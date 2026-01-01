@@ -3711,98 +3711,6 @@ function SceneCard({
                     </div>
                   )}
                   
-                  {/* Audio Timeline Preview Strip */}
-                  {(() => {
-                    const sceneDescription = scene.visualDescription || scene.action || scene.summary || scene.heading
-                    const descriptionUrl = scene.descriptionAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.descriptionAudioUrl : undefined)
-                    const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
-                    const dialogueCount = scene.dialogue?.length || 0
-                    // Get dialogue audio array for current language
-                    let timelineDialogueAudioArray: any[] = []
-                    if (Array.isArray(scene.dialogueAudio)) {
-                      timelineDialogueAudioArray = scene.dialogueAudio
-                    } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
-                      timelineDialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
-                    }
-                    const dialogueWithAudio = scene.dialogue?.reduce((count: number, d: any, idx: number) => {
-                      const audioEntry = timelineDialogueAudioArray.find((a: any) => 
-                        a.character === d.character && a.dialogueIndex === idx
-                      )
-                      return count + (audioEntry?.audioUrl ? 1 : 0)
-                    }, 0) || 0
-                    const sfxCount = scene.sfx?.length || 0
-                    const sfxWithAudio = scene.sfxAudio?.filter(Boolean).length || 0
-                    const hasMusic = !!scene.musicAudio
-                    
-                    const totalElements = (sceneDescription ? 1 : 0) + (scene.narration ? 1 : 0) + dialogueCount + sfxCount + (scene.music ? 1 : 0)
-                    const readyElements = (descriptionUrl ? 1 : 0) + (narrationUrl ? 1 : 0) + dialogueWithAudio + sfxWithAudio + (hasMusic ? 1 : 0)
-                    
-                    if (totalElements === 0) return null
-                    
-                    return (
-                      <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-medium text-gray-400">Audio Timeline</span>
-                          <span className="text-xs text-gray-500">{readyElements}/{totalElements} ready</span>
-                        </div>
-                        <div className="flex items-center gap-1 h-8 bg-gray-900/50 rounded overflow-hidden">
-                          {sceneDescription && (
-                            <div 
-                              className={`flex-1 h-full flex items-center justify-center text-[11px] font-medium transition-colors ${
-                                descriptionUrl ? 'bg-purple-600/60 text-white' : 'bg-purple-900/30 text-purple-400/70'
-                              }`}
-                              title={descriptionUrl ? 'Description: Ready' : 'Description: Not generated'}
-                            >
-                              Desc
-                            </div>
-                          )}
-                          {scene.narration && (
-                            <div 
-                              className={`flex-1 h-full flex items-center justify-center text-[11px] font-medium transition-colors ${
-                                narrationUrl ? 'bg-blue-600/60 text-white' : 'bg-blue-900/30 text-blue-400/70'
-                              }`}
-                              title={narrationUrl ? 'Narration: Ready' : 'Narration: Not generated'}
-                            >
-                              Narr
-                            </div>
-                          )}
-                          {dialogueCount > 0 && (
-                            <div 
-                              className={`flex-[2] h-full flex items-center justify-center text-[11px] font-medium transition-colors ${
-                                dialogueWithAudio === dialogueCount ? 'bg-green-600/60 text-white' : 
-                                dialogueWithAudio > 0 ? 'bg-green-600/40 text-white/80' : 'bg-green-900/30 text-green-400/70'
-                              }`}
-                              title={`Dialogue: ${dialogueWithAudio}/${dialogueCount} ready`}
-                            >
-                              Dialog ({dialogueWithAudio}/{dialogueCount})
-                            </div>
-                          )}
-                          {sfxCount > 0 && (
-                            <div 
-                              className={`flex-1 h-full flex items-center justify-center text-[11px] font-medium transition-colors ${
-                                sfxWithAudio === sfxCount ? 'bg-amber-600/60 text-white' : 
-                                sfxWithAudio > 0 ? 'bg-amber-600/40 text-white/80' : 'bg-amber-900/30 text-amber-400/70'
-                              }`}
-                              title={`SFX: ${sfxWithAudio}/${sfxCount} ready`}
-                            >
-                              SFX
-                            </div>
-                          )}
-                          {scene.music && (
-                            <div 
-                              className={`flex-1 h-full flex items-center justify-center text-[11px] font-medium transition-colors ${
-                                hasMusic ? 'bg-purple-500/60 text-white' : 'bg-purple-900/30 text-purple-400/70'
-                              }`}
-                              title={hasMusic ? 'Music: Ready' : 'Music: Not generated'}
-                            >
-                              Music
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })()}
-                  
                   {/* Scene Description (plays before narration) */}
                   {(() => {
                     const sceneDescription = scene.visualDescription || scene.action || scene.summary || scene.heading
@@ -3826,7 +3734,9 @@ function SceneCard({
                             {descriptionUrl && (
                               <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
                                 <Volume2 className="w-3 h-3" />
-                                Audio Ready
+                                {scene.descriptionAudio?.[selectedLanguage]?.duration 
+                                  ? `${scene.descriptionAudio[selectedLanguage].duration.toFixed(1)}s`
+                                  : 'Ready'}
                               </span>
                             )}
                           </button>
@@ -3977,7 +3887,9 @@ function SceneCard({
                           {narrationUrl && (
                             <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
                               <Volume2 className="w-3 h-3" />
-                              Audio Ready
+                              {scene.narrationAudio?.[selectedLanguage]?.duration 
+                                ? `${scene.narrationAudio[selectedLanguage].duration.toFixed(1)}s`
+                                : 'Ready'}
                             </span>
                           )}
                         </button>

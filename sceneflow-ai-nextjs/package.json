@@ -17,7 +17,8 @@
                 "ci:smoke": "bash scripts/ci/ai-smoke.sh",
                 "setup:database": "echo 'Database setup scripts removed during cleanup'",
                 "test": "echo 'Test scripts removed during cleanup'",
-                "gcp:deploy": "echo 'Deploy via Vercel (cloud export handled server-side).'"
+                "gcp:deploy": "echo 'Deploy via Vercel (cloud export handled server-side).'",
+                "compliance-check": "node scripts/fastspring-compliance-check.js"
         },
         "dependencies": {
                 "@dnd-kit/core": "^6.3.1",
