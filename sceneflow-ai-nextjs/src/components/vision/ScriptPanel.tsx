@@ -3412,38 +3412,6 @@ function SceneCard({
                       </Tooltip>
                     </TooltipProvider>
                   )}
-                  
-                  {/* Play/Stop Audio Button */}
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            if (isPlaying) {
-                              if (onStopAudio) onStopAudio()
-                            } else {
-                              if (onPlayScene) onPlayScene(sceneIdx)
-                            }
-                          }}
-                          className={`p-1.5 rounded-lg transition ${
-                            isPlaying 
-                              ? 'bg-red-500/20 text-red-400 border border-red-500/40 hover:bg-red-500/30' 
-                              : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30'
-                          }`}
-                        >
-                          {isPlaying ? (
-                            <Square className="w-4 h-4" />
-                          ) : (
-                            <Volume2 className="w-4 h-4" />
-                          )}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                        {isPlaying ? 'Stop playing audio' : 'Play scene audio'}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
                 </>
               )}
               
@@ -3754,7 +3722,8 @@ function SceneCard({
                     }
                     
                     // Check if we have any audio to display
-                    const hasAnyAudio = descriptionUrl || narrationUrl || dialogueAudioArray.some((d: any) => d?.audioUrl)
+                    const hasSfxAudio = scene.sfxAudio && scene.sfxAudio.length > 0 && scene.sfxAudio.some((url: string) => url)
+                    const hasAnyAudio = descriptionUrl || narrationUrl || dialogueAudioArray.some((d: any) => d?.audioUrl) || hasSfxAudio
                     if (!hasAnyAudio) return null
                     
                     // Calculate scene duration from audio
@@ -3819,12 +3788,38 @@ function SceneCard({
                       audioTracks.dialogue = dialogueClips
                     }
                     
+                    // Build SFX clips for timeline
+                    let maxSfxEnd = 0
+                    if (scene.sfxAudio && scene.sfxAudio.length > 0) {
+                      const sfxClips: AudioTrackClip[] = scene.sfxAudio
+                        .filter((url: string) => url)
+                        .map((url: string, idx: number) => {
+                          const sfxDef = scene.sfx?.[idx] || {}
+                          // Use stored duration or estimate at 2s
+                          const duration = sfxDef.duration || 2
+                          // Use specified time or distribute evenly
+                          const startTime = sfxDef.time ?? (1 + idx * 2)
+                          maxSfxEnd = Math.max(maxSfxEnd, startTime + duration)
+                          return {
+                            id: `sfx-${idx}`,
+                            url,
+                            startTime,
+                            duration,
+                            label: typeof sfxDef === 'string' ? sfxDef.slice(0, 20) : (sfxDef.description?.slice(0, 20) || `SFX ${idx + 1}`)
+                          }
+                        })
+                      if (sfxClips.length > 0) {
+                        audioTracks.sfx = sfxClips
+                      }
+                    }
+                    
                     // Calculate total scene duration for timeline
                     const sceneDuration = Math.max(
                       10,
                       descStartTime + descDuration,
                       narrStartTime + narrDuration,
                       maxDialogueEnd,
+                      maxSfxEnd,
                       scene.duration || 0
                     ) + 2 // Add 2s buffer
                     
@@ -3851,7 +3846,7 @@ function SceneCard({
                     const descriptionUrl = scene.descriptionAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.descriptionAudioUrl : undefined)
 
                     return (
-                      <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                         <div className="flex items-center justify-between mb-2">
                           <button
                             onClick={(e) => {
@@ -3860,9 +3855,9 @@ function SceneCard({
                             }}
                             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                           >
-                            <ChevronDown className={`w-4 h-4 text-purple-600 dark:text-purple-300 transition-transform ${descriptionCollapsed ? '-rotate-90' : ''}`} />
-                            <Volume2 className="w-4 h-4 text-purple-600 dark:text-purple-300" />
-                            <span className="text-xs font-semibold text-purple-700 dark:text-purple-200">Scene Description</span>
+                            <ChevronDown className={`w-4 h-4 text-blue-600 dark:text-blue-400 transition-transform ${descriptionCollapsed ? '-rotate-90' : ''}`} />
+                            <Volume2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                            <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Scene Description (V.O.)</span>
                             {descriptionUrl && (
                               <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
                                 <Volume2 className="w-3 h-3" />
@@ -3879,7 +3874,7 @@ function SceneCard({
                                   e.stopPropagation()
                                   onPlayAudio?.(descriptionUrl, 'description')
                                 }}
-                                className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
+                                className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
                                 title="Play Scene Description"
                               >
                                 {playingAudio === descriptionUrl ? (
@@ -3908,7 +3903,7 @@ function SceneCard({
                                   }
                                 }}
                                 disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__description__'}
-                                className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded disabled:opacity-50"
+                                className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded disabled:opacity-50"
                                 title="Regenerate Scene Description Audio"
                               >
                                 {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__description__' ? (
@@ -3920,7 +3915,7 @@ function SceneCard({
                               <a
                                 href={descriptionUrl}
                                 download
-                                className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
+                                className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
                                 title="Download Scene Description Audio"
                               >
                                 <Download className="w-4 h-4" />
@@ -3942,7 +3937,7 @@ function SceneCard({
                                   e.stopPropagation()
                                   uploadAudio(sceneIdx, 'description')
                                 }}
-                                className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
+                                className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
                                 title="Upload Scene Description Audio"
                               >
                                 <Upload className="w-4 h-4" />
@@ -3970,7 +3965,7 @@ function SceneCard({
                                   }
                                 }}
                                 disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__description__'}
-                                className="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
+                                className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
                               >
                                 {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__description__' ? (
                                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -3982,7 +3977,7 @@ function SceneCard({
                                   e.stopPropagation()
                                   uploadAudio(sceneIdx, 'description')
                                 }}
-                                className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
+                                className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
                                 title="Upload Scene Description Audio"
                               >
                                 <Upload className="w-4 h-4" />
@@ -3997,9 +3992,9 @@ function SceneCard({
                         )}
                         {/* Start Time Control - shown when audio exists */}
                         {descriptionUrl && !descriptionCollapsed && (
-                          <div className="mt-2 pt-2 border-t border-purple-200 dark:border-purple-700/50 flex items-center gap-2">
-                            <Clock className="w-3 h-3 text-purple-400" />
-                            <span className="text-[10px] text-purple-400">Start at:</span>
+                          <div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-700/50 flex items-center gap-2">
+                            <Clock className="w-3 h-3 text-blue-400" />
+                            <span className="text-xs text-blue-400">Start at:</span>
                             <input
                               type="number"
                               min="0"
@@ -4011,10 +4006,10 @@ function SceneCard({
                                 onUpdateAudioStartTime?.(sceneIdx, 'description', startTime)
                               }}
                               onClick={(e) => e.stopPropagation()}
-                              className="w-20 px-2 py-0.5 text-xs bg-purple-100 dark:bg-purple-900/50 border border-purple-300 dark:border-purple-600 rounded text-purple-700 dark:text-purple-200 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                              className="w-20 px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900/50 border border-blue-300 dark:border-blue-600 rounded text-blue-700 dark:text-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
                               title="Start time offset in seconds"
                             />
-                            <span className="text-[10px] text-purple-400">seconds</span>
+                            <span className="text-xs text-blue-400">seconds</span>
                           </div>
                         )}
                       </div>
@@ -4026,7 +4021,7 @@ function SceneCard({
                     const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
                     
                     return (
-                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
                       <div className="flex items-center justify-between mb-2">
                         <button
                           onClick={(e) => {
@@ -4035,9 +4030,9 @@ function SceneCard({
                           }}
                           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                         >
-                          <ChevronDown className={`w-4 h-4 text-blue-600 dark:text-blue-400 transition-transform ${narrationCollapsed ? '-rotate-90' : ''}`} />
-                          <Volume2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                          <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Scene Narration</span>
+                          <ChevronDown className={`w-4 h-4 text-purple-600 dark:text-purple-400 transition-transform ${narrationCollapsed ? '-rotate-90' : ''}`} />
+                          <Volume2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                          <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">Scene Narration</span>
                           {narrationUrl && (
                             <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
                               <Volume2 className="w-3 h-3" />
@@ -4054,7 +4049,7 @@ function SceneCard({
                                 e.stopPropagation()
                                 onPlayAudio?.(narrationUrl, 'narration')
                               }}
-                              className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
+                              className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
                               title="Play Narration"
                             >
                               {playingAudio === narrationUrl ? (
@@ -4081,7 +4076,7 @@ function SceneCard({
                                 }
                               }}
                               disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__'}
-                              className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded disabled:opacity-50"
+                              className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded disabled:opacity-50"
                               title="Regenerate Narration Audio"
                             >
                               {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__' ? (
@@ -4093,7 +4088,7 @@ function SceneCard({
                             <a
                               href={narrationUrl}
                               download
-                              className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
+                              className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
                               title="Download Narration"
                             >
                               <Download className="w-4 h-4" />
@@ -4115,7 +4110,7 @@ function SceneCard({
                                 e.stopPropagation()
                                 uploadAudio(sceneIdx, 'narration')
                               }}
-                              className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
+                              className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
                               title="Upload Narration Audio"
                             >
                               <Upload className="w-4 h-4" />
@@ -4141,7 +4136,7 @@ function SceneCard({
                                 }
                               }}
                               disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__'}
-                              className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
+                              className="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
                             >
                               {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__' ? (
                                 <Loader2 className="w-3 h-3 animate-spin" />
@@ -4153,7 +4148,7 @@ function SceneCard({
                                 e.stopPropagation()
                                 uploadAudio(sceneIdx, 'narration')
                               }}
-                              className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
+                              className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
                               title="Upload Narration Audio"
                             >
                               <Upload className="w-4 h-4" />
@@ -4168,9 +4163,9 @@ function SceneCard({
                       )}
                       {/* Start Time Control - shown when audio exists */}
                       {narrationUrl && !narrationCollapsed && (
-                        <div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-700/50 flex items-center gap-2">
-                          <Clock className="w-3 h-3 text-blue-400" />
-                          <span className="text-[10px] text-blue-400">Start at:</span>
+                        <div className="mt-2 pt-2 border-t border-purple-200 dark:border-purple-700/50 flex items-center gap-2">
+                          <Clock className="w-3 h-3 text-purple-400" />
+                          <span className="text-xs text-purple-400">Start at:</span>
                           <input
                             type="number"
                             min="0"
@@ -4182,10 +4177,10 @@ function SceneCard({
                               onUpdateAudioStartTime?.(sceneIdx, 'narration', startTime)
                             }}
                             onClick={(e) => e.stopPropagation()}
-                            className="w-20 px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900/50 border border-blue-300 dark:border-blue-600 rounded text-blue-700 dark:text-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="w-20 px-2 py-0.5 text-xs bg-purple-100 dark:bg-purple-900/50 border border-purple-300 dark:border-purple-600 rounded text-purple-700 dark:text-purple-200 focus:outline-none focus:ring-1 focus:ring-purple-500"
                             title="Start time offset in seconds"
                           />
-                          <span className="text-[10px] text-blue-400">seconds</span>
+                          <span className="text-xs text-purple-400">seconds</span>
                         </div>
                       )}
                     </div>
@@ -4194,7 +4189,7 @@ function SceneCard({
                   
                   {/* Scene Dialog */}
                   {scene.dialogue && scene.dialogue.length > 0 && (
-                    <div className="bg-green-950 border-l-4 border-green-500 p-4 rounded-lg">
+                    <div className="bg-emerald-950 border-l-4 border-emerald-500 p-4 rounded-lg">
                       <div className="flex items-center justify-between mb-3">
                         <button
                           onClick={(e) => {
@@ -4203,8 +4198,8 @@ function SceneCard({
                           }}
                           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                         >
-                          <ChevronDown className={`w-4 h-4 text-green-400 transition-transform ${dialogueCollapsed ? '-rotate-90' : ''}`} />
-                          <Users className="w-4 h-4 text-green-400" />
+                          <ChevronDown className={`w-4 h-4 text-emerald-400 transition-transform ${dialogueCollapsed ? '-rotate-90' : ''}`} />
+                          <Users className="w-4 h-4 text-emerald-400" />
                           <span className="text-sm font-semibold text-gray-200">Scene Dialog</span>
                           <span className="text-xs text-gray-500">({scene.dialogue.length} {scene.dialogue.length === 1 ? 'line' : 'lines'})</span>
                         </button>
