@@ -49,7 +49,8 @@ export function AudioTimeline({
   const [mutedTracks, setMutedTracks] = useState<Set<string>>(new Set())
   
   // Ref to capture mutedTracks for use in animation frames (avoids minification closure issues)
-  const mutedTracksRef = useRef<Set<string>>(mutedTracks)
+  // Initialize with empty Set - will be synced in useEffect below
+  const mutedTracksRef = useRef<Set<string>>(new Set())
   useEffect(() => {
     mutedTracksRef.current = mutedTracks
   }, [mutedTracks])
