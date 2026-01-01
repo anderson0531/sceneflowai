@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect, useMemo } from 'react'
-import { Play, Pause, Volume2, VolumeX, Mic, Music, Zap, SkipBack, SkipForward } from 'lucide-react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
+import { Play, Pause, Volume2, VolumeX, Mic, Music, Zap, SkipBack, SkipForward, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
@@ -28,6 +28,7 @@ interface AudioTimelineProps {
   audioTracks?: AudioTracksData
   onPlayheadChange?: (time: number) => void
   onTrackUpdate?: (trackType: keyof AudioTracksData, clips: AudioTrackClip | AudioTrackClip[]) => void
+  onAudioClipChange?: (trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
 }
 
 function formatTime(seconds: number): string {
@@ -43,20 +44,75 @@ export function AudioTimeline({
   audioTracks,
   onPlayheadChange,
   onTrackUpdate,
+  onAudioClipChange,
 }: AudioTimelineProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   
-  // WORKAROUND: Use explicit variable name to avoid minification issues
-  // The minifier was incorrectly handling 'audioMuteState' variable name
+  // Per-clip selection state
+  const [selectedClipId, setSelectedClipId] = useState<string | null>(null)
+  const [selectedClipTrackType, setSelectedClipTrackType] = useState<string | null>(null)
+  
+  // Per-clip mute state - persisted to localStorage
+  const [mutedClips, setMutedClips] = useState<Set<string>>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sceneflow-muted-audio-clips')
+      if (saved) return new Set(JSON.parse(saved))
+    }
+    return new Set()
+  })
+  
+  // Ref to capture mutedClips for animation frames
+  const mutedClipsRef = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    mutedClipsRef.current = mutedClips
+  }, [mutedClips])
+  
+  // Persist mutedClips to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sceneflow-muted-audio-clips', JSON.stringify([...mutedClips]))
+    }
+  }, [mutedClips])
+  
+  // Toggle mute for a specific clip
+  const toggleClipMute = useCallback((clipId: string) => {
+    setMutedClips(prev => {
+      const next = new Set(prev)
+      if (next.has(clipId)) {
+        next.delete(clipId)
+      } else {
+        next.add(clipId)
+        audioRefs.current.get(clipId)?.pause()
+      }
+      return next
+    })
+  }, [])
+  
+  // Track-level mute state (legacy)
   const [audioMuteState, setAudioMuteState] = useState<Set<string>>(new Set())
   
   // Ref to capture audioMuteState for use in animation frames (avoids minification closure issues)
-  // Initialize with empty Set - will be synced in useEffect below
   const audioMuteStateRef = useRef<Set<string>>(new Set())
   useEffect(() => {
     audioMuteStateRef.current = audioMuteState
   }, [audioMuteState])
+  
+  // Track volume state
+  const [trackVolumes, setTrackVolumes] = useState<Record<string, number>>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sceneflow-audio-track-volumes')
+      if (saved) return JSON.parse(saved)
+    }
+    return { voiceover: 1, dialogue: 1, music: 0.6, sfx: 0.8 }
+  })
+  
+  // Persist track volumes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sceneflow-audio-track-volumes', JSON.stringify(trackVolumes))
+    }
+  }, [trackVolumes])
   
   const timelineRef = useRef<HTMLDivElement>(null)
   const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map())
@@ -90,6 +146,54 @@ export function AudioTimeline({
     return clips
   }, [audioTracks])
 
+  // Get the selected clip's data
+  const getSelectedClipData = useCallback(() => {
+    if (!selectedClipId || !selectedClipTrackType) return null
+    return allClips.find(c => c.clip.id === selectedClipId)?.clip || null
+  }, [selectedClipId, selectedClipTrackType, allClips])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Escape to deselect
+      if (e.key === 'Escape') {
+        setSelectedClipId(null)
+        setSelectedClipTrackType(null)
+        return
+      }
+      
+      // M to toggle mute on selected clip
+      if (e.key === 'm' || e.key === 'M') {
+        if (selectedClipId) {
+          e.preventDefault()
+          toggleClipMute(selectedClipId)
+        }
+        return
+      }
+      
+      // Arrow keys to adjust timing
+      if (selectedClipId && selectedClipTrackType && onAudioClipChange) {
+        const clipData = getSelectedClipData()
+        if (!clipData) return
+        
+        const step = e.shiftKey ? 0.5 : 0.1
+        
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault()
+          const newStart = Math.max(0, clipData.startTime - step)
+          onAudioClipChange(selectedClipTrackType, selectedClipId, { startTime: newStart })
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault()
+          const newStart = clipData.startTime + step
+          onAudioClipChange(selectedClipTrackType, selectedClipId, { startTime: newStart })
+        }
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedClipId, selectedClipTrackType, toggleClipMute, getSelectedClipData, onAudioClipChange])
+
   // Play/pause control
   const togglePlayback = () => {
     if (isPlaying) {
@@ -104,9 +208,12 @@ export function AudioTimeline({
       
       // Start/sync all audio elements - use ref to avoid minification closure issues
       const currentMutedTracks = audioMuteStateRef.current
+      const currentMutedClips = mutedClipsRef.current
       allClips.forEach(({ type, clip }) => {
         const audio = audioRefs.current.get(clip.id)
-        if (audio && !currentMutedTracks.has(type)) {
+        const isClipMuted = currentMutedClips.has(clip.id)
+        if (audio && !currentMutedTracks.has(type) && !isClipMuted) {
+          audio.volume = trackVolumes[type] ?? 1
           const clipStartTime = clip.startTime
           const clipEndTime = clip.startTime + clip.duration
           
@@ -136,16 +243,26 @@ export function AudioTimeline({
         
         // Check audio timing - use ref to avoid minification closure issues
         const animMutedTracks = audioMuteStateRef.current
+        const animMutedClips = mutedClipsRef.current
         allClips.forEach(({ type, clip }) => {
           const audio = audioRefs.current.get(clip.id)
-          if (audio && !animMutedTracks.has(type)) {
-            const clipStart = clip.startTime
-            const clipEnd = clip.startTime + clip.duration
+          const isTrackMuted = animMutedTracks.has(type)
+          const isClipMuted = animMutedClips.has(clip.id)
+          
+          if (audio) {
+            audio.volume = (isTrackMuted || isClipMuted) ? 0 : (trackVolumes[type] ?? 1)
             
-            if (elapsed >= clipStart && elapsed < clipEnd && audio.paused) {
-              audio.currentTime = elapsed - clipStart
-              audio.play().catch(() => {})
-            } else if ((elapsed < clipStart || elapsed >= clipEnd) && !audio.paused) {
+            if (!isTrackMuted && !isClipMuted) {
+              const clipStart = clip.startTime
+              const clipEnd = clip.startTime + clip.duration
+              
+              if (elapsed >= clipStart && elapsed < clipEnd && audio.paused) {
+                audio.currentTime = elapsed - clipStart
+                audio.play().catch(() => {})
+              } else if ((elapsed < clipStart || elapsed >= clipEnd) && !audio.paused) {
+                audio.pause()
+              }
+            } else if (!audio.paused) {
               audio.pause()
             }
           }
@@ -227,24 +344,24 @@ export function AudioTimeline({
   ) => {
     // Use ref for muted state to avoid minification TDZ issues
     const currentMutedTracks = audioMuteStateRef.current
-    const isMuted = currentMutedTracks?.has(trackType) ?? false
+    const isTrackMuted = currentMutedTracks?.has(trackType) ?? false
     
     return (
-      <div className="flex items-stretch h-8 group">
+      <div className="flex items-stretch h-10 group">
         {/* Track Label */}
         <div className="w-20 flex-shrink-0 flex items-center gap-1 px-2 bg-gray-100 dark:bg-gray-800 border-r border-gray-300 dark:border-gray-700">
           <button
             onClick={() => toggleMute(trackType)}
             className={cn(
               "p-0.5 rounded transition-colors",
-              isMuted ? "text-gray-400" : "text-gray-600 dark:text-gray-300"
+              isTrackMuted ? "text-gray-400" : "text-gray-600 dark:text-gray-300"
             )}
           >
-            {isMuted ? <VolumeX className="w-3 h-3" /> : icon}
+            {isTrackMuted ? <VolumeX className="w-3 h-3" /> : icon}
           </button>
           <span className={cn(
             "text-[10px] font-medium truncate",
-            isMuted ? "text-gray-400" : "text-gray-700 dark:text-gray-300"
+            isTrackMuted ? "text-gray-400 line-through" : "text-gray-700 dark:text-gray-300"
           )}>
             {label}
           </span>
@@ -265,26 +382,65 @@ export function AudioTimeline({
           ))}
           
           {/* Audio clips */}
-          {clips.map((clip) => (
-            <div
-              key={clip.id}
-              className={cn(
-                "absolute top-1 bottom-1 rounded-sm flex items-center px-1 overflow-hidden",
-                isMuted ? "opacity-40" : "opacity-90",
-                color
-              )}
-              style={{
-                left: clip.startTime * pixelsPerSecond,
-                width: Math.max(clip.duration * pixelsPerSecond, 4),
-              }}
-            >
-              {clip.label && clip.duration * pixelsPerSecond > 40 && (
-                <span className="text-[8px] text-white font-medium truncate">
-                  {clip.label}
-                </span>
-              )}
-            </div>
-          ))}
+          {clips.map((clip) => {
+            const isClipMuted = mutedClips.has(clip.id)
+            const isSelected = selectedClipId === clip.id
+            const isMuted = isTrackMuted || isClipMuted
+            
+            return (
+              <div
+                key={clip.id}
+                className={cn(
+                  "absolute top-1 bottom-1 rounded-sm flex items-center px-1 overflow-hidden cursor-pointer transition-all group/clip",
+                  isMuted ? "opacity-40" : "opacity-90",
+                  isSelected && "ring-2 ring-cyan-400 ring-offset-1 ring-offset-gray-900 z-10",
+                  color
+                )}
+                style={{
+                  left: clip.startTime * pixelsPerSecond,
+                  width: Math.max(clip.duration * pixelsPerSecond, 4),
+                }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setSelectedClipId(clip.id)
+                  setSelectedClipTrackType(trackType)
+                }}
+              >
+                {/* Muted strikethrough pattern */}
+                {isClipMuted && (
+                  <div 
+                    className="absolute inset-0 pointer-events-none"
+                    style={{ 
+                      background: 'repeating-linear-gradient(135deg, transparent, transparent 2px, rgba(239,68,68,0.4) 2px, rgba(239,68,68,0.4) 4px)'
+                    }}
+                  />
+                )}
+                
+                {/* Mute toggle on hover */}
+                <button
+                  className={cn(
+                    "absolute top-0 right-0 w-4 h-4 rounded-bl flex items-center justify-center transition-opacity z-20",
+                    isClipMuted 
+                      ? "bg-red-500 opacity-100" 
+                      : "bg-gray-900/70 opacity-0 group-hover/clip:opacity-100"
+                  )}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    toggleClipMute(clip.id)
+                  }}
+                  title={isClipMuted ? 'Unmute clip' : 'Mute clip'}
+                >
+                  {isClipMuted ? <VolumeX className="w-2.5 h-2.5 text-white" /> : <Volume2 className="w-2.5 h-2.5 text-white" />}
+                </button>
+                
+                {clip.label && clip.duration * pixelsPerSecond > 40 && (
+                  <span className="text-[8px] text-white font-medium truncate relative z-10">
+                    {clip.label}
+                  </span>
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
     )
@@ -411,6 +567,103 @@ export function AudioTimeline({
           <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rounded-full" />
         </div>
       </div>
+
+      {/* Selected Clip Panel */}
+      {selectedClipId && selectedClipTrackType && (() => {
+        const clipData = getSelectedClipData()
+        if (!clipData) return null
+        
+        const trackColors: Record<string, string> = {
+          voiceover: 'border-blue-500 bg-blue-500/10',
+          dialogue: 'border-emerald-500 bg-emerald-500/10',
+          music: 'border-purple-500 bg-purple-500/10',
+          sfx: 'border-amber-500 bg-amber-500/10',
+        }
+        const trackLabels: Record<string, string> = {
+          voiceover: 'V.O.',
+          dialogue: 'Dialogue',
+          music: 'Music',
+          sfx: 'SFX',
+        }
+        const isClipMuted = mutedClips.has(selectedClipId)
+        
+        return (
+          <div className={cn(
+            "border-t-2 p-3 transition-all",
+            trackColors[selectedClipTrackType] || 'border-gray-500 bg-gray-500/10'
+          )}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase text-gray-400">{trackLabels[selectedClipTrackType] || 'Clip'}</span>
+                <span className="text-xs font-medium text-white truncate max-w-[150px]">
+                  {clipData.label || `Clip`}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => toggleClipMute(selectedClipId)}
+                  className={cn(
+                    "flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium transition-colors",
+                    isClipMuted 
+                      ? "bg-red-500/20 text-red-400 hover:bg-red-500/30" 
+                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  )}
+                >
+                  {isClipMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
+                  {isClipMuted ? 'Unmute' : 'Mute'}
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedClipId(null)
+                    setSelectedClipTrackType(null)
+                  }}
+                  className="p-1 rounded bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white transition-colors"
+                  title="Close (Esc)"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-3 text-xs">
+              {/* Start Time */}
+              <div>
+                <label className="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Start</label>
+                <div className="flex items-center gap-1">
+                  <span className="px-1.5 py-0.5 bg-gray-800 border border-gray-700 rounded text-gray-300 font-mono">
+                    {clipData.startTime.toFixed(1)}s
+                  </span>
+                </div>
+              </div>
+              
+              {/* Duration */}
+              <div>
+                <label className="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Duration</label>
+                <div className="flex items-center gap-1">
+                  <span className="px-1.5 py-0.5 bg-gray-900 border border-gray-800 rounded text-gray-400 font-mono">
+                    {clipData.duration.toFixed(1)}s
+                  </span>
+                </div>
+              </div>
+              
+              {/* End Time */}
+              <div>
+                <label className="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">End</label>
+                <div className="flex items-center gap-1">
+                  <span className="px-1.5 py-0.5 bg-gray-900 border border-gray-800 rounded text-gray-400 font-mono">
+                    {(clipData.startTime + clipData.duration).toFixed(1)}s
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-2 pt-2 border-t border-gray-800 flex items-center gap-3 text-[9px] text-gray-500">
+              <span><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">M</kbd> Mute</span>
+              <span><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">Esc</kbd> Deselect</span>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Hidden Audio Elements */}
       {allClips.map(({ clip }) => (
