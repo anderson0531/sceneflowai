@@ -448,10 +448,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const overlayStore = useOverlayStore()
   
   // Credits context for budget calculator
-  const { userCredits } = useCredits()
+  const { credits: userCredits } = useCredits()
   
-  // Project costs for pre-populating budget calculator
-  const projectCosts = useProjectCosts(script?.metadata?.visionPhase)
+  // Project costs for pre-populating budget calculator (script IS the visionPhase data)
+  const projectCosts = useProjectCosts(script)
   
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [showScriptEditor, setShowScriptEditor] = useState(false)
