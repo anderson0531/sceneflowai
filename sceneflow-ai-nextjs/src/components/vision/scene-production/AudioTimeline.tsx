@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
-import { Play, Pause, Volume2, VolumeX, Mic, Music, Zap, SkipBack, SkipForward, X } from 'lucide-react'
+import { Play, Pause, Volume2, VolumeX, Mic, Music, Zap, SkipBack, SkipForward, X, RotateCcw, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
@@ -385,18 +385,16 @@ export function AudioTimeline({
             />
           ))}
           
-          {/* Audio clips */}
-          {clips.map((clip) => {
-            const isClipMuted = mutedClips.has(clip.id)
+          {/* Audio clips - hide muted clips from timeline */}
+          {clips.filter(clip => !mutedClips.has(clip.id)).map((clip) => {
             const isSelected = selectedClipId === clip.id
-            const isMuted = isTrackMuted || isClipMuted
             
             return (
               <div
                 key={clip.id}
                 className={cn(
                   "absolute top-1 bottom-1 rounded-sm flex items-center px-1 overflow-hidden cursor-pointer transition-all group/clip",
-                  isMuted ? "opacity-40" : "opacity-90",
+                  isTrackMuted ? "opacity-40" : "opacity-90",
                   isSelected && "ring-2 ring-cyan-400 ring-offset-1 ring-offset-gray-900 z-10",
                   color
                 )}
@@ -410,33 +408,7 @@ export function AudioTimeline({
                   setSelectedClipTrackType(trackType)
                 }}
               >
-                {/* Muted strikethrough pattern */}
-                {isClipMuted && (
-                  <div 
-                    className="absolute inset-0 pointer-events-none"
-                    style={{ 
-                      background: 'repeating-linear-gradient(135deg, transparent, transparent 2px, rgba(239,68,68,0.4) 2px, rgba(239,68,68,0.4) 4px)'
-                    }}
-                  />
-                )}
-                
-                {/* Mute toggle on hover */}
-                <button
-                  className={cn(
-                    "absolute top-0 right-0 w-4 h-4 rounded-bl flex items-center justify-center transition-opacity z-20",
-                    isClipMuted 
-                      ? "bg-red-500 opacity-100" 
-                      : "bg-gray-900/70 opacity-0 group-hover/clip:opacity-100"
-                  )}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    toggleClipMute(clip.id)
-                  }}
-                  title={isClipMuted ? 'Unmute clip' : 'Mute clip'}
-                >
-                  {isClipMuted ? <VolumeX className="w-2.5 h-2.5 text-white" /> : <Volume2 className="w-2.5 h-2.5 text-white" />}
-                </button>
-                
+                {/* Clip label */}
                 {clip.label && clip.duration * pixelsPerSecond > 40 && (
                   <span className="text-[8px] text-white font-medium truncate relative z-10">
                     {clip.label}
@@ -591,6 +563,18 @@ export function AudioTimeline({
         }
         const isClipMuted = mutedClips.has(selectedClipId)
         
+        // Detect if this clip has user-edited timing (differs from auto-calculated)
+        // For now, we show "Edited" if startTime > 0 (since auto-calc puts most at 0 or sequential)
+        // A more robust approach would compare to a stored "autoStartTime" value
+        const hasEditedTiming = clipData.startTime !== undefined && clipData.startTime > 0
+        
+        // Reset to auto handler - resets start time to 0 (or sequential position)
+        const handleResetToAuto = () => {
+          // Reset start time to 0 for voiceover/music, or maintain sequential for dialogue/sfx
+          const autoStartTime = 0
+          onAudioClipChange?.(selectedClipTrackType!, selectedClipId!, { startTime: autoStartTime })
+        }
+        
         return (
           <div className={cn(
             "border-t-2 p-3 transition-all",
@@ -602,8 +586,26 @@ export function AudioTimeline({
                 <span className="text-xs font-medium text-white truncate max-w-[150px]">
                   {clipData.label || `Clip`}
                 </span>
+                {/* Edited indicator */}
+                {hasEditedTiming && (
+                  <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[9px] font-medium">
+                    <Pencil className="w-2.5 h-2.5" />
+                    Edited
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-1.5">
+                {/* Reset to Auto button */}
+                {hasEditedTiming && (
+                  <button
+                    onClick={handleResetToAuto}
+                    className="flex items-center gap-1 px-2 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600 text-[10px] font-medium transition-colors"
+                    title="Reset timing to automated baseline"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    Reset
+                  </button>
+                )}
                 <button
                   onClick={() => toggleClipMute(selectedClipId)}
                   className={cn(

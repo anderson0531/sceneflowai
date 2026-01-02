@@ -2404,7 +2404,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           if (!isNaN(sfxIdx) && updatedScene.sfx?.[sfxIdx]) {
             updatedScene.sfx = updatedScene.sfx.map((s: any, i: number) =>
               i === sfxIdx
-                ? { ...s, startTime: changes.startTime ?? s.startTime, duration: changes.duration ?? s.duration }
+                ? { ...s, time: changes.startTime ?? s.time, duration: changes.duration ?? s.duration }
                 : s
             )
           }

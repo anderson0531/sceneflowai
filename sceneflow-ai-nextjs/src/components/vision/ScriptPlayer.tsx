@@ -540,10 +540,11 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
 
         const sfxDef = scene.sfx?.[idx] || {}
         const sfxDuration = await resolveAudioDuration(sfxUrl, sfxDef.duration)
-        const explicitTime = typeof sfxDef.time === 'number'
-          ? Math.max(sfxDef.time, voiceAnchorTime)
-          : Math.max(sfxCursor, voiceAnchorTime)
-        const startTime = Math.max(explicitTime, sfxCursor)
+        // Phase 4: Respect user-saved timing unconditionally - no voiceAnchorTime floor
+        // User's intentional edits take priority over automated constraints
+        const startTime = typeof sfxDef.time === 'number'
+          ? sfxDef.time  // User-saved timing: use directly
+          : Math.max(sfxCursor, voiceAnchorTime)  // Auto: sequential after anchor
         resolvedSfx.push({
           url: sfxUrl,
           startTime
@@ -619,12 +620,12 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       for (let i = 0; i < orderedAudio.length; i++) {
         const dialogue = orderedAudio[i]
         if (dialogue.audioUrl) {
-          // Phase 3: Use custom startTime if set, otherwise use sequential timing
-          // Custom startTime allows users to offset individual dialogue lines
+          // Phase 4: Respect user-saved timing unconditionally - no voiceAnchorTime floor
+          // User's intentional edits take priority over automated constraints
           const customDialogueStartTime = typeof dialogue.startTime === 'number' ? dialogue.startTime : null
           const startTime = customDialogueStartTime !== null 
-            ? Math.max(customDialogueStartTime, voiceAnchorTime) // Custom: use offset but not before voice anchor
-            : Math.max(dialogueCursor, voiceAnchorTime) // Default: sequential after previous dialogue
+            ? customDialogueStartTime  // User-saved timing: use directly
+            : Math.max(dialogueCursor, voiceAnchorTime) // Auto: sequential after previous dialogue
           
           resolvedDialogue.push({
             url: dialogue.audioUrl,
