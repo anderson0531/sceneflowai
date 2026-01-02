@@ -12,7 +12,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Bot, PenTool, FolderPlus, Pencil, Layers } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Bot, PenTool, FolderPlus, Pencil, Layers, List } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
@@ -50,6 +50,7 @@ import { getAudioUrl } from '@/lib/audio/languageDetection'
 import { cleanupScriptAudio } from '@/lib/audio/cleanupAudio'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '@/components/ui/dialog'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -3177,6 +3178,62 @@ function SceneCard({
                 <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Next scene</TooltipContent>
               </Tooltip>
             </TooltipProvider>
+            
+            {/* Scene Jump Selector */}
+            {totalScenes && totalScenes > 1 && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    className="flex items-center gap-1 text-xs text-gray-400 hover:text-white hover:bg-white/10 rounded px-2 py-1 transition-colors cursor-pointer"
+                    title="Jump to any scene"
+                  >
+                    <List className="w-3.5 h-3.5" />
+                    <span className="font-medium">S{sceneNumber}/{totalScenes}</span>
+                    <ChevronDown className="w-3 h-3 opacity-60" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent 
+                  className="w-64 max-h-80 overflow-y-auto p-2 bg-slate-900 border-slate-700"
+                  align="start"
+                  sideOffset={8}
+                >
+                  <div className="text-xs text-gray-400 px-2 py-1.5 mb-1 border-b border-gray-700">
+                    Jump to Scene
+                  </div>
+                  <div className="space-y-0.5">
+                    {Array.from({ length: totalScenes }, (_, i) => {
+                      const isCurrentScene = i === sceneIdx
+                      return (
+                        <button
+                          key={i}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (onNavigateScene && !isCurrentScene) {
+                              onNavigateScene(i)
+                            }
+                          }}
+                          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left transition-colors ${
+                            isCurrentScene
+                              ? 'bg-purple-600/30 text-purple-300'
+                              : 'hover:bg-gray-800 text-gray-300 hover:text-white'
+                          }`}
+                        >
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded min-w-[32px] text-center ${
+                            isCurrentScene ? 'bg-purple-500 text-white' : 'bg-gray-700 text-gray-300'
+                          }`}>
+                            S{i + 1}
+                          </span>
+                          <span className="text-xs truncate flex-1">Scene {i + 1}</span>
+                          {isCurrentScene && (
+                            <CheckCircle className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
             
             <div className="w-px h-4 bg-gray-700" />
             
