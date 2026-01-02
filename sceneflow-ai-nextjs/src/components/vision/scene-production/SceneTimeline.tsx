@@ -1472,6 +1472,11 @@ export function SceneTimeline({
             }}
             src={clip.url}
             preload="auto"
+            onError={(e) => {
+              // Suppress 404 console errors for stale audio URLs
+              // Audio playback will handle actual errors
+              console.debug('[Timeline] Audio preload error (likely stale URL):', clip.url?.substring(clip.url.lastIndexOf('/') + 1))
+            }}
           />
         )
       ))}

@@ -293,7 +293,8 @@ export function SceneProductionManager({
     const sceneDuration = segmentsData?.reduce((acc, seg) => Math.max(acc, seg.endTime), 10) || 10
     
     // Voiceover from scene narration - get duration from audio metadata
-    const voUrl = sceneData.narrationAudioUrl || sceneData.narrationAudio?.en?.url || sceneData.descriptionAudioUrl || sceneData.descriptionAudio?.en?.url
+    // Prioritize new multi-language path over legacy path to avoid stale URLs
+    const voUrl = sceneData.narrationAudio?.en?.url || sceneData.narrationAudioUrl || sceneData.descriptionAudio?.en?.url || sceneData.descriptionAudioUrl
     if (voUrl) {
       // Try to get stored duration from audio metadata (set during generation)
       const voDuration = sceneData.narrationAudio?.en?.duration 
