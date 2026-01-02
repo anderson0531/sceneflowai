@@ -267,15 +267,6 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
             </div>
           )}
 
-          {/* Pro Tips Section */}
-          {config.sectionVisibility.proTips && (
-            <ProTipsChecklist
-              phase={config.phase}
-              isOpen={sectionsOpen.proTips}
-              onToggle={() => toggleSection('proTips')}
-            />
-          )}
-
           {/* Progress Section */}
           {config.sectionVisibility.progress && progressItems.length > 0 && (
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -321,76 +312,6 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
                           <span className="ml-auto text-[10px] bg-gray-200 dark:bg-gray-700 text-gray-500 px-1.5 py-0.5 rounded">{item.badge}</span>
                         )}
                       </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Quick Actions Section */}
-          {config.sectionVisibility.quickActions && config.quickActions && config.quickActions.length > 0 && (
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-              <button
-                onClick={() => toggleSection('quickActions')}
-                className="flex items-center justify-between w-full text-sm font-medium text-gray-600 dark:text-gray-400 mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-amber-500" />
-                  <span>Quick Actions</span>
-                </div>
-                {sectionsOpen.quickActions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
-              {sectionsOpen.quickActions && (
-                <div className="space-y-2">
-                  {config.quickActions.map(action => {
-                    const IconComponent = iconMap[action.icon] || Sparkles
-                    const isDisabled = typeof action.disabled === 'function' ? action.disabled() : action.disabled
-                    
-                    if (action.action === 'navigate' && action.href) {
-                      return (
-                        <Link
-                          key={action.id}
-                          href={action.href}
-                          className={cn(
-                            'flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors',
-                            isDisabled && 'opacity-50 cursor-not-allowed pointer-events-none'
-                          )}
-                        >
-                          <IconComponent className={cn('w-3 h-3', action.iconColor || 'text-gray-400')} />
-                          <span>{action.label}</span>
-                          {action.badge && (
-                            <span className={cn(
-                              'ml-auto text-[10px] px-1.5 py-0.5 rounded',
-                              action.badgeVariant === 'warning' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' :
-                              action.badgeVariant === 'success' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
-                              'bg-gray-200 dark:bg-gray-700 text-gray-500'
-                            )}>{action.badge}</span>
-                          )}
-                        </Link>
-                      )
-                    }
-                    
-                    return (
-                      <Button
-                        key={action.id}
-                        variant={action.variant || 'outline'}
-                        size="sm"
-                        className="w-full justify-start text-xs"
-                        onClick={() => handleQuickAction(action.id, action.action, action.eventName, action.href)}
-                        disabled={isDisabled}
-                      >
-                        <IconComponent className={cn('w-3 h-3 mr-2', action.iconColor || 'text-gray-400')} />
-                        {action.label}
-                        {action.badge && (
-                          <span className={cn(
-                            'ml-auto text-[10px] px-1.5 py-0.5 rounded',
-                            action.badgeVariant === 'warning' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' :
-                            action.badgeVariant === 'success' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
-                            'bg-gray-200 dark:bg-gray-700 text-gray-500'
-                          )}>{action.badge}</span>
-                        )}
-                      </Button>
                     )
                   })}
                 </div>
