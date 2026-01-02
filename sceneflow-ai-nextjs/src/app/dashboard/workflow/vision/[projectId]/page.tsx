@@ -5400,9 +5400,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Handle generate scene audio
   // Optional sceneOverride parameter allows passing scene data directly (avoids stale state issues in sequential operations)
   const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue' | 'description', characterName?: string, dialogueIndex?: number, language: string = 'en', sceneOverride?: any) => {
-    const scene = sceneOverride ?? script?.script?.scenes?.[sceneIdx]
+    // Robust scene lookup: check multiple paths for scene data
+    // Priority: sceneOverride > script.script.scenes > script.scenes
+    const scenes = script?.script?.scenes || script?.scenes || []
+    const scene = sceneOverride ?? scenes[sceneIdx]
     if (!scene) {
-      console.error('[Generate Scene Audio] Scene not found at index:', sceneIdx)
+      console.error('[Generate Scene Audio] Scene not found at index:', sceneIdx, 
+        '| Total scenes:', scenes.length, 
+        '| Script structure:', script ? Object.keys(script) : 'null',
+        '| script.script:', script?.script ? Object.keys(script.script) : 'undefined')
       return
     }
 
@@ -5546,9 +5552,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         let updatedScenesForDb: any[] = []
         
         setScript((prevScript: any) => {
-          const currentScenes = prevScript?.script?.scenes || []
+          // Robust scene lookup: check multiple paths
+          const currentScenes = prevScript?.script?.scenes || prevScript?.scenes || []
           if (!currentScenes[sceneIdx]) {
-            console.error('[Generate Scene Audio] Scene not found at index:', sceneIdx)
+            console.error('[Generate Scene Audio] Scene not found in setScript callback at index:', sceneIdx,
+              '| Total scenes:', currentScenes.length)
             return prevScript
           }
           
@@ -5656,11 +5664,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           // Capture for database save (outside the callback)
           updatedScenesForDb = updatedScenes
           
-          return {
-            ...prevScript,
-            script: {
-              ...prevScript?.script,
+          // Preserve original script structure when updating
+          // Check which path the original data used
+          if (prevScript?.script?.scenes) {
+            return {
+              ...prevScript,
+              script: {
+                ...prevScript.script,
+                scenes: updatedScenes
+              }
+            }
+          } else if (prevScript?.scenes) {
+            return {
+              ...prevScript,
               scenes: updatedScenes
+            }
+          } else {
+            // Fallback: create nested structure
+            return {
+              ...prevScript,
+              script: {
+                ...prevScript?.script,
+                scenes: updatedScenes
+              }
             }
           }
         })
