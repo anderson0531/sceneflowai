@@ -703,7 +703,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Compute bookmark index for quick actions
   const bookmarkedSceneIndex = useMemo(() => {
     if (!sceneBookmark) return -1
-    const scriptScenes = script?.script?.scenes || []
+    const scriptScenes = normalizeScenes(script)
     return scriptScenes.findIndex((s: any, idx: number) => {
       const sceneId = s.id || s.sceneId || `scene-${idx}`
       if (sceneBookmark?.sceneId) {
@@ -714,7 +714,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       return false
     })
-  }, [sceneBookmark, script?.script?.scenes])
+  }, [sceneBookmark, script])
 
   // Handler to jump to bookmarked scene
   const handleJumpToBookmark = useCallback(() => {

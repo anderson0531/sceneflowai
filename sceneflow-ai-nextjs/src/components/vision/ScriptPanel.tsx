@@ -3203,6 +3203,7 @@ function SceneCard({
                   <div className="space-y-0.5">
                     {Array.from({ length: totalScenes }, (_, i) => {
                       const isCurrentScene = i === sceneIdx
+                      const isBookmarked = i === bookmarkedSceneIndex
                       return (
                         <button
                           key={i}
@@ -3224,6 +3225,9 @@ function SceneCard({
                             S{i + 1}
                           </span>
                           <span className="text-xs truncate flex-1">Scene {i + 1}</span>
+                          {isBookmarked && (
+                            <Bookmark className="w-3.5 h-3.5 text-amber-400 fill-amber-400 flex-shrink-0" />
+                          )}
                           {isCurrentScene && (
                             <CheckCircle className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
                           )}
