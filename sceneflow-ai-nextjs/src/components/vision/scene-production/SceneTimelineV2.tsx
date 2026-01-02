@@ -20,6 +20,7 @@ import {
   SkipBack, SkipForward, Film, Plus, Trash2, X, Maximize2, Minimize2, 
   MessageSquare, GripVertical, Globe, AlertCircle, Download
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { 
@@ -239,7 +240,17 @@ export function SceneTimelineV2({
   // Handle audio load errors
   const handleAudioError = useCallback((clipId: string, url: string) => {
     console.warn(`[SceneTimelineV2] Audio failed to load: ${url}`)
-    setStaleUrls(prev => new Set(prev).add(url))
+    // Only show toast if this is a new stale URL (not already tracked)
+    setStaleUrls(prev => {
+      if (!prev.has(url)) {
+        // Show toast only once per stale URL
+        toast.error('Audio file not found. Try regenerating the audio.', {
+          description: 'The audio file may have expired or been deleted.',
+          duration: 5000,
+        })
+      }
+      return new Set(prev).add(url)
+    })
     onAudioError?.(clipId, url)
   }, [onAudioError])
   

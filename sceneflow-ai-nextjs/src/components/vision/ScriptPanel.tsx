@@ -1841,7 +1841,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     } else {
       if (individualAudioRef.current) {
         individualAudioRef.current.src = audioUrl
-        individualAudioRef.current.play()
+        individualAudioRef.current.play().catch((error) => {
+          console.error('[ScriptPanel] Audio playback failed:', error, audioUrl)
+          setPlayingAudio(null)
+          toast.error(`Audio not found. Try regenerating the ${label} audio.`)
+        })
         setPlayingAudio(audioUrl)
       }
     }
@@ -2494,6 +2498,15 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       <audio
         ref={individualAudioRef}
         onEnded={() => setPlayingAudio(null)}
+        onError={(e) => {
+          // Handle audio loading errors (404s, etc.)
+          const target = e.currentTarget
+          if (target.src && playingAudio) {
+            console.error('[ScriptPanel] Audio load error:', target.src)
+            setPlayingAudio(null)
+            // Don't show toast here - handlePlayAudio.catch will handle it
+          }
+        }}
         className="hidden"
       />
 
