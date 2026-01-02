@@ -519,15 +519,16 @@ export default function ProductivityValueSection() {
   const scenario = SCENARIOS.find(s => s.id === selectedScenario)!;
 
   return (
-    <section id="value-calculator" className="py-24 bg-slate-950 relative overflow-hidden">
+    <section id="value-calculator" className="py-12 sm:py-16 lg:py-20 bg-slate-950 relative overflow-hidden border-t border-emerald-500/10">
       {/* Background Effects */}
       <div className="absolute inset-0">
         <div 
           className="absolute inset-0 opacity-30"
           style={{
             backgroundImage: `
-              radial-gradient(circle at 30% 20%, rgba(16, 185, 129, 0.15) 0%, transparent 50%),
-              radial-gradient(circle at 70% 80%, rgba(6, 182, 212, 0.15) 0%, transparent 50%)
+              linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, transparent 20%),
+              radial-gradient(circle at 30% 30%, rgba(16, 185, 129, 0.12) 0%, transparent 50%),
+              radial-gradient(circle at 70% 70%, rgba(6, 182, 212, 0.12) 0%, transparent 50%)
             `
           }}
         />
@@ -536,13 +537,13 @@ export default function ProductivityValueSection() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Header */}
         <motion.div
-          className="text-center mb-12"
+          className="text-center mb-8 sm:mb-10"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <div className="inline-flex items-center px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full mb-6">
+          <div className="inline-flex items-center px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full mb-4">
             <Calculator className="w-4 h-4 text-emerald-400 mr-2" />
             <span className="text-emerald-300 text-sm font-medium">Value Calculator</span>
           </div>
@@ -563,7 +564,7 @@ export default function ProductivityValueSection() {
 
         {/* At-a-Glance Value Summary */}
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10"
+          className="grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-4 mb-8"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -571,7 +572,7 @@ export default function ProductivityValueSection() {
         >
           {/* Cost Savings Card */}
           <div 
-            className="relative bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 rounded-2xl p-6 pt-8 border border-emerald-500/30 cursor-pointer hover:border-emerald-400/50 transition-all"
+            className="relative bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 rounded-2xl p-5 pt-7 lg:p-6 lg:pt-8 border border-emerald-500/30 cursor-pointer hover:border-emerald-400/50 transition-all"
             onClick={() => setActiveTab('cost')}
           >
             <div className="absolute -top-3 right-4 w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30">
@@ -587,7 +588,7 @@ export default function ProductivityValueSection() {
 
           {/* Time Savings Card */}
           <div 
-            className="relative bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 rounded-2xl p-6 pt-8 border border-cyan-500/30 cursor-pointer hover:border-cyan-400/50 transition-all"
+            className="relative bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 rounded-2xl p-5 pt-7 lg:p-6 lg:pt-8 border border-cyan-500/30 cursor-pointer hover:border-cyan-400/50 transition-all"
             onClick={() => setActiveTab('time')}
           >
             <div className="absolute -top-3 right-4 w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center shadow-lg shadow-cyan-500/30">
@@ -603,7 +604,7 @@ export default function ProductivityValueSection() {
 
           {/* Expertise Value Card */}
           <div 
-            className="relative bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-2xl p-6 pt-8 border border-purple-500/30 cursor-pointer hover:border-purple-400/50 transition-all"
+            className="relative bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-2xl p-5 pt-7 lg:p-6 lg:pt-8 border border-purple-500/30 cursor-pointer hover:border-purple-400/50 transition-all"
             onClick={() => setActiveTab('expertise')}
           >
             <div className="absolute -top-3 right-4 w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center shadow-lg shadow-purple-500/30">
@@ -619,7 +620,7 @@ export default function ProductivityValueSection() {
         </motion.div>
 
         {/* Tab Navigation */}
-        <div className="flex justify-center gap-1.5 sm:gap-4 mb-8">
+        <div className="flex justify-center gap-2 sm:gap-3 lg:gap-4 mb-6">
           <TabButton
             active={activeTab === 'cost'}
             onClick={() => setActiveTab('cost')}
@@ -655,7 +656,7 @@ export default function ProductivityValueSection() {
 
         {/* CTA */}
         <motion.div
-          className="text-center mt-12"
+          className="text-center mt-8 sm:mt-10"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
