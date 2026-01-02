@@ -58,7 +58,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
-import { proTipsConfig, type ProTip } from '@/config/nav/proTipsConfig'
 
 type DialogGenerationMode = 'foreground' | 'background'
 
@@ -2005,7 +2004,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           
           {/* Action Buttons - Right Justified */}
           <div className="flex items-center gap-2">
-            {/* Guide Dropdown - Workflow Tips */}
+            {/* Guide Dropdown - Workflow Guide */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -2018,77 +2017,133 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   <ChevronDown className="w-3 h-3 opacity-60" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
-                <DropdownMenuLabel className="text-purple-400">Production Workflow</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="text-purple-400">Workflow Guide</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {proTipsConfig.production.map((tip: ProTip) => (
-                  <DropdownMenuItem
-                    key={tip.id}
-                    onClick={() => {
-                      if (tip.actionEventName) {
-                        window.dispatchEvent(new CustomEvent(tip.actionEventName))
-                      }
-                    }}
-                    className="flex flex-col items-start gap-0.5 py-2"
-                  >
-                    <span className="font-medium">{tip.title}</span>
-                    {tip.description && (
-                      <span className="text-xs text-gray-400">{tip.description}</span>
-                    )}
-                  </DropdownMenuItem>
-                ))}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuItem
+                        onClick={() => window.dispatchEvent(new CustomEvent('vision:scenes'))}
+                      >
+                        <Film className="w-4 h-4 mr-2 text-cyan-400" />
+                        <span>View Scenes</span>
+                      </DropdownMenuItem>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="bg-gray-900 text-white border-gray-700">
+                      <p>Review scene breakdowns</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuItem
+                        onClick={() => window.dispatchEvent(new CustomEvent('vision:characters'))}
+                      >
+                        <Users className="w-4 h-4 mr-2 text-purple-400" />
+                        <span>Character Library</span>
+                      </DropdownMenuItem>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="bg-gray-900 text-white border-gray-700">
+                      <p>Check character consistency</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuItem
+                        onClick={() => window.dispatchEvent(new CustomEvent('vision:script-preview'))}
+                      >
+                        <FileText className="w-4 h-4 mr-2 text-blue-400" />
+                        <span>Preview Script</span>
+                      </DropdownMenuItem>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="bg-gray-900 text-white border-gray-700">
+                      <p>Validate dialogue flow</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuItem
+                        onClick={() => window.dispatchEvent(new CustomEvent('vision:gallery'))}
+                      >
+                        <ImageIcon className="w-4 h-4 mr-2 text-emerald-400" />
+                        <span>Open Gallery</span>
+                      </DropdownMenuItem>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="bg-gray-900 text-white border-gray-700">
+                      <p>Preview key frames</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuItem
+                        onClick={() => window.dispatchEvent(new CustomEvent('vision:cost-estimate'))}
+                      >
+                        <BarChart3 className="w-4 h-4 mr-2 text-amber-400" />
+                        <span>Cost Estimate</span>
+                      </DropdownMenuItem>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="bg-gray-900 text-white border-gray-700">
+                      <p>Estimate credit usage</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Actions Dropdown - Quick Actions */}
+            {/* Actions Dropdown - Quick Actions (matches sidebar) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex items-center gap-2 border-cyan-500/30 hover:border-cyan-500/50 hover:bg-cyan-500/10"
+                  className="flex items-center gap-2 border-amber-500/30 hover:border-amber-500/50 hover:bg-amber-500/10"
                 >
-                  <Wand2 className="w-4 h-4 text-cyan-400" />
+                  <Zap className="w-4 h-4 text-amber-400" />
                   <span className="text-sm">Actions</span>
                   <ChevronDown className="w-3 h-3 opacity-60" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="text-cyan-400">Quick Actions</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-amber-400">Quick Actions</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => {
-                    if (onOpenAssets) {
-                      onOpenAssets()
-                    } else {
-                      setGenerateAudioDialogOpen(true)
-                    }
-                  }}
+                  onClick={() => window.dispatchEvent(new CustomEvent('production:goto-bookmark'))}
                 >
-                  <Sparkles className="w-4 h-4 mr-2 text-cyan-400" />
-                  <span>Auto-Build All Assets</span>
+                  <Bookmark className="w-4 h-4 mr-2 text-amber-500" />
+                  <span>Go to Bookmark</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => setGenerateAudioDialogOpen(true)}
+                  onClick={() => window.dispatchEvent(new CustomEvent('production:scene-gallery'))}
                 >
-                  <Volume2 className="w-4 h-4 mr-2 text-amber-400" />
-                  <span>Generate Audio</span>
+                  <ImageIcon className="w-4 h-4 mr-2 text-cyan-400" />
+                  <span>Open Scene Gallery</span>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => setShowScriptEditor(true)}
+                  onClick={() => window.dispatchEvent(new CustomEvent('production:screening-room'))}
                 >
-                  <PenTool className="w-4 h-4 mr-2 text-blue-400" />
-                  <span>Edit Script</span>
+                  <Play className="w-4 h-4 mr-2 text-green-500" />
+                  <span>Screening Room</span>
                 </DropdownMenuItem>
-                {script && scenes && scenes.length > 0 && (
-                  <DropdownMenuItem
-                    onClick={() => setExportDialogOpen(true)}
-                  >
-                    <Download className="w-4 h-4 mr-2 text-emerald-400" />
-                    <span>Export</span>
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem
+                  onClick={() => window.dispatchEvent(new CustomEvent('production:update-reviews'))}
+                >
+                  <BarChart3 className="w-4 h-4 mr-2 text-purple-500" />
+                  <span>Update Review Scores</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => window.dispatchEvent(new CustomEvent('production:review-analysis'))}
+                >
+                  <FileText className="w-4 h-4 mr-2 text-blue-500" />
+                  <span>Review Analysis</span>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
