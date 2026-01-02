@@ -490,8 +490,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // Script overview visibility state
   const [showScriptOverview, setShowScriptOverview] = useState(false)
   
-  // Scene timeline visibility state
-  const [showTimeline, setShowTimeline] = useState(false)
+  // Scene timeline visibility state - always visible by default (primary navigation)
+  const [showTimeline, setShowTimeline] = useState(true)
   
   // Scene review modal state
   const [showSceneReviewModal, setShowSceneReviewModal] = useState(false)
@@ -592,9 +592,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [isPlayingAll, setIsPlayingAll] = useState(false)
   const playbackAbortRef = useRef(false)
   const [bookmarkSavingSceneIdx, setBookmarkSavingSceneIdx] = useState<number | null>(null)
-  
-  // Single-scene-open state - only one scene workflow can be open at a time
-  const [openSceneIdx, setOpenSceneIdx] = useState<number | null>(null)
 
   // Handler for opening frame edit modal (used by SceneCard/SegmentFrameTimeline)
   const handleOpenFrameEditModal = useCallback((
@@ -616,13 +613,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
   const scenes = useMemo(() => normalizeScenes(script), [script])
 
-  // Filter to only show selected scene when selectedSceneIndex is set
+  // Always show single scene - use selectedSceneIndex or default to first scene
   const displayedScenes = useMemo(() => {
-    if (selectedSceneIndex !== null && selectedSceneIndex >= 0 && selectedSceneIndex < scenes.length) {
-      return [{ scene: scenes[selectedSceneIndex], originalIndex: selectedSceneIndex }]
-    }
-    // When no scene is selected, show all scenes
-    return scenes.map((scene: any, idx: number) => ({ scene, originalIndex: idx }))
+    if (scenes.length === 0) return []
+    const idx = selectedSceneIndex !== null && selectedSceneIndex >= 0 && selectedSceneIndex < scenes.length
+      ? selectedSceneIndex
+      : 0 // Default to first scene
+    return [{ scene: scenes[idx], originalIndex: idx }]
   }, [scenes, selectedSceneIndex])
 
   const bookmarkedSceneIndex = useMemo(() => {
@@ -1995,28 +1992,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           
           {/* Action Buttons - Right Justified */}
           <div className="flex items-center gap-2">
-            {/* Scene Timeline Toggle */}
-            {timelineSlot && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowTimeline(!showTimeline)}
-                      className={`flex items-center gap-2 border-amber-500/30 hover:border-amber-500/50 hover:bg-amber-500/10 ${showTimeline ? 'bg-amber-500/10 border-amber-500/50' : ''}`}
-                    >
-                      <Layers className={`w-5 h-5 ${showTimeline ? 'text-amber-400' : 'text-amber-400/70'}`} />
-                      <span className="text-sm">Timeline</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                    <p>{showTimeline ? 'Hide scene timeline' : 'Show scene timeline'}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-
             {/* Build All Button (formerly Assets) */}
             <TooltipProvider>
               <Tooltip>
@@ -2264,30 +2239,15 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                             setImageEditModalOpen(true);
                           }}
                           onUploadFrame={handleUploadFrame}
-                          isWorkflowOpen={selectedSceneIndex !== null ? true : openSceneIdx === idx}
-                          onWorkflowOpenChange={(isOpen: boolean) => {
-                            // Single-scene-open behavior: close others when opening this one
-                            // When selectedSceneIndex is set, the scene is always open
-                            if (selectedSceneIndex === null) {
-                              setOpenSceneIdx(isOpen ? idx : null)
-                            }
+                          isWorkflowOpen={true}
+                          onWorkflowOpenChange={() => {
+                            // Single scene view - workflow always open, navigation via timeline
                           }}
                           totalScenes={scenes.length}
                           onNavigateScene={(newIdx: number) => {
-                            // Navigate to scene: scroll and open it
-                            const targetScene = scenes[newIdx]
-                            if (targetScene) {
-                              const targetDomId = getSceneDomId(targetScene, newIdx)
-                              const targetEl = document.getElementById(targetDomId)
-                              if (targetEl) {
-                                targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                              }
-                              // Update the open scene - use parent's handler if available, otherwise local state
-                              if (selectedSceneIndex !== null && onSelectSceneIndex) {
-                                onSelectSceneIndex(newIdx)
-                              } else {
-                                setOpenSceneIdx(newIdx)
-                              }
+                            // Navigate to scene via parent handler
+                            if (onSelectSceneIndex) {
+                              onSelectSceneIndex(newIdx)
                             }
                           }}
                           onMarkWorkflowComplete={onMarkWorkflowComplete}

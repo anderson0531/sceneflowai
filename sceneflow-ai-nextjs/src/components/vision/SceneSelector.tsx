@@ -43,6 +43,8 @@ interface SceneSelectorProps {
   scenes: SceneItem[]
   selectedSceneId?: string
   onSelectScene: (sceneId: string) => void
+  onPrevScene?: () => void
+  onNextScene?: () => void
   className?: string
 }
 
@@ -50,6 +52,8 @@ export function SceneSelector({
   scenes, 
   selectedSceneId, 
   onSelectScene,
+  onPrevScene,
+  onNextScene,
   className 
 }: SceneSelectorProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -278,6 +282,37 @@ export function SceneSelector({
         })}
         </div>
       </div>
+
+      {/* Scene Navigation Bar */}
+      {(onPrevScene || onNextScene) && (
+        <div className="flex items-center justify-center gap-4 px-3 py-2 border-t border-gray-800 bg-gray-900/80">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onPrevScene}
+            disabled={!selectedSceneId || scenes.findIndex(s => s.id === selectedSceneId) === 0}
+            className="h-7 px-3 text-xs text-gray-400 hover:text-white hover:bg-gray-800 disabled:opacity-40"
+          >
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Prev Scene
+          </Button>
+          
+          <span className="text-xs text-gray-500">
+            Scene {selectedSceneId ? scenes.findIndex(s => s.id === selectedSceneId) + 1 : '-'} of {scenes.length}
+          </span>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onNextScene}
+            disabled={!selectedSceneId || scenes.findIndex(s => s.id === selectedSceneId) === scenes.length - 1}
+            className="h-7 px-3 text-xs text-gray-400 hover:text-white hover:bg-gray-800 disabled:opacity-40"
+          >
+            Next Scene
+            <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

@@ -694,6 +694,46 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     sceneElement?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [bookmarkedSceneIndex])
 
+  // Keyboard navigation for scenes (← → arrow keys, 1-9 number keys)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input/textarea
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return
+      }
+      
+      const scriptScenes = script?.script?.scenes || []
+      if (scriptScenes.length === 0) return
+      
+      // Arrow key navigation
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault()
+        setSelectedSceneIndex(prev => {
+          const current = prev ?? 0
+          return Math.max(0, current - 1)
+        })
+      } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault()
+        setSelectedSceneIndex(prev => {
+          const current = prev ?? 0
+          return Math.min(scriptScenes.length - 1, current + 1)
+        })
+      }
+      // Number keys 1-9 for quick jump to scene
+      else if (e.key >= '1' && e.key <= '9') {
+        const sceneNum = parseInt(e.key)
+        if (sceneNum <= scriptScenes.length) {
+          e.preventDefault()
+          setSelectedSceneIndex(sceneNum - 1)
+        }
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [script?.script?.scenes])
+
   const handleBookmarkScene = useCallback(
     async (bookmark: SceneBookmark | null) => {
       if (!projectId) return
@@ -6895,6 +6935,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       )
                       if (idx !== -1) {
                         setSelectedSceneIndex(idx)
+                      }
+                    }}
+                    onPrevScene={() => {
+                      if (selectedSceneIndex !== null && selectedSceneIndex > 0) {
+                        setSelectedSceneIndex(selectedSceneIndex - 1)
+                      }
+                    }}
+                    onNextScene={() => {
+                      const scenes = script?.script?.scenes || []
+                      if (selectedSceneIndex !== null && selectedSceneIndex < scenes.length - 1) {
+                        setSelectedSceneIndex(selectedSceneIndex + 1)
                       }
                     }}
                   />

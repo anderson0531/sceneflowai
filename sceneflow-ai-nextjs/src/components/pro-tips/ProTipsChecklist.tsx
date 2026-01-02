@@ -173,7 +173,7 @@ export function ProTipsChecklist({
       >
         <div className="flex items-center gap-2">
           <ClipboardList className="w-4 h-4 text-amber-500" />
-          <span>Pro Tips</span>
+          <span>Workflow Guide</span>
           <span className="text-xs font-normal normal-case text-slate-500">
             {phaseDisplayName}
           </span>
