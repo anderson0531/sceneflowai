@@ -83,14 +83,6 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
   const currentProject = useStore(s => s.currentProject)
   const { credits: creditsData } = useCredits()
   
-  // Hide sidebar on Production (vision) page - it has its own integrated navigation
-  const isProductionPage = pathname?.includes('/dashboard/workflow/vision/')
-  
-  // For Production page, render children without sidebar wrapper and minimal top padding
-  if (isProductionPage) {
-    return <div className="min-h-screen pt-14">{children}</div>
-  }
-  
   // Read sidebar data from store (populated by workflow pages)
   const sidebarData = useStore(s => s.sidebarData)
   const { reviewScores, projectStats, progressData, quickActionHandlers } = sidebarData
