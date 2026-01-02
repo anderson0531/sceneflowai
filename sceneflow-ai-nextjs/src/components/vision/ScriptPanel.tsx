@@ -50,6 +50,15 @@ import { getAudioUrl } from '@/lib/audio/languageDetection'
 import { cleanupScriptAudio } from '@/lib/audio/cleanupAudio'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
+import { proTipsConfig, type ProTip } from '@/config/nav/proTipsConfig'
 
 type DialogGenerationMode = 'foreground' | 'background'
 
@@ -1996,32 +2005,92 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           
           {/* Action Buttons - Right Justified */}
           <div className="flex items-center gap-2">
-            {/* Build All Button (formerly Assets) */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
+            {/* Guide Dropdown - Workflow Tips */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2 border-purple-500/30 hover:border-purple-500/50 hover:bg-purple-500/10"
+                >
+                  <Lightbulb className="w-4 h-4 text-purple-400" />
+                  <span className="text-sm">Guide</span>
+                  <ChevronDown className="w-3 h-3 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel className="text-purple-400">Production Workflow</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {proTipsConfig.production.map((tip: ProTip) => (
+                  <DropdownMenuItem
+                    key={tip.id}
                     onClick={() => {
-                      if (onOpenAssets) {
-                        onOpenAssets()
-                      } else {
-                        setGenerateAudioDialogOpen(true)
+                      if (tip.actionEventName) {
+                        window.dispatchEvent(new CustomEvent(tip.actionEventName))
                       }
                     }}
-                    className="flex items-center gap-2 border-cyan-500/30 hover:border-cyan-500/50 hover:bg-cyan-500/10"
+                    className="flex flex-col items-start gap-0.5 py-2"
                   >
-                    <Wand2 className="w-5 h-5 text-cyan-400" />
-                    <span className="text-sm">Build</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-xs">
-                  <p className="font-medium">Auto-Build Assets</p>
-                  <p className="text-xs text-gray-400 mt-1">Automatically generate characters, directions, scene frames, audio, and video segments</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                    <span className="font-medium">{tip.title}</span>
+                    {tip.description && (
+                      <span className="text-xs text-gray-400">{tip.description}</span>
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Actions Dropdown - Quick Actions */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2 border-cyan-500/30 hover:border-cyan-500/50 hover:bg-cyan-500/10"
+                >
+                  <Wand2 className="w-4 h-4 text-cyan-400" />
+                  <span className="text-sm">Actions</span>
+                  <ChevronDown className="w-3 h-3 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="text-cyan-400">Quick Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    if (onOpenAssets) {
+                      onOpenAssets()
+                    } else {
+                      setGenerateAudioDialogOpen(true)
+                    }
+                  }}
+                >
+                  <Sparkles className="w-4 h-4 mr-2 text-cyan-400" />
+                  <span>Auto-Build All Assets</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setGenerateAudioDialogOpen(true)}
+                >
+                  <Volume2 className="w-4 h-4 mr-2 text-amber-400" />
+                  <span>Generate Audio</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setShowScriptEditor(true)}
+                >
+                  <PenTool className="w-4 h-4 mr-2 text-blue-400" />
+                  <span>Edit Script</span>
+                </DropdownMenuItem>
+                {script && scenes && scenes.length > 0 && (
+                  <DropdownMenuItem
+                    onClick={() => setExportDialogOpen(true)}
+                  >
+                    <Download className="w-4 h-4 mr-2 text-emerald-400" />
+                    <span>Export</span>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* Language Selector */}
             <div className="w-[120px]">
@@ -2038,48 +2107,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Edit Script Button */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowScriptEditor(true)}
-                    className="flex items-center gap-2 border-blue-500/30 hover:border-blue-500/50 hover:bg-blue-500/10"
-                  >
-                    <PenTool className="w-5 h-5 text-blue-400" />
-                    <span className="text-sm">Edit</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                  <p>Edit screenplay script</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            {/* Export Button */}
-            {script && scenes && scenes.length > 0 && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setExportDialogOpen(true)}
-                      className="flex items-center gap-2 border-emerald-500/30 hover:border-emerald-500/50 hover:bg-emerald-500/10"
-                    >
-                      <Download className="w-5 h-5 text-emerald-400" />
-                      <span className="text-sm">Export</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                    <p>Export script, storyboard, or reports</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
           </div>
         </div>
         

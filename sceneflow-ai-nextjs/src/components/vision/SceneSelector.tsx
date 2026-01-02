@@ -1,10 +1,11 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { 
   ChevronLeft, 
   ChevronRight,
+  ChevronDown,
   Clock,
   Film,
   CheckCircle2,
@@ -16,9 +17,11 @@ import {
   FileText,
   Compass,
   Frame,
-  Clapperboard
+  Clapperboard,
+  List
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 export interface SceneItem {
   id: string
@@ -58,6 +61,7 @@ export function SceneSelector({
 }: SceneSelectorProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const selectedCardRef = useRef<HTMLButtonElement>(null)
+  const [sceneJumpOpen, setSceneJumpOpen] = useState(false)
 
   // Auto-scroll to selected scene
   useEffect(() => {
@@ -297,9 +301,63 @@ export function SceneSelector({
             Prev Scene
           </Button>
           
-          <span className="text-xs text-gray-500">
-            Scene {selectedSceneId ? scenes.findIndex(s => s.id === selectedSceneId) + 1 : '-'} of {scenes.length}
-          </span>
+          {/* Scene Jump Selector */}
+          <Popover open={sceneJumpOpen} onOpenChange={setSceneJumpOpen}>
+            <PopoverTrigger asChild>
+              <button
+                className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded px-2 py-1 transition-colors cursor-pointer"
+                title="Click to jump to any scene"
+              >
+                <List className="w-3.5 h-3.5" />
+                <span>
+                  Scene {selectedSceneId ? scenes.findIndex(s => s.id === selectedSceneId) + 1 : '-'} of {scenes.length}
+                </span>
+                <ChevronDown className="w-3 h-3 opacity-60" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent 
+              className="w-64 max-h-80 overflow-y-auto p-2 bg-slate-900 border-slate-700"
+              align="center"
+              sideOffset={8}
+            >
+              <div className="text-xs text-gray-400 px-2 py-1.5 mb-1 border-b border-gray-700">
+                Jump to Scene
+              </div>
+              <div className="space-y-0.5">
+                {scenes.map((scene, index) => {
+                  const isSelected = scene.id === selectedSceneId
+                  return (
+                    <button
+                      key={scene.id}
+                      onClick={() => {
+                        onSelectScene(scene.id)
+                        setSceneJumpOpen(false)
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-2 py-1.5 rounded text-left transition-colors",
+                        isSelected
+                          ? "bg-purple-600/30 text-purple-300"
+                          : "hover:bg-gray-800 text-gray-300 hover:text-white"
+                      )}
+                    >
+                      <span className={cn(
+                        "text-[10px] font-bold px-1.5 py-0.5 rounded min-w-[32px] text-center",
+                        isSelected ? "bg-purple-500 text-white" : "bg-gray-700 text-gray-300"
+                      )}>
+                        S{scene.sceneNumber}
+                      </span>
+                      <span className="text-xs truncate flex-1" title={scene.name}>
+                        {scene.name || `Scene ${scene.sceneNumber}`}
+                      </span>
+                      {isSelected && (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
           
           <Button
             variant="ghost"
