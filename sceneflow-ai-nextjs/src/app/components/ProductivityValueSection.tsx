@@ -511,6 +511,7 @@ const ExpertiseTab = () => {
 // =============================================================================
 // MAIN COMPONENT
 // =============================================================================
+// UI Optimized: Reduced padding, added gradient border, tightened spacing (v2.1)
 
 export default function ProductivityValueSection() {
   const [activeTab, setActiveTab] = useState<TabId>('cost');
