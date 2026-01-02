@@ -3348,15 +3348,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     'review-analysis': () => setShowReviewModal(true),
   }), [handleJumpToBookmark, handleGenerateReviews]))
   
+  // Refs to hold latest handlers for event listeners (avoids stale closures)
+  const handlersRef = useRef({
+    jumpToBookmark: handleJumpToBookmark,
+    generateReviews: handleGenerateReviews,
+  })
+  
+  // Keep refs updated with latest handlers
+  useEffect(() => {
+    handlersRef.current = {
+      jumpToBookmark: handleJumpToBookmark,
+      generateReviews: handleGenerateReviews,
+    }
+  }, [handleJumpToBookmark])
+  
   // Listen for custom events from header dropdowns (Guide and Actions)
   // These events are dispatched by ScriptPanel dropdown menus
   useEffect(() => {
-    const handlers: Record<string, () => void> = {
+    const eventHandlers: Record<string, () => void> = {
       // Actions dropdown events
-      'production:goto-bookmark': handleJumpToBookmark,
+      'production:goto-bookmark': () => handlersRef.current.jumpToBookmark(),
       'production:scene-gallery': () => setShowSceneGallery(prev => !prev),
       'production:screening-room': () => setIsPlayerOpen(true),
-      'production:update-reviews': handleGenerateReviews,
+      'production:update-reviews': () => handlersRef.current.generateReviews(),
       'production:review-analysis': () => setShowReviewModal(true),
       // Guide dropdown events
       'vision:scenes': () => {
@@ -3385,7 +3399,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
     
     // Create event handler functions
-    const eventListeners = Object.entries(handlers).map(([eventName, handler]) => {
+    const eventListeners = Object.entries(eventHandlers).map(([eventName, handler]) => {
       const listener = () => handler()
       window.addEventListener(eventName, listener)
       return { eventName, listener }
@@ -3397,7 +3411,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         window.removeEventListener(eventName, listener)
       })
     }
-  }, [handleJumpToBookmark, handleGenerateReviews])
+  }, [])
   // ============================================================================
 
   const generateScriptHash = (script: any): string => {
