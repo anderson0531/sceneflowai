@@ -3347,6 +3347,57 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     'update-reviews': handleGenerateReviews,
     'review-analysis': () => setShowReviewModal(true),
   }), [handleJumpToBookmark, handleGenerateReviews]))
+  
+  // Listen for custom events from header dropdowns (Guide and Actions)
+  // These events are dispatched by ScriptPanel dropdown menus
+  useEffect(() => {
+    const handlers: Record<string, () => void> = {
+      // Actions dropdown events
+      'production:goto-bookmark': handleJumpToBookmark,
+      'production:scene-gallery': () => setShowSceneGallery(prev => !prev),
+      'production:screening-room': () => setIsPlayerOpen(true),
+      'production:update-reviews': handleGenerateReviews,
+      'production:review-analysis': () => setShowReviewModal(true),
+      // Guide dropdown events
+      'vision:scenes': () => {
+        // Scroll to first scene
+        const firstScene = document.getElementById('scene-0')
+        if (firstScene) {
+          firstScene.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      },
+      'vision:characters': () => {
+        // Open Reference Library Cast tab by dispatching event
+        window.dispatchEvent(new CustomEvent('reference-library:open-tab', { detail: { tab: 'cast' } }))
+      },
+      'vision:script-preview': () => {
+        // Toggle scene gallery as script preview
+        setShowSceneGallery(prev => !prev)
+      },
+      'vision:gallery': () => {
+        // Toggle scene gallery
+        setShowSceneGallery(prev => !prev)
+      },
+      'vision:cost-estimate': () => {
+        // Show cost calculator modal (dispatches event for ScriptPanel to handle)
+        window.dispatchEvent(new CustomEvent('open-cost-calculator'))
+      },
+    }
+    
+    // Create event handler functions
+    const eventListeners = Object.entries(handlers).map(([eventName, handler]) => {
+      const listener = () => handler()
+      window.addEventListener(eventName, listener)
+      return { eventName, listener }
+    })
+    
+    // Cleanup
+    return () => {
+      eventListeners.forEach(({ eventName, listener }) => {
+        window.removeEventListener(eventName, listener)
+      })
+    }
+  }, [handleJumpToBookmark, handleGenerateReviews])
   // ============================================================================
 
   const generateScriptHash = (script: any): string => {
