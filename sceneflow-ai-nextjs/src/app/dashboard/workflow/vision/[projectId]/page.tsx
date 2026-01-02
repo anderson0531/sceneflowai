@@ -5358,10 +5358,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   // Handle generate scene audio
-  const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue' | 'description', characterName?: string, dialogueIndex?: number, language: string = 'en') => {
-    const scene = script?.script?.scenes?.[sceneIdx]
+  // Optional sceneOverride parameter allows passing scene data directly (avoids stale state issues in sequential operations)
+  const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue' | 'description', characterName?: string, dialogueIndex?: number, language: string = 'en', sceneOverride?: any) => {
+    const scene = sceneOverride ?? script?.script?.scenes?.[sceneIdx]
     if (!scene) {
-      console.error('[Generate Scene Audio] Scene not found')
+      console.error('[Generate Scene Audio] Scene not found at index:', sceneIdx)
       return
     }
 
@@ -6342,7 +6343,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const task = generationTasks[i]
           try {
             if (task.type === 'description' || task.type === 'narration' || task.type === 'dialogue') {
-              await handleGenerateSceneAudio(sceneIndex, task.type, task.character, task.dialogueIndex)
+              // Pass cleanedScene directly to avoid stale state issues
+              await handleGenerateSceneAudio(sceneIndex, task.type, task.character, task.dialogueIndex, 'en', cleanedScene)
             } else if (task.type === 'music') {
               await generateMusicForScene(sceneIndex, cleanedScene)
             } else if (task.type === 'sfx' && task.sfxIndex !== undefined) {
