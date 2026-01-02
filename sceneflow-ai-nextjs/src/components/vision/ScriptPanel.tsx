@@ -12,7 +12,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Bot, PenTool, FolderPlus, Pencil, Layers, List } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
@@ -49,7 +49,9 @@ import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAudioUrl } from '@/lib/audio/languageDetection'
 import { cleanupScriptAudio } from '@/lib/audio/cleanupAudio'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
-import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '@/components/ui/dialog'
+import { useCredits } from '@/contexts/CreditsContext'
+import { useProjectCosts } from '@/hooks/useProjectCosts'
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader, DialogDescription } from '@/components/ui/dialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   DropdownMenu,
@@ -445,6 +447,12 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
+  // Credits context for budget calculator
+  const { userCredits } = useCredits()
+  
+  // Project costs for pre-populating budget calculator
+  const projectCosts = useProjectCosts(script?.metadata?.visionPhase)
+  
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [showScriptEditor, setShowScriptEditor] = useState(false)
   const [scriptEditorInitialInstruction, setScriptEditorInitialInstruction] = useState<string | null>(null)
@@ -453,6 +461,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [storyboardPreviewOpen, setStoryboardPreviewOpen] = useState(false)
   const [sceneDirectionPreviewOpen, setSceneDirectionPreviewOpen] = useState(false)
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
+  const [costCalculatorOpen, setCostCalculatorOpen] = useState(false)
   const [generateAudioDialogOpen, setGenerateAudioDialogOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en')
   
@@ -2005,6 +2014,18 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           
           {/* Action Buttons - Right Justified */}
           <div className="flex items-center gap-2">
+            {/* Budget Calculator Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCostCalculatorOpen(true)}
+              className="flex items-center gap-2 border-cyan-500/30 hover:border-cyan-500/50 hover:bg-cyan-500/10"
+              title="Open budget calculator to estimate costs"
+            >
+              <Calculator className="w-4 h-4 text-cyan-400" />
+              <span className="text-sm hidden sm:inline">Budget</span>
+            </Button>
+            
             {/* Guide Dropdown - Workflow Guide */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -2628,6 +2649,52 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           </div>
         </div>
       )}
+
+      {/* Budget Calculator Modal */}
+      <Dialog open={costCalculatorOpen} onOpenChange={setCostCalculatorOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-900 border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Calculator className="w-5 h-5 text-sf-primary" />
+              Project Cost Calculator - {script?.title || 'Untitled Project'}
+            </DialogTitle>
+            <DialogDescription className="text-gray-400 text-sm">
+              Estimate credits needed for your project and set a budget.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4">
+            <ProjectCostCalculator 
+              currentTier="starter"
+              currentBalance={userCredits?.total_credits ?? 0}
+              compact={false}
+              projectId={projectId}
+              initialParams={projectCosts || undefined}
+              onSetBudget={async (budget) => {
+                // Save budget to project metadata
+                if (!projectId) return
+                try {
+                  await fetch(`/api/projects/${projectId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                      metadata: { 
+                        ...script?.metadata, 
+                        creditsBudget: budget 
+                      } 
+                    })
+                  })
+                  setCostCalculatorOpen(false)
+                  window.dispatchEvent(new CustomEvent('project-updated'))
+                  toast.success('Budget saved successfully')
+                } catch (error) {
+                  console.error('Failed to set budget:', error)
+                  toast.error('Failed to save budget')
+                }
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
     </>
   )
