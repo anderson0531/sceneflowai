@@ -6951,11 +6951,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   return (
     <div className="h-full flex flex-col bg-gray-50 dark:bg-sf-background overflow-x-hidden max-w-full">
       
-      <div className="flex-1 overflow-hidden overflow-x-hidden px-4 py-3 max-w-full min-w-0">
+      <div className="flex-1 overflow-hidden overflow-x-hidden px-3 py-1.5 max-w-full min-w-0">
         <PanelGroup direction="horizontal" className="h-full max-w-full min-w-0 overflow-x-hidden">
           {/* Main Content: Script with Scene Cards */}
           <Panel defaultSize={65} minSize={40} maxSize={80} className="min-w-0 overflow-hidden overflow-x-hidden">
-            <div className="h-full overflow-y-auto px-4 pt-4 min-w-0 w-full overflow-x-hidden">
+            <div className="h-full overflow-y-auto px-3 pt-2 min-w-0 w-full overflow-x-hidden">
               <ScriptPanel 
                 script={script}
                 onScriptChange={handleScriptChange}
