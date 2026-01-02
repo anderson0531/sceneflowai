@@ -450,8 +450,14 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // Credits context for budget calculator
   const { credits: userCredits } = useCredits()
   
-  // Project costs for pre-populating budget calculator (script IS the visionPhase data)
-  const projectCosts = useProjectCosts(script)
+  // Project costs for pre-populating budget calculator
+  // Wrap script in expected structure: useProjectCosts expects { script: { script: { scenes } } }
+  // but ScriptPanel receives script which already has { script: { scenes } }
+  const visionPhaseDataForCosts = useMemo(() => {
+    if (!script) return null;
+    return { script: script };
+  }, [script]);
+  const projectCosts = useProjectCosts(visionPhaseDataForCosts)
   
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [showScriptEditor, setShowScriptEditor] = useState(false)
