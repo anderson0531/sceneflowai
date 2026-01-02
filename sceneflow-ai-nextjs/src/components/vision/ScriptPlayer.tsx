@@ -82,6 +82,37 @@ function normalizeDuration(value: unknown): number | null {
   return null
 }
 
+// Helper function to normalize scenes from various data paths
+// This ensures consistent scene access across different storage patterns
+function normalizeScenes(source: any): any[] {
+  if (!source) return []
+
+  const candidates = [
+    source?.script?.scenes,
+    source?.scenes,
+    source?.visionPhase?.script?.script?.scenes,
+    source?.visionPhase?.scenes,
+    source?.metadata?.visionPhase?.script?.script?.scenes,
+    source?.metadata?.visionPhase?.scenes
+  ]
+
+  // First, try to find a non-empty array
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate) && candidate.length > 0) {
+      return candidate
+    }
+  }
+
+  // If all are empty, return the first valid array (even if empty)
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) {
+      return candidate
+    }
+  }
+
+  return []
+}
+
 async function resolveAudioDuration(url: string, stored?: unknown): Promise<number> {
   if (!url) {
     return 0
@@ -177,8 +208,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
   
   // Extract scenes with proper reactivity to script changes
   const scenes = React.useMemo(() => {
-    const extractedScenes = script?.script?.scenes || script?.scenes || []
-    return extractedScenes
+    return normalizeScenes(script)
   }, [script])
 
   // Create a fingerprint of audio URLs in scenes to detect content changes

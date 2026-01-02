@@ -118,6 +118,37 @@ const normalizeCharacterName = (name: string): string => {
     .trim()
 }
 
+// Helper function to normalize scenes from various data paths
+// This ensures consistent scene access across all components
+function normalizeScenes(source: any): any[] {
+  if (!source) return []
+
+  const candidates = [
+    source?.script?.scenes,
+    source?.scenes,
+    source?.visionPhase?.script?.script?.scenes,
+    source?.visionPhase?.scenes,
+    source?.metadata?.visionPhase?.script?.script?.scenes,
+    source?.metadata?.visionPhase?.scenes
+  ]
+
+  // First, try to find a non-empty array
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate) && candidate.length > 0) {
+      return candidate
+    }
+  }
+
+  // If all are empty, return the first valid array (even if empty)
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) {
+      return candidate
+    }
+  }
+
+  return []
+}
+
 // Helper function to ensure narrator character exists
 const ensureNarratorCharacter = (characters: Character[], narrationVoice?: VoiceConfig): Character => {
   const existingNarrator = characters.find(char => char.type === 'narrator')
@@ -3303,7 +3334,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }, [directorReview?.overallScore, audienceReview?.overallScore])
   
   const sidebarProjectStats = useMemo(() => {
-    const scriptScenes = script?.script?.scenes || []
+    const scriptScenes = normalizeScenes(script)
     const sceneCount = scriptScenes.length
     const castCount = characters.length
     const durationMinutes = Math.round(scriptScenes.reduce((sum: number, s: any) => sum + (s.estimatedDuration || s.duration || 15), 0) / 60)
@@ -3313,10 +3344,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const estimatedCredits = imageCredits + charCredits + audioCredits
     
     return { sceneCount, castCount, durationMinutes, estimatedCredits }
-  }, [script?.script?.scenes, characters.length])
+  }, [script, characters.length])
   
   const sidebarProgressData = useMemo(() => {
-    const scriptScenes = script?.script?.scenes || []
+    const scriptScenes = normalizeScenes(script)
     const sceneCount = scriptScenes.length
     const hasFilmTreatment = !!(project?.metadata?.filmTreatment || project?.metadata?.filmTreatmentVariant)
     const hasScreenplay = sceneCount > 0
@@ -3329,7 +3360,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const audioProgress = sceneCount > 0 ? Math.round((scenesWithAudio / sceneCount) * 100) : 0
     
     return { hasFilmTreatment, hasScreenplay, sceneCount, refLibraryCount, imageProgress, audioProgress }
-  }, [script?.script?.scenes, project?.metadata, sceneReferences.length, objectReferences.length])
+  }, [script, project?.metadata, sceneReferences.length, objectReferences.length])
   
   // Push data to global sidebar via store
   useSidebarData({
@@ -7184,7 +7215,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         className="rounded-2xl border border-white/5 bg-slate-900/40 p-4 shadow-[0_15px_40px_rgba(8,8,20,0.35)]"
                       >
                           <SceneGallery
-                            scenes={script?.script?.scenes || []}
+                            scenes={normalizeScenes(script)}
                             characters={characters}
                             projectTitle={project?.title}
                             onRegenerateScene={(index) => handleGenerateSceneImage(index)}
@@ -7193,7 +7224,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onUploadScene={handleUploadScene}
                             onClose={() => setShowSceneGallery(false)}
                             onAddToSceneLibrary={async (index, imageUrl) => {
-                              const scenes = script?.script?.scenes || []
+                              const scenes = normalizeScenes(script)
                               const scene = scenes[index]
                               if (scene && imageUrl) {
                                 const newReference: VisualReference = {
