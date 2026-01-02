@@ -2343,6 +2343,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                           onGenerateAllSegmentFrames={onGenerateAllSegmentFrames}
                           generatingFrameForSegment={generatingFrameForSegment}
                           generatingFramePhase={generatingFramePhase}
+                          bookmarkedSceneIndex={bookmarkedSceneIndex}
                 />
                     )
                   })}
@@ -2768,6 +2769,8 @@ interface SceneCardProps {
   onUploadFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', file: File) => void
   generatingFrameForSegment?: string | null
   generatingFramePhase?: 'start' | 'end' | 'video' | null
+  // Bookmark index for scene jump selector
+  bookmarkedSceneIndex?: number
 }
 
 function SceneCard({
@@ -2866,6 +2869,7 @@ function SceneCard({
   onUploadFrame,
   generatingFrameForSegment,
   generatingFramePhase,
+  bookmarkedSceneIndex = -1,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(null)
