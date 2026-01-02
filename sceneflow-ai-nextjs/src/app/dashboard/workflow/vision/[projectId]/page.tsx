@@ -5496,9 +5496,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Handle generate scene audio
   // Optional sceneOverride parameter allows passing scene data directly (avoids stale state issues in sequential operations)
   const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue' | 'description', characterName?: string, dialogueIndex?: number, language: string = 'en', sceneOverride?: any) => {
-    // Robust scene lookup: check multiple paths for scene data
-    // Priority: sceneOverride > script.script.scenes > script.scenes
-    const scenes = script?.script?.scenes || script?.scenes || []
+    // Robust scene lookup using normalizeScenes helper that checks 6 different paths
+    // Priority: sceneOverride > normalizeScenes(script)
+    const scenes = normalizeScenes(script)
     const scene = sceneOverride ?? scenes[sceneIdx]
     if (!scene) {
       console.error('[Generate Scene Audio] Scene not found at index:', sceneIdx, 
@@ -5648,8 +5648,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         let updatedScenesForDb: any[] = []
         
         setScript((prevScript: any) => {
-          // Robust scene lookup: check multiple paths
-          const currentScenes = prevScript?.script?.scenes || prevScript?.scenes || []
+          // Robust scene lookup using normalizeScenes helper
+          const currentScenes = normalizeScenes(prevScript)
           if (!currentScenes[sceneIdx]) {
             console.error('[Generate Scene Audio] Scene not found in setScript callback at index:', sceneIdx,
               '| Total scenes:', currentScenes.length)

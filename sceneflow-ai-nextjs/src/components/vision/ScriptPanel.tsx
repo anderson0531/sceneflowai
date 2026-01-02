@@ -673,7 +673,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const audioCount = useMemo(() => {
     if (!Array.isArray(scenes)) return 0
     return scenes.reduce((acc: number, s: any) => {
-      const narration = s?.narrationAudioUrl || s?.narrationAudio?.en?.url ? 1 : 0
+      const narration = s?.narrationAudio?.en?.url || s?.narrationAudioUrl ? 1 : 0
       const music = s?.musicAudio ? 1 : 0
       const dialogue = Array.isArray(s?.dialogueAudio) ? s.dialogueAudio.length : 0
       const sfx = Array.isArray(s?.sfxAudio) ? s.sfxAudio.length : 0
