@@ -55,6 +55,7 @@ export interface WorkflowStep {
  */
 export interface SectionVisibility {
   workflow: boolean
+  workflowGuide: boolean
   proTips: boolean
   progress: boolean
   quickActions: boolean
@@ -68,6 +69,7 @@ export interface SectionVisibility {
  */
 export interface SectionDefaults {
   workflow: boolean
+  workflowGuide: boolean
   proTips: boolean
   progress: boolean
   quickActions: boolean
@@ -137,6 +139,7 @@ export const blueprintSidebarConfig: WorkflowSidebarConfig = {
   ],
   sectionVisibility: {
     workflow: true,
+    workflowGuide: false,
     proTips: true,
     progress: true,
     quickActions: true,
@@ -146,6 +149,7 @@ export const blueprintSidebarConfig: WorkflowSidebarConfig = {
   },
   sectionDefaults: {
     workflow: true,
+    workflowGuide: false,
     proTips: false,
     progress: false,
     quickActions: true,
@@ -207,6 +211,7 @@ export const productionSidebarConfig: WorkflowSidebarConfig = {
   ],
   sectionVisibility: {
     workflow: true,
+    workflowGuide: true,
     proTips: true,
     progress: true,
     quickActions: true,
@@ -216,6 +221,7 @@ export const productionSidebarConfig: WorkflowSidebarConfig = {
   },
   sectionDefaults: {
     workflow: true,
+    workflowGuide: true,
     proTips: false,
     progress: false,
     quickActions: true,
@@ -270,6 +276,7 @@ export const finalCutSidebarConfig: WorkflowSidebarConfig = {
   ],
   sectionVisibility: {
     workflow: true,
+    workflowGuide: false,
     proTips: true,
     progress: true,
     quickActions: true,
@@ -279,6 +286,7 @@ export const finalCutSidebarConfig: WorkflowSidebarConfig = {
   },
   sectionDefaults: {
     workflow: true,
+    workflowGuide: false,
     proTips: false,
     progress: false,
     quickActions: true,
@@ -328,6 +336,7 @@ export const premiereSidebarConfig: WorkflowSidebarConfig = {
   ],
   sectionVisibility: {
     workflow: true,
+    workflowGuide: false,
     proTips: true,
     progress: false,
     quickActions: true,
@@ -337,6 +346,7 @@ export const premiereSidebarConfig: WorkflowSidebarConfig = {
   },
   sectionDefaults: {
     workflow: true,
+    workflowGuide: false,
     proTips: false,
     progress: false,
     quickActions: true,
@@ -355,6 +365,7 @@ export const dashboardSidebarConfig: WorkflowSidebarConfig = {
   showWorkflowStepper: false,
   sectionVisibility: {
     workflow: false,
+    workflowGuide: false,
     proTips: false,
     progress: false,
     quickActions: false,
@@ -364,6 +375,7 @@ export const dashboardSidebarConfig: WorkflowSidebarConfig = {
   },
   sectionDefaults: {
     workflow: false,
+    workflowGuide: false,
     proTips: false,
     progress: false,
     quickActions: false,
