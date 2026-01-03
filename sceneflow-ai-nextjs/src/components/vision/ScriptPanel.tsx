@@ -147,6 +147,8 @@ interface ScriptPanelProps {
   onEditScene?: (sceneIndex: number) => void
   onUpdateSceneAudio?: (sceneIndex: number) => Promise<void>
   onDeleteSceneAudio?: (sceneIndex: number, audioType: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx', dialogueIndex?: number, sfxIndex?: number) => void
+  // NEW: Enhance scene context with AI-generated beat, character arc, and thematic context
+  onEnhanceSceneContext?: (sceneIndex: number) => Promise<void>
   // NEW: Scene score generation props
   onGenerateSceneScore?: (sceneIndex: number) => void
   generatingScoreFor?: number | null
@@ -443,7 +445,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -2318,6 +2320,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       onDeleteScene={onDeleteScene}
                       onEditScene={onEditScene}
                       onUpdateSceneAudio={onUpdateSceneAudio}
+                      onDeleteSceneAudio={onDeleteSceneAudio}
+                      onEnhanceSceneContext={onEnhanceSceneContext}
                       onGenerateSceneScore={onGenerateSceneScore}
                       generatingScoreFor={generatingScoreFor}
                       getScoreColorClass={getScoreColorClass}
@@ -2777,6 +2781,8 @@ interface SceneCardProps {
   onUpdateSceneAudio?: (sceneIndex: number) => Promise<void>
   // NEW: Delete specific audio from scene
   onDeleteSceneAudio?: (sceneIndex: number, audioType: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx', dialogueIndex?: number, sfxIndex?: number) => void
+  // NEW: Enhance scene context with AI-generated beat, character arc, and thematic context
+  onEnhanceSceneContext?: (sceneIndex: number) => Promise<void>
   // NEW: Audio start time offset controls
   onUpdateAudioStartTime?: (sceneIndex: number, audioType: 'description' | 'narration' | 'dialogue', startTime: number, dialogueIndex?: number) => void
   // NEW: Scene score generation props
@@ -2913,6 +2919,7 @@ function SceneCard({
   onEditScene,
   onUpdateSceneAudio,
   onDeleteSceneAudio,
+  onEnhanceSceneContext,
   onUpdateAudioStartTime,
   onGenerateSceneScore,
   generatingScoreFor,
@@ -4143,12 +4150,13 @@ function SceneCard({
                     )
                   })()}
                   
-                  {/* Scene Description (plays before narration) */}
+                  {/* Scene Description (read-only context for user) */}
                   {(() => {
                     const sceneDescription = scene.visualDescription || scene.action || scene.summary || scene.heading
                     if (!sceneDescription) return null
 
-                    const descriptionUrl = scene.descriptionAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.descriptionAudioUrl : undefined)
+                    const sceneContext = scene.sceneContext
+                    const isEnhancing = generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__context__'
 
                     return (
                       <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
@@ -4161,138 +4169,73 @@ function SceneCard({
                             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                           >
                             <ChevronDown className={`w-4 h-4 text-blue-600 dark:text-blue-400 transition-transform ${descriptionCollapsed ? '-rotate-90' : ''}`} />
-                            <Volume2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                            <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Scene Description (V.O.)</span>
-                            {descriptionUrl && (
-                              <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
-                                <Volume2 className="w-3 h-3" />
-                                {scene.descriptionAudio?.[selectedLanguage]?.duration 
-                                  ? `${scene.descriptionAudio[selectedLanguage].duration.toFixed(1)}s`
-                                  : 'Ready'}
+                            <Film className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                            <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Scene Description</span>
+                            {sceneContext && (
+                              <span className="text-xs px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded flex items-center gap-1">
+                                <Sparkles className="w-3 h-3" />
+                                Enhanced
                               </span>
                             )}
                           </button>
-                          {descriptionUrl ? (
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  onPlayAudio?.(descriptionUrl, 'description')
-                                }}
-                                className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
-                                title="Play Scene Description"
-                              >
-                                {playingAudio === descriptionUrl ? (
-                                  <Pause className="w-4 h-4" />
-                                ) : (
-                                  <Play className="w-4 h-4" />
-                                )}
-                              </button>
-                              <button
-                                onClick={async (e) => {
-                                  e.stopPropagation()
-                                  if (!onGenerateSceneAudio) return
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              if (!onEnhanceSceneContext) return
 
-                                  setGeneratingDialogue?.({ sceneIdx, character: '__description__' })
-                                  overlayStore?.show(`Regenerating scene description for Scene ${sceneIdx + 1}...`, 20)
-                                  try {
-                                    await onGenerateSceneAudio?.(sceneIdx, 'description', undefined, undefined, selectedLanguage)
-                                    overlayStore?.hide()
-                                    toast.success('Scene description regenerated!')
-                                  } catch (error) {
-                                    console.error('[ScriptPanel] Description regeneration failed:', error)
-                                    overlayStore?.hide()
-                                    toast.error('Failed to regenerate description audio')
-                                  } finally {
-                                    setGeneratingDialogue?.(null)
-                                  }
-                                }}
-                                disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__description__'}
-                                className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded disabled:opacity-50"
-                                title="Regenerate Scene Description Audio"
-                              >
-                                {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__description__' ? (
-                                  <Loader className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <RefreshCw className="w-4 h-4" />
-                                )}
-                              </button>
-                              <a
-                                href={descriptionUrl}
-                                download
-                                className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
-                                title="Download Scene Description Audio"
-                              >
-                                <Download className="w-4 h-4" />
-                              </a>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  if (confirm('Delete description audio? You can regenerate it later.')) {
-                                    onDeleteSceneAudio?.(sceneIdx, 'description')
-                                  }
-                                }}
-                                className="p-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
-                                title="Delete Scene Description Audio"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  uploadAudio(sceneIdx, 'description')
-                                }}
-                                className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
-                                title="Upload Scene Description Audio"
-                              >
-                                <Upload className="w-4 h-4" />
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={async (e) => {
-                                  e.stopPropagation()
-                                  if (!onGenerateSceneAudio) return
-
-                                  setGeneratingDialogue?.({ sceneIdx, character: '__description__' })
-                                  overlayStore?.show(`Generating scene description for Scene ${sceneIdx + 1}...`, 20)
-                                  try {
-                                    await onGenerateSceneAudio?.(sceneIdx, 'description', undefined, undefined, selectedLanguage)
-                                    overlayStore?.hide()
-                                    toast.success('Scene description generated!')
-                                  } catch (error) {
-                                    console.error('[ScriptPanel] Description generation failed:', error)
-                                    overlayStore?.hide()
-                                    toast.error('Failed to generate scene description audio')
-                                  } finally {
-                                    setGeneratingDialogue?.(null)
-                                  }
-                                }}
-                                disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__description__'}
-                                className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
-                              >
-                                {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__description__' ? (
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                ) : null}
-                                Generate Audio
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  uploadAudio(sceneIdx, 'description')
-                                }}
-                                className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
-                                title="Upload Scene Description Audio"
-                              >
-                                <Upload className="w-4 h-4" />
-                              </button>
-                            </div>
-                          )}
+                              setGeneratingDialogue?.({ sceneIdx, character: '__context__' })
+                              overlayStore?.show(`Analyzing scene context for Scene ${sceneIdx + 1}...`, 15)
+                              try {
+                                await onEnhanceSceneContext?.(sceneIdx)
+                                overlayStore?.hide()
+                                toast.success('Scene context enhanced!')
+                              } catch (error) {
+                                console.error('[ScriptPanel] Context enhancement failed:', error)
+                                overlayStore?.hide()
+                                toast.error('Failed to enhance scene context')
+                              } finally {
+                                setGeneratingDialogue?.(null)
+                              }
+                            }}
+                            disabled={isEnhancing}
+                            className="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
+                            title="Generate beat, character arc, and thematic context for this scene"
+                          >
+                            {isEnhancing ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Sparkles className="w-3 h-3" />
+                            )}
+                            {sceneContext ? 'Refresh' : 'Enhance Details'}
+                          </button>
                         </div>
                         {!descriptionCollapsed && (
-                          <div className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
-                            "{sceneDescription}"
+                          <div className="space-y-3">
+                            <div className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
+                              "{sceneDescription}"
+                            </div>
+                            {sceneContext && (
+                              <div className="pt-2 border-t border-blue-200 dark:border-blue-700 space-y-2">
+                                {sceneContext.beat && (
+                                  <div className="text-xs">
+                                    <span className="font-semibold text-purple-600 dark:text-purple-400">Beat:</span>
+                                    <span className="ml-1 text-gray-600 dark:text-gray-400">{sceneContext.beat}</span>
+                                  </div>
+                                )}
+                                {sceneContext.characterArc && (
+                                  <div className="text-xs">
+                                    <span className="font-semibold text-purple-600 dark:text-purple-400">Character Arc:</span>
+                                    <span className="ml-1 text-gray-600 dark:text-gray-400">{sceneContext.characterArc}</span>
+                                  </div>
+                                )}
+                                {sceneContext.thematicContext && (
+                                  <div className="text-xs">
+                                    <span className="font-semibold text-purple-600 dark:text-purple-400">Theme:</span>
+                                    <span className="ml-1 text-gray-600 dark:text-gray-400">{sceneContext.thematicContext}</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>

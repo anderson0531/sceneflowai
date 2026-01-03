@@ -1119,14 +1119,6 @@ export function SceneTimelineV2({
           'bg-gradient-to-r from-green-500 to-green-600'
         )}
         
-        {filteredAudioTracks.description && renderAudioTrack(
-          'description',
-          'Description',
-          <Film className="w-4 h-4 text-teal-500" />,
-          [filteredAudioTracks.description],
-          'bg-gradient-to-r from-teal-500 to-teal-600'
-        )}
-        
         {filteredAudioTracks.dialogue.length > 0 && renderAudioTrack(
           'dialogue',
           'Dialogue',

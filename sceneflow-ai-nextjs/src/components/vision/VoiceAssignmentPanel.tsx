@@ -160,10 +160,10 @@ export function VoiceAssignmentPanel({
         </div>
       )}
 
-      {/* Voiceover Voice */}
+      {/* Narration Voice */}
       <div className="space-y-2">
         <label className="text-sm font-medium text-gray-300">
-          Voiceover (V.O.)
+          Narration
         </label>
         <div className="flex gap-2">
           <select
@@ -186,7 +186,7 @@ export function VoiceAssignmentPanel({
           </button>
         </div>
         <p className="text-xs text-gray-500">
-          Voice for voiceover (V.O.) narration
+          Voice for scene narration
         </p>
       </div>
 

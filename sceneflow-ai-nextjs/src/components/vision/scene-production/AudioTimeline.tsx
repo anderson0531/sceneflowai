@@ -499,9 +499,9 @@ export function AudioTimeline({
         className="relative cursor-pointer"
         onClick={handleTimelineClick}
       >
-        {/* Voiceover Track (Description + Narration) */}
+        {/* Narration Track */}
         {renderTrack(
-          'V.O.',
+          'Narration',
           <Mic className="w-3 h-3" />,
           'voiceover',
           audioTracks?.voiceover || [],
@@ -556,7 +556,7 @@ export function AudioTimeline({
           sfx: 'border-amber-500 bg-amber-500/10',
         }
         const trackLabels: Record<string, string> = {
-          voiceover: 'V.O.',
+          voiceover: 'Narration',
           dialogue: 'Dialogue',
           music: 'Music',
           sfx: 'SFX',

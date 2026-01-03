@@ -5495,7 +5495,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   // Handle generate scene audio
   // Optional sceneOverride parameter allows passing scene data directly (avoids stale state issues in sequential operations)
+  // NOTE: 'description' audioType is deprecated - scene description is now read-only context, not an audio track
   const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue' | 'description', characterName?: string, dialogueIndex?: number, language: string = 'en', sceneOverride?: any) => {
+    // Description audio generation is deprecated - scene description is for user context only
+    if (audioType === 'description') {
+      console.warn('[Generate Scene Audio] Description audio generation is deprecated. Use Enhance Details instead.')
+      toast.info('Scene description is now read-only. Use "Enhance Details" for story context.')
+      return
+    }
+    
     // Robust scene lookup using normalizeScenes helper that checks 6 different paths
     // Priority: sceneOverride > normalizeScenes(script)
     const scenes = normalizeScenes(script)
@@ -6658,6 +6666,65 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  // Enhance scene context with AI-generated beat, character arc, and thematic context
+  const handleEnhanceSceneContext = async (sceneIndex: number) => {
+    if (!script?.script?.scenes?.[sceneIndex]) {
+      console.error('[Enhance Scene Context] Scene not found')
+      toast.error('Scene not found')
+      return
+    }
+
+    const currentScene = script.script.scenes[sceneIndex]
+    const allScenes = script.script.scenes
+
+    try {
+      const response = await fetch('/api/scene/generate-context', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex,
+          scene: currentScene,
+          allScenes: allScenes.map((s: any) => ({
+            heading: s.heading,
+            action: s.action,
+            visualDescription: s.visualDescription,
+            narration: s.narration,
+          })),
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to enhance scene context')
+      }
+
+      const data = await response.json()
+      
+      if (data.success && data.sceneContext) {
+        // Update local state with the new scene context
+        const updatedScenes = [...script.script.scenes]
+        updatedScenes[sceneIndex] = {
+          ...currentScene,
+          sceneContext: data.sceneContext,
+        }
+
+        setScript({
+          ...script,
+          script: {
+            ...script.script,
+            scenes: updatedScenes,
+          },
+        })
+
+        console.log(`[Enhance Scene Context] Enhanced context for Scene ${sceneIndex + 1}`)
+      }
+    } catch (error) {
+      console.error('[Enhance Scene Context] Error:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to enhance scene context')
+    }
+  }
+
   // Update audio start time offset for playback timing
   const handleUpdateAudioStartTime = async (
     sceneIndex: number,
@@ -7079,6 +7146,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onEditScene={handleEditScene}
                 onUpdateSceneAudio={handleUpdateSceneAudio}
                 onDeleteSceneAudio={handleDeleteSceneAudio}
+                onEnhanceSceneContext={handleEnhanceSceneContext}
                 onUpdateAudioStartTime={handleUpdateAudioStartTime}
                 onGenerateSceneScore={handleGenerateSceneScore}
                 generatingScoreFor={generatingScoreFor}

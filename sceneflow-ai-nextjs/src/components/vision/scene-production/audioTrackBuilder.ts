@@ -116,7 +116,7 @@ export function buildAudioTracksForLanguage(
     tracks.voiceover = {
       id: 'vo-scene',
       url: narrationUrl,
-      startTime: scene.narrationStartTime || 0,
+      startTime: 0, // Narration always starts at 0 seconds
       duration: narrationAudio?.duration || scene.narrationDuration || 0,
       label: 'Narration',
       volume: 1,
@@ -126,23 +126,8 @@ export function buildAudioTracksForLanguage(
     }
   }
   
-  // Build description track
-  const descriptionAudio = scene.descriptionAudio?.[language] || scene.descriptionAudio?.en
-  const descriptionUrl = descriptionAudio?.url || scene.descriptionAudioUrl
-  
-  if (descriptionUrl && typeof descriptionUrl === 'string' && descriptionUrl.trim()) {
-    tracks.description = {
-      id: 'desc-scene',
-      url: descriptionUrl,
-      startTime: scene.descriptionStartTime || 0,
-      duration: descriptionAudio?.duration || scene.descriptionDuration || 0,
-      label: 'Scene Description',
-      volume: 1,
-      language,
-      source: 'scene' as AudioClipSource,
-      scenePropertyPath: `descriptionAudio.${language}.url`,
-    }
-  }
+  // Description track removed - description is scene context for user, not production audio
+  // Users who want scene description narrated can include it in their narration text
   
   // Build dialogue tracks - check multiple sources
   const dialogueClips: AudioTrackClipV2[] = []
