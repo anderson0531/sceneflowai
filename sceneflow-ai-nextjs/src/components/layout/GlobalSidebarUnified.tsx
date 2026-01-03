@@ -100,6 +100,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
     progress: config.sectionDefaults.progress,
     quickActions: config.sectionDefaults.quickActions,
     reviewScores: config.sectionDefaults.reviewScores,
+    screeningRoom: config.sectionDefaults.screeningRoom,
     projectStats: config.sectionDefaults.projectStats,
     credits: config.sectionDefaults.credits,
   })
@@ -286,6 +287,30 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
               onToggle={() => toggleSection('reviewScores')}
               isGenerating={isGeneratingReviews}
             />
+          )}
+
+          {/* Screening Room Section */}
+          {config.sectionVisibility.screeningRoom && (
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('production:screening-room'))
+                }}
+                className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wider hover:text-gray-700 dark:hover:text-gray-300 transition-colors group"
+              >
+                <div className="flex items-center gap-2">
+                  <Play className="w-3.5 h-3.5 text-green-500" />
+                  <span>Screening Room</span>
+                </div>
+                <div className="flex items-center gap-1 text-[10px] font-normal text-green-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span>Open</span>
+                  <ChevronDown className="w-3 h-3 rotate-[-90deg]" />
+                </div>
+              </button>
+              <p className="text-[10px] text-slate-500 mt-1.5 pl-5">
+                Review animatic before video generation
+              </p>
+            </div>
           )}
 
           {/* Credits Section - Always at bottom, pushed by flex-grow spacer */}

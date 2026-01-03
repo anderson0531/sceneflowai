@@ -82,7 +82,7 @@ export function ReviewScoresPanel({
     <div className={cn('p-4 border-b border-gray-200 dark:border-gray-700', className)}>
       <button
         onClick={onToggle}
-        className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+        className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
       >
         <div className="flex items-center gap-2">
           <Sparkles className="w-3.5 h-3.5 text-purple-500" />

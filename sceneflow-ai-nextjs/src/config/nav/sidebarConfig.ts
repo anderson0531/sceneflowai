@@ -60,6 +60,7 @@ export interface SectionVisibility {
   progress: boolean
   quickActions: boolean
   reviewScores: boolean
+  screeningRoom: boolean
   projectStats: boolean
   credits: boolean
 }
@@ -74,6 +75,7 @@ export interface SectionDefaults {
   progress: boolean
   quickActions: boolean
   reviewScores: boolean
+  screeningRoom: boolean
   projectStats: boolean
   credits: boolean
 }
@@ -144,6 +146,7 @@ export const blueprintSidebarConfig: WorkflowSidebarConfig = {
     progress: true,
     quickActions: true,
     reviewScores: false,
+    screeningRoom: false,
     projectStats: false,
     credits: true,
   },
@@ -154,6 +157,7 @@ export const blueprintSidebarConfig: WorkflowSidebarConfig = {
     progress: false,
     quickActions: true,
     reviewScores: false,
+    screeningRoom: false,
     projectStats: false,
     credits: true,
   },
@@ -216,16 +220,18 @@ export const productionSidebarConfig: WorkflowSidebarConfig = {
     progress: true,
     quickActions: true,
     reviewScores: true,
+    screeningRoom: true,
     projectStats: true,
     credits: true,
   },
   sectionDefaults: {
     workflow: true,
-    workflowGuide: true,
+    workflowGuide: false,
     proTips: false,
     progress: false,
     quickActions: true,
     reviewScores: true,
+    screeningRoom: true,
     projectStats: false,
     credits: true,
   },
@@ -281,6 +287,7 @@ export const finalCutSidebarConfig: WorkflowSidebarConfig = {
     progress: true,
     quickActions: true,
     reviewScores: true,
+    screeningRoom: true,
     projectStats: true,
     credits: true,
   },
@@ -291,6 +298,7 @@ export const finalCutSidebarConfig: WorkflowSidebarConfig = {
     progress: false,
     quickActions: true,
     reviewScores: true,
+    screeningRoom: true,
     projectStats: false,
     credits: true,
   },
@@ -341,6 +349,7 @@ export const premiereSidebarConfig: WorkflowSidebarConfig = {
     progress: false,
     quickActions: true,
     reviewScores: true,
+    screeningRoom: true,
     projectStats: true,
     credits: true,
   },
@@ -351,6 +360,7 @@ export const premiereSidebarConfig: WorkflowSidebarConfig = {
     progress: false,
     quickActions: true,
     reviewScores: true,
+    screeningRoom: true,
     projectStats: true,
     credits: true,
   },
@@ -370,6 +380,7 @@ export const dashboardSidebarConfig: WorkflowSidebarConfig = {
     progress: false,
     quickActions: false,
     reviewScores: false,
+    screeningRoom: false,
     projectStats: false,
     credits: true,
   },
@@ -380,6 +391,7 @@ export const dashboardSidebarConfig: WorkflowSidebarConfig = {
     progress: false,
     quickActions: false,
     reviewScores: false,
+    screeningRoom: false,
     projectStats: false,
     credits: true,
   },

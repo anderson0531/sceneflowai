@@ -289,12 +289,12 @@ export function WorkflowGuidePanel({
       {/* Header */}
       <button
         onClick={onToggle}
-        className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+        className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
       >
         <div className="flex items-center gap-2">
           <ClipboardCheck className="w-3.5 h-3.5 text-amber-500" />
-          <span>Workflow Guide</span>
-          <span className="text-[10px] font-normal normal-case text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded">
+          <span>Guide</span>
+          <span className="text-[10px] font-normal text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded">
             {phaseDisplayName[phase]}
           </span>
         </div>
