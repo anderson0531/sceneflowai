@@ -50,7 +50,6 @@ import { getAudioUrl } from '@/lib/audio/languageDetection'
 import { cleanupScriptAudio } from '@/lib/audio/cleanupAudio'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
 import { useCredits } from '@/contexts/CreditsContext'
-import { useProjectCosts } from '@/hooks/useProjectCosts'
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader, DialogDescription } from '@/components/ui/dialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
@@ -449,15 +448,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   
   // Credits context for budget calculator
   const { credits: userCredits } = useCredits()
-  
-  // Project costs for pre-populating budget calculator
-  // Wrap script in expected structure: useProjectCosts expects { script: { script: { scenes } } }
-  // but ScriptPanel receives script which already has { script: { scenes } }
-  const visionPhaseDataForCosts = useMemo(() => {
-    if (!script) return null;
-    return { script: script };
-  }, [script]);
-  const projectCosts = useProjectCosts(visionPhaseDataForCosts)
   
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [showScriptEditor, setShowScriptEditor] = useState(false)
@@ -2674,7 +2664,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               currentBalance={userCredits?.total_credits ?? 0}
               compact={false}
               projectId={projectId}
-              initialParams={projectCosts || undefined}
+              initialParams={undefined}
               onSetBudget={async (budget) => {
                 // Save budget to project metadata
                 if (!projectId) return
