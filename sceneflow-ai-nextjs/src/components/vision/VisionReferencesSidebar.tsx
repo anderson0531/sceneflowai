@@ -450,8 +450,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   return (
     <DndContext>
       <div className="flex flex-col h-full">
-        {/* Title - compact */}
-        <h3 className="text-sm font-medium text-gray-400 dark:text-gray-500 py-1.5">Reference Library</h3>
+        {/* Title - matching scene heading style */}
+        <h3 className="text-xl font-semibold text-white py-3 mb-2">Production Bible</h3>
         
         {/* Tab Navigation - matching ScriptPanel folder tab style */}
         <div className="flex items-center border-b border-gray-700/50 mb-3 overflow-x-auto">
