@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { DndContext } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/Input'
@@ -451,7 +451,10 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     <DndContext>
       <div className="flex flex-col h-full">
         {/* Title - matching scene heading style */}
-        <h3 className="text-xl font-semibold text-white py-3 mb-2">Production Bible</h3>
+        <div className="flex items-center gap-2 py-3 mb-2">
+          <BookOpen className="w-4 h-4 text-cyan-400" />
+          <h3 className="text-sm font-semibold text-white">Production Bible</h3>
+        </div>
         
         {/* Tab Navigation - matching ScriptPanel folder tab style */}
         <div className="flex items-center border-b border-gray-700/50 mb-3 overflow-x-auto">
