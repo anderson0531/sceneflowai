@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { ChevronUp, ChevronDown, BarChart3, FileText } from 'lucide-react'
+import { ChevronUp, ChevronDown, BarChart3, FileText, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface ReviewScores {
@@ -84,7 +84,10 @@ export function ReviewScoresPanel({
         onClick={onToggle}
         className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
       >
-        <span>Review Guide</span>
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+          <span>Review Guide</span>
+        </div>
         {isOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
       </button>
       {isOpen && (

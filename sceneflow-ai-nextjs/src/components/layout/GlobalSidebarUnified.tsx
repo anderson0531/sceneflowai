@@ -267,58 +267,6 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
             </div>
           )}
 
-          {/* Progress Section */}
-          {config.sectionVisibility.progress && progressItems.length > 0 && (
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-              <button
-                onClick={() => toggleSection('progress')}
-                className="flex items-center justify-between w-full text-sm font-medium text-gray-600 dark:text-gray-400 mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-green-500" />
-                  <span>Progress</span>
-                </div>
-                {sectionsOpen.progress ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
-              {sectionsOpen.progress && (
-                <div className="space-y-2">
-                  {progressItems.map(item => {
-                    const isComplete = typeof item.isComplete === 'function' ? item.isComplete() : item.isComplete
-                    const IconComponent = iconMap[item.icon || 'Circle'] || Circle
-                    const hasProgress = 'progress' in item && item.progress !== undefined
-                    
-                    return (
-                      <div key={item.id} className="flex items-center gap-2 text-xs">
-                        <div className={cn(
-                          'w-5 h-5 rounded flex items-center justify-center',
-                          isComplete 
-                            ? 'bg-green-500/20 text-green-500'
-                            : hasProgress && (item.progress || 0) > 0
-                              ? 'bg-amber-500/20 text-amber-500'
-                              : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
-                        )}>
-                          {isComplete ? <CheckCircle2 className="w-3 h-3" /> : <IconComponent className="w-3 h-3" />}
-                        </div>
-                        <span className={isComplete || (hasProgress && (item.progress || 0) > 0) ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400'}>
-                          {item.label}
-                        </span>
-                        {'value' in item && item.value && (
-                          <span className="ml-auto text-gray-400">{item.value}</span>
-                        )}
-                        {hasProgress && (
-                          <span className="ml-auto text-gray-400">{item.progress}%</span>
-                        )}
-                        {'badge' in item && item.badge && (
-                          <span className="ml-auto text-[10px] bg-gray-200 dark:bg-gray-700 text-gray-500 px-1.5 py-0.5 rounded">{item.badge}</span>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Review Scores Section */}
           {config.sectionVisibility.reviewScores && reviewScores && (
             <ReviewScoresPanel
@@ -326,15 +274,6 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
               isOpen={sectionsOpen.reviewScores}
               onToggle={() => toggleSection('reviewScores')}
               isGenerating={isGeneratingReviews}
-            />
-          )}
-
-          {/* Project Stats Section */}
-          {config.sectionVisibility.projectStats && projectStats && (
-            <ProjectStatsPanel
-              stats={projectStats}
-              isOpen={sectionsOpen.projectStats}
-              onToggle={() => toggleSection('projectStats')}
             />
           )}
 
