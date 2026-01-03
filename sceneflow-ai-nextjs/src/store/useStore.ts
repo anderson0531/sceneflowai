@@ -217,6 +217,7 @@ interface AppState {
       audioProgress?: number;
     } | null;
     quickActionHandlers: Record<string, () => void>;
+    isGeneratingReviews?: boolean;
   };
   
   // Sidebar actions
@@ -225,6 +226,7 @@ interface AppState {
   setSidebarProgressData: (data: { hasFilmTreatment?: boolean; hasScreenplay?: boolean; sceneCount?: number; refLibraryCount?: number; imageProgress?: number; audioProgress?: number } | null) => void;
   registerQuickActionHandler: (actionId: string, handler: () => void) => void;
   unregisterQuickActionHandler: (actionId: string) => void;
+  setIsGeneratingReviews: (isGenerating: boolean) => void;
   clearSidebarData: () => void;
   
   // Cue Assistant state
@@ -317,6 +319,7 @@ export const useStore = create<AppState>((set, get) => ({
     projectStats: null,
     progressData: null,
     quickActionHandlers: {},
+    isGeneratingReviews: false,
   },
   cueConversation: {
     messages: [],
@@ -470,12 +473,16 @@ export const useStore = create<AppState>((set, get) => ({
       sidebarData: { ...state.sidebarData, quickActionHandlers: rest }
     }
   }),
+  setIsGeneratingReviews: (isGenerating) => set((state) => ({
+    sidebarData: { ...state.sidebarData, isGeneratingReviews: isGenerating }
+  })),
   clearSidebarData: () => set((state) => ({
     sidebarData: {
       reviewScores: null,
       projectStats: null,
       progressData: null,
       quickActionHandlers: {},
+      isGeneratingReviews: false,
     }
   })),
   

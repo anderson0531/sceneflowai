@@ -3221,6 +3221,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (!script || !projectId) return
     
     setIsGeneratingReviews(true)
+    useStore.getState().setIsGeneratingReviews(true)
     try {
       await execute(async () => {
         const response = await fetch('/api/vision/review-script', {
@@ -3317,6 +3318,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       } catch {}
     } finally {
       setIsGeneratingReviews(false)
+      useStore.getState().setIsGeneratingReviews(false)
     }
   }
 

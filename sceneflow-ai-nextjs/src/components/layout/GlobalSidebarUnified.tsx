@@ -85,7 +85,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
   
   // Read sidebar data from store (populated by workflow pages)
   const sidebarData = useStore(s => s.sidebarData)
-  const { reviewScores, projectStats, progressData, quickActionHandlers } = sidebarData
+  const { reviewScores, projectStats, progressData, quickActionHandlers, isGeneratingReviews } = sidebarData
   
   // Get sidebar config based on current path
   const config = useMemo(() => getSidebarConfigForPath(pathname), [pathname])
@@ -325,6 +325,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
               scores={reviewScores}
               isOpen={sectionsOpen.reviewScores}
               onToggle={() => toggleSection('reviewScores')}
+              isGenerating={isGeneratingReviews}
             />
           )}
 

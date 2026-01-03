@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { ChevronUp, ChevronDown } from 'lucide-react'
+import { ChevronUp, ChevronDown, BarChart3, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface ReviewScores {
@@ -13,6 +13,7 @@ interface ReviewScoresPanelProps {
   scores: ReviewScores
   isOpen: boolean
   onToggle: () => void
+  isGenerating?: boolean
   className?: string
 }
 
@@ -60,6 +61,7 @@ export function ReviewScoresPanel({
   scores,
   isOpen,
   onToggle,
+  isGenerating = false,
   className,
 }: ReviewScoresPanelProps) {
   const hasScores = scores.director !== null || scores.audience !== null
@@ -68,17 +70,27 @@ export function ReviewScoresPanel({
     return null
   }
 
+  const handleUpdateReviews = () => {
+    window.dispatchEvent(new CustomEvent('production:update-reviews'))
+  }
+
+  const handleReviewAnalysis = () => {
+    window.dispatchEvent(new CustomEvent('production:review-analysis'))
+  }
+
   return (
     <div className={cn('p-4 border-b border-gray-200 dark:border-gray-700', className)}>
       <button
         onClick={onToggle}
         className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
       >
-        <span>Review Scores</span>
+        <span>Review Guide</span>
         {isOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
       </button>
       {isOpen && (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-3">
+          {/* Score Cards */}
+          <div className="grid grid-cols-2 gap-2">
           {/* Director Score Card */}
           {(() => {
             const directorColors = getScoreCardClasses(scores.director || 0)
@@ -120,6 +132,27 @@ export function ReviewScoresPanel({
             )
           })()}
         </div>
+
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={handleUpdateReviews}
+            disabled={isGenerating}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            <span>Update</span>
+          </button>
+          <button
+            onClick={handleReviewAnalysis}
+            disabled={isGenerating}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>Analysis</span>
+          </button>
+        </div>
+      </div>
       )}
     </div>
   )
