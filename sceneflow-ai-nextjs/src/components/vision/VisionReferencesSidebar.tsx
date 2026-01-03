@@ -450,10 +450,10 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   return (
     <DndContext>
       <div className="flex flex-col h-full">
-        {/* Title - matching app name style */}
+        {/* Title - h4 style */}
         <div className="flex items-center gap-2 py-3 mb-2">
-          <BookOpen className="w-4 h-4 md:w-5 md:h-5 text-cyan-400" />
-          <h3 className="font-bold text-lg md:text-xl tracking-tight text-gray-900 dark:text-white">Production Bible</h3>
+          <BookOpen className="w-4 h-4 text-cyan-400" />
+          <h4 className="font-bold text-base tracking-tight text-gray-900 dark:text-white">Production Bible</h4>
         </div>
         
         {/* Tab Navigation - matching ScriptPanel folder tab style */}
