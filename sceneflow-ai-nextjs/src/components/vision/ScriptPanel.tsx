@@ -12,6 +12,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
@@ -460,6 +461,35 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [costCalculatorOpen, setCostCalculatorOpen] = useState(false)
   const [generateAudioDialogOpen, setGenerateAudioDialogOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en')
+  
+  // Collapsible UI state with localStorage persistence
+  const [sceneNavigationCollapsed, setSceneNavigationCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sceneNavigationCollapsed')
+      return saved ? JSON.parse(saved) : false
+    }
+    return false
+  })
+  const [audioTimelineCollapsed, setAudioTimelineCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('audioTimelineCollapsed')
+      return saved ? JSON.parse(saved) : true // Default collapsed
+    }
+    return true // Default collapsed
+  })
+  
+  // Persist collapsed states to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sceneNavigationCollapsed', JSON.stringify(sceneNavigationCollapsed))
+    }
+  }, [sceneNavigationCollapsed])
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('audioTimelineCollapsed', JSON.stringify(audioTimelineCollapsed))
+    }
+  }, [audioTimelineCollapsed])
   
   // Image Edit Modal state
   const [imageEditModalOpen, setImageEditModalOpen] = useState(false)
@@ -3204,6 +3234,35 @@ function SceneCard({
         <div className="flex items-center justify-between gap-3 py-2 border-b border-gray-200 dark:border-gray-700 mb-2">
           {/* Left Side: Scene Navigation & Management Controls */}
           <div className="flex items-center gap-2">
+            {/* Collapse/Expand Scene Navigation */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSceneNavigationCollapsed(!sceneNavigationCollapsed)
+                    }}
+                    className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                  >
+                    {sceneNavigationCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                  {sceneNavigationCollapsed ? 'Show' : 'Hide'} scene navigation
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <AnimatePresence>
+              {!sceneNavigationCollapsed && (
+                <motion.div
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: 'auto' }}
+                  exit={{ opacity: 0, width: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center gap-2"
+                >
             {/* Previous Scene Button */}
             <TooltipProvider>
               <Tooltip>
@@ -3305,6 +3364,9 @@ function SceneCard({
                 </PopoverContent>
               </Popover>
             )}
+                </motion.div>
+              )}
+            </AnimatePresence>
             
             <div className="w-px h-4 bg-gray-700" />
             
@@ -4032,17 +4094,38 @@ function SceneCard({
                     return (
                       <div className="bg-slate-900/80 rounded-lg border border-cyan-500/30 overflow-hidden">
                         <div className="px-3 py-2 bg-cyan-900/20 border-b border-cyan-500/20 flex items-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setAudioTimelineCollapsed(!audioTimelineCollapsed)
+                            }}
+                            className="p-1 hover:bg-cyan-500/20 rounded transition-colors"
+                            title={audioTimelineCollapsed ? 'Show audio timeline' : 'Hide audio timeline'}
+                          >
+                            {audioTimelineCollapsed ? <ChevronDown className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronUp className="w-3.5 h-3.5 text-cyan-400" />}
+                          </button>
                           <Layers className="w-4 h-4 text-cyan-400" />
                           <span className="text-xs font-medium text-cyan-300">Audio Timeline</span>
                           <span className="text-[10px] text-gray-500 ml-auto">{sceneDuration.toFixed(1)}s total</span>
                         </div>
-                        <AudioTimeline
-                          sceneDuration={sceneDuration}
-                          audioTracks={audioTracks}
-                          onAudioClipChange={(trackType, clipId, changes) => {
-                            onAudioClipChange?.(sceneIdx, trackType, clipId, changes)
-                          }}
-                        />
+                        <AnimatePresence>
+                          {!audioTimelineCollapsed && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <AudioTimeline
+                                sceneDuration={sceneDuration}
+                                audioTracks={audioTracks}
+                                onAudioClipChange={(trackType, clipId, changes) => {
+                                  onAudioClipChange?.(sceneIdx, trackType, clipId, changes)
+                                }}
+                              />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     )
                   })()}
