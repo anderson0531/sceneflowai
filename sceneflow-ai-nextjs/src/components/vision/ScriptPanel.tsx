@@ -2391,6 +2391,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                           generatingFrameForSegment={generatingFrameForSegment}
                           generatingFramePhase={generatingFramePhase}
                           bookmarkedSceneIndex={bookmarkedSceneIndex}
+                          sceneNavigationCollapsed={sceneNavigationCollapsed}
+                          setSceneNavigationCollapsed={setSceneNavigationCollapsed}
+                          audioTimelineCollapsed={audioTimelineCollapsed}
+                          setAudioTimelineCollapsed={setAudioTimelineCollapsed}
                 />
                     )
                   })}
@@ -2864,6 +2868,11 @@ interface SceneCardProps {
   generatingFramePhase?: 'start' | 'end' | 'video' | null
   // Bookmark index for scene jump selector
   bookmarkedSceneIndex?: number
+  // Collapsible UI state
+  sceneNavigationCollapsed?: boolean
+  setSceneNavigationCollapsed?: (collapsed: boolean) => void
+  audioTimelineCollapsed?: boolean
+  setAudioTimelineCollapsed?: (collapsed: boolean) => void
 }
 
 function SceneCard({
@@ -2963,6 +2972,10 @@ function SceneCard({
   generatingFrameForSegment,
   generatingFramePhase,
   bookmarkedSceneIndex = -1,
+  sceneNavigationCollapsed,
+  setSceneNavigationCollapsed,
+  audioTimelineCollapsed,
+  setAudioTimelineCollapsed,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(null)
