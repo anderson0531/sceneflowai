@@ -836,7 +836,7 @@ export function SceneProductionManager({
       // Narration-driven segmentation options
       narrationDriven,
       narrationText: narrationDriven ? scene?.narration : undefined,
-      narrationDuration: narrationDriven && narrationDuration ? narrationDuration : undefined,
+      narrationDuration: narrationDriven && narrationDurationSeconds ? narrationDurationSeconds : undefined,
       narrationAudioUrl: narrationDriven ? scene?.narrationAudioUrl : undefined,
     }
     
@@ -1230,7 +1230,7 @@ export function SceneProductionManager({
                       src={scene.narrationAudioUrl}
                     />
                     <span className="text-xs text-purple-500">
-                      {narrationDuration ? `${narrationDuration.toFixed(1)}s` : 'Audio'}
+                      {narrationDurationSeconds ? `${narrationDurationSeconds.toFixed(1)}s` : 'Audio'}
                     </span>
                   </div>
                 )}
