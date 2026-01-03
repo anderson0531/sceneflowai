@@ -452,8 +452,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
       <div className="flex flex-col h-full">
         {/* Title - h4 style */}
         <div className="flex items-center gap-2 py-3 mb-2">
-          <BookOpen className="w-4 h-4 text-cyan-400" />
-          <h4 className="font-bold text-base tracking-tight text-gray-900 dark:text-white">Production Bible</h4>
+          <BookOpen className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+          <h4 className="font-bold text-base tracking-tight text-gray-900 dark:text-white leading-none">Production Bible</h4>
         </div>
         
         {/* Tab Navigation - matching ScriptPanel folder tab style */}
