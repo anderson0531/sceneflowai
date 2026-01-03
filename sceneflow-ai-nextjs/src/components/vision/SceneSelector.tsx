@@ -1,11 +1,13 @@
 'use client'
 
 import { useRef, useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { 
   ChevronLeft, 
   ChevronRight,
   ChevronDown,
+  ChevronUp,
   Clock,
   Film,
   CheckCircle2,
@@ -18,7 +20,8 @@ import {
   Compass,
   Frame,
   Clapperboard,
-  List
+  List,
+  LayoutGrid
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -62,6 +65,22 @@ export function SceneSelector({
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const selectedCardRef = useRef<HTMLButtonElement>(null)
   const [sceneJumpOpen, setSceneJumpOpen] = useState(false)
+  
+  // Collapsible state with localStorage persistence (default to collapsed)
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('scenesNavigatorCollapsed')
+      return saved !== null ? JSON.parse(saved) : true // Default collapsed
+    }
+    return true
+  })
+  
+  // Persist collapsed state
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('scenesNavigatorCollapsed', JSON.stringify(isCollapsed))
+    }
+  }, [isCollapsed])
 
   // Auto-scroll to selected scene
   useEffect(() => {
@@ -139,8 +158,15 @@ export function SceneSelector({
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-800">
         <div className="flex items-center gap-2">
-          <Film className="w-3.5 h-3.5 text-purple-400" />
-          <span className="text-xs font-medium text-white">Scenes</span>
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-1 hover:bg-gray-800 rounded transition-colors"
+            title={isCollapsed ? 'Show scenes navigator' : 'Hide scenes navigator'}
+          >
+            {isCollapsed ? <ChevronDown className="w-3.5 h-3.5 text-purple-400" /> : <ChevronUp className="w-3.5 h-3.5 text-purple-400" />}
+          </button>
+          <LayoutGrid className="w-3.5 h-3.5 text-purple-400" />
+          <span className="text-xs font-medium text-white">Scenes Navigator</span>
           <span className="text-[10px] text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded">
             {scenes.length}
           </span>
@@ -176,14 +202,22 @@ export function SceneSelector({
         </div>
       </div>
 
-      {/* Scrollable Scene Cards */}
-      <div 
-        ref={scrollContainerRef}
-        className="overflow-x-auto overflow-y-hidden w-full min-w-0"
-        style={{ scrollbarWidth: 'thin', maxWidth: '100%' }}
-      >
-        <div className="flex gap-2 px-3 py-2 w-max min-w-0">
-        {scenes.map((scene) => {
+      {/* Scrollable Scene Cards - Collapsible */}
+      <AnimatePresence>
+        {!isCollapsed && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div 
+              ref={scrollContainerRef}
+              className="overflow-x-auto overflow-y-hidden w-full min-w-0"
+              style={{ scrollbarWidth: 'thin', maxWidth: '100%' }}
+            >
+              <div className="flex gap-2 px-3 py-2 w-max min-w-0">
+              {scenes.map((scene) => {
           const isSelected = scene.id === selectedSceneId
           const displayDuration = getDisplayDuration(scene)
           const isActualDuration = scene.actualDuration && scene.actualDuration > 0
@@ -284,8 +318,11 @@ export function SceneSelector({
             </button>
           )
         })}
-        </div>
-      </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Scene Navigation Bar */}
       {(onPrevScene || onNextScene) && (
