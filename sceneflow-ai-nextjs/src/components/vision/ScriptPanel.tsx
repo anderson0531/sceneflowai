@@ -2066,7 +2066,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               <span className="text-sm hidden sm:inline">Edit Script</span>
             </Button>
 
-            {/* Language Selector */
+            {/* Language Selector */}
             <div className="w-[120px]">
               <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
                 <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700 text-slate-200">
