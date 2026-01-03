@@ -2054,150 +2054,19 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               <span className="text-sm hidden sm:inline">Budget</span>
             </Button>
             
-            {/* Guide Dropdown - Workflow Guide */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2 border-purple-500/30 hover:border-purple-500/50 hover:bg-purple-500/10"
-                >
-                  <Lightbulb className="w-4 h-4 text-purple-400" />
-                  <span className="text-sm">Guide</span>
-                  <ChevronDown className="w-3 h-3 opacity-60" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="text-purple-400">Workflow Guide</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <DropdownMenuItem
-                        onClick={() => window.dispatchEvent(new CustomEvent('vision:scenes'))}
-                      >
-                        <Film className="w-4 h-4 mr-2 text-cyan-400" />
-                        <span>View Scenes</span>
-                      </DropdownMenuItem>
-                    </TooltipTrigger>
-                    <TooltipContent side="left" className="bg-gray-900 text-white border-gray-700">
-                      <p>Review scene breakdowns</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <DropdownMenuItem
-                        onClick={() => window.dispatchEvent(new CustomEvent('vision:characters'))}
-                      >
-                        <Users className="w-4 h-4 mr-2 text-purple-400" />
-                        <span>Character Library</span>
-                      </DropdownMenuItem>
-                    </TooltipTrigger>
-                    <TooltipContent side="left" className="bg-gray-900 text-white border-gray-700">
-                      <p>Check character consistency</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <DropdownMenuItem
-                        onClick={() => window.dispatchEvent(new CustomEvent('vision:script-preview'))}
-                      >
-                        <FileText className="w-4 h-4 mr-2 text-blue-400" />
-                        <span>Preview Script</span>
-                      </DropdownMenuItem>
-                    </TooltipTrigger>
-                    <TooltipContent side="left" className="bg-gray-900 text-white border-gray-700">
-                      <p>Validate dialogue flow</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <DropdownMenuItem
-                        onClick={() => window.dispatchEvent(new CustomEvent('vision:gallery'))}
-                      >
-                        <ImageIcon className="w-4 h-4 mr-2 text-emerald-400" />
-                        <span>Open Gallery</span>
-                      </DropdownMenuItem>
-                    </TooltipTrigger>
-                    <TooltipContent side="left" className="bg-gray-900 text-white border-gray-700">
-                      <p>Preview key frames</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <DropdownMenuItem
-                        onClick={() => window.dispatchEvent(new CustomEvent('vision:cost-estimate'))}
-                      >
-                        <BarChart3 className="w-4 h-4 mr-2 text-amber-400" />
-                        <span>Cost Estimate</span>
-                      </DropdownMenuItem>
-                    </TooltipTrigger>
-                    <TooltipContent side="left" className="bg-gray-900 text-white border-gray-700">
-                      <p>Estimate credit usage</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Edit Script Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.dispatchEvent(new CustomEvent('production:edit-script'))}
+              className="flex items-center gap-2 border-blue-500/30 hover:border-blue-500/50 hover:bg-blue-500/10"
+              title="Edit and iterate on the script"
+            >
+              <Edit className="w-4 h-4 text-blue-400" />
+              <span className="text-sm hidden sm:inline">Edit Script</span>
+            </Button>
 
-            {/* Actions Dropdown - Quick Actions (matches sidebar) */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2 border-amber-500/30 hover:border-amber-500/50 hover:bg-amber-500/10"
-                >
-                  <Zap className="w-4 h-4 text-amber-400" />
-                  <span className="text-sm">Actions</span>
-                  <ChevronDown className="w-3 h-3 opacity-60" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="text-amber-400">Quick Actions</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => window.dispatchEvent(new CustomEvent('production:goto-bookmark'))}
-                >
-                  <Bookmark className="w-4 h-4 mr-2 text-amber-500" />
-                  <span>Go to Bookmark</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => window.dispatchEvent(new CustomEvent('production:scene-gallery'))}
-                >
-                  <ImageIcon className="w-4 h-4 mr-2 text-cyan-400" />
-                  <span>Open Scene Gallery</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => window.dispatchEvent(new CustomEvent('production:screening-room'))}
-                >
-                  <Play className="w-4 h-4 mr-2 text-green-500" />
-                  <span>Screening Room</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => window.dispatchEvent(new CustomEvent('production:update-reviews'))}
-                >
-                  <BarChart3 className="w-4 h-4 mr-2 text-purple-500" />
-                  <span>Update Review Scores</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => window.dispatchEvent(new CustomEvent('production:review-analysis'))}
-                >
-                  <FileText className="w-4 h-4 mr-2 text-blue-500" />
-                  <span>Review Analysis</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Language Selector */}
+            {/* Language Selector */
             <div className="w-[120px]">
               <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
                 <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700 text-slate-200">
@@ -3511,7 +3380,7 @@ function SceneCard({
           {/* Right Side: Scene Actions */}
           <div className="flex items-center gap-2">
             
-            {/* Edit Button */}
+            {/* Edit Scene Button */}
             {!isOutline && (
               <TooltipProvider>
                 <Tooltip>
@@ -3524,10 +3393,10 @@ function SceneCard({
                       className="flex items-center gap-1 px-2 py-1 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded transition-colors"
                     >
                       <Edit className="w-4 h-4" />
-                      <span className="text-xs">Edit</span>
+                      <span className="text-xs">Edit Scene</span>
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Edit scene</TooltipContent>
+                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Edit scene details</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             )}
