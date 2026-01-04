@@ -243,9 +243,19 @@ export async function POST(req: NextRequest) {
     console.error('[Scene Audio] Error:', {
       message: error?.message || String(error),
       stack: error?.stack,
+      name: error?.name,
+      cause: error?.cause,
     })
+    
+    // Return detailed error for debugging
+    const errorMessage = error?.message || 'Audio generation failed'
+    const errorDetail = error?.name ? `${error.name}: ${errorMessage}` : errorMessage
+    
     return NextResponse.json(
-      { error: error.message || 'Audio generation failed' },
+      { 
+        error: errorDetail,
+        details: process.env.NODE_ENV === 'development' ? error?.stack : undefined 
+      },
       { status: 500 }
     )
   }

@@ -2956,13 +2956,14 @@ function SceneCard({
   }, [isSceneAudioCompleteForLanguage, selectedLanguage, scene.sceneDirection, scene.imageUrl, sceneProductionData, workflowCompletions])
   
   // Sequential activation logic - steps unlock based on prerequisite completion
+  // Direction (directorsChair) is now auto-generated, so Frame unlocks when Script is complete
   // Call Action also requires scene image for visual consistency (soft requirement - shows warning)
   const hasSceneImage = !!scene.imageUrl
   const stepUnlocked = useMemo(() => {
     return {
       dialogueAction: true, // Always unlocked
-      directorsChair: stepCompletion.dialogueAction,
-      storyboardPreViz: stepCompletion.directorsChair,
+      directorsChair: stepCompletion.dialogueAction, // Keep for internal logic
+      storyboardPreViz: stepCompletion.dialogueAction, // Frame now unlocks when Script is complete (Direction is auto-generated)
       callAction: stepCompletion.storyboardPreViz,  // Unlocks after Frame step, but will show warning if no image
     }
   }, [stepCompletion])
@@ -3023,7 +3024,7 @@ function SceneCard({
 
   const workflowTabs: Array<{ key: WorkflowStep; label: string; icon: React.ReactNode }> = useMemo(() => [
     { key: 'dialogueAction', label: 'Script', icon: <FileText className="w-4 h-4" /> },
-    { key: 'directorsChair', label: 'Direction', icon: <Film className="w-4 h-4" /> },
+    // Direction (directorsChair) is now hidden - auto-generated from Script, accessible via Frame dialog and Export
     { key: 'storyboardPreViz', label: 'Frame', icon: <Camera className="w-4 h-4" /> },
     { key: 'callAction', label: 'Call Action', icon: <Clapperboard className="w-4 h-4" /> }
   ], [])
@@ -3690,11 +3691,13 @@ function SceneCard({
               <div className="bg-slate-800/30 rounded-lg p-4 min-h-[200px]">
                 {/* Staleness Warning Banner */}
                 {(() => {
-                  const directionStale = activeWorkflowTab === 'directorsChair' && stepStaleness.directorsChair
+                  // Direction is now hidden, so show Direction stale warning on Frame tab too
+                  const directionStale = activeWorkflowTab === 'storyboardPreViz' && stepStaleness.directorsChair
                   const imageStale = activeWorkflowTab === 'storyboardPreViz' && stepStaleness.storyboardPreViz
                   
                   if (!directionStale && !imageStale) return null
                   
+                  // If both are stale, prioritize Direction (regenerate Direction first, then Frame)
                   const staleStepKey = directionStale ? 'directorsChair' : 'storyboardPreViz'
                   
                   return (
@@ -3703,7 +3706,7 @@ function SceneCard({
                         <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                         <span className="text-sm font-medium">
                           {directionStale 
-                            ? 'Script has changed. Consider regenerating Direction.' 
+                            ? 'Script has changed. Direction may be stale — regenerate before creating Frame.' 
                             : 'Direction has changed. Consider regenerating Frame.'}
                         </span>
                         <div className="ml-auto flex items-center gap-2">
