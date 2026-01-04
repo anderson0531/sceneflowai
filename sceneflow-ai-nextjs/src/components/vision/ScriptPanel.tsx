@@ -13,7 +13,7 @@
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
@@ -2867,6 +2867,8 @@ function SceneCard({
   const [dialogueCollapsed, setDialogueCollapsed] = useState(false)
   const [musicCollapsed, setMusicCollapsed] = useState(false)
   const [sfxCollapsed, setSfxCollapsed] = useState(false)
+  // Scene Image section: expanded when image exists, collapsed when empty to encourage generation
+  const [sceneImageCollapsed, setSceneImageCollapsed] = useState(!scene.imageUrl)
   
   // Determine active step for Co-Pilot
   const activeStep: WorkflowStep | null = activeWorkflowTab
@@ -4006,6 +4008,145 @@ function SceneCard({
                                   onAudioClipChange?.(sceneIdx, trackType, clipId, changes)
                                 }}
                               />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )
+                  })()}
+                  
+                  {/* Scene Reference Image - visual anchor for Screening Room and Frame generation */}
+                  {(() => {
+                    const hasImage = !!scene.imageUrl
+                    const isGenerating = isGeneratingImage
+                    
+                    return (
+                      <div className="bg-slate-900/80 rounded-lg border border-indigo-500/30 overflow-hidden">
+                        <div className="px-3 py-2 bg-indigo-900/20 border-b border-indigo-500/20 flex items-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSceneImageCollapsed(!sceneImageCollapsed)
+                            }}
+                            className="p-1 hover:bg-indigo-500/20 rounded transition-colors"
+                            title={sceneImageCollapsed ? 'Show scene image' : 'Hide scene image'}
+                          >
+                            {sceneImageCollapsed ? <ChevronDown className="w-3.5 h-3.5 text-indigo-400" /> : <ChevronUp className="w-3.5 h-3.5 text-indigo-400" />}
+                          </button>
+                          <ImageIcon className="w-4 h-4 text-indigo-400" />
+                          <span className="text-xs font-medium text-indigo-300">Scene Image</span>
+                          {hasImage && (
+                            <span className="text-xs px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded flex items-center gap-1 ml-1">
+                              <CheckCircle2 className="w-3 h-3" />
+                              Ready
+                            </span>
+                          )}
+                          <div className="flex items-center gap-1 ml-auto">
+                            {hasImage && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onOpenPromptBuilder?.(sceneIdx)
+                                }}
+                                className="p-1 hover:bg-indigo-500/20 rounded transition-colors"
+                                title="Edit image prompt"
+                              >
+                                <Pencil className="w-3.5 h-3.5 text-indigo-400" />
+                              </button>
+                            )}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (!isGenerating) {
+                                  onOpenPromptBuilder?.(sceneIdx)
+                                }
+                              }}
+                              disabled={isGenerating}
+                              className="text-xs px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
+                              title={hasImage ? 'Regenerate scene image' : 'Generate scene image'}
+                            >
+                              {isGenerating ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Sparkles className="w-3 h-3" />
+                              )}
+                              {hasImage ? 'Regenerate' : 'Generate'}
+                            </button>
+                          </div>
+                        </div>
+                        <AnimatePresence>
+                          {!sceneImageCollapsed && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="p-3"
+                            >
+                              {hasImage ? (
+                                <div className="relative group">
+                                  <img
+                                    src={scene.imageUrl}
+                                    alt={`Scene ${sceneNumber} reference`}
+                                    className="w-full h-auto rounded-lg object-cover max-h-64 cursor-pointer"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      // Open in full view or modal if needed
+                                      window.open(scene.imageUrl, '_blank')
+                                    }}
+                                  />
+                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-3">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        onOpenPromptBuilder?.(sceneIdx)
+                                      }}
+                                      className="p-2 bg-white/20 hover:bg-white/30 rounded-full transition-colors"
+                                      title="Edit prompt"
+                                    >
+                                      <Pencil className="w-4 h-4 text-white" />
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        window.open(scene.imageUrl, '_blank')
+                                      }}
+                                      className="p-2 bg-white/20 hover:bg-white/30 rounded-full transition-colors"
+                                      title="View full size"
+                                    >
+                                      <Expand className="w-4 h-4 text-white" />
+                                    </button>
+                                  </div>
+                                  <p className="text-[10px] text-gray-500 mt-2 text-center">
+                                    This image anchors your scene vision for Screening Room and Frame generation
+                                  </p>
+                                </div>
+                              ) : (
+                                <div className="flex flex-col items-center justify-center py-6 px-4 border-2 border-dashed border-indigo-500/30 rounded-lg bg-indigo-500/5">
+                                  <ImageIcon className="w-8 h-8 text-indigo-400/50 mb-2" />
+                                  <p className="text-sm text-gray-400 text-center mb-3">
+                                    No scene image yet
+                                  </p>
+                                  <p className="text-xs text-gray-500 text-center mb-3 max-w-xs">
+                                    Generate a reference image to visualize your scene before video production. This anchors visual consistency for frames and videos.
+                                  </p>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      onOpenPromptBuilder?.(sceneIdx)
+                                    }}
+                                    disabled={isGenerating}
+                                    className="text-xs px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-2 transition-colors"
+                                  >
+                                    {isGenerating ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Sparkles className="w-4 h-4" />
+                                    )}
+                                    Generate Scene Image
+                                  </button>
+                                </div>
+                              )}
                             </motion.div>
                           )}
                         </AnimatePresence>
