@@ -408,6 +408,9 @@ export interface AudioTrackClipV2 {
   scenePropertyPath?: string  // e.g., 'narrationAudio.en.url' for debugging
   characterName?: string      // For dialogue clips
   dialogueIndex?: number      // Index in scene.dialogue array
+  // Stale audio warning
+  isStale?: boolean           // True if audio doesn't match current dialogue
+  staleReason?: string        // Human-readable reason for stale status
 }
 
 /**

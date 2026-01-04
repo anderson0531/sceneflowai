@@ -139,9 +139,10 @@ export function buildAudioTracksForLanguage(
   const currentDialogue: any[] = Array.isArray(scene.dialogue) ? scene.dialogue : []
   
   // Helper to check if audio entry matches a valid dialogue line
-  const isValidDialogueAudio = (audio: any, fallbackIdx: number): boolean => {
+  // Returns null if valid, or a stale reason string if mismatched
+  const getStaleReason = (audio: any, fallbackIdx: number): string | null => {
     // If no current dialogue, audio is stale
-    if (currentDialogue.length === 0) return false
+    if (currentDialogue.length === 0) return 'No dialogue lines in script'
     
     // Check if dialogueIndex is valid
     const targetIdx = audio.dialogueIndex ?? fallbackIdx
@@ -153,7 +154,7 @@ export function buildAudioTracksForLanguage(
       
       // If characters match or audio doesn't have character info, it's valid
       if (!audioChar || !dialogueChar || audioChar === dialogueChar) {
-        return true
+        return null
       }
     }
     
@@ -161,13 +162,15 @@ export function buildAudioTracksForLanguage(
     // This helps when indices are out of sync but content matches
     const audioChar = (audio.character || audio.speaker || audio.characterName || '').toLowerCase().trim()
     if (audioChar) {
-      return currentDialogue.some(d => 
+      const hasMatch = currentDialogue.some(d => 
         (d?.character || '').toLowerCase().trim() === audioChar
       )
+      if (hasMatch) return null
+      return `Character "${audioChar}" not found in current dialogue`
     }
     
-    // No way to validate, consider stale
-    return false
+    // No way to validate
+    return 'Dialogue line may have been modified'
   }
   
   // Source 1: dialogueAudio[language] array (preferred)
@@ -176,10 +179,10 @@ export function buildAudioTracksForLanguage(
     dialogueAudioArray.forEach((audio: any, idx: number) => {
       const url = audio?.audioUrl || audio?.url
       if (url && typeof url === 'string' && url.trim()) {
-        // Filter out stale dialogue audio that doesn't match current script
-        if (!isValidDialogueAudio(audio, idx)) {
-          console.log(`[audioTrackBuilder] Skipping stale dialogue audio at index ${idx}, character: ${audio.character || 'unknown'}`)
-          return
+        // Check if dialogue audio matches current script - mark as stale if not
+        const staleReason = getStaleReason(audio, idx)
+        if (staleReason) {
+          console.warn(`[audioTrackBuilder] Stale dialogue audio at index ${idx}: ${staleReason}`)
         }
         
         const duration = audio.duration || 3
@@ -195,6 +198,8 @@ export function buildAudioTracksForLanguage(
           scenePropertyPath: `dialogueAudio.${language}[${idx}].url`,
           characterName: audio.character || audio.speaker || audio.characterName,
           dialogueIndex: audio.dialogueIndex ?? idx,
+          isStale: !!staleReason,
+          staleReason: staleReason || undefined,
         })
         currentTime += duration + 0.5
       }

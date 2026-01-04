@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
-import { Play, Pause, Volume2, VolumeX, Mic, Music, Zap, SkipBack, SkipForward, X, RotateCcw, Pencil } from 'lucide-react'
+import { Play, Pause, Volume2, VolumeX, Mic, Music, Zap, SkipBack, SkipForward, X, RotateCcw, Pencil, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
@@ -13,6 +13,8 @@ export interface AudioTrackClip {
   duration: number   // In seconds
   label?: string     // e.g., character name for dialogue, description for SFX
   volume?: number    // 0-1
+  isStale?: boolean  // True if audio doesn't match current dialogue
+  staleReason?: string  // Human-readable reason for stale status
 }
 
 export interface AudioTracksData {
@@ -29,6 +31,7 @@ interface AudioTimelineProps {
   onPlayheadChange?: (time: number) => void
   onTrackUpdate?: (trackType: keyof AudioTracksData, clips: AudioTrackClip | AudioTrackClip[]) => void
   onAudioClipChange?: (trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
+  onAudioError?: (clipId: string, url: string) => void
 }
 
 function formatTime(seconds: number): string {
@@ -45,6 +48,7 @@ export function AudioTimeline({
   onPlayheadChange,
   onTrackUpdate,
   onAudioClipChange,
+  onAudioError,
 }: AudioTimelineProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -411,6 +415,15 @@ export function AudioTimeline({
                   setSelectedClipTrackType(trackType)
                 }}
               >
+                {/* Stale warning icon */}
+                {clip.isStale && (
+                  <span 
+                    className="flex-shrink-0 mr-0.5" 
+                    title={clip.staleReason || 'Audio may be out of sync with script'}
+                  >
+                    <AlertTriangle className="w-3 h-3 text-yellow-400" />
+                  </span>
+                )}
                 {/* Clip label */}
                 {clip.label && clip.duration * pixelsPerSecond > 40 && (
                   <span className="text-[8px] text-white font-medium truncate relative z-10">
@@ -640,7 +653,8 @@ export function AudioTimeline({
                 <label className="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Start</label>
                 <div className="flex items-center gap-1">
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation()
                       const newStart = Math.max(0, clipData.startTime - 0.5)
                       onAudioClipChange?.(selectedClipTrackType!, selectedClipId!, { startTime: newStart })
                     }}
@@ -674,7 +688,8 @@ export function AudioTimeline({
                     className="w-12 px-1 py-0.5 bg-gray-800 border border-gray-600 hover:border-cyan-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded text-white font-mono text-[11px] text-center outline-none"
                   />
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation()
                       const newStart = Math.min(sceneDuration, clipData.startTime + 0.5)
                       onAudioClipChange?.(selectedClipTrackType!, selectedClipId!, { startTime: newStart })
                     }}
@@ -690,7 +705,8 @@ export function AudioTimeline({
                 <label className="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Duration</label>
                 <div className="flex items-center gap-1">
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation()
                       const newDuration = Math.max(0.1, clipData.duration - 0.5)
                       onAudioClipChange?.(selectedClipTrackType!, selectedClipId!, { duration: newDuration })
                     }}
@@ -724,7 +740,8 @@ export function AudioTimeline({
                     className="w-12 px-1 py-0.5 bg-gray-800 border border-gray-600 hover:border-cyan-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded text-white font-mono text-[11px] text-center outline-none"
                   />
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation()
                       const newDuration = clipData.duration + 0.5
                       onAudioClipChange?.(selectedClipTrackType!, selectedClipId!, { duration: newDuration })
                     }}
@@ -767,6 +784,10 @@ export function AudioTimeline({
             }}
             src={clip.url}
             preload="auto"
+            onError={() => {
+              console.warn(`[AudioTimeline] Audio failed to load: ${clip.url}`)
+              onAudioError?.(clip.id, clip.url!)
+            }}
           />
         )
       ))}
