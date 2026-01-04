@@ -66,6 +66,9 @@ export function AudioTimeline({
   const [editingStartTime, setEditingStartTime] = useState<string | null>(null)
   const [editingDuration, setEditingDuration] = useState<string | null>(null)
   
+  // Track last known clip values to detect external changes
+  const lastClipValuesRef = useRef<{ id: string | null; startTime: number; duration: number }>({ id: null, startTime: 0, duration: 0 })
+  
   // Ref to capture mutedClips for animation frames
   const mutedClipsRef = useRef<Set<string>>(new Set())
   useEffect(() => {
@@ -632,22 +635,31 @@ export function AudioTimeline({
             </div>
             
             <div className="grid grid-cols-3 gap-3 text-xs">
-              {/* Start Time - EDITABLE */}
+              {/* Start Time - EDITABLE with +/- buttons */}
               <div>
                 <label className="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Start</label>
                 <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => {
+                      const newStart = Math.max(0, clipData.startTime - 0.5)
+                      onAudioClipChange?.(selectedClipTrackType!, selectedClipId!, { startTime: newStart })
+                    }}
+                    className="w-5 h-5 flex items-center justify-center bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-gray-300 text-xs font-bold"
+                    title="-0.5s"
+                  >−</button>
                   <input
-                    type="number"
-                    min={0}
-                    max={sceneDuration}
-                    step={0.1}
+                    type="text"
+                    inputMode="decimal"
                     value={editingStartTime ?? clipData.startTime.toFixed(1)}
                     onFocus={() => setEditingStartTime(clipData.startTime.toFixed(1))}
                     onChange={(e) => setEditingStartTime(e.target.value)}
                     onBlur={() => {
                       if (editingStartTime !== null) {
-                        const newStart = Math.max(0, Math.min(sceneDuration, parseFloat(editingStartTime) || 0))
-                        onAudioClipChange?.(selectedClipTrackType!, selectedClipId!, { startTime: newStart })
+                        const parsed = parseFloat(editingStartTime)
+                        if (!isNaN(parsed)) {
+                          const newStart = Math.max(0, Math.min(sceneDuration, parsed))
+                          onAudioClipChange?.(selectedClipTrackType!, selectedClipId!, { startTime: newStart })
+                        }
                       }
                       setEditingStartTime(null)
                     }}
@@ -659,28 +671,45 @@ export function AudioTimeline({
                         ;(e.target as HTMLInputElement).blur()
                       }
                     }}
-                    className="w-14 px-1.5 py-0.5 bg-gray-800 border border-gray-600 hover:border-cyan-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded text-white font-mono text-[11px] outline-none"
+                    className="w-12 px-1 py-0.5 bg-gray-800 border border-gray-600 hover:border-cyan-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded text-white font-mono text-[11px] text-center outline-none"
                   />
+                  <button
+                    onClick={() => {
+                      const newStart = Math.min(sceneDuration, clipData.startTime + 0.5)
+                      onAudioClipChange?.(selectedClipTrackType!, selectedClipId!, { startTime: newStart })
+                    }}
+                    className="w-5 h-5 flex items-center justify-center bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-gray-300 text-xs font-bold"
+                    title="+0.5s"
+                  >+</button>
                   <span className="text-gray-500">s</span>
                 </div>
               </div>
               
-              {/* Duration - EDITABLE */}
+              {/* Duration - EDITABLE with +/- buttons */}
               <div>
                 <label className="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Duration</label>
                 <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => {
+                      const newDuration = Math.max(0.1, clipData.duration - 0.5)
+                      onAudioClipChange?.(selectedClipTrackType!, selectedClipId!, { duration: newDuration })
+                    }}
+                    className="w-5 h-5 flex items-center justify-center bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-gray-300 text-xs font-bold"
+                    title="-0.5s"
+                  >−</button>
                   <input
-                    type="number"
-                    min={0.1}
-                    max={sceneDuration}
-                    step={0.1}
+                    type="text"
+                    inputMode="decimal"
                     value={editingDuration ?? clipData.duration.toFixed(1)}
                     onFocus={() => setEditingDuration(clipData.duration.toFixed(1))}
                     onChange={(e) => setEditingDuration(e.target.value)}
                     onBlur={() => {
                       if (editingDuration !== null) {
-                        const newDuration = Math.max(0.1, parseFloat(editingDuration) || 0.1)
-                        onAudioClipChange?.(selectedClipTrackType!, selectedClipId!, { duration: newDuration })
+                        const parsed = parseFloat(editingDuration)
+                        if (!isNaN(parsed)) {
+                          const newDuration = Math.max(0.1, parsed)
+                          onAudioClipChange?.(selectedClipTrackType!, selectedClipId!, { duration: newDuration })
+                        }
                       }
                       setEditingDuration(null)
                     }}
@@ -692,8 +721,16 @@ export function AudioTimeline({
                         ;(e.target as HTMLInputElement).blur()
                       }
                     }}
-                    className="w-14 px-1.5 py-0.5 bg-gray-800 border border-gray-600 hover:border-cyan-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded text-white font-mono text-[11px] outline-none"
+                    className="w-12 px-1 py-0.5 bg-gray-800 border border-gray-600 hover:border-cyan-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded text-white font-mono text-[11px] text-center outline-none"
                   />
+                  <button
+                    onClick={() => {
+                      const newDuration = clipData.duration + 0.5
+                      onAudioClipChange?.(selectedClipTrackType!, selectedClipId!, { duration: newDuration })
+                    }}
+                    className="w-5 h-5 flex items-center justify-center bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-gray-300 text-xs font-bold"
+                    title="+0.5s"
+                  >+</button>
                   <span className="text-gray-500">s</span>
                 </div>
               </div>

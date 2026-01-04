@@ -3870,12 +3870,17 @@ function SceneCard({
                     if (!hasAnyAudio) return null
                     
                     // Calculate scene duration from audio
-                    // Read from saved override fields first, then fall back to audio metadata
-                    const descDuration = scene.descriptionDuration ?? scene.descriptionAudio?.[selectedLanguage]?.duration ?? 0
-                    const descStartTime = scene.descriptionStartTime ?? scene.descriptionAudio?.[selectedLanguage]?.startTime ?? 0
-                    const narrDurationFromAudio = scene.narrationAudio?.[selectedLanguage]?.duration || 0
+                    // Use saved override fields first, with sensible defaults
+                    // Note: Audio metadata often doesn't have startTime, so don't fall back to it
+                    const descDurationFromAudio = scene.descriptionAudio?.[selectedLanguage]?.duration ?? 0
+                    const descDuration = scene.descriptionDuration ?? descDurationFromAudio
+                    const descStartTime = scene.descriptionStartTime ?? 0 // Always start at 0 by default
+                    
+                    const narrDurationFromAudio = scene.narrationAudio?.[selectedLanguage]?.duration ?? 0
                     const narrDuration = scene.narrationDuration ?? narrDurationFromAudio
-                    const narrStartTime = scene.narrationStartTime ?? scene.narrationAudio?.[selectedLanguage]?.startTime ?? (descDuration > 0 ? descStartTime + descDuration + 0.35 : 2)
+                    // Narration starts after description ends (with small gap), or at 0 if no description
+                    const defaultNarrStartTime = descDuration > 0 ? descStartTime + descDuration + 0.35 : 0
+                    const narrStartTime = scene.narrationStartTime ?? defaultNarrStartTime
                     
                     // Calculate dialogue end times
                     let maxDialogueEnd = 0
