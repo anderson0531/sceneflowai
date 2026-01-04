@@ -3964,7 +3964,6 @@ function SceneCard({
                     // Calculate total scene duration for timeline
                     const sceneDuration = Math.max(
                       10,
-                      descStartTime + descDuration,
                       narrStartTime + narrDuration,
                       maxDialogueEnd,
                       maxSfxEnd,
