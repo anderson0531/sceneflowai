@@ -163,6 +163,29 @@ export function AudioTimeline({
     return allClips.find(c => c.clip.id === selectedClipId)?.clip || null
   }, [selectedClipId, selectedClipTrackType, allClips])
 
+  // Clear editing state when clip values change externally (e.g., from +/- buttons)
+  useEffect(() => {
+    const clipData = getSelectedClipData()
+    if (!clipData) return
+    
+    // Check if the clip ID changed (user selected a different clip)
+    if (lastClipValuesRef.current.id !== clipData.id) {
+      // Clear editing state when switching clips
+      setEditingStartTime(null)
+      setEditingDuration(null)
+      lastClipValuesRef.current = { id: clipData.id, startTime: clipData.startTime, duration: clipData.duration }
+      return
+    }
+    
+    // Check if values changed externally (not from typing in the input)
+    if (editingStartTime === null && clipData.startTime !== lastClipValuesRef.current.startTime) {
+      lastClipValuesRef.current.startTime = clipData.startTime
+    }
+    if (editingDuration === null && clipData.duration !== lastClipValuesRef.current.duration) {
+      lastClipValuesRef.current.duration = clipData.duration
+    }
+  }, [getSelectedClipData, editingStartTime, editingDuration])
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
