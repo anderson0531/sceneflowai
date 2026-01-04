@@ -70,6 +70,14 @@ export function AudioTimeline({
   const [editingStartTime, setEditingStartTime] = useState<string | null>(null)
   const [editingDuration, setEditingDuration] = useState<string | null>(null)
   
+  // Optimistic local values - updated immediately on +/- button clicks
+  // This ensures the UI shows the new value immediately without waiting for parent re-render
+  const [optimisticValues, setOptimisticValues] = useState<{ 
+    clipId: string | null; 
+    startTime: number | null; 
+    duration: number | null 
+  }>({ clipId: null, startTime: null, duration: null })
+  
   // Track last known clip values to detect external changes
   const lastClipValuesRef = useRef<{ id: string | null; startTime: number; duration: number }>({ id: null, startTime: 0, duration: 0 })
   
@@ -157,47 +165,68 @@ export function AudioTimeline({
     return clips
   }, [audioTracks])
 
-  // Get the selected clip's data
+  // Get the selected clip's data with optimistic values applied
   const getSelectedClipData = useCallback(() => {
     if (!selectedClipId || !selectedClipTrackType) return null
-    return allClips.find(c => c.clip.id === selectedClipId)?.clip || null
-  }, [selectedClipId, selectedClipTrackType, allClips])
+    const baseClip = allClips.find(c => c.clip.id === selectedClipId)?.clip || null
+    if (!baseClip) return null
+    
+    // Apply optimistic values if they exist for this clip
+    if (optimisticValues.clipId === selectedClipId) {
+      return {
+        ...baseClip,
+        startTime: optimisticValues.startTime ?? baseClip.startTime,
+        duration: optimisticValues.duration ?? baseClip.duration,
+      }
+    }
+    return baseClip
+  }, [selectedClipId, selectedClipTrackType, allClips, optimisticValues])
 
-  // Clear editing state when clip values change externally (e.g., from +/- buttons)
-  // This effect runs whenever allClips changes (which happens after onAudioClipChange)
+  // Clear optimistic values when props catch up, and handle clip switching
   useEffect(() => {
-    const clipData = getSelectedClipData()
-    if (!clipData) {
+    const baseClip = allClips.find(c => c.clip.id === selectedClipId)?.clip
+    if (!baseClip) {
       // No clip selected, reset everything
       lastClipValuesRef.current = { id: null, startTime: 0, duration: 0 }
+      setOptimisticValues({ clipId: null, startTime: null, duration: null })
       return
     }
     
     // Check if the clip ID changed (user selected a different clip)
-    if (lastClipValuesRef.current.id !== clipData.id) {
-      // Clear editing state when switching clips
+    if (lastClipValuesRef.current.id !== baseClip.id) {
+      // Clear editing state and optimistic values when switching clips
       setEditingStartTime(null)
       setEditingDuration(null)
-      lastClipValuesRef.current = { id: clipData.id, startTime: clipData.startTime, duration: clipData.duration }
+      setOptimisticValues({ clipId: null, startTime: null, duration: null })
+      lastClipValuesRef.current = { id: baseClip.id, startTime: baseClip.startTime, duration: baseClip.duration }
       return
     }
     
-    // Check if values changed externally (from +/- buttons, not from typing)
-    // If the clip values don't match our last known values, clear editing state
-    const startTimeChanged = clipData.startTime !== lastClipValuesRef.current.startTime
-    const durationChanged = clipData.duration !== lastClipValuesRef.current.duration
+    // Check if props caught up to our optimistic values
+    // If the prop values now match our optimistic values, clear them
+    if (optimisticValues.clipId === selectedClipId) {
+      const propsCaughtUpStart = optimisticValues.startTime !== null && baseClip.startTime === optimisticValues.startTime
+      const propsCaughtUpDuration = optimisticValues.duration !== null && baseClip.duration === optimisticValues.duration
+      
+      if (propsCaughtUpStart && propsCaughtUpDuration) {
+        // Both values caught up
+        setOptimisticValues({ clipId: null, startTime: null, duration: null })
+      } else if (propsCaughtUpStart && optimisticValues.duration === null) {
+        // Start time caught up, no pending duration
+        setOptimisticValues({ clipId: null, startTime: null, duration: null })
+      } else if (propsCaughtUpDuration && optimisticValues.startTime === null) {
+        // Duration caught up, no pending start time  
+        setOptimisticValues({ clipId: null, startTime: null, duration: null })
+      }
+    }
     
-    if (startTimeChanged) {
-      // Value was changed externally, clear editing state so we show the new value
-      setEditingStartTime(null)
-      lastClipValuesRef.current.startTime = clipData.startTime
-    }
-    if (durationChanged) {
-      // Value was changed externally, clear editing state so we show the new value
-      setEditingDuration(null)
-      lastClipValuesRef.current.duration = clipData.duration
-    }
-  }, [getSelectedClipData])
+    // Update our ref tracking
+    lastClipValuesRef.current = { id: baseClip.id, startTime: baseClip.startTime, duration: baseClip.duration }
+    
+    // Clear editing state when values change
+    setEditingStartTime(null)
+    setEditingDuration(null)
+  }, [selectedClipId, allClips, optimisticValues])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -692,6 +721,12 @@ export function AudioTimeline({
                     onClick={(e) => {
                       e.stopPropagation()
                       const newStart = Math.max(0, clipData.startTime - 0.5)
+                      // Optimistic update - show new value immediately
+                      setOptimisticValues(prev => ({ 
+                        clipId: selectedClipId!, 
+                        startTime: newStart, 
+                        duration: prev.clipId === selectedClipId ? prev.duration : null 
+                      }))
                       onAudioClipChange?.(selectedClipTrackType!, selectedClipId!, { startTime: newStart })
                     }}
                     className="w-5 h-5 flex items-center justify-center bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-gray-300 text-xs font-bold"
@@ -728,6 +763,12 @@ export function AudioTimeline({
                     onClick={(e) => {
                       e.stopPropagation()
                       const newStart = Math.min(sceneDuration, clipData.startTime + 0.5)
+                      // Optimistic update - show new value immediately
+                      setOptimisticValues(prev => ({ 
+                        clipId: selectedClipId!, 
+                        startTime: newStart, 
+                        duration: prev.clipId === selectedClipId ? prev.duration : null 
+                      }))
                       onAudioClipChange?.(selectedClipTrackType!, selectedClipId!, { startTime: newStart })
                     }}
                     className="w-5 h-5 flex items-center justify-center bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-gray-300 text-xs font-bold"
@@ -745,6 +786,12 @@ export function AudioTimeline({
                     onClick={(e) => {
                       e.stopPropagation()
                       const newDuration = Math.max(0.1, clipData.duration - 0.5)
+                      // Optimistic update - show new value immediately
+                      setOptimisticValues(prev => ({ 
+                        clipId: selectedClipId!, 
+                        startTime: prev.clipId === selectedClipId ? prev.startTime : null, 
+                        duration: newDuration 
+                      }))
                       onAudioClipChange?.(selectedClipTrackType!, selectedClipId!, { duration: newDuration })
                     }}
                     className="w-5 h-5 flex items-center justify-center bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-gray-300 text-xs font-bold"
@@ -781,6 +828,12 @@ export function AudioTimeline({
                     onClick={(e) => {
                       e.stopPropagation()
                       const newDuration = clipData.duration + 0.5
+                      // Optimistic update - show new value immediately
+                      setOptimisticValues(prev => ({ 
+                        clipId: selectedClipId!, 
+                        startTime: prev.clipId === selectedClipId ? prev.startTime : null, 
+                        duration: newDuration 
+                      }))
                       onAudioClipChange?.(selectedClipTrackType!, selectedClipId!, { duration: newDuration })
                     }}
                     className="w-5 h-5 flex items-center justify-center bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-gray-300 text-xs font-bold"
