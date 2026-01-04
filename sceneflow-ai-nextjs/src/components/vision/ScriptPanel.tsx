@@ -3852,7 +3852,7 @@ function SceneCard({
                   {/* Audio Timeline Visualization - Always visible strip showing audio alignment */}
                   {(() => {
                     // Build audio tracks data from scene
-                    const descriptionUrl = scene.descriptionAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.descriptionAudioUrl : undefined)
+                    // Note: Description audio is deprecated - scene descriptions are context for user, not production audio
                     const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
                     
                     // Get dialogue audio array
@@ -3866,21 +3866,16 @@ function SceneCard({
                     // Check if we have any audio to display
                     const hasSfxAudio = scene.sfxAudio && scene.sfxAudio.length > 0 && scene.sfxAudio.some((url: string) => url)
                     const hasMusicAudio = !!(scene.musicAudio || scene.music?.url)
-                    const hasAnyAudio = descriptionUrl || narrationUrl || dialogueAudioArray.some((d: any) => d?.audioUrl) || hasSfxAudio || hasMusicAudio
+                    // Note: Description audio is deprecated - it's scene context for user, not production audio
+                    const hasAnyAudio = narrationUrl || dialogueAudioArray.some((d: any) => d?.audioUrl) || hasSfxAudio || hasMusicAudio
                     if (!hasAnyAudio) return null
                     
                     // Calculate scene duration from audio
-                    // Use saved override fields first, with sensible defaults
-                    // Note: Audio metadata often doesn't have startTime, so don't fall back to it
-                    const descDurationFromAudio = scene.descriptionAudio?.[selectedLanguage]?.duration ?? 0
-                    const descDuration = scene.descriptionDuration ?? descDurationFromAudio
-                    const descStartTime = scene.descriptionStartTime ?? 0 // Always start at 0 by default
-                    
+                    // Note: Description audio is deprecated - it was scene context for user, not production audio
+                    // Narration is now the primary voiceover track and always starts at 0
                     const narrDurationFromAudio = scene.narrationAudio?.[selectedLanguage]?.duration ?? 0
                     const narrDuration = scene.narrationDuration ?? narrDurationFromAudio
-                    // Narration starts after description ends (with small gap), or at 0 if no description
-                    const defaultNarrStartTime = descDuration > 0 ? descStartTime + descDuration + 0.35 : 0
-                    const narrStartTime = scene.narrationStartTime ?? defaultNarrStartTime
+                    const narrStartTime = scene.narrationStartTime ?? 0
                     
                     // Calculate dialogue end times
                     let maxDialogueEnd = 0
@@ -3907,18 +3902,10 @@ function SceneCard({
                       sfx: []
                     }
                     
-                    // Add Description to voiceover track (blue)
-                    if (descriptionUrl) {
-                      audioTracks.voiceover!.push({
-                        id: 'description',
-                        url: descriptionUrl,
-                        startTime: descStartTime,
-                        duration: descDuration || 5,
-                        label: 'Description'
-                      })
-                    }
+                    // Note: Description audio is deprecated - it was scene context for user, not production audio
+                    // Only Narration is added to the voiceover track now
                     
-                    // Add Narration to voiceover track (blue) - as second clip
+                    // Add Narration to voiceover track (blue)
                     if (narrationUrl) {
                       audioTracks.voiceover!.push({
                         id: 'narration',
