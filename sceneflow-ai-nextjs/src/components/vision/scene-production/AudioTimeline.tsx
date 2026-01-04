@@ -685,7 +685,8 @@ export function AudioTimeline({
                         ;(e.target as HTMLInputElement).blur()
                       }
                     }}
-                    className="w-12 px-1 py-0.5 bg-gray-800 border border-gray-600 hover:border-cyan-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded text-white font-mono text-[11px] text-center outline-none"
+                    style={{ width: '100px' }}
+                    className="px-2 py-0.5 bg-gray-800 border border-gray-600 hover:border-cyan-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded text-white font-mono text-[10px] text-center outline-none"
                   />
                   <button
                     onClick={(e) => {
@@ -737,7 +738,8 @@ export function AudioTimeline({
                         ;(e.target as HTMLInputElement).blur()
                       }
                     }}
-                    className="w-12 px-1 py-0.5 bg-gray-800 border border-gray-600 hover:border-cyan-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded text-white font-mono text-[11px] text-center outline-none"
+                    style={{ width: '100px' }}
+                    className="px-2 py-0.5 bg-gray-800 border border-gray-600 hover:border-cyan-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded text-white font-mono text-[10px] text-center outline-none"
                   />
                   <button
                     onClick={(e) => {
