@@ -164,9 +164,14 @@ export function AudioTimeline({
   }, [selectedClipId, selectedClipTrackType, allClips])
 
   // Clear editing state when clip values change externally (e.g., from +/- buttons)
+  // This effect runs whenever allClips changes (which happens after onAudioClipChange)
   useEffect(() => {
     const clipData = getSelectedClipData()
-    if (!clipData) return
+    if (!clipData) {
+      // No clip selected, reset everything
+      lastClipValuesRef.current = { id: null, startTime: 0, duration: 0 }
+      return
+    }
     
     // Check if the clip ID changed (user selected a different clip)
     if (lastClipValuesRef.current.id !== clipData.id) {
@@ -177,14 +182,22 @@ export function AudioTimeline({
       return
     }
     
-    // Check if values changed externally (not from typing in the input)
-    if (editingStartTime === null && clipData.startTime !== lastClipValuesRef.current.startTime) {
+    // Check if values changed externally (from +/- buttons, not from typing)
+    // If the clip values don't match our last known values, clear editing state
+    const startTimeChanged = clipData.startTime !== lastClipValuesRef.current.startTime
+    const durationChanged = clipData.duration !== lastClipValuesRef.current.duration
+    
+    if (startTimeChanged) {
+      // Value was changed externally, clear editing state so we show the new value
+      setEditingStartTime(null)
       lastClipValuesRef.current.startTime = clipData.startTime
     }
-    if (editingDuration === null && clipData.duration !== lastClipValuesRef.current.duration) {
+    if (durationChanged) {
+      // Value was changed externally, clear editing state so we show the new value
+      setEditingDuration(null)
       lastClipValuesRef.current.duration = clipData.duration
     }
-  }, [getSelectedClipData, editingStartTime, editingDuration])
+  }, [getSelectedClipData])
 
   // Keyboard shortcuts
   useEffect(() => {
