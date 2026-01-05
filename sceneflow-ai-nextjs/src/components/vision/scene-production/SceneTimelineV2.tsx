@@ -18,7 +18,7 @@ import { createPortal } from 'react-dom'
 import { 
   Play, Pause, Volume2, VolumeX, Mic, Music, Zap, 
   SkipBack, SkipForward, Film, Plus, Trash2, X, Maximize2, Minimize2, 
-  MessageSquare, GripVertical, Globe, AlertCircle, Download
+  MessageSquare, GripVertical, Globe, AlertCircle, Download, Layers, Magnet, Link2
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
@@ -168,6 +168,10 @@ export function SceneTimelineV2({
   onAudioError,
   sceneFrameUrl,
   dialogueAssignments,
+  // Phase 8: Audio alignment features
+  onSegmentTimeChange,
+  onFitSegmentToDialogue,
+  onOpenSegmentPromptDialog,
   isSidePanelVisible = true,
   onToggleSidePanel,
 }: SceneTimelineV2Props & {
@@ -300,6 +304,21 @@ export function SceneTimelineV2({
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false)
   const [isTimelineWide, setIsTimelineWide] = useState(false)
   
+  // Audio Snap feature - snap segment edges to audio clip boundaries
+  const [enableAudioSnap, setEnableAudioSnap] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('sceneflow-audio-snap') === 'true'
+    }
+    return false
+  })
+  
+  // Persist audio snap preference
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sceneflow-audio-snap', String(enableAudioSnap))
+    }
+  }, [enableAudioSnap])
+  
   // Track volume and enabled state - persist to localStorage
   // Note: description is now a separate track from voiceover (narration)
   const [trackVolumes, setTrackVolumes] = useState<Record<string, number>>(() => {
@@ -429,6 +448,38 @@ export function SceneTimelineV2({
   }, [localClipOffsets])
   
   // ============================================================================
+  // Audio Snap Helper - Find nearest audio boundary to snap to
+  // ============================================================================
+  
+  const SNAP_THRESHOLD = 0.15 // 150ms snap threshold
+  
+  const findNearestAudioBoundary = useCallback((time: number): number | null => {
+    if (!enableAudioSnap) return null
+    
+    const boundaries: number[] = []
+    
+    // Collect all audio clip start and end times
+    allAudioClips.forEach(clip => {
+      boundaries.push(clip.startTime)
+      boundaries.push(clip.startTime + clip.duration)
+    })
+    
+    // Find nearest boundary within threshold
+    let nearestBoundary: number | null = null
+    let nearestDistance = SNAP_THRESHOLD
+    
+    boundaries.forEach(boundary => {
+      const distance = Math.abs(time - boundary)
+      if (distance < nearestDistance) {
+        nearestDistance = distance
+        nearestBoundary = boundary
+      }
+    })
+    
+    return nearestBoundary
+  }, [enableAudioSnap, allAudioClips])
+  
+  // ============================================================================
   // Drag Handlers
   // ============================================================================
   
@@ -465,11 +516,38 @@ export function SceneTimelineV2({
       
       if (dragState.type === 'move') {
         startDelta = deltaTime
+        
+        // Apply audio snap for segment moves (only for visual track)
+        if (enableAudioSnap && dragState.trackType === 'visual') {
+          const proposedStart = dragState.originalStart + startDelta
+          const snappedStart = findNearestAudioBoundary(proposedStart)
+          if (snappedStart !== null) {
+            startDelta = snappedStart - dragState.originalStart
+          }
+        }
       } else if (dragState.type === 'resize-left') {
         startDelta = Math.max(-dragState.originalStart, Math.min(deltaTime, dragState.originalDuration - 0.5))
+        
+        // Snap left edge to audio boundary
+        if (enableAudioSnap && dragState.trackType === 'visual') {
+          const proposedStart = dragState.originalStart + startDelta
+          const snappedStart = findNearestAudioBoundary(proposedStart)
+          if (snappedStart !== null) {
+            startDelta = snappedStart - dragState.originalStart
+          }
+        }
         durationDelta = -startDelta
       } else if (dragState.type === 'resize-right') {
         durationDelta = Math.max(0.5 - dragState.originalDuration, deltaTime)
+        
+        // Snap right edge to audio boundary
+        if (enableAudioSnap && dragState.trackType === 'visual') {
+          const proposedEnd = dragState.originalStart + dragState.originalDuration + durationDelta
+          const snappedEnd = findNearestAudioBoundary(proposedEnd)
+          if (snappedEnd !== null) {
+            durationDelta = snappedEnd - dragState.originalStart - dragState.originalDuration
+          }
+        }
       }
       
       // Update local state immediately for responsive feedback
@@ -961,6 +1039,51 @@ export function SceneTimelineV2({
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Audio Snap Toggle - Align segments to audio boundaries */}
+          <Button
+            variant={enableAudioSnap ? "default" : "outline"}
+            size="sm"
+            className={cn(
+              "h-7 text-xs gap-1 px-2",
+              enableAudioSnap && "bg-cyan-600 hover:bg-cyan-700 text-white"
+            )}
+            onClick={() => setEnableAudioSnap(!enableAudioSnap)}
+            title={enableAudioSnap ? 'Disable audio snap (segments snap to audio boundaries)' : 'Enable audio snap (segments snap to audio boundaries)'}
+          >
+            <Link2 className="w-3 h-3" />
+            Snap
+          </Button>
+          
+          {/* Fit-to-Dialogue - Auto-size selected segment to match dialogue duration */}
+          {onFitSegmentToDialogue && selectedSegmentId && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20"
+              onClick={() => onFitSegmentToDialogue(selectedSegmentId)}
+              title="Auto-size segment to fit assigned dialogue duration"
+            >
+              <Mic className="w-3 h-3" />
+              Fit Audio
+            </Button>
+          )}
+          
+          {/* Open Segment Prompt Dialog */}
+          {onOpenSegmentPromptDialog && selectedSegmentId && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1 px-2"
+              onClick={() => onOpenSegmentPromptDialog(selectedSegmentId)}
+              title="Edit segment prompt and settings"
+            >
+              <MessageSquare className="w-3 h-3" />
+              Edit
+            </Button>
+          )}
+          
+          <div className="w-px h-5 bg-gray-300 dark:bg-gray-600" />
+          
           {/* Add/Delete Segment Controls */}
           {onAddSegment && (
             <Button
@@ -1063,15 +1186,15 @@ export function SceneTimelineV2({
           </div>
         </div>
         
-        {/* Visual track */}
+        {/* Segments Track - Primary visual segmentation */}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <div className={cn("flex items-stretch transition-all duration-200", isTimelineExpanded ? "h-24" : "h-16")}>
             <div 
               className="flex-shrink-0 flex items-center gap-2 px-3 bg-gray-100 dark:bg-gray-800"
               style={{ width: TRACK_LABEL_WIDTH }}
             >
-              <Film className="w-4 h-4 text-sf-primary" />
-              <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Video</span>
+              <Layers className="w-4 h-4 text-sf-primary" />
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Segments</span>
             </div>
             
             <div className="flex-1 relative bg-gray-50 dark:bg-gray-900/50">

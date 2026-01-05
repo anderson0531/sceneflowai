@@ -463,6 +463,10 @@ export interface SceneTimelineV2Props {
   sceneFrameUrl?: string | null
   // Phase 2: Dialogue coverage indicators
   dialogueAssignments?: Record<string, Set<string>>
+  // Phase 8: Audio alignment features
+  onSegmentTimeChange?: (segmentId: string, newStartTime: number, newEndTime: number) => void
+  onFitSegmentToDialogue?: (segmentId: string) => void
+  onOpenSegmentPromptDialog?: (segmentId: string) => void
 }
 
 // ============================================================================

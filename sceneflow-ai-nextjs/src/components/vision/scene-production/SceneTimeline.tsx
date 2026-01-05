@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { 
   Play, Pause, Volume2, VolumeX, Mic, Music, Zap, 
-  SkipBack, SkipForward, Film, Download, Plus, Trash2, X, Maximize2, Minimize2, Info, MessageSquare, GripVertical
+  SkipBack, SkipForward, Film, Download, Plus, Trash2, X, Maximize2, Minimize2, Info, MessageSquare, GripVertical, Layers
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
@@ -954,9 +954,9 @@ export function SceneTimeline({
           className="flex-shrink-0 flex items-center gap-1.5 px-2 bg-gray-100 dark:bg-gray-800 border-r border-gray-300 dark:border-gray-700"
           style={{ width: AUDIO_TRACK_LABEL_WIDTH }}
         >
-          <Film className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400" />
+          <Layers className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400" />
           <span className="text-[10px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-            Visual
+            Segments
           </span>
           {reorderSegmentsCallback && (
             <GripVertical className="w-3 h-3 text-gray-400 ml-auto" title="Drag segments to reorder" />
