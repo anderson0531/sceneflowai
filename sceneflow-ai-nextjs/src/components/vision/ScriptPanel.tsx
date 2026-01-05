@@ -42,6 +42,7 @@ import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData, SceneDirectionData } from '@/lib/types/reports'
 import { ExportDialog } from './ExportDialog'
 import { isDirectionStale, isImageStale } from '@/lib/utils/contentHash'
+import { getKenBurnsConfig, generateKenBurnsKeyframes, type KenBurnsIntensity } from '@/lib/animation/kenBurns'
 import { GenerateAudioDialog } from './GenerateAudioDialog'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { WebAudioMixer, type SceneAudioConfig, type AudioSource } from '@/lib/audio/webAudioMixer'
@@ -2891,8 +2892,6 @@ function SceneCard({
   const [sfxCollapsed, setSfxCollapsed] = useState(false)
   // Scene Image section: expanded when image exists, collapsed when empty to encourage generation
   const [sceneImageCollapsed, setSceneImageCollapsed] = useState(!scene.imageUrl)
-  // Inline expanded image view (16:9 full-width overlay)
-  const [sceneImageExpanded, setSceneImageExpanded] = useState(false)
   
   // Determine active step for Co-Pilot
   const activeStep: WorkflowStep | null = activeWorkflowTab
@@ -4067,69 +4066,24 @@ function SceneCard({
                     const isGenerating = isGeneratingImage
                     const currentKenBurns = (scene?.kenBurnsIntensity as 'off' | 'subtle' | 'medium' | 'dramatic') || 'medium'
                     
+                    // Ken Burns configuration for inline preview animation
+                    const kenBurnsIntensity = scene.kenBurnsIntensity as KenBurnsIntensity | undefined
+                    const kenBurnsConfig = kenBurnsIntensity && kenBurnsIntensity !== 'off' as any
+                      ? getKenBurnsConfig(scene, sceneIdx, kenBurnsIntensity)
+                      : null
+                    const kenBurnsAnimationName = `kenBurns-scene-${sceneIdx}`
+                    const kenBurnsKeyframes = kenBurnsConfig
+                      ? generateKenBurnsKeyframes(kenBurnsAnimationName, kenBurnsConfig)
+                      : ''
+                    // Use shorter duration for preview (6s loop)
+                    const previewDuration = 6
+                    
                     return (
                       <>
-                        {/* Inline Expanded Image Overlay */}
-                        <AnimatePresence>
-                          {sceneImageExpanded && hasImage && (
-                            <motion.div
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              transition={{ duration: 0.2 }}
-                              className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-8"
-                              onClick={() => setSceneImageExpanded(false)}
-                            >
-                              <motion.div
-                                initial={{ scale: 0.9 }}
-                                animate={{ scale: 1 }}
-                                exit={{ scale: 0.9 }}
-                                className="relative max-w-6xl w-full"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <img
-                                  src={scene.imageUrl}
-                                  alt={`Scene ${sceneNumber} reference - expanded`}
-                                  className="w-full h-auto rounded-lg object-contain max-h-[85vh]"
-                                />
-                                <button
-                                  onClick={() => setSceneImageExpanded(false)}
-                                  className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
-                                  title="Close"
-                                >
-                                  <ChevronDown className="w-6 h-6 text-white" />
-                                </button>
-                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      onOpenPromptBuilder?.(sceneIdx)
-                                      setSceneImageExpanded(false)
-                                    }}
-                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center gap-2 transition-colors"
-                                  >
-                                    <Sparkles className="w-4 h-4" />
-                                    Regenerate
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      if (scene.imageUrl && setEditingImageData && setImageEditModalOpen) {
-                                        setEditingImageData({ url: scene.imageUrl, sceneIdx })
-                                        setImageEditModalOpen(true)
-                                        setSceneImageExpanded(false)
-                                      }
-                                    }}
-                                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center gap-2 transition-colors"
-                                  >
-                                    <Wand2 className="w-4 h-4" />
-                                    Edit Image
-                                  </button>
-                                </div>
-                              </motion.div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                        {/* Ken Burns keyframes injection */}
+                        {kenBurnsConfig && (
+                          <style dangerouslySetInnerHTML={{ __html: kenBurnsKeyframes }} />
+                        )}
                         
                         <div className="bg-slate-900/80 rounded-lg border border-indigo-500/30 overflow-hidden">
                           <div className="px-3 py-2 bg-indigo-900/20 border-b border-indigo-500/20 flex items-center gap-2">
@@ -4222,16 +4176,19 @@ function SceneCard({
                               >
                                 {hasImage ? (
                                   <div className="relative group">
-                                    {/* 16:9 aspect ratio container */}
+                                    {/* 16:9 aspect ratio container with Ken Burns animation */}
                                     <div className="aspect-video w-full overflow-hidden rounded-lg bg-slate-800">
-                                      <img
-                                        src={scene.imageUrl}
-                                        alt={`Scene ${sceneNumber} reference`}
-                                        className="w-full h-full object-cover cursor-pointer"
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          setSceneImageExpanded(true)
+                                      <div
+                                        className="w-full h-full bg-cover bg-center"
+                                        style={{
+                                          backgroundImage: `url(${scene.imageUrl})`,
+                                          backgroundSize: kenBurnsConfig ? '120%' : 'cover',
+                                          animation: kenBurnsConfig
+                                            ? `${kenBurnsAnimationName} ${previewDuration}s ${kenBurnsConfig.easing} infinite alternate`
+                                            : 'none',
+                                          transformOrigin: 'center center',
                                         }}
+                                        title={kenBurnsConfig ? `Ken Burns: ${kenBurnsIntensity}` : 'Static image'}
                                       />
                                     </div>
                                     {/* Hover overlay with Generate and Edit buttons */}
@@ -4263,16 +4220,6 @@ function SceneCard({
                                         title="Edit image (Quick Edit, Precise Edit, Outpaint)"
                                       >
                                         <Wand2 className="w-5 h-5 text-white" />
-                                      </button>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          setSceneImageExpanded(true)
-                                        }}
-                                        className="p-3 bg-white/20 hover:bg-white/30 rounded-full transition-colors"
-                                        title="View full size"
-                                      >
-                                        <Expand className="w-5 h-5 text-white" />
                                       </button>
                                     </div>
                                     <p className="text-[10px] text-gray-500 mt-2 text-center">
