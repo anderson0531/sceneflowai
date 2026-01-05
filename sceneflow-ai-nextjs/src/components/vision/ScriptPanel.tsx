@@ -4048,14 +4048,43 @@ function SceneCard({
                             >
                               <AudioTimeline
                                 sceneDuration={sceneDuration}
+                                segments={sceneProductionData?.segments?.map(seg => ({
+                                  startTime: seg.startTime,
+                                  endTime: seg.endTime,
+                                  segmentId: seg.segmentId,
+                                  sequenceIndex: seg.sequenceIndex,
+                                })) || []}
                                 audioTracks={audioTracks}
                                 onAudioClipChange={(trackType, clipId, changes) => {
                                   onAudioClipChange?.(sceneIdx, trackType, clipId, changes)
+                                }}
+                                onSegmentChange={(segmentId, changes) => {
+                                  const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
+                                  onSegmentResize?.(sceneId, segmentId, changes)
                                 }}
                               />
                             </motion.div>
                           )}
                         </AnimatePresence>
+                        
+                        {/* Generate Segments button when no segments exist */}
+                        {(!sceneProductionData?.isSegmented || !sceneProductionData?.segments?.length) && !audioTimelineCollapsed && (
+                          <div className="p-3 border-t border-cyan-500/20 bg-cyan-900/10">
+                            <button
+                              onClick={() => {
+                                const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
+                                onInitializeSceneProduction?.(sceneId, { targetDuration: sceneDuration })
+                              }}
+                              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 rounded-lg text-cyan-300 text-sm font-medium transition-colors"
+                            >
+                              <Layers className="w-4 h-4" />
+                              Generate Segments
+                            </button>
+                            <p className="text-[10px] text-gray-500 mt-2 text-center">
+                              AI will analyze your scene to create video segments
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )
                   })()}
