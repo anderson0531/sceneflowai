@@ -4221,6 +4221,18 @@ function SceneCard({
                                       >
                                         <Wand2 className="w-5 h-5 text-white" />
                                       </button>
+                                      {onAddToReferenceLibrary && scene.imageUrl && (
+                                        <button
+                                          onClick={async (e) => {
+                                            e.stopPropagation()
+                                            await onAddToReferenceLibrary(scene.imageUrl!, `Scene ${sceneNumber} Reference`, sceneNumber)
+                                          }}
+                                          className="p-3 bg-cyan-600/80 hover:bg-cyan-600 rounded-full transition-colors"
+                                          title="Save to Reference Library"
+                                        >
+                                          <FolderPlus className="w-5 h-5 text-white" />
+                                        </button>
+                                      )}
                                     </div>
                                     <p className="text-[10px] text-gray-500 mt-2 text-center">
                                       This image anchors your scene vision for Screening Room and Frame generation
