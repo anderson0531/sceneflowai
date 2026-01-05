@@ -4030,12 +4030,12 @@ function SceneCard({
                               setAudioTimelineCollapsed(!audioTimelineCollapsed)
                             }}
                             className="p-1 hover:bg-cyan-500/20 rounded transition-colors"
-                            title={audioTimelineCollapsed ? 'Show audio timeline' : 'Hide audio timeline'}
+                            title={audioTimelineCollapsed ? 'Show scene timeline' : 'Hide scene timeline'}
                           >
                             {audioTimelineCollapsed ? <ChevronDown className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronUp className="w-3.5 h-3.5 text-cyan-400" />}
                           </button>
                           <Layers className="w-4 h-4 text-cyan-400" />
-                          <span className="text-xs font-medium text-cyan-300">Audio Timeline</span>
+                          <span className="text-xs font-medium text-cyan-300">Scene Timeline</span>
                           <span className="text-[10px] text-gray-500 ml-auto">{sceneDuration.toFixed(1)}s total</span>
                         </div>
                         <AnimatePresence>

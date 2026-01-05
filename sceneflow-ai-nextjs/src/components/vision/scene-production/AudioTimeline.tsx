@@ -1,10 +1,19 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
-import { Play, Pause, Volume2, VolumeX, Mic, Music, Zap, SkipBack, SkipForward, X, RotateCcw, Pencil, AlertTriangle } from 'lucide-react'
+import { Play, Pause, Volume2, VolumeX, Mic, Music, Zap, SkipBack, SkipForward, X, RotateCcw, Pencil, AlertTriangle, Layers, Link2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
+
+export interface SegmentClip {
+  segmentId: string
+  startTime: number
+  endTime: number
+  duration: number
+  label?: string
+  sequenceIndex: number
+}
 
 export interface AudioTrackClip {
   id: string
@@ -26,11 +35,12 @@ export interface AudioTracksData {
 
 interface AudioTimelineProps {
   sceneDuration: number  // Total scene duration in seconds
-  segments?: Array<{ startTime: number; endTime: number; segmentId: string }>
+  segments?: Array<{ startTime: number; endTime: number; segmentId: string; sequenceIndex?: number }>
   audioTracks?: AudioTracksData
   onPlayheadChange?: (time: number) => void
   onTrackUpdate?: (trackType: keyof AudioTracksData, clips: AudioTrackClip | AudioTrackClip[]) => void
   onAudioClipChange?: (trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
+  onSegmentChange?: (segmentId: string, changes: { startTime?: number; duration?: number }) => void
   onAudioError?: (clipId: string, url: string) => void
 }
 
@@ -48,14 +58,34 @@ export function AudioTimeline({
   onPlayheadChange,
   onTrackUpdate,
   onAudioClipChange,
+  onSegmentChange,
   onAudioError,
 }: AudioTimelineProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   
-  // Per-clip selection state
+  // Per-clip selection state (for audio)
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null)
   const [selectedClipTrackType, setSelectedClipTrackType] = useState<string | null>(null)
+  
+  // Segment selection state
+  const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null)
+  
+  // Audio snap toggle - persisted to localStorage
+  const [enableAudioSnap, setEnableAudioSnap] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sceneflow-audio-snap-enabled')
+      return saved === 'true'
+    }
+    return false
+  })
+  
+  // Persist audio snap setting
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sceneflow-audio-snap-enabled', enableAudioSnap.toString())
+    }
+  }, [enableAudioSnap])
   
   // Per-clip mute state - persisted to localStorage
   const [mutedClips, setMutedClips] = useState<Set<string>>(() => {
@@ -69,6 +99,10 @@ export function AudioTimeline({
   // Local editing state for timing fields (prevents cursor jumping)
   const [editingStartTime, setEditingStartTime] = useState<string | null>(null)
   const [editingDuration, setEditingDuration] = useState<string | null>(null)
+  
+  // Local editing state for segment timing fields
+  const [editingSegStartTime, setEditingSegStartTime] = useState<string | null>(null)
+  const [editingSegDuration, setEditingSegDuration] = useState<string | null>(null)
   
   // Optimistic local values - updated immediately on +/- button clicks
   // This ensures the UI shows the new value immediately without waiting for parent re-render
@@ -165,6 +199,61 @@ export function AudioTimeline({
     return clips
   }, [audioTracks])
 
+  // Segment clips derived from segments prop
+  const segmentClips = useMemo<SegmentClip[]>(() => {
+    return segments.map((seg, idx) => ({
+      segmentId: seg.segmentId,
+      startTime: seg.startTime,
+      endTime: seg.endTime,
+      duration: seg.endTime - seg.startTime,
+      label: `Seg ${(seg.sequenceIndex ?? idx) + 1}`,
+      sequenceIndex: seg.sequenceIndex ?? idx,
+    }))
+  }, [segments])
+
+  // Get selected segment data with optimistic values
+  const getSelectedSegmentData = useCallback(() => {
+    if (!selectedSegmentId) return null
+    const seg = segmentClips.find(s => s.segmentId === selectedSegmentId)
+    if (!seg) return null
+    
+    // Apply optimistic values if they exist for this segment
+    if (optimisticValues.clipId === selectedSegmentId) {
+      return {
+        ...seg,
+        startTime: optimisticValues.startTime ?? seg.startTime,
+        duration: optimisticValues.duration ?? seg.duration,
+        endTime: (optimisticValues.startTime ?? seg.startTime) + (optimisticValues.duration ?? seg.duration),
+      }
+    }
+    return seg
+  }, [selectedSegmentId, segmentClips, optimisticValues])
+
+  // Find nearest audio boundary for snap functionality
+  const findNearestAudioBoundary = useCallback((time: number, threshold: number = 0.15): number | null => {
+    const boundaries: number[] = []
+    
+    // Collect all audio clip start/end times
+    allClips.forEach(({ clip }) => {
+      boundaries.push(clip.startTime)
+      boundaries.push(clip.startTime + clip.duration)
+    })
+    
+    // Find closest boundary within threshold
+    let closest: number | null = null
+    let closestDist = threshold
+    
+    for (const boundary of boundaries) {
+      const dist = Math.abs(boundary - time)
+      if (dist < closestDist) {
+        closest = boundary
+        closestDist = dist
+      }
+    }
+    
+    return closest
+  }, [allClips])
+
   // Get the selected clip's data with optimistic values applied
   const getSelectedClipData = useCallback(() => {
     if (!selectedClipId || !selectedClipTrackType) return null
@@ -235,6 +324,7 @@ export function AudioTimeline({
       if (e.key === 'Escape') {
         setSelectedClipId(null)
         setSelectedClipTrackType(null)
+        setSelectedSegmentId(null)
         return
       }
       
@@ -503,6 +593,61 @@ export function AudioTimeline({
     )
   }
 
+  // Render segment track row (above audio tracks)
+  const renderSegmentTrack = () => {
+    if (segmentClips.length === 0) return null
+    
+    return (
+      <div className="flex items-stretch h-10 group border-b-2 border-cyan-500/30">
+        {/* Track Label */}
+        <div className="w-20 flex-shrink-0 flex items-center gap-1 px-2 bg-cyan-900/20 border-r border-gray-300 dark:border-gray-700">
+          <Layers className="w-3 h-3 text-cyan-400" />
+          <span className="text-[10px] font-medium truncate text-cyan-300">Segments</span>
+        </div>
+        
+        {/* Track Timeline */}
+        <div 
+          className="flex-1 relative bg-cyan-950/20 border-b border-gray-200 dark:border-gray-800"
+          style={{ width: containerWidth }}
+        >
+          {/* Segment clips */}
+          {segmentClips.map((seg) => {
+            const isSelected = selectedSegmentId === seg.segmentId
+            
+            return (
+              <div
+                key={seg.segmentId}
+                className={cn(
+                  "absolute top-1 bottom-1 rounded-sm flex items-center px-1 overflow-hidden cursor-pointer transition-all",
+                  "bg-gradient-to-r from-cyan-600 to-cyan-700 opacity-90",
+                  isSelected && "ring-2 ring-cyan-400 ring-offset-1 ring-offset-gray-900 z-10"
+                )}
+                style={{
+                  left: seg.startTime * pixelsPerSecond,
+                  width: Math.max(seg.duration * pixelsPerSecond, 4),
+                }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  // Deselect audio clip when selecting segment
+                  setSelectedClipId(null)
+                  setSelectedClipTrackType(null)
+                  setSelectedSegmentId(seg.segmentId)
+                }}
+              >
+                {/* Segment label */}
+                {seg.duration * pixelsPerSecond > 30 && (
+                  <span className="text-[8px] text-white font-medium truncate relative z-10">
+                    {seg.label}
+                  </span>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
   // Time markers
   const timeMarkers = useMemo(() => {
     const markers: number[] = []
@@ -550,8 +695,27 @@ export function AudioTimeline({
         
         <div className="flex-1" />
         
+        {/* Audio Snap Toggle */}
+        {onSegmentChange && segmentClips.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setEnableAudioSnap(!enableAudioSnap)}
+            className={cn(
+              "h-7 text-[10px] gap-1 px-2",
+              enableAudioSnap 
+                ? "text-cyan-400 bg-cyan-500/20 hover:bg-cyan-500/30" 
+                : "text-gray-400 hover:text-gray-300"
+            )}
+            title={enableAudioSnap ? 'Disable audio snap' : 'Enable audio snap (segments snap to audio boundaries)'}
+          >
+            <Link2 className="w-3 h-3" />
+            Snap
+          </Button>
+        )}
+        
         <span className="text-[10px] text-gray-400">
-          Audio Preview · Sync to Final Cut
+          Scene Timeline
         </span>
       </div>
 
@@ -580,6 +744,9 @@ export function AudioTimeline({
         className="relative cursor-pointer"
         onClick={handleTimelineClick}
       >
+        {/* Segments Track - above audio tracks */}
+        {renderSegmentTrack()}
+        
         {/* Narration Track */}
         {renderTrack(
           'Narration',
@@ -859,6 +1026,178 @@ export function AudioTimeline({
               <span><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">M</kbd> Mute</span>
               <span><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">←</kbd><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">→</kbd> ±0.1s</span>
               <span><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">Esc</kbd> Deselect</span>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Selected Segment Panel */}
+      {selectedSegmentId && !selectedClipId && (() => {
+        const segData = getSelectedSegmentData()
+        if (!segData) return null
+        
+        // Apply snap to a value
+        const applySnap = (value: number): number => {
+          if (!enableAudioSnap) return value
+          const snapped = findNearestAudioBoundary(value)
+          return snapped !== null ? snapped : value
+        }
+        
+        return (
+          <div className="border-t-2 border-cyan-500 bg-cyan-500/10 p-3 transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase text-cyan-400">SEGMENT</span>
+                <span className="text-xs font-medium text-white truncate max-w-[150px]">
+                  {segData.label || `Segment ${segData.sequenceIndex + 1}`}
+                </span>
+                {enableAudioSnap && (
+                  <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 text-[9px] font-medium">
+                    <Link2 className="w-2.5 h-2.5" />
+                    Snap On
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => {
+                    setSelectedSegmentId(null)
+                  }}
+                  className="p-1 rounded bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white transition-colors"
+                  title="Close (Esc)"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-3 text-xs">
+              {/* Start Time - EDITABLE with +/- buttons */}
+              <div>
+                <label className="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Start</label>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      let newStart = Math.max(0, segData.startTime - 0.5)
+                      newStart = applySnap(newStart)
+                      onSegmentChange?.(selectedSegmentId!, { startTime: newStart })
+                    }}
+                    className="w-5 h-5 flex items-center justify-center bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-gray-300 text-xs font-bold"
+                    title="-0.5s"
+                  >−</button>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={editingSegStartTime ?? segData.startTime.toFixed(1)}
+                    onFocus={() => setEditingSegStartTime(segData.startTime.toFixed(1))}
+                    onChange={(e) => setEditingSegStartTime(e.target.value)}
+                    onBlur={() => {
+                      if (editingSegStartTime !== null) {
+                        const parsed = parseFloat(editingSegStartTime)
+                        if (!isNaN(parsed)) {
+                          let newStart = Math.max(0, Math.min(sceneDuration, parsed))
+                          newStart = applySnap(newStart)
+                          onSegmentChange?.(selectedSegmentId!, { startTime: newStart })
+                        }
+                      }
+                      setEditingSegStartTime(null)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        (e.target as HTMLInputElement).blur()
+                      } else if (e.key === 'Escape') {
+                        setEditingSegStartTime(null)
+                        ;(e.target as HTMLInputElement).blur()
+                      }
+                    }}
+                    style={{ width: '100px' }}
+                    className="px-2 py-0.5 bg-gray-800 border border-gray-600 hover:border-cyan-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded text-white font-mono text-[10px] text-center outline-none"
+                  />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      let newStart = Math.min(sceneDuration, segData.startTime + 0.5)
+                      newStart = applySnap(newStart)
+                      onSegmentChange?.(selectedSegmentId!, { startTime: newStart })
+                    }}
+                    className="w-5 h-5 flex items-center justify-center bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-gray-300 text-xs font-bold"
+                    title="+0.5s"
+                  >+</button>
+                  <span className="text-gray-500">s</span>
+                </div>
+              </div>
+              
+              {/* Duration - EDITABLE with +/- buttons */}
+              <div>
+                <label className="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Duration</label>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      const newDuration = Math.max(0.5, segData.duration - 0.5)
+                      onSegmentChange?.(selectedSegmentId!, { duration: newDuration })
+                    }}
+                    className="w-5 h-5 flex items-center justify-center bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-gray-300 text-xs font-bold"
+                    title="-0.5s"
+                  >−</button>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={editingSegDuration ?? segData.duration.toFixed(1)}
+                    onFocus={() => setEditingSegDuration(segData.duration.toFixed(1))}
+                    onChange={(e) => setEditingSegDuration(e.target.value)}
+                    onBlur={() => {
+                      if (editingSegDuration !== null) {
+                        const parsed = parseFloat(editingSegDuration)
+                        if (!isNaN(parsed)) {
+                          const newDuration = Math.max(0.5, parsed)
+                          onSegmentChange?.(selectedSegmentId!, { duration: newDuration })
+                        }
+                      }
+                      setEditingSegDuration(null)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        (e.target as HTMLInputElement).blur()
+                      } else if (e.key === 'Escape') {
+                        setEditingSegDuration(null)
+                        ;(e.target as HTMLInputElement).blur()
+                      }
+                    }}
+                    style={{ width: '100px' }}
+                    className="px-2 py-0.5 bg-gray-800 border border-gray-600 hover:border-cyan-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded text-white font-mono text-[10px] text-center outline-none"
+                  />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      const newDuration = segData.duration + 0.5
+                      onSegmentChange?.(selectedSegmentId!, { duration: newDuration })
+                    }}
+                    className="w-5 h-5 flex items-center justify-center bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-gray-300 text-xs font-bold"
+                    title="+0.5s"
+                  >+</button>
+                  <span className="text-gray-500">s</span>
+                </div>
+              </div>
+              
+              {/* End Time - Calculated (read-only) */}
+              <div>
+                <label className="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">End</label>
+                <div className="flex items-center gap-1">
+                  <span className="px-1.5 py-0.5 bg-gray-900 border border-gray-800 rounded text-gray-400 font-mono text-[11px]">
+                    {segData.endTime.toFixed(1)}
+                  </span>
+                  <span className="text-gray-500">s</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-2 pt-2 border-t border-gray-800 flex flex-wrap items-center gap-2 text-[9px] text-gray-500">
+              <span><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">Esc</kbd> Deselect</span>
+              {enableAudioSnap && (
+                <span className="text-cyan-400">Snap enabled: timing snaps to audio boundaries</span>
+              )}
             </div>
           </div>
         )
