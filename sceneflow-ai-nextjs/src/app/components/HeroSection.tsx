@@ -69,14 +69,16 @@ export function HeroSection() {
         >
           {/* Badge */}
           <motion.div 
-            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-amber-500/10 border border-cyan-500/20 rounded-full mb-8 backdrop-blur-sm"
+            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500/10 via-red-500/10 to-yellow-500/10 border border-white/20 rounded-full mb-8 backdrop-blur-sm"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-cyan-400 mr-2" />
-            <span className="text-sm md:text-base font-medium bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent">
-              Powered by Industry-Leading AI Generation
+            <div className="w-5 h-5 md:w-6 md:h-6 bg-white rounded flex items-center justify-center mr-2 shadow-sm">
+              <span className="text-sm md:text-base font-bold bg-gradient-to-br from-blue-500 via-red-500 to-yellow-500 bg-clip-text text-transparent">G</span>
+            </div>
+            <span className="text-sm md:text-base font-medium text-white">
+              Powered by Google Cloud
             </span>
           </motion.div>
 
