@@ -4,11 +4,21 @@ import { getVertexAIAuthToken } from '@/lib/vertexai/client'
 export const runtime = 'nodejs'
 
 export async function GET(_req: NextRequest) {
+  const projectId = process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID || null
+  const location = process.env.VERTEX_LOCATION || process.env.GCP_REGION || 'us-central1'
+  
   const results: any = {
     ok: false,
     authMethod: 'oauth2',
-    projectId: process.env.GCP_PROJECT_ID || null,
-    region: process.env.GCP_REGION || 'us-central1',
+    projectId,
+    location,
+    envVars: {
+      VERTEX_PROJECT_ID: !!process.env.VERTEX_PROJECT_ID,
+      VERTEX_LOCATION: !!process.env.VERTEX_LOCATION,
+      GCP_PROJECT_ID: !!process.env.GCP_PROJECT_ID,
+      GCP_REGION: !!process.env.GCP_REGION,
+      GOOGLE_APPLICATION_CREDENTIALS_JSON: !!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
+    },
     serviceAccount: null,
     tokenTest: { ok: false },
     predictTest: { status: 0, ok: false },
@@ -18,12 +28,12 @@ export async function GET(_req: NextRequest) {
   try {
     // 1. Check environment
     if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-      results.hints.push('Missing GOOGLE_APPLICATION_CREDENTIALS_JSON')
+      results.hints.push('Missing GOOGLE_APPLICATION_CREDENTIALS_JSON - This is REQUIRED for Vertex AI authentication')
       return NextResponse.json(results, { status: 500 })
     }
     
-    if (!results.projectId) {
-      results.hints.push('Missing GCP_PROJECT_ID')
+    if (!projectId) {
+      results.hints.push('Missing VERTEX_PROJECT_ID or GCP_PROJECT_ID - One is REQUIRED')
       return NextResponse.json(results, { status: 500 })
     }
 
@@ -31,8 +41,9 @@ export async function GET(_req: NextRequest) {
     try {
       const creds = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
       results.serviceAccount = creds.client_email || 'unknown'
+      results.credentialsProjectId = creds.project_id
     } catch {
-      results.hints.push('Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON')
+      results.hints.push('Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON - Check JSON syntax')
       return NextResponse.json(results, { status: 500 })
     }
 
@@ -46,9 +57,10 @@ export async function GET(_req: NextRequest) {
       return NextResponse.json(results, { status: 500 })
     }
 
-    // 4. Test predict endpoint
-    const model = 'imagegeneration@006'
-    const endpoint = `https://${results.region}-aiplatform.googleapis.com/v1/projects/${results.projectId}/locations/${results.region}/publishers/google/models/${model}:predict`
+    // 4. Test predict endpoint with Imagen 3
+    const model = 'imagen-3.0-generate-001'
+    const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:predict`
+    results.testEndpoint = endpoint
     
     try {
       const token = await getVertexAIAuthToken()
@@ -59,7 +71,7 @@ export async function GET(_req: NextRequest) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          instances: [{ prompt: 'test' }],
+          instances: [{ prompt: 'test diagnostic image' }],
           parameters: { sampleCount: 1, aspectRatio: '1:1' }
         })
       })
@@ -69,11 +81,15 @@ export async function GET(_req: NextRequest) {
       
       if (!testRes.ok && testRes.status !== 400) {
         const text = await testRes.text()
-        results.predictTest.error = text.slice(0, 300)
+        results.predictTest.error = text.slice(0, 500)
         
         if (testRes.status === 403) {
-          results.hints.push(`Run: gcloud projects add-iam-policy-binding ${results.projectId} --member="serviceAccount:${results.serviceAccount}" --role="roles/aiplatform.user"`)
+          results.hints.push(`IAM permission denied. Run: gcloud projects add-iam-policy-binding ${projectId} --member="serviceAccount:${results.serviceAccount}" --role="roles/aiplatform.user"`)
+        } else if (testRes.status === 404) {
+          results.hints.push(`Model or endpoint not found. Check region (${location}) supports Imagen 3`)
         }
+      } else {
+        results.ok = true
       }
     } catch (error: any) {
       results.predictTest.error = error.message

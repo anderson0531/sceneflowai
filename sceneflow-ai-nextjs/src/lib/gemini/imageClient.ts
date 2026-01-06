@@ -73,10 +73,19 @@ export async function generateImageWithGemini(
     options.referenceImages = options.referenceImages!.slice(0, 4)
   }
   
-  const accessToken = await getVertexAIAuthToken()
+  console.log('[Vertex Imagen] Requesting auth token...')
+  let accessToken: string
+  try {
+    accessToken = await getVertexAIAuthToken()
+    console.log('[Vertex Imagen] Auth token obtained successfully')
+  } catch (authError: any) {
+    console.error('[Vertex Imagen] AUTH FAILED:', authError.message)
+    throw new Error(`Vertex AI authentication failed: ${authError.message}`)
+  }
   
   // Vertex AI Imagen endpoint
   const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:predict`
+  console.log('[Vertex Imagen] Endpoint:', endpoint)
   
   // Build request body
   const requestBody: any = {

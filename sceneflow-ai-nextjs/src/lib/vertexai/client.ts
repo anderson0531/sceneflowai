@@ -7,13 +7,21 @@ let authClient: any = null
  * Uses service account credentials from GOOGLE_APPLICATION_CREDENTIALS_JSON
  */
 export async function getVertexAIAuthToken(): Promise<string> {
+  console.log('[Vertex AI Auth] Getting access token...')
+  console.log('[Vertex AI Auth] GOOGLE_APPLICATION_CREDENTIALS_JSON configured:', !!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+  console.log('[Vertex AI Auth] VERTEX_PROJECT_ID:', process.env.VERTEX_PROJECT_ID || 'NOT SET')
+  console.log('[Vertex AI Auth] VERTEX_LOCATION:', process.env.VERTEX_LOCATION || 'NOT SET')
+  
   if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-    throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON not configured')
+    console.error('[Vertex AI Auth] GOOGLE_APPLICATION_CREDENTIALS_JSON not configured')
+    throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON not configured - check Vercel environment variables')
   }
 
   try {
     if (!authClient) {
+      console.log('[Vertex AI Auth] Creating new auth client...')
       const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+      console.log('[Vertex AI Auth] Parsed credentials for project:', credentials.project_id)
       
       const auth = new GoogleAuth({
         credentials,
@@ -21,6 +29,7 @@ export async function getVertexAIAuthToken(): Promise<string> {
       })
       
       authClient = await auth.getClient()
+      console.log('[Vertex AI Auth] Auth client created successfully')
     }
 
     const accessToken = await authClient.getAccessToken()
@@ -29,9 +38,11 @@ export async function getVertexAIAuthToken(): Promise<string> {
       throw new Error('Failed to get access token')
     }
     
+    console.log('[Vertex AI Auth] Access token obtained successfully')
     return accessToken.token
   } catch (error: any) {
-    console.error('[Vertex AI Auth] Error:', error)
+    console.error('[Vertex AI Auth] Error:', error.message)
+    console.error('[Vertex AI Auth] Stack:', error.stack)
     throw new Error(`Vertex AI authentication failed: ${error.message}`)
   }
 }
