@@ -599,15 +599,11 @@ async function updateSceneAudio(
   
   console.log('[Update Scene Audio] Project updated successfully for language:', language)
   
-  // Delete old audio blob if it exists and is different from new URL
+  // NOTE: We intentionally do NOT delete old audio blobs synchronously here.
+  // Synchronous deletion causes 404 errors when UI components still reference the old URL.
+  // Orphaned blobs will be cleaned up via scheduled cleanup job or admin action.
+  // See: https://github.com/anderson0531/sceneflowai/issues/audio-404-fix
   if (oldAudioUrl && oldAudioUrl !== audioUrl) {
-    try {
-      console.log('[Update Scene Audio] Deleting old audio blob:', oldAudioUrl)
-      await del(oldAudioUrl)
-      console.log('[Update Scene Audio] Successfully deleted old audio blob')
-    } catch (deleteError) {
-      // Log but don't fail - the new audio was saved successfully
-      console.warn('[Update Scene Audio] Failed to delete old audio blob:', deleteError)
-    }
+    console.log('[Update Scene Audio] Old audio URL detected, skipping immediate deletion to prevent 404s:', oldAudioUrl)
   }
 }

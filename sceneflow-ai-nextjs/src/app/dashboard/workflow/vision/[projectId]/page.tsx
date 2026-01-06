@@ -2579,7 +2579,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       pendingStaleUrlCleanupRef.current.get(sceneId)!.add(staleUrl)
       
       // Debounce the actual cleanup to batch multiple stale URL removals
-      // and allow time for regeneration to complete first
+      // and allow time for regeneration to complete first.
+      // Use 10-second delay to prevent race conditions with audio regeneration.
       if (staleCleanupTimeoutRef.current) {
         clearTimeout(staleCleanupTimeoutRef.current)
       }
@@ -2721,7 +2722,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           
           return hasChanges ? updatedScenes : currentScenes
         })
-      }, 3000) // Wait 3 seconds before cleanup to allow regeneration to complete
+      }, 10000) // Wait 10 seconds before cleanup to allow regeneration to complete and prevent 404s
     },
     [project?.id, project?.metadata]
   )
