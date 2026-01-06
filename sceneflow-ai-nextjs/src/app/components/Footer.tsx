@@ -1,6 +1,7 @@
 'use client'
 
 import { Mail, Twitter, Linkedin, Github, ExternalLink } from 'lucide-react'
+import Image from 'next/image'
 
 export function Footer() {
   const footerLinks = {
@@ -181,9 +182,12 @@ export function Footer() {
             </div>
             <div className="flex items-center gap-4 mt-4 md:mt-0">
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-white rounded flex items-center justify-center">
-                  <span className="text-xs font-bold bg-gradient-to-br from-blue-500 via-red-500 to-yellow-500 bg-clip-text text-transparent">G</span>
-                </div>
+                <Image 
+                  src="/images/google-cloud-logo.png" 
+                  alt="Google Cloud" 
+                  width={16} 
+                  height={16}
+                />
                 <span className="text-xs text-gray-400">Powered by Google Cloud</span>
               </div>
             </div>

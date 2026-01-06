@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Cloud, Sparkles, Video, ImageIcon, Brain, Cpu } from 'lucide-react';
+import Image from 'next/image';
 
 export function GoogleCloudBadge() {
   const googleServices = [
@@ -23,9 +24,12 @@ export function GoogleCloudBadge() {
         >
           <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-500/10 via-red-500/10 to-yellow-500/10 border border-white/10 rounded-full mb-6">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-lg">
-                <span className="text-lg font-bold bg-gradient-to-br from-blue-500 via-red-500 to-yellow-500 bg-clip-text text-transparent">G</span>
-              </div>
+              <Image 
+                src="/images/google-cloud-logo.png" 
+                alt="Google Cloud" 
+                width={32} 
+                height={32}
+              />
               <span className="text-white font-semibold text-lg">Powered by Google Cloud</span>
             </div>
           </div>

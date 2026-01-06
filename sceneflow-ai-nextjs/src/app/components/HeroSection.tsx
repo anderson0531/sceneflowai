@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { DemoVideoModal } from './DemoVideoModal'
 import { Play, ArrowRight, Sparkles, Film, Mic2, Video, Users, Volume2, VolumeX } from 'lucide-react'
 import { useRef } from 'react'
+import Image from 'next/image'
 
 export function HeroSection() {
   const [isDemoOpen, setIsDemoOpen] = useState(false)
@@ -74,9 +75,13 @@ export function HeroSection() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <div className="w-5 h-5 md:w-6 md:h-6 bg-white rounded flex items-center justify-center mr-2 shadow-sm">
-              <span className="text-sm md:text-base font-bold bg-gradient-to-br from-blue-500 via-red-500 to-yellow-500 bg-clip-text text-transparent">G</span>
-            </div>
+            <Image 
+              src="/images/google-cloud-logo.png" 
+              alt="Google Cloud" 
+              width={24} 
+              height={24} 
+              className="mr-2"
+            />
             <span className="text-sm md:text-base font-medium text-white">
               Powered by Google Cloud
             </span>
