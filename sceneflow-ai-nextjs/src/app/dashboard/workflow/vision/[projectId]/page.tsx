@@ -4983,14 +4983,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   const handleGenerateSceneImage = async (sceneIdx: number, selectedCharacters?: any[] | any) => {
+    console.log('[handleGenerateSceneImage] Called with sceneIdx:', sceneIdx)
+    console.log('[handleGenerateSceneImage] selectedCharacters:', selectedCharacters)
+    
     const scene = script?.script?.scenes?.[sceneIdx]
+    console.log('[handleGenerateSceneImage] Scene found:', !!scene)
+    console.log('[handleGenerateSceneImage] Scene fields:', scene ? {
+      hasVisualDescription: !!scene.visualDescription,
+      hasAction: !!scene.action,
+      hasSummary: !!scene.summary,
+      hasHeading: !!scene.heading
+    } : 'no scene')
+    
     // Accept any scene description field: visualDescription, action, summary, or heading
     const sceneDescription = scene?.visualDescription || scene?.action || scene?.summary || scene?.heading
     if (!scene || !sceneDescription) {
-      console.warn('No visual description available for scene', sceneIdx)
+      console.warn('[handleGenerateSceneImage] No visual description available for scene', sceneIdx)
       try { const { toast } = require('sonner'); toast.error('Scene must have a description to generate image') } catch {}
       return
     }
+    
+    console.log('[handleGenerateSceneImage] Scene description found, proceeding with generation...')
     
     // Set global keyframe generation state for screen freeze
     setIsGeneratingKeyframe(true)
@@ -5036,26 +5049,33 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           referenceImageUrl: c.referenceImage ? c.referenceImage.substring(0, 50) + '...' : 'none' 
         })))
       
+      console.log('[handleGenerateSceneImage] Making API call to /api/scene/generate-image...')
+      const requestBody = { 
+        projectId: projectId,
+        sceneIndex: sceneIdx,
+        // Use scenePrompt from prompt builder if provided, otherwise use scene description
+        scenePrompt: promptData.scenePrompt || scene.visualDescription || scene.action || scene.heading,
+        // Legacy support: customPrompt (if provided, will be used by API)
+        customPrompt: promptData.customPrompt,
+        artStyle: promptData.artStyle,
+        shotType: promptData.shotType,
+        cameraAngle: promptData.cameraAngle,
+        lighting: promptData.lighting,
+        characters: sceneCharacters,  // Characters array
+        quality: imageQuality
+      }
+      console.log('[handleGenerateSceneImage] Request body:', JSON.stringify(requestBody).substring(0, 500))
+      
       const response = await fetch('/api/scene/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          projectId: projectId,
-          sceneIndex: sceneIdx,
-          // Use scenePrompt from prompt builder if provided, otherwise use scene description
-          scenePrompt: promptData.scenePrompt || scene.visualDescription || scene.action || scene.heading,
-          // Legacy support: customPrompt (if provided, will be used by API)
-          customPrompt: promptData.customPrompt,
-          artStyle: promptData.artStyle,
-          shotType: promptData.shotType,
-          cameraAngle: promptData.cameraAngle,
-          lighting: promptData.lighting,
-          characters: sceneCharacters,  // Characters array
-          quality: imageQuality
-        })
+        body: JSON.stringify(requestBody)
       })
       
+      console.log('[handleGenerateSceneImage] Response status:', response.status)
       const data = await response.json()
+      console.log('[handleGenerateSceneImage] Response data:', JSON.stringify(data).substring(0, 500))
+      
       if (!response.ok) {
         const errorMsg = data?.error || 'Image generation failed'
         throw new Error(errorMsg)
