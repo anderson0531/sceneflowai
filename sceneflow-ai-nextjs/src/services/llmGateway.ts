@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { generateText } from '@/lib/vertexai/gemini'
 
 export type Provider = 'openai' | 'gemini'
 
@@ -40,29 +41,17 @@ export async function callLLM(config: LLMConfig, prompt: string): Promise<string
     return normalizeToJsonString(content)
   }
 
-  // default gemini
-  const apiKey = config.apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
-  if (!apiKey) throw new Error('Gemini API key not configured (GEMINI_API_KEY)')
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 60000)
-  const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    signal: controller.signal,
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.2,
-        topP: 0.9,
-        responseMimeType: 'application/json'
-      }
-    }),
-  }).finally(() => clearTimeout(timeout))
-  if (!resp.ok) throw new Error(`Gemini API error: ${resp.status}`)
-  const json = await resp.json()
-  const text: string | undefined = json?.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!text) throw new Error('Gemini returned empty content')
-  return normalizeToJsonString(text)
+  // Use Vertex AI for Gemini (pay-as-you-go, no free tier limits)
+  const result = await generateText(prompt, {
+    model,
+    temperature: 0.2,
+    topP: 0.9,
+    responseMimeType: 'application/json',
+    systemInstruction: 'Return ONLY valid JSON that matches the requested schema. No prose.'
+  })
+  
+  if (!result.text) throw new Error('Gemini returned empty content')
+  return normalizeToJsonString(result.text)
 }
 
 function normalizeToJsonString(raw: string): string {

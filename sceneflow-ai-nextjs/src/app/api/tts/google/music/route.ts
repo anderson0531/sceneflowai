@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60 // Allow up to 60 seconds for music generation
@@ -12,49 +11,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing text parameter' }, { status: 400 })
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY
-    console.log('[Google Music] API Key present:', !!apiKey)
+    // Check for Vertex AI configuration
+    const projectId = process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID
+    console.log('[Google Music] Vertex AI project configured:', !!projectId)
     
-    if (!apiKey) {
-      console.error('[Google Music] Error: Google/Gemini API key not configured')
+    if (!projectId) {
+      console.error('[Google Music] Error: Vertex AI not configured (VERTEX_PROJECT_ID required)')
       return NextResponse.json({ error: 'Music generation API not configured' }, { status: 500 })
     }
 
     const durationSeconds = duration || 30
     console.log('[Google Music] Generating music:', { text, duration: durationSeconds })
 
-    // Initialize Gemini client
-    const genAI = new GoogleGenerativeAI(apiKey)
+    // Note: Lyria RealTime API is experimental and may require special access
+    // This implementation returns an informative error since the API isn't publicly available yet
     
-    // Note: As of now, Lyria RealTime API is experimental and may require special access
-    // This implementation uses the standard Gemini API approach
-    // Once Lyria RealTime API is fully available, update to use client.live.music.connect()
+    console.warn('[Google Music] Lyria RealTime API is experimental and may not be available')
+    console.warn('[Google Music] Falling back to placeholder response')
     
-    try {
-      // Attempt to use music generation (experimental feature)
-      // For now, we'll return an informative error since Lyria API isn't publicly available yet
-      
-      console.warn('[Google Music] Lyria RealTime API is experimental and may not be available')
-      console.warn('[Google Music] Falling back to placeholder response')
-      
-      // TODO: Update this when Lyria RealTime API becomes publicly available
-      // Expected API usage:
-      // const musicSession = await genAI.live.music.connect({
-      //   prompt: text,
-      //   duration: durationSeconds
-      // })
-      // const audioData = await musicSession.generate()
-      
-      return NextResponse.json({ 
-        error: 'Music generation not yet available',
-        details: 'Google Lyria RealTime API is currently experimental. Please check back later or contact support for early access.',
-        fallback: 'Consider using background music libraries or keeping ElevenLabs for music generation.'
-      }, { status: 501 })
-      
-    } catch (musicError: any) {
-      console.error('[Google Music] Lyria API error:', musicError)
-      throw musicError
-    }
+    // TODO: Update this when Lyria RealTime API becomes publicly available via Vertex AI
+    // Expected Vertex AI endpoint:
+    // POST https://{location}-aiplatform.googleapis.com/v1/projects/{project}/locations/{location}/publishers/google/models/lyria-realtime:predict
+    
+    return NextResponse.json({ 
+      error: 'Music generation not yet available',
+      details: 'Google Lyria RealTime API is currently experimental. Please check back later or contact support for early access.',
+      fallback: 'Consider using background music libraries or keeping ElevenLabs for music generation.'
+    }, { status: 501 })
 
   } catch (error: any) {
     console.error('[Google Music] Error:', error?.message || String(error))

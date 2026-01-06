@@ -1,16 +1,12 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { generateWithVision } from '@/lib/vertexai/gemini'
 
 /**
- * Analyze character image with Gemini Vision to extract detailed physical description
+ * Analyze character image with Vertex AI Gemini Vision to extract detailed physical description
  * Optimized for AI image generation prompts
  */
 export async function analyzeCharacterImage(imageUrl: string, characterName: string): Promise<string> {
   console.log(`[Vision Analyzer] Analyzing ${characterName} from:`, imageUrl.substring(0, 50))
   
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-  // Use Gemini 3.0 (Pro Preview)
-  const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' })
-
   // Fetch image
   const response = await fetch(imageUrl)
   if (!response.ok) {
@@ -45,17 +41,20 @@ DO NOT INCLUDE:
 
 Respond with a neutral, emotion-free physical description (3-4 sentences). Focus on unchanging characteristics only. Use precise, specific language.`
 
-  const result = await model.generateContent([
-    prompt,
+  const result = await generateWithVision([
+    { text: prompt },
     {
       inlineData: {
         data: base64,
         mimeType: mimeType
       }
     }
-  ])
+  ], {
+    model: 'gemini-2.0-flash',
+    temperature: 0.2
+  })
 
-  const description = result.response.text().trim()
+  const description = result.text.trim()
   console.log(`[Vision Analyzer] ${characterName} analysis complete:`)
   console.log(description.substring(0, 200) + (description.length > 200 ? '...' : ''))
   

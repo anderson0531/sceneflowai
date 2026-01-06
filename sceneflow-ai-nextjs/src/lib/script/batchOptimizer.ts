@@ -1,5 +1,6 @@
 import { buildCharacterBible } from './characterBible'
 import { buildInitialSynopsis, updateSynopsis } from './synopsis'
+import { generateText } from '@/lib/vertexai/gemini'
 
 type FetchFn = (input: string, init?: any) => Promise<Response>
 
@@ -71,20 +72,16 @@ Rules:
 }
 
 async function callGeminiForScene({ apiKey, fetchImpl, prompt }: { apiKey: string, fetchImpl: FetchFn, prompt: string }): Promise<any> {
-  const res = await fetchImpl(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 1536, responseMimeType: 'application/json' }
-      })
-    }
-  )
-  if (!res.ok) throw new Error(`Gemini scene error: ${res.status}`)
-  const data = await res.json()
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  // Use Vertex AI for Gemini (pay-as-you-go, no free tier limits)
+  // Note: apiKey and fetchImpl are kept for interface compatibility but not used
+  const result = await generateText(prompt, {
+    model: 'gemini-2.0-flash',
+    temperature: 0.2,
+    maxOutputTokens: 1536,
+    responseMimeType: 'application/json'
+  })
+  
+  const text = result.text || ''
   const json = extractSceneJson(text)
   return json
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { generateText } from '@/lib/vertexai/gemini'
 import { moderatePrompt, getUserModerationContext, createBlockedResponse } from '@/lib/moderation'
 
 export const maxDuration = 120
@@ -817,44 +817,23 @@ Return ONLY valid JSON array. No markdown code blocks, no explanatory text.
 }
 
 async function callGeminiForIntelligentSegmentation(prompt: string): Promise<IntelligentSegment[]> {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
-  if (!apiKey) {
-    throw new Error('Google Gemini API key not configured')
+  // Use Vertex AI for Gemini (pay-as-you-go, no free tier limits)
+  const projectId = process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID
+  if (!projectId) {
+    throw new Error('Vertex AI not configured (VERTEX_PROJECT_ID required)')
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey)
+  console.log(`[Scene Segmentation] Using Vertex AI Gemini`)
   
-  // Try models in order of preference: Gemini 3.0 Pro for highest intelligence
-  const modelsToTry = ['gemini-3-pro-preview', 'gemini-3.0-flash', 'gemini-2.5-flash']
+  const result = await generateText(prompt, {
+    model: 'gemini-2.0-flash',
+    temperature: 0.7,
+    maxOutputTokens: 16384,
+    responseMimeType: 'application/json'
+  })
   
-  let lastError: Error | null = null
-
-  for (const modelName of modelsToTry) {
-    try {
-      console.log(`[Scene Segmentation] Attempting with model: ${modelName}`)
-      const model = genAI.getGenerativeModel({ 
-        model: modelName,
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 16384,
-          responseMimeType: 'application/json',
-        },
-      })
-
-      const result = await model.generateContent(prompt)
-      const response = await result.response
-      const text = response.text()
-      
-      console.log(`[Scene Segmentation] Success with model: ${modelName}`)
-      return parseGeminiResponseText(text)
-    } catch (error) {
-      console.warn(`[Scene Segmentation] Failed with model ${modelName}:`, error instanceof Error ? error.message : error)
-      lastError = error instanceof Error ? error : new Error(String(error))
-      // Continue to next model
-    }
-  }
-
-  throw lastError || new Error('All Gemini model attempts failed')
+  console.log(`[Scene Segmentation] Success with Vertex AI`)
+  return parseGeminiResponseText(result.text)
 }
 
 function parseGeminiResponseText(text: string): IntelligentSegment[] {

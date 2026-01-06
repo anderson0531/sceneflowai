@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { generateWithVision } from '@/lib/vertexai/gemini'
 
 /**
  * Confidence Thresholds:
@@ -21,9 +21,6 @@ export async function validateCharacterLikeness(
   referenceImageUrl: string,
   characterName: string
 ): Promise<ValidationResult> {
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-  const model = genAI.getGenerativeModel({ model: 'gemini-3.0-flash' })
-  
   // Fetch both images
   const [generatedRes, referenceRes] = await Promise.all([
     fetch(generatedImageUrl),
@@ -69,7 +66,7 @@ IMPORTANT:
 - If facial structure is completely different, confidence MUST be < 50
 - Only mark "matches": true if confidence >= 85 and ethnicity matches`
 
-  const result = await model.generateContent([
+  const result = await generateWithVision([
     {
       inlineData: {
         data: Buffer.from(referenceBuffer).toString('base64'),
@@ -82,10 +79,13 @@ IMPORTANT:
         mimeType: 'image/png'
       }
     },
-    prompt
-  ])
+    { text: prompt }
+  ], {
+    model: 'gemini-2.0-flash',
+    temperature: 0.2
+  })
   
-  const text = result.response.text()
+  const text = result.text
   const jsonMatch = text.match(/\{[\s\S]*\}/)
   
   if (jsonMatch) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { generateText } from '@/lib/vertexai/gemini'
 
 export const runtime = 'nodejs'
 
@@ -15,25 +15,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Instruction is required' }, { status: 400 })
     }
 
-    const apiKey = process.env.GOOGLE_API_KEY
-    if (!apiKey) {
-      return NextResponse.json({ error: 'Gemini API key not configured' }, { status: 500 })
+    // Vertex AI requires VERTEX_PROJECT_ID and GOOGLE_APPLICATION_CREDENTIALS_JSON
+    const projectId = process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID
+    if (!projectId) {
+      return NextResponse.json({ error: 'Vertex AI not configured (VERTEX_PROJECT_ID required)' }, { status: 500 })
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey)
-    
-    // Try models in order of preference: Gemini 3.0 (requested), then fallbacks
-    const modelsToTry = ['gemini-3-pro-preview', 'gemini-2.5-flash']
-    
-    let optimizedPrompt = ''
-    let lastError = null
+    console.log(`[Optimize Prompt] Using Vertex AI Gemini`)
 
-    for (const modelName of modelsToTry) {
-      try {
-        console.log(`[Optimize Prompt] Attempting with model: ${modelName}`)
-        const model = genAI.getGenerativeModel({ model: modelName })
-
-        const systemPrompt = `You are an expert AI prompt optimizer for character image generation. Your task is to optimize a character description prompt for better image generation results, specifically for professional character portraits.
+    const systemPrompt = `You are an expert AI prompt optimizer for character image generation. Your task is to optimize a character description prompt for better image generation results, specifically for professional character portraits.
 
 Given a character description and an instruction, modify the prompt to better suit the instruction while maintaining the core character details.
 
@@ -41,7 +31,7 @@ Keep the optimized prompt concise but descriptive, focusing on visual elements t
 
 Return only the optimized prompt text, no explanations or additional formatting.`
 
-        const fullPrompt = `${systemPrompt}
+    const fullPrompt = `${systemPrompt}
 
 Original prompt: ${prompt}
 
@@ -49,22 +39,13 @@ Instruction: ${instruction}
 
 Optimized prompt:`
 
-        const result = await model.generateContent(fullPrompt)
-        const response = await result.response
-        optimizedPrompt = response.text().trim()
-        
-        console.log(`[Optimize Prompt] Success with model: ${modelName}`)
-        break // Stop if successful
-      } catch (error) {
-        console.warn(`[Optimize Prompt] Failed with model ${modelName}:`, error instanceof Error ? error.message : error)
-        lastError = error
-        // Continue to next model
-      }
-    }
-
-    if (!optimizedPrompt) {
-      throw lastError || new Error('All model attempts failed')
-    }
+    const result = await generateText(fullPrompt, {
+      model: 'gemini-2.0-flash',
+      temperature: 0.3
+    })
+    
+    const optimizedPrompt = result.text.trim()
+    console.log(`[Optimize Prompt] Success with Vertex AI`)
 
     return NextResponse.json({ optimizedPrompt })
 

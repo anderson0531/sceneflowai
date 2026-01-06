@@ -1,11 +1,11 @@
 /**
  * NarrationBeatAnalyzer
  * 
- * Uses Gemini to split scene narration into visual beats for video generation.
+ * Uses Vertex AI Gemini to split scene narration into visual beats for video generation.
  * Each beat represents a distinct visual concept that can be a separate video clip.
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { generateText } from '@/lib/vertexai/gemini'
 
 export interface NarrationBeat {
   beatNumber: number
@@ -71,12 +71,9 @@ export async function analyzeNarrationBeats(input: AnalyzeNarrationInput): Promi
     }
   }
   
-  // For beat-matched mode, use Gemini to analyze
+  // For beat-matched mode, use Vertex AI Gemini to analyze
   const duration = input.estimatedDuration || estimateNarrationDuration(narrationText)
   const targetSegments = calculateSegmentCount(duration)
-  
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
   
   const characterContext = characterDescriptions 
     ? Object.entries(characterDescriptions)
@@ -128,8 +125,12 @@ Important prompt rules:
 - Vary shot types to maintain visual interest`
 
   try {
-    const result = await model.generateContent(prompt)
-    const responseText = result.response.text()
+    const result = await generateText(prompt, {
+      model: 'gemini-2.0-flash',
+      temperature: 0.3,
+      responseMimeType: 'application/json'
+    })
+    const responseText = result.text
     
     // Parse JSON from response (handle potential markdown wrapping)
     let jsonStr = responseText
