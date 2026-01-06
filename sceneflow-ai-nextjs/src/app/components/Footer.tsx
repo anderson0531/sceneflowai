@@ -176,7 +176,7 @@ export function Footer() {
               </p>
               {/* Business Address - Required for payment processor compliance */}
               <p className="text-gray-600 text-xs mt-1">
-                SceneFlow AI • [Virtual Office Address - Coming Soon] • Contact: support@sceneflowai.studio
+                Life Focus, LLC • 7435 Paradiso Drive, Apollo Beach FL 33572 • Contact: support@sceneflowai.studio
               </p>
             </div>
             <div className="flex items-center gap-4 mt-4 md:mt-0">
