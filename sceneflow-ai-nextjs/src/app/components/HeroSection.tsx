@@ -94,9 +94,9 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
           >
-            <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white">From Idea to</span>
+            <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white">Direct the Vision.</span>
             <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400">
-              Published Video
+              Automate the Production
             </span>
           </motion.h1>
 
@@ -107,8 +107,7 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.7 }}
           >
-            Go from napkin idea to <span className="text-white font-semibold">professional-quality video</span>—at a 
-            fraction of traditional production costs. One platform. Zero tool-juggling. Complete creative control.
+            Stop juggling 9 different tools. Experience the first <span className="text-white font-semibold">unified workflow</span> powered by Google&apos;s Veo 3 and Gemini 2.5—turning your script into professional cinema in minutes, not weeks.
           </motion.p>
 
           {/* Key Capabilities Pills */}
