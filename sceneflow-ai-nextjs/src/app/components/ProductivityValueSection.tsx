@@ -173,7 +173,7 @@ const CostTab = ({ scenario }: { scenario: Scenario }) => {
     
     // Individual tools costs
     const veoClips = totalScenes * 7; // ~7 segments per scene
-    const veoCost = veoClips * 1.30; // Veo 3.1 Quality (4K) at ~$1.30 per 8s clip
+    const veoCost = veoClips * 0.75; // Veo 3.1 Fast (720p) at ~$0.75 per 8s clip
     const imagenCost = totalScenes * 8 * 0.04; // 8 frames per scene
     const geminiCost = totalVideos * 0.50; // Gemini 2.5 Pro for script generation per project
     const elevenLabsCost = 99; // subscription
@@ -249,7 +249,7 @@ const CostTab = ({ scenario }: { scenario: Scenario }) => {
         
         <div className="space-y-2 mb-4">
           {[
-            { name: 'Veo 3.1 Quality (4K)', cost: calculations.veoCost },
+            { name: 'Veo 3.1 Fast (720p)', cost: calculations.veoCost },
             { name: 'Imagen 4', cost: calculations.imagenCost },
             { name: 'Gemini 2.5 Pro', cost: calculations.geminiCost },
             { name: 'ElevenLabs Pro', cost: calculations.elevenLabsCost },

@@ -1,10 +1,13 @@
 /**
  * Image Editing Client for SceneFlow AI
  * 
- * All editing modes use Gemini 3 Pro Image Preview via REST API with GEMINI_API_KEY:
+ * All editing modes use Vertex AI Gemini for multimodal image editing:
  * 1. Instruction-Based Editing - Natural language editing without masks
  * 2. Mask-Based Editing (Inpainting) - Precise pixel control with masks
  * 3. Outpainting - Expand image to new aspect ratios
+ * 
+ * MIGRATED: From consumer Gemini API (generativelanguage.googleapis.com) to
+ * Vertex AI (aiplatform.googleapis.com) for pay-as-you-go billing and no 429 errors.
  * 
  * SERVER-SIDE ONLY - Do not import this file in client components
  * 
@@ -12,6 +15,19 @@
  */
 
 import { EditMode, AspectRatioPreset } from '@/types/imageEdit'
+import { getVertexAIAuthToken } from '@/lib/vertexai/client'
+
+// Vertex AI configuration
+function getVertexConfig() {
+  const projectId = process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID
+  const location = process.env.VERTEX_LOCATION || process.env.GCP_REGION || 'us-central1'
+  
+  if (!projectId) {
+    throw new Error('VERTEX_PROJECT_ID or GCP_PROJECT_ID must be configured for Vertex AI')
+  }
+  
+  return { projectId, location }
+}
 
 // Re-export types for API route usage
 export type { EditMode, AspectRatioPreset }
@@ -108,9 +124,9 @@ function detectMimeType(imageSource: string): string {
 // ============================================================================
 
 /**
- * Edit image using natural language instruction (Gemini)
+ * Edit image using natural language instruction (Vertex AI Gemini)
  * No mask required - AI understands context from the instruction
- * Uses Gemini 3 Pro Image Preview for intelligent image editing
+ * Uses Vertex AI for pay-as-you-go billing (no 429 quota errors)
  * 
  * @example
  * await editImageWithInstruction({
@@ -123,15 +139,11 @@ export async function editImageWithInstruction(
 ): Promise<EditResult> {
   const { sourceImage, instruction, subjectReference } = options
   
-  console.log('[Image Edit] Starting instruction-based edit with Gemini...')
+  console.log('[Image Edit] Starting instruction-based edit with Vertex AI Gemini...')
   console.log('[Image Edit] Instruction:', instruction.substring(0, 100))
   
   try {
-    const apiKey = process.env.GEMINI_API_KEY
-    
-    if (!apiKey) {
-      throw new Error('GEMINI_API_KEY not configured')
-    }
+    const { projectId, location } = getVertexConfig()
     
     // Convert source image to base64
     const sourceBase64 = await imageToBase64(sourceImage)
@@ -169,35 +181,41 @@ export async function editImageWithInstruction(
     
     contents.push({ text: editPrompt })
     
-    // Use Gemini 3 Pro Image Preview which supports image generation
-    const model = 'gemini-3-pro-image-preview'
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+    // Use Vertex AI Gemini endpoint for image editing
+    // Note: gemini-2.0-flash-exp supports image generation on Vertex AI
+    const model = 'gemini-2.0-flash-exp'
+    const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
+    
+    const accessToken = await getVertexAIAuthToken()
     
     const requestBody = {
       contents: [{ parts: contents }],
       generationConfig: {
-        response_modalities: ['IMAGE']
+        responseModalities: ['IMAGE', 'TEXT']
       }
     }
     
-    console.log('[Image Edit] Calling Gemini API...')
+    console.log('[Image Edit] Calling Vertex AI Gemini...')
     
     const response = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
       body: JSON.stringify(requestBody)
     })
     
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`Gemini API error: ${response.status} - ${errorText}`)
+      throw new Error(`Vertex AI Gemini error: ${response.status} - ${errorText}`)
     }
     
     const data = await response.json()
     
     // Check for API errors
     if (data.error) {
-      throw new Error(`Gemini API error: ${data.error.message || 'Unknown error'}`)
+      throw new Error(`Vertex AI Gemini error: ${data.error.message || 'Unknown error'}`)
     }
     
     // Extract image from Gemini response
@@ -208,7 +226,7 @@ export async function editImageWithInstruction(
     
     const parts = candidates[0]?.content?.parts
     if (!parts || parts.length === 0) {
-      throw new Error('Unexpected response format from Gemini API')
+      throw new Error('Unexpected response format from Vertex AI Gemini')
     }
     
     // Find the image part
@@ -222,12 +240,12 @@ export async function editImageWithInstruction(
     }
     
     if (!imageData) {
-      throw new Error('No image generated by Gemini')
+      throw new Error('No image generated by Vertex AI Gemini')
     }
     
     const editedImageDataUrl = `data:image/png;base64,${imageData}`
     
-    console.log('[Image Edit] Instruction-based edit completed successfully')
+    console.log('[Image Edit] Instruction-based edit completed successfully via Vertex AI')
     
     return {
       imageDataUrl: editedImageDataUrl,
@@ -248,13 +266,13 @@ export async function editImageWithInstruction(
 }
 
 // ============================================================================
-// Mask-Based Editing (Gemini with Mask)
+// Mask-Based Editing (Vertex AI Gemini with Mask)
 // ============================================================================
 
 /**
- * Edit image using a binary mask (Gemini Inpainting)
+ * Edit image using a binary mask (Vertex AI Gemini Inpainting)
  * White areas in mask will be regenerated based on prompt
- * Uses Gemini 3 Pro Image Preview for mask-guided editing
+ * Uses Vertex AI for pay-as-you-go billing (no 429 quota errors)
  * 
  * @example
  * await inpaintImage({
@@ -268,15 +286,11 @@ export async function inpaintImage(
 ): Promise<EditResult> {
   const { sourceImage, maskImage, prompt, negativePrompt } = options
   
-  console.log('[Image Edit] Starting mask-based inpainting with Gemini...')
+  console.log('[Image Edit] Starting mask-based inpainting with Vertex AI Gemini...')
   console.log('[Image Edit] Prompt:', prompt.substring(0, 100))
   
   try {
-    const apiKey = process.env.GEMINI_API_KEY
-    
-    if (!apiKey) {
-      throw new Error('GEMINI_API_KEY not configured')
-    }
+    const { projectId, location } = getVertexConfig()
     
     // Convert images to base64
     const sourceBase64 = await imageToBase64(sourceImage)
@@ -315,35 +329,40 @@ In the WHITE masked areas, generate: ${prompt}`
     
     contents.push({ text: editPrompt })
     
-    // Use Gemini 3 Pro Image Preview
-    const model = 'gemini-3-pro-image-preview'
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+    // Use Vertex AI Gemini endpoint
+    const model = 'gemini-2.0-flash-exp'
+    const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
+    
+    const accessToken = await getVertexAIAuthToken()
     
     const requestBody = {
       contents: [{ parts: contents }],
       generationConfig: {
-        response_modalities: ['IMAGE']
+        responseModalities: ['IMAGE', 'TEXT']
       }
     }
     
-    console.log('[Image Edit] Calling Gemini API for inpainting...')
+    console.log('[Image Edit] Calling Vertex AI Gemini for inpainting...')
     
     const response = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
       body: JSON.stringify(requestBody)
     })
     
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`Gemini API error: ${response.status} - ${errorText}`)
+      throw new Error(`Vertex AI Gemini error: ${response.status} - ${errorText}`)
     }
     
     const data = await response.json()
     
     // Check for API errors
     if (data.error) {
-      throw new Error(`Gemini API error: ${data.error.message || 'Unknown error'}`)
+      throw new Error(`Vertex AI Gemini error: ${data.error.message || 'Unknown error'}`)
     }
     
     // Extract image from response
@@ -354,7 +373,7 @@ In the WHITE masked areas, generate: ${prompt}`
     
     const parts = candidates[0]?.content?.parts
     if (!parts || parts.length === 0) {
-      throw new Error('Unexpected response format from Gemini API')
+      throw new Error('Unexpected response format from Vertex AI Gemini')
     }
     
     // Find the image part
@@ -368,12 +387,12 @@ In the WHITE masked areas, generate: ${prompt}`
     }
     
     if (!imageData) {
-      throw new Error('No image generated by Gemini')
+      throw new Error('No image generated by Vertex AI Gemini')
     }
     
     const editedImageDataUrl = `data:image/png;base64,${imageData}`
     
-    console.log('[Image Edit] Inpainting completed successfully')
+    console.log('[Image Edit] Inpainting completed successfully via Vertex AI')
     
     return {
       imageDataUrl: editedImageDataUrl,
@@ -394,13 +413,13 @@ In the WHITE masked areas, generate: ${prompt}`
 }
 
 // ============================================================================
-// Outpainting (Aspect Ratio Expansion with Gemini)
+// Outpainting (Aspect Ratio Expansion with Vertex AI Gemini)
 // ============================================================================
 
 /**
- * Expand image to a new aspect ratio (Gemini Outpainting)
+ * Expand image to a new aspect ratio (Vertex AI Gemini Outpainting)
  * AI fills in the new areas based on the prompt
- * Uses Gemini 3 Pro Image Preview for intelligent canvas expansion
+ * Uses Vertex AI for pay-as-you-go billing (no 429 quota errors)
  * 
  * @example
  * await outpaintImage({
@@ -414,16 +433,12 @@ export async function outpaintImage(
 ): Promise<EditResult> {
   const { sourceImage, targetAspectRatio, prompt, negativePrompt } = options
   
-  console.log('[Image Edit] Starting outpainting with Gemini...')
+  console.log('[Image Edit] Starting outpainting with Vertex AI Gemini...')
   console.log('[Image Edit] Target aspect ratio:', targetAspectRatio)
   console.log('[Image Edit] Prompt:', prompt.substring(0, 100))
   
   try {
-    const apiKey = process.env.GEMINI_API_KEY
-    
-    if (!apiKey) {
-      throw new Error('GEMINI_API_KEY not configured')
-    }
+    const { projectId, location } = getVertexConfig()
     
     // Convert source image to base64
     const sourceBase64 = await imageToBase64(sourceImage)
@@ -455,48 +470,40 @@ Make sure the expanded areas blend seamlessly with the original image, matching 
     
     contents.push({ text: editPrompt })
     
-    // Use Gemini 3 Pro Image Preview
-    const model = 'gemini-3-pro-image-preview'
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+    // Use Vertex AI Gemini endpoint
+    const model = 'gemini-2.0-flash-exp'
+    const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
     
-    // Map aspect ratio to image_config
-    const aspectRatioMap: Record<string, string> = {
-      '16:9': '16:9',
-      '21:9': '21:9',
-      '1:1': '1:1',
-      '9:16': '9:16',
-      '4:3': '4:3',
-      '3:4': '3:4'
-    }
+    const accessToken = await getVertexAIAuthToken()
     
     const requestBody: any = {
       contents: [{ parts: contents }],
       generationConfig: {
-        response_modalities: ['IMAGE'],
-        image_config: {
-          aspect_ratio: aspectRatioMap[targetAspectRatio] || '16:9'
-        }
+        responseModalities: ['IMAGE', 'TEXT']
       }
     }
     
-    console.log('[Image Edit] Calling Gemini API for outpainting...')
+    console.log('[Image Edit] Calling Vertex AI Gemini for outpainting...')
     
     const response = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
       body: JSON.stringify(requestBody)
     })
     
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`Gemini API error: ${response.status} - ${errorText}`)
+      throw new Error(`Vertex AI Gemini error: ${response.status} - ${errorText}`)
     }
     
     const data = await response.json()
     
     // Check for API errors
     if (data.error) {
-      throw new Error(`Gemini API error: ${data.error.message || 'Unknown error'}`)
+      throw new Error(`Vertex AI Gemini error: ${data.error.message || 'Unknown error'}`)
     }
     
     // Extract image from response
@@ -507,7 +514,7 @@ Make sure the expanded areas blend seamlessly with the original image, matching 
     
     const parts = candidates[0]?.content?.parts
     if (!parts || parts.length === 0) {
-      throw new Error('Unexpected response format from Gemini API')
+      throw new Error('Unexpected response format from Vertex AI Gemini')
     }
     
     // Find the image part
@@ -521,12 +528,12 @@ Make sure the expanded areas blend seamlessly with the original image, matching 
     }
     
     if (!imageData) {
-      throw new Error('No image generated by Gemini')
+      throw new Error('No image generated by Vertex AI Gemini')
     }
     
     const editedImageDataUrl = `data:image/png;base64,${imageData}`
     
-    console.log('[Image Edit] Outpainting completed successfully')
+    console.log('[Image Edit] Outpainting completed successfully via Vertex AI')
     
     return {
       imageDataUrl: editedImageDataUrl,
