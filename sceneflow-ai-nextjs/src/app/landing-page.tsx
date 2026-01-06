@@ -5,6 +5,8 @@ import dynamic from 'next/dynamic'
 import { Header } from './components/Header'
 import { HeroSection } from './components/HeroSection'
 import { TrustSignals } from './components/TrustSignals'
+import { GoogleCloudBadge } from './components/GoogleCloudBadge'
+import { FounderSection } from './components/FounderSection'
 // Value Proposition Sections - Streamlined for clarity and conversion
 const SlotMachineSection = dynamic(() => import('@/components/landing/SlotMachineSection'), { ssr: false })
 const HowItWorks = dynamic(() => import('./components/HowItWorks').then(m => m.HowItWorks), { ssr: false })
@@ -37,6 +39,8 @@ export default function LandingPage() {
       <HeroSection />
       {/* 2. Trust: Powered by Google Cloud credibility */}
       <TrustSignals />
+      {/* 2.5. Google Cloud: Showcase Google AI integration */}
+      <GoogleCloudBadge />
       {/* 3. Problem: Slot machine metaphor - why current tools fail */}
       <SlotMachineSection />
       {/* 4. How: Simple 3-step process - moved earlier per optimization */}
@@ -60,6 +64,8 @@ export default function LandingPage() {
       <UseCasesSection />
       {/* 12. Pricing: Full production value tiers with animatic features */}
       <Pricing />
+      {/* 12.5. Founder: Leadership and vision */}
+      <FounderSection />
       {/* 13. FAQ: Objection handling */}
       <FAQ />
       {/* 14. Final CTA: Conversion */}
