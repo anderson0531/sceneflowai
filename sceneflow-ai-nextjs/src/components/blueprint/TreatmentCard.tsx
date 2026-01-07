@@ -34,6 +34,14 @@ export function TreatmentCard() {
     expression: string;
     build: string;
     description: string;
+    // Psychological depth fields
+    externalGoal?: string;
+    internalNeed?: string;
+    fatalFlaw?: string;
+    arcStartingState?: string;
+    arcShift?: string;
+    arcEndingState?: string;
+    // Existing optional fields
     imagePrompt?: string;
     referenceImage?: string | null;
     generating?: boolean;
@@ -226,10 +234,7 @@ export function TreatmentCard() {
     const flashIf = (key: string) => (wasJustAppliedActive && changedKeys.has(key) ? 'flash-highlight' : '')
     return (
       <Card className="mt-4 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-        <CardHeader>
-          <CardTitle className="text-gray-900 dark:text-gray-100">Treatment</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="w-full">
             <div className="sticky top-0 z-10 bg-gray-900/80 backdrop-blur supports-[backdrop-filter]:bg-gray-900/60 rounded-md">
               <div className="flex items-center justify-end gap-3 py-2">
@@ -680,22 +685,93 @@ export function TreatmentCard() {
                     </div>
                   </div>
 
-                  {/* Characters - Simple Preview */}
+                  {/* Characters - Expanded View with Psychological Depth */}
                   {Array.isArray(v.character_descriptions) && v.character_descriptions.length > 0 ? (
-                    <div className="space-y-1">
+                    <div className="space-y-3">
                       <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-2">
                         <Users className="w-3 h-3" />
                         Characters ({v.character_descriptions.length})
                       </div>
-                      <div className="flex flex-wrap gap-2 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                      <div className="space-y-3">
                         {v.character_descriptions.map((c, idx) => (
-                          <div 
-                            key={idx} 
-                            className="px-2.5 py-1 text-xs rounded-full bg-purple-50 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30 flex items-center gap-1.5"
+                          <details 
+                            key={idx}
+                            className="group rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden"
                           >
-                            {c.name}
-                            {c.role && <span className="text-purple-600 dark:text-purple-400/60">· {c.role}</span>}
-                          </div>
+                            <summary className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center">
+                                  <span className="text-purple-700 dark:text-purple-300 text-sm font-bold">{c.name?.charAt(0) || '?'}</span>
+                                </div>
+                                <div>
+                                  <div className="font-medium text-gray-900 dark:text-gray-100">{c.name}</div>
+                                  <div className="text-xs text-purple-600 dark:text-purple-400">{c.role || 'Character'}</div>
+                                </div>
+                              </div>
+                              <ChevronDown className="w-4 h-4 text-gray-400 group-open:rotate-180 transition-transform" />
+                            </summary>
+                            <div className="px-4 pb-4 pt-2 border-t border-gray-100 dark:border-gray-700 space-y-3">
+                              {/* Description */}
+                              {c.description && (
+                                <div className="text-sm text-gray-700 dark:text-gray-300">{c.description}</div>
+                              )}
+                              
+                              {/* Goals & Flaws Grid */}
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                {c.externalGoal && (
+                                  <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-900">
+                                    <div className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-1">External Goal</div>
+                                    <div className="text-xs text-blue-800 dark:text-blue-200">{c.externalGoal}</div>
+                                  </div>
+                                )}
+                                {c.internalNeed && (
+                                  <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-900">
+                                    <div className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-1">Internal Need</div>
+                                    <div className="text-xs text-amber-800 dark:text-amber-200">{c.internalNeed}</div>
+                                  </div>
+                                )}
+                                {c.fatalFlaw && (
+                                  <div className="p-2.5 rounded-lg bg-red-50 dark:bg-red-950/50 border border-red-100 dark:border-red-900">
+                                    <div className="text-[10px] font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide mb-1">Fatal Flaw</div>
+                                    <div className="text-xs text-red-800 dark:text-red-200">{c.fatalFlaw}</div>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Character Arc */}
+                              {(c.arcStartingState || c.arcShift || c.arcEndingState) && (
+                                <div className="p-3 rounded-lg bg-gradient-to-r from-purple-50 via-indigo-50 to-cyan-50 dark:from-purple-950/30 dark:via-indigo-950/30 dark:to-cyan-950/30 border border-purple-100 dark:border-purple-800">
+                                  <div className="text-[10px] font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide mb-2">Character Arc</div>
+                                  <div className="flex items-center gap-2 text-xs">
+                                    {c.arcStartingState && (
+                                      <div className="flex-1 p-2 rounded bg-white/60 dark:bg-gray-800/60">
+                                        <div className="text-[9px] text-gray-500 dark:text-gray-400 uppercase">Starting</div>
+                                        <div className="text-gray-700 dark:text-gray-300">{c.arcStartingState}</div>
+                                      </div>
+                                    )}
+                                    {c.arcShift && (
+                                      <>
+                                        <ArrowRight className="w-3 h-3 text-purple-400 flex-shrink-0" />
+                                        <div className="flex-1 p-2 rounded bg-white/60 dark:bg-gray-800/60">
+                                          <div className="text-[9px] text-gray-500 dark:text-gray-400 uppercase">Shift</div>
+                                          <div className="text-gray-700 dark:text-gray-300">{c.arcShift}</div>
+                                        </div>
+                                      </>
+                                    )}
+                                    {c.arcEndingState && (
+                                      <>
+                                        <ArrowRight className="w-3 h-3 text-cyan-400 flex-shrink-0" />
+                                        <div className="flex-1 p-2 rounded bg-white/60 dark:bg-gray-800/60">
+                                          <div className="text-[9px] text-gray-500 dark:text-gray-400 uppercase">Ending</div>
+                                          <div className="text-gray-700 dark:text-gray-300">{c.arcEndingState}</div>
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </details>
                         ))}
                       </div>
                       <div className="text-xs text-gray-600 dark:text-gray-400 italic mt-2 px-3">

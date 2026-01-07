@@ -120,7 +120,13 @@ SCHEMA - GENERATE IN THIS EXACT ORDER:
       "build": "Body type, physique, movement style (e.g., 'Wiry, compact, and deceptively strong, favoring quick movements over bulk')",
       "defaultWardrobe": "Primary outfit/attire appropriate to role and setting (e.g., 'Charcoal grey tailored business suit, crisp white dress shirt, dark blue silk tie, polished black oxford shoes')",
       "wardrobeAccessories": "Consistent accessories worn throughout (e.g., 'Silver wristwatch with leather band, rectangular black-framed glasses, simple gold wedding band')",
-      "description": "Brief character context for story (role in narrative)"
+      "description": "Brief character context for story (role in narrative)",
+      "externalGoal": "What the character wants to achieve externally (e.g., 'Win the championship', 'Save the company', 'Find the treasure')",
+      "internalNeed": "What the character needs emotionally/psychologically (e.g., 'Learn to trust others', 'Overcome fear of failure', 'Accept their past')",
+      "fatalFlaw": "Character weakness that creates obstacles (e.g., 'Stubborn pride', 'Fear of intimacy', 'Reckless impulsivity')",
+      "arcStartingState": "Who the character is at the beginning (e.g., 'Cynical loner who pushes everyone away')",
+      "arcShift": "What catalyzes change (e.g., 'Forced to rely on an unlikely ally')",
+      "arcEndingState": "Who the character becomes (e.g., 'Opens heart to friendship, finds purpose in community')"
     }
   ],
   
@@ -167,9 +173,11 @@ COMPLETE OUTPUT EXAMPLE:
 CRITICAL: 
 - Generate 3-5 detailed character_descriptions (protagonist + supporting characters)
 - Each character MUST have complete attributes: subject, ethnicity, keyFeature, hairStyle, hairColor, eyeColor, expression, build
+- Each character MUST have psychological depth: externalGoal, internalNeed, fatalFlaw, and character arc (arcStartingState, arcShift, arcEndingState)
 - Generate 3-5 detailed scene_descriptions (key locations)
 - All details must be SPECIFIC and VISUAL for precise image generation
 - Character attributes must be detailed enough to recreate consistent character images across all scenes
+- Character arcs must show clear transformation aligned with story themes
 - Generate treatment with BOLD storytelling choices and CLEAR reasoning`
 }
 

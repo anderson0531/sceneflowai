@@ -52,6 +52,13 @@ const TreatmentSchema = z.object({
         build: z.string().optional(),
         description: z.string().optional(),
         image_prompt: z.string().optional(),
+        // Psychological depth fields
+        externalGoal: z.string().optional(),
+        internalNeed: z.string().optional(),
+        fatalFlaw: z.string().optional(),
+        arcStartingState: z.string().optional(),
+        arcShift: z.string().optional(),
+        arcEndingState: z.string().optional(),
       })
     )
     .optional(),
