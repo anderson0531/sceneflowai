@@ -14,6 +14,7 @@
  */
 
 import { getVertexAIAuthToken } from './client'
+import { fetchWithRetry } from '../utils/retry'
 
 // =============================================================================
 // Configuration
@@ -47,6 +48,10 @@ export interface TextGenerationOptions {
   topK?: number
   responseMimeType?: 'text/plain' | 'application/json'
   systemInstruction?: string
+  /** Maximum retry attempts for 429/transient errors (default: 3) */
+  maxRetries?: number
+  /** Initial retry delay in ms (default: 1000) */
+  initialDelayMs?: number
 }
 
 export interface TextGenerationResult {
@@ -102,14 +107,22 @@ export async function generateText(
   
   console.log(`[Vertex Gemini] Generating text with ${model}...`)
   
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json'
+  const response = await fetchWithRetry(
+    endpoint,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
     },
-    body: JSON.stringify(requestBody)
-  })
+    {
+      maxRetries: options.maxRetries ?? 3,
+      initialDelayMs: options.initialDelayMs ?? 1000,
+      operationName: `Vertex Gemini ${model}`,
+    }
+  )
   
   if (!response.ok) {
     const errorText = await response.text()
@@ -206,14 +219,22 @@ export async function generateWithVision(
   
   console.log(`[Vertex Gemini Vision] Generating with ${model}...`)
   
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json'
+  const response = await fetchWithRetry(
+    endpoint,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
     },
-    body: JSON.stringify(requestBody)
-  })
+    {
+      maxRetries: options.maxRetries ?? 3,
+      initialDelayMs: options.initialDelayMs ?? 1000,
+      operationName: `Vertex Gemini Vision ${model}`,
+    }
+  )
   
   if (!response.ok) {
     const errorText = await response.text()
@@ -346,14 +367,22 @@ export async function generateImage(
     }
   }
   
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json'
+  const response = await fetchWithRetry(
+    endpoint,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
     },
-    body: JSON.stringify(requestBody)
-  })
+    {
+      maxRetries: 3,
+      initialDelayMs: 1000,
+      operationName: `Vertex Imagen ${model}`,
+    }
+  )
   
   if (!response.ok) {
     const errorText = await response.text()

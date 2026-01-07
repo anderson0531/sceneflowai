@@ -1,4 +1,5 @@
 import { GoogleAuth } from 'google-auth-library'
+import { fetchWithRetry } from '../utils/retry'
 
 let authClient: any = null
 
@@ -217,14 +218,22 @@ export async function callVertexAIImagen(
   
   console.log('[Imagen] Config:', JSON.stringify(requestBody.parameters))
   
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json'
+  const response = await fetchWithRetry(
+    endpoint,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
     },
-    body: JSON.stringify(requestBody)
-  })
+    {
+      maxRetries: 3,
+      initialDelayMs: 1000,
+      operationName: `Vertex Imagen ${MODEL_ID}`,
+    }
+  )
 
   if (!response.ok) {
     const errorText = await response.text()

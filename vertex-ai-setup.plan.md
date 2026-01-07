@@ -298,13 +298,77 @@ When ready for BYOK (at 80% completion):
 - Verify service account has "Vertex AI User" role
 - Check API is enabled in your GCP project
 
-**If you get "quota exceeded":**
+**If you get "quota exceeded" or "RESOURCE_EXHAUSTED" (429):**
 - Check GCP quotas at **IAM & Admin** → **Quotas**
-- Request quota increase if needed
+- Request quota increase if needed (see below)
+- The app includes automatic retry with exponential backoff (3 retries, 1-30s delays)
 
 **If you get "model not found":**
 - Verify Imagen is available in your selected region
 - Try `us-central1` (most features available)
+
+---
+
+## Increasing Vertex AI Quotas for Production Scale
+
+As your app scales, you may hit default rate limits (typically 60 requests/minute for Gemini).
+Request a quota increase to handle production traffic.
+
+### Step 1: Access Quotas Dashboard
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Navigate to **IAM & Admin** → **Quotas & System Limits**
+3. Or direct link: `https://console.cloud.google.com/iam-admin/quotas?project=YOUR_PROJECT_ID`
+
+### Step 2: Find Vertex AI Gemini Quotas
+
+1. In the Filter box, search for:
+   - `Gemini` or `generateContent`
+   - Or service: `aiplatform.googleapis.com`
+2. Look for these key quotas:
+   - **Generate content requests per minute per region** (Gemini API RPM)
+   - **Generate content requests per minute per region per model**
+   - **Online prediction requests per minute per region** (Imagen)
+
+### Step 3: Request Increase
+
+1. Select the quota(s) you want to increase
+2. Click **EDIT QUOTAS** button
+3. Enter your desired limit:
+   - **Development**: 60-120 RPM (default)
+   - **Small production**: 300 RPM
+   - **Medium production**: 600 RPM
+   - **Large production**: 1000+ RPM
+4. Provide a brief justification (e.g., "Production AI video platform with growing user base")
+5. Submit request
+
+### Step 4: Monitor Usage
+
+1. Set up quota alerts at **Monitoring** → **Alerting**
+2. Create alert when usage exceeds 80% of quota
+3. Monitor via: `https://console.cloud.google.com/monitoring`
+
+### Recommended Quotas by Scale
+
+| User Scale | Gemini RPM | Imagen RPM | Notes |
+|------------|------------|------------|-------|
+| Development | 60 (default) | 60 | Free tier limits apply |
+| Beta (10-50 users) | 120 | 120 | Request increase early |
+| Launch (50-200 users) | 300 | 200 | Submit 1-2 weeks before launch |
+| Growth (200-1000 users) | 600 | 400 | May require billing tier upgrade |
+| Scale (1000+ users) | 1000+ | 600+ | Contact Google Cloud sales |
+
+### Automatic Retry Built-in
+
+The app now includes automatic retry with exponential backoff for 429 errors:
+- **Max retries**: 3 attempts
+- **Initial delay**: 1 second
+- **Max delay**: 30 seconds
+- **Backoff**: Exponential (1s → 2s → 4s) with jitter
+
+This handles transient rate limits automatically, but increasing quotas is still recommended for consistent performance.
+
+---
 
 ## Implementation Order
 
