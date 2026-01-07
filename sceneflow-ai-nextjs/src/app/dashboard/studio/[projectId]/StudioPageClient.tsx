@@ -105,8 +105,10 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       
       // API returns visuals.heroImage as an object with { id, url, prompt, status, ... }
       if (data.success && data.visuals?.heroImage?.url) {
-        // Get current variants from the store and update the first one with hero image
-        const currentVariants = guide.treatmentVariants || []
+        // Get CURRENT variants from the store using getState() to avoid stale closure
+        const currentVariants = useGuideStore.getState().guide.treatmentVariants || []
+        console.log('[StudioPage] Current variants from store:', currentVariants.length)
+        
         const updatedVariants = currentVariants.map((v: any, idx: number) => 
           idx === 0 ? { ...v, heroImage: data.visuals.heroImage } : v
         )
