@@ -105,12 +105,12 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       
       // API returns visuals.heroImage as an object with { id, url, prompt, status, ... }
       if (data.success && data.visuals?.heroImage?.url) {
-        // Update the variant with the full hero image object
-        setTreatmentVariants((prev: any[]) => 
-          prev.map((v, idx) => 
-            idx === 0 ? { ...v, heroImage: data.visuals.heroImage } : v
-          )
+        // Get current variants from the store and update the first one with hero image
+        const currentVariants = guide.treatmentVariants || []
+        const updatedVariants = currentVariants.map((v: any, idx: number) => 
+          idx === 0 ? { ...v, heroImage: data.visuals.heroImage } : v
         )
+        setTreatmentVariants(updatedVariants)
         console.log('[StudioPage] Hero image generated successfully:', data.visuals.heroImage.url)
       }
     } catch (error) {
