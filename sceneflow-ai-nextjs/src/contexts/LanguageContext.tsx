@@ -69,8 +69,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   // Load language from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem('sceneflow-language')
+    console.log('[LanguageProvider] Initializing. Stored language:', stored)
     if (stored && LANGUAGE_OPTIONS.some(l => l.code === stored)) {
+      console.log('[LanguageProvider] Setting language from localStorage:', stored)
       setLanguageState(stored)
+    } else {
+      console.log('[LanguageProvider] Using default language: en')
     }
     
     // Load translation cache from localStorage
@@ -101,9 +105,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, [language])
 
   const setLanguage = useCallback((lang: string) => {
+    console.log('[LanguageContext] setLanguage called:', { from: language, to: lang })
     setLanguageState(lang)
     localStorage.setItem('sceneflow-language', lang)
-  }, [])
+  }, [language])
 
   const languageOption = LANGUAGE_OPTIONS.find(l => l.code === language)
   const isRTL = RTL_LANGUAGES.includes(language)
@@ -126,19 +131,30 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const translateText = useCallback(async (text: string, targetLang?: string): Promise<string> => {
     const target = targetLang || language
     
+    console.log('[LanguageContext] translateText called:', { 
+      text: text?.substring(0, 50), 
+      target, 
+      currentLanguage: language 
+    })
+    
     // Skip if source and target are the same (English)
-    if (target === 'en') return text
+    if (target === 'en') {
+      console.log('[LanguageContext] Skipping translation - target is English')
+      return text
+    }
     if (!text?.trim()) return text
 
     // Check cache first
     const cacheKey = getCacheKey(text, target)
     const cached = translationCache.current[cacheKey]
     if (cached && Date.now() - cached.timestamp < CACHE_EXPIRY) {
+      console.log('[LanguageContext] Using cached translation:', cached.text?.substring(0, 50))
       return cached.text
     }
 
     try {
       setIsTranslating(true)
+      console.log('[LanguageContext] Making API call to /api/translate for:', text?.substring(0, 50))
       const response = await fetch('/api/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -146,12 +162,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (!response.ok) {
-        console.error('[LanguageContext] Translation failed:', response.status)
+        console.error('[LanguageContext] Translation API failed:', response.status)
         return text
       }
 
       const data = await response.json()
       const translatedText = data.translatedText || text
+      console.log('[LanguageContext] Got translation result:', translatedText?.substring(0, 50))
 
       // Cache the result
       translationCache.current[cacheKey] = {
@@ -268,12 +285,19 @@ export function useTranslatedText(text: string): string {
   const [translated, setTranslated] = useState(text)
 
   useEffect(() => {
+    console.log('[useTranslatedText] Effect triggered:', { language, text: text?.substring(0, 30) })
+    
     if (language === 'en') {
+      console.log('[useTranslatedText] Skipping - language is English')
       setTranslated(text)
       return
     }
 
-    translateText(text).then(setTranslated)
+    console.log('[useTranslatedText] Calling translateText for:', text?.substring(0, 30))
+    translateText(text).then(result => {
+      console.log('[useTranslatedText] Got result:', result?.substring(0, 30))
+      setTranslated(result)
+    })
   }, [text, language, translateText])
 
   return translated

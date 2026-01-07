@@ -15,12 +15,21 @@ export async function POST(request: NextRequest) {
     const body: TranslateRequest = await request.json()
     const { text, texts, targetLanguage, sourceLanguage = 'en' } = body
 
+    console.log('[Translate API] Request received:', {
+      targetLanguage,
+      sourceLanguage,
+      hasText: !!text,
+      hasTexts: !!texts,
+      textPreview: text?.substring(0, 50) || texts?.[0]?.substring(0, 50)
+    })
+
     if (!targetLanguage) {
       return NextResponse.json({ error: 'Target language is required' }, { status: 400 })
     }
 
     // Skip translation if target is same as source
     if (targetLanguage === sourceLanguage) {
+      console.log('[Translate API] Skipping - target equals source')
       if (texts) {
         return NextResponse.json({ translatedTexts: texts })
       }
@@ -30,23 +39,30 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.GOOGLE_TRANSLATE_API_KEY || process.env.GOOGLE_API_KEY
 
     if (!apiKey) {
-      console.error('[Translate API] No Google API key found')
-      // Fallback: return original text
+      console.error('[Translate API] ⚠️ NO GOOGLE API KEY FOUND - Translation will not work!')
+      console.error('[Translate API] Set GOOGLE_TRANSLATE_API_KEY or GOOGLE_API_KEY in environment')
+      // Fallback: return original text with warning flag
       if (texts) {
-        return NextResponse.json({ translatedTexts: texts })
+        return NextResponse.json({ translatedTexts: texts, warning: 'API key not configured' })
       }
-      return NextResponse.json({ translatedText: text })
+      return NextResponse.json({ translatedText: text, warning: 'API key not configured' })
     }
+
+    console.log('[Translate API] Using API key:', apiKey.substring(0, 8) + '...')
 
     // Handle batch translation
     if (texts && Array.isArray(texts) && texts.length > 0) {
+      console.log('[Translate API] Batch translating', texts.length, 'texts to', targetLanguage)
       const results = await translateBatch(texts, targetLanguage, sourceLanguage, apiKey)
+      console.log('[Translate API] Batch translation complete')
       return NextResponse.json({ translatedTexts: results })
     }
 
     // Handle single text translation
     if (text) {
+      console.log('[Translate API] Single translating to', targetLanguage, ':', text?.substring(0, 50))
       const result = await translateSingle(text, targetLanguage, sourceLanguage, apiKey)
+      console.log('[Translate API] Single translation result:', result?.substring(0, 50))
       return NextResponse.json({ translatedText: result })
     }
 

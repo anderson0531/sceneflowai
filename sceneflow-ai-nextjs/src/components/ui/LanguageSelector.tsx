@@ -38,6 +38,7 @@ export function LanguageSelector({ className, compact = false }: LanguageSelecto
   }, [])
 
   const handleSelect = (code: string) => {
+    console.log('[LanguageSelector] Language selected:', code, '(was:', language, ')')
     setLanguage(code)
     setIsOpen(false)
   }
