@@ -175,7 +175,7 @@ const CostTab = ({ scenario }: { scenario: Scenario }) => {
     const veoClips = totalScenes * 7; // ~7 segments per scene
     const veoCost = veoClips * 0.75; // Veo 3.1 Fast (720p) at ~$0.75 per 8s clip
     const imagenCost = totalScenes * 8 * 0.04; // 8 frames per scene
-    const geminiCost = totalVideos * 0.50; // Gemini 2.5 Pro for script generation per project
+    const geminiCost = totalVideos * 0.50; // Gemini 3.0 Pro for script generation per project
     const elevenLabsCost = 99; // subscription
     const sunoCost = 24;
     const topazMinutes = Math.max(60, totalMinutes); // At least 60 minutes of upscaling
@@ -251,7 +251,7 @@ const CostTab = ({ scenario }: { scenario: Scenario }) => {
           {[
             { name: 'Veo 3.1 Fast (720p)', cost: calculations.veoCost },
             { name: 'Imagen 4', cost: calculations.imagenCost },
-            { name: 'Gemini 2.5 Pro', cost: calculations.geminiCost },
+            { name: 'Gemini 3.0 Pro', cost: calculations.geminiCost },
             { name: 'ElevenLabs Pro', cost: calculations.elevenLabsCost },
             { name: 'Suno Pro', cost: calculations.sunoCost },
             { name: `Topaz AI (${calculations.topazMinutes}min)`, cost: calculations.topazCost },

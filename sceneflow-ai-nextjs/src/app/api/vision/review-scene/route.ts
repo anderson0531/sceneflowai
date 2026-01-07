@@ -263,7 +263,7 @@ Output this exact JSON structure:
 {"overallScore": <number>, "categories": [{"name": "Scene Structure", "score": <number>}, {"name": "Character Moments", "score": <number>}, {"name": "Pacing", "score": <number>}, {"name": "Visual Storytelling", "score": <number>}, {"name": "Script Integration", "score": <number>}], "analysis": "<single line analysis>", "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"], "improvements": ["<improvement 1>", "<improvement 2>", "<improvement 3>"], "recommendations": ["<recommendation 1>", "<recommendation 2>", "<recommendation 3>"]}`
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -389,7 +389,7 @@ Output this exact JSON structure:
 {"overallScore": <number>, "categories": [{"name": "Entertainment Value", "score": <number>}, {"name": "Emotional Impact", "score": <number>}, {"name": "Clarity", "score": <number>}, {"name": "Character Connection", "score": <number>}, {"name": "Story Momentum", "score": <number>}], "analysis": "<single line analysis>", "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"], "improvements": ["<improvement 1>", "<improvement 2>", "<improvement 3>"], "recommendations": ["<recommendation 1>", "<recommendation 2>", "<recommendation 3>"]}`
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

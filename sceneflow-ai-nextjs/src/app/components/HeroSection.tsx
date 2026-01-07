@@ -107,7 +107,7 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.7 }}
           >
-            Stop juggling 9 different tools. Experience the first <span className="text-white font-semibold">unified workflow</span> powered by Google&apos;s Veo 3 and Gemini 2.5—turning your script into professional cinema in minutes, not weeks.
+            Stop juggling 9 different tools. Experience the first <span className="text-white font-semibold">unified workflow</span> powered by Google&apos;s Veo 3 and Gemini 3.0—turning your script into professional cinema in minutes, not weeks.
           </motion.p>
 
           {/* Key Capabilities Pills */}

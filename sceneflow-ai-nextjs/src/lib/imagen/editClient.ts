@@ -182,8 +182,8 @@ export async function editImageWithInstruction(
     contents.push({ text: editPrompt })
     
     // Use Vertex AI Gemini endpoint for image editing
-    // Note: gemini-2.0-flash-exp supports image generation on Vertex AI
-    const model = 'gemini-2.0-flash-exp'
+    // Note: gemini-2.0-flash supports image generation on Vertex AI
+    const model = 'gemini-2.0-flash'
     const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
     
     const accessToken = await getVertexAIAuthToken()
@@ -330,7 +330,7 @@ In the WHITE masked areas, generate: ${prompt}`
     contents.push({ text: editPrompt })
     
     // Use Vertex AI Gemini endpoint
-    const model = 'gemini-2.0-flash-exp'
+    const model = 'gemini-2.0-flash'
     const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
     
     const accessToken = await getVertexAIAuthToken()
@@ -471,7 +471,7 @@ Make sure the expanded areas blend seamlessly with the original image, matching 
     contents.push({ text: editPrompt })
     
     // Use Vertex AI Gemini endpoint
-    const model = 'gemini-2.0-flash-exp'
+    const model = 'gemini-2.0-flash'
     const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
     
     const accessToken = await getVertexAIAuthToken()

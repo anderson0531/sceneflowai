@@ -29,8 +29,8 @@ interface GeminiRequestError extends Error {
 }
 
 const DEFAULT_MODEL_SEQUENCE = [
-  'gemini-3-pro-preview',
-  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-lite',
 ]
 
 const configuredSequence = process.env.GEMINI_MODEL_SEQUENCE || process.env.GEMINI_MODEL_PRIORITY

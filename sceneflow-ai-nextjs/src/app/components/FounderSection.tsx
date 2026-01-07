@@ -163,7 +163,7 @@ export function FounderSection() {
         >
           <blockquote className="text-xl sm:text-2xl text-gray-300 italic">
             &ldquo;SceneFlow AI is the commercial showcase for Google&apos;s generative AI video capabilities. 
-            Our success directly validates Veo 3, Imagen 4, and Gemini 2.5 as production-ready creative tools.&rdquo;
+            Our success directly validates Veo 3, Imagen 4, and Gemini 3.0 as production-ready creative tools.&rdquo;
           </blockquote>
           <p className="text-gray-500 mt-4">— Brian Anderson, Founder</p>
         </motion.div>
