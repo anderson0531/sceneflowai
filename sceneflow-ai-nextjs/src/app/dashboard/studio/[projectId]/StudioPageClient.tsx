@@ -326,9 +326,18 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       try {
         const res = await fetch(`/api/projects/${projectId}`)
         if (res.ok) {
-          const projectData = await res.json()
+          const responseData = await res.json()
+          // API returns { success: true, project: { ... } } - unwrap the project object
+          const projectData = responseData.project || responseData
           loadedProjectRef.current = projectId
           setCurrentProject(projectData)
+          
+          console.log('[StudioPage] Loading project data:', {
+            projectId,
+            hasProject: !!responseData.project,
+            title: projectData?.title,
+            metadataKeys: Object.keys(projectData?.metadata || {})
+          })
           
           // Check multiple places where treatment data might be stored
           const metadata = projectData?.metadata || {}
