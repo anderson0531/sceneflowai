@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/Input";
-import { DownloadIcon, Edit, ChevronUp, Save, Settings, FileText, BarChart3, ChevronRight, Check, HelpCircle, Sparkles } from "lucide-react";
+import { DownloadIcon, Edit, ChevronUp, Save, Settings, FileText, BarChart3, ChevronRight, Check, HelpCircle, Sparkles, Film, Lightbulb } from "lucide-react";
 import { useGuideStore } from "@/store/useGuideStore";
 import { useStore } from '@/store/useStore'
 import { useCue } from "@/store/useCueStore";
@@ -13,6 +13,7 @@ import ProjectIdeaTab from "@/components/studio/ProjectIdeaTab";
 import dynamic from 'next/dynamic';
 import { cn } from "@/lib/utils";
 import { BlueprintComposer } from '@/components/blueprint/BlueprintComposer'
+import { TreatmentHeroImage } from '@/components/treatment/TreatmentHeroImage'
 const TreatmentCard = dynamic(() => import('@/components/blueprint/TreatmentCard').then(mod => mod.TreatmentCard), { ssr: false })
 import TopProgressBar from '@/components/ui/TopProgressBar'
 import GeneratingOverlay from '@/components/ui/GeneratingOverlay'
@@ -282,30 +283,66 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const beatsDataRef = React.useRef<any[]>([])
 
   return (
-    <div className="min-h-screen p-4 lg:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen p-4 lg:p-6 max-w-7xl mx-auto">
       <TopProgressBar progress={genProgress} />
       <GeneratingOverlay visible={isGen} message="Creating your Film Concept..." progress={genProgress} />
       
-      {/* Compact header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-        <h1 className="text-2xl font-bold text-gray-100">The Blueprint</h1>
-        <Button onClick={handleSaveProject} variant="outline" className="text-gray-300 hover:text-white border-gray-700">
-          <Save className="w-4 h-4 mr-2" />
-          Save
-        </Button>
+      {/* Vision-Style Premium Container */}
+      <div className="relative rounded-3xl border border-slate-700/60 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900/60 overflow-hidden shadow-[0_25px_80px_rgba(8,8,20,0.55)]">
+        {/* Left accent border - signature SceneFlow styling */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-sf-primary via-fuchsia-500 to-cyan-400 opacity-80" />
+        
+        {/* Header with backdrop blur */}
+        <div className="px-6 py-4 border-b border-white/10 bg-slate-900/70 backdrop-blur rounded-t-3xl">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center border border-blue-500/30">
+                <Lightbulb className="w-5 h-5 text-blue-400" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white">The Blueprint</h1>
+                <p className="text-xs text-gray-400">Step 1: Ideation & Development</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs px-3 py-1 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/30">Phase 1 of 3</span>
+              <Button onClick={handleSaveProject} variant="outline" className="text-gray-300 hover:text-white border-gray-700">
+                <Save className="w-4 h-4 mr-2" />
+                Save
+              </Button>
+            </div>
+          </div>
+        </div>
+        
+        {/* Content area with proper padding */}
+        <div className="p-6 space-y-6">
+          {/* Billboard Hero Image - shows when treatment exists */}
+          {guide.treatmentVariants && guide.treatmentVariants.length > 0 && guide.treatmentVariants[0]?.title && (
+            <TreatmentHeroImage
+              image={guide.treatmentVariants[0]?.heroImage || null}
+              title={guide.treatmentVariants[0]?.title || guide.title || 'Untitled'}
+              subtitle={guide.treatmentVariants[0]?.logline}
+              genre={guide.treatmentVariants[0]?.genre}
+              aspectRatio="2.39:1"
+              className="mb-6"
+            />
+          )}
+
+          {/* Blueprint Composer */}
+          <div className="rounded-2xl p-5 border border-slate-700/50 bg-gradient-to-b from-slate-900/80 to-slate-900/40">
+            <div className="flex items-center gap-2 mb-3">
+              <Film className="w-4 h-4 text-cyan-400" />
+              <span className="text-sm font-medium text-gray-200">Your Creative Vision</span>
+            </div>
+            <BlueprintComposer
+              onGenerate={handleGenerateBlueprint}
+            />
+          </div>
+
+          {/* Treatment Card */}
+          <TreatmentCard />
+        </div>
       </div>
-
-      {/* Blueprint Composer */}
-      <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700/50">
-        <div className="text-sm text-slate-400 mb-2">Your Input</div>
-        <BlueprintComposer
-          onGenerate={handleGenerateBlueprint}
-        />
-      </div>
-
-      {/* Treatment Card */}
-      <TreatmentCard />
-
       {/* Structure Help Modal */}
       {showStructureHelp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowStructureHelp(false)}>
