@@ -304,7 +304,7 @@ async function generateFilmTreatment(
   
   // Use Vertex AI instead of consumer Gemini API
   const result = await generateText(prompt, {
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     temperature: 0.3,
     topP: 0.9,
     responseMimeType: 'application/json'
@@ -476,7 +476,7 @@ Respond with valid JSON only:
   console.log('[Film Treatment] Analyzing core concept with Vertex AI Gemini...')
 
   const result = await generateText(prompt, {
-    model: 'gemini-2.0-flash-exp',
+    model: 'gemini-2.5-flash',
     temperature: 0.3,
     topP: 0.9,
     responseMimeType: 'application/json'

@@ -61,7 +61,7 @@ async function callGeminiJson(messages: Message[], _apiKey: string): Promise<any
   const prompt = 'Return ONLY valid JSON with a root key "scenes" as specified. No prose.\n\n' + promptParts.join('\n\n')
 
   console.log('[Generate Outline] Calling Vertex AI Gemini...')
-  const text = await generateText(prompt, { model: 'gemini-2.0-flash' })
+  const text = await generateText(prompt, { model: 'gemini-2.5-flash' })
   
   if (!text) throw new Error('No content from Vertex AI Gemini')
   return JSON.parse(text)

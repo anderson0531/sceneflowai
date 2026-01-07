@@ -101,7 +101,7 @@ async function callGemini(messages: Message[], _apiKey: string, context?: CueCon
 
   console.log('[Cue Respond] Calling Vertex AI Gemini...')
   const result = await generateText(fullPrompt, {
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     temperature: 0.7,
     maxOutputTokens: maxTokens
   })

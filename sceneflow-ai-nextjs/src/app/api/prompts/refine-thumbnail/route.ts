@@ -41,7 +41,7 @@ Provide the refined prompt (output only the improved prompt, no explanations):`
     const fullPrompt = `${systemPrompt}\n\n${userPrompt}`
     
     console.log('[Refine Thumbnail] Calling Vertex AI Gemini...')
-    const refinedPrompt = await generateText(fullPrompt, { model: 'gemini-2.0-flash' })
+    const refinedPrompt = await generateText(fullPrompt, { model: 'gemini-2.5-flash' })
 
     if (!refinedPrompt) {
       return NextResponse.json(

@@ -849,7 +849,7 @@ Complete the script with accurate duration estimates.`
 async function callGemini(apiKey: string, prompt: string): Promise<string> {
   console.log('[Generate Script V2] Calling Vertex AI Gemini...')
   const result = await generateText(prompt, {
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     temperature: 0.7,
     maxOutputTokens: 32768  // Increased to handle larger batch responses
   })

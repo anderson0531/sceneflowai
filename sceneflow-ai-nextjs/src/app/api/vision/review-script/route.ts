@@ -159,7 +159,7 @@ Format as JSON with this structure:
 
   console.log('[Director Review] Calling Vertex AI Gemini...')
   const result = await generateText(prompt, {
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     temperature: 0.7,
     maxOutputTokens: 8192
   })
@@ -318,7 +318,7 @@ Format as JSON with this structure:
 
   console.log('[Audience Review] Calling Vertex AI Gemini...')
   const result = await generateText(prompt, {
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     temperature: 0.7,
     maxOutputTokens: 8192
   })

@@ -22,7 +22,7 @@ Return ONLY the summary text (no JSON, no formatting, no explanations).`
 
   try {
     console.log('[Summary Gen] Calling Vertex AI Gemini...')
-    const text = await generateText(prompt, { model: 'gemini-2.0-flash' })
+    const text = await generateText(prompt, { model: 'gemini-2.5-flash' })
     
     return text?.trim() || `${scenes.length} scenes completed. The story continues.`
   } catch (error) {

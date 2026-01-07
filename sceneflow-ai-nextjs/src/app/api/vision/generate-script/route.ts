@@ -699,7 +699,7 @@ async function callGeminiWithRetry(
 async function callGemini(apiKey: string, prompt: string, maxTokens: number): Promise<string> {
   console.log('[Generate Script] Calling Vertex AI Gemini...')
   const result = await generateText(prompt, {
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     temperature: 0.5, // Reduced from 0.7 to 0.5 for more deterministic JSON
     topP: 0.9,
     maxOutputTokens: maxTokens,

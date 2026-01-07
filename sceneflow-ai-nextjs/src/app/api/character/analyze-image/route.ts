@@ -68,7 +68,7 @@ Start your response with { and end with }`
         }
       ],
       {
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         temperature: 0.4,
         topP: 0.8,
         maxOutputTokens: 500

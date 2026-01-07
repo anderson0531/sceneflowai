@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
 
     const hasOpenAI = !!process.env.OPENAI_API_KEY
     const provider = 'vertex' // Always use Vertex AI for Gemini now
-    const model = 'gemini-2.0-flash'
+    const model = 'gemini-2.5-flash'
     
     console.log(`[Blueprint V3] Generating ${variantsRequested} variant(s) - model: ${model} (Vertex AI)`)
     const prompt = toPrompt(input)
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
       // Use Vertex AI Gemini (preferred) or fallback to OpenAI
       try {
         console.log('[Blueprint V3] Calling Vertex AI Gemini...')
-        jsonText = await generateText(prompt, { model: 'gemini-2.0-flash' }) || ''
+        jsonText = await generateText(prompt, { model: 'gemini-2.5-flash' }) || ''
       } catch (vertexError) {
         if (hasOpenAI) {
           console.log('[Blueprint V3] Vertex AI failed, falling back to OpenAI...')

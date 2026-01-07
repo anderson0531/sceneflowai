@@ -128,7 +128,7 @@ async function executeOptimizedPrompt(
 async function callGeminiAPI(prompt: string, parameters: Record<string, any>, modelId: string): Promise<string> {
   console.log('[Cue DOL] Calling Vertex AI Gemini...');
   const result = await generateText(prompt, {
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     temperature: 0.7,
     maxOutputTokens: parameters.maxTokens || 1024
   });

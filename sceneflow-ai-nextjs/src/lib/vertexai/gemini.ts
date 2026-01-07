@@ -69,7 +69,7 @@ export async function generateText(
   options: TextGenerationOptions = {}
 ): Promise<TextGenerationResult> {
   const { projectId, location } = getConfig()
-  const model = options.model || 'gemini-2.0-flash'
+  const model = options.model || 'gemini-2.5-flash'
   
   // Vertex AI endpoint for Gemini models
   // Format: https://{location}-aiplatform.googleapis.com/v1/projects/{project}/locations/{location}/publishers/google/models/{model}:generateContent
@@ -174,8 +174,8 @@ export async function generateWithVision(
   options: VisionGenerationOptions = {}
 ): Promise<TextGenerationResult> {
   const { projectId, location } = getConfig()
-  // Use gemini-2.0-flash for vision by default (fast and capable)
-  const model = options.model || 'gemini-2.0-flash'
+  // Use gemini-2.5-flash for vision by default (fast and capable)
+  const model = options.model || 'gemini-2.5-flash'
   
   const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
   

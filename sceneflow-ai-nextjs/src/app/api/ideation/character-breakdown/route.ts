@@ -130,7 +130,7 @@ Respond with valid JSON only:
 }` + strictJsonPromptSuffix
 
   console.log('[Character Breakdown] Calling Vertex AI Gemini...')
-  const generatedText = await generateText(prompt, { model: 'gemini-2.0-flash' })
+  const generatedText = await generateText(prompt, { model: 'gemini-2.5-flash' })
 
   if (!generatedText) {
     throw new Error('No response from Vertex AI Gemini')

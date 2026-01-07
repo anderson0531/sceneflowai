@@ -212,7 +212,7 @@ Focus on making the scene more engaging, clear, and emotionally impactful while 
 
   console.log('[Scene Revision] Calling Vertex AI Gemini...')
   const result = await generateText(prompt, {
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     temperature: 0.7,
     maxOutputTokens: 8192  // Doubled to accommodate longer responses
   })

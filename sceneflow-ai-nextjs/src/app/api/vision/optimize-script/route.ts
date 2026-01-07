@@ -325,7 +325,7 @@ ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce si
   console.log('[Script Optimization] Calling Vertex AI Gemini...')
   
   const result = await generateText(prompt, {
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     temperature: 0.2,
     maxOutputTokens: estimatedTokens,
     responseMimeType: 'application/json'

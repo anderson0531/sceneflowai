@@ -81,7 +81,7 @@ OUTPUT FORMAT: Return ONLY the variations, one per line, no numbering, no markdo
 
     // Call Vertex AI Gemini with high temperature for creativity
     console.log('[Inspiration API] Calling Vertex AI Gemini for variations...')
-    const response = await generateText(prompt, { model: 'gemini-2.0-flash' })
+    const response = await generateText(prompt, { model: 'gemini-2.5-flash' })
     
     if (!response || !response.text) {
       throw new Error('Vertex AI Gemini returned empty content')
@@ -156,7 +156,7 @@ Example: [{"title":"...", "logline":"...", "genre":"...", "tone":"...", "format"
 
   try {
     console.log('[Inspiration API] Calling Vertex AI Gemini for structured concepts...')
-    const response = await generateText(prompt, { model: 'gemini-2.0-flash' })
+    const response = await generateText(prompt, { model: 'gemini-2.5-flash' })
     
     if (!response || !response.text) {
       throw new Error('Vertex AI Gemini returned empty content')

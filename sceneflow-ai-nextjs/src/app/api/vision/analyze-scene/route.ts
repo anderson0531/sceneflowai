@@ -275,7 +275,7 @@ IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maxim
   console.log('[Director Analysis] Calling Vertex AI Gemini...')
 
   const result = await generateText(prompt, {
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     temperature: 0.3,  // Lower temperature for scoring consistency
     maxOutputTokens: 8192  // Doubled to accommodate longer responses
   })
@@ -529,7 +529,7 @@ IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maxim
   console.log('[Audience Analysis] Calling Vertex AI Gemini...')
 
   const result = await generateText(prompt, {
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     temperature: 0.3,  // Lower temperature for scoring consistency
     maxOutputTokens: 8192  // Doubled to accommodate longer responses
   })

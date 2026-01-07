@@ -19,7 +19,7 @@ Provide 3 brief, vivid variations (each 3-8 words). Return ONLY a JSON array of 
 Example response: ["variation one", "variation two", "variation three"]`
 
     console.log('[Prompt Enhance] Calling Vertex AI Gemini...')
-    const text = await generateText(prompt, { model: 'gemini-2.0-flash' })
+    const text = await generateText(prompt, { model: 'gemini-2.5-flash' })
 
     if (!text) {
       console.error('[Prompt Enhance] No response from Vertex AI')

@@ -126,7 +126,7 @@ Important prompt rules:
 
   try {
     const result = await generateText(prompt, {
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-flash',
       temperature: 0.3,
       responseMimeType: 'application/json'
     })

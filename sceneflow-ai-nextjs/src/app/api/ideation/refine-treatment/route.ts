@@ -19,7 +19,7 @@ ${instructions || 'Improve clarity, keep under 100 words for synopsis, keep tone
 Respond with valid JSON using the same keys as the variant object (only include fields that changed).` + strictJsonPromptSuffix
 
     console.log('[Refine Treatment] Calling Vertex AI Gemini...')
-    const generatedText = await generateText(prompt, { model: 'gemini-2.0-flash' })
+    const generatedText = await generateText(prompt, { model: 'gemini-2.5-flash' })
     const parsed = safeParseJsonFromText(generatedText || '{}')
 
     return NextResponse.json({ success: true, draft: parsed })

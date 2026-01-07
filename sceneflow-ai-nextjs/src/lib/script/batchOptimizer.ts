@@ -75,7 +75,7 @@ async function callGeminiForScene({ apiKey, fetchImpl, prompt }: { apiKey: strin
   // Use Vertex AI for Gemini (pay-as-you-go, no free tier limits)
   // Note: apiKey and fetchImpl are kept for interface compatibility but not used
   const result = await generateText(prompt, {
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     temperature: 0.2,
     maxOutputTokens: 1536,
     responseMimeType: 'application/json'
