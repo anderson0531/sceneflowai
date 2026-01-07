@@ -5,12 +5,24 @@ import { sequelize } from '@/config/database'
 // Increase timeout for large project updates
 export const maxDuration = 60 // 60 seconds timeout
 
+// UUID v4 regex pattern for validation
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params
+    
+    // Validate UUID format - reject placeholder IDs like 'new-project'
+    if (!id || !UUID_REGEX.test(id)) {
+      console.warn(`[Projects GET by ID] Invalid project ID format: ${id}`)
+      return NextResponse.json(
+        { error: 'Invalid project ID format' },
+        { status: 400 }
+      )
+    }
     
     await sequelize.authenticate()
     

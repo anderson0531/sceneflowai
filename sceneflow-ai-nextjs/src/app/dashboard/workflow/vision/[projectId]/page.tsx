@@ -104,6 +104,14 @@ type SceneBookmark = {
   sceneNumber: number
 }
 
+// UUID v4 validation regex - rejects placeholder IDs like 'new-project'
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+// Helper to validate projectId before API calls
+const isValidProjectId = (id: string | undefined | null): boolean => {
+  return !!id && UUID_REGEX.test(id)
+}
+
 const getSceneProductionKey = (scene: Scene, index: number): string =>
   (scene as any)?.sceneId || scene.id || `scene-${index}`
 
@@ -625,6 +633,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     // Update local state immediately for responsive UI
     setScript(updatedScript)
     setScriptEditedAt(Date.now())
+    
+    // Guard: Don't save if projectId is invalid
+    if (!isValidProjectId(projectId)) {
+      console.warn('[handleScriptChange] Skipping save - invalid projectId:', projectId)
+      return
+    }
     
     // Save to database
     const updatedScenes = updatedScript?.script?.scenes || []
@@ -3213,9 +3227,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   useEffect(() => {
     if (mounted) {
+      // Guard against placeholder project IDs - redirect to studio for proper project creation
+      if (!projectId || projectId.startsWith('new-project')) {
+        console.warn('[VisionPage] Invalid projectId, redirecting to studio:', projectId)
+        router.replace('/dashboard/studio/new-project')
+        return
+      }
       loadProject()
     }
-  }, [projectId, mounted])
+  }, [projectId, mounted, router])
 
   // Script review functions
   const handleGenerateReviews = async () => {
