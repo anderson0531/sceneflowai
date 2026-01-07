@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { dol } from '@/services/DOL/DynamicOptimizationLayer';
 import { TaskType, TaskComplexity } from '@/types/dol';
+import { generateText } from '@/lib/vertexai/gemini';
 
 type Role = 'system' | 'user' | 'assistant';
 
@@ -125,32 +126,13 @@ async function executeOptimizedPrompt(
 }
 
 async function callGeminiAPI(prompt: string, parameters: Record<string, any>, modelId: string): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('Gemini API key not configured');
-
-  const body = {
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: parameters.maxTokens || 1024,
-    }
-  };
-
-  const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+  console.log('[Cue DOL] Calling Vertex AI Gemini...');
+  const result = await generateText(prompt, {
+    model: 'gemini-2.0-flash',
+    temperature: 0.7,
+    maxOutputTokens: parameters.maxTokens || 1024
   });
-
-  if (!resp.ok) {
-    const errText = await resp.text().catch(() => 'unknown error');
-    throw new Error(`Gemini error: ${resp.status} ${errText}`);
-  }
-
-  const json = await resp.json();
-  const content = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!content) throw new Error('No content from Gemini');
-  return content;
+  return result.text;
 }
 
 async function callOpenAIAPI(prompt: string, parameters: Record<string, any>, modelId: string): Promise<string> {

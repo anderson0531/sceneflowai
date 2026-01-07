@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { strictJsonPromptSuffix } from '@/lib/safeJson'
+import { generateText } from '@/lib/vertexai/gemini'
 
 interface CharacterBreakdownRequest {
   input: string
@@ -47,14 +48,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-    if (!apiKey) {
-      return NextResponse.json({
-        success: false,
-        message: 'Google Gemini API key not configured'
-      }, { status: 500 })
-    }
-
+    // Vertex AI uses service account credentials - no API key required
     console.log('👥 Character Breakdown - Input length:', input.length)
     console.log('👥 Core concept:', coreConcept.input_title)
 
@@ -65,7 +59,7 @@ export async function POST(request: NextRequest) {
       genre,
       duration,
       platform
-    }, apiKey)
+    })
 
     return NextResponse.json({
       success: true,
@@ -85,8 +79,7 @@ export async function POST(request: NextRequest) {
 async function generateCharacterBreakdown(
   input: string,
   coreConcept: any,
-  context: any,
-  apiKey: string
+  context: any
 ): Promise<CharacterBreakdownResponse['data']> {
   
   const prompt = `CRITICAL INSTRUCTIONS: You are a professional character analyst. Identify ALL characters from the input, focusing on their ESSENTIAL traits and roles.
@@ -136,32 +129,14 @@ Respond with valid JSON only:
   "character_arcs": ["Arc 1", "Arc 2"]
 }` + strictJsonPromptSuffix
 
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${apiKey}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      contents: [{
-        parts: [{
-          text: prompt
-        }]
-      }]
-    }),
-  })
-
-  if (!response.ok) {
-    throw new Error(`Gemini API error: ${response.status}`)
-  }
-
-  const data = await response.json()
-  const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text
+  console.log('[Character Breakdown] Calling Vertex AI Gemini...')
+  const generatedText = await generateText(prompt, { model: 'gemini-2.0-flash' })
 
   if (!generatedText) {
-    throw new Error('No response from Gemini API')
+    throw new Error('No response from Vertex AI Gemini')
   }
 
-  console.log('👥 Gemini Character Breakdown Response:', generatedText)
+  console.log('👥 Vertex AI Character Breakdown Response:', generatedText)
 
   try {
     const parsed = (() => {

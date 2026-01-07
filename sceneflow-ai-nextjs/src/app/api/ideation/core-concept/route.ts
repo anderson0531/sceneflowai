@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { strictJsonPromptSuffix } from '@/lib/safeJson'
+import { generateText } from '@/lib/vertexai/gemini'
 
 interface CoreConceptRequest {
   input: string
@@ -34,16 +35,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-    console.log('🔑 API Key available:', !!apiKey)
-    if (!apiKey) {
-      console.error('❌ Google Gemini API key not configured')
-      return NextResponse.json({
-        success: false,
-        message: 'Google Gemini API key not configured'
-      }, { status: 500 })
-    }
-
+    // Vertex AI uses service account credentials - no API key required
     console.log('🎯 Core Concept Analysis - Input length:', input.length)
     console.log('🎯 First 500 chars:', input.substring(0, 500))
 
@@ -54,7 +46,7 @@ export async function POST(request: NextRequest) {
       genre,
       duration,
       platform
-    }, apiKey)
+    })
 
     return NextResponse.json({
       success: true,
@@ -73,8 +65,7 @@ export async function POST(request: NextRequest) {
 
 async function analyzeCoreConcept(
   input: string, 
-  context: any, 
-  apiKey: string
+  context: any
 ): Promise<CoreConceptResponse['data']> {
   
   const prompt = `CRITICAL INSTRUCTIONS: You are a professional script analyst. Analyze this input and extract ONLY the core concept.
@@ -110,32 +101,14 @@ Respond with valid JSON only:
   "narrative_structure": "3-Act Structure" | "5-Act Structure" | "Hero's Journey" | "Documentary Structure" | "Series Structure" | "Experimental Structure"
 }` + strictJsonPromptSuffix
 
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${apiKey}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      contents: [{
-        parts: [{
-          text: prompt
-        }]
-      }]
-    }),
-  })
-
-  if (!response.ok) {
-    throw new Error(`Gemini API error: ${response.status}`)
-  }
-
-  const data = await response.json()
-  const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text
+  console.log('[Core Concept] Calling Vertex AI Gemini...')
+  const generatedText = await generateText(prompt, { model: 'gemini-2.0-flash' })
 
   if (!generatedText) {
-    throw new Error('No response from Gemini API')
+    throw new Error('No response from Vertex AI Gemini')
   }
 
-  console.log('🎯 Gemini Core Concept Response:', generatedText)
+  console.log('🎯 Vertex AI Core Concept Response:', generatedText)
 
   try {
     const parsed = (() => {

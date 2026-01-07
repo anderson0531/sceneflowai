@@ -1,10 +1,12 @@
+import { generateText } from '@/lib/vertexai/gemini'
+
 /**
  * Generate a rolling summary for narrative continuity between beats
  */
 export async function generateRollingSummary(
   beatTitle: string,
   scenes: any[],
-  apiKey: string
+  _apiKey: string // No longer needed - Vertex AI uses service account credentials
 ): Promise<string> {
   const prompt = `Summarize this script segment in 2-3 sentences for continuity:
 
@@ -18,31 +20,15 @@ Focus on:
 
 Return ONLY the summary text (no JSON, no formatting, no explanations).`
 
-  // Call Gemini Flash (fast, cheap for summaries)
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 256
-        }
-      })
-    }
-  )
-
-  if (!response.ok) {
-    console.warn('[Summary Gen] Failed to generate summary:', response.status)
+  try {
+    console.log('[Summary Gen] Calling Vertex AI Gemini...')
+    const text = await generateText(prompt, { model: 'gemini-2.0-flash' })
+    
+    return text?.trim() || `${scenes.length} scenes completed. The story continues.`
+  } catch (error) {
+    console.warn('[Summary Gen] Failed to generate summary:', error)
     // Fallback: return a simple summary based on scene count
     return `${scenes.length} scenes completed. The story continues.`
   }
-
-  const data = await response.json()
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-  
-  return text.trim() || `${scenes.length} scenes completed. The story continues.`
 }
 

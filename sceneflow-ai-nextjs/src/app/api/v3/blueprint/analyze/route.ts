@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { generateText } from '@/lib/vertexai/gemini'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -101,30 +102,32 @@ export async function POST(req: NextRequest) {
     const variantsRequested = Math.max(1, Math.min(5, Number(body?.variants || 1)))
     if (!input) return NextResponse.json({ success: false, error: 'Missing input' }, { status: 400 })
 
-    const provider = (process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY) ? 'gemini' : 'openai'
-    const model = provider === 'gemini' ? (process.env.GEMINI_MODEL || 'gemini-3.0-flash') : (process.env.OPENAI_MODEL || 'gpt-4.1')
+    const hasOpenAI = !!process.env.OPENAI_API_KEY
+    const provider = 'vertex' // Always use Vertex AI for Gemini now
+    const model = 'gemini-2.0-flash'
     
-    console.log(`[Blueprint V3] Generating ${variantsRequested} variant(s) - model: ${model}`)
+    console.log(`[Blueprint V3] Generating ${variantsRequested} variant(s) - model: ${model} (Vertex AI)`)
     const prompt = toPrompt(input)
 
     async function generateOne(): Promise<SimpleBlueprint> {
       let jsonText = ''
-      if (provider === 'gemini') {
-        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-        })
-        const data = await resp.json()
-        jsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text || ''
-      } else {
-        const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-          body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }] })
-        })
-        const data = await resp.json()
-        jsonText = data?.choices?.[0]?.message?.content || ''
+      // Use Vertex AI Gemini (preferred) or fallback to OpenAI
+      try {
+        console.log('[Blueprint V3] Calling Vertex AI Gemini...')
+        jsonText = await generateText(prompt, { model: 'gemini-2.0-flash' }) || ''
+      } catch (vertexError) {
+        if (hasOpenAI) {
+          console.log('[Blueprint V3] Vertex AI failed, falling back to OpenAI...')
+          const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+            body: JSON.stringify({ model: 'gpt-4.1', messages: [{ role: 'user', content: prompt }] })
+          })
+          const data = await resp.json()
+          jsonText = data?.choices?.[0]?.message?.content || ''
+        } else {
+          throw vertexError
+        }
       }
       if (!jsonText || typeof jsonText !== 'string') throw new Error('Empty model response')
       const repaired = extractJson(jsonText)

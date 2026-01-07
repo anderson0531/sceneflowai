@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { RecommendationPriority } from '@/types/story'
 import { DIRECTOR_CRITERIA, AUDIENCE_CRITERIA } from '@/lib/review-criteria'
+import { generateText } from '@/lib/vertexai/gemini'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -70,9 +71,6 @@ export async function POST(req: NextRequest) {
 }
 
 async function generateDirectorReview(script: any): Promise<Review> {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-  if (!apiKey) throw new Error('Google API key not configured')
-
   const sceneCount = script.scenes?.length || 0
   const characterCount = script.characters?.length || 0
   
@@ -159,44 +157,23 @@ Format as JSON with this structure:
   ]
 }`
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 8192
-        }
-      })
-    }
-  )
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error('[Director Review] API error:', response.status, errorText)
-    throw new Error(`Gemini API error: ${response.status}`)
-  }
-
-  const data = await response.json()
-  
-  // Log the full response structure for debugging
-  console.log('[Director Review] Full API response:', JSON.stringify(data, null, 2))
-  console.log('[Director Review] Candidates:', data.candidates)
-  console.log('[Director Review] First candidate:', data.candidates?.[0])
+  console.log('[Director Review] Calling Vertex AI Gemini...')
+  const result = await generateText(prompt, {
+    model: 'gemini-2.0-flash',
+    temperature: 0.7,
+    maxOutputTokens: 8192
+  })
   
   // Check for safety ratings or blocked content
-  if (data.candidates?.[0]?.finishReason === 'SAFETY') {
-    console.error('[Director Review] Content blocked by safety filters:', data.candidates[0].safetyRatings)
+  if (result.finishReason === 'SAFETY') {
+    console.error('[Director Review] Content blocked by safety filters:', result.safetyRatings)
     throw new Error('Content blocked by safety filters. Please try with different script content.')
   }
   
-  const reviewText = data.candidates?.[0]?.content?.parts?.[0]?.text
+  const reviewText = result.text
 
   if (!reviewText) {
-    console.error('[Director Review] No text in response. Full candidate:', JSON.stringify(data.candidates?.[0], null, 2))
+    console.error('[Director Review] No text in response')
     throw new Error('No review generated - empty response from Gemini')
   }
 
@@ -253,9 +230,6 @@ Format as JSON with this structure:
 }
 
 async function generateAudienceReview(script: any): Promise<Review> {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-  if (!apiKey) throw new Error('Google API key not configured')
-
   const sceneCount = script.scenes?.length || 0
   const characterCount = script.characters?.length || 0
   
@@ -342,44 +316,23 @@ Format as JSON with this structure:
   ]
 }`
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 8192
-        }
-      })
-    }
-  )
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error('[Audience Review] API error:', response.status, errorText)
-    throw new Error(`Gemini API error: ${response.status}`)
-  }
-
-  const data = await response.json()
-  
-  // Log the full response structure for debugging
-  console.log('[Audience Review] Full API response:', JSON.stringify(data, null, 2))
-  console.log('[Audience Review] Candidates:', data.candidates)
-  console.log('[Audience Review] First candidate:', data.candidates?.[0])
+  console.log('[Audience Review] Calling Vertex AI Gemini...')
+  const result = await generateText(prompt, {
+    model: 'gemini-2.0-flash',
+    temperature: 0.7,
+    maxOutputTokens: 8192
+  })
   
   // Check for safety ratings or blocked content
-  if (data.candidates?.[0]?.finishReason === 'SAFETY') {
-    console.error('[Audience Review] Content blocked by safety filters:', data.candidates[0].safetyRatings)
+  if (result.finishReason === 'SAFETY') {
+    console.error('[Audience Review] Content blocked by safety filters:', result.safetyRatings)
     throw new Error('Content blocked by safety filters. Please try with different script content.')
   }
   
-  const reviewText = data.candidates?.[0]?.content?.parts?.[0]?.text
+  const reviewText = result.text
 
   if (!reviewText) {
-    console.error('[Audience Review] No text in response. Full candidate:', JSON.stringify(data.candidates?.[0], null, 2))
+    console.error('[Audience Review] No text in response')
     throw new Error('No review generated - empty response from Gemini')
   }
 

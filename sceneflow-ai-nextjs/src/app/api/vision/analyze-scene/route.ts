@@ -9,6 +9,7 @@ import {
   calculateScoreFloor,
   getScoreTier
 } from '@/lib/review-criteria'
+import { generateText } from '@/lib/vertexai/gemini'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -146,8 +147,6 @@ async function generateDirectorAnalysis(scene: any, context: any): Promise<{
   scoreFloor: number
   iteration: number
 }> {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-  if (!apiKey) throw new Error('Google API key not configured')
 
   const dialogueText = scene.dialogue?.map((d: any) => `${d.character}: ${d.text}`).join('\n') || 'No dialogue'
   const previousSceneText = context.previousScene ? 
@@ -273,60 +272,33 @@ Focus on practical, implementable suggestions that a director would give to impr
 IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maximum. Remember: recommendations for polish don't mean the scene is bad - score generously!`
 
   console.log('[Director Analysis] Sending prompt (first 500 chars):', prompt.substring(0, 500))
-  console.log('[Director Analysis] API endpoint:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent`)
+  console.log('[Director Analysis] Calling Vertex AI Gemini...')
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.3,  // Lower temperature for scoring consistency
-          maxOutputTokens: 8192  // Doubled to accommodate longer responses
-        }
-      })
-    }
-  )
+  const result = await generateText(prompt, {
+    model: 'gemini-2.0-flash',
+    temperature: 0.3,  // Lower temperature for scoring consistency
+    maxOutputTokens: 8192  // Doubled to accommodate longer responses
+  })
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error('[Scene Analysis] Gemini API error:', response.status, errorText)
-    throw new Error(`Gemini API error: ${response.status} - ${errorText}`)
-  }
+  console.log('[Director Analysis] Response received, finishReason:', result.finishReason)
 
-  const data = await response.json()
-  console.log('[Director Analysis] Full API response:', JSON.stringify(data, null, 2))
-  console.log('[Director Analysis] Candidates:', data.candidates)
-  console.log('[Director Analysis] First candidate:', data.candidates?.[0])
-
-  const analysisText = data.candidates?.[0]?.content?.parts?.[0]?.text
+  const analysisText = result.text
 
   if (!analysisText) {
     console.error('[Director Analysis] No text found in response')
-    console.error('[Director Analysis] Response structure:', {
-      hasCandidates: !!data.candidates,
-      candidatesLength: data.candidates?.length,
-      firstCandidate: data.candidates?.[0],
-      hasContent: !!data.candidates?.[0]?.content,
-      hasParts: !!data.candidates?.[0]?.content?.parts,
-      partsLength: data.candidates?.[0]?.content?.parts?.length
-    })
     throw new Error('No analysis generated from Gemini')
   }
 
   // Check if response was blocked by safety filters
-  if (data.candidates?.[0]?.finishReason === 'SAFETY') {
+  if (result.finishReason === 'SAFETY') {
     console.error('[Director Analysis] Response blocked by safety filters')
-    console.error('[Director Analysis] Safety ratings:', data.candidates[0].safetyRatings)
+    console.error('[Director Analysis] Safety ratings:', result.safetyRatings)
     throw new Error('Analysis blocked by content safety filters')
   }
 
   // Check if response was truncated
-  if (data.candidates?.[0]?.finishReason === 'MAX_TOKENS') {
+  if (result.finishReason === 'MAX_TOKENS') {
     console.warn('[Director Analysis] Response truncated due to MAX_TOKENS')
-    console.warn('[Director Analysis] Usage:', data.usageMetadata)
   }
 
   // Extract JSON from markdown code blocks if present
@@ -445,9 +417,6 @@ async function generateAudienceAnalysis(scene: any, context: any): Promise<{
   scoreFloor: number
   iteration: number
 }> {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-  if (!apiKey) throw new Error('Google API key not configured')
-
   const dialogueText = scene.dialogue?.map((d: any) => `${d.character}: ${d.text}`).join('\n') || 'No dialogue'
 
   // Enhanced score stabilization with priority-weighted floor calculation
@@ -557,60 +526,33 @@ Focus on what audiences will love and what will make them more engaged with the 
 IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maximum. Remember: recommendations for polish don't mean the scene is bad - score generously!`
 
   console.log('[Audience Analysis] Sending prompt (first 500 chars):', prompt.substring(0, 500))
-  console.log('[Audience Analysis] API endpoint:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent`)
+  console.log('[Audience Analysis] Calling Vertex AI Gemini...')
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.3,  // Lower temperature for scoring consistency
-          maxOutputTokens: 8192  // Doubled to accommodate longer responses
-        }
-      })
-    }
-  )
+  const result = await generateText(prompt, {
+    model: 'gemini-2.0-flash',
+    temperature: 0.3,  // Lower temperature for scoring consistency
+    maxOutputTokens: 8192  // Doubled to accommodate longer responses
+  })
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error('[Scene Analysis] Gemini API error:', response.status, errorText)
-    throw new Error(`Gemini API error: ${response.status} - ${errorText}`)
-  }
+  console.log('[Audience Analysis] Response received, finishReason:', result.finishReason)
 
-  const data = await response.json()
-  console.log('[Audience Analysis] Full API response:', JSON.stringify(data, null, 2))
-  console.log('[Audience Analysis] Candidates:', data.candidates)
-  console.log('[Audience Analysis] First candidate:', data.candidates?.[0])
-
-  const analysisText = data.candidates?.[0]?.content?.parts?.[0]?.text
+  const analysisText = result.text
 
   if (!analysisText) {
     console.error('[Audience Analysis] No text found in response')
-    console.error('[Audience Analysis] Response structure:', {
-      hasCandidates: !!data.candidates,
-      candidatesLength: data.candidates?.length,
-      firstCandidate: data.candidates?.[0],
-      hasContent: !!data.candidates?.[0]?.content,
-      hasParts: !!data.candidates?.[0]?.content?.parts,
-      partsLength: data.candidates?.[0]?.content?.parts?.length
-    })
     throw new Error('No analysis generated from Gemini')
   }
 
   // Check if response was blocked by safety filters
-  if (data.candidates?.[0]?.finishReason === 'SAFETY') {
+  if (result.finishReason === 'SAFETY') {
     console.error('[Audience Analysis] Response blocked by safety filters')
-    console.error('[Audience Analysis] Safety ratings:', data.candidates[0].safetyRatings)
+    console.error('[Audience Analysis] Safety ratings:', result.safetyRatings)
     throw new Error('Analysis blocked by content safety filters')
   }
 
   // Check if response was truncated
-  if (data.candidates?.[0]?.finishReason === 'MAX_TOKENS') {
+  if (result.finishReason === 'MAX_TOKENS') {
     console.warn('[Audience Analysis] Response truncated due to MAX_TOKENS')
-    console.warn('[Audience Analysis] Usage:', data.usageMetadata)
   }
 
   // Extract JSON from markdown code blocks if present
@@ -631,7 +573,7 @@ IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maxim
   console.log('[Audience Analysis] JSON to parse:', jsonText.substring(0, 200))
 
   // Try to repair truncated JSON if needed
-  if (data.candidates?.[0]?.finishReason === 'MAX_TOKENS' && !jsonText.trim().endsWith('}')) {
+  if (result.finishReason === 'MAX_TOKENS' && !jsonText.trim().endsWith('}')) {
     console.log('[Audience Analysis] Attempting to repair truncated JSON')
     // Count open braces/brackets and close them
     const openBraces = (jsonText.match(/{/g) || []).length

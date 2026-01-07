@@ -4,6 +4,7 @@ import { sequelize } from '@/config/database'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen } from '@/lib/imagen/promptOptimizer'
+import { generateText } from '@/lib/vertexai/gemini'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -17,14 +18,6 @@ export async function POST(request: NextRequest) {
         success: false,
         error: 'projectId and sceneNumber are required'
       }, { status: 400 })
-    }
-
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-    if (!apiKey) {
-      return NextResponse.json({
-        success: false,
-        error: 'Gemini API key not configured'
-      }, { status: 500 })
     }
 
     // Ensure database connection
@@ -491,67 +484,25 @@ async function callGeminiWithRetry(
   throw new Error('All retries failed')
 }
 
-// Helper: Call Gemini API
+// Helper: Call Gemini API via Vertex AI
 async function callGemini(apiKey: string, prompt: string, maxTokens: number): Promise<string> {
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 30000)
+  console.log('[Expand Scene] Calling Vertex AI Gemini...')
+  const result = await generateText(prompt, {
+    model: 'gemini-2.0-flash',
+    temperature: 0.5,
+    topP: 0.9,
+    maxOutputTokens: maxTokens,
+    responseMimeType: 'application/json'
+  })
   
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.5,
-            topP: 0.9,
-            maxOutputTokens: maxTokens,
-            responseMimeType: 'application/json'
-          }
-        }),
-      }
-    )
-    
-    if (!response.ok) {
-      const errorBody = await response.text().catch(() => 'Unknown error')
-      console.error(`[Gemini API] HTTP ${response.status}:`, errorBody)
-      throw new Error(`Gemini API error: ${response.status}`)
+  if (!result.text) {
+    if (result.finishReason === 'SAFETY') {
+      console.error('[Expand Scene] Content blocked by safety filter:', result.safetyRatings)
+      throw new Error('Content blocked by safety filter - try adjusting the prompt')
     }
-    
-    const data = await response.json()
-    
-    // Log the full response structure for debugging
-    console.log('[Gemini API] Response structure:', {
-      hasCandidates: !!data?.candidates,
-      candidateCount: data?.candidates?.length || 0,
-      hasContent: !!data?.candidates?.[0]?.content,
-      hasParts: !!data?.candidates?.[0]?.content?.parts,
-      partsCount: data?.candidates?.[0]?.content?.parts?.length || 0,
-      finishReason: data?.candidates?.[0]?.finishReason,
-      safetyRatings: data?.candidates?.[0]?.safetyRatings
-    })
-    
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
-    
-    if (!text) {
-      // Check for safety filter blocks
-      const finishReason = data?.candidates?.[0]?.finishReason
-      if (finishReason === 'SAFETY') {
-        console.error('[Gemini API] Content blocked by safety filter:', data?.candidates?.[0]?.safetyRatings)
-        throw new Error('Content blocked by safety filter - try adjusting the prompt')
-      }
-      
-      // Log full response for debugging
-      console.error('[Gemini API] Empty content. Full response:', JSON.stringify(data, null, 2))
-      throw new Error(`Gemini returned empty content. Finish reason: ${finishReason || 'unknown'}`)
-    }
-    
-    return text
-  } finally {
-    clearTimeout(timeout)
+    throw new Error(`Gemini returned empty content. Finish reason: ${result.finishReason || 'unknown'}`)
   }
+  
+  return result.text
 }
 

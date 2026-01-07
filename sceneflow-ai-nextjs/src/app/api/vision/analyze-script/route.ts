@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { generateText } from '@/lib/vertexai/gemini'
 
 export const maxDuration = 120
 export const runtime = 'nodejs'
@@ -39,9 +40,6 @@ export async function POST(req: NextRequest) {
 }
 
 async function analyzeScript(script: any, characters: any[], compact: boolean): Promise<any[]> {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-  if (!apiKey) throw new Error('Google API key not configured')
-  
   const limit = compact ? 5 : 8
   const sceneSummaries = (script.scenes || []).slice(0, limit).map((scene: any, idx: number) => {
     const dialogueCount = scene.dialogue?.length || 0
@@ -80,63 +78,24 @@ OUTPUT REQUIREMENTS:
 `
 
   console.log('[Script Analysis] Sending prompt (first 500 chars):', prompt.substring(0, 500))
-  console.log('[Script Analysis] API endpoint:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent`)
+  console.log('[Script Analysis] Calling Vertex AI Gemini...')
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 4096,
-          responseMimeType: 'application/json'
-        },
-        safetySettings: [
-          {
-            category: 'HARM_CATEGORY_HARASSMENT',
-            threshold: 'BLOCK_MEDIUM_AND_ABOVE'
-          },
-          {
-            category: 'HARM_CATEGORY_HATE_SPEECH',
-            threshold: 'BLOCK_MEDIUM_AND_ABOVE'
-          },
-          {
-            category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-            threshold: 'BLOCK_MEDIUM_AND_ABOVE'
-          },
-          {
-            category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-            threshold: 'BLOCK_MEDIUM_AND_ABOVE'
-          }
-        ]
-      })
-    }
-  )
+  const result = await generateText(prompt, {
+    model: 'gemini-2.0-flash',
+    temperature: 0.1,
+    maxOutputTokens: 4096,
+    responseMimeType: 'application/json'
+  })
   
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error('[Script Analysis] Gemini API error:', response.status, errorText)
-    throw new Error(`Gemini API error: ${response.status} - ${errorText}`)
-  }
+  console.log('[Script Analysis] Response received, finishReason:', result.finishReason)
   
-  const data = await response.json()
-  console.log('[Script Analysis] Full API response:', JSON.stringify(data, null, 2))
-  console.log('[Script Analysis] Candidates:', data.candidates)
-  console.log('[Script Analysis] First candidate:', data.candidates?.[0])
-
-  const parts = (data.candidates || [])
-    .map((c: any) => c?.content?.parts?.[0]?.text)
-    .filter((t: any) => typeof t === 'string' && t.trim().length > 0)
-  const analysisText = parts[0] || ''
+  const analysisText = result.text || ''
+  const finish = result.finishReason
 
   if (!analysisText) {
     // Safety/finish reason diagnostics
-    const finish = data.candidates?.[0]?.finishReason
     if (finish === 'SAFETY') {
-      console.error('[Script Analysis] Response blocked by safety filters', data.candidates?.[0]?.safetyRatings)
+      console.error('[Script Analysis] Response blocked by safety filters', result.safetyRatings)
       throw new Error('Analysis blocked by content safety filters')
     }
     if (finish === 'MAX_TOKENS' && !compact) {
@@ -150,8 +109,6 @@ OUTPUT REQUIREMENTS:
     }
     throw new Error('No analysis generated')
   }
-
-  const finish = data.candidates?.[0]?.finishReason
 
   // Try JSON first (code fence, raw, or balanced)
   const extractBalancedJson = (text: string): string => {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { safeParseJsonFromText, strictJsonPromptSuffix } from '@/lib/safeJson'
+import { generateText } from '@/lib/vertexai/gemini'
 
 // ============================================================================
 // PHASE 1 OPTIMIZATION: Direct Function Calls (No HTTP Overhead)
@@ -106,19 +107,10 @@ async function callLLM(modelConfig: ModelConfig, prompt: string): Promise<string
     return content
   }
 
-  // Default: Gemini
-  if (!geminiApiKey) throw new Error('Google Gemini API key not configured')
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-  })
-  if (!response.ok) {
-    throw new Error(`Gemini API error: ${response.status}`)
-  }
-  const data = await response.json()
-  const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!generatedText) throw new Error('No response from Gemini API')
+  // Default: Use Vertex AI Gemini (migrated from deprecated consumer API)
+  console.log('[Generate Sequential] Calling Vertex AI Gemini...')
+  const generatedText = await generateText(prompt, { model: 'gemini-2.0-flash' })
+  if (!generatedText) throw new Error('No response from Vertex AI Gemini')
   return generatedText
 }
 

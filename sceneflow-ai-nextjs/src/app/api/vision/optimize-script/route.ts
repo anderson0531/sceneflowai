@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { generateText } from '@/lib/vertexai/gemini'
 
 export const maxDuration = 300 // Increased timeout for large scripts
 export const runtime = 'nodejs'
@@ -84,9 +85,6 @@ async function optimizeScript(
   directorReview?: Review | null,
   audienceReview?: Review | null
 ) {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-  if (!apiKey) throw new Error('Google API key not configured')
-  
   // When reviews are present, include full scene content for targeted improvements
   const hasReviewContext = !!(directorReview || audienceReview)
   
@@ -319,39 +317,21 @@ CRITICAL:
 - All string values MUST be valid JSON strings. Escape quotes and newlines (use \\n for line breaks). Do NOT include raw line breaks inside JSON strings.
 ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce size.\n' : ''}`
 
-  console.log('[Script Optimization] Calling Gemini API...')
-  
   // Calculate appropriate token limit based on scene count
   // Each scene needs ~200-300 tokens in output, plus changesSummary
   const sceneCount = script.scenes?.length || 0
   const estimatedTokens = Math.min(65536, Math.max(16384, sceneCount * 400 + 2000))
   
-  console.log('[Script Optimization] Calling Gemini 3 Pro Preview API...')
+  console.log('[Script Optimization] Calling Vertex AI Gemini...')
   
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: estimatedTokens,
-          responseMimeType: 'application/json'
-        }
-      })
-    }
-  )
+  const result = await generateText(prompt, {
+    model: 'gemini-2.0-flash',
+    temperature: 0.2,
+    maxOutputTokens: estimatedTokens,
+    responseMimeType: 'application/json'
+  })
   
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error('[Script Optimization] Gemini API error:', response.status, errorText)
-    throw new Error(`Gemini API error: ${response.status}`)
-  }
-  
-  const data = await response.json()
-  const analysisText = data.candidates?.[0]?.content?.parts?.[0]?.text
+  const analysisText = result.text
   
   if (!analysisText) {
     throw new Error('No optimization generated from Gemini')

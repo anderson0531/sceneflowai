@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { generateText } from '@/lib/vertexai/gemini'
 
 export const runtime = 'nodejs'
 export const maxDuration = 10
@@ -11,43 +12,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Field and value are required' }, { status: 400 })
     }
 
-    const googleApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
-    if (!googleApiKey) {
-      return NextResponse.json({ 
-        error: 'Google API key not configured' 
-      }, { status: 500 })
-    }
-
-    // Use Gemini Flash for quick, cheap expansions
+    // Vertex AI uses service account credentials - no API key required
     const prompt = `Expand on this "${field}" description for an AI character image prompt: "${value}". 
 Provide 3 brief, vivid variations (each 3-8 words). Return ONLY a JSON array of strings, nothing else.
 
 Example response: ["variation one", "variation two", "variation three"]`
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${googleApiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.8,
-            maxOutputTokens: 200
-          }
-        })
-      }
-    )
+    console.log('[Prompt Enhance] Calling Vertex AI Gemini...')
+    const text = await generateText(prompt, { model: 'gemini-2.0-flash' })
 
-    if (!response.ok) {
-      console.error('[Prompt Enhance] API error:', response.status)
+    if (!text) {
+      console.error('[Prompt Enhance] No response from Vertex AI')
       return NextResponse.json({ 
         error: 'Failed to generate suggestions' 
       }, { status: 500 })
     }
-
-    const data = await response.json()
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || ''
     
     // Extract JSON array from response
     let suggestions: string[] = []

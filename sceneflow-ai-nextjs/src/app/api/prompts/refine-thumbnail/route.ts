@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { generateText } from '@/lib/vertexai/gemini'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,14 +14,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
-    if (!apiKey) {
-      return NextResponse.json(
-        { success: false, error: 'Google API key not configured' },
-        { status: 500 }
-      )
-    }
-
+    // Vertex AI uses service account credentials - no API key required
     const systemPrompt = `You are a prompt engineering expert specializing in image generation prompts for Imagen 3 (Vertex AI).
 
 Your task is to refine and improve image generation prompts to create better, more visually striking results.
@@ -44,33 +38,10 @@ ${instructions}
 
 Provide the refined prompt (output only the improved prompt, no explanations):`
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: userPrompt }] }],
-          systemInstruction: { parts: [{ text: systemPrompt }] },
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 2000
-          }
-        })
-      }
-    )
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('[Refine Thumbnail] API error:', errorText)
-      return NextResponse.json(
-        { success: false, error: `API error: ${response.status}` },
-        { status: 500 }
-      )
-    }
-
-    const data = await response.json()
-    const refinedPrompt = data?.candidates?.[0]?.content?.parts?.[0]?.text
+    const fullPrompt = `${systemPrompt}\n\n${userPrompt}`
+    
+    console.log('[Refine Thumbnail] Calling Vertex AI Gemini...')
+    const refinedPrompt = await generateText(fullPrompt, { model: 'gemini-2.0-flash' })
 
     if (!refinedPrompt) {
       return NextResponse.json(

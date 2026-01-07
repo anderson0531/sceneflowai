@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { generateText } from '@/lib/vertexai/gemini'
 
 export const maxDuration = 300 // Increased for complex optimization
 export const runtime = 'nodejs'
@@ -50,9 +51,6 @@ export async function POST(req: NextRequest) {
 }
 
 async function optimizeScene(scene: any, context: any) {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-  if (!apiKey) throw new Error('Google API key not configured')
-
   const dialogueText = scene.dialogue?.map((d: any) => `${d.character}: ${d.text}`).join('\n') || 'No dialogue'
   const previousSceneText = context.previousScene ? 
     `Previous: ${context.previousScene.heading || 'Untitled'} - ${context.previousScene.action?.substring(0, 100) || 'No action'}...` : 
@@ -67,7 +65,7 @@ async function optimizeScene(scene: any, context: any) {
   for (const model of MODEL_SEQUENCE) {
     try {
       console.log(`[Scene Optimization] Trying model: ${model}`)
-      const result = await tryOptimizeWithModel(model, scene, context, dialogueText, previousSceneText, nextSceneText, apiKey)
+      const result = await tryOptimizeWithModel(model, scene, context, dialogueText, previousSceneText, nextSceneText)
       console.log(`[Scene Optimization] Success with model: ${model}`)
       return result
     } catch (error: any) {
@@ -87,8 +85,7 @@ async function tryOptimizeWithModel(
   context: any,
   dialogueText: string,
   previousSceneText: string,
-  nextSceneText: string,
-  apiKey: string
+  nextSceneText: string
 ) {
   const prompt = `You are an expert film director and screenwriting consultant. Optimize this scene holistically for both director and audience perspectives.
 
@@ -188,30 +185,14 @@ REMEMBER: ALL dialogue must include [emotional tags] at the beginning.
 Focus on holistic improvement that works together, not piecemeal fixes.
 Make every change count toward making the scene more effective overall.`
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 8192
-        }
-      })
-    }
-  )
+  console.log('[Scene Optimization] Calling Vertex AI Gemini...')
+  const result = await generateText(prompt, {
+    model: model,
+    temperature: 0.7,
+    maxOutputTokens: 8192
+  })
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error(`[Scene Optimization] API error with ${model}:`, response.status, errorText)
-    throw new Error(`API error: ${response.status}`)
-  }
-
-  const data = await response.json()
-
-  const analysisText = data.candidates?.[0]?.content?.parts?.[0]?.text
+  const analysisText = result.text
 
   if (!analysisText) {
     throw new Error('No optimization generated')

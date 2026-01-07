@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { strictJsonPromptSuffix } from '@/lib/safeJson'
+import { generateText } from '@/lib/vertexai/gemini'
 
 interface BeatSheetRequest {
   input: string
@@ -84,14 +85,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-    if (!apiKey) {
-      return NextResponse.json({
-        success: false,
-        message: 'Google Gemini API key not configured'
-      }, { status: 500 })
-    }
-
+    // Vertex AI uses service account credentials - no API key required
     console.log('📋 Beat Sheet Generation - Input length:', input.length)
     console.log('📋 Core concept:', coreConcept.input_title)
     console.log('📋 Characters count:', characters.length)
@@ -103,7 +97,7 @@ export async function POST(request: NextRequest) {
       genre,
       duration,
       platform
-    }, apiKey)
+    })
 
     return NextResponse.json({
       success: true,
@@ -125,8 +119,7 @@ async function generateBeatSheet(
   coreConcept: any,
   filmTreatment: any,
   characters: any[],
-  context: any,
-  apiKey: string
+  context: any
 ): Promise<BeatSheetResponse['data']> {
   
   const prompt = `CRITICAL INSTRUCTIONS: You are a professional beat sheet writer. Create a detailed beat sheet based on the analysis, NOT by copying the input.
@@ -227,32 +220,14 @@ Respond with valid JSON only:
   "transition_notes": ["Transition 1", "Transition 2"]
 }` + strictJsonPromptSuffix
 
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${apiKey}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      contents: [{
-        parts: [{
-          text: prompt
-        }]
-      }]
-    }),
-  })
-
-  if (!response.ok) {
-    throw new Error(`Gemini API error: ${response.status}`)
-  }
-
-  const data = await response.json()
-  const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text
+  console.log('[Beat Sheet] Calling Vertex AI Gemini...')
+  const generatedText = await generateText(prompt, { model: 'gemini-2.0-flash' })
 
   if (!generatedText) {
-    throw new Error('No response from Gemini API')
+    throw new Error('No response from Vertex AI Gemini')
   }
 
-  console.log('📋 Gemini Beat Sheet Response:', generatedText)
+  console.log('📋 Vertex AI Beat Sheet Response:', generatedText)
 
   try {
   const parsed = (() => {

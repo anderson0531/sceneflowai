@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { generateText } from '@/lib/vertexai/gemini'
 
 export const dynamic = 'force-dynamic'
 
@@ -78,59 +79,34 @@ const SCENE_SCRIPT_SYSTEM = [
   '- Do NOT include extra headings before or after the scene blocks.',
 ].join('\n')
 
-async function callGemini(messages: Message[], apiKey: string, context?: CueContext): Promise<string> {
-  // Convert OpenAI format to Gemini format
-  const contents = messages
-    .filter(msg => msg.role !== 'system')
-    .map(msg => ({
-      role: msg.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: msg.content }]
-    }))
-
-  // Add system prompt as the first user message for Gemini
+async function callGemini(messages: Message[], _apiKey: string, context?: CueContext): Promise<string> {
+  // Convert OpenAI format to prompt text
   const systemMessages = messages.filter(msg => msg.role === 'system')
+  const otherMessages = messages.filter(msg => msg.role !== 'system')
+  
+  // Build the full prompt
+  let fullPrompt = ''
   if (systemMessages.length > 0) {
-    const systemPrompt = systemMessages.map(msg => msg.content).join('\n\n')
-    contents.unshift({
-      role: 'user',
-      parts: [{ text: systemPrompt + '\n\nPlease respond as Cue, following these guidelines exactly.' }]
-    })
-    contents.splice(1, 0, {
-      role: 'model',
-      parts: [{ text: 'I understand. I am Cue, your expert film director and audience strategist. I will provide direct, actionable advice with director POV, audience impact, and concrete next steps. How can I help with your project?' }]
-    })
+    fullPrompt = systemMessages.map(msg => msg.content).join('\n\n') + '\n\nPlease respond as Cue, following these guidelines exactly.\n\n'
+  }
+  
+  for (const msg of otherMessages) {
+    const role = msg.role === 'assistant' ? 'Assistant' : 'User'
+    fullPrompt += `${role}: ${msg.content}\n\n`
   }
 
   // Use maximum model capability for project creation
   const isProjectCreation = context?.type === 'project-creation'
-  const model = isProjectCreation ? 'gemini-3.0-flash' : 'gemini-3.0-flash'
   const maxTokens = isProjectCreation ? 32768 : 4096
 
-  const body = {
-    contents,
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: maxTokens,
-    }
-  }
-
-  const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
+  console.log('[Cue Respond] Calling Vertex AI Gemini...')
+  const result = await generateText(fullPrompt, {
+    model: 'gemini-2.0-flash',
+    temperature: 0.7,
+    maxOutputTokens: maxTokens
   })
-
-  if (!resp.ok) {
-    const errText = await resp.text().catch(() => 'unknown error')
-    throw new Error(`Gemini error: ${resp.status} ${errText}`)
-  }
-
-  const json = await resp.json()
-  const content = json?.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!content) throw new Error('No content from Gemini')
-  return content
+  
+  return result.text
 }
 
 async function callOpenAI(messages: Message[], apiKey: string, context?: CueContext): Promise<string> {
@@ -320,7 +296,7 @@ export async function POST(req: NextRequest) {
     }
 
     const providers = [
-      { name: 'Gemini', key: process.env.GEMINI_API_KEY, call: callGemini },
+      { name: 'Gemini', key: 'vertex-ai', call: callGemini },  // Vertex AI uses service account, not API key
       { name: 'OpenAI', key: process.env.OPENAI_API_KEY, call: callOpenAI }
     ]
 

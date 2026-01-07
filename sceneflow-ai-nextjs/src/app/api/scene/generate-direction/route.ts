@@ -3,12 +3,10 @@ import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { DetailedSceneDirection } from '../../../../types/scene-direction'
 import { generateSceneContentHash } from '../../../../lib/utils/contentHash'
+import { generateText } from '@/lib/vertexai/gemini'
 
 export const maxDuration = 300
 export const runtime = 'nodejs'
-
-const GEMINI_API_VERSION = process.env.GEMINI_API_VERSION || 'v1beta'
-const GEMINI_API_HOST = process.env.GEMINI_API_HOST || 'https://generativelanguage.googleapis.com'
 
 interface GenerateDirectionRequest {
   projectId: string
@@ -24,115 +22,19 @@ interface GenerateDirectionRequest {
   }
 }
 
-interface GeminiRequestError extends Error {
-  status?: number
-}
-
-const DEFAULT_MODEL_SEQUENCE = [
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-lite',
-]
-
-const configuredSequence = process.env.GEMINI_MODEL_SEQUENCE || process.env.GEMINI_MODEL_PRIORITY
-const preferredModel = process.env.GEMINI_MODEL?.trim()
-
-const prioritizedModels: string[] = preferredModel ? [preferredModel] : []
-const configuredModels: string[] = configuredSequence
-  ? configuredSequence.split(',').map(model => model.trim()).filter(Boolean)
-  : DEFAULT_MODEL_SEQUENCE
-
-const GEMINI_MODEL_SEQUENCE = Array.from(new Set([...prioritizedModels, ...configuredModels]))
-
 /**
- * Attempts Gemini generation using preferred models in sequence, falling back when models return 404/403
+ * Call Vertex AI Gemini for scene direction generation
  */
-async function callGemini(apiKey: string, prompt: string): Promise<string> {
-  let lastError: Error | null = null
-
-  for (const model of GEMINI_MODEL_SEQUENCE) {
-    try {
-      return await callGeminiWithModel(apiKey, prompt, model)
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error('Unknown Gemini error')
-      const status = (error as GeminiRequestError)?.status
-      const canFallback = status === 404 || status === 403
-      console.warn(`[Gemini API] Model ${model} failed${status ? ` (${status})` : ''}: ${lastError.message}`)
-
-      if (!canFallback) {
-        throw lastError
-      }
-    }
-  }
-
-  throw lastError || new Error('Gemini API failed for all configured models')
-}
-
-/**
- * Call Gemini API for a specific model with retry logic for rate limiting (429 errors)
- */
-async function callGeminiWithModel(apiKey: string, prompt: string, model: string, retryCount = 0): Promise<string> {
-  const maxRetries = 3
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 60000) // 60 second timeout
-  
-  try {
-    const endpoint = `${GEMINI_API_HOST}/${GEMINI_API_VERSION}/models/${model}:generateContent?key=${apiKey}`
-    const response = await fetch(
-      endpoint,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.7,
-            topP: 0.95,
-            maxOutputTokens: 8192,
-            responseMimeType: 'application/json'
-          }
-        }),
-      }
-    )
-    
-    if (!response.ok) {
-      const errorBody = await response.text().catch(() => 'Unknown error')
-      
-      // Handle rate limiting with exponential backoff
-      if (response.status === 429 && retryCount < maxRetries) {
-        const waitTime = Math.pow(2, retryCount) * 1000 // 1s, 2s, 4s
-        console.warn(`[Gemini API] Rate limited (429) on model ${model}. Retrying in ${waitTime}ms... (attempt ${retryCount + 1}/${maxRetries})`)
-        clearTimeout(timeout)
-        await new Promise(resolve => setTimeout(resolve, waitTime))
-        return callGeminiWithModel(apiKey, prompt, model, retryCount + 1)
-      }
-      
-      console.error(`[Gemini API] HTTP ${response.status} on model ${model}:`, errorBody)
-      const error: GeminiRequestError = new Error(
-        `Gemini API error: ${response.status}${response.status === 429 ? ' (Rate limit exceeded. Please try again in a moment.)' : ''}`
-      )
-      error.status = response.status
-      throw error
-    }
-    
-    const data = await response.json()
-    
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
-    
-    if (!text) {
-      const finishReason = data?.candidates?.[0]?.finishReason
-      if (finishReason === 'SAFETY') {
-        console.error('[Gemini API] Content blocked by safety filter:', data?.candidates?.[0]?.safetyRatings)
-        throw new Error('Content blocked by safety filter')
-      }
-      throw new Error(`Gemini returned empty content. Finish reason: ${finishReason || 'unknown'}`)
-    }
-    
-    console.log(`[Gemini API] Scene direction generated with model ${model}`)
-    return text
-  } finally {
-    clearTimeout(timeout)
-  }
+async function callGemini(prompt: string): Promise<string> {
+  console.log('[Scene Direction] Calling Vertex AI Gemini...')
+  const result = await generateText(prompt, {
+    model: 'gemini-2.0-flash',
+    temperature: 0.7,
+    topP: 0.95,
+    maxOutputTokens: 8192,
+    responseMimeType: 'application/json'
+  })
+  return result.text
 }
 
 /**
@@ -227,22 +129,12 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Get API key (prioritize GEMINI_API_KEY, fallback to legacy)
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
-    if (!apiKey) {
-      return NextResponse.json(
-        { success: false, error: 'Gemini API key not configured (GEMINI_API_KEY)' },
-        { status: 500 }
-      )
-    }
-
     // Build prompt
     const prompt = buildSceneDirectionPrompt(scene)
     console.log('[Scene Direction] Generating direction for scene', sceneIndex)
-    console.log('[Scene Direction] Using API key:', apiKey.substring(0, 20) + '...' + apiKey.substring(apiKey.length - 4))
 
-    // Call Gemini API
-    const responseText = await callGemini(apiKey, prompt)
+    // Call Vertex AI Gemini
+    const responseText = await callGemini(prompt)
     
     // Parse JSON response
     let sceneDirection: DetailedSceneDirection

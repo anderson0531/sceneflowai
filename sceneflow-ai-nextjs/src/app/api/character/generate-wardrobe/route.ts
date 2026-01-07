@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { generateText } from '@/lib/vertexai/gemini'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
-
-const GEMINI_API_VERSION = process.env.GEMINI_API_VERSION || 'v1beta'
-const GEMINI_API_HOST = process.env.GEMINI_API_HOST || 'https://generativelanguage.googleapis.com'
 
 interface GenerateWardrobeRequest {
   characterName: string
@@ -24,107 +22,19 @@ interface WardrobeResult {
   wardrobeAccessories: string
 }
 
-interface GeminiRequestError extends Error {
-  status?: number
-}
-
-const DEFAULT_MODEL_SEQUENCE = [
-  'gemini-2.0-flash',
-  'gemini-1.5-flash',
-]
-
-const configuredSequence = process.env.GEMINI_MODEL_SEQUENCE || process.env.GEMINI_MODEL_PRIORITY
-const preferredModel = process.env.GEMINI_MODEL?.trim()
-
-const prioritizedModels: string[] = preferredModel ? [preferredModel] : []
-const configuredModels: string[] = configuredSequence
-  ? configuredSequence.split(',').map(model => model.trim()).filter(Boolean)
-  : DEFAULT_MODEL_SEQUENCE
-
-const GEMINI_MODEL_SEQUENCE = Array.from(new Set([...prioritizedModels, ...configuredModels]))
-
 /**
- * Attempts Gemini generation using preferred models in sequence, falling back when models return 404/403
+ * Call Vertex AI Gemini for wardrobe generation
  */
-async function callGemini(apiKey: string, prompt: string): Promise<string> {
-  let lastError: Error | null = null
-
-  for (const model of GEMINI_MODEL_SEQUENCE) {
-    try {
-      return await callGeminiWithModel(apiKey, prompt, model)
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error('Unknown Gemini error')
-      const status = (error as GeminiRequestError)?.status
-      const canFallback = status === 404 || status === 403
-      console.warn(`[Gemini API] Model ${model} failed${status ? ` (${status})` : ''}: ${lastError.message}`)
-
-      if (!canFallback) {
-        throw lastError
-      }
-    }
-  }
-
-  throw lastError || new Error('Gemini API failed for all configured models')
-}
-
-/**
- * Call Gemini API for a specific model with retry logic for rate limiting (429 errors)
- */
-async function callGeminiWithModel(apiKey: string, prompt: string, model: string, retryCount = 0): Promise<string> {
-  const maxRetries = 3
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 30000)
-  
-  try {
-    const endpoint = `${GEMINI_API_HOST}/${GEMINI_API_VERSION}/models/${model}:generateContent?key=${apiKey}`
-    const response = await fetch(
-      endpoint,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.7,
-            topP: 0.95,
-            maxOutputTokens: 1024,
-            responseMimeType: 'application/json'
-          }
-        }),
-      }
-    )
-    
-    clearTimeout(timeout)
-    
-    if (!response.ok) {
-      const errorBody = await response.text().catch(() => 'Unknown error')
-      
-      // Handle rate limiting with exponential backoff
-      if (response.status === 429 && retryCount < maxRetries) {
-        const backoffMs = Math.pow(2, retryCount) * 1000 + Math.random() * 1000
-        console.log(`[Gemini API] Rate limited, retrying in ${backoffMs}ms...`)
-        await new Promise(resolve => setTimeout(resolve, backoffMs))
-        return callGeminiWithModel(apiKey, prompt, model, retryCount + 1)
-      }
-      
-      const error = new Error(`Gemini API error: ${response.status} - ${errorBody}`) as GeminiRequestError
-      error.status = response.status
-      throw error
-    }
-
-    const data = await response.json()
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
-    
-    if (!text) {
-      throw new Error('No response from Gemini')
-    }
-    
-    return text
-  } catch (error) {
-    clearTimeout(timeout)
-    throw error
-  }
+async function callGemini(prompt: string): Promise<string> {
+  console.log('[Generate Wardrobe] Calling Vertex AI Gemini...')
+  const result = await generateText(prompt, {
+    model: 'gemini-2.0-flash',
+    temperature: 0.7,
+    topP: 0.95,
+    maxOutputTokens: 1024,
+    responseMimeType: 'application/json'
+  })
+  return result.text
 }
 
 function buildWardrobePrompt(request: GenerateWardrobeRequest): string {
@@ -229,18 +139,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const apiKey = process.env.GEMINI_API_KEY
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'Gemini API key not configured' },
-        { status: 500 }
-      )
-    }
-
     const prompt = buildWardrobePrompt(body)
     console.log('[Generate Wardrobe] Processing request for:', body.characterName, body.recommendMode ? '(recommend mode)' : '(user description)')
 
-    const responseText = await callGemini(apiKey, prompt)
+    const responseText = await callGemini(prompt)
     
     // Parse the JSON response
     let wardrobe: WardrobeResult

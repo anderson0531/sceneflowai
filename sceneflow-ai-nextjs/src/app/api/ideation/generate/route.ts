@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AIProvider } from '@/services/ai-providers/BaseAIProviderAdapter'
 import { videoGenerationGateway } from '@/services/VideoGenerationGateway'
+import { generateText } from '@/lib/vertexai/gemini'
 
 interface ConversationMessage {
   role: 'user' | 'assistant' | 'system'
@@ -289,67 +290,26 @@ async function generateVideoIdeas(
 
 async function callGoogleGemini(
   messages: { role: 'system' | 'user' | 'assistant'; content: string }[],
-  apiKey: string
+  _apiKey: string // No longer needed - Vertex AI uses service account credentials
 ): Promise<string> {
-  // Convert messages to Gemini format
-  const contents = messages
-    .filter(msg => msg.role !== 'system') // Gemini handles system messages differently
-    .map(msg => ({
-      role: msg.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: msg.content }]
-    }))
-
-  // Add system instruction if present
+  // Combine messages into a single prompt for Vertex AI
   const systemMessage = messages.find(msg => msg.role === 'system')
-  const systemInstruction = systemMessage ? systemMessage.content : undefined
-
-  const body = {
-    contents,
-    systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : undefined,
-    generationConfig: {
-    temperature: 0.7,
-      topK: 40,
-      topP: 0.95,
-      maxOutputTokens: 8192, // Large context for handling scripts
-    },
-    safetySettings: [
-      {
-        category: "HARM_CATEGORY_HARASSMENT",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE"
-      },
-      {
-        category: "HARM_CATEGORY_HATE_SPEECH",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE"
-      },
-      {
-        category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE"
-      },
-      {
-        category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-        threshold: "BLOCK_MEDIUM_AND_ABOVE"
-      }
-    ]
-  }
-
-  const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${apiKey}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  })
+  const userMessages = messages.filter(msg => msg.role !== 'system')
   
-  if (!resp.ok) {
-    const errorText = await resp.text()
-    throw new Error(`Google Gemini error: ${errorText}`)
+  const promptParts = []
+  if (systemMessage) {
+    promptParts.push(`SYSTEM: ${systemMessage.content}`)
   }
-  
-  const json = await resp.json()
-  const content = json?.candidates?.[0]?.content?.parts?.[0]?.text
+  for (const msg of userMessages) {
+    promptParts.push(`${msg.role.toUpperCase()}: ${msg.content}`)
+  }
+  const prompt = promptParts.join('\n\n')
+
+  console.log('[Ideation Generate] Calling Vertex AI Gemini...')
+  const content = await generateText(prompt, { model: 'gemini-2.0-flash' })
   
   if (!content) {
-    throw new Error('Google Gemini returned no content')
+    throw new Error('Vertex AI Gemini returned no content')
   }
   
   return content

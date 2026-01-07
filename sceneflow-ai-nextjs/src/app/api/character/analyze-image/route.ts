@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { generateWithVision } from '@/lib/vertexai/gemini'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -9,11 +10,6 @@ export async function POST(req: NextRequest) {
     
     if (!imageUrl) {
       return NextResponse.json({ error: 'No image URL provided' }, { status: 400 })
-    }
-    
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-    if (!apiKey) {
-      return NextResponse.json({ error: 'API key not configured' }, { status: 500 })
     }
     
     console.log('[Analyze Image] Analyzing character:', characterName, 'from URL:', imageUrl.substring(0, 50))
@@ -60,38 +56,26 @@ CRITICAL: Output ONLY a single valid JSON object with all fields.
 DO NOT include markdown fences, explanations, or any text before or after the JSON.
 Start your response with { and end with }`
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: prompt },
-              { 
-                inline_data: {
-                  mime_type: mimeType,
-                  data: base64Image
-                }
-              }
-            ]
-          }],
-          generationConfig: {
-            temperature: 0.4, // Lower temperature for more consistent, factual extraction
-            topP: 0.8,
-            maxOutputTokens: 500
+    console.log('[Analyze Image] Calling Vertex AI Gemini...')
+    const result = await generateWithVision(
+      [
+        { text: prompt },
+        {
+          inlineData: {
+            mimeType,
+            data: base64Image
           }
-        })
+        }
+      ],
+      {
+        model: 'gemini-2.0-flash',
+        temperature: 0.4,
+        topP: 0.8,
+        maxOutputTokens: 500
       }
     )
     
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.status}`)
-    }
-    
-    const data = await response.json()
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text
+    const text = result.text
     
     if (!text) {
       throw new Error('No response from Gemini')

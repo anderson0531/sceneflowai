@@ -67,15 +67,19 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       
       const data = await response.json()
       
-      if (data.success && Array.isArray(data.treatments)) {
-        // Map API treatments to variants format expected by TreatmentCard
-        const variants = data.treatments.map((t: any, idx: number) => ({
-          id: `treatment-${Date.now()}-${idx}`,
-          label: t.title || `Variant ${idx + 1}`,
+      // API returns 'variants' array (not 'treatments'), with fallback to data.data
+      const rawVariants = Array.isArray(data.variants) ? data.variants : (data.data ? [data.data] : [])
+      
+      if (data.success && rawVariants.length > 0) {
+        // Map API variants to format expected by TreatmentCard
+        const variants = rawVariants.map((t: any, idx: number) => ({
+          id: t.id || `treatment-${Date.now()}-${idx}`,
+          label: t.label || t.title || `Variant ${idx + 1}`,
           content: t.synopsis || t.film_treatment || '',
           ...t
         }))
         
+        console.log('[StudioPage] Film treatment variants received:', variants.length)
         setTreatmentVariants(variants)
         
         if (variants[0]) {
@@ -91,6 +95,15 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         if (data.estimatedRuntime) {
           setEstimatedRuntime(data.estimatedRuntime)
         }
+      } else {
+        // Debug logging for when treatment display fails
+        console.warn('[StudioPage] Film treatment not displayed. Response:', {
+          success: data.success,
+          hasVariants: Array.isArray(data.variants),
+          variantsLength: data.variants?.length,
+          hasData: !!data.data,
+          responseKeys: Object.keys(data)
+        })
       }
     } catch (error: any) {
       console.error('[StudioPage] Blueprint generation failed:', error)

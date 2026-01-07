@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { generateText } from '@/lib/vertexai/gemini'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -175,9 +176,6 @@ export async function POST(req: NextRequest) {
 }
 
 async function generateDirectorSceneReview(scene: any, sceneIndex: number, script: any): Promise<Review> {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-  if (!apiKey) throw new Error('Google API key not configured')
-
   const totalScenes = script.scenes?.length || 0
   const characterCount = script.characters?.length || 0
   
@@ -262,35 +260,19 @@ CRITICAL JSON FORMATTING RULES:
 Output this exact JSON structure:
 {"overallScore": <number>, "categories": [{"name": "Scene Structure", "score": <number>}, {"name": "Character Moments", "score": <number>}, {"name": "Pacing", "score": <number>}, {"name": "Visual Storytelling", "score": <number>}, {"name": "Script Integration", "score": <number>}], "analysis": "<single line analysis>", "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"], "improvements": ["<improvement 1>", "<improvement 2>", "<improvement 3>"], "recommendations": ["<recommendation 1>", "<recommendation 2>", "<recommendation 3>"]}`
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 4096,
-          responseMimeType: 'application/json'
-        }
-      })
-    }
-  )
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error('[Director Scene Review] API error:', response.status, errorText)
-    throw new Error(`Gemini API error: ${response.status}`)
-  }
-
-  const data = await response.json()
+  console.log('[Director Scene Review] Calling Vertex AI Gemini...')
+  const result = await generateText(prompt, {
+    model: 'gemini-2.0-flash',
+    temperature: 0.7,
+    maxOutputTokens: 4096,
+    responseMimeType: 'application/json'
+  })
   
-  if (data.candidates?.[0]?.finishReason === 'SAFETY') {
+  if (result.finishReason === 'SAFETY') {
     throw new Error('Content blocked by safety filters.')
   }
   
-  const reviewText = data.candidates?.[0]?.content?.parts?.[0]?.text
+  const reviewText = result.text
 
   if (!reviewText) {
     throw new Error('No review generated - empty response from Gemini')
@@ -305,9 +287,6 @@ Output this exact JSON structure:
 }
 
 async function generateAudienceSceneReview(scene: any, sceneIndex: number, script: any): Promise<Review> {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-  if (!apiKey) throw new Error('Google API key not configured')
-
   const totalScenes = script.scenes?.length || 0
   const characterCount = script.characters?.length || 0
   
@@ -388,35 +367,19 @@ CRITICAL JSON FORMATTING RULES:
 Output this exact JSON structure:
 {"overallScore": <number>, "categories": [{"name": "Entertainment Value", "score": <number>}, {"name": "Emotional Impact", "score": <number>}, {"name": "Clarity", "score": <number>}, {"name": "Character Connection", "score": <number>}, {"name": "Story Momentum", "score": <number>}], "analysis": "<single line analysis>", "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"], "improvements": ["<improvement 1>", "<improvement 2>", "<improvement 3>"], "recommendations": ["<recommendation 1>", "<recommendation 2>", "<recommendation 3>"]}`
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 4096,
-          responseMimeType: 'application/json'
-        }
-      })
-    }
-  )
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error('[Audience Scene Review] API error:', response.status, errorText)
-    throw new Error(`Gemini API error: ${response.status}`)
-  }
-
-  const data = await response.json()
+  console.log('[Audience Scene Review] Calling Vertex AI Gemini...')
+  const result = await generateText(prompt, {
+    model: 'gemini-2.0-flash',
+    temperature: 0.7,
+    maxOutputTokens: 4096,
+    responseMimeType: 'application/json'
+  })
   
-  if (data.candidates?.[0]?.finishReason === 'SAFETY') {
+  if (result.finishReason === 'SAFETY') {
     throw new Error('Content blocked by safety filters.')
   }
   
-  const reviewText = data.candidates?.[0]?.content?.parts?.[0]?.text
+  const reviewText = result.text
 
   if (!reviewText) {
     throw new Error('No review generated - empty response from Gemini')

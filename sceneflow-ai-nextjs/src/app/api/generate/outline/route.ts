@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { generateText } from '@/lib/vertexai/gemini'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -51,33 +52,18 @@ async function callOpenAIJson(messages: Message[], apiKey: string): Promise<any>
   return JSON.parse(content)
 }
 
-async function callGeminiJson(messages: Message[], apiKey: string): Promise<any> {
-  // Convert to Gemini format
-  const contents = messages.map(m => ({
-    role: m.role === 'system' ? 'user' : (m.role === 'user' ? 'user' : 'model'),
-    parts: [{ text: m.content }]
-  }))
-  // Force JSON by instruction
-  contents.unshift({ role: 'user', parts: [{ text: 'Return ONLY valid JSON with a root key "scenes" as specified. No prose.' }]})
-
-  const body = {
-    contents,
-    generationConfig: {
-      temperature: 0.5,
-      responseMimeType: 'application/json'
-    }
-  }
-  const model = 'gemini-3.0-flash'
-  const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+async function callGeminiJson(messages: Message[], _apiKey: string): Promise<any> {
+  // Convert messages to a single prompt for Vertex AI
+  const promptParts = messages.map(m => {
+    const prefix = m.role === 'system' ? 'SYSTEM: ' : 'USER: '
+    return prefix + m.content
   })
-  if (!resp.ok) {
-    const txt = await resp.text().catch(() => 'unknown error')
-    throw new Error(`Gemini JSON error: ${resp.status} ${txt}`)
-  }
-  const json = await resp.json()
-  const text = json?.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!text) throw new Error('No content from Gemini')
+  const prompt = 'Return ONLY valid JSON with a root key "scenes" as specified. No prose.\n\n' + promptParts.join('\n\n')
+
+  console.log('[Generate Outline] Calling Vertex AI Gemini...')
+  const text = await generateText(prompt, { model: 'gemini-2.0-flash' })
+  
+  if (!text) throw new Error('No content from Vertex AI Gemini')
   return JSON.parse(text)
 }
 

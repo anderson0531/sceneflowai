@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeDuration } from '@/lib/treatment/duration'
 import { safeParseJsonFromText } from '@/lib/safeJson'
+import { generateText } from '@/lib/vertexai/gemini'
 
 export const runtime = 'nodejs'
 export const maxDuration = 15
@@ -78,41 +79,12 @@ CRITICAL:
 
 OUTPUT FORMAT: Return ONLY the variations, one per line, no numbering, no markdown.`
 
-    // Call Gemini API directly with high temperature for creativity
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
-    if (!apiKey) {
-      throw new Error('Google Gemini API key not configured')
-    }
-
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 15000) // 15s timeout
-    
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.95, // High creativity for diversity
-            topP: 0.95,
-            maxOutputTokens: 500
-          }
-        }),
-      }
-    ).finally(() => clearTimeout(timeout))
-
-    if (!geminiResponse.ok) {
-      throw new Error(`Gemini API error: ${geminiResponse.status}`)
-    }
-
-    const geminiData = await geminiResponse.json()
-    const response = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text
+    // Call Vertex AI Gemini with high temperature for creativity
+    console.log('[Inspiration API] Calling Vertex AI Gemini for variations...')
+    const response = await generateText(prompt, { model: 'gemini-2.0-flash' })
     
     if (!response) {
-      throw new Error('Gemini returned empty content')
+      throw new Error('Vertex AI Gemini returned empty content')
     }
 
     const variants = parseVariants(response)
@@ -152,14 +124,6 @@ function parseVariants(llmResponse: string): string[] {
  * Returns JSON objects with title, logline, genre, tone, format
  */
 async function generateStructuredConcepts(vagueIdea: string, count: number): Promise<NextResponse> {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
-  if (!apiKey) {
-    return NextResponse.json({ 
-      success: false, 
-      error: 'Google Gemini API key not configured' 
-    }, { status: 500 })
-  }
-
   const prompt = `You are a creative film development assistant. A user has a vague idea and needs inspiration.
 
 USER'S VAGUE IDEA: "${vagueIdea}"
@@ -185,36 +149,11 @@ OUTPUT FORMAT: Return ONLY a valid JSON array. No markdown, no explanation.
 Example: [{"title":"...", "logline":"...", "genre":"...", "tone":"...", "format":"...", "estimatedDuration":"..."}]`
 
   try {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 20000)
-    
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.9,
-            topP: 0.95,
-            maxOutputTokens: 1500,
-            responseMimeType: 'application/json'
-          }
-        }),
-      }
-    ).finally(() => clearTimeout(timeout))
-
-    if (!geminiResponse.ok) {
-      throw new Error(`Gemini API error: ${geminiResponse.status}`)
-    }
-
-    const geminiData = await geminiResponse.json()
-    const response = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text
+    console.log('[Inspiration API] Calling Vertex AI Gemini for structured concepts...')
+    const response = await generateText(prompt, { model: 'gemini-2.0-flash' })
     
     if (!response) {
-      throw new Error('Gemini returned empty content')
+      throw new Error('Vertex AI Gemini returned empty content')
     }
 
     // Parse the JSON response

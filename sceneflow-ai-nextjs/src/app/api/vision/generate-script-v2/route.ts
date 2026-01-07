@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 import { SubscriptionService } from '../../../../services/SubscriptionService'
 import { runScriptQA, autoFixScript } from '@/lib/script/qualityAssurance'
+import { generateText } from '@/lib/vertexai/gemini'
 
 export const runtime = 'nodejs'
 export const maxDuration = 600  // 10 minutes for large script generation (requires Vercel Pro)
@@ -43,16 +44,6 @@ export async function POST(request: NextRequest) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
             type: 'error', 
             error: 'No film treatment found' 
-          })}\n\n`))
-          controller.close()
-          return
-        }
-
-        const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-        if (!apiKey) {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-            type: 'error', 
-            error: 'API key not configured' 
           })}\n\n`))
           controller.close()
           return
@@ -856,27 +847,14 @@ Complete the script with accurate duration estimates.`
 }
 
 async function callGemini(apiKey: string, prompt: string): Promise<string> {
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 32768  // Increased to handle larger batch responses (Gemini 2.5 Pro supports up to 65536)
-        }
-      })
-    }
-  )
-
-  if (!response.ok) {
-    throw new Error(`Gemini error: ${response.status}`)
-  }
-
-  const data = await response.json()
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  console.log('[Generate Script V2] Calling Vertex AI Gemini...')
+  const result = await generateText(prompt, {
+    model: 'gemini-2.0-flash',
+    temperature: 0.7,
+    maxOutputTokens: 32768  // Increased to handle larger batch responses
+  })
+  
+  const text = result.text || ''
   
   // Debug logging - first 500 chars
   console.log('[Gemini Response] First 500 chars:', text.substring(0, 500))
