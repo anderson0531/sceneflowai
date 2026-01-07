@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/Input";
-import { DownloadIcon, Edit, ChevronUp, Save, Settings, FileText, BarChart3, ChevronRight, Check, HelpCircle, Sparkles, Film, Lightbulb, PanelRight, PanelRightClose } from "lucide-react";
+import { DownloadIcon, Edit, ChevronUp, Settings, FileText, BarChart3, ChevronRight, Check, HelpCircle, Sparkles, Film, Lightbulb, PanelRight, PanelRightClose } from "lucide-react";
 import { useGuideStore } from "@/store/useGuideStore";
 import { useStore } from '@/store/useStore'
 import { useCue } from "@/store/useCueStore";
@@ -72,6 +72,10 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
 
   // Store last input
   const [lastInput, setLastInput] = useState('')
+  
+  // Auto-save debounce ref and saved indicator
+  const autoSaveDebounceRef = useRef<NodeJS.Timeout | null>(null)
+  const [isSaved, setIsSaved] = useState(true)
   
   // Composer visibility - collapsed after generation when variants exist
   const [showComposer, setShowComposer] = useState(true)
@@ -345,6 +349,62 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     load()
   }, [projectId, setCurrentProject, setBeats, updateTreatment, setTreatmentVariants, updateTitle])
 
+  // Auto-save effect - debounced to prevent excessive API calls
+  useEffect(() => {
+    // Only auto-save for existing projects (not new-project-*)
+    if (!projectId || projectId.startsWith('new-project')) return
+    
+    // Don't save if no meaningful data exists
+    const hasData = guide.treatmentVariants?.length > 0 || guide.filmTreatment?.trim()
+    if (!hasData) return
+    
+    // Mark as unsaved when data changes
+    setIsSaved(false)
+    
+    // Clear existing debounce timer
+    if (autoSaveDebounceRef.current) {
+      clearTimeout(autoSaveDebounceRef.current)
+    }
+    
+    // Debounce auto-save by 1.5 seconds
+    autoSaveDebounceRef.current = setTimeout(async () => {
+      try {
+        const blueprintData = {
+          id: projectId,
+          title: guide.title || 'Untitled Project',
+          description: '',
+          metadata: {
+            blueprintInput: lastInput,
+            filmTreatment: guide.filmTreatment,
+            treatmentVariants: guide.treatmentVariants || [],
+            beats: beatsView,
+            estimatedRuntime: estimatedRuntime
+          }
+        }
+        
+        const res = await fetch(`/api/projects`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(blueprintData)
+        })
+        
+        if (res.ok) {
+          setIsSaved(true)
+          console.log('[StudioPage] Auto-saved project')
+        }
+      } catch (error) {
+        console.error('[StudioPage] Auto-save failed:', error)
+      }
+    }, 1500)
+    
+    // Cleanup on unmount
+    return () => {
+      if (autoSaveDebounceRef.current) {
+        clearTimeout(autoSaveDebounceRef.current)
+      }
+    }
+  }, [projectId, lastInput, guide.treatmentVariants, guide.title, guide.filmTreatment, beatsView, estimatedRuntime])
+
   useEffect(() => { console.debug('[StudioPage] outline autogen disabled; relying on OutlineV2') }, [guide?.filmTreatment, currentProject?.id])
 
   const [isGen, setIsGen] = useState(false)
@@ -395,20 +455,20 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               <div className="px-6 py-4 border-b border-white/10 bg-slate-900/70 backdrop-blur rounded-t-3xl">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center border border-blue-500/30">
-                      <Lightbulb className="w-5 h-5 text-blue-400" />
-                    </div>
-                    <div>
-                      <h1 className="text-xl font-bold text-white">The Blueprint</h1>
-                      <p className="text-xs text-gray-400">Step 1: Ideation & Development</p>
-                    </div>
+                    <h3 className="text-xl font-bold text-white">The Blueprint</h3>
+                    {!isSaved && (
+                      <span className="text-xs text-gray-500 flex items-center gap-1">
+                        Saving...
+                      </span>
+                    )}
+                    {isSaved && projectId && !projectId.startsWith('new-project') && (
+                      <span className="text-xs text-emerald-400 flex items-center gap-1">
+                        <Check className="w-3 h-3" />
+                        Saved
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs px-3 py-1 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/30">Phase 1 of 3</span>
-                    <Button onClick={handleSaveProject} variant="outline" className="text-gray-300 hover:text-white border-gray-700">
-                      <Save className="w-4 h-4 mr-2" />
-                      Save
-                    </Button>
                     <Button 
                       onClick={() => setShowInspirationPanel(!showInspirationPanel)} 
                       variant="outline" 
