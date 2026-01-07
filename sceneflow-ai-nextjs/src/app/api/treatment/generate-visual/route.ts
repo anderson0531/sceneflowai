@@ -33,11 +33,12 @@ async function generateHeroImage(
   projectId: string
 ): Promise<GeneratedImage> {
   const prompt = buildPromptWithMood(
-    DEFAULT_PROMPT_TEMPLATES.heroImage
-      .replace('{title}', treatment.title || 'Untitled')
-      .replace('{genre}', treatment.genre || 'drama')
-      .replace('{tone}', treatment.tone || 'dramatic')
-      .replace('{logline}', treatment.logline || treatment.synopsis?.slice(0, 200) || ''),
+    DEFAULT_PROMPT_TEMPLATES.heroImage({
+      title: treatment.title || 'Untitled',
+      genre: treatment.genre || 'drama',
+      mood: treatment.tone || 'dramatic',
+      setting: treatment.setting || ''
+    }),
     mood
   )
   
@@ -78,12 +79,13 @@ async function generateCharacterPortrait(
       : 'supporting'
   
   const prompt = buildPromptWithMood(
-    DEFAULT_PROMPT_TEMPLATES.characterPortrait
-      .replace('{name}', character.name)
-      .replace('{role}', character.role || 'character')
-      .replace('{description}', character.description || '')
-      .replace('{genre}', treatment.genre || 'drama')
-      .replace('{visualStyle}', treatment.visual_style || 'cinematic'),
+    DEFAULT_PROMPT_TEMPLATES.characterPortrait({
+      name: character.name,
+      description: character.description || '',
+      role: character.role || 'character',
+      ethnicity: (character as any).ethnicity,
+      age: (character as any).age
+    }),
     mood
   )
   
@@ -121,12 +123,13 @@ async function generateActAnchor(
   projectId: string
 ): Promise<ActAnchor> {
   const prompt = buildPromptWithMood(
-    DEFAULT_PROMPT_TEMPLATES.actEstablishing
-      .replace('{actNumber}', String(actNumber))
-      .replace('{setting}', treatment.setting || 'dramatic location')
-      .replace('{actSummary}', actContent.slice(0, 300))
-      .replace('{visualStyle}', treatment.visual_style || 'cinematic')
-      .replace('{tone}', treatment.tone || 'dramatic'),
+    DEFAULT_PROMPT_TEMPLATES.actEstablishing({
+      actNumber,
+      setting: treatment.setting || 'dramatic location',
+      timeOfDay: 'day',
+      mood: treatment.tone || 'dramatic',
+      genre: treatment.genre || 'drama'
+    }),
     mood
   )
   
