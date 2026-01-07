@@ -3,7 +3,6 @@ import { put, del } from '@vercel/blob'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { optimizeTextForTTS } from '../../../../lib/tts/textOptimizer'
-import { getElevenLabsVoiceForLanguage } from '../../../../lib/audio/elevenlabsVoices'
 import { getAudioDurationFromBuffer } from '../../../../lib/audio/serverAudioDuration'
 
 export const maxDuration = 60
@@ -24,21 +23,19 @@ interface AudioGenerationRequest {
   audioType: 'narration' | 'dialogue' | 'description'
   text: string
   voiceConfig: VoiceConfig
-  language?: string // New: language code (default: 'en')
   characterName?: string // For dialogue
   dialogueIndex?: number // For dialogue - index of the dialog line in the scene
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, sceneIndex, audioType, text, voiceConfig, language = 'en', characterName, dialogueIndex }: AudioGenerationRequest & { text: string } = await req.json()
+    const { projectId, sceneIndex, audioType, text, voiceConfig, characterName, dialogueIndex }: AudioGenerationRequest & { text: string } = await req.json()
 
     // Log the request for debugging
     console.log('[Scene Audio] Request:', { 
       projectId, 
       sceneIndex, 
       audioType,
-      language,
       characterName,
       dialogueIndex,
       hasText: !!text,
@@ -75,56 +72,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    console.log(`[Scene Audio] Generating ${audioType} for scene ${sceneIndex} in language: ${language}`)
+    console.log(`[Scene Audio] Generating ${audioType} for scene ${sceneIndex}`)
 
-    // Step 1: Translate text if language is not English
+    // Text is always in English - no translation needed
     let textToGenerate = text
-    if (language !== 'en') {
-      try {
-        console.log('[Scene Audio] ==================== TRANSLATION DEBUG ====================')
-        console.log('[Scene Audio] Source language: en')
-        console.log('[Scene Audio] Target language:', language)
-        console.log('[Scene Audio] Original text:', text)
-        console.log('[Scene Audio] Original text length:', text.length)
-        
-        // Use Google Translate API directly
-        const apiKey = process.env.GOOGLE_API_KEY
-        if (!apiKey) {
-          throw new Error('Google API key not configured for translation')
-        }
-        
-        const translateUrl = `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`
-        const translateResponse = await fetch(translateUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            q: text,
-            target: language,
-            source: 'en',
-            format: 'text'
-          })
-        })
-
-        if (!translateResponse.ok) {
-          const errorText = await translateResponse.text().catch(() => 'Unknown error')
-          throw new Error(`Translation API error: ${translateResponse.status} ${errorText}`)
-        }
-
-        const translateData = await translateResponse.json()
-        textToGenerate = translateData.data.translations[0].translatedText
-        
-        console.log('[Scene Audio] Translated text:', textToGenerate)
-        console.log('[Scene Audio] Translated text length:', textToGenerate.length)
-        console.log('[Scene Audio] Translated text (first 200 chars):', textToGenerate.substring(0, 200))
-        console.log('[Scene Audio] ==================== END TRANSLATION DEBUG ====================')
-      } catch (error: any) {
-        console.error('[Scene Audio] Translation error:', error)
-        return NextResponse.json(
-          { error: `Translation failed: ${error.message}` },
-          { status: 500 }
-        )
-      }
-    }
 
     // Step 2: Optimize text for TTS (remove stage directions, clean up)
     const optimized = optimizeTextForTTS(textToGenerate)

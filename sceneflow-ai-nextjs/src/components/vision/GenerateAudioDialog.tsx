@@ -12,20 +12,8 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Globe, CheckCircle2, AlertCircle, XCircle, Loader, Sparkles } from 'lucide-react'
-import { SUPPORTED_LANGUAGES } from '@/constants/languages'
+import { CheckCircle2, AlertCircle, XCircle, Loader, Sparkles } from 'lucide-react'
 import { getAvailableLanguages, hasLanguageAudio } from '@/lib/audio/languageDetection'
-import { useLanguage } from '@/contexts/LanguageContext'
-
-interface LanguageStatus {
-  code: string
-  name: string
-  status: 'complete' | 'partial' | 'none'
-  narrationCount: number
-  dialogueCount: number
-  musicCount: number
-  sfxCount: number
-}
 
 interface GenerationProgress {
   status: 'idle' | 'running' | 'completed' | 'error'
@@ -70,9 +58,8 @@ export function GenerateAudioDialog({
   mode = 'foreground',
   onRunInBackground,
 }: GenerateAudioDialogProps) {
-  // Use global language preference as default
-  const { language: globalLanguage } = useLanguage()
-  const [selectedLanguage, setSelectedLanguage] = useState<string>(globalLanguage)
+  // Hardcode English - multi-language support deferred
+  const selectedLanguage = 'en'
   const [audioTypes, setAudioTypes] = useState({
     narration: true,
     dialogue: true,
@@ -88,10 +75,8 @@ export function GenerateAudioDialog({
       setStayOpen(true)
       setIncludeCharacters(false)
       setIncludeSceneImages(false)
-      // Sync with global language preference when dialog opens
-      setSelectedLanguage(globalLanguage)
     }
-  }, [open, globalLanguage])
+  }, [open])
 
   const scenes = script?.script?.scenes || []
   const characterCount = Array.isArray(characters) ? characters.length : 0
@@ -100,76 +85,36 @@ export function GenerateAudioDialog({
     : 0
   const scenesWithImages = scenes.filter((scene: any) => !!scene?.imageUrl).length
 
-  // Calculate language status for all languages
-  const languageStatuses = useMemo((): LanguageStatus[] => {
-    return SUPPORTED_LANGUAGES.map(lang => {
-      let narrationCount = 0
-      let dialogueCount = 0
-      let musicCount = 0
-      let sfxCount = 0
+  // Calculate audio status for English only
+  const audioStatus = useMemo(() => {
+    let narrationCount = 0
+    let dialogueCount = 0
+    let musicCount = 0
+    let sfxCount = 0
 
-      scenes.forEach((scene: any) => {
-        // Check narration
-        const hasNarration = 
-          (scene.narrationAudio?.[lang.code]?.url) ||
-          (lang.code === 'en' && scene.narrationAudioUrl)
-        if (hasNarration) narrationCount++
+    scenes.forEach((scene: any) => {
+      // Check narration
+      if (scene.narrationAudioUrl || scene.narrationAudio?.en?.url) narrationCount++
 
-        // Check dialogue
-        const dialogueArray = scene.dialogueAudio?.[lang.code] || (lang.code === 'en' ? scene.dialogueAudio : null)
-        if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
-          const hasDialogue = dialogueArray.some((d: any) => d.audioUrl)
-          if (hasDialogue) {
-            dialogueCount += dialogueArray.filter((d: any) => d.audioUrl).length
-          }
-        }
-
-        // Check music
-        if (scene.musicUrl || scene.music?.url) musicCount++
-
-        // Check SFX
-        if (Array.isArray(scene.sfx)) {
-          const sfxWithAudio = scene.sfx.filter((sfx: any) => 
-            (typeof sfx === 'object' && sfx.url) || (typeof sfx === 'string' && sfx)
-          )
-          sfxCount += sfxWithAudio.length
-        }
-      })
-
-      const totalScenes = scenes.length
-      const hasNarration = narrationCount > 0
-      const hasDialogue = dialogueCount > 0
-      const hasAny = hasNarration || hasDialogue || musicCount > 0 || sfxCount > 0
-      
-      let status: 'complete' | 'partial' | 'none' = 'none'
-      if (narrationCount === totalScenes && hasDialogue) {
-        status = 'complete'
-      } else if (hasAny) {
-        status = 'partial'
+      // Check dialogue
+      const dialogueArray = scene.dialogueAudio?.en || scene.dialogueAudio
+      if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
+        dialogueCount += dialogueArray.filter((d: any) => d.audioUrl).length
       }
 
-      return {
-        code: lang.code,
-        name: lang.name,
-        status,
-        narrationCount,
-        dialogueCount,
-        musicCount,
-        sfxCount,
+      // Check music
+      if (scene.musicUrl || scene.music?.url) musicCount++
+
+      // Check SFX
+      if (Array.isArray(scene.sfx)) {
+        sfxCount += scene.sfx.filter((sfx: any) => 
+          (typeof sfx === 'object' && sfx.url) || (typeof sfx === 'string' && sfx)
+        ).length
       }
     })
-  }, [scenes])
 
-  // Calculate counts for selected language
-  const selectedLanguageStatus = languageStatuses.find(l => l.code === selectedLanguage) || {
-    code: selectedLanguage,
-    name: SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name || selectedLanguage,
-    status: 'none' as const,
-    narrationCount: 0,
-    dialogueCount: 0,
-    musicCount: 0,
-    sfxCount: 0,
-  }
+    return { narrationCount, dialogueCount, musicCount, sfxCount }
+  }, [scenes])
 
   // Calculate what will be generated
   const totalScenes = scenes.length
@@ -193,11 +138,11 @@ export function GenerateAudioDialog({
   const musicCount = willGenerateMusic ? totalScenes : 0
   const sfxCount = willGenerateSFX ? totalSFXCount : 0
 
-  const willOverwrite = selectedLanguageStatus.status !== 'none' && (
-    (willGenerateNarration && selectedLanguageStatus.narrationCount > 0) ||
-    (willGenerateDialogue && selectedLanguageStatus.dialogueCount > 0) ||
-    (willGenerateMusic && selectedLanguageStatus.musicCount > 0) ||
-    (willGenerateSFX && selectedLanguageStatus.sfxCount > 0)
+  const willOverwrite = (
+    (willGenerateNarration && audioStatus.narrationCount > 0) ||
+    (willGenerateDialogue && audioStatus.dialogueCount > 0) ||
+    (willGenerateMusic && audioStatus.musicCount > 0) ||
+    (willGenerateSFX && audioStatus.sfxCount > 0)
   )
 
   const handleGenerate = async () => {
@@ -259,7 +204,7 @@ export function GenerateAudioDialog({
             Generate Assets
           </DialogTitle>
           <DialogDescription className="text-gray-300">
-            Select language and asset types to generate for all scenes
+            Select asset types to generate for all scenes
           </DialogDescription>
         </DialogHeader>
 
@@ -309,71 +254,6 @@ export function GenerateAudioDialog({
               )}
             </div>
           )}
-          {/* Language Selection */}
-          <div className="space-y-3">
-            <label className="text-sm font-medium text-gray-200 flex items-center gap-2">
-              <Globe className="w-4 h-4 text-blue-400" />
-              Target Language
-            </label>
-            <Select value={selectedLanguage} onValueChange={setSelectedLanguage} disabled={isRunning}>
-              <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white" disabled={isRunning}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-700">
-                {SUPPORTED_LANGUAGES.map(lang => (
-                  <SelectItem 
-                    key={lang.code} 
-                    value={lang.code}
-                    className="text-white hover:bg-gray-700 focus:bg-gray-700"
-                  >
-                    {lang.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Language Status List */}
-            <div className="bg-gray-800 rounded-lg p-3 space-y-2 max-h-48 overflow-y-auto">
-              <div className="text-xs font-medium text-gray-400 mb-2">Language Status:</div>
-              {languageStatuses.map(status => {
-                const isSelected = status.code === selectedLanguage
-                const Icon = status.status === 'complete' 
-                  ? CheckCircle2 
-                  : status.status === 'partial' 
-                  ? AlertCircle 
-                  : XCircle
-                const iconColor = status.status === 'complete'
-                  ? 'text-green-400'
-                  : status.status === 'partial'
-                  ? 'text-yellow-400'
-                  : 'text-gray-500'
-
-                return (
-                  <div
-                    key={status.code}
-                    className={`flex items-center justify-between text-xs p-2 rounded ${
-                      isSelected ? 'bg-blue-900/30 border border-blue-700' : 'hover:bg-gray-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Icon className={`w-3 h-3 ${iconColor}`} />
-                      <span className={isSelected ? 'text-blue-300 font-medium' : 'text-gray-300'}>
-                        {status.name}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-gray-400">
-                      {status.narrationCount > 0 && (
-                        <span>N:{status.narrationCount}</span>
-                      )}
-                      {status.dialogueCount > 0 && (
-                        <span>D:{status.dialogueCount}</span>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
 
           {/* Audio Types Selection */}
           <div className="space-y-3">
@@ -406,10 +286,10 @@ export function GenerateAudioDialog({
                 >
                   <div className="font-medium">Narration</div>
                   <div className="text-xs text-gray-400">
-                    {totalScenes} scenes • {selectedLanguageStatus.narrationCount === totalScenes 
+                    {totalScenes} scenes • {audioStatus.narrationCount === totalScenes 
                       ? '✅ Complete' 
-                      : selectedLanguageStatus.narrationCount > 0 
-                      ? `⚠️ Partial (${selectedLanguageStatus.narrationCount}/${totalScenes})` 
+                      : audioStatus.narrationCount > 0 
+                      ? `⚠️ Partial (${audioStatus.narrationCount}/${totalScenes})` 
                       : '❌ Not generated'}
                   </div>
                 </label>
@@ -430,10 +310,10 @@ export function GenerateAudioDialog({
                 >
                   <div className="font-medium">Dialogue</div>
                   <div className="text-xs text-gray-400">
-                    {totalDialogueLines} lines • {selectedLanguageStatus.dialogueCount === totalDialogueLines 
+                    {totalDialogueLines} lines • {audioStatus.dialogueCount === totalDialogueLines 
                       ? '✅ Complete' 
-                      : selectedLanguageStatus.dialogueCount > 0 
-                      ? `⚠️ Partial (${selectedLanguageStatus.dialogueCount}/${totalDialogueLines})` 
+                      : audioStatus.dialogueCount > 0 
+                      ? `⚠️ Partial (${audioStatus.dialogueCount}/${totalDialogueLines})` 
                       : '❌ Not generated'}
                   </div>
                 </label>
@@ -454,8 +334,8 @@ export function GenerateAudioDialog({
                 >
                   <div className="font-medium">Background Music</div>
                   <div className="text-xs text-gray-400">
-                    {totalScenes} scenes • {selectedLanguageStatus.musicCount > 0 
-                      ? `✅ ${selectedLanguageStatus.musicCount} generated` 
+                    {totalScenes} scenes • {audioStatus.musicCount > 0 
+                      ? `✅ ${audioStatus.musicCount} generated` 
                       : '❌ Not generated'}
                   </div>
                 </label>
@@ -476,8 +356,8 @@ export function GenerateAudioDialog({
                 >
                   <div className="font-medium">Sound Effects</div>
                   <div className="text-xs text-gray-400">
-                    {sfxCount} effects • {selectedLanguageStatus.sfxCount > 0 
-                      ? `✅ ${selectedLanguageStatus.sfxCount} generated` 
+                    {sfxCount} effects • {audioStatus.sfxCount > 0 
+                      ? `✅ ${audioStatus.sfxCount} generated` 
                       : '❌ Not generated'}
                   </div>
                 </label>
@@ -517,9 +397,6 @@ export function GenerateAudioDialog({
                   )}
                 </div>
               )}
-              <div className="pt-1 text-blue-300">
-                Language: <strong>{SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name}</strong>
-              </div>
             </div>
             {willOverwrite && (
               <div className="text-xs text-yellow-400 flex items-center gap-1 mt-2">

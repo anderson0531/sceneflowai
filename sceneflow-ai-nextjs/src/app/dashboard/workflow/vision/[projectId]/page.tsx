@@ -5373,7 +5373,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   // Handle generate all audio
-  const handleGenerateAllAudio = async (language: string = 'en') => {
+  const handleGenerateAllAudio = async () => {
     if (!narrationVoice) {
       try { const { toast } = require('sonner'); toast.error('Please select a narration voice first') } catch {}                                                
       return
@@ -5420,7 +5420,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             projectId,
             includeMusic: true,
             includeSFX: true,
-            language,
           }),
         })
 
@@ -5521,7 +5520,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Handle generate scene audio
   // Optional sceneOverride parameter allows passing scene data directly (avoids stale state issues in sequential operations)
   // NOTE: 'description' audioType is deprecated - scene description is now read-only context, not an audio track
-  const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue' | 'description', characterName?: string, dialogueIndex?: number, language: string = 'en', sceneOverride?: any) => {
+  const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue' | 'description', characterName?: string, dialogueIndex?: number, sceneOverride?: any) => {
     // Description audio generation is deprecated - scene description is for user context only
     if (audioType === 'description') {
       console.warn('[Generate Scene Audio] Description audio generation is deprecated. Use Enhance Details instead.')
@@ -5668,7 +5667,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           audioType,
           text,
           voiceConfig,
-          language,
           characterName,
           dialogueIndex
         }),
@@ -5700,19 +5698,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               scene.narrationAudio = { ...scene.narrationAudio }
             }
             
-            // Store language-specific narration audio
-            scene.narrationAudio[language] = {
+            // Store English narration audio
+            scene.narrationAudio['en'] = {
               url: data.audioUrl,
               duration: data.duration || undefined,
               generatedAt: new Date().toISOString(),
               voiceId: voiceConfig.voiceId
             }
             
-            // Maintain backward compatibility: set narrationAudioUrl for English
-            if (language === 'en') {
-              scene.narrationAudioUrl = data.audioUrl
-              scene.narrationAudioGeneratedAt = new Date().toISOString()
-            }
+            // Maintain backward compatibility: set narrationAudioUrl
+            scene.narrationAudioUrl = data.audioUrl
+            scene.narrationAudioGeneratedAt = new Date().toISOString()
             
             updatedScenes[sceneIdx] = scene
           } else if (audioType === 'description') {
@@ -5722,18 +5718,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               scene.descriptionAudio = { ...scene.descriptionAudio }
             }
 
-            scene.descriptionAudio[language] = {
+            scene.descriptionAudio['en'] = {
               url: data.audioUrl,
               duration: data.duration || undefined,
               generatedAt: new Date().toISOString(),
               voiceId: voiceConfig.voiceId
             }
 
-            // Maintain backward compatibility: set descriptionAudioUrl for English
-            if (language === 'en') {
-              scene.descriptionAudioUrl = data.audioUrl
-              scene.descriptionAudioGeneratedAt = new Date().toISOString()
-            }
+            // Maintain backward compatibility: set descriptionAudioUrl
+            scene.descriptionAudioUrl = data.audioUrl
+            scene.descriptionAudioGeneratedAt = new Date().toISOString()
 
             updatedScenes[sceneIdx] = scene
           } else if (audioType === 'dialogue' && characterName) {
@@ -5749,12 +5743,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               scene.dialogueAudio = { ...scene.dialogueAudio }
             }
             
-            // Initialize language array if it doesn't exist
-            if (!scene.dialogueAudio[language]) {
-              scene.dialogueAudio[language] = []
+            // Initialize English dialogue array if it doesn't exist
+            if (!scene.dialogueAudio['en']) {
+              scene.dialogueAudio['en'] = []
             }
             
-            const dialogueArray = [...scene.dialogueAudio[language]]
+            const dialogueArray = [...scene.dialogueAudio['en']]
             const existingIndex = dialogueArray.findIndex((d: any) => 
               d.character === characterName && d.dialogueIndex === dialogueIndex
             )
@@ -5773,7 +5767,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               dialogueArray.push(dialogueEntry)
             }
             
-            scene.dialogueAudio[language] = dialogueArray
+            scene.dialogueAudio['en'] = dialogueArray
             scene.dialogueAudioGeneratedAt = new Date().toISOString()
             
             updatedScenes[sceneIdx] = scene
@@ -6539,7 +6533,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           try {
             if (task.type === 'description' || task.type === 'narration' || task.type === 'dialogue') {
               // Pass cleanedScene directly to avoid stale state issues
-              await handleGenerateSceneAudio(sceneIndex, task.type, task.character, task.dialogueIndex, 'en', cleanedScene)
+              await handleGenerateSceneAudio(sceneIndex, task.type, task.character, task.dialogueIndex, cleanedScene)
             } else if (task.type === 'music') {
               await generateMusicForScene(sceneIndex, cleanedScene)
             } else if (task.type === 'sfx' && task.sfxIndex !== undefined) {

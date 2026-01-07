@@ -129,7 +129,7 @@ interface ScriptPanelProps {
   onPlayAudio?: (audioUrl: string, label: string) => void
   onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number, language?: string) => void
   // NEW: Props for Production Script Header
-  onGenerateAllAudio?: (language?: string) => void
+  onGenerateAllAudio?: () => void
   isGeneratingAudio?: boolean
   onPlayScript?: () => void
   // NEW: Scene management callbacks
@@ -847,6 +847,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     audioTypes: { narration: boolean; dialogue: boolean; music: boolean; sfx: boolean },
     options?: { stayOpen: boolean; generateCharacters?: boolean; generateSceneImages?: boolean }
   ) => {
+    // Note: language param is accepted but ignored - always generate in English
     const stayOpen = options?.stayOpen ?? true
     const includeCharacters = options?.generateCharacters ?? false
     const includeSceneImages = options?.generateSceneImages ?? false
@@ -858,7 +859,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         setDialogGenerationMode('foreground')
         generationModeRef.current = 'foreground'
         backgroundRequestedRef.current = false
-        await onGenerateAllAudio(language)
+        await onGenerateAllAudio()
         setGenerateAudioDialogOpen(false)
         return
       }
@@ -877,11 +878,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       return
     }
 
-    // Show warning if music/SFX are selected for non-English
-    if ((audioTypes.music || audioTypes.sfx) && language !== 'en') {
-      toast.warning('Music and SFX will be generated in English only. Generating narration and dialogue in the selected language.', { style: toastVisualStyle })
-    }
-
     const totalDialogueLines = audioTypes.dialogue
       ? scenes.reduce((sum: number, scene: any) => {
           if (!Array.isArray(scene.dialogue)) return sum
@@ -895,7 +891,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     const totalImages = includeSceneImages ? scenes.length : 0
     const totalSteps = totalSceneSteps + totalDialogueLines + totalCharacters + totalImages
     const audioTasksSelected = audioTypes.narration || audioTypes.dialogue
-    const languageName = SUPPORTED_LANGUAGES.find(l => l.code === language)?.name || language
 
     if (totalSteps === 0) {
       toast.info('Select at least one generation option.', { style: toastVisualStyle })
@@ -979,7 +974,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             message: `Generating narration for scene ${sceneIdx + 1} of ${scenes.length}`,
           } : prev)
 
-          await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined, language)
+          await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined)
 
           completedSteps += 1
           updateDialogProgress((prev) => prev ? {
@@ -1001,7 +996,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               message: `Generating dialogue ${processedDialogue} of ${totalDialogueLines}${entry.character ? ` • ${entry.character}` : ''}`,
             } : prev)
 
-            await onGenerateSceneAudio(sceneIdx, 'dialogue', entry.character, entry.__index, language)
+            await onGenerateSceneAudio(sceneIdx, 'dialogue', entry.character, entry.__index)
 
             completedSteps += 1
             updateDialogProgress((prev) => prev ? {
@@ -1125,7 +1120,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         message: 'Generation complete.',
       } : prev)
 
-      const completionMessage = `${isBackground ? 'Background generation' : `Generation${audioTasksSelected ? ` for ${languageName}` : ''}`} complete: ${taskSummary}.`
+      const completionMessage = `${isBackground ? 'Background generation' : 'Generation'} complete: ${taskSummary}.`
       toast.success(completionMessage, { style: toastVisualStyle })
     } catch (error) {
       console.error('Error generating audio:', error)
@@ -3808,11 +3803,11 @@ function SceneCard({
                           try {
                             // Generate description if missing
                             if (sceneDescription && !descriptionUrl && onGenerateSceneAudio) {
-                              await onGenerateSceneAudio(sceneIdx, 'description', undefined, undefined, selectedLanguage)
+                              await onGenerateSceneAudio(sceneIdx, 'description', undefined, undefined)
                             }
                             // Generate narration if missing
                             if (scene.narration && !narrationUrl && onGenerateSceneAudio) {
-                              await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined, selectedLanguage)
+                              await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined)
                             }
                             // Generate missing dialogues
                             if (scene.dialogue && onGenerateSceneAudio) {
@@ -3829,7 +3824,7 @@ function SceneCard({
                                   a.character === d.character && a.dialogueIndex === i
                                 )
                                 if (!audioEntry?.audioUrl) {
-                                  await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i, selectedLanguage)
+                                  await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i)
                                 }
                               }
                             }
