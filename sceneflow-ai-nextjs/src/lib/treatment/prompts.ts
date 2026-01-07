@@ -23,6 +23,15 @@ TARGET RUNTIME: ~${targetMinutes} minutes (±10%).
 PRIORITIES: ${formatBlock.priorities}
 ${personaBlock}${structureBlock}
 
+CULTURAL AUTHENTICITY - MANDATORY:
+- Extract nationality, ethnicity, and cultural clues from the user's input
+- Character names MUST be culturally authentic to their ethnicity and the story's setting
+- If input mentions "Thai woman" → use authentic Thai names (e.g., Niran, Somchai, Priya, Malai, Nong)
+- If input mentions "Japanese" → use Japanese names (e.g., Yuki, Haruto, Kenji, Sakura)
+- If input mentions "Mexican" → use Spanish/Latin names (e.g., María, Diego, Carmen)
+- NEVER use generic Western names for non-Western characters unless explicitly stated
+- The ethnicity field must EXACTLY match what's implied in the input (e.g., "Thai" not "Southeast Asian")
+
 STORYTELLING OPTIMIZATION (PRIMARY GOAL):
 - Prioritize narrative coherence, emotional resonance, dramatic structure
 - Make bold creative decisions: combine characters, elevate subplots, shift focus
@@ -108,17 +117,17 @@ SCHEMA - GENERATE IN THIS EXACT ORDER:
   
   "character_descriptions": [
     {
-      "name": "Character Name",
+      "name": "CULTURALLY AUTHENTIC NAME - Must match the character's ethnicity (Thai character = Thai name, NOT 'Aisha' or Western names)",
       "role": "protagonist | supporting | antagonist",
-      "subject": "Full name with title/nickname (e.g., 'Captain Valerius \"Val\" Zinn')",
-      "ethnicity": "Specific ethnic/cultural origin (e.g., 'Mediterranean/Outer Rim Colonies')",
+      "subject": "Full name with title/nickname reflecting cultural background (e.g., Thai: 'Niran \"Nong\" Saetang', Japanese: 'Kenji \"Ken\" Tanaka')",
+      "ethnicity": "MUST match story context EXACTLY (e.g., if story says 'Thai woman', ethnicity MUST be 'Thai', not 'Asian' or 'Southeast Asian')",
       "keyFeature": "Defining characteristic or profession (e.g., 'Scarred, charismatic freelance cargo pilot and occasional smuggler')",
       "hairStyle": "Specific style, length, texture (e.g., 'Mid-length, swept back, slightly unruly and oil-stained')",
       "hairColor": "Exact color with detail (e.g., 'Deep, dark auburn')",
       "eyeColor": "Exact eye color (e.g., 'Bright, electric amber')",
       "expression": "Typical facial expression/demeanor (e.g., 'Constant, slight smirk, weary but calculating, with crow's feet from years of exposure')",
       "build": "Body type, physique, movement style (e.g., 'Wiry, compact, and deceptively strong, favoring quick movements over bulk')",
-      "defaultWardrobe": "Primary outfit/attire appropriate to role and setting (e.g., 'Charcoal grey tailored business suit, crisp white dress shirt, dark blue silk tie, polished black oxford shoes')",
+      "defaultWardrobe": "Primary outfit/attire appropriate to role, setting, AND cultural background",
       "wardrobeAccessories": "Consistent accessories worn throughout (e.g., 'Silver wristwatch with leather band, rectangular black-framed glasses, simple gold wedding band')",
       "description": "Brief character context for story (role in narrative)",
       "externalGoal": "REQUIRED: What they visibly pursue (e.g., 'Win the underground fighting championship to pay off debts')",
@@ -173,6 +182,8 @@ COMPLETE OUTPUT EXAMPLE:
 CRITICAL - CHARACTER ARCS ARE MANDATORY: 
 - Generate 3-5 detailed character_descriptions (protagonist + supporting characters)
 - Each character MUST have complete attributes: subject, ethnicity, keyFeature, hairStyle, hairColor, eyeColor, expression, build
+- **CHARACTER NAMES MUST BE CULTURALLY AUTHENTIC** - if story mentions Thai characters, use Thai names (Niran, Somchai, Priya, Malai, Nong), NOT Western names like Aisha, Sarah, etc.
+- **ETHNICITY MUST BE SPECIFIC** - use "Thai" not "Asian", "Nigerian" not "African", "Mexican" not "Hispanic"
 - **EVERY CHARACTER MUST HAVE PSYCHOLOGICAL DEPTH** - these fields are REQUIRED, not optional:
   • externalGoal: What they visibly pursue (concrete, tangible objective)
   • internalNeed: What they emotionally need to learn/heal (deeper psychological truth)

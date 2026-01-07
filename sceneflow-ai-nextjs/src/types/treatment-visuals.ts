@@ -131,6 +131,9 @@ export interface TreatmentPromptTemplates {
     genre: string
     mood: string
     setting?: string
+    synopsis?: string
+    protagonist?: string
+    mainCharacterAppearance?: string
   }) => string
   
   characterPortrait: (params: {
@@ -166,17 +169,41 @@ export interface TreatmentPromptTemplates {
  * Default prompt templates
  */
 export const DEFAULT_PROMPT_TEMPLATES: TreatmentPromptTemplates = {
-  heroImage: ({ title, genre, mood, setting }) => 
-    `Cinematic movie poster composition, ${genre} atmosphere, ${mood} lighting, ` +
-    `${setting ? `featuring ${setting}, ` : ''}dramatic composition, ` +
-    `professional film poster style, no text, high quality, 16:9 aspect ratio`,
+  heroImage: ({ title, genre, mood, setting, synopsis, protagonist, mainCharacterAppearance }) => {
+    // Build a story-accurate prompt with character details
+    const characterClause = mainCharacterAppearance 
+      ? `featuring ${mainCharacterAppearance}, ` 
+      : '';
+    const protagonistClause = protagonist && !mainCharacterAppearance
+      ? `depicting ${protagonist}, `
+      : '';
+    const synopsisClause = synopsis 
+      ? `Story: ${synopsis.slice(0, 150)}${synopsis.length > 150 ? '...' : ''}. `
+      : '';
+    
+    return `Cinematic movie poster composition for "${title}". ${genre} atmosphere, ${mood} lighting. ` +
+      `${synopsisClause}` +
+      `${characterClause}${protagonistClause}` +
+      `${setting ? `Setting: ${setting}. ` : ''}` +
+      `Dramatic composition, professional film poster style, no text, high quality, 16:9 aspect ratio`;
+  },
   
-  characterPortrait: ({ name, description, role, ethnicity, age }) =>
-    `Studio portrait photography, ${description}, ` +
-    `${ethnicity ? `${ethnicity} ` : ''}${age ? `${age} year old ` : ''}person, ` +
-    `${role} character archetype, neutral grey background, ` +
-    `dramatic rim lighting, close-up headshot, professional quality, ` +
-    `cinematic lighting, 3:4 portrait orientation`,
+  characterPortrait: ({ name, description, role, ethnicity, age }) => {
+    // Be explicit about ethnicity for accurate representation
+    const ethnicityClause = ethnicity 
+      ? `${ethnicity} ethnicity, ` 
+      : '';
+    const ageClause = age 
+      ? `${age} years old, ` 
+      : '';
+    
+    return `Studio portrait photography of ${name}. ${description}. ` +
+      `${ethnicityClause}${ageClause}` +
+      `${role} character archetype, neutral grey background, ` +
+      `dramatic rim lighting, close-up headshot, professional quality, ` +
+      `cinematic lighting, 3:4 portrait orientation. ` +
+      `IMPORTANT: Accurately depict the specified ethnicity and physical features.`;
+  },
   
   actEstablishing: ({ actNumber, setting, timeOfDay, mood, genre }) =>
     `Wide establishing shot of ${setting}, ${timeOfDay}, ` +

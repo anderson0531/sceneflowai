@@ -32,12 +32,44 @@ async function generateHeroImage(
   mood: TreatmentMood,
   projectId: string
 ): Promise<GeneratedImage> {
+  // Extract main character details for accurate depiction
+  const characters = (treatment as any).character_descriptions || []
+  const protagonist = characters.find((c: any) => 
+    c.role?.toLowerCase()?.includes('protagonist') || 
+    c.role?.toLowerCase()?.includes('lead') ||
+    c.role?.toLowerCase()?.includes('main')
+  ) || characters[0]
+  
+  // Build main character appearance string from their physical attributes
+  let mainCharacterAppearance = ''
+  if (protagonist) {
+    const parts = []
+    if (protagonist.ethnicity) parts.push(protagonist.ethnicity)
+    if (protagonist.age) parts.push(`${protagonist.age} year old`)
+    if (protagonist.build) parts.push(protagonist.build)
+    if (protagonist.hairColor && protagonist.hairStyle) {
+      parts.push(`${protagonist.hairColor} ${protagonist.hairStyle} hair`)
+    }
+    if (protagonist.keyFeature) parts.push(protagonist.keyFeature)
+    if (protagonist.expression) parts.push(protagonist.expression)
+    if (protagonist.defaultWardrobe) parts.push(`wearing ${protagonist.defaultWardrobe}`)
+    
+    if (parts.length > 0) {
+      mainCharacterAppearance = parts.join(', ')
+    } else if (protagonist.description) {
+      mainCharacterAppearance = protagonist.description
+    }
+  }
+  
   const prompt = buildPromptWithMood(
     DEFAULT_PROMPT_TEMPLATES.heroImage({
       title: treatment.title || 'Untitled',
       genre: treatment.genre || 'drama',
       mood: treatment.tone || 'dramatic',
-      setting: treatment.setting || ''
+      setting: treatment.setting || '',
+      synopsis: treatment.synopsis || treatment.logline || '',
+      protagonist: treatment.protagonist || protagonist?.name || '',
+      mainCharacterAppearance
     }),
     mood
   )
