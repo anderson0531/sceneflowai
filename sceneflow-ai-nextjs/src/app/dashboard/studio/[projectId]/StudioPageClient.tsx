@@ -82,6 +82,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   
   // Collaboration state
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isSharing, setIsSharing] = useState(false)
   
   // Handle share/collaborate
@@ -112,8 +113,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       const data = await res.json()
       if (data.success && data.sessionId) {
         setSessionId(data.sessionId)
-        const shareUrl = `${window.location.origin}/collaborate/${data.sessionId}`
-        await navigator.clipboard.writeText(shareUrl)
+        const url = `${window.location.origin}/collaborate/${data.sessionId}`
+        setShareUrl(url)
+        await navigator.clipboard.writeText(url)
         try { const { toast } = require('sonner'); toast.success('Link copied to clipboard!') } catch {}
       }
     } catch (error) {
@@ -589,6 +591,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 onInsert={handleInsertInspiration}
                 onClose={() => setShowInspirationPanel(false)}
                 sessionId={sessionId}
+                shareUrl={shareUrl}
                 onShare={handleShare}
                 isSharing={isSharing}
               />

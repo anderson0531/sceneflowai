@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Lightbulb, Users, X } from 'lucide-react'
+import { Lightbulb, Users, X, Copy, Check, Link2 } from 'lucide-react'
 import { InspirationPanel } from './InspirationPanel'
 import { cn } from '@/lib/utils'
 import { useGuideStore } from '@/store/useGuideStore'
@@ -11,11 +11,12 @@ interface SidePanelTabsProps {
   onInsert: (text: string) => void
   onClose?: () => void
   sessionId: string | null
+  shareUrl: string | null
   onShare: () => void
   isSharing: boolean
 }
 
-export function SidePanelTabs({ onInsert, onClose, sessionId, onShare, isSharing }: SidePanelTabsProps) {
+export function SidePanelTabs({ onInsert, onClose, sessionId, shareUrl, onShare, isSharing }: SidePanelTabsProps) {
   const [activeTab, setActiveTab] = useState<'inspiration' | 'collaboration'>('inspiration')
   const { guide } = useGuideStore()
   const activeVariantId = (guide as any)?.selectedTreatmentId || ((guide as any)?.treatmentVariants?.[0]?.id)
@@ -67,7 +68,8 @@ export function SidePanelTabs({ onInsert, onClose, sessionId, onShare, isSharing
           <InspirationPanel onInsert={onInsert} hideHeader />
         ) : (
           <CollaborationContent 
-            sessionId={sessionId} 
+            sessionId={sessionId}
+            shareUrl={shareUrl}
             activeVariantId={activeVariantId}
             onShare={onShare}
             isSharing={isSharing}
@@ -80,12 +82,14 @@ export function SidePanelTabs({ onInsert, onClose, sessionId, onShare, isSharing
 
 // Inline collaboration content (not a modal overlay)
 function CollaborationContent({ 
-  sessionId, 
+  sessionId,
+  shareUrl,
   activeVariantId,
   onShare,
   isSharing
 }: { 
   sessionId: string | null
+  shareUrl: string | null
   activeVariantId: string | null
   onShare: () => void
   isSharing: boolean
@@ -93,6 +97,18 @@ function CollaborationContent({
   const [subTab, setSubTab] = useState<'feedback' | 'chat'>('feedback')
   const [feedback, setFeedback] = React.useState<any[]>([])
   const [loading, setLoading] = React.useState(false)
+  const [copied, setCopied] = React.useState(false)
+
+  const handleCopyLink = async () => {
+    if (!shareUrl) return
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (e) {
+      console.error('Copy failed:', e)
+    }
+  }
 
   // Fetch feedback when session exists
   React.useEffect(() => {
@@ -151,6 +167,31 @@ function CollaborationContent({
 
   return (
     <div className="h-full flex flex-col">
+      {/* Share Link Display */}
+      {shareUrl && (
+        <div className="px-3 py-2 border-b border-gray-800/40 bg-purple-500/5">
+          <div className="flex items-center gap-2 text-xs text-gray-400 mb-1.5">
+            <Link2 size={12} className="text-purple-400" />
+            <span>Share Link</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div 
+              className="flex-1 bg-gray-900/60 rounded-lg px-2.5 py-1.5 text-xs text-gray-300 truncate border border-gray-800/60"
+              title={shareUrl}
+            >
+              {shareUrl}
+            </div>
+            <button
+              onClick={handleCopyLink}
+              className="p-1.5 rounded-lg bg-purple-600/80 hover:bg-purple-500 text-white transition-colors flex-shrink-0"
+              title={copied ? 'Copied!' : 'Copy link'}
+            >
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Sub-tabs */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-800/40">
         <button 
