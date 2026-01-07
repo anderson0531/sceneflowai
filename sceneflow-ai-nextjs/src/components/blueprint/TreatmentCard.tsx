@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import VariantEditorDrawer from './VariantEditorDrawer'
+import TreatmentEditorDialog from './TreatmentEditorDialog'
 import OwnerCollabPanel from '@/components/studio/OwnerCollabPanel'
 import { getCuratedElevenVoices, type CuratedVoice } from '@/lib/tts/voices'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
@@ -860,7 +860,7 @@ export function TreatmentCard() {
             </div>
           </div>
         </CardContent>
-        <VariantEditorDrawer
+        <TreatmentEditorDialog
           open={editorOpen}
           variant={activeVariant as any}
           onClose={() => setEditorOpen(false)}
