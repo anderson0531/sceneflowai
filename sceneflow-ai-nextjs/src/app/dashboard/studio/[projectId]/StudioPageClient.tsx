@@ -72,6 +72,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
 
   // Store last input
   const [lastInput, setLastInput] = useState('')
+  
+  // Composer visibility - collapsed after generation when variants exist
+  const [showComposer, setShowComposer] = useState(true)
 
   // Auto-generate hero image for treatment variant
   const generateHeroImage = async (variant: any) => {
@@ -161,6 +164,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         
         console.log('[StudioPage] Film treatment variants received:', variants.length)
         setTreatmentVariants(variants)
+        
+        // Auto-collapse composer after successful generation
+        setShowComposer(false)
         
         if (variants[0]) {
           updateTitle(variants[0].title || 'Untitled Project')
@@ -289,6 +295,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               id: approvedVariant.id || 'approved-treatment',
               ...approvedVariant
             }])
+            setShowComposer(false) // Collapse composer when loading existing treatment
             console.log('[StudioPage] Restored approved filmTreatmentVariant from project:', approvedVariant.id || 'approved-treatment')
           } else if (hasTreatmentVariants) {
             // Restore from treatmentVariants array
@@ -297,6 +304,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               const first = metadata.treatmentVariants[0]
               updateTreatment(first.content || first.synopsis || '')
             }
+            setShowComposer(false) // Collapse composer when loading existing treatment
             console.log('[StudioPage] Restored treatmentVariants from project:', metadata.treatmentVariants.length)
           } else if (hasFilmTreatment) {
             // Restore from plain filmTreatment string
@@ -307,6 +315,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               content: metadata.filmTreatment,
               synopsis: metadata.filmTreatment
             }])
+            setShowComposer(false) // Collapse composer when loading existing treatment
             console.log('[StudioPage] Restored legacy filmTreatment from project')
           }
           
@@ -429,16 +438,33 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                   />
                 )}
 
-                {/* Blueprint Composer */}
-                <div className="rounded-2xl p-5 border border-slate-700/50 bg-gradient-to-b from-slate-900/80 to-slate-900/40">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Film className="w-4 h-4 text-cyan-400" />
-                    <span className="text-sm font-medium text-gray-200">Your Creative Vision</span>
-                  </div>
-                  <BlueprintComposer
-                    onGenerate={handleGenerateBlueprint}
-                    onInsertText={registerInsertText}
-                  />
+                {/* Blueprint Composer - Collapsible after generation */}
+                <div className="rounded-2xl border border-slate-700/50 bg-gradient-to-b from-slate-900/80 to-slate-900/40 overflow-hidden">
+                  <button
+                    onClick={() => setShowComposer(!showComposer)}
+                    className="w-full flex items-center justify-between p-4 hover:bg-slate-800/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Film className="w-4 h-4 text-cyan-400" />
+                      <span className="text-sm font-medium text-gray-200">Your Creative Vision</span>
+                      {!showComposer && guide.treatmentVariants && guide.treatmentVariants.length > 0 && (
+                        <span className="text-xs text-gray-500 ml-2">• Click to edit</span>
+                      )}
+                    </div>
+                    <ChevronUp className={cn(
+                      "w-4 h-4 text-gray-400 transition-transform duration-200",
+                      !showComposer && "rotate-180"
+                    )} />
+                  </button>
+                  
+                  {showComposer && (
+                    <div className="px-5 pb-5">
+                      <BlueprintComposer
+                        onGenerate={handleGenerateBlueprint}
+                        onInsertText={registerInsertText}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Treatment Card */}
