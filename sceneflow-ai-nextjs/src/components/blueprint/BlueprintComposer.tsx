@@ -13,10 +13,12 @@ export function BlueprintComposer({
   onGenerate,
   rigor,
   onChangeRigor,
+  onInsertText,
 }: {
   onGenerate: (text: string, opts?: { persona?: 'Narrator'|'Director'; model?: string; rigor?: 'fast'|'balanced'|'thorough' }) => void
   rigor?: 'fast'|'balanced'|'thorough'
   onChangeRigor?: (r: 'fast'|'balanced'|'thorough') => void
+  onInsertText?: (callback: (text: string) => void) => void
 }) {
   const [text, setText] = useState('')
   const [persona] = useState<'Narrator'|'Director'>('Director')
@@ -25,6 +27,15 @@ export function BlueprintComposer({
   const [inspirationOpen, setInspirationOpen] = useState(false)
   const { supported: sttSupported, isSecure, permission, isRecording, transcript, error: sttError, start, stop, setTranscript } = useSpeechRecognition()
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  
+  // Register insert callback for external text insertion
+  useEffect(() => {
+    if (onInsertText) {
+      onInsertText((snippet: string) => {
+        setText(t => (t ? t + '\n\n' : '') + snippet)
+      })
+    }
+  }, [onInsertText])
 
   // Removed inline examples for simplicity
 

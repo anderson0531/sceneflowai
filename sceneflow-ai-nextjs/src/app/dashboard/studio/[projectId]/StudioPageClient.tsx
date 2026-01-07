@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/Input";
-import { DownloadIcon, Edit, ChevronUp, Save, Settings, FileText, BarChart3, ChevronRight, Check, HelpCircle, Sparkles, Film, Lightbulb } from "lucide-react";
+import { DownloadIcon, Edit, ChevronUp, Save, Settings, FileText, BarChart3, ChevronRight, Check, HelpCircle, Sparkles, Film, Lightbulb, PanelRight, PanelRightClose } from "lucide-react";
 import { useGuideStore } from "@/store/useGuideStore";
 import { useStore } from '@/store/useStore'
 import { useCue } from "@/store/useCueStore";
@@ -14,6 +14,8 @@ import dynamic from 'next/dynamic';
 import { cn } from "@/lib/utils";
 import { BlueprintComposer } from '@/components/blueprint/BlueprintComposer'
 import { TreatmentHeroImage } from '@/components/treatment/TreatmentHeroImage'
+import { InspirationPanel } from '@/components/blueprint/InspirationPanel'
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 const TreatmentCard = dynamic(() => import('@/components/blueprint/TreatmentCard').then(mod => mod.TreatmentCard), { ssr: false })
 import TopProgressBar from '@/components/ui/TopProgressBar'
 import GeneratingOverlay from '@/components/ui/GeneratingOverlay'
@@ -32,6 +34,35 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const [isInitializing, setIsInitializing] = useState(false);
   const [showStructureHelp, setShowStructureHelp] = useState(false);
   const loadedProjectRef = useRef<string | null>(null);
+  
+  // Inspiration panel state with localStorage persistence
+  const [showInspirationPanel, setShowInspirationPanel] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('blueprint-inspiration-panel')
+      return saved !== null ? saved === 'true' : true // Default to open
+    }
+    return true
+  })
+  
+  // Persist panel state to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('blueprint-inspiration-panel', String(showInspirationPanel))
+    }
+  }, [showInspirationPanel])
+  
+  // Callback for inserting inspiration text into BlueprintComposer
+  const insertTextRef = useRef<((text: string) => void) | null>(null)
+  
+  const handleInsertInspiration = (text: string) => {
+    if (insertTextRef.current) {
+      insertTextRef.current(text)
+    }
+  }
+  
+  const registerInsertText = (callback: (text: string) => void) => {
+    insertTextRef.current = callback
+  }
 
   const isProjectCreated = !!(guide.filmTreatment && guide.filmTreatment.trim() !== '' && guide.title && guide.title !== 'Untitled Project');
 
@@ -41,6 +72,51 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
 
   // Store last input
   const [lastInput, setLastInput] = useState('')
+
+  // Auto-generate hero image for treatment variant
+  const generateHeroImage = async (variant: any) => {
+    if (!variant?.title) return
+    
+    try {
+      console.log('[StudioPage] Auto-generating hero image for:', variant.title)
+      
+      const response = await fetch('/api/treatment/generate-visual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: projectId,
+          treatment: {
+            title: variant.title,
+            logline: variant.logline || '',
+            synopsis: variant.synopsis || variant.content || '',
+            genre: variant.genre || '',
+            visualStyle: variant.visualStyle || {}
+          },
+          visualType: 'hero',
+          mood: 'balanced'
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error('Hero image generation failed')
+      }
+      
+      const data = await response.json()
+      
+      if (data.success && data.imageUrl) {
+        // Update the variant with the hero image
+        setTreatmentVariants((prev: any[]) => 
+          prev.map((v, idx) => 
+            idx === 0 ? { ...v, heroImage: data.imageUrl } : v
+          )
+        )
+        console.log('[StudioPage] Hero image generated successfully')
+      }
+    } catch (error) {
+      console.error('[StudioPage] Hero image generation error:', error)
+      // Non-blocking - don't throw, just log
+    }
+  }
 
   // Generate film treatment handler
   const handleGenerateBlueprint = async (text: string, opts?: { persona?: 'Narrator'|'Director'; model?: string; rigor?: 'fast'|'balanced'|'thorough' }) => {
@@ -86,6 +162,13 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         if (variants[0]) {
           updateTitle(variants[0].title || 'Untitled Project')
           updateTreatment(variants[0].synopsis || variants[0].content || '')
+          
+          // Auto-generate hero image for the first variant
+          if (!variants[0].heroImage) {
+            generateHeroImage(variants[0]).catch(err => {
+              console.warn('[StudioPage] Hero image generation failed (non-blocking):', err)
+            })
+          }
         }
         
         if (data.beats) {
@@ -283,66 +366,101 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const beatsDataRef = React.useRef<any[]>([])
 
   return (
-    <div className="min-h-screen p-4 lg:p-6 max-w-7xl mx-auto">
+    <div className="min-h-screen">
       <TopProgressBar progress={genProgress} />
       <GeneratingOverlay visible={isGen} message="Creating your Film Concept..." progress={genProgress} />
       
-      {/* Vision-Style Premium Container */}
-      <div className="relative rounded-3xl border border-slate-700/60 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900/60 overflow-hidden shadow-[0_25px_80px_rgba(8,8,20,0.55)]">
-        {/* Left accent border - signature SceneFlow styling */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-sf-primary via-fuchsia-500 to-cyan-400 opacity-80" />
-        
-        {/* Header with backdrop blur */}
-        <div className="px-6 py-4 border-b border-white/10 bg-slate-900/70 backdrop-blur rounded-t-3xl">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center border border-blue-500/30">
-                <Lightbulb className="w-5 h-5 text-blue-400" />
+      <PanelGroup direction="horizontal" className="min-h-screen">
+        {/* Main Content Panel */}
+        <Panel defaultSize={showInspirationPanel ? 75 : 100} minSize={50}>
+          <div className="h-full p-4 lg:p-6 max-w-6xl mx-auto">
+            {/* Vision-Style Premium Container */}
+            <div className="relative rounded-3xl border border-slate-700/60 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900/60 overflow-hidden shadow-[0_25px_80px_rgba(8,8,20,0.55)]">
+              {/* Left accent border - signature SceneFlow styling */}
+              <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-sf-primary via-fuchsia-500 to-cyan-400 opacity-80" />
+              
+              {/* Header with backdrop blur */}
+              <div className="px-6 py-4 border-b border-white/10 bg-slate-900/70 backdrop-blur rounded-t-3xl">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center border border-blue-500/30">
+                      <Lightbulb className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <div>
+                      <h1 className="text-xl font-bold text-white">The Blueprint</h1>
+                      <p className="text-xs text-gray-400">Step 1: Ideation & Development</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs px-3 py-1 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/30">Phase 1 of 3</span>
+                    <Button onClick={handleSaveProject} variant="outline" className="text-gray-300 hover:text-white border-gray-700">
+                      <Save className="w-4 h-4 mr-2" />
+                      Save
+                    </Button>
+                    <Button 
+                      onClick={() => setShowInspirationPanel(!showInspirationPanel)} 
+                      variant="outline" 
+                      className={cn(
+                        "text-gray-300 hover:text-white border-gray-700 p-2",
+                        showInspirationPanel && "bg-blue-500/10 border-blue-500/30 text-blue-300"
+                      )}
+                      title={showInspirationPanel ? "Hide Inspiration Panel" : "Show Inspiration Panel"}
+                    >
+                      {showInspirationPanel ? <PanelRightClose className="w-4 h-4" /> : <PanelRight className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">The Blueprint</h1>
-                <p className="text-xs text-gray-400">Step 1: Ideation & Development</p>
+              
+              {/* Content area with proper padding */}
+              <div className="p-6 space-y-6">
+                {/* Billboard Hero Image - shows when treatment exists */}
+                {guide.treatmentVariants && guide.treatmentVariants.length > 0 && guide.treatmentVariants[0]?.title && (
+                  <TreatmentHeroImage
+                    image={guide.treatmentVariants[0]?.heroImage || null}
+                    title={guide.treatmentVariants[0]?.title || guide.title || 'Untitled'}
+                    subtitle={guide.treatmentVariants[0]?.logline}
+                    genre={guide.treatmentVariants[0]?.genre}
+                    aspectRatio="2.39:1"
+                    className="mb-6"
+                  />
+                )}
+
+                {/* Blueprint Composer */}
+                <div className="rounded-2xl p-5 border border-slate-700/50 bg-gradient-to-b from-slate-900/80 to-slate-900/40">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Film className="w-4 h-4 text-cyan-400" />
+                    <span className="text-sm font-medium text-gray-200">Your Creative Vision</span>
+                  </div>
+                  <BlueprintComposer
+                    onGenerate={handleGenerateBlueprint}
+                    onInsertText={registerInsertText}
+                  />
+                </div>
+
+                {/* Treatment Card */}
+                <TreatmentCard />
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs px-3 py-1 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/30">Phase 1 of 3</span>
-              <Button onClick={handleSaveProject} variant="outline" className="text-gray-300 hover:text-white border-gray-700">
-                <Save className="w-4 h-4 mr-2" />
-                Save
-              </Button>
             </div>
           </div>
-        </div>
+        </Panel>
         
-        {/* Content area with proper padding */}
-        <div className="p-6 space-y-6">
-          {/* Billboard Hero Image - shows when treatment exists */}
-          {guide.treatmentVariants && guide.treatmentVariants.length > 0 && guide.treatmentVariants[0]?.title && (
-            <TreatmentHeroImage
-              image={guide.treatmentVariants[0]?.heroImage || null}
-              title={guide.treatmentVariants[0]?.title || guide.title || 'Untitled'}
-              subtitle={guide.treatmentVariants[0]?.logline}
-              genre={guide.treatmentVariants[0]?.genre}
-              aspectRatio="2.39:1"
-              className="mb-6"
-            />
-          )}
-
-          {/* Blueprint Composer */}
-          <div className="rounded-2xl p-5 border border-slate-700/50 bg-gradient-to-b from-slate-900/80 to-slate-900/40">
-            <div className="flex items-center gap-2 mb-3">
-              <Film className="w-4 h-4 text-cyan-400" />
-              <span className="text-sm font-medium text-gray-200">Your Creative Vision</span>
-            </div>
-            <BlueprintComposer
-              onGenerate={handleGenerateBlueprint}
-            />
-          </div>
-
-          {/* Treatment Card */}
-          <TreatmentCard />
-        </div>
-      </div>
+        {/* Resize Handle */}
+        {showInspirationPanel && (
+          <>
+            <PanelResizeHandle className="w-1.5 bg-gray-800/50 hover:bg-blue-500/50 transition-colors cursor-col-resize" />
+            
+            {/* Inspiration Side Panel */}
+            <Panel defaultSize={25} minSize={20} maxSize={40}>
+              <InspirationPanel 
+                onInsert={handleInsertInspiration}
+                onClose={() => setShowInspirationPanel(false)}
+              />
+            </Panel>
+          </>
+        )}
+      </PanelGroup>
+      
       {/* Structure Help Modal */}
       {showStructureHelp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowStructureHelp(false)}>
