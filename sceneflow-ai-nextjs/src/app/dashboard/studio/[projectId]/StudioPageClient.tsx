@@ -130,6 +130,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const generateHeroImage = async (variant: any) => {
     if (!variant?.title) return
     
+    setIsGeneratingHeroImage(true)
     try {
       console.log('[StudioPage] Auto-generating hero image for:', variant.title)
       
@@ -171,6 +172,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     } catch (error) {
       console.error('[StudioPage] Hero image generation error:', error)
       // Non-blocking - don't throw, just log
+    } finally {
+      setIsGeneratingHeroImage(false)
     }
   }
 
@@ -396,6 +399,14 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           }
           
           console.log('[StudioPage] Project data loaded:', projectData.id)
+          
+          // Auto-generate hero image if treatment exists but hero image doesn't
+          const loadedVariant = metadata.treatmentVariants?.[0] || metadata.filmTreatmentVariant
+          if (loadedVariant?.title && !loadedVariant?.heroImage?.url) {
+            console.log('[StudioPage] Treatment loaded without hero image, auto-generating...')
+            // Use setTimeout to allow state to settle before generating
+            setTimeout(() => generateHeroImage(loadedVariant), 500)
+          }
         }
       } catch (err) {
         console.error('[StudioPage] Failed to load project:', err)
@@ -464,6 +475,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
 
   const [isGen, setIsGen] = useState(false)
   const [genProgress, setGenProgress] = useState(0)
+  const [isGeneratingHeroImage, setIsGeneratingHeroImage] = useState(false)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   const startProgress = () => {
@@ -550,6 +562,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                     genre={guide.treatmentVariants[0]?.genre}
                     aspectRatio="2.39:1"
                     className="mb-6"
+                    onRegenerate={() => generateHeroImage(guide.treatmentVariants[0])}
+                    isGenerating={isGeneratingHeroImage}
                   />
                 )}
 
