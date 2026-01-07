@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useGuideStore } from '@/store/useGuideStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Play, Square, Volume2, Share2, PencilLine, MoreHorizontal, ChevronDown, MessageSquare, ArrowRight, Loader2, Wand2, X, Users, Lightbulb, SparklesIcon, Award, RefreshCw, FileText } from 'lucide-react'
+import { Play, Square, Volume2, Share2, PencilLine, MoreHorizontal, ChevronDown, MessageSquare, ArrowRight, Loader2, Wand2, X, Users, Lightbulb, SparklesIcon, Award, RefreshCw, FileText, Printer } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -342,46 +342,19 @@ export function TreatmentCard() {
                   return (
                     <TooltipProvider>
                       <div className="flex items-center gap-1">
-                        {/* Collab owner panel trigger */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button aria-label="Collaboration panel" onClick={()=> setCollabOpen(true)} className="h-8 px-2 border border-gray-700 text-gray-200 hover:bg-gray-800" variant="outline" size="sm">
-                              <MessageSquare className="h-4 w-4" />
-                              <span className="hidden md:inline ml-1.5">Collab</span>
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>View feedback & chat</TooltipContent>
-                        </Tooltip>
-                        {/* Share */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              aria-busy={isSharing}
-                              aria-label="Share & Collaborate"
-                              onClick={handleShare}
-                              className="h-8 px-2 border border-blue-500 text-blue-300 hover:bg-blue-500/10 hidden md:inline-flex"
-                              variant="outline"
-                              size="sm"
-                            >
-                              <Share2 className="h-4 w-4" />
-                              <span className="hidden md:inline ml-1.5">Share</span>
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Share & Collaborate (S)</TooltipContent>
-                        </Tooltip>
 
                         {/* Edit */}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
                               aria-label="Edit treatment"
+                              title="Edit (E)"
                               onClick={() => setEditorOpen(true)}
-                              className="h-8 px-2 border border-gray-700 text-gray-200 hover:bg-gray-800 hidden md:inline-flex"
+                              className="h-8 w-8 border border-gray-700 text-gray-200 hover:bg-gray-800"
                               variant="outline"
-                              size="sm"
+                              size="icon"
                             >
                               <PencilLine className="h-4 w-4" />
-                              <span className="hidden md:inline ml-1.5">Edit</span>
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>Edit (E)</TooltipContent>
@@ -393,20 +366,20 @@ export function TreatmentCard() {
                             <TooltipTrigger asChild>
                               <Button
                                 aria-label="Preview and print"
+                                title="Preview & Print"
                                 onClick={() => setReportPreviewOpen(true)}
-                                className="h-8 px-2 border border-gray-700 text-gray-200 hover:bg-gray-800 hidden md:inline-flex"
+                                className="h-8 w-8 border border-gray-700 text-gray-200 hover:bg-gray-800"
                                 variant="outline"
-                                size="sm"
+                                size="icon"
                               >
-                                <FileText className="h-4 w-4" />
-                                <span className="hidden md:inline ml-1.5">Preview</span>
+                                <Printer className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>Preview & Print</TooltipContent>
                           </Tooltip>
                         )}
 
-                        {/* Overflow on small screens only (Share, Edit) */}
+                        {/* Overflow on small screens only (Edit) */}
                         <div className="md:hidden">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -415,9 +388,6 @@ export function TreatmentCard() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-52">
-                              <DropdownMenuItem onSelect={(e)=>{e.preventDefault(); handleShare();}} onClick={(e)=>{e.preventDefault();}}>
-                                <Share2 className="h-4 w-4 mr-2" /> Share
-                              </DropdownMenuItem>
                               <DropdownMenuItem onSelect={(e)=>{e.preventDefault(); setEditorOpen(true);}} onClick={(e)=>{e.preventDefault();}}>
                                 <PencilLine className="h-4 w-4 mr-2" /> Edit
                               </DropdownMenuItem>
@@ -432,13 +402,13 @@ export function TreatmentCard() {
                                 <TooltipTrigger asChild>
                                   <Button
                                     aria-label="Stop playback"
+                                    title="Stop (P)"
                                     onClick={stopAny}
-                                    className="h-8 px-2 border border-gray-700 text-gray-300 hover:bg-gray-800"
+                                    className="h-8 w-8 border border-gray-700 text-gray-300 hover:bg-gray-800"
                                     variant="outline"
-                                    size="sm"
+                                    size="icon"
                                   >
                                     <Square className="h-4 w-4" />
-                                    <span className="hidden md:inline ml-1.5">Stop</span>
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>Stop (P)</TooltipContent>
@@ -448,13 +418,13 @@ export function TreatmentCard() {
                                 <TooltipTrigger asChild>
                                   <Button
                                     aria-label="Play variant narration"
+                                    title="Play (P)"
                                     onClick={() => { const currentId = ((guide as any)?.selectedTreatmentId as string) || active; if (currentId) playVariant(currentId) }}
-                                    className="h-8 px-2 border border-gray-700 text-gray-300 hover:bg-gray-800"
+                                    className="h-8 w-8 border border-gray-700 text-gray-300 hover:bg-gray-800"
                                     variant="outline"
-                                    size="sm"
+                                    size="icon"
                                   >
                                     <Play className="h-4 w-4" />
-                                    <span className="hidden md:inline ml-1.5">Play</span>
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>Play (P)</TooltipContent>
@@ -465,13 +435,13 @@ export function TreatmentCard() {
                               <TooltipTrigger asChild>
                                 <Button
                                   aria-label="Audio preview unavailable"
+                                  title="Audio preview unavailable"
                                   disabled
-                                  className="h-8 px-2 border border-gray-800 text-gray-500"
+                                  className="h-8 w-8 border border-gray-800 text-gray-500"
                                   variant="outline"
-                                  size="sm"
+                                  size="icon"
                                 >
                                   <Play className="h-4 w-4" />
-                                  <span className="hidden md:inline ml-1.5">Play</span>
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>Configure ELEVENLABS_API_KEY to enable audio previews</TooltipContent>
@@ -516,12 +486,12 @@ export function TreatmentCard() {
                           </DropdownMenu>
                         </div>
 
-                        {/* Approve & Generate Script - moved to end */}
+                        {/* Start Production - moved to end */}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
                               aria-busy={isCreatingVision}
-                              aria-label="Approve & Generate Script"
+                              aria-label="Start Production"
                               onClick={handleStartVision}
                               disabled={isCreatingVision}
                               className="h-8 px-2 bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50"
@@ -533,11 +503,11 @@ export function TreatmentCard() {
                                 <ArrowRight className="h-4 w-4" />
                               )}
                               <span className="hidden md:inline ml-1.5">
-                                {isCreatingVision ? 'Creating...' : 'Approve & Generate Script'}
+                                {isCreatingVision ? 'Creating...' : 'Start Production'}
                               </span>
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Approve treatment & generate script + visuals</TooltipContent>
+                          <TooltipContent>Start production - generate script & visuals</TooltipContent>
                         </Tooltip>
                       </div>
                     </TooltipProvider>

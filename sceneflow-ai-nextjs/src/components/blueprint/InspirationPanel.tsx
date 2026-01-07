@@ -12,6 +12,7 @@ interface Variant {
 interface InspirationPanelProps {
   onInsert: (text: string) => void
   onClose?: () => void
+  hideHeader?: boolean
 }
 
 const QUICK_TAGS = [
@@ -25,7 +26,7 @@ const QUICK_TAGS = [
   'event recap'
 ]
 
-export function InspirationPanel({ onInsert, onClose }: InspirationPanelProps) {
+export function InspirationPanel({ onInsert, onClose, hideHeader = false }: InspirationPanelProps) {
   const [keyword, setKeyword] = useState('')
   const [variants, setVariants] = useState<Variant[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
@@ -133,52 +134,66 @@ export function InspirationPanel({ onInsert, onClose }: InspirationPanelProps) {
 
   return (
     <div className="h-full flex flex-col border-l border-gray-800/80 bg-gray-950/95 backdrop-blur-xl">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800/50 bg-gray-950/90 backdrop-blur-md">
-        <div className="flex items-center gap-2.5 text-gray-100 font-medium">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center border border-blue-500/30">
-            <Lightbulb size={16} className="text-blue-400" />
+      {/* Header - hidden when embedded in SidePanelTabs */}
+      {!hideHeader && (
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800/50 bg-gray-950/90 backdrop-blur-md">
+          <div className="flex items-center gap-2.5 text-gray-100 font-medium">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center border border-blue-500/30">
+              <Lightbulb size={16} className="text-blue-400" />
+            </div>
+            Inspiration
           </div>
-          Inspiration
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 transition-colors"
+              title="Close panel"
+            >
+              <PanelRightClose size={18} />
+            </button>
+          )}
         </div>
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 transition-colors"
-            title="Close panel"
-          >
-            <PanelRightClose size={18} />
-          </button>
-        )}
-      </div>
+      )}
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {/* Keyword Input */}
         <div className="space-y-2">
-          <div className="relative">
-            <input
-              ref={inputRef}
-              type="text"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Enter topic or keyword..."
-              disabled={isGenerating}
-              className="w-full text-sm px-4 py-2.5 pr-10 rounded-xl border border-gray-700/60 bg-gray-900/60 text-gray-100 placeholder-gray-500 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all duration-200 disabled:opacity-50"
-            />
-            {keyword && !isGenerating && (
-              <button
-                onClick={() => setKeyword('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
-              >
-                <X size={16} />
-              </button>
-            )}
-            {isGenerating && (
-              <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                <div className="animate-spin h-4 w-4 border-2 border-sf-primary border-t-transparent rounded-full" />
-              </div>
-            )}
+          <div className="relative flex gap-2">
+            <div className="relative flex-1">
+              <input
+                ref={inputRef}
+                type="text"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Enter topic or keyword..."
+                disabled={isGenerating}
+                className="w-full text-sm px-4 py-2.5 pr-10 rounded-xl border border-gray-700/60 bg-gray-900/60 text-gray-100 placeholder-gray-500 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all duration-200 disabled:opacity-50"
+              />
+              {keyword && !isGenerating && (
+                <button
+                  onClick={() => setKeyword('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+            <button
+              onClick={() => keyword.trim() && generateVariants(keyword)}
+              disabled={isGenerating || !keyword.trim()}
+              title="Generate ideas"
+              className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+            >
+              {isGenerating ? (
+                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+              ) : (
+                <>
+                  <Lightbulb size={16} />
+                  <span className="hidden sm:inline">Generate</span>
+                </>
+              )}
+            </button>
           </div>
           
           {/* Quick Tags */}
@@ -197,7 +212,7 @@ export function InspirationPanel({ onInsert, onClose }: InspirationPanelProps) {
 
           <div className="text-[10px] text-gray-500 flex items-center gap-1">
             <ChevronRight size={10} />
-            Press Enter to generate or click a tag
+            Click Generate or press Enter
           </div>
         </div>
 

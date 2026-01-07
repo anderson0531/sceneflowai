@@ -14,7 +14,7 @@ import dynamic from 'next/dynamic';
 import { cn } from "@/lib/utils";
 import { BlueprintComposer } from '@/components/blueprint/BlueprintComposer'
 import { TreatmentHeroImage } from '@/components/treatment/TreatmentHeroImage'
-import { InspirationPanel } from '@/components/blueprint/InspirationPanel'
+import { SidePanelTabs } from '@/components/blueprint/SidePanelTabs'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 const TreatmentCard = dynamic(() => import('@/components/blueprint/TreatmentCard').then(mod => mod.TreatmentCard), { ssr: false })
 import TopProgressBar from '@/components/ui/TopProgressBar'
@@ -79,6 +79,50 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   
   // Composer visibility - collapsed after generation when variants exist
   const [showComposer, setShowComposer] = useState(true)
+  
+  // Collaboration state
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [isSharing, setIsSharing] = useState(false)
+  
+  // Handle share/collaborate
+  const handleShare = async () => {
+    const variants = (guide as any)?.treatmentVariants
+    if (!variants?.length) return
+    
+    setIsSharing(true)
+    try {
+      const userId = typeof window !== 'undefined' ? localStorage.getItem('authUserId') || crypto.randomUUID() : 'anonymous'
+      if (typeof window !== 'undefined' && !localStorage.getItem('authUserId')) {
+        localStorage.setItem('authUserId', userId)
+      }
+      
+      const items = variants.map((v: any) => ({
+        id: v.id,
+        title: v.title,
+        logline: v.logline,
+        synopsis: v.synopsis
+      }))
+      
+      const res = await fetch('/api/collab/session.create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ownerId: userId, items })
+      })
+      
+      const data = await res.json()
+      if (data.success && data.sessionId) {
+        setSessionId(data.sessionId)
+        const shareUrl = `${window.location.origin}/collaborate/${data.sessionId}`
+        await navigator.clipboard.writeText(shareUrl)
+        try { const { toast } = require('sonner'); toast.success('Link copied to clipboard!') } catch {}
+      }
+    } catch (error) {
+      console.error('Share failed:', error)
+      try { const { toast } = require('sonner'); toast.error('Failed to create share link') } catch {}
+    } finally {
+      setIsSharing(false)
+    }
+  }
 
   // Auto-generate hero image for treatment variant
   const generateHeroImage = async (variant: any) => {
@@ -539,11 +583,14 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           <>
             <PanelResizeHandle className="w-1.5 bg-gray-800/50 hover:bg-blue-500/50 transition-colors cursor-col-resize" />
             
-            {/* Inspiration Side Panel */}
+            {/* Side Panel with Inspiration & Collaboration Tabs */}
             <Panel defaultSize={25} minSize={20} maxSize={40}>
-              <InspirationPanel 
+              <SidePanelTabs 
                 onInsert={handleInsertInspiration}
                 onClose={() => setShowInspirationPanel(false)}
+                sessionId={sessionId}
+                onShare={handleShare}
+                isSharing={isSharing}
               />
             </Panel>
           </>
