@@ -4,6 +4,7 @@ import { analyzeDuration, normalizeDuration } from '@/lib/treatment/duration'
 import { buildTreatmentPrompt } from '@/lib/treatment/prompts'
 import { BEAT_STRUCTURES, type BeatStructureKey } from '@/lib/treatment/structures'
 import { repairTreatment } from '@/lib/treatment/validate'
+import { generateText } from '@/lib/vertexai/gemini'
 
 interface FilmTreatmentRequest {
   input: string
@@ -194,15 +195,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Input content is required' }, { status: 400 })
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-    if (!apiKey) {
-      return NextResponse.json({ success: false, message: 'Google Gemini API key not configured' }, { status: 500 })
-    }
-
+    // Vertex AI doesn't require API key check - uses service account credentials
 
     // Derive core concept if not provided
     if (!coreConcept) {
-      coreConcept = await analyzeCoreConcept(input, { targetAudience, keyMessage, tone, genre, duration }, apiKey)
+      coreConcept = await analyzeCoreConcept(input, { targetAudience, keyMessage, tone, genre, duration })
     }
 
     // Auto-detect film structure if not explicitly provided
@@ -238,7 +235,7 @@ export async function POST(request: NextRequest) {
     // Generate variants serially (keeps logs clearer); can parallelize later if needed
     const variants: Array<{ id: string; label: string } & FilmTreatmentItem> = []
     for (const cfg of variantConfigs) {
-      const v = await generateFilmTreatment(input, coreConcept!, { ...context, variantStyle: cfg.styleHint }, apiKey)
+      const v = await generateFilmTreatment(input, coreConcept!, { ...context, variantStyle: cfg.styleHint })
       variants.push({ 
         id: cfg.id, 
         label: cfg.label, 
@@ -282,7 +279,6 @@ async function generateFilmTreatment(
   input: string,
   coreConcept: CoreConceptData,
   context: any,
-  apiKey: string,
   attempt: number = 1
 ): Promise<FilmTreatmentItem> {
   const maxAttempts = 2 // Allow 1 retry
@@ -304,34 +300,18 @@ async function generateFilmTreatment(
     persona: (context as any)?.persona ?? null
   }) + retryHint + strictJsonPromptSuffix
 
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      contents: [{
-        parts: [{
-          text: prompt
-        }]
-      }],
-      generationConfig: {
-        temperature: 0.3,
-        responseMimeType: 'application/json',
-        // responseSchema removed to prevent 400 Bad Request error
-      }
-    }),
+  console.log('[Film Treatment] Calling Vertex AI Gemini...')
+  
+  // Use Vertex AI instead of consumer Gemini API
+  const generatedText = await generateText(prompt, {
+    model: 'gemini-2.0-flash-exp',
+    temperature: 0.3,
+    topP: 0.9,
+    responseMimeType: 'application/json'
   })
 
-  if (!response.ok) {
-    throw new Error(`Gemini API error: ${response.status}`)
-  }
-
-  const data = await response.json()
-  const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text
-
   if (!generatedText) {
-    throw new Error('No response from Gemini API')
+    throw new Error('No response from Vertex AI Gemini')
   }
 
   try {
@@ -454,7 +434,7 @@ async function generateFilmTreatment(
     // Retry on JSON parse errors if attempts remaining
     if (attempt < maxAttempts) {
       console.warn(`[Film Treatment] JSON parse failed on attempt ${attempt}, retrying...`)
-      return generateFilmTreatment(input, coreConcept, context, apiKey, attempt + 1)
+      return generateFilmTreatment(input, coreConcept, context, attempt + 1)
     }
     
     // Log the error with context
@@ -469,8 +449,7 @@ async function generateFilmTreatment(
 
 async function analyzeCoreConcept(
   input: string,
-  context: any,
-  apiKey: string
+  context: any
 ): Promise<CoreConceptData> {
   const prompt = `CRITICAL INSTRUCTIONS: Analyze the input and extract ONLY the core concept. Avoid copying text.
 
@@ -492,14 +471,19 @@ Respond with valid JSON only:
   "narrative_structure": "3-Act Structure"
 }` + strictJsonPromptSuffix
 
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+  console.log('[Film Treatment] Analyzing core concept with Vertex AI Gemini...')
+
+  const generatedText = await generateText(prompt, {
+    model: 'gemini-2.0-flash-exp',
+    temperature: 0.3,
+    topP: 0.9,
+    responseMimeType: 'application/json'
   })
-  if (!response.ok) throw new Error(`Gemini API error (core concept): ${response.status}`)
-  const data = await response.json()
-  const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!generatedText) throw new Error('No response from Gemini API (core concept)')
+
+  if (!generatedText) {
+    throw new Error('No response from Vertex AI Gemini (core concept)')
+  }
+
   const parsed = safeParseJsonFromText(generatedText)
   return {
     input_title: parsed.input_title || 'Core Concept',
