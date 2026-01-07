@@ -90,7 +90,7 @@ async function generateAndSaveSFXForScene(scene: any, projectId: string, sceneId
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, includeMusic = false, includeSFX = false } = await req.json()
+    const { projectId, includeMusic = false, includeSFX = false, language = 'en' } = await req.json()
 
     if (!projectId) {
       return NextResponse.json({ error: 'Project ID is required' }, { status: 400 })                                                                            
@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
     })
     console.log(`[Batch Audio] Unique dialogue characters in script:`, Array.from(allDialogueCharacters))                                                       
 
-    console.log(`[Batch Audio] Generating audio for ${scenes.length} scenes (includeMusic: ${includeMusic}, includeSFX: ${includeSFX})`)
+    console.log(`[Batch Audio] Generating audio for ${scenes.length} scenes (language: ${language}, includeMusic: ${includeMusic}, includeSFX: ${includeSFX})`)
 
     const encoder = new TextEncoder()
     
@@ -181,6 +181,7 @@ export async function POST(req: NextRequest) {
                   audioType: 'narration',
                   text: optimizedNarration.text,
                   voiceConfig: narrationVoice,
+                  language,
                 }),
               })
               const narrationData = await narrationResult.json()
@@ -202,6 +203,7 @@ export async function POST(req: NextRequest) {
                   audioType: 'description',
                   text: optimizedDescription.text,
                   voiceConfig: narrationVoice,
+                  language,
                 }),
               })
               const descriptionData = await descriptionResult.json()
@@ -264,7 +266,8 @@ export async function POST(req: NextRequest) {
                     text: optimizedDialogue.text,
                     voiceConfig: character.voiceConfig,
                     characterName: dialogueLine.character,
-                    dialogueIndex
+                    dialogueIndex,
+                    language,
                   }),
                 })
                 const dialogueData = await dialogueResult.json()

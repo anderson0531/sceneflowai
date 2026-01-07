@@ -129,7 +129,7 @@ interface ScriptPanelProps {
   onPlayAudio?: (audioUrl: string, label: string) => void
   onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number, language?: string) => void
   // NEW: Props for Production Script Header
-  onGenerateAllAudio?: () => void
+  onGenerateAllAudio?: (language?: string) => void
   isGeneratingAudio?: boolean
   onPlayScript?: () => void
   // NEW: Scene management callbacks
@@ -851,14 +851,14 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     const includeCharacters = options?.generateCharacters ?? false
     const includeSceneImages = options?.generateSceneImages ?? false
 
-    // If all types are selected and it's English, use the batch generation API (includes music and SFX)
-    if (language === 'en' && audioTypes.narration && audioTypes.dialogue && audioTypes.music && audioTypes.sfx) {
+    // If all types are selected, use the batch generation API (includes music and SFX)
+    if (audioTypes.narration && audioTypes.dialogue && audioTypes.music && audioTypes.sfx) {
       if (onGenerateAllAudio) {
         setDialogGenerationProgress(null)
         setDialogGenerationMode('foreground')
         generationModeRef.current = 'foreground'
         backgroundRequestedRef.current = false
-        await onGenerateAllAudio()
+        await onGenerateAllAudio(language)
         setGenerateAudioDialogOpen(false)
         return
       }

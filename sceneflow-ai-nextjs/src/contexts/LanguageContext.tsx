@@ -278,3 +278,39 @@ export function useTranslatedText(text: string): string {
 
   return translated
 }
+
+// Component for inline translations - usage: <T>Hello World</T>
+interface TProps {
+  children: string
+  as?: keyof JSX.IntrinsicElements
+  className?: string
+}
+
+export function T({ children, as: Component = 'span', className }: TProps) {
+  const translated = useTranslatedText(children)
+  
+  // If no change or same text, render without wrapper to avoid extra DOM nodes
+  if (Component === 'span' && !className && translated === children) {
+    return <>{translated}</>
+  }
+  
+  return <Component className={className}>{translated}</Component>
+}
+
+// Hook for batch translating multiple strings at once
+export function useTranslatedTexts(texts: string[]): string[] {
+  const { language, translateBatch } = useLanguage()
+  const [translated, setTranslated] = useState<string[]>(texts)
+  const textsKey = texts.join('||')
+
+  useEffect(() => {
+    if (language === 'en') {
+      setTranslated(texts)
+      return
+    }
+
+    translateBatch(texts).then(setTranslated)
+  }, [textsKey, language, translateBatch])
+
+  return translated
+}

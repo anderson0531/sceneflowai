@@ -5373,7 +5373,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   // Handle generate all audio
-  const handleGenerateAllAudio = async () => {
+  const handleGenerateAllAudio = async (language: string = 'en') => {
     if (!narrationVoice) {
       try { const { toast } = require('sonner'); toast.error('Please select a narration voice first') } catch {}                                                
       return
@@ -5419,7 +5419,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           body: JSON.stringify({ 
             projectId,
             includeMusic: true,
-            includeSFX: true
+            includeSFX: true,
+            language,
           }),
         })
 
