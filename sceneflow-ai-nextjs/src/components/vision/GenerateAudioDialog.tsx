@@ -15,6 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Globe, CheckCircle2, AlertCircle, XCircle, Loader, Sparkles } from 'lucide-react'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { getAvailableLanguages, hasLanguageAudio } from '@/lib/audio/languageDetection'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface LanguageStatus {
   code: string
@@ -69,7 +70,9 @@ export function GenerateAudioDialog({
   mode = 'foreground',
   onRunInBackground,
 }: GenerateAudioDialogProps) {
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('en')
+  // Use global language preference as default
+  const { language: globalLanguage } = useLanguage()
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(globalLanguage)
   const [audioTypes, setAudioTypes] = useState({
     narration: true,
     dialogue: true,
@@ -85,8 +88,10 @@ export function GenerateAudioDialog({
       setStayOpen(true)
       setIncludeCharacters(false)
       setIncludeSceneImages(false)
+      // Sync with global language preference when dialog opens
+      setSelectedLanguage(globalLanguage)
     }
-  }, [open])
+  }, [open, globalLanguage])
 
   const scenes = script?.script?.scenes || []
   const characterCount = Array.isArray(characters) ? characters.length : 0

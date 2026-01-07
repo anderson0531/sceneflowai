@@ -841,3 +841,97 @@
     font-weight: inherit !important;
   }
 }
+
+/* =============================================================================
+   RTL (Right-to-Left) Language Support
+   Applied when html[dir="rtl"] or body.rtl is set
+   ============================================================================= */
+
+/* Base RTL layout adjustments */
+html[dir="rtl"],
+body.rtl {
+  text-align: right;
+}
+
+/* Flip horizontal layouts for RTL */
+html[dir="rtl"] .flex-row,
+body.rtl .flex-row {
+  flex-direction: row-reverse;
+}
+
+/* Keep certain elements LTR (code, numbers, icons) */
+html[dir="rtl"] code,
+html[dir="rtl"] pre,
+html[dir="rtl"] .ltr,
+body.rtl code,
+body.rtl pre,
+body.rtl .ltr {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Flip margins and paddings for RTL */
+html[dir="rtl"] .ml-auto,
+body.rtl .ml-auto {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+html[dir="rtl"] .mr-auto,
+body.rtl .mr-auto {
+  margin-right: 0;
+  margin-left: auto;
+}
+
+/* Flip icon positions for RTL */
+html[dir="rtl"] .gap-2 > svg:first-child,
+body.rtl .gap-2 > svg:first-child {
+  order: 1;
+}
+
+/* Header adjustments for RTL */
+html[dir="rtl"] header .flex.items-center.gap-3,
+body.rtl header .flex.items-center.gap-3 {
+  flex-direction: row-reverse;
+}
+
+/* Sidebar adjustments for RTL */
+html[dir="rtl"] aside,
+body.rtl aside {
+  right: 0;
+  left: auto;
+  border-left: 1px solid;
+  border-right: none;
+}
+
+/* Form inputs and text areas for RTL */
+html[dir="rtl"] input,
+html[dir="rtl"] textarea,
+html[dir="rtl"] select,
+body.rtl input,
+body.rtl textarea,
+body.rtl select {
+  text-align: right;
+}
+
+/* Dropdown menus for RTL */
+html[dir="rtl"] [role="listbox"],
+html[dir="rtl"] [role="menu"],
+body.rtl [role="listbox"],
+body.rtl [role="menu"] {
+  left: 0;
+  right: auto;
+}
+
+/* Preserve LTR for specific content */
+.preserve-ltr {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+/* Numbers should always be LTR */
+html[dir="rtl"] .tabular-nums,
+body.rtl .tabular-nums {
+  direction: ltr;
+  unicode-bidi: embed;
+}
