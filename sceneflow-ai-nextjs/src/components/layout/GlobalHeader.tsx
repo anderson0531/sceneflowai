@@ -8,7 +8,6 @@ import { Button } from '../../components/ui/Button'
 import { AuthModal } from '../../components/auth/AuthModal'
 import { Breadcrumbs } from '../../components/layout/Breadcrumbs'
 import { LanguageSelector } from '../../components/ui/LanguageSelector'
-import { T } from '@/contexts/LanguageContext'
 import { isPublicRoute } from '@/constants/publicRoutes'
 
 declare global {
@@ -73,7 +72,7 @@ export function GlobalHeader() {
                   <div className="w-2.5 h-2.5 bg-white dark:bg-sf-background rounded-sm" />
                 </div>
               </div>
-              <span className="app-name-text font-bold text-lg md:text-xl tracking-tight text-gray-900 dark:text-white flex items-baseline gap-1 leading-none">
+              <span translate="no" className="app-name-text font-bold text-lg md:text-xl tracking-tight text-gray-900 dark:text-white flex items-baseline gap-1 leading-none">
                 <span>SceneFlow</span> <span className="text-sf-primary">AI</span>
               </span>
             </a>
@@ -100,7 +99,7 @@ export function GlobalHeader() {
             >
               <HelpCircle size={20} />
             </button>
-            {/* Language Selector */}
+            {/* Language Selector - for audio/TTS language */}
             <LanguageSelector />
             {/* Settings */}
             <button
@@ -119,14 +118,14 @@ export function GlobalHeader() {
                   className="border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
                   onClick={() => setAuthOpen(true)}
                 >
-                  <T>Sign In</T>
+                  Sign In
                 </Button>
                 <Button
                   size="sm"
                   className="bg-sf-primary hover:bg-sf-accent text-white"
                   onClick={() => setAuthOpen(true)}
                 >
-                  <T>Get Started</T>
+                  Get Started
                 </Button>
               </div>
             )}
@@ -150,7 +149,7 @@ export function GlobalHeader() {
             <div className="w-full px-4 py-3 flex flex-col gap-1">
                 <div className="flex items-center gap-2">
                   <Button variant="outline" className="flex-1 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => setAuthOpen(true)}>
-                    <span className="mr-2 inline-flex items-center"><User size={16} /></span> {isSignedIn ? <T>Switch Account</T> : <T>Sign In</T>}
+                    <span className="mr-2 inline-flex items-center"><User size={16} /></span> {isSignedIn ? 'Switch Account' : 'Sign In'}
                   </Button>
                 </div>
             </div>

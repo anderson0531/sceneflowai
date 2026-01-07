@@ -15,11 +15,6 @@ export function LanguageSelector({ className, compact = false }: LanguageSelecto
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // Debug log on mount
-  useEffect(() => {
-    console.log('🎯🎯🎯 [LanguageSelector] MOUNTED - Current language:', language, '🎯🎯🎯')
-  }, [])
-
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -43,7 +38,6 @@ export function LanguageSelector({ className, compact = false }: LanguageSelecto
   }, [])
 
   const handleSelect = (code: string) => {
-    console.log('🎯🎯🎯 [LanguageSelector] LANGUAGE SELECTED:', code, '(was:', language, ') 🎯🎯🎯')
     setLanguage(code)
     setIsOpen(false)
   }
@@ -59,9 +53,10 @@ export function LanguageSelector({ className, compact = false }: LanguageSelecto
           'hover:bg-gray-100 dark:hover:bg-gray-800/60',
           compact ? 'p-2' : 'px-3 py-2'
         )}
-        aria-label="Select language"
+        aria-label="Select audio language"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
+        title="Audio narration language"
       >
         {isTranslating ? (
           <Loader2 size={20} className="animate-spin" />

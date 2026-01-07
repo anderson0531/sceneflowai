@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '@/constants/languages'
 
 // Extended languages with flags for UI display
@@ -62,9 +62,6 @@ const LanguageContext = createContext<LanguageContextType>({
 })
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  // Immediate log on render - this runs BEFORE any hooks
-  console.log('🌐🌐🌐 [LanguageProvider] COMPONENT RENDERING 🌐🌐🌐')
-  
   const [language, setLanguageState] = useState<string>('en')
   const [isTranslating, setIsTranslating] = useState(false)
   const translationCache = useRef<TranslationCache>({})
@@ -72,12 +69,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   // Load language from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem('sceneflow-language')
-    console.log('🌐🌐🌐 [LanguageProvider] MOUNTED - Stored language:', stored, '🌐🌐🌐')
     if (stored && LANGUAGE_OPTIONS.some(l => l.code === stored)) {
-      console.log('🌐 [LanguageProvider] Setting language from localStorage:', stored)
       setLanguageState(stored)
-    } else {
-      console.log('🌐 [LanguageProvider] Using default language: en')
     }
     
     // Load translation cache from localStorage
@@ -108,13 +101,19 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, [language])
 
   const setLanguage = useCallback((lang: string) => {
-    console.log('[LanguageContext] setLanguage called:', { from: language, to: lang })
     setLanguageState(lang)
     localStorage.setItem('sceneflow-language', lang)
-  }, [language])
+  }, [])
 
-  const languageOption = LANGUAGE_OPTIONS.find(l => l.code === language)
-  const isRTL = RTL_LANGUAGES.includes(language)
+  // Memoize computed values to prevent unnecessary re-renders
+  const languageOption = useMemo(() => 
+    LANGUAGE_OPTIONS.find(l => l.code === language), 
+    [language]
+  )
+  const isRTL = useMemo(() => 
+    RTL_LANGUAGES.includes(language), 
+    [language]
+  )
 
   // Save cache to localStorage periodically
   const saveCacheToStorage = useCallback(() => {
@@ -130,19 +129,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     return `${targetLang}:${text.slice(0, 100)}` // Limit key length
   }
 
-  // Translate single text
+  // Translate single text (used for audio script translation)
   const translateText = useCallback(async (text: string, targetLang?: string): Promise<string> => {
     const target = targetLang || language
     
-    console.log('[LanguageContext] translateText called:', { 
-      text: text?.substring(0, 50), 
-      target, 
-      currentLanguage: language 
-    })
-    
     // Skip if source and target are the same (English)
     if (target === 'en') {
-      console.log('[LanguageContext] Skipping translation - target is English')
       return text
     }
     if (!text?.trim()) return text
@@ -151,13 +143,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const cacheKey = getCacheKey(text, target)
     const cached = translationCache.current[cacheKey]
     if (cached && Date.now() - cached.timestamp < CACHE_EXPIRY) {
-      console.log('[LanguageContext] Using cached translation:', cached.text?.substring(0, 50))
       return cached.text
     }
 
     try {
       setIsTranslating(true)
-      console.log('[LanguageContext] Making API call to /api/translate for:', text?.substring(0, 50))
       const response = await fetch('/api/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -165,13 +155,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (!response.ok) {
-        console.error('[LanguageContext] Translation API failed:', response.status)
         return text
       }
 
       const data = await response.json()
       const translatedText = data.translatedText || text
-      console.log('[LanguageContext] Got translation result:', translatedText?.substring(0, 50))
 
       // Cache the result
       translationCache.current[cacheKey] = {
@@ -181,8 +169,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       saveCacheToStorage()
 
       return translatedText
-    } catch (error) {
-      console.error('[LanguageContext] Translation error:', error)
+    } catch {
       return text
     } finally {
       setIsTranslating(false)
@@ -223,7 +210,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (!response.ok) {
-        console.error('[LanguageContext] Batch translation failed:', response.status)
         return texts
       }
 
@@ -249,26 +235,26 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       saveCacheToStorage()
 
       return results as string[]
-    } catch (error) {
-      console.error('[LanguageContext] Batch translation error:', error)
+    } catch {
       return texts
     } finally {
       setIsTranslating(false)
     }
   }, [language, saveCacheToStorage])
 
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    language,
+    setLanguage,
+    languageOption,
+    isRTL,
+    translateText,
+    translateBatch,
+    isTranslating,
+  }), [language, setLanguage, languageOption, isRTL, translateText, translateBatch, isTranslating])
+
   return (
-    <LanguageContext.Provider
-      value={{
-        language,
-        setLanguage,
-        languageOption,
-        isRTL,
-        translateText,
-        translateBatch,
-        isTranslating,
-      }}
-    >
+    <LanguageContext.Provider value={contextValue}>
       {children}
     </LanguageContext.Provider>
   )
@@ -282,62 +268,6 @@ export function useLanguage() {
   return context
 }
 
-// Hook for translating component text with auto-update
-export function useTranslatedText(text: string): string {
-  const { language, translateText } = useLanguage()
-  const [translated, setTranslated] = useState(text)
-
-  useEffect(() => {
-    console.log('[useTranslatedText] Effect triggered:', { language, text: text?.substring(0, 30) })
-    
-    if (language === 'en') {
-      console.log('[useTranslatedText] Skipping - language is English')
-      setTranslated(text)
-      return
-    }
-
-    console.log('[useTranslatedText] Calling translateText for:', text?.substring(0, 30))
-    translateText(text).then(result => {
-      console.log('[useTranslatedText] Got result:', result?.substring(0, 30))
-      setTranslated(result)
-    })
-  }, [text, language, translateText])
-
-  return translated
-}
-
-// Component for inline translations - usage: <T>Hello World</T>
-interface TProps {
-  children: string
-  as?: keyof JSX.IntrinsicElements
-  className?: string
-}
-
-export function T({ children, as: Component = 'span', className }: TProps) {
-  const translated = useTranslatedText(children)
-  
-  // If no change or same text, render without wrapper to avoid extra DOM nodes
-  if (Component === 'span' && !className && translated === children) {
-    return <>{translated}</>
-  }
-  
-  return <Component className={className}>{translated}</Component>
-}
-
-// Hook for batch translating multiple strings at once
-export function useTranslatedTexts(texts: string[]): string[] {
-  const { language, translateBatch } = useLanguage()
-  const [translated, setTranslated] = useState<string[]>(texts)
-  const textsKey = texts.join('||')
-
-  useEffect(() => {
-    if (language === 'en') {
-      setTranslated(texts)
-      return
-    }
-
-    translateBatch(texts).then(setTranslated)
-  }, [textsKey, language, translateBatch])
-
-  return translated
-}
+// Note: UI translation is handled by browser's built-in translation (e.g., Chrome Translate)
+// The language selector is primarily for audio/TTS language selection
+// Translation functions are kept for translating audio scripts before TTS generation
