@@ -62,6 +62,9 @@ const LanguageContext = createContext<LanguageContextType>({
 })
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  // Immediate log on render - this runs BEFORE any hooks
+  console.log('🌐🌐🌐 [LanguageProvider] COMPONENT RENDERING 🌐🌐🌐')
+  
   const [language, setLanguageState] = useState<string>('en')
   const [isTranslating, setIsTranslating] = useState(false)
   const translationCache = useRef<TranslationCache>({})
@@ -69,12 +72,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   // Load language from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem('sceneflow-language')
-    console.log('[LanguageProvider] Initializing. Stored language:', stored)
+    console.log('🌐🌐🌐 [LanguageProvider] MOUNTED - Stored language:', stored, '🌐🌐🌐')
     if (stored && LANGUAGE_OPTIONS.some(l => l.code === stored)) {
-      console.log('[LanguageProvider] Setting language from localStorage:', stored)
+      console.log('🌐 [LanguageProvider] Setting language from localStorage:', stored)
       setLanguageState(stored)
     } else {
-      console.log('[LanguageProvider] Using default language: en')
+      console.log('🌐 [LanguageProvider] Using default language: en')
     }
     
     // Load translation cache from localStorage
