@@ -83,11 +83,11 @@ OUTPUT FORMAT: Return ONLY the variations, one per line, no numbering, no markdo
     console.log('[Inspiration API] Calling Vertex AI Gemini for variations...')
     const response = await generateText(prompt, { model: 'gemini-2.0-flash' })
     
-    if (!response) {
+    if (!response || !response.text) {
       throw new Error('Vertex AI Gemini returned empty content')
     }
 
-    const variants = parseVariants(response)
+    const variants = parseVariants(response.text)
 
     return NextResponse.json({
       success: true,
@@ -105,6 +105,12 @@ OUTPUT FORMAT: Return ONLY the variations, one per line, no numbering, no markdo
 }
 
 function parseVariants(llmResponse: string): string[] {
+  // Runtime safety check - ensure we have a valid string
+  if (typeof llmResponse !== 'string' || !llmResponse.trim()) {
+    console.warn('[Inspiration API] parseVariants received non-string or empty input')
+    return []
+  }
+  
   return llmResponse
     .split('\n')
     .map(line => line.trim())
@@ -152,14 +158,14 @@ Example: [{"title":"...", "logline":"...", "genre":"...", "tone":"...", "format"
     console.log('[Inspiration API] Calling Vertex AI Gemini for structured concepts...')
     const response = await generateText(prompt, { model: 'gemini-2.0-flash' })
     
-    if (!response) {
+    if (!response || !response.text) {
       throw new Error('Vertex AI Gemini returned empty content')
     }
 
     // Parse the JSON response
     let concepts: ConceptSuggestion[]
     try {
-      concepts = safeParseJsonFromText(response)
+      concepts = safeParseJsonFromText(response.text)
       if (!Array.isArray(concepts)) {
         concepts = [concepts]
       }
