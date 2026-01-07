@@ -103,14 +103,15 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       
       const data = await response.json()
       
-      if (data.success && data.imageUrl) {
-        // Update the variant with the hero image
+      // API returns visuals.heroImage as an object with { id, url, prompt, status, ... }
+      if (data.success && data.visuals?.heroImage?.url) {
+        // Update the variant with the full hero image object
         setTreatmentVariants((prev: any[]) => 
           prev.map((v, idx) => 
-            idx === 0 ? { ...v, heroImage: data.imageUrl } : v
+            idx === 0 ? { ...v, heroImage: data.visuals.heroImage } : v
           )
         )
-        console.log('[StudioPage] Hero image generated successfully')
+        console.log('[StudioPage] Hero image generated successfully:', data.visuals.heroImage.url)
       }
     } catch (error) {
       console.error('[StudioPage] Hero image generation error:', error)

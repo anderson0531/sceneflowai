@@ -54,10 +54,12 @@ async function generateHeroImage(
   })
   
   return {
+    id: `hero-${projectId}-${Date.now()}`,
     url: blob.url,
     prompt,
     generatedAt: new Date().toISOString(),
-    aspectRatio: '16:9'
+    aspectRatio: '16:9',
+    status: 'ready' as const
   }
 }
 
@@ -100,10 +102,12 @@ async function generateCharacterPortrait(
     characterName: character.name,
     role: roleType,
     image: {
+      id: `char-${character.name.replace(/\s+/g, '-')}-${Date.now()}`,
       url: blob.url,
       prompt,
       generatedAt: new Date().toISOString(),
-      aspectRatio: '3:4'
+      aspectRatio: '3:4',
+      status: 'ready' as const
     }
   }
 }
@@ -141,10 +145,12 @@ async function generateActAnchor(
     actNumber,
     title: `Act ${actNumber}`,
     establishingShot: {
+      id: `act${actNumber}-${projectId}-${Date.now()}`,
       url: blob.url,
       prompt,
       generatedAt: new Date().toISOString(),
-      aspectRatio: '21:9'
+      aspectRatio: '21:9',
+      status: 'ready' as const
     },
     description: actContent
   }
