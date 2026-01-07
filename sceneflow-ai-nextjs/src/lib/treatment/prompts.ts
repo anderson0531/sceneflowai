@@ -121,12 +121,12 @@ SCHEMA - GENERATE IN THIS EXACT ORDER:
       "defaultWardrobe": "Primary outfit/attire appropriate to role and setting (e.g., 'Charcoal grey tailored business suit, crisp white dress shirt, dark blue silk tie, polished black oxford shoes')",
       "wardrobeAccessories": "Consistent accessories worn throughout (e.g., 'Silver wristwatch with leather band, rectangular black-framed glasses, simple gold wedding band')",
       "description": "Brief character context for story (role in narrative)",
-      "externalGoal": "What the character wants to achieve externally (e.g., 'Win the championship', 'Save the company', 'Find the treasure')",
-      "internalNeed": "What the character needs emotionally/psychologically (e.g., 'Learn to trust others', 'Overcome fear of failure', 'Accept their past')",
-      "fatalFlaw": "Character weakness that creates obstacles (e.g., 'Stubborn pride', 'Fear of intimacy', 'Reckless impulsivity')",
-      "arcStartingState": "Who the character is at the beginning (e.g., 'Cynical loner who pushes everyone away')",
-      "arcShift": "What catalyzes change (e.g., 'Forced to rely on an unlikely ally')",
-      "arcEndingState": "Who the character becomes (e.g., 'Opens heart to friendship, finds purpose in community')"
+      "externalGoal": "REQUIRED: What they visibly pursue (e.g., 'Win the underground fighting championship to pay off debts')",
+      "internalNeed": "REQUIRED: What they emotionally need (e.g., 'Learn that self-worth isn't defined by past failures')",
+      "fatalFlaw": "REQUIRED: Weakness creating obstacles (e.g., 'Stubborn pride that prevents asking for help')",
+      "arcStartingState": "REQUIRED: Who they are at start (e.g., 'A bitter ex-champion haunted by addiction, pushing everyone away')",
+      "arcShift": "REQUIRED: What forces change (e.g., 'Mentoring a young fighter shows him what he lost')",
+      "arcEndingState": "REQUIRED: Who they become (e.g., 'Finds redemption not in victory but in passing on wisdom')"
     }
   ],
   
@@ -170,14 +170,22 @@ COMPLETE OUTPUT EXAMPLE:
   "beats": [...]
 }
 
-CRITICAL: 
+CRITICAL - CHARACTER ARCS ARE MANDATORY: 
 - Generate 3-5 detailed character_descriptions (protagonist + supporting characters)
 - Each character MUST have complete attributes: subject, ethnicity, keyFeature, hairStyle, hairColor, eyeColor, expression, build
-- Each character MUST have psychological depth: externalGoal, internalNeed, fatalFlaw, and character arc (arcStartingState, arcShift, arcEndingState)
+- **EVERY CHARACTER MUST HAVE PSYCHOLOGICAL DEPTH** - these fields are REQUIRED, not optional:
+  • externalGoal: What they visibly pursue (concrete, tangible objective)
+  • internalNeed: What they emotionally need to learn/heal (deeper psychological truth)
+  • fatalFlaw: Their weakness that creates obstacles (specific character defect)
+  • arcStartingState: Who they are at story start (current state, mindset, belief)
+  • arcShift: The catalyst that forces change (moment of crisis or revelation)
+  • arcEndingState: Who they become by story end (transformed state)
 - Generate 3-5 detailed scene_descriptions (key locations)
 - All details must be SPECIFIC and VISUAL for precise image generation
 - Character attributes must be detailed enough to recreate consistent character images across all scenes
-- Character arcs must show clear transformation aligned with story themes
+- Character arcs must show CLEAR TRANSFORMATION: Starting → Shift → Ending
+- The protagonist's arc should embody the story's central theme
+- Supporting characters should have complementary or contrasting arcs
 - Generate treatment with BOLD storytelling choices and CLEAR reasoning`
 }
 
