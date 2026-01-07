@@ -124,11 +124,11 @@ export default function TreatmentEditorDialog({ open, variant, onClose, onApply 
   const [draft, setDraft] = useState<Partial<Variant> | null>(null)
   const [aiInstr, setAiInstr] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [regenerate, setRegenerate] = useState(false)
   const [appliedMessage, setAppliedMessage] = useState('')
   const dirtyRef = useRef(false)
-  const { markJustApplied } = useGuideStore() as any
+  const { markJustApplied, setTreatmentVariants, updateTitle, updateTreatment } = useGuideStore() as any
 
   // Initialize draft when dialog opens
   useEffect(() => {
@@ -137,7 +137,7 @@ export default function TreatmentEditorDialog({ open, variant, onClose, onApply 
     setAiInstr('')
     setProgress(0)
     setAiLoading(false)
-    setRegenerate(false)
+    setIsGenerating(false)
     setDraft(variant ? { 
       ...variant, 
       content: variant.synopsis || variant.content,
@@ -195,6 +195,83 @@ export default function TreatmentEditorDialog({ open, variant, onClose, onApply 
     handleRefine(instruction)
   }
 
+  // Handle full blueprint generation
+  const handleGenerate = async () => {
+    if (!draft) return
+    
+    setIsGenerating(true)
+    const toastId = toast.loading('Generating new blueprint...', {
+      description: 'This may take up to 30 seconds'
+    })
+    
+    try {
+      // Build the input from current draft fields
+      const input = [
+        draft.title && `Title: ${draft.title}`,
+        draft.logline && `Logline: ${draft.logline}`,
+        draft.genre && `Genre: ${draft.genre}`,
+        draft.tone_description && `Tone: ${draft.tone_description}`,
+        draft.visual_style && `Visual Style: ${draft.visual_style}`,
+        draft.target_audience && `Audience: ${draft.target_audience}`,
+        draft.synopsis && `Synopsis: ${draft.synopsis}`
+      ].filter(Boolean).join('\n')
+      
+      const response = await fetch('/api/ideation/film-treatment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          input,
+          format: draft.duration || 'short_film',
+          filmType: draft.duration || 'short_film',
+          rigor: 'thorough',
+          variants: 1
+        })
+      })
+      
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}))
+        throw new Error(errData.error || 'Failed to generate blueprint')
+      }
+      
+      const data = await response.json()
+      const rawVariants = Array.isArray(data.variants) ? data.variants : (data.data ? [data.data] : [])
+      
+      if (data.success && rawVariants.length > 0) {
+        const newVariant = {
+          id: rawVariants[0].id || `treatment-${Date.now()}`,
+          label: rawVariants[0].label || rawVariants[0].title || 'New Treatment',
+          content: rawVariants[0].synopsis || rawVariants[0].film_treatment || '',
+          ...rawVariants[0]
+        }
+        
+        // Update store with new variant
+        if (setTreatmentVariants) {
+          setTreatmentVariants([newVariant])
+        }
+        if (updateTitle && newVariant.title) {
+          updateTitle(newVariant.title)
+        }
+        if (updateTreatment && newVariant.synopsis) {
+          updateTreatment(newVariant.synopsis)
+        }
+        
+        toast.success('Blueprint generated!', { id: toastId })
+        dirtyRef.current = false
+        onClose()
+      } else {
+        throw new Error('No treatment generated')
+      }
+    } catch (error) {
+      console.error('Generate blueprint error:', error)
+      toast.error('Failed to generate blueprint', { 
+        id: toastId,
+        description: error instanceof Error ? error.message : 'Please try again'
+      })
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
   // Mark as dirty on any change
   const onAnyChange = () => { dirtyRef.current = true }
 
@@ -222,41 +299,24 @@ export default function TreatmentEditorDialog({ open, variant, onClose, onApply 
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [open, draft, variant, regenerate])
+  }, [open, draft, variant])
 
-  // Handle apply/regenerate
+  // Handle apply changes
   const handleApply = async () => {
     if (!draft || !variant) return
 
-    if (regenerate) {
-      // Dispatch event for regeneration with new parameters
-      window.dispatchEvent(new CustomEvent('sf:regenerate-treatment', { 
-        detail: { 
-          filmType: draft.duration,
-          genre: draft.genre,
-          tone: draft.tone_description,
-          visualStyle: draft.visual_style,
-          targetAudience: draft.target_audience,
-          title: draft.title,
-          logline: draft.logline
-        } 
-      }))
-      toast.success('Regenerating blueprint...')
-      onClose()
-    } else {
-      // Apply changes directly
-      onApply(draft)
-      markJustApplied?.(variant.id)
-      setAppliedMessage('Treatment updated')
-      setTimeout(() => setAppliedMessage(''), 1500)
-      dirtyRef.current = false
-      toast.success('Treatment updated', { 
-        action: { 
-          label: 'Undo', 
-          onClick: () => (useGuideStore.getState() as any).undoLastEdit() 
-        } 
-      })
-    }
+    // Apply changes directly
+    onApply(draft)
+    markJustApplied?.(variant.id)
+    setAppliedMessage('Treatment updated')
+    setTimeout(() => setAppliedMessage(''), 1500)
+    dirtyRef.current = false
+    toast.success('Treatment updated', { 
+      action: { 
+        label: 'Undo', 
+        onClick: () => (useGuideStore.getState() as any).undoLastEdit() 
+      } 
+    })
   }
 
   if (!open) return null
@@ -476,13 +536,37 @@ export default function TreatmentEditorDialog({ open, variant, onClose, onApply 
                       <button
                         key={edit.id}
                         onClick={() => handleQuickEdit(edit.instruction)}
-                        disabled={aiLoading}
+                        disabled={aiLoading || isGenerating}
                         className="px-3 py-1.5 text-xs font-medium rounded-full bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 hover:border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {edit.label}
                       </button>
                     ))}
                   </div>
+                </div>
+
+                {/* Generate Blueprint Button */}
+                <div className="pt-4 border-t border-gray-800">
+                  <Button
+                    onClick={handleGenerate}
+                    disabled={isGenerating || aiLoading}
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white shadow-lg py-3"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Generating Blueprint...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Generate New Blueprint
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-xs text-gray-500 text-center mt-2">
+                    Creates a completely new treatment using your edits as a guide
+                  </p>
                 </div>
               </div>
             </TabsContent>
@@ -576,26 +660,6 @@ export default function TreatmentEditorDialog({ open, variant, onClose, onApply 
 
           {/* Footer */}
           <div className="px-6 py-4 border-t border-gray-700 bg-gradient-to-t from-gray-950 via-gray-950 to-gray-950/80 backdrop-blur-sm">
-            {/* Regenerate Toggle */}
-            <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-gray-900/50 border border-gray-800">
-              <input
-                type="checkbox"
-                id="regenerate"
-                checked={regenerate}
-                onChange={e => setRegenerate(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-600 bg-gray-900 text-blue-600 focus:ring-blue-500 focus:ring-offset-0"
-              />
-              <label htmlFor="regenerate" className="flex-1 cursor-pointer">
-                <div className="text-sm font-medium text-white flex items-center gap-2">
-                  <RefreshCw className="w-4 h-4 text-blue-400" />
-                  Regenerate Blueprint
-                </div>
-                <div className="text-xs text-gray-400 mt-0.5">
-                  Generate a completely new treatment with AI using your edits as guidance
-                </div>
-              </label>
-            </div>
-
             <div className="flex items-center justify-between">
               <Button
                 variant="outline"
@@ -617,25 +681,12 @@ export default function TreatmentEditorDialog({ open, variant, onClose, onApply 
                 )}
                 <Button
                   onClick={handleApply}
-                  disabled={aiLoading}
-                  className={`px-6 shadow-lg transition-all hover:scale-105 ${
-                    regenerate 
-                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 shadow-purple-500/20' 
-                      : 'bg-blue-600 hover:bg-blue-500 shadow-blue-500/20'
-                  } text-white`}
+                  disabled={aiLoading || isGenerating}
+                  className="bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 px-6 transition-all hover:scale-105"
                   title="Cmd/Ctrl+Enter"
                 >
-                  {regenerate ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Generate New Blueprint
-                    </>
-                  ) : (
-                    <>
-                      <Check className="w-4 h-4 mr-2" />
-                      Apply Changes
-                    </>
-                  )}
+                  <Check className="w-4 h-4 mr-2" />
+                  Apply Changes
                 </Button>
               </div>
             </div>
