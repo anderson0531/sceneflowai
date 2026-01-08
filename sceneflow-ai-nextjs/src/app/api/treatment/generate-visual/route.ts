@@ -32,33 +32,68 @@ async function generateHeroImage(
   mood: TreatmentMood,
   projectId: string
 ): Promise<GeneratedImage> {
-  // Extract main character details for accurate depiction
+  // Extract character details for accurate depiction
   const characters = (treatment as any).character_descriptions || []
+  
+  // Find protagonist
   const protagonist = characters.find((c: any) => 
     c.role?.toLowerCase()?.includes('protagonist') || 
     c.role?.toLowerCase()?.includes('lead') ||
     c.role?.toLowerCase()?.includes('main')
   ) || characters[0]
   
-  // Build main character appearance string from their physical attributes
-  let mainCharacterAppearance = ''
-  if (protagonist) {
-    const parts = []
-    if (protagonist.ethnicity) parts.push(protagonist.ethnicity)
-    if (protagonist.age) parts.push(`${protagonist.age} year old`)
-    if (protagonist.build) parts.push(protagonist.build)
-    if (protagonist.hairColor && protagonist.hairStyle) {
-      parts.push(`${protagonist.hairColor} ${protagonist.hairStyle} hair`)
+  // Find antagonist
+  const antagonist = characters.find((c: any) => 
+    c.role?.toLowerCase()?.includes('antagonist') || 
+    c.role?.toLowerCase()?.includes('villain')
+  )
+  
+  // Helper function to build character appearance string from physical attributes
+  function buildCharacterAppearance(character: any): string {
+    if (!character) return ''
+    
+    const parts: string[] = []
+    if (character.ethnicity) parts.push(character.ethnicity)
+    if (character.age) parts.push(`${character.age} year old`)
+    if (character.build) parts.push(character.build)
+    if (character.hairColor && character.hairStyle) {
+      parts.push(`${character.hairColor} ${character.hairStyle} hair`)
     }
-    if (protagonist.keyFeature) parts.push(protagonist.keyFeature)
-    if (protagonist.expression) parts.push(protagonist.expression)
-    if (protagonist.defaultWardrobe) parts.push(`wearing ${protagonist.defaultWardrobe}`)
+    if (character.keyFeature) parts.push(character.keyFeature)
+    if (character.expression) parts.push(character.expression)
+    if (character.defaultWardrobe) parts.push(`wearing ${character.defaultWardrobe}`)
     
     if (parts.length > 0) {
-      mainCharacterAppearance = parts.join(', ')
-    } else if (protagonist.description) {
-      mainCharacterAppearance = protagonist.description
+      // Include character name at the start for context
+      const namePrefix = character.name ? `${character.name} - ` : ''
+      return namePrefix + parts.join(', ')
+    } else if (character.description) {
+      const namePrefix = character.name ? `${character.name} - ` : ''
+      return namePrefix + character.description
     }
+    return character.name || ''
+  }
+  
+  const mainCharacterAppearance = buildCharacterAppearance(protagonist)
+  const antagonistAppearance = buildCharacterAppearance(antagonist)
+  
+  // Extract themes - handle both array and string formats
+  let themes: string[] = []
+  if (treatment.themes) {
+    if (Array.isArray(treatment.themes)) {
+      themes = treatment.themes
+    } else if (typeof treatment.themes === 'string') {
+      themes = treatment.themes.split(',').map(t => t.trim())
+    }
+  }
+  
+  // Build conflict dynamic from character roles/relationships
+  let conflictDynamic = ''
+  if (protagonist && antagonist) {
+    // Try to infer relationship from character data
+    const protRole = protagonist.role || 'protagonist'
+    const antRole = antagonist.role || 'antagonist'
+    conflictDynamic = `${protagonist.name || 'protagonist'} (${protRole}) vs ${antagonist.name || 'antagonist'} (${antRole})`
   }
   
   const prompt = buildPromptWithMood(
@@ -69,7 +104,12 @@ async function generateHeroImage(
       setting: treatment.setting || '',
       synopsis: treatment.synopsis || treatment.logline || '',
       protagonist: treatment.protagonist || protagonist?.name || '',
-      mainCharacterAppearance
+      mainCharacterAppearance,
+      antagonist: treatment.antagonist || antagonist?.name || '',
+      antagonistAppearance,
+      themes,
+      visualStyle: treatment.visual_style || '',
+      conflictDynamic
     }),
     mood
   )

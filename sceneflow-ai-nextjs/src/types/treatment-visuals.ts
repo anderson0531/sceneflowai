@@ -134,6 +134,12 @@ export interface TreatmentPromptTemplates {
     synopsis?: string
     protagonist?: string
     mainCharacterAppearance?: string
+    // Enhanced params for accurate character/story representation
+    antagonist?: string
+    antagonistAppearance?: string
+    themes?: string[]
+    visualStyle?: string
+    conflictDynamic?: string  // e.g., "father-son ideological battle"
   }) => string
   
   characterPortrait: (params: {
@@ -169,23 +175,65 @@ export interface TreatmentPromptTemplates {
  * Default prompt templates
  */
 export const DEFAULT_PROMPT_TEMPLATES: TreatmentPromptTemplates = {
-  heroImage: ({ title, genre, mood, setting, synopsis, protagonist, mainCharacterAppearance }) => {
-    // Build a story-accurate prompt with character details
-    const characterClause = mainCharacterAppearance 
-      ? `featuring ${mainCharacterAppearance}, ` 
-      : '';
-    const protagonistClause = protagonist && !mainCharacterAppearance
-      ? `depicting ${protagonist}, `
-      : '';
-    const synopsisClause = synopsis 
-      ? `Story: ${synopsis.slice(0, 150)}${synopsis.length > 150 ? '...' : ''}. `
-      : '';
+  heroImage: ({ title, genre, mood, setting, synopsis, protagonist, mainCharacterAppearance, antagonist, antagonistAppearance, themes, visualStyle, conflictDynamic }) => {
+    // Build comprehensive story-accurate prompt with multiple characters
+    const parts: string[] = []
     
-    return `Cinematic movie poster composition for "${title}". ${genre} atmosphere, ${mood} lighting. ` +
-      `${synopsisClause}` +
-      `${characterClause}${protagonistClause}` +
-      `${setting ? `Setting: ${setting}. ` : ''}` +
-      `Dramatic composition, professional film poster style, no text, high quality, 16:9 aspect ratio`;
+    // Title and genre foundation
+    parts.push(`Cinematic movie poster composition for "${title}".`)
+    parts.push(`${genre} atmosphere, ${mood} lighting.`)
+    
+    // Visual style if specified
+    if (visualStyle) {
+      parts.push(`Visual style: ${visualStyle}.`)
+    }
+    
+    // Story synopsis - use more characters for better context
+    if (synopsis) {
+      const synopsisText = synopsis.slice(0, 300)
+      parts.push(`Story: ${synopsisText}${synopsis.length > 300 ? '...' : ''}.`)
+    }
+    
+    // Main characters section
+    const characterParts: string[] = []
+    
+    // Protagonist with full physical description
+    if (mainCharacterAppearance) {
+      characterParts.push(`PROTAGONIST: ${mainCharacterAppearance}`)
+    } else if (protagonist) {
+      characterParts.push(`PROTAGONIST: ${protagonist}`)
+    }
+    
+    // Antagonist with full physical description
+    if (antagonistAppearance) {
+      characterParts.push(`ANTAGONIST: ${antagonistAppearance}`)
+    } else if (antagonist) {
+      characterParts.push(`ANTAGONIST: ${antagonist}`)
+    }
+    
+    if (characterParts.length > 0) {
+      parts.push(`Main characters: ${characterParts.join('; ')}.`)
+    }
+    
+    // Conflict/relationship dynamic
+    if (conflictDynamic) {
+      parts.push(`Central conflict: ${conflictDynamic}.`)
+    }
+    
+    // Themes for symbolic imagery
+    if (themes && themes.length > 0) {
+      parts.push(`Themes: ${themes.slice(0, 4).join(', ')}.`)
+    }
+    
+    // Setting
+    if (setting) {
+      parts.push(`Setting: ${setting}.`)
+    }
+    
+    // Technical quality requirements
+    parts.push(`Dramatic composition showing character relationship/tension, professional film poster style, no text, high quality, 16:9 aspect ratio.`)
+    
+    return parts.join(' ')
   },
   
   characterPortrait: ({ name, description, role, ethnicity, age }) => {
