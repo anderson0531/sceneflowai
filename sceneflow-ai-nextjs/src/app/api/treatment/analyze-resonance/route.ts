@@ -146,7 +146,8 @@ function performHeuristicAnalysis(
       title: 'Missing Protagonist Definition',
       insight: 'Your treatment lacks a clearly defined protagonist. Audiences connect through character.',
       actionable: true,
-      fixSection: 'story'
+      fixSection: 'story',
+      fixSuggestion: 'Add a protagonist definition: "A [adjective] [occupation], [NAME], who struggles with [internal conflict] while pursuing [external goal]."'
     })
   }
   
@@ -158,7 +159,21 @@ function performHeuristicAnalysis(
       title: 'Incomplete Beat Structure',
       insight: 'Your treatment needs more defined story beats for clear pacing.',
       actionable: true,
-      fixSection: 'beats'
+      fixSection: 'beats',
+      fixSuggestion: 'Add key story beats: Inciting Incident (what disrupts the ordinary world), Midpoint Turn (major revelation or reversal), All Is Lost (lowest point), and Climax (final confrontation).'
+    })
+  }
+  
+  if (!treatment.antagonist) {
+    insights.push({
+      id: 'missing-antagonist',
+      category: 'character-arc',
+      status: 'weakness',
+      title: 'Missing Antagonist',
+      insight: 'Define the opposing force to create clear conflict and stakes.',
+      actionable: true,
+      fixSection: 'story',
+      fixSuggestion: 'Add an antagonist: "Opposing [protagonist] is [NAME], a [description] whose [motivation] creates the central conflict."'
     })
   }
   
@@ -211,7 +226,7 @@ async function analyzeWithGemini(
   
   const result = await generateText(prompt, {
     model: 'gemini-2.5-flash',
-    temperature: 0.3,
+    temperature: 0, // Use 0 for deterministic, consistent scoring
     maxOutputTokens: 8192,
     responseMimeType: 'application/json'
   })
@@ -272,18 +287,29 @@ async function analyzeWithGemini(
     analysisDate: new Date().toISOString()
   }
   
-  // Transform insights
-  const insights: ResonanceInsight[] = (parsed.insights || []).map((i: any, idx: number) => ({
-    id: `insight-${idx}`,
-    category: mapCategory(i.category),
-    status: i.status === 'strength' ? 'strength' : i.status === 'neutral' ? 'neutral' : 'weakness',
-    title: i.title || 'Insight',
-    insight: i.insight || i.description || '',
-    treatmentSection: i.treatment_section,
-    actionable: Boolean(i.actionable),
-    fixSuggestion: i.fix_suggestion,
-    fixSection: mapFixSection(i.fix_section)
-  }))
+  // Transform insights - force actionable and fixSuggestion for all weaknesses
+  const insights: ResonanceInsight[] = (parsed.insights || []).map((i: any, idx: number) => {
+    const isWeakness = i.status !== 'strength' && i.status !== 'neutral'
+    const category = mapCategory(i.category)
+    
+    // Determine appropriate fix section based on category if not provided
+    const inferredFixSection = !i.fix_section ? inferFixSectionFromCategory(category) : mapFixSection(i.fix_section)
+    
+    return {
+      id: `insight-${idx}`,
+      category,
+      status: i.status === 'strength' ? 'strength' : i.status === 'neutral' ? 'neutral' : 'weakness',
+      title: i.title || 'Insight',
+      insight: i.insight || i.description || '',
+      treatmentSection: i.treatment_section,
+      // Force actionable=true for all weaknesses
+      actionable: isWeakness ? true : Boolean(i.actionable),
+      // Provide default fix suggestion if weakness is missing one
+      fixSuggestion: i.fix_suggestion || (isWeakness ? generateDefaultFixSuggestion(i.title, category) : undefined),
+      // Ensure fix section is set for weaknesses
+      fixSection: isWeakness ? (inferredFixSection || 'story') : inferredFixSection
+    }
+  })
   
   // Transform recommendations
   const recommendations: OptimizationRecommendation[] = (parsed.recommendations || []).map((r: any, idx: number) => ({
@@ -387,9 +413,35 @@ ${getGenreGuidelines(intent.primaryGenre)}
 DEMOGRAPHIC RESONANCE for ${demoLabel}:
 ${getDemographicGuidelines(intent.targetDemographic)}
 
-Provide at least 3 insights (mix of strengths and weaknesses) and 2 recommendations.
-Be specific and actionable. Reference actual content from the treatment.
-For weaknesses, always provide a fix_suggestion with specific text changes.`
+SCORING RUBRIC (apply consistently):
+
+Greenlight Score (overall market readiness):
+- 90-100: MARKET READY - All elements strong, ready for production. Clear protagonist, antagonist, 3-act structure, compelling logline, strong genre fit.
+- 75-89: STRONG POTENTIAL - Minor refinements needed. Solid foundation with 1-2 areas to improve.
+- 60-74: PROMISING - Good concept but execution needs work. Missing some key elements.
+- 40-59: NEEDS DEVELOPMENT - Core issues to address. Multiple weak areas.
+- 0-39: NOT READY - Fundamental problems with concept or execution.
+
+Individual Axis Scoring:
+- 90-100: Exceptional - Best-in-class for this category
+- 70-89: Strong - Meets or exceeds expectations
+- 50-69: Adequate - Functional but room for improvement
+- 30-49: Weak - Notable deficiencies
+- 0-29: Critical - Major problems
+
+CALIBRATION EXAMPLES:
+- Treatment with clear protagonist, antagonist, 3-act structure, compelling logline: 80-90
+- Treatment with good logline but missing character depth: 60-70
+- Treatment with just title and vague synopsis: 30-40
+
+CRITICAL RULES FOR INSIGHTS:
+1. Every insight with status="weakness" MUST have actionable=true
+2. Every weakness MUST have fix_suggestion with SPECIFIC TEXT to add or replace (not vague advice)
+3. Every weakness MUST have fix_section set to the appropriate section
+4. fix_suggestion should be ready-to-use text, e.g., "A battle-worn detective, Marcus Cole, haunted by his partner's unsolved murder"
+5. Provide at least 3 insights (mix of strengths and weaknesses) and 2 recommendations
+
+Be specific and actionable. Reference actual content from the treatment.`
 }
 
 function getGenreGuidelines(genre: string): string {
@@ -454,6 +506,72 @@ function mapFixSection(section: string): ResonanceInsight['fixSection'] | undefi
     'characters': 'characters'
   }
   return map[section?.toLowerCase()]
+}
+
+/**
+ * Infer the appropriate fix section based on insight category
+ */
+function inferFixSectionFromCategory(category: ResonanceInsight['category']): ResonanceInsight['fixSection'] {
+  const map: Record<ResonanceInsight['category'], ResonanceInsight['fixSection']> = {
+    'genre-alignment': 'core',
+    'audience-demographics': 'core',
+    'tone-consistency': 'tone',
+    'character-arc': 'characters',
+    'structural-beats': 'beats',
+    'market-positioning': 'story'
+  }
+  return map[category] || 'story'
+}
+
+/**
+ * Generate a default fix suggestion for weaknesses that are missing one
+ */
+function generateDefaultFixSuggestion(title: string, category: ResonanceInsight['category']): string {
+  const titleLower = (title || '').toLowerCase()
+  
+  // Character-related issues
+  if (titleLower.includes('protagonist') || titleLower.includes('character')) {
+    return 'Add a clear protagonist definition: "A [adjective] [occupation], [NAME], who struggles with [internal conflict] while pursuing [external goal]."'
+  }
+  if (titleLower.includes('antagonist')) {
+    return 'Define the antagonist: "Opposing [protagonist] is [NAME], a [description] whose [motivation] drives them to [specific actions]."'
+  }
+  
+  // Structure-related issues
+  if (titleLower.includes('beat') || titleLower.includes('structure') || titleLower.includes('pacing')) {
+    return 'Add clearer story beats: Define the Inciting Incident, Midpoint Turn, All Is Lost moment, and Climax with specific dramatic turning points.'
+  }
+  
+  // Tone-related issues
+  if (titleLower.includes('tone') || titleLower.includes('mood')) {
+    return 'Clarify the tone by adding specific visual and emotional descriptors. Reference comparable films to establish the intended atmosphere.'
+  }
+  
+  // Genre-related issues
+  if (titleLower.includes('genre') || titleLower.includes('convention')) {
+    return 'Strengthen genre elements by including essential conventions: for thrillers add stakes/ticking clock, for drama add emotional transformation arc.'
+  }
+  
+  // Logline issues
+  if (titleLower.includes('logline') || titleLower.includes('concept')) {
+    return 'Strengthen the logline: "When [protagonist] faces [inciting incident], they must [action] or else [stakes]."'
+  }
+  
+  // Default based on category
+  switch (category) {
+    case 'character-arc':
+      return 'Deepen character development with specific emotional arcs, internal conflicts, and transformational moments.'
+    case 'structural-beats':
+      return 'Add or clarify story beats to improve narrative pacing and dramatic tension.'
+    case 'tone-consistency':
+      return 'Ensure consistent tone throughout by specifying visual style, mood, and comparable works.'
+    case 'genre-alignment':
+      return 'Reinforce genre conventions to meet audience expectations for this category.'
+    case 'audience-demographics':
+      return 'Adjust content to better resonate with the target demographic\'s values and interests.'
+    default:
+      return 'Review and enhance this section to strengthen market positioning and audience appeal.'
+  }
 }
 
 function calculateWeightedScore(axes: ResonanceAxis[]): number {

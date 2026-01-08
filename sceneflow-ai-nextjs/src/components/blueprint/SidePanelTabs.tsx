@@ -20,6 +20,7 @@ interface SidePanelTabsProps {
 export function SidePanelTabs({ onInsert, onClose, sessionId, shareUrl, onShare, isSharing }: SidePanelTabsProps) {
   const [activeTab, setActiveTab] = useState<'resonance' | 'ideation' | 'collaboration'>('resonance')
   const { guide } = useGuideStore()
+  const { updateTreatmentVariant } = useGuideStore() as any
   const activeVariantId = (guide as any)?.selectedTreatmentId || ((guide as any)?.treatmentVariants?.[0]?.id)
   
   // Get the current treatment variant for resonance analysis
@@ -27,6 +28,14 @@ export function SidePanelTabs({ onInsert, onClose, sessionId, shareUrl, onShare,
     const variants = (guide as any)?.treatmentVariants || []
     return variants.find((v: any) => v.id === activeVariantId) || variants[0] || null
   }, [guide, activeVariantId])
+  
+  // Handle treatment updates from resonance fixes
+  const handleTreatmentUpdate = React.useCallback((updatedTreatment: any) => {
+    if (updatedTreatment?.id && updateTreatmentVariant) {
+      updateTreatmentVariant(updatedTreatment.id, updatedTreatment)
+      console.log('[SidePanelTabs] Treatment updated from resonance fix:', updatedTreatment.id)
+    }
+  }, [updateTreatmentVariant])
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 border-l border-gray-800">
@@ -84,7 +93,10 @@ export function SidePanelTabs({ onInsert, onClose, sessionId, shareUrl, onShare,
       {/* Content */}
       <div className="flex-1 overflow-hidden">
         {activeTab === 'resonance' ? (
-          <AudienceResonancePanel treatment={currentTreatment} />
+          <AudienceResonancePanel 
+            treatment={currentTreatment} 
+            onTreatmentUpdate={handleTreatmentUpdate}
+          />
         ) : activeTab === 'ideation' ? (
           <IdeationPanel onInsert={onInsert} hideHeader />
         ) : (

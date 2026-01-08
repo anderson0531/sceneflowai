@@ -33,7 +33,8 @@ import {
 
 interface AudienceResonancePanelProps {
   treatment?: any
-  onFixApplied?: (insightId: string, section: string) => void
+  onFixApplied?: (insightId: string, section: string, updatedTreatment?: any) => void
+  onTreatmentUpdate?: (updatedTreatment: any) => void
 }
 
 /**
@@ -42,7 +43,11 @@ interface AudienceResonancePanelProps {
  * Strategic advisor that analyzes film treatments against target market,
  * genre conventions, and commercial viability.
  */
-export function AudienceResonancePanel({ treatment, onFixApplied }: AudienceResonancePanelProps) {
+export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied, onTreatmentUpdate }: AudienceResonancePanelProps) {
+  // Local treatment state - allows updates from fixes
+  const [localTreatment, setLocalTreatment] = useState<any>(treatmentProp)
+  const treatment = localTreatment || treatmentProp
+  
   // State
   const [intent, setIntent] = useState<AudienceIntent>(DEFAULT_INTENT)
   const [analysis, setAnalysis] = useState<AudienceResonanceAnalysis | null>(null)
@@ -50,6 +55,16 @@ export function AudienceResonancePanel({ treatment, onFixApplied }: AudienceReso
   const [error, setError] = useState<string | null>(null)
   const [expandedInsights, setExpandedInsights] = useState<string[]>([])
   const [applyingFix, setApplyingFix] = useState<string | null>(null)
+  const [previousScore, setPreviousScore] = useState<number | null>(null)
+  const [scoreDelta, setScoreDelta] = useState<number | null>(null)
+  const [appliedFixes, setAppliedFixes] = useState<string[]>([])
+  
+  // Sync with prop changes
+  useEffect(() => {
+    if (treatmentProp && treatmentProp !== localTreatment) {
+      setLocalTreatment(treatmentProp)
+    }
+  }, [treatmentProp])
   
   // Auto-detect intent from treatment
   useEffect(() => {
@@ -95,11 +110,22 @@ export function AudienceResonancePanel({ treatment, onFixApplied }: AudienceReso
       const data = await response.json()
       
       if (data.success && data.analysis) {
+        // Calculate score delta if we have a previous score
+        const newScore = data.analysis.greenlightScore?.score || 0
+        if (previousScore !== null && newScore !== previousScore) {
+          setScoreDelta(newScore - previousScore)
+          // Clear delta after 5 seconds
+          setTimeout(() => setScoreDelta(null), 5000)
+        }
+        setPreviousScore(newScore)
+        
         setAnalysis(data.analysis)
-        // Auto-expand first weakness
-        const firstWeakness = data.analysis.insights.find((i: ResonanceInsight) => i.status === 'weakness')
-        if (firstWeakness) {
-          setExpandedInsights([firstWeakness.id])
+        // Auto-expand first weakness that hasn't been fixed yet
+        const firstUnfixedWeakness = data.analysis.insights.find(
+          (i: ResonanceInsight) => i.status === 'weakness' && !appliedFixes.includes(i.id)
+        )
+        if (firstUnfixedWeakness) {
+          setExpandedInsights([firstUnfixedWeakness.id])
         }
       } else {
         setError(data.error || 'Analysis failed')
@@ -109,13 +135,14 @@ export function AudienceResonancePanel({ treatment, onFixApplied }: AudienceReso
     } finally {
       setIsAnalyzing(false)
     }
-  }, [treatment, intent])
+  }, [treatment, intent, previousScore, appliedFixes])
   
   // Apply fix suggestion
   const applyFix = useCallback(async (insight: ResonanceInsight) => {
     if (!insight.fixSuggestion || !insight.fixSection) return
     
     setApplyingFix(insight.id)
+    setError(null)
     
     try {
       // Call the refine API with the fix suggestion
@@ -131,17 +158,30 @@ export function AudienceResonancePanel({ treatment, onFixApplied }: AudienceReso
       
       const data = await response.json()
       
-      if (data.success) {
-        onFixApplied?.(insight.id, insight.fixSection)
-        // Re-analyze after fix
-        setTimeout(() => runAnalysis(true), 500)
+      if (data.success && data.draft) {
+        // Merge the draft into the local treatment
+        const updatedTreatment = { ...treatment, ...data.draft, updatedAt: Date.now() }
+        setLocalTreatment(updatedTreatment)
+        
+        // Track this fix as applied
+        setAppliedFixes(prev => [...prev, insight.id])
+        
+        // Notify parent component
+        onFixApplied?.(insight.id, insight.fixSection, updatedTreatment)
+        onTreatmentUpdate?.(updatedTreatment)
+        
+        // Re-analyze with FULL analysis (not quick) to get accurate new score
+        setTimeout(() => runAnalysis(false), 500)
+      } else {
+        setError(data.message || 'Failed to apply fix')
       }
     } catch (err) {
       console.error('Failed to apply fix:', err)
+      setError('Failed to apply fix. Please try again.')
     } finally {
       setApplyingFix(null)
     }
-  }, [treatment, onFixApplied, runAnalysis])
+  }, [treatment, onFixApplied, onTreatmentUpdate, runAnalysis])
   
   // Toggle insight expansion
   const toggleInsight = (id: string) => {
@@ -265,14 +305,40 @@ export function AudienceResonancePanel({ treatment, onFixApplied }: AudienceReso
               exit={{ opacity: 0, y: -20 }}
               className="p-4 space-y-6"
             >
-              {/* Greenlight Score */}
-              <div className="flex flex-col items-center">
+              {/* Greenlight Score with Delta Indicator */}
+              <div className="flex flex-col items-center relative">
                 <GreenlightScore
                   score={analysis.greenlightScore.score}
                   confidence={analysis.greenlightScore.confidence}
                   size="md"
                   genre={GENRE_OPTIONS.find(g => g.value === intent.primaryGenre)?.label}
                 />
+                
+                {/* Score Delta Indicator */}
+                <AnimatePresence>
+                  {scoreDelta !== null && scoreDelta !== 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.8 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.8 }}
+                      className={`absolute -right-2 top-0 px-2 py-1 rounded-full text-xs font-bold ${
+                        scoreDelta > 0 
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                          : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                      }`}
+                    >
+                      {scoreDelta > 0 ? '+' : ''}{scoreDelta} pts
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                
+                {/* Applied Fixes Count */}
+                {appliedFixes.length > 0 && (
+                  <div className="mt-2 text-xs text-cyan-400 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    {appliedFixes.length} fix{appliedFixes.length > 1 ? 'es' : ''} applied
+                  </div>
+                )}
               </div>
               
               {/* Radar Chart */}
