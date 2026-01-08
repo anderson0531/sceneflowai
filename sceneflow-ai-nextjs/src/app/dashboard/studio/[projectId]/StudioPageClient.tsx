@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/Input";
-import { DownloadIcon, Edit, ChevronUp, Settings, FileText, BarChart3, ChevronRight, Check, HelpCircle, Sparkles, Film, Lightbulb, PanelRight, PanelRightClose } from "lucide-react";
+import { DownloadIcon, Edit, ChevronUp, Settings, FileText, BarChart3, ChevronRight, Check, HelpCircle, Sparkles, Film, Lightbulb, PanelRight, PanelRightClose, RefreshCw, Wand2 } from "lucide-react";
 import { useGuideStore } from "@/store/useGuideStore";
 import { useStore } from '@/store/useStore'
 import { useCue } from "@/store/useCueStore";
@@ -13,6 +13,7 @@ import ProjectIdeaTab from "@/components/studio/ProjectIdeaTab";
 import dynamic from 'next/dynamic';
 import { cn } from "@/lib/utils";
 import { BlueprintComposer } from '@/components/blueprint/BlueprintComposer'
+import { BlueprintReimaginDialog } from '@/components/blueprint/BlueprintReimaginDialog'
 import { TreatmentHeroImage } from '@/components/treatment/TreatmentHeroImage'
 import { SidePanelTabs } from '@/components/blueprint/SidePanelTabs'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
@@ -35,11 +36,19 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const [showStructureHelp, setShowStructureHelp] = useState(false);
   const loadedProjectRef = useRef<string | null>(null);
   
-  // Inspiration panel state with localStorage persistence
-  const [showInspirationPanel, setShowInspirationPanel] = useState(() => {
+  // Ideation panel state with localStorage persistence (migrated from inspiration-panel)
+  const [showIdeationPanel, setShowIdeationPanel] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('blueprint-inspiration-panel')
-      return saved !== null ? saved === 'true' : true // Default to open
+      // Migration: check for old key first, then new key
+      const oldKey = localStorage.getItem('blueprint-inspiration-panel')
+      const newKey = localStorage.getItem('blueprint-ideation-panel')
+      if (oldKey !== null && newKey === null) {
+        // Migrate old preference to new key
+        localStorage.setItem('blueprint-ideation-panel', oldKey)
+        localStorage.removeItem('blueprint-inspiration-panel')
+        return oldKey === 'true'
+      }
+      return newKey !== null ? newKey === 'true' : true // Default to open
     }
     return true
   })
@@ -47,9 +56,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   // Persist panel state to localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('blueprint-inspiration-panel', String(showInspirationPanel))
+      localStorage.setItem('blueprint-ideation-panel', String(showIdeationPanel))
     }
-  }, [showInspirationPanel])
+  }, [showIdeationPanel])
   
   // Callback for inserting inspiration text into BlueprintComposer
   const insertTextRef = useRef<((text: string) => void) | null>(null)
@@ -79,6 +88,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   
   // Composer visibility - collapsed after generation when variants exist
   const [showComposer, setShowComposer] = useState(true)
+  
+  // Reimagine dialog state for initial generation
+  const [showReimaginDialog, setShowReimaginDialog] = useState(false)
   
   // Collaboration state
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -511,7 +523,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       
       <PanelGroup direction="horizontal" className="min-h-screen">
         {/* Main Content Panel */}
-        <Panel defaultSize={showInspirationPanel ? 75 : 100} minSize={50}>
+        <Panel defaultSize={showIdeationPanel ? 75 : 100} minSize={50}>
           <div className="h-full p-4 lg:p-6 max-w-6xl mx-auto">
             {/* Vision-Style Premium Container */}
             <div className="relative rounded-3xl border border-slate-700/60 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900/60 overflow-hidden shadow-[0_25px_80px_rgba(8,8,20,0.55)]">
@@ -537,15 +549,15 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                   </div>
                   <div className="flex items-center gap-2">
                     <Button 
-                      onClick={() => setShowInspirationPanel(!showInspirationPanel)} 
+                      onClick={() => setShowIdeationPanel(!showIdeationPanel)} 
                       variant="outline" 
                       className={cn(
                         "text-gray-300 hover:text-white border-gray-700 p-2",
-                        showInspirationPanel && "bg-blue-500/10 border-blue-500/30 text-blue-300"
+                        showIdeationPanel && "bg-blue-500/10 border-blue-500/30 text-blue-300"
                       )}
-                      title={showInspirationPanel ? "Hide Inspiration Panel" : "Show Inspiration Panel"}
+                      title={showIdeationPanel ? "Hide Ideation Panel" : "Show Ideation Panel"}
                     >
-                      {showInspirationPanel ? <PanelRightClose className="w-4 h-4" /> : <PanelRight className="w-4 h-4" />}
+                      {showIdeationPanel ? <PanelRightClose className="w-4 h-4" /> : <PanelRight className="w-4 h-4" />}
                     </Button>
                   </div>
                 </div>
@@ -596,6 +608,29 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                   )}
                 </div>
 
+                {/* Empty Blueprint State - Show prominent CTA when no Blueprint exists */}
+                {(!guide.treatmentVariants || guide.treatmentVariants.length === 0) && !isGen && (
+                  <div className="rounded-2xl border-2 border-dashed border-cyan-500/30 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 p-8 text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center border border-cyan-500/30">
+                      <Wand2 className="w-8 h-8 text-cyan-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-white mb-2">Create Your Blueprint</h3>
+                    <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
+                      Generate a professional film treatment with AI-powered story structure, characters, and visual direction.
+                    </p>
+                    <Button
+                      onClick={() => setShowReimaginDialog(true)}
+                      className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white px-6 py-3 text-base font-medium"
+                    >
+                      <Sparkles className="w-5 h-5 mr-2" />
+                      Generate Blueprint
+                    </Button>
+                    <p className="text-xs text-gray-500 mt-3">
+                      Or use the composer above for quick generation
+                    </p>
+                  </div>
+                )}
+
                 {/* Treatment Card */}
                 <TreatmentCard />
               </div>
@@ -604,15 +639,15 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         </Panel>
         
         {/* Resize Handle */}
-        {showInspirationPanel && (
+        {showIdeationPanel && (
           <>
             <PanelResizeHandle className="w-1.5 bg-gray-800/50 hover:bg-blue-500/50 transition-colors cursor-col-resize" />
             
-            {/* Side Panel with Inspiration & Collaboration Tabs */}
+            {/* Side Panel with Ideation & Collaboration Tabs */}
             <Panel defaultSize={25} minSize={20} maxSize={40}>
               <SidePanelTabs 
                 onInsert={handleInsertInspiration}
-                onClose={() => setShowInspirationPanel(false)}
+                onClose={() => setShowIdeationPanel(false)}
                 sessionId={sessionId}
                 shareUrl={shareUrl}
                 onShare={handleShare}
@@ -662,6 +697,18 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           </div>
         </div>
       )}
+      
+      {/* Blueprint Reimagine Dialog for initial generation */}
+      <BlueprintReimaginDialog
+        open={showReimaginDialog}
+        onClose={() => setShowReimaginDialog(false)}
+        existingVariant={null}
+        onGenerate={async (input, opts) => {
+          setShowReimaginDialog(false)
+          // Use the existing handleGenerateBlueprint logic
+          await handleGenerateBlueprint(input)
+        }}
+      />
     </div>
   );
 }

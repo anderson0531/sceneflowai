@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { Lightbulb, Users, X, Copy, Check, Link2 } from 'lucide-react'
-import { InspirationPanel } from './InspirationPanel'
+import { IdeationPanel } from './IdeationPanel'
 import { cn } from '@/lib/utils'
 import { useGuideStore } from '@/store/useGuideStore'
 import ChatWindow from '../collab/ChatWindow'
@@ -17,7 +17,7 @@ interface SidePanelTabsProps {
 }
 
 export function SidePanelTabs({ onInsert, onClose, sessionId, shareUrl, onShare, isSharing }: SidePanelTabsProps) {
-  const [activeTab, setActiveTab] = useState<'inspiration' | 'collaboration'>('inspiration')
+  const [activeTab, setActiveTab] = useState<'ideation' | 'collaboration'>('ideation')
   const { guide } = useGuideStore()
   const activeVariantId = (guide as any)?.selectedTreatmentId || ((guide as any)?.treatmentVariants?.[0]?.id)
 
@@ -27,16 +27,16 @@ export function SidePanelTabs({ onInsert, onClose, sessionId, shareUrl, onShare,
       <div className="flex items-center justify-between px-3 py-2 border-b border-gray-800/60 bg-gray-900/50">
         <div className="flex items-center gap-1">
           <button
-            onClick={() => setActiveTab('inspiration')}
+            onClick={() => setActiveTab('ideation')}
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
-              activeTab === 'inspiration'
+              activeTab === 'ideation'
                 ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
                 : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
             )}
           >
             <Lightbulb size={14} />
-            <span>Inspiration</span>
+            <span>Ideation</span>
           </button>
           <button
             onClick={() => setActiveTab('collaboration')}
@@ -64,8 +64,8 @@ export function SidePanelTabs({ onInsert, onClose, sessionId, shareUrl, onShare,
 
       {/* Content */}
       <div className="flex-1 overflow-hidden">
-        {activeTab === 'inspiration' ? (
-          <InspirationPanel onInsert={onInsert} hideHeader />
+        {activeTab === 'ideation' ? (
+          <IdeationPanel onInsert={onInsert} hideHeader />
         ) : (
           <CollaborationContent 
             sessionId={sessionId}

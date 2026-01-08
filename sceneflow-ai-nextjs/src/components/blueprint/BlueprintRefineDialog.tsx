@@ -479,7 +479,23 @@ export function BlueprintRefineDialog({
   
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden bg-slate-900 border-slate-700">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden bg-slate-900 border-slate-700 relative">
+        {/* Freeze overlay during AI refinement */}
+        {isRefining && (
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
+            <div className="bg-slate-900 border border-cyan-500/30 rounded-xl p-8 shadow-2xl flex flex-col items-center max-w-sm text-center">
+              <Loader2 className="w-12 h-12 animate-spin text-cyan-400 mb-4" />
+              <h3 className="text-lg font-semibold text-white mb-2">Refining {isRefining.charAt(0).toUpperCase() + isRefining.slice(1)}</h3>
+              <p className="text-sm text-gray-400">AI is enhancing your Blueprint section...</p>
+              <div className="flex gap-1 mt-3">
+                <span className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            </div>
+          </div>
+        )}
+        
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <PencilLine className="w-5 h-5 text-cyan-400" />

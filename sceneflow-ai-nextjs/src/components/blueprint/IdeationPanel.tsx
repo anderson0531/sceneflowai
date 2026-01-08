@@ -9,7 +9,7 @@ interface Variant {
   pinned?: boolean
 }
 
-interface InspirationPanelProps {
+interface IdeationPanelProps {
   onInsert: (text: string) => void
   onClose?: () => void
   hideHeader?: boolean
@@ -26,7 +26,8 @@ const QUICK_TAGS = [
   'event recap'
 ]
 
-export function InspirationPanel({ onInsert, onClose, hideHeader = false }: InspirationPanelProps) {
+// Renamed from InspirationPanel for semantic clarity
+export function IdeationPanel({ onInsert, onClose, hideHeader = false }: IdeationPanelProps) {
   const [keyword, setKeyword] = useState('')
   const [variants, setVariants] = useState<Variant[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
@@ -141,7 +142,7 @@ export function InspirationPanel({ onInsert, onClose, hideHeader = false }: Insp
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center border border-blue-500/30">
               <Lightbulb size={16} className="text-blue-400" />
             </div>
-            Inspiration
+            Ideation
           </div>
           {onClose && (
             <button
