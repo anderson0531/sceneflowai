@@ -152,11 +152,22 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         body: JSON.stringify({
           projectId: projectId,
           treatment: {
+            // Core narrative fields
             title: variant.title,
             logline: variant.logline || '',
             synopsis: variant.synopsis || variant.content || '',
             genre: variant.genre || '',
-            visualStyle: variant.visualStyle || {}
+            // Character data - CRITICAL for accurate hero image
+            character_descriptions: variant.character_descriptions || [],
+            protagonist: variant.protagonist || '',
+            antagonist: variant.antagonist || '',
+            // Setting and atmosphere
+            setting: variant.setting || '',
+            tone: variant.tone || '',
+            themes: variant.themes || [],
+            // Visual styling
+            visual_style: variant.visual_style || variant.visualStyle || '',
+            visualStyle: variant.visualStyle || variant.visual_style || ''
           },
           visualType: 'hero',
           mood: 'balanced'

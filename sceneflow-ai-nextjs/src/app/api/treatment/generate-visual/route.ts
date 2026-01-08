@@ -35,6 +35,22 @@ async function generateHeroImage(
   // Extract character details for accurate depiction
   const characters = (treatment as any).character_descriptions || []
   
+  // DEBUG: Log character data availability for prompt validation
+  console.log('[HeroImage] Character data received:', {
+    hasCharacterDescriptions: characters.length > 0,
+    characterCount: characters.length,
+    hasTreatmentProtagonist: !!(treatment as any).protagonist,
+    hasTreatmentAntagonist: !!(treatment as any).antagonist,
+    treatmentTitle: treatment.title,
+    hasLogline: !!treatment.logline,
+    hasSetting: !!treatment.setting,
+    hasTone: !!treatment.tone
+  })
+  
+  if (characters.length === 0) {
+    console.warn('[HeroImage] WARNING: No character_descriptions provided - hero image may lack accurate character depiction')
+  }
+  
   // Find protagonist
   const protagonist = characters.find((c: any) => 
     c.role?.toLowerCase()?.includes('protagonist') || 
@@ -48,34 +64,92 @@ async function generateHeroImage(
     c.role?.toLowerCase()?.includes('villain')
   )
   
-  // Helper function to build character appearance string from physical attributes
-  function buildCharacterAppearance(character: any): string {
+  /**
+   * Enhanced character appearance builder with emotional state extraction
+   * and detailed physical description for cinematic hero images.
+   * 
+   * Follows the "Subject & Micro-Expression" layer of Layered Narrative Construction.
+   */
+  function buildCharacterAppearance(character: any, isProtagonist: boolean = false): string {
     if (!character) return ''
     
     const parts: string[] = []
-    if (character.ethnicity) parts.push(character.ethnicity)
-    if (character.age) parts.push(`${character.age} year old`)
-    if (character.build) parts.push(character.build)
-    if (character.hairColor && character.hairStyle) {
-      parts.push(`${character.hairColor} ${character.hairStyle} hair`)
-    }
-    if (character.keyFeature) parts.push(character.keyFeature)
-    if (character.expression) parts.push(character.expression)
-    if (character.defaultWardrobe) parts.push(`wearing ${character.defaultWardrobe}`)
     
-    if (parts.length > 0) {
-      // Include character name at the start for context
-      const namePrefix = character.name ? `${character.name} - ` : ''
-      return namePrefix + parts.join(', ')
-    } else if (character.description) {
-      const namePrefix = character.name ? `${character.name} - ` : ''
-      return namePrefix + character.description
+    // Core physical attributes (maintain order for natural description)
+    if (character.name) parts.push(character.name)
+    
+    // Age and ethnicity first for accurate representation
+    if (character.ethnicity) parts.push(`${character.ethnicity} ethnicity`)
+    if (character.age) parts.push(`${character.age} years old`)
+    if (character.gender) parts.push(character.gender)
+    
+    // Build/physical presence
+    if (character.build) parts.push(character.build + ' build')
+    if (character.height) parts.push(character.height)
+    
+    // Hair styling (combine for natural flow)
+    const hairParts: string[] = []
+    if (character.hairColor) hairParts.push(character.hairColor)
+    if (character.hairStyle) hairParts.push(character.hairStyle)
+    if (hairParts.length > 0) parts.push(`${hairParts.join(' ')} hair`)
+    
+    // Distinctive features
+    if (character.eyeColor) parts.push(`${character.eyeColor} eyes`)
+    if (character.keyFeature) parts.push(character.keyFeature)
+    if (character.distinguishingFeatures) parts.push(character.distinguishingFeatures)
+    
+    // Wardrobe - critical for establishing character
+    if (character.defaultWardrobe) {
+      parts.push(`wearing ${character.defaultWardrobe}`)
+    } else if (character.wardrobe) {
+      parts.push(`wearing ${character.wardrobe}`)
     }
-    return character.name || ''
+    
+    // MICRO-EXPRESSION: Emotional state from character arc or logline context
+    // This is the "inner emptiness" or emotional weight the camera captures
+    if (character.expression) {
+      parts.push(`expression: ${character.expression}`)
+    } else if (character.emotionalState) {
+      parts.push(`expression: ${character.emotionalState}`)
+    } else if (isProtagonist && treatment.logline) {
+      // Infer emotional state from logline for protagonist
+      const logline = treatment.logline.toLowerCase()
+      if (logline.includes('heartbreak') || logline.includes('loss') || logline.includes('grief')) {
+        parts.push('expression: hollow and introspective, look of profound regret')
+      } else if (logline.includes('revenge') || logline.includes('justice')) {
+        parts.push('expression: steely determination, simmering intensity')
+      } else if (logline.includes('discover') || logline.includes('uncover') || logline.includes('search')) {
+        parts.push('expression: searching gaze, restless curiosity')
+      } else if (logline.includes('escape') || logline.includes('flee') || logline.includes('survive')) {
+        parts.push('expression: haunted vigilance, survival instinct')
+      } else if (logline.includes('love') || logline.includes('romance')) {
+        parts.push('expression: vulnerable longing, guarded hope')
+      }
+    }
+    
+    // Physical stance for cinematic framing
+    if (character.stance) {
+      parts.push(character.stance)
+    } else if (isProtagonist) {
+      parts.push('standing perfectly still, staring directly through the camera lens')
+    }
+    
+    // Fallback to description if no structured data
+    if (parts.length <= 1 && character.description) {
+      return character.name ? `${character.name} - ${character.description}` : character.description
+    }
+    
+    return parts.join(', ')
   }
   
-  const mainCharacterAppearance = buildCharacterAppearance(protagonist)
-  const antagonistAppearance = buildCharacterAppearance(antagonist)
+  const mainCharacterAppearance = buildCharacterAppearance(protagonist, true)
+  const antagonistAppearance = buildCharacterAppearance(antagonist, false)
+  
+  // Log appearance strings for debugging
+  console.log('[HeroImage] Character appearances built:', {
+    protagonist: mainCharacterAppearance.substring(0, 100) + (mainCharacterAppearance.length > 100 ? '...' : ''),
+    antagonist: antagonistAppearance.substring(0, 100) + (antagonistAppearance.length > 100 ? '...' : '')
+  })
   
   // Extract themes - handle both array and string formats
   let themes: string[] = []
@@ -113,6 +187,16 @@ async function generateHeroImage(
     }),
     mood
   )
+  
+  // Log final prompt for debugging hero image quality
+  console.log('[HeroImage] Final prompt generated:', {
+    promptLength: prompt.length,
+    hasSubjectLayer: prompt.includes('(Subject)'),
+    hasEnvironmentLayer: prompt.includes('(Environment)'),
+    hasLightingLayer: prompt.includes('(Lighting/Mood)'),
+    hasCinematographyLayer: prompt.includes('(Cinematography)'),
+    promptPreview: prompt.substring(0, 300) + '...'
+  })
   
   const base64Image = await generateImageWithGemini(prompt, {
     aspectRatio: '16:9',

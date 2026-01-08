@@ -172,66 +172,178 @@ export interface TreatmentPromptTemplates {
 }
 
 /**
+ * Cinematography specifications by genre for professional-quality hero images
+ * Uses the Layered Narrative Construction method
+ */
+export const CINEMATOGRAPHY_SPECS: Record<string, {
+  camera: string
+  lens: string
+  lighting: string
+  colorGrade: string
+}> = {
+  drama: {
+    camera: 'Shot on Arri Alexa Mini',
+    lens: '35mm Anamorphic lens, shallow depth of field',
+    lighting: 'Natural balanced lighting with motivated sources',
+    colorGrade: 'Cinematic color grading, rich shadows'
+  },
+  documentary: {
+    camera: 'Shot on Arri Alexa Mini',
+    lens: '35mm Anamorphic lens, shallow depth of field (bokeh background)',
+    lighting: 'High-contrast lighting, neon reflections on skin',
+    colorGrade: 'Documentary realism with cinematic color grading'
+  },
+  noir: {
+    camera: 'Shot on Red Monstro 8K',
+    lens: '50mm Anamorphic, razor-sharp focus on eyes',
+    lighting: 'Neon Noir lighting, high contrast, harsh shadows',
+    colorGrade: 'Deep blacks, single accent color, desaturated'
+  },
+  thriller: {
+    camera: 'Shot on Arri Alexa LF',
+    lens: '40mm Anamorphic, tension-building composition',
+    lighting: 'Chiaroscuro lighting, motivated shadows',
+    colorGrade: 'Cool color palette, teal and orange split'
+  },
+  horror: {
+    camera: 'Shot on Red Komodo',
+    lens: '24mm wide angle, unsettling perspective',
+    lighting: 'Low-key lighting, single source, deep shadows',
+    colorGrade: 'Desaturated greens and blacks, sickly undertones'
+  },
+  romance: {
+    camera: 'Shot on Sony Venice 2',
+    lens: '85mm with heavy bokeh',
+    lighting: 'Golden hour warmth, soft diffused light',
+    colorGrade: 'Warm tones, soft pinks and oranges'
+  },
+  scifi: {
+    camera: 'Shot on Arri Alexa 65',
+    lens: '28mm Ultra Prime, clinical precision',
+    lighting: 'Futuristic lighting, LED accents, volumetric atmosphere',
+    colorGrade: 'Cyans and purples, digital textures, clean highlights'
+  },
+  action: {
+    camera: 'Shot on Red V-Raptor',
+    lens: '35mm, dynamic angle',
+    lighting: 'High energy lighting, practical fire/explosion sources',
+    colorGrade: 'Punchy contrast, orange and teal'
+  },
+  comedy: {
+    camera: 'Shot on Arri Alexa Mini',
+    lens: '40mm, balanced composition',
+    lighting: 'Bright even lighting, warm and inviting',
+    colorGrade: 'Saturated, vibrant, clean midtones'
+  },
+  fantasy: {
+    camera: 'Shot on Arri Alexa 65',
+    lens: '35mm Anamorphic, magical flares',
+    lighting: 'Ethereal lighting, practical magic sources, rim light',
+    colorGrade: 'Rich jewel tones, magical glow, painterly'
+  }
+}
+
+/**
+ * Tone-to-lighting style mapping for the Lighting & Atmosphere layer
+ */
+export const TONE_LIGHTING_STYLES: Record<string, string> = {
+  melancholic: 'Melancholic lighting with muted blues and soft vignette',
+  neon: 'Neon Noir lighting, high-contrast with neon reflections on skin',
+  hopeful: 'Warm golden hour lighting with lens flares',
+  tense: 'Stark contrast lighting with cold blue undertones',
+  romantic: 'Soft diffused lighting with warm pink and orange tones',
+  dark: 'Low-key dramatic lighting, deep shadows, single source',
+  gritty: 'Harsh practical lighting, desaturated, documentary realism',
+  dreamlike: 'Ethereal soft focus, gauzy lighting, magical quality',
+  comedic: 'Bright even lighting, warm and saturated',
+  epic: 'Sweeping dramatic lighting, golden rim light, volumetric atmosphere'
+}
+
+/**
  * Default prompt templates
  */
 export const DEFAULT_PROMPT_TEMPLATES: TreatmentPromptTemplates = {
   heroImage: ({ title, genre, mood, setting, synopsis, protagonist, mainCharacterAppearance, antagonist, antagonistAppearance, themes, visualStyle, conflictDynamic }) => {
-    // Build comprehensive story-accurate prompt with multiple characters
+    /**
+     * LAYERED NARRATIVE CONSTRUCTION METHOD
+     * Formula: [Subject & Micro-Expression] + [Environment & "The Trap"] + 
+     *          [Lighting & Atmosphere] + [Cinematography]
+     * 
+     * This produces cinematic hero images with emotional resonance and visual subtext.
+     */
     const parts: string[] = []
     
-    // Title and genre foundation
-    parts.push(`Cinematic movie poster composition for "${title}".`)
-    parts.push(`${genre} atmosphere, ${mood} lighting.`)
+    // Normalize genre for cinematography lookup
+    const normalizedGenre = (genre || 'drama').toLowerCase().replace(/[^a-z]/g, '')
+    const cinSpecs = CINEMATOGRAPHY_SPECS[normalizedGenre] || CINEMATOGRAPHY_SPECS.drama
     
-    // Visual style if specified
-    if (visualStyle) {
-      parts.push(`Visual style: ${visualStyle}.`)
-    }
+    // Normalize tone/mood for lighting lookup
+    const normalizedMood = (mood || 'balanced').toLowerCase()
+    const lightingStyle = TONE_LIGHTING_STYLES[normalizedMood] || TONE_LIGHTING_STYLES.melancholic
     
-    // Story synopsis - use more characters for better context
-    if (synopsis) {
-      const synopsisText = synopsis.slice(0, 300)
-      parts.push(`Story: ${synopsisText}${synopsis.length > 300 ? '...' : ''}.`)
-    }
-    
-    // Main characters section
-    const characterParts: string[] = []
-    
-    // Protagonist with full physical description
+    // =========================================================================
+    // LAYER 1: SUBJECT & MICRO-EXPRESSION
+    // Define protagonist with emotional state and physical stance
+    // =========================================================================
     if (mainCharacterAppearance) {
-      characterParts.push(`PROTAGONIST: ${mainCharacterAppearance}`)
+      parts.push(`(Subject): ${mainCharacterAppearance}, standing perfectly still.`)
     } else if (protagonist) {
-      characterParts.push(`PROTAGONIST: ${protagonist}`)
+      parts.push(`(Subject): ${protagonist}, centered in frame with a contemplative expression.`)
     }
     
-    // Antagonist with full physical description
-    if (antagonistAppearance) {
-      characterParts.push(`ANTAGONIST: ${antagonistAppearance}`)
-    } else if (antagonist) {
-      characterParts.push(`ANTAGONIST: ${antagonist}`)
-    }
-    
-    if (characterParts.length > 0) {
-      parts.push(`Main characters: ${characterParts.join('; ')}.`)
-    }
-    
-    // Conflict/relationship dynamic
-    if (conflictDynamic) {
-      parts.push(`Central conflict: ${conflictDynamic}.`)
-    }
-    
-    // Themes for symbolic imagery
-    if (themes && themes.length > 0) {
-      parts.push(`Themes: ${themes.slice(0, 4).join(', ')}.`)
-    }
-    
-    // Setting
+    // =========================================================================
+    // LAYER 2: ENVIRONMENT & "THE TRAP"
+    // Setting arranged to create visual enclosure/metaphor for story tension
+    // =========================================================================
     if (setting) {
-      parts.push(`Setting: ${setting}.`)
+      // Create environmental composition that visually represents the story's tension
+      parts.push(`(Environment): ${setting}.`)
+      parts.push(`The background elements are arranged to visually frame and enclose the character, creating a sense of the story's central tension.`)
     }
     
-    // Technical quality requirements
-    parts.push(`Dramatic composition showing character relationship/tension, professional film poster style, no text, high quality, 16:9 aspect ratio.`)
+    // Add visual metaphor from title if present (e.g., "Gilded Cage" = neon bars)
+    if (title) {
+      parts.push(`The composition subtly reflects the title "${title}" through visual metaphor in the environment.`)
+    }
+    
+    // Antagonist in background if present (subtext layer)
+    if (antagonistAppearance) {
+      parts.push(`(Background subtext): ${antagonistAppearance} is visible in the deep background, slightly out of focus, observing the protagonist.`)
+    } else if (antagonist) {
+      parts.push(`(Background subtext): ${antagonist} is visible in the deep background, slightly out of focus.`)
+    }
+    
+    // =========================================================================
+    // LAYER 3: LIGHTING & ATMOSPHERE
+    // Use tone to dictate color palette and emotional texture
+    // =========================================================================
+    parts.push(`(Lighting/Mood): Nighttime or dramatic lighting. ${lightingStyle}.`)
+    
+    // Visual style enhancement
+    if (visualStyle) {
+      parts.push(`Visual aesthetic: ${visualStyle}.`)
+    }
+    
+    // Theme-based color story
+    if (themes && themes.length > 0) {
+      const themeList = themes.slice(0, 3).join(', ')
+      parts.push(`The color palette reflects the themes of ${themeList}.`)
+    }
+    
+    // =========================================================================
+    // LAYER 4: CINEMATOGRAPHY & TECHNICAL SPECS
+    // Professional camera/lens specs for film-quality output
+    // =========================================================================
+    parts.push(`(Cinematography): ${cinSpecs.camera}, ${cinSpecs.lens}, sharp focus on eyes.`)
+    parts.push(`${cinSpecs.colorGrade}, 8K resolution, ultra-realistic texture.`)
+    
+    // Conflict dynamic for compositional tension
+    if (conflictDynamic) {
+      parts.push(`Central relationship tension: ${conflictDynamic}.`)
+    }
+    
+    // Final technical requirements
+    parts.push(`Cinematic movie poster composition, professional film quality, no text overlays, 16:9 aspect ratio.`)
     
     return parts.join(' ')
   },
