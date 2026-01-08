@@ -1,8 +1,9 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Lightbulb, Users, X, Copy, Check, Link2 } from 'lucide-react'
+import { Lightbulb, Users, X, Copy, Check, Link2, Radar } from 'lucide-react'
 import { IdeationPanel } from './IdeationPanel'
+import { AudienceResonancePanel } from './AudienceResonancePanel'
 import { cn } from '@/lib/utils'
 import { useGuideStore } from '@/store/useGuideStore'
 import ChatWindow from '../collab/ChatWindow'
@@ -17,15 +18,33 @@ interface SidePanelTabsProps {
 }
 
 export function SidePanelTabs({ onInsert, onClose, sessionId, shareUrl, onShare, isSharing }: SidePanelTabsProps) {
-  const [activeTab, setActiveTab] = useState<'ideation' | 'collaboration'>('ideation')
+  const [activeTab, setActiveTab] = useState<'resonance' | 'ideation' | 'collaboration'>('resonance')
   const { guide } = useGuideStore()
   const activeVariantId = (guide as any)?.selectedTreatmentId || ((guide as any)?.treatmentVariants?.[0]?.id)
+  
+  // Get the current treatment variant for resonance analysis
+  const currentTreatment = React.useMemo(() => {
+    const variants = (guide as any)?.treatmentVariants || []
+    return variants.find((v: any) => v.id === activeVariantId) || variants[0] || null
+  }, [guide, activeVariantId])
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 border-l border-gray-800">
       {/* Header with Tabs */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-gray-800/60 bg-gray-900/50">
         <div className="flex items-center gap-1">
+          <button
+            onClick={() => setActiveTab('resonance')}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
+              activeTab === 'resonance'
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+            )}
+          >
+            <Radar size={14} />
+            <span>Resonance</span>
+          </button>
           <button
             onClick={() => setActiveTab('ideation')}
             className={cn(
@@ -64,7 +83,9 @@ export function SidePanelTabs({ onInsert, onClose, sessionId, shareUrl, onShare,
 
       {/* Content */}
       <div className="flex-1 overflow-hidden">
-        {activeTab === 'ideation' ? (
+        {activeTab === 'resonance' ? (
+          <AudienceResonancePanel treatment={currentTreatment} />
+        ) : activeTab === 'ideation' ? (
           <IdeationPanel onInsert={onInsert} hideHeader />
         ) : (
           <CollaborationContent 
