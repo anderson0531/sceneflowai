@@ -101,9 +101,9 @@ export function ResonanceRadarChart({
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5, delay: 0.2 }}
       className="w-full"
-      style={{ height }}
+      style={{ height, minHeight: height, minWidth: 200 }}
     >
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={height} minWidth={200}>
         <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData}>
           {/* Grid lines */}
           <PolarGrid 

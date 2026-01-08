@@ -123,10 +123,9 @@ export function AudienceResonancePanel({ treatment, onFixApplied }: AudienceReso
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          treatment,
+          variant: treatment,
           section: insight.fixSection,
-          instructions: insight.fixSuggestion,
-          mode: 'enhance'
+          instructions: insight.fixSuggestion
         })
       })
       
