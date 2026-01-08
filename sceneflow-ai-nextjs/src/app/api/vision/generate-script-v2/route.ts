@@ -117,12 +117,13 @@ export async function POST(request: NextRequest) {
         }
 
         // Calculate dynamic batch size based on remaining scenes
+        // Reduced from 10 to 5 for lower memory pressure per batch
         const calculateBatchSize = (remaining: number): number => {
-          if (remaining <= 10) return remaining
-          return Math.min(10, remaining) // Max 10 for all batches
+          if (remaining <= 5) return remaining
+          return Math.min(5, remaining) // Max 5 for all batches (reduced from 10)
         }
         
-        const INITIAL_BATCH_SIZE = Math.min(10, suggestedScenes)
+        const INITIAL_BATCH_SIZE = Math.min(5, suggestedScenes)
         const MAX_BATCH_RETRIES = 3
         let actualTotalScenes = suggestedScenes
         let allScenes: any[] = []
@@ -191,6 +192,18 @@ export async function POST(request: NextRequest) {
           
           console.log(`[Script Gen V2] Batch ${batchNumber}: Generating scenes ${startScene}-${endScene}...`)
           
+          // Memory pressure check - always log in production to help diagnose OOM
+          const memUsage = process.memoryUsage()
+          const heapUsedMB = Math.round(memUsage.heapUsed / 1024 / 1024)
+          console.log(`[Memory] Batch ${batchNumber}: ${heapUsedMB}MB heap used`)
+          
+          // Warn if memory is getting high (over 1.5GB)
+          if (heapUsedMB > 1500) {
+            console.warn(`[Memory] High memory pressure detected (${heapUsedMB}MB), forcing GC pause`)
+            // Allow event loop to process and GC to potentially run
+            await new Promise(resolve => setTimeout(resolve, 200))
+          }
+          
           try {
             // Create lightweight scene summary for prompt (keep last 3 only)
             const prevScenesForPrompt = allScenes.slice(-3)
@@ -198,14 +211,8 @@ export async function POST(request: NextRequest) {
             let batchResponse = await callGemini(batchPrompt)
             let batchData = parseScenes(batchResponse, startScene, endScene)
             
-            // Release memory immediately after parsing
+            // Release memory immediately after parsing - explicit null assignment
             batchResponse = ''
-            
-            // Log memory usage in development
-            if (process.env.NODE_ENV === 'development') {
-              const memUsage = process.memoryUsage()
-              console.log(`[Memory] Batch ${batchNumber}: ${Math.round(memUsage.heapUsed / 1024 / 1024)}MB used, ${Math.round(memUsage.heapTotal / 1024 / 1024)}MB total`)
-            }
             
             // Check if batch actually generated scenes
             if (batchData.scenes.length === 0) {
@@ -851,7 +858,7 @@ async function callGemini(prompt: string): Promise<string> {
   const result = await generateText(prompt, {
     model: 'gemini-2.5-flash',
     temperature: 0.7,
-    maxOutputTokens: 32768  // Increased to handle larger batch responses
+    maxOutputTokens: 16384  // Reduced from 32768 to lower memory footprint
   })
   
   const text = result.text || ''
@@ -888,6 +895,13 @@ function* streamParseScenes(jsonText: string): Generator<any[], void, unknown> {
 }
 
 function sanitizeJsonString(jsonStr: string): string {
+  // Memory safety: reject extremely large responses that would cause OOM
+  const MAX_SAFE_SIZE = 150000 // 150KB max - prevents OOM during sanitization
+  if (jsonStr.length > MAX_SAFE_SIZE) {
+    console.error(`[Sanitize] Response too large (${jsonStr.length} chars > ${MAX_SAFE_SIZE}), truncating`)
+    jsonStr = jsonStr.substring(0, MAX_SAFE_SIZE)
+  }
+  
   // Remove markdown code fences
   let cleaned = jsonStr.replace(/```json\n?|```/g, '').trim()
   
@@ -907,7 +921,8 @@ function sanitizeJsonString(jsonStr: string): string {
     console.log('[Sanitize] Starts with:', cleaned.charAt(0), 'Code:', cleaned.charCodeAt(0))
     
     // STEP 1: Fix control characters in strings using state machine (most critical)
-    let result = ''
+    // Use array.push instead of string concat for memory efficiency
+    const resultChars: string[] = []
     let inString = false
     let escaped = false
     
@@ -917,14 +932,14 @@ function sanitizeJsonString(jsonStr: string): string {
       
       // Handle escape sequences
       if (escaped) {
-        result += char
+        resultChars.push(char)
         escaped = false
         continue
       }
       
       // Check for backslash (escape character)
       if (char === '\\' && inString) {
-        result += char
+        resultChars.push(char)
         escaped = true
         continue
       }
@@ -932,31 +947,32 @@ function sanitizeJsonString(jsonStr: string): string {
       // Check for quotes (string delimiters)
       if (char === '"') {
         inString = !inString
-        result += char
+        resultChars.push(char)
         continue
       }
       
       // Inside a string: escape control characters
       if (inString) {
         if (char === '\n') {
-          result += '\\n'
+          resultChars.push('\\', 'n')
         } else if (char === '\r') {
-          result += '\\r'
+          resultChars.push('\\', 'r')
         } else if (char === '\t') {
-          result += '\\t'
+          resultChars.push('\\', 't')
         } else if (code >= 0x00 && code <= 0x1F && code !== 0x09 && code !== 0x0A && code !== 0x0D) {
           // Skip other control characters (don't include them)
           continue
         } else {
-          result += char
+          resultChars.push(char)
         }
       } else {
         // Outside strings: keep everything as-is (including formatting newlines)
-        result += char
+        resultChars.push(char)
       }
     }
     
-    cleaned = result
+    // Join array once at the end (more memory efficient than string concat in loop)
+    cleaned = resultChars.join('')
     
     // STEP 2: Remove trailing commas (lightweight fix)
     cleaned = cleaned
