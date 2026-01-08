@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
         console.log(`[Script Gen V2] Batch 1: Generating first ${INITIAL_BATCH_SIZE} scenes...`)
         
         const batch1Prompt = buildBatch1Prompt(treatment, 1, INITIAL_BATCH_SIZE, minScenes, maxScenes, suggestedScenes, duration, [], existingCharacters)
-        let batch1Response = await callGemini(apiKey, batch1Prompt)
+        let batch1Response = await callGemini(batch1Prompt)
         let batch1Data = parseBatch1(batch1Response, 1, INITIAL_BATCH_SIZE)
         
         // Release memory immediately after parsing
@@ -195,7 +195,7 @@ export async function POST(request: NextRequest) {
             // Create lightweight scene summary for prompt (keep last 3 only)
             const prevScenesForPrompt = allScenes.slice(-3)
             const batchPrompt = buildBatch2Prompt(treatment, startScene, endScene, actualTotalScenes, duration, prevScenesForPrompt, allScenes.length, totalPrevDuration, existingCharacters)
-            let batchResponse = await callGemini(apiKey, batchPrompt)
+            let batchResponse = await callGemini(batchPrompt)
             let batchData = parseScenes(batchResponse, startScene, endScene)
             
             // Release memory immediately after parsing
@@ -220,7 +220,7 @@ export async function POST(request: NextRequest) {
                   const singleScenePrompt = buildBatch2Prompt(treatment, startScene, startScene, actualTotalScenes, duration, prevScenesForPrompt, allScenes.length, totalPrevDuration, existingCharacters)
                     .replace(`Generate scenes ${startScene}-${startScene} (batch of 1 scenes)`, `Generate ONLY scene ${startScene}`)
                   
-                  let singleResponse = await callGemini(apiKey, singleScenePrompt)
+                  let singleResponse = await callGemini(singleScenePrompt)
                   let singleData = parseScenes(singleResponse, startScene, startScene)
                   singleResponse = ''
                   
@@ -846,7 +846,7 @@ FOCUS ON:
 Complete the script with accurate duration estimates.`
 }
 
-async function callGemini(apiKey: string, prompt: string): Promise<string> {
+async function callGemini(prompt: string): Promise<string> {
   console.log('[Generate Script V2] Calling Vertex AI Gemini...')
   const result = await generateText(prompt, {
     model: 'gemini-2.5-flash',
