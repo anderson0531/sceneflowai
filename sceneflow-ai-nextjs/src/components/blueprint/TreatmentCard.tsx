@@ -11,6 +11,8 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import TreatmentEditorDialog from './TreatmentEditorDialog'
+import BlueprintReimaginDialog from './BlueprintReimaginDialog'
+import BlueprintRefineDialog from './BlueprintRefineDialog'
 import OwnerCollabPanel from '@/components/studio/OwnerCollabPanel'
 import { getCuratedElevenVoices, type CuratedVoice } from '@/lib/tts/voices'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
@@ -57,6 +59,8 @@ export function TreatmentCard() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [selectedVoiceId, setSelectedVoiceId] = useState<string | undefined>(undefined)
   const [editorOpen, setEditorOpen] = useState(false)
+  const [reimaginOpen, setReimaginOpen] = useState(false)
+  const [refineOpen, setRefineOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isSharing, setIsSharing] = useState(false)
@@ -200,7 +204,7 @@ export function TreatmentCard() {
       if ((document as any).body?.classList?.contains('modal-open')) return
       if (e.key.toLowerCase() === 's') { e.preventDefault(); (async()=>{ try{ const btn = document.activeElement as HTMLElement; }catch{} })(); (async()=>{ try{ }catch{} })(); }
       if (e.key === 'Enter') { e.preventDefault(); try { const v = (Array.isArray(variants) ? variants.find(x=>x.id===active) : null) || (variants||[])[0]; if (v) (useGuideStore.getState() as any).useTreatmentVariant(v.id) } catch {} }
-      if (e.key.toLowerCase() === 'e') { e.preventDefault(); setEditorOpen(true) }
+      if (e.key.toLowerCase() === 'e') { e.preventDefault(); setRefineOpen(true) }
       if (e.key.toLowerCase() === 'i') { e.preventDefault(); try { const v = (variants||[]).find(x=>x.id===active) || (variants||[])[0]; if (v) { const t = mapVariantToInputText(v); sendToComposer(t, { generate: false }) } } catch {} }
       if (e.key.toLowerCase() === 'r') { e.preventDefault(); try { const v = (variants||[]).find(x=>x.id===active) || (variants||[])[0]; if (v) { const t = mapVariantToInputText(v); sendToComposer(t, { generate: true }) } } catch {} }
     }
@@ -343,13 +347,13 @@ export function TreatmentCard() {
                     <TooltipProvider>
                       <div className="flex items-center gap-1">
 
-                        {/* Edit */}
+                        {/* Refine - precise section editing */}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
-                              aria-label="Edit treatment"
-                              title="Edit (E)"
-                              onClick={() => setEditorOpen(true)}
+                              aria-label="Refine blueprint"
+                              title="Refine (E)"
+                              onClick={() => setRefineOpen(true)}
                               className="h-8 w-8 border border-gray-700 text-gray-200 hover:bg-gray-800"
                               variant="outline"
                               size="icon"
@@ -357,7 +361,24 @@ export function TreatmentCard() {
                               <PencilLine className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Edit (E)</TooltipContent>
+                          <TooltipContent>Refine (E)</TooltipContent>
+                        </Tooltip>
+
+                        {/* Reimagine - major story changes */}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              aria-label="Reimagine blueprint"
+                              title="Reimagine"
+                              onClick={() => setReimaginOpen(true)}
+                              className="h-8 w-8 border border-gray-700 text-gray-200 hover:bg-gray-800"
+                              variant="outline"
+                              size="icon"
+                            >
+                              <RefreshCw className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Reimagine</TooltipContent>
                         </Tooltip>
 
                         {/* Preview/Print */}
@@ -388,8 +409,11 @@ export function TreatmentCard() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-52">
-                              <DropdownMenuItem onSelect={(e)=>{e.preventDefault(); setEditorOpen(true);}} onClick={(e)=>{e.preventDefault();}}>
-                                <PencilLine className="h-4 w-4 mr-2" /> Edit
+                              <DropdownMenuItem onSelect={(e)=>{e.preventDefault(); setRefineOpen(true);}} onClick={(e)=>{e.preventDefault();}}>
+                                <PencilLine className="h-4 w-4 mr-2" /> Refine
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onSelect={(e)=>{e.preventDefault(); setReimaginOpen(true);}} onClick={(e)=>{e.preventDefault();}}>
+                                <RefreshCw className="h-4 w-4 mr-2" /> Reimagine
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -867,6 +891,47 @@ export function TreatmentCard() {
           onApply={(patch) => {
             try { (useGuideStore.getState() as any).updateTreatmentVariant(activeVariant.id, patch) } catch {}
             setEditorOpen(false)
+          }}
+        />
+        {/* Blueprint Refine Dialog - Section-specific editing */}
+        <BlueprintRefineDialog
+          open={refineOpen}
+          variant={activeVariant as any}
+          onClose={() => setRefineOpen(false)}
+          onApply={(patch) => {
+            try { (useGuideStore.getState() as any).updateTreatmentVariant(activeVariant.id, patch) } catch {}
+            setRefineOpen(false)
+          }}
+        />
+        {/* Blueprint Reimagine Dialog - Major story changes */}
+        <BlueprintReimaginDialog
+          open={reimaginOpen}
+          onClose={() => setReimaginOpen(false)}
+          existingVariant={activeVariant as any}
+          onGenerate={async (input, opts) => {
+            // Call the film-treatment API to regenerate
+            const response = await fetch('/api/ideation/film-treatment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                input,
+                format: opts?.duration || 'short_film',
+                filmType: opts?.duration || 'short_film',
+                genre: opts?.genre,
+                tone: opts?.tone,
+                rigor: 'thorough',
+                variants: 1
+              })
+            })
+            if (!response.ok) throw new Error('Generation failed')
+            const data = await response.json()
+            if (data.success && data.variants?.length > 0) {
+              const newVariant = {
+                id: `reimagined-${Date.now()}`,
+                ...data.variants[0]
+              }
+              setTreatmentVariants([newVariant])
+            }
           }}
         />
         {/* Report Preview Modal */}

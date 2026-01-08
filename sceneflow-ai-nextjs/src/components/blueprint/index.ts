@@ -68,3 +68,7 @@ export { BlueprintTopbar } from './BlueprintTopbar'
 export { InspirationDrawer } from './InspirationDrawer'
 export { TreatmentCard } from './TreatmentCard'
 export { ActionBar } from './ActionBar'
+
+// Blueprint Editor Dialogs (v2)
+export { BlueprintReimaginDialog } from './BlueprintReimaginDialog'
+export { BlueprintRefineDialog } from './BlueprintRefineDialog'
