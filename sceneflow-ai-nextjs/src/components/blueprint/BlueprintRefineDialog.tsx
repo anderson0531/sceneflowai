@@ -479,7 +479,7 @@ export function BlueprintRefineDialog({
   
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden bg-slate-900 border-slate-700 relative">
+      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col overflow-hidden bg-slate-900 border-slate-700 relative">
         {/* Freeze overlay during AI refinement */}
         {isRefining && (
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
@@ -508,8 +508,8 @@ export function BlueprintRefineDialog({
           </DialogTitle>
         </DialogHeader>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="grid grid-cols-5 bg-slate-800/50 mb-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <TabsList className="grid grid-cols-5 bg-slate-800/50 mb-4 flex-shrink-0">
             <TabsTrigger value="core" className="text-xs">Core Info</TabsTrigger>
             <TabsTrigger value="story" className="text-xs">Story Setup</TabsTrigger>
             <TabsTrigger value="tone" className="text-xs">Tone & Style</TabsTrigger>
@@ -517,7 +517,7 @@ export function BlueprintRefineDialog({
             <TabsTrigger value="characters" className="text-xs">Characters</TabsTrigger>
           </TabsList>
           
-          <div className="flex-1 overflow-y-auto pr-2">
+          <div className="flex-1 overflow-y-auto pr-2 min-h-0">
             {/* Core Info Tab */}
             <TabsContent value="core" className="space-y-4 mt-0">
               <SectionHeader 
@@ -866,7 +866,7 @@ export function BlueprintRefineDialog({
         </Tabs>
         
         {/* Actions */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-700 flex-shrink-0">
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
