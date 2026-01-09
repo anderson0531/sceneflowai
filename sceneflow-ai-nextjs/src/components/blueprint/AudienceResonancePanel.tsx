@@ -213,7 +213,7 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
           treatmentId: treatment.id || 'current',
           treatment: {
             title: treatment.label || treatment.title,
-            content: treatment.content,
+            // NOTE: content field removed - unused by API, reduces payload size
             synopsis: treatment.synopsis,
             visual_style: treatment.visual_style,
             tone_description: treatment.tone_description || treatment.tone,

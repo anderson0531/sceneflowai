@@ -22,6 +22,8 @@ export interface RetryOptions {
   isRetryable?: (error: any, status?: number) => boolean
   /** Operation name for logging */
   operationName?: string
+  /** Timeout in milliseconds for the entire operation (default: none) */
+  timeoutMs?: number
 }
 
 export interface RetryResult<T> {
@@ -163,6 +165,7 @@ export async function withRetry<T>(
 /**
  * Fetch with automatic retry for transient failures
  * Handles 429, 502, 503 status codes and network errors
+ * Supports optional timeout via AbortController
  */
 export async function fetchWithRetry(
   url: string,
@@ -170,20 +173,50 @@ export async function fetchWithRetry(
   options: RetryOptions = {}
 ): Promise<Response> {
   const operationName = options.operationName || `Fetch ${url.substring(0, 50)}`
+  const timeoutMs = options.timeoutMs
   
   return withRetry(async () => {
-    const response = await fetch(url, init)
+    // Create AbortController for timeout if specified
+    let controller: AbortController | undefined
+    let timeoutId: NodeJS.Timeout | undefined
     
-    // Check if response status indicates we should retry
-    if (response.status === 429 || response.status === 502 || response.status === 503) {
-      const errorText = await response.text()
-      const error: any = new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}`)
-      error.status = response.status
-      error.response = response
-      throw error
+    if (timeoutMs) {
+      controller = new AbortController()
+      timeoutId = setTimeout(() => {
+        controller?.abort()
+        console.warn(`[Retry] ${operationName} timed out after ${timeoutMs}ms`)
+      }, timeoutMs)
     }
     
-    return response
+    try {
+      const response = await fetch(url, {
+        ...init,
+        signal: controller?.signal || init?.signal,
+      })
+      
+      // Check if response status indicates we should retry
+      if (response.status === 429 || response.status === 502 || response.status === 503) {
+        const errorText = await response.text()
+        const error: any = new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}`)
+        error.status = response.status
+        error.response = response
+        throw error
+      }
+      
+      return response
+    } catch (error: any) {
+      // Convert AbortError to timeout error for better diagnostics
+      if (error.name === 'AbortError') {
+        const timeoutError: any = new Error(`${operationName} timed out after ${timeoutMs}ms`)
+        timeoutError.code = 'TIMEOUT'
+        throw timeoutError
+      }
+      throw error
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+    }
   }, { ...options, operationName })
 }
 

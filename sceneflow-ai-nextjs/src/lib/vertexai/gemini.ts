@@ -52,6 +52,8 @@ export interface TextGenerationOptions {
   maxRetries?: number
   /** Initial retry delay in ms (default: 1000) */
   initialDelayMs?: number
+  /** Timeout in ms for the entire request including retries (default: 90000) */
+  timeoutMs?: number
 }
 
 export interface TextGenerationResult {
@@ -121,6 +123,7 @@ export async function generateText(
       maxRetries: options.maxRetries ?? 3,
       initialDelayMs: options.initialDelayMs ?? 1000,
       operationName: `Vertex Gemini ${model}`,
+      timeoutMs: options.timeoutMs ?? 90000, // Default 90s timeout per request
     }
   )
   

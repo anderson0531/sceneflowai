@@ -34,6 +34,37 @@ export interface ResonanceCacheEntry {
   isScoreEstimated: boolean; // True if using local calculation with overrides
 }
 
+// Maximum number of treatments to cache in localStorage
+// Prevents unbounded localStorage growth
+const MAX_CACHE_ENTRIES = 10;
+
+/**
+ * Evict oldest cache entries if cache exceeds MAX_CACHE_ENTRIES
+ * Returns a new cache object with oldest entries removed
+ */
+function evictOldestEntries(
+  cache: Record<string, ResonanceCacheEntry>,
+  maxEntries: number
+): Record<string, ResonanceCacheEntry> {
+  const entries = Object.entries(cache);
+  if (entries.length <= maxEntries) {
+    return cache;
+  }
+  
+  // Sort by lastUpdated ascending (oldest first)
+  entries.sort((a, b) => (a[1].lastUpdated || 0) - (b[1].lastUpdated || 0));
+  
+  // Keep only the newest maxEntries
+  const toKeep = entries.slice(entries.length - maxEntries);
+  const newCache: Record<string, ResonanceCacheEntry> = {};
+  for (const [key, value] of toKeep) {
+    newCache[key] = value;
+  }
+  
+  console.log(`[ResonanceStore] Evicted ${entries.length - maxEntries} old cache entries`);
+  return newCache;
+}
+
 interface ResonanceState {
   // Per-treatment analysis cache (keyed by treatment ID)
   analysisCache: Record<string, ResonanceCacheEntry>;
@@ -87,15 +118,17 @@ export const useResonanceStore = create<ResonanceState>()(
       setAnalysis: (treatmentId: string, data) => {
         set((state) => {
           const existing = state.analysisCache[treatmentId] || createDefaultEntry();
-          return {
-            analysisCache: {
-              ...state.analysisCache,
-              [treatmentId]: {
-                ...existing,
-                ...data,
-                lastUpdated: Date.now(),
-              },
+          const updatedCache = {
+            ...state.analysisCache,
+            [treatmentId]: {
+              ...existing,
+              ...data,
+              lastUpdated: Date.now(),
             },
+          };
+          // Evict oldest entries if cache exceeds limit
+          return {
+            analysisCache: evictOldestEntries(updatedCache, MAX_CACHE_ENTRIES),
           };
         });
       },

@@ -24,6 +24,18 @@ import {
   ALL_SCORING_AXES
 } from '@/lib/treatment/scoringChecklist'
 
+// MODULE-LEVEL CACHE: Build checkpoint penalty lookup once at module load
+// This avoids 85 iterations per request inside parseCheckpointResults()
+const CHECKPOINT_PENALTIES: Record<string, number> = (() => {
+  const penalties: Record<string, number> = {}
+  for (const axis of ALL_SCORING_AXES) {
+    for (const checkpoint of axis.checkpoints) {
+      penalties[checkpoint.id] = checkpoint.failPenalty
+    }
+  }
+  return penalties
+})()
+
 export const runtime = 'nodejs'
 export const maxDuration = 120
 
@@ -530,13 +542,8 @@ function parseCheckpointResults(rawCheckpoints: Record<string, string[]> | undef
     'commercial-viability': {}
   }
   
-  // Build checkpoint penalty lookup from axis definitions
-  const checkpointPenalties: Record<string, number> = {}
-  for (const axis of ALL_SCORING_AXES) {
-    for (const checkpoint of axis.checkpoints) {
-      checkpointPenalties[checkpoint.id] = checkpoint.failPenalty
-    }
-  }
+  // NOTE: Uses module-level CHECKPOINT_PENALTIES cache (computed once at load)
+  // This avoids rebuilding the penalty map on every request (85 iterations saved)
   
   // If no checkpoints from Gemini, return empty results
   if (!rawCheckpoints || typeof rawCheckpoints !== 'object') {
