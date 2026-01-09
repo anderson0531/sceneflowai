@@ -7,7 +7,7 @@ export function HowItWorks() {
   const steps = [
     {
       icon: <Lightbulb className="w-10 h-10" />,
-      title: '1. The Blueprint',
+      title: '1. Blueprint',
       subtitle: 'Ideation',
       description: 'Start with your idea. AI generates a professional film treatment with story structure and character breakdowns.',
       color: 'from-cyan-500 to-cyan-600',

@@ -25,7 +25,7 @@ export function NavigationWarningDialog({
   open,
   onOpenChange,
   targetHref,
-  targetLabel = 'The Blueprint',
+  targetLabel = 'Blueprint',
   onConfirm,
 }: NavigationWarningDialogProps) {
   const router = useRouter()
@@ -61,7 +61,7 @@ export function NavigationWarningDialog({
               <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
               <div>
                 <h4 className="font-medium text-emerald-900 dark:text-emerald-100 mb-1">
-                  Your Virtual Production work is saved
+                  Your Production work is saved
                 </h4>
                 <p className="text-sm text-emerald-700 dark:text-emerald-300">
                   You can navigate freely between workflow steps. Your script, scenes, images, 
@@ -80,8 +80,8 @@ export function NavigationWarningDialog({
                   Generating a new script will replace existing work
                 </h4>
                 <p className="text-sm text-red-700 dark:text-red-300">
-                  If you generate a <strong>new Film Treatment and Script</strong> from The Blueprint, 
-                  it will replace your current Virtual Production content (script, scenes, and generated assets).
+                  If you generate a <strong>new Film Treatment and Script</strong> from Blueprint, 
+                  it will replace your current Production content (script, scenes, and generated assets).
                 </p>
               </div>
             </div>
@@ -91,7 +91,7 @@ export function NavigationWarningDialog({
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
             <p className="text-sm text-blue-700 dark:text-blue-300">
               <strong>Tip:</strong> To edit your existing treatment without losing work, 
-              use the "Refine Treatment" option in The Blueprint instead of generating a completely new one.
+              use the "Refine Treatment" option in Blueprint instead of generating a completely new one.
             </p>
           </div>
         </div>
@@ -103,7 +103,7 @@ export function NavigationWarningDialog({
             disabled={isNavigating}
             className="flex-1 sm:flex-none"
           >
-            Stay in Virtual Production
+            Stay in Production
           </Button>
           <Button
             onClick={handleConfirm}

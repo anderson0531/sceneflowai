@@ -50,6 +50,10 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   // Auto-save debounce ref and saved indicator
   const autoSaveDebounceRef = useRef<NodeJS.Timeout | null>(null)
   const [isSaved, setIsSaved] = useState(true)
+  const [saveError, setSaveError] = useState(false)
+  
+  // Hero image error state
+  const [heroImageError, setHeroImageError] = useState<string | null>(null)
   
   // Reimagine dialog state for initial generation
   const [showReimaginDialog, setShowReimaginDialog] = useState(false)
@@ -105,6 +109,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     if (!variant?.title) return
     
     setIsGeneratingHeroImage(true)
+    setHeroImageError(null) // Clear previous error
     try {
       console.log('[StudioPage] Auto-generating hero image for:', variant.title)
       
@@ -137,7 +142,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       })
       
       if (!response.ok) {
-        throw new Error('Hero image generation failed')
+        const errorText = await response.text().catch(() => 'Unknown error')
+        throw new Error(`Hero image generation failed: ${response.status} - ${errorText}`)
       }
       
       const data = await response.json()
@@ -153,10 +159,14 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         )
         setTreatmentVariants(updatedVariants)
         console.log('[StudioPage] Hero image generated successfully:', data.visuals.heroImage.url)
+      } else if (data.error) {
+        throw new Error(data.error)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('[StudioPage] Hero image generation error:', error)
-      // Non-blocking - don't throw, just log
+      const errorMessage = error?.message || 'Failed to generate hero image'
+      setHeroImageError(errorMessage)
+      try { const { toast } = require('sonner'); toast.error('Hero image generation failed. Click the image to retry.') } catch {}
     } finally {
       setIsGeneratingHeroImage(false)
     }
@@ -421,6 +431,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     // Debounce auto-save by 1.5 seconds
     autoSaveDebounceRef.current = setTimeout(async () => {
       try {
+        setSaveError(false)
         const blueprintData = {
           id: projectId,
           title: guide.title || 'Untitled Project',
@@ -442,10 +453,15 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         
         if (res.ok) {
           setIsSaved(true)
+          setSaveError(false)
           console.log('[StudioPage] Auto-saved project')
+        } else {
+          console.error('[StudioPage] Auto-save failed:', res.status)
+          setSaveError(true)
         }
       } catch (error) {
         console.error('[StudioPage] Auto-save failed:', error)
+        setSaveError(true)
       }
     }, 1500)
     
@@ -508,13 +524,19 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               <div className="px-6 py-4 border-b border-white/10 bg-slate-900/70 backdrop-blur rounded-t-3xl">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <h3 className="text-xl font-bold text-white">The Blueprint</h3>
-                    {!isSaved && (
+                    <h3 className="text-xl font-bold text-white">Blueprint</h3>
+                    {!isSaved && !saveError && (
                       <span className="text-xs text-gray-500 flex items-center gap-1">
+                        <RefreshCw className="w-3 h-3 animate-spin" />
                         Saving...
                       </span>
                     )}
-                    {isSaved && projectId && !projectId.startsWith('new-project') && (
+                    {saveError && (
+                      <span className="text-xs text-red-400 flex items-center gap-1">
+                        Save failed
+                      </span>
+                    )}
+                    {isSaved && !saveError && projectId && !projectId.startsWith('new-project') && (
                       <span className="text-xs text-emerald-400 flex items-center gap-1">
                         <Check className="w-3 h-3" />
                         Saved
@@ -550,6 +572,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                     className="mb-6"
                     onRegenerate={() => generateHeroImage(guide.treatmentVariants[0])}
                     isGenerating={isGeneratingHeroImage}
+                    error={heroImageError}
                   />
                 )}
 

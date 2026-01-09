@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Target, 
@@ -32,6 +32,7 @@ import {
   DEFAULT_INTENT
 } from '@/lib/types/audienceResonance'
 import { READY_FOR_PRODUCTION_THRESHOLD, MAX_ITERATIONS } from '@/lib/treatment/scoringChecklist'
+import { useResonanceStore, type ResonanceCacheEntry } from '@/store/useResonanceStore'
 
 interface AudienceResonancePanelProps {
   treatment?: any
@@ -51,21 +52,90 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
   const [localTreatment, setLocalTreatment] = useState<any>(treatmentProp)
   const treatment = localTreatment || treatmentProp
   
-  // State
-  const [intent, setIntent] = useState<AudienceIntent>(DEFAULT_INTENT)
-  const [analysis, setAnalysis] = useState<AudienceResonanceAnalysis | null>(null)
+  // Get treatment ID for cache key
+  const treatmentId = useMemo(() => treatment?.id || 'current', [treatment?.id])
+  
+  // Zustand store for persistence
+  const { getAnalysis, setAnalysis: setStoreAnalysis, clearAnalysis: clearStoreAnalysis } = useResonanceStore()
+  const cachedState = getAnalysis(treatmentId)
+  
+  // State - initialized from cache if available
+  const [intent, setIntentLocal] = useState<AudienceIntent>(
+    cachedState?.intent || DEFAULT_INTENT
+  )
+  const [analysis, setAnalysisLocal] = useState<AudienceResonanceAnalysis | null>(
+    cachedState?.analysis || null
+  )
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [expandedInsights, setExpandedInsights] = useState<string[]>([])
   const [applyingFix, setApplyingFix] = useState<string | null>(null)
-  const [previousScore, setPreviousScore] = useState<number | null>(null)
+  const [previousScore, setPreviousScoreLocal] = useState<number | null>(
+    cachedState?.previousScore ?? null
+  )
   const [scoreDelta, setScoreDelta] = useState<number | null>(null)
-  const [appliedFixes, setAppliedFixes] = useState<string[]>([])
+  const [appliedFixes, setAppliedFixesLocal] = useState<string[]>(
+    cachedState?.appliedFixes || []
+  )
   
   // Iteration tracking for diminishing returns
-  const [iterationCount, setIterationCount] = useState(0)
-  const [isReadyForProduction, setIsReadyForProduction] = useState(false)
-  const [pendingFixesCount, setPendingFixesCount] = useState(0) // Fixes applied since last analysis
+  const [iterationCount, setIterationCountLocal] = useState(
+    cachedState?.iterationCount || 0
+  )
+  const [isReadyForProduction, setIsReadyForProductionLocal] = useState(
+    cachedState?.isReadyForProduction || false
+  )
+  const [pendingFixesCount, setPendingFixesCountLocal] = useState(
+    cachedState?.pendingFixesCount || 0
+  )
+  
+  // Wrapper functions to sync local state with Zustand store
+  const setIntent = useCallback((value: AudienceIntent | ((prev: AudienceIntent) => AudienceIntent)) => {
+    setIntentLocal(prev => {
+      const newValue = typeof value === 'function' ? value(prev) : value
+      setStoreAnalysis(treatmentId, { intent: newValue })
+      return newValue
+    })
+  }, [treatmentId, setStoreAnalysis])
+  
+  const setAnalysis = useCallback((value: AudienceResonanceAnalysis | null) => {
+    setAnalysisLocal(value)
+    setStoreAnalysis(treatmentId, { analysis: value })
+  }, [treatmentId, setStoreAnalysis])
+  
+  const setPreviousScore = useCallback((value: number | null) => {
+    setPreviousScoreLocal(value)
+    setStoreAnalysis(treatmentId, { previousScore: value })
+  }, [treatmentId, setStoreAnalysis])
+  
+  const setAppliedFixes = useCallback((value: string[] | ((prev: string[]) => string[])) => {
+    setAppliedFixesLocal(prev => {
+      const newValue = typeof value === 'function' ? value(prev) : value
+      setStoreAnalysis(treatmentId, { appliedFixes: newValue })
+      return newValue
+    })
+  }, [treatmentId, setStoreAnalysis])
+  
+  const setIterationCount = useCallback((value: number | ((prev: number) => number)) => {
+    setIterationCountLocal(prev => {
+      const newValue = typeof value === 'function' ? value(prev) : value
+      setStoreAnalysis(treatmentId, { iterationCount: newValue })
+      return newValue
+    })
+  }, [treatmentId, setStoreAnalysis])
+  
+  const setIsReadyForProduction = useCallback((value: boolean) => {
+    setIsReadyForProductionLocal(value)
+    setStoreAnalysis(treatmentId, { isReadyForProduction: value })
+  }, [treatmentId, setStoreAnalysis])
+  
+  const setPendingFixesCount = useCallback((value: number | ((prev: number) => number)) => {
+    setPendingFixesCountLocal(prev => {
+      const newValue = typeof value === 'function' ? value(prev) : value
+      setStoreAnalysis(treatmentId, { pendingFixesCount: newValue })
+      return newValue
+    })
+  }, [treatmentId, setStoreAnalysis])
   
   // Sync with prop changes
   useEffect(() => {
@@ -227,25 +297,29 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
   const handleIntentChange = (key: keyof AudienceIntent, value: string) => {
     setIntent(prev => ({ ...prev, [key]: value }))
     // Clear analysis and reset iterations when intent changes
-    setAnalysis(null)
-    setIterationCount(0)
-    setIsReadyForProduction(false)
-    setAppliedFixes([])
-    setPendingFixesCount(0)
+    setAnalysisLocal(null)
+    setIterationCountLocal(0)
+    setIsReadyForProductionLocal(false)
+    setAppliedFixesLocal([])
+    setPendingFixesCountLocal(0)
     setScoreDelta(null)
-    setPreviousScore(null)
+    setPreviousScoreLocal(null)
+    // Clear store for this treatment
+    clearStoreAnalysis(treatmentId)
   }
   
   // Manual reset handler for user control
   const handleReset = () => {
-    setAnalysis(null)
-    setIterationCount(0)
-    setIsReadyForProduction(false)
-    setAppliedFixes([])
-    setPendingFixesCount(0)
+    setAnalysisLocal(null)
+    setIterationCountLocal(0)
+    setIsReadyForProductionLocal(false)
+    setAppliedFixesLocal([])
+    setPendingFixesCountLocal(0)
     setScoreDelta(null)
-    setPreviousScore(null)
+    setPreviousScoreLocal(null)
     setError(null)
+    // Clear store for this treatment
+    clearStoreAnalysis(treatmentId)
   }
   
   // No treatment available

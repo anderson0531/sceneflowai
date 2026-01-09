@@ -71,7 +71,7 @@ const workflowContext = {
       "How can we make this concept unique?",
       "What's your call-to-action?"
     ],
-    context: "You're in The Blueprint — ideation & scripting. Let's develop your video concept together."
+    context: "You're in Blueprint — ideation & scripting. Let's develop your video concept together."
   },
   storyboard: {
     suggestions: storyboardSuggestions,
@@ -100,7 +100,7 @@ export function CueChatInterface({ onConceptUpdate, onGenerateIdeas, onSceneIter
       const welcomeMessage: CueMessage = {
         id: 'welcome',
         type: 'assistant',
-        content: `Welcome to ${isStoryboardMode ? 'Vision' : 'The Blueprint'}! I'm Cue, your AI creative partner. ${context.context}`,
+        content: `Welcome to ${isStoryboardMode ? 'Production' : 'Blueprint'}! I'm Cue, your AI creative partner. ${context.context}`,
         timestamp: new Date(),
         suggestions: suggestions,
         completeness_score: 0.1,

@@ -21,6 +21,7 @@ interface TreatmentHeroImageProps {
   onRegenerate?: () => void
   onEditPrompt?: () => void
   isGenerating?: boolean
+  error?: string | null // External error message from parent
   className?: string
 }
 
@@ -37,6 +38,7 @@ export function TreatmentHeroImage({
   onRegenerate,
   onEditPrompt,
   isGenerating = false,
+  error: externalError,
   className
 }: TreatmentHeroImageProps) {
   const [isHovered, setIsHovered] = useState(false)
@@ -89,14 +91,25 @@ export function TreatmentHeroImage({
                   Generating hero image...
                 </span>
               </div>
-            ) : image?.status === 'error' ? (
+            ) : image?.status === 'error' || externalError ? (
               <div className="flex flex-col items-center gap-2 text-red-400">
                 <ImageOff className="w-10 h-10" />
                 <span className="text-sm">Failed to generate</span>
-                {image.error && (
+                {(externalError || image?.error) && (
                   <span className="text-xs text-slate-500 max-w-xs text-center">
-                    {image.error}
+                    {externalError || image?.error}
                   </span>
+                )}
+                {onRegenerate && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onRegenerate}
+                    className="mt-2 border-red-500/30 hover:border-red-400/50"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Retry
+                  </Button>
                 )}
               </div>
             ) : (
