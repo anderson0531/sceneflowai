@@ -173,14 +173,26 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   }
 
   // Generate film treatment handler
-  const handleGenerateBlueprint = async (text: string, opts?: { persona?: 'Narrator'|'Director'; model?: string; rigor?: 'fast'|'balanced'|'thorough'; variantCount?: number }) => {
+  const handleGenerateBlueprint = async (text: string, opts?: { 
+    persona?: 'Narrator'|'Director'; 
+    model?: string; 
+    rigor?: 'fast'|'balanced'|'thorough'; 
+    variantCount?: number;
+    // Blueprint dialog options - reduces memory by enabling optimizations
+    genre?: string;
+    tone?: string;
+    duration?: string;
+    targetAudience?: string;
+    visualStyle?: string;
+  }) => {
     setLastInput(text)
     setIsGen(true)
     startProgress()
     
-    // Use provided variant count, default to 3
-    const variantCount = opts?.variantCount ?? 3
-    console.log('[StudioPage] Generating Blueprint with', variantCount, 'variant(s)')
+    // Smart variant count: when user provides explicit settings, they have clear intent - use 1 variant
+    const hasExplicitSettings = !!(opts?.genre || opts?.tone || opts?.targetAudience)
+    const variantCount = opts?.variantCount ?? (hasExplicitSettings ? 1 : 3)
+    console.log('[StudioPage] Generating Blueprint with', variantCount, 'variant(s)', hasExplicitSettings ? '(explicit settings detected)' : '')
     
     try {
       const response = await fetch('/api/ideation/film-treatment', {
@@ -189,9 +201,16 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         body: JSON.stringify({
           input: text,
           format: 'short_film',
-          filmType: 'short_film',
+          filmType: opts?.duration || 'short_film',
           rigor: opts?.rigor || 'thorough',
-          variants: variantCount
+          variants: variantCount,
+          // Pass dialog settings to enable optimizations (skip core concept, reduce prompt size)
+          ...(opts?.genre && { genre: opts.genre }),
+          ...(opts?.tone && { tone: opts.tone }),
+          ...(opts?.targetAudience && { targetAudience: opts.targetAudience }),
+          ...(opts?.visualStyle && { visualStyle: opts.visualStyle }),
+          // Signal to API that explicit settings were provided for optimization
+          hasExplicitSettings
         })
       })
       
@@ -708,8 +727,15 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         existingVariant={null}
         onGenerate={async (input, opts) => {
           setShowReimaginDialog(false)
-          // Use the existing handleGenerateBlueprint logic
-          await handleGenerateBlueprint(input)
+          // Forward dialog options to enable API optimizations (reduced variants, skip core concept)
+          await handleGenerateBlueprint(input, {
+            genre: opts?.genre,
+            tone: opts?.tone,
+            duration: opts?.duration,
+            targetAudience: opts?.targetAudience,
+            visualStyle: opts?.visualStyle,
+            variantCount: opts?.variantCount
+          })
         }}
       />
     </div>

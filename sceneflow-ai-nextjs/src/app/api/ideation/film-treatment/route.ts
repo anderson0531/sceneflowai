@@ -6,6 +6,9 @@ import { BEAT_STRUCTURES, type BeatStructureKey } from '@/lib/treatment/structur
 import { repairTreatment } from '@/lib/treatment/validate'
 import { generateText } from '@/lib/vertexai/gemini'
 
+// Vercel function configuration - must match vercel.json
+export const maxDuration = 300 // 5 minutes for complex Blueprint generation
+
 interface FilmTreatmentRequest {
   input: string
   coreConcept?: {
@@ -96,6 +99,67 @@ interface CoreConceptData {
   narrative_structure: string
 }
 
+// =============================================================================
+// HELPER FUNCTIONS FOR SYNTHETIC CORE CONCEPT (Optimization)
+// =============================================================================
+// When user provides explicit settings, we can build a core concept without LLM
+
+function extractTitleFromInput(input: string): string {
+  // Try to extract a title from the first line or sentence
+  const firstLine = input.split('\n')[0].trim()
+  if (firstLine.length > 0 && firstLine.length < 100) {
+    // If first line looks like a title (short, no periods)
+    if (!firstLine.includes('.') && firstLine.length < 60) {
+      return firstLine
+    }
+  }
+  // Fall back to first few words
+  const words = input.split(/\s+/).slice(0, 5).join(' ')
+  return words.length > 50 ? words.slice(0, 50) + '...' : words
+}
+
+function extractThemesFromGenreTone(genre: string, tone: string): string[] {
+  const genreThemes: Record<string, string[]> = {
+    'drama': ['personal growth', 'conflict', 'relationships'],
+    'thriller': ['suspense', 'danger', 'survival'],
+    'horror': ['fear', 'isolation', 'the unknown'],
+    'comedy': ['humor', 'relationships', 'absurdity'],
+    'sci-fi': ['technology', 'humanity', 'the future'],
+    'romance': ['love', 'connection', 'vulnerability'],
+    'action': ['heroism', 'justice', 'sacrifice'],
+    'fantasy': ['magic', 'destiny', 'good vs evil'],
+    'mystery': ['truth', 'deception', 'justice'],
+    'documentary': ['authenticity', 'discovery', 'human experience']
+  }
+  
+  const toneThemes: Record<string, string[]> = {
+    'dark': ['moral ambiguity', 'consequence'],
+    'gritty': ['realism', 'hardship'],
+    'light': ['hope', 'optimism'],
+    'comedic': ['irony', 'levity'],
+    'inspirational': ['triumph', 'perseverance'],
+    'suspenseful': ['tension', 'anticipation'],
+    'dramatic': ['emotion', 'transformation']
+  }
+  
+  const themes = new Set<string>()
+  
+  // Add genre themes
+  const genreKey = genre.toLowerCase()
+  if (genreThemes[genreKey]) {
+    genreThemes[genreKey].forEach(t => themes.add(t))
+  }
+  
+  // Add tone themes (match partial)
+  Object.keys(toneThemes).forEach(key => {
+    if (tone.toLowerCase().includes(key)) {
+      toneThemes[key].forEach(t => themes.add(t))
+    }
+  })
+  
+  return Array.from(themes).slice(0, 4) // Return up to 4 themes
+}
+
 // Map film type to target minutes estimate
 function getFilmTypeMinutes(filmType?: string): number {
   switch (filmType) {
@@ -176,7 +240,18 @@ export async function POST(request: NextRequest) {
     const body: FilmTreatmentRequest = await request.json()
     const { input, targetAudience, keyMessage, tone, genre, duration, platform, userName } = body
     let { coreConcept } = body
-    const variantsCount = Math.max(1, Math.min(body.variants || 1, 5))
+    
+    // Check if explicit settings were provided (enables optimizations)
+    const hasExplicitSettings = !!(body as any).hasExplicitSettings || !!(genre && tone && targetAudience)
+    
+    // OPTIMIZATION: When user provides explicit settings, use fewer variants (they have clear intent)
+    const requestedVariants = body.variants || (hasExplicitSettings ? 1 : 3)
+    const variantsCount = Math.max(1, Math.min(requestedVariants, 5))
+    
+    if (hasExplicitSettings) {
+      console.log(`[Film Treatment] Explicit settings detected - using optimized flow (${variantsCount} variant(s))`)
+    }
+    
     const format = body.format || 'documentary'
     // Prefer filmType over targetMinutes, but fall back to analyzeDuration if neither provided
     const targetMinutes = body.filmType 
@@ -197,9 +272,23 @@ export async function POST(request: NextRequest) {
 
     // Vertex AI doesn't require API key check - uses service account credentials
 
-    // Derive core concept if not provided
+    // OPTIMIZATION: When user provides explicit settings (genre, tone, audience), we can build
+    // a lightweight core concept from those settings instead of calling the LLM
+    // This eliminates one LLM call and reduces memory usage
     if (!coreConcept) {
-      coreConcept = await analyzeCoreConcept(input, { targetAudience, keyMessage, tone, genre, duration })
+      if (hasExplicitSettings && genre && tone) {
+        // Build synthetic core concept from explicit settings - no LLM call needed
+        console.log('[Film Treatment] Building core concept from explicit settings (skipping LLM extraction)')
+        coreConcept = {
+          input_title: extractTitleFromInput(input),
+          input_synopsis: input.slice(0, 500), // First 500 chars as synopsis
+          core_themes: extractThemesFromGenreTone(genre, tone),
+          narrative_structure: 'three_act' // Default structure
+        }
+      } else {
+        // No explicit settings - use full LLM extraction
+        coreConcept = await analyzeCoreConcept(input, { targetAudience, keyMessage, tone, genre, duration })
+      }
     }
 
     // Auto-detect film structure if not explicitly provided
@@ -229,7 +318,9 @@ export async function POST(request: NextRequest) {
       format, 
       targetMinutes: cappedTargetMinutes, 
       beatStructure: effectiveBeatStructure, 
-      userName 
+      userName,
+      // Pass optimization flag to prompt builder
+      hasExplicitSettings
     }
 
     // Generate variants serially (keeps logs clearer); can parallelize later if needed
@@ -297,7 +388,9 @@ async function generateFilmTreatment(
     styleHint: context?.variantStyle,
     context,
     beatStructure: context?.beatStructure ? { label: BEAT_STRUCTURES[context.beatStructure as BeatStructureKey]?.label, beats: (BEAT_STRUCTURES[context.beatStructure as BeatStructureKey]?.beats || []).map(b => ({ title: b.title })) } : null,
-    persona: (context as any)?.persona ?? null
+    persona: (context as any)?.persona ?? null,
+    // Pass optimization flag - uses lightweight checklist when true
+    hasExplicitSettings: context?.hasExplicitSettings
   }) + retryHint + strictJsonPromptSuffix
 
   console.log('[Film Treatment] Calling Vertex AI Gemini...')
