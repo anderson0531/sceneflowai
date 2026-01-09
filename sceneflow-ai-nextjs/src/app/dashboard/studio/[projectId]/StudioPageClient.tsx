@@ -277,7 +277,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 title: variants[0]?.title || 'Untitled Project',
                 description: '',
                 metadata: {
-                  blueprintInput: input,
+                  blueprintInput: text,
                   filmTreatment: variants[0]?.synopsis || variants[0]?.content || '',
                   treatmentVariants: variants,
                   beats: data.beats || [],
