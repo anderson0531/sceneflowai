@@ -235,6 +235,15 @@ function getGreenlightTierLocal(score: number): { tier: string; label: string; c
 }
 
 /**
+ * Truncate text to max length to reduce prompt size
+ */
+function truncateText(text: string | undefined, maxLength: number): string {
+  if (!text) return ''
+  if (text.length <= maxLength) return text
+  return text.slice(0, maxLength) + '...'
+}
+
+/**
  * Full AI-powered analysis using Gemini
  */
 async function analyzeWithGemini(
@@ -396,104 +405,77 @@ function buildAnalysisPrompt(
   const checklistSection = buildChecklistPrompt(intent, iteration)
   const iterationFocus = getIterationFocus(iteration)
   
-  return `You are a professional Creative Executive at a major film studio. Analyze this film treatment for market viability.
+  // Truncate long fields to reduce prompt size and memory usage
+  const synopsis = truncateText(treatment.synopsis, 2000)
+  const beatsText = treatment.beats?.slice(0, 10).map(b => 
+    `${b.title}: ${truncateText(b.intent || b.synopsis || '', 150)}`
+  ).join('\n') || 'Not provided'
+  const charactersText = treatment.character_descriptions?.slice(0, 6).map(c => 
+    `${c.name} (${c.role}): ${truncateText(c.description, 150)}`
+  ).join('\n') || 'Not provided'
+  
+  return `You are a Creative Executive. Analyze this treatment for market viability.
 
-TARGET INTENT:
-- Primary Genre: ${genreLabel}
-- Target Demographic: ${demoLabel}
-- Desired Tone: ${toneLabel}
+INTENT: ${genreLabel} | ${demoLabel} | ${toneLabel}
 
 TREATMENT:
 Title: ${treatment.title || 'Untitled'}
-Logline: ${treatment.logline || 'Not provided'}
-Genre: ${treatment.genre || 'Not specified'}
-Tone: ${treatment.tone || 'Not specified'}
+Logline: ${truncateText(treatment.logline, 300) || 'Not provided'}
+Genre: ${treatment.genre || 'Not specified'} | Tone: ${treatment.tone || 'Not specified'}
 
-Synopsis: ${treatment.synopsis || 'Not provided'}
+Synopsis: ${synopsis || 'Not provided'}
 
-Setting: ${treatment.setting || 'Not specified'}
-Protagonist: ${treatment.protagonist || 'Not specified'}
-Antagonist: ${treatment.antagonist || 'Not specified'}
+Setting: ${truncateText(treatment.setting, 200) || 'Not specified'}
+Protagonist: ${truncateText(treatment.protagonist, 200) || 'Not specified'}
+Antagonist: ${truncateText(treatment.antagonist, 200) || 'Not specified'}
 
-Themes: ${Array.isArray(treatment.themes) ? treatment.themes.join(', ') : treatment.themes || 'Not specified'}
+Themes: ${Array.isArray(treatment.themes) ? treatment.themes.slice(0, 5).join(', ') : treatment.themes || 'Not specified'}
 
-Beats: ${treatment.beats?.map(b => `${b.title}: ${b.intent || b.synopsis || ''}`).join('\n') || 'Not provided'}
+Beats:
+${beatsText}
 
-Characters: ${treatment.character_descriptions?.map(c => `${c.name} (${c.role}): ${c.description}`).join('\n') || 'Not provided'}
+Characters:
+${charactersText}
 
-Act Breakdown:
-${treatment.act_breakdown ? `Act 1: ${treatment.act_breakdown.act1 || 'N/A'}\nAct 2: ${treatment.act_breakdown.act2 || 'N/A'}\nAct 3: ${treatment.act_breakdown.act3 || 'N/A'}` : 'Not provided'}
+${treatment.act_breakdown ? `Acts: ${truncateText(treatment.act_breakdown.act1, 200)} → ${truncateText(treatment.act_breakdown.act2, 200)} → ${truncateText(treatment.act_breakdown.act3, 200)}` : ''}
 
 ${checklistSection}
 
-ANALYZE and return JSON with this structure:
+Return JSON:
 {
-  "greenlight_score": number (0-100, overall market readiness - use weighted formula above),
-  "confidence": number (0-1, your confidence in this assessment),
-  
-  "originality_score": number (0-100, Concept Originality - 25% weight),
-  "genre_fidelity_score": number (0-100, Genre Fidelity - 15% weight),
-  "character_depth_score": number (0-100, Character Depth - 25% weight),
-  "pacing_score": number (0-100, Pacing & Structure - 20% weight),
-  "commercial_viability_score": number (0-100, Commercial Viability - 15% weight),
-  
+  "greenlight_score": number (0-100),
+  "confidence": number (0-1),
+  "originality_score": number (0-100),
+  "genre_fidelity_score": number (0-100),
+  "character_depth_score": number (0-100),
+  "pacing_score": number (0-100),
+  "commercial_viability_score": number (0-100),
   "checkpoints_passed": {
-    "concept_originality": ["hook-or-twist", "cliche-avoidance"],  // list of passed checkpoint IDs
+    "concept_originality": ["hook-or-twist"],
     "character_depth": ["protagonist-goal"],
     "pacing_structure": [],
     "genre_fidelity": [],
     "commercial_viability": []
   },
-  
   "insights": [
     {
       "category": "genre-alignment" | "audience-demographics" | "tone-consistency" | "character-arc" | "structural-beats" | "market-positioning",
       "status": "strength" | "weakness" | "neutral",
       "title": string,
-      "insight": string (specific, actionable feedback),
-      "treatment_section": string (which part of treatment this refers to),
+      "insight": string,
       "actionable": boolean,
-      "fix_suggestion": string (if actionable, provide specific text to add/change - MUST be ready-to-use text),
+      "fix_suggestion": string (ready-to-use text for weaknesses),
       "fix_section": "core" | "story" | "tone" | "beats" | "characters",
-      "checkpoint_id": string (REQUIRED for weaknesses - the specific checkpoint ID this relates to, e.g., "hook-or-twist", "protagonist-goal", "three-act-structure"),
-      "axis_id": "concept_originality" | "character_depth" | "pacing_structure" | "genre_fidelity" | "commercial_viability" (REQUIRED for weaknesses - which scoring axis this insight relates to)
+      "checkpoint_id": string (for weaknesses: e.g., "hook-or-twist", "protagonist-goal"),
+      "axis_id": "concept_originality" | "character_depth" | "pacing_structure" | "genre_fidelity" | "commercial_viability"
     }
   ],
-  
-  "recommendations": [
-    {
-      "priority": "high" | "medium" | "low",
-      "category": string,
-      "title": string,
-      "description": string,
-      "expected_impact": number (points this could add to score - be realistic: ${iterationFocus.maxImpact}),
-      "effort": "quick" | "moderate" | "significant"
-    }
-  ]
+  "recommendations": [{"priority": "high"|"medium"|"low", "title": string, "description": string, "expected_impact": number}]
 }
 
-ITERATION ${iteration} RULES:
-- Focus: ${iterationFocus.focusAreas.join(', ')}
-- Expected max impact: ${iterationFocus.maxImpact}
-${iteration >= 2 ? `- DO NOT suggest: ${iterationFocus.restrictedSuggestions.join(', ')}` : ''}
-${iteration >= 3 ? `- This is the FINAL iteration. Accept the treatment unless there is a FATAL FLAW.` : ''}
-
-GENRE ANALYSIS GUIDELINES for ${genreLabel}:
-${getGenreGuidelines(intent.primaryGenre)}
-
-DEMOGRAPHIC RESONANCE for ${demoLabel}:
-${getDemographicGuidelines(intent.targetDemographic)}
-
-CRITICAL RULES FOR INSIGHTS:
-1. Every insight with status="weakness" MUST have actionable=true
-2. Every weakness MUST have fix_suggestion with SPECIFIC TEXT to add or replace (not vague advice)
-3. Every weakness MUST have fix_section set to the appropriate section
-4. fix_suggestion should be ready-to-use text, e.g., "A battle-worn detective, Marcus Cole, haunted by his partner's unsolved murder"
-5. Provide at least 3 insights (mix of strengths and weaknesses) and 2 recommendations
-6. If score >= ${READY_FOR_PRODUCTION_THRESHOLD}, minimize weakness insights - treatment is ready for production
-7. Score based on CHECKPOINTS: start at base 85, subtract penalty for each failed checkpoint
-
-Be specific and actionable. Reference actual content from the treatment.`
+RULES: Weaknesses need actionable=true, fix_suggestion (specific text), checkpoint_id, axis_id. Provide 3+ insights, 2+ recommendations.
+${iteration >= 2 ? `Avoid: ${iterationFocus.restrictedSuggestions.slice(0, 3).join(', ')}` : ''}
+${iteration >= 3 ? 'FINAL: Accept unless FATAL FLAW.' : ''}`
 }
 
 function getGenreGuidelines(genre: string): string {

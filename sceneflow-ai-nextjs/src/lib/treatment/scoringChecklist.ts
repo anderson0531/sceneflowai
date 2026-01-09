@@ -498,7 +498,7 @@ export const ENDING_EXPECTATIONS: Record<string, { acceptable: string[]; penaliz
 }
 
 // =============================================================================
-// HELPER: Build Checklist Prompt Section
+// HELPER: Build Checklist Prompt Section (Compact Version)
 // =============================================================================
 
 export function buildChecklistPrompt(intent: {
@@ -509,124 +509,26 @@ export function buildChecklistPrompt(intent: {
   const genreKeywords = GENRE_KEYWORDS[intent.primaryGenre] || GENRE_KEYWORDS['drama']
   const toneKeywords = TONE_KEYWORDS[intent.toneProfile] || TONE_KEYWORDS['dark-gritty']
   const demoThemes = DEMOGRAPHIC_THEMES[intent.targetDemographic] || DEMOGRAPHIC_THEMES['millennials-25-34']
-  const endingExpectations = ENDING_EXPECTATIONS[intent.toneProfile] || ENDING_EXPECTATIONS['dark-gritty']
   const iterationFocus = getIterationFocus(iteration)
   
+  // Compact checklist format to reduce prompt size
   return `
-=============================================================================
-TREATMENT-PHASE SCORING CHECKLIST
-=============================================================================
+SCORING: ${WEIGHT_FORMULA}
+Iteration ${iteration}/${MAX_ITERATIONS} | Focus: ${iterationFocus.focusAreas.join(', ')}
+${iteration >= 2 ? `Avoid suggesting: ${iterationFocus.restrictedSuggestions.slice(0, 3).join(', ')}` : ''}
 
-IMPORTANT: This is Blueprint phase analysis. Evaluate TREATMENT-appropriate metrics,
-NOT script-level nuance. Focus on structural elements, not dialogue polish.
+CHECKPOINTS (mark passed IDs in checkpoints_passed):
+Concept (25%): hook-or-twist (-25), cliche-avoidance (-20), unique-setting-or-premise (-15)
+Character (25%): protagonist-goal (-30), protagonist-flaw (-25), antagonist-defined (-20), character-ghost (-10)
+Pacing (20%): three-act-structure (-25), inciting-incident-placement (-20), low-point-mentioned (-15), midpoint-shift (-10)
+Genre (15%): genre-keywords (-20), genre-conventions-met (-25), tone-consistency (-15)
+Commercial (15%): protagonist-demographic-match (-20), demographic-themes (-20), marketable-logline (-15)
 
-SCORING WEIGHTS:
-${WEIGHT_FORMULA}
+GENRE ${intent.primaryGenre}: Need keywords like ${genreKeywords.required.slice(0, 4).join(', ')}
+TONE ${intent.toneProfile}: Need keywords like ${toneKeywords.required.slice(0, 4).join(', ')}
+AUDIENCE ${intent.targetDemographic}: Protagonist age ${demoThemes.protagonistAge}, themes: ${demoThemes.themes.slice(0, 3).join(', ')}
 
-ITERATION ${iteration} of ${MAX_ITERATIONS} (${iterationFocus.description})
-Focus Areas: ${iterationFocus.focusAreas.join(', ')}
-Expected Impact: ${iterationFocus.maxImpact}
-${iteration >= 2 ? `\nRESTRICTED SUGGESTIONS (do not suggest): ${iterationFocus.restrictedSuggestions.join(', ')}` : ''}
-
-=============================================================================
-AXIS 1: CONCEPT ORIGINALITY (25% weight)
-=============================================================================
-Pass Threshold: All checkpoints must pass for full score
-
-[ ] HOOK/TWIST PRESENT (-25 pts if missing)
-    Does the logline contain a clear "Hook" or "Twist"?
-    Pass: ${CONCEPT_ORIGINALITY_AXIS.checkpoints[0].passCondition}
-
-[ ] AVOIDS TOP 5 GENRE CLICHÉS (-20 pts if failed)
-    Is it distinct from overused ${intent.primaryGenre} tropes?
-    Pass: ${CONCEPT_ORIGINALITY_AXIS.checkpoints[1].passCondition}
-
-[ ] UNIQUE SETTING/PREMISE (-15 pts if failed)
-    Is the setting or premise distinct?
-    Pass: ${CONCEPT_ORIGINALITY_AXIS.checkpoints[2].passCondition}
-
-=============================================================================
-AXIS 2: CHARACTER DEPTH (25% weight)
-=============================================================================
-Pass Threshold: Must have Goal + Flaw at minimum
-
-[ ] PROTAGONIST GOAL DEFINED (-30 pts if missing)
-    Pass: ${CHARACTER_DEPTH_AXIS.checkpoints[0].passCondition}
-
-[ ] PROTAGONIST FLAW DEFINED (-25 pts if missing)
-    Pass: ${CHARACTER_DEPTH_AXIS.checkpoints[1].passCondition}
-
-[ ] ANTAGONIST/OPPOSITION DEFINED (-20 pts if missing)
-    Pass: ${CHARACTER_DEPTH_AXIS.checkpoints[2].passCondition}
-
-[ ] THE "GHOST" (Backstory Trauma) (-10 pts if missing)
-    For ${intent.targetDemographic} resonance, this is especially important.
-    Pass: ${CHARACTER_DEPTH_AXIS.checkpoints[3].passCondition}
-
-=============================================================================
-AXIS 3: PACING & STRUCTURE (20% weight)
-=============================================================================
-Pass Threshold: 3 acts and inciting incident required
-
-[ ] THREE ACTS IDENTIFIABLE (-25 pts if missing)
-    Look for: "Setup," "Confrontation," "Resolution" or equivalent beats
-    Pass: ${PACING_STRUCTURE_AXIS.checkpoints[0].passCondition}
-
-[ ] INCITING INCIDENT IN FIRST 25% (-20 pts if late/missing)
-    Pass: ${PACING_STRUCTURE_AXIS.checkpoints[1].passCondition}
-
-[ ] LOW POINT/ALL IS LOST (-15 pts if missing)
-    Pass: ${PACING_STRUCTURE_AXIS.checkpoints[2].passCondition}
-
-[ ] MIDPOINT TURN (-10 pts if missing)
-    Pass: ${PACING_STRUCTURE_AXIS.checkpoints[3].passCondition}
-
-=============================================================================
-AXIS 4: GENRE FIDELITY (15% weight) - ${intent.primaryGenre.toUpperCase()} + ${intent.toneProfile.toUpperCase()}
-=============================================================================
-
-[ ] GENRE KEYWORDS PRESENT (3+ required, -20 pts if <3)
-    Required keywords for ${intent.primaryGenre}: ${genreKeywords.required.join(', ')}
-    Avoid (would hurt fidelity): ${genreKeywords.avoid.join(', ')}
-
-[ ] TONE KEYWORDS PRESENT (3+ required)
-    Required keywords for ${intent.toneProfile}: ${toneKeywords.required.join(', ')}
-    Avoid (inconsistent with tone): ${toneKeywords.avoid.join(', ')}
-
-[ ] ESSENTIAL CONVENTIONS PRESENT (-25 pts if missing)
-    Pass: Treatment includes must-have elements for ${intent.primaryGenre}
-
-[ ] ENDING TYPE APPROPRIATE
-    Acceptable endings for ${intent.toneProfile}: ${endingExpectations.acceptable.join(', ')}
-    Penalized endings: ${endingExpectations.penalized.join(', ')}
-
-=============================================================================
-AXIS 5: COMMERCIAL VIABILITY (15% weight) - ${intent.targetDemographic.toUpperCase()}
-=============================================================================
-
-[ ] PROTAGONIST MATCHES TARGET DEMOGRAPHIC (-20 pts if mismatch)
-    Target protagonist age: ${demoThemes.protagonistAge}
-    Pass: ${COMMERCIAL_VIABILITY_AXIS.checkpoints[0].passCondition}
-
-[ ] DEMOGRAPHIC-RELEVANT THEMES PRESENT (-20 pts if missing)
-    Required themes for ${intent.targetDemographic}: ${demoThemes.themes.join(', ')}
-
-[ ] MARKETABLE LOGLINE (-15 pts if weak)
-    Pass: ${COMMERCIAL_VIABILITY_AXIS.checkpoints[2].passCondition}
-
-=============================================================================
-READY FOR PRODUCTION THRESHOLD: ${READY_FOR_PRODUCTION_THRESHOLD}/100
-=============================================================================
-If score >= ${READY_FOR_PRODUCTION_THRESHOLD}, the treatment is ready to proceed to scripting.
-Do not suggest minor improvements if this threshold is met.
-
-${iteration >= MAX_ITERATIONS ? `
-=============================================================================
-FINAL ITERATION - HARD STOP
-=============================================================================
-This is iteration ${iteration}. The treatment must be accepted in its current state
-unless there is a FATAL FLAW (broken logic, major contradiction, completely missing
-protagonist). Do NOT suggest "better words," "more flair," or stylistic improvements.
-` : ''}
+READY THRESHOLD: ${READY_FOR_PRODUCTION_THRESHOLD}/100. If score >= ${READY_FOR_PRODUCTION_THRESHOLD}, minimize suggestions.
+${iteration >= MAX_ITERATIONS ? 'FINAL ITERATION: Accept unless FATAL FLAW exists.' : ''}
 `
 }
