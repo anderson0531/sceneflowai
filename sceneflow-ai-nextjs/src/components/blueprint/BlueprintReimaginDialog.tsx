@@ -48,6 +48,7 @@ type Props = {
     visualStyle?: string
     duration?: string
     targetAudience?: string
+    variantCount?: number // Smart variant count based on complexity
   }) => Promise<void>
   existingVariant?: any // For reimagine mode (editing existing)
   initialIdea?: IdeationConcept // Pre-populated from Ideation
@@ -337,6 +338,10 @@ export function BlueprintReimaginDialog({
       return
     }
     
+    // Smart variant count: reduce to 1 when many story directions selected to avoid OOM
+    const hasComplexInput = selectedInstructions.length > 2 || customInstruction.trim().length > 200
+    const variantCount = hasComplexInput ? 1 : 3
+    
     setIsGenerating(true)
     try {
       await onGenerate(buildInput(), {
@@ -344,7 +349,8 @@ export function BlueprintReimaginDialog({
         tone,
         visualStyle,
         duration,
-        targetAudience
+        targetAudience,
+        variantCount
       })
       
       toast.success(isReimaginMode ? 'Blueprint reimagined!' : 'Blueprint generated!')

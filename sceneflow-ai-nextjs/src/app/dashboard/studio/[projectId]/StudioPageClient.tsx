@@ -163,10 +163,14 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   }
 
   // Generate film treatment handler
-  const handleGenerateBlueprint = async (text: string, opts?: { persona?: 'Narrator'|'Director'; model?: string; rigor?: 'fast'|'balanced'|'thorough' }) => {
+  const handleGenerateBlueprint = async (text: string, opts?: { persona?: 'Narrator'|'Director'; model?: string; rigor?: 'fast'|'balanced'|'thorough'; variantCount?: number }) => {
     setLastInput(text)
     setIsGen(true)
     startProgress()
+    
+    // Use provided variant count, default to 3
+    const variantCount = opts?.variantCount ?? 3
+    console.log('[StudioPage] Generating Blueprint with', variantCount, 'variant(s)')
     
     try {
       const response = await fetch('/api/ideation/film-treatment', {
@@ -177,7 +181,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           format: 'short_film',
           filmType: 'short_film',
           rigor: opts?.rigor || 'thorough',
-          variants: 3
+          variants: variantCount
         })
       })
       
