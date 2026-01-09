@@ -13,6 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import TreatmentEditorDialog from './TreatmentEditorDialog'
 import BlueprintReimaginDialog from './BlueprintReimaginDialog'
 import BlueprintRefineDialog from './BlueprintRefineDialog'
+import { CoreInfoEditDialog } from './CoreInfoEditDialog'
+import { StorySetupEditDialog } from './StorySetupEditDialog'
+import { ToneStyleEditDialog } from './ToneStyleEditDialog'
+import { BeatsEditDialog } from './BeatsEditDialog'
+import { CharactersEditDialog } from './CharactersEditDialog'
 import OwnerCollabPanel from '@/components/studio/OwnerCollabPanel'
 import { getCuratedElevenVoices, type CuratedVoice } from '@/lib/tts/voices'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
@@ -61,6 +66,11 @@ export function TreatmentCard() {
   const [editorOpen, setEditorOpen] = useState(false)
   const [reimaginOpen, setReimaginOpen] = useState(false)
   const [refineOpen, setRefineOpen] = useState(false)
+  const [coreInfoEditOpen, setCoreInfoEditOpen] = useState(false)
+  const [storySetupEditOpen, setStorySetupEditOpen] = useState(false)
+  const [toneStyleEditOpen, setToneStyleEditOpen] = useState(false)
+  const [beatsEditOpen, setBeatsEditOpen] = useState(false)
+  const [charactersEditOpen, setCharactersEditOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isSharing, setIsSharing] = useState(false)
@@ -565,7 +575,17 @@ export function TreatmentCard() {
                   </div>
                   {/* Core Identifying Information */}
                   <div className="space-y-1">
-                    <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Core Identifying Information</div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Core Identifying Information</div>
+                      <Button
+                        onClick={() => setCoreInfoEditOpen(true)}
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0 hover:bg-slate-700/50"
+                      >
+                        <PencilLine className="w-3 h-3 text-gray-400 hover:text-cyan-400" />
+                      </Button>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                       <div>
                         <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Title</div>
@@ -606,7 +626,17 @@ export function TreatmentCard() {
 
                   {/* Narrative Structure & Plot */}
                   <div className="space-y-1">
-                    <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Story Setup</div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Story Setup</div>
+                      <Button
+                        onClick={() => setStorySetupEditOpen(true)}
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0 hover:bg-slate-700/50"
+                      >
+                        <PencilLine className="w-3 h-3 text-gray-400 hover:text-cyan-400" />
+                      </Button>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                       <div>
                         <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Setting</div>
@@ -625,7 +655,17 @@ export function TreatmentCard() {
 
                   {/* Tone, Style, & Themes */}
                   <div className="space-y-1">
-                    <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Tone, Style, & Themes</div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Tone, Style, & Themes</div>
+                      <Button
+                        onClick={() => setToneStyleEditOpen(true)}
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0 hover:bg-slate-700/50"
+                      >
+                        <PencilLine className="w-3 h-3 text-gray-400 hover:text-cyan-400" />
+                      </Button>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                       <div>
                         <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Tone</div>
@@ -654,7 +694,17 @@ export function TreatmentCard() {
 
                   {/* Beats & Runtime */}
                   <div className="space-y-1">
-                    <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Beats & Runtime</div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Beats & Runtime</div>
+                      <Button
+                        onClick={() => setBeatsEditOpen(true)}
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0 hover:bg-slate-700/50"
+                      >
+                        <PencilLine className="w-3 h-3 text-gray-400 hover:text-cyan-400" />
+                      </Button>
+                    </div>
                     <div className="space-y-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                       <div>
                         <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Synopsis</div>
@@ -682,9 +732,19 @@ export function TreatmentCard() {
                   {/* Characters - Expanded View with Psychological Depth */}
                   {Array.isArray(v.character_descriptions) && v.character_descriptions.length > 0 ? (
                     <div className="space-y-3">
-                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-2">
-                        <Users className="w-3 h-3" />
-                        Characters ({v.character_descriptions.length})
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-2">
+                          <Users className="w-3 h-3" />
+                          Characters ({v.character_descriptions.length})
+                        </div>
+                        <Button
+                          onClick={() => setCharactersEditOpen(true)}
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 w-6 p-0 hover:bg-slate-700/50"
+                        >
+                          <PencilLine className="w-3 h-3 text-gray-400 hover:text-cyan-400" />
+                        </Button>
                       </div>
                       <div className="space-y-3">
                         {v.character_descriptions.map((c, idx) => (
@@ -902,6 +962,57 @@ export function TreatmentCard() {
             try { (useGuideStore.getState() as any).updateTreatmentVariant(activeVariant.id, patch) } catch {}
             setRefineOpen(false)
           }}
+        />
+        {/* Section-Specific Edit Dialogs */}
+        <CoreInfoEditDialog
+          open={coreInfoEditOpen}
+          variant={activeVariant as any}
+          onClose={() => setCoreInfoEditOpen(false)}
+          onApply={(patch) => {
+            try { (useGuideStore.getState() as any).updateTreatmentVariant(activeVariant.id, patch) } catch {}
+            setCoreInfoEditOpen(false)
+          }}
+          projectId={guide.projectId}
+        />
+        <StorySetupEditDialog
+          open={storySetupEditOpen}
+          variant={activeVariant as any}
+          onClose={() => setStorySetupEditOpen(false)}
+          onApply={(patch) => {
+            try { (useGuideStore.getState() as any).updateTreatmentVariant(activeVariant.id, patch) } catch {}
+            setStorySetupEditOpen(false)
+          }}
+          projectId={guide.projectId}
+        />
+        <ToneStyleEditDialog
+          open={toneStyleEditOpen}
+          variant={activeVariant as any}
+          onClose={() => setToneStyleEditOpen(false)}
+          onApply={(patch) => {
+            try { (useGuideStore.getState() as any).updateTreatmentVariant(activeVariant.id, patch) } catch {}
+            setToneStyleEditOpen(false)
+          }}
+          projectId={guide.projectId}
+        />
+        <BeatsEditDialog
+          open={beatsEditOpen}
+          variant={activeVariant as any}
+          onClose={() => setBeatsEditOpen(false)}
+          onApply={(patch) => {
+            try { (useGuideStore.getState() as any).updateTreatmentVariant(activeVariant.id, patch) } catch {}
+            setBeatsEditOpen(false)
+          }}
+          projectId={guide.projectId}
+        />
+        <CharactersEditDialog
+          open={charactersEditOpen}
+          variant={activeVariant as any}
+          onClose={() => setCharactersEditOpen(false)}
+          onApply={(patch) => {
+            try { (useGuideStore.getState() as any).updateTreatmentVariant(activeVariant.id, patch) } catch {}
+            setCharactersEditOpen(false)
+          }}
+          projectId={guide.projectId}
         />
         {/* Blueprint Reimagine Dialog - Major story changes */}
         <BlueprintReimaginDialog

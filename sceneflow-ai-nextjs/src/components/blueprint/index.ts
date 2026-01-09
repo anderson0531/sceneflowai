@@ -72,3 +72,8 @@ export { ActionBar } from './ActionBar'
 // Blueprint Editor Dialogs (v2)
 export { BlueprintReimaginDialog } from './BlueprintReimaginDialog'
 export { BlueprintRefineDialog } from './BlueprintRefineDialog'
+export { CoreInfoEditDialog } from './CoreInfoEditDialog'
+export { StorySetupEditDialog } from './StorySetupEditDialog'
+export { ToneStyleEditDialog } from './ToneStyleEditDialog'
+export { BeatsEditDialog } from './BeatsEditDialog'
+export { CharactersEditDialog } from './CharactersEditDialog'
