@@ -28,7 +28,7 @@ interface StudioPageClientProps {
 export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { guide, updateTitle, updateTreatment, setTreatmentVariants } = useGuideStore();
+  const { guide, updateTitle, updateTreatment, setTreatmentVariants, variantsLastModified } = useGuideStore();
   const { invokeCue } = useCue();
   const { currentProject, setCurrentProject, setBeats } = useStore();
   const [isNewProject, setIsNewProject] = useState(false);
@@ -447,6 +447,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     const hasData = guide.treatmentVariants?.length > 0 || guide.filmTreatment?.trim()
     if (!hasData) return
     
+    // Debug: log when auto-save triggers
+    console.debug('[StudioPage] Auto-save triggered:', { variantsLastModified, variantsCount: guide.treatmentVariants?.length })
+    
     // Mark as unsaved when data changes
     setIsSaved(false)
     
@@ -492,7 +495,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         clearTimeout(autoSaveDebounceRef.current)
       }
     }
-  }, [projectId, lastInput, guide.treatmentVariants, guide.title, guide.filmTreatment, beatsView, estimatedRuntime])
+  }, [projectId, lastInput, variantsLastModified, guide.title, guide.filmTreatment, beatsView, estimatedRuntime])
 
   useEffect(() => { console.debug('[StudioPage] outline autogen disabled; relying on OutlineV2') }, [guide?.filmTreatment, currentProject?.id])
 

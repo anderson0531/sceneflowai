@@ -26,6 +26,8 @@ const initialGuide: ProductionGuide = {
 
 interface GuideState {
   guide: ProductionGuide;
+  // Timestamp for detecting variant changes reliably
+  variantsLastModified: number;
   // Project initialization
   initializeProject: (projectData: Partial<ProductionGuide>) => void;
   resetProject: () => void;
@@ -75,6 +77,7 @@ interface GuideState {
 
 export const useGuideStore = create<GuideState>((set) => ({
   guide: initialGuide,
+  variantsLastModified: 0,
   lastEdit: null,
   setLastEdit: (e) => set({ lastEdit: e }),
   undoLastEdit: () => set((state) => {
@@ -392,7 +395,8 @@ export const useGuideStore = create<GuideState>((set) => ({
   
   // New: treatment variants
   setTreatmentVariants: (variants) => set((state) => ({
-    guide: { ...(state.guide as any), treatmentVariants: variants, selectedTreatmentId: variants?.[0]?.id }
+    guide: { ...(state.guide as any), treatmentVariants: variants, selectedTreatmentId: variants?.[0]?.id },
+    variantsLastModified: Date.now()
   })),
   selectTreatmentVariant: (id) => set((state) => ({
     guide: { ...(state.guide as any), selectedTreatmentId: id }
@@ -431,12 +435,12 @@ export const useGuideStore = create<GuideState>((set) => ({
     const before = list[idx]
     const updated = [...list]
     updated[idx] = { ...before, ...patch, updatedAt: Date.now() }
-    return { guide: { ...(state.guide as any), treatmentVariants: updated }, lastEdit: { variantId: id, before } } as any
+    return { guide: { ...(state.guide as any), treatmentVariants: updated }, lastEdit: { variantId: id, before }, variantsLastModified: Date.now() } as any
   }),
   addTreatmentVariant: (variant) => set((state) => {
     const list = ((state.guide as any).treatmentVariants || []) as any[]
     const next = [...list, variant]
-    return { guide: { ...(state.guide as any), treatmentVariants: next } } as any
+    return { guide: { ...(state.guide as any), treatmentVariants: next }, variantsLastModified: Date.now() } as any
   }),
   cloneTreatmentVariant: (id) => {
     let cloned: any = null
@@ -447,7 +451,7 @@ export const useGuideStore = create<GuideState>((set) => ({
       const newId = `${id}′`
       cloned = { ...src, id: newId, label: `${src.label || src.id}′` }
       const next = [...list, cloned]
-      return { guide: { ...(state.guide as any), treatmentVariants: next, selectedTreatmentId: newId } } as any
+      return { guide: { ...(state.guide as any), treatmentVariants: next, selectedTreatmentId: newId }, variantsLastModified: Date.now() } as any
     })
     return cloned
   }
