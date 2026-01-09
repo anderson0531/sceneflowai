@@ -22,7 +22,7 @@ import {
 } from '@/lib/treatment/scoringChecklist'
 
 export const runtime = 'nodejs'
-export const maxDuration = 60
+export const maxDuration = 120
 
 /**
  * Audience Resonance Analysis API

@@ -237,6 +237,45 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         if (data.estimatedRuntime) {
           setEstimatedRuntime(data.estimatedRuntime)
         }
+        
+        // Auto-create project after initial generation if on new-project URL
+        // This ensures the project gets a real ID and enables auto-save for future changes
+        if (projectId.startsWith('new-project')) {
+          console.log('[StudioPage] Auto-creating project after initial generation...')
+          const userId = typeof window !== 'undefined' ? localStorage.getItem('authUserId') || crypto.randomUUID() : 'anonymous'
+          if (typeof window !== 'undefined' && !localStorage.getItem('authUserId')) {
+            localStorage.setItem('authUserId', userId)
+          }
+          
+          try {
+            const createRes = await fetch('/api/projects', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId,
+                title: variants[0]?.title || 'Untitled Project',
+                description: '',
+                metadata: {
+                  blueprintInput: input,
+                  filmTreatment: variants[0]?.synopsis || variants[0]?.content || '',
+                  treatmentVariants: variants,
+                  beats: data.beats || [],
+                  estimatedRuntime: data.estimatedRuntime || null
+                },
+                currentStep: 'ideation'
+              })
+            })
+            
+            const createData = await createRes.json()
+            if (createData.success && createData.project) {
+              console.log('[StudioPage] Project auto-created:', createData.project.id)
+              // Navigate to the real project URL to enable future auto-saves
+              router.replace(`/dashboard/studio/${createData.project.id}`)
+            }
+          } catch (createErr) {
+            console.error('[StudioPage] Auto-create project failed (non-blocking):', createErr)
+          }
+        }
       } else {
         // Debug logging for when treatment display fails
         console.warn('[StudioPage] Film treatment not displayed. Response:', {

@@ -10,6 +10,10 @@
       "maxDuration": 300,
       "memory": 3008
     },
+    "src/app/api/treatment/analyze-resonance/route.ts": {
+      "maxDuration": 120,
+      "memory": 1024
+    },
     "src/app/api/v2/blueprint/analyze/route.ts": {
       "maxDuration": 300,
       "memory": 2048
