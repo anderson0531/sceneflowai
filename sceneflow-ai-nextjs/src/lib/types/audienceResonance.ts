@@ -123,6 +123,8 @@ export interface ResonanceInsight {
   actionable: boolean
   fixSuggestion?: string // AI-generated fix text
   fixSection?: 'core' | 'story' | 'tone' | 'beats' | 'characters' // Which refine section to target
+  checkpointId?: string // Links to specific checkpoint for local score recalculation (e.g., 'hook-or-twist')
+  axisId?: 'concept-originality' | 'character-depth' | 'pacing-structure' | 'genre-fidelity' | 'commercial-viability' // Which scoring axis this insight relates to
 }
 
 export interface OptimizationRecommendation {
@@ -174,6 +176,25 @@ export interface ToneHeatMapSegment {
 }
 
 // =============================================================================
+// CHECKPOINT RESULTS (for local score recalculation)
+// =============================================================================
+
+export interface CheckpointResult {
+  passed: boolean
+  penalty: number // 0 if passed, penalty value if failed
+}
+
+export type AxisCheckpointResults = Record<string, CheckpointResult>
+
+export interface CheckpointResults {
+  'concept-originality': AxisCheckpointResults
+  'character-depth': AxisCheckpointResults
+  'pacing-structure': AxisCheckpointResults
+  'genre-fidelity': AxisCheckpointResults
+  'commercial-viability': AxisCheckpointResults
+}
+
+// =============================================================================
 // FULL ANALYSIS RESPONSE
 // =============================================================================
 
@@ -185,6 +206,9 @@ export interface AudienceResonanceAnalysis {
   // Core Metrics
   greenlightScore: GreenlightScore
   axes: ResonanceAxis[]
+  
+  // Checkpoint Results (for local scoring)
+  checkpointResults?: CheckpointResults
   
   // Detailed Insights
   insights: ResonanceInsight[]

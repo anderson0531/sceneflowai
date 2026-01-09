@@ -10,6 +10,8 @@ import type {
   OptimizationRecommendation,
   GreenlightScore,
   AudienceIntent,
+  CheckpointResults,
+  AxisCheckpointResults,
   getGreenlightTier
 } from '@/lib/types/audienceResonance'
 import {
@@ -18,7 +20,8 @@ import {
   READY_FOR_PRODUCTION_THRESHOLD,
   MAX_ITERATIONS,
   getIterationFocus,
-  isSuggestionRestricted
+  isSuggestionRestricted,
+  ALL_SCORING_AXES
 } from '@/lib/treatment/scoringChecklist'
 
 export const runtime = 'nodejs'
@@ -317,6 +320,15 @@ async function analyzeWithGemini(
     // Determine appropriate fix section based on category if not provided
     const inferredFixSection = !i.fix_section ? inferFixSectionFromCategory(category) : mapFixSection(i.fix_section)
     
+    // Map axis_id from prompt format to our format
+    const axisIdMap: Record<string, ResonanceInsight['axisId']> = {
+      'concept_originality': 'concept-originality',
+      'character_depth': 'character-depth',
+      'pacing_structure': 'pacing-structure',
+      'genre_fidelity': 'genre-fidelity',
+      'commercial_viability': 'commercial-viability'
+    }
+    
     return {
       id: `insight-${idx}`,
       category,
@@ -329,7 +341,10 @@ async function analyzeWithGemini(
       // Provide default fix suggestion if weakness is missing one
       fixSuggestion: i.fix_suggestion || (isWeakness ? generateDefaultFixSuggestion(i.title, category) : undefined),
       // Ensure fix section is set for weaknesses
-      fixSection: isWeakness ? (inferredFixSection || 'story') : inferredFixSection
+      fixSection: isWeakness ? (inferredFixSection || 'story') : inferredFixSection,
+      // Checkpoint tracking for local score recalculation (only for weaknesses)
+      checkpointId: isWeakness ? i.checkpoint_id : undefined,
+      axisId: isWeakness ? axisIdMap[i.axis_id] : undefined
     }
   })
   
@@ -351,11 +366,15 @@ async function analyzeWithGemini(
     effort: r.effort === 'quick' ? 'quick' : r.effort === 'significant' ? 'significant' : 'moderate'
   }))
   
+  // Parse checkpoint results from Gemini response
+  const checkpointResults = parseCheckpointResults(parsed.checkpoints_passed)
+  
   return {
     intent,
     treatmentId: reqId,
     greenlightScore,
     axes,
+    checkpointResults,
     insights,
     recommendations,
     analysisVersion: '1.0',
@@ -435,7 +454,9 @@ ANALYZE and return JSON with this structure:
       "treatment_section": string (which part of treatment this refers to),
       "actionable": boolean,
       "fix_suggestion": string (if actionable, provide specific text to add/change - MUST be ready-to-use text),
-      "fix_section": "core" | "story" | "tone" | "beats" | "characters"
+      "fix_section": "core" | "story" | "tone" | "beats" | "characters",
+      "checkpoint_id": string (REQUIRED for weaknesses - the specific checkpoint ID this relates to, e.g., "hook-or-twist", "protagonist-goal", "three-act-structure"),
+      "axis_id": "concept_originality" | "character_depth" | "pacing_structure" | "genre_fidelity" | "commercial_viability" (REQUIRED for weaknesses - which scoring axis this insight relates to)
     }
   ],
   
@@ -502,6 +523,72 @@ function getDemographicGuidelines(demo: string): string {
     'mature-21+': 'Values: complex themes, moral ambiguity, explicit content if meaningful, sophisticated narratives. Avoid: unnecessary shock value.'
   }
   return guidelines[demo] || 'Consider broad appeal factors: relatable characters, clear narrative, emotional resonance.'
+}
+
+/**
+ * Parse checkpoints_passed from Gemini response into structured CheckpointResults
+ * Maps each checkpoint to passed/failed status with penalty values from axis definitions
+ */
+function parseCheckpointResults(rawCheckpoints: Record<string, string[]> | undefined): CheckpointResults {
+  // Axis ID mapping from prompt format to our format
+  const axisIdMap: Record<string, keyof CheckpointResults> = {
+    'concept_originality': 'concept-originality',
+    'character_depth': 'character-depth',
+    'pacing_structure': 'pacing-structure',
+    'genre_fidelity': 'genre-fidelity',
+    'commercial_viability': 'commercial-viability'
+  }
+  
+  // Initialize with empty results
+  const results: CheckpointResults = {
+    'concept-originality': {},
+    'character-depth': {},
+    'pacing-structure': {},
+    'genre-fidelity': {},
+    'commercial-viability': {}
+  }
+  
+  // Build checkpoint penalty lookup from axis definitions
+  const checkpointPenalties: Record<string, number> = {}
+  for (const axis of ALL_SCORING_AXES) {
+    for (const checkpoint of axis.checkpoints) {
+      checkpointPenalties[checkpoint.id] = checkpoint.failPenalty
+    }
+  }
+  
+  // If no checkpoints from Gemini, return empty results
+  if (!rawCheckpoints || typeof rawCheckpoints !== 'object') {
+    console.log('[Resonance] No checkpoint data from Gemini, returning empty results')
+    return results
+  }
+  
+  // Process each axis
+  for (const [rawAxisId, passedCheckpointIds] of Object.entries(rawCheckpoints)) {
+    const axisId = axisIdMap[rawAxisId]
+    if (!axisId) {
+      console.warn(`[Resonance] Unknown axis ID in checkpoints_passed: ${rawAxisId}`)
+      continue
+    }
+    
+    // Find the axis definition to get all checkpoints
+    const axisConfig = ALL_SCORING_AXES.find(a => a.id === axisId)
+    if (!axisConfig) continue
+    
+    // Mark each checkpoint as passed or failed
+    const axisResults: AxisCheckpointResults = {}
+    for (const checkpoint of axisConfig.checkpoints) {
+      const passed = Array.isArray(passedCheckpointIds) && passedCheckpointIds.includes(checkpoint.id)
+      axisResults[checkpoint.id] = {
+        passed,
+        penalty: passed ? 0 : checkpoint.failPenalty
+      }
+    }
+    
+    results[axisId] = axisResults
+  }
+  
+  console.log('[Resonance] Parsed checkpoint results:', JSON.stringify(results, null, 2))
+  return results
 }
 
 function mapCategory(cat: string): ResonanceInsight['category'] {

@@ -16,7 +16,8 @@ import {
   TrendingUp,
   Users,
   Film,
-  Palette
+  Palette,
+  ShieldCheck
 } from 'lucide-react'
 import { GreenlightScore } from './GreenlightScore'
 import { ResonanceRadarChart, ResonanceRadarLegend } from '@/components/charts/ResonanceRadarChart'
@@ -26,6 +27,7 @@ import {
   type ResonanceInsight,
   type PrimaryGenre,
   type ToneProfile,
+  type CheckpointResults,
   GENRE_OPTIONS,
   DEMOGRAPHIC_OPTIONS,
   TONE_OPTIONS,
@@ -33,6 +35,11 @@ import {
 } from '@/lib/types/audienceResonance'
 import { READY_FOR_PRODUCTION_THRESHOLD, MAX_ITERATIONS } from '@/lib/treatment/scoringChecklist'
 import { useResonanceStore, type ResonanceCacheEntry } from '@/store/useResonanceStore'
+import { 
+  calculateLocalScore, 
+  createEmptyCheckpointResults,
+  type CheckpointOverride 
+} from '@/lib/treatment/localScoring'
 
 interface AudienceResonancePanelProps {
   treatment?: any
@@ -89,6 +96,17 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     cachedState?.pendingFixesCount || 0
   )
   
+  // Local scoring state - NEW
+  const [serverCheckpointResults, setServerCheckpointResultsLocal] = useState<CheckpointResults | null>(
+    cachedState?.serverCheckpointResults || null
+  )
+  const [checkpointOverrides, setCheckpointOverridesLocal] = useState<CheckpointOverride[]>(
+    cachedState?.checkpointOverrides || []
+  )
+  const [isScoreEstimated, setIsScoreEstimatedLocal] = useState(
+    cachedState?.isScoreEstimated || false
+  )
+  
   // Wrapper functions to sync local state with Zustand store
   const setIntent = useCallback((value: AudienceIntent | ((prev: AudienceIntent) => AudienceIntent)) => {
     setIntentLocal(prev => {
@@ -135,6 +153,25 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
       setStoreAnalysis(treatmentId, { pendingFixesCount: newValue })
       return newValue
     })
+  }, [treatmentId, setStoreAnalysis])
+  
+  // Local scoring setters - NEW
+  const setServerCheckpointResults = useCallback((value: CheckpointResults | null) => {
+    setServerCheckpointResultsLocal(value)
+    setStoreAnalysis(treatmentId, { serverCheckpointResults: value })
+  }, [treatmentId, setStoreAnalysis])
+  
+  const setCheckpointOverrides = useCallback((value: CheckpointOverride[] | ((prev: CheckpointOverride[]) => CheckpointOverride[])) => {
+    setCheckpointOverridesLocal(prev => {
+      const newValue = typeof value === 'function' ? value(prev) : value
+      setStoreAnalysis(treatmentId, { checkpointOverrides: newValue })
+      return newValue
+    })
+  }, [treatmentId, setStoreAnalysis])
+  
+  const setIsScoreEstimated = useCallback((value: boolean) => {
+    setIsScoreEstimatedLocal(value)
+    setStoreAnalysis(treatmentId, { isScoreEstimated: value })
   }, [treatmentId, setStoreAnalysis])
   
   // Sync with prop changes
@@ -200,6 +237,13 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
           setTimeout(() => setScoreDelta(null), 5000)
         }
         setPreviousScore(newScore)
+        
+        // Store checkpoint results for local scoring - NEW
+        if (data.analysis.checkpointResults) {
+          setServerCheckpointResults(data.analysis.checkpointResults)
+          setCheckpointOverrides([]) // Reset overrides on new analysis
+          setIsScoreEstimated(false) // Server score is authoritative
+        }
         
         // Update iteration count and ready-for-production status
         if (isReanalysis) {
@@ -269,6 +313,54 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
         setAppliedFixes(prev => [...prev, insight.id])
         setPendingFixesCount(prev => prev + 1)
         
+        // LOCAL SCORING: Add checkpoint override if insight has checkpointId - NEW
+        if (insight.checkpointId && insight.axisId && serverCheckpointResults) {
+          const newOverride: CheckpointOverride = {
+            checkpointId: insight.checkpointId,
+            axisId: insight.axisId,
+            overridePassed: true // User applied the fix
+          }
+          
+          setCheckpointOverrides(prev => {
+            // Don't add duplicate overrides
+            const existing = prev.find(
+              o => o.checkpointId === insight.checkpointId && o.axisId === insight.axisId
+            )
+            if (existing) return prev
+            return [...prev, newOverride]
+          })
+          
+          // Recalculate score locally
+          const updatedOverrides = checkpointOverrides.some(
+            o => o.checkpointId === insight.checkpointId && o.axisId === insight.axisId
+          ) ? checkpointOverrides : [...checkpointOverrides, newOverride]
+          
+          const localResult = calculateLocalScore(serverCheckpointResults, updatedOverrides)
+          
+          // Update analysis with estimated score
+          if (analysis) {
+            const updatedAnalysis: AudienceResonanceAnalysis = {
+              ...analysis,
+              greenlightScore: localResult.greenlightScore,
+              axes: localResult.axes
+            }
+            setAnalysis(updatedAnalysis)
+            setIsScoreEstimated(true)
+            
+            // Calculate and show score delta
+            const newScore = localResult.overallScore
+            if (previousScore !== null && newScore !== previousScore) {
+              setScoreDelta(newScore - previousScore)
+              setTimeout(() => setScoreDelta(null), 5000)
+            }
+            setPreviousScore(newScore)
+            
+            // Check if now ready for production
+            const ready = newScore >= READY_FOR_PRODUCTION_THRESHOLD
+            setIsReadyForProduction(ready)
+          }
+        }
+        
         // Notify parent component
         onFixApplied?.(insight.id, insight.fixSection, updatedTreatment)
         onTreatmentUpdate?.(updatedTreatment)
@@ -284,7 +376,7 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     } finally {
       setApplyingFix(null)
     }
-  }, [treatment, onFixApplied, onTreatmentUpdate, runAnalysis])
+  }, [treatment, onFixApplied, onTreatmentUpdate, runAnalysis, serverCheckpointResults, checkpointOverrides, analysis, previousScore, setAnalysis, setIsScoreEstimated, setCheckpointOverrides, setPreviousScore, setIsReadyForProduction, setAppliedFixes, setPendingFixesCount, iterationCount])
   
   // Toggle insight expansion
   const toggleInsight = (id: string) => {
@@ -304,6 +396,10 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     setPendingFixesCountLocal(0)
     setScoreDelta(null)
     setPreviousScoreLocal(null)
+    // Reset local scoring state - NEW
+    setServerCheckpointResultsLocal(null)
+    setCheckpointOverridesLocal([])
+    setIsScoreEstimatedLocal(false)
     // Clear store for this treatment
     clearStoreAnalysis(treatmentId)
   }
@@ -318,6 +414,10 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     setScoreDelta(null)
     setPreviousScoreLocal(null)
     setError(null)
+    // Reset local scoring state - NEW
+    setServerCheckpointResultsLocal(null)
+    setCheckpointOverridesLocal([])
+    setIsScoreEstimatedLocal(false)
     // Clear store for this treatment
     clearStoreAnalysis(treatmentId)
   }
@@ -519,6 +619,24 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
                   size="md"
                   genre={GENRE_OPTIONS.find(g => g.value === intent.primaryGenre)?.label}
                 />
+                
+                {/* Estimated Score Badge - NEW */}
+                {isScoreEstimated && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-xs text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30">
+                      Estimated Score
+                    </span>
+                    <button
+                      onClick={() => runAnalysis(false, true)}
+                      disabled={isAnalyzing}
+                      className="flex items-center gap-1 text-xs px-2 py-0.5 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 rounded-full border border-cyan-500/30 transition-colors disabled:opacity-50"
+                      title="Re-analyze with API to verify score"
+                    >
+                      <ShieldCheck className="w-3 h-3" />
+                      Verify Score
+                    </button>
+                  </div>
+                )}
                 
                 {/* Score Delta Indicator */}
                 <AnimatePresence>

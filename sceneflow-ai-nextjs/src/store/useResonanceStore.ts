@@ -4,14 +4,18 @@
  * Zustand store with localStorage persistence for Audience Resonance analysis state.
  * Caches analysis results per treatment ID so users don't lose their work when
  * hiding/showing the side panel or navigating between pages.
+ * 
+ * NEW: Supports local score recalculation with checkpoint overrides
  */
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { 
   AudienceIntent, 
-  AudienceResonanceAnalysis 
+  AudienceResonanceAnalysis,
+  CheckpointResults
 } from '@/lib/types/audienceResonance';
 import { DEFAULT_INTENT } from '@/lib/types/audienceResonance';
+import type { CheckpointOverride } from '@/lib/treatment/localScoring';
 
 // Cache entry for a single treatment's resonance analysis
 export interface ResonanceCacheEntry {
@@ -23,6 +27,11 @@ export interface ResonanceCacheEntry {
   isReadyForProduction: boolean;
   pendingFixesCount: number;
   lastUpdated: number;
+  
+  // NEW: Local scoring support
+  serverCheckpointResults: CheckpointResults | null; // Original results from API
+  checkpointOverrides: CheckpointOverride[]; // User-applied fixes
+  isScoreEstimated: boolean; // True if using local calculation with overrides
 }
 
 interface ResonanceState {
@@ -46,6 +55,10 @@ const createDefaultEntry = (): ResonanceCacheEntry => ({
   isReadyForProduction: false,
   pendingFixesCount: 0,
   lastUpdated: Date.now(),
+  // NEW: Local scoring defaults
+  serverCheckpointResults: null,
+  checkpointOverrides: [],
+  isScoreEstimated: false,
 });
 
 export const useResonanceStore = create<ResonanceState>()(
@@ -127,5 +140,10 @@ export const useResonanceForTreatment = (treatmentId: string) => {
     iterationCount: cached?.iterationCount || 0,
     isReadyForProduction: cached?.isReadyForProduction || false,
     pendingFixesCount: cached?.pendingFixesCount || 0,
+    
+    // NEW: Local scoring getters
+    serverCheckpointResults: cached?.serverCheckpointResults || null,
+    checkpointOverrides: cached?.checkpointOverrides || [],
+    isScoreEstimated: cached?.isScoreEstimated || false,
   };
 };
