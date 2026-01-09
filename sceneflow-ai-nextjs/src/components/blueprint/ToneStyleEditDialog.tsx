@@ -55,6 +55,38 @@ export function ToneStyleEditDialog({ open, variant, onClose, onApply, projectId
     )
   }
 
+  // Immediately refine with a specific instruction
+  const refineWithInstruction = async (instruction: string, actionId: string) => {
+    if (!variant || isRefining) return
+    setIsRefining(true)
+    try {
+      const res = await fetch('/api/treatment/refine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          section: 'tone',
+          variant: { ...variant, ...draft },
+          instructions: instruction,
+          projectId,
+        }),
+      })
+      if (!res.ok) throw new Error('Refinement failed')
+      const data = await res.json()
+      if (data.success && data.draft) {
+        setDraft(prev => ({ ...prev, ...data.draft }))
+        setHasChanges(true)
+        toast.success(`Refined ${data.fieldsUpdated?.length || 0} fields`)
+      } else {
+        throw new Error(data.message || 'Refinement failed')
+      }
+    } catch (error) {
+      console.error('Refine error:', error)
+      toast.error('Failed to refine')
+    } finally {
+      setIsRefining(false)
+    }
+  }
+
   const updateDraft = (key: string, value: any) => {
     setDraft(prev => ({ ...prev, [key]: value }))
     setHasChanges(true)
@@ -82,10 +114,12 @@ export function ToneStyleEditDialog({ open, variant, onClose, onApply, projectId
 
       if (!res.ok) throw new Error('Refinement failed')
       const data = await res.json()
-      if (data.success && data.refined) {
-        setDraft(prev => ({ ...prev, ...data.refined }))
+      if (data.success && data.draft) {
+        setDraft(prev => ({ ...prev, ...data.draft }))
         setHasChanges(true)
-        toast.success('Tone & style refined!')
+        toast.success(`Refined ${data.fieldsUpdated?.length || 0} fields`)
+      } else {
+        throw new Error(data.message || 'Refinement failed')
       }
     } catch (error) {
       console.error('Refine error:', error)
@@ -116,10 +150,11 @@ export function ToneStyleEditDialog({ open, variant, onClose, onApply, projectId
           </div>
         )}
 
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
+        <DialogHeader className="pb-3 border-b border-slate-700">
+          <DialogTitle className="flex items-center gap-2 text-lg">
             <Palette className="w-5 h-5 text-cyan-400" />
-            <span>Edit Tone & Style</span>
+            <span>Edit</span>
+            <span className="text-gray-500 font-normal">· Tone & Style</span>
             {hasChanges && (
               <span className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-full">
                 Unsaved Changes
@@ -143,15 +178,17 @@ export function ToneStyleEditDialog({ open, variant, onClose, onApply, projectId
             {INSTRUCTION_TEMPLATES.map(template => (
               <button
                 key={template.id}
-                onClick={() => toggleInstruction(template.id)}
+                onClick={() => refineWithInstruction(template.text, template.id)}
+                disabled={isRefining}
                 title={template.text}
                 className={cn(
-                  'px-3 py-1.5 text-xs rounded-lg border transition-all',
-                  selectedInstructions.includes(template.id)
-                    ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300'
-                    : 'bg-slate-800/50 border-slate-700 text-gray-400 hover:border-slate-600 hover:text-gray-300'
+                  'px-3 py-1.5 text-xs rounded-lg border transition-all flex items-center gap-1.5',
+                  isRefining
+                    ? 'opacity-50 cursor-not-allowed'
+                    : 'bg-slate-800/50 border-slate-700 text-gray-400 hover:border-cyan-500/50 hover:bg-cyan-500/10 hover:text-cyan-300'
                 )}
               >
+                <Wand2 className="w-3 h-3" />
                 {template.label}
               </button>
             ))}
