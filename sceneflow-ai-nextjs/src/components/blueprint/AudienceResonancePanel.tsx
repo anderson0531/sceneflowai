@@ -355,14 +355,14 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
                 <span className="text-emerald-300 font-semibold">Ready for Production!</span>
               </div>
               <p className="text-xs text-gray-400 mb-3">
-                Your treatment meets the quality threshold and is ready to proceed to scripting.
+                Your treatment meets the quality threshold and is ready for production.
               </p>
               <button
                 onClick={onProceedToScripting}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium rounded-lg hover:from-emerald-600 hover:to-cyan-600 transition-all"
               >
                 <ArrowRight className="w-4 h-4" />
-                Proceed to Scripting
+                Start Production
               </button>
             </motion.div>
           )}
@@ -397,15 +397,15 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
           {iterationCount >= MAX_ITERATIONS && !isReadyForProduction && (
             <div className="mt-3 p-2 bg-amber-500/10 rounded-lg border border-amber-500/20">
               <p className="text-xs text-amber-400">
-                Maximum refinements reached. Consider proceeding to scripting - 
-                detailed improvements can be made during production.
+                Maximum refinements reached. Consider starting production - 
+                detailed improvements can be made during the scripting phase.
               </p>
               <button
                 onClick={onProceedToScripting}
                 className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2 bg-amber-500/20 text-amber-300 font-medium rounded-lg hover:bg-amber-500/30 transition-all text-sm"
               >
                 <ArrowRight className="w-4 h-4" />
-                Proceed to Scripting Anyway
+                Start Production Anyway
               </button>
             </div>
           )}
@@ -499,6 +499,7 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
                     onToggle={() => toggleInsight(insight.id)}
                     onApplyFix={() => applyFix(insight)}
                     isApplying={applyingFix === insight.id}
+                    isApplied={appliedFixes.includes(insight.id)}
                   />
                 ))}
                 
@@ -603,13 +604,15 @@ function InsightCard({
   expanded,
   onToggle,
   onApplyFix,
-  isApplying
+  isApplying,
+  isApplied
 }: {
   insight: ResonanceInsight
   expanded: boolean
   onToggle: () => void
   onApplyFix: () => void
   isApplying: boolean
+  isApplied: boolean
 }) {
   const statusConfig = {
     strength: {
@@ -632,12 +635,20 @@ function InsightCard({
     }
   }
   
-  const config = statusConfig[insight.status]
+  // Override config for applied state
+  const config = isApplied 
+    ? {
+        icon: CheckCircle2,
+        color: 'text-emerald-400',
+        bg: 'bg-emerald-400/5',
+        border: 'border-emerald-400/30'
+      }
+    : statusConfig[insight.status]
   const Icon = config.icon
   
   return (
     <div 
-      className={`rounded-lg border ${config.border} overflow-hidden transition-all`}
+      className={`rounded-lg border ${config.border} overflow-hidden transition-all ${isApplied ? 'opacity-60' : ''}`}
     >
       {/* Header */}
       <button
@@ -645,7 +656,12 @@ function InsightCard({
         className={`w-full flex items-center gap-3 p-3 ${config.bg} hover:bg-opacity-80 transition-colors text-left`}
       >
         <Icon className={`w-4 h-4 ${config.color} flex-shrink-0`} />
-        <span className="flex-1 text-sm text-white font-medium">{insight.title}</span>
+        <span className={`flex-1 text-sm font-medium ${isApplied ? 'text-gray-400 line-through' : 'text-white'}`}>{insight.title}</span>
+        {isApplied && (
+          <span className="text-[10px] text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded font-medium">
+            ✓ Applied
+          </span>
+        )}
         <ChevronDown 
           className={`w-4 h-4 text-gray-500 transition-transform ${expanded ? 'rotate-180' : ''}`} 
         />
@@ -670,8 +686,8 @@ function InsightCard({
                 </p>
               )}
               
-              {/* Fix Button */}
-              {insight.actionable && insight.fixSuggestion && (
+              {/* Fix Button - hidden when applied */}
+              {!isApplied && insight.actionable && insight.fixSuggestion && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
@@ -688,6 +704,14 @@ function InsightCard({
                   Apply Fix
                   <ArrowRight className="w-3 h-3" />
                 </button>
+              )}
+              
+              {/* Applied confirmation */}
+              {isApplied && (
+                <p className="text-xs text-emerald-400 flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Fix applied to treatment
+                </p>
               )}
             </div>
           </motion.div>
