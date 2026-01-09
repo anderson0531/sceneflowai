@@ -62,11 +62,11 @@ interface Scenario {
 // CONSTANTS
 // =============================================================================
 
-const SCENARIOS: Scenario[] = [
+const SCENARIOS = [
   { id: 'solo', name: 'Solo Creator', shortVideos: 10, longVideos: 2, avgScenes: 10, avgDuration: 8 },
   { id: 'agency', name: 'Small Agency', shortVideos: 30, longVideos: 6, avgScenes: 15, avgDuration: 12 },
   { id: 'studio', name: 'Production Studio', shortVideos: 60, longVideos: 12, avgScenes: 20, avgDuration: 15 },
-];
+] as const satisfies readonly Scenario[];
 
 const ICON_MAP: Record<string, React.ElementType> = {
   FileText, Film, Users, Edit3, Volume2, Globe, Image, Video, Play, 
@@ -77,7 +77,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
 // ANIMATED NUMBER COMPONENT
 // =============================================================================
 
-const AnimatedNumber = ({ 
+const AnimatedNumber = React.memo(function AnimatedNumber({ 
   value, 
   prefix = '', 
   suffix = '',
@@ -87,24 +87,25 @@ const AnimatedNumber = ({
   prefix?: string; 
   suffix?: string;
   duration?: number;
-}) => {
+}) {
   return (
     <motion.span
       key={value}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration }}
+      aria-label={`${prefix}${value.toLocaleString()}${suffix}`}
     >
       {prefix}{value.toLocaleString()}{suffix}
     </motion.span>
   );
-};
+});
 
 // =============================================================================
 // TAB BUTTON COMPONENT
 // =============================================================================
 
-const TabButton = ({ 
+const TabButton = React.memo(function TabButton({ 
   active, 
   onClick, 
   icon: Icon, 
@@ -118,48 +119,56 @@ const TabButton = ({
   label: string;
   shortLabel: string;
   color: string;
-}) => (
-  <button
-    onClick={onClick}
-    className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium transition-all duration-300 ${
-      active
-        ? `bg-gradient-to-r ${color} text-white shadow-lg`
-        : 'bg-slate-800/50 text-gray-400 hover:text-white hover:bg-slate-700/50'
-    }`}
-  >
-    <Icon className="w-4 h-4" />
-    <span className="sm:hidden text-xs">{shortLabel}</span>
-    <span className="hidden sm:inline">{label}</span>
-  </button>
-);
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={active}
+      aria-label={label}
+      className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium transition-all duration-300 ${
+        active
+          ? `bg-gradient-to-r ${color} text-white shadow-lg`
+          : 'bg-slate-800/50 text-gray-400 hover:text-white hover:bg-slate-700/50'
+      }`}
+    >
+      <Icon className="w-4 h-4" aria-hidden="true" />
+      <span className="sm:hidden text-xs">{shortLabel}</span>
+      <span className="hidden sm:inline">{label}</span>
+    </button>
+  );
+});
 
 // =============================================================================
 // SCENARIO SELECTOR
 // =============================================================================
 
-const ScenarioSelector = ({
+const ScenarioSelector = React.memo(function ScenarioSelector({
   selected,
   onChange
 }: {
   selected: ScenarioId;
   onChange: (id: ScenarioId) => void;
-}) => (
-  <div className="flex justify-center gap-2 sm:gap-4 mb-8">
-    {SCENARIOS.map((scenario) => (
-      <button
-        key={scenario.id}
-        onClick={() => onChange(scenario.id)}
-        className={`px-3 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
-          selected === scenario.id
-            ? 'bg-cyan-500 text-white'
-            : 'bg-slate-800/50 text-gray-400 hover:text-white border border-slate-700/50'
-        }`}
-      >
-        {scenario.name}
-      </button>
-    ))}
-  </div>
-);
+}) {
+  return (
+    <div className="flex justify-center gap-2 sm:gap-4 mb-8" role="tablist" aria-label="Usage scenario">
+      {SCENARIOS.map((scenario) => (
+        <button
+          key={scenario.id}
+          role="tab"
+          aria-selected={selected === scenario.id}
+          onClick={() => onChange(scenario.id)}
+          className={`px-3 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
+            selected === scenario.id
+              ? 'bg-cyan-500 text-white'
+              : 'bg-slate-800/50 text-gray-400 hover:text-white border border-slate-700/50'
+          }`}
+        >
+          {scenario.name}
+        </button>
+      ))}
+    </div>
+  );
+});
 
 // =============================================================================
 // COST COMPARISON TAB
@@ -517,7 +526,10 @@ export default function ProductivityValueSection() {
   const [activeTab, setActiveTab] = useState<TabId>('cost');
   const [selectedScenario, setSelectedScenario] = useState<ScenarioId>('solo');
   
-  const scenario = SCENARIOS.find(s => s.id === selectedScenario)!;
+  const scenario = useMemo(
+    () => SCENARIOS.find(s => s.id === selectedScenario)!,
+    [selectedScenario]
+  );
 
   return (
     <section id="value-calculator" className="py-12 sm:py-16 lg:py-20 bg-slate-950 relative overflow-hidden border-t border-emerald-500/10">
@@ -621,7 +633,7 @@ export default function ProductivityValueSection() {
         </motion.div>
 
         {/* Tab Navigation */}
-        <div className="flex justify-center gap-2 sm:gap-3 lg:gap-4 mb-6">
+        <div className="flex justify-center gap-2 sm:gap-3 lg:gap-4 mb-6" role="tablist" aria-label="Value calculator tabs">
           <TabButton
             active={activeTab === 'cost'}
             onClick={() => setActiveTab('cost')}
@@ -649,11 +661,13 @@ export default function ProductivityValueSection() {
         </div>
 
         {/* Tab Content */}
-        <AnimatePresence mode="wait">
-          {activeTab === 'cost' && <CostTab key="cost" scenario={scenario} />}
-          {activeTab === 'time' && <TimeTab key="time" scenario={scenario} />}
-          {activeTab === 'expertise' && <ExpertiseTab key="expertise" />}
-        </AnimatePresence>
+        <div role="tabpanel" aria-label={`${activeTab} tab content`}>
+          <AnimatePresence mode="wait">
+            {activeTab === 'cost' && <CostTab key="cost" scenario={scenario} />}
+            {activeTab === 'time' && <TimeTab key="time" scenario={scenario} />}
+            {activeTab === 'expertise' && <ExpertiseTab key="expertise" />}
+          </AnimatePresence>
+        </div>
 
         {/* CTA */}
         <motion.div
