@@ -184,15 +184,17 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     duration?: string;
     targetAudience?: string;
     visualStyle?: string;
+    hasStoryDirections?: boolean; // Story direction options were selected - triggers OOM-safe mode
   }) => {
     setLastInput(text)
     setIsGen(true)
     startProgress()
     
-    // Smart variant count: when user provides explicit settings, they have clear intent - use 1 variant
-    const hasExplicitSettings = !!(opts?.genre || opts?.tone || opts?.targetAudience)
+    // Smart variant count: when user provides explicit settings or story directions, they have clear intent - use 1 variant
+    // OOM FIX: Story directions increase prompt complexity significantly, so always use optimized flow
+    const hasExplicitSettings = !!(opts?.genre || opts?.tone || opts?.targetAudience || opts?.hasStoryDirections)
     const variantCount = opts?.variantCount ?? (hasExplicitSettings ? 1 : 3)
-    console.log('[StudioPage] Generating Blueprint with', variantCount, 'variant(s)', hasExplicitSettings ? '(explicit settings detected)' : '')
+    console.log('[StudioPage] Generating Blueprint with', variantCount, 'variant(s)', hasExplicitSettings ? '(explicit settings detected)' : '', opts?.hasStoryDirections ? '(story directions active)' : '')
     
     try {
       const response = await fetch('/api/ideation/film-treatment', {

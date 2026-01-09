@@ -49,6 +49,7 @@ type Props = {
     duration?: string
     targetAudience?: string
     variantCount?: number // Smart variant count based on complexity
+    hasStoryDirections?: boolean // Signals story direction options were selected (enables OOM-safe mode)
   }) => Promise<void>
   existingVariant?: any // For reimagine mode (editing existing)
   initialIdea?: IdeationConcept // Pre-populated from Ideation
@@ -338,9 +339,14 @@ export function BlueprintReimaginDialog({
       return
     }
     
-    // Smart variant count: reduce to 1 when many story directions selected to avoid OOM
-    const hasComplexInput = selectedInstructions.length > 2 || customInstruction.trim().length > 200
-    const variantCount = hasComplexInput ? 1 : 3
+    // OOM FIX: Reduce to 1 variant when ANY story direction is selected or custom instruction provided
+    // Story directions add complexity to prompts and increase memory usage significantly
+    const hasStoryDirections = selectedInstructions.length > 0 || customInstruction.trim().length > 0
+    const variantCount = hasStoryDirections ? 1 : 3
+    
+    if (hasStoryDirections) {
+      console.log('[BlueprintDialog] Story directions selected - using single variant mode to prevent OOM')
+    }
     
     setIsGenerating(true)
     try {
@@ -350,7 +356,8 @@ export function BlueprintReimaginDialog({
         visualStyle,
         duration,
         targetAudience,
-        variantCount
+        variantCount,
+        hasStoryDirections // Signal to API to use optimized prompt flow
       })
       
       toast.success(isReimaginMode ? 'Blueprint reimagined!' : 'Blueprint generated!')
