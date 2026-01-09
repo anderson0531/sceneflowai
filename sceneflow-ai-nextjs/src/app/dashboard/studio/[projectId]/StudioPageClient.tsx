@@ -105,8 +105,27 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   }
 
   // Auto-generate hero image for treatment variant
+  // Uses sessionStorage to prevent duplicate generation across navigation
   const generateHeroImage = async (variant: any) => {
     if (!variant?.title) return
+    
+    // Check if hero image already exists on the variant
+    if (variant.heroImage?.url) {
+      console.log('[StudioPage] Hero image already exists, skipping generation')
+      return
+    }
+    
+    // Use sessionStorage to prevent duplicate generation during navigation
+    const heroGenKey = `hero-gen-${variant.id || variant.title}`
+    if (typeof window !== 'undefined' && sessionStorage.getItem(heroGenKey)) {
+      console.log('[StudioPage] Hero image generation already in progress for this variant, skipping')
+      return
+    }
+    
+    // Mark as generating
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem(heroGenKey, 'generating')
+    }
     
     setIsGeneratingHeroImage(true)
     setHeroImageError(null) // Clear previous error
@@ -159,6 +178,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         )
         setTreatmentVariants(updatedVariants)
         console.log('[StudioPage] Hero image generated successfully:', data.visuals.heroImage.url)
+        
+        // Clear the generation flag on success
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem(`hero-gen-${variant.id || variant.title}`)
+        }
       } else if (data.error) {
         throw new Error(data.error)
       }
@@ -169,6 +193,10 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       try { const { toast } = require('sonner'); toast.error('Hero image generation failed. Click the image to retry.') } catch {}
     } finally {
       setIsGeneratingHeroImage(false)
+      // Clear the generation flag on error (so user can retry)
+      if (heroImageError && typeof window !== 'undefined') {
+        sessionStorage.removeItem(`hero-gen-${variant.id || variant.title}`)
+      }
     }
   }
 
