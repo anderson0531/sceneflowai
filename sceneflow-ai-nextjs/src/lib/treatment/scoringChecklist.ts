@@ -401,6 +401,10 @@ export const DEMOGRAPHIC_THEMES: Record<string, { themes: string[]; protagonistA
   'mature-21+': {
     themes: ['moral ambiguity', 'violence', 'sexuality', 'addiction', 'trauma', 'complex relationships', 'existential questions'],
     protagonistAge: '21-45'
+  },
+  'general-audience': {
+    themes: ['universal struggles', 'hope', 'love', 'adventure', 'growth', 'humor', 'resilience', 'connection', 'discovery'],
+    protagonistAge: 'any (broadly relatable)'
   }
 }
 

@@ -10,6 +10,7 @@ import {
   CheckCircle2, 
   Sparkles,
   RefreshCw,
+  RotateCcw,
   Zap,
   ArrowRight,
   TrendingUp,
@@ -64,6 +65,7 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
   // Iteration tracking for diminishing returns
   const [iterationCount, setIterationCount] = useState(0)
   const [isReadyForProduction, setIsReadyForProduction] = useState(false)
+  const [pendingFixesCount, setPendingFixesCount] = useState(0) // Fixes applied since last analysis
   
   // Sync with prop changes
   useEffect(() => {
@@ -132,6 +134,7 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
         // Update iteration count and ready-for-production status
         if (isReanalysis) {
           setIterationCount(nextIteration)
+          setPendingFixesCount(0) // Clear pending fixes after re-analysis
         } else if (iterationCount === 0) {
           setIterationCount(1)
         }
@@ -192,16 +195,16 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
         const updatedTreatment = { ...treatment, ...data.draft, updatedAt: Date.now() }
         setLocalTreatment(updatedTreatment)
         
-        // Track this fix as applied
+        // Track this fix as applied (increment pending fixes count)
         setAppliedFixes(prev => [...prev, insight.id])
+        setPendingFixesCount(prev => prev + 1)
         
         // Notify parent component
         onFixApplied?.(insight.id, insight.fixSection, updatedTreatment)
         onTreatmentUpdate?.(updatedTreatment)
         
-        // Re-analyze with FULL analysis (not quick) to get accurate new score
-        // Pass isReanalysis=true to increment iteration count
-        setTimeout(() => runAnalysis(false, true), 500)
+        // NOTE: Do NOT auto re-analyze. User will click Analyze when ready.
+        // This allows applying multiple fixes before using an iteration.
       } else {
         setError(data.message || 'Failed to apply fix')
       }
@@ -220,11 +223,29 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     )
   }
   
-  // Intent change handler with debounced re-analysis
+  // Intent change handler - reset iterations for fresh scoring with new intent
   const handleIntentChange = (key: keyof AudienceIntent, value: string) => {
     setIntent(prev => ({ ...prev, [key]: value }))
-    // Clear analysis when intent changes
+    // Clear analysis and reset iterations when intent changes
     setAnalysis(null)
+    setIterationCount(0)
+    setIsReadyForProduction(false)
+    setAppliedFixes([])
+    setPendingFixesCount(0)
+    setScoreDelta(null)
+    setPreviousScore(null)
+  }
+  
+  // Manual reset handler for user control
+  const handleReset = () => {
+    setAnalysis(null)
+    setIterationCount(0)
+    setIsReadyForProduction(false)
+    setAppliedFixes([])
+    setPendingFixesCount(0)
+    setScoreDelta(null)
+    setPreviousScore(null)
+    setError(null)
   }
   
   // No treatment available
@@ -292,14 +313,33 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
           {/* Iteration Progress */}
           {iterationCount > 0 && (
             <div className="mt-3 flex items-center justify-between text-xs">
-              <span className="text-gray-500">
-                Iteration {iterationCount}/{MAX_ITERATIONS}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">
+                  Iteration {iterationCount}/{MAX_ITERATIONS}
+                </span>
+                <button
+                  onClick={handleReset}
+                  className="flex items-center gap-1 px-2 py-0.5 text-gray-400 hover:text-cyan-400 hover:bg-slate-700/50 rounded transition-colors"
+                  title="Reset iterations to score different intent"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  Reset
+                </button>
+              </div>
               <span className={`font-medium ${
                 isReadyForProduction ? 'text-emerald-400' : 'text-amber-400'
               }`}>
                 Target: {READY_FOR_PRODUCTION_THRESHOLD}+
               </span>
+            </div>
+          )}
+          
+          {/* Pending Fixes Indicator */}
+          {pendingFixesCount > 0 && (
+            <div className="mt-2 p-2 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
+              <p className="text-xs text-cyan-400">
+                <span className="font-medium">{pendingFixesCount} fix{pendingFixesCount > 1 ? 'es' : ''} applied</span> — Click Re-analyze to see updated score
+              </p>
             </div>
           )}
           
@@ -330,7 +370,7 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
           {/* Analyze Button - hidden when ready for production */}
           {!isReadyForProduction && (
             <button
-              onClick={() => runAnalysis(false)}
+              onClick={() => runAnalysis(false, pendingFixesCount > 0)}
               disabled={isAnalyzing || iterationCount >= MAX_ITERATIONS}
               className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-emerald-500 text-white font-medium rounded-lg hover:from-cyan-600 hover:to-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -347,7 +387,7 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
               ) : (
                 <>
                   <Sparkles className="w-4 h-4" />
-                  {iterationCount > 0 ? 'Re-analyze' : 'Analyze Resonance'}
+                  {pendingFixesCount > 0 ? `Re-analyze (${pendingFixesCount} fix${pendingFixesCount > 1 ? 'es' : ''})` : iterationCount > 0 ? 'Re-analyze' : 'Analyze Resonance'}
                 </>
               )}
             </button>

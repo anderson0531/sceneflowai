@@ -37,6 +37,7 @@ export type TargetDemographic =
   | 'teens-13-17'
   | 'family-all-ages'
   | 'mature-21+'
+  | 'general-audience'
 
 export type ToneProfile =
   | 'dark-gritty'
@@ -276,6 +277,7 @@ export const GENRE_OPTIONS: { value: PrimaryGenre; label: string }[] = [
 ]
 
 export const DEMOGRAPHIC_OPTIONS: { value: TargetDemographic; label: string }[] = [
+  { value: 'general-audience', label: 'General Audience' },
   { value: 'gen-z-18-24', label: 'Gen Z (18-24)' },
   { value: 'millennials-25-34', label: 'Millennials (25-34)' },
   { value: 'gen-x-35-54', label: 'Gen X (35-54)' },
