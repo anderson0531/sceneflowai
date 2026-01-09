@@ -467,16 +467,22 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   }, [projectId, setCurrentProject, setBeats, updateTreatment, setTreatmentVariants, updateTitle])
 
   // Auto-save effect - debounced to prevent excessive API calls
+  // Access treatmentVariants with proper typing (not in ProductionGuide interface yet)
+  const treatmentVariants = (guide as any)?.treatmentVariants || []
+  
   useEffect(() => {
     // Only auto-save for existing projects (not new-project-*)
     if (!projectId || projectId.startsWith('new-project')) return
     
     // Don't save if no meaningful data exists
-    const hasData = guide.treatmentVariants?.length > 0 || guide.filmTreatment?.trim()
-    if (!hasData) return
+    const hasData = treatmentVariants.length > 0 || guide.filmTreatment?.trim()
+    if (!hasData) {
+      console.debug('[StudioPage] Auto-save skipped: no data to save')
+      return
+    }
     
     // Debug: log when auto-save triggers
-    console.debug('[StudioPage] Auto-save triggered:', { variantsLastModified, variantsCount: guide.treatmentVariants?.length })
+    console.debug('[StudioPage] Auto-save triggered:', { variantsLastModified, variantsCount: treatmentVariants.length })
     
     // Mark as unsaved when data changes
     setIsSaved(false)
@@ -497,7 +503,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           metadata: {
             blueprintInput: lastInput,
             filmTreatment: guide.filmTreatment,
-            treatmentVariants: guide.treatmentVariants || [],
+            treatmentVariants: treatmentVariants,
             beats: beatsView,
             estimatedRuntime: estimatedRuntime
           }
@@ -529,7 +535,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         clearTimeout(autoSaveDebounceRef.current)
       }
     }
-  }, [projectId, lastInput, variantsLastModified, guide.title, guide.filmTreatment, beatsView, estimatedRuntime])
+  }, [projectId, lastInput, variantsLastModified, guide.title, guide.filmTreatment, treatmentVariants, beatsView, estimatedRuntime])
 
   useEffect(() => { console.debug('[StudioPage] outline autogen disabled; relying on OutlineV2') }, [guide?.filmTreatment, currentProject?.id])
 

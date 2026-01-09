@@ -96,4 +96,22 @@ export interface ProductionGuide {
   // New outline/script fields
   scenesOutline?: any[];
   fullScriptText?: string | null;
+  // Treatment variants for Blueprint multi-variant support
+  treatmentVariants?: Array<{
+    id: string;
+    label?: string;
+    content: string;
+    title?: string;
+    logline?: string;
+    synopsis?: string;
+    visual_style?: string;
+    tone_description?: string;
+    target_audience?: string;
+    genre?: string;
+    themes?: any;
+    mood_references?: string[];
+    character_descriptions?: any[];
+    heroImage?: string;
+  }>;
+  selectedTreatmentId?: string;
 }
