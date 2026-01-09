@@ -5,14 +5,13 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/Input";
-import { DownloadIcon, Edit, ChevronUp, Settings, FileText, BarChart3, ChevronRight, Check, HelpCircle, Sparkles, Film, Lightbulb, PanelRight, PanelRightClose, RefreshCw, Wand2 } from "lucide-react";
+import { DownloadIcon, Edit, Settings, FileText, BarChart3, ChevronRight, Check, HelpCircle, Sparkles, PanelRight, PanelRightClose, RefreshCw, Wand2 } from "lucide-react";
 import { useGuideStore } from "@/store/useGuideStore";
 import { useStore } from '@/store/useStore'
 import { useCue } from "@/store/useCueStore";
 import ProjectIdeaTab from "@/components/studio/ProjectIdeaTab";
 import dynamic from 'next/dynamic';
 import { cn } from "@/lib/utils";
-import { BlueprintComposer } from '@/components/blueprint/BlueprintComposer'
 import { BlueprintReimaginDialog } from '@/components/blueprint/BlueprintReimaginDialog'
 import { TreatmentHeroImage } from '@/components/treatment/TreatmentHeroImage'
 import { SidePanelTabs } from '@/components/blueprint/SidePanelTabs'
@@ -36,42 +35,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const [showStructureHelp, setShowStructureHelp] = useState(false);
   const loadedProjectRef = useRef<string | null>(null);
   
-  // Ideation panel state with localStorage persistence (migrated from inspiration-panel)
-  const [showIdeationPanel, setShowIdeationPanel] = useState(() => {
-    if (typeof window !== 'undefined') {
-      // Migration: check for old key first, then new key
-      const oldKey = localStorage.getItem('blueprint-inspiration-panel')
-      const newKey = localStorage.getItem('blueprint-ideation-panel')
-      if (oldKey !== null && newKey === null) {
-        // Migrate old preference to new key
-        localStorage.setItem('blueprint-ideation-panel', oldKey)
-        localStorage.removeItem('blueprint-inspiration-panel')
-        return oldKey === 'true'
-      }
-      return newKey !== null ? newKey === 'true' : true // Default to open
-    }
-    return true
-  })
-  
-  // Persist panel state to localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('blueprint-ideation-panel', String(showIdeationPanel))
-    }
-  }, [showIdeationPanel])
-  
-  // Callback for inserting inspiration text into BlueprintComposer
-  const insertTextRef = useRef<((text: string) => void) | null>(null)
-  
-  const handleInsertInspiration = (text: string) => {
-    if (insertTextRef.current) {
-      insertTextRef.current(text)
-    }
-  }
-  
-  const registerInsertText = (callback: (text: string) => void) => {
-    insertTextRef.current = callback
-  }
+  // Side panel visibility state
+  const [showSidePanel, setShowSidePanel] = useState(true)
 
   const isProjectCreated = !!(guide.filmTreatment && guide.filmTreatment.trim() !== '' && guide.title && guide.title !== 'Untitled Project');
 
@@ -85,9 +50,6 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   // Auto-save debounce ref and saved indicator
   const autoSaveDebounceRef = useRef<NodeJS.Timeout | null>(null)
   const [isSaved, setIsSaved] = useState(true)
-  
-  // Composer visibility - collapsed after generation when variants exist
-  const [showComposer, setShowComposer] = useState(true)
   
   // Reimagine dialog state for initial generation
   const [showReimaginDialog, setShowReimaginDialog] = useState(false)
@@ -241,9 +203,6 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         console.log('[StudioPage] Film treatment variants received:', variants.length)
         setTreatmentVariants(variants)
         
-        // Auto-collapse composer after successful generation
-        setShowComposer(false)
-        
         if (variants[0]) {
           updateTitle(variants[0].title || 'Untitled Project')
           updateTreatment(variants[0].synopsis || variants[0].content || '')
@@ -380,7 +339,6 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               id: approvedVariant.id || 'approved-treatment',
               ...approvedVariant
             }])
-            setShowComposer(false) // Collapse composer when loading existing treatment
             console.log('[StudioPage] Restored approved filmTreatmentVariant from project:', approvedVariant.id || 'approved-treatment')
           } else if (hasTreatmentVariants) {
             // Restore from treatmentVariants array
@@ -389,7 +347,6 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               const first = metadata.treatmentVariants[0]
               updateTreatment(first.content || first.synopsis || '')
             }
-            setShowComposer(false) // Collapse composer when loading existing treatment
             console.log('[StudioPage] Restored treatmentVariants from project:', metadata.treatmentVariants.length)
           } else if (hasFilmTreatment) {
             // Restore from plain filmTreatment string
@@ -400,7 +357,6 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               content: metadata.filmTreatment,
               synopsis: metadata.filmTreatment
             }])
-            setShowComposer(false) // Collapse composer when loading existing treatment
             console.log('[StudioPage] Restored legacy filmTreatment from project')
           }
           
@@ -537,7 +493,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       
       <PanelGroup direction="horizontal" className="min-h-screen">
         {/* Main Content Panel */}
-        <Panel defaultSize={showIdeationPanel ? 75 : 100} minSize={50}>
+        <Panel defaultSize={showSidePanel ? 75 : 100} minSize={50}>
           <div className="h-full p-4 lg:p-6 max-w-6xl mx-auto">
             {/* Vision-Style Premium Container */}
             <div className="relative rounded-3xl border border-slate-700/60 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900/60 overflow-hidden shadow-[0_25px_80px_rgba(8,8,20,0.55)]">
@@ -563,15 +519,15 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                   </div>
                   <div className="flex items-center gap-2">
                     <Button 
-                      onClick={() => setShowIdeationPanel(!showIdeationPanel)} 
+                      onClick={() => setShowSidePanel(!showSidePanel)} 
                       variant="outline" 
                       className={cn(
                         "text-gray-300 hover:text-white border-gray-700 p-2",
-                        showIdeationPanel && "bg-blue-500/10 border-blue-500/30 text-blue-300"
+                        showSidePanel && "bg-blue-500/10 border-blue-500/30 text-blue-300"
                       )}
-                      title={showIdeationPanel ? "Hide Ideation Panel" : "Show Ideation Panel"}
+                      title={showSidePanel ? "Hide Side Panel" : "Show Side Panel"}
                     >
-                      {showIdeationPanel ? <PanelRightClose className="w-4 h-4" /> : <PanelRight className="w-4 h-4" />}
+                      {showSidePanel ? <PanelRightClose className="w-4 h-4" /> : <PanelRight className="w-4 h-4" />}
                     </Button>
                   </div>
                 </div>
@@ -593,35 +549,6 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                   />
                 )}
 
-                {/* Blueprint Composer - Collapsible after generation */}
-                <div className="rounded-2xl border border-slate-700/50 bg-gradient-to-b from-slate-900/80 to-slate-900/40 overflow-hidden">
-                  <button
-                    onClick={() => setShowComposer(!showComposer)}
-                    className="w-full flex items-center justify-between p-4 hover:bg-slate-800/30 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Film className="w-4 h-4 text-cyan-400" />
-                      <span className="text-sm font-medium text-gray-200">Your Creative Vision</span>
-                      {!showComposer && guide.treatmentVariants && guide.treatmentVariants.length > 0 && (
-                        <span className="text-xs text-gray-500 ml-2">• Click to edit</span>
-                      )}
-                    </div>
-                    <ChevronUp className={cn(
-                      "w-4 h-4 text-gray-400 transition-transform duration-200",
-                      !showComposer && "rotate-180"
-                    )} />
-                  </button>
-                  
-                  {showComposer && (
-                    <div className="px-5 pb-5">
-                      <BlueprintComposer
-                        onGenerate={handleGenerateBlueprint}
-                        onInsertText={registerInsertText}
-                      />
-                    </div>
-                  )}
-                </div>
-
                 {/* Empty Blueprint State - Show prominent CTA when no Blueprint exists */}
                 {(!guide.treatmentVariants || guide.treatmentVariants.length === 0) && !isGen && (
                   <div className="rounded-2xl border-2 border-dashed border-cyan-500/30 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 p-8 text-center">
@@ -639,9 +566,6 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                       <Sparkles className="w-5 h-5 mr-2" />
                       Generate Blueprint
                     </Button>
-                    <p className="text-xs text-gray-500 mt-3">
-                      Or use the composer above for quick generation
-                    </p>
                   </div>
                 )}
 
@@ -653,15 +577,14 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         </Panel>
         
         {/* Resize Handle */}
-        {showIdeationPanel && (
+        {showSidePanel && (
           <>
             <PanelResizeHandle className="w-1.5 bg-gray-800/50 hover:bg-blue-500/50 transition-colors cursor-col-resize" />
             
-            {/* Side Panel with Ideation & Collaboration Tabs */}
+            {/* Side Panel with Resonance & Collaboration Tabs */}
             <Panel defaultSize={25} minSize={20} maxSize={40}>
               <SidePanelTabs 
-                onInsert={handleInsertInspiration}
-                onClose={() => setShowIdeationPanel(false)}
+                onClose={() => setShowSidePanel(false)}
                 sessionId={sessionId}
                 shareUrl={shareUrl}
                 onShare={handleShare}

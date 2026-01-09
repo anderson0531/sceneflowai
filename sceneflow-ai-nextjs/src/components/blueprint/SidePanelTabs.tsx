@@ -1,15 +1,13 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Lightbulb, Users, X, Copy, Check, Link2, Radar } from 'lucide-react'
-import { IdeationPanel } from './IdeationPanel'
+import { Users, X, Copy, Check, Link2, Radar } from 'lucide-react'
 import { AudienceResonancePanel } from './AudienceResonancePanel'
 import { cn } from '@/lib/utils'
 import { useGuideStore } from '@/store/useGuideStore'
 import ChatWindow from '../collab/ChatWindow'
 
 interface SidePanelTabsProps {
-  onInsert: (text: string) => void
   onClose?: () => void
   sessionId: string | null
   shareUrl: string | null
@@ -17,8 +15,8 @@ interface SidePanelTabsProps {
   isSharing: boolean
 }
 
-export function SidePanelTabs({ onInsert, onClose, sessionId, shareUrl, onShare, isSharing }: SidePanelTabsProps) {
-  const [activeTab, setActiveTab] = useState<'resonance' | 'ideation' | 'collaboration'>('resonance')
+export function SidePanelTabs({ onClose, sessionId, shareUrl, onShare, isSharing }: SidePanelTabsProps) {
+  const [activeTab, setActiveTab] = useState<'resonance' | 'collaboration'>('resonance')
   const { guide } = useGuideStore()
   const { updateTreatmentVariant } = useGuideStore() as any
   const activeVariantId = (guide as any)?.selectedTreatmentId || ((guide as any)?.treatmentVariants?.[0]?.id)
@@ -55,18 +53,6 @@ export function SidePanelTabs({ onInsert, onClose, sessionId, shareUrl, onShare,
             <span>Resonance</span>
           </button>
           <button
-            onClick={() => setActiveTab('ideation')}
-            className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
-              activeTab === 'ideation'
-                ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
-            )}
-          >
-            <Lightbulb size={14} />
-            <span>Ideation</span>
-          </button>
-          <button
             onClick={() => setActiveTab('collaboration')}
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
@@ -97,8 +83,6 @@ export function SidePanelTabs({ onInsert, onClose, sessionId, shareUrl, onShare,
             treatment={currentTreatment} 
             onTreatmentUpdate={handleTreatmentUpdate}
           />
-        ) : activeTab === 'ideation' ? (
-          <IdeationPanel onInsert={onInsert} hideHeader />
         ) : (
           <CollaborationContent 
             sessionId={sessionId}
