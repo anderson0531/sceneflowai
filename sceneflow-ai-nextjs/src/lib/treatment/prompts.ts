@@ -18,10 +18,20 @@ export function buildTreatmentPrompt(opts: {
     : persona === 'Narrator'
     ? '\nVOICE: Write as an engaging, neutral narrator with professional tone.'
     : ''
+  
+  // Build scoring-aware checklist based on context
+  const scoringChecklist = buildScoringAwareChecklist({
+    genre: context?.genre,
+    targetAudience: context?.targetAudience,
+    tone: context?.tone
+  })
+  
   return `CRITICAL INSTRUCTIONS: You are a professional ${formatLabel(format)} showrunner.
 TARGET RUNTIME: ~${targetMinutes} minutes (±10%).
 PRIORITIES: ${formatBlock.priorities}
 ${personaBlock}${structureBlock}
+
+${scoringChecklist}
 
 CULTURAL AUTHENTICITY - MANDATORY:
 - Extract nationality, ethnicity, and cultural clues from the user's input
@@ -216,6 +226,147 @@ function getFormatBlock(f: Format) {
   if (f === 'education') return { priorities: 'clear learning objectives, scaffolded sections, recap and quick assessment', includeCTA: false, includeLearning: true }
   if (f === 'training') return { priorities: 'task-oriented modules, demonstrations, checkpoints and practice prompts', includeCTA: false, includeLearning: true }
   return { priorities: 'three-act arc, character tension, cinematic pacing', includeCTA: false, includeLearning: false }
+}
+
+// =============================================================================
+// SCORING-AWARE PRE-GENERATION CHECKLIST
+// =============================================================================
+// These guidelines ensure treatments score 80+ on first generation
+
+export function buildScoringAwareChecklist(opts: {
+  genre?: string
+  targetAudience?: string
+  tone?: string
+}): string {
+  const { genre = 'drama', targetAudience = 'millennials-25-34', tone = 'dark-gritty' } = opts
+  
+  // Get demographic-specific requirements
+  const demographicThemes = getDemographicThemes(targetAudience)
+  const toneKeywords = getToneKeywords(tone)
+  const genreConventions = getGenreConventions(genre)
+  
+  return `
+=============================================================================
+QUALITY GATE CHECKLIST - MUST PASS ALL ITEMS
+=============================================================================
+This treatment will be scored. To achieve 80+ on first generation, ENSURE:
+
+AXIS 1: CONCEPT ORIGINALITY (25% of score)
+[ ] HOOK/TWIST: Logline MUST contain an unexpected element or compelling twist
+    BAD: "A man goes on a journey to find himself"
+    GOOD: "A burned-out detective discovers his missing daughter was erased from all records—including his own memory"
+[ ] AVOID CLICHÉS: Do NOT use these tired tropes without subversion:
+    - Chosen one prophecy (unless subverted)
+    - Love at first sight (unless complicated)  
+    - Mentor dies to motivate hero (unless meaningful)
+    - It was all a dream/simulation reveal
+[ ] UNIQUE ANGLE: Setting or premise must have a distinctive element
+
+AXIS 2: CHARACTER DEPTH (25% of score)
+[ ] PROTAGONIST GOAL: State clearly what they want (external, tangible)
+    EXAMPLE: "Marcus must find the killer before the 48-hour deadline expires"
+[ ] PROTAGONIST FLAW: State their internal weakness that creates obstacles
+    EXAMPLE: "His inability to trust anyone isolates him from potential allies"
+[ ] ANTAGONIST DEFINED: Name or describe the opposing force
+    EXAMPLE: "Opposing him is Councilman Webb, whose political ambitions require the truth stay buried"
+[ ] THE "GHOST": Include past trauma or secret that haunts the protagonist
+    EXAMPLE: "Haunted by his partner's unsolved murder five years ago"
+    This is CRITICAL for ${targetAudience} resonance.
+
+AXIS 3: PACING & STRUCTURE (20% of score)
+[ ] THREE ACTS: Treatment MUST have clear Setup, Confrontation, Resolution
+[ ] INCITING INCIDENT: In first 25% of story, something disrupts ordinary world
+    EXAMPLE: "When a cryptic letter arrives revealing [secret]..."
+[ ] MIDPOINT TURN: Include a revelation or reversal at the story's midpoint
+[ ] LOW POINT/ALL IS LOST: Before the climax, protagonist hits rock bottom
+
+AXIS 4: GENRE FIDELITY (15% of score) - ${genre.toUpperCase()}
+[ ] ESSENTIAL CONVENTIONS: ${genreConventions}
+[ ] TONE KEYWORDS: Include 3+ of these words/concepts: ${toneKeywords}
+[ ] CONSISTENT TONE: All elements should reinforce ${tone} atmosphere
+
+AXIS 5: COMMERCIAL VIABILITY (15% of score) - ${targetAudience.toUpperCase()}
+[ ] PROTAGONIST AGE: Should resonate with ${demographicThemes.ageRange}
+[ ] DEMOGRAPHIC THEMES: Include themes like: ${demographicThemes.themes}
+[ ] MARKETABLE LOGLINE: One sentence that could go on a movie poster
+
+=============================================================================
+PRE-GENERATION SELF-CHECK
+=============================================================================
+Before outputting, verify:
+1. Can you state the protagonist's GOAL in one sentence? → If no, add it
+2. Can you state the protagonist's FLAW in one sentence? → If no, add it
+3. Is there a clear "When [event] happens, [protagonist] must..." structure? → If no, fix it
+4. Does the logline have a HOOK that makes you want to know more? → If no, add a twist
+5. Are character names culturally authentic to their ethnicity? → If not, fix them
+=============================================================================
+`
+}
+
+function getDemographicThemes(demographic: string): { ageRange: string; themes: string } {
+  const map: Record<string, { ageRange: string; themes: string }> = {
+    'gen-z-18-24': { 
+      ageRange: '18-24 year olds', 
+      themes: 'identity crisis, social media pressure, climate anxiety, mental health, authenticity vs. performance' 
+    },
+    'millennials-25-34': { 
+      ageRange: '25-34 year olds', 
+      themes: 'burnout, student debt, quarter-life crisis, work-life balance, digital isolation, imposter syndrome' 
+    },
+    'gen-x-35-54': { 
+      ageRange: '35-54 year olds', 
+      themes: 'midlife reflection, aging parents, career plateau, divorce/reinvention, legacy concerns' 
+    },
+    'boomers-55+': { 
+      ageRange: '55-70 year olds', 
+      themes: 'retirement, mortality awareness, grandchildren, legacy, second chances, reflection on life choices' 
+    },
+    'teens-13-17': { 
+      ageRange: '14-17 year olds', 
+      themes: 'first love, identity formation, peer pressure, family conflict, rebellion, self-discovery' 
+    },
+    'family-all-ages': { 
+      ageRange: 'all ages (relatable to kids and adults)', 
+      themes: 'adventure, teamwork, love, courage, friendship, good vs evil, wonder' 
+    },
+    'mature-21+': { 
+      ageRange: '21-45 year olds', 
+      themes: 'moral ambiguity, complex relationships, trauma, addiction, existential questions' 
+    }
+  }
+  return map[demographic] || map['millennials-25-34']
+}
+
+function getToneKeywords(tone: string): string {
+  const map: Record<string, string> = {
+    'dark-gritty': 'visceral, shadowy, tense, burdened, raw, harsh, unforgiving, bleak',
+    'light-comedic': 'playful, witty, charming, absurd, quirky, delightful, amusing',
+    'inspirational': 'uplifting, triumph, hope, perseverance, courage, transformation, breakthrough',
+    'suspenseful': 'tense, edge, anticipation, danger, uncertainty, looming, breathless',
+    'heartwarming': 'touching, emotional, tender, bond, love, connection, healing',
+    'satirical': 'ironic, biting, critique, absurd, exaggerated, commentary, parody',
+    'melancholic': 'wistful, bittersweet, loss, reflection, longing, nostalgia, regret',
+    'whimsical': 'magical, fantastical, playful, wonder, curious, enchanting, dreamlike',
+    'intense': 'gripping, powerful, relentless, confrontation, explosive, urgent, fierce',
+    'nostalgic': 'reminiscent, era, memory, classic, throwback, sentimental, retro'
+  }
+  return map[tone] || map['dark-gritty']
+}
+
+function getGenreConventions(genre: string): string {
+  const map: Record<string, string> = {
+    'drama': 'emotional core, character transformation, personal stakes, cathartic resolution',
+    'thriller': 'clear stakes, ticking clock, escalating tension, twist/reveal, suspenseful pacing',
+    'horror': 'atmosphere of dread, clear threat, isolation, escalating scares, survivor archetype',
+    'comedy': 'clear comedic premise, setup/payoff structure, likeable protagonist, stakes despite humor',
+    'sci-fi': 'world-building consistency, technology driving plot, human element amidst spectacle',
+    'romance': 'meet-cute, obstacles to love, emotional vulnerability, satisfying resolution',
+    'action': 'clear hero goal, escalating set-pieces, physical stakes, villain with motivation',
+    'fantasy': 'consistent magic system, world-building, quest or chosen one structure',
+    'mystery': 'central question, clues and red herrings, satisfying revelation',
+    'documentary': 'clear thesis, compelling subjects, narrative arc despite non-fiction'
+  }
+  return map[genre.toLowerCase()] || map['drama']
 }
 
 

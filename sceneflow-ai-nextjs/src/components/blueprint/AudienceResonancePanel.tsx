@@ -30,11 +30,13 @@ import {
   TONE_OPTIONS,
   DEFAULT_INTENT
 } from '@/lib/types/audienceResonance'
+import { READY_FOR_PRODUCTION_THRESHOLD, MAX_ITERATIONS } from '@/lib/treatment/scoringChecklist'
 
 interface AudienceResonancePanelProps {
   treatment?: any
   onFixApplied?: (insightId: string, section: string, updatedTreatment?: any) => void
   onTreatmentUpdate?: (updatedTreatment: any) => void
+  onProceedToScripting?: () => void // Called when user clicks "Proceed to Scripting"
 }
 
 /**
@@ -43,7 +45,7 @@ interface AudienceResonancePanelProps {
  * Strategic advisor that analyzes film treatments against target market,
  * genre conventions, and commercial viability.
  */
-export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied, onTreatmentUpdate }: AudienceResonancePanelProps) {
+export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied, onTreatmentUpdate, onProceedToScripting }: AudienceResonancePanelProps) {
   // Local treatment state - allows updates from fixes
   const [localTreatment, setLocalTreatment] = useState<any>(treatmentProp)
   const treatment = localTreatment || treatmentProp
@@ -58,6 +60,10 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
   const [previousScore, setPreviousScore] = useState<number | null>(null)
   const [scoreDelta, setScoreDelta] = useState<number | null>(null)
   const [appliedFixes, setAppliedFixes] = useState<string[]>([])
+  
+  // Iteration tracking for diminishing returns
+  const [iterationCount, setIterationCount] = useState(0)
+  const [isReadyForProduction, setIsReadyForProduction] = useState(false)
   
   // Sync with prop changes
   useEffect(() => {
@@ -78,11 +84,14 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
   }, [treatment])
   
   // Analyze treatment
-  const runAnalysis = useCallback(async (quickMode = false) => {
+  const runAnalysis = useCallback(async (quickMode = false, isReanalysis = false) => {
     if (!treatment) {
       setError('No treatment selected')
       return
     }
+    
+    // Increment iteration count only for re-analysis (after applying fixes)
+    const nextIteration = isReanalysis ? iterationCount + 1 : (iterationCount || 1)
     
     setIsAnalyzing(true)
     setError(null)
@@ -103,7 +112,8 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
             genre: treatment.genre
           },
           intent,
-          quickAnalysis: quickMode
+          quickAnalysis: quickMode,
+          iteration: nextIteration
         })
       })
       
@@ -119,13 +129,26 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
         }
         setPreviousScore(newScore)
         
+        // Update iteration count and ready-for-production status
+        if (isReanalysis) {
+          setIterationCount(nextIteration)
+        } else if (iterationCount === 0) {
+          setIterationCount(1)
+        }
+        
+        // Check if ready for production (score >= 80)
+        const ready = data.readyForProduction || newScore >= READY_FOR_PRODUCTION_THRESHOLD
+        setIsReadyForProduction(ready)
+        
         setAnalysis(data.analysis)
-        // Auto-expand first weakness that hasn't been fixed yet
-        const firstUnfixedWeakness = data.analysis.insights.find(
-          (i: ResonanceInsight) => i.status === 'weakness' && !appliedFixes.includes(i.id)
-        )
-        if (firstUnfixedWeakness) {
-          setExpandedInsights([firstUnfixedWeakness.id])
+        // Auto-expand first weakness that hasn't been fixed yet (only if not ready)
+        if (!ready) {
+          const firstUnfixedWeakness = data.analysis.insights.find(
+            (i: ResonanceInsight) => i.status === 'weakness' && !appliedFixes.includes(i.id)
+          )
+          if (firstUnfixedWeakness) {
+            setExpandedInsights([firstUnfixedWeakness.id])
+          }
         }
       } else {
         setError(data.error || 'Analysis failed')
@@ -135,11 +158,17 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     } finally {
       setIsAnalyzing(false)
     }
-  }, [treatment, intent, previousScore, appliedFixes])
+  }, [treatment, intent, previousScore, appliedFixes, iterationCount])
   
   // Apply fix suggestion
   const applyFix = useCallback(async (insight: ResonanceInsight) => {
     if (!insight.fixSuggestion || !insight.fixSection) return
+    
+    // Check if we've reached max iterations
+    if (iterationCount >= MAX_ITERATIONS) {
+      setError('Maximum refinement iterations reached. Your treatment is ready for production.')
+      return
+    }
     
     setApplyingFix(insight.id)
     setError(null)
@@ -171,7 +200,8 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
         onTreatmentUpdate?.(updatedTreatment)
         
         // Re-analyze with FULL analysis (not quick) to get accurate new score
-        setTimeout(() => runAnalysis(false), 500)
+        // Pass isReanalysis=true to increment iteration count
+        setTimeout(() => runAnalysis(false, true), 500)
       } else {
         setError(data.message || 'Failed to apply fix')
       }
@@ -259,27 +289,89 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
             />
           </div>
           
-          {/* Analyze Button */}
-          <button
-            onClick={() => runAnalysis(false)}
-            disabled={isAnalyzing}
-            className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-emerald-500 text-white font-medium rounded-lg hover:from-cyan-600 hover:to-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isAnalyzing ? (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                Analyzing...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4" />
-                Analyze Resonance
-              </>
-            )}
-          </button>
+          {/* Iteration Progress */}
+          {iterationCount > 0 && (
+            <div className="mt-3 flex items-center justify-between text-xs">
+              <span className="text-gray-500">
+                Iteration {iterationCount}/{MAX_ITERATIONS}
+              </span>
+              <span className={`font-medium ${
+                isReadyForProduction ? 'text-emerald-400' : 'text-amber-400'
+              }`}>
+                Target: {READY_FOR_PRODUCTION_THRESHOLD}+
+              </span>
+            </div>
+          )}
           
-          {/* Quick Analysis (free) */}
-          {!analysis && !isAnalyzing && (
+          {/* Ready for Production Banner */}
+          {isReadyForProduction && analysis && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mt-4 p-3 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-lg border border-emerald-500/30"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                <span className="text-emerald-300 font-semibold">Ready for Production!</span>
+              </div>
+              <p className="text-xs text-gray-400 mb-3">
+                Your treatment meets the quality threshold and is ready to proceed to scripting.
+              </p>
+              <button
+                onClick={onProceedToScripting}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium rounded-lg hover:from-emerald-600 hover:to-cyan-600 transition-all"
+              >
+                <ArrowRight className="w-4 h-4" />
+                Proceed to Scripting
+              </button>
+            </motion.div>
+          )}
+          
+          {/* Analyze Button - hidden when ready for production */}
+          {!isReadyForProduction && (
+            <button
+              onClick={() => runAnalysis(false)}
+              disabled={isAnalyzing || iterationCount >= MAX_ITERATIONS}
+              className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-emerald-500 text-white font-medium rounded-lg hover:from-cyan-600 hover:to-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isAnalyzing ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  Analyzing...
+                </>
+              ) : iterationCount >= MAX_ITERATIONS ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4" />
+                  Analysis Complete
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  {iterationCount > 0 ? 'Re-analyze' : 'Analyze Resonance'}
+                </>
+              )}
+            </button>
+          )}
+          
+          {/* Max Iterations Reached Notice */}
+          {iterationCount >= MAX_ITERATIONS && !isReadyForProduction && (
+            <div className="mt-3 p-2 bg-amber-500/10 rounded-lg border border-amber-500/20">
+              <p className="text-xs text-amber-400">
+                Maximum refinements reached. Consider proceeding to scripting - 
+                detailed improvements can be made during production.
+              </p>
+              <button
+                onClick={onProceedToScripting}
+                className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2 bg-amber-500/20 text-amber-300 font-medium rounded-lg hover:bg-amber-500/30 transition-all text-sm"
+              >
+                <ArrowRight className="w-4 h-4" />
+                Proceed to Scripting Anyway
+              </button>
+            </div>
+          )}
+          
+          {/* Quick Analysis (free) - only show on first analysis */}
+          {!analysis && !isAnalyzing && iterationCount === 0 && (
             <button
               onClick={() => runAnalysis(true)}
               className="mt-2 w-full text-xs text-gray-500 hover:text-gray-400 transition-colors"

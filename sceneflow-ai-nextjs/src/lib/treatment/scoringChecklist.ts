@@ -1,0 +1,628 @@
+/**
+ * Treatment-Phase Scoring Checklist
+ * 
+ * This configuration defines explicit pass/fail criteria for the Audience Resonance
+ * scoring algorithm. Each axis has specific gates that must be passed before 
+ * nuanced scoring is applied.
+ * 
+ * Key Principles:
+ * 1. Treatment-appropriate metrics (not script-level nuance)
+ * 2. Explicit, binary checkpoints for each axis
+ * 3. Intent-aware criteria (genre, demographic, tone)
+ * 4. Diminishing returns after 3 iterations
+ */
+
+import type { PrimaryGenre, TargetDemographic, ToneProfile } from '@/lib/types/audienceResonance'
+
+// =============================================================================
+// SCORING WEIGHTS (User-specified)
+// =============================================================================
+
+export const SCORING_WEIGHTS = {
+  'concept-originality': 0.25,
+  'character-depth': 0.25,
+  'pacing-structure': 0.20,
+  'genre-fidelity': 0.15,
+  'commercial-viability': 0.15
+} as const
+
+export const WEIGHT_FORMULA = 'Score = (Concept × 0.25) + (Character × 0.25) + (Pacing × 0.20) + (Genre × 0.15) + (Viability × 0.15)'
+
+// =============================================================================
+// GOOD ENOUGH THRESHOLD
+// =============================================================================
+
+export const READY_FOR_PRODUCTION_THRESHOLD = 80
+export const MAX_ITERATIONS = 3
+
+// =============================================================================
+// AXIS CHECKPOINTS (Pass/Fail Gates)
+// =============================================================================
+
+export interface AxisCheckpoint {
+  id: string
+  label: string
+  description: string
+  passCondition: string // What the AI should look for
+  failPenalty: number // Points deducted if failed (0-30)
+  fixTemplate: string // Template for fix suggestion if failed
+}
+
+export interface AxisConfig {
+  id: string
+  label: string
+  weight: number
+  description: string
+  checkpoints: AxisCheckpoint[]
+  baseScore: number // Score if all checkpoints pass
+}
+
+// =============================================================================
+// CONCEPT ORIGINALITY AXIS (25%)
+// =============================================================================
+
+export const CONCEPT_ORIGINALITY_AXIS: AxisConfig = {
+  id: 'concept-originality',
+  label: 'Concept Originality',
+  weight: 0.25,
+  description: 'How unique and fresh is the concept?',
+  baseScore: 85,
+  checkpoints: [
+    {
+      id: 'hook-or-twist',
+      label: 'Hook/Twist Present',
+      description: 'Does the logline contain a clear "Hook" or "Twist"?',
+      passCondition: 'Logline contains an unexpected element, unique angle, or compelling twist that differentiates it from standard genre fare',
+      failPenalty: 25,
+      fixTemplate: 'Strengthen the logline with a clear hook: "When [ordinary situation], [protagonist] discovers [unexpected twist] that forces them to [high-stakes action]."'
+    },
+    {
+      id: 'cliche-avoidance',
+      label: 'Avoids Top 5 Genre Clichés',
+      description: 'Is it distinct from the top 5 clichés in the selected genre?',
+      passCondition: 'The premise does not rely on overused tropes without subversion (e.g., "chosen one" without twist, "love at first sight" without complication)',
+      failPenalty: 20,
+      fixTemplate: 'Subvert the familiar premise by adding: [specific subversion based on genre]. Instead of [cliché], consider [fresh angle].'
+    },
+    {
+      id: 'unique-setting-or-premise',
+      label: 'Distinct Setting/Premise',
+      description: 'Is the setting or premise different from standard entries?',
+      passCondition: 'The world, time period, or central premise offers something audiences haven\'t seen frequently',
+      failPenalty: 15,
+      fixTemplate: 'Add specificity to the setting: "[Time period/location] where [unique detail that affects the story]."'
+    }
+  ]
+}
+
+// =============================================================================
+// CHARACTER DEPTH AXIS (25%)
+// =============================================================================
+
+export const CHARACTER_DEPTH_AXIS: AxisConfig = {
+  id: 'character-depth',
+  label: 'Character Depth',
+  weight: 0.25,
+  description: 'Are characters well-defined with clear motivations?',
+  baseScore: 85,
+  checkpoints: [
+    {
+      id: 'protagonist-goal',
+      label: 'Protagonist Goal Defined',
+      description: 'Does the protagonist have a clear, stated goal?',
+      passCondition: 'The treatment explicitly states what the protagonist wants to achieve (external goal)',
+      failPenalty: 30,
+      fixTemplate: 'Define the protagonist\'s goal: "[NAME] desperately wants to [specific external goal] because [personal motivation]."'
+    },
+    {
+      id: 'protagonist-flaw',
+      label: 'Protagonist Flaw Defined',
+      description: 'Does the protagonist have a defined flaw or internal conflict?',
+      passCondition: 'The treatment mentions a character weakness, fear, or internal obstacle',
+      failPenalty: 25,
+      fixTemplate: 'Add the protagonist\'s flaw: "But [NAME]\'s [internal flaw: fear/weakness/blind spot] threatens to sabotage their mission."'
+    },
+    {
+      id: 'antagonist-defined',
+      label: 'Antagonist/Opposition Defined',
+      description: 'Is there a clear antagonist (person or force)?',
+      passCondition: 'The treatment names or describes the opposing force creating conflict',
+      failPenalty: 20,
+      fixTemplate: 'Define the antagonist: "Standing in their way is [NAME/FORCE], whose [motivation] creates the central conflict."'
+    },
+    {
+      id: 'character-ghost',
+      label: 'The "Ghost" (Backstory Trauma)',
+      description: 'Is there a past trauma or secret that haunts the protagonist?',
+      passCondition: 'The treatment references a past event, loss, or secret that explains the character\'s current state',
+      failPenalty: 10,
+      fixTemplate: 'Add the character\'s ghost: "[NAME] carries the weight of [past trauma/secret] that still drives their decisions today."'
+    }
+  ]
+}
+
+// =============================================================================
+// PACING & STRUCTURE AXIS (20%)
+// =============================================================================
+
+export const PACING_STRUCTURE_AXIS: AxisConfig = {
+  id: 'pacing-structure',
+  label: 'Pacing & Structure',
+  weight: 0.20,
+  description: 'Is the narrative structure clear and well-paced?',
+  baseScore: 85,
+  checkpoints: [
+    {
+      id: 'three-act-structure',
+      label: 'Three Acts Identifiable',
+      description: 'Are there exactly 3 distinct acts (Setup, Confrontation, Resolution)?',
+      passCondition: 'The treatment contains clear act breaks or the words/concepts of Setup, Confrontation/Rising Action, and Resolution/Climax',
+      failPenalty: 25,
+      fixTemplate: 'Add clear act structure: "ACT 1 (Setup): [what happens]. ACT 2 (Confrontation): [escalating conflict]. ACT 3 (Resolution): [climax and resolution]."'
+    },
+    {
+      id: 'inciting-incident-placement',
+      label: 'Inciting Incident in First 25%',
+      description: 'Does the "Inciting Incident" occur early in the treatment?',
+      passCondition: 'Within the first quarter of the synopsis/beats, there is a clear event that disrupts the ordinary world',
+      failPenalty: 20,
+      fixTemplate: 'Clarify the inciting incident: "Everything changes when [specific event] forces [protagonist] to [reaction]."'
+    },
+    {
+      id: 'low-point-mentioned',
+      label: 'Low Point/All Is Lost',
+      description: 'Is there a clear "Low Point" mentioned near Act 2 end?',
+      passCondition: 'The treatment describes a moment where all seems lost for the protagonist before the final push',
+      failPenalty: 15,
+      fixTemplate: 'Add the low point: "At their lowest moment, [protagonist] loses [what matters most] and must decide whether to [give up or push forward]."'
+    },
+    {
+      id: 'midpoint-shift',
+      label: 'Midpoint Turn Present',
+      description: 'Is there a midpoint revelation or reversal?',
+      passCondition: 'The treatment mentions a revelation, reversal, or point of no return around the middle of the story',
+      failPenalty: 10,
+      fixTemplate: 'Add a midpoint turn: "The truth about [revelation] changes everything, forcing [protagonist] to [new approach]."'
+    }
+  ]
+}
+
+// =============================================================================
+// GENRE FIDELITY AXIS (15%)
+// =============================================================================
+
+export const GENRE_FIDELITY_AXIS: AxisConfig = {
+  id: 'genre-fidelity',
+  label: 'Genre Fidelity',
+  weight: 0.15,
+  description: 'Does the treatment match genre expectations?',
+  baseScore: 85,
+  checkpoints: [
+    {
+      id: 'genre-keywords',
+      label: 'Genre Keywords Present (3+)',
+      description: 'Does the treatment contain keywords associated with the genre and tone?',
+      passCondition: 'At least 3 keywords or phrases that evoke the chosen genre and tone appear in the treatment',
+      failPenalty: 20,
+      fixTemplate: 'Add genre-appropriate language: For [genre], include words like [keyword1], [keyword2], [keyword3] to establish tone.'
+    },
+    {
+      id: 'genre-conventions-met',
+      label: 'Essential Conventions Present',
+      description: 'Does the treatment include the must-have elements for this genre?',
+      passCondition: 'The essential genre conventions are present (e.g., thriller has stakes/ticking clock, horror has threat/dread, drama has emotional transformation)',
+      failPenalty: 25,
+      fixTemplate: 'Strengthen genre elements: This [genre] needs [essential convention]. Add: "[specific convention text]."'
+    },
+    {
+      id: 'tone-consistency',
+      label: 'Tone Matches Throughout',
+      description: 'Is the emotional tone consistent with the selected tone profile?',
+      passCondition: 'The language, imagery, and story beats maintain the specified tone (dark/light/suspenseful/etc.)',
+      failPenalty: 15,
+      fixTemplate: 'Adjust tone consistency: Replace [inconsistent element] with [tone-appropriate alternative] to maintain [tone profile] feel.'
+    }
+  ]
+}
+
+// =============================================================================
+// COMMERCIAL VIABILITY AXIS (15%)
+// =============================================================================
+
+export const COMMERCIAL_VIABILITY_AXIS: AxisConfig = {
+  id: 'commercial-viability',
+  label: 'Commercial Viability',
+  weight: 0.15,
+  description: 'Is this marketable to the target demographic?',
+  baseScore: 85,
+  checkpoints: [
+    {
+      id: 'protagonist-demographic-match',
+      label: 'Protagonist Matches Target Audience',
+      description: 'Does the protagonist\'s age/situation match the target demographic?',
+      passCondition: 'The protagonist\'s age, life stage, or concerns align with what the target demographic can relate to',
+      failPenalty: 20,
+      fixTemplate: 'Adjust protagonist for audience: For [demographic], the protagonist should be [age range] dealing with [relevant themes].'
+    },
+    {
+      id: 'demographic-themes',
+      label: 'Demographic-Relevant Themes',
+      description: 'Does the treatment address themes relevant to the target demographic?',
+      passCondition: 'The story explores themes that resonate with the target age group\'s experiences and concerns',
+      failPenalty: 20,
+      fixTemplate: 'Add demographic-relevant themes: For [demographic], include themes like [theme1], [theme2] that resonate with their experiences.'
+    },
+    {
+      id: 'marketable-logline',
+      label: 'Marketable Logline',
+      description: 'Is the logline pitchable in one compelling sentence?',
+      passCondition: 'The logline could be used in marketing materials and clearly communicates the hook',
+      failPenalty: 15,
+      fixTemplate: 'Strengthen the logline for marketing: "[Genre] meets [comparison] when [protagonist] must [action] or face [stakes]."'
+    }
+  ]
+}
+
+// =============================================================================
+// ALL AXES COMBINED
+// =============================================================================
+
+export const ALL_SCORING_AXES: AxisConfig[] = [
+  CONCEPT_ORIGINALITY_AXIS,
+  CHARACTER_DEPTH_AXIS,
+  PACING_STRUCTURE_AXIS,
+  GENRE_FIDELITY_AXIS,
+  COMMERCIAL_VIABILITY_AXIS
+]
+
+// =============================================================================
+// GENRE-SPECIFIC KEYWORDS
+// =============================================================================
+
+export const GENRE_KEYWORDS: Record<string, { required: string[]; avoid: string[] }> = {
+  'drama': {
+    required: ['emotional', 'transformation', 'struggle', 'relationship', 'conflict', 'catharsis', 'realization'],
+    avoid: ['gore', 'explosion', 'action sequence']
+  },
+  'thriller': {
+    required: ['stakes', 'tension', 'clock', 'pursuit', 'danger', 'revelation', 'twist'],
+    avoid: ['whimsical', 'heartwarming', 'comedic']
+  },
+  'horror': {
+    required: ['dread', 'fear', 'threat', 'survival', 'darkness', 'terror', 'isolation'],
+    avoid: ['cheerful', 'upbeat', 'lighthearted']
+  },
+  'comedy': {
+    required: ['funny', 'humor', 'awkward', 'mishap', 'ironic', 'absurd', 'witty'],
+    avoid: ['tragedy', 'death', 'despair']
+  },
+  'sci-fi': {
+    required: ['technology', 'future', 'discovery', 'humanity', 'evolution', 'alien', 'synthetic'],
+    avoid: ['magic', 'supernatural', 'fantasy']
+  },
+  'romance': {
+    required: ['love', 'connection', 'chemistry', 'heart', 'passion', 'desire', 'vulnerability'],
+    avoid: ['violence', 'gore', 'horror']
+  },
+  'action': {
+    required: ['explosive', 'chase', 'fight', 'hero', 'stakes', 'danger', 'adrenaline'],
+    avoid: ['slow', 'contemplative', 'subtle']
+  },
+  'fantasy': {
+    required: ['magic', 'quest', 'realm', 'power', 'destiny', 'ancient', 'mythical'],
+    avoid: ['technology', 'science', 'realistic']
+  },
+  'mystery': {
+    required: ['clue', 'suspect', 'secret', 'investigation', 'revelation', 'truth', 'deception'],
+    avoid: ['obvious', 'straightforward', 'simple']
+  },
+  'documentary': {
+    required: ['truth', 'real', 'insight', 'journey', 'discovery', 'subject', 'perspective'],
+    avoid: ['fictional', 'imaginary', 'fantasy']
+  }
+}
+
+// =============================================================================
+// TONE-SPECIFIC KEYWORDS
+// =============================================================================
+
+export const TONE_KEYWORDS: Record<string, { required: string[]; avoid: string[] }> = {
+  'dark-gritty': {
+    required: ['visceral', 'shadowy', 'tense', 'burdened', 'raw', 'harsh', 'unforgiving', 'bleak'],
+    avoid: ['cheerful', 'bright', 'happy', 'joyful', 'lighthearted']
+  },
+  'light-comedic': {
+    required: ['playful', 'witty', 'charming', 'absurd', 'quirky', 'delightful', 'amusing'],
+    avoid: ['dark', 'grim', 'disturbing', 'violent', 'tragic']
+  },
+  'inspirational': {
+    required: ['uplifting', 'triumph', 'hope', 'perseverance', 'courage', 'transformation', 'breakthrough'],
+    avoid: ['cynical', 'hopeless', 'defeat', 'despair']
+  },
+  'suspenseful': {
+    required: ['tense', 'edge', 'anticipation', 'danger', 'uncertainty', 'looming', 'breathless'],
+    avoid: ['relaxed', 'calm', 'peaceful', 'predictable']
+  },
+  'heartwarming': {
+    required: ['touching', 'emotional', 'tender', 'bond', 'love', 'family', 'connection', 'healing'],
+    avoid: ['cold', 'dark', 'violent', 'cynical']
+  },
+  'satirical': {
+    required: ['ironic', 'biting', 'critique', 'absurd', 'exaggerated', 'commentary', 'parody'],
+    avoid: ['sincere', 'earnest', 'straightforward']
+  },
+  'melancholic': {
+    required: ['wistful', 'bittersweet', 'loss', 'reflection', 'longing', 'nostalgia', 'regret'],
+    avoid: ['cheerful', 'energetic', 'upbeat']
+  },
+  'whimsical': {
+    required: ['magical', 'fantastical', 'playful', 'wonder', 'curious', 'enchanting', 'dreamlike'],
+    avoid: ['realistic', 'grim', 'harsh', 'dark']
+  },
+  'intense': {
+    required: ['gripping', 'powerful', 'relentless', 'confrontation', 'explosive', 'urgent', 'fierce'],
+    avoid: ['gentle', 'mild', 'subdued', 'calm']
+  },
+  'nostalgic': {
+    required: ['reminiscent', 'era', 'memory', 'classic', 'throwback', 'sentimental', 'retro'],
+    avoid: ['futuristic', 'modern', 'cutting-edge']
+  }
+}
+
+// =============================================================================
+// DEMOGRAPHIC-SPECIFIC THEMES
+// =============================================================================
+
+export const DEMOGRAPHIC_THEMES: Record<string, { themes: string[]; protagonistAge: string }> = {
+  'gen-z-18-24': {
+    themes: ['identity', 'authenticity', 'social media', 'mental health', 'climate anxiety', 'diversity', 'digital native'],
+    protagonistAge: '18-24'
+  },
+  'millennials-25-34': {
+    themes: ['burnout', 'student debt', 'quarter-life crisis', 'work-life balance', 'digital isolation', 'adulting', 'relationship complexity'],
+    protagonistAge: '25-34'
+  },
+  'gen-x-35-54': {
+    themes: ['career plateau', 'aging parents', 'teenage children', 'midlife reflection', 'divorce', 'reinvention', 'legacy'],
+    protagonistAge: '35-54'
+  },
+  'boomers-55+': {
+    themes: ['retirement', 'mortality', 'grandchildren', 'health', 'legacy', 'second chances', 'wisdom', 'reflection'],
+    protagonistAge: '55-70'
+  },
+  'teens-13-17': {
+    themes: ['first love', 'identity formation', 'peer pressure', 'family conflict', 'school', 'self-discovery', 'rebellion'],
+    protagonistAge: '14-17'
+  },
+  'family-all-ages': {
+    themes: ['adventure', 'teamwork', 'love', 'courage', 'friendship', 'growth', 'wonder', 'good vs evil'],
+    protagonistAge: 'any (relatable to children and adults)'
+  },
+  'mature-21+': {
+    themes: ['moral ambiguity', 'violence', 'sexuality', 'addiction', 'trauma', 'complex relationships', 'existential questions'],
+    protagonistAge: '21-45'
+  }
+}
+
+// =============================================================================
+// DIMINISHING RETURNS CONFIGURATION
+// =============================================================================
+
+export interface IterationFocus {
+  iteration: number
+  focusAreas: string[]
+  description: string
+  maxImpact: string
+  restrictedSuggestions: string[]
+}
+
+export const ITERATION_FOCUS: IterationFocus[] = [
+  {
+    iteration: 1,
+    focusAreas: ['Major Structural Blocks', 'Missing Core Elements'],
+    description: 'Focus on major blocks: missing logline, weak/missing acts, undefined protagonist',
+    maxImpact: '+20-40 points',
+    restrictedSuggestions: []
+  },
+  {
+    iteration: 2,
+    focusAreas: ['Tone Consistency', 'Genre Alignment', 'Character Depth'],
+    description: 'Focus on tone consistency and secondary elements',
+    maxImpact: '+10-20 points',
+    restrictedSuggestions: ['word choice', 'phrasing', 'stylistic']
+  },
+  {
+    iteration: 3,
+    focusAreas: ['Fatal Flaws Only'],
+    description: 'Accept current state unless a fatal flaw (broken logic, major contradiction) exists',
+    maxImpact: '+5-10 points',
+    restrictedSuggestions: ['better words', 'more flair', 'enhanced description', 'stylistic improvements', 'word choice', 'phrasing', 'polish']
+  }
+]
+
+/**
+ * Get iteration focus configuration
+ */
+export function getIterationFocus(iteration: number): IterationFocus {
+  if (iteration >= 3) return ITERATION_FOCUS[2]
+  return ITERATION_FOCUS[Math.max(0, iteration - 1)]
+}
+
+/**
+ * Check if a suggestion should be restricted based on iteration
+ */
+export function isSuggestionRestricted(suggestion: string, iteration: number): boolean {
+  if (iteration < 2) return false // No restrictions in first iteration
+  
+  const focus = getIterationFocus(iteration)
+  const lowerSuggestion = suggestion.toLowerCase()
+  
+  return focus.restrictedSuggestions.some(restricted => 
+    lowerSuggestion.includes(restricted.toLowerCase())
+  )
+}
+
+// =============================================================================
+// ENDING TYPE EXPECTATIONS BY TONE
+// =============================================================================
+
+export const ENDING_EXPECTATIONS: Record<string, { acceptable: string[]; penalized: string[] }> = {
+  'dark-gritty': {
+    acceptable: ['bittersweet', 'tragic', 'pyrrhic victory', 'ambiguous', 'somber'],
+    penalized: ['happy ending', 'fairy tale', 'triumphant', 'cheerful resolution']
+  },
+  'light-comedic': {
+    acceptable: ['happy', 'satisfying', 'comedic resolution', 'heartwarming'],
+    penalized: ['tragic', 'death', 'depressing', 'dark']
+  },
+  'inspirational': {
+    acceptable: ['triumphant', 'hopeful', 'transformation complete', 'success'],
+    penalized: ['defeat', 'tragedy', 'hopeless', 'failure']
+  },
+  'suspenseful': {
+    acceptable: ['resolution', 'revelation', 'twist', 'cliffhanger'],
+    penalized: ['predictable', 'anticlimactic']
+  },
+  'heartwarming': {
+    acceptable: ['emotional resolution', 'reunion', 'reconciliation', 'love'],
+    penalized: ['cold', 'unresolved', 'tragic', 'dark']
+  },
+  'melancholic': {
+    acceptable: ['bittersweet', 'acceptance', 'wistful', 'reflection'],
+    penalized: ['purely happy', 'triumphant', 'energetic']
+  }
+}
+
+// =============================================================================
+// HELPER: Build Checklist Prompt Section
+// =============================================================================
+
+export function buildChecklistPrompt(intent: {
+  primaryGenre: PrimaryGenre
+  targetDemographic: TargetDemographic
+  toneProfile: ToneProfile
+}, iteration: number): string {
+  const genreKeywords = GENRE_KEYWORDS[intent.primaryGenre] || GENRE_KEYWORDS['drama']
+  const toneKeywords = TONE_KEYWORDS[intent.toneProfile] || TONE_KEYWORDS['dark-gritty']
+  const demoThemes = DEMOGRAPHIC_THEMES[intent.targetDemographic] || DEMOGRAPHIC_THEMES['millennials-25-34']
+  const endingExpectations = ENDING_EXPECTATIONS[intent.toneProfile] || ENDING_EXPECTATIONS['dark-gritty']
+  const iterationFocus = getIterationFocus(iteration)
+  
+  return `
+=============================================================================
+TREATMENT-PHASE SCORING CHECKLIST
+=============================================================================
+
+IMPORTANT: This is Blueprint phase analysis. Evaluate TREATMENT-appropriate metrics,
+NOT script-level nuance. Focus on structural elements, not dialogue polish.
+
+SCORING WEIGHTS:
+${WEIGHT_FORMULA}
+
+ITERATION ${iteration} of ${MAX_ITERATIONS} (${iterationFocus.description})
+Focus Areas: ${iterationFocus.focusAreas.join(', ')}
+Expected Impact: ${iterationFocus.maxImpact}
+${iteration >= 2 ? `\nRESTRICTED SUGGESTIONS (do not suggest): ${iterationFocus.restrictedSuggestions.join(', ')}` : ''}
+
+=============================================================================
+AXIS 1: CONCEPT ORIGINALITY (25% weight)
+=============================================================================
+Pass Threshold: All checkpoints must pass for full score
+
+[ ] HOOK/TWIST PRESENT (-25 pts if missing)
+    Does the logline contain a clear "Hook" or "Twist"?
+    Pass: ${CONCEPT_ORIGINALITY_AXIS.checkpoints[0].passCondition}
+
+[ ] AVOIDS TOP 5 GENRE CLICHÉS (-20 pts if failed)
+    Is it distinct from overused ${intent.primaryGenre} tropes?
+    Pass: ${CONCEPT_ORIGINALITY_AXIS.checkpoints[1].passCondition}
+
+[ ] UNIQUE SETTING/PREMISE (-15 pts if failed)
+    Is the setting or premise distinct?
+    Pass: ${CONCEPT_ORIGINALITY_AXIS.checkpoints[2].passCondition}
+
+=============================================================================
+AXIS 2: CHARACTER DEPTH (25% weight)
+=============================================================================
+Pass Threshold: Must have Goal + Flaw at minimum
+
+[ ] PROTAGONIST GOAL DEFINED (-30 pts if missing)
+    Pass: ${CHARACTER_DEPTH_AXIS.checkpoints[0].passCondition}
+
+[ ] PROTAGONIST FLAW DEFINED (-25 pts if missing)
+    Pass: ${CHARACTER_DEPTH_AXIS.checkpoints[1].passCondition}
+
+[ ] ANTAGONIST/OPPOSITION DEFINED (-20 pts if missing)
+    Pass: ${CHARACTER_DEPTH_AXIS.checkpoints[2].passCondition}
+
+[ ] THE "GHOST" (Backstory Trauma) (-10 pts if missing)
+    For ${intent.targetDemographic} resonance, this is especially important.
+    Pass: ${CHARACTER_DEPTH_AXIS.checkpoints[3].passCondition}
+
+=============================================================================
+AXIS 3: PACING & STRUCTURE (20% weight)
+=============================================================================
+Pass Threshold: 3 acts and inciting incident required
+
+[ ] THREE ACTS IDENTIFIABLE (-25 pts if missing)
+    Look for: "Setup," "Confrontation," "Resolution" or equivalent beats
+    Pass: ${PACING_STRUCTURE_AXIS.checkpoints[0].passCondition}
+
+[ ] INCITING INCIDENT IN FIRST 25% (-20 pts if late/missing)
+    Pass: ${PACING_STRUCTURE_AXIS.checkpoints[1].passCondition}
+
+[ ] LOW POINT/ALL IS LOST (-15 pts if missing)
+    Pass: ${PACING_STRUCTURE_AXIS.checkpoints[2].passCondition}
+
+[ ] MIDPOINT TURN (-10 pts if missing)
+    Pass: ${PACING_STRUCTURE_AXIS.checkpoints[3].passCondition}
+
+=============================================================================
+AXIS 4: GENRE FIDELITY (15% weight) - ${intent.primaryGenre.toUpperCase()} + ${intent.toneProfile.toUpperCase()}
+=============================================================================
+
+[ ] GENRE KEYWORDS PRESENT (3+ required, -20 pts if <3)
+    Required keywords for ${intent.primaryGenre}: ${genreKeywords.required.join(', ')}
+    Avoid (would hurt fidelity): ${genreKeywords.avoid.join(', ')}
+
+[ ] TONE KEYWORDS PRESENT (3+ required)
+    Required keywords for ${intent.toneProfile}: ${toneKeywords.required.join(', ')}
+    Avoid (inconsistent with tone): ${toneKeywords.avoid.join(', ')}
+
+[ ] ESSENTIAL CONVENTIONS PRESENT (-25 pts if missing)
+    Pass: Treatment includes must-have elements for ${intent.primaryGenre}
+
+[ ] ENDING TYPE APPROPRIATE
+    Acceptable endings for ${intent.toneProfile}: ${endingExpectations.acceptable.join(', ')}
+    Penalized endings: ${endingExpectations.penalized.join(', ')}
+
+=============================================================================
+AXIS 5: COMMERCIAL VIABILITY (15% weight) - ${intent.targetDemographic.toUpperCase()}
+=============================================================================
+
+[ ] PROTAGONIST MATCHES TARGET DEMOGRAPHIC (-20 pts if mismatch)
+    Target protagonist age: ${demoThemes.protagonistAge}
+    Pass: ${COMMERCIAL_VIABILITY_AXIS.checkpoints[0].passCondition}
+
+[ ] DEMOGRAPHIC-RELEVANT THEMES PRESENT (-20 pts if missing)
+    Required themes for ${intent.targetDemographic}: ${demoThemes.themes.join(', ')}
+
+[ ] MARKETABLE LOGLINE (-15 pts if weak)
+    Pass: ${COMMERCIAL_VIABILITY_AXIS.checkpoints[2].passCondition}
+
+=============================================================================
+READY FOR PRODUCTION THRESHOLD: ${READY_FOR_PRODUCTION_THRESHOLD}/100
+=============================================================================
+If score >= ${READY_FOR_PRODUCTION_THRESHOLD}, the treatment is ready to proceed to scripting.
+Do not suggest minor improvements if this threshold is met.
+
+${iteration >= MAX_ITERATIONS ? `
+=============================================================================
+FINAL ITERATION - HARD STOP
+=============================================================================
+This is iteration ${iteration}. The treatment must be accepted in its current state
+unless there is a FATAL FLAW (broken logic, major contradiction, completely missing
+protagonist). Do NOT suggest "better words," "more flair," or stylistic improvements.
+` : ''}
+`
+}

@@ -12,6 +12,14 @@ import type {
   AudienceIntent,
   getGreenlightTier
 } from '@/lib/types/audienceResonance'
+import {
+  buildChecklistPrompt,
+  SCORING_WEIGHTS,
+  READY_FOR_PRODUCTION_THRESHOLD,
+  MAX_ITERATIONS,
+  getIterationFocus,
+  isSuggestionRestricted
+} from '@/lib/treatment/scoringChecklist'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -29,7 +37,7 @@ export async function POST(request: NextRequest) {
   
   try {
     const body: AnalyzeResonanceRequest = await request.json()
-    const { treatment, intent, quickAnalysis = false } = body
+    const { treatment, intent, quickAnalysis = false, iteration = 1 } = body
     
     if (!treatment) {
       return NextResponse.json({
@@ -38,25 +46,36 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
     
+    // Cap iteration at MAX_ITERATIONS
+    const effectiveIteration = Math.min(iteration, MAX_ITERATIONS)
+    
     // Quick analysis uses heuristics only (no AI cost)
     if (quickAnalysis) {
-      const heuristicAnalysis = performHeuristicAnalysis(treatment, intent)
+      const heuristicAnalysis = performHeuristicAnalysis(treatment, intent, effectiveIteration)
       return NextResponse.json({
         success: true,
         analysis: heuristicAnalysis,
-        cached: false
+        cached: false,
+        iteration: effectiveIteration,
+        maxIterations: MAX_ITERATIONS,
+        readyForProduction: heuristicAnalysis.greenlightScore.score >= READY_FOR_PRODUCTION_THRESHOLD
       })
     }
     
     // Full AI analysis
-    console.log(`[Resonance] Starting analysis for "${treatment.title}" with intent:`, intent)
+    console.log(`[Resonance] Starting analysis (iteration ${effectiveIteration}/${MAX_ITERATIONS}) for "${treatment.title}" with intent:`, intent)
     
-    const analysis = await analyzeWithGemini(treatment, intent, reqId)
+    const analysis = await analyzeWithGemini(treatment, intent, reqId, effectiveIteration)
+    
+    const isReadyForProduction = analysis.greenlightScore.score >= READY_FOR_PRODUCTION_THRESHOLD
     
     return NextResponse.json({
       success: true,
       analysis,
-      cached: false
+      cached: false,
+      iteration: effectiveIteration,
+      maxIterations: MAX_ITERATIONS,
+      readyForProduction: isReadyForProduction
     }, {
       headers: {
         'x-sf-request-id': reqId,
@@ -78,7 +97,8 @@ export async function POST(request: NextRequest) {
  */
 function performHeuristicAnalysis(
   treatment: AnalyzeResonanceRequest['treatment'],
-  intent: AudienceIntent
+  intent: AudienceIntent,
+  iteration: number = 1
 ): AudienceResonanceAnalysis {
   const axes: ResonanceAxis[] = [
     {
@@ -86,14 +106,14 @@ function performHeuristicAnalysis(
       label: 'Concept Originality',
       description: 'How unique is the concept?',
       score: treatment.logline && treatment.logline.length > 50 ? 70 : 50,
-      weight: 0.2
+      weight: SCORING_WEIGHTS['concept-originality']
     },
     {
       id: 'genre-fidelity',
       label: 'Genre Fidelity',
       description: 'Does it match genre conventions?',
       score: treatment.genre?.toLowerCase().includes(intent.primaryGenre) ? 85 : 60,
-      weight: 0.25
+      weight: SCORING_WEIGHTS['genre-fidelity']
     },
     {
       id: 'character-depth',
@@ -101,7 +121,7 @@ function performHeuristicAnalysis(
       description: 'Are characters well-defined?',
       score: (treatment.protagonist && treatment.antagonist) ? 75 : 
              treatment.protagonist ? 60 : 40,
-      weight: 0.2
+      weight: SCORING_WEIGHTS['character-depth']
     },
     {
       id: 'pacing',
@@ -109,14 +129,14 @@ function performHeuristicAnalysis(
       description: 'Is the structure clear?',
       score: treatment.beats && treatment.beats.length >= 4 ? 80 : 
              treatment.act_breakdown ? 70 : 50,
-      weight: 0.15
+      weight: SCORING_WEIGHTS['pacing-structure']
     },
     {
       id: 'commercial-viability',
       label: 'Commercial Viability',
       description: 'Is this marketable?',
       score: treatment.title && treatment.logline ? 70 : 50,
-      weight: 0.2
+      weight: SCORING_WEIGHTS['commercial-viability']
     }
   ]
   
@@ -217,12 +237,13 @@ function getGreenlightTierLocal(score: number): { tier: string; label: string; c
 async function analyzeWithGemini(
   treatment: AnalyzeResonanceRequest['treatment'],
   intent: AudienceIntent,
-  reqId: string
+  reqId: string,
+  iteration: number = 1
 ): Promise<AudienceResonanceAnalysis> {
   
-  const prompt = buildAnalysisPrompt(treatment, intent)
+  const prompt = buildAnalysisPrompt(treatment, intent, iteration)
   
-  console.log('[Resonance] Calling Vertex AI Gemini for analysis...')
+  console.log(`[Resonance] Calling Vertex AI Gemini for analysis (iteration ${iteration})...`)
   
   const result = await generateText(prompt, {
     model: 'gemini-2.5-flash',
@@ -237,42 +258,42 @@ async function analyzeWithGemini(
   
   const parsed = safeParseJsonFromText(result.text)
   
-  // Validate and transform the response
+  // Validate and transform the response - use user-specified weights
   const axes: ResonanceAxis[] = [
     {
       id: 'originality',
       label: 'Concept Originality',
       description: 'How unique is the concept?',
       score: clamp(parsed.originality_score || 50, 0, 100),
-      weight: 0.2
+      weight: SCORING_WEIGHTS['concept-originality']
     },
     {
       id: 'genre-fidelity',
       label: 'Genre Fidelity',
       description: 'Does it match genre conventions?',
       score: clamp(parsed.genre_fidelity_score || 50, 0, 100),
-      weight: 0.25
+      weight: SCORING_WEIGHTS['genre-fidelity']
     },
     {
       id: 'character-depth',
       label: 'Character Depth',
       description: 'Are characters well-defined?',
       score: clamp(parsed.character_depth_score || 50, 0, 100),
-      weight: 0.2
+      weight: SCORING_WEIGHTS['character-depth']
     },
     {
       id: 'pacing',
       label: 'Pacing & Structure',
       description: 'Is the structure clear?',
       score: clamp(parsed.pacing_score || 50, 0, 100),
-      weight: 0.15
+      weight: SCORING_WEIGHTS['pacing-structure']
     },
     {
       id: 'commercial-viability',
       label: 'Commercial Viability',
       description: 'Is this marketable?',
       score: clamp(parsed.commercial_viability_score || 50, 0, 100),
-      weight: 0.2
+      weight: SCORING_WEIGHTS['commercial-viability']
     }
   ]
   
@@ -288,7 +309,8 @@ async function analyzeWithGemini(
   }
   
   // Transform insights - force actionable and fixSuggestion for all weaknesses
-  const insights: ResonanceInsight[] = (parsed.insights || []).map((i: any, idx: number) => {
+  // Also filter out restricted suggestions based on iteration
+  const rawInsights: ResonanceInsight[] = (parsed.insights || []).map((i: any, idx: number) => {
     const isWeakness = i.status !== 'strength' && i.status !== 'neutral'
     const category = mapCategory(i.category)
     
@@ -309,6 +331,13 @@ async function analyzeWithGemini(
       // Ensure fix section is set for weaknesses
       fixSection: isWeakness ? (inferredFixSection || 'story') : inferredFixSection
     }
+  })
+  
+  // Filter out stylistic/polish suggestions in later iterations
+  const insights = rawInsights.filter(insight => {
+    if (insight.status !== 'weakness') return true // Keep all strengths
+    if (!insight.fixSuggestion) return true
+    return !isSuggestionRestricted(insight.fixSuggestion, iteration)
   })
   
   // Transform recommendations
@@ -337,11 +366,16 @@ async function analyzeWithGemini(
 
 function buildAnalysisPrompt(
   treatment: AnalyzeResonanceRequest['treatment'],
-  intent: AudienceIntent
+  intent: AudienceIntent,
+  iteration: number = 1
 ): string {
   const genreLabel = intent.primaryGenre.replace('-', ' ')
   const demoLabel = intent.targetDemographic.replace(/-/g, ' ')
   const toneLabel = intent.toneProfile.replace('-', ' ')
+  
+  // Get the checklist-based prompt section
+  const checklistSection = buildChecklistPrompt(intent, iteration)
+  const iterationFocus = getIterationFocus(iteration)
   
   return `You are a professional Creative Executive at a major film studio. Analyze this film treatment for market viability.
 
@@ -371,16 +405,26 @@ Characters: ${treatment.character_descriptions?.map(c => `${c.name} (${c.role}):
 Act Breakdown:
 ${treatment.act_breakdown ? `Act 1: ${treatment.act_breakdown.act1 || 'N/A'}\nAct 2: ${treatment.act_breakdown.act2 || 'N/A'}\nAct 3: ${treatment.act_breakdown.act3 || 'N/A'}` : 'Not provided'}
 
+${checklistSection}
+
 ANALYZE and return JSON with this structure:
 {
-  "greenlight_score": number (0-100, overall market readiness),
+  "greenlight_score": number (0-100, overall market readiness - use weighted formula above),
   "confidence": number (0-1, your confidence in this assessment),
   
-  "originality_score": number (0-100),
-  "genre_fidelity_score": number (0-100),
-  "character_depth_score": number (0-100),
-  "pacing_score": number (0-100),
-  "commercial_viability_score": number (0-100),
+  "originality_score": number (0-100, Concept Originality - 25% weight),
+  "genre_fidelity_score": number (0-100, Genre Fidelity - 15% weight),
+  "character_depth_score": number (0-100, Character Depth - 25% weight),
+  "pacing_score": number (0-100, Pacing & Structure - 20% weight),
+  "commercial_viability_score": number (0-100, Commercial Viability - 15% weight),
+  
+  "checkpoints_passed": {
+    "concept_originality": ["hook-or-twist", "cliche-avoidance"],  // list of passed checkpoint IDs
+    "character_depth": ["protagonist-goal"],
+    "pacing_structure": [],
+    "genre_fidelity": [],
+    "commercial_viability": []
+  },
   
   "insights": [
     {
@@ -390,7 +434,7 @@ ANALYZE and return JSON with this structure:
       "insight": string (specific, actionable feedback),
       "treatment_section": string (which part of treatment this refers to),
       "actionable": boolean,
-      "fix_suggestion": string (if actionable, provide specific text to add/change),
+      "fix_suggestion": string (if actionable, provide specific text to add/change - MUST be ready-to-use text),
       "fix_section": "core" | "story" | "tone" | "beats" | "characters"
     }
   ],
@@ -401,11 +445,17 @@ ANALYZE and return JSON with this structure:
       "category": string,
       "title": string,
       "description": string,
-      "expected_impact": number (points this could add to score),
+      "expected_impact": number (points this could add to score - be realistic: ${iterationFocus.maxImpact}),
       "effort": "quick" | "moderate" | "significant"
     }
   ]
 }
+
+ITERATION ${iteration} RULES:
+- Focus: ${iterationFocus.focusAreas.join(', ')}
+- Expected max impact: ${iterationFocus.maxImpact}
+${iteration >= 2 ? `- DO NOT suggest: ${iterationFocus.restrictedSuggestions.join(', ')}` : ''}
+${iteration >= 3 ? `- This is the FINAL iteration. Accept the treatment unless there is a FATAL FLAW.` : ''}
 
 GENRE ANALYSIS GUIDELINES for ${genreLabel}:
 ${getGenreGuidelines(intent.primaryGenre)}
@@ -413,33 +463,14 @@ ${getGenreGuidelines(intent.primaryGenre)}
 DEMOGRAPHIC RESONANCE for ${demoLabel}:
 ${getDemographicGuidelines(intent.targetDemographic)}
 
-SCORING RUBRIC (apply consistently):
-
-Greenlight Score (overall market readiness):
-- 90-100: MARKET READY - All elements strong, ready for production. Clear protagonist, antagonist, 3-act structure, compelling logline, strong genre fit.
-- 75-89: STRONG POTENTIAL - Minor refinements needed. Solid foundation with 1-2 areas to improve.
-- 60-74: PROMISING - Good concept but execution needs work. Missing some key elements.
-- 40-59: NEEDS DEVELOPMENT - Core issues to address. Multiple weak areas.
-- 0-39: NOT READY - Fundamental problems with concept or execution.
-
-Individual Axis Scoring:
-- 90-100: Exceptional - Best-in-class for this category
-- 70-89: Strong - Meets or exceeds expectations
-- 50-69: Adequate - Functional but room for improvement
-- 30-49: Weak - Notable deficiencies
-- 0-29: Critical - Major problems
-
-CALIBRATION EXAMPLES:
-- Treatment with clear protagonist, antagonist, 3-act structure, compelling logline: 80-90
-- Treatment with good logline but missing character depth: 60-70
-- Treatment with just title and vague synopsis: 30-40
-
 CRITICAL RULES FOR INSIGHTS:
 1. Every insight with status="weakness" MUST have actionable=true
 2. Every weakness MUST have fix_suggestion with SPECIFIC TEXT to add or replace (not vague advice)
 3. Every weakness MUST have fix_section set to the appropriate section
 4. fix_suggestion should be ready-to-use text, e.g., "A battle-worn detective, Marcus Cole, haunted by his partner's unsolved murder"
 5. Provide at least 3 insights (mix of strengths and weaknesses) and 2 recommendations
+6. If score >= ${READY_FOR_PRODUCTION_THRESHOLD}, minimize weakness insights - treatment is ready for production
+7. Score based on CHECKPOINTS: start at base 85, subtract penalty for each failed checkpoint
 
 Be specific and actionable. Reference actual content from the treatment.`
 }

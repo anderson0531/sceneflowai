@@ -221,6 +221,7 @@ export interface AnalyzeResonanceRequest {
   intent: AudienceIntent
   includeHeatMap?: boolean
   quickAnalysis?: boolean // Heuristic-only, no AI (free tier)
+  iteration?: number // Current refinement iteration (1-3, capped at 3)
 }
 
 export interface AnalyzeResonanceResponse {
@@ -228,6 +229,9 @@ export interface AnalyzeResonanceResponse {
   analysis?: AudienceResonanceAnalysis
   error?: string
   cached?: boolean
+  iteration?: number // Current iteration number
+  maxIterations?: number // Maximum allowed iterations (3)
+  readyForProduction?: boolean // Score >= 80
 }
 
 // =============================================================================
