@@ -20,12 +20,17 @@ export interface CanonicalCharacter {
  * - Title Case (e.g., "Brian Anderson Sr")
  * - No ALL CAPS
  * - Removes screenplay annotations like (V.O.), (O.S.), (CONT'D)
+ * - Removes quoted nicknames/aliases like 'ben' or "Ben"
  */
 export function toCanonicalName(input: string): string {
   if (!input) return ''
   
   // Remove screenplay annotations: (V.O.), (O.S.), (O.C.), (CONT'D)
   let clean = input.replace(/\s*\([^)]*\)\s*/g, '').trim()
+  
+  // Remove quoted nicknames/aliases: 'ben', "Ben", 'Ben', etc.
+  // This ensures "Dr. Benjamin 'ben' Anderson" matches "Dr. Benjamin Anderson"
+  clean = clean.replace(/\s*['"][^'"]+['"]\s*/g, ' ').trim()
   
   // Remove ALL extra whitespace (consolidate multiple spaces into one)
   clean = clean.replace(/\s+/g, ' ').trim()
@@ -55,8 +60,9 @@ export function toCanonicalName(input: string): string {
  * - "Brian Anderson Sr" → ["Brian Anderson Sr", "Brian", "Anderson", "Brian Anderson"]
  * - "John Doe" → ["John Doe", "John", "Doe"]
  * - "Alice" → ["Alice"]
+ * - "Dr. Benjamin 'ben' Anderson" → ["Dr. Benjamin Anderson", "Benjamin", "Anderson", "Ben"]
  */
-export function generateAliases(canonicalName: string): string[] {
+export function generateAliases(canonicalName: string, originalName?: string): string[] {
   const aliases = [canonicalName]  // Include canonical name
   
   const parts = canonicalName.split(' ')
@@ -74,6 +80,22 @@ export function generateAliases(canonicalName: string): string[] {
   // First + Last (if middle name/suffix exists)
   if (parts.length > 2) {
     aliases.push(`${parts[0]} ${parts[parts.length - 1]}`)
+  }
+  
+  // Extract nicknames from original name (if provided)
+  // Matches: 'ben', "Ben", 'Ben', etc.
+  if (originalName) {
+    const nicknameMatches = originalName.match(/['"]([^'"]+)['"]/g)
+    if (nicknameMatches) {
+      for (const match of nicknameMatches) {
+        // Remove quotes and normalize to title case
+        const nickname = match.replace(/['"]/g, '').trim()
+        if (nickname) {
+          const normalizedNickname = nickname.charAt(0).toUpperCase() + nickname.slice(1).toLowerCase()
+          aliases.push(normalizedNickname)
+        }
+      }
+    }
   }
   
   return [...new Set(aliases)]  // Remove duplicates
