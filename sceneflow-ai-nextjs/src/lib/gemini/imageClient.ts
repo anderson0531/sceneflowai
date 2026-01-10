@@ -136,6 +136,13 @@ export async function generateImageWithGemini(
         continue
       }
       
+      // Strip data URL prefix if present (e.g., "data:image/png;base64,")
+      if (base64Data.includes(',')) {
+        const originalLength = base64Data.length
+        base64Data = base64Data.split(',')[1] || base64Data
+        console.log(`[Vertex Imagen] Stripped data URL prefix: ${originalLength} -> ${base64Data.length} chars`)
+      }
+      
       // Build reference image object per Imagen 3 Capability API spec
       referenceImagesArray.push({
         referenceType: 'REFERENCE_TYPE_SUBJECT',

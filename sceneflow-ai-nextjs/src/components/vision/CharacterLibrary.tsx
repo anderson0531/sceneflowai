@@ -745,6 +745,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                   if (isUploading) return
                   const file = e.target.files?.[0]
                   if (file) onUpload(file)
+                  e.target.value = ''
                 }}
               />
             </div>
@@ -804,6 +805,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                   if (isUploading) return
                   const file = e.target.files?.[0]
                   if (file) onUpload(file)
+                  e.target.value = ''
                 }}
               />
             </div>
