@@ -3323,6 +3323,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Handle scene wardrobe assignment - assigns specific wardrobe to character for a scene
   const handleUpdateSceneWardrobe = async (sceneIndex: number, characterId: string, wardrobeId: string | null) => {
     try {
+      // Safety check: Don't save if scenes haven't loaded yet - prevents data corruption
+      if (!scenes || scenes.length === 0) {
+        console.warn('[Update Scene Wardrobe] Aborted: scenes not loaded yet, preventing empty save')
+        return
+      }
+      
       const updatedScenes = scenes.map((scene, idx) => {
         if (idx !== sceneIndex) return scene
         
