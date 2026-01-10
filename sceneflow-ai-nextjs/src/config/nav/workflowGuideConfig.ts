@@ -149,46 +149,103 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
 // BLUEPRINT PHASE WORKFLOW GUIDE
 // =============================================================================
 
+/**
+ * Blueprint Guide: Streamlined 4-phase workflow
+ * 
+ * Design principles:
+ * - Action-oriented labels (verbs)
+ * - Progressive disclosure (expand current group)
+ * - Minimal text, clear next steps
+ * - Tooltips/help for details (not inline)
+ */
 export const blueprintWorkflowGroups: WorkflowGroup[] = [
   {
-    id: 'concept-development',
-    title: 'Concept Development',
+    id: 'create-story',
+    title: 'Create Your Story',
     icon: 'Lightbulb',
     iconColor: 'text-yellow-500',
     steps: [
-      { id: 'enter-concept', label: 'Enter Video Concept', actionEventName: 'blueprint:enter-concept' },
-      { id: 'generate-treatment', label: 'Generate Film Treatment', actionEventName: 'blueprint:generate-treatment' },
-      { id: 'review-score', label: 'Review Score & Recommendations', actionEventName: 'blueprint:scorecard' },
+      { 
+        id: 'enter-idea', 
+        label: 'Enter your idea or topic', 
+        description: 'Describe your video concept, story, or topic',
+        actionEventName: 'blueprint:enter-concept' 
+      },
+      { 
+        id: 'generate-blueprint', 
+        label: 'Generate Blueprint', 
+        description: 'AI creates title, logline, beats, characters',
+        actionEventName: 'blueprint:generate-treatment' 
+      },
     ],
   },
   {
-    id: 'character-setup',
-    title: 'Character Setup',
-    icon: 'Users',
+    id: 'refine-blueprint',
+    title: 'Refine Your Blueprint',
+    icon: 'Target',
+    iconColor: 'text-cyan-500',
+    collapsed: true,
+    steps: [
+      { 
+        id: 'review-sections', 
+        label: 'Review & edit sections', 
+        description: 'Fine-tune story, tone, beats, characters',
+        actionEventName: 'blueprint:edit-sections' 
+      },
+      { 
+        id: 'run-resonance', 
+        label: 'Run Audience Resonance', 
+        description: 'Get score and recommendations',
+        actionEventName: 'blueprint:analyze-resonance' 
+      },
+      { 
+        id: 'apply-fixes', 
+        label: 'Apply quick fixes', 
+        description: 'Target 80+ score (2-3 iterations max)',
+        actionEventName: 'blueprint:apply-fixes' 
+      },
+    ],
+  },
+  {
+    id: 'enhance-experience',
+    title: 'Enhance Experience',
+    icon: 'Sparkles',
     iconColor: 'text-purple-500',
+    collapsed: true,
     steps: [
-      { id: 'review-characters', label: 'Review Generated Characters', actionEventName: 'blueprint:characters' },
-      { id: 'refine-characters', label: 'Refine Character Details', actionEventName: 'blueprint:refine-characters' },
+      { 
+        id: 'regenerate-hero', 
+        label: 'Regenerate hero image', 
+        description: 'Update visual to match narrative',
+        actionEventName: 'blueprint:regenerate-hero' 
+      },
+      { 
+        id: 'preview-audio', 
+        label: 'Preview with audio', 
+        description: 'Listen in multiple languages',
+        actionEventName: 'blueprint:preview-audio' 
+      },
+      { 
+        id: 'collaborate-export', 
+        label: 'Collaborate & export', 
+        description: 'Share link, export PDF/Doc/PPTX',
+        actionEventName: 'blueprint:collaborate' 
+      },
     ],
   },
   {
-    id: 'style-config',
-    title: 'Style & Tone',
-    icon: 'Palette',
-    iconColor: 'text-pink-500',
-    steps: [
-      { id: 'set-visual-style', label: 'Set Visual Style', actionEventName: 'blueprint:style' },
-      { id: 'confirm-tone', label: 'Confirm Tone & Genre', actionEventName: 'blueprint:tone' },
-    ],
-  },
-  {
-    id: 'proceed-production',
-    title: 'Proceed to Production',
+    id: 'start-production',
+    title: 'Ready for Production',
     icon: 'ArrowRight',
     iconColor: 'text-green-500',
+    collapsed: true,
     steps: [
-      { id: 'generate-screenplay', label: 'Generate Screenplay', actionEventName: 'blueprint:generate-screenplay' },
-      { id: 'enter-production', label: 'Enter Virtual Production', actionEventName: 'blueprint:enter-production' },
+      { 
+        id: 'start-production', 
+        label: 'Start Production', 
+        description: 'Generate script and begin production',
+        actionEventName: 'blueprint:start-production' 
+      },
     ],
   },
 ]

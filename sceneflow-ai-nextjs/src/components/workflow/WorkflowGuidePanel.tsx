@@ -22,6 +22,7 @@ import {
   Lightbulb,
   Palette,
   ArrowRight,
+  Target,
 } from 'lucide-react'
 import { 
   type WorkflowGroup, 
@@ -48,6 +49,8 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Palette,
   ArrowRight,
   ClipboardCheck,
+  Target,
+  Sparkles,
 }
 
 // =============================================================================

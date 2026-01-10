@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useState, useCallback } from 'react'
+import React, { useMemo, useState, useCallback, useEffect } from 'react'
 import { usePathname, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useCredits } from '@/contexts/CreditsContext'
@@ -50,6 +50,7 @@ import { ReviewScoresPanel, type ReviewScores } from './ReviewScoresPanel'
 import { ProjectStatsPanel, type ProjectStats } from './ProjectStatsPanel'
 import { ProTipsChecklist } from '../pro-tips/ProTipsChecklist'
 import { WorkflowGuidePanel } from '../workflow/WorkflowGuidePanel'
+import { type WorkflowStepStatus as GuideStepStatus } from '@/config/nav/workflowGuideConfig'
 
 // Icon map for dynamic rendering
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -107,6 +108,20 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
   
   const toggleSection = useCallback((section: keyof SectionVisibility) => {
     setSectionsOpen(prev => ({ ...prev, [section]: !prev[section] }))
+  }, [])
+
+  // Blueprint guide step status - updated via custom events from workflow pages
+  const [blueprintGuideStatus, setBlueprintGuideStatus] = useState<Record<string, GuideStepStatus>>({})
+
+  // Listen for blueprint guide status updates
+  useEffect(() => {
+    const handleStatusUpdate = (e: CustomEvent<Record<string, GuideStepStatus>>) => {
+      setBlueprintGuideStatus(prev => ({ ...prev, ...e.detail }))
+    }
+    window.addEventListener('blueprint:guide-status' as any, handleStatusUpdate)
+    return () => {
+      window.removeEventListener('blueprint:guide-status' as any, handleStatusUpdate)
+    }
   }, [])
 
   // Handle quick action clicks
@@ -276,6 +291,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
               phase={config.phase}
               isOpen={sectionsOpen.workflowGuide}
               onToggle={() => toggleSection('workflowGuide')}
+              externalStatus={blueprintGuideStatus}
             />
           )}
 

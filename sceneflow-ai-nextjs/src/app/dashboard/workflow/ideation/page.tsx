@@ -380,6 +380,116 @@ export default function IdeationPage() {
     setScores(s)
   }, [concept, targetAudience, keyMessage, tone])
 
+  // Blueprint Guide event listeners
+  // These connect sidebar guide steps to page actions
+  useEffect(() => {
+    const handlers: Record<string, () => void> = {
+      'blueprint:enter-concept': () => {
+        // Focus concept input - scroll to spark phase
+        setPhase('spark')
+        const input = document.querySelector('textarea[placeholder*="concept"], textarea[placeholder*="idea"]') as HTMLTextAreaElement
+        if (input) {
+          input.focus()
+          input.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      },
+      'blueprint:generate-treatment': () => {
+        // Trigger blueprint generation
+        if (concept?.trim()) {
+          generateFromCurrentConcept()
+        }
+      },
+      'blueprint:edit-sections': () => {
+        // Navigate to workshop phase for section editing
+        if (phase !== 'workshop' && phase !== 'blueprint') {
+          if (concept?.trim()) {
+            generateFromCurrentConcept()
+          }
+        } else {
+          setPhase('workshop')
+        }
+      },
+      'blueprint:analyze-resonance': () => {
+        // Scroll to Audience Resonance analyzer
+        setPhase('workshop')
+        const scoreCard = document.querySelector('[data-section="audience-resonance"]')
+        if (scoreCard) {
+          scoreCard.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      },
+      'blueprint:apply-fixes': () => {
+        // Apply selected recommendations
+        if (selectedRecs.length > 0) {
+          applySelectedRecommendations()
+        }
+      },
+      'blueprint:regenerate-hero': () => {
+        // Scroll to hero image section
+        const heroSection = document.querySelector('[data-section="hero-image"]')
+        if (heroSection) {
+          heroSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      },
+      'blueprint:preview-audio': () => {
+        // Scroll to audio preview section
+        const audioSection = document.querySelector('[data-section="audio-preview"]')
+        if (audioSection) {
+          audioSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      },
+      'blueprint:collaborate': () => {
+        // Open collaboration/export options
+        handleShareIdeas()
+      },
+      'blueprint:start-production': () => {
+        // Navigate to production
+        handleNextStep()
+      },
+    }
+
+    // Register all event listeners
+    const eventHandler = (e: Event) => {
+      const eventName = e.type
+      if (handlers[eventName]) {
+        handlers[eventName]()
+      }
+    }
+
+    Object.keys(handlers).forEach(eventName => {
+      window.addEventListener(eventName, eventHandler)
+    })
+
+    return () => {
+      Object.keys(handlers).forEach(eventName => {
+        window.removeEventListener(eventName, eventHandler)
+      })
+    }
+  }, [concept, phase, selectedRecs])
+
+  // Broadcast blueprint guide step status based on page state
+  useEffect(() => {
+    const status: Record<string, 'pending' | 'in-progress' | 'complete' | 'skipped'> = {
+      // Create Your Story
+      'enter-idea': concept?.trim() ? 'complete' : phase === 'spark' ? 'in-progress' : 'pending',
+      'generate-blueprint': attributes ? 'complete' : isAnalyzing ? 'in-progress' : 'pending',
+      
+      // Refine Your Blueprint
+      'review-sections': phase === 'workshop' || phase === 'blueprint' ? 'in-progress' : attributes ? 'complete' : 'pending',
+      'run-resonance': scoreCard ? 'complete' : 'pending',
+      'apply-fixes': selectedRecs.length > 0 ? 'in-progress' : scoreCard && (scoreCard.audience >= 80 || scoreCard.director >= 80) ? 'complete' : 'pending',
+      
+      // Enhance Experience
+      'regenerate-hero': 'pending',  // TODO: Track when hero is regenerated
+      'preview-audio': 'pending',    // TODO: Track when audio is previewed
+      'collaborate-export': 'pending',
+      
+      // Ready for Production
+      'start-production': 'pending',
+    }
+    
+    window.dispatchEvent(new CustomEvent('blueprint:guide-status', { detail: status }))
+  }, [concept, phase, attributes, isAnalyzing, scoreCard, selectedRecs])
+
   const handleSelectAndIterate = (idea: any) => {
     setSelectedIdea(idea)
     setShowIdeas(false)

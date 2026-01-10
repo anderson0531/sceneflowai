@@ -141,7 +141,7 @@ export const blueprintSidebarConfig: WorkflowSidebarConfig = {
   ],
   sectionVisibility: {
     workflow: true,
-    workflowGuide: false,
+    workflowGuide: true,
     proTips: true,
     progress: true,
     quickActions: true,
@@ -152,7 +152,7 @@ export const blueprintSidebarConfig: WorkflowSidebarConfig = {
   },
   sectionDefaults: {
     workflow: true,
-    workflowGuide: false,
+    workflowGuide: true,
     proTips: false,
     progress: false,
     quickActions: true,
