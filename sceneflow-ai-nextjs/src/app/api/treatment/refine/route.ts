@@ -45,7 +45,13 @@ Themes should be thematically rich but not preachy.`,
   beats: `You are refining the STORY BEATS of a film treatment.
 Focus on: beat titles, intents, durations, and synopses.
 Ensure beats flow logically and total duration is realistic.
-Each beat should have clear dramatic purpose.`,
+Each beat should have clear dramatic purpose.
+
+CRITICAL CONSTRAINTS:
+- Maximum 8 beats total (consolidate if needed)
+- Each beat synopsis should be 1-3 sentences max
+- Keep response compact - no lengthy descriptions
+- Preserve existing beat structure where possible`,
 
   characters: `You are refining the CHARACTER DESCRIPTIONS of a film treatment.
 Focus on: character names, descriptions, appearance, and psychological depth.
@@ -88,6 +94,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // For beats section, limit the data size to prevent OOM
+    if (section === 'beats' && Array.isArray(sectionData.beats)) {
+      const beats = sectionData.beats as Array<Record<string, unknown>>
+      sectionData.beats = beats.slice(0, 10).map((b, i) => ({
+        title: b.title || `Beat ${i + 1}`,
+        intent: b.intent || '',
+        minutes: b.minutes || 0,
+        synopsis: typeof b.synopsis === 'string' ? b.synopsis.substring(0, 200) : ''
+      }))
+    }
+
+    // Section-specific token limits to prevent OOM
+    const maxTokens = section === 'beats' ? 2048 : 
+                      section === 'characters' ? 3072 : 4096
+
     const prompt = `${SECTION_CONTEXT[section]}
 
 You are an expert film treatment editor. Refine the provided section according to the user's instructions.
@@ -113,11 +134,12 @@ IMPORTANT:
 ${strictJsonPromptSuffix}`
 
     console.log(`[Refine Treatment] Refining section "${section}" with instructions: ${instructions.substring(0, 100)}...`)
+    console.log(`[Refine Treatment] Using maxTokens: ${maxTokens} for section: ${section}`)
     
     const result = await generateText(prompt, {
       model: 'gemini-2.5-flash',
       temperature: 0.3,
-      maxOutputTokens: 4096
+      maxOutputTokens: maxTokens
     })
 
     const generatedText = result?.text || '{}'
