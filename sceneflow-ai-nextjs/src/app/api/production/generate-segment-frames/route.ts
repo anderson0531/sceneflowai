@@ -203,6 +203,8 @@ export async function POST(req: NextRequest) {
       console.log('[Generate Frames] Start frame prompt:', startFramePrompt.substring(0, 150))
       
       // Prepare reference images
+      // The scene image already contains characters in context - use it as the SINGLE reference
+      // Adding separate character portrait refs is redundant and exceeds the 2-ref limit for 16:9
       const startReferenceImages: Array<{
         referenceId: number
         imageUrl: string
@@ -210,30 +212,29 @@ export async function POST(req: NextRequest) {
       }> = []
       
       if (referenceImageUrl) {
+        // Scene image or previous frame already has characters - use as single reference
         startReferenceImages.push({
           referenceId: 1,
           imageUrl: referenceImageUrl,
           subjectDescription: transitionType === 'CONTINUE' 
-            ? 'Previous frame - maintain exact visual continuity'
-            : 'Scene establishing shot - match location and style'
+            ? 'Previous frame - maintain exact visual continuity including character appearance'
+            : 'Scene establishing shot - match location, style, and character appearance'
         })
-      }
-      
-      // Add character reference images if available
-      // Log character reference status for debugging
-      const startCharsWithRefs = characters.filter(c => c.referenceUrl)
-      console.log(`[Generate Frames] Start frame - Character references: ${startCharsWithRefs.length}/${characters.length}`, 
-        startCharsWithRefs.map(c => c.name).join(', '))
-      
-      startCharsWithRefs
-        .slice(0, 3) // Max 4 total references
-        .forEach((char, index) => {
+        console.log('[Generate Frames] Using scene/previous frame as single reference (characters already in context)')
+      } else {
+        // No scene image - fall back to character portrait references
+        const startCharsWithRefs = characters.filter(c => c.referenceUrl)
+        console.log(`[Generate Frames] No scene image, using ${startCharsWithRefs.length} character portrait refs`)
+        
+        const maxRefs = aspectRatio === '1:1' ? 4 : 2
+        startCharsWithRefs.slice(0, maxRefs).forEach((char, index) => {
           startReferenceImages.push({
-            referenceId: index + 2,
+            referenceId: index + 1,
             imageUrl: char.referenceUrl!,
             subjectDescription: `Character: ${char.name} - match exact appearance`
           })
         })
+      }
       
       // Generate start frame using Vertex AI Imagen (higher rate limits than Gemini API)
       const startImageDataUrl = await callVertexAIImagen(startFramePrompt, {
@@ -299,6 +300,8 @@ export async function POST(req: NextRequest) {
       console.log('[Generate Frames] End frame prompt:', endFramePrompt.substring(0, 150))
       
       // Prepare reference images for end frame
+      // The start frame already contains characters in context - use it as the SINGLE reference
+      // Adding separate character portrait refs is redundant and exceeds the 2-ref limit for 16:9
       const endReferenceImages: Array<{
         referenceId: number
         imageUrl: string
@@ -311,22 +314,8 @@ export async function POST(req: NextRequest) {
         }
       ]
       
-      // ALWAYS add character references for consistent identity lock across all action types
-      // High-action scenes especially need character refs to prevent drift during dynamic motion
-      // Log character reference status for debugging
-      const charsWithRefs = characters.filter(c => c.referenceUrl)
-      console.log(`[Generate Frames] Character references available: ${charsWithRefs.length}/${characters.length}`, 
-        charsWithRefs.map(c => c.name).join(', '))
-      
-      charsWithRefs
-        .slice(0, 3) // Max 4 total (1 start frame + 3 characters)
-        .forEach((char, index) => {
-          endReferenceImages.push({
-            referenceId: index + 2,
-            imageUrl: char.referenceUrl!,
-            subjectDescription: `Character: ${char.name} - IDENTICAL appearance required`
-          })
-        })
+      // DON'T add separate character refs - start frame already has them in context
+      console.log('[Generate Frames] End frame using start frame as single reference (characters already in context)')
       
       // Generate end frame using Vertex AI Imagen (higher rate limits than Gemini API)
       const endImageDataUrl = await callVertexAIImagen(endFramePrompt, {
