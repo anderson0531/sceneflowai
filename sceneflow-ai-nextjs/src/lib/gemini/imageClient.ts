@@ -106,49 +106,65 @@ export async function generateImageWithGemini(
   }
   
   // Add reference images for subject customization
+  // Vertex AI requires GCS URIs for reference images (NOT base64)
   if (hasReferenceImages) {
     console.log('[Vertex Imagen] Adding', options.referenceImages!.length, 'reference image(s) for subject customization')
+    console.log('[Vertex Imagen] Using GCS URI format for Vertex AI (not base64)')
+    
+    // Import GCS utilities for uploading images
+    const { uploadFromUrlToGCS, uploadImageToGCS } = await import('@/lib/storage/gcs')
     
     const referenceImagesArray = []
     
     for (const ref of options.referenceImages!) {
-      let base64Data = ref.base64Image
+      let gcsUri: string | undefined
       
-      // Download from URL if needed
-      if (!base64Data && ref.imageUrl) {
-        console.log(`[Vertex Imagen] Downloading reference ${ref.referenceId} from: ${ref.imageUrl.substring(0, 50)}...`)
+      // Vertex AI requires GCS URIs for reference images (not base64)
+      // Upload HTTP images to GCS, or use existing gs:// URIs directly
+      if (ref.imageUrl?.startsWith('gs://')) {
+        // Already a GCS URI - use directly
+        gcsUri = ref.imageUrl
+        console.log(`[Vertex Imagen] Using existing GCS URI: ${gcsUri}`)
+      } else if (ref.imageUrl?.startsWith('http://') || ref.imageUrl?.startsWith('https://')) {
+        // HTTP URL - upload to GCS first
+        console.log(`[Vertex Imagen] Uploading HTTP image to GCS: ${ref.imageUrl.substring(0, 60)}...`)
         try {
-          const imageResponse = await fetch(ref.imageUrl)
-          if (!imageResponse.ok) {
-            throw new Error(`HTTP ${imageResponse.status}: ${imageResponse.statusText}`)
-          }
-          const imageBuffer = await imageResponse.arrayBuffer()
-          base64Data = Buffer.from(imageBuffer).toString('base64')
-          console.log(`[Vertex Imagen] Downloaded and encoded ${base64Data.length} base64 chars`)
+          gcsUri = await uploadFromUrlToGCS(ref.imageUrl, `ref-${ref.referenceId}`)
+          console.log(`[Vertex Imagen] Uploaded to GCS: ${gcsUri}`)
         } catch (error: any) {
-          console.error(`[Vertex Imagen] Failed to download reference image:`, error.message)
-          throw new Error(`Failed to download reference image: ${error.message}`)
+          console.error(`[Vertex Imagen] Failed to upload reference image to GCS:`, error.message)
+          throw new Error(`Failed to upload reference image to GCS: ${error.message}`)
+        }
+      } else if (ref.base64Image) {
+        // Base64 provided directly - upload to GCS
+        console.log(`[Vertex Imagen] Uploading base64 image to GCS for reference ${ref.referenceId}`)
+        try {
+          // Strip data URL prefix if present (e.g., "data:image/png;base64,")
+          let base64Data = ref.base64Image
+          if (base64Data.includes(',')) {
+            base64Data = base64Data.split(',')[1] || base64Data
+          }
+          const imageBuffer = Buffer.from(base64Data, 'base64')
+          gcsUri = await uploadImageToGCS(imageBuffer, `ref-${ref.referenceId}`)
+          console.log(`[Vertex Imagen] Uploaded base64 to GCS: ${gcsUri}`)
+        } catch (error: any) {
+          console.error(`[Vertex Imagen] Failed to upload base64 image to GCS:`, error.message)
+          throw new Error(`Failed to upload base64 image to GCS: ${error.message}`)
         }
       }
       
-      if (!base64Data) {
-        console.warn(`[Vertex Imagen] Reference ${ref.referenceId}: No image data available, skipping`)
+      if (!gcsUri) {
+        console.warn(`[Vertex Imagen] Reference ${ref.referenceId}: No image source available, skipping`)
         continue
       }
       
-      // Strip data URL prefix if present (e.g., "data:image/png;base64,")
-      if (base64Data.includes(',')) {
-        const originalLength = base64Data.length
-        base64Data = base64Data.split(',')[1] || base64Data
-        console.log(`[Vertex Imagen] Stripped data URL prefix: ${originalLength} -> ${base64Data.length} chars`)
-      }
-      
       // Build reference image object per Imagen 3 Capability API spec
+      // Uses gcsUri format for Vertex AI (NOT bytesBase64Encoded)
       referenceImagesArray.push({
         referenceType: 'REFERENCE_TYPE_SUBJECT',
         referenceId: ref.referenceId,
         referenceImage: {
-          bytesBase64Encoded: base64Data
+          gcsUri: gcsUri
         },
         subjectImageConfig: {
           subjectType: 'SUBJECT_TYPE_PERSON',
@@ -156,11 +172,12 @@ export async function generateImageWithGemini(
         }
       })
       
-      console.log(`[Vertex Imagen] Added reference ${ref.referenceId}: ${ref.subjectDescription || 'person'} (${base64Data.length} base64 chars)`)
+      console.log(`[Vertex Imagen] Added reference ${ref.referenceId}: ${ref.subjectDescription || 'person'} -> ${gcsUri}`)
     }
     
     if (referenceImagesArray.length > 0) {
       requestBody.instances[0].referenceImages = referenceImagesArray
+      console.log('[Vertex Imagen] Reference images configured:', referenceImagesArray.length, 'images (using GCS URIs)')
     }
   }
   
