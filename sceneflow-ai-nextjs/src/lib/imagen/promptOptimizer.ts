@@ -51,9 +51,35 @@ function extractDemographicAnchor(appearanceDescription: string): string | null 
     age = `in ${gender === 'woman' ? 'her' : 'his'} ${qualifier}${ageMatch[2]}`
   }
   
-  // Build demographic anchor
+  // Extract distinctive hair characteristics
+  // These are important visual features that help maintain character consistency
+  let hairFeatures = ''
+  const hairPatterns = [
+    { pattern: /salt[- ]?and[- ]?pepper\s+(hair|beard)/i, value: 'salt-and-pepper hair' },
+    { pattern: /grey|gray\s+(hair|beard)/i, value: 'grey hair' },
+    { pattern: /bald|shaved head/i, value: 'bald' },
+    { pattern: /long\s+(blonde|blond|brown|black|red)\s+hair/i, value: (m: RegExpMatchArray) => `long ${m[1]} hair` },
+    { pattern: /short\s+(blonde|blond|brown|black|red)\s+hair/i, value: (m: RegExpMatchArray) => `short ${m[1]} hair` },
+    { pattern: /curly\s+(blonde|blond|brown|black|red|grey|gray)?\s*hair/i, value: (m: RegExpMatchArray) => m[1] ? `curly ${m[1]} hair` : 'curly hair' },
+    { pattern: /\b(beard|goatee|mustache)\b/i, value: (m: RegExpMatchArray) => m[1].toLowerCase() },
+  ]
+  
+  // Check for salt-and-pepper specifically (distinctive aging feature)
+  if (/salt[- ]?and[- ]?pepper/i.test(desc)) {
+    hairFeatures = 'with salt-and-pepper hair'
+    // Also check for beard
+    if (/beard/i.test(desc)) {
+      hairFeatures = 'with salt-and-pepper hair and beard'
+    }
+  } else if (/grey|gray/i.test(desc) && /hair/i.test(desc)) {
+    hairFeatures = 'with grey hair'
+  } else if (/bald|shaved head/i.test(desc)) {
+    hairFeatures = 'who is bald'
+  }
+  
+  // Build demographic anchor with hair features
   if (ethnicity && gender) {
-    return `a ${ethnicity} ${gender}${age ? ' ' + age : ''}`
+    return `a ${ethnicity} ${gender}${age ? ' ' + age : ''}${hairFeatures ? ' ' + hairFeatures : ''}`
   }
   return null
 }

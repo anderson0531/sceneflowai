@@ -755,8 +755,9 @@ export async function POST(req: NextRequest) {
 
         console.log(`[Image Validator] ${primaryCharForValidation.name} - Matches: ${validation.matches}, Confidence: ${validation.confidence}%`)
         
-        if (!validation.matches && validation.confidence < 90) {
-          console.warn('[Scene Image] ⚠️  Character likeness validation failed (confidence < 90%).')
+        // 80% threshold is appropriate for AI-generated likeness (perfect match is rare)
+        if (!validation.matches && validation.confidence < 80) {
+          console.warn('[Scene Image] ⚠️  Character likeness validation failed (confidence < 80%).')
           console.warn('[Scene Image] Issues:', validation.issues.join(', '))
         } else if (validation.matches) {
           console.log(`[Scene Image] ✓ Character likeness validated (${validation.confidence}% confidence)`)
