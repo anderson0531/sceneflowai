@@ -2829,8 +2829,21 @@ interface SceneCardProps {
   onGenerateEndFrame?: (sceneId: string, segmentId: string, startFrameUrl: string, segmentPrompt: string) => Promise<string | null>
   // Frame Anchoring: Update segment's end frame URL
   onEndFrameGenerated?: (sceneId: string, segmentId: string, endFrameUrl: string) => void
-  // Characters for backdrop video modal
-  characters?: Array<{ id: string; name: string; description?: string; appearance?: string }>
+  // Characters for backdrop video modal and wardrobe selection
+  characters?: Array<{ 
+    id: string
+    name: string
+    description?: string
+    appearance?: string
+    wardrobes?: Array<{
+      id: string
+      name: string
+      description: string
+      accessories?: string
+      isDefault: boolean
+      createdAt: string
+    }>
+  }>
   // Take management
   onSelectTake?: (sceneId: string, segmentId: string, takeId: string, assetUrl: string) => void
   onDeleteTake?: (sceneId: string, segmentId: string, takeId: string) => void
@@ -3008,6 +3021,7 @@ function SceneCard({
   const [dialogueCollapsed, setDialogueCollapsed] = useState(false)
   const [musicCollapsed, setMusicCollapsed] = useState(false)
   const [sfxCollapsed, setSfxCollapsed] = useState(false)
+  const [sceneCastCollapsed, setSceneCastCollapsed] = useState(true) // Collapsed by default - wardrobe selection is advanced
   // Scene Image section: expanded when image exists, collapsed when empty to encourage generation
   const [sceneImageCollapsed, setSceneImageCollapsed] = useState(!scene.imageUrl)
   
@@ -4668,6 +4682,88 @@ function SceneCard({
                       )}
                     </div>
                   )
+                  })()}
+                  
+                  {/* Scene Cast & Wardrobe Selection */}
+                  {scene.dialogue && scene.dialogue.length > 0 && characters && characters.length > 0 && (() => {
+                    // Get unique character names from dialogue
+                    const sceneCharacterNames = Array.from(new Set(scene.dialogue.map((d: any) => d.character))) as string[]
+                    // Find matching characters from character library
+                    const sceneCharacters = sceneCharacterNames
+                      .map(name => characters.find(c => c.name.toLowerCase() === name.toLowerCase()))
+                      .filter((c): c is NonNullable<typeof c> => c !== undefined && c.wardrobes && c.wardrobes.length > 1)
+                    
+                    // Only show if there are characters with multiple wardrobes
+                    if (sceneCharacters.length === 0) return null
+                    
+                    return (
+                      <div className="bg-violet-950 border-l-4 border-violet-500 p-4 rounded-lg">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSceneCastCollapsed(!sceneCastCollapsed)
+                          }}
+                          className="flex items-center gap-2 hover:opacity-80 transition-opacity w-full"
+                        >
+                          <ChevronDown className={`w-4 h-4 text-violet-400 transition-transform ${sceneCastCollapsed ? '-rotate-90' : ''}`} />
+                          <Users className="w-4 h-4 text-violet-400" />
+                          <span className="text-sm font-semibold text-gray-200">Scene Wardrobe</span>
+                          <span className="text-xs text-gray-500">({sceneCharacters.length} {sceneCharacters.length === 1 ? 'character' : 'characters'} with costume options)</span>
+                        </button>
+                        
+                        {!sceneCastCollapsed && (
+                          <div className="mt-3 space-y-2">
+                            {sceneCharacters.map((character) => {
+                              // Get current wardrobe assignment for this scene
+                              const sceneWardrobe = scene.characterWardrobes?.find((cw: any) => cw.characterId === character.id)
+                              const currentWardrobeId = sceneWardrobe?.wardrobeId || character.wardrobes?.find(w => w.isDefault)?.id || ''
+                              const currentWardrobe = character.wardrobes?.find(w => w.id === currentWardrobeId)
+                              
+                              return (
+                                <div key={character.id} className="flex items-center gap-3 bg-violet-900/30 rounded-lg p-2">
+                                  <span className="text-sm font-medium text-violet-200 min-w-[100px]">{character.name}</span>
+                                  <select
+                                    value={currentWardrobeId}
+                                    onChange={(e) => {
+                                      e.stopPropagation()
+                                      const wardrobeId = e.target.value || null
+                                      onUpdateSceneWardrobe?.(sceneIdx, character.id, wardrobeId)
+                                    }}
+                                    className="flex-1 bg-violet-900/50 border border-violet-600/50 text-violet-200 text-sm rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                                  >
+                                    {character.wardrobes?.map((wardrobe) => (
+                                      <option key={wardrobe.id} value={wardrobe.id}>
+                                        {wardrobe.name}{wardrobe.isDefault ? ' (Default)' : ''}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  {currentWardrobe && (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span className="text-xs text-violet-400 truncate max-w-[150px]">
+                                            {currentWardrobe.description.slice(0, 30)}{currentWardrobe.description.length > 30 ? '...' : ''}
+                                          </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="bg-gray-900 text-white border border-gray-700 max-w-xs">
+                                          <p className="text-xs">{currentWardrobe.description}</p>
+                                          {currentWardrobe.accessories && (
+                                            <p className="text-xs text-gray-400 mt-1">Accessories: {currentWardrobe.accessories}</p>
+                                          )}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
+                                </div>
+                              )
+                            })}
+                            <p className="text-[10px] text-violet-400/70 mt-2">
+                              Select different wardrobes for characters in this scene. Changes affect image generation.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )
                   })()}
                   
                   {/* Scene Dialog */}
