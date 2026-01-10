@@ -499,12 +499,39 @@ export async function POST(req: NextRequest) {
       const referenceId = hasReferenceImage ? ++gcsRefIndex : undefined
       
       // Generate linking description for text-matching mode
-      // CRITICAL: This MUST be set here and match what we pass to subjectDescription in the API call
-      // Using "person [id]" format which is most reliable with Imagen 3.0
-      const linkingDescription = hasReferenceImage ? `person [${referenceId}]` : undefined
+      // CRITICAL: subjectDescription should be a TEXT DESCRIPTION (e.g., "a Black man in his late 40s")
+      // The [N] marker is just a reference tag in the prompt, NOT the subjectDescription
+      // Per Google docs: "subjectDescription": "a man with short hair" with prompt containing "a man with short hair [1]"
+      let subjectTextDescription: string | undefined
+      if (hasReferenceImage && char.appearanceDescription) {
+        // Extract concise description from appearance (first 1-2 sentences or key phrase)
+        const desc = char.appearanceDescription
+        // Look for patterns like "This is a [ethnicity] [gender] in [age]"
+        const match = desc.match(/(?:This is |^)(a\s+\w+(?:\s+\w+)?\s+(?:man|woman|person)(?:\s+in\s+(?:his|her|their)\s+(?:late|early|mid)?\s*\d+s)?)/i)
+        if (match) {
+          subjectTextDescription = match[1].trim()
+        } else {
+          // Fallback: use first sentence or first 60 chars
+          const firstSentence = desc.split(/[.!?]/)[0].trim()
+          subjectTextDescription = firstSentence.length > 60 ? firstSentence.substring(0, 60) : firstSentence
+        }
+        console.log(`[Scene Image] ${char.name} subjectDescription: "${subjectTextDescription}"`)
+      } else if (hasReferenceImage) {
+        // No appearance description, use generic
+        subjectTextDescription = 'a person'
+        console.log(`[Scene Image] ${char.name} using generic subjectDescription: "${subjectTextDescription}"`)
+      }
+      
+      // linkingDescription for prompt: "a Black man in his late 40s [1]"
+      // subjectDescription for API: "a Black man in his late 40s" (without [1])
+      const linkingDescription = hasReferenceImage 
+        ? (subjectTextDescription ? `${subjectTextDescription} [${referenceId}]` : `person [${referenceId}]`)
+        : undefined
       
       if (hasReferenceImage) {
-        console.log(`[Scene Image] ${char.name} has reference image, assigned referenceId: ${referenceId}, linkingDescription: "${linkingDescription}"`)
+        console.log(`[Scene Image] ${char.name} has reference image, assigned referenceId: ${referenceId}`)
+        console.log(`[Scene Image] ${char.name} linkingDescription (for prompt): "${linkingDescription}"`)
+        console.log(`[Scene Image] ${char.name} subjectDescription (for API): "${subjectTextDescription}"`)
       } else {
         console.log(`[Scene Image] ${char.name} has no reference image, will use text description only`)
       }
@@ -518,7 +545,8 @@ export async function POST(req: NextRequest) {
         keyFeatures: keyFeatures.length > 0 ? keyFeatures : undefined,  // Key physical characteristics
         defaultWardrobe: effectiveWardrobe,  // Wardrobe for consistency (may be scene-overridden)
         wardrobeAccessories: effectiveAccessories,  // Accessories for consistency (may be scene-overridden)
-        linkingDescription,  // CRITICAL: Pre-computed linking text for text-matching (must match subjectDescription)
+        linkingDescription,  // For prompt text: "a Black man in his late 40s [1]"
+        subjectTextDescription,  // For API subjectDescription: "a Black man in his late 40s" (no [N])
         appearanceDescription: char.appearanceDescription || char.visionDescription  // Physical appearance for prompt injection
       }
     })
@@ -615,11 +643,12 @@ export async function POST(req: NextRequest) {
       const linkingDescription = matchingRef?.linkingDescription || `person [${referenceId || 1}]`
       
       console.log(`[Scene Image] Character ${char.name} linking description: "${linkingDescription}"`)
+      console.log(`[Scene Image] Character ${char.name} API subjectDescription: "${matchingRef?.subjectTextDescription || 'a person'}"`)
       
       return {
         referenceId: referenceId || 1, // Fallback to 1 if somehow missing
         imageUrl: char.referenceImage,  // Blob URL - will be downloaded and encoded by generateImageWithGemini
-        subjectDescription: linkingDescription
+        subjectDescription: matchingRef?.subjectTextDescription || 'a person'  // TEXT description for API (not "person [1]")
       }
     })
 
