@@ -486,9 +486,13 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
       })
     
     // PHASE 1: Build SUBJECT & WARDROBE section (placed FIRST)
-    // HYBRID ANCHOR STRATEGY:
-    // - With reference image: "person [1], a Black man in his 50s" - anchor demographic, let image define features
-    // - Without reference image: full text description defines identity
+    // REFERENCE-FIRST STRATEGY:
+    // - With reference image: Use ONLY "person [1]" - let the image define ALL visual identity
+    // - Without reference image: Full text description defines identity
+    // 
+    // IMPORTANT: Adding text descriptions alongside reference tokens creates conflict.
+    // The model tries to satisfy BOTH the text AND the image, which "smooths over"
+    // the unique features of the reference image. Pure token binding is more accurate.
     const subjectWardrobeDescriptions: string[] = []
     characterRefs.forEach(ref => {
       if (ref.defaultWardrobe) {
@@ -497,17 +501,12 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
         
         let subjectClause = ref.linkingDescription
         
-        if (hasReferenceImage && ref.appearanceDescription) {
-          // HYBRID ANCHOR: Extract ONLY demographic (ethnicity + age) to prevent context bias
-          // Do NOT include detailed features (eyes, cheekbones, hair texture) - let reference image define those
-          const demographicAnchor = extractDemographicAnchor(ref.appearanceDescription)
-          if (demographicAnchor) {
-            subjectClause = `${ref.linkingDescription}, ${demographicAnchor}`
-            console.log(`[Prompt Optimizer] Hybrid anchor for ${ref.name}: "${demographicAnchor}"`)
-          } else {
-            console.log(`[Prompt Optimizer] Reference image for ${ref.name}, no demographic extracted, using: "${ref.linkingDescription}"`)
-          }
-        } else if (!hasReferenceImage && ref.appearanceDescription) {
+        if (hasReferenceImage) {
+          // REFERENCE-FIRST: Use ONLY the token binding, no text description
+          // The reference image should be the sole source of visual identity
+          subjectClause = ref.linkingDescription // e.g., just "person [1]"
+          console.log(`[Prompt Optimizer] Reference-first for ${ref.name}: using pure token "${ref.linkingDescription}" (no text anchor)`)
+        } else if (ref.appearanceDescription) {
           // No reference image: use full text description
           const sentences = ref.appearanceDescription.split(/[.!?]+/).filter(s => s.trim())
           const conciseAppearance = sentences.slice(0, 2).join('. ').trim()
