@@ -130,6 +130,75 @@ export async function deleteImageFromGCS(gsUrl: string): Promise<void> {
 }
 
 /**
+ * Upload an image from an HTTP URL to GCS
+ * Downloads the image and uploads to GCS, returning the gs:// URI
+ * Required for Vertex AI Imagen which requires GCS URIs for reference images
+ * @param httpUrl - HTTP/HTTPS URL of the image to upload
+ * @param identifier - Unique identifier for the file (e.g., character name or reference ID)
+ * @returns GCS URL in format: gs://bucket-name/reference-images/identifier-timestamp.jpg
+ */
+export async function uploadFromUrlToGCS(
+  httpUrl: string,
+  identifier: string
+): Promise<string> {
+  const bucketName = process.env.GCS_BUCKET_NAME
+
+  if (!bucketName) {
+    throw new Error('GCS_BUCKET_NAME environment variable not configured')
+  }
+
+  try {
+    console.log(`[GCS] Downloading image from: ${httpUrl.substring(0, 60)}...`)
+    
+    // Download the image
+    const response = await fetch(httpUrl)
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    
+    const arrayBuffer = await response.arrayBuffer()
+    const imageBuffer = Buffer.from(arrayBuffer)
+    
+    console.log(`[GCS] Downloaded ${imageBuffer.length} bytes`)
+    
+    // Determine content type from response or default to JPEG
+    const contentType = response.headers.get('content-type') || 'image/jpeg'
+    const extension = contentType.includes('png') ? 'png' : 'jpg'
+    
+    // Generate unique filename
+    const storage = getStorageClient()
+    const bucket = storage.bucket(bucketName)
+    const sanitizedId = identifier.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+    const timestamp = Date.now()
+    const filename = `reference-images/${sanitizedId}-${timestamp}.${extension}`
+    
+    const file = bucket.file(filename)
+    
+    console.log(`[GCS] Uploading to gs://${bucketName}/${filename}`)
+    
+    // Upload the image
+    await file.save(imageBuffer, {
+      metadata: {
+        contentType,
+        metadata: {
+          sourceUrl: httpUrl.substring(0, 200), // Truncate long URLs
+          uploadedAt: new Date().toISOString()
+        }
+      },
+      resumable: false
+    })
+    
+    const gsUrl = `gs://${bucketName}/${filename}`
+    console.log(`[GCS] Successfully uploaded to ${gsUrl}`)
+    
+    return gsUrl
+  } catch (error: any) {
+    console.error('[GCS] Upload from URL failed:', error)
+    throw new Error(`Failed to upload image to GCS: ${error.message}`)
+  }
+}
+
+/**
  * Download image from GCS and return as base64 encoded string
  * Required for Imagen subject customization which needs bytesBase64Encoded, not GCS URIs
  * @param gsUrl - GCS URL in format: gs://bucket-name/path/to/file.jpg
