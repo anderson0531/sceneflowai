@@ -44,9 +44,9 @@ export async function generateImageWithGeminiStudio(
     throw new Error('Missing GEMINI_API_KEY or GOOGLE_GEMINI_API_KEY environment variable')
   }
   
-  // Use gemini-2.5-flash-preview-image for higher rate limits (500 RPM vs 20 RPM)
-  // Still supports reference images for character consistency
-  const model = 'gemini-2.5-flash-preview-image'
+  // Use gemini-2.5-flash-image for higher rate limits (500 RPM vs 20 RPM for gemini-3-pro-image)
+  // This is the "Nano Banana" model - supports reference images for character consistency
+  const model = 'gemini-2.5-flash-image'
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
   
   console.log(`[Gemini Studio Image] Generating with ${model}...`)
