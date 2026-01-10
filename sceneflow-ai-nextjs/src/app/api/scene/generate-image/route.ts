@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
+import { generateImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor } from '@/lib/imagen/promptOptimizer'
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
@@ -693,25 +694,49 @@ export async function POST(req: NextRequest) {
     
     console.log(`[Scene Image] Negative prompt includes ${characterSpecificNegatives.length} character-specific exclusions (facial features only)`)
 
-    // Generate with Gemini (with optional character references)
-    // Add retry logic for reference image access issues
+    // Generate with Gemini
+    // Use Gemini Studio (gemini-3-pro-image-preview) for reference images - better character consistency
+    // Fall back to Vertex AI Imagen for non-reference image generation
     let base64Image: string | null = null
     let generationAttempt = 0
     const maxGenerationAttempts = 2
+    const useGeminiStudio = imageReferences.length > 0  // Use Gemini Studio when we have reference images
     
     while (generationAttempt < maxGenerationAttempts) {
       try {
         generationAttempt++
         console.log(`[Scene Image] Generation attempt ${generationAttempt}/${maxGenerationAttempts}`)
         
-        base64Image = await generateImageWithGemini(optimizedPrompt, {
-          aspectRatio: '16:9',
-          numberOfImages: 1,
-          imageSize: quality === 'max' ? '2K' : '1K',
-          referenceImages: imageReferences.length > 0 ? imageReferences : undefined,
-          personGeneration: personGeneration || 'allow_adult', // Default to 'allow_adult' for backward compatibility
-          negativePrompt: finalNegativePrompt // Pass character-specific + wardrobe negatives
-        })
+        if (useGeminiStudio) {
+          // Use Gemini 3 Pro Image Preview for reference image generation
+          // This passes reference images directly in the prompt for better character consistency
+          console.log('[Scene Image] Using Gemini Studio (gemini-3-pro-image-preview) for character reference images')
+          
+          // Build multimodal prompt with character instructions
+          const geminiPrompt = `Generate a cinematic scene image based on this description. The scene should feature the person(s) shown in the reference image(s) provided.\n\n${optimizedPrompt}\n\nIMPORTANT: The character(s) in the generated image MUST match the person(s) in the reference image(s) exactly - same ethnicity, facial features, hair color/style, and facial hair. Preserve their identity.`
+          
+          const result = await generateImageWithGeminiStudio({
+            prompt: geminiPrompt,
+            aspectRatio: '16:9',
+            imageSize: quality === 'max' ? '2K' : '1K',
+            referenceImages: imageReferences.map(ref => ({
+              imageUrl: ref.imageUrl,
+              name: ref.subjectDescription || 'character'
+            }))
+          })
+          
+          base64Image = result.imageBase64
+        } else {
+          // Use Vertex AI Imagen for non-reference generation (faster, cheaper)
+          console.log('[Scene Image] Using Vertex AI Imagen (no reference images)')
+          base64Image = await generateImageWithGemini(optimizedPrompt, {
+            aspectRatio: '16:9',
+            numberOfImages: 1,
+            imageSize: quality === 'max' ? '2K' : '1K',
+            personGeneration: personGeneration || 'allow_adult',
+            negativePrompt: finalNegativePrompt
+          })
+        }
         
         // Success - break out of retry loop
         if (base64Image) {
