@@ -2799,7 +2799,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       status: '',
       scenesGenerated: 0,
       totalScenes: 0,
-      batch: 0
+      batch: 0,
+      elapsedSeconds: 0,
+      estimatedRemainingSeconds: 0
     },
     characters: { complete: false, progress: 0, total: 0 },
     scenes: { complete: false, progress: 0, total: 0 }
@@ -4171,10 +4173,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     status: data.status,
                     scenesGenerated: data.scenesGenerated,
                     totalScenes: data.totalScenes,
-                    batch: data.batch
+                    batch: data.batch,
+                    elapsedSeconds: data.elapsedSeconds || 0,
+                    estimatedRemainingSeconds: data.estimatedRemainingSeconds || 0
                   }
                 }))
-                console.log(`[Vision] ${data.status} (${data.scenesGenerated}/${data.totalScenes})`)
+                console.log(`[Vision] ${data.status} (${data.scenesGenerated}/${data.totalScenes})${data.estimatedRemainingSeconds ? ` ~${data.estimatedRemainingSeconds}s remaining` : ''}`)
               } else if (data.type === 'warning') {
                 console.warn(`[Vision] Warning: ${data.message}`)
                 try {

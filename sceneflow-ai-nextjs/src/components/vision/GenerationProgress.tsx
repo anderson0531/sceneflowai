@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Loader, CheckCircle } from 'lucide-react'
+import { Loader, CheckCircle, Clock } from 'lucide-react'
 
 interface GenerationProgressProps {
   progress: {
@@ -11,14 +11,25 @@ interface GenerationProgressProps {
       status?: string;
       scenesGenerated?: number;
       totalScenes?: number;
-      batch?: number; 
+      batch?: number;
+      elapsedSeconds?: number;
+      estimatedRemainingSeconds?: number;
     }
     characters: { complete: boolean; progress: number; total: number }
     scenes: { complete: boolean; progress: number; total: number }
   }
 }
 
+function formatTime(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`
+}
+
 export function GenerationProgress({ progress }: GenerationProgressProps) {
+  const { elapsedSeconds, estimatedRemainingSeconds } = progress.script
+  
   return (
     <div className="fixed bottom-4 right-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 max-w-sm z-50">
       <div className="flex items-center gap-2 mb-3">
@@ -44,6 +55,16 @@ export function GenerationProgress({ progress }: GenerationProgressProps) {
                   <span className="ml-2">
                     ({progress.script.scenesGenerated}/{progress.script.totalScenes} scenes)
                   </span>
+                )}
+              </p>
+            )}
+            {/* Time estimation display */}
+            {!progress.script.complete && estimatedRemainingSeconds !== undefined && estimatedRemainingSeconds > 0 && (
+              <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                ~{formatTime(estimatedRemainingSeconds)} remaining
+                {elapsedSeconds !== undefined && elapsedSeconds > 0 && (
+                  <span className="ml-2">({formatTime(elapsedSeconds)} elapsed)</span>
                 )}
               </p>
             )}

@@ -117,16 +117,20 @@ export async function POST(request: NextRequest) {
         }
 
         // Calculate dynamic batch size based on remaining scenes
-        // Reduced from 10 to 5 for lower memory pressure per batch
+        // Restored to 10 for faster generation (was reduced to 5)
         const calculateBatchSize = (remaining: number): number => {
-          if (remaining <= 5) return remaining
-          return Math.min(5, remaining) // Max 5 for all batches (reduced from 10)
+          if (remaining <= 10) return remaining
+          return Math.min(10, remaining) // Max 10 scenes per batch for optimal speed
         }
         
-        const INITIAL_BATCH_SIZE = Math.min(5, suggestedScenes)
+        const INITIAL_BATCH_SIZE = Math.min(10, suggestedScenes)
         const MAX_BATCH_RETRIES = 3
         let actualTotalScenes = suggestedScenes
         let allScenes: any[] = []
+        
+        // Time-based progress tracking
+        const generationStartTime = Date.now()
+        let lastBatchHit429 = false  // Track rate limit for cooldown
 
         // BATCH 1: Generate first batch
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({
@@ -134,7 +138,9 @@ export async function POST(request: NextRequest) {
           status: 'Generating first batch of scenes...',
           batch: 1,
           scenesGenerated: 0,
-          totalScenes: suggestedScenes
+          totalScenes: suggestedScenes,
+          elapsedSeconds: 0,
+          estimatedRemainingSeconds: suggestedScenes * 3  // ~3s per scene estimate
         })}\n\n`))
 
         console.log(`[Script Gen V2] Batch 1: Generating first ${INITIAL_BATCH_SIZE} scenes...`)
@@ -178,16 +184,30 @@ export async function POST(request: NextRequest) {
         let totalPrevDuration = allScenes.reduce((sum, s) => sum + (s.duration || 0), 0)
         
         while (remainingScenes > 0) {
+          // Rate limit cooldown - if previous batch hit 429, wait 5 seconds before next batch
+          if (lastBatchHit429) {
+            console.log('[Script Gen V2] Applying 5-second cooldown after rate limit...')
+            await new Promise(resolve => setTimeout(resolve, 5000))
+            lastBatchHit429 = false  // Reset flag after cooldown
+          }
+          
           const batchSize = calculateBatchSize(remainingScenes)
           const startScene = allScenes.length + 1
           const endScene = startScene + batchSize - 1
+          
+          // Calculate time-based progress for this batch start
+          const elapsedSeconds = Math.floor((Date.now() - generationStartTime) / 1000)
+          const avgSecondsPerScene = allScenes.length > 0 ? elapsedSeconds / allScenes.length : 3
+          const estimatedRemainingSeconds = Math.ceil(remainingScenes * avgSecondsPerScene)
           
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({
             type: 'progress',
             status: `Generating scenes ${startScene}-${endScene}...`,
             batch: batchNumber,
             scenesGenerated: allScenes.length,
-            totalScenes: actualTotalScenes
+            totalScenes: actualTotalScenes,
+            elapsedSeconds,
+            estimatedRemainingSeconds
           })}\n\n`))
           
           console.log(`[Script Gen V2] Batch ${batchNumber}: Generating scenes ${startScene}-${endScene}...`)
@@ -201,7 +221,7 @@ export async function POST(request: NextRequest) {
           if (heapUsedMB > 1500) {
             console.warn(`[Memory] High memory pressure detected (${heapUsedMB}MB), forcing GC pause`)
             // Allow event loop to process and GC to potentially run
-            await new Promise(resolve => setTimeout(resolve, 200))
+            await new Promise(resolve => setTimeout(resolve, 100)) // Reduced from 200ms
           }
           
           try {
@@ -253,6 +273,7 @@ export async function POST(request: NextRequest) {
             
             // Success - reset retry counter and add scenes
             batchRetries = 0
+            lastBatchHit429 = false  // Clear rate limit flag on success
             allScenes.push(...batchData.scenes)
             
             // Update total duration
@@ -267,12 +288,20 @@ export async function POST(request: NextRequest) {
             
             console.log(`[Script Gen V2] Batch ${batchNumber} complete: ${batchData.scenes.length} scenes (total: ${allScenes.length}), avg dialogue: ${Math.round(avgDialogueLength)} chars`)
             
+            // Calculate time-based progress estimation
+            const elapsedSeconds = Math.floor((Date.now() - generationStartTime) / 1000)
+            const avgSecondsPerScene = allScenes.length > 0 ? elapsedSeconds / allScenes.length : 3
+            const remainingScenesAfterBatch = actualTotalScenes - allScenes.length
+            const estimatedRemainingSeconds = Math.ceil(remainingScenesAfterBatch * avgSecondsPerScene)
+            
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
               type: 'progress',
               status: `Generated ${allScenes.length} of ${actualTotalScenes} scenes...`,
               batch: batchNumber,
               scenesGenerated: allScenes.length,
-              totalScenes: actualTotalScenes
+              totalScenes: actualTotalScenes,
+              elapsedSeconds,
+              estimatedRemainingSeconds
             })}\n\n`))
             
             // Release batch data to free memory
@@ -282,7 +311,7 @@ export async function POST(request: NextRequest) {
             if (global.gc) {
               global.gc()
             }
-            await new Promise(resolve => setTimeout(resolve, 100))
+            await new Promise(resolve => setTimeout(resolve, 50))  // Reduced from 100ms
             
             remainingScenes = actualTotalScenes - allScenes.length
             batchNumber++
@@ -290,6 +319,13 @@ export async function POST(request: NextRequest) {
           } catch (error: any) {
             batchRetries++
             console.error(`[Script Gen V2] Batch ${batchNumber} error (retry ${batchRetries}/${MAX_BATCH_RETRIES}):`, error.message)
+            
+            // Check if this was a rate limit error (429)
+            const is429 = error.message?.includes('429') || error.message?.includes('RESOURCE_EXHAUSTED') || error.message?.includes('rate limit')
+            if (is429) {
+              lastBatchHit429 = true
+              console.log('[Script Gen V2] Rate limit detected, will apply cooldown before next batch')
+            }
             
             if (batchRetries >= MAX_BATCH_RETRIES) {
               console.error(`[Script Gen V2] Max retries reached, stopping generation`)
