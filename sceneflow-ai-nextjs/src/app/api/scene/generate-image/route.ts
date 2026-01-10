@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
-import { optimizePromptForImagen, generateLinkingDescription } from '@/lib/imagen/promptOptimizer'
+import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor } from '@/lib/imagen/promptOptimizer'
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
 import { waitForGCSURIs, checkGCSURIAccessibility } from '@/lib/storage/gcsAccessibility'
 import { generateDirectionHash, generateImageSourceHash } from '@/lib/utils/contentHash'
