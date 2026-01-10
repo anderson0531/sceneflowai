@@ -192,7 +192,8 @@ export async function generateVideoWithVeo(
 ): Promise<VideoGenerationResult> {
   // Vertex AI endpoint config
   const project = process.env.VERTEX_PROJECT_ID
-  const location = process.env.VERTEX_LOCATION || 'us-central1'
+  // Veo models are only available in us-central1 (not in us-east1 like Imagen)
+  const location = process.env.VEO_LOCATION || 'us-central1'
   const model = 'veo-3.1-generate-preview'
   if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
   // Vertex endpoint: https://LOCATION-aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/LOCATION/publishers/google/models/MODEL:predictLongRunning
@@ -421,7 +422,8 @@ export async function generateVideoWithVeo(
 export async function checkVideoGenerationStatus(
   operationName: string
 ): Promise<VideoGenerationResult> {
-  const location = process.env.VERTEX_LOCATION || 'us-central1'
+  // Veo models are only available in us-central1
+  const location = process.env.VEO_LOCATION || 'us-central1'
   const project = process.env.VERTEX_PROJECT_ID
   if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
   
@@ -626,7 +628,8 @@ export async function downloadVideoFile(
   fileName: string
 ): Promise<Buffer | null> {
   const project = process.env.VERTEX_PROJECT_ID
-  const location = process.env.VERTEX_LOCATION || 'us-central1'
+  // Veo models are only available in us-central1
+  const location = process.env.VEO_LOCATION || 'us-central1'
   if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
   // Extract file name from file: prefix if present
   const cleanName = fileName.startsWith('file:') ? fileName.substring(5) : fileName
