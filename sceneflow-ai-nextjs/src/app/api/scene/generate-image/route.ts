@@ -225,7 +225,8 @@ export async function POST(req: NextRequest) {
       characters,            // NEW: From prompt data object
       selectedCharacters = [], // Legacy support - array or extracted from object
       quality = 'auto',
-      personGeneration       // NEW: Optional personGeneration setting (default: 'allow_adult')
+      personGeneration,       // NEW: Optional personGeneration setting (default: 'allow_adult')
+      characterWardrobes = [] // NEW: Scene-level wardrobe overrides - array of { characterId, wardrobeId }
     } = body
     
     // Handle both legacy (selectedCharacters) and new (characters) formats
@@ -418,13 +419,35 @@ export async function POST(req: NextRequest) {
       // Strip emotional descriptors - let scene drive emotions
       let description = stripEmotionalDescriptors(rawDescription)
       
+      // Determine wardrobe for this character in this scene
+      // Check for scene-level wardrobe override first
+      let effectiveWardrobe = char.defaultWardrobe
+      let effectiveAccessories = char.wardrobeAccessories
+      
+      const charId = char.id || char.name // Some characters may use name as ID
+      const sceneWardrobeOverride = characterWardrobes.find(
+        (cw: { characterId: string; wardrobeId: string }) => cw.characterId === charId
+      )
+      
+      if (sceneWardrobeOverride && char.wardrobes && Array.isArray(char.wardrobes)) {
+        // Find the specific wardrobe in the character's collection
+        const selectedWardrobe = char.wardrobes.find(
+          (w: { id: string; description: string; accessories?: string }) => w.id === sceneWardrobeOverride.wardrobeId
+        )
+        if (selectedWardrobe) {
+          effectiveWardrobe = selectedWardrobe.description
+          effectiveAccessories = selectedWardrobe.accessories
+          console.log(`[Scene Image] Using scene-level wardrobe override for ${char.name}: "${selectedWardrobe.name}"`)
+        }
+      }
+      
       // Strip clothing descriptors if explicit wardrobe is set to prevent conflicts
       // Example: visionDescription says "wearing a blue suit" but defaultWardrobe says "casual jeans and t-shirt"
-      if (char.defaultWardrobe) {
+      if (effectiveWardrobe) {
         const originalDescription = description
         description = stripClothingDescriptors(description)
         if (description !== originalDescription) {
-          console.log(`[Scene Image] Stripped clothing from description for ${char.name} (explicit wardrobe: "${char.defaultWardrobe}")`)
+          console.log(`[Scene Image] Stripped clothing from description for ${char.name} (explicit wardrobe: "${effectiveWardrobe}")`)
           console.log(`[Scene Image]   Original: "${originalDescription}"`)
           console.log(`[Scene Image]   Cleaned:  "${description}"`)
         }
@@ -461,12 +484,12 @@ export async function POST(req: NextRequest) {
       
       console.log(`[Scene Image] Extracted key features for ${char.name}:`, keyFeatures)
       
-      // Build wardrobe description if available
+      // Build wardrobe description if available (using effective wardrobe, which may be overridden)
       let wardrobeDescription = ''
-      if (char.defaultWardrobe) {
-        wardrobeDescription = `, wearing ${char.defaultWardrobe}`
-        if (char.wardrobeAccessories) {
-          wardrobeDescription += `, ${char.wardrobeAccessories}`
+      if (effectiveWardrobe) {
+        wardrobeDescription = `, wearing ${effectiveWardrobe}`
+        if (effectiveAccessories) {
+          wardrobeDescription += `, ${effectiveAccessories}`
         }
         console.log(`[Scene Image] ${char.name} wardrobe: ${wardrobeDescription}`)
       }
@@ -488,8 +511,8 @@ export async function POST(req: NextRequest) {
         imageUrl: char.referenceImage,      // Blob URL for both prompt text and API call
         ethnicity: char.ethnicity,           // For ethnicity injection in scene description
         keyFeatures: keyFeatures.length > 0 ? keyFeatures : undefined,  // Key physical characteristics
-        defaultWardrobe: char.defaultWardrobe,  // Wardrobe for consistency
-        wardrobeAccessories: char.wardrobeAccessories  // Accessories for consistency
+        defaultWardrobe: effectiveWardrobe,  // Wardrobe for consistency (may be scene-overridden)
+        wardrobeAccessories: effectiveAccessories  // Accessories for consistency (may be scene-overridden)
       }
     })
     

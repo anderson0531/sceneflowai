@@ -2881,6 +2881,8 @@ interface SceneCardProps {
   // Image edit modal access
   setEditingImageData?: (data: { url: string; sceneIdx: number; segmentId?: string; frameType?: 'start' | 'end'; sceneId?: string } | null) => void
   setImageEditModalOpen?: (open: boolean) => void
+  // Scene wardrobe assignment - allows selecting which wardrobe each character uses in this scene
+  onUpdateSceneWardrobe?: (sceneIndex: number, characterId: string, wardrobeId: string | null) => void
 }
 
 function SceneCard({
@@ -2990,6 +2992,7 @@ function SceneCard({
   onScriptChange,
   setEditingImageData,
   setImageEditModalOpen,
+  onUpdateSceneWardrobe,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(null)

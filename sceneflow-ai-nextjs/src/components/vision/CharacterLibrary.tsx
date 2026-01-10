@@ -24,7 +24,13 @@ export interface CharacterLibraryProps {
   onUpdateCharacterAppearance?: (characterId: string, description: string) => void
   onUpdateCharacterName?: (characterId: string, name: string) => void
   onUpdateCharacterRole?: (characterId: string, role: string) => void
-  onUpdateCharacterWardrobe?: (characterId: string, wardrobe: { defaultWardrobe?: string; wardrobeAccessories?: string }) => void
+  onUpdateCharacterWardrobe?: (characterId: string, wardrobe: { 
+    defaultWardrobe?: string; 
+    wardrobeAccessories?: string;
+    wardrobeId?: string;
+    wardrobeName?: string;
+    action?: 'add' | 'update' | 'delete' | 'setDefault';
+  }) => void
   onAddCharacter?: (characterData: any) => void
   onRemoveCharacter?: (characterName: string) => void
   ttsProvider: 'google' | 'elevenlabs'
@@ -41,6 +47,16 @@ export interface CharacterLibraryProps {
     logline?: string
     visualStyle?: string
   }
+}
+
+// Wardrobe item in collection
+interface CharacterWardrobe {
+  id: string
+  name: string
+  description: string
+  accessories?: string
+  isDefault: boolean
+  createdAt: string
 }
 
 interface CharacterCardProps {
@@ -61,7 +77,13 @@ interface CharacterCardProps {
   onUpdateAppearance?: (characterId: string, description: string) => void
   onUpdateCharacterName?: (characterId: string, name: string) => void
   onUpdateCharacterRole?: (characterId: string, role: string) => void
-  onUpdateWardrobe?: (characterId: string, wardrobe: { defaultWardrobe?: string; wardrobeAccessories?: string }) => void
+  onUpdateWardrobe?: (characterId: string, wardrobe: { 
+    defaultWardrobe?: string; 
+    wardrobeAccessories?: string;
+    wardrobeId?: string;
+    wardrobeName?: string;
+    action?: 'add' | 'update' | 'delete' | 'setDefault';
+  }) => void
   onRemove?: () => void
   ttsProvider: 'google' | 'elevenlabs'
   voiceSectionExpanded?: boolean
@@ -461,12 +483,27 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   const [editingRole, setEditingRole] = useState(false)
   const [wardrobeSectionExpanded, setWardrobeSectionExpanded] = useState(false)
   const [editingWardrobe, setEditingWardrobe] = useState(false)
+  const [editingWardrobeId, setEditingWardrobeId] = useState<string | null>(null) // Which wardrobe is being edited
   const [wardrobeText, setWardrobeText] = useState('')
   const [accessoriesText, setAccessoriesText] = useState('')
+  const [wardrobeName, setWardrobeName] = useState('') // Name for new/edited wardrobe
   const [showAiAssist, setShowAiAssist] = useState(false)
   const [aiPromptText, setAiPromptText] = useState('')
   const [isGeneratingWardrobe, setIsGeneratingWardrobe] = useState(false)
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false)
+  const [showAddWardrobeForm, setShowAddWardrobeForm] = useState(false) // Toggle for add new wardrobe form
+  
+  // Get wardrobes collection (or migrate from legacy format)
+  const wardrobes: CharacterWardrobe[] = character.wardrobes || (
+    (character.defaultWardrobe || character.wardrobeAccessories) ? [{
+      id: 'legacy-wardrobe',
+      name: 'Default Outfit',
+      description: character.defaultWardrobe || '',
+      accessories: character.wardrobeAccessories,
+      isDefault: true,
+      createdAt: new Date().toISOString()
+    }] : []
+  )
   
   // Build character context for voice recommendations
   const characterContext: CharacterContext = {
@@ -518,7 +555,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
     }
   }
 
-  const handleGenerateWardrobe = async (recommendMode: boolean = false) => {
+  const handleGenerateWardrobe = async (recommendMode: boolean = false, addAsNew: boolean = false) => {
     if (!recommendMode && !aiPromptText.trim()) {
       toast.error('Please describe the wardrobe or image you want')
       return
@@ -553,10 +590,18 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
       
       // Populate the wardrobe fields with AI-generated content
       setWardrobeText(wardrobe.defaultWardrobe)
-      setAccessoriesText(wardrobe.wardrobeAccessories)
+      setAccessoriesText(wardrobe.wardrobeAccessories || '')
       setShowAiAssist(false)
       setAiPromptText('')
-      setEditingWardrobe(true)
+      
+      if (addAsNew) {
+        // Show add form with pre-filled AI content including suggested name
+        setShowAddWardrobeForm(true)
+        setWardrobeName(wardrobe.wardrobeName || '') // Use AI-suggested name
+      } else {
+        setEditingWardrobe(true)
+        setEditingWardrobeId(null)
+      }
       
       toast.success(recommendMode 
         ? 'Wardrobe recommended based on character & screenplay! Review and save.' 
@@ -567,6 +612,68 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
     } finally {
       setIsGeneratingWardrobe(false)
     }
+  }
+  
+  // Handle saving wardrobe (add new or update existing)
+  const handleSaveWardrobe = () => {
+    if (!wardrobeText.trim()) {
+      toast.error('Please enter a wardrobe description')
+      return
+    }
+    
+    if (showAddWardrobeForm) {
+      // Adding new wardrobe to collection
+      const name = wardrobeName.trim() || `Outfit ${wardrobes.length + 1}`
+      onUpdateWardrobe?.(characterId, {
+        defaultWardrobe: wardrobeText.trim(),
+        wardrobeAccessories: accessoriesText.trim() || undefined,
+        wardrobeName: name,
+        action: 'add'
+      })
+      toast.success(`Added "${name}" to wardrobe collection`)
+    } else if (editingWardrobeId) {
+      // Updating existing wardrobe
+      onUpdateWardrobe?.(characterId, {
+        defaultWardrobe: wardrobeText.trim(),
+        wardrobeAccessories: accessoriesText.trim() || undefined,
+        wardrobeId: editingWardrobeId,
+        action: 'update'
+      })
+      toast.success('Wardrobe updated')
+    } else {
+      // Legacy: update default wardrobe
+      onUpdateWardrobe?.(characterId, {
+        defaultWardrobe: wardrobeText.trim(),
+        wardrobeAccessories: accessoriesText.trim() || undefined
+      })
+      toast.success('Wardrobe updated')
+    }
+    
+    // Reset form state
+    setEditingWardrobe(false)
+    setEditingWardrobeId(null)
+    setShowAddWardrobeForm(false)
+    setWardrobeText('')
+    setAccessoriesText('')
+    setWardrobeName('')
+  }
+  
+  // Handle deleting a wardrobe
+  const handleDeleteWardrobe = (wardrobeId: string) => {
+    onUpdateWardrobe?.(characterId, {
+      wardrobeId,
+      action: 'delete'
+    })
+    toast.success('Wardrobe deleted')
+  }
+  
+  // Handle setting a wardrobe as default
+  const handleSetDefaultWardrobe = (wardrobeId: string) => {
+    onUpdateWardrobe?.(characterId, {
+      wardrobeId,
+      action: 'setDefault'
+    })
+    toast.success('Default wardrobe updated')
   }
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -865,7 +972,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
           {character.description}
         </p>
         
-        {/* Wardrobe Section - Collapsible */}
+        {/* Wardrobe Section - Collapsible with Collection Management */}
         <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={(e) => {
@@ -876,10 +983,10 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
           >
             <span className="flex items-center gap-2">
               <Shirt className="w-4 h-4" />
-              Wardrobe
-              {(character.defaultWardrobe || character.wardrobeAccessories) && (
+              Wardrobes
+              {wardrobes.length > 0 && (
                 <span className="text-xs px-1.5 py-0.5 bg-green-500/20 text-green-600 dark:text-green-400 rounded">
-                  Set
+                  {wardrobes.length}
                 </span>
               )}
             </span>
@@ -908,7 +1015,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleGenerateWardrobe(false)
+                        handleGenerateWardrobe(false, true) // Add as new to collection
                       }}
                       disabled={isGeneratingWardrobe || !aiPromptText.trim()}
                       className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -921,7 +1028,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                       ) : (
                         <>
                           <Sparkles className="w-3 h-3" />
-                          Generate Wardrobe
+                          Generate & Add
                         </>
                       )}
                     </button>
@@ -938,13 +1045,15 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                     </button>
                   </div>
                   <p className="text-[10px] text-purple-600 dark:text-purple-400">
-                    AI will generate specific outfit and accessory descriptions based on your input
+                    AI will generate specific outfit and add it to the wardrobe collection
                   </p>
                 </div>
-              ) : editingWardrobe ? (
-                <div className="space-y-2">
+              ) : (editingWardrobe || showAddWardrobeForm) ? (
+                <div className="space-y-2 p-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Edit Wardrobe</span>
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                      {showAddWardrobeForm ? 'Add New Wardrobe' : 'Edit Wardrobe'}
+                    </span>
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
@@ -956,8 +1065,21 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                       AI Assist
                     </button>
                   </div>
+                  {showAddWardrobeForm && (
+                    <div>
+                      <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Wardrobe Name</label>
+                      <input
+                        type="text"
+                        value={wardrobeName}
+                        onChange={(e) => setWardrobeName(e.target.value)}
+                        placeholder="e.g., Office Attire, Casual, Formal Event"
+                        className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                  )}
                   <div>
-                    <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Default Outfit</label>
+                    <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Outfit Description</label>
                     <textarea
                       value={wardrobeText}
                       onChange={(e) => setWardrobeText(e.target.value)}
@@ -982,21 +1104,21 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        onUpdateWardrobe?.(characterId, {
-                          defaultWardrobe: wardrobeText.trim() || undefined,
-                          wardrobeAccessories: accessoriesText.trim() || undefined
-                        })
-                        setEditingWardrobe(false)
-                        toast.success('Wardrobe updated')
+                        handleSaveWardrobe()
                       }}
                       className="flex-1 px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
                     >
-                      Save
+                      {showAddWardrobeForm ? 'Add to Collection' : 'Save'}
                     </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
                         setEditingWardrobe(false)
+                        setEditingWardrobeId(null)
+                        setShowAddWardrobeForm(false)
+                        setWardrobeText('')
+                        setAccessoriesText('')
+                        setWardrobeName('')
                       }}
                       className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
                     >
@@ -1005,14 +1127,29 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                   </div>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {/* AI Wardrobe Buttons */}
+                <div className="space-y-3">
+                  {/* Action Buttons */}
                   <div className="flex gap-2">
-                    {/* Recommend Button - Auto-generates based on character & screenplay */}
+                    {/* Add New Wardrobe Button */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleGenerateWardrobe(true)
+                        setShowAddWardrobeForm(true)
+                        setWardrobeText('')
+                        setAccessoriesText('')
+                        setWardrobeName('')
+                      }}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded border border-blue-200 dark:border-blue-700 hover:bg-blue-200 dark:hover:bg-blue-800/40"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Add Outfit
+                    </button>
+                    
+                    {/* AI Recommend Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleGenerateWardrobe(true, true) // Recommend and add as new
                       }}
                       disabled={isGeneratingWardrobe}
                       className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1023,53 +1160,96 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                       ) : (
                         <Wand2 className="w-3.5 h-3.5" />
                       )}
-                      {isGeneratingWardrobe ? 'Generating...' : 'Recommend'}
-                    </button>
-                    
-                    {/* AI Assist Button - User describes what they want */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setShowAiAssist(true)
-                      }}
-                      disabled={isGeneratingWardrobe}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded border border-purple-200 dark:border-purple-700 hover:bg-purple-200 dark:hover:bg-purple-800/40 disabled:opacity-50"
-                      title="Describe the look you want"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      Describe
+                      {isGeneratingWardrobe ? 'Generating...' : 'AI Recommend'}
                     </button>
                   </div>
                   
-                  <div 
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setWardrobeText(character.defaultWardrobe || '')
-                      setAccessoriesText(character.wardrobeAccessories || '')
-                      setEditingWardrobe(true)
-                    }}
-                    className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded p-2 -m-2"
-                  >
-                    {character.defaultWardrobe || character.wardrobeAccessories ? (
-                      <div className="space-y-1">
-                        {character.defaultWardrobe && (
-                          <p className="text-xs text-gray-600 dark:text-gray-400">
-                            <span className="font-medium">Outfit:</span> {character.defaultWardrobe}
-                          </p>
-                        )}
-                        {character.wardrobeAccessories && (
-                          <p className="text-xs text-gray-600 dark:text-gray-400">
-                            <span className="font-medium">Accessories:</span> {character.wardrobeAccessories}
-                          </p>
-                        )}
-                        <p className="text-xs text-blue-500 mt-1">Click to edit manually</p>
-                      </div>
-                    ) : (
-                      <p className="text-xs text-gray-400 italic">
-                        Or click here to add wardrobe manually
-                      </p>
-                    )}
-                  </div>
+                  {/* Wardrobe Collection List */}
+                  {wardrobes.length > 0 ? (
+                    <div className="space-y-2">
+                      {wardrobes.map((w) => (
+                        <div 
+                          key={w.id}
+                          className={`p-2 rounded-lg border transition-colors ${
+                            w.isDefault 
+                              ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700' 
+                              : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
+                                  {w.name}
+                                </span>
+                                {w.isDefault && (
+                                  <span className="text-[10px] px-1 py-0.5 bg-green-500/20 text-green-600 dark:text-green-400 rounded">
+                                    Default
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-gray-600 dark:text-gray-400 line-clamp-2 mt-0.5">
+                                {w.description}
+                              </p>
+                              {w.accessories && (
+                                <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-0.5">
+                                  Accessories: {w.accessories}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              {!w.isDefault && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleSetDefaultWardrobe(w.id)
+                                  }}
+                                  className="p-1 text-gray-400 hover:text-green-500 transition-colors"
+                                  title="Set as default"
+                                >
+                                  <Check className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setEditingWardrobe(true)
+                                  setEditingWardrobeId(w.id)
+                                  setWardrobeText(w.description)
+                                  setAccessoriesText(w.accessories || '')
+                                  setShowAddWardrobeForm(false)
+                                }}
+                                className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                                title="Edit wardrobe"
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                              </button>
+                              {wardrobes.length > 1 && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleDeleteWardrobe(w.id)
+                                  }}
+                                  className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                  title="Delete wardrobe"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-400 italic text-center py-2">
+                      No wardrobes defined. Add an outfit or let AI recommend one.
+                    </p>
+                  )}
+                  
+                  <p className="text-[10px] text-gray-500 dark:text-gray-500 text-center">
+                    Tip: Create multiple wardrobes for different scenes (office, casual, formal, etc.)
+                  </p>
                 </div>
               )}
             </div>
@@ -1101,13 +1281,13 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
               setWardrobeSectionExpanded(!wardrobeSectionExpanded)
             }}
             className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs rounded-lg transition-colors ${
-              character.defaultWardrobe || character.wardrobeAccessories
+              wardrobes.length > 0
                 ? 'bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500/20'
                 : 'bg-gray-500/10 border border-gray-500/30 text-gray-400 hover:bg-gray-500/20'
             }`}
           >
             <Shirt className="w-3.5 h-3.5" />
-            Wardrobe
+            {wardrobes.length > 0 ? `${wardrobes.length} Outfit${wardrobes.length > 1 ? 's' : ''}` : 'Wardrobe'}
           </button>
         </div>
         

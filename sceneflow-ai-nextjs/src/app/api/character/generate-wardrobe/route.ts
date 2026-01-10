@@ -20,6 +20,7 @@ interface GenerateWardrobeRequest {
 interface WardrobeResult {
   defaultWardrobe: string
   wardrobeAccessories: string
+  wardrobeName?: string  // Suggested name for the wardrobe (e.g., "Office Attire", "Casual")
 }
 
 /**
@@ -69,6 +70,7 @@ Consider:
 
 RESPONSE FORMAT (JSON):
 {
+  "wardrobeName": "A short name for this outfit (2-3 words max), e.g., 'Office Attire', 'Casual Home', 'Formal Event', 'Lab Coat'",
   "defaultWardrobe": "Complete outfit description with specific colors, materials, and style details. Should be 1-2 sentences that can be injected into an image prompt.",
   "wardrobeAccessories": "Specific accessories including jewelry, watches, glasses, bags, hats, etc. Be specific about materials and colors."
 }
@@ -106,6 +108,7 @@ Based on the user's description, generate detailed, specific wardrobe specificat
 
 RESPONSE FORMAT (JSON):
 {
+  "wardrobeName": "A short name for this outfit (2-3 words max), e.g., 'Office Attire', 'Casual Home', 'Formal Event', 'Lab Coat'",
   "defaultWardrobe": "Complete outfit description with specific colors, materials, and style details. Should be 1-2 sentences that can be injected into an image prompt.",
   "wardrobeAccessories": "Specific accessories including jewelry, watches, glasses, bags, hats, etc. Be specific about materials and colors."
 }
