@@ -518,7 +518,8 @@ export async function POST(req: NextRequest) {
         keyFeatures: keyFeatures.length > 0 ? keyFeatures : undefined,  // Key physical characteristics
         defaultWardrobe: effectiveWardrobe,  // Wardrobe for consistency (may be scene-overridden)
         wardrobeAccessories: effectiveAccessories,  // Accessories for consistency (may be scene-overridden)
-        linkingDescription  // CRITICAL: Pre-computed linking text for text-matching (must match subjectDescription)
+        linkingDescription,  // CRITICAL: Pre-computed linking text for text-matching (must match subjectDescription)
+        appearanceDescription: char.appearanceDescription || char.visionDescription  // Physical appearance for prompt injection
       }
     })
     

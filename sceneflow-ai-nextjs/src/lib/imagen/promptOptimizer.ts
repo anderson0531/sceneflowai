@@ -26,6 +26,7 @@ interface OptimizePromptParams {
     linkingDescription?: string // Pre-computed linking text for text-matching
     defaultWardrobe?: string    // Character's standard outfit (e.g., "tailored navy suit")
     wardrobeAccessories?: string // Character's accessories (e.g., "gold watch, leather briefcase")
+    appearanceDescription?: string // AI-generated physical appearance (race, age, hair, skin tone)
   }>
 }
 
@@ -405,16 +406,29 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
           isFemale,
           linkingDescription, // e.g., "person [1]" or "a young man with curly hair"
           defaultWardrobe: fullRef?.defaultWardrobe,
-          wardrobeAccessories: fullRef?.wardrobeAccessories
+          wardrobeAccessories: fullRef?.wardrobeAccessories,
+          appearanceDescription: fullRef?.appearanceDescription
         }
       })
     
     // PHASE 1: Build SUBJECT & WARDROBE section (placed FIRST)
-    // Format: "[linking description] wearing [wardrobe]"
+    // Format: "[linking description], [appearance], wearing [wardrobe]"
+    // CRITICAL: Include appearance description to reinforce race/ethnicity/age from reference image
     const subjectWardrobeDescriptions: string[] = []
     characterRefs.forEach(ref => {
       if (ref.defaultWardrobe) {
-        let wardrobeDesc = `${ref.linkingDescription} wearing ${ref.defaultWardrobe}`
+        // Extract concise appearance (first 2 sentences max to avoid prompt bloat)
+        let appearanceClause = ''
+        if (ref.appearanceDescription) {
+          const sentences = ref.appearanceDescription.split(/[.!?]+/).filter(s => s.trim())
+          const conciseAppearance = sentences.slice(0, 2).join('. ').trim()
+          if (conciseAppearance) {
+            appearanceClause = `, ${conciseAppearance}`
+            console.log(`[Prompt Optimizer] Injecting appearance for ${ref.name}: "${conciseAppearance.substring(0, 80)}..."`)
+          }
+        }
+        
+        let wardrobeDesc = `${ref.linkingDescription}${appearanceClause}, wearing ${ref.defaultWardrobe}`
         if (ref.wardrobeAccessories) {
           wardrobeDesc += ` with ${ref.wardrobeAccessories}`
         }
