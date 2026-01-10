@@ -31,7 +31,7 @@ async function callGemini(prompt: string): Promise<string> {
     model: 'gemini-2.5-flash',
     temperature: 0.7,
     topP: 0.95,
-    maxOutputTokens: 1024,
+    maxOutputTokens: 2048,  // Increased from 1024 to prevent truncation
     responseMimeType: 'application/json'
   })
   return result.text
