@@ -412,23 +412,31 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
       })
     
     // PHASE 1: Build SUBJECT & WARDROBE section (placed FIRST)
-    // Format: "[linking description], [appearance], wearing [wardrobe]"
-    // CRITICAL: Include appearance description to reinforce race/ethnicity/age from reference image
+    // CRITICAL: When reference image exists, use ONLY "person [N]" to let the image define identity
+    // Only include appearance description when NO reference image is available
     const subjectWardrobeDescriptions: string[] = []
     characterRefs.forEach(ref => {
       if (ref.defaultWardrobe) {
-        // Extract concise appearance (first 2 sentences max to avoid prompt bloat)
-        let appearanceClause = ''
-        if (ref.appearanceDescription) {
+        // Check if this character has a reference image (indicated by [N] pattern in linkingDescription)
+        const hasReferenceImage = ref.linkingDescription?.includes('[') && ref.linkingDescription?.includes(']')
+        
+        let subjectClause = ref.linkingDescription
+        
+        // Only add appearance description if NO reference image
+        // With reference image: "person [1]" - let the image define identity
+        // Without reference image: "a Black man in his 40s..." - text defines identity
+        if (!hasReferenceImage && ref.appearanceDescription) {
           const sentences = ref.appearanceDescription.split(/[.!?]+/).filter(s => s.trim())
           const conciseAppearance = sentences.slice(0, 2).join('. ').trim()
           if (conciseAppearance) {
-            appearanceClause = `, ${conciseAppearance}`
-            console.log(`[Prompt Optimizer] Injecting appearance for ${ref.name}: "${conciseAppearance.substring(0, 80)}..."`)
+            subjectClause = `${ref.linkingDescription}, ${conciseAppearance}`
+            console.log(`[Prompt Optimizer] No reference image for ${ref.name}, using text description: "${conciseAppearance.substring(0, 60)}..."`)
           }
+        } else if (hasReferenceImage) {
+          console.log(`[Prompt Optimizer] Reference image for ${ref.name}, using minimal identifier: "${ref.linkingDescription}"`)
         }
         
-        let wardrobeDesc = `${ref.linkingDescription}${appearanceClause}, wearing ${ref.defaultWardrobe}`
+        let wardrobeDesc = `${subjectClause}, wearing ${ref.defaultWardrobe}`
         if (ref.wardrobeAccessories) {
           wardrobeDesc += ` with ${ref.wardrobeAccessories}`
         }
