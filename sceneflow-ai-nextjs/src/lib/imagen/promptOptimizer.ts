@@ -10,6 +10,54 @@
 
 import { artStylePresets } from '@/constants/artStylePresets'
 
+/**
+ * Extract demographic anchor (ethnicity + age) from appearance description.
+ * This is used for the "Hybrid Anchor" strategy when reference images are present.
+ * We anchor the demographic to prevent context bias, but let the image define features.
+ */
+function extractDemographicAnchor(appearanceDescription: string): string | null {
+  if (!appearanceDescription) return null
+  
+  const desc = appearanceDescription.toLowerCase()
+  
+  // Extract ethnicity/race
+  let ethnicity = ''
+  const ethnicityPatterns = [
+    { pattern: /\b(black|african[- ]?american)\b/i, value: 'Black' },
+    { pattern: /\b(white|caucasian|european)\b/i, value: 'White' },
+    { pattern: /\b(asian|east[- ]?asian|chinese|japanese|korean)\b/i, value: 'Asian' },
+    { pattern: /\b(hispanic|latino|latina|latinx)\b/i, value: 'Hispanic' },
+    { pattern: /\b(indian|south[- ]?asian)\b/i, value: 'South Asian' },
+    { pattern: /\b(middle[- ]?eastern|arab)\b/i, value: 'Middle Eastern' },
+  ]
+  
+  for (const { pattern, value } of ethnicityPatterns) {
+    if (pattern.test(desc)) {
+      ethnicity = value
+      break
+    }
+  }
+  
+  // Extract gender
+  let gender = ''
+  if (/\b(woman|female)\b/i.test(desc)) gender = 'woman'
+  else if (/\b(man|male)\b/i.test(desc)) gender = 'man'
+  
+  // Extract age
+  let age = ''
+  const ageMatch = desc.match(/\b(late|early|mid)?[- ]?(20s|30s|40s|50s|60s|70s)\b/i)
+  if (ageMatch) {
+    const qualifier = ageMatch[1] ? `${ageMatch[1]} ` : ''
+    age = `in ${gender === 'woman' ? 'her' : 'his'} ${qualifier}${ageMatch[2]}`
+  }
+  
+  // Build demographic anchor
+  if (ethnicity && gender) {
+    return `a ${ethnicity} ${gender}${age ? ' ' + age : ''}`
+  }
+  return null
+}
+
 interface OptimizePromptParams {
   sceneAction: string
   visualDescription: string
@@ -412,8 +460,9 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
       })
     
     // PHASE 1: Build SUBJECT & WARDROBE section (placed FIRST)
-    // CRITICAL: When reference image exists, use ONLY "person [N]" to let the image define identity
-    // Only include appearance description when NO reference image is available
+    // HYBRID ANCHOR STRATEGY:
+    // - With reference image: "person [1], a Black man in his 50s" - anchor demographic, let image define features
+    // - Without reference image: full text description defines identity
     const subjectWardrobeDescriptions: string[] = []
     characterRefs.forEach(ref => {
       if (ref.defaultWardrobe) {
@@ -422,18 +471,24 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
         
         let subjectClause = ref.linkingDescription
         
-        // Only add appearance description if NO reference image
-        // With reference image: "person [1]" - let the image define identity
-        // Without reference image: "a Black man in his 40s..." - text defines identity
-        if (!hasReferenceImage && ref.appearanceDescription) {
+        if (hasReferenceImage && ref.appearanceDescription) {
+          // HYBRID ANCHOR: Extract ONLY demographic (ethnicity + age) to prevent context bias
+          // Do NOT include detailed features (eyes, cheekbones, hair texture) - let reference image define those
+          const demographicAnchor = extractDemographicAnchor(ref.appearanceDescription)
+          if (demographicAnchor) {
+            subjectClause = `${ref.linkingDescription}, ${demographicAnchor}`
+            console.log(`[Prompt Optimizer] Hybrid anchor for ${ref.name}: "${demographicAnchor}"`)
+          } else {
+            console.log(`[Prompt Optimizer] Reference image for ${ref.name}, no demographic extracted, using: "${ref.linkingDescription}"`)
+          }
+        } else if (!hasReferenceImage && ref.appearanceDescription) {
+          // No reference image: use full text description
           const sentences = ref.appearanceDescription.split(/[.!?]+/).filter(s => s.trim())
           const conciseAppearance = sentences.slice(0, 2).join('. ').trim()
           if (conciseAppearance) {
             subjectClause = `${ref.linkingDescription}, ${conciseAppearance}`
             console.log(`[Prompt Optimizer] No reference image for ${ref.name}, using text description: "${conciseAppearance.substring(0, 60)}..."`)
           }
-        } else if (hasReferenceImage) {
-          console.log(`[Prompt Optimizer] Reference image for ${ref.name}, using minimal identifier: "${ref.linkingDescription}"`)
         }
         
         let wardrobeDesc = `${subjectClause}, wearing ${ref.defaultWardrobe}`
