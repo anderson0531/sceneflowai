@@ -26,19 +26,55 @@ function splitIntoParagraphs(text: string): string[] {
     .filter(p => p.length > 0)
 }
 
-// Generate audio for a single chunk
-async function generateChunk(text: string, voiceId: string, apiKey: string): Promise<ArrayBuffer> {
-  const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?optimize_streaming_latency=3&output_format=mp3_44100_128`
+// Languages that benefit from eleven_v3's improved tonal handling
+const V3_LANGUAGES = ['th', 'vi', 'id', 'ms', 'zh', 'ja', 'ko']
+
+// Generate audio for a single chunk with proper multilingual support
+async function generateChunk(text: string, voiceId: string, apiKey: string, language: string = 'en'): Promise<ArrayBuffer> {
+  // Select model based on language:
+  // - eleven_turbo_v2_5: Fast, production-ready, best for most Western languages
+  // - eleven_v3: Newest flagship model with best quality for tonal/Asian languages
+  const useV3Model = V3_LANGUAGES.includes(language)
+  const modelId = useV3Model ? 'eleven_v3' : 'eleven_turbo_v2_5'
+  
+  // Higher quality output for non-English
+  const outputFormat = language !== 'en' ? 'mp3_44100_192' : 'mp3_44100_128'
+  
+  // Build URL - eleven_v3 does NOT support optimize_streaming_latency parameter
+  const urlParams = new URLSearchParams({ output_format: outputFormat })
+  if (!useV3Model) {
+    urlParams.append('optimize_streaming_latency', '0')
+  }
+  const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?${urlParams.toString()}`
+  
+  // Build voice_settings based on model
+  // eleven_v3 uses different settings than turbo_v2_5:
+  // - v3: stability must be 0.0 (Creative), 0.5 (Natural), or 1.0 (Robust)
+  // - v3: does NOT support similarity_boost, style, or use_speaker_boost
+  let voiceSettings: Record<string, any>
+  
+  if (useV3Model) {
+    // v3 model - simpler settings for tonal languages
+    voiceSettings = {
+      stability: 0.5, // Natural - best balance for most content
+    }
+  } else {
+    // turbo_v2_5 - full settings with multilingual optimizations
+    const isNonEnglish = language !== 'en'
+    voiceSettings = {
+      stability: isNonEnglish ? 0.6 : 0.5,
+      similarity_boost: isNonEnglish ? 0.8 : 0.75,
+      style: 0.5,
+      use_speaker_boost: isNonEnglish,
+    }
+  }
+  
+  console.log('[Blueprint TTS] Model selection:', { language, useV3Model, modelId, outputFormat })
   
   const body = {
     text,
-    model_id: 'eleven_flash_v2_5', // Fastest flash model for minimum latency
-    voice_settings: {
-      stability: 0.25,
-      similarity_boost: 0.8,
-      style: 0.5,
-      use_speaker_boost: true,
-    },
+    model_id: modelId,
+    voice_settings: voiceSettings,
   }
 
   const resp = await fetch(url, {
@@ -79,7 +115,7 @@ export async function POST(request: NextRequest) {
     }
     const userId = session.user.id
 
-    const { text, voiceId, parallel = true, projectId, sceneId, voiceName, isClonedVoice = false } = await request.json()
+    const { text, voiceId, parallel = true, projectId, sceneId, voiceName, isClonedVoice = false, language = 'en' } = await request.json()
 
     if (!text || typeof text !== 'string') {
       return new Response(JSON.stringify({ error: 'Missing text' }), { status: 400 })
@@ -115,7 +151,7 @@ export async function POST(request: NextRequest) {
     // If only one paragraph or parallel disabled, process as single request
     if (paragraphs.length <= 1 || !parallel) {
       console.log('🎤 TTS: Single chunk processing')
-      const audioBuffer = await generateChunk(text, id, apiKey)
+      const audioBuffer = await generateChunk(text, id, apiKey, language)
       
       // Create provenance and watermark the audio
       const provenance = AudioWatermarkService.createProvenance({
@@ -168,7 +204,7 @@ export async function POST(request: NextRequest) {
     for (let i = 0; i < paragraphs.length; i += CONCURRENCY_LIMIT) {
       const batch = paragraphs.slice(i, i + CONCURRENCY_LIMIT)
       const batchResults = await Promise.all(
-        batch.map(paragraph => generateChunk(paragraph, id, apiKey))
+        batch.map(paragraph => generateChunk(paragraph, id, apiKey, language))
       )
       audioBuffers.push(...batchResults)
     }
