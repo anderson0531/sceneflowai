@@ -7065,25 +7065,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   return (
     <div className="h-full flex flex-col bg-gray-50 dark:bg-sf-background overflow-x-hidden max-w-full">
       
-      {/* Project Title & Logline Header */}
-      <div className="px-6 py-3 border-b border-white/10 bg-slate-900/80 backdrop-blur-sm flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <h1 className="text-lg font-bold text-white truncate flex-1">
-            {projectTitle}
-          </h1>
-          {projectDuration && (
-            <span className="text-xs font-medium text-gray-400 bg-slate-800 px-2 py-1 rounded">
-              {projectDuration}
-            </span>
-          )}
-        </div>
-        {projectLogline && (
-          <p className="text-sm text-gray-400 mt-1 line-clamp-2">
-            {projectLogline}
-          </p>
-        )}
-      </div>
-      
       <div className="flex-1 overflow-hidden overflow-x-hidden px-4 py-1 max-w-full min-w-0">
         <PanelGroup direction="horizontal" className="h-full max-w-full min-w-0 overflow-x-hidden">
           {/* Main Content: Script with Scene Cards */}
@@ -7105,6 +7086,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onGenerateSceneAudio={handleGenerateSceneAudio}
                 onGenerateAllAudio={handleGenerateAllAudio}
                 isGeneratingAudio={isGeneratingAudio}
+                projectTitle={projectTitle}
+                projectLogline={projectLogline}
+                projectDuration={projectDuration || undefined}
                 timelineSlot={
                   <SceneSelector
                     scenes={(script?.script?.scenes || []).map((scene: any, idx: number, allScenes: any[]) => {
