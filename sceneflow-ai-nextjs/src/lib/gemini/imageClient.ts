@@ -160,7 +160,26 @@ export async function generateImageWithGemini(
         }
       })
       
-      console.log(`[Vertex Imagen] Added reference ${ref.referenceId}: "${ref.subjectDescription || 'a person'}" (${base64Data.length} base64 chars)`)
+      console.log(`[Vertex Imagen] Added SUBJECT reference ${ref.referenceId}: "${ref.subjectDescription || 'a person'}" (${base64Data.length} base64 chars)`)
+      
+      // ALSO add FACE_MESH control reference using the SAME image
+      // Per Google docs, adding CONTROL_TYPE_FACE_MESH alongside subject reference
+      // helps preserve facial features more accurately (pose, expression, structure)
+      // We use a new referenceId (original + 100) to avoid collision
+      const faceMeshRefId = ref.referenceId + 100
+      referenceImagesArray.push({
+        referenceType: 'REFERENCE_TYPE_CONTROL',
+        referenceId: faceMeshRefId,
+        referenceImage: {
+          bytesBase64Encoded: base64Data  // Same image as subject
+        },
+        controlImageConfig: {
+          controlType: 'CONTROL_TYPE_FACE_MESH',
+          enableControlImageComputation: true  // Let API compute face mesh from image
+        }
+      })
+      
+      console.log(`[Vertex Imagen] Added FACE_MESH control reference ${faceMeshRefId} for better facial preservation`)
     }
     
     if (referenceImagesArray.length > 0) {

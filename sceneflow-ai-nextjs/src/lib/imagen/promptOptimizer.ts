@@ -11,11 +11,19 @@
 import { artStylePresets } from '@/constants/artStylePresets'
 
 /**
- * Extract demographic anchor (ethnicity + age) from appearance description.
+ * Extract demographic anchor (ethnicity + age + key features) from appearance description.
  * This is used for the "Hybrid Anchor" strategy when reference images are present.
  * We anchor the demographic to prevent context bias, but let the image define features.
+ * 
+ * CRITICAL: This function now also extracts KEY PHYSICAL FEATURES (hair color, facial hair)
+ * that must be included in subjectDescription for Vertex AI Imagen to preserve them.
+ * Per Google docs: subjectDescription should be like "a man with short hair" - including
+ * distinctive features that identify the person.
+ * 
+ * @param appearanceDescription - Full appearance description from character
+ * @returns Concise description like "a Black man in his late 40s with salt-and-pepper hair and beard"
  */
-function extractDemographicAnchor(appearanceDescription: string): string | null {
+export function extractDemographicAnchor(appearanceDescription: string): string | null {
   if (!appearanceDescription) return null
   
   const desc = appearanceDescription.toLowerCase()
@@ -547,8 +555,17 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
       promptScene = promptScene.replace(firstNamePattern, replacement)
     })
     
-    // PHASE 4: Assemble final prompt with SUBJECT & WARDROBE first
+    // PHASE 4: Assemble final prompt using Google's recommended template
+    // Google's docs recommend: "Create an image about SUBJECT [1] to match the description: a portrait of SUBJECT [1] ${PROMPT}"
+    // This structure helps the model better link the reference image to the character in the scene
     let prompt = ''
+    
+    // Build the subject introductions for Google's template
+    // e.g., "a Black man in his late 40s with salt-and-pepper hair and beard [1]"
+    const subjectIntroductions = characterRefs.map(ref => ref.linkingDescription).join(' and ')
+    
+    // Use Google's recommended template structure for subject customization
+    prompt += `Create an image about ${subjectIntroductions} to match the description: `
     
     // Add explicit instruction to avoid UI overlays but allow in-world signage
     prompt += 'Cinematic frame without dialogue captions, subtitles, or UI overlays. In-world signage and text visible in the scene environment is acceptable. '

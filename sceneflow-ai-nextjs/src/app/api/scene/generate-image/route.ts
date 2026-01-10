@@ -499,23 +499,26 @@ export async function POST(req: NextRequest) {
       const referenceId = hasReferenceImage ? ++gcsRefIndex : undefined
       
       // Generate linking description for text-matching mode
-      // CRITICAL: subjectDescription should be a TEXT DESCRIPTION (e.g., "a Black man in his late 40s")
+      // CRITICAL: subjectDescription should be a TEXT DESCRIPTION with KEY PHYSICAL FEATURES
       // The [N] marker is just a reference tag in the prompt, NOT the subjectDescription
       // Per Google docs: "subjectDescription": "a man with short hair" with prompt containing "a man with short hair [1]"
+      // 
+      // IMPORTANT: Include distinctive features (hair color, facial hair) that must be preserved!
+      // e.g., "a Black man in his late 40s with salt-and-pepper hair and beard"
       let subjectTextDescription: string | undefined
       if (hasReferenceImage && char.appearanceDescription) {
-        // Extract concise description from appearance (first 1-2 sentences or key phrase)
-        const desc = char.appearanceDescription
-        // Look for patterns like "This is a [ethnicity] [gender] in [age]"
-        const match = desc.match(/(?:This is |^)(a\s+\w+(?:\s+\w+)?\s+(?:man|woman|person)(?:\s+in\s+(?:his|her|their)\s+(?:late|early|mid)?\s*\d+s)?)/i)
-        if (match) {
-          subjectTextDescription = match[1].trim()
+        // Use extractDemographicAnchor which extracts ethnicity + age + hair/beard features
+        // This is critical - the subjectDescription must include features to preserve from reference
+        const extractedAnchor = extractDemographicAnchor(char.appearanceDescription)
+        if (extractedAnchor) {
+          subjectTextDescription = extractedAnchor
+          console.log(`[Scene Image] ${char.name} subjectDescription (with features): "${subjectTextDescription}"`)
         } else {
           // Fallback: use first sentence or first 60 chars
-          const firstSentence = desc.split(/[.!?]/)[0].trim()
+          const firstSentence = char.appearanceDescription.split(/[.!?]/)[0].trim()
           subjectTextDescription = firstSentence.length > 60 ? firstSentence.substring(0, 60) : firstSentence
+          console.log(`[Scene Image] ${char.name} subjectDescription (fallback): "${subjectTextDescription}"`)
         }
-        console.log(`[Scene Image] ${char.name} subjectDescription: "${subjectTextDescription}"`)
       } else if (hasReferenceImage) {
         // No appearance description, use generic
         subjectTextDescription = 'a person'
