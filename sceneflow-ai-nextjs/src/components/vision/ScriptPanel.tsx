@@ -67,11 +67,15 @@ type DialogGenerationMode = 'foreground' | 'background'
 
 interface DialogGenerationProgress {
   status: 'idle' | 'running' | 'completed' | 'error'
-  phase: 'narration' | 'dialogue' | 'characters' | 'images'
+  phase: 'narration' | 'dialogue' | 'music' | 'sfx' | 'characters' | 'images'
   currentScene: number
   totalScenes: number
   currentDialogue: number
   totalDialogue: number
+  currentMusic: number
+  totalMusic: number
+  currentSfx: number
+  totalSfx: number
   currentCharacter: number
   totalCharacters: number
   currentImage: number
@@ -886,11 +890,24 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         }, 0)
       : 0
 
+    // Count music scenes (scenes that have music description)
+    const totalMusicScenes = audioTypes.music
+      ? scenes.filter((scene: any) => scene?.music || typeof scene?.music === 'string').length
+      : 0
+
+    // Count SFX items across all scenes
+    const totalSfxItems = audioTypes.sfx
+      ? scenes.reduce((sum: number, scene: any) => {
+          if (!Array.isArray(scene.sfx)) return sum
+          return sum + scene.sfx.length
+        }, 0)
+      : 0
+
     const totalSceneSteps = audioTypes.narration ? scenes.length : 0
     const totalCharacters = includeCharacters ? (characters?.length || 0) : 0
     const totalImages = includeSceneImages ? scenes.length : 0
-    const totalSteps = totalSceneSteps + totalDialogueLines + totalCharacters + totalImages
-    const audioTasksSelected = audioTypes.narration || audioTypes.dialogue
+    const totalSteps = totalSceneSteps + totalDialogueLines + totalMusicScenes + totalSfxItems + totalCharacters + totalImages
+    const audioTasksSelected = audioTypes.narration || audioTypes.dialogue || audioTypes.music || audioTypes.sfx
 
     if (totalSteps === 0) {
       toast.info('Select at least one generation option.', { style: toastVisualStyle })
@@ -904,6 +921,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       ? 'narration'
       : audioTypes.dialogue
       ? 'dialogue'
+      : audioTypes.music
+      ? 'music'
+      : audioTypes.sfx
+      ? 'sfx'
       : includeCharacters
       ? 'characters'
       : includeSceneImages
@@ -916,6 +937,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           return audioTypes.narration ? 'Preparing narration...' : 'Narration skipped.'
         case 'dialogue':
           return 'Preparing dialogue...'
+        case 'music':
+          return 'Preparing music generation...'
+        case 'sfx':
+          return 'Preparing sound effects...'
         case 'characters':
           return totalCharacters > 0 ? 'Preparing character assets...' : 'No characters to generate.'
         case 'images':
@@ -932,6 +957,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       totalScenes: scenes.length,
       currentDialogue: 0,
       totalDialogue: totalDialogueLines,
+      currentMusic: 0,
+      totalMusic: totalMusicScenes,
+      currentSfx: 0,
+      totalSfx: totalSfxItems,
       currentCharacter: 0,
       totalCharacters,
       currentImage: 0,
@@ -1018,6 +1047,86 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       }
       if (audioTypes.dialogue) {
         tasksCompleted.push('dialogue')
+      }
+
+      // Generate music for scenes that have music descriptions
+      if (audioTypes.music) {
+        let processedMusic = 0
+        for (let sceneIdx = 0; sceneIdx < scenes.length; sceneIdx++) {
+          const scene = scenes[sceneIdx]
+          const hasMusic = scene?.music || typeof scene?.music === 'string'
+          const hasMusicAudio = !!(scene.musicAudio || scene.music?.url)
+          
+          if (hasMusic && !hasMusicAudio) {
+            processedMusic += 1
+            updateDialogProgress((prev) => prev ? {
+              ...prev,
+              phase: 'music',
+              currentScene: sceneIdx + 1,
+              currentMusic: processedMusic,
+              message: `Generating music for scene ${sceneIdx + 1} of ${scenes.length}`,
+            } : prev)
+
+            try {
+              await generateMusic(sceneIdx)
+            } catch (error) {
+              console.error(`[Music Generation] Error for scene ${sceneIdx}:`, error)
+            }
+
+            completedSteps += 1
+            updateDialogProgress((prev) => prev ? {
+              ...prev,
+              completedSteps,
+              currentMusic: processedMusic,
+            } : prev)
+          }
+        }
+        if (processedMusic > 0) {
+          tasksCompleted.push('music')
+        }
+      }
+
+      // Generate SFX for scenes that have sound effects
+      if (audioTypes.sfx) {
+        let processedSfx = 0
+        for (let sceneIdx = 0; sceneIdx < scenes.length; sceneIdx++) {
+          const scene = scenes[sceneIdx]
+          if (!Array.isArray(scene.sfx)) continue
+
+          for (let sfxIdx = 0; sfxIdx < scene.sfx.length; sfxIdx++) {
+            const sfxItem = scene.sfx[sfxIdx]
+            // Check if SFX already has audio
+            const hasSfxAudio = (scene.sfxAudio && scene.sfxAudio[sfxIdx]) || 
+                                (typeof sfxItem === 'object' && sfxItem.audioUrl)
+            
+            if (!hasSfxAudio) {
+              processedSfx += 1
+              updateDialogProgress((prev) => prev ? {
+                ...prev,
+                phase: 'sfx',
+                currentScene: sceneIdx + 1,
+                currentSfx: processedSfx,
+                message: `Generating sound effect ${processedSfx} of ${totalSfxItems} (Scene ${sceneIdx + 1})`,
+              } : prev)
+
+              try {
+                await generateSFX(sceneIdx, sfxIdx)
+              } catch (error) {
+                console.error(`[SFX Generation] Error for scene ${sceneIdx}, sfx ${sfxIdx}:`, error)
+              }
+
+              completedSteps += 1
+              updateDialogProgress((prev) => prev ? {
+                ...prev,
+                completedSteps,
+                currentSfx: processedSfx,
+              } : prev)
+            }
+          }
+        }
+        if (processedSfx > 0) {
+          tasksCompleted.push('sfx')
+        }
       }
 
       if (includeCharacters) {
@@ -1716,7 +1825,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       updatedScenes[sceneIdx].musicAudio = audioUrl
     }
 
-    // Update local state
+    // Update local state - onScriptChange will also persist to database
     const updatedScript = {
       ...script,
       script: {
@@ -1725,26 +1834,12 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       }
     }
     onScriptChange(updatedScript)
-
-    // Save to database if projectId is available
-    if (projectId) {
-      try {
-        await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            metadata: {
-              visionPhase: {
-                ...script,
-                script: { scenes: updatedScenes }
-              }
-            }
-          })
-        })
-      } catch (error) {
-        console.error('[Save Audio] Error:', error)
-      }
-    }
+    
+    console.log('[Save Audio] State updated with new audio URL:', {
+      sceneIdx,
+      audioType,
+      audioUrl: audioUrl.substring(0, 60) + '...'
+    })
   }
 
   const playAllScenes = async () => {
@@ -3794,12 +3889,13 @@ function SceneCard({
                       <button
                         onClick={async (e) => {
                           e.stopPropagation()
-                          // Generate all missing audio for this scene
+                          // Generate all missing audio for this scene (narration, dialogue, music, SFX)
                           const sceneDescription = scene.visualDescription || scene.action || scene.summary || scene.heading
                           const descriptionUrl = scene.descriptionAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.descriptionAudioUrl : undefined)
                           const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
+                          const hasMusicAudio = !!(scene.musicAudio || scene.music?.url)
                           
-                          overlayStore?.show(`Generating all audio for Scene ${sceneIdx + 1}...`, 30)
+                          overlayStore?.show(`Generating all audio for Scene ${sceneIdx + 1}...`, 60)
                           try {
                             // Generate description if missing
                             if (sceneDescription && !descriptionUrl && onGenerateSceneAudio) {
@@ -3828,6 +3924,20 @@ function SceneCard({
                                 }
                               }
                             }
+                            // Generate music if missing
+                            if (scene.music && !hasMusicAudio) {
+                              await generateMusic(sceneIdx)
+                            }
+                            // Generate missing SFX
+                            if (Array.isArray(scene.sfx)) {
+                              for (let sfxIdx = 0; sfxIdx < scene.sfx.length; sfxIdx++) {
+                                const hasSfxAudio = (scene.sfxAudio && scene.sfxAudio[sfxIdx]) || 
+                                                    (typeof scene.sfx[sfxIdx] === 'object' && scene.sfx[sfxIdx].audioUrl)
+                                if (!hasSfxAudio) {
+                                  await generateSFX(sceneIdx, sfxIdx)
+                                }
+                              }
+                            }
                             overlayStore?.hide()
                             toast.success('All audio generated!')
                           } catch (error) {
@@ -3839,7 +3949,7 @@ function SceneCard({
                         className="px-3 py-1.5 text-xs font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-md flex items-center gap-1.5 transition-all"
                       >
                         <Sparkles className="w-3 h-3" />
-                        Generate All Missing
+                        Generate All Audio
                       </button>
                       <button
                         onClick={(e) => {

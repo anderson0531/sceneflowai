@@ -17,11 +17,15 @@ import { getAvailableLanguages, hasLanguageAudio } from '@/lib/audio/languageDet
 
 interface GenerationProgress {
   status: 'idle' | 'running' | 'completed' | 'error'
-  phase: 'narration' | 'dialogue' | 'characters' | 'images'
+  phase: 'narration' | 'dialogue' | 'music' | 'sfx' | 'characters' | 'images'
   currentScene: number
   totalScenes: number
   currentDialogue: number
   totalDialogue: number
+  currentMusic: number
+  totalMusic: number
+  currentSfx: number
+  totalSfx: number
   currentCharacter: number
   totalCharacters: number
   currentImage: number
@@ -102,13 +106,15 @@ export function GenerateAudioDialog({
         dialogueCount += dialogueArray.filter((d: any) => d.audioUrl).length
       }
 
-      // Check music
-      if (scene.musicUrl || scene.music?.url) musicCount++
+      // Check music - use musicAudio (primary) or music.url (legacy)
+      if (scene.musicAudio || scene.music?.url) musicCount++
 
-      // Check SFX
-      if (Array.isArray(scene.sfx)) {
+      // Check SFX - use sfxAudio array (primary) or sfx with audioUrl (legacy)
+      if (Array.isArray(scene.sfxAudio) && scene.sfxAudio.length > 0) {
+        sfxCount += scene.sfxAudio.filter((url: any) => !!url).length
+      } else if (Array.isArray(scene.sfx)) {
         sfxCount += scene.sfx.filter((sfx: any) => 
-          (typeof sfx === 'object' && sfx.url) || (typeof sfx === 'string' && sfx)
+          (typeof sfx === 'object' && (sfx.audioUrl || sfx.url))
         ).length
       }
     })
@@ -182,6 +188,14 @@ export function GenerateAudioDialog({
         return generationProgress.totalDialogue > 0
           ? `Dialogue ${generationProgress.currentDialogue}/${generationProgress.totalDialogue}`
           : null
+      case 'music':
+        return generationProgress.totalMusic > 0
+          ? `Music ${generationProgress.currentMusic}/${generationProgress.totalMusic}`
+          : null
+      case 'sfx':
+        return generationProgress.totalSfx > 0
+          ? `SFX ${generationProgress.currentSfx}/${generationProgress.totalSfx}`
+          : null
       case 'characters':
         return generationProgress.totalCharacters > 0
           ? `Character ${generationProgress.currentCharacter}/${generationProgress.totalCharacters}`
@@ -215,6 +229,8 @@ export function GenerateAudioDialog({
                 <span>
                   {generationProgress.phase === 'narration' && 'Narration progress'}
                   {generationProgress.phase === 'dialogue' && 'Dialogue progress'}
+                  {generationProgress.phase === 'music' && 'Music progress'}
+                  {generationProgress.phase === 'sfx' && 'Sound effects progress'}
                   {generationProgress.phase === 'characters' && 'Character progress'}
                   {generationProgress.phase === 'images' && 'Scene image progress'}
                 </span>
@@ -229,7 +245,7 @@ export function GenerateAudioDialog({
               <div className="space-y-1 text-xs text-gray-300">
                 <p>{generationProgress.message}</p>
                 <div className="flex flex-wrap gap-3 text-gray-400">
-                  {(generationProgress.totalScenes > 0 && (generationProgress.phase === 'narration' || generationProgress.phase === 'dialogue' || generationProgress.phase === 'images')) && (
+                  {(generationProgress.totalScenes > 0 && (generationProgress.phase === 'narration' || generationProgress.phase === 'dialogue' || generationProgress.phase === 'music' || generationProgress.phase === 'sfx' || generationProgress.phase === 'images')) && (
                     <span>
                       Scene {Math.max(1, generationProgress.currentScene)} / {generationProgress.totalScenes}
                     </span>
