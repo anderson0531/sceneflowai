@@ -3726,11 +3726,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Load existing Vision data if available
       const visionPhase = proj.metadata?.visionPhase
+      console.log('[loadProject] visionPhase loaded:', {
+        hasVisionPhase: !!visionPhase,
+        hasScript: !!visionPhase?.script,
+        hasScriptScriptScenes: !!visionPhase?.script?.script?.scenes,
+        scriptScriptScenesLength: visionPhase?.script?.script?.scenes?.length,
+        hasScenes: !!visionPhase?.scenes,
+        scenesLength: visionPhase?.scenes?.length,
+        hasCharacters: !!visionPhase?.characters,
+        charactersLength: visionPhase?.characters?.length
+      })
       if (visionPhase) {
         if (visionPhase.script) {
           // Migrate audio structure if needed
           const { migrateScriptAudio } = await import('@/lib/audio/audioMigration')
           const { script: migratedScript, needsMigration } = migrateScriptAudio(visionPhase.script)
+          
+          console.log('[loadProject] Script after migration:', {
+            hasScript: !!migratedScript,
+            hasScriptScenes: !!migratedScript?.script?.scenes,
+            scriptScenesLength: migratedScript?.script?.scenes?.length,
+            needsMigration
+          })
           
           if (needsMigration) {
             // Save migrated script back to database
