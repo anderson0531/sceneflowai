@@ -498,8 +498,13 @@ export async function POST(req: NextRequest) {
       const hasReferenceImage = !!char.referenceImage
       const referenceId = hasReferenceImage ? ++gcsRefIndex : undefined
       
+      // Generate linking description for text-matching mode
+      // CRITICAL: This MUST be set here and match what we pass to subjectDescription in the API call
+      // Using "person [id]" format which is most reliable with Imagen 3.0
+      const linkingDescription = hasReferenceImage ? `person [${referenceId}]` : undefined
+      
       if (hasReferenceImage) {
-        console.log(`[Scene Image] ${char.name} has reference image, assigned referenceId: ${referenceId}`)
+        console.log(`[Scene Image] ${char.name} has reference image, assigned referenceId: ${referenceId}, linkingDescription: "${linkingDescription}"`)
       } else {
         console.log(`[Scene Image] ${char.name} has no reference image, will use text description only`)
       }
@@ -512,7 +517,8 @@ export async function POST(req: NextRequest) {
         ethnicity: char.ethnicity,           // For ethnicity injection in scene description
         keyFeatures: keyFeatures.length > 0 ? keyFeatures : undefined,  // Key physical characteristics
         defaultWardrobe: effectiveWardrobe,  // Wardrobe for consistency (may be scene-overridden)
-        wardrobeAccessories: effectiveAccessories  // Accessories for consistency (may be scene-overridden)
+        wardrobeAccessories: effectiveAccessories,  // Accessories for consistency (may be scene-overridden)
+        linkingDescription  // CRITICAL: Pre-computed linking text for text-matching (must match subjectDescription)
       }
     })
     
@@ -593,9 +599,9 @@ export async function POST(req: NextRequest) {
     }
     
     // Build image references for all characters with reference images
-    // Use CONCISE subject descriptions - the API works better with short, distinctive descriptions
+    // Use the pre-computed linkingDescription from characterReferences for consistency
     const imageReferences = charactersWithImages.map((char: any) => {
-      // Find the matching character reference with referenceId
+      // Find the matching character reference with referenceId and linkingDescription
       const matchingRef = characterReferences.find((ref: any) => ref.name === char.name)
       
       // Use the referenceId from characterReferences - this was assigned in order for chars with images
@@ -604,20 +610,8 @@ export async function POST(req: NextRequest) {
         console.error(`[Scene Image] ERROR: Character ${char.name} has reference image but no referenceId assigned!`)
       }
       
-      // Generate LINKING DESCRIPTION for text-matching mode
-      // This EXACT text must appear in BOTH the prompt AND the subjectDescription
-      // to link the reference image to the character in the scene
-      // const description = char.visionDescription || char.appearanceDescription || ''
-      // const linkingDescription = generateLinkingDescription(description)
-      
-      // NEW: Use explicit ID linking which is more reliable with Imagen 3.0
-      // The format "person [id]" works best with the model
-      const linkingDescription = `person [${referenceId || 1}]`
-      
-      // Also add linkingDescription to the characterReference so promptOptimizer can use it
-      if (matchingRef) {
-        matchingRef.linkingDescription = linkingDescription
-      }
+      // Use the pre-computed linkingDescription - this MUST match what promptOptimizer uses
+      const linkingDescription = matchingRef?.linkingDescription || `person [${referenceId || 1}]`
       
       console.log(`[Scene Image] Character ${char.name} linking description: "${linkingDescription}"`)
       
