@@ -3915,17 +3915,12 @@ function SceneCard({
                         onClick={async (e) => {
                           e.stopPropagation()
                           // Generate all missing audio for this scene (narration, dialogue, music, SFX)
-                          const sceneDescription = scene.visualDescription || scene.action || scene.summary || scene.heading
-                          const descriptionUrl = scene.descriptionAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.descriptionAudioUrl : undefined)
+                          // Note: Description audio has been deprecated
                           const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
                           const hasMusicAudio = !!(scene.musicAudio || scene.music?.url)
                           
                           overlayStore?.show(`Generating all audio for Scene ${sceneIdx + 1}...`, 60)
                           try {
-                            // Generate description if missing
-                            if (sceneDescription && !descriptionUrl && onGenerateSceneAudio) {
-                              await onGenerateSceneAudio(sceneIdx, 'description', undefined, undefined)
-                            }
                             // Generate narration if missing
                             if (scene.narration && !narrationUrl && onGenerateSceneAudio) {
                               await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined)

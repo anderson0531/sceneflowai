@@ -4,6 +4,7 @@ import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { optimizeTextForTTS } from '../../../../lib/tts/textOptimizer'
 import { getAudioDurationFromBuffer } from '../../../../lib/audio/serverAudioDuration'
+import { getElevenLabsVoiceForLanguage } from '../../../../lib/audio/elevenlabsVoices'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -20,7 +21,7 @@ interface VoiceConfig {
 interface AudioGenerationRequest {
   projectId: string
   sceneIndex: number
-  audioType: 'narration' | 'dialogue' | 'description'
+  audioType: 'narration' | 'dialogue'
   text: string
   voiceConfig: VoiceConfig
   characterName?: string // For dialogue
@@ -75,6 +76,7 @@ export async function POST(req: NextRequest) {
     console.log(`[Scene Audio] Generating ${audioType} for scene ${sceneIndex}`)
 
     // Text is always in English - no translation needed
+    const language = 'en'
     let textToGenerate = text
 
     // Step 2: Optimize text for TTS (remove stage directions, clean up)
