@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Button } from "@/components/ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/Input";
@@ -27,6 +28,7 @@ interface StudioPageClientProps {
 export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const { guide, updateTitle, updateTreatment, setTreatmentVariants, variantsLastModified } = useGuideStore();
   const { invokeCue } = useCue();
   const { currentProject, setCurrentProject, setBeats } = useStore();
@@ -234,6 +236,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           filmType: opts?.duration || 'short_film',
           rigor: opts?.rigor || 'thorough',
           variants: variantCount,
+          // Pass user's name for "Created By" field
+          userName: session?.user?.name || undefined,
           // Pass dialog settings to enable optimizations (skip core concept, reduce prompt size)
           ...(opts?.genre && { genre: opts.genre }),
           ...(opts?.tone && { tone: opts.tone }),
