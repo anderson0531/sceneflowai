@@ -22,6 +22,8 @@ interface BrowseVoicesDialogProps {
   characterContext?: CharacterContext
   screenplayContext?: ScreenplayContext
   apiKey?: string
+  /** Default use case filter (e.g., 'narrative', 'conversational', 'characters') */
+  defaultUseCaseFilter?: string
 }
 
 export function BrowseVoicesDialog({
@@ -32,7 +34,8 @@ export function BrowseVoicesDialog({
   onSelectVoice,
   characterContext,
   screenplayContext,
-  apiKey
+  apiKey,
+  defaultUseCaseFilter = 'all'
 }: BrowseVoicesDialogProps) {
   const [voices, setVoices] = useState<ElevenLabsVoice[]>([])
   const [loading, setLoading] = useState(true)
@@ -41,6 +44,7 @@ export function BrowseVoicesDialog({
   const [languageFilter, setLanguageFilter] = useState('all')
   const [genderFilter, setGenderFilter] = useState('all')
   const [categoryFilter, setCategoryFilter] = useState('all')
+  const [useCaseFilter, setUseCaseFilter] = useState(defaultUseCaseFilter)
   const [showRecommendedOnly, setShowRecommendedOnly] = useState(false)
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null)
   const [recommendations, setRecommendations] = useState<VoiceRecommendation[]>([])
@@ -107,17 +111,20 @@ export function BrowseVoicesDialog({
     const languages = new Set<string>()
     const genders = new Set<string>()
     const categories = new Set<string>()
+    const useCases = new Set<string>()
 
     voices.forEach(v => {
       if (v.language) languages.add(v.language)
       if (v.gender) genders.add(v.gender)
       if (v.category) categories.add(v.category)
+      if (v.useCase) useCases.add(v.useCase)
     })
 
     return {
       languages: Array.from(languages).sort(),
       genders: Array.from(genders).sort(),
-      categories: Array.from(categories).sort()
+      categories: Array.from(categories).sort(),
+      useCases: Array.from(useCases).sort()
     }
   }, [voices])
 
@@ -152,6 +159,9 @@ export function BrowseVoicesDialog({
     if (categoryFilter !== 'all') {
       result = result.filter(v => v.category === categoryFilter)
     }
+    if (useCaseFilter !== 'all') {
+      result = result.filter(v => v.useCase === useCaseFilter)
+    }
     if (showRecommendedOnly) {
       result = result.filter(v => recommendedVoiceIds.has(v.id))
     }
@@ -163,7 +173,7 @@ export function BrowseVoicesDialog({
       if (scoreA !== scoreB) return scoreB - scoreA
       return a.name.localeCompare(b.name)
     })
-  }, [voices, debouncedQuery, languageFilter, genderFilter, categoryFilter, showRecommendedOnly, recommendedVoiceIds, getRecommendationScore, characterContext, screenplayContext])
+  }, [voices, debouncedQuery, languageFilter, genderFilter, categoryFilter, useCaseFilter, showRecommendedOnly, recommendedVoiceIds, getRecommendationScore, characterContext, screenplayContext])
 
   const handlePreview = async (voice: ElevenLabsVoice) => {
     if (!voice.previewUrl) return
@@ -346,6 +356,21 @@ export function BrowseVoicesDialog({
                 </select>
               )}
 
+              {filterOptions.useCases.length > 1 && (
+                <select
+                  value={useCaseFilter}
+                  onChange={(e) => setUseCaseFilter(e.target.value)}
+                  className="px-2 py-1.5 bg-gray-900 border border-gray-700 rounded text-gray-200 text-xs focus:outline-none focus:border-blue-500"
+                >
+                  <option value="all">All Use Cases</option>
+                  {filterOptions.useCases.map(uc => (
+                    <option key={uc} value={uc}>
+                      {uc.charAt(0).toUpperCase() + uc.slice(1).replace(/_/g, ' ')}
+                    </option>
+                  ))}
+                </select>
+              )}
+
               <div className="flex-1" />
 
               <button
@@ -368,7 +393,7 @@ export function BrowseVoicesDialog({
               </div>
             ) : filteredVoices.length === 0 ? (
               <div className="text-sm text-gray-500 text-center py-12">
-                {searchQuery || languageFilter !== 'all' || genderFilter !== 'all' || categoryFilter !== 'all' || showRecommendedOnly
+                {searchQuery || languageFilter !== 'all' || genderFilter !== 'all' || categoryFilter !== 'all' || useCaseFilter !== 'all' || showRecommendedOnly
                   ? 'No voices match your filters'
                   : 'No voices available'
                 }

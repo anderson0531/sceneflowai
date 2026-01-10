@@ -18,6 +18,8 @@ import { StorySetupEditDialog } from './StorySetupEditDialog'
 import { ToneStyleEditDialog } from './ToneStyleEditDialog'
 import { BeatsEditDialog } from './BeatsEditDialog'
 import { CharactersEditDialog } from './CharactersEditDialog'
+import { BrowseVoicesDialog } from '@/components/tts/BrowseVoicesDialog'
+import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import OwnerCollabPanel from '@/components/studio/OwnerCollabPanel'
 import { getCuratedElevenVoices, type CuratedVoice } from '@/lib/tts/voices'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
@@ -62,7 +64,7 @@ export function TreatmentCard() {
   const [enabled, setEnabled] = useState<boolean>(false)
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  const [selectedVoiceId, setSelectedVoiceId] = useState<string | undefined>(undefined)
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string | undefined>('pNInz6obpgDQGcFmaJgB') // Adam voice
   const [editorOpen, setEditorOpen] = useState(false)
   const [reimaginOpen, setReimaginOpen] = useState(false)
   const [refineOpen, setRefineOpen] = useState(false)
@@ -76,6 +78,9 @@ export function TreatmentCard() {
   const [isSharing, setIsSharing] = useState(false)
   const [isCreatingVision, setIsCreatingVision] = useState(false)
   const [audioMenuOpen, setAudioMenuOpen] = useState(false)
+  const [voiceDialogOpen, setVoiceDialogOpen] = useState(false)
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('en')
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Adam')
   const [collabOpen, setCollabOpen] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [showReasoning, setShowReasoning] = useState(false)
@@ -96,6 +101,7 @@ export function TreatmentCard() {
   }
   const [narrationMode, setNarrationMode] = useState<'synopsis'|'full'|'beats'>('synopsis')
   const queueAbortRef = useRef<{ abort: boolean }>({ abort: false })
+  const translationCacheRef = useRef<Map<string, string>>(new Map())
   // Character state removed - all character management moved to Vision phase
 
   const active = useMemo(() => {
@@ -163,9 +169,39 @@ export function TreatmentCard() {
     queueAbortRef.current.abort = false
     for (const t of texts) {
       if (queueAbortRef.current.abort) break
+      
+      // Translate text if not English
+      let textToSpeak = t
+      if (selectedLanguage !== 'en') {
+        const cacheKey = `${t}-${selectedLanguage}`
+        const cached = translationCacheRef.current.get(cacheKey)
+        if (cached) {
+          textToSpeak = cached
+        } else {
+          try {
+            const translateResp = await fetch('/api/translate/google', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                text: t,
+                targetLanguage: selectedLanguage,
+                sourceLanguage: 'en'
+              })
+            })
+            if (translateResp.ok) {
+              const translateData = await translateResp.json()
+              textToSpeak = translateData.translatedText || t
+              translationCacheRef.current.set(cacheKey, textToSpeak)
+            }
+          } catch (err) {
+            console.error('[Blueprint TTS] Translation failed, using original text:', err)
+          }
+        }
+      }
+      
       const resp = await fetch('/api/tts/elevenlabs', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: t, voiceId: selectedVoiceId || voices[0]?.id })
+        body: JSON.stringify({ text: textToSpeak, voiceId: selectedVoiceId || voices[0]?.id })
       })
       if (!resp.ok) throw new Error('TTS failed')
       const blob = await resp.blob()
@@ -489,22 +525,34 @@ export function TreatmentCard() {
                                 <ChevronDown className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-64">
+                            <DropdownMenuContent align="end" className="w-72">
                               <div className="px-1 py-1.5 text-xs text-gray-400">Voice</div>
-                              {enabled && voices.length > 0 ? (
-                                <Select value={selectedVoiceId} onValueChange={setSelectedVoiceId}>
-                                  <SelectTrigger className="h-8 mx-1">
-                                    <SelectValue placeholder="Select voice" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {voices.map(vv => (
-                                      <SelectItem key={vv.id} value={vv.id}>{vv.name}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
+                              {enabled ? (
+                                <Button 
+                                  variant="outline" 
+                                  className="h-8 mx-1 w-[calc(100%-8px)] justify-between text-left font-normal"
+                                  onClick={() => {
+                                    setAudioMenuOpen(false)
+                                    setVoiceDialogOpen(true)
+                                  }}
+                                >
+                                  <span className="truncate">{selectedVoiceName || 'Select voice...'}</span>
+                                  <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
+                                </Button>
                               ) : (
                                 <div className="mx-2 my-1 text-xs text-amber-300">Audio not configured</div>
                               )}
+                              <div className="px-1 pt-2 pb-1 text-xs text-gray-400">Language</div>
+                              <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                                <SelectTrigger className="h-8 mx-1">
+                                  <SelectValue placeholder="Select language" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {SUPPORTED_LANGUAGES.map(lang => (
+                                    <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                               <div className="px-1 pt-2 pb-1 text-xs text-gray-400">Narration</div>
                               <Select value={narrationMode} onValueChange={(val)=>setNarrationMode(val as any)}>
                                 <SelectTrigger className="h-8 mx-1">
@@ -1062,6 +1110,19 @@ export function TreatmentCard() {
           sessionId={sessionId}
           activeVariantId={activeVariant.id}
           onSelectVariant={(id)=> selectTreatmentVariant(id)}
+        />
+        {/* Voice Selection Dialog */}
+        <BrowseVoicesDialog
+          open={voiceDialogOpen}
+          onOpenChange={setVoiceDialogOpen}
+          provider="elevenlabs"
+          selectedVoiceId={selectedVoiceId}
+          onSelectVoice={(voiceId, voiceName) => {
+            setSelectedVoiceId(voiceId)
+            setSelectedVoiceName(voiceName)
+            setVoiceDialogOpen(false)
+          }}
+          defaultUseCaseFilter="narrative"
         />
         {/* Character Prompt Builder removed - now in Vision phase */}
         {shareOpen && (
