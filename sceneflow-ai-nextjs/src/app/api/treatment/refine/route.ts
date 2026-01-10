@@ -139,7 +139,8 @@ ${strictJsonPromptSuffix}`
     const result = await generateText(prompt, {
       model: 'gemini-2.5-flash',
       temperature: 0.3,
-      maxOutputTokens: maxTokens
+      maxOutputTokens: maxTokens,
+      thinkingBudget: 0  // Disable thinking mode to prevent OOM crashes
     })
 
     const generatedText = result?.text || '{}'

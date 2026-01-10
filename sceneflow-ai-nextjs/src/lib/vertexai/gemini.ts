@@ -54,6 +54,12 @@ export interface TextGenerationOptions {
   initialDelayMs?: number
   /** Timeout in ms for the entire request including retries (default: 90000) */
   timeoutMs?: number
+  /** 
+   * Thinking budget for Gemini 2.5 models. Set to 0 to disable thinking mode.
+   * For Gemini 2.5 Flash: valid range is 0-24576 (0 disables thinking)
+   * Default: undefined (auto/dynamic thinking)
+   */
+  thinkingBudget?: number
 }
 
 export interface TextGenerationResult {
@@ -104,6 +110,14 @@ export async function generateText(
   if (options.systemInstruction) {
     requestBody.systemInstruction = {
       parts: [{ text: options.systemInstruction }]
+    }
+  }
+  
+  // Add thinking config for Gemini 2.5 models
+  // Setting thinkingBudget to 0 disables thinking mode (prevents OOM issues)
+  if (options.thinkingBudget !== undefined && model.includes('2.5')) {
+    requestBody.generationConfig.thinkingConfig = {
+      thinkingBudget: options.thinkingBudget
     }
   }
   
