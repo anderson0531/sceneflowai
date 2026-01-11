@@ -907,7 +907,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     const totalDialogueLines = audioTypes.dialogue
       ? scenes.reduce((sum: number, scene: any) => {
           if (!Array.isArray(scene.dialogue)) return sum
-          const count = scene.dialogue.filter((d: any) => d?.character && d?.text).length
+          const count = scene.dialogue.filter((d: any) => d?.character && d?.line).length
           return sum + count
         }, 0)
       : 0
@@ -1010,11 +1010,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     try {
       for (let sceneIdx = 0; sceneIdx < scenes.length; sceneIdx++) {
         const scene = scenes[sceneIdx]
-        const hasNarration = audioTypes.narration && scene?.action
+        const hasNarration = audioTypes.narration && (scene?.narration || scene?.action)
         const dialogueEntries = audioTypes.dialogue && Array.isArray(scene.dialogue)
           ? scene.dialogue
               .map((d: any, idx: number) => ({ ...d, __index: idx }))
-              .filter((d: any) => d?.character && d?.text)
+              .filter((d: any) => d?.character && d?.line)
           : []
 
         if (hasNarration) {

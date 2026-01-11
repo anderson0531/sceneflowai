@@ -5900,6 +5900,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Optional sceneOverride parameter allows passing scene data directly (avoids stale state issues in sequential operations)
   // NOTE: 'description' audioType is deprecated - scene description is now read-only context, not an audio track
   const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue' | 'description', characterName?: string, dialogueIndex?: number, sceneOverride?: any) => {
+    // Debug logging for audio generation diagnostics
+    console.log('[Generate Scene Audio] START:', {
+      sceneIdx,
+      audioType,
+      characterName,
+      dialogueIndex,
+      hasSceneOverride: !!sceneOverride,
+      hasNarrationVoice: !!narrationVoice,
+      narrationVoiceId: narrationVoice?.voiceId,
+      characterCount: characters?.length || 0
+    })
+
     // Description audio generation is deprecated - scene description is for user context only
     if (audioType === 'description') {
       console.warn('[Generate Scene Audio] Description audio generation is deprecated. Use Enhance Details instead.')
@@ -5949,14 +5961,32 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       let text: string | undefined
       if (audioType === 'narration') {
-        text = scene.narration
+        text = scene.narration || scene.action
       } else if (audioType === 'description') {
         text = scene.visualDescription || scene.action || scene.summary || scene.heading
       } else {
         text = dialogueLine?.line
       }
+
+      // Debug logging for text extraction
+      console.log('[Generate Scene Audio] Text extraction:', {
+        audioType,
+        hasText: !!text,
+        textLength: text?.length || 0,
+        textPreview: text?.substring(0, 50) || 'EMPTY',
+        sceneHasNarration: !!scene.narration,
+        sceneHasAction: !!scene.action,
+        dialogueLineFound: !!dialogueLine,
+        dialogueLine: dialogueLine ? { character: dialogueLine.character, line: dialogueLine.line?.substring(0, 50) } : null
+      })
       
       if (!text) {
+        console.error('[Generate Scene Audio] No text found for audio generation:', {
+          audioType,
+          sceneNarration: scene.narration?.substring(0, 50),
+          sceneAction: scene.action?.substring(0, 50),
+          dialogueEntries: scene.dialogue?.length || 0
+        })
         try { const { toast } = require('sonner'); toast.error('No text found to generate audio') } catch {}
         return
       }
@@ -5992,11 +6022,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (!character) {
           console.error('[Generate Scene Audio] Character not found after normalization:', {
             original: characterName,
-            normalized: normalizedSearchName
+            normalized: canonicalSearchName,
+            availableCharacters: characters.map(c => ({ name: c.name, hasVoice: !!c.voiceConfig }))
           })
           try { 
             const { toast } = require('sonner')
-            toast.error(`Character "${normalizedSearchName}" not found. Please check character names match in Character Library.`, {
+            toast.error(`Character "${canonicalSearchName}" not found. Please check character names match in Character Library.`, {
               duration: 8000
             })
           } catch {}
@@ -6009,6 +6040,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         : audioType === 'description'
           ? descriptionVoice
           : narrationVoice
+
+      // Debug logging for voice config resolution
+      console.log('[Generate Scene Audio] Voice config resolution:', {
+        audioType,
+        hasVoiceConfig: !!voiceConfig,
+        voiceId: voiceConfig?.voiceId,
+        provider: voiceConfig?.provider,
+        characterName: character?.name,
+        characterHasVoice: !!character?.voiceConfig,
+        narrationVoiceConfigured: !!narrationVoice,
+        descriptionVoiceConfigured: !!descriptionVoice
+      })
 
       if (!voiceConfig) {
         // Show specific error message based on audio type
