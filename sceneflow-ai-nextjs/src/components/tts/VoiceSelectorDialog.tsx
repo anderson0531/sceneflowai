@@ -155,11 +155,28 @@ export function VoiceSelectorDialog({
       result = result.filter(v => recommendedVoiceIds.has(v.id))
     }
 
-    // Sort: recommended voices first, then by score
+    // Sort: recommended voices first by score, then by gender match, then alphabetically
     return result.sort((a, b) => {
       const scoreA = getRecommendationScore(a.id)
       const scoreB = getRecommendationScore(b.id)
+      // Primary: score (normalized percentage)
       if (scoreA !== scoreB) return scoreB - scoreA
+      // Secondary: prefer voices in recommendations list
+      const recA = recommendedVoiceIds.has(a.id) ? 1 : 0
+      const recB = recommendedVoiceIds.has(b.id) ? 1 : 0
+      if (recA !== recB) return recB - recA
+      // Tertiary: prefer matching gender if character context available
+      if (characterContext?.gender) {
+        const charGender = characterContext.gender.toLowerCase()
+        const genderMatchA = a.gender?.toLowerCase() === charGender ? 1 : 0
+        const genderMatchB = b.gender?.toLowerCase() === charGender ? 1 : 0
+        if (genderMatchA !== genderMatchB) return genderMatchB - genderMatchA
+      }
+      // Quaternary: prefer professional category
+      const catA = a.category === 'professional' ? 1 : 0
+      const catB = b.category === 'professional' ? 1 : 0
+      if (catA !== catB) return catB - catA
+      // Final: alphabetical
       return a.name.localeCompare(b.name)
     })
   }, [voices, debouncedQuery, languageFilter, genderFilter, showRecommendedOnly, recommendedVoiceIds, getRecommendationScore, characterContext, screenplayContext])

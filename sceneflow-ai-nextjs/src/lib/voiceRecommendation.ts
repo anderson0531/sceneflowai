@@ -70,6 +70,56 @@ export interface ElevenLabsVoice {
 // Scoring Functions
 // ================================================================================
 
+// Maximum possible score for normalization (sum of all possible bonuses)
+const MAX_POSSIBLE_SCORE = 110 // 30 (gender) + 20 (age) + 15 (accent) + 25 (role) + 10 (genre) + 10 (personality)
+
+/**
+ * Infer age group from character description
+ */
+function inferAgeFromDescription(description: string): 'young' | 'middle' | 'mature' | null {
+  const text = description.toLowerCase()
+  
+  // Extract numeric ages
+  const ageMatch = text.match(/\b(\d{1,3})\s*(?:years?|yrs?)\s*old\b|\bage\s*(\d{1,3})\b|\b(\d{1,3})\s*year\s*old\b/)
+  if (ageMatch) {
+    const age = parseInt(ageMatch[1] || ageMatch[2] || ageMatch[3], 10)
+    if (age < 30) return 'young'
+    if (age >= 30 && age < 55) return 'middle'
+    if (age >= 55) return 'mature'
+  }
+  
+  // Keyword-based inference
+  const youngIndicators = ['young', 'youthful', 'teen', 'teenager', 'adolescent', 'child', 'kid', 'boy', 'girl', 'twenties', '20s']
+  const matureIndicators = ['old', 'elderly', 'senior', 'ancient', 'elder', 'grandparent', 'grandmother', 'grandfather', 'retired', 'fifties', 'sixties', 'seventies', '50s', '60s', '70s']
+  
+  for (const indicator of matureIndicators) {
+    if (text.includes(indicator)) return 'mature'
+  }
+  for (const indicator of youngIndicators) {
+    if (text.includes(indicator)) return 'young'
+  }
+  
+  return 'middle' // Default to middle-aged for unspecified adults
+}
+
+/**
+ * Infer gender from character name using common name patterns
+ */
+function inferGenderFromName(name: string): 'male' | 'female' | null {
+  const firstName = name.split(/[\s.]+/)[0]?.toLowerCase() || ''
+  
+  // Common male names (partial list for high-confidence matches)
+  const maleNames = ['james', 'john', 'robert', 'michael', 'william', 'david', 'richard', 'joseph', 'thomas', 'charles', 'daniel', 'matthew', 'anthony', 'mark', 'donald', 'steven', 'paul', 'andrew', 'joshua', 'kenneth', 'kevin', 'brian', 'george', 'edward', 'ronald', 'timothy', 'jason', 'jeffrey', 'ryan', 'jacob', 'gary', 'nicholas', 'eric', 'jonathan', 'stephen', 'larry', 'justin', 'scott', 'brandon', 'benjamin', 'samuel', 'raymond', 'gregory', 'frank', 'alexander', 'patrick', 'jack', 'dennis', 'jerry', 'tyler', 'aaron', 'jose', 'adam', 'nathan', 'henry', 'douglas', 'zachary', 'peter', 'kyle', 'noah', 'ethan', 'jeremy', 'walter', 'christian', 'keith', 'roger', 'terry', 'austin', 'sean', 'gerald', 'carl', 'dylan', 'harold', 'jordan', 'jesse', 'bryan', 'lawrence', 'arthur', 'gabriel', 'bruce', 'logan', 'albert', 'willie', 'alan', 'eugene', 'russell', 'vincent', 'philip', 'bobby', 'johnny', 'bradley', 'dr']
+  
+  // Common female names (partial list for high-confidence matches)
+  const femaleNames = ['mary', 'patricia', 'jennifer', 'linda', 'elizabeth', 'barbara', 'susan', 'jessica', 'sarah', 'karen', 'lisa', 'nancy', 'betty', 'margaret', 'sandra', 'ashley', 'dorothy', 'kimberly', 'emily', 'donna', 'michelle', 'carol', 'amanda', 'melissa', 'deborah', 'stephanie', 'rebecca', 'sharon', 'laura', 'cynthia', 'kathleen', 'amy', 'angela', 'shirley', 'anna', 'brenda', 'pamela', 'emma', 'nicole', 'helen', 'samantha', 'katherine', 'christine', 'debra', 'rachel', 'carolyn', 'janet', 'catherine', 'maria', 'heather', 'diane', 'ruth', 'julie', 'olivia', 'joyce', 'virginia', 'victoria', 'kelly', 'lauren', 'christina', 'joan', 'evelyn', 'judith', 'megan', 'andrea', 'cheryl', 'hannah', 'jacqueline', 'martha', 'gloria', 'teresa', 'ann', 'sara', 'madison', 'frances', 'kathryn', 'janice', 'jean', 'abigail', 'alice', 'judy', 'sophia', 'grace', 'denise', 'amber', 'doris', 'marilyn', 'danielle', 'beverly', 'isabella', 'theresa', 'diana', 'natalie', 'brittany', 'charlotte', 'marie', 'kayla', 'alexis', 'lori']
+  
+  if (maleNames.includes(firstName)) return 'male'
+  if (femaleNames.includes(firstName)) return 'female'
+  
+  return null
+}
+
 /**
  * Score a voice against character attributes
  */
@@ -77,26 +127,49 @@ function scoreVoiceForCharacter(
   voice: ElevenLabsVoice,
   character: CharacterContext,
   screenplayContext?: ScreenplayContext
-): { score: number; reasons: string[] } {
+): { score: number; reasons: string[]; normalizedScore: number } {
   let score = 0
   const reasons: string[] = []
 
-  // Gender matching (high weight)
+  // Infer gender if not provided
   const voiceGender = voice.gender?.toLowerCase() || voice.labels?.gender?.toLowerCase()
-  const charGender = character.gender?.toLowerCase()
+  let charGender = character.gender?.toLowerCase()
   
+  // Try to infer gender from description or name
+  if (!charGender && character.description) {
+    const inferredFromDesc = inferGenderFromDescription(character.description)
+    if (inferredFromDesc) {
+      charGender = inferredFromDesc
+    }
+  }
+  if (!charGender && character.name) {
+    const inferredFromName = inferGenderFromName(character.name)
+    if (inferredFromName) {
+      charGender = inferredFromName
+    }
+  }
+  
+  // Gender matching (high weight)
   if (voiceGender && charGender) {
     if (voiceGender === charGender) {
       score += 30
       reasons.push(`Gender match: ${voiceGender}`)
-    } else if (voiceGender !== charGender) {
+    } else {
       score -= 20 // Penalty for mismatch
     }
   }
 
+  // Infer age if not provided
+  let charAge = character.age?.toLowerCase()
+  if (!charAge && character.description) {
+    const inferredAge = inferAgeFromDescription(character.description)
+    if (inferredAge) {
+      charAge = inferredAge
+    }
+  }
+  
   // Age matching (medium weight)
   const voiceAge = voice.age?.toLowerCase() || voice.labels?.age?.toLowerCase()
-  const charAge = character.age?.toLowerCase()
   
   if (voiceAge && charAge) {
     const ageMap: Record<string, string[]> = {
@@ -215,7 +288,10 @@ function scoreVoiceForCharacter(
     reasons.push('High quality voice')
   }
 
-  return { score, reasons }
+  // Normalize score to 0-100 percentage
+  const normalizedScore = Math.max(0, Math.min(100, Math.round((score / MAX_POSSIBLE_SCORE) * 100)))
+
+  return { score, reasons, normalizedScore }
 }
 
 // ================================================================================
@@ -231,20 +307,60 @@ export function getCharacterVoiceRecommendations(
   screenplayContext?: ScreenplayContext,
   topN: number = 5
 ): VoiceRecommendation[] {
-  const scored = voices.map(voice => {
-    const { score, reasons } = scoreVoiceForCharacter(voice, character, screenplayContext)
+  // Infer character gender for pre-filtering
+  let charGender = character.gender?.toLowerCase()
+  if (!charGender && character.description) {
+    const inferredFromDesc = inferGenderFromDescription(character.description)
+    if (inferredFromDesc) charGender = inferredFromDesc
+  }
+  if (!charGender && character.name) {
+    const inferredFromName = inferGenderFromName(character.name)
+    if (inferredFromName) charGender = inferredFromName
+  }
+  
+  // Pre-filter by gender for better recommendations (but keep fallback)
+  let candidateVoices = voices
+  if (charGender) {
+    const genderFiltered = voices.filter(v => {
+      const voiceGender = v.gender?.toLowerCase() || v.labels?.gender?.toLowerCase()
+      return voiceGender === charGender
+    })
+    // Only use filtered list if we have enough candidates
+    if (genderFiltered.length >= topN) {
+      candidateVoices = genderFiltered
+    }
+  }
+  
+  const scored = candidateVoices.map(voice => {
+    const { score, reasons, normalizedScore } = scoreVoiceForCharacter(voice, character, screenplayContext)
     return {
       voiceId: voice.id,
       voiceName: voice.name,
-      score,
+      score: normalizedScore, // Use normalized percentage
+      rawScore: score,
       reasons,
-      provider: 'elevenlabs' as const
+      provider: 'elevenlabs' as const,
+      gender: voice.gender?.toLowerCase() || voice.labels?.gender?.toLowerCase(),
+      category: voice.category
     }
   })
 
-  // Sort by score descending and return top N
+  // Sort by score descending, with secondary criteria for tie-breaking
   return scored
-    .sort((a, b) => b.score - a.score)
+    .sort((a, b) => {
+      // Primary: normalized score
+      if (a.score !== b.score) return b.score - a.score
+      // Secondary: prefer matching gender
+      const aGenderMatch = a.gender === charGender ? 1 : 0
+      const bGenderMatch = b.gender === charGender ? 1 : 0
+      if (aGenderMatch !== bGenderMatch) return bGenderMatch - aGenderMatch
+      // Tertiary: prefer professional category
+      const aCat = a.category === 'professional' ? 1 : 0
+      const bCat = b.category === 'professional' ? 1 : 0
+      if (aCat !== bCat) return bCat - aCat
+      // Final: alphabetical
+      return a.voiceName.localeCompare(b.voiceName)
+    })
     .slice(0, topN)
 }
 
