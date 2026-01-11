@@ -8,8 +8,16 @@
  * Unlike Vertex AI Imagen's complex referenceImages API, Gemini 3 Pro uses
  * simple multimodal input - reference images are passed directly in the prompt.
  * 
+ * Rate Limits:
+ * - gemini-3-pro-image-preview: 20 RPM (higher quality, 4K support)
+ * - gemini-2.5-flash-image: 500 RPM (faster, 1K only, fallback)
+ * 
  * @see https://ai.google.dev/gemini-api/docs/image-generation
  */
+
+// Rate limit tracking for automatic fallback
+let proModelRateLimitedUntil: number | null = null
+const RATE_LIMIT_COOLDOWN_MS = 60000 // 1 minute cooldown after rate limit hit
 
 export interface GeminiStudioImageOptions {
   prompt: string
@@ -44,10 +52,17 @@ export async function generateImageWithGeminiStudio(
     throw new Error('Missing GEMINI_API_KEY or GOOGLE_GEMINI_API_KEY environment variable')
   }
   
-  // Use gemini-2.5-flash-image for higher rate limits (500 RPM vs 20 RPM for gemini-3-pro-image)
-  // This is the "Nano Banana" model - supports reference images for character consistency
-  const model = 'gemini-2.5-flash-image'
+  // Check if we should use fallback due to rate limiting
+  const useFlashFallback = proModelRateLimitedUntil && Date.now() < proModelRateLimitedUntil
+  
+  // Primary: gemini-3-pro-image-preview (20 RPM, higher quality, 4K support)
+  // Fallback: gemini-2.5-flash-image (500 RPM, 1K only) - used when rate limited
+  const model = useFlashFallback ? 'gemini-2.5-flash-image' : 'gemini-3-pro-image-preview'
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+  
+  if (useFlashFallback) {
+    console.log(`[Gemini Studio Image] Using flash fallback (rate limited until ${new Date(proModelRateLimitedUntil).toISOString()})`)
+  }
   
   console.log(`[Gemini Studio Image] Generating with ${model}...`)
   console.log(`[Gemini Studio Image] Prompt preview: ${options.prompt.substring(0, 150)}...`)
@@ -112,7 +127,10 @@ export async function generateImageWithGeminiStudio(
     }
   }
   
-  // Build request body per Gemini API spec
+  // Build request body per Gemini REST API spec (uses snake_case field names)
+  // Note: gemini-2.5-flash-image only supports 1K resolution, ignore imageSize for it
+  const effectiveImageSize = model === 'gemini-2.5-flash-image' ? undefined : options.imageSize
+  
   const requestBody = {
     contents: [
       {
@@ -120,11 +138,11 @@ export async function generateImageWithGeminiStudio(
       }
     ],
     generationConfig: {
-      responseModalities: ['TEXT', 'IMAGE'],  // Allow both text and image output
-      ...(options.aspectRatio || options.imageSize ? {
-        imageConfig: {
-          ...(options.aspectRatio && { aspectRatio: options.aspectRatio }),
-          ...(options.imageSize && { imageSize: options.imageSize })
+      response_modalities: ['TEXT', 'IMAGE'],  // Allow both text and image output
+      ...(options.aspectRatio || effectiveImageSize ? {
+        image_config: {
+          ...(options.aspectRatio && { aspect_ratio: options.aspectRatio }),
+          ...(effectiveImageSize && { image_size: effectiveImageSize })
         }
       } : {})
     },
@@ -156,18 +174,32 @@ export async function generateImageWithGeminiStudio(
     const errorText = await response.text()
     console.error('[Gemini Studio Image] Error response:', errorText)
     
+    // Handle rate limiting with automatic fallback
+    if (response.status === 429) {
+      if (model === 'gemini-3-pro-image-preview' && !useFlashFallback) {
+        // Set cooldown and retry with flash model
+        proModelRateLimitedUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS
+        console.log(`[Gemini Studio Image] Rate limited on pro model, retrying with flash fallback...`)
+        return generateImageWithGeminiStudio(options) // Recursive call will use flash
+      }
+      throw new Error(`Rate limit exceeded on both models. Please wait a moment and try again.`)
+    }
+    
     let hint = ''
     if (response.status === 400) {
       hint = 'Bad request. Check prompt and parameters.'
     } else if (response.status === 403) {
       hint = 'API key may be invalid or this model is not available with your API key.'
-    } else if (response.status === 429) {
-      hint = 'Rate limit exceeded. Try again in a moment.'
     } else if (response.status === 503) {
       hint = 'Service temporarily unavailable. The model may be under high load.'
     }
     
     throw new Error(`Gemini Studio API error ${response.status}: ${errorText}. ${hint}`)
+  }
+  
+  // Clear rate limit on success with pro model
+  if (model === 'gemini-3-pro-image-preview') {
+    proModelRateLimitedUntil = null
   }
   
   const data = await response.json()
