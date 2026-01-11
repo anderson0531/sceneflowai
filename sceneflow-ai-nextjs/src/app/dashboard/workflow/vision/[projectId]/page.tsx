@@ -4268,8 +4268,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             await generateScript(proj)
           },
           { 
-            message: 'Generating script... This may take 2-3 minutes.',
-            estimatedDuration: 120 
+            message: 'Generating script... This may take 5-8 minutes for longer films.',
+            estimatedDuration: 420  // 7 minutes conservative estimate (actual: 5-7 min for ~90 scenes)
           }
         )
         
