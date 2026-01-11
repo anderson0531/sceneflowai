@@ -3672,6 +3672,32 @@ function SceneCard({
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
+                {/* Update Scores button */}
+                {onGenerateSceneScore && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onGenerateSceneScore(sceneIdx)
+                          }}
+                          disabled={generatingScoreFor === sceneIdx}
+                          className="p-1.5 rounded-md bg-sf-primary/20 text-sf-primary border border-sf-primary/40 hover:bg-sf-primary/30 disabled:opacity-50 transition"
+                        >
+                          {generatingScoreFor === sceneIdx ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <RefreshCw className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-gray-900 text-white border border-gray-700">
+                        <p className="text-xs">Update review scores</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
               </div>
             )}
           </div>

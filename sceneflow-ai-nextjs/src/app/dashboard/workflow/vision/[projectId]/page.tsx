@@ -6571,6 +6571,44 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     setIsSceneEditorOpen(true)
   }
 
+  // Handler for immediate score updates from dialog (without closing it)
+  const handleUpdateSceneScores = async (sceneIndex: number, directorScore: number, audienceScore: number, dialogReviews: any) => {
+    if (!script) return
+    
+    const updatedScenes = [...(script.script?.scenes || [])]
+    const scene = updatedScenes[sceneIndex]
+    
+    // Update the scene's scoreAnalysis and dialogReviews
+    updatedScenes[sceneIndex] = {
+      ...scene,
+      scoreAnalysis: {
+        ...(scene.scoreAnalysis || {}),
+        overallScore: Math.round((directorScore + audienceScore) / 2),
+        directorScore,
+        audienceScore,
+        generatedAt: new Date().toISOString()
+      },
+      dialogReviews
+    }
+    
+    // Update local state immediately
+    setScript({
+      ...script,
+      script: {
+        ...script.script,
+        scenes: updatedScenes
+      }
+    })
+    
+    // Save to database in background
+    try {
+      await saveScenesToDatabase(updatedScenes)
+      console.log(`[Vision] Updated scores for scene ${sceneIndex + 1}: Director ${directorScore}, Audience ${audienceScore}`)
+    } catch (error) {
+      console.error('[Vision] Failed to save scene scores:', error)
+    }
+  }
+
   const handleApplySceneChanges = async (sceneIndex: number, revisedScene: any) => {
     if (!script) return
 
@@ -7920,6 +7958,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             characters: characters
           }}
           onApplyChanges={handleApplySceneChanges}
+          onUpdateSceneScores={handleUpdateSceneScores}
         />
       )}
 

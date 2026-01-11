@@ -61,6 +61,7 @@ interface SceneEditorModalProps {
   nextScene?: any
   script?: any
   onApplyChanges: (sceneIndex: number, revisedScene: any) => void
+  onUpdateSceneScores?: (sceneIndex: number, directorScore: number, audienceScore: number, dialogReviews: any) => void
 }
 
 export function SceneEditorModal({
@@ -73,7 +74,8 @@ export function SceneEditorModal({
   previousScene,
   nextScene,
   script,
-  onApplyChanges
+  onApplyChanges,
+  onUpdateSceneScores
 }: SceneEditorModalProps) {
   // State management
   const [customInstruction, setCustomInstruction] = useState('')
@@ -290,6 +292,16 @@ export function SceneEditorModal({
       const data = await response.json()
       setDirectorReview(data.director)
       setAudienceReview(data.audience)
+      
+      // Immediately update project with new scores (when re-scoring with edits)
+      if (useCurrentEdits && onUpdateSceneScores && data.director && data.audience) {
+        const dialogReviews = {
+          director: data.director,
+          audience: data.audience,
+          lastUpdated: new Date().toISOString()
+        }
+        onUpdateSceneScores(sceneIndex, data.director.overallScore, data.audience.overallScore, dialogReviews)
+      }
       
       // Auto-switch to director review tab
       setLeftPanelTab('director')
