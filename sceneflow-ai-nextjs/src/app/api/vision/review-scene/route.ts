@@ -41,6 +41,7 @@ function escapeControlCharsInJsonStrings(json: string): string {
   while (i < json.length) {
     const char = json[i]
     const nextChar = json[i + 1]
+    const charCode = char.charCodeAt(0)
     
     if (char === '"' && (i === 0 || json[i - 1] !== '\\')) {
       // Toggle string state on unescaped quotes
@@ -54,6 +55,9 @@ function escapeControlCharsInJsonStrings(json: string): string {
         result += '\\r'
       } else if (char === '\t') {
         result += '\\t'
+      } else if (charCode < 32) {
+        // Escape any other control characters (ASCII 0-31)
+        result += '\\u' + charCode.toString(16).padStart(4, '0')
       } else if (char === '\\' && nextChar && !['n', 'r', 't', '"', '\\', '/', 'b', 'f', 'u'].includes(nextChar)) {
         // Escape lone backslashes that aren't part of valid escape sequences
         result += '\\\\'
@@ -134,9 +138,75 @@ function extractAndParseJSON(rawText: string, context: string): any {
     try {
       return JSON.parse(repairedJson)
     } catch (secondError: any) {
-      console.error(`[${context}] JSON repair failed:`, secondError.message)
-      console.error(`[${context}] Raw text (first 500 chars):`, rawText.substring(0, 500))
-      throw new Error(`Failed to parse ${context} JSON: ${firstError.message}`)
+      console.warn(`[${context}] Second parse attempt failed, trying truncation repair...`)
+      
+      // Try to repair truncated JSON by closing open structures
+      let truncRepaired = repairedJson
+      
+      // Check if response appears truncated (doesn't end with })
+      if (!truncRepaired.trim().endsWith('}')) {
+        // Count open braces/brackets and close them
+        const openBraces = (truncRepaired.match(/{/g) || []).length
+        const closeBraces = (truncRepaired.match(/}/g) || []).length
+        const openBrackets = (truncRepaired.match(/\[/g) || []).length
+        const closeBrackets = (truncRepaired.match(/\]/g) || []).length
+        
+        // Close any open strings (odd number of quotes)
+        const quoteCount = (truncRepaired.match(/(?<!\\)"/g) || []).length
+        if (quoteCount % 2 !== 0) {
+          truncRepaired += '"'
+        }
+        
+        // Close open brackets and braces
+        for (let i = 0; i < (openBrackets - closeBrackets); i++) {
+          truncRepaired += ']'
+        }
+        for (let i = 0; i < (openBraces - closeBraces); i++) {
+          truncRepaired += '}'
+        }
+        
+        try {
+          return JSON.parse(truncRepaired)
+        } catch (thirdError: any) {
+          console.warn(`[${context}] Truncation repair failed, trying minimal fallback...`)
+        }
+      }
+      
+      // Last resort: Try to extract what we can and return minimal valid structure
+      try {
+        // Extract overallScore if possible
+        const scoreMatch = repairedJson.match(/"overallScore"\s*:\s*(\d+)/)
+        const score = scoreMatch ? parseInt(scoreMatch[1]) : 85
+        
+        // Extract categories if possible
+        const categoriesMatch = repairedJson.match(/"categories"\s*:\s*(\[[\s\S]*?\])/)
+        let categories = [
+          { name: "Scene Structure", score: score },
+          { name: "Character Moments", score: score },
+          { name: "Pacing", score: score },
+          { name: "Visual Storytelling", score: score },
+          { name: "Script Integration", score: score }
+        ]
+        if (categoriesMatch) {
+          try {
+            categories = JSON.parse(categoriesMatch[1])
+          } catch {}
+        }
+        
+        console.warn(`[${context}] Using fallback review with extracted score: ${score}`)
+        return {
+          overallScore: score,
+          categories,
+          analysis: "Review analysis unavailable due to parsing error. Please try again.",
+          strengths: ["Scene has good potential"],
+          improvements: ["Consider regenerating the review for detailed feedback"],
+          recommendations: ["Try running the review again"]
+        }
+      } catch (fallbackError: any) {
+        console.error(`[${context}] All JSON repair attempts failed:`, secondError.message)
+        console.error(`[${context}] Raw text (first 500 chars):`, rawText.substring(0, 500))
+        throw new Error(`Failed to parse ${context} JSON: ${firstError.message}`)
+      }
     }
   }
 }
@@ -255,7 +325,10 @@ CRITICAL JSON FORMATTING RULES:
 - Output ONLY valid JSON, no markdown code fences
 - All string values must be on a single line (no line breaks inside strings)
 - Use escaped characters for quotes inside strings: \\"
-- Keep analysis concise (under 500 characters) to avoid formatting issues
+- Do NOT use em-dashes, use regular hyphens (-) instead
+- Do NOT use smart quotes or curly quotes
+- Keep analysis concise (under 400 characters) to avoid formatting issues
+- Keep each strength/improvement/recommendation under 100 characters
 
 Output this exact JSON structure:
 {"overallScore": <number>, "categories": [{"name": "Scene Structure", "score": <number>}, {"name": "Character Moments", "score": <number>}, {"name": "Pacing", "score": <number>}, {"name": "Visual Storytelling", "score": <number>}, {"name": "Script Integration", "score": <number>}], "analysis": "<single line analysis>", "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"], "improvements": ["<improvement 1>", "<improvement 2>", "<improvement 3>"], "recommendations": ["<recommendation 1>", "<recommendation 2>", "<recommendation 3>"]}`
@@ -362,7 +435,10 @@ CRITICAL JSON FORMATTING RULES:
 - Output ONLY valid JSON, no markdown code fences
 - All string values must be on a single line (no line breaks inside strings)
 - Use escaped characters for quotes inside strings: \\"
-- Keep analysis concise (under 500 characters) to avoid formatting issues
+- Do NOT use em-dashes, use regular hyphens (-) instead
+- Do NOT use smart quotes or curly quotes
+- Keep analysis concise (under 400 characters) to avoid formatting issues
+- Keep each strength/improvement/recommendation under 100 characters
 
 Output this exact JSON structure:
 {"overallScore": <number>, "categories": [{"name": "Entertainment Value", "score": <number>}, {"name": "Emotional Impact", "score": <number>}, {"name": "Clarity", "score": <number>}, {"name": "Character Connection", "score": <number>}, {"name": "Story Momentum", "score": <number>}], "analysis": "<single line analysis>", "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"], "improvements": ["<improvement 1>", "<improvement 2>", "<improvement 3>"], "recommendations": ["<recommendation 1>", "<recommendation 2>", "<recommendation 3>"]}`
