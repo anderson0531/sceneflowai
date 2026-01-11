@@ -106,6 +106,50 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     }
   }
 
+  // Handle "Start Production" from AudienceResonancePanel
+  const handleProceedToScripting = async () => {
+    const variants = (guide as any)?.treatmentVariants
+    const selectedId = (guide as any)?.selectedTreatmentId
+    const v = variants?.find((variant: any) => variant.id === selectedId) || variants?.[0]
+    
+    if (!v) {
+      try { const { toast } = require('sonner'); toast.error('No treatment variant found') } catch {}
+      return
+    }
+    
+    try {
+      // Get or create user ID
+      let userId = localStorage.getItem('authUserId')
+      if (!userId) {
+        userId = crypto.randomUUID()
+        localStorage.setItem('authUserId', userId)
+      }
+      
+      // Create project from Film Treatment variant
+      const res = await fetch('/api/projects/from-variant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          variant: v // Send full variant with all data
+        })
+      })
+      
+      const data = await res.json()
+      
+      if (data.success && data.project) {
+        try { const { toast } = require('sonner'); toast('Creating Vision...') } catch {}
+        // Navigate to Vision page
+        router.push(`/dashboard/workflow/vision/${data.project.id}`)
+      } else {
+        try { const { toast } = require('sonner'); toast.error('Failed to create project') } catch {}
+      }
+    } catch (e) {
+      console.error('Vision creation error:', e)
+      try { const { toast } = require('sonner'); toast.error('Failed to create Vision') } catch {}
+    }
+  }
+
   // Auto-generate hero image for treatment variant
   // Uses sessionStorage to prevent duplicate generation across navigation
   const generateHeroImage = async (variant: any) => {
@@ -714,6 +758,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 shareUrl={shareUrl}
                 onShare={handleShare}
                 isSharing={isSharing}
+                onProceedToScripting={handleProceedToScripting}
               />
             </Panel>
           </>

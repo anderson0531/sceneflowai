@@ -13,9 +13,10 @@ interface SidePanelTabsProps {
   shareUrl: string | null
   onShare: () => void
   isSharing: boolean
+  onProceedToScripting?: () => void
 }
 
-export function SidePanelTabs({ onClose, sessionId, shareUrl, onShare, isSharing }: SidePanelTabsProps) {
+export function SidePanelTabs({ onClose, sessionId, shareUrl, onShare, isSharing, onProceedToScripting }: SidePanelTabsProps) {
   const [activeTab, setActiveTab] = useState<'resonance' | 'collaboration'>('resonance')
   const { guide } = useGuideStore()
   const { updateTreatmentVariant } = useGuideStore() as any
@@ -82,6 +83,7 @@ export function SidePanelTabs({ onClose, sessionId, shareUrl, onShare, isSharing
           <AudienceResonancePanel 
             treatment={currentTreatment} 
             onTreatmentUpdate={handleTreatmentUpdate}
+            onProceedToScripting={onProceedToScripting}
           />
         ) : (
           <CollaborationContent 
