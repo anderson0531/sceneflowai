@@ -3639,14 +3639,14 @@ function SceneCard({
             </p>
             {/* Score badges in header */}
             {!isOutline && scene.scoreAnalysis && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                        (scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore) >= 85 ? 'bg-green-500/20 text-green-400' :
-                        (scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore) >= 75 ? 'bg-yellow-500/20 text-yellow-400' :
-                        'bg-red-500/20 text-red-400'
+                      <span className={`text-sm px-2.5 py-1 rounded-md font-bold shadow-lg border-2 ${
+                        (scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore) >= 85 ? 'bg-green-500/30 text-green-300 border-green-400/60' :
+                        (scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore) >= 75 ? 'bg-yellow-500/30 text-yellow-300 border-yellow-400/60' :
+                        'bg-red-500/30 text-red-300 border-red-400/60'
                       }`}>
                         🎬 {scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore}
                       </span>
@@ -3659,10 +3659,10 @@ function SceneCard({
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                        (scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore) >= 85 ? 'bg-green-500/20 text-green-400' :
-                        (scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore) >= 75 ? 'bg-yellow-500/20 text-yellow-400' :
-                        'bg-red-500/20 text-red-400'
+                      <span className={`text-sm px-2.5 py-1 rounded-md font-bold shadow-lg border-2 ${
+                        (scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore) >= 85 ? 'bg-green-500/30 text-green-300 border-green-400/60' :
+                        (scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore) >= 75 ? 'bg-yellow-500/30 text-yellow-300 border-yellow-400/60' :
+                        'bg-red-500/30 text-red-300 border-red-400/60'
                       }`}>
                         👥 {scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore}
                       </span>
