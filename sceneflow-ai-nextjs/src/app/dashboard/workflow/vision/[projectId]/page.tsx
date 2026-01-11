@@ -197,26 +197,6 @@ const ensureNarratorCharacter = (characters: Character[], narrationVoice?: Voice
   }
 }
 
-const ensureDescriptionCharacter = (characters: Character[], descriptionVoice?: VoiceConfig): Character => {
-  const existingDescription = characters.find(char => char.type === 'description')
-
-  if (existingDescription) {
-    return existingDescription
-  }
-
-  return {
-    id: 'scene-description-voice',
-    name: 'Scene Description',
-    description: 'Voiceover that introduces the scene before narration begins',
-    type: 'description',
-    voiceConfig: descriptionVoice || {
-      provider: 'elevenlabs',
-      voiceName: 'Allison',
-      voiceId: 'EXAVITQu4vr4xnSDxMaL'
-    }
-  }
-}
-
 interface VoiceConfig {
   provider: 'elevenlabs' | 'google'
   voiceId: string
@@ -4046,21 +4026,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           }
 
-          // Ensure narrator/description characters exist so voices can be configured independently
+          // Ensure narrator character exists so voice can be configured independently
           const narratorCharacter = ensureNarratorCharacter(charactersWithIds, narrationVoice || undefined)
           const charactersWithNarrator = charactersWithIds.some(c => c.type === 'narrator') 
             ? charactersWithIds 
             : [...charactersWithIds, narratorCharacter]
-
-          const descriptionCharacter = ensureDescriptionCharacter(charactersWithNarrator, visionPhase.descriptionVoice || undefined)
-          const charactersWithDescription = charactersWithNarrator.some(c => c.type === 'description')
-            ? charactersWithNarrator
-            : [...charactersWithNarrator, descriptionCharacter]
           
-          setCharacters(charactersWithDescription)
+          // Filter out deprecated description characters
+          const charactersFiltered = charactersWithNarrator.filter(c => c.type !== 'description')
+          
+          setCharacters(charactersFiltered)
           
           // Sync narration voice from narrator character (single source of truth)
-          const narratorChar = charactersWithDescription.find(c => c.type === 'narrator')
+          const narratorChar = charactersFiltered.find(c => c.type === 'narrator')
           if (narratorChar?.voiceConfig) {
             const finalNarratorVoice = narratorChar.voiceConfig
             setNarrationVoice(finalNarratorVoice)

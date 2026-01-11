@@ -332,15 +332,6 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
               ttsProvider={ttsProvider}
             />
           )}
-
-          {/* Scene Description Voice Card */}
-          {characters.find(char => char.type === 'description') && (
-            <DescriptionVoiceCard
-              character={characters.find(char => char.type === 'description')!}
-              onUpdateCharacterVoice={onUpdateCharacterVoice}
-              ttsProvider={ttsProvider}
-            />
-          )}
           
           {/* Regular Character Cards */}
           {characters.filter(char => char.type !== 'narrator' && char.type !== 'description').map((char, idx) => {
