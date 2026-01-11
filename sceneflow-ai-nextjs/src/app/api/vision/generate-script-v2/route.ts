@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
           scenesGenerated: 0,
           totalScenes: suggestedScenes,
           elapsedSeconds: 0,
-          estimatedRemainingSeconds: suggestedScenes * 3  // ~3s per scene estimate
+          estimatedRemainingSeconds: suggestedScenes * 5  // ~5s per scene conservative estimate
         })}\n\n`))
 
         console.log(`[Script Gen V2] Batch 1: Generating first ${INITIAL_BATCH_SIZE} scenes...`)
@@ -197,8 +197,9 @@ export async function POST(request: NextRequest) {
           
           // Calculate time-based progress for this batch start
           const elapsedSeconds = Math.floor((Date.now() - generationStartTime) / 1000)
-          const avgSecondsPerScene = allScenes.length > 0 ? elapsedSeconds / allScenes.length : 3
-          const estimatedRemainingSeconds = Math.ceil(remainingScenes * avgSecondsPerScene)
+          const avgSecondsPerScene = allScenes.length > 0 ? elapsedSeconds / allScenes.length : 5
+          // 1.3x buffer for conservative estimate - better to finish early than late
+          const estimatedRemainingSeconds = Math.ceil(remainingScenes * avgSecondsPerScene * 1.3)
           
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({
             type: 'progress',

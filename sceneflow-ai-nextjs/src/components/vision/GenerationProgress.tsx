@@ -47,15 +47,32 @@ export function GenerationProgress({ progress }: GenerationProgressProps) {
           )}
           <div className="flex-1">
             <span className="text-gray-700 dark:text-gray-300">Script generation</span>
-            {progress.script.status && (
-              <p className="text-xs text-gray-500 mt-1">
-                {progress.script.status}
-                {progress.script.scenesGenerated !== undefined && 
-                 progress.script.totalScenes !== undefined && (
-                  <span className="ml-2">
-                    ({progress.script.scenesGenerated}/{progress.script.totalScenes} scenes)
+            
+            {/* Prominent scene counter */}
+            {progress.script.scenesGenerated !== undefined && 
+             progress.script.totalScenes !== undefined && (
+              <div className="mt-2">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {progress.script.scenesGenerated} of {progress.script.totalScenes} scenes completed
                   </span>
-                )}
+                  <span className="text-sm font-medium text-sf-primary">
+                    {Math.round((progress.script.scenesGenerated / progress.script.totalScenes) * 100)}%
+                  </span>
+                </div>
+                {/* Visual progress bar */}
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div 
+                    className="bg-sf-primary h-2 rounded-full transition-all duration-500 ease-out"
+                    style={{ width: `${(progress.script.scenesGenerated / progress.script.totalScenes) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
+            
+            {progress.script.status && (
+              <p className="text-xs text-gray-500 mt-2">
+                {progress.script.status}
               </p>
             )}
             {/* Time estimation display */}
@@ -69,9 +86,6 @@ export function GenerationProgress({ progress }: GenerationProgressProps) {
               </p>
             )}
           </div>
-          {progress.script.progress > 0 && (
-            <span className="text-xs text-gray-500 dark:text-gray-400">{progress.script.progress}%</span>
-          )}
         </div>
         
         {/* Character/Scene progress hidden - images generated on-demand, not during script gen */}
