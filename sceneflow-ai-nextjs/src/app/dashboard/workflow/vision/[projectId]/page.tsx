@@ -1252,6 +1252,68 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [project, projectId, sceneReferences, objectReferences]
   )
 
+  // Handler for when an object reference is generated via AI
+  const handleObjectGenerated = useCallback(
+    async (object: { 
+      name: string; 
+      description: string; 
+      imageUrl: string; 
+      category: string;
+      importance: string;
+      generationPrompt: string;
+      aiGenerated: boolean;
+    }) => {
+      const newReference: VisualReference = {
+        id: crypto.randomUUID(),
+        type: 'object',
+        name: object.name,
+        description: object.description,
+        imageUrl: object.imageUrl,
+        createdAt: new Date().toISOString(),
+        category: object.category as any,
+        importance: object.importance as any,
+        generationPrompt: object.generationPrompt,
+        aiGenerated: object.aiGenerated,
+      }
+
+      // Update local state
+      const updatedObjectRefs = [...objectReferences, newReference]
+      setObjectReferences(updatedObjectRefs)
+
+      // Save to database
+      try {
+        const existingMetadata = project?.metadata || {}
+        const existingVisionPhase = existingMetadata.visionPhase || {}
+
+        const payload = {
+          metadata: {
+            ...existingMetadata,
+            visionPhase: {
+              ...existingVisionPhase,
+              references: {
+                sceneReferences,
+                objectReferences: updatedObjectRefs
+              }
+            }
+          }
+        }
+
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+
+        if (!response.ok) {
+          console.error('[handleObjectGenerated] Failed to save reference to database')
+        }
+      } catch (error) {
+        console.error('[handleObjectGenerated] Error saving reference:', error)
+      }
+    },
+    [project, projectId, sceneReferences, objectReferences]
+  )
+
   // Handler for inserting a backdrop segment at the beginning of a scene
   const handleInsertBackdropSegment = useCallback(
     async (sceneId: string, referenceId: string, imageUrl: string, name: string) => {
@@ -7680,6 +7742,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 backdropCharacters={characters.map(c => ({ id: c.id, name: c.name, description: c.description, appearance: c.appearance }))}
                 onBackdropGenerated={handleBackdropGenerated}
                 onInsertBackdropSegment={handleInsertBackdropSegment}
+                onObjectGenerated={handleObjectGenerated}
                 screenplayContext={{
                   genre: project?.genre,
                   tone: project?.tone || project?.metadata?.filmTreatmentVariant?.tone_description || project?.metadata?.filmTreatmentVariant?.tone,

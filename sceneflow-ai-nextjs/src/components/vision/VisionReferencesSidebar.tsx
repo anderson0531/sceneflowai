@@ -4,15 +4,16 @@ import React, { useState } from 'react'
 import { DndContext } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, BookOpen } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, BookOpen, Wand2, Loader2, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/textarea'
 import { CharacterLibrary, CharacterLibraryProps } from './CharacterLibrary'
-import { VisualReference, VisualReferenceType } from '@/types/visionReferences'
+import { VisualReference, VisualReferenceType, ObjectCategory } from '@/types/visionReferences'
 import { BackdropGeneratorModal, SceneForBackdrop, CharacterForBackdrop } from './BackdropGeneratorModal'
 import { BackdropMode } from '@/lib/vision/backdropGenerator'
+import { ObjectSuggestionPanel } from './ObjectSuggestionPanel'
 
 interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'compact'> {
   sceneReferences: VisualReference[]
@@ -27,6 +28,16 @@ interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'comp
   onBackdropGenerated?: (reference: { name: string; description?: string; imageUrl: string; sourceSceneNumber?: number; backdropMode: BackdropMode }) => void
   /** Callback to insert a backdrop segment at the beginning of a scene */
   onInsertBackdropSegment?: (sceneId: string, referenceId: string, imageUrl: string, name: string) => void
+  /** Callback when an object is generated (for ObjectSuggestionPanel) */
+  onObjectGenerated?: (object: {
+    name: string
+    description: string
+    imageUrl: string
+    category: ObjectCategory
+    importance: 'critical' | 'important' | 'background'
+    generationPrompt: string
+    aiGenerated: boolean
+  }) => void
 }
 
 interface ReferenceSectionProps {
@@ -290,22 +301,60 @@ interface AddReferenceDialogProps {
   open: boolean
   onClose: () => void
   onSubmit: (payload: { name: string; description?: string; file?: File | null }) => Promise<void> | void
+  onGenerateObject?: (payload: { name: string; description: string; prompt: string; referenceFile?: File | null }) => Promise<{ imageUrl: string } | null>
   type: VisualReferenceType | null
   isSubmitting: boolean
 }
 
-function AddReferenceDialog({ open, onClose, onSubmit, type, isSubmitting }: AddReferenceDialogProps) {
+function AddReferenceDialog({ open, onClose, onSubmit, onGenerateObject, type, isSubmitting }: AddReferenceDialogProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [filePreview, setFilePreview] = useState<string | null>(null)
+  const [referenceFile, setReferenceFile] = useState<File | null>(null)
+  const [referencePreview, setReferencePreview] = useState<string | null>(null)
+  const [mode, setMode] = useState<'upload' | 'generate'>('upload')
+  const [generatedPrompt, setGeneratedPrompt] = useState('')
+  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false)
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false)
   const isScene = type === 'scene'
+  const isObject = type === 'object'
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selected = event.target.files?.[0]
     if (selected) {
       setFile(selected)
       setFilePreview(URL.createObjectURL(selected))
+    }
+  }
+
+  const handleReferenceFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = event.target.files?.[0]
+    if (selected) {
+      setReferenceFile(selected)
+      setReferencePreview(URL.createObjectURL(selected))
+    }
+  }
+
+  // Auto-generate prompt from name and description
+  const generatePromptFromDescription = async () => {
+    if (!name.trim()) return
+    
+    setIsGeneratingPrompt(true)
+    try {
+      // Build a default prompt based on the name and description
+      const basePrompt = description.trim() || name.trim()
+      const categoryHint = basePrompt.toLowerCase().includes('vehicle') ? 'vehicle' :
+                          basePrompt.toLowerCase().includes('costume') ? 'costume' :
+                          basePrompt.toLowerCase().includes('technology') ? 'technology' :
+                          'prop'
+      
+      const studioStyle = 'Professional product photography, clean studio lighting with soft shadows, centered composition, high resolution, sharp focus, 8K quality, production reference image.'
+      const prompt = `${basePrompt}. ${studioStyle}`
+      
+      setGeneratedPrompt(prompt)
+    } finally {
+      setIsGeneratingPrompt(false)
     }
   }
 
@@ -318,53 +367,197 @@ function AddReferenceDialog({ open, onClose, onSubmit, type, isSubmitting }: Add
       description: description.trim() || undefined,
       file,
     })
+    resetForm()
+  }
+
+  const handleGenerateAndSubmit = async () => {
+    if (!name.trim() || !generatedPrompt.trim() || !onGenerateObject) return
+    
+    setIsGeneratingImage(true)
+    try {
+      const result = await onGenerateObject({
+        name: name.trim(),
+        description: description.trim(),
+        prompt: generatedPrompt.trim(),
+        referenceFile: referenceFile || undefined
+      })
+      
+      if (result) {
+        resetForm()
+        onClose()
+      }
+    } finally {
+      setIsGeneratingImage(false)
+    }
+  }
+
+  const resetForm = () => {
     setName('')
     setDescription('')
     setFile(null)
     setFilePreview(null)
+    setReferenceFile(null)
+    setReferencePreview(null)
+    setMode('upload')
+    setGeneratedPrompt('')
   }
 
   return (
-    <Dialog open={open} onOpenChange={(value) => !isSubmitting && onClose()}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={(value) => !isSubmitting && !isGeneratingImage && onClose()}>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Add {isScene ? 'Scene' : 'Object'} Reference</DialogTitle>
           <DialogDescription>
-            Upload a reference image and details to keep visual continuity intact when generating segment prompts.
+            {isObject 
+              ? 'Upload or generate a reference image to maintain visual consistency.'
+              : 'Upload a reference image and details to keep visual continuity intact when generating segment prompts.'
+            }
           </DialogDescription>
         </DialogHeader>
+
+        {/* Mode Toggle for Objects */}
+        {isObject && onGenerateObject && (
+          <div className="flex items-center gap-2 p-1 bg-slate-800 rounded-lg">
+            <button
+              onClick={() => setMode('upload')}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                mode === 'upload' 
+                  ? 'bg-slate-700 text-white' 
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Upload className="w-4 h-4" />
+              Upload Image
+            </button>
+            <button
+              onClick={() => setMode('generate')}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                mode === 'generate' 
+                  ? 'bg-sf-primary/20 text-sf-primary' 
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Wand2 className="w-4 h-4" />
+              Generate Image
+            </button>
+          </div>
+        )}
 
         <div className="space-y-3">
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Reference Name</label>
-            <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. Observation Deck Lighting" />
+            <Input 
+              value={name} 
+              onChange={(event) => setName(event.target.value)} 
+              placeholder={isObject ? "e.g. Marcus's Pocket Watch" : "e.g. Observation Deck Lighting"} 
+            />
           </div>
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
             <Textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="Brief notes about lighting, mood, or prop details."
+              placeholder={isObject 
+                ? "Detailed description for image generation (materials, colors, era, condition)..."
+                : "Brief notes about lighting, mood, or prop details."
+              }
+              onBlur={() => {
+                if (mode === 'generate' && name.trim() && !generatedPrompt) {
+                  generatePromptFromDescription()
+                }
+              }}
             />
           </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Reference Image</label>
-            <Input type="file" accept="image/*" onChange={handleFileChange} />
-            {filePreview ? (
-              <div className="mt-2">
-                <img src={filePreview} alt="Preview" className="w-full rounded-md border border-gray-200 dark:border-gray-800" />
+
+          {/* Upload Mode */}
+          {mode === 'upload' && (
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Reference Image</label>
+              <Input type="file" accept="image/*" onChange={handleFileChange} />
+              {filePreview ? (
+                <div className="mt-2">
+                  <img src={filePreview} alt="Preview" className="w-full rounded-md border border-gray-200 dark:border-gray-800" />
+                </div>
+              ) : null}
+            </div>
+          )}
+
+          {/* Generate Mode */}
+          {mode === 'generate' && isObject && (
+            <>
+              {/* Optional Reference Image */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Source Reference Image <span className="text-slate-500">(optional)</span>
+                </label>
+                <p className="text-xs text-slate-500 mb-2">
+                  Upload a photo to generate a cleaner, studio-quality version.
+                </p>
+                <Input type="file" accept="image/*" onChange={handleReferenceFileChange} />
+                {referencePreview && (
+                  <div className="mt-2">
+                    <img src={referencePreview} alt="Reference Preview" className="w-32 h-32 object-cover rounded-md border border-gray-200 dark:border-gray-800" />
+                  </div>
+                )}
               </div>
-            ) : null}
-          </div>
+
+              {/* Generated Prompt */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Generation Prompt</label>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={generatePromptFromDescription}
+                    disabled={!name.trim() || isGeneratingPrompt}
+                    className="text-xs h-7"
+                  >
+                    {isGeneratingPrompt ? (
+                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3 h-3 mr-1" />
+                    )}
+                    Auto-Generate
+                  </Button>
+                </div>
+                <Textarea
+                  value={generatedPrompt}
+                  onChange={(e) => setGeneratedPrompt(e.target.value)}
+                  placeholder="Image generation prompt will appear here..."
+                  className="min-h-[80px]"
+                />
+              </div>
+            </>
+          )}
         </div>
 
         <DialogFooter className="flex justify-between gap-2">
-          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting || isGeneratingImage}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting || !name.trim()}>
-            {isSubmitting ? 'Adding...' : 'Add Reference'}
-          </Button>
+          {mode === 'upload' ? (
+            <Button onClick={handleSubmit} disabled={isSubmitting || !name.trim()}>
+              {isSubmitting ? 'Adding...' : 'Add Reference'}
+            </Button>
+          ) : (
+            <Button 
+              onClick={handleGenerateAndSubmit} 
+              disabled={isGeneratingImage || !name.trim() || !generatedPrompt.trim()}
+              className="bg-sf-primary hover:bg-sf-primary/80"
+            >
+              {isGeneratingImage ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="w-4 h-4 mr-2" />
+                  Generate & Add
+                </>
+              )}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -399,6 +592,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     backdropCharacters = [],
     onBackdropGenerated,
     onInsertBackdropSegment,
+    onObjectGenerated,
   } = props
 
   const [dialogType, setDialogType] = useState<VisualReferenceType | null>(null)
@@ -429,12 +623,75 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     }
   }
 
+  // Handle object image generation from dialog
+  const handleGenerateObject = async (payload: { 
+    name: string; 
+    description: string; 
+    prompt: string; 
+    referenceFile?: File | null 
+  }): Promise<{ imageUrl: string } | null> => {
+    try {
+      // Convert reference file to base64 if provided
+      let referenceImageBase64: string | undefined
+      if (payload.referenceFile) {
+        const buffer = await payload.referenceFile.arrayBuffer()
+        referenceImageBase64 = Buffer.from(buffer).toString('base64')
+      }
+
+      const response = await fetch('/api/vision/generate-object', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: payload.name,
+          description: payload.description,
+          prompt: payload.prompt,
+          category: 'other',
+          referenceImageBase64
+        })
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to generate object')
+      }
+
+      const data = await response.json()
+
+      // Add to references via onObjectGenerated
+      if (onObjectGenerated) {
+        onObjectGenerated({
+          name: payload.name,
+          description: payload.description,
+          imageUrl: data.imageUrl,
+          category: 'other',
+          importance: 'important',
+          generationPrompt: payload.prompt,
+          aiGenerated: true
+        })
+      }
+
+      return { imageUrl: data.imageUrl }
+    } catch (error) {
+      console.error('[VisionReferencesSidebar] Generate object error:', error)
+      return null
+    }
+  }
+
   const handleBackdropGenerated = (reference: { name: string; description?: string; imageUrl: string; sourceSceneNumber?: number; backdropMode: BackdropMode }) => {
     // Forward to parent handler if provided
     if (onBackdropGenerated) {
       onBackdropGenerated(reference)
     }
   }
+
+  // Prepare scenes for ObjectSuggestionPanel
+  const scenesForSuggestion = scenes.map((s, idx) => ({
+    sceneNumber: s.scene_number ?? idx + 1,
+    heading: typeof s.heading === 'string' ? s.heading : s.heading?.text,
+    action: s.action,
+    visualDescription: s.visualDescription || s.visual_description,
+    description: s.description
+  }))
 
   const [castOpen, setCastOpen] = useState(false)
   const [showProTips, setShowProTips] = useState(false)
@@ -570,6 +827,16 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
           {/* Object Tab Content */}
           {activeReferenceTab === 'object' && (
             <div className="space-y-3">
+              {/* AI Object Suggestions Panel */}
+              {scenesForSuggestion.length > 0 && onObjectGenerated && (
+                <ObjectSuggestionPanel
+                  scenes={scenesForSuggestion}
+                  existingObjects={objectReferences}
+                  onObjectGenerated={onObjectGenerated}
+                  compact
+                />
+              )}
+              
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -602,6 +869,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
         open={isDialogOpen}
         onClose={handleCloseDialog}
         onSubmit={handleCreateReference}
+        onGenerateObject={dialogType === 'object' ? handleGenerateObject : undefined}
         type={dialogType}
         isSubmitting={isSubmitting}
       />
