@@ -228,13 +228,19 @@ export async function generateImageWithGeminiStudio(
   let imageMimeType = 'image/png'
   let responseText: string | undefined
   
+  // Log full response structure for debugging
+  console.log(`[Gemini Studio Image] Response parts structure:`, JSON.stringify(content.parts.map((p: any) => Object.keys(p))))
+  
   for (const part of content.parts) {
-    if (part.inline_data) {
-      imageBase64 = part.inline_data.data
-      imageMimeType = part.inline_data.mime_type || 'image/png'
+    // Gemini REST API returns camelCase in responses (inlineData, not inline_data)
+    const inlineData = part.inlineData || part.inline_data
+    if (inlineData) {
+      // Handle both camelCase (mimeType) and snake_case (mime_type) response formats
+      imageBase64 = inlineData.data
+      imageMimeType = inlineData.mimeType || inlineData.mime_type || 'image/png'
       console.log(`[Gemini Studio Image] Found image: ${imageMimeType}, ${imageBase64.length} chars`)
-    } else if (part.text && !part.thought) {
-      // Capture non-thought text
+    } else if (part.text && !part.thought && !part.thoughtSignature) {
+      // Capture non-thought text (skip thought and thoughtSignature parts)
       responseText = part.text
       console.log(`[Gemini Studio Image] Found text: ${responseText.substring(0, 100)}...`)
     }
