@@ -33,6 +33,8 @@ export interface CharacterLibraryProps {
   }) => void
   onAddCharacter?: (characterData: any) => void
   onRemoveCharacter?: (characterName: string) => void
+  /** Callback to edit a character's reference image */
+  onEditCharacterImage?: (characterId: string, imageUrl: string) => void
   ttsProvider: 'google' | 'elevenlabs'
   compact?: boolean
   uploadingRef?: Record<string, boolean>
@@ -85,6 +87,8 @@ interface CharacterCardProps {
     action?: 'add' | 'update' | 'delete' | 'setDefault';
   }) => void
   onRemove?: () => void
+  /** Callback to edit the character's reference image */
+  onEditImage?: () => void
   ttsProvider: 'google' | 'elevenlabs'
   voiceSectionExpanded?: boolean
   onToggleVoiceSection?: () => void
@@ -100,7 +104,7 @@ interface CharacterCardProps {
   }
 }
 
-export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateCharacterWardrobe, onAddCharacter, onRemoveCharacter, ttsProvider, compact = false, uploadingRef = {}, setUploadingRef, enableDrag = false, showProTips: showProTipsProp, screenplayContext }: CharacterLibraryProps) {                                
+export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateCharacterWardrobe, onAddCharacter, onRemoveCharacter, onEditCharacterImage, ttsProvider, compact = false, uploadingRef = {}, setUploadingRef, enableDrag = false, showProTips: showProTipsProp, screenplayContext }: CharacterLibraryProps) {                                
   const [selectedChar, setSelectedChar] = useState<string | null>(null)
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(new Set())
   const [zoomedImage, setZoomedImage] = useState<{url: string; name: string} | null>(null)
@@ -379,6 +383,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                 onUpdateCharacterRole={onUpdateCharacterRole}
                 onUpdateWardrobe={onUpdateCharacterWardrobe}
                 onRemove={() => onRemoveCharacter?.(char.name)}
+                onEditImage={char.referenceImage && onEditCharacterImage ? () => onEditCharacterImage(charId, char.referenceImage) : undefined}
                 ttsProvider={ttsProvider}
                 voiceSectionExpanded={voiceSectionExpanded[charId] || false}
                 onToggleVoiceSection={() => handleToggleVoiceSection(charId)}
@@ -473,7 +478,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
   )
 }
 
-const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, isUploading = false, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateWardrobe, onRemove, ttsProvider, voiceSectionExpanded, onToggleVoiceSection, enableDrag = false, onOpenCharacterPrompt, screenplayContext }: CharacterCardProps) => {
+const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, isUploading = false, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateWardrobe, onRemove, onEditImage, ttsProvider, voiceSectionExpanded, onToggleVoiceSection, enableDrag = false, onOpenCharacterPrompt, screenplayContext }: CharacterCardProps) => {
   const hasImage = !!character.referenceImage
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
@@ -721,6 +726,18 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
               >
                 <Sparkles className="w-4 h-4" />
               </button>
+              {onEditImage && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onEditImage()
+                  }}
+                  className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-sf-primary hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm"
+                  title="Edit image"
+                >
+                  <Wand2 className="w-4 h-4" />
+                </button>
+              )}
                             <button 
                 onClick={(e) => {
                   e.stopPropagation()

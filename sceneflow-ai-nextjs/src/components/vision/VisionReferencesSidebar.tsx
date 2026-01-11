@@ -14,6 +14,7 @@ import { VisualReference, VisualReferenceType, ObjectCategory } from '@/types/vi
 import { BackdropGeneratorModal, SceneForBackdrop, CharacterForBackdrop } from './BackdropGeneratorModal'
 import { BackdropMode } from '@/lib/vision/backdropGenerator'
 import { ObjectSuggestionPanel } from './ObjectSuggestionPanel'
+import { ImageEditModal } from './ImageEditModal'
 
 interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'compact'> {
   sceneReferences: VisualReference[]
@@ -38,6 +39,10 @@ interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'comp
     generationPrompt: string
     aiGenerated: boolean
   }) => void
+  /** Callback to update a reference image after editing */
+  onUpdateReferenceImage?: (type: 'scene' | 'object', referenceId: string, newImageUrl: string) => void
+  /** Callback to edit a character's reference image */
+  onEditCharacterImage?: (characterId: string, imageUrl: string) => void
 }
 
 interface ReferenceSectionProps {
@@ -63,9 +68,13 @@ interface DraggableReferenceCardProps {
   scenes?: SceneForBackdrop[]
   /** Callback to insert a backdrop segment */
   onInsertBackdropSegment?: (sceneId: string, referenceId: string, imageUrl: string, name: string) => void
+  /** Callback to edit the reference image */
+  onEditImage?: (imageUrl: string, referenceId: string, type: 'scene' | 'object') => void
+  /** Reference type for edit context */
+  referenceType?: 'scene' | 'object'
 }
 
-function DraggableReferenceCard({ reference, onRemove, scenes, onInsertBackdropSegment }: DraggableReferenceCardProps) {
+function DraggableReferenceCard({ reference, onRemove, scenes, onInsertBackdropSegment, onEditImage, referenceType }: DraggableReferenceCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `visual-reference-${reference.id}`,
     data: {
@@ -149,6 +158,20 @@ function DraggableReferenceCard({ reference, onRemove, scenes, onInsertBackdropS
             >
               <Film className="w-3.5 h-3.5" />
               <span>Add to Timeline</span>
+            </button>
+          )}
+          {/* Edit Image button */}
+          {onEditImage && reference.imageUrl && referenceType && (
+            <button
+              onPointerDown={(e) => {
+                e.stopPropagation()
+                e.preventDefault()
+                onEditImage(reference.imageUrl!, reference.id, referenceType)
+              }}
+              className="p-1.5 rounded-md text-sf-primary hover:text-sf-primary/80 hover:bg-sf-primary/10 transition-colors"
+              title="Edit image"
+            >
+              <Wand2 className="w-4 h-4" />
             </button>
           )}
           {onRemove && (
@@ -593,12 +616,49 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onBackdropGenerated,
     onInsertBackdropSegment,
     onObjectGenerated,
+    onUpdateReferenceImage,
+    onEditCharacterImage,
   } = props
 
   const [dialogType, setDialogType] = useState<VisualReferenceType | null>(null)
   const [isDialogOpen, setDialogOpen] = useState(false)
   const [isSubmitting, setSubmitting] = useState(false)
   const [isGeneratorModalOpen, setGeneratorModalOpen] = useState(false)
+  
+  // Image edit modal state
+  const [imageEditModalOpen, setImageEditModalOpen] = useState(false)
+  const [editingImageData, setEditingImageData] = useState<{
+    url: string
+    referenceId: string
+    type: 'scene' | 'object' | 'character'
+    characterId?: string
+  } | null>(null)
+
+  // Handler for opening image edit modal
+  const handleEditReferenceImage = (imageUrl: string, referenceId: string, type: 'scene' | 'object') => {
+    setEditingImageData({ url: imageUrl, referenceId, type })
+    setImageEditModalOpen(true)
+  }
+
+  // Handler for character image edit (triggered from CharacterLibrary)
+  const handleEditCharacterImage = (characterId: string, imageUrl: string) => {
+    setEditingImageData({ url: imageUrl, referenceId: characterId, type: 'character', characterId })
+    setImageEditModalOpen(true)
+  }
+
+  // Handler for saving edited image
+  const handleSaveEditedImage = async (newImageUrl: string) => {
+    if (!editingImageData) return
+
+    if (editingImageData.type === 'character' && editingImageData.characterId && onEditCharacterImage) {
+      onEditCharacterImage(editingImageData.characterId, newImageUrl)
+    } else if ((editingImageData.type === 'scene' || editingImageData.type === 'object') && onUpdateReferenceImage) {
+      onUpdateReferenceImage(editingImageData.type, editingImageData.referenceId, newImageUrl)
+    }
+
+    setImageEditModalOpen(false)
+    setEditingImageData(null)
+  }
 
   const handleOpenDialog = (type: VisualReferenceType) => {
     setDialogType(type)
@@ -771,6 +831,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               onUpdateCharacterWardrobe={onUpdateCharacterWardrobe}
               onAddCharacter={onAddCharacter}
               onRemoveCharacter={onRemoveCharacter}
+              onEditCharacterImage={handleEditCharacterImage}
               ttsProvider={ttsProvider}
               uploadingRef={uploadingRef}
               setUploadingRef={setUploadingRef}
@@ -818,6 +879,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                     onRemove={() => onRemoveReference('scene', reference.id)}
                     scenes={scenes}
                     onInsertBackdropSegment={onInsertBackdropSegment}
+                    onEditImage={handleEditReferenceImage}
+                    referenceType="scene"
                   />
                 ))
               )}
@@ -858,6 +921,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                     key={reference.id}
                     reference={reference}
                     onRemove={() => onRemoveReference('object', reference.id)}
+                    onEditImage={handleEditReferenceImage}
+                    referenceType="object"
                   />
                 ))
               )}
@@ -882,6 +947,21 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
         characters={backdropCharacters}
         onGenerated={handleBackdropGenerated}
       />
+
+      {/* Image Edit Modal */}
+      {editingImageData && (
+        <ImageEditModal
+          open={imageEditModalOpen}
+          onOpenChange={(open) => {
+            setImageEditModalOpen(open)
+            if (!open) setEditingImageData(null)
+          }}
+          imageUrl={editingImageData.url}
+          imageType={editingImageData.type === 'character' ? 'character' : editingImageData.type}
+          onSave={handleSaveEditedImage}
+          title={`Edit ${editingImageData.type.charAt(0).toUpperCase() + editingImageData.type.slice(1)} Image`}
+        />
+      )}
     </DndContext>
   )
 }

@@ -1202,6 +1202,109 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [project, projectId, sceneReferences, objectReferences]
   )
 
+  // Handler for updating a reference image after editing
+  const handleUpdateReferenceImage = useCallback(
+    async (type: 'scene' | 'object', referenceId: string, newImageUrl: string) => {
+      // Update local state
+      let updatedSceneRefs = sceneReferences
+      let updatedObjectRefs = objectReferences
+      
+      if (type === 'scene') {
+        updatedSceneRefs = sceneReferences.map((ref) => 
+          ref.id === referenceId ? { ...ref, imageUrl: newImageUrl, updatedAt: new Date().toISOString() } : ref
+        )
+        setSceneReferences(updatedSceneRefs)
+      } else {
+        updatedObjectRefs = objectReferences.map((ref) => 
+          ref.id === referenceId ? { ...ref, imageUrl: newImageUrl, updatedAt: new Date().toISOString() } : ref
+        )
+        setObjectReferences(updatedObjectRefs)
+      }
+      
+      // Save to database
+      try {
+        const existingMetadata = project?.metadata || {}
+        const existingVisionPhase = existingMetadata.visionPhase || {}
+        
+        const payload = {
+          metadata: {
+            ...existingMetadata,
+            visionPhase: {
+              ...existingVisionPhase,
+              references: {
+                sceneReferences: updatedSceneRefs,
+                objectReferences: updatedObjectRefs
+              }
+            }
+          }
+        }
+        
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        
+        if (!response.ok) {
+          console.error('[handleUpdateReferenceImage] Failed to save updated image to database')
+        } else {
+          toast.success(`${type === 'scene' ? 'Scene' : 'Object'} image updated`)
+        }
+      } catch (error) {
+        console.error('[handleUpdateReferenceImage] Error saving updated image:', error)
+        toast.error('Failed to save image update')
+      }
+    },
+    [project, projectId, sceneReferences, objectReferences]
+  )
+
+  // Handler for updating a character's reference image after editing
+  const handleEditCharacterImage = useCallback(
+    async (characterId: string, newImageUrl: string) => {
+      // Update local state
+      const updatedCharacters = characters.map((char, idx) => {
+        const charId = char.id || idx.toString()
+        return charId === characterId 
+          ? { ...char, referenceImage: newImageUrl, imageApproved: false }
+          : char
+      })
+      
+      setCharacters(updatedCharacters)
+      
+      // Save to database
+      try {
+        const existingMetadata = project?.metadata || {}
+        const existingVisionPhase = existingMetadata.visionPhase || {}
+        
+        const payload = {
+          metadata: {
+            ...existingMetadata,
+            visionPhase: {
+              ...existingVisionPhase,
+              characters: updatedCharacters
+            }
+          }
+        }
+        
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        
+        if (!response.ok) {
+          console.error('[handleEditCharacterImage] Failed to save updated image to database')
+        } else {
+          toast.success('Character image updated')
+        }
+      } catch (error) {
+        console.error('[handleEditCharacterImage] Error saving updated image:', error)
+        toast.error('Failed to save image update')
+      }
+    },
+    [project, projectId, characters]
+  )
+
   // Handler for when a backdrop is generated via AI
   const handleBackdropGenerated = useCallback(
     async (reference: { name: string; description?: string; imageUrl: string; sourceSceneNumber?: number; backdropMode?: string }) => {
@@ -7738,6 +7841,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 objectReferences={objectReferences}
                 onCreateReference={(type, payload) => handleCreateReference(type, payload)}
                 onRemoveReference={(type, referenceId) => handleRemoveReference(type, referenceId)}
+                onUpdateReferenceImage={handleUpdateReferenceImage}
+                onEditCharacterImage={handleEditCharacterImage}
                 scenes={script?.script?.scenes || []}
                 backdropCharacters={characters.map(c => ({ id: c.id, name: c.name, description: c.description, appearance: c.appearance }))}
                 onBackdropGenerated={handleBackdropGenerated}
