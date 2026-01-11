@@ -257,19 +257,29 @@ export function SceneEditorModal({
     }
   }
 
-  const fetchSceneReview = async () => {
+  const fetchSceneReview = async (useCurrentEdits: boolean = false) => {
     setIsLoadingReview(true)
     setReviewError(null)
     
     try {
+      // Use the current edited scene content if requested (for re-scoring after changes)
+      const sceneToReview = useCurrentEdits 
+        ? {
+            ...scene,
+            visualDescription: sceneDescription,
+            // Include any preview changes if available
+            ...(previewScene || {})
+          }
+        : scene
+      
       const response = await fetch('/api/vision/review-scene', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId,
           sceneIndex,
-          scene,
-          script: script || { scenes: [scene], characters }
+          scene: sceneToReview,
+          script: script || { scenes: [sceneToReview], characters }
         })
       })
 
@@ -488,29 +498,35 @@ export function SceneEditorModal({
             <div className={`text-3xl font-bold px-4 py-2 rounded-lg ${getScoreColor(review.overallScore)}`}>
               {review.overallScore}
             </div>
-            {/* Reset buttons */}
+            {/* Action buttons */}
             <div className="flex flex-col gap-1">
+              {/* Update Scores - Re-analyze with current edits */}
+              <Button
+                variant="default"
+                size="sm"
+                className="h-7 text-xs bg-sf-primary hover:bg-sf-primary/90"
+                onClick={() => fetchSceneReview(true)}
+                disabled={isLoadingReview}
+                title="Re-analyze scene with your current edits to get updated scores"
+              >
+                {isLoadingReview ? (
+                  <Loader className="w-3 h-3 mr-1 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3 h-3 mr-1" />
+                )}
+                Update Scores
+              </Button>
+              {/* Clear Applied - Reset recommendation tracking */}
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-6 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400"
                 onClick={handleResetSceneReview}
                 disabled={isResetting}
-                title="Reset this scene's review"
+                title="Clear applied recommendations and start fresh review cycle"
               >
                 <RotateCcw className="w-3 h-3 mr-1" />
-                Reset Scene
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 text-xs text-red-500 hover:text-red-700 dark:text-red-400"
-                onClick={handleResetAllScenesReview}
-                disabled={isResetting}
-                title="Reset all scenes' reviews (for major script changes)"
-              >
-                <RotateCcw className="w-3 h-3 mr-1" />
-                Reset All
+                Clear Applied
               </Button>
             </div>
           </div>
