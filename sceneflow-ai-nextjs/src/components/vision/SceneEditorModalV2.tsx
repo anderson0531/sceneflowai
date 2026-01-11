@@ -224,9 +224,17 @@ export function SceneEditorModal({
       setCurrentHistoryIndex(0)
       setShowPreview(false)
       setSceneDescription(scene.visualDescription || '')
-      // Reset reviews when scene changes
-      setDirectorReview(null)
-      setAudienceReview(null)
+      // Load existing reviews from scene if available
+      if (scene.dialogReviews?.director) {
+        setDirectorReview(scene.dialogReviews.director)
+      } else {
+        setDirectorReview(null)
+      }
+      if (scene.dialogReviews?.audience) {
+        setAudienceReview(scene.dialogReviews.audience)
+      } else {
+        setAudienceReview(null)
+      }
       setReviewError(null)
       setLeftPanelTab('scene')
     }
@@ -344,12 +352,28 @@ export function SceneEditorModal({
 
     const cleanedDescription = sceneDescription?.trim() || ''
 
-    // Include applied recommendation IDs for score stabilization
+    // Include applied recommendation IDs for score stabilization and dialog reviews for persistence
     const revisedSceneWithMetadata = {
       ...sourceScene,
       visualDescription: cleanedDescription,
       appliedRecommendationIds: appliedRecommendationIds.length > 0 ? appliedRecommendationIds : (sourceScene.appliedRecommendationIds || []),
-      analysisIterationCount: (sourceScene.analysisIterationCount || 0) + (appliedRecommendationIds.length > 0 ? 1 : 0)
+      analysisIterationCount: (sourceScene.analysisIterationCount || 0) + (appliedRecommendationIds.length > 0 ? 1 : 0),
+      // Persist dialog reviews with the scene
+      dialogReviews: {
+        director: directorReview || sourceScene.dialogReviews?.director || null,
+        audience: audienceReview || sourceScene.dialogReviews?.audience || null,
+        lastUpdated: (directorReview || audienceReview) ? new Date().toISOString() : sourceScene.dialogReviews?.lastUpdated
+      },
+      // Also update scoreAnalysis for scene card header display (if we have new reviews)
+      scoreAnalysis: (directorReview || audienceReview) ? {
+        ...(sourceScene.scoreAnalysis || {}),
+        overallScore: directorReview?.overallScore || audienceReview?.overallScore || sourceScene.scoreAnalysis?.overallScore,
+        directorScore: directorReview?.overallScore || sourceScene.scoreAnalysis?.directorScore,
+        audienceScore: audienceReview?.overallScore || sourceScene.scoreAnalysis?.audienceScore,
+        generatedAt: new Date().toISOString(),
+        iterationCount: (sourceScene.scoreAnalysis?.iterationCount || 0) + 1,
+        appliedRecommendationIds: appliedRecommendationIds.length > 0 ? appliedRecommendationIds : (sourceScene.appliedRecommendationIds || [])
+      } : sourceScene.scoreAnalysis
     }
 
     const newHistory = [...revisionHistory.slice(0, currentHistoryIndex + 1), revisedSceneWithMetadata]

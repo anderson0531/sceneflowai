@@ -3591,78 +3591,6 @@ function SceneCard({
               </TooltipProvider>
             )}
 
-            {/* Scene Review Button with Scores */}
-            {!isOutline && onGenerateSceneScore && (
-              <div className="flex items-center gap-1">
-                {/* Score badges if available */}
-                {scene.scoreAnalysis && (
-                  <div className="flex items-center gap-1 mr-1">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                            (scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore) >= 85 ? 'bg-green-500/20 text-green-400' :
-                            (scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore) >= 75 ? 'bg-yellow-500/20 text-yellow-400' :
-                            'bg-red-500/20 text-red-400'
-                          }`}>
-                            🎬 {scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-900 text-white border border-gray-700">
-                          <p className="text-xs">Director Score: {scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore}/100</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                            (scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore) >= 85 ? 'bg-green-500/20 text-green-400' :
-                            (scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore) >= 75 ? 'bg-yellow-500/20 text-yellow-400' :
-                            'bg-red-500/20 text-red-400'
-                          }`}>
-                            👥 {scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-900 text-white border border-gray-700">
-                          <p className="text-xs">Audience Score: {scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore}/100</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                )}
-                {/* Review button */}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onGenerateSceneScore(sceneIdx)
-                        }}
-                        disabled={generatingScoreFor === sceneIdx}
-                        className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${
-                          scene.scoreAnalysis 
-                            ? 'text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20' 
-                            : 'text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20'
-                        } disabled:opacity-50`}
-                      >
-                        {generatingScoreFor === sceneIdx ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Star className="w-4 h-4" />
-                        )}
-                        <span className="text-xs">{scene.scoreAnalysis ? 'Review' : 'Review Scene'}</span>
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                      {scene.scoreAnalysis ? 'View or regenerate scene review' : 'Generate Director & Audience review'}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            )}
-
             {/* Bookmark toggle button */}
             {onBookmarkToggle && (
               <TooltipProvider>
@@ -3705,9 +3633,48 @@ function SceneCard({
           className="mt-2 flex items-center justify-between cursor-pointer hover:bg-white/5 -mx-2 px-2 py-1 rounded-lg transition-colors"
           onClick={toggleOpen}
         >
-          <p className="text-xl font-semibold text-white leading-tight">
-            SCENE {sceneNumber}: {formattedHeading}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-xl font-semibold text-white leading-tight">
+              SCENE {sceneNumber}: {formattedHeading}
+            </p>
+            {/* Score badges in header */}
+            {!isOutline && scene.scoreAnalysis && (
+              <div className="flex items-center gap-1">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                        (scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore) >= 85 ? 'bg-green-500/20 text-green-400' :
+                        (scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore) >= 75 ? 'bg-yellow-500/20 text-yellow-400' :
+                        'bg-red-500/20 text-red-400'
+                      }`}>
+                        🎬 {scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-gray-900 text-white border border-gray-700">
+                      <p className="text-xs">Director Score: {scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore}/100</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                        (scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore) >= 85 ? 'bg-green-500/20 text-green-400' :
+                        (scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore) >= 75 ? 'bg-yellow-500/20 text-yellow-400' :
+                        'bg-red-500/20 text-red-400'
+                      }`}>
+                        👥 {scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-gray-900 text-white border border-gray-700">
+                      <p className="text-xs">Audience Score: {scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore}/100</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            )}
+          </div>
           
           {/* Mark Done and Help controls */}
           {!isOutline && activeStep && (
@@ -5762,14 +5729,8 @@ function SceneCard({
                   await onGenerateSceneDirection(sceneIdx)
                 }
               } : undefined}
-              onRunReview={activeStep === 'dialogueAction' && onGenerateSceneScore ? () => {
-                if (onGenerateSceneScore) {
-                  onGenerateSceneScore(sceneIdx)
-                }
-              } : undefined}
               sceneIdx={sceneIdx}
               generatingDirectionFor={generatingDirectionFor}
-              generatingScoreFor={generatingScoreFor}
             />
           )}
           
