@@ -319,7 +319,7 @@ IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maxim
   console.log('[Director Analysis] JSON to parse:', jsonText.substring(0, 200))
 
   // Try to repair truncated JSON if needed
-  if (data.candidates?.[0]?.finishReason === 'MAX_TOKENS' && !jsonText.trim().endsWith('}')) {
+  if (result.finishReason === 'MAX_TOKENS' && !jsonText.trim().endsWith('}')) {
     console.log('[Director Analysis] Attempting to repair truncated JSON')
     // Count open braces/brackets and close them
     const openBraces = (jsonText.match(/{/g) || []).length
