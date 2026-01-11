@@ -55,6 +55,7 @@ import Link from 'next/link'
 import ScriptReviewModal from '@/components/vision/ScriptReviewModal'
 import { SceneEditorModal } from '@/components/vision/SceneEditorModalV2'
 import { NavigationWarningDialog } from '@/components/workflow/NavigationWarningDialog'
+import { FilmTreatmentReviewModal } from '@/components/vision/FilmTreatmentReviewModal'
 import { findSceneCharacters } from '../../../../../lib/character/matching'
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 import { v4 as uuidv4 } from 'uuid'
@@ -586,6 +587,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [showSceneGallery, setShowSceneGallery] = useState(false)
   const [showDashboard, setShowDashboard] = useState(false)
   const [showNavigationWarning, setShowNavigationWarning] = useState(false)
+  const [showTreatmentReview, setShowTreatmentReview] = useState(false)
   const [voiceAssignments, setVoiceAssignments] = useState<Record<string, any>>({})
   const [sceneReferences, setSceneReferences] = useState<VisualReference[]>([])
   const [objectReferences, setObjectReferences] = useState<VisualReference[]>([])
@@ -3758,6 +3760,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     'screening-room': () => setIsPlayerOpen(true),
     'update-reviews': handleGenerateReviews,
     'review-analysis': () => setShowReviewModal(true),
+    'review-treatment': () => setShowTreatmentReview(true),
   }), [handleJumpToBookmark, handleGenerateReviews]))
   
   // Refs to hold latest handlers for event listeners (avoids stale closures)
@@ -3784,6 +3787,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       'production:screening-room': () => setIsPlayerOpen(true),
       'production:update-reviews': () => handlersRef.current.generateReviews(),
       'production:review-analysis': () => setShowReviewModal(true),
+      'production:review-treatment': () => setShowTreatmentReview(true),
       'production:edit-script': () => setReviseScriptInstruction(' '),
       // Guide dropdown events
       'vision:scenes': () => {
@@ -7583,6 +7587,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onGenerateReviews={handleGenerateReviews}
                 isGeneratingReviews={isGeneratingReviews}
                 onShowReviews={() => setShowReviewModal(true)}
+                onShowTreatmentReview={() => setShowTreatmentReview(true)}
                 directorReview={directorReview}
                 audienceReview={audienceReview}
                 hasBYOK={!!byokSettings?.videoProvider}
@@ -7886,6 +7891,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         onOpenChange={setShowNavigationWarning}
         targetHref={projectId ? `/dashboard/studio/${projectId}` : '/dashboard/studio/new-project'}
         targetLabel="The Blueprint"
+      />
+
+      {/* Film Treatment Review Modal */}
+      <FilmTreatmentReviewModal
+        open={showTreatmentReview}
+        onOpenChange={setShowTreatmentReview}
+        filmTreatmentVariant={project?.metadata?.filmTreatmentVariant}
+        filmTreatmentHtml={project?.metadata?.filmTreatment}
+        script={script}
+        characters={characters}
       />
 
       {/* Script Review Modal */}

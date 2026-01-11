@@ -946,7 +946,7 @@ Instead of asking you for each detail, I've built the foundation so we can focus
           </div>
           <div className="flex space-x-2">
             <Button
-              onClick={() => window.open('/dashboard/studio/crispr-debate-001', '_self')}
+              onClick={() => window.open('/dashboard/studio/new-project', '_self')}
               size="sm"
               className="bg-sf-primary hover:bg-sf-primary/90 text-white"
             >

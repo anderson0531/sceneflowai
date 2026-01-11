@@ -50,6 +50,7 @@ import { ReviewScoresPanel, type ReviewScores } from './ReviewScoresPanel'
 import { ProjectStatsPanel, type ProjectStats } from './ProjectStatsPanel'
 import { ProTipsChecklist } from '../pro-tips/ProTipsChecklist'
 import { WorkflowGuidePanel } from '../workflow/WorkflowGuidePanel'
+import { NavigationWarningDialog } from '../workflow/NavigationWarningDialog'
 import { type WorkflowStepStatus as GuideStepStatus } from '@/config/nav/workflowGuideConfig'
 
 // Icon map for dynamic rendering
@@ -112,6 +113,13 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
 
   // Blueprint guide step status - updated via custom events from workflow pages
   const [blueprintGuideStatus, setBlueprintGuideStatus] = useState<Record<string, GuideStepStatus>>({})
+
+  // Navigation warning dialog state for backward navigation
+  const [showNavigationWarning, setShowNavigationWarning] = useState(false)
+  const [navigationTarget, setNavigationTarget] = useState<{ href: string; label: string }>({ href: '', label: '' })
+
+  // Determine if currently in Production phase (Vision page)
+  const isInProductionPhase = pathname.includes('/workflow/vision/')
 
   // Listen for blueprint guide status updates
   useEffect(() => {
@@ -267,6 +275,24 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
                           </div>
                         )
                       }
+
+                      // Check if this is backward navigation from Production to Blueprint
+                      const isBackwardNavigation = isInProductionPhase && step.id === 'blueprint'
+                      
+                      if (isBackwardNavigation) {
+                        return (
+                          <button
+                            key={step.id}
+                            onClick={() => {
+                              setNavigationTarget({ href, label: step.label })
+                              setShowNavigationWarning(true)
+                            }}
+                            className={cn('flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors group w-full text-left', classes.container)}
+                          >
+                            {stepContent}
+                          </button>
+                        )
+                      }
                       
                       return (
                         <Link
@@ -392,6 +418,14 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
         </div>
       </aside>
       <main className="flex-1 min-h-screen">{children}</main>
+
+      {/* Navigation Warning Dialog for backward navigation */}
+      <NavigationWarningDialog
+        open={showNavigationWarning}
+        onOpenChange={setShowNavigationWarning}
+        targetHref={navigationTarget.href}
+        targetLabel={navigationTarget.label}
+      />
     </div>
   )
 }

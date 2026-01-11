@@ -33,7 +33,7 @@ export function ClientPage() {
     if (currentProject) {
       router.push(`/dashboard/project-bible/create?projectId=${currentProject.id}`)
     } else {
-      router.push('/dashboard/studio/crispr-debate-001')
+      router.push('/dashboard/studio/new-project')
     }
   }
 

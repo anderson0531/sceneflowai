@@ -39,7 +39,7 @@ export function Launchpad() {
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Card 1: Start Project - Enhanced with blue accent background and border */}
-        <Link href="/dashboard/studio/crispr-debate-001">
+        <Link href="/dashboard/studio/new-project">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}

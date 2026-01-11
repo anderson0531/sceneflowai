@@ -37,7 +37,7 @@ export function ProjectHub() {
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm text-gray-400">No projects yet</span>
-              <Link href="/dashboard/studio/crispr-debate-001">
+              <Link href="/dashboard/studio/new-project">
                 <Button
                   size="sm"
                   className="bg-blue-500 hover:bg-blue-600 text-white"
@@ -59,7 +59,7 @@ export function ProjectHub() {
           <p className="text-gray-400 mb-6 max-w-md mx-auto">
             Start your first video project to begin your creative journey with SceneFlow AI.
           </p>
-          <Link href="/dashboard/studio/crispr-debate-001">
+          <Link href="/dashboard/studio/new-project">
             <Button className="bg-blue-500 hover:bg-blue-600 text-white">
               <Plus className="w-4 h-4 mr-2" />
               Create Your First Project
