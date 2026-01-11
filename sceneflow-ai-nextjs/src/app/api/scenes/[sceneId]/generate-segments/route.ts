@@ -31,6 +31,8 @@ interface GenerateSegmentsRequest {
   narrationDurationSeconds?: number
   narrationText?: string
   narrationAudioUrl?: string
+  // NEW: Preview mode - returns proposals without committing
+  previewMode?: boolean
 }
 
 // Enhanced segment structure for Veo 3.1 intelligent generation
@@ -78,7 +80,9 @@ export async function POST(
       narrationDriven = false,
       narrationDurationSeconds,
       narrationText,
-      narrationAudioUrl
+      narrationAudioUrl,
+      // NEW: Preview mode - returns proposals without committing to DB
+      previewMode = false
     } = body
 
     if (!sceneId || !projectId) {
@@ -306,7 +310,7 @@ export async function POST(
     })
     
     // Log segment generation results
-    console.log('[Scene Segmentation] Generated', transformedSegments.length, 'dialogue segments')
+    console.log('[Scene Segmentation] Generated', transformedSegments.length, 'dialogue segments', previewMode ? '(preview mode)' : '')
     transformedSegments.forEach((seg: any, idx: number) => {
       console.log(`[Scene Segmentation] Segment ${idx + 1}: method=${seg.generationMethod}, trigger="${seg.triggerReason?.substring(0, 50)}...", prompt="${seg.generatedPrompt?.substring(0, 100)}..."`)
     })
@@ -318,6 +322,10 @@ export async function POST(
       success: true,
       segments: transformedSegments,
       targetSegmentDuration: preferredDuration,
+      // Preview mode indicator - segments are proposals, not committed
+      previewMode,
+      // Include scene bible hash for staleness detection on finalize
+      sceneBibleHash: sceneData.visualDescriptionHash || '',
     })
   } catch (error: any) {
     console.error('[Scene Segmentation] Error:', error)

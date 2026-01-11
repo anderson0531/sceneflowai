@@ -29,8 +29,9 @@
 import * as ActionWeights from './ActionWeights'
 import * as PromptEnhancer from './PromptEnhancer'
 import * as FrameGenerator from './FrameGenerator'
+import { SegmentValidation } from './SegmentValidation'
 
-export { ActionWeights, PromptEnhancer, FrameGenerator }
+export { ActionWeights, PromptEnhancer, FrameGenerator, SegmentValidation }
 
 // Re-export key types
 export type { ActionType, ActionWeightConfig } from './ActionWeights'
@@ -43,6 +44,12 @@ export type {
   FrameGenerationRequest,
   FrameGenerationResult
 } from './FrameGenerator'
+export type { 
+  ValidationResult, 
+  ValidationIssue, 
+  ValidationSeverity,
+  ValidationConfig 
+} from './SegmentValidation'
 
 // Convenience re-exports of commonly used functions
 export const inferActionType = ActionWeights.inferActionType
@@ -52,3 +59,6 @@ export const buildEndFramePrompt = PromptEnhancer.buildEndFramePrompt
 export const determineTransitionType = FrameGenerator.determineTransitionType
 export const buildBatchGenerationPlan = FrameGenerator.buildBatchGenerationPlan
 export const validateFTVReadiness = FrameGenerator.validateFTVReadiness
+export const validateSegment = SegmentValidation.validateSegment.bind(SegmentValidation)
+export const validateAllSegments = SegmentValidation.validateAllSegments.bind(SegmentValidation)
+export const detectNewEntities = SegmentValidation.detectNewEntities.bind(SegmentValidation)

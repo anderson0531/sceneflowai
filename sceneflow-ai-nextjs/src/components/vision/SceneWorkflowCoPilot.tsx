@@ -1,10 +1,10 @@
 'use client'
 
 import React from 'react'
-import { FileText, Film, Camera, Clapperboard, ChevronDown, ChevronUp, Lightbulb } from 'lucide-react'
+import { FileText, Film, Camera, Clapperboard, ChevronDown, ChevronUp, Lightbulb, Layers } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-export type WorkflowStep = 'dialogueAction' | 'directorsChair' | 'storyboardPreViz' | 'callAction'
+export type WorkflowStep = 'dialogueAction' | 'directorsChair' | 'storyboardPreViz' | 'segmentBuilder' | 'callAction'
 
 interface SceneWorkflowCoPilotProps {
   activeStep: WorkflowStep | null
@@ -80,6 +80,27 @@ export const guidanceContent: Record<WorkflowStep, {
     ],
     bestPractice: 'If changes are needed, go back to the previous steps (Script or Direction) and regenerate the storyboard.',
     tip: 'Making changes to the storyboard is fast; making changes to the video is slow and costly.'
+  },
+  segmentBuilder: {
+    title: 'Segments',
+    icon: <Layers className="w-5 h-5 text-sf-primary" />,
+    goal: 'Build intelligent video segments based on scene content and audio timing.',
+    whyItMatters: 'Proper segmentation is the foundation for high-quality video generation. AI analyzes narration, dialogue, and scene changes to create optimal segment boundaries.',
+    howItWorks: [
+      'AI Analysis: Automatically segments the scene based on narration, dialogue timing, and scene changes',
+      'Preview & Adjust: Review proposed segments on the timeline; drag edges to fine-tune boundaries',
+      'Prompt Review: Edit video generation prompts (cinematography only - scene content is locked)',
+      'Finalize: Lock segments and proceed to Key Frames for each segment'
+    ],
+    toolsAndTips: [
+      'Scene Bible: The scene description, narration, and dialogue are read-only during segmentation',
+      'Duration Limits: Segments are optimized for 4-8 seconds (Veo 3.1 optimal range)',
+      'Audio Alignment: Drag segment edges to snap to narration/dialogue boundaries',
+      'Guardrails: The system will warn if your prompts introduce content not in the script',
+      'Cinematography: Focus edits on camera movement, lighting, and pacing'
+    ],
+    bestPractice: 'Review the AI-generated segments before editing. If the script needs changes, go back to the Script tab first.',
+    tip: 'Scene content is locked during segmentation to prevent accidental script changes. Edit the scene in the Script tab if needed.'
   },
   callAction: {
     title: 'Call Action',

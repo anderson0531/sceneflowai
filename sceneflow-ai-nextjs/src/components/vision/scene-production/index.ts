@@ -20,6 +20,12 @@ export { DirectorDialog } from './DirectorDialog'
 export { DirectorConsole } from './DirectorConsole'
 export { SceneVideoPlayer } from './SceneVideoPlayer'
 
+// Segment Builder Components (Intelligent Segmentation)
+export { SegmentBuilder } from './SegmentBuilder'
+export type { SceneBible, ProposedSegment, BuilderPhase } from './SegmentBuilder'
+export { SegmentPreviewTimeline } from './SegmentPreviewTimeline'
+export { SegmentPromptEditor } from './SegmentPromptEditor'
+
 // Prompt utilities
 export * from './methodPromptBuilder'
 export * from './promptSyncService'

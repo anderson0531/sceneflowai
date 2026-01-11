@@ -18,9 +18,10 @@ import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
 import { SegmentFrameTimeline } from './scene-production/SegmentFrameTimeline'
+import { SegmentBuilder } from './scene-production/SegmentBuilder'
 import { DirectorConsole } from './scene-production/DirectorConsole'
 import { AudioTimeline, type AudioTracksData, type AudioTrackClip } from './scene-production/AudioTimeline'
-import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from './scene-production/types'
+import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings, SceneSegment } from './scene-production/types'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -3127,6 +3128,15 @@ function SceneCard({
     const dialogueActionAuto = isSceneAudioCompleteForLanguage(selectedLanguage)
     const directorsChairAuto = !!scene.sceneDirection
     const storyboardPreVizAuto = !!scene.imageUrl
+    // Segment Builder: Complete when segments exist and all have READY or higher status
+    const segmentBuilderAuto = (() => {
+      if (!sceneProductionData) return false
+      if (!sceneProductionData.isSegmented || sceneProductionData.segments.length === 0) return false
+      // All segments should have status of READY or higher (not DRAFT)
+      return sceneProductionData.segments.every(segment => 
+        segment.status !== 'DRAFT' && segment.generatedPrompt
+      )
+    })()
     // Check if Call Action is complete: scene must be segmented and all segments must have assets
     const callActionAuto = (() => {
       if (!sceneProductionData) return false
@@ -3140,12 +3150,14 @@ function SceneCard({
       dialogueAction: workflowCompletions.dialogueAction ?? dialogueActionAuto,
       directorsChair: workflowCompletions.directorsChair ?? directorsChairAuto,
       storyboardPreViz: workflowCompletions.storyboardPreViz ?? storyboardPreVizAuto,
+      segmentBuilder: workflowCompletions.segmentBuilder ?? segmentBuilderAuto,
       callAction: workflowCompletions.callAction ?? callActionAuto,
     }
   }, [isSceneAudioCompleteForLanguage, selectedLanguage, scene.sceneDirection, scene.imageUrl, sceneProductionData, workflowCompletions])
   
   // Sequential activation logic - steps unlock based on prerequisite completion
   // Direction (directorsChair) is now auto-generated, so Frame unlocks when Script is complete
+  // Segment Builder unlocks after Frame step (storyboardPreViz)
   // Call Action also requires scene image for visual consistency (soft requirement - shows warning)
   const hasSceneImage = !!scene.imageUrl
   const stepUnlocked = useMemo(() => {
@@ -3153,7 +3165,8 @@ function SceneCard({
       dialogueAction: true, // Always unlocked
       directorsChair: stepCompletion.dialogueAction, // Keep for internal logic
       storyboardPreViz: stepCompletion.dialogueAction, // Frame now unlocks when Script is complete (Direction is auto-generated)
-      callAction: stepCompletion.storyboardPreViz,  // Unlocks after Frame step, but will show warning if no image
+      segmentBuilder: stepCompletion.storyboardPreViz, // Segments unlock after Frame step
+      callAction: stepCompletion.segmentBuilder,  // Call Action unlocks after Segments are finalized
     }
   }, [stepCompletion])
   
@@ -3215,6 +3228,7 @@ function SceneCard({
     { key: 'dialogueAction', label: 'Script', icon: <FileText className="w-4 h-4" /> },
     // Direction (directorsChair) is now hidden - auto-generated from Script, accessible via Frame dialog and Export
     { key: 'storyboardPreViz', label: 'Frame', icon: <Camera className="w-4 h-4" /> },
+    { key: 'segmentBuilder', label: 'Segments', icon: <Layers className="w-4 h-4" /> },
     { key: 'callAction', label: 'Call Action', icon: <Clapperboard className="w-4 h-4" /> }
   ], [])
   
@@ -5663,6 +5677,50 @@ function SceneCard({
                       </div>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {activeWorkflowTab === 'segmentBuilder' && (
+                  <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
+                    <SegmentBuilder
+                      sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
+                      sceneNumber={sceneNumber}
+                      scene={scene}
+                      productionData={sceneProductionData}
+                      references={{
+                        characters: characters || [],
+                        sceneReferences: sceneReferences || [],
+                        objectReferences: objectReferences || [],
+                      }}
+                      projectId={projectId || ''}
+                      onSegmentsGenerated={(segments) => {
+                        // Segments generated in preview mode - handled internally by SegmentBuilder
+                        console.log('[ScriptPanel] Segments generated:', segments.length)
+                      }}
+                      onSegmentsFinalized={(segments) => {
+                        // Finalized segments - save to production data and switch to Frame tab
+                        if (onInitializeSceneProduction) {
+                          const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
+                          // Update production data with finalized segments
+                          onInitializeSceneProduction(sceneId, {
+                            targetDuration: 6,
+                            generationOptions: {
+                              targetDuration: 6,
+                              alignWithNarration: true,
+                              addLeadInSegment: false,
+                              leadInDuration: 0,
+                              customInstructions: '',
+                              focusMode: 'balanced',
+                            }
+                          }).then(() => {
+                            // The segments will be set by the parent through onSegmentsFinalized callback
+                            // Switch to Call Action tab after finalization
+                            setActiveWorkflowTab?.('callAction')
+                          })
+                        }
+                      }}
+                      onClose={() => setActiveWorkflowTab?.('storyboardPreViz')}
+                    />
                   </div>
                 )}
 
