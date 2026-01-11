@@ -71,7 +71,169 @@ export interface ElevenLabsVoice {
 // ================================================================================
 
 // Maximum possible score for normalization (sum of all possible bonuses)
-const MAX_POSSIBLE_SCORE = 110 // 30 (gender) + 20 (age) + 15 (accent) + 25 (role) + 10 (genre) + 10 (personality)
+const MAX_POSSIBLE_SCORE = 145 // 30 (gender) + 20 (age) + 20 (ethnicity/accent) + 25 (role) + 20 (profession) + 10 (genre) + 10 (personality) + 10 (description traits)
+
+/**
+ * Infer ethnicity/cultural background from character description and name
+ * Returns accent preferences for voice matching
+ */
+function inferEthnicityFromDescription(description: string, name: string): string | null {
+  const text = (description + ' ' + name).toLowerCase()
+  
+  // Ethnicity to accent mapping - ordered by specificity (more specific first)
+  const ethnicityPatterns: Array<{ keywords: string[], accent: string }> = [
+    // African/African American
+    { keywords: ['african american', 'african-american', 'black american', 'afro-american'], accent: 'american' },
+    { keywords: ['african', 'nigerian', 'kenyan', 'ghanaian', 'ethiopian', 'south african'], accent: 'african' },
+    
+    // Asian
+    { keywords: ['chinese', 'mandarin', 'cantonese', 'beijing', 'shanghai', 'hong kong'], accent: 'chinese' },
+    { keywords: ['japanese', 'tokyo', 'osaka', 'kyoto'], accent: 'japanese' },
+    { keywords: ['korean', 'seoul', 'busan', 'pyongyang'], accent: 'korean' },
+    { keywords: ['indian', 'hindi', 'mumbai', 'delhi', 'bangalore', 'punjabi', 'tamil', 'bengali'], accent: 'indian' },
+    { keywords: ['vietnamese', 'hanoi', 'saigon', 'ho chi minh'], accent: 'vietnamese' },
+    { keywords: ['filipino', 'philippine', 'manila', 'tagalog'], accent: 'filipino' },
+    { keywords: ['thai', 'bangkok', 'thailand'], accent: 'thai' },
+    { keywords: ['indonesian', 'jakarta', 'bali'], accent: 'indonesian' },
+    
+    // European
+    { keywords: ['british', 'english', 'london', 'manchester', 'birmingham', 'uk', 'united kingdom', 'cockney', 'received pronunciation'], accent: 'british' },
+    { keywords: ['scottish', 'scotland', 'edinburgh', 'glasgow', 'highlander'], accent: 'scottish' },
+    { keywords: ['irish', 'ireland', 'dublin', 'belfast', 'celtic'], accent: 'irish' },
+    { keywords: ['welsh', 'wales', 'cardiff'], accent: 'welsh' },
+    { keywords: ['french', 'paris', 'france', 'marseille', 'lyon', 'parisian'], accent: 'french' },
+    { keywords: ['german', 'germany', 'berlin', 'munich', 'hamburg', 'bavarian'], accent: 'german' },
+    { keywords: ['italian', 'italy', 'rome', 'milan', 'naples', 'sicilian', 'tuscan'], accent: 'italian' },
+    { keywords: ['spanish', 'spain', 'madrid', 'barcelona', 'castilian', 'andalusian'], accent: 'spanish' },
+    { keywords: ['russian', 'russia', 'moscow', 'slavic', 'siberian'], accent: 'russian' },
+    { keywords: ['polish', 'poland', 'warsaw', 'krakow'], accent: 'polish' },
+    { keywords: ['dutch', 'netherlands', 'amsterdam', 'holland'], accent: 'dutch' },
+    { keywords: ['swedish', 'sweden', 'stockholm', 'scandinavian'], accent: 'swedish' },
+    { keywords: ['norwegian', 'norway', 'oslo'], accent: 'norwegian' },
+    { keywords: ['danish', 'denmark', 'copenhagen'], accent: 'danish' },
+    { keywords: ['greek', 'greece', 'athens'], accent: 'greek' },
+    { keywords: ['portuguese', 'portugal', 'lisbon'], accent: 'portuguese' },
+    
+    // Latin American / Hispanic
+    { keywords: ['mexican', 'mexico', 'mexico city', 'guadalajara', 'tijuana'], accent: 'mexican' },
+    { keywords: ['latino', 'latina', 'hispanic', 'latin american', 'latinx'], accent: 'latino' },
+    { keywords: ['brazilian', 'brazil', 'rio', 'sao paulo', 'rio de janeiro'], accent: 'brazilian' },
+    { keywords: ['cuban', 'cuba', 'havana'], accent: 'cuban' },
+    { keywords: ['puerto rican', 'puerto rico', 'boricua'], accent: 'puerto rican' },
+    { keywords: ['colombian', 'colombia', 'bogota', 'medellin'], accent: 'colombian' },
+    { keywords: ['argentinian', 'argentina', 'buenos aires'], accent: 'argentinian' },
+    { keywords: ['venezuelan', 'venezuela', 'caracas'], accent: 'venezuelan' },
+    { keywords: ['peruvian', 'peru', 'lima'], accent: 'peruvian' },
+    { keywords: ['chilean', 'chile', 'santiago'], accent: 'chilean' },
+    
+    // Middle Eastern
+    { keywords: ['arabic', 'arab', 'middle eastern', 'saudi', 'emirati', 'egyptian', 'lebanese', 'syrian', 'iraqi', 'jordanian'], accent: 'arabic' },
+    { keywords: ['persian', 'iranian', 'iran', 'tehran', 'farsi'], accent: 'persian' },
+    { keywords: ['turkish', 'turkey', 'istanbul', 'ankara'], accent: 'turkish' },
+    { keywords: ['israeli', 'hebrew', 'jewish', 'tel aviv', 'jerusalem'], accent: 'israeli' },
+    
+    // Other
+    { keywords: ['australian', 'australia', 'sydney', 'melbourne', 'aussie', 'outback'], accent: 'australian' },
+    { keywords: ['new zealand', 'kiwi', 'auckland', 'wellington', 'maori'], accent: 'new zealand' },
+    { keywords: ['canadian', 'canada', 'toronto', 'vancouver', 'montreal', 'quebec'], accent: 'canadian' },
+    { keywords: ['southern american', 'southern drawl', 'dixie', 'deep south'], accent: 'southern american' },
+    { keywords: ['new york', 'brooklyn', 'bronx', 'queens', 'manhattan'], accent: 'new york' },
+    { keywords: ['boston', 'bostonian', 'massachusetts'], accent: 'boston' },
+    { keywords: ['texan', 'texas', 'dallas', 'houston'], accent: 'texan' },
+    { keywords: ['american', 'usa', 'united states', 'u.s.', 'los angeles', 'chicago'], accent: 'american' },
+  ]
+  
+  for (const { keywords, accent } of ethnicityPatterns) {
+    for (const keyword of keywords) {
+      if (text.includes(keyword)) {
+        return accent
+      }
+    }
+  }
+  
+  return null
+}
+
+/**
+ * Infer character profession/occupation from description
+ * Returns voice style preferences for matching
+ */
+function inferProfessionFromDescription(description: string): { profession: string, voiceStyles: string[] } | null {
+  const text = description.toLowerCase()
+  
+  // Profession to voice style mapping - ordered by specificity
+  const professionPatterns: Array<{ keywords: string[], profession: string, voiceStyles: string[] }> = [
+    // Medical
+    { keywords: ['doctor', 'physician', 'surgeon', 'md', 'medical doctor', 'dr.'], profession: 'doctor', voiceStyles: ['authoritative', 'calm', 'professional', 'intelligent'] },
+    { keywords: ['nurse', 'nursing', 'caregiver', 'rn', 'registered nurse'], profession: 'nurse', voiceStyles: ['warm', 'caring', 'gentle', 'compassionate'] },
+    { keywords: ['psychiatrist', 'psychologist', 'therapist', 'counselor'], profession: 'therapist', voiceStyles: ['calm', 'soothing', 'understanding', 'thoughtful'] },
+    
+    // Legal/Authority
+    { keywords: ['lawyer', 'attorney', 'barrister', 'solicitor', 'legal counsel'], profession: 'lawyer', voiceStyles: ['authoritative', 'articulate', 'persuasive', 'confident'] },
+    { keywords: ['judge', 'magistrate', 'justice', 'your honor'], profession: 'judge', voiceStyles: ['authoritative', 'commanding', 'dignified', 'serious'] },
+    { keywords: ['police', 'detective', 'officer', 'cop', 'sheriff', 'marshal', 'investigator'], profession: 'police', voiceStyles: ['commanding', 'firm', 'authoritative', 'serious'] },
+    { keywords: ['military', 'soldier', 'general', 'colonel', 'sergeant', 'captain', 'marine', 'army', 'navy', 'commander'], profession: 'military', voiceStyles: ['commanding', 'strong', 'disciplined', 'authoritative'] },
+    
+    // Business/Corporate
+    { keywords: ['ceo', 'executive', 'businessman', 'businesswoman', 'entrepreneur', 'corporate', 'chairman', 'director'], profession: 'executive', voiceStyles: ['confident', 'professional', 'authoritative', 'polished'] },
+    { keywords: ['politician', 'senator', 'congressman', 'mayor', 'governor', 'president', 'minister', 'diplomat'], profession: 'politician', voiceStyles: ['charismatic', 'persuasive', 'articulate', 'confident'] },
+    
+    // Creative/Entertainment
+    { keywords: ['actor', 'actress', 'performer', 'entertainer', 'thespian'], profession: 'actor', voiceStyles: ['expressive', 'dramatic', 'versatile', 'theatrical'] },
+    { keywords: ['singer', 'vocalist', 'musician', 'artist', 'composer', 'conductor'], profession: 'musician', voiceStyles: ['melodic', 'expressive', 'dynamic', 'passionate'] },
+    { keywords: ['writer', 'author', 'novelist', 'poet', 'journalist', 'reporter', 'editor'], profession: 'writer', voiceStyles: ['thoughtful', 'articulate', 'intellectual', 'contemplative'] },
+    { keywords: ['director', 'filmmaker', 'producer'], profession: 'filmmaker', voiceStyles: ['creative', 'passionate', 'visionary', 'articulate'] },
+    
+    // Academic/Scientific
+    { keywords: ['professor', 'teacher', 'educator', 'lecturer', 'academic', 'instructor'], profession: 'educator', voiceStyles: ['clear', 'articulate', 'patient', 'knowledgeable'] },
+    { keywords: ['scientist', 'researcher', 'physicist', 'chemist', 'biologist', 'astronomer'], profession: 'scientist', voiceStyles: ['intelligent', 'precise', 'analytical', 'thoughtful'] },
+    
+    // Sports/Physical
+    { keywords: ['boxer', 'fighter', 'mma', 'wrestler', 'martial artist', 'pugilist'], profession: 'fighter', voiceStyles: ['tough', 'intense', 'gritty', 'strong'] },
+    { keywords: ['athlete', 'sports', 'player', 'coach', 'trainer', 'champion'], profession: 'athlete', voiceStyles: ['energetic', 'confident', 'dynamic', 'passionate'] },
+    
+    // Service/Hospitality
+    { keywords: ['chef', 'cook', 'culinary', 'kitchen', 'pastry chef', 'sous chef'], profession: 'chef', voiceStyles: ['passionate', 'warm', 'energetic', 'creative'] },
+    { keywords: ['bartender', 'waiter', 'waitress', 'server', 'sommelier'], profession: 'hospitality', voiceStyles: ['friendly', 'personable', 'warm', 'charismatic'] },
+    
+    // Technical
+    { keywords: ['engineer', 'programmer', 'developer', 'tech', 'software', 'hacker', 'coder'], profession: 'tech', voiceStyles: ['intelligent', 'analytical', 'precise', 'knowledgeable'] },
+    { keywords: ['mechanic', 'technician', 'repairman', 'electrician', 'plumber'], profession: 'technician', voiceStyles: ['practical', 'grounded', 'straightforward', 'reliable'] },
+    
+    // Criminal/Underworld
+    { keywords: ['gangster', 'mobster', 'mafia', 'crime boss', 'don', 'godfather'], profession: 'gangster', voiceStyles: ['menacing', 'powerful', 'intimidating', 'commanding'] },
+    { keywords: ['criminal', 'thug', 'hitman', 'enforcer', 'muscle'], profession: 'criminal', voiceStyles: ['menacing', 'intense', 'threatening', 'gritty'] },
+    { keywords: ['spy', 'agent', 'operative', 'assassin', 'secret agent'], profession: 'spy', voiceStyles: ['mysterious', 'cool', 'sophisticated', 'calculating'] },
+    { keywords: ['thief', 'burglar', 'con artist', 'grifter', 'pickpocket'], profession: 'thief', voiceStyles: ['smooth', 'charming', 'sly', 'quick'] },
+    
+    // Religious/Spiritual
+    { keywords: ['priest', 'pastor', 'reverend', 'minister', 'preacher', 'father'], profession: 'clergy', voiceStyles: ['warm', 'soothing', 'compassionate', 'wise'] },
+    { keywords: ['rabbi', 'imam', 'cleric', 'religious leader'], profession: 'religious', voiceStyles: ['wise', 'thoughtful', 'gentle', 'authoritative'] },
+    { keywords: ['monk', 'nun', 'spiritual', 'mystic', 'sage', 'guru'], profession: 'spiritual', voiceStyles: ['calm', 'peaceful', 'serene', 'wise'] },
+    
+    // Working Class
+    { keywords: ['farmer', 'rancher', 'cowboy', 'ranch hand'], profession: 'farmer', voiceStyles: ['rustic', 'grounded', 'warm', 'straightforward'] },
+    { keywords: ['factory', 'worker', 'laborer', 'construction', 'builder', 'miner'], profession: 'laborer', voiceStyles: ['practical', 'straightforward', 'grounded', 'tough'] },
+    { keywords: ['trucker', 'driver', 'cabbie', 'taxi', 'chauffeur'], profession: 'driver', voiceStyles: ['casual', 'friendly', 'relaxed', 'conversational'] },
+    { keywords: ['sailor', 'seaman', 'captain', 'skipper', 'fisherman'], profession: 'sailor', voiceStyles: ['weathered', 'gruff', 'experienced', 'adventurous'] },
+    
+    // Other Professions
+    { keywords: ['pilot', 'aviator', 'astronaut'], profession: 'pilot', voiceStyles: ['calm', 'confident', 'professional', 'authoritative'] },
+    { keywords: ['wizard', 'sorcerer', 'mage', 'magician'], profession: 'wizard', voiceStyles: ['mysterious', 'wise', 'ancient', 'powerful'] },
+    { keywords: ['king', 'queen', 'prince', 'princess', 'royalty', 'monarch'], profession: 'royalty', voiceStyles: ['regal', 'dignified', 'commanding', 'elegant'] },
+    { keywords: ['warrior', 'knight', 'gladiator', 'samurai'], profession: 'warrior', voiceStyles: ['strong', 'commanding', 'fierce', 'determined'] },
+  ]
+  
+  for (const { keywords, profession, voiceStyles } of professionPatterns) {
+    for (const keyword of keywords) {
+      if (text.includes(keyword)) {
+        return { profession, voiceStyles }
+      }
+    }
+  }
+  
+  return null
+}
 
 /**
  * Infer age group from character description
@@ -190,13 +352,47 @@ function scoreVoiceForCharacter(
     }
   }
 
-  // Accent matching (medium weight)
+  // Accent/Ethnicity matching (enhanced with inference)
   const voiceAccent = voice.accent?.toLowerCase() || voice.labels?.accent?.toLowerCase()
-  if (voiceAccent) {
-    // Match accent to setting or ethnicity hints
+  let charEthnicity = character.ethnicity?.toLowerCase()
+  
+  // Infer ethnicity from description if not explicitly provided
+  if (!charEthnicity && character.description) {
+    const inferredEthnicity = inferEthnicityFromDescription(character.description, character.name || '')
+    if (inferredEthnicity) {
+      charEthnicity = inferredEthnicity
+    }
+  }
+  
+  if (voiceAccent && charEthnicity) {
+    // Check for accent match with inferred or explicit ethnicity
+    if (voiceAccent.includes(charEthnicity) || charEthnicity.includes(voiceAccent)) {
+      score += 20
+      reasons.push(`Accent matches ethnicity: ${charEthnicity}`)
+    } else {
+      // Check for regional matches (e.g., "southern american" matches "american")
+      const accentFamilies: Record<string, string[]> = {
+        'american': ['american', 'southern american', 'new york', 'boston', 'texan', 'california'],
+        'british': ['british', 'english', 'scottish', 'irish', 'welsh', 'cockney'],
+        'latin': ['latino', 'mexican', 'spanish', 'cuban', 'puerto rican', 'colombian', 'argentinian'],
+        'asian': ['chinese', 'japanese', 'korean', 'indian', 'vietnamese', 'filipino', 'thai'],
+        'european': ['french', 'german', 'italian', 'russian', 'polish', 'dutch', 'swedish', 'greek'],
+      }
+      
+      for (const [family, accents] of Object.entries(accentFamilies)) {
+        const voiceInFamily = accents.some(a => voiceAccent.includes(a))
+        const charInFamily = accents.some(a => charEthnicity!.includes(a))
+        if (voiceInFamily && charInFamily) {
+          score += 10
+          reasons.push(`Accent in same ${family} family`)
+          break
+        }
+      }
+    }
+  } else if (voiceAccent) {
+    // Fallback: Match accent to setting hints
     const settingHints = [
       screenplayContext?.setting?.toLowerCase() || '',
-      character.ethnicity?.toLowerCase() || '',
       character.description?.toLowerCase() || ''
     ].join(' ')
 
@@ -206,6 +402,49 @@ function scoreVoiceForCharacter(
     } else if (voiceAccent.includes('american') && settingHints.includes('american')) {
       score += 10
       reasons.push('American accent matches setting')
+    }
+  }
+
+  // Profession-based voice style matching
+  if (character.description) {
+    const professionInfo = inferProfessionFromDescription(character.description)
+    if (professionInfo) {
+      const voiceDescLower = voice.description?.toLowerCase() || ''
+      const voiceLabels = Object.values(voice.labels || {}).join(' ').toLowerCase()
+      const voiceText = voiceDescLower + ' ' + voiceLabels
+      
+      // Check if voice matches any of the profession's preferred styles
+      let professionMatched = false
+      for (const style of professionInfo.voiceStyles) {
+        if (voiceText.includes(style)) {
+          score += 20
+          reasons.push(`Voice style matches ${professionInfo.profession}: ${style}`)
+          professionMatched = true
+          break
+        }
+      }
+      
+      // Partial match for similar traits
+      if (!professionMatched) {
+        const partialMatches = professionInfo.voiceStyles.filter(style => {
+          // Check for partial/related keywords
+          const relatedTerms: Record<string, string[]> = {
+            'authoritative': ['commanding', 'strong', 'powerful', 'confident'],
+            'warm': ['friendly', 'gentle', 'caring', 'compassionate'],
+            'mysterious': ['enigmatic', 'dark', 'intriguing', 'suspense'],
+            'intense': ['dramatic', 'powerful', 'fierce', 'passionate'],
+            'calm': ['soothing', 'relaxed', 'peaceful', 'serene'],
+            'articulate': ['clear', 'precise', 'eloquent', 'polished'],
+          }
+          const related = relatedTerms[style] || []
+          return related.some(r => voiceText.includes(r))
+        })
+        
+        if (partialMatches.length > 0) {
+          score += 10
+          reasons.push(`Voice partially matches ${professionInfo.profession} style`)
+        }
+      }
     }
   }
 
