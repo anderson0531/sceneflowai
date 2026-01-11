@@ -7188,13 +7188,41 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           sceneContext: data.sceneContext,
         }
 
-        setScript({
+        const updatedScript = {
           ...script,
           script: {
             ...script.script,
             scenes: updatedScenes,
           },
-        })
+        }
+
+        setScript(updatedScript)
+
+        // Persist to database
+        try {
+          const existingMetadata = project?.metadata || {}
+          const existingVisionPhase = existingMetadata.visionPhase || {}
+          
+          await fetch(`/api/projects/${projectId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              metadata: {
+                ...existingMetadata,
+                visionPhase: {
+                  ...existingVisionPhase,
+                  script: updatedScript
+                }
+              }
+            }),
+          })
+          
+          console.log(`[Enhance Scene Context] Saved enhanced context for Scene ${sceneIndex + 1}`)
+          toast.success('Scene details enhanced and saved')
+        } catch (dbError) {
+          console.error('[Enhance Scene Context] Database save error:', dbError)
+          toast.error('Enhanced context generated but failed to save. Please try refreshing.')
+        }
 
         console.log(`[Enhance Scene Context] Enhanced context for Scene ${sceneIndex + 1}`)
       }
