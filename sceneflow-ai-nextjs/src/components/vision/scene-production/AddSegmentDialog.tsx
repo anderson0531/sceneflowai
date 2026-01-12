@@ -133,6 +133,13 @@ interface PromptBuilderOptions {
     talent: boolean
     audio: boolean
   }
+  customDirection: {
+    camera: string
+    lighting: string
+    scene: string
+    talent: string
+    audio: string
+  }
   sceneDirection: SceneDirection
   selectedDialogueTexts: Map<string, string> // Map of line ID to edited text
   dialogueLines: DialogueLine[]
@@ -151,13 +158,16 @@ function buildSegmentPrompt(options: PromptBuilderOptions): string {
   const lensLabel = LENS_OPTIONS.find(l => l.value === options.lens)?.label || '50mm'
   parts.push(`${shotLabel}, ${lensLabel} lens.`)
 
-  // 2. Scene/Environment Description (from selected direction)
-  if (options.selectedDirection.scene && options.sceneDirection.scene) {
+  // 2. Scene/Environment Description (from custom input, selected direction, or visual description)
+  if (options.selectedDirection.scene && options.customDirection.scene) {
+    // Custom input takes priority
+    parts.push(options.customDirection.scene)
+  } else if (options.selectedDirection.scene && options.sceneDirection.scene) {
     parts.push(options.sceneDirection.scene)
   } else if (options.visualDescription) {
-    // Fallback to visual description
-    const truncated = options.visualDescription.length > 200 
-      ? options.visualDescription.substring(0, 200) + '...'
+    // Fallback to visual description - increased limit for detailed prompts
+    const truncated = options.visualDescription.length > 500 
+      ? options.visualDescription.substring(0, 500) + '...'
       : options.visualDescription
     parts.push(truncated)
   }
@@ -179,8 +189,9 @@ function buildSegmentPrompt(options: PromptBuilderOptions): string {
       return charName
     })
     parts.push(`Subject: ${charDescriptions.join(' and ')}.`)
-  } else if (options.selectedDirection.talent && options.sceneDirection.talent) {
-    parts.push(options.sceneDirection.talent)
+  } else if (options.selectedDirection.talent) {
+    const talentText = options.customDirection.talent || options.sceneDirection.talent
+    if (talentText) parts.push(talentText)
   }
 
   // 4. Dialogue - format for Veo 3.1 speech synthesis (using edited text)
@@ -211,18 +222,21 @@ function buildSegmentPrompt(options: PromptBuilderOptions): string {
   }
 
   // 6. Camera Direction Notes
-  if (options.selectedDirection.camera && options.sceneDirection.camera) {
-    parts.push(`Camera notes: ${options.sceneDirection.camera}`)
+  if (options.selectedDirection.camera) {
+    const cameraText = options.customDirection.camera || options.sceneDirection.camera
+    if (cameraText) parts.push(`Camera notes: ${cameraText}`)
   }
 
   // 7. Lighting
-  if (options.selectedDirection.lighting && options.sceneDirection.lighting) {
-    parts.push(`Lighting: ${options.sceneDirection.lighting}`)
+  if (options.selectedDirection.lighting) {
+    const lightingText = options.customDirection.lighting || options.sceneDirection.lighting
+    if (lightingText) parts.push(`Lighting: ${lightingText}`)
   }
 
   // 8. Audio/SFX Notes (Veo 3.1 can generate ambient audio)
-  if (options.selectedDirection.audio && options.sceneDirection.audio) {
-    parts.push(`Ambient audio: ${options.sceneDirection.audio}`)
+  if (options.selectedDirection.audio) {
+    const audioText = options.customDirection.audio || options.sceneDirection.audio
+    if (audioText) parts.push(`Ambient audio: ${audioText}`)
   }
 
   // 9. Additional user notes
@@ -300,6 +314,15 @@ export function AddSegmentDialog({
     audio: true,
   })
   
+  // Custom scene direction input (for when original is not defined or user wants to override)
+  const [customDirection, setCustomDirection] = useState({
+    camera: '',
+    lighting: '',
+    scene: '',
+    talent: '',
+    audio: '',
+  })
+  
   // Dialogue selection - Map of line ID to edited text (allows partial text editing)
   const [selectedDialogueTexts, setSelectedDialogueTexts] = useState<Map<string, string>>(new Map())
   
@@ -350,6 +373,7 @@ export function AddSegmentDialog({
       lens,
       visualDescription,
       selectedDirection,
+      customDirection,
       sceneDirection,
       selectedDialogueTexts,
       dialogueLines,
@@ -361,7 +385,7 @@ export function AddSegmentDialog({
     })
   }, [
     shotType, cameraMovement, lens, visualDescription, selectedDirection,
-    sceneDirection, selectedDialogueTexts, dialogueLines, includeNarration,
+    customDirection, sceneDirection, selectedDialogueTexts, dialogueLines, includeNarration,
     editedNarrationText, narratorVoiceName, characters, additionalNotes
   ])
 
@@ -554,7 +578,7 @@ export function AddSegmentDialog({
                   Include Scene Direction
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  Select which director's notes to include in the prompt
+                  Select which director's notes to include. Click to enable, then add custom notes if needed.
                 </p>
                 
                 <div className="grid grid-cols-2 gap-2">
@@ -568,35 +592,49 @@ export function AddSegmentDialog({
                     <div
                       key={key}
                       className={cn(
-                        "flex items-start gap-2 p-2 rounded-lg border cursor-pointer transition-colors",
+                        "rounded-lg border transition-colors",
                         selectedDirection[key] 
                           ? "border-primary/50 bg-primary/10" 
-                          : "border-border hover:border-muted-foreground/50",
-                        !value && "opacity-50 cursor-not-allowed"
+                          : "border-border hover:border-muted-foreground/50"
                       )}
-                      onClick={() => value && handleDirectionToggle(key)}
                     >
-                      <Checkbox
-                        checked={selectedDirection[key] && !!value}
-                        disabled={!value}
-                        className="mt-0.5"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <Icon className="w-3.5 h-3.5 text-muted-foreground" />
-                          <span className="text-xs font-medium">{label}</span>
+                      <div
+                        className="flex items-start gap-2 p-2 cursor-pointer"
+                        onClick={() => handleDirectionToggle(key)}
+                      >
+                        <Checkbox
+                          checked={selectedDirection[key]}
+                          className="mt-0.5"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span className="text-xs font-medium">{label}</span>
+                          </div>
+                          {value && !selectedDirection[key] && (
+                            <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">
+                              {value}
+                            </p>
+                          )}
+                          {!value && !selectedDirection[key] && (
+                            <p className="text-[10px] text-muted-foreground/50 mt-0.5 italic">
+                              Click to add custom
+                            </p>
+                          )}
                         </div>
-                        {value && (
-                          <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">
-                            {value}
-                          </p>
-                        )}
-                        {!value && (
-                          <p className="text-[10px] text-muted-foreground/50 mt-0.5 italic">
-                            Not defined
-                          </p>
-                        )}
                       </div>
+                      {/* Show input when selected */}
+                      {selectedDirection[key] && (
+                        <div className="px-2 pb-2">
+                          <Textarea
+                            value={customDirection[key] || value || ''}
+                            onChange={(e) => setCustomDirection(prev => ({ ...prev, [key]: e.target.value }))}
+                            className="text-xs min-h-[50px] bg-background/50"
+                            placeholder={value ? 'Edit or add custom notes...' : `Add ${label.toLowerCase()}...`}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

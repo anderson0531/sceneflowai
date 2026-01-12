@@ -797,7 +797,7 @@ export function SceneTimelineV2({
       <div
         key={`${clip.id}:${clip.url || 'no-url'}`}
         className={cn(
-          "absolute rounded-sm overflow-hidden transition-shadow",
+          "absolute rounded-sm transition-shadow",
           "group cursor-move select-none",
           isSelected && "ring-2 ring-sf-primary ring-offset-1 ring-offset-gray-900 z-10",
           isDragging && "opacity-80 shadow-lg z-20",
