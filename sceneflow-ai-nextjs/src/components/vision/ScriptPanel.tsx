@@ -19,6 +19,7 @@ import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
 import { SegmentFrameTimeline } from './scene-production/SegmentFrameTimeline'
 import { SegmentBuilder } from './scene-production/SegmentBuilder'
+import { AddSegmentDialog } from './scene-production/AddSegmentDialog'
 import { DirectorConsole } from './scene-production/DirectorConsole'
 import { AudioTimeline, type AudioTracksData, type AudioTrackClip } from './scene-production/AudioTimeline'
 import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings, SceneSegment } from './scene-production/types'
@@ -3055,6 +3056,9 @@ function SceneCard({
   const [isUpdatingAudio, setIsUpdatingAudio] = useState(false)
   const [selectedSegmentIndex, setSelectedSegmentIndex] = useState<number | null>(null)
   
+  // Add Segment dialog state
+  const [addSegmentDialogOpen, setAddSegmentDialogOpen] = useState(false)
+  
   // Collapsible section states
   const [descriptionCollapsed, setDescriptionCollapsed] = useState(false)
   const [narrationCollapsed, setNarrationCollapsed] = useState(false)
@@ -4275,6 +4279,22 @@ function SceneCard({
                             <p className="text-[10px] text-gray-500 mt-2 text-center">
                               AI will analyze your scene to create video segments
                             </p>
+                          </div>
+                        )}
+                        
+                        {/* Add Segment button when segments exist */}
+                        {sceneProductionData?.segments?.length > 0 && !audioTimelineCollapsed && (
+                          <div className="px-3 py-2 border-t border-cyan-500/20 bg-cyan-900/10 flex items-center justify-between">
+                            <span className="text-[10px] text-gray-500">
+                              {sceneProductionData.segments.length} segment{sceneProductionData.segments.length !== 1 ? 's' : ''}
+                            </span>
+                            <button
+                              onClick={() => setAddSegmentDialogOpen(true)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 rounded text-cyan-300 text-xs font-medium transition-colors"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              Add Segment
+                            </button>
                           </div>
                         )}
                       </div>
@@ -5812,6 +5832,46 @@ function SceneCard({
               </div>
             </div>
           )}
+          
+          {/* Add Segment Dialog */}
+          <AddSegmentDialog
+            open={addSegmentDialogOpen}
+            onOpenChange={setAddSegmentDialogOpen}
+            sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
+            sceneNumber={sceneNumber}
+            visualDescription={scene.visualDescription || scene.action || ''}
+            sceneDirection={{
+              camera: scene.sceneDirection?.camera,
+              lighting: scene.sceneDirection?.lighting,
+              scene: scene.sceneDirection?.scene,
+              talent: scene.sceneDirection?.talent,
+              audio: scene.sceneDirection?.audio,
+            }}
+            narrationText={scene.narration || null}
+            dialogueLines={(scene.dialogue || []).map((d: any, idx: number) => ({
+              id: d.id || `dialogue-${idx}`,
+              character: d.character || d.name || 'UNKNOWN',
+              text: d.text || d.dialogue || d.line || '',
+              emotion: d.emotion || d.mood || undefined,
+            }))}
+            characters={(characters || []).map(c => ({
+              id: c.id || c.name,
+              name: c.name,
+              description: c.appearance || c.description,
+            }))}
+            sceneFrameUrl={scene.imageUrl || null}
+            existingSegments={sceneProductionData?.segments || []}
+            onAddSegment={(newSegment) => {
+              const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
+              // Append to existing segments
+              const existingSegments = sceneProductionData?.segments || []
+              const updatedSegments = [...existingSegments, newSegment]
+              onInitializeSceneProduction?.(sceneId, { 
+                targetDuration: calculateSceneDuration(scene),
+                segments: updatedSegments 
+              })
+            }}
+          />
           
           {/* AI Co-Pilot Side Panel */}
           {!isOutline && activeStep && (

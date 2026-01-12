@@ -1,0 +1,789 @@
+'use client'
+
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/badge'
+import { Label } from '@/components/ui/label'
+import { Slider } from '@/components/ui/slider'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Textarea } from '@/components/ui/textarea'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { cn } from '@/lib/utils'
+import {
+  Film,
+  Camera,
+  Lightbulb,
+  Users,
+  Volume2,
+  MessageSquare,
+  Clock,
+  Sparkles,
+  Eye,
+  Plus,
+  MapPin,
+  Mic,
+} from 'lucide-react'
+import { SceneSegment, VideoGenerationMethod } from './types'
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface SceneDirection {
+  camera?: string
+  lighting?: string
+  scene?: string
+  talent?: string
+  audio?: string
+}
+
+export interface DialogueLine {
+  id: string
+  character: string
+  text: string
+  emotion?: string
+  durationEstimate?: number // Estimated duration in seconds
+}
+
+export interface AddSegmentDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  sceneId: string
+  sceneNumber: number
+  // Script data
+  visualDescription: string
+  sceneDirection: SceneDirection
+  narrationText: string | null
+  dialogueLines: DialogueLine[]
+  characters: Array<{ id: string; name: string; description?: string }>
+  sceneFrameUrl: string | null
+  // Existing segments for timing calculation
+  existingSegments: SceneSegment[]
+  // Callback when segment is created
+  onAddSegment: (segment: SceneSegment) => void
+}
+
+// ============================================================================
+// Shot Types & Lens Presets
+// ============================================================================
+
+const SHOT_TYPES = [
+  { value: 'extreme-wide', label: 'Extreme Wide', description: 'Full environment, tiny subjects' },
+  { value: 'wide', label: 'Wide Shot', description: 'Full body, environmental context' },
+  { value: 'medium-wide', label: 'Medium Wide', description: 'Knee to head, some environment' },
+  { value: 'medium', label: 'Medium Shot', description: 'Waist up, conversational' },
+  { value: 'medium-close', label: 'Medium Close-up', description: 'Chest up, emotional focus' },
+  { value: 'close-up', label: 'Close-up', description: 'Face only, intense emotion' },
+  { value: 'extreme-close', label: 'Extreme Close-up', description: 'Eyes, mouth, or detail' },
+  { value: 'two-shot', label: 'Two Shot', description: 'Two characters framed together' },
+  { value: 'over-shoulder', label: 'Over the Shoulder', description: 'Perspective from behind one character' },
+  { value: 'pov', label: 'POV', description: 'Point of view shot' },
+] as const
+
+const CAMERA_MOVEMENTS = [
+  { value: 'static', label: 'Static', description: 'Locked-off, no movement' },
+  { value: 'push-in', label: 'Push In', description: 'Slow dolly toward subject' },
+  { value: 'pull-out', label: 'Pull Out', description: 'Slow dolly away from subject' },
+  { value: 'pan-left', label: 'Pan Left', description: 'Camera pivots left' },
+  { value: 'pan-right', label: 'Pan Right', description: 'Camera pivots right' },
+  { value: 'tilt-up', label: 'Tilt Up', description: 'Camera angles upward' },
+  { value: 'tilt-down', label: 'Tilt Down', description: 'Camera angles downward' },
+  { value: 'tracking', label: 'Tracking', description: 'Following subject movement' },
+  { value: 'handheld', label: 'Handheld', description: 'Slight shake, documentary feel' },
+  { value: 'crane', label: 'Crane/Jib', description: 'Vertical movement, sweeping' },
+] as const
+
+const LENS_OPTIONS = [
+  { value: '24mm', label: '24mm Wide', description: 'Environmental, expansive' },
+  { value: '35mm', label: '35mm Anamorphic', description: 'Cinematic, slight distortion' },
+  { value: '50mm', label: '50mm Standard', description: 'Natural perspective' },
+  { value: '85mm', label: '85mm Portrait', description: 'Shallow DOF, intimate' },
+  { value: '135mm', label: '135mm Telephoto', description: 'Compressed, isolated' },
+] as const
+
+// ============================================================================
+// Prompt Builder Utility
+// ============================================================================
+
+interface PromptBuilderOptions {
+  shotType: string
+  cameraMovement: string
+  lens: string
+  visualDescription: string
+  selectedDirection: {
+    camera: boolean
+    lighting: boolean
+    scene: boolean
+    talent: boolean
+    audio: boolean
+  }
+  sceneDirection: SceneDirection
+  selectedDialogue: string[] // IDs of selected dialogue lines
+  dialogueLines: DialogueLine[]
+  includeNarration: boolean
+  narrationText: string | null
+  characters: Array<{ id: string; name: string; description?: string }>
+  additionalNotes: string
+}
+
+function buildSegmentPrompt(options: PromptBuilderOptions): string {
+  const parts: string[] = []
+
+  // 1. Shot Type + Lens
+  const shotLabel = SHOT_TYPES.find(s => s.value === options.shotType)?.label || 'Medium Shot'
+  const lensLabel = LENS_OPTIONS.find(l => l.value === options.lens)?.label || '50mm'
+  parts.push(`${shotLabel}, ${lensLabel} lens.`)
+
+  // 2. Scene/Environment Description (from selected direction)
+  if (options.selectedDirection.scene && options.sceneDirection.scene) {
+    parts.push(options.sceneDirection.scene)
+  } else if (options.visualDescription) {
+    // Fallback to visual description
+    const truncated = options.visualDescription.length > 200 
+      ? options.visualDescription.substring(0, 200) + '...'
+      : options.visualDescription
+    parts.push(truncated)
+  }
+
+  // 3. Character/Subject - extract from selected dialogue or talent direction
+  const speakingCharacters = new Set(
+    options.dialogueLines
+      .filter(d => options.selectedDialogue.includes(d.id))
+      .map(d => d.character)
+  )
+  
+  if (speakingCharacters.size > 0) {
+    const charDescriptions = Array.from(speakingCharacters).map(charName => {
+      const charInfo = options.characters.find(c => c.name.toLowerCase() === charName.toLowerCase())
+      if (charInfo?.description) {
+        return `${charName} (${charInfo.description.substring(0, 100)})`
+      }
+      return charName
+    })
+    parts.push(`Subject: ${charDescriptions.join(' and ')}.`)
+  } else if (options.selectedDirection.talent && options.sceneDirection.talent) {
+    parts.push(options.sceneDirection.talent)
+  }
+
+  // 4. Dialogue - format for Veo 3.1 speech synthesis
+  const selectedDialogueLines = options.dialogueLines.filter(d => 
+    options.selectedDialogue.includes(d.id)
+  )
+  
+  if (selectedDialogueLines.length > 0) {
+    for (const line of selectedDialogueLines) {
+      const emotionNote = line.emotion ? ` with ${line.emotion} delivery` : ''
+      parts.push(`${line.character} speaks${emotionNote}, "${line.text}"`)
+    }
+  }
+
+  // 5. Camera Movement
+  const movementLabel = CAMERA_MOVEMENTS.find(m => m.value === options.cameraMovement)?.label
+  if (movementLabel && options.cameraMovement !== 'static') {
+    parts.push(`Camera: ${movementLabel}.`)
+  } else if (options.cameraMovement === 'static') {
+    parts.push('Camera: Locked-off, static frame.')
+  }
+
+  // 6. Camera Direction Notes
+  if (options.selectedDirection.camera && options.sceneDirection.camera) {
+    parts.push(`Camera notes: ${options.sceneDirection.camera}`)
+  }
+
+  // 7. Lighting
+  if (options.selectedDirection.lighting && options.sceneDirection.lighting) {
+    parts.push(`Lighting: ${options.sceneDirection.lighting}`)
+  }
+
+  // 8. Audio/SFX Notes (Veo 3.1 can generate ambient audio)
+  if (options.selectedDirection.audio && options.sceneDirection.audio) {
+    parts.push(`Ambient audio: ${options.sceneDirection.audio}`)
+  }
+
+  // 9. Additional user notes
+  if (options.additionalNotes.trim()) {
+    parts.push(options.additionalNotes.trim())
+  }
+
+  // 10. Technical specs
+  parts.push('Cinematic quality, 8K, photorealistic.')
+
+  return parts.join(' ')
+}
+
+// ============================================================================
+// Estimate duration from dialogue
+// ============================================================================
+
+function estimateDuration(
+  selectedDialogue: string[],
+  dialogueLines: DialogueLine[],
+  includeNarration: boolean,
+  narrationText: string | null
+): number {
+  const WORDS_PER_SECOND = 2.5
+  let totalWords = 0
+
+  // Count dialogue words
+  for (const id of selectedDialogue) {
+    const line = dialogueLines.find(d => d.id === id)
+    if (line) {
+      totalWords += line.text.split(/\s+/).length
+    }
+  }
+
+  // Count narration words (if included - though typically not in video prompt)
+  if (includeNarration && narrationText) {
+    totalWords += narrationText.split(/\s+/).length
+  }
+
+  // Estimate: words / 2.5 words per second, with minimum of 4s and max of 8s
+  const estimated = Math.ceil(totalWords / WORDS_PER_SECOND)
+  return Math.max(4, Math.min(8, estimated || 6))
+}
+
+// ============================================================================
+// Main Component
+// ============================================================================
+
+export function AddSegmentDialog({
+  open,
+  onOpenChange,
+  sceneId,
+  sceneNumber,
+  visualDescription,
+  sceneDirection,
+  narrationText,
+  dialogueLines,
+  characters,
+  sceneFrameUrl,
+  existingSegments,
+  onAddSegment,
+}: AddSegmentDialogProps) {
+  // -------------------------------------------------------------------------
+  // State
+  // -------------------------------------------------------------------------
+  
+  // Shot configuration
+  const [shotType, setShotType] = useState('medium')
+  const [cameraMovement, setCameraMovement] = useState('static')
+  const [lens, setLens] = useState('50mm')
+  
+  // Scene direction toggles
+  const [selectedDirection, setSelectedDirection] = useState({
+    camera: true,
+    lighting: true,
+    scene: true,
+    talent: true,
+    audio: true,
+  })
+  
+  // Dialogue selection
+  const [selectedDialogue, setSelectedDialogue] = useState<string[]>([])
+  
+  // Narration toggle (note: narration is usually a separate audio track, not in video)
+  const [includeNarration, setIncludeNarration] = useState(false)
+  
+  // Duration
+  const [duration, setDuration] = useState(6)
+  const [autoEstimateDuration, setAutoEstimateDuration] = useState(true)
+  
+  // Additional notes
+  const [additionalNotes, setAdditionalNotes] = useState('')
+  
+  // Generation method
+  const [generationMethod, setGenerationMethod] = useState<VideoGenerationMethod>(
+    sceneFrameUrl && existingSegments.length === 0 ? 'I2V' : 'T2V'
+  )
+
+  // -------------------------------------------------------------------------
+  // Effects
+  // -------------------------------------------------------------------------
+  
+  // Auto-estimate duration when dialogue selection changes
+  useEffect(() => {
+    if (autoEstimateDuration) {
+      const estimated = estimateDuration(selectedDialogue, dialogueLines, includeNarration, narrationText)
+      setDuration(estimated)
+    }
+  }, [selectedDialogue, dialogueLines, includeNarration, narrationText, autoEstimateDuration])
+
+  // -------------------------------------------------------------------------
+  // Computed
+  // -------------------------------------------------------------------------
+  
+  // Build live prompt preview
+  const promptPreview = useMemo(() => {
+    return buildSegmentPrompt({
+      shotType,
+      cameraMovement,
+      lens,
+      visualDescription,
+      selectedDirection,
+      sceneDirection,
+      selectedDialogue,
+      dialogueLines,
+      includeNarration,
+      narrationText,
+      characters,
+      additionalNotes,
+    })
+  }, [
+    shotType, cameraMovement, lens, visualDescription, selectedDirection,
+    sceneDirection, selectedDialogue, dialogueLines, includeNarration,
+    narrationText, characters, additionalNotes
+  ])
+
+  // Calculate start time from existing segments
+  const nextStartTime = useMemo(() => {
+    if (existingSegments.length === 0) return 0
+    const lastSegment = existingSegments[existingSegments.length - 1]
+    return lastSegment.endTime
+  }, [existingSegments])
+
+  // -------------------------------------------------------------------------
+  // Handlers
+  // -------------------------------------------------------------------------
+  
+  const handleDirectionToggle = useCallback((key: keyof typeof selectedDirection) => {
+    setSelectedDirection(prev => ({ ...prev, [key]: !prev[key] }))
+  }, [])
+
+  const handleDialogueToggle = useCallback((id: string) => {
+    setSelectedDialogue(prev => 
+      prev.includes(id) ? prev.filter(d => d !== id) : [...prev, id]
+    )
+  }, [])
+
+  const handleCreate = useCallback(() => {
+    const newSegment: SceneSegment = {
+      segmentId: `seg_${sceneId}_${existingSegments.length + 1}_${Date.now()}`,
+      sequenceIndex: existingSegments.length,
+      startTime: nextStartTime,
+      endTime: nextStartTime + duration,
+      status: 'READY',
+      generatedPrompt: promptPreview,
+      userEditedPrompt: null,
+      activeAssetUrl: null,
+      assetType: null,
+      generationMethod,
+      triggerReason: 'User-created segment',
+      shotType: SHOT_TYPES.find(s => s.value === shotType)?.label,
+      cameraMovement: CAMERA_MOVEMENTS.find(m => m.value === cameraMovement)?.label,
+      dialogueLineIds: selectedDialogue,
+      references: {
+        startFrameUrl: generationMethod === 'I2V' ? sceneFrameUrl : null,
+        endFrameUrl: null,
+        useSceneFrame: generationMethod === 'I2V',
+        characterRefs: characters
+          .filter(c => selectedDialogue.some(id => {
+            const line = dialogueLines.find(d => d.id === id)
+            return line?.character.toLowerCase() === c.name.toLowerCase()
+          }))
+          .map(c => c.name),
+        characterIds: [],
+        sceneRefIds: [],
+        objectRefIds: [],
+      },
+      takes: [],
+    }
+
+    onAddSegment(newSegment)
+    onOpenChange(false)
+    
+    // Reset form
+    setShotType('medium')
+    setCameraMovement('static')
+    setLens('50mm')
+    setSelectedDialogue([])
+    setIncludeNarration(false)
+    setDuration(6)
+    setAdditionalNotes('')
+  }, [
+    sceneId, existingSegments, nextStartTime, duration, promptPreview,
+    generationMethod, shotType, cameraMovement, selectedDialogue,
+    dialogueLines, characters, sceneFrameUrl, onAddSegment, onOpenChange
+  ])
+
+  // -------------------------------------------------------------------------
+  // Render
+  // -------------------------------------------------------------------------
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Plus className="w-5 h-5 text-primary" />
+            Add Segment
+            <Badge variant="outline" className="ml-2 text-xs">
+              Scene {sceneNumber}
+            </Badge>
+          </DialogTitle>
+          <DialogDescription>
+            Build a video generation prompt by selecting shot type, scene elements, and dialogue.
+            Veo 3.1 will generate voiceover and SFX directly from the prompt.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex flex-1 gap-4 min-h-0 overflow-hidden">
+          {/* Left Panel: Configuration */}
+          <ScrollArea className="flex-1 pr-4">
+            <div className="space-y-6">
+              {/* Shot Configuration */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium flex items-center gap-2">
+                  <Camera className="w-4 h-4 text-blue-400" />
+                  Shot Configuration
+                </h3>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Shot Type</Label>
+                    <Select value={shotType} onValueChange={setShotType}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SHOT_TYPES.map(type => (
+                          <SelectItem key={type.value} value={type.value}>
+                            <span className="font-medium">{type.label}</span>
+                            <span className="text-xs text-muted-foreground ml-2">
+                              {type.description}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Lens</Label>
+                    <Select value={lens} onValueChange={setLens}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {LENS_OPTIONS.map(opt => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Camera Movement</Label>
+                  <Select value={cameraMovement} onValueChange={setCameraMovement}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CAMERA_MOVEMENTS.map(mov => (
+                        <SelectItem key={mov.value} value={mov.value}>
+                          <span className="font-medium">{mov.label}</span>
+                          <span className="text-xs text-muted-foreground ml-2">
+                            {mov.description}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Scene Direction Toggles */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium flex items-center gap-2">
+                  <Film className="w-4 h-4 text-amber-400" />
+                  Include Scene Direction
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Select which director's notes to include in the prompt
+                </p>
+                
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { key: 'camera' as const, icon: Camera, label: 'Camera Notes', value: sceneDirection.camera },
+                    { key: 'lighting' as const, icon: Lightbulb, label: 'Lighting', value: sceneDirection.lighting },
+                    { key: 'scene' as const, icon: MapPin, label: 'Scene/Environment', value: sceneDirection.scene },
+                    { key: 'talent' as const, icon: Users, label: 'Talent/Blocking', value: sceneDirection.talent },
+                    { key: 'audio' as const, icon: Volume2, label: 'Audio/SFX', value: sceneDirection.audio },
+                  ].map(({ key, icon: Icon, label, value }) => (
+                    <div
+                      key={key}
+                      className={cn(
+                        "flex items-start gap-2 p-2 rounded-lg border cursor-pointer transition-colors",
+                        selectedDirection[key] 
+                          ? "border-primary/50 bg-primary/10" 
+                          : "border-border hover:border-muted-foreground/50",
+                        !value && "opacity-50 cursor-not-allowed"
+                      )}
+                      onClick={() => value && handleDirectionToggle(key)}
+                    >
+                      <Checkbox
+                        checked={selectedDirection[key] && !!value}
+                        disabled={!value}
+                        className="mt-0.5"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span className="text-xs font-medium">{label}</span>
+                        </div>
+                        {value && (
+                          <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">
+                            {value}
+                          </p>
+                        )}
+                        {!value && (
+                          <p className="text-[10px] text-muted-foreground/50 mt-0.5 italic">
+                            Not defined
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Dialogue Selection */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-emerald-400" />
+                  Dialogue Lines
+                  <Badge variant="secondary" className="text-[10px]">
+                    Veo 3.1 Speech
+                  </Badge>
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Select dialogue for this segment. Veo 3.1 will generate the character's voice.
+                </p>
+                
+                {dialogueLines.length > 0 ? (
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {dialogueLines.map((line, idx) => (
+                      <div
+                        key={line.id}
+                        className={cn(
+                          "flex items-start gap-2 p-2 rounded-lg border cursor-pointer transition-colors",
+                          selectedDialogue.includes(line.id)
+                            ? "border-emerald-500/50 bg-emerald-950/20"
+                            : "border-border hover:border-muted-foreground/50"
+                        )}
+                        onClick={() => handleDialogueToggle(line.id)}
+                      >
+                        <Checkbox
+                          checked={selectedDialogue.includes(line.id)}
+                          className="mt-0.5"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-emerald-400">
+                              {line.character}
+                            </span>
+                            {line.emotion && (
+                              <Badge variant="outline" className="text-[10px]">
+                                {line.emotion}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            "{line.text}"
+                          </p>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground">
+                          #{idx + 1}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-muted-foreground/50 italic p-3 text-center border border-dashed rounded-lg">
+                    No dialogue in this scene
+                  </div>
+                )}
+              </div>
+
+              {/* Narration Toggle */}
+              {narrationText && (
+                <div className="space-y-2">
+                  <div
+                    className={cn(
+                      "flex items-start gap-2 p-3 rounded-lg border cursor-pointer transition-colors",
+                      includeNarration
+                        ? "border-blue-500/50 bg-blue-950/20"
+                        : "border-border hover:border-muted-foreground/50"
+                    )}
+                    onClick={() => setIncludeNarration(!includeNarration)}
+                  >
+                    <Checkbox checked={includeNarration} className="mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Mic className="w-3.5 h-3.5 text-blue-400" />
+                        <span className="text-xs font-medium">Include Narration Context</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2">
+                        {narrationText}
+                      </p>
+                      <p className="text-[10px] text-amber-400 mt-1">
+                        Note: Narration is typically a separate audio track, not in video.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Duration */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-purple-400" />
+                    Duration
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="auto-duration"
+                      checked={autoEstimateDuration}
+                      onCheckedChange={(checked) => setAutoEstimateDuration(!!checked)}
+                    />
+                    <Label htmlFor="auto-duration" className="text-xs text-muted-foreground">
+                      Auto-estimate
+                    </Label>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <Slider
+                    value={[duration]}
+                    onValueChange={([val]) => {
+                      setAutoEstimateDuration(false)
+                      setDuration(val)
+                    }}
+                    min={4}
+                    max={8}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <Badge variant="outline" className="w-12 justify-center">
+                    {duration}s
+                  </Badge>
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Veo 3.1 max: 8 seconds per segment
+                </p>
+              </div>
+
+              {/* Additional Notes */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Additional Notes</Label>
+                <Textarea
+                  placeholder="Any extra direction, visual details, or style notes..."
+                  value={additionalNotes}
+                  onChange={(e) => setAdditionalNotes(e.target.value)}
+                  rows={2}
+                  className="text-xs resize-none"
+                />
+              </div>
+
+              {/* Generation Method */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Generation Method</Label>
+                <Select 
+                  value={generationMethod} 
+                  onValueChange={(v) => setGenerationMethod(v as VideoGenerationMethod)}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="T2V">
+                      <span className="font-medium">T2V</span>
+                      <span className="text-xs text-muted-foreground ml-2">Text-to-Video</span>
+                    </SelectItem>
+                    <SelectItem value="I2V" disabled={!sceneFrameUrl}>
+                      <span className="font-medium">I2V</span>
+                      <span className="text-xs text-muted-foreground ml-2">
+                        Image-to-Video {!sceneFrameUrl && '(No scene image)'}
+                      </span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </ScrollArea>
+
+          {/* Right Panel: Prompt Preview */}
+          <div className="w-80 flex flex-col border-l pl-4">
+            <h3 className="text-sm font-medium flex items-center gap-2 mb-3">
+              <Eye className="w-4 h-4 text-primary" />
+              Prompt Preview
+            </h3>
+            
+            <div className="flex-1 min-h-0">
+              <ScrollArea className="h-full">
+                <div className="p-3 bg-muted/30 rounded-lg border border-border">
+                  <p className="text-xs leading-relaxed whitespace-pre-wrap font-mono">
+                    {promptPreview}
+                  </p>
+                </div>
+              </ScrollArea>
+            </div>
+
+            <div className="mt-4 pt-4 border-t space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Start Time</span>
+                <span className="font-mono">{nextStartTime.toFixed(1)}s</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">End Time</span>
+                <span className="font-mono">{(nextStartTime + duration).toFixed(1)}s</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Duration</span>
+                <Badge variant="secondary" className="text-[10px]">{duration}s</Badge>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Method</span>
+                <Badge variant="outline" className="text-[10px]">{generationMethod}</Badge>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Dialogue Lines</span>
+                <span className="font-mono">{selectedDialogue.length}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter className="mt-4 pt-4 border-t">
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleCreate}>
+            <Sparkles className="w-4 h-4 mr-2" />
+            Add Segment
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+export default AddSegmentDialog
