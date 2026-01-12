@@ -1,7 +1,7 @@
 # SceneFlow AI - Application Design Document
 
-**Version**: 2.44  
-**Last Updated**: January 1, 2026  
+**Version**: 2.45  
+**Last Updated**: January 12, 2026  
 **Status**: Production
 
 ---
@@ -1284,6 +1284,13 @@ STRIPE_WEBHOOK_SECRET=...
 ---
 
 ## 12. Future Enhancements
+
+### Pre-Production TODOs (Target: April 2026)
+
+| Priority | Task | Status | Notes |
+|----------|------|--------|-------|
+| 🔴 High | Migrate to Vertex AI Gemini for image generation | TODO | Currently using Gemini Studio (AI Studio) with 10 RPM limit. Vertex AI provides 60+ RPM for production scale. Same API format, different auth. |
+| 🟡 Medium | Re-test Vertex AI Imagen reference images | TODO | Reference image handling failed during January 2026 testing. Veo handles refs correctly but Imagen does not. Retry after Google updates API. |
 
 ### Phase 1: Core Functionality (Current)
 - ✅ Ideation & Scripting

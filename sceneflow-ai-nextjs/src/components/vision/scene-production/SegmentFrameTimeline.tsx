@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { SegmentPairCard } from './SegmentPairCard'
+import { FramePromptDialog, type FrameGenerationOptions } from './FramePromptDialog'
 import type { 
   SceneSegment, 
   AnchorStatus 
@@ -33,7 +34,12 @@ export interface SegmentFrameTimelineProps {
   sceneImageUrl?: string | null
   selectedSegmentIndex: number | null
   onSelectSegment: (index: number) => void
-  onGenerateFrames: (segmentId: string, frameType: 'start' | 'end' | 'both') => Promise<void>
+  onGenerateFrames: (segmentId: string, frameType: 'start' | 'end' | 'both', options?: {
+    customPrompt?: string
+    negativePrompt?: string
+    usePreviousEndFrame?: boolean
+    previousEndFrameUrl?: string
+  }) => Promise<void>
   onGenerateAllFrames: () => Promise<void>
   onGenerateVideo: (segmentId: string) => void
   onEditFrame?: (segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
@@ -107,6 +113,13 @@ export function SegmentFrameTimeline({
 }: SegmentFrameTimelineProps) {
   const [isExpanded, setIsExpanded] = useState(true)
   
+  // Frame prompt dialog state
+  const [framePromptDialogOpen, setFramePromptDialogOpen] = useState(false)
+  const [dialogSegment, setDialogSegment] = useState<SceneSegment | null>(null)
+  const [dialogSegmentIndex, setDialogSegmentIndex] = useState(0)
+  const [dialogFrameType, setDialogFrameType] = useState<'start' | 'end' | 'both'>('both')
+  const [dialogPreviousEndFrame, setDialogPreviousEndFrame] = useState<string | null>(null)
+  
   const stats = useMemo(() => calculateTimelineStats(segments), [segments])
   
   // Get previous segment's end frame for each segment (for CONTINUE transitions)
@@ -116,9 +129,29 @@ export function SegmentFrameTimeline({
     return prevSegment?.endFrameUrl || prevSegment?.references?.endFrameUrl || null
   }, [segments])
   
-  // Handle frame generation for a segment
-  const handleGenerateFrames = useCallback(async (segmentId: string, frameType: 'start' | 'end' | 'both') => {
-    await onGenerateFrames(segmentId, frameType)
+  // Open the frame prompt dialog instead of generating directly
+  const openFramePromptDialog = useCallback((
+    segment: SceneSegment,
+    segmentIndex: number,
+    frameType: 'start' | 'end' | 'both'
+  ) => {
+    setDialogSegment(segment)
+    setDialogSegmentIndex(segmentIndex)
+    setDialogFrameType(frameType)
+    setDialogPreviousEndFrame(getPreviousEndFrame(segmentIndex))
+    setFramePromptDialogOpen(true)
+  }, [getPreviousEndFrame])
+  
+  // Handle generation from dialog
+  const handleDialogGenerate = useCallback(async (options: FrameGenerationOptions) => {
+    setFramePromptDialogOpen(false)
+    
+    await onGenerateFrames(options.segmentId, options.frameType, {
+      customPrompt: options.customPrompt,
+      negativePrompt: options.negativePrompt,
+      usePreviousEndFrame: options.usePreviousEndFrame,
+      previousEndFrameUrl: options.previousEndFrameUrl || undefined,
+    })
   }, [onGenerateFrames])
 
   if (segments.length === 0) {
@@ -222,9 +255,9 @@ export function SegmentFrameTimeline({
                 segmentIndex={index}
                 isSelected={selectedSegmentIndex === index}
                 onSelect={() => onSelectSegment(index)}
-                onGenerateStartFrame={() => handleGenerateFrames(segment.segmentId, 'start')}
-                onGenerateEndFrame={() => handleGenerateFrames(segment.segmentId, 'end')}
-                onGenerateBothFrames={() => handleGenerateFrames(segment.segmentId, 'both')}
+                onGenerateStartFrame={() => openFramePromptDialog(segment, index, 'start')}
+                onGenerateEndFrame={() => openFramePromptDialog(segment, index, 'end')}
+                onGenerateBothFrames={() => openFramePromptDialog(segment, index, 'both')}
                 onGenerateVideo={() => onGenerateVideo(segment.segmentId)}
                 onEditFrame={onEditFrame ? (frameType, frameUrl) => onEditFrame(segment.segmentId, frameType, frameUrl) : undefined}
                 onUploadFrame={onUploadFrame ? (frameType, file) => onUploadFrame(segment.segmentId, frameType, file) : undefined}
@@ -253,6 +286,19 @@ export function SegmentFrameTimeline({
           </div>
         </div>
       )}
+      
+      {/* Frame Prompt Dialog */}
+      <FramePromptDialog
+        open={framePromptDialogOpen}
+        onOpenChange={setFramePromptDialogOpen}
+        segment={dialogSegment}
+        segmentIndex={dialogSegmentIndex}
+        frameType={dialogFrameType}
+        previousEndFrameUrl={dialogPreviousEndFrame}
+        sceneImageUrl={sceneImageUrl}
+        onGenerate={handleDialogGenerate}
+        isGenerating={isGenerating}
+      />
     </div>
   )
 }

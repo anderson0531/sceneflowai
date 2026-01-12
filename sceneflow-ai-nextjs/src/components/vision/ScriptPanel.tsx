@@ -242,7 +242,12 @@ interface ScriptPanelProps {
   onSelectTake?: (sceneId: string, segmentId: string, takeId: string, assetUrl: string) => void
   onDeleteTake?: (sceneId: string, segmentId: string, takeId: string) => void
   // Keyframe State Machine - Frame step handlers
-  onGenerateSegmentFrames?: (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both') => Promise<void>
+  onGenerateSegmentFrames?: (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both', options?: {
+    customPrompt?: string
+    negativePrompt?: string
+    usePreviousEndFrame?: boolean
+    previousEndFrameUrl?: string
+  }) => Promise<void>
   onGenerateAllSegmentFrames?: (sceneId: string) => Promise<void>
   onEditFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
   onUploadFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', file: File) => void
@@ -2912,7 +2917,7 @@ interface SceneCardProps {
   onMarkWorkflowComplete?: (sceneIdx: number, stepKey: string, isComplete: boolean) => void
   onDismissStaleWarning?: (sceneIdx: number, stepKey: string) => void
   // Keyframe State Machine - Frame step handlers
-  onGenerateSegmentFrames?: (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both') => Promise<void>
+  onGenerateSegmentFrames?: (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both', options?: { customPrompt?: string; negativePrompt?: string; usePreviousEndFrame?: boolean }) => Promise<void>
   onGenerateAllSegmentFrames?: (sceneId: string) => Promise<void>
   onOpenFrameEditModal?: (sceneId: string, sceneIdx: number, segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
   onUploadFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', file: File) => void
@@ -5530,11 +5535,12 @@ function SceneCard({
                         sceneImageUrl={scene.imageUrl}
                         selectedSegmentIndex={selectedSegmentIndex}
                         onSelectSegment={setSelectedSegmentIndex}
-                        onGenerateFrames={(segmentId, frameType) => 
+                        onGenerateFrames={(segmentId, frameType, options) => 
                           onGenerateSegmentFrames?.(
                             scene.sceneId || scene.id || `scene-${sceneIdx}`,
                             segmentId,
-                            frameType
+                            frameType,
+                            options
                           ) ?? Promise.resolve()
                         }
                         onGenerateAllFrames={() => 

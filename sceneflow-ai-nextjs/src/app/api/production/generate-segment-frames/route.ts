@@ -60,6 +60,11 @@ interface FrameGenerationRequest {
   
   // Aspect ratio
   aspectRatio?: '16:9' | '9:16' | '1:1'
+  
+  // NEW: User customization options from FramePromptDialog
+  customPrompt?: string          // User-edited prompt to use instead of actionPrompt
+  negativePrompt?: string        // Elements to avoid in generation
+  usePreviousEndFrame?: boolean  // Copy previous end frame as start frame (skip generation)
 }
 
 interface FrameGenerationResponse {
@@ -114,8 +119,15 @@ export async function POST(req: NextRequest) {
       characters = [],
       sceneContext = {},
       triggerReason,
-      aspectRatio = '16:9'
+      aspectRatio = '16:9',
+      // NEW: User customization options
+      customPrompt,
+      negativePrompt,
+      usePreviousEndFrame = false
     } = body
+    
+    // Use custom prompt if provided, otherwise fall back to action prompt
+    const effectivePrompt = customPrompt?.trim() || actionPrompt
 
     // Get user session for authentication
     const session = await getServerSession(authOptions)
@@ -163,46 +175,60 @@ export async function POST(req: NextRequest) {
     if (frameType === 'start' || frameType === 'both') {
       console.log('[Generate Frames] Generating start frame...')
       
-      // Determine which reference image to use for start frame
-      let referenceImageUrl: string | undefined
-      let imageStrength = 0 // T2I mode by default
-      
-      if (transitionType === 'CONTINUE' && previousEndFrameUrl) {
-        // Continuation: use previous segment's end frame with high strength
-        referenceImageUrl = previousEndFrameUrl
-        imageStrength = Math.min(0.90, weights.imageStrength + 0.1) // Boost for continuation
-        console.log('[Generate Frames] Using previous end frame for continuation')
-      } else if (sceneImageUrl) {
-        // CUT transition: use scene image as reference
-        referenceImageUrl = sceneImageUrl
-        imageStrength = 0.75 // Moderate strength for establishing
-        console.log('[Generate Frames] Using scene image for new shot')
-      }
-      
-      // Build enhanced start frame prompt
-      startFramePrompt = enhancePrompt(
-        `Opening frame: ${actionPrompt}`,
-        {
-          actionType,
-          framePosition: 'start',
-          characters: characters.map(c => ({
-            name: c.name,
-            appearance: c.appearance,
-            ethnicity: c.ethnicity,
-            age: c.age,
-            wardrobe: c.wardrobe
-          })),
-          sceneContext: {
-            location: sceneContext.location || sceneContext.heading,
-            timeOfDay: sceneContext.timeOfDay,
-            atmosphere: sceneContext.atmosphere,
-            lighting: sceneContext.lighting
-          },
-          actionDescription: actionPrompt
+      // Check if user wants to use previous segment's end frame directly (seamless continuity)
+      if (usePreviousEndFrame && previousEndFrameUrl) {
+        console.log('[Generate Frames] Using previous end frame as start frame (seamless continuity)')
+        generatedStartFrameUrl = previousEndFrameUrl
+        startFramePrompt = 'Copied from previous segment end frame for seamless continuity'
+      } else {
+        // Generate a new start frame
+        
+        // Determine which reference image to use for start frame
+        let referenceImageUrl: string | undefined
+        let imageStrength = 0 // T2I mode by default
+        
+        if (transitionType === 'CONTINUE' && previousEndFrameUrl) {
+          // Continuation: use previous segment's end frame with high strength
+          referenceImageUrl = previousEndFrameUrl
+          imageStrength = Math.min(0.90, weights.imageStrength + 0.1) // Boost for continuation
+          console.log('[Generate Frames] Using previous end frame for continuation')
+        } else if (sceneImageUrl) {
+          // CUT transition: use scene image as reference
+          referenceImageUrl = sceneImageUrl
+          imageStrength = 0.75 // Moderate strength for establishing
+          console.log('[Generate Frames] Using scene image for new shot')
         }
-      )
-      
-      console.log('[Generate Frames] Start frame prompt:', startFramePrompt.substring(0, 150))
+        
+        // Build enhanced start frame prompt using custom prompt if provided
+        startFramePrompt = enhancePrompt(
+          `Opening frame: ${effectivePrompt}`,
+          {
+            actionType,
+            framePosition: 'start',
+            characters: characters.map(c => ({
+              name: c.name,
+              appearance: c.appearance,
+              ethnicity: c.ethnicity,
+              age: c.age,
+              wardrobe: c.wardrobe
+            })),
+            sceneContext: {
+              location: sceneContext.location || sceneContext.heading,
+              timeOfDay: sceneContext.timeOfDay,
+              atmosphere: sceneContext.atmosphere,
+              lighting: sceneContext.lighting
+            },
+            actionDescription: effectivePrompt
+          }
+        )
+        
+        // Append negative prompt to main prompt (Gemini doesn't have native negative prompt support)
+        if (negativePrompt) {
+          startFramePrompt = `${startFramePrompt}\n\nAvoid: ${negativePrompt}`
+          console.log('[Generate Frames] Added negative prompt:', negativePrompt.substring(0, 100))
+        }
+        
+        console.log('[Generate Frames] Start frame prompt:', startFramePrompt.substring(0, 150))
       
       // Prepare reference images
       // The scene image already contains characters in context - use it as the SINGLE reference
@@ -288,6 +314,7 @@ export async function POST(req: NextRequest) {
       )
       
       console.log('[Generate Frames] Start frame generated:', generatedStartFrameUrl)
+      } // End of else block for generating new start frame
     }
 
     // ========================================================================
@@ -330,6 +357,11 @@ export async function POST(req: NextRequest) {
       )
       
       console.log('[Generate Frames] End frame prompt:', endFramePrompt.substring(0, 150))
+      
+      // Append negative prompt to end frame prompt as well
+      if (negativePrompt) {
+        endFramePrompt = `${endFramePrompt}\n\nAvoid: ${negativePrompt}`
+      }
       
       // Prepare reference images for end frame
       // The start frame already contains characters in context - use it as the SINGLE reference

@@ -1666,7 +1666,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Keyframe State Machine: Generate frames for a specific segment
   // Uses the /api/production/generate-segment-frames endpoint
   const handleGenerateSegmentFrames = useCallback(
-    async (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both') => {
+    async (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both', options?: {
+      customPrompt?: string
+      negativePrompt?: string
+      usePreviousEndFrame?: boolean
+      previousEndFrameUrl?: string
+    }) => {
       const scene = script?.script?.scenes?.find((s: any) => 
         (s.id || s.sceneId || `scene-${script?.script?.scenes?.indexOf(s)}`) === sceneId
       )
@@ -1685,8 +1690,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       try {
         // Get previous segment's end frame for CONTINUE transitions
         const segmentIndex = productionData?.segments?.findIndex(s => s.segmentId === segmentId) ?? -1
-        let previousEndFrameUrl: string | undefined
-        if (segmentIndex > 0) {
+        let previousEndFrameUrl: string | undefined = options?.previousEndFrameUrl
+        if (!previousEndFrameUrl && segmentIndex > 0) {
           const prevSeg = productionData?.segments?.[segmentIndex - 1]
           previousEndFrameUrl = prevSeg?.endFrameUrl || prevSeg?.references?.endFrameUrl
         }
@@ -1705,6 +1710,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             previousEndFrameUrl,
             sceneImageUrl: scene?.imageUrl,
             startFrameUrl: segment.startFrameUrl || segment.references?.startFrameUrl,
+            // NEW: User customization options from FramePromptDialog
+            customPrompt: options?.customPrompt,
+            negativePrompt: options?.negativePrompt,
+            usePreviousEndFrame: options?.usePreviousEndFrame,
             // Enhanced character data with all fields for identity lock
             // Priority: protagonist > main > supporting (sorted before API handles slicing)
             characters: [...characters]
