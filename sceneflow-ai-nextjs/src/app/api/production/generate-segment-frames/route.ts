@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { callVertexAIImagen } from '@/lib/vertexai/client'
+// NOTE: Vertex AI Imagen import removed - using Gemini Studio exclusively due to Vertex auth issues
+// import { callVertexAIImagen } from '@/lib/vertexai/client'
 import { generateImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { getServerSession } from 'next-auth'
@@ -237,42 +238,48 @@ export async function POST(req: NextRequest) {
         })
       }
       
-      // Generate start frame
-      // Use Gemini Studio for character portrait references (better identity preservation)
-      // Use Vertex AI Imagen for scene/frame references (faster, for continuity)
+      // Generate start frame using Gemini Studio (Vertex AI was deprecated due to auth issues)
+      // Gemini Studio handles both character portraits AND scene/frame references
       let startImageDataUrl: string
-      const hasCharacterPortraitRefs = !referenceImageUrl && characters.some(c => c.referenceUrl)
       
-      if (hasCharacterPortraitRefs) {
-        // Character portrait references - use Gemini Studio for better identity
-        console.log('[Generate Frames] Using Gemini Studio for character portrait references')
-        const charRefs = characters.filter(c => c.referenceUrl).slice(0, 5) // Max 5 human refs
-        const geminiPrompt = `Generate a cinematic frame based on this description. The character(s) shown in the reference image(s) must appear in this scene with their exact appearance preserved.\n\n${startFramePrompt}\n\nIMPORTANT: Match the character's ethnicity, facial features, hair color/style, and facial hair exactly from the reference images.`
-        
-        const result = await generateImageWithGeminiStudio({
-          prompt: geminiPrompt,
-          aspectRatio: aspectRatio as '16:9' | '9:16' | '1:1',
-          imageSize: '1K',
-          referenceImages: charRefs.map(c => ({
-            imageUrl: c.referenceUrl!,
-            name: c.name
-          }))
-        })
-        startImageDataUrl = result.imageBase64
-      } else {
-        // Scene/frame references - use Vertex AI Imagen for continuity
-        startImageDataUrl = await callVertexAIImagen(startFramePrompt, {
-          aspectRatio,
-          referenceImages: startReferenceImages.length > 0 ? startReferenceImages.map(ref => ({
-            referenceId: ref.referenceId,
-            imageUrl: ref.imageUrl,
-            subjectDescription: ref.subjectDescription,
-            referenceType: 'REFERENCE_TYPE_SUBJECT' as const,
-            subjectType: 'SUBJECT_TYPE_PERSON' as const
-          })) : undefined,
-          numberOfImages: 1
+      // Collect all reference images: character portraits + scene image
+      const allReferenceImages: Array<{ imageUrl: string; name: string }> = []
+      
+      // Add character portrait references (up to 5)
+      const charRefs = characters.filter(c => c.referenceUrl).slice(0, 5)
+      for (const c of charRefs) {
+        allReferenceImages.push({
+          imageUrl: c.referenceUrl!,
+          name: c.name
         })
       }
+      
+      // Add scene/frame reference if available and we have room (Gemini supports up to 5 refs)
+      if (referenceImageUrl && allReferenceImages.length < 5) {
+        allReferenceImages.push({
+          imageUrl: referenceImageUrl,
+          name: 'Scene Reference'
+        })
+      }
+      
+      console.log(`[Generate Frames] Using Gemini Studio with ${allReferenceImages.length} reference image(s)`)
+      console.log(`[Generate Frames] References: ${allReferenceImages.map(r => r.name).join(', ') || 'none'}`)
+      
+      // Build enhanced prompt for Gemini
+      let geminiPrompt = startFramePrompt
+      if (charRefs.length > 0) {
+        geminiPrompt = `Generate a cinematic frame based on this description. The character(s) shown in the reference image(s) must appear in this scene with their exact appearance preserved.\n\n${startFramePrompt}\n\nIMPORTANT: Match the character's ethnicity, facial features, hair color/style, and facial hair exactly from the reference images.`
+      } else if (referenceImageUrl) {
+        geminiPrompt = `Generate a cinematic frame based on this description. Use the provided reference image for visual style and scene continuity.\n\n${startFramePrompt}`
+      }
+      
+      const result = await generateImageWithGeminiStudio({
+        prompt: geminiPrompt,
+        aspectRatio: aspectRatio as '16:9' | '9:16' | '1:1',
+        imageSize: '1K',
+        referenceImages: allReferenceImages.length > 0 ? allReferenceImages : undefined
+      })
+      startImageDataUrl = result.imageBase64
       
       // Upload to blob storage
       generatedStartFrameUrl = await uploadImageToBlob(
@@ -327,33 +334,28 @@ export async function POST(req: NextRequest) {
       // Prepare reference images for end frame
       // The start frame already contains characters in context - use it as the SINGLE reference
       // Adding separate character portrait refs is redundant and exceeds the 2-ref limit for 16:9
-      const endReferenceImages: Array<{
-        referenceId: number
-        imageUrl: string
-        subjectDescription: string
-      }> = [
+      // Build reference images for end frame - start frame as primary reference
+      const endReferenceImages: Array<{ imageUrl: string; name: string }> = [
         {
-          referenceId: 1,
           imageUrl: startFrameReference,
-          subjectDescription: 'Starting frame - maintain EXACT character appearance, costumes, and environment'
+          name: 'Start Frame - maintain character appearance and environment'
         }
       ]
       
       // DON'T add separate character refs - start frame already has them in context
-      console.log('[Generate Frames] End frame using start frame as single reference (characters already in context)')
+      console.log('[Generate Frames] End frame using Gemini Studio with start frame as reference')
       
-      // Generate end frame using Vertex AI Imagen (higher rate limits than Gemini API)
-      const endImageDataUrl = await callVertexAIImagen(endFramePrompt, {
-        aspectRatio,
-        referenceImages: endReferenceImages.map(ref => ({
-          referenceId: ref.referenceId,
-          imageUrl: ref.imageUrl,
-          subjectDescription: ref.subjectDescription,
-          referenceType: 'REFERENCE_TYPE_SUBJECT' as const,
-          subjectType: 'SUBJECT_TYPE_PERSON' as const
-        })),
-        numberOfImages: 1
+      // Build enhanced prompt for end frame
+      const geminiEndPrompt = `Generate the ending frame for this scene segment. The starting frame is provided as reference - maintain EXACT character appearance, costumes, and environment continuity.\n\n${endFramePrompt}\n\nCRITICAL: This is the END of the action. Show the final state after the action completes.`
+      
+      // Generate end frame using Gemini Studio
+      const endResult = await generateImageWithGeminiStudio({
+        prompt: geminiEndPrompt,
+        aspectRatio: aspectRatio as '16:9' | '9:16' | '1:1',
+        imageSize: '1K',
+        referenceImages: endReferenceImages
       })
+      const endImageDataUrl = endResult.imageBase64
       
       // Upload to blob storage
       generatedEndFrameUrl = await uploadImageToBlob(
