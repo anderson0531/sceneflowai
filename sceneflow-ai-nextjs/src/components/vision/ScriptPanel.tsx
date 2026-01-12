@@ -2371,6 +2371,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       onSegmentGenerate={onSegmentGenerate}
                       onSegmentUpload={onSegmentUpload}
                       onAddSegment={onAddSegment}
+                      onAddFullSegment={onAddFullSegment}
                       onDeleteSegment={onDeleteSegment}
                       onSegmentResize={onSegmentResize}
                       onReorderSegments={onReorderSegments}
@@ -2999,6 +3000,7 @@ function SceneCard({
   onSegmentGenerate,
   onSegmentUpload,
   onAddSegment,
+  onAddFullSegment,
   onDeleteSegment,
   onSegmentResize,
   onReorderSegments,
