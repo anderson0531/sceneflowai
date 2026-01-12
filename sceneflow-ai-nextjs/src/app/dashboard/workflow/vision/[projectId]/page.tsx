@@ -4066,7 +4066,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }
 
           // Sync description voice from dedicated character
-          const descriptionChar = charactersWithDescription.find(c => c.type === 'description')
+          const descriptionChar = charactersWithIds.find(c => c.type === 'description')
           if (descriptionChar?.voiceConfig) {
             const finalDescriptionVoice = descriptionChar.voiceConfig
             setDescriptionVoice(finalDescriptionVoice)
