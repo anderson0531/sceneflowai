@@ -8,6 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import {
@@ -406,6 +414,24 @@ export function SegmentBuilder({
   // Generation options
   const [targetDuration, setTargetDuration] = useState(6) // 4-8 seconds
   const [narrationDriven, setNarrationDriven] = useState(false)
+  
+  // Regeneration dialog state
+  const [showRegenerateDialog, setShowRegenerateDialog] = useState(false)
+  const [regenerationConfig, setRegenerationConfig] = useState({
+    targetDuration: 6,
+    narrationDriven: false,
+    preserveManualEdits: false,
+  })
+  
+  // Track scene bible hash for staleness
+  const [lastGeneratedHash, setLastGeneratedHash] = useState<string | null>(null)
+  
+  // Track if we have existing finalized segments
+  const existingSegments = productionData?.segments || []
+  const hasExistingSegments = existingSegments.length > 0
+  const hasExistingVideoAssets = existingSegments.some(
+    seg => seg.activeAssetUrl || (seg.takes && seg.takes.length > 0)
+  )
 
   // -------------------------------------------------------------------------
   // Derived State
@@ -444,6 +470,21 @@ export function SegmentBuilder({
   const totalDuration = useMemo(() => {
     return proposedSegments.reduce((sum, seg) => sum + seg.duration, 0)
   }, [proposedSegments])
+  
+  // Staleness detection - check if scene content changed since last generation
+  const isStale = useMemo(() => {
+    if (!lastGeneratedHash) return false
+    return sceneBible.contentHash !== lastGeneratedHash
+  }, [sceneBible.contentHash, lastGeneratedHash])
+  
+  // Check if existing segments are stale (for post-finalization view)
+  const existingSegmentsStale = useMemo(() => {
+    if (!hasExistingSegments) return false
+    const firstSegment = existingSegments[0]
+    const savedHash = firstSegment.promptContext?.visualDescriptionHash
+    if (!savedHash) return false
+    return savedHash !== sceneBible.contentHash
+  }, [hasExistingSegments, existingSegments, sceneBible.contentHash])
 
   // -------------------------------------------------------------------------
   // Handlers
@@ -494,6 +535,9 @@ export function SegmentBuilder({
       setProposedSegments(proposed)
       setPhase('review')
       
+      // Save the content hash for staleness detection
+      setLastGeneratedHash(sceneBible.contentHash)
+      
       // Select first segment
       if (proposed.length > 0) {
         setSelectedSegmentId(proposed[0].id)
@@ -541,7 +585,40 @@ export function SegmentBuilder({
     }))
   }, [])
 
-  const handleRegenerate = useCallback(() => {
+  // Open regeneration dialog with current settings
+  const handleOpenRegenerateDialog = useCallback(() => {
+    setRegenerationConfig({
+      targetDuration,
+      narrationDriven,
+      preserveManualEdits: false,
+    })
+    setShowRegenerateDialog(true)
+  }, [targetDuration, narrationDriven])
+  
+  // Confirm regeneration from dialog
+  const handleConfirmRegenerate = useCallback(() => {
+    // Apply config to generation options
+    setTargetDuration(regenerationConfig.targetDuration)
+    setNarrationDriven(regenerationConfig.narrationDriven)
+    
+    // Store current user-edited prompts if preserving
+    const preservedEdits = regenerationConfig.preserveManualEdits
+      ? proposedSegments
+          .filter(s => s.userEditedPrompt)
+          .map(s => ({ sequenceIndex: s.sequenceIndex, prompt: s.userEditedPrompt }))
+      : []
+    
+    // Reset state for new generation
+    setPhase('analyze')
+    setProposedSegments([])
+    setSelectedSegmentId(null)
+    setShowRegenerateDialog(false)
+    
+    toast.info('Ready for regeneration - click Generate Segments')
+  }, [regenerationConfig, proposedSegments])
+  
+  // Quick regenerate (no dialog, same settings)
+  const handleQuickRegenerate = useCallback(() => {
     setPhase('analyze')
     setProposedSegments([])
     setSelectedSegmentId(null)
@@ -636,6 +713,42 @@ export function SegmentBuilder({
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Existing Segments Warning */}
+                  {hasExistingSegments && (
+                    <Alert className={cn(
+                      "border",
+                      existingSegmentsStale 
+                        ? "border-amber-500/50 bg-amber-950/20" 
+                        : "border-blue-500/50 bg-blue-950/20"
+                    )}>
+                      <div className="flex items-start gap-2">
+                        {existingSegmentsStale ? (
+                          <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5" />
+                        ) : (
+                          <Layers className="w-4 h-4 text-blue-500 mt-0.5" />
+                        )}
+                        <div className="flex-1">
+                          <p className={cn(
+                            "text-sm font-medium",
+                            existingSegmentsStale ? "text-amber-400" : "text-blue-400"
+                          )}>
+                            {existingSegments.length} Existing Segments
+                            {existingSegmentsStale && " (Scene Changed)"}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {hasExistingVideoAssets ? (
+                              <>
+                                <span className="text-red-400 font-medium">Warning:</span> Regenerating will discard {existingSegments.filter(s => s.activeAssetUrl || s.takes?.length).length} generated video assets.
+                              </>
+                            ) : (
+                              "Regenerating will replace current segment configuration."
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    </Alert>
+                  )}
+
                   {/* Duration Setting */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Target Segment Duration</label>
@@ -687,11 +800,17 @@ export function SegmentBuilder({
                     disabled={isAnalyzing}
                     className="w-full"
                     size="lg"
+                    variant={hasExistingVideoAssets ? 'destructive' : 'default'}
                   >
                     {isAnalyzing ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         Analyzing Scene...
+                      </>
+                    ) : hasExistingSegments ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Regenerate Segments
                       </>
                     ) : (
                       <>
@@ -750,9 +869,20 @@ export function SegmentBuilder({
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" onClick={handleRegenerate}>
+                  {/* Staleness Warning */}
+                  {isStale && (
+                    <Badge variant="outline" className="text-amber-500 border-amber-500/50 gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      Scene Changed
+                    </Badge>
+                  )}
+                  <Button variant="outline" size="sm" onClick={handleQuickRegenerate}>
                     <RefreshCw className="w-4 h-4 mr-2" />
-                    Regenerate
+                    Quick Regen
+                  </Button>
+                  <Button variant="outline" onClick={handleOpenRegenerateDialog}>
+                    <Settings2 className="w-4 h-4 mr-2" />
+                    Regenerate...
                   </Button>
                   <Button
                     onClick={() => setPhase('finalize')}
@@ -841,6 +971,115 @@ export function SegmentBuilder({
           )}
         </div>
       </div>
+
+      {/* Regeneration Configuration Dialog */}
+      <Dialog open={showRegenerateDialog} onOpenChange={setShowRegenerateDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RefreshCw className="w-5 h-5 text-primary" />
+              Regenerate Segments
+            </DialogTitle>
+            <DialogDescription>
+              Configure options for segment regeneration. Current proposals will be discarded.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Staleness Warning */}
+            {isStale && (
+              <Alert className="border-amber-500/50 bg-amber-950/20">
+                <AlertTriangle className="w-4 h-4 text-amber-500" />
+                <AlertDescription className="text-amber-400">
+                  Scene content has changed since last generation. Regeneration recommended.
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {/* Duration Setting */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Target Segment Duration</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="range"
+                  min={4}
+                  max={8}
+                  step={1}
+                  value={regenerationConfig.targetDuration}
+                  onChange={e => setRegenerationConfig(prev => ({
+                    ...prev,
+                    targetDuration: parseInt(e.target.value)
+                  }))}
+                  className="flex-1"
+                />
+                <span className="text-sm font-mono w-12">{regenerationConfig.targetDuration}s</span>
+              </div>
+            </div>
+
+            {/* Narration-Driven Toggle */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">Narration-Driven</p>
+                <p className="text-xs text-muted-foreground">
+                  Prioritize narration timing for segment boundaries
+                </p>
+              </div>
+              <Button
+                variant={regenerationConfig.narrationDriven ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setRegenerationConfig(prev => ({
+                  ...prev,
+                  narrationDriven: !prev.narrationDriven
+                }))}
+              >
+                {regenerationConfig.narrationDriven ? 'On' : 'Off'}
+              </Button>
+            </div>
+
+            {/* Preserve Manual Edits Toggle */}
+            {proposedSegments.some(s => s.userEditedPrompt) && (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Preserve Manual Edits</p>
+                  <p className="text-xs text-muted-foreground">
+                    Attempt to reapply your prompt edits to matching segments
+                  </p>
+                </div>
+                <Button
+                  variant={regenerationConfig.preserveManualEdits ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setRegenerationConfig(prev => ({
+                    ...prev,
+                    preserveManualEdits: !prev.preserveManualEdits
+                  }))}
+                >
+                  {regenerationConfig.preserveManualEdits ? 'Yes' : 'No'}
+                </Button>
+              </div>
+            )}
+
+            {/* Warning about discarding current work */}
+            <Alert>
+              <AlertCircle className="w-4 h-4" />
+              <AlertDescription>
+                {proposedSegments.filter(s => s.isAdjusted).length > 0 
+                  ? `${proposedSegments.filter(s => s.isAdjusted).length} adjusted segment(s) will be discarded.`
+                  : 'Current segment proposals will be discarded.'}
+              </AlertDescription>
+            </Alert>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowRegenerateDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmRegenerate}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Regenerate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
