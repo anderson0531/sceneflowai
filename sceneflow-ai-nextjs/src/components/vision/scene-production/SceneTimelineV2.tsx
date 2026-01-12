@@ -18,7 +18,7 @@ import { createPortal } from 'react-dom'
 import { 
   Play, Pause, Volume2, VolumeX, Mic, Music, Zap, 
   SkipBack, SkipForward, Film, Plus, Trash2, X, Maximize2, Minimize2, 
-  MessageSquare, GripVertical, Globe, AlertCircle, Download, Layers, Magnet, Link2
+  MessageSquare, GripVertical, Globe, AlertCircle, Download, Layers, Magnet, Link2, Pencil
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
@@ -840,6 +840,35 @@ export function SceneTimelineV2({
             </span>
           )}
         </div>
+        
+        {/* Edit/Delete buttons - visible on hover for visual segments only */}
+        {trackType === 'visual' && (
+          <div className="absolute top-0.5 right-0.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto z-30">
+            {onOpenSegmentPromptDialog && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onOpenSegmentPromptDialog(clip.id); }}
+                className="p-0.5 rounded bg-black/60 hover:bg-sf-primary/80 text-white transition-colors"
+                title="Edit segment prompt"
+              >
+                <Pencil className="w-2.5 h-2.5" />
+              </button>
+            )}
+            {onDeleteSegment && segments.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (window.confirm('Delete this segment?')) onDeleteSegment(clip.id);
+                }}
+                className="p-0.5 rounded bg-black/60 hover:bg-red-500/80 text-white transition-colors"
+                title="Delete segment"
+              >
+                <Trash2 className="w-2.5 h-2.5" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
     )
   }
