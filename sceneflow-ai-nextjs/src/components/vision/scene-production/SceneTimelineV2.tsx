@@ -844,21 +844,27 @@ export function SceneTimelineV2({
         {/* Edit/Delete buttons - visible on hover for visual segments only */}
         {trackType === 'visual' && (
           <div className="absolute top-0.5 right-0.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto z-30">
-            {onOpenSegmentPromptDialog && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onOpenSegmentPromptDialog(clip.id); }}
-                className="p-0.5 rounded bg-black/60 hover:bg-sf-primary/80 text-white transition-colors"
-                title="Edit segment prompt"
-              >
-                <Pencil className="w-2.5 h-2.5" />
-              </button>
-            )}
-            {onDeleteSegment && segments.length > 1 && (
+            <button
+              type="button"
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                // Select segment to edit in side panel
+                onSegmentSelect(clip.id);
+              }}
+              className="p-0.5 rounded bg-black/60 hover:bg-sf-primary/80 text-white transition-colors"
+              title="Edit segment"
+            >
+              <Pencil className="w-2.5 h-2.5" />
+            </button>
+            {onDeleteSegment && (
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (segments.length <= 1) {
+                    toast.error('Cannot delete the only segment');
+                    return;
+                  }
                   if (window.confirm('Delete this segment?')) onDeleteSegment(clip.id);
                 }}
                 className="p-0.5 rounded bg-black/60 hover:bg-red-500/80 text-white transition-colors"

@@ -5816,8 +5816,14 @@ function SceneCard({
             existingSegments={sceneProductionData?.segments || []}
             onAddSegment={(newSegment) => {
               const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
+              console.log('[ScriptPanel] AddSegmentDialog callback:', { sceneId, hasHandler: !!onAddFullSegment })
               // Use onAddFullSegment to properly append the complete segment
-              onAddFullSegment?.(sceneId, newSegment)
+              if (onAddFullSegment) {
+                onAddFullSegment(sceneId, newSegment)
+                console.log('[ScriptPanel] onAddFullSegment called successfully')
+              } else {
+                console.error('[ScriptPanel] onAddFullSegment is NOT defined!')
+              }
             }}
           />
           

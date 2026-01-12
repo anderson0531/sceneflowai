@@ -403,7 +403,9 @@ export function AddSegmentDialog({
       takes: [],
     }
 
+    console.log('[AddSegmentDialog] Creating segment:', newSegment)
     onAddSegment(newSegment)
+    console.log('[AddSegmentDialog] Segment callback fired, closing dialog')
     onOpenChange(false)
     
     // Reset form
