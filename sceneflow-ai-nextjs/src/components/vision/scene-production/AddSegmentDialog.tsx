@@ -873,7 +873,7 @@ export function AddSegmentDialog({
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">Dialogue Lines</span>
-                <span className="font-mono">{selectedDialogue.length}</span>
+                <span className="font-mono">{selectedDialogueTexts.size}</span>
               </div>
             </div>
           </div>
