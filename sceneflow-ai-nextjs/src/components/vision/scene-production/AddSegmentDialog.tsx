@@ -39,6 +39,7 @@ import {
   Mic,
 } from 'lucide-react'
 import { SceneSegment, VideoGenerationMethod } from './types'
+import { VoiceSelector } from '@/components/tts/VoiceSelector'
 
 // ============================================================================
 // Types
@@ -133,10 +134,11 @@ interface PromptBuilderOptions {
     audio: boolean
   }
   sceneDirection: SceneDirection
-  selectedDialogue: string[] // IDs of selected dialogue lines
+  selectedDialogueTexts: Map<string, string> // Map of line ID to edited text
   dialogueLines: DialogueLine[]
   includeNarration: boolean
-  narrationText: string | null
+  editedNarrationText: string // User-edited narration text
+  narratorVoiceName: string | null // Selected narrator voice name
   characters: Array<{ id: string; name: string; description?: string }>
   additionalNotes: string
 }
@@ -161,9 +163,10 @@ function buildSegmentPrompt(options: PromptBuilderOptions): string {
   }
 
   // 3. Character/Subject - extract from selected dialogue or talent direction
+  const selectedDialogueIds = Array.from(options.selectedDialogueTexts.keys())
   const speakingCharacters = new Set(
     options.dialogueLines
-      .filter(d => options.selectedDialogue.includes(d.id))
+      .filter(d => selectedDialogueIds.includes(d.id))
       .map(d => d.character)
   )
   
@@ -180,16 +183,23 @@ function buildSegmentPrompt(options: PromptBuilderOptions): string {
     parts.push(options.sceneDirection.talent)
   }
 
-  // 4. Dialogue - format for Veo 3.1 speech synthesis
+  // 4. Dialogue - format for Veo 3.1 speech synthesis (using edited text)
   const selectedDialogueLines = options.dialogueLines.filter(d => 
-    options.selectedDialogue.includes(d.id)
+    selectedDialogueIds.includes(d.id)
   )
   
   if (selectedDialogueLines.length > 0) {
     for (const line of selectedDialogueLines) {
+      const editedText = options.selectedDialogueTexts.get(line.id) || line.text
       const emotionNote = line.emotion ? ` with ${line.emotion} delivery` : ''
-      parts.push(`${line.character} speaks${emotionNote}, "${line.text}"`)
+      parts.push(`${line.character} speaks${emotionNote}, "${editedText}"`)
     }
+  }
+
+  // 4.5 Narration voiceover (if included)
+  if (options.includeNarration && options.editedNarrationText.trim()) {
+    const voiceNote = options.narratorVoiceName ? ` (${options.narratorVoiceName} voice)` : ''
+    parts.push(`Voiceover narration${voiceNote}: "${options.editedNarrationText.trim()}"`)
   }
 
   // 5. Camera Movement
@@ -231,25 +241,22 @@ function buildSegmentPrompt(options: PromptBuilderOptions): string {
 // ============================================================================
 
 function estimateDuration(
-  selectedDialogue: string[],
+  selectedDialogueTexts: Map<string, string>,
   dialogueLines: DialogueLine[],
   includeNarration: boolean,
-  narrationText: string | null
+  editedNarrationText: string
 ): number {
   const WORDS_PER_SECOND = 2.5
   let totalWords = 0
 
-  // Count dialogue words
-  for (const id of selectedDialogue) {
-    const line = dialogueLines.find(d => d.id === id)
-    if (line) {
-      totalWords += line.text.split(/\s+/).length
-    }
+  // Count dialogue words from edited texts
+  for (const [id, editedText] of selectedDialogueTexts) {
+    totalWords += editedText.split(/\s+/).length
   }
 
-  // Count narration words (if included - though typically not in video prompt)
-  if (includeNarration && narrationText) {
-    totalWords += narrationText.split(/\s+/).length
+  // Count narration words (now included in prompt as voiceover)
+  if (includeNarration && editedNarrationText) {
+    totalWords += editedNarrationText.split(/\s+/).length
   }
 
   // Estimate: words / 2.5 words per second, with minimum of 4s and max of 8s
@@ -293,11 +300,14 @@ export function AddSegmentDialog({
     audio: true,
   })
   
-  // Dialogue selection
-  const [selectedDialogue, setSelectedDialogue] = useState<string[]>([])
+  // Dialogue selection - Map of line ID to edited text (allows partial text editing)
+  const [selectedDialogueTexts, setSelectedDialogueTexts] = useState<Map<string, string>>(new Map())
   
-  // Narration toggle (note: narration is usually a separate audio track, not in video)
+  // Narration - editable text and voice selection
   const [includeNarration, setIncludeNarration] = useState(false)
+  const [editedNarrationText, setEditedNarrationText] = useState(narrationText || '')
+  const [narratorVoiceId, setNarratorVoiceId] = useState<string | null>(null)
+  const [narratorVoiceName, setNarratorVoiceName] = useState<string | null>(null)
   
   // Duration
   const [duration, setDuration] = useState(6)
@@ -315,13 +325,18 @@ export function AddSegmentDialog({
   // Effects
   // -------------------------------------------------------------------------
   
-  // Auto-estimate duration when dialogue selection changes
+  // Auto-estimate duration when dialogue/narration changes
   useEffect(() => {
     if (autoEstimateDuration) {
-      const estimated = estimateDuration(selectedDialogue, dialogueLines, includeNarration, narrationText)
+      const estimated = estimateDuration(selectedDialogueTexts, dialogueLines, includeNarration, editedNarrationText)
       setDuration(estimated)
     }
-  }, [selectedDialogue, dialogueLines, includeNarration, narrationText, autoEstimateDuration])
+  }, [selectedDialogueTexts, dialogueLines, includeNarration, editedNarrationText, autoEstimateDuration])
+  
+  // Reset narration text when prop changes
+  useEffect(() => {
+    setEditedNarrationText(narrationText || '')
+  }, [narrationText])
 
   // -------------------------------------------------------------------------
   // Computed
@@ -336,17 +351,18 @@ export function AddSegmentDialog({
       visualDescription,
       selectedDirection,
       sceneDirection,
-      selectedDialogue,
+      selectedDialogueTexts,
       dialogueLines,
       includeNarration,
-      narrationText,
+      editedNarrationText,
+      narratorVoiceName,
       characters,
       additionalNotes,
     })
   }, [
     shotType, cameraMovement, lens, visualDescription, selectedDirection,
-    sceneDirection, selectedDialogue, dialogueLines, includeNarration,
-    narrationText, characters, additionalNotes
+    sceneDirection, selectedDialogueTexts, dialogueLines, includeNarration,
+    editedNarrationText, narratorVoiceName, characters, additionalNotes
   ])
 
   // Calculate start time from existing segments
@@ -364,13 +380,30 @@ export function AddSegmentDialog({
     setSelectedDirection(prev => ({ ...prev, [key]: !prev[key] }))
   }, [])
 
-  const handleDialogueToggle = useCallback((id: string) => {
-    setSelectedDialogue(prev => 
-      prev.includes(id) ? prev.filter(d => d !== id) : [...prev, id]
-    )
+  // Toggle dialogue selection and initialize/remove edited text
+  const handleDialogueToggle = useCallback((id: string, originalText: string) => {
+    setSelectedDialogueTexts(prev => {
+      const newMap = new Map(prev)
+      if (newMap.has(id)) {
+        newMap.delete(id)
+      } else {
+        newMap.set(id, originalText)
+      }
+      return newMap
+    })
+  }, [])
+  
+  // Update edited dialogue text
+  const handleDialogueTextChange = useCallback((id: string, newText: string) => {
+    setSelectedDialogueTexts(prev => {
+      const newMap = new Map(prev)
+      newMap.set(id, newText)
+      return newMap
+    })
   }, [])
 
   const handleCreate = useCallback(() => {
+    const selectedDialogueIds = Array.from(selectedDialogueTexts.keys())
     const newSegment: SceneSegment = {
       segmentId: `seg_${sceneId}_${existingSegments.length + 1}_${Date.now()}`,
       sequenceIndex: existingSegments.length,
@@ -385,13 +418,13 @@ export function AddSegmentDialog({
       triggerReason: 'User-created segment',
       shotType: SHOT_TYPES.find(s => s.value === shotType)?.label,
       cameraMovement: CAMERA_MOVEMENTS.find(m => m.value === cameraMovement)?.label,
-      dialogueLineIds: selectedDialogue,
+      dialogueLineIds: selectedDialogueIds,
       references: {
         startFrameUrl: generationMethod === 'I2V' ? sceneFrameUrl : null,
         endFrameUrl: null,
         useSceneFrame: generationMethod === 'I2V',
         characterRefs: characters
-          .filter(c => selectedDialogue.some(id => {
+          .filter(c => selectedDialogueIds.some(id => {
             const line = dialogueLines.find(d => d.id === id)
             return line?.character.toLowerCase() === c.name.toLowerCase()
           }))
@@ -412,14 +445,17 @@ export function AddSegmentDialog({
     setShotType('medium')
     setCameraMovement('static')
     setLens('50mm')
-    setSelectedDialogue([])
+    setSelectedDialogueTexts(new Map())
     setIncludeNarration(false)
+    setEditedNarrationText(narrationText || '')
+    setNarratorVoiceId(null)
+    setNarratorVoiceName(null)
     setDuration(6)
     setAdditionalNotes('')
   }, [
     sceneId, existingSegments, nextStartTime, duration, promptPreview,
-    generationMethod, shotType, cameraMovement, selectedDialogue,
-    dialogueLines, characters, sceneFrameUrl, onAddSegment, onOpenChange
+    generationMethod, shotType, cameraMovement, selectedDialogueTexts,
+    dialogueLines, characters, sceneFrameUrl, onAddSegment, onOpenChange, narrationText
   ])
 
   // -------------------------------------------------------------------------
@@ -566,7 +602,7 @@ export function AddSegmentDialog({
                 </div>
               </div>
 
-              {/* Dialogue Selection */}
+              {/* Dialogue Selection with Editable Text */}
               <div className="space-y-3">
                 <h3 className="text-sm font-medium flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-emerald-400" />
@@ -576,46 +612,71 @@ export function AddSegmentDialog({
                   </Badge>
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  Select dialogue for this segment. Veo 3.1 will generate the character's voice.
+                  Select dialogue for this segment. Click to select, then edit the text to use only portions. Veo 3.1 will generate the character's voice.
                 </p>
                 
                 {dialogueLines.length > 0 ? (
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {dialogueLines.map((line, idx) => (
-                      <div
-                        key={line.id}
-                        className={cn(
-                          "flex items-start gap-2 p-2 rounded-lg border cursor-pointer transition-colors",
-                          selectedDialogue.includes(line.id)
-                            ? "border-emerald-500/50 bg-emerald-950/20"
-                            : "border-border hover:border-muted-foreground/50"
-                        )}
-                        onClick={() => handleDialogueToggle(line.id)}
-                      >
-                        <Checkbox
-                          checked={selectedDialogue.includes(line.id)}
-                          className="mt-0.5"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium text-emerald-400">
-                              {line.character}
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {dialogueLines.map((line, idx) => {
+                      const isSelected = selectedDialogueTexts.has(line.id)
+                      const editedText = selectedDialogueTexts.get(line.id) || line.text
+                      return (
+                        <div
+                          key={line.id}
+                          className={cn(
+                            "rounded-lg border transition-colors",
+                            isSelected
+                              ? "border-emerald-500/50 bg-emerald-950/20"
+                              : "border-border hover:border-muted-foreground/50"
+                          )}
+                        >
+                          <div 
+                            className="flex items-start gap-2 p-2 cursor-pointer"
+                            onClick={() => handleDialogueToggle(line.id, line.text)}
+                          >
+                            <Checkbox
+                              checked={isSelected}
+                              className="mt-0.5"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium text-emerald-400">
+                                  {line.character}
+                                </span>
+                                {line.emotion && (
+                                  <Badge variant="outline" className="text-[10px]">
+                                    {line.emotion}
+                                  </Badge>
+                                )}
+                              </div>
+                              {!isSelected && (
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  "{line.text}"
+                                </p>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-muted-foreground">
+                              #{idx + 1}
                             </span>
-                            {line.emotion && (
-                              <Badge variant="outline" className="text-[10px]">
-                                {line.emotion}
-                              </Badge>
-                            )}
                           </div>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            "{line.text}"
-                          </p>
+                          {/* Editable text area when selected */}
+                          {isSelected && (
+                            <div className="px-2 pb-2">
+                              <Textarea
+                                value={editedText}
+                                onChange={(e) => handleDialogueTextChange(line.id, e.target.value)}
+                                className="text-xs min-h-[60px] bg-background/50"
+                                placeholder="Edit dialogue text to use in this segment..."
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <p className="text-[10px] text-muted-foreground mt-1">
+                                Edit to use only the portion needed for this segment (&lt;8s)
+                              </p>
+                            </div>
+                          )}
                         </div>
-                        <span className="text-[10px] text-muted-foreground">
-                          #{idx + 1}
-                        </span>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 ) : (
                   <div className="text-xs text-muted-foreground/50 italic p-3 text-center border border-dashed rounded-lg">
@@ -624,31 +685,75 @@ export function AddSegmentDialog({
                 )}
               </div>
 
-              {/* Narration Toggle */}
+              {/* Narration with Editable Text and Voice Selection */}
               {narrationText && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div
                     className={cn(
-                      "flex items-start gap-2 p-3 rounded-lg border cursor-pointer transition-colors",
+                      "rounded-lg border transition-colors",
                       includeNarration
                         ? "border-blue-500/50 bg-blue-950/20"
                         : "border-border hover:border-muted-foreground/50"
                     )}
-                    onClick={() => setIncludeNarration(!includeNarration)}
                   >
-                    <Checkbox checked={includeNarration} className="mt-0.5" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <Mic className="w-3.5 h-3.5 text-blue-400" />
-                        <span className="text-xs font-medium">Include Narration Context</span>
+                    <div 
+                      className="flex items-start gap-2 p-3 cursor-pointer"
+                      onClick={() => setIncludeNarration(!includeNarration)}
+                    >
+                      <Checkbox checked={includeNarration} className="mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <Mic className="w-3.5 h-3.5 text-blue-400" />
+                          <span className="text-xs font-medium">Include Narration Voiceover</span>
+                        </div>
+                        {!includeNarration && (
+                          <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2">
+                            {narrationText}
+                          </p>
+                        )}
                       </div>
-                      <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2">
-                        {narrationText}
-                      </p>
-                      <p className="text-[10px] text-amber-400 mt-1">
-                        Note: Narration is typically a separate audio track, not in video.
-                      </p>
                     </div>
+                    
+                    {/* Editable narration text and voice selector when enabled */}
+                    {includeNarration && (
+                      <div className="px-3 pb-3 space-y-3">
+                        <div>
+                          <Label className="text-xs text-muted-foreground mb-1">Narration Text (editable)</Label>
+                          <Textarea
+                            value={editedNarrationText}
+                            onChange={(e) => setEditedNarrationText(e.target.value)}
+                            className="text-xs min-h-[80px] bg-background/50"
+                            placeholder="Edit narration text for this segment..."
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <p className="text-[10px] text-muted-foreground mt-1">
+                            Edit to use only the portion of narration for this segment
+                          </p>
+                        </div>
+                        
+                        {/* Narrator Voice Selection */}
+                        <div>
+                          <Label className="text-xs text-muted-foreground mb-1">Narrator Voice</Label>
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <VoiceSelector
+                              provider="elevenlabs"
+                              selectedVoiceId={narratorVoiceId || undefined}
+                              onSelectVoice={(voiceId, voiceName) => {
+                                setNarratorVoiceId(voiceId)
+                                setNarratorVoiceName(voiceName)
+                              }}
+                              compact={true}
+                              className="w-full"
+                            />
+                          </div>
+                          {narratorVoiceName && (
+                            <p className="text-[10px] text-blue-400 mt-1">
+                              Selected: {narratorVoiceName}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

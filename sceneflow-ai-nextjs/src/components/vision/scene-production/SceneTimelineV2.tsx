@@ -843,7 +843,7 @@ export function SceneTimelineV2({
         
         {/* Edit/Delete buttons - visible on hover for visual segments only */}
         {trackType === 'visual' && (
-          <div className="absolute top-0.5 right-0.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto z-30">
+          <div className="absolute top-1 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto z-30">
             <button
               type="button"
               onClick={(e) => { 
@@ -851,10 +851,10 @@ export function SceneTimelineV2({
                 // Select segment to edit in side panel
                 onSegmentSelect(clip.id);
               }}
-              className="p-0.5 rounded bg-black/60 hover:bg-sf-primary/80 text-white transition-colors"
+              className="p-1 rounded bg-black/70 hover:bg-sf-primary/80 text-white transition-colors shadow-md"
               title="Edit segment"
             >
-              <Pencil className="w-2.5 h-2.5" />
+              <Pencil className="w-3.5 h-3.5" />
             </button>
             {onDeleteSegment && (
               <button
@@ -867,10 +867,10 @@ export function SceneTimelineV2({
                   }
                   if (window.confirm('Delete this segment?')) onDeleteSegment(clip.id);
                 }}
-                className="p-0.5 rounded bg-black/60 hover:bg-red-500/80 text-white transition-colors"
+                className="p-1 rounded bg-black/70 hover:bg-red-500/80 text-white transition-colors shadow-md"
                 title="Delete segment"
               >
-                <Trash2 className="w-2.5 h-2.5" />
+                <Trash2 className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
