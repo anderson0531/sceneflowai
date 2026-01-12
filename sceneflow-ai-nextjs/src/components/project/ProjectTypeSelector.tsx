@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { Clock, Film, Video, Zap, BookOpen, Target, Users, DollarSign } from 'lucide-react'
 import type { ProjectType, StoryStructure } from '@/types/SceneFlow'
 

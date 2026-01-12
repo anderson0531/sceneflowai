@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { Bell, Mail, Smartphone } from 'lucide-react'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 
 export default function NotificationsPage() {
   return (

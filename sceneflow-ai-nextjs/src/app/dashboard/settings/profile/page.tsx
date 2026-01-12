@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 import { User, Mail, UserCircle, Save, Loader } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
 
 export default function ProfilePage() {

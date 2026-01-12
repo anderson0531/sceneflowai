@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui/Card";
+import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
 export const ImagePlaceholder = ({ title }: { title: string }) => {

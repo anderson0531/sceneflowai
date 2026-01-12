@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useGuideStore } from '@/store/useGuideStore';
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/utils";

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useStore } from '@/store/useStore'
 import { ProjectBibleEditor } from '@/components/project/ProjectBibleEditor'
 import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
+import { Card } from '@/components/ui/card'
 import { BookOpen, Plus, Search, Download, Upload, ArrowLeft, Edit3, Eye, Sparkles } from 'lucide-react'
 
 export function ClientPage() {

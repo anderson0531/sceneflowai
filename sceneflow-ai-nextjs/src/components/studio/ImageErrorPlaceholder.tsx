@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui/Card";
+import { Card } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 
 export const ImageErrorPlaceholder = ({ error }: { error: string }) => {

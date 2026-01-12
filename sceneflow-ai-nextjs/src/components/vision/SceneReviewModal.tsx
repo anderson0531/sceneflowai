@@ -2,7 +2,7 @@
 
 import { X, Download, RefreshCw, Loader, Star } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface SceneReview {
   overallScore: number
