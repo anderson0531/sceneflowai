@@ -200,6 +200,59 @@ function extractSceneBible(scene: any, sceneNumber: number, characters: any[]): 
   }
 }
 
+/**
+ * Extract audio metadata from scene for intelligent segmentation
+ * This includes narration duration and dialogue timing for audio-aligned segments
+ */
+function extractAudioMetadata(scene: any, selectedLanguage = 'en-US'): {
+  narrationDurationSeconds: number | null
+  narrationText: string | null
+  narrationAudioUrl: string | null
+  dialogueDurations: Array<{ character: string; text: string; durationSeconds: number }>
+  totalAudioDurationSeconds: number
+} {
+  // Extract narration metadata
+  const narrationAudio = scene.narrationAudio?.[selectedLanguage] || scene.narrationAudio?.['en-US'] || {}
+  const narrationDurationSeconds = scene.narrationDuration 
+    || narrationAudio.duration 
+    || (scene.narrationUrl && 10) // Default estimate if URL exists but no duration
+    || null
+  const narrationText = scene.narration || null
+  const narrationAudioUrl = scene.narrationUrl || narrationAudio.url || null
+
+  // Extract dialogue durations
+  const dialogueAudioArray = Array.isArray(scene.dialogueAudio)
+    ? scene.dialogueAudio
+    : (scene.dialogueAudio?.[selectedLanguage] || [])
+  
+  const dialogueDurations = (scene.dialogue || []).map((d: any, idx: number) => {
+    const audioData = dialogueAudioArray[idx] || {}
+    const text = d.text || d.dialogue || d.line || ''
+    // Estimate: ~2.5 words per second if no duration available
+    const estimatedDuration = text.split(/\s+/).length / 2.5
+    return {
+      character: d.character || d.name || 'UNKNOWN',
+      text,
+      durationSeconds: audioData.duration || estimatedDuration,
+    }
+  })
+
+  // Calculate total audio duration
+  const totalDialogueDuration = dialogueDurations.reduce((acc: number, d) => acc + d.durationSeconds, 0)
+  const totalAudioDurationSeconds = Math.max(
+    narrationDurationSeconds || 0,
+    totalDialogueDuration
+  ) + 2 // Buffer for gaps between dialogue
+
+  return {
+    narrationDurationSeconds,
+    narrationText,
+    narrationAudioUrl,
+    dialogueDurations,
+    totalAudioDurationSeconds,
+  }
+}
+
 // ============================================================================
 // Scene Bible Panel Component
 // ============================================================================
@@ -442,6 +495,18 @@ export function SegmentBuilder({
     return extractSceneBible(scene, sceneNumber, references.characters)
   }, [scene, sceneNumber, references.characters])
 
+  // Extract audio metadata for intelligent segmentation
+  const audioMetadata = useMemo(() => {
+    return extractAudioMetadata(scene)
+  }, [scene])
+
+  // Auto-enable narration-driven mode if scene has narration audio
+  useEffect(() => {
+    if (audioMetadata.narrationDurationSeconds && audioMetadata.narrationDurationSeconds > 0) {
+      setNarrationDriven(true)
+    }
+  }, [audioMetadata.narrationDurationSeconds])
+
   // Selected segment for editing
   const selectedSegment = useMemo(() => {
     return proposedSegments.find(s => s.id === selectedSegmentId) || null
@@ -503,6 +568,10 @@ export function SegmentBuilder({
           projectId,
           focusMode: 'balanced',
           narrationDriven,
+          // Pass audio metadata for intelligent segmentation
+          narrationDurationSeconds: audioMetadata.narrationDurationSeconds,
+          narrationText: audioMetadata.narrationText,
+          narrationAudioUrl: audioMetadata.narrationAudioUrl,
           // Request preview mode (segments not committed)
           previewMode: true,
         }),
@@ -551,7 +620,7 @@ export function SegmentBuilder({
     } finally {
       setIsAnalyzing(false)
     }
-  }, [sceneId, projectId, targetDuration, narrationDriven])
+  }, [sceneId, projectId, targetDuration, narrationDriven, audioMetadata, sceneBible.contentHash])
 
   const handlePromptEdit = useCallback((segmentId: string, newPrompt: string) => {
     setProposedSegments(prev => prev.map(seg => {
@@ -691,14 +760,14 @@ export function SegmentBuilder({
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 min-w-0 overflow-hidden">
         {/* Left Panel: Scene Bible (Read-Only) */}
-        <div className="w-80 border-r border-border p-4 overflow-y-auto">
+        <div className="w-64 flex-shrink-0 border-r border-border p-4 overflow-y-auto">
           <SceneBiblePanel bible={sceneBible} />
         </div>
 
         {/* Center Panel: Timeline & Segments */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
           {/* Phase: Analyze */}
           {phase === 'analyze' && (
             <div className="flex-1 flex items-center justify-center p-8">

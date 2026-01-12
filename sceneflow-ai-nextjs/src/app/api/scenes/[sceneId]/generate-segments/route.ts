@@ -483,6 +483,7 @@ function buildComprehensiveSceneData(
 /**
  * Analyze narration text to identify visual beats and estimate timing
  * Used for narration-driven segmentation to create segments that illustrate the narration
+ * Enforces Veo 3.1's 8-second maximum segment duration while splitting at natural sentence boundaries
  */
 function analyzeNarrationBeats(
   narrationText: string,
@@ -492,9 +493,14 @@ function analyzeNarrationBeats(
     return []
   }
   
-  // Split narration into sentences
+  // Veo 3.1 constraint: max 8 seconds per segment
+  const MAX_SEGMENT_DURATION = 8.0
+  const TARGET_SEGMENT_DURATION = 6.0 // Target 6 seconds to leave room for timing variance
+  const MIN_SEGMENT_DURATION = 3.0 // Minimum segment to avoid too-short clips
+  
+  // Split narration into sentences (preserving punctuation context)
   const sentences = narrationText
-    .split(/[.!?]+/)
+    .split(/(?<=[.!?])\s+/)
     .map(s => s.trim())
     .filter(s => s.length > 0)
   
@@ -513,8 +519,7 @@ function analyzeNarrationBeats(
   const totalEstimatedDuration = sentenceData.reduce((acc, s) => acc + s.duration, 0)
   const durationScale = totalDurationSeconds / Math.max(totalEstimatedDuration, 1)
   
-  // Group sentences into beats (target 6-8 seconds per beat)
-  const targetBeatDuration = 7
+  // Group sentences into beats, enforcing MAX_SEGMENT_DURATION
   const beats: Array<{ text: string; estimatedDuration: number; visualSuggestion: string; emotionalTone: string }> = []
   
   let currentBeat = { sentences: [] as string[], duration: 0 }
@@ -522,8 +527,86 @@ function analyzeNarrationBeats(
   for (const data of sentenceData) {
     const scaledDuration = data.duration * durationScale
     
-    // If adding this sentence would exceed target, start new beat
-    if (currentBeat.duration + scaledDuration > targetBeatDuration * 1.3 && currentBeat.sentences.length > 0) {
+    // Case 1: Single sentence exceeds max - split at phrase/clause boundaries
+    if (scaledDuration > MAX_SEGMENT_DURATION) {
+      // First, finish current beat if any
+      if (currentBeat.sentences.length > 0) {
+        beats.push({
+          text: currentBeat.sentences.join(' '),
+          estimatedDuration: Math.min(currentBeat.duration, MAX_SEGMENT_DURATION),
+          visualSuggestion: generateVisualSuggestion(currentBeat.sentences.join(' ')),
+          emotionalTone: detectEmotionalTone(currentBeat.sentences.join(' '))
+        })
+        currentBeat = { sentences: [], duration: 0 }
+      }
+      
+      // Split long sentence at clause boundaries (comma, semicolon, em-dash, or 'and')
+      const clauses = data.sentence
+        .split(/(?<=[,;—–])\s*|\s+(?=and\s)/i)
+        .map(c => c.trim())
+        .filter(c => c.length > 0)
+      
+      if (clauses.length > 1) {
+        // Combine clauses into chunks under max duration
+        let clauseChunk: string[] = []
+        let chunkDuration = 0
+        const clauseWordsPerSecond = 2.5
+        
+        for (const clause of clauses) {
+          const clauseWords = clause.split(/\s+/).length
+          const clauseDuration = (clauseWords / clauseWordsPerSecond) * durationScale
+          
+          if (chunkDuration + clauseDuration > MAX_SEGMENT_DURATION && clauseChunk.length > 0) {
+            beats.push({
+              text: clauseChunk.join(' '),
+              estimatedDuration: Math.min(chunkDuration, MAX_SEGMENT_DURATION),
+              visualSuggestion: generateVisualSuggestion(clauseChunk.join(' ')),
+              emotionalTone: detectEmotionalTone(clauseChunk.join(' '))
+            })
+            clauseChunk = []
+            chunkDuration = 0
+          }
+          clauseChunk.push(clause)
+          chunkDuration += clauseDuration
+        }
+        
+        // Add remaining clauses
+        if (clauseChunk.length > 0) {
+          beats.push({
+            text: clauseChunk.join(' '),
+            estimatedDuration: Math.min(chunkDuration, MAX_SEGMENT_DURATION),
+            visualSuggestion: generateVisualSuggestion(clauseChunk.join(' ')),
+            emotionalTone: detectEmotionalTone(clauseChunk.join(' '))
+          })
+        }
+      } else {
+        // Can't split further - cap at max duration and warn
+        console.warn(`[analyzeNarrationBeats] Sentence exceeds ${MAX_SEGMENT_DURATION}s and cannot be split: "${data.sentence.substring(0, 50)}..."`)
+        beats.push({
+          text: data.sentence,
+          estimatedDuration: MAX_SEGMENT_DURATION, // Cap at max
+          visualSuggestion: generateVisualSuggestion(data.sentence),
+          emotionalTone: detectEmotionalTone(data.sentence)
+        })
+      }
+      continue
+    }
+    
+    // Case 2: Adding this sentence would exceed max - start new beat
+    if (currentBeat.duration + scaledDuration > MAX_SEGMENT_DURATION && currentBeat.sentences.length > 0) {
+      beats.push({
+        text: currentBeat.sentences.join(' '),
+        estimatedDuration: currentBeat.duration,
+        visualSuggestion: generateVisualSuggestion(currentBeat.sentences.join(' ')),
+        emotionalTone: detectEmotionalTone(currentBeat.sentences.join(' '))
+      })
+      currentBeat = { sentences: [], duration: 0 }
+    }
+    
+    // Case 3: If current beat would be a good size, consider starting fresh
+    if (currentBeat.duration >= TARGET_SEGMENT_DURATION && 
+        currentBeat.duration + scaledDuration > TARGET_SEGMENT_DURATION * 1.2 &&
+        scaledDuration >= MIN_SEGMENT_DURATION) {
       beats.push({
         text: currentBeat.sentences.join(' '),
         estimatedDuration: currentBeat.duration,
@@ -541,7 +624,7 @@ function analyzeNarrationBeats(
   if (currentBeat.sentences.length > 0) {
     beats.push({
       text: currentBeat.sentences.join(' '),
-      estimatedDuration: currentBeat.duration,
+      estimatedDuration: Math.min(currentBeat.duration, MAX_SEGMENT_DURATION),
       visualSuggestion: generateVisualSuggestion(currentBeat.sentences.join(' ')),
       emotionalTone: detectEmotionalTone(currentBeat.sentences.join(' '))
     })

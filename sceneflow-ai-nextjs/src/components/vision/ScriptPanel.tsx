@@ -3163,17 +3163,18 @@ function SceneCard({
   }, [isSceneAudioCompleteForLanguage, selectedLanguage, scene.sceneDirection, scene.imageUrl, sceneProductionData, workflowCompletions])
   
   // Sequential activation logic - steps unlock based on prerequisite completion
-  // Direction (directorsChair) is now auto-generated, so Frame unlocks when Script is complete
-  // Segment Builder unlocks after Frame step (storyboardPreViz)
+  // New order: Script -> Segments -> Frame -> Call Action
+  // Segments unlock after Script is complete (user defines segments before generating frames)
+  // Frame unlocks after Segments are finalized
   // Call Action also requires scene image for visual consistency (soft requirement - shows warning)
   const hasSceneImage = !!scene.imageUrl
   const stepUnlocked = useMemo(() => {
     return {
       dialogueAction: true, // Always unlocked
       directorsChair: stepCompletion.dialogueAction, // Keep for internal logic
-      storyboardPreViz: stepCompletion.dialogueAction, // Frame now unlocks when Script is complete (Direction is auto-generated)
-      segmentBuilder: stepCompletion.storyboardPreViz, // Segments unlock after Frame step
-      callAction: stepCompletion.segmentBuilder,  // Call Action unlocks after Segments are finalized
+      segmentBuilder: stepCompletion.dialogueAction, // Segments unlock after Script is complete
+      storyboardPreViz: stepCompletion.segmentBuilder, // Frame unlocks after Segments are finalized
+      callAction: stepCompletion.storyboardPreViz,  // Call Action unlocks after Frame step
     }
   }, [stepCompletion])
   
@@ -3233,9 +3234,10 @@ function SceneCard({
 
   const workflowTabs: Array<{ key: WorkflowStep; label: string; icon: React.ReactNode }> = useMemo(() => [
     { key: 'dialogueAction', label: 'Script', icon: <FileText className="w-4 h-4" /> },
-    // Direction (directorsChair) is now hidden - auto-generated from Script, accessible via Frame dialog and Export
-    { key: 'storyboardPreViz', label: 'Frame', icon: <Camera className="w-4 h-4" /> },
+    // Segments now comes after Script - user defines segments before generating frames
     { key: 'segmentBuilder', label: 'Segments', icon: <Layers className="w-4 h-4" /> },
+    // Direction (directorsChair) is hidden - auto-generated from Script, accessible via Frame dialog and Export
+    { key: 'storyboardPreViz', label: 'Frame', icon: <Camera className="w-4 h-4" /> },
     { key: 'callAction', label: 'Call Action', icon: <Clapperboard className="w-4 h-4" /> }
   ], [])
   
