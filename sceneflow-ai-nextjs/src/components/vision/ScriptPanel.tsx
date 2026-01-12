@@ -2427,6 +2427,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                           onScriptChange={onScriptChange}
                           setEditingImageData={setEditingImageData}
                           setImageEditModalOpen={setImageEditModalOpen}
+                          sceneReferences={sceneReferences}
+                          objectReferences={objectReferences}
                 />
                     )
                   })}
@@ -2929,6 +2931,9 @@ interface SceneCardProps {
   setImageEditModalOpen?: (open: boolean) => void
   // Scene wardrobe assignment - allows selecting which wardrobe each character uses in this scene
   onUpdateSceneWardrobe?: (sceneIndex: number, characterId: string, wardrobeId: string | null) => void
+  // Visual references for SegmentBuilder
+  sceneReferences?: Array<{ id: string; name: string; description?: string; imageUrl?: string }>
+  objectReferences?: Array<{ id: string; name: string; description?: string; imageUrl?: string }>
 }
 
 function SceneCard({
@@ -3039,6 +3044,8 @@ function SceneCard({
   setEditingImageData,
   setImageEditModalOpen,
   onUpdateSceneWardrobe,
+  sceneReferences = [],
+  objectReferences = [],
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(null)
