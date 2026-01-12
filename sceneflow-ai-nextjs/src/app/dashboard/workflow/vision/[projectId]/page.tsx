@@ -2231,6 +2231,58 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [applySceneProductionUpdate]
   )
   
+  // Handle adding a complete segment with full data (from AddSegmentDialog)
+  const handleAddFullSegment = useCallback(
+    (sceneId: string, newSegment: any) => {
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) {
+          // Initialize production data if it doesn't exist
+          const duration = newSegment.endTime - newSegment.startTime
+          return {
+            isSegmented: true,
+            segments: [{
+              ...newSegment,
+              segmentId: newSegment.segmentId || `seg_${sceneId}_1_${Date.now()}`,
+              sequenceIndex: 0,
+              startTime: 0,
+              endTime: duration,
+            }],
+            targetSegmentDuration: duration,
+          }
+        }
+        
+        const segments = [...current.segments]
+        const lastSegment = segments[segments.length - 1]
+        const newStartTime = lastSegment ? lastSegment.endTime : 0
+        const duration = newSegment.endTime - newSegment.startTime
+        
+        // Append the new segment with correct timing
+        const segmentToAdd = {
+          ...newSegment,
+          segmentId: newSegment.segmentId || `seg_${sceneId}_${segments.length + 1}_${Date.now()}`,
+          sequenceIndex: segments.length,
+          startTime: newStartTime,
+          endTime: newStartTime + duration,
+        }
+        
+        segments.push(segmentToAdd)
+        
+        return { 
+          ...current, 
+          isSegmented: true,
+          segments,
+        }
+      })
+
+      try {
+        const { toast } = require('sonner')
+        const duration = newSegment.endTime - newSegment.startTime
+        toast.success(`Added ${duration.toFixed(1)}s segment with prompt`)
+      } catch {}
+    },
+    [applySceneProductionUpdate]
+  )
+  
   // Handle adding establishing shot segment(s) at the beginning of the scene
   // Supports: single-shot, beat-matched (AI splits narration), and legacy modes
   const handleAddEstablishingShot = useCallback(
@@ -7717,6 +7769,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSegmentGenerate={handleSegmentGenerate}
                 onSegmentUpload={handleSegmentUpload}
                 onAddSegment={handleAddSegment}
+                onAddFullSegment={handleAddFullSegment}
                 onDeleteSegment={handleDeleteSegment}
                 onSegmentResize={handleSegmentResize}
                 onReorderSegments={handleReorderSegments}

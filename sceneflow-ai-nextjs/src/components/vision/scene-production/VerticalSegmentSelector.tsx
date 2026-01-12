@@ -5,7 +5,7 @@ import { SceneSegment } from './types'
 import { Badge } from '@/components/ui/badge'
 import { 
   PlayCircle, AlertCircle, CheckCircle2, Loader2, 
-  Film, Video, Image, Upload, Plus
+  Film, Video, Image, Upload, Plus, Pencil, Trash2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
@@ -16,6 +16,8 @@ interface VerticalSegmentSelectorProps {
   currentPlayingSegmentId?: string
   onSelect: (segmentId: string) => void
   onAddSegment?: () => void
+  onEditSegment?: (segmentId: string) => void
+  onDeleteSegment?: (segmentId: string) => void
 }
 
 const statusConfig: Record<SceneSegment['status'], { 
@@ -65,9 +67,11 @@ interface SegmentCardProps {
   isSelected: boolean
   isPlaying: boolean
   onSelect: () => void
+  onEdit?: () => void
+  onDelete?: () => void
 }
 
-const SegmentCard = memo(({ segment, isSelected, isPlaying, onSelect }: SegmentCardProps) => {
+const SegmentCard = memo(({ segment, isSelected, isPlaying, onSelect, onEdit, onDelete }: SegmentCardProps) => {
   const duration = segment.endTime - segment.startTime
   const status = statusConfig[segment.status]
   const thumbnailUrl = segment.references.thumbnailUrl || segment.references.mediaUrl
@@ -78,7 +82,7 @@ const SegmentCard = memo(({ segment, isSelected, isPlaying, onSelect }: SegmentC
       type="button"
       onClick={onSelect}
       className={cn(
-        "relative w-full rounded-lg border-2 transition-all overflow-hidden",
+        "group relative w-full rounded-lg border-2 transition-all overflow-hidden",
         "bg-white dark:bg-gray-900 hover:shadow-md",
         "focus:outline-none focus:ring-2 focus:ring-sf-primary/50",
         isSelected
@@ -127,6 +131,35 @@ const SegmentCard = memo(({ segment, isSelected, isPlaying, onSelect }: SegmentC
         <div className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/70 rounded text-[9px] font-mono text-white">
           {duration.toFixed(1)}s
         </div>
+        
+        {/* Edit/Delete buttons - visible on hover */}
+        {(onEdit || onDelete) && (
+          <div className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            {onEdit && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                className="p-1 rounded bg-black/60 hover:bg-sf-primary/80 text-white transition-colors"
+                title="Edit segment"
+              >
+                <Pencil className="w-3 h-3" />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (window.confirm('Delete this segment?')) onDelete();
+                }}
+                className="p-1 rounded bg-black/60 hover:bg-red-500/80 text-white transition-colors"
+                title="Delete segment"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
       
       {/* Info Section */}
@@ -181,6 +214,8 @@ export function VerticalSegmentSelector({
   currentPlayingSegmentId,
   onSelect,
   onAddSegment,
+  onEditSegment,
+  onDeleteSegment,
 }: VerticalSegmentSelectorProps) {
   if (segments.length === 0) {
     return (
@@ -216,6 +251,8 @@ export function VerticalSegmentSelector({
             isSelected={segment.segmentId === selectedSegmentId}
             isPlaying={segment.segmentId === currentPlayingSegmentId}
             onSelect={() => onSelect(segment.segmentId)}
+            onEdit={onEditSegment ? () => onEditSegment(segment.segmentId) : undefined}
+            onDelete={onDeleteSegment ? () => onDeleteSegment(segment.segmentId) : undefined}
           />
         ))}
         
