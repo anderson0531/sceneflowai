@@ -20,6 +20,7 @@ import { SceneProductionManager } from './scene-production/SceneProductionManage
 import { SegmentFrameTimeline } from './scene-production/SegmentFrameTimeline'
 import { SegmentBuilder } from './scene-production/SegmentBuilder'
 import { AddSegmentDialog } from './scene-production/AddSegmentDialog'
+import { EditSegmentDialog } from './scene-production/EditSegmentDialog'
 import { DirectorConsole } from './scene-production/DirectorConsole'
 import { AudioTimeline, type AudioTracksData, type AudioTrackClip } from './scene-production/AudioTimeline'
 import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings, SceneSegment } from './scene-production/types'
@@ -3058,6 +3059,11 @@ function SceneCard({
   const [isUpdatingAudio, setIsUpdatingAudio] = useState(false)
   const [selectedSegmentIndex, setSelectedSegmentIndex] = useState<number | null>(null)
   
+  // Segment selection and dialog states
+  const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null)
+  const [editSegmentDialogOpen, setEditSegmentDialogOpen] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  
   // Add Segment dialog state
   const [addSegmentDialogOpen, setAddSegmentDialogOpen] = useState(false)
   
@@ -4250,6 +4256,8 @@ function SceneCard({
                                   sequenceIndex: seg.sequenceIndex,
                                 })) || []}
                                 audioTracks={audioTracks}
+                                selectedSegmentId={selectedSegmentId}
+                                onSegmentSelect={setSelectedSegmentId}
                                 onAudioClipChange={(trackType, clipId, changes) => {
                                   onAudioClipChange?.(sceneIdx, trackType, clipId, changes)
                                 }}
@@ -4281,19 +4289,47 @@ function SceneCard({
                           </div>
                         )}
                         
-                        {/* Add Segment button when segments exist */}
+                        {/* Segment controls footer when segments exist */}
                         {sceneProductionData?.segments?.length > 0 && !audioTimelineCollapsed && (
                           <div className="px-3 py-2 border-t border-cyan-500/20 bg-cyan-900/10 flex items-center justify-between">
                             <span className="text-[10px] text-gray-500">
                               {sceneProductionData.segments.length} segment{sceneProductionData.segments.length !== 1 ? 's' : ''}
+                              {selectedSegmentId && (
+                                <span className="ml-2 text-cyan-400">
+                                  • Seg {(sceneProductionData.segments.findIndex(s => s.segmentId === selectedSegmentId) + 1) || '?'} selected
+                                </span>
+                              )}
                             </span>
-                            <button
-                              onClick={() => setAddSegmentDialogOpen(true)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 rounded text-cyan-300 text-xs font-medium transition-colors"
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                              Add Segment
-                            </button>
+                            <div className="flex items-center gap-2">
+                              {/* Edit Segment button - only when segment selected */}
+                              {selectedSegmentId && (
+                                <button
+                                  onClick={() => setEditSegmentDialogOpen(true)}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 rounded text-amber-300 text-xs font-medium transition-colors"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                  Edit Segment
+                                </button>
+                              )}
+                              {/* Delete Segment button - only when segment selected and more than 1 segment */}
+                              {selectedSegmentId && sceneProductionData.segments.length > 1 && (
+                                <button
+                                  onClick={() => setDeleteConfirmOpen(true)}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 rounded text-red-300 text-xs font-medium transition-colors"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  Delete
+                                </button>
+                              )}
+                              {/* Add Segment button */}
+                              <button
+                                onClick={() => setAddSegmentDialogOpen(true)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 rounded text-cyan-300 text-xs font-medium transition-colors"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                                Add Segment
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -5827,6 +5863,54 @@ function SceneCard({
                 console.error('[ScriptPanel] onAddFullSegment is NOT defined!')
               }
             }}
+          />
+          
+          {/* Delete Segment Confirmation Dialog */}
+          <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+            <DialogContent className="bg-slate-900 border border-red-500/30 max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-red-400 flex items-center gap-2">
+                  <Trash2 className="w-5 h-5" />
+                  Delete Segment
+                </DialogTitle>
+                <DialogDescription className="text-gray-400">
+                  Are you sure you want to delete this segment? This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex justify-end gap-3 mt-4">
+                <button
+                  onClick={() => setDeleteConfirmOpen(false)}
+                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg text-white text-sm font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (selectedSegmentId && onDeleteSegment) {
+                      const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
+                      onDeleteSegment(sceneId, selectedSegmentId)
+                      setSelectedSegmentId(null)
+                    }
+                    setDeleteConfirmOpen(false)
+                  }}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-500 border border-red-500 rounded-lg text-white text-sm font-medium transition-colors"
+                >
+                  Delete Segment
+                </button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          
+          {/* Edit Segment Dialog */}
+          <EditSegmentDialog
+            open={editSegmentDialogOpen}
+            onOpenChange={setEditSegmentDialogOpen}
+            segment={selectedSegmentId ? sceneProductionData?.segments?.find(s => s.segmentId === selectedSegmentId) || null : null}
+            sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
+            sceneNumber={sceneNumber}
+            sceneFrameUrl={scene.imageUrl || null}
+            onPromptChange={onSegmentPromptChange}
+            onSegmentResize={onSegmentResize}
           />
           
           {/* AI Co-Pilot Side Panel */}

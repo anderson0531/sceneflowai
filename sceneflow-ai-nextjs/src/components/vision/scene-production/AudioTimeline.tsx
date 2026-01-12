@@ -37,6 +37,8 @@ interface AudioTimelineProps {
   sceneDuration: number  // Total scene duration in seconds
   segments?: Array<{ startTime: number; endTime: number; segmentId: string; sequenceIndex?: number }>
   audioTracks?: AudioTracksData
+  selectedSegmentId?: string | null  // Externally controlled segment selection
+  onSegmentSelect?: (segmentId: string | null) => void  // Callback when segment is selected
   onPlayheadChange?: (time: number) => void
   onTrackUpdate?: (trackType: keyof AudioTracksData, clips: AudioTrackClip | AudioTrackClip[]) => void
   onAudioClipChange?: (trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
@@ -55,6 +57,8 @@ export function AudioTimeline({
   sceneDuration,
   segments = [],
   audioTracks,
+  selectedSegmentId: externalSelectedSegmentId,
+  onSegmentSelect,
   onPlayheadChange,
   onTrackUpdate,
   onAudioClipChange,
@@ -68,8 +72,17 @@ export function AudioTimeline({
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null)
   const [selectedClipTrackType, setSelectedClipTrackType] = useState<string | null>(null)
   
-  // Segment selection state
-  const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null)
+  // Segment selection - use external if provided, otherwise internal
+  const [internalSelectedSegmentId, setInternalSelectedSegmentId] = useState<string | null>(null)
+  const selectedSegmentId = externalSelectedSegmentId !== undefined ? externalSelectedSegmentId : internalSelectedSegmentId
+  
+  const handleSegmentSelect = useCallback((segmentId: string | null) => {
+    if (onSegmentSelect) {
+      onSegmentSelect(segmentId)
+    } else {
+      setInternalSelectedSegmentId(segmentId)
+    }
+  }, [onSegmentSelect])
   
   // Audio snap toggle - persisted to localStorage
   const [enableAudioSnap, setEnableAudioSnap] = useState(() => {
@@ -324,7 +337,7 @@ export function AudioTimeline({
       if (e.key === 'Escape') {
         setSelectedClipId(null)
         setSelectedClipTrackType(null)
-        setSelectedSegmentId(null)
+        handleSegmentSelect(null)
         return
       }
       
@@ -631,7 +644,7 @@ export function AudioTimeline({
                   // Deselect audio clip when selecting segment
                   setSelectedClipId(null)
                   setSelectedClipTrackType(null)
-                  setSelectedSegmentId(seg.segmentId)
+                  handleSegmentSelect(seg.segmentId)
                 }}
               >
                 {/* Segment label */}
@@ -1061,7 +1074,7 @@ export function AudioTimeline({
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => {
-                    setSelectedSegmentId(null)
+                    handleSegmentSelect(null)
                   }}
                   className="p-1 rounded bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white transition-colors"
                   title="Close (Esc)"
