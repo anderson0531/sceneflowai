@@ -34,7 +34,17 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
-import type { SceneSegment } from './types'
+import type { SceneSegment, SelectedAudioTracks } from './types'
+
+/**
+ * Audio URLs for scene playback overlay
+ */
+interface SceneAudioUrls {
+  narrationUrl?: string
+  musicUrl?: string
+  dialogueUrls?: string[]
+  sfxUrls?: string[]
+}
 
 interface SceneVideoPlayerProps {
   segments: SceneSegment[]
@@ -44,6 +54,10 @@ interface SceneVideoPlayerProps {
   onClose: () => void
   /** Optional: Start playback at specific segment index */
   startAtSegment?: number
+  /** Audio track selection for overlay playback */
+  audioTracks?: SelectedAudioTracks
+  /** Audio URLs for overlay */
+  sceneAudio?: SceneAudioUrls
 }
 
 interface PlayableSegment {
@@ -62,6 +76,8 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
   isOpen,
   onClose,
   startAtSegment = 0,
+  audioTracks,
+  sceneAudio,
 }) => {
   // Current playback state
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(startAtSegment)
@@ -72,6 +88,92 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
   
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null)
+  
+  // Audio overlay refs
+  const narrationAudioRef = useRef<HTMLAudioElement | null>(null)
+  const musicAudioRef = useRef<HTMLAudioElement | null>(null)
+  const dialogueAudiosRef = useRef<HTMLAudioElement[]>([])
+  const sfxAudiosRef = useRef<HTMLAudioElement[]>([])
+  
+  // Initialize audio elements when modal opens
+  useEffect(() => {
+    if (isOpen && sceneAudio) {
+      // Narration audio
+      if (sceneAudio.narrationUrl && audioTracks?.narration) {
+        narrationAudioRef.current = new Audio(sceneAudio.narrationUrl)
+        narrationAudioRef.current.volume = 0.8
+      }
+      
+      // Music audio
+      if (sceneAudio.musicUrl && audioTracks?.music) {
+        musicAudioRef.current = new Audio(sceneAudio.musicUrl)
+        musicAudioRef.current.volume = 0.4  // Lower volume for background
+        musicAudioRef.current.loop = true   // Loop music continuously
+      }
+      
+      // Dialogue audios (for future per-segment alignment)
+      if (sceneAudio.dialogueUrls && audioTracks?.dialogue) {
+        dialogueAudiosRef.current = sceneAudio.dialogueUrls.map(url => {
+          const audio = new Audio(url)
+          audio.volume = 0.9
+          return audio
+        })
+      }
+      
+      // SFX audios
+      if (sceneAudio.sfxUrls && audioTracks?.sfx) {
+        sfxAudiosRef.current = sceneAudio.sfxUrls.map(url => {
+          const audio = new Audio(url)
+          audio.volume = 0.6
+          return audio
+        })
+      }
+    }
+    
+    // Cleanup on close
+    return () => {
+      narrationAudioRef.current?.pause()
+      musicAudioRef.current?.pause()
+      dialogueAudiosRef.current.forEach(a => a.pause())
+      sfxAudiosRef.current.forEach(a => a.pause())
+      
+      narrationAudioRef.current = null
+      musicAudioRef.current = null
+      dialogueAudiosRef.current = []
+      sfxAudiosRef.current = []
+    }
+  }, [isOpen, sceneAudio, audioTracks])
+  
+  // Sync audio playback with video state
+  useEffect(() => {
+    if (isPlaying) {
+      // Start all selected audio tracks
+      if (audioTracks?.narration && narrationAudioRef.current) {
+        narrationAudioRef.current.play().catch(() => {})
+      }
+      if (audioTracks?.music && musicAudioRef.current) {
+        musicAudioRef.current.play().catch(() => {})
+      }
+    } else {
+      // Pause all audio when video pauses
+      narrationAudioRef.current?.pause()
+      musicAudioRef.current?.pause()
+      dialogueAudiosRef.current.forEach(a => a.pause())
+      sfxAudiosRef.current.forEach(a => a.pause())
+    }
+  }, [isPlaying, audioTracks])
+  
+  // Mute/unmute audio tracks with video
+  useEffect(() => {
+    if (narrationAudioRef.current) {
+      narrationAudioRef.current.muted = isMuted
+    }
+    if (musicAudioRef.current) {
+      musicAudioRef.current.muted = isMuted
+    }
+    dialogueAudiosRef.current.forEach(a => a.muted = isMuted)
+    sfxAudiosRef.current.forEach(a => a.muted = isMuted)
+  }, [isMuted])
   
   // Build playable segments list with fallbacks
   const playableSegments: PlayableSegment[] = segments

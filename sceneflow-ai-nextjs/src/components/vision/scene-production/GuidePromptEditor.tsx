@@ -43,6 +43,13 @@ import {
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   Mic2,
   MessageSquare,
   Music,
@@ -61,8 +68,10 @@ import {
   Ban,
   Wand2,
   Eye,
+  User,
+  Video,
 } from 'lucide-react'
-import type { SceneSegment, SegmentDialogueLine } from './types'
+import type { SceneSegment, SegmentDialogueLine, NarratorVoiceType, VoiceAnchorPreset } from './types'
 
 // ============================================================================
 // Types
@@ -143,6 +152,90 @@ interface AudioElement {
   // Portion selection for long content spanning multiple clips
   portionStart: number  // 0-100 percentage
   portionEnd: number    // 0-100 percentage
+}
+
+// ============================================================================
+// Voice Anchor Presets (Veo 3.1 Prompt Optimization)
+// ============================================================================
+
+/**
+ * Voice anchor presets for consistent narrator voice generation
+ * Based on the "Voice Anchor" concept from Veo prompt optimization guide:
+ * Formula: [Age/Gender] + [Vocal Texture] + [Speaking Style/Pace]
+ */
+const VOICE_ANCHOR_PRESETS: VoiceAnchorPreset[] = [
+  {
+    type: 'deep-masculine',
+    label: 'Deep Masculine',
+    description: 'Authoritative male narrator',
+    promptText: 'A deep-voiced male narrator speaking with authority and gravitas',
+  },
+  {
+    type: 'warm-feminine',
+    label: 'Warm Feminine',
+    description: 'Expressive female narrator',
+    promptText: 'A warm, expressive female voice speaking with emotional depth',
+  },
+  {
+    type: 'neutral-documentary',
+    label: 'Documentary',
+    description: 'Professional neutral style',
+    promptText: 'A professional neutral narrator speaking in documentary style',
+  },
+  {
+    type: 'elderly-wise',
+    label: 'Elderly Wise',
+    description: 'Aged, contemplative voice',
+    promptText: 'An elderly, contemplative voice speaking slowly and deliberately',
+  },
+  {
+    type: 'young-energetic',
+    label: 'Young Energetic',
+    description: 'Youthful, dynamic voice',
+    promptText: 'A youthful, energetic voice speaking with dynamic enthusiasm',
+  },
+  {
+    type: 'custom',
+    label: 'Custom',
+    description: 'Define your own voice style',
+    promptText: '',
+  },
+]
+
+/**
+ * Auto-generate voice anchor from character demographics
+ * Used when no explicit voice type is selected for dialogue
+ */
+function generateCharacterVoiceAnchor(
+  name: string,
+  age?: string,
+  gender?: string,
+  ethnicity?: string
+): string {
+  const parts: string[] = []
+  
+  // Age descriptor
+  if (age) {
+    const ageNum = parseInt(age)
+    if (!isNaN(ageNum)) {
+      if (ageNum < 25) parts.push('young')
+      else if (ageNum < 40) parts.push('adult')
+      else if (ageNum < 60) parts.push('middle-aged')
+      else parts.push('elderly')
+    }
+  }
+  
+  // Gender descriptor
+  if (gender) {
+    parts.push(gender.toLowerCase())
+  }
+  
+  // Build the anchor
+  if (parts.length > 0) {
+    return `${name}, a ${parts.join(' ')} voice`
+  }
+  
+  return name
 }
 
 // ============================================================================
@@ -433,6 +526,13 @@ export function GuidePromptEditor({
   const [customAddition, setCustomAddition] = useState('')
   const [showRawPreview, setShowRawPreview] = useState(false)
   
+  // Voice Anchor state for narrator
+  const [narratorVoiceType, setNarratorVoiceType] = useState<NarratorVoiceType>('neutral-documentary')
+  const [customVoiceDescription, setCustomVoiceDescription] = useState('')
+  
+  // Get the selected voice preset
+  const selectedVoicePreset = VOICE_ANCHOR_PRESETS.find(p => p.type === narratorVoiceType) || VOICE_ANCHOR_PRESETS[2]
+  
   // Build the list of audio elements from scene data
   useEffect(() => {
     const newElements: AudioElement[] = []
@@ -566,8 +666,9 @@ export function GuidePromptEditor({
   }, [])
   
   // ============================================================================
-  // INTELLIGENT PROMPT SYNTHESIS
-  // Instead of concatenating with [HEADERS], we synthesize a video-model-friendly prompt
+  // INTELLIGENT PROMPT SYNTHESIS - Anchor & Layer Format
+  // Veo 3.1 Optimization: [Cinematography] → [Visual Anchor] → [Action] → 
+  // [Environment] → [Audio: Dialogue] → [Audio: SFX+Ambience]
   // ============================================================================
   const composedPrompt = useMemo(() => {
     const selectedElements = elements.filter(el => el.selected)
@@ -578,68 +679,93 @@ export function GuidePromptEditor({
     
     const promptParts: string[] = []
     
-    // 1. VISUAL ACTION (from direction) - Most important for video
+    // 1. CINEMATOGRAPHY (from scene direction camera work)
     const directions = selectedElements.filter(el => el.type === 'direction')
     if (directions.length > 0) {
       const directionText = directions
         .map(d => getTextPortion(d.content, d.portionStart, d.portionEnd))
         .join(' ')
-      const visualAction = extractCoreVisualAction(directionText, 280)
+      
+      // Extract camera work if present
+      const cameraMatch = directionText.match(/(?:camera|shot|angle|pan|zoom|tracking|dolly|close[- ]?up|wide|medium)[^.]*\./i)
+      if (cameraMatch) {
+        promptParts.push(cameraMatch[0].trim())
+      }
+      
+      // 2. VISUAL ACTION - Core visual description
+      const visualAction = extractCoreVisualAction(directionText, 250)
       if (visualAction) {
         promptParts.push(visualAction)
       }
     }
     
-    // 2. CHARACTER PERFORMANCE (from dialogue) - Focus on delivery style, not full text
+    // 3. DIALOGUE with Voice Anchors - Include actual dialogue text for Veo synthesis
     const dialogues = selectedElements.filter(el => el.type === 'dialogue')
     if (dialogues.length > 0) {
-      const performances = dialogues.map(d => {
+      const dialogueParts = dialogues.map(d => {
         const portion = getTextPortion(d.content, d.portionStart, d.portionEnd)
-        const emotion = extractDialoguePerformance(portion)
         const charName = d.character || 'Character'
+        const emotion = extractDialoguePerformance(portion)
         
+        // Truncate long dialogue to ~80 words max for Veo
+        const words = portion.split(/\s+/)
+        const truncatedText = words.length > 80 
+          ? words.slice(0, 80).join(' ') + '...'
+          : portion
+        
+        // Format with voice anchor: "[Voice Description] says: "[Dialogue]""
         if (emotion) {
-          return `${charName} speaks ${emotion}`
+          return `${charName} ${emotion} says: "${truncatedText}"`
         }
-        // If dialogue is short enough, include the actual line
-        if (portion.length < 60) {
-          return `${charName} says: "${portion}"`
-        }
-        return `${charName} delivers dialogue`
+        return `${charName} says: "${truncatedText}"`
       })
       
-      if (performances.length > 0) {
-        promptParts.push(performances.join('. '))
-      }
+      promptParts.push(dialogueParts.join(' '))
     }
     
-    // 3. VOICEOVER CONTEXT (from narration) - Emotional tone only, not full text
+    // 4. NARRATION with Voice Anchor - Include actual narration text (parsed portion)
     const narrations = selectedElements.filter(el => el.type === 'narration')
     if (narrations.length > 0) {
       const narrationText = narrations
         .map(n => getTextPortion(n.content, n.portionStart, n.portionEnd))
         .join(' ')
-      const tone = extractNarrativeTone(narrationText)
-      promptParts.push(`Voiceover with ${tone}`)
+      
+      // Get the voice anchor description
+      const voiceAnchor = narratorVoiceType === 'custom' && customVoiceDescription
+        ? customVoiceDescription
+        : selectedVoicePreset.promptText
+      
+      // Truncate long narration to ~80 words max for Veo
+      const words = narrationText.split(/\s+/)
+      const truncatedNarration = words.length > 80 
+        ? words.slice(0, 80).join(' ') + '...'
+        : narrationText
+      
+      // Format: "[Voice Anchor]: "[Narration Text]""
+      if (voiceAnchor) {
+        promptParts.push(`${voiceAnchor}: "${truncatedNarration}"`)
+      } else {
+        promptParts.push(`Narrator: "${truncatedNarration}"`)
+      }
     }
     
-    // 4. AMBIENT AUDIO (SFX that Veo can generate)
+    // 5. AMBIENT AUDIO (SFX that Veo can generate)
     const sfxElements = selectedElements.filter(el => el.type === 'sfx')
     if (sfxElements.length > 0) {
       const sfxDescriptions = sfxElements
         .map(s => getTextPortion(s.content, s.portionStart, s.portionEnd))
         .join(', ')
-      promptParts.push(`Ambient sounds: ${sfxDescriptions}`)
+      promptParts.push(`Ambient: ${sfxDescriptions}`)
     }
     
-    // 5. CUSTOM NOTES (user additions)
+    // 6. CUSTOM NOTES (user additions)
     if (customAddition.trim()) {
       promptParts.push(customAddition.trim())
     }
     
     // Join with periods for clean sentence structure
-    return promptParts.join('. ').replace(/\.\./g, '.')
-  }, [elements, customAddition])
+    return promptParts.join('. ').replace(/\.\./g, '.').replace(/\s+/g, ' ').trim()
+  }, [elements, customAddition, narratorVoiceType, customVoiceDescription, selectedVoicePreset])
   
   // Raw concatenated version for preview/debugging
   const rawConcatenatedPrompt = useMemo(() => {
@@ -794,6 +920,59 @@ export function GuidePromptEditor({
                 </Tooltip>
               </div>
             </div>
+            
+            {/* Narrator Voice Anchor Selector */}
+            {elements.some(el => el.type === 'narration' && el.selected) && (
+              <div className="p-3 bg-blue-900/20 rounded-lg border border-blue-500/30">
+                <div className="flex items-center gap-2 mb-3">
+                  <User className="w-4 h-4 text-blue-400" />
+                  <Label className="text-xs font-medium text-blue-300">Narrator Voice Anchor</Label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="w-3.5 h-3.5 text-blue-400 cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>Voice Anchor ensures consistent narrator voice across all video clips. Veo uses this description to synthesize matching voices.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <div className="space-y-3">
+                  <Select
+                    value={narratorVoiceType}
+                    onValueChange={(value) => setNarratorVoiceType(value as NarratorVoiceType)}
+                  >
+                    <SelectTrigger className="bg-slate-800 border-slate-600">
+                      <SelectValue placeholder="Select narrator voice style" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {VOICE_ANCHOR_PRESETS.map((preset) => (
+                        <SelectItem key={preset.type} value={preset.type}>
+                          <div className="flex flex-col">
+                            <span>{preset.label}</span>
+                            <span className="text-xs text-slate-500">{preset.description}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  {narratorVoiceType === 'custom' && (
+                    <Textarea
+                      value={customVoiceDescription}
+                      onChange={(e) => setCustomVoiceDescription(e.target.value)}
+                      placeholder="e.g., 'A raspy, deep-voiced elderly man with a thick Scottish accent, speaking slowly and deliberately'"
+                      className="min-h-[60px] text-sm bg-slate-800 border-slate-600"
+                    />
+                  )}
+                  
+                  {narratorVoiceType !== 'custom' && (
+                    <p className="text-xs text-slate-500 italic">
+                      "{selectedVoicePreset.promptText}"
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
             
             {/* Element Cards */}
             <div className="space-y-2">

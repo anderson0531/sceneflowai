@@ -20,6 +20,7 @@
 import React, { useState, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { 
   Play, 
@@ -42,11 +43,20 @@ import type {
   VideoGenerationConfig,
   VideoGenerationMethod,
   SceneProductionData,
+  SelectedAudioTracks,
 } from './types'
 import { DirectorDialog } from './DirectorDialog'
 import { SceneVideoPlayer } from './SceneVideoPlayer'
 import { useVideoQueue } from '@/hooks/useVideoQueue'
 import type { SceneAudioData } from './GuidePromptEditor'
+
+// Default audio track selection state
+const DEFAULT_AUDIO_TRACKS: SelectedAudioTracks = {
+  narration: true,
+  dialogue: true,
+  music: false,
+  sfx: false,
+}
 
 interface DirectorConsoleProps {
   sceneId: string
@@ -120,6 +130,17 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   
   // Scene video player modal state
   const [isScenePlayerOpen, setIsScenePlayerOpen] = useState(false)
+  
+  // Audio track selection for video playback overlay
+  const [selectedAudioTracks, setSelectedAudioTracks] = useState<SelectedAudioTracks>(DEFAULT_AUDIO_TRACKS)
+  
+  // Toggle individual audio track
+  const toggleAudioTrack = useCallback((track: keyof SelectedAudioTracks) => {
+    setSelectedAudioTracks(prev => ({
+      ...prev,
+      [track]: !prev[track]
+    }))
+  }, [])
   
   // Handle saving config from dialog
   const handleSaveConfig = useCallback((config: VideoGenerationConfig) => {
@@ -415,13 +436,27 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
               <Volume2 className="w-4 h-4 text-purple-400" />
               Audio Tracks
             </h3>
-            <span className="text-xs text-slate-500">Post-Production Audio</span>
+            <span className="text-xs text-slate-500">Select tracks for Play Scene overlay</span>
           </div>
           
           <div className="space-y-3">
             {/* Narration Track */}
             {scene?.narration && (
-              <div className="flex items-center gap-3 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+              <div 
+                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                  selectedAudioTracks.narration 
+                    ? 'bg-purple-500/10 border border-purple-500/30' 
+                    : 'bg-slate-700/30 border border-slate-600/30 opacity-60'
+                }`}
+                onClick={() => toggleAudioTrack('narration')}
+              >
+                <Checkbox
+                  checked={selectedAudioTracks.narration}
+                  onCheckedChange={() => toggleAudioTrack('narration')}
+                  disabled={!scene?.narrationAudioUrl}
+                  className="flex-shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                />
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
                   <Mic2 className="w-4 h-4 text-purple-400" />
                 </div>
@@ -443,6 +478,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                     controls
                     className="h-8 w-40"
                     src={scene.narrationAudioUrl}
+                    onClick={(e) => e.stopPropagation()}
                   />
                 )}
               </div>
@@ -450,7 +486,20 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
             
             {/* Dialogue Track */}
             {scene?.dialogueLines && scene.dialogueLines.length > 0 && (
-              <div className="flex items-center gap-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <div 
+                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                  selectedAudioTracks.dialogue 
+                    ? 'bg-blue-500/10 border border-blue-500/30' 
+                    : 'bg-slate-700/30 border border-slate-600/30 opacity-60'
+                }`}
+                onClick={() => toggleAudioTrack('dialogue')}
+              >
+                <Checkbox
+                  checked={selectedAudioTracks.dialogue}
+                  onCheckedChange={() => toggleAudioTrack('dialogue')}
+                  className="flex-shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                />
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
                   <MessageSquare className="w-4 h-4 text-blue-400" />
                 </div>
@@ -468,31 +517,79 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
               </div>
             )}
             
-            {/* SFX Placeholder */}
-            <div className="flex items-center gap-3 p-3 bg-slate-700/30 border border-slate-600/30 rounded-lg opacity-60">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-600/20 flex items-center justify-center">
-                <Volume2 className="w-4 h-4 text-slate-500" />
+            {/* SFX Track */}
+            <div 
+              className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                selectedAudioTracks.sfx 
+                  ? 'bg-amber-500/10 border border-amber-500/30' 
+                  : 'bg-slate-700/30 border border-slate-600/30 opacity-60'
+              }`}
+              onClick={() => toggleAudioTrack('sfx')}
+            >
+              <Checkbox
+                checked={selectedAudioTracks.sfx}
+                onCheckedChange={() => toggleAudioTrack('sfx')}
+                disabled={!scene?.sfx?.some(s => s.audioUrl)}
+                className="flex-shrink-0"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
+                <Volume2 className="w-4 h-4 text-amber-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium text-slate-400">Sound Effects</span>
-                <p className="text-xs text-slate-500 mt-0.5">Added in post-production</p>
+                <span className="text-sm font-medium text-amber-300">Sound Effects</span>
+                {scene?.sfx && scene.sfx.length > 0 ? (
+                  <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
+                    {scene.sfx.map(s => s.description).join(', ')}
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-500 mt-0.5">No SFX audio available</p>
+                )}
               </div>
             </div>
             
-            {/* Music Placeholder */}
-            <div className="flex items-center gap-3 p-3 bg-slate-700/30 border border-slate-600/30 rounded-lg opacity-60">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-600/20 flex items-center justify-center">
-                <Music className="w-4 h-4 text-slate-500" />
+            {/* Music Track */}
+            <div 
+              className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                selectedAudioTracks.music 
+                  ? 'bg-green-500/10 border border-green-500/30' 
+                  : 'bg-slate-700/30 border border-slate-600/30 opacity-60'
+              }`}
+              onClick={() => toggleAudioTrack('music')}
+            >
+              <Checkbox
+                checked={selectedAudioTracks.music}
+                onCheckedChange={() => toggleAudioTrack('music')}
+                disabled={!scene?.musicAudio}
+                className="flex-shrink-0"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
+                <Music className="w-4 h-4 text-green-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium text-slate-400">Background Music</span>
-                <p className="text-xs text-slate-500 mt-0.5">Added in post-production</p>
+                <span className="text-sm font-medium text-green-300">Background Music</span>
+                {scene?.musicAudio ? (
+                  <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
+                    {typeof scene.music === 'string' ? scene.music : scene.music?.description || 'Music track'}
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-500 mt-0.5">No music audio available</p>
+                )}
               </div>
+              {scene?.musicAudio && (
+                <audio
+                  controls
+                  className="h-8 w-40"
+                  src={scene.musicAudio}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              )}
             </div>
           </div>
           
           <p className="text-xs text-slate-500 text-center">
-            💡 Veo 3.1 renders video with voice/SFX. Music is added in post-production.
+            💡 Selected tracks will overlay during Play Scene preview. Veo 3.1 renders video with voice/SFX natively.
           </p>
         </div>
       )}
@@ -525,6 +622,15 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
         sceneNumber={sceneNumber}
         isOpen={isScenePlayerOpen}
         onClose={() => setIsScenePlayerOpen(false)}
+        audioTracks={selectedAudioTracks}
+        sceneAudio={{
+          narrationUrl: scene?.narrationAudioUrl,
+          musicUrl: scene?.musicAudio,
+          // Collect dialogue audio URLs
+          dialogueUrls: scene?.dialogueAudio?.en?.map(d => d.audioUrl) || [],
+          // Collect SFX audio URLs
+          sfxUrls: scene?.sfx?.filter(s => s.audioUrl).map(s => s.audioUrl!) || [],
+        }}
       />
     </div>
     </TooltipProvider>

@@ -782,3 +782,62 @@ export interface VideoPromptPayload {
   }
 }
 
+// ============================================================================
+// Voice Anchor Types - For Veo 3.1 consistent voice synthesis
+// ============================================================================
+
+/**
+ * Narrator voice type presets for consistent voiceover generation
+ * Used in Veo 3.1 prompts to describe the voice that should speak narration
+ */
+export type NarratorVoiceType = 
+  | 'deep-masculine'       // Deep, authoritative male voice
+  | 'warm-feminine'        // Warm, expressive female voice
+  | 'neutral-documentary'  // Professional, neutral documentary style
+  | 'elderly-wise'         // Aged, contemplative voice
+  | 'young-energetic'      // Youthful, dynamic voice
+  | 'custom'               // User-defined custom description
+
+/**
+ * Voice anchor for consistent voice generation in Veo 3.1
+ * Based on the "Voice Anchor" concept from Veo prompt optimization guide
+ */
+export interface VoiceAnchor {
+  type: NarratorVoiceType
+  /** Custom description when type is 'custom' */
+  customDescription?: string
+  /** Additional voice modifiers (e.g., "British accent", "whispering") */
+  modifiers?: string[]
+}
+
+/**
+ * Voice anchor preset with display info and prompt text
+ */
+export interface VoiceAnchorPreset {
+  type: NarratorVoiceType
+  label: string
+  description: string
+  /** The actual text to include in Veo prompts */
+  promptText: string
+}
+
+/**
+ * Audio track selection for video playback overlay
+ */
+export interface SelectedAudioTracks {
+  narration: boolean
+  dialogue: boolean
+  music: boolean
+  sfx: boolean
+}
+
+/**
+ * Audio track data for playback
+ */
+export interface AudioTrackData {
+  type: 'narration' | 'dialogue' | 'music' | 'sfx'
+  audioUrl?: string
+  label: string
+  enabled: boolean
+}
+
