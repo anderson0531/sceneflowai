@@ -109,9 +109,10 @@ export async function generateVideoWithGeminiStudio(
   }
   
   const model = 'veo-3.1-generate-preview'
-  // Use the Gemini API endpoint for video generation
-  // Based on: https://ai.google.dev/gemini-api/docs/video
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateVideos?key=${apiKey}`
+  // Use the Gemini API predictLongRunning endpoint for video generation
+  // Based on Python SDK: google/genai/models.py _generate_videos method
+  // The endpoint is :predictLongRunning, same as Vertex but with different auth
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:predictLongRunning?key=${apiKey}`
   
   console.log(`[Gemini Studio Video] Generating with ${model}...`)
   console.log(`[Gemini Studio Video] Prompt preview: ${prompt.substring(0, 200)}...`)
@@ -124,40 +125,42 @@ export async function generateVideoWithGeminiStudio(
     referenceImagesCount: options.referenceImages?.length || 0
   }))
   
-  // Build the request body per Gemini API spec
-  // https://ai.google.dev/gemini-api/docs/video
-  const requestBody: Record<string, any> = {
-    prompt: prompt,
-    config: {}
+  // Build the request body per Gemini API mldev format
+  // Structure: { instances: [{ prompt, image?, ... }], parameters: { ... } }
+  // Based on Python SDK: _GenerateVideosParameters_to_mldev
+  const instance: Record<string, any> = {
+    prompt: prompt
   }
   
-  // Add generation config
-  const config: Record<string, any> = {}
+  const parameters: Record<string, any> = {}
   
+  // Add parameters (config options)
   if (options.aspectRatio) {
-    config.aspectRatio = options.aspectRatio
+    parameters.aspectRatio = options.aspectRatio
   }
   
   if (options.resolution) {
-    config.resolution = options.resolution
+    parameters.resolution = options.resolution
   }
   
   if (options.durationSeconds) {
-    config.durationSeconds = options.durationSeconds
+    parameters.durationSeconds = options.durationSeconds
   }
   
   if (options.negativePrompt) {
-    config.negativePrompt = options.negativePrompt
+    parameters.negativePrompt = options.negativePrompt
   }
   
   // Person generation setting
   // T2V: 'allow_all' only
   // I2V/FTV/REF: 'allow_adult' only
   const isImageBased = !!options.startFrame || (options.referenceImages && options.referenceImages.length > 0)
-  config.personGeneration = isImageBased ? 'allow_adult' : 'allow_all'
+  parameters.personGeneration = isImageBased ? 'allow_adult' : 'allow_all'
   
   if (options.numberOfVideos) {
-    config.numberOfVideos = options.numberOfVideos
+    parameters.sampleCount = options.numberOfVideos
+  } else {
+    parameters.sampleCount = 1
   }
   
   // Add start frame for I2V mode
@@ -182,8 +185,8 @@ export async function generateVideoWithGeminiStudio(
       imageData = options.startFrame
     }
     
-    // Add image at request level (not in config)
-    requestBody.image = {
+    // Add image to instance for I2V mode
+    instance.image = {
       bytesBase64Encoded: imageData,
       mimeType: mimeType
     }
@@ -211,7 +214,8 @@ export async function generateVideoWithGeminiStudio(
       imageData = options.lastFrame
     }
     
-    config.lastFrame = {
+    // lastFrame goes in instance for FTV interpolation
+    instance.lastFrame = {
       bytesBase64Encoded: imageData,
       mimeType: mimeType
     }
@@ -251,18 +255,19 @@ export async function generateVideoWithGeminiStudio(
     
     const validRefs = refs.filter(Boolean)
     if (validRefs.length > 0) {
-      config.referenceImages = validRefs
+      parameters.referenceImages = validRefs
       console.log(`[Gemini Studio Video] Added ${validRefs.length} reference images`)
     }
   }
   
-  // Add config to request body if not empty
-  if (Object.keys(config).length > 0) {
-    requestBody.config = config
+  // Build the final request body with instances and parameters
+  const requestBody = {
+    instances: [instance],
+    parameters: parameters
   }
   
-  console.log('[Gemini Studio Video] Request body keys:', Object.keys(requestBody))
-  console.log('[Gemini Studio Video] Config keys:', Object.keys(config))
+  console.log('[Gemini Studio Video] Instance keys:', Object.keys(instance))
+  console.log('[Gemini Studio Video] Parameters keys:', Object.keys(parameters))
   
   try {
     const response = await fetch(endpoint, {
@@ -410,8 +415,10 @@ export async function checkGeminiVideoStatus(
     }
     
     // Check for RAI filtering
-    const raiFilteredCount = data.response?.raiMediaFilteredCount
-    const raiReasons = data.response?.raiMediaFilteredReasons
+    // Python SDK checks: response.generateVideoResponse.raiMediaFilteredCount
+    const generateVideoResponse = data.response?.generateVideoResponse || data.response
+    const raiFilteredCount = generateVideoResponse?.raiMediaFilteredCount
+    const raiReasons = generateVideoResponse?.raiMediaFilteredReasons
     if (raiFilteredCount && raiFilteredCount > 0) {
       const reason = raiReasons?.[0] || 'Content was filtered by safety policies'
       console.error('[Gemini Studio Video] Content filtered by RAI:', reason)
@@ -422,9 +429,14 @@ export async function checkGeminiVideoStatus(
     }
     
     // Extract video from response
-    const generatedVideos = data.response?.generatedVideos
-    if (generatedVideos && generatedVideos.length > 0) {
-      const video = generatedVideos[0].video
+    // Python SDK mldev uses: response.generateVideoResponse.generatedSamples[0].video
+    // But may also be: response.generatedVideos[0].video
+    const generatedSamples = generateVideoResponse?.generatedSamples || 
+                             generateVideoResponse?.generatedVideos ||
+                             data.response?.generatedVideos
+    if (generatedSamples && generatedSamples.length > 0) {
+      const videoEntry = generatedSamples[0]
+      const video = videoEntry.video || videoEntry
       
       // Video may be a file reference that needs to be downloaded
       if (video?.name) {
