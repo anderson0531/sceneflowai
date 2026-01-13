@@ -2039,6 +2039,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             duration: options?.duration,
             aspectRatio: options?.aspectRatio,
             resolution: options?.resolution,
+            // Pass guidePrompt containing voice/dialogue/SFX for Veo 3.1 audio generation
+            guidePrompt: options?.guidePrompt,
           }),
         })
 

@@ -46,6 +46,9 @@ interface GenerateAssetRequest {
     dialogueBeat?: string
     suggestedAtmosphere?: string
   }
+  // Guide prompt containing voice/dialogue/SFX cues for Veo 3.1 native audio
+  // Composed by GuidePromptEditor with proper voice anchors and Veo formatting
+  guidePrompt?: string
 }
 
 export async function POST(
@@ -78,7 +81,9 @@ export async function POST(
       previousSegmentVeoRef,
       isEstablishingShot = false,
       // Audio context for atmospheric guidance
-      audioContext
+      audioContext,
+      // Guide prompt with voice/dialogue/SFX cues for Veo 3.1 native audio
+      guidePrompt
     } = body
 
     // Get user session for authentication
@@ -205,9 +210,21 @@ export async function POST(
         // If user wants I2V with character consistency, they should use I2V mode without referenceImages
       }
       
-      // Enhance prompt with audio context for atmospheric guidance
-      // Veo 3.1 supports voice and SFX, so we can guide the atmosphere
+      // Enhance prompt with guidePrompt for Veo 3.1 native voice/dialogue/SFX generation
+      // The guidePrompt contains properly formatted audio cues from GuidePromptEditor:
+      // - Dialogue with voice anchors: CHARACTER says with [voice type]: "dialogue text"
+      // - Narration with voice anchors: Narrator in [voice type] says: "narration text"
+      // - SFX/Ambience: Ambient: sound description
       let enhancedPrompt = prompt
+      if (guidePrompt && guidePrompt.trim()) {
+        // Append guidePrompt to visual prompt - Veo 3.1 will generate synchronized audio
+        enhancedPrompt = `${prompt}\n\n${guidePrompt}`
+        console.log('[Segment Asset Generation] Enhanced prompt with guidePrompt for voice/SFX generation')
+        console.log('[Segment Asset Generation] Guide prompt length:', guidePrompt.length, 'chars')
+      }
+      
+      // Additional atmospheric guidance from audioContext (legacy support)
+      // Veo 3.1 supports voice and SFX, so we can guide the atmosphere
       if (audioContext) {
         const atmosphericGuidance: string[] = []
         
