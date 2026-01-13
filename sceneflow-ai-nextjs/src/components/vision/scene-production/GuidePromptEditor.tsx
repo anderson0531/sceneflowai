@@ -649,6 +649,10 @@ export function GuidePromptEditor({
   const [customAddition, setCustomAddition] = useState('')
   const [showRawPreview, setShowRawPreview] = useState(false)
   
+  // Stable reference for characters to prevent infinite loops
+  // Characters are used for voice anchor lookup, only need to recompute when actual data changes
+  const charactersKey = useMemo(() => JSON.stringify(characters.map(c => c.name)), [characters])
+  
   // Voice Anchor state for narrator
   const [narratorVoiceType, setNarratorVoiceType] = useState<NarratorVoiceType>('neutral-documentary')
   const [customVoiceDescription, setCustomVoiceDescription] = useState('')
@@ -830,7 +834,8 @@ export function GuidePromptEditor({
     }
     
     setElements(newElements)
-  }, [segment, scene, language, characters])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [segment, scene, language, charactersKey])  // Use charactersKey for stable reference
   
   // Toggle element selection
   const toggleElement = useCallback((elementId: string) => {
