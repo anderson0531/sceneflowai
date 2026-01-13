@@ -37,6 +37,7 @@ import {
   MessageSquare,
   Music,
   Upload,
+  RefreshCw,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -92,12 +93,12 @@ const methodBadgeConfig: Record<VideoGenerationMethod, { label: string; classNam
   REF: { label: 'REF', className: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50' },
 }
 
-// Status badge colors
+// Status badge colors - Using film terminology
 const statusBadgeConfig = {
-  'auto-ready': { label: 'Auto-Ready', className: 'bg-slate-500/20 text-slate-300 border-slate-500/50', icon: Clock },
-  'user-approved': { label: 'Approved', className: 'bg-green-500/20 text-green-300 border-green-500/50', icon: CheckCircle },
-  'rendering': { label: 'Rendering', className: 'bg-blue-500/20 text-blue-300 border-blue-500/50', icon: Loader2 },
-  'rendered': { label: 'Complete', className: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50', icon: Film },
+  'auto-ready': { label: 'Ready', className: 'bg-slate-500/20 text-slate-300 border-slate-500/50', icon: Clock },
+  'user-approved': { label: 'Print', className: 'bg-green-500/20 text-green-300 border-green-500/50', icon: CheckCircle },
+  'rendering': { label: 'Rolling', className: 'bg-blue-500/20 text-blue-300 border-blue-500/50', icon: Loader2 },
+  'rendered': { label: 'In the Can', className: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50', icon: Film },
   'error': { label: 'Error', className: 'bg-red-500/20 text-red-300 border-red-500/50', icon: AlertCircle },
 }
 
@@ -128,6 +129,31 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   // Selected segment for DirectorDialog
   const [selectedSegment, setSelectedSegment] = useState<SceneSegment | null>(null)
   
+  // Segment selection for batch operations (checkboxes)
+  const [selectedSegmentIds, setSelectedSegmentIds] = useState<Set<string>>(new Set())
+  
+  // Toggle segment selection
+  const toggleSegmentSelection = useCallback((segmentId: string, checked: boolean) => {
+    setSelectedSegmentIds(prev => {
+      const next = new Set(prev)
+      if (checked) {
+        next.add(segmentId)
+      } else {
+        next.delete(segmentId)
+      }
+      return next
+    })
+  }, [])
+  
+  // Select/deselect all segments
+  const selectAllSegments = useCallback(() => {
+    setSelectedSegmentIds(new Set(queue.map(q => q.segmentId)))
+  }, [queue])
+  
+  const deselectAllSegments = useCallback(() => {
+    setSelectedSegmentIds(new Set())
+  }, [])
+  
   // Scene video player modal state
   const [isScenePlayerOpen, setIsScenePlayerOpen] = useState(false)
   
@@ -150,7 +176,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     }
   }, [selectedSegment, updateConfig])
   
-  // Handle batch render
+  // Handle batch render - approved only
   const handleRenderApproved = useCallback(() => {
     processQueue({
       mode: 'approved_only',
@@ -159,6 +185,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     })
   }, [processQueue])
   
+  // Handle batch render - all segments
   const handleRenderAll = useCallback(() => {
     processQueue({
       mode: 'all',
@@ -167,11 +194,43 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     })
   }, [processQueue])
   
+  // Handle batch render - selected segments only
+  const handleRenderSelected = useCallback(() => {
+    if (selectedSegmentIds.size === 0) return
+    processQueue({
+      mode: 'selected',
+      priority: 'sequence',
+      delayBetween: 500,
+      selectedIds: Array.from(selectedSegmentIds),
+    })
+    // Clear selection after starting render
+    setSelectedSegmentIds(new Set())
+  }, [processQueue, selectedSegmentIds])
+  
+  // Mark segment as "Print" (keep this take - user approved)
+  const handleMarkPrint = useCallback((segmentId: string) => {
+    const item = queue.find(q => q.segmentId === segmentId)
+    if (item) {
+      updateConfig(segmentId, { ...item.config, approvalStatus: 'user-approved' })
+    }
+  }, [queue, updateConfig])
+  
+  // Mark segment for "Retake" (needs re-render - reset to auto-ready)
+  const handleMarkRetake = useCallback((segmentId: string) => {
+    const item = queue.find(q => q.segmentId === segmentId)
+    if (item) {
+      updateConfig(segmentId, { ...item.config, approvalStatus: 'auto-ready' })
+      // Auto-select for next render batch
+      setSelectedSegmentIds(prev => new Set(prev).add(segmentId))
+    }
+  }, [queue, updateConfig])
+  
   // Count segments by status
   const statusCounts = {
     approved: queue.filter(q => q.config.approvalStatus === 'user-approved').length,
     autoReady: queue.filter(q => q.config.approvalStatus === 'auto-ready').length,
     rendered: queue.filter(q => q.status === 'complete').length,
+    retakes: queue.filter(q => q.status === 'complete' && q.config.approvalStatus === 'auto-ready').length,
     total: queue.length,
   }
   
@@ -221,6 +280,17 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
             </>
           ) : (
             <>
+              {/* Render Selected - only show when segments are selected */}
+              {selectedSegmentIds.size > 0 && (
+                <Button 
+                  size="sm"
+                  onClick={handleRenderSelected}
+                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Render Selected ({selectedSegmentIds.size})
+                </Button>
+              )}
               <Button 
                 variant="outline" 
                 size="sm"
@@ -294,11 +364,22 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                   ? 'bg-indigo-900/10 border-indigo-500/30' 
                   : 'bg-slate-800/30 border-slate-700/50'
                 }
+                ${selectedSegmentIds.has(item.segmentId) ? 'ring-2 ring-amber-500/50' : ''}
                 ${isCurrentlyRendering ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900' : ''}
               `}
               onClick={() => setSelectedSegment(segment)}
             >
               <div className="flex gap-4">
+                {/* Selection Checkbox */}
+                <div className="flex-shrink-0 flex items-start pt-1">
+                  <Checkbox
+                    checked={selectedSegmentIds.has(item.segmentId)}
+                    onCheckedChange={(checked) => toggleSegmentSelection(item.segmentId, checked === true)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="border-slate-500"
+                  />
+                </div>
+                
                 {/* Thumbnail Preview */}
                 <div className="w-32 aspect-video bg-black rounded overflow-hidden relative flex-shrink-0">
                   {item.thumbnailUrl ? (
@@ -423,6 +504,53 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                   </Tooltip>
                 </div>
               </div>
+              
+              {/* Print / Retake Actions for completed segments */}
+              {item.status === 'complete' && (
+                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-700/50">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant={item.config.approvalStatus === 'user-approved' ? 'default' : 'outline'}
+                        size="sm"
+                        className={item.config.approvalStatus === 'user-approved' 
+                          ? 'flex-1 bg-green-600 hover:bg-green-700 text-white' 
+                          : 'flex-1 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700'
+                        }
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleMarkPrint(item.segmentId)
+                        }}
+                      >
+                        <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                        Print
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Keep this take - mark as final</TooltipContent>
+                  </Tooltip>
+                  
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant={item.config.approvalStatus === 'auto-ready' ? 'default' : 'outline'}
+                        size="sm"
+                        className={item.config.approvalStatus === 'auto-ready' 
+                          ? 'flex-1 bg-amber-600 hover:bg-amber-700 text-white' 
+                          : 'flex-1 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700'
+                        }
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleMarkRetake(item.segmentId)
+                        }}
+                      >
+                        <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+                        Retake
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Queue for re-render</TooltipContent>
+                  </Tooltip>
+                </div>
+              )}
             </div>
           )
         })}

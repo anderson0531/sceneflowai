@@ -168,9 +168,10 @@ export interface DirectorQueueItem {
  * Batch rendering options for Director's Console
  */
 export interface BatchRenderOptions {
-  mode: 'approved_only' | 'all'
+  mode: 'approved_only' | 'all' | 'selected'
   priority: 'sequence' | 'approved_first'
   delayBetween: number        // ms delay between API calls (rate limiting)
+  selectedIds?: string[]      // Segment IDs to render when mode is 'selected'
 }
 
 // ============================================================================

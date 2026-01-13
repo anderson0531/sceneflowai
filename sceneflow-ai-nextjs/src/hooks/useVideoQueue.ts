@@ -176,13 +176,18 @@ export function useVideoQueue(
       return
     }
     
-    const { mode, priority, delayBetween } = options
+    const { mode, priority, delayBetween, selectedIds } = options
     
     // Filter queue based on mode
     let itemsToProcess = queue.filter((item) => {
       // Skip actively rendering
       if (item.status === 'rendering') {
         return false
+      }
+      
+      // For 'selected' mode: only render explicitly selected segments
+      if (mode === 'selected') {
+        return selectedIds?.includes(item.segmentId) ?? false
       }
       
       // For approved_only mode: include user-approved items (even if already complete for re-rendering)
