@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateVideoWithVeo, waitForVideoCompletion, downloadVideoFile } from '@/lib/gemini/videoClient'
+import { 
+  generateVideoWithGeminiStudio, 
+  waitForGeminiVideoCompletion, 
+  downloadGeminiVideoFile 
+} from '@/lib/gemini/geminiStudioVideoClient'
 import { uploadVideoToBlob } from '@/lib/storage/blob'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -58,28 +62,48 @@ export async function POST(req: NextRequest) {
     console.log('[Generate Backdrop Video] Mode:', mode, 'Scene:', sourceSceneNumber)
     console.log('[Generate Backdrop Video] Enhanced prompt:', enhancedPrompt)
 
-    // Generate video using Veo 3.1 (T2V mode - no start frame)
-    const operationName = await generateVideoWithVeo({
-      prompt: enhancedPrompt,
+    // Generate video using Veo 3.1 via Gemini Studio API (T2V mode - no start frame)
+    const veoResult = await generateVideoWithGeminiStudio(enhancedPrompt, {
       negativePrompt: negativePrompt || modeConfig.negativePrompt,
       aspectRatio,
-      durationSeconds: Math.min(duration, 8), // Veo 3.1 supports up to 8s
+      durationSeconds: Math.min(duration, 8) as 4 | 6 | 8, // Veo 3.1 supports up to 8s
       personGeneration: modeConfig.allowPeople ? 'allow_adult' : 'dont_allow',
     })
 
-    console.log('[Generate Backdrop Video] Waiting for completion:', operationName)
+    if (veoResult.status === 'FAILED') {
+      throw new Error(veoResult.error || 'Video generation failed')
+    }
+
+    console.log('[Generate Backdrop Video] Waiting for completion:', veoResult.operationName)
     
     // Wait for video to complete
-    const result = await waitForVideoCompletion(operationName)
+    let finalResult = veoResult
+    if (veoResult.status === 'QUEUED' || veoResult.status === 'PROCESSING') {
+      finalResult = await waitForGeminiVideoCompletion(veoResult.operationName!, 240, 10)
+    }
     
-    if (!result.videoUri) {
-      throw new Error('Video generation completed but no video URI returned')
+    if (finalResult.status !== 'COMPLETED' || !finalResult.videoUrl) {
+      throw new Error(finalResult.error || 'Video generation did not complete')
     }
 
     console.log('[Generate Backdrop Video] Video generated, downloading...')
 
     // Download the video from Gemini
-    const videoBuffer = await downloadVideoFile(result.videoUri)
+    let videoBuffer: Buffer
+    if (finalResult.videoUrl.startsWith('file:')) {
+      const downloaded = await downloadGeminiVideoFile(finalResult.videoUrl)
+      if (!downloaded) {
+        throw new Error('Failed to download video file')
+      }
+      videoBuffer = downloaded
+    } else {
+      // Download from HTTP URL
+      const videoResponse = await fetch(finalResult.videoUrl)
+      if (!videoResponse.ok) {
+        throw new Error(`Failed to fetch video: ${videoResponse.status}`)
+      }
+      videoBuffer = Buffer.from(await videoResponse.arrayBuffer())
+    }
 
     // Upload to Vercel Blob
     const filename = `backdrop-${mode}-${sourceSceneNumber || 'unknown'}-${Date.now()}.mp4`
@@ -92,7 +116,7 @@ export async function POST(req: NextRequest) {
       videoUrl,
       duration: duration,
       mode,
-      veoVideoRef: result.veoVideoRef,
+      operationName: finalResult.operationName,
     })
   } catch (error: any) {
     console.error('[Generate Backdrop Video] Error:', error)

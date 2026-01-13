@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
-import { generateVideoWithVeo, waitForVideoCompletion, downloadVideoFile } from '@/lib/gemini/videoClient'
+import { 
+  generateVideoWithGeminiStudio, 
+  waitForGeminiVideoCompletion, 
+  downloadGeminiVideoFile 
+} from '@/lib/gemini/geminiStudioVideoClient'
 import { uploadImageToBlob, uploadVideoToBlob } from '@/lib/storage/blob'
 import { extractAndStoreLastFrame } from '@/lib/videoUtils'
 import { getServerSession } from 'next-auth'
@@ -248,8 +252,9 @@ export async function POST(
         }
       }
       
-      // Trigger video generation
-      const veoResult = await generateVideoWithVeo(enhancedPrompt, videoOptions)
+      // Trigger video generation using Gemini Studio API (same auth as image generation)
+      console.log('[Segment Asset Generation] Using Gemini Studio Video API for Veo 3.1')
+      const veoResult = await generateVideoWithGeminiStudio(enhancedPrompt, videoOptions)
 
       if (veoResult.status === 'FAILED') {
         throw new Error(veoResult.error || 'Video generation failed')
@@ -259,7 +264,7 @@ export async function POST(
       let finalResult = veoResult
       if (veoResult.status === 'QUEUED' || veoResult.status === 'PROCESSING') {
         console.log('[Segment Asset Generation] Waiting for video completion...')
-        finalResult = await waitForVideoCompletion(
+        finalResult = await waitForGeminiVideoCompletion(
           veoResult.operationName!,
           240, // 4 minutes max wait
           10   // Poll every 10 seconds
@@ -274,7 +279,7 @@ export async function POST(
       let videoBuffer: Buffer | null = null
       if (finalResult.videoUrl.startsWith('file:')) {
         console.log('[Segment Asset Generation] Downloading video from Files API...')
-        videoBuffer = await downloadVideoFile(finalResult.videoUrl)
+        videoBuffer = await downloadGeminiVideoFile(finalResult.videoUrl)
         if (!videoBuffer) {
           throw new Error('Failed to download video file')
         }
