@@ -140,6 +140,13 @@ export interface GuidePromptEditorProps {
   onGuidePromptChange: (guidePrompt: string) => void
   /** Callback for negative prompt changes */
   onNegativePromptChange?: (negativePrompt: string) => void
+  /** Optional characters array for voice anchor demographics */
+  characters?: Array<{
+    name: string
+    age?: string
+    gender?: string
+    ethnicity?: string
+  }>
   className?: string
 }
 
@@ -150,6 +157,10 @@ interface AudioElement {
   content: string
   audioUrl?: string
   character?: string
+  // Character demographics for voice anchor generation
+  characterAge?: string
+  characterGender?: string
+  characterEthnicity?: string
   selected: boolean
   // Portion selection for long content spanning multiple clips
   portionStart: number  // 0-100 percentage
@@ -203,6 +214,53 @@ const VOICE_ANCHOR_PRESETS: VoiceAnchorPreset[] = [
     promptText: '',
   },
 ]
+
+/**
+ * Character voice styles for dialogue - explicit Veo 3.1 voice descriptors
+ * Maps age+gender combinations to natural voice descriptions
+ * These help Veo generate consistent character voices with specific qualities
+ */
+const CHARACTER_VOICE_STYLES: Record<string, string> = {
+  // Male voices by age
+  'young-male': 'a young man with a clear, energetic voice',
+  'adult-male': 'an adult man with a measured, natural voice',
+  'middle-aged-male': 'a middle-aged man with a resonant, authoritative voice',
+  'elderly-male': 'an elderly man with a weathered, deliberate voice',
+  // Female voices by age
+  'young-female': 'a young woman with a bright, expressive voice',
+  'adult-female': 'an adult woman with a warm, articulate voice',
+  'middle-aged-female': 'a middle-aged woman with a composed, confident voice',
+  'elderly-female': 'an elderly woman with a gentle, knowing voice',
+  // Fallbacks
+  'male': 'a man speaking naturally',
+  'female': 'a woman speaking naturally',
+  'neutral': 'speaking clearly and naturally',
+}
+
+/**
+ * Get voice style descriptor from character demographics
+ */
+function getCharacterVoiceStyle(age?: string, gender?: string): string {
+  if (!gender) return CHARACTER_VOICE_STYLES['neutral']
+  
+  const genderLower = gender.toLowerCase()
+  const genderKey = genderLower === 'male' || genderLower === 'm' ? 'male' : 
+                    genderLower === 'female' || genderLower === 'f' ? 'female' : 'neutral'
+  
+  if (!age) return CHARACTER_VOICE_STYLES[genderKey] || CHARACTER_VOICE_STYLES['neutral']
+  
+  const ageNum = parseInt(age)
+  let ageKey = ''
+  if (!isNaN(ageNum)) {
+    if (ageNum < 25) ageKey = 'young'
+    else if (ageNum < 40) ageKey = 'adult'
+    else if (ageNum < 60) ageKey = 'middle-aged'
+    else ageKey = 'elderly'
+  }
+  
+  const fullKey = ageKey ? `${ageKey}-${genderKey}` : genderKey
+  return CHARACTER_VOICE_STYLES[fullKey] || CHARACTER_VOICE_STYLES[genderKey] || CHARACTER_VOICE_STYLES['neutral']
+}
 
 // ============================================================================
 // Video Negative Prompt Presets (Veo 3.1 Realism)
@@ -582,6 +640,7 @@ export function GuidePromptEditor({
   language = 'en',
   onGuidePromptChange,
   onNegativePromptChange,
+  characters = [],
   className,
 }: GuidePromptEditorProps) {
   const { playingUrl, toggle } = useAudioPlayer()
@@ -656,12 +715,22 @@ export function GuidePromptEditor({
     // 2. Dialogue lines for this segment
     const segmentDialogue = getSegmentDialogueLines(segment, scene.dialogue)
     segmentDialogue.forEach((dl, idx) => {
+      // Try to find character demographics from characters array
+      const charData = characters.find(c => 
+        c.name.toLowerCase() === dl.character.toLowerCase() ||
+        c.name.toLowerCase().includes(dl.character.toLowerCase()) ||
+        dl.character.toLowerCase().includes(c.name.toLowerCase())
+      )
+      
       newElements.push({
         id: `dialogue-${dl.id || idx}`,
         type: 'dialogue',
         label: dl.character,
         content: dl.line,
         character: dl.character,
+        characterAge: charData?.age,
+        characterGender: charData?.gender,
+        characterEthnicity: charData?.ethnicity,
         audioUrl: getDialogueAudioUrl(dl.index, scene.dialogueAudio, language),
         selected: true,
         portionStart: 0,
@@ -672,12 +741,22 @@ export function GuidePromptEditor({
     // 3. All scene dialogue (if segment doesn't have specific IDs assigned)
     if (segmentDialogue.length === 0 && scene.dialogue && scene.dialogue.length > 0) {
       scene.dialogue.forEach((dl, idx) => {
+        // Try to find character demographics from characters array
+        const charData = characters.find(c => 
+          c.name.toLowerCase() === (dl.character || '').toLowerCase() ||
+          c.name.toLowerCase().includes((dl.character || '').toLowerCase()) ||
+          (dl.character || '').toLowerCase().includes(c.name.toLowerCase())
+        )
+        
         newElements.push({
           id: `scene-dialogue-${idx}`,
           type: 'dialogue',
           label: dl.character || 'Character',
           content: dl.line || dl.text || '',
           character: dl.character,
+          characterAge: charData?.age,
+          characterGender: charData?.gender,
+          characterEthnicity: charData?.ethnicity,
           audioUrl: getDialogueAudioUrl(idx, scene.dialogueAudio, language),
           selected: false,
           portionStart: 0,
@@ -751,7 +830,7 @@ export function GuidePromptEditor({
     }
     
     setElements(newElements)
-  }, [segment, scene, language])
+  }, [segment, scene, language, characters])
   
   // Toggle element selection
   const toggleElement = useCallback((elementId: string) => {
@@ -768,9 +847,9 @@ export function GuidePromptEditor({
   }, [])
   
   // ============================================================================
-  // INTELLIGENT PROMPT SYNTHESIS - Anchor & Layer Format
-  // Veo 3.1 Optimization: [Cinematography] → [Visual Anchor] → [Action] → 
-  // [Environment] → [Audio: Dialogue] → [Audio: SFX+Ambience]
+  // INTELLIGENT PROMPT SYNTHESIS - Structured Audio Format for Veo 3.1
+  // Veo 3.1 requires explicit voice descriptors and clear audio instructions
+  // Format: [Visual Scene] + [AUDIO INSTRUCTIONS] with labeled sections
   // ============================================================================
   const composedPrompt = useMemo(() => {
     const selectedElements = elements.filter(el => el.selected)
@@ -779,7 +858,8 @@ export function GuidePromptEditor({
       return ''
     }
     
-    const promptParts: string[] = []
+    const visualParts: string[] = []
+    const audioParts: string[] = []
     
     // 1. CINEMATOGRAPHY (from scene direction camera work)
     const directions = selectedElements.filter(el => el.type === 'direction')
@@ -791,41 +871,51 @@ export function GuidePromptEditor({
       // Extract camera work if present
       const cameraMatch = directionText.match(/(?:camera|shot|angle|pan|zoom|tracking|dolly|close[- ]?up|wide|medium)[^.]*\./i)
       if (cameraMatch) {
-        promptParts.push(cameraMatch[0].trim())
+        visualParts.push(cameraMatch[0].trim())
       }
       
       // 2. VISUAL ACTION - Core visual description
       const visualAction = extractCoreVisualAction(directionText, 250)
       if (visualAction) {
-        promptParts.push(visualAction)
+        visualParts.push(visualAction)
       }
     }
     
-    // 3. DIALOGUE with Voice Anchors - Include actual dialogue text for Veo synthesis
+    // 3. DIALOGUE with Explicit Voice Anchors for Veo 3.1
+    // Format: "CHARACTER_NAME, [voice descriptor], says [emotion]: "[dialogue]""
     const dialogues = selectedElements.filter(el => el.type === 'dialogue')
     if (dialogues.length > 0) {
-      const dialogueParts = dialogues.map(d => {
+      dialogues.forEach(d => {
         const portion = getTextPortion(d.content, d.portionStart, d.portionEnd)
         const charName = d.character || 'Character'
         const emotion = extractDialoguePerformance(portion)
         
-        // Truncate long dialogue to ~80 words max for Veo
-        const words = portion.split(/\s+/)
-        const truncatedText = words.length > 80 
-          ? words.slice(0, 80).join(' ') + '...'
-          : portion
+        // Get voice style from character demographics
+        const voiceStyle = getCharacterVoiceStyle(d.characterAge, d.characterGender)
         
-        // Format with voice anchor: "[Voice Description] says: "[Dialogue]""
+        // Clean dialogue text - remove parentheticals for the spoken text
+        let cleanDialogue = portion.replace(/\[.*?\]/g, '').replace(/\(.*?\)/g, '').trim()
+        
+        // Truncate long dialogue to ~60 words max for clearer Veo synthesis
+        const words = cleanDialogue.split(/\s+/)
+        const truncatedText = words.length > 60 
+          ? words.slice(0, 60).join(' ') + '...'
+          : cleanDialogue
+        
+        // Build explicit voice instruction for Veo 3.1
+        // Format: "CHARACTER, [voice descriptor], says [emotion]: "dialogue""
+        let dialogueInstruction = `${charName}, ${voiceStyle}`
         if (emotion) {
-          return `${charName} ${emotion} says: "${truncatedText}"`
+          dialogueInstruction += `, ${emotion}`
         }
-        return `${charName} says: "${truncatedText}"`
+        dialogueInstruction += `: "${truncatedText}"`
+        
+        audioParts.push(`DIALOGUE: ${dialogueInstruction}`)
       })
-      
-      promptParts.push(dialogueParts.join(' '))
     }
     
-    // 4. NARRATION with Voice Anchor - Include actual narration text (parsed portion)
+    // 4. NARRATION with Explicit Voice Anchor
+    // Format: "[Voice descriptor] narrates: "[narration]""
     const narrations = selectedElements.filter(el => el.type === 'narration')
     if (narrations.length > 0) {
       const narrationText = narrations
@@ -837,36 +927,45 @@ export function GuidePromptEditor({
         ? customVoiceDescription
         : selectedVoicePreset.promptText
       
-      // Truncate long narration to ~80 words max for Veo
+      // Truncate long narration to ~60 words max for Veo
       const words = narrationText.split(/\s+/)
-      const truncatedNarration = words.length > 80 
-        ? words.slice(0, 80).join(' ') + '...'
+      const truncatedNarration = words.length > 60 
+        ? words.slice(0, 60).join(' ') + '...'
         : narrationText
       
-      // Format: "[Voice Anchor]: "[Narration Text]""
-      if (voiceAnchor) {
-        promptParts.push(`${voiceAnchor}: "${truncatedNarration}"`)
-      } else {
-        promptParts.push(`Narrator: "${truncatedNarration}"`)
-      }
+      // Build explicit narration instruction
+      const narratorDesc = voiceAnchor || 'A clear, professional narrator'
+      audioParts.push(`VOICEOVER: ${narratorDesc} narrates: "${truncatedNarration}"`)
     }
     
-    // 5. AMBIENT AUDIO (SFX that Veo can generate)
+    // 5. AMBIENT AUDIO / SOUND EFFECTS with explicit descriptors
+    // Format: "Sound effect description (intensity, timing)"
     const sfxElements = selectedElements.filter(el => el.type === 'sfx')
     if (sfxElements.length > 0) {
       const sfxDescriptions = sfxElements
-        .map(s => getTextPortion(s.content, s.portionStart, s.portionEnd))
-        .join(', ')
-      promptParts.push(`Ambient: ${sfxDescriptions}`)
+        .map(s => {
+          const sfxText = getTextPortion(s.content, s.portionStart, s.portionEnd)
+          // Parse for intensity/timing hints or add defaults
+          return sfxText
+        })
+        .join('; ')
+      audioParts.push(`AMBIENT SOUNDS: ${sfxDescriptions}`)
     }
     
     // 6. CUSTOM NOTES (user additions)
     if (customAddition.trim()) {
-      promptParts.push(customAddition.trim())
+      visualParts.push(customAddition.trim())
     }
     
-    // Join with periods for clean sentence structure
-    return promptParts.join('. ').replace(/\.\./g, '.').replace(/\s+/g, ' ').trim()
+    // Build final prompt with structured audio section
+    let finalPrompt = visualParts.join('. ').replace(/\.\./g, '.').replace(/\s+/g, ' ').trim()
+    
+    if (audioParts.length > 0) {
+      // Add explicit audio instructions section for Veo 3.1
+      finalPrompt += '\n\n[AUDIO INSTRUCTIONS]\n' + audioParts.join('\n')
+    }
+    
+    return finalPrompt
   }, [elements, customAddition, narratorVoiceType, customVoiceDescription, selectedVoicePreset])
   
   // Raw concatenated version for preview/debugging
