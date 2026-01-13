@@ -873,6 +873,7 @@ export function SceneProductionManager({
     duration?: number
     aspectRatio?: '16:9' | '9:16'
     resolution?: '720p' | '1080p'
+    guidePrompt?: string  // Voice/dialogue/SFX instructions for Veo 3.1 audio
   }) => {
     if (!selectedSegment) return
     await onGenerate(sceneId, selectedSegment.segmentId, mode, options)

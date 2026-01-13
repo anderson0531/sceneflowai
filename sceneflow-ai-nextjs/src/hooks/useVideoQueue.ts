@@ -258,6 +258,7 @@ export function useVideoQueue(
             aspectRatio: item.config.aspectRatio,
             resolution: item.config.resolution,
             generationMethod: item.config.mode,
+            guidePrompt: item.config.guidePrompt,  // Voice/dialogue/SFX for Veo 3.1 audio
           }
         )
         

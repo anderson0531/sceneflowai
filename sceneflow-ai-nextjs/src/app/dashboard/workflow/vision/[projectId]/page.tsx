@@ -1985,6 +1985,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         generationMethod?: 'T2V' | 'I2V' | 'FTV' | 'EXT' | 'REF'
         endFrameUrl?: string
         referenceImages?: Array<{ url: string; type: 'style' | 'character' }>
+        guidePrompt?: string  // Voice/dialogue/SFX instructions for Veo 3.1 audio
       }
     ) => {
       if (!project?.id) {

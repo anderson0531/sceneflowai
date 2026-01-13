@@ -48,6 +48,7 @@ interface SegmentStudioProps {
     aspectRatio?: '16:9' | '9:16'
     resolution?: '720p' | '1080p'
     sourceVideoUrl?: string
+    guidePrompt?: string  // Voice/dialogue/SFX instructions for Veo 3.1 audio
   }) => Promise<void>
   onUploadMedia: (file: File) => Promise<void>
   onPromptChange?: (prompt: string) => void
