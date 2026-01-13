@@ -299,7 +299,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                 className="bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700"
               >
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Render Approved ({statusCounts.approved})
+                Render Print ({statusCounts.approved})
               </Button>
               <Button 
                 size="sm"

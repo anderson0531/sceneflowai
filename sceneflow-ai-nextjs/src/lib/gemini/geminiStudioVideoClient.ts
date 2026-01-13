@@ -25,10 +25,11 @@
 // ============================================================================
 
 interface ReferenceImage {
-  imageUrl?: string
-  base64Image?: string
+  url?: string         // Primary URL field (from API route)
+  imageUrl?: string    // Alternative URL field (legacy)
+  base64Image?: string // Direct base64 data
   mimeType?: string
-  referenceType?: 'asset' | 'style'
+  referenceType?: 'asset' | 'style' | 'ASSET' | 'STYLE'
   type?: 'style' | 'character'
 }
 
@@ -226,7 +227,8 @@ export async function generateVideoWithGeminiStudio(
   if (options.referenceImages && options.referenceImages.length > 0 && !options.startFrame) {
     const refs = await Promise.all(
       options.referenceImages.slice(0, 3).map(async (ref) => {
-        const imageSource = ref.base64Image || ref.imageUrl
+        // Check url first (from API route), then imageUrl (legacy), then base64Image
+        const imageSource = ref.url || ref.base64Image || ref.imageUrl
         if (!imageSource) return null
         
         let imageData: string
@@ -240,22 +242,24 @@ export async function generateVideoWithGeminiStudio(
           imageData = imageSource
         }
         
-        // Map type to Veo's referenceType
-        const refType = ref.referenceType || (ref.type === 'style' ? 'style' : 'asset')
+        // Map type to Veo's referenceType (must be uppercase per API spec)
+        const refType = ref.referenceType || (ref.type === 'style' ? 'STYLE' : 'ASSET')
         
         return {
           image: {
             bytesBase64Encoded: imageData,
             mimeType: mimeType
           },
-          referenceType: refType
+          referenceType: refType.toUpperCase() // Ensure uppercase: ASSET or STYLE
         }
       })
     )
     
     const validRefs = refs.filter(Boolean)
     if (validRefs.length > 0) {
-      parameters.referenceImages = validRefs
+      // CRITICAL: referenceImages goes in instance, NOT in parameters
+      // Per SDK: common.setValueByPath(parentObject, ['instances[0]', 'referenceImages'], ...)
+      instance.referenceImages = validRefs
       console.log(`[Gemini Studio Video] Added ${validRefs.length} reference images`)
     }
   }

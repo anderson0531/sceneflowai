@@ -120,8 +120,20 @@ export function useVideoQueue(
       }
       
       // Determine status
+      // A segment is 'complete' if:
+      // 1. Status is COMPLETE with a video asset, OR
+      // 2. Has an activeAssetUrl that looks like a video (fallback for data inconsistencies)
       let status: DirectorQueueItem['status'] = 'queued'
-      if (segment.status === 'COMPLETE' && segment.activeAssetUrl && segment.assetType === 'video') {
+      const hasVideoAsset = segment.activeAssetUrl && (
+        segment.assetType === 'video' || 
+        segment.activeAssetUrl.includes('.mp4') ||
+        segment.activeAssetUrl.includes('video')
+      )
+      
+      if (segment.status === 'COMPLETE' && hasVideoAsset) {
+        status = 'complete'
+      } else if (segment.status === 'COMPLETE' && segment.activeAssetUrl) {
+        // Fallback: if status is COMPLETE with any asset, consider it complete
         status = 'complete'
       } else if (segment.status === 'GENERATING') {
         status = 'rendering'
