@@ -197,6 +197,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
             segment={segment}
             scene={scene}
             onGuidePromptChange={setGuidePrompt}
+            onNegativePromptChange={setNegativePrompt}
             className="mt-2"
           />
         )}

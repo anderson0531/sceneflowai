@@ -138,6 +138,8 @@ export interface GuidePromptEditorProps {
   scene: SceneAudioData
   language?: string
   onGuidePromptChange: (guidePrompt: string) => void
+  /** Callback for negative prompt changes */
+  onNegativePromptChange?: (negativePrompt: string) => void
   className?: string
 }
 
@@ -201,6 +203,67 @@ const VOICE_ANCHOR_PRESETS: VoiceAnchorPreset[] = [
     promptText: '',
   },
 ]
+
+// ============================================================================
+// Video Negative Prompt Presets (Veo 3.1 Realism)
+// ============================================================================
+
+/**
+ * Negative prompt presets to avoid common video generation artifacts
+ * Focus on motion quality and realism issues
+ */
+export const VIDEO_NEGATIVE_PROMPT_PRESETS = [
+  {
+    id: 'unnatural-motion',
+    label: 'Unnatural Motion',
+    description: 'Avoid jerky or robotic movements',
+    value: 'unnatural motion, jerky movements, robotic motion, stiff movement, mechanical animation, jittery, stuttering motion, unsmooth transitions',
+  },
+  {
+    id: 'bad-physics',
+    label: 'Bad Physics',
+    description: 'Avoid physics-defying elements',
+    value: 'floating objects, defying gravity, impossible physics, clipping through objects, objects passing through each other, glitching',
+  },
+  {
+    id: 'face-distortion',
+    label: 'Face Distortion',
+    description: 'Avoid facial anomalies',
+    value: 'distorted face, morphing face, melting features, uncanny valley, asymmetric eyes, wrong number of eyes, blurred face, deformed facial features',
+  },
+  {
+    id: 'hand-artifacts',
+    label: 'Hand Artifacts',
+    description: 'Avoid hand/finger issues',
+    value: 'extra fingers, missing fingers, fused fingers, deformed hands, wrong number of fingers, malformed hands, floating hands',
+  },
+  {
+    id: 'temporal-flicker',
+    label: 'Temporal Flicker',
+    description: 'Avoid frame inconsistency',
+    value: 'flickering, temporal inconsistency, frame jumping, sudden appearance, sudden disappearance, objects popping in and out',
+  },
+  {
+    id: 'low-quality',
+    label: 'Low Quality',
+    description: 'Avoid quality issues',
+    value: 'blurry, pixelated, low resolution, compression artifacts, noisy, grainy, washed out colors, overexposed, underexposed',
+  },
+  {
+    id: 'non-cinematic',
+    label: 'Non-Cinematic',
+    description: 'Avoid non-filmic styles',
+    value: 'cartoon style, anime, 3D animation, CGI look, video game graphics, illustration style, unrealistic lighting',
+  },
+  {
+    id: 'lip-sync',
+    label: 'Lip Sync Issues',
+    description: 'Avoid speech artifacts',
+    value: 'bad lip sync, mouth not matching audio, frozen mouth, exaggerated mouth movements, no mouth movement when speaking',
+  },
+] as const
+
+const DEFAULT_VIDEO_NEGATIVE_PRESETS = ['unnatural-motion', 'face-distortion', 'hand-artifacts']
 
 /**
  * Auto-generate voice anchor from character demographics
@@ -518,6 +581,7 @@ export function GuidePromptEditor({
   scene,
   language = 'en',
   onGuidePromptChange,
+  onNegativePromptChange,
   className,
 }: GuidePromptEditorProps) {
   const { playingUrl, toggle } = useAudioPlayer()
@@ -530,8 +594,46 @@ export function GuidePromptEditor({
   const [narratorVoiceType, setNarratorVoiceType] = useState<NarratorVoiceType>('neutral-documentary')
   const [customVoiceDescription, setCustomVoiceDescription] = useState('')
   
+  // Negative prompt state for video quality
+  const [selectedNegativePresets, setSelectedNegativePresets] = useState<Set<string>>(
+    new Set(DEFAULT_VIDEO_NEGATIVE_PRESETS)
+  )
+  const [customNegativePrompt, setCustomNegativePrompt] = useState('')
+  
   // Get the selected voice preset
   const selectedVoicePreset = VOICE_ANCHOR_PRESETS.find(p => p.type === narratorVoiceType) || VOICE_ANCHOR_PRESETS[2]
+  
+  // Build negative prompt from selected presets + custom
+  const buildNegativePrompt = useCallback((): string => {
+    const presetValues = VIDEO_NEGATIVE_PROMPT_PRESETS
+      .filter(p => selectedNegativePresets.has(p.id))
+      .map(p => p.value)
+    
+    const allParts = [...presetValues]
+    if (customNegativePrompt.trim()) {
+      allParts.push(customNegativePrompt.trim())
+    }
+    
+    return allParts.join(', ')
+  }, [selectedNegativePresets, customNegativePrompt])
+  
+  // Toggle negative preset selection
+  const toggleNegativePreset = useCallback((presetId: string) => {
+    setSelectedNegativePresets(prev => {
+      const next = new Set(prev)
+      if (next.has(presetId)) {
+        next.delete(presetId)
+      } else {
+        next.add(presetId)
+      }
+      return next
+    })
+  }, [])
+  
+  // Notify parent of negative prompt changes
+  useEffect(() => {
+    onNegativePromptChange?.(buildNegativePrompt())
+  }, [buildNegativePrompt, onNegativePromptChange])
   
   // Build the list of audio elements from scene data
   useEffect(() => {
@@ -1122,6 +1224,74 @@ export function GuidePromptEditor({
                 className="min-h-[60px] text-sm bg-slate-800 border-slate-700"
               />
             </div>
+            
+            {/* Negative Prompts Section */}
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="negative" className="border-slate-700">
+                <AccordionTrigger className="text-sm text-slate-300 hover:text-white py-2">
+                  <div className="flex items-center gap-2">
+                    <Ban className="w-4 h-4 text-red-400" />
+                    <span>Negative Prompts (Realism)</span>
+                    <Badge variant="outline" className="text-[10px] text-red-300 border-red-500/50 ml-2">
+                      {selectedNegativePresets.size} active
+                    </Badge>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-4">
+                    <p className="text-xs text-slate-500">
+                      Select artifacts to avoid for more realistic video generation:
+                    </p>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      {VIDEO_NEGATIVE_PROMPT_PRESETS.map(preset => (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => toggleNegativePreset(preset.id)}
+                          className={cn(
+                            "p-2 rounded-lg border text-left transition-colors",
+                            selectedNegativePresets.has(preset.id)
+                              ? "border-red-500/50 bg-red-500/10"
+                              : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
+                          )}
+                        >
+                          <span className={cn(
+                            "text-xs font-medium",
+                            selectedNegativePresets.has(preset.id) ? "text-red-300" : "text-slate-400"
+                          )}>
+                            {preset.label}
+                          </span>
+                          <p className="text-[10px] text-slate-500 mt-0.5">
+                            {preset.description}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-xs text-slate-400">Custom negative prompt:</Label>
+                      <Textarea
+                        value={customNegativePrompt}
+                        onChange={(e) => setCustomNegativePrompt(e.target.value)}
+                        placeholder="Add custom terms to avoid (e.g., 'shaky camera, motion blur')..."
+                        className="min-h-[60px] text-sm bg-slate-800 border-slate-700"
+                      />
+                    </div>
+                    
+                    {/* Preview combined negative prompt */}
+                    {(selectedNegativePresets.size > 0 || customNegativePrompt) && (
+                      <div className="p-3 bg-slate-900 rounded-lg">
+                        <Label className="text-xs text-slate-500 mb-1 block">Combined negative prompt:</Label>
+                        <p className="text-xs text-red-400/70 font-mono break-words max-h-[100px] overflow-y-auto">
+                          {buildNegativePrompt() || '(none)'}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
             
             {/* Optimized Prompt Preview */}
             <Accordion type="single" collapsible className="w-full">
