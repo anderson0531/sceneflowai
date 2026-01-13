@@ -1140,7 +1140,7 @@ export function GuidePromptEditor({
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-xs text-slate-400 line-clamp-2">
+                            <p className="text-xs text-slate-400 whitespace-pre-wrap break-words select-text cursor-text">
                               {element.content}
                             </p>
                             
