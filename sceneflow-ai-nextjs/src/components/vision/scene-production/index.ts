@@ -19,6 +19,8 @@ export { SegmentFrameTimeline } from './SegmentFrameTimeline'
 export { DirectorDialog } from './DirectorDialog'
 export { DirectorConsole } from './DirectorConsole'
 export { SceneVideoPlayer } from './SceneVideoPlayer'
+export { GuidePromptEditor } from './GuidePromptEditor'
+export type { SceneAudioData, GuidePromptEditorProps } from './GuidePromptEditor'
 
 // Segment Builder Components (Intelligent Segmentation)
 export { SegmentBuilder } from './SegmentBuilder'

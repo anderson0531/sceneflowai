@@ -59,10 +59,12 @@ import type {
   VideoGenerationConfig 
 } from './types'
 import { useSegmentConfig } from '@/hooks/useSegmentConfig'
+import { GuidePromptEditor, type SceneAudioData } from './GuidePromptEditor'
 
 interface DirectorDialogProps {
   segment: SceneSegment
   sceneImageUrl?: string
+  scene?: SceneAudioData
   isOpen: boolean
   onSaveConfig: (config: VideoGenerationConfig) => void
   onClose: () => void
@@ -87,6 +89,7 @@ const methodToMode: Record<VideoGenerationMethod, string> = {
 export const DirectorDialog: React.FC<DirectorDialogProps> = ({ 
   segment, 
   sceneImageUrl,
+  scene,
   isOpen, 
   onSaveConfig, 
   onClose 
@@ -103,6 +106,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>(autoConfig.aspectRatio)
   const [resolution, setResolution] = useState<'720p' | '1080p'>(autoConfig.resolution)
   const [duration, setDuration] = useState(autoConfig.duration)
+  const [guidePrompt, setGuidePrompt] = useState('')
   
   // Sync prompt based on mode
   useEffect(() => {
@@ -136,6 +140,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       motionPrompt,
       visualPrompt,
       negativePrompt,
+      guidePrompt: guidePrompt || undefined,
       aspectRatio,
       resolution,
       duration,
@@ -173,7 +178,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl bg-slate-900 text-white border-slate-700">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-900 text-white border-slate-700">
         
         {/* Header */}
         <DialogHeader>
@@ -185,6 +190,16 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
             Review and customize generation parameters before rendering.
           </DialogDescription>
         </DialogHeader>
+
+        {/* Guide Prompt Editor - Audio & Scene Direction Context */}
+        {scene && (
+          <GuidePromptEditor
+            segment={segment}
+            scene={scene}
+            onGuidePromptChange={setGuidePrompt}
+            className="mt-2"
+          />
+        )}
 
         <div className="grid grid-cols-12 gap-6 mt-4">
           

@@ -46,17 +46,14 @@ import type {
 import { DirectorDialog } from './DirectorDialog'
 import { SceneVideoPlayer } from './SceneVideoPlayer'
 import { useVideoQueue } from '@/hooks/useVideoQueue'
+import type { SceneAudioData } from './GuidePromptEditor'
 
 interface DirectorConsoleProps {
   sceneId: string
   sceneNumber: number
   productionData: SceneProductionData | null
   sceneImageUrl?: string
-  scene?: {
-    narration?: string
-    narrationAudioUrl?: string
-    dialogueLines?: Array<{ character?: string; line?: string }>
-  }
+  scene?: SceneAudioData
   onGenerate: (
     sceneId: string,
     segmentId: string,
@@ -515,6 +512,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
         <DirectorDialog 
           segment={selectedSegment}
           sceneImageUrl={sceneImageUrl}
+          scene={scene}
           isOpen={!!selectedSegment}
           onClose={() => setSelectedSegment(null)}
           onSaveConfig={handleSaveConfig}

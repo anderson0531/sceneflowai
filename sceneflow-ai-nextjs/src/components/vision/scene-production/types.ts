@@ -134,6 +134,7 @@ export interface VideoGenerationConfig {
   motionPrompt: string        // Motion-focused prompt for FTV mode
   visualPrompt: string        // Visual-focused prompt for I2V/T2V mode
   negativePrompt: string      // What to avoid in generation
+  guidePrompt?: string        // Composed from audio/direction elements (narration, dialogue, music, sfx, direction)
   
   // Video parameters
   aspectRatio: '16:9' | '9:16'

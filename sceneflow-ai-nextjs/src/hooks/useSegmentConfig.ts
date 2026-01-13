@@ -23,13 +23,28 @@ import type { VideoGenerationConfig, ApprovalStatus } from '@/components/vision/
 /**
  * Generates a motion-focused prompt for Frame-to-Video interpolation
  * Describes movement between start and end frames, not the visual content
+ * 
+ * Priority:
+ * 1. segment.userInstruction (user override)
+ * 2. segment.userEditedPrompt (user-edited version)
+ * 3. Generated from segment metadata (action, camera, emotion)
  */
 function generateMotionPrompt(segment: SceneSegment): string {
+  // Priority 1: User instruction override
+  if (segment.userInstruction && segment.userInstruction.trim()) {
+    return segment.userInstruction.trim()
+  }
+  
+  // Priority 2: User-edited prompt (can serve as motion instruction)
+  if (segment.userEditedPrompt && segment.userEditedPrompt.trim()) {
+    return segment.userEditedPrompt.trim()
+  }
+  
   const action = segment.action || segment.actionPrompt || ''
   const cameraMovement = segment.cameraMovement || ''
   const emotionalBeat = segment.emotionalBeat || ''
   
-  // Build motion-focused prompt
+  // Build motion-focused prompt from metadata
   const parts: string[] = []
   
   // Camera movement first (most important for interpolation)
@@ -62,24 +77,39 @@ function generateMotionPrompt(segment: SceneSegment): string {
 /**
  * Generates a visual-focused prompt for I2V/T2V generation
  * Describes the scene and atmosphere
+ * 
+ * Priority:
+ * 1. segment.userInstruction (user override)
+ * 2. segment.userEditedPrompt (user-edited version)
+ * 3. segment.generatedPrompt (AI-generated from script)
+ * 4. segment.actionPrompt (action description)
+ * 5. Built from metadata (shotType, action)
  */
 function generateVisualPrompt(segment: SceneSegment, sceneImageUrl?: string): string {
-  const generatedPrompt = segment.generatedPrompt || ''
-  const userPrompt = segment.userEditedPrompt || ''
-  const action = segment.action || segment.actionPrompt || ''
+  // Priority 1: User instruction override
+  if (segment.userInstruction && segment.userInstruction.trim()) {
+    return segment.userInstruction.trim()
+  }
+  
+  // Priority 2: User-edited prompt
+  if (segment.userEditedPrompt && segment.userEditedPrompt.trim()) {
+    return segment.userEditedPrompt.trim()
+  }
+  
+  // Priority 3: Generated prompt from AI/script
+  if (segment.generatedPrompt && segment.generatedPrompt.trim()) {
+    return segment.generatedPrompt.trim()
+  }
+  
+  // Priority 4: Action prompt
+  if (segment.actionPrompt && segment.actionPrompt.trim()) {
+    return segment.actionPrompt.trim()
+  }
+  
+  // Priority 5: Build from metadata
+  const action = segment.action || ''
   const shotType = segment.shotType || 'medium shot'
   
-  // Prefer user-edited prompt if available
-  if (userPrompt) {
-    return userPrompt
-  }
-  
-  // Use generated prompt if available
-  if (generatedPrompt) {
-    return generatedPrompt
-  }
-  
-  // Build visual prompt from metadata
   const parts: string[] = []
   
   parts.push(`${shotType},`)
