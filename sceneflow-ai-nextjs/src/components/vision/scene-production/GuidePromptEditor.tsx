@@ -1085,8 +1085,8 @@ export function GuidePromptEditor({
                 Select elements to include. The prompt will be intelligently synthesized for optimal video generation.
               </p>
               
-              <ScrollArea className="max-h-[300px]">
-                <div className="space-y-2 pr-2">
+              <ScrollArea className="max-h-[450px]">
+                <div className="space-y-3 pr-2">
                   {elements.map((element) => {
                     const Icon = getTypeIcon(element.type)
                     const colorClass = getTypeColor(element.type)
