@@ -828,6 +828,14 @@ export interface VoiceAnchorPreset {
 }
 
 /**
+ * Audio track timing settings for timeline controls
+ */
+export interface AudioTrackTimingSettings {
+  startTime: number  // In seconds, relative to scene start
+  duration: number   // In seconds
+}
+
+/**
  * Audio track selection for video playback overlay
  */
 export interface SelectedAudioTracks {
@@ -835,6 +843,16 @@ export interface SelectedAudioTracks {
   dialogue: boolean
   music: boolean
   sfx: boolean
+}
+
+/**
+ * Extended audio track selection with timing settings
+ */
+export interface AudioTrackSelectionWithTiming {
+  narration: { enabled: boolean; timing: AudioTrackTimingSettings }
+  dialogue: { enabled: boolean; timing: AudioTrackTimingSettings }
+  music: { enabled: boolean; timing: AudioTrackTimingSettings }
+  sfx: { enabled: boolean; timing: AudioTrackTimingSettings }
 }
 
 /**

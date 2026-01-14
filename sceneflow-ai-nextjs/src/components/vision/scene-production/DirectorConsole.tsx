@@ -41,6 +41,7 @@ import {
   Lock,
   Unlock,
   PlayCircle,
+  Timer,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -48,6 +49,8 @@ import type {
   VideoGenerationMethod,
   SceneProductionData,
   SelectedAudioTracks,
+  AudioTrackTimingSettings,
+  SceneAudioConfig,
 } from './types'
 import { DirectorDialog } from './DirectorDialog'
 import { SceneVideoPlayer } from './SceneVideoPlayer'
@@ -60,6 +63,20 @@ const DEFAULT_AUDIO_TRACKS: SelectedAudioTracks = {
   dialogue: true,
   music: false,
   sfx: false,
+}
+
+// Default timing settings
+const DEFAULT_TIMING: AudioTrackTimingSettings = {
+  startTime: 0,
+  duration: 30,
+}
+
+// Audio track timing state type
+interface AudioTrackTimingState {
+  narration: AudioTrackTimingSettings
+  dialogue: AudioTrackTimingSettings
+  music: AudioTrackTimingSettings
+  sfx: AudioTrackTimingSettings
 }
 
 interface DirectorConsoleProps {
@@ -169,6 +186,25 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   
   // Audio track selection for video playback overlay
   const [selectedAudioTracks, setSelectedAudioTracks] = useState<SelectedAudioTracks>(DEFAULT_AUDIO_TRACKS)
+  
+  // Audio track timing settings
+  const [audioTrackTiming, setAudioTrackTiming] = useState<AudioTrackTimingState>({
+    narration: { ...DEFAULT_TIMING },
+    dialogue: { ...DEFAULT_TIMING },
+    music: { ...DEFAULT_TIMING },
+    sfx: { ...DEFAULT_TIMING },
+  })
+  
+  // Update track timing
+  const updateTrackTiming = useCallback((track: keyof AudioTrackTimingState, field: 'startTime' | 'duration', value: number) => {
+    setAudioTrackTiming(prev => ({
+      ...prev,
+      [track]: {
+        ...prev[track],
+        [field]: Math.max(0, value),
+      },
+    }))
+  }, [])
   
   // Toggle individual audio track
   const toggleAudioTrack = useCallback((track: keyof SelectedAudioTracks) => {
@@ -606,7 +642,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
       </div>
 
       {/* Audio Tracks Section */}
-      {(scene?.narration || scene?.dialogueLines?.length) && (
+      {(scene?.narration || scene?.dialogue?.length || scene?.sfx?.length || scene?.musicAudio) && (
         <div className="p-4 bg-slate-800/50 border border-slate-700/50 rounded-lg space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
@@ -620,147 +656,389 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
             {/* Narration Track */}
             {scene?.narration && (
               <div 
-                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                className={`p-3 rounded-lg transition-colors ${
                   selectedAudioTracks.narration 
                     ? 'bg-purple-500/10 border border-purple-500/30' 
                     : 'bg-slate-700/30 border border-slate-600/30 opacity-60'
                 }`}
-                onClick={() => toggleAudioTrack('narration')}
               >
-                <Checkbox
-                  checked={selectedAudioTracks.narration}
-                  onCheckedChange={() => toggleAudioTrack('narration')}
-                  disabled={!scene?.narrationAudioUrl}
-                  className="flex-shrink-0"
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
-                  <Mic2 className="w-4 h-4 text-purple-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-purple-300">Narration</span>
-                    {scene?.narrationAudioUrl && (
-                      <Badge variant="outline" className="text-[10px] bg-purple-500/10 border-purple-500/30 text-purple-400">
-                        Audio Ready
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-400 mt-0.5 line-clamp-1 italic">
-                    "{scene.narration}"
-                  </p>
-                </div>
-                {scene?.narrationAudioUrl && (
-                  <audio
-                    controls
-                    className="h-8 w-40"
-                    src={scene.narrationAudioUrl}
+                <div 
+                  className="flex items-center gap-3 cursor-pointer"
+                  onClick={() => toggleAudioTrack('narration')}
+                >
+                  <Checkbox
+                    checked={selectedAudioTracks.narration}
+                    onCheckedChange={() => toggleAudioTrack('narration')}
+                    disabled={!scene?.narrationAudioUrl}
+                    className="flex-shrink-0"
                     onClick={(e) => e.stopPropagation()}
                   />
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
+                    <Mic2 className="w-4 h-4 text-purple-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-purple-300">Narration</span>
+                      {scene?.narrationAudioUrl && (
+                        <Badge variant="outline" className="text-[10px] bg-purple-500/10 border-purple-500/30 text-purple-400">
+                          Audio Ready
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5 line-clamp-1 italic">
+                      "{scene.narration}"
+                    </p>
+                  </div>
+                  {scene?.narrationAudioUrl && (
+                    <audio
+                      controls
+                      className="h-8 w-40"
+                      src={scene.narrationAudioUrl}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  )}
+                </div>
+                
+                {/* Timeline Controls */}
+                {selectedAudioTracks.narration && (
+                  <div className="mt-3 pt-3 border-t border-purple-500/20 flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Timer className="w-3 h-3 text-slate-500" />
+                      <span className="text-[10px] text-slate-500 uppercase">Start:</span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); updateTrackTiming('narration', 'startTime', audioTrackTiming.narration.startTime - 0.5) }}
+                          className="w-5 h-5 flex items-center justify-center bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded text-slate-300 text-xs font-bold"
+                        >−</button>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={audioTrackTiming.narration.startTime}
+                          onChange={(e) => updateTrackTiming('narration', 'startTime', parseFloat(e.target.value) || 0)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-14 px-1.5 py-0.5 bg-slate-800 border border-slate-600 rounded text-white font-mono text-[10px] text-center"
+                        />
+                        <button
+                          onClick={(e) => { e.stopPropagation(); updateTrackTiming('narration', 'startTime', audioTrackTiming.narration.startTime + 0.5) }}
+                          className="w-5 h-5 flex items-center justify-center bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded text-slate-300 text-xs font-bold"
+                        >+</button>
+                        <span className="text-[10px] text-slate-500">s</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-500 uppercase">Duration:</span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); updateTrackTiming('narration', 'duration', audioTrackTiming.narration.duration - 0.5) }}
+                          className="w-5 h-5 flex items-center justify-center bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded text-slate-300 text-xs font-bold"
+                        >−</button>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={audioTrackTiming.narration.duration}
+                          onChange={(e) => updateTrackTiming('narration', 'duration', parseFloat(e.target.value) || 0)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-14 px-1.5 py-0.5 bg-slate-800 border border-slate-600 rounded text-white font-mono text-[10px] text-center"
+                        />
+                        <button
+                          onClick={(e) => { e.stopPropagation(); updateTrackTiming('narration', 'duration', audioTrackTiming.narration.duration + 0.5) }}
+                          className="w-5 h-5 flex items-center justify-center bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded text-slate-300 text-xs font-bold"
+                        >+</button>
+                        <span className="text-[10px] text-slate-500">s</span>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             )}
             
-            {/* Dialogue Track */}
-            {scene?.dialogueLines && scene.dialogueLines.length > 0 && (
+            {/* Dialogue Track - check both dialogue and dialogueLines */}
+            {((scene?.dialogue && scene.dialogue.length > 0) || (scene?.dialogueAudio?.en && scene.dialogueAudio.en.length > 0)) && (
               <div 
-                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                className={`p-3 rounded-lg transition-colors ${
                   selectedAudioTracks.dialogue 
                     ? 'bg-blue-500/10 border border-blue-500/30' 
                     : 'bg-slate-700/30 border border-slate-600/30 opacity-60'
                 }`}
-                onClick={() => toggleAudioTrack('dialogue')}
               >
-                <Checkbox
-                  checked={selectedAudioTracks.dialogue}
-                  onCheckedChange={() => toggleAudioTrack('dialogue')}
-                  className="flex-shrink-0"
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
-                  <MessageSquare className="w-4 h-4 text-blue-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-blue-300">Dialogue</span>
-                    <Badge variant="outline" className="text-[10px] bg-blue-500/10 border-blue-500/30 text-blue-400">
-                      {scene.dialogueLines.length} Lines
-                    </Badge>
+                <div 
+                  className="flex items-center gap-3 cursor-pointer"
+                  onClick={() => toggleAudioTrack('dialogue')}
+                >
+                  <Checkbox
+                    checked={selectedAudioTracks.dialogue}
+                    onCheckedChange={() => toggleAudioTrack('dialogue')}
+                    disabled={!scene?.dialogueAudio?.en?.length}
+                    className="flex-shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                    <MessageSquare className="w-4 h-4 text-blue-400" />
                   </div>
-                  <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
-                    {scene.dialogueLines[0]?.character}: "{scene.dialogueLines[0]?.line}"
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-blue-300">Dialogue</span>
+                      {scene?.dialogueAudio?.en && scene.dialogueAudio.en.length > 0 && (
+                        <Badge variant="outline" className="text-[10px] bg-blue-500/10 border-blue-500/30 text-blue-400">
+                          Audio Ready
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className="text-[10px] bg-blue-500/10 border-blue-500/30 text-blue-400">
+                        {scene?.dialogue?.length || scene?.dialogueAudio?.en?.length || 0} Lines
+                      </Badge>
+                    </div>
+                    {scene?.dialogue?.[0] && (
+                      <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
+                        {scene.dialogue[0].character}: "{scene.dialogue[0].line || scene.dialogue[0].text}"
+                      </p>
+                    )}
+                  </div>
                 </div>
+                
+                {/* Timeline Controls */}
+                {selectedAudioTracks.dialogue && (
+                  <div className="mt-3 pt-3 border-t border-blue-500/20 flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Timer className="w-3 h-3 text-slate-500" />
+                      <span className="text-[10px] text-slate-500 uppercase">Start:</span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); updateTrackTiming('dialogue', 'startTime', audioTrackTiming.dialogue.startTime - 0.5) }}
+                          className="w-5 h-5 flex items-center justify-center bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded text-slate-300 text-xs font-bold"
+                        >−</button>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={audioTrackTiming.dialogue.startTime}
+                          onChange={(e) => updateTrackTiming('dialogue', 'startTime', parseFloat(e.target.value) || 0)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-14 px-1.5 py-0.5 bg-slate-800 border border-slate-600 rounded text-white font-mono text-[10px] text-center"
+                        />
+                        <button
+                          onClick={(e) => { e.stopPropagation(); updateTrackTiming('dialogue', 'startTime', audioTrackTiming.dialogue.startTime + 0.5) }}
+                          className="w-5 h-5 flex items-center justify-center bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded text-slate-300 text-xs font-bold"
+                        >+</button>
+                        <span className="text-[10px] text-slate-500">s</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-500 uppercase">Duration:</span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); updateTrackTiming('dialogue', 'duration', audioTrackTiming.dialogue.duration - 0.5) }}
+                          className="w-5 h-5 flex items-center justify-center bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded text-slate-300 text-xs font-bold"
+                        >−</button>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={audioTrackTiming.dialogue.duration}
+                          onChange={(e) => updateTrackTiming('dialogue', 'duration', parseFloat(e.target.value) || 0)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-14 px-1.5 py-0.5 bg-slate-800 border border-slate-600 rounded text-white font-mono text-[10px] text-center"
+                        />
+                        <button
+                          onClick={(e) => { e.stopPropagation(); updateTrackTiming('dialogue', 'duration', audioTrackTiming.dialogue.duration + 0.5) }}
+                          className="w-5 h-5 flex items-center justify-center bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded text-slate-300 text-xs font-bold"
+                        >+</button>
+                        <span className="text-[10px] text-slate-500">s</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             
             {/* SFX Track */}
             <div 
-              className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+              className={`p-3 rounded-lg transition-colors ${
                 selectedAudioTracks.sfx 
                   ? 'bg-amber-500/10 border border-amber-500/30' 
                   : 'bg-slate-700/30 border border-slate-600/30 opacity-60'
               }`}
-              onClick={() => toggleAudioTrack('sfx')}
             >
-              <Checkbox
-                checked={selectedAudioTracks.sfx}
-                onCheckedChange={() => toggleAudioTrack('sfx')}
-                disabled={!scene?.sfx?.some(s => s.audioUrl)}
-                className="flex-shrink-0"
-                onClick={(e) => e.stopPropagation()}
-              />
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
-                <Volume2 className="w-4 h-4 text-amber-400" />
+              <div 
+                className="flex items-center gap-3 cursor-pointer"
+                onClick={() => toggleAudioTrack('sfx')}
+              >
+                <Checkbox
+                  checked={selectedAudioTracks.sfx}
+                  onCheckedChange={() => toggleAudioTrack('sfx')}
+                  disabled={!scene?.sfx?.some(s => s.audioUrl)}
+                  className="flex-shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
+                  <Volume2 className="w-4 h-4 text-amber-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-amber-300">Sound Effects</span>
+                    {scene?.sfx?.some(s => s.audioUrl) && (
+                      <Badge variant="outline" className="text-[10px] bg-amber-500/10 border-amber-500/30 text-amber-400">
+                        Audio Ready
+                      </Badge>
+                    )}
+                  </div>
+                  {scene?.sfx && scene.sfx.length > 0 ? (
+                    <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
+                      {scene.sfx.map(s => s.description).join(', ')}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-slate-500 mt-0.5">No SFX audio available</p>
+                  )}
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium text-amber-300">Sound Effects</span>
-                {scene?.sfx && scene.sfx.length > 0 ? (
-                  <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
-                    {scene.sfx.map(s => s.description).join(', ')}
-                  </p>
-                ) : (
-                  <p className="text-xs text-slate-500 mt-0.5">No SFX audio available</p>
-                )}
-              </div>
+              
+              {/* Timeline Controls */}
+              {selectedAudioTracks.sfx && (
+                <div className="mt-3 pt-3 border-t border-amber-500/20 flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Timer className="w-3 h-3 text-slate-500" />
+                    <span className="text-[10px] text-slate-500 uppercase">Start:</span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); updateTrackTiming('sfx', 'startTime', audioTrackTiming.sfx.startTime - 0.5) }}
+                        className="w-5 h-5 flex items-center justify-center bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded text-slate-300 text-xs font-bold"
+                      >−</button>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={audioTrackTiming.sfx.startTime}
+                        onChange={(e) => updateTrackTiming('sfx', 'startTime', parseFloat(e.target.value) || 0)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-14 px-1.5 py-0.5 bg-slate-800 border border-slate-600 rounded text-white font-mono text-[10px] text-center"
+                      />
+                      <button
+                        onClick={(e) => { e.stopPropagation(); updateTrackTiming('sfx', 'startTime', audioTrackTiming.sfx.startTime + 0.5) }}
+                        className="w-5 h-5 flex items-center justify-center bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded text-slate-300 text-xs font-bold"
+                      >+</button>
+                      <span className="text-[10px] text-slate-500">s</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-slate-500 uppercase">Duration:</span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); updateTrackTiming('sfx', 'duration', audioTrackTiming.sfx.duration - 0.5) }}
+                        className="w-5 h-5 flex items-center justify-center bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded text-slate-300 text-xs font-bold"
+                      >−</button>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={audioTrackTiming.sfx.duration}
+                        onChange={(e) => updateTrackTiming('sfx', 'duration', parseFloat(e.target.value) || 0)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-14 px-1.5 py-0.5 bg-slate-800 border border-slate-600 rounded text-white font-mono text-[10px] text-center"
+                      />
+                      <button
+                        onClick={(e) => { e.stopPropagation(); updateTrackTiming('sfx', 'duration', audioTrackTiming.sfx.duration + 0.5) }}
+                        className="w-5 h-5 flex items-center justify-center bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded text-slate-300 text-xs font-bold"
+                      >+</button>
+                      <span className="text-[10px] text-slate-500">s</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             
             {/* Music Track */}
             <div 
-              className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+              className={`p-3 rounded-lg transition-colors ${
                 selectedAudioTracks.music 
                   ? 'bg-green-500/10 border border-green-500/30' 
                   : 'bg-slate-700/30 border border-slate-600/30 opacity-60'
               }`}
-              onClick={() => toggleAudioTrack('music')}
             >
-              <Checkbox
-                checked={selectedAudioTracks.music}
-                onCheckedChange={() => toggleAudioTrack('music')}
-                disabled={!scene?.musicAudio}
-                className="flex-shrink-0"
-                onClick={(e) => e.stopPropagation()}
-              />
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
-                <Music className="w-4 h-4 text-green-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium text-green-300">Background Music</span>
-                {scene?.musicAudio ? (
-                  <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
-                    {typeof scene.music === 'string' ? scene.music : scene.music?.description || 'Music track'}
-                  </p>
-                ) : (
-                  <p className="text-xs text-slate-500 mt-0.5">No music audio available</p>
-                )}
-              </div>
-              {scene?.musicAudio && (
-                <audio
-                  controls
-                  className="h-8 w-40"
-                  src={scene.musicAudio}
+              <div 
+                className="flex items-center gap-3 cursor-pointer"
+                onClick={() => toggleAudioTrack('music')}
+              >
+                <Checkbox
+                  checked={selectedAudioTracks.music}
+                  onCheckedChange={() => toggleAudioTrack('music')}
+                  disabled={!scene?.musicAudio}
+                  className="flex-shrink-0"
                   onClick={(e) => e.stopPropagation()}
                 />
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
+                  <Music className="w-4 h-4 text-green-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-green-300">Background Music</span>
+                    {scene?.musicAudio && (
+                      <Badge variant="outline" className="text-[10px] bg-green-500/10 border-green-500/30 text-green-400">
+                        Audio Ready
+                      </Badge>
+                    )}
+                  </div>
+                  {scene?.musicAudio ? (
+                    <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
+                      {typeof scene.music === 'string' ? scene.music : scene.music?.description || 'Music track'}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-slate-500 mt-0.5">No music audio available</p>
+                  )}
+                </div>
+                {scene?.musicAudio && (
+                  <audio
+                    controls
+                    className="h-8 w-40"
+                    src={scene.musicAudio}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                )}
+              </div>
+              
+              {/* Timeline Controls */}
+              {selectedAudioTracks.music && (
+                <div className="mt-3 pt-3 border-t border-green-500/20 flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Timer className="w-3 h-3 text-slate-500" />
+                    <span className="text-[10px] text-slate-500 uppercase">Start:</span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); updateTrackTiming('music', 'startTime', audioTrackTiming.music.startTime - 0.5) }}
+                        className="w-5 h-5 flex items-center justify-center bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded text-slate-300 text-xs font-bold"
+                      >−</button>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={audioTrackTiming.music.startTime}
+                        onChange={(e) => updateTrackTiming('music', 'startTime', parseFloat(e.target.value) || 0)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-14 px-1.5 py-0.5 bg-slate-800 border border-slate-600 rounded text-white font-mono text-[10px] text-center"
+                      />
+                      <button
+                        onClick={(e) => { e.stopPropagation(); updateTrackTiming('music', 'startTime', audioTrackTiming.music.startTime + 0.5) }}
+                        className="w-5 h-5 flex items-center justify-center bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded text-slate-300 text-xs font-bold"
+                      >+</button>
+                      <span className="text-[10px] text-slate-500">s</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-slate-500 uppercase">Duration:</span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); updateTrackTiming('music', 'duration', audioTrackTiming.music.duration - 0.5) }}
+                        className="w-5 h-5 flex items-center justify-center bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded text-slate-300 text-xs font-bold"
+                      >−</button>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={audioTrackTiming.music.duration}
+                        onChange={(e) => updateTrackTiming('music', 'duration', parseFloat(e.target.value) || 0)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-14 px-1.5 py-0.5 bg-slate-800 border border-slate-600 rounded text-white font-mono text-[10px] text-center"
+                      />
+                      <button
+                        onClick={(e) => { e.stopPropagation(); updateTrackTiming('music', 'duration', audioTrackTiming.music.duration + 0.5) }}
+                        className="w-5 h-5 flex items-center justify-center bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded text-slate-300 text-xs font-bold"
+                      >+</button>
+                      <span className="text-[10px] text-slate-500">s</span>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -813,6 +1091,33 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           // Collect SFX audio URLs
           sfxUrls: scene?.sfx?.filter(s => s.audioUrl).map(s => s.audioUrl!) || [],
         }}
+        audioConfig={{
+          narration: scene?.narrationAudioUrl ? {
+            url: scene.narrationAudioUrl,
+            startTime: audioTrackTiming.narration.startTime,
+            duration: audioTrackTiming.narration.duration,
+            volume: 0.8,
+          } : undefined,
+          music: scene?.musicAudio ? {
+            url: scene.musicAudio,
+            startTime: audioTrackTiming.music.startTime,
+            duration: audioTrackTiming.music.duration,
+            volume: 0.5,
+            loop: false,
+          } : undefined,
+          dialogue: scene?.dialogueAudio?.en?.map((d, i) => ({
+            url: d.audioUrl,
+            startTime: audioTrackTiming.dialogue.startTime + (i * 2), // Stagger dialogue lines
+            duration: audioTrackTiming.dialogue.duration,
+            volume: 0.9,
+          })),
+          sfx: scene?.sfx?.filter(s => s.audioUrl).map((s, i) => ({
+            url: s.audioUrl!,
+            startTime: audioTrackTiming.sfx.startTime + (i * 1), // Stagger SFX
+            duration: audioTrackTiming.sfx.duration,
+            volume: 0.6,
+          })),
+        } as SceneAudioConfig}
       />
     </div>
     </TooltipProvider>
