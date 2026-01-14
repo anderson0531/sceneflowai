@@ -103,7 +103,7 @@ export function useVideoQueue(
       const userConfig = userConfigs.get(segment.segmentId)
       
       // Prefer user config over auto config
-      const config = userConfig || autoConfig?.config || {
+      let config = userConfig || autoConfig?.config || {
         mode: 'T2V' as VideoGenerationMethod,
         prompt: '',
         motionPrompt: '',
@@ -117,6 +117,11 @@ export function useVideoQueue(
         sourceVideoUrl: null,
         approvalStatus: 'auto-ready' as const,
         confidence: 50,
+      }
+      
+      // If segment is locked in DB (persisted), override the approval status
+      if (segment.lockedForProduction && config.approvalStatus !== 'locked') {
+        config = { ...config, approvalStatus: 'locked' as const }
       }
       
       // Determine status

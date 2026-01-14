@@ -329,6 +329,10 @@ export interface SceneSegment {
   
   // End frame URL (convenience accessor, also in references.endFrameUrl)
   endFrameUrl?: string | null
+  
+  // Production lock - prevents regeneration in Director's Console
+  // Persisted to DB, survives page reloads
+  lockedForProduction?: boolean
 }
 
 // Character presence in a segment

@@ -1938,6 +1938,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [applySceneProductionUpdate]
   )
 
+  // Handle segment lock state changes (persists to DB for production lock)
+  const handleLockSegment = useCallback(
+    (sceneId: string, segmentId: string, locked: boolean) => {
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        const segments = current.segments.map((segment) =>
+          segment.segmentId === segmentId
+            ? { ...segment, lockedForProduction: locked }
+            : segment
+        )
+        return { ...current, segments }
+      })
+    },
+    [applySceneProductionUpdate]
+  )
+
   // Phase 7: Handle segment reordering (drag-and-drop)
   const handleReorderSegments = useCallback(
     (sceneId: string, oldIndex: number, newIndex: number) => {
@@ -7780,6 +7796,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSegmentDialogueAssignmentChange={handleSegmentDialogueAssignmentChange}
                 onSegmentGenerate={handleSegmentGenerate}
                 onSegmentUpload={handleSegmentUpload}
+                onLockSegment={handleLockSegment}
                 onAddSegment={handleAddSegment}
                 onAddFullSegment={handleAddFullSegment}
                 onDeleteSegment={handleDeleteSegment}

@@ -85,6 +85,8 @@ interface DirectorConsoleProps {
     }
   ) => Promise<void>
   onSegmentUpload?: (segmentId: string, file: File) => void
+  /** Persist lock status to database */
+  onLockSegment?: (segmentId: string, locked: boolean) => void
 }
 
 // Method badge colors and labels
@@ -114,6 +116,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   scene,
   onGenerate,
   onSegmentUpload,
+  onLockSegment,
 }) => {
   const segments = productionData?.segments || []
   
@@ -234,24 +237,34 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     setSelectedSegmentIds(new Set())
   }, [processQueue, selectedSegmentIds, queue])
   
-  // Toggle segment lock status (locked/unlocked)
+  // Toggle segment lock status (locked/unlocked) - persists to DB
   const handleToggleLock = useCallback((segmentId: string) => {
     const item = queue.find(q => q.segmentId === segmentId)
-    if (item) {
-      const newStatus = item.config.approvalStatus === 'locked' ? 'auto-ready' : 'locked'
+    const segment = segments.find(s => s.segmentId === segmentId)
+    if (item && segment) {
+      // Check current lock state from both sources (segment.lockedForProduction or config status)
+      const isCurrentlyLocked = segment.lockedForProduction || item.config.approvalStatus === 'locked'
+      const newLockState = !isCurrentlyLocked
+      const newStatus = newLockState ? 'locked' : 'auto-ready'
+      
+      // Update local queue state
       updateConfig(segmentId, { ...item.config, approvalStatus: newStatus })
+      
+      // Persist to DB if callback provided
+      if (onLockSegment) {
+        onLockSegment(segmentId, newLockState)
+      }
     }
-  }, [queue, updateConfig])
+  }, [queue, segments, updateConfig, onLockSegment])
   
-  // Mark segment for "Retake" (needs re-render - reset to auto-ready)
+  // Mark segment for "Retake" - opens dialog for user to configure regeneration
   const handleMarkRetake = useCallback((segmentId: string) => {
-    const item = queue.find(q => q.segmentId === segmentId)
-    if (item) {
-      updateConfig(segmentId, { ...item.config, approvalStatus: 'auto-ready' })
-      // Auto-select for next render batch
-      setSelectedSegmentIds(prev => new Set(prev).add(segmentId))
+    const segment = segments.find(s => s.segmentId === segmentId)
+    if (segment) {
+      // Open DirectorDialog so user can review/edit settings before regenerating
+      setSelectedSegment(segment)
     }
-  }, [queue, updateConfig])
+  }, [segments])
   
   // Count segments by status
   const statusCounts = {
@@ -373,7 +386,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
             <div 
               key={item.segmentId}
               className={`
-                border rounded-lg p-4 cursor-pointer transition-all 
+                border rounded-lg p-4 transition-all 
                 hover:border-indigo-500/70 hover:bg-slate-800/50
                 ${item.config.approvalStatus === 'user-approved' 
                   ? 'bg-indigo-900/10 border-indigo-500/30' 
@@ -382,7 +395,6 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                 ${selectedSegmentIds.has(item.segmentId) ? 'ring-4 ring-amber-500 bg-amber-500/10' : ''}
                 ${isCurrentlyRendering ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900' : ''}
               `}
-              onClick={() => setSelectedSegment(segment)}
             >
               <div className="flex gap-4">
                 {/* Selection Checkbox */}
@@ -390,7 +402,6 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                   <Checkbox
                     checked={selectedSegmentIds.has(item.segmentId)}
                     onCheckedChange={(checked) => toggleSegmentSelection(item.segmentId, checked === true)}
-                    onClick={(e) => e.stopPropagation()}
                     className="border-slate-500"
                   />
                 </div>
@@ -528,10 +539,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                     variant="outline" 
                     size="sm"
                     className="text-xs bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700 px-2"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setSelectedSegment(segment)
-                    }}
+                    onClick={() => setSelectedSegment(segment)}
                   >
                     <Settings2 className="w-3.5 h-3.5 mr-1" />
                     {item.status === 'complete' ? 'Edit' : 'Take'} (1)
@@ -551,10 +559,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                           ? 'flex-1 bg-green-600 hover:bg-green-700 text-white' 
                           : 'flex-1 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700'
                         }
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleToggleLock(item.segmentId)
-                        }}
+                        onClick={() => handleToggleLock(item.segmentId)}
                       >
                         {item.config.approvalStatus === 'locked' ? (
                           <>
@@ -585,10 +590,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                           ? 'flex-1 bg-amber-600 hover:bg-amber-700 text-white' 
                           : 'flex-1 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700'
                         }
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleMarkRetake(item.segmentId)
-                        }}
+                        onClick={() => handleMarkRetake(item.segmentId)}
                       >
                         <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
                         Regenerate

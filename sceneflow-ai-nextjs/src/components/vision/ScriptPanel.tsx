@@ -178,6 +178,7 @@ interface ScriptPanelProps {
   onSegmentDialogueAssignmentChange?: (sceneId: string, segmentId: string, dialogueLineIds: string[]) => void
   onSegmentGenerate?: (sceneId: string, segmentId: string, mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD', options?: { startFrameUrl?: string; prompt?: string; negativePrompt?: string; duration?: number; aspectRatio?: '16:9' | '9:16'; resolution?: '720p' | '1080p' }) => Promise<void>
   onSegmentUpload?: (sceneId: string, segmentId: string, file: File) => Promise<void>
+  onLockSegment?: (sceneId: string, segmentId: string, locked: boolean) => void
   onAddSegment?: (sceneId: string, afterSegmentId: string | null, duration: number) => void
   onDeleteSegment?: (sceneId: string, segmentId: string) => void
   onSegmentResize?: (sceneId: string, segmentId: string, changes: { startTime?: number; duration?: number }) => void
@@ -485,7 +486,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle, projectLogline, projectDuration }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle, projectLogline, projectDuration }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -2853,6 +2854,7 @@ interface SceneCardProps {
   onSegmentDialogueAssignmentChange?: (sceneId: string, segmentId: string, dialogueLineIds: string[]) => void
   onSegmentGenerate?: (sceneId: string, segmentId: string, mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD', options?: { startFrameUrl?: string; prompt?: string; negativePrompt?: string; duration?: number; aspectRatio?: '16:9' | '9:16'; resolution?: '720p' | '1080p' }) => Promise<void>
   onSegmentUpload?: (sceneId: string, segmentId: string, file: File) => Promise<void>
+  onLockSegment?: (sceneId: string, segmentId: string, locked: boolean) => void
   onAddSegment?: (sceneId: string, afterSegmentId: string | null, duration: number) => void
   onDeleteSegment?: (sceneId: string, segmentId: string) => void
   onSegmentResize?: (sceneId: string, segmentId: string, changes: { startTime?: number; duration?: number }) => void
@@ -3005,6 +3007,7 @@ function SceneCard({
   onSegmentDialogueAssignmentChange,
   onSegmentGenerate,
   onSegmentUpload,
+  onLockSegment,
   onAddSegment,
   onAddFullSegment,
   onDeleteSegment,
@@ -5789,6 +5792,7 @@ function SceneCard({
                         scene={scene}
                         onGenerate={onSegmentGenerate || (async () => {})}
                         onSegmentUpload={onSegmentUpload ? (segmentId, file) => onSegmentUpload(scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId, file) : undefined}
+                        onLockSegment={onLockSegment ? (segmentId, locked) => onLockSegment(scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId, locked) : undefined}
                       />
                     ) : (
                       /* Fallback: SceneProductionManager when no segments yet */
