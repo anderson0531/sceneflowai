@@ -145,7 +145,15 @@ export async function generateVideoWithGeminiStudio(
   }
   
   if (options.durationSeconds) {
-    parameters.durationSeconds = options.durationSeconds
+    // Defensive validation: ensure duration is exactly 4, 6, or 8
+    // Snap to nearest valid value if needed
+    let duration = options.durationSeconds
+    if (![4, 6, 8].includes(duration)) {
+      const snapped = duration <= 5 ? 4 : duration <= 7 ? 6 : 8
+      console.warn(`[Gemini Studio Video] Invalid duration ${duration}, snapping to ${snapped}`)
+      duration = snapped as 4 | 6 | 8
+    }
+    parameters.durationSeconds = duration
   }
   
   if (options.negativePrompt) {
@@ -242,15 +250,15 @@ export async function generateVideoWithGeminiStudio(
           imageData = imageSource
         }
         
-        // Map type to Veo's referenceType (must be uppercase per API spec)
-        const refType = ref.referenceType || (ref.type === 'style' ? 'STYLE' : 'ASSET')
+        // Map type to Veo's referenceType (lowercase per Python SDK: 'asset' or 'style')
+        const refType = ref.referenceType || (ref.type === 'style' ? 'style' : 'asset')
         
         return {
           image: {
             bytesBase64Encoded: imageData,
             mimeType: mimeType
           },
-          referenceType: refType.toUpperCase() // Ensure uppercase: ASSET or STYLE
+          referenceType: refType.toLowerCase() // Ensure lowercase: asset or style
         }
       })
     )

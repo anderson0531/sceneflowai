@@ -151,17 +151,48 @@ export async function POST(
         methodSelectionResult.warnings.forEach(w => console.warn('[Segment Asset Generation] Warning:', w))
       }
       
+      // Handle different Veo 3.1 generation methods based on EFFECTIVE method
+      const method = effectiveMethod
+      
+      // Determine if this is an image-based generation method
+      // T2V: allow_all ONLY
+      // I2V, FTV, EXT, REF (with images): allow_adult ONLY
+      const isImageBasedMethod = method === 'I2V' || method === 'FTV' || method === 'EXT' || 
+        (method === 'REF' && referenceImages && referenceImages.length > 0)
+      
+      // Duration constraints:
+      // - FTV (interpolation) requires duration = 8
+      // - REF (reference images) requires duration = 8  
+      // - 1080p resolution requires duration = 8
+      // - Otherwise, snap to valid values: 4, 6, or 8
+      const requiresDuration8 = method === 'FTV' || 
+        (method === 'REF' && referenceImages && referenceImages.length > 0) ||
+        (resolution === '1080p')
+      
+      let effectiveDuration: 4 | 6 | 8 = 8
+      if (requiresDuration8) {
+        effectiveDuration = 8
+        if (duration && duration !== 8) {
+          console.log(`[Segment Asset Generation] Duration forced to 8s (required for ${method === 'FTV' ? 'FTV interpolation' : method === 'REF' ? 'reference images' : '1080p resolution'})`)
+        }
+      } else if (duration) {
+        // Snap to nearest valid value: 4, 6, or 8
+        if (duration <= 5) effectiveDuration = 4
+        else if (duration <= 7) effectiveDuration = 6
+        else effectiveDuration = 8
+      }
+      
       // Build video generation options based on effective method
       const videoOptions: any = {
         aspectRatio: aspectRatio || '16:9',
         resolution: resolution || '720p',
-        durationSeconds: (duration && [4, 6, 8].includes(duration)) ? duration as 4 | 6 | 8 : 8,
+        durationSeconds: effectiveDuration,
         negativePrompt: negativePrompt,
-        personGeneration: 'allow_adult'
+        personGeneration: isImageBasedMethod ? 'allow_adult' : 'allow_all'
       }
       
-      // Handle different Veo 3.1 generation methods based on EFFECTIVE method
-      const method = effectiveMethod
+      console.log(`[Segment Asset Generation] personGeneration: ${videoOptions.personGeneration} (method: ${method}, isImageBased: ${isImageBasedMethod})`)
+      console.log(`[Segment Asset Generation] durationSeconds: ${effectiveDuration} (requested: ${duration || 'default'})`)
       
       // Start Frame - used for I2V and FTV methods
       if ((method === 'I2V' || method === 'FTV') && startFrameUrl) {
