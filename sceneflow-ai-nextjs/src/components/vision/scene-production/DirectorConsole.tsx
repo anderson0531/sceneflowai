@@ -1164,9 +1164,6 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
               duration: data.duration || editingVideoSegment.config.duration,
               aspectRatio: data.aspectRatio || editingVideoSegment.config.aspectRatio,
               resolution: data.resolution || editingVideoSegment.config.resolution,
-              startFrameUrl: data.startFrameUrl || editingVideoSegment.config.startFrameUrl,
-              endFrameUrl: data.endFrameUrl || editingVideoSegment.config.endFrameUrl,
-              sourceVideoUrl: data.sourceVideoUrl || editingVideoSegment.config.sourceVideoUrl,
             })
             processQueue({
               mode: 'selected',

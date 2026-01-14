@@ -872,16 +872,11 @@ export function VideoEditingDialog({
   segment,
   initialTab = 'smart-prompt',
   allSegments = [],
-  sceneReferences = [],
-  objectReferences = [],
   characters = [],
   sceneImageUrl,
-  previousSegmentLastFrame,
   onGenerate,
   isGenerating = false
 }: VideoEditingDialogProps) {
-  const [activeTab, setActiveTab] = useState<VideoEditingTab>(initialTab)
-  
   // Shared state
   const [prompt, setPrompt] = useState('')
   const [negativePrompt, setNegativePrompt] = useState('')
@@ -891,126 +886,50 @@ export function VideoEditingDialog({
   
   // Smart Prompt state
   const [smartPromptSettings, setSmartPromptSettings] = useState<SmartPromptSettings>(createDefaultSmartPromptSettings())
-  const [useStartFrame, setUseStartFrame] = useState(false)
   const [generalInstruction, setGeneralInstruction] = useState('')
-  
-  // Tab-specific state
-  const [sourceVideoUrl, setSourceVideoUrl] = useState('')
-  const [startFrameUrl, setStartFrameUrl] = useState('')
-  const [endFrameUrl, setEndFrameUrl] = useState('')
-  const [selectedReferences, setSelectedReferences] = useState<SelectedReference[]>([])
 
-  // Reset state when dialog opens or tab changes
+  // Reset state when dialog opens
   useEffect(() => {
     if (open && segment) {
-      setActiveTab(initialTab)
       setPrompt(segment.userEditedPrompt || segment.generatedPrompt || '')
       // Pre-load general instruction from segment if saved
       setGeneralInstruction(segment.userInstruction || '')
-      // Pre-select source video for extension
-      const currentVideoTake = segment.takes?.find(t => t.assetUrl === segment.activeAssetUrl && t.veoVideoRef)
-      if (currentVideoTake) {
-        setSourceVideoUrl(currentVideoTake.assetUrl)
-      }
-      // Pre-select start frame
-      if (sceneImageUrl) {
-        setStartFrameUrl(sceneImageUrl)
-      }
       // Reset smart prompt settings
       setSmartPromptSettings(createDefaultSmartPromptSettings())
     }
-  }, [open, initialTab, segment, sceneImageUrl])
+  }, [open, segment])
 
   // Handle generation based on active tab
   const handleGenerate = async () => {
-    let method: VideoGenerationMethod = 'T2V'
-    let finalPrompt = prompt
-    let data: Parameters<typeof onGenerate>[0] = {
-      method,
-      prompt: finalPrompt,
-      negativePrompt,
+    // Compile the smart prompt settings with general instruction prepended
+    const baseWithInstruction = generalInstruction 
+      ? `${generalInstruction}. ${prompt}`.trim()
+      : prompt
+    const payload = compileVideoPrompt({
+      basePrompt: baseWithInstruction,
+      settings: smartPromptSettings,
+      method: 'T2V',
+      durationSeconds: duration,
+      aspectRatio,
+      preserveCharacters: characters.map(c => c.name),
+    })
+    
+    const data: Parameters<typeof onGenerate>[0] = {
+      method: payload.method,
+      prompt: payload.basePrompt,
+      negativePrompt: payload.negativePrompt,
       duration,
       aspectRatio,
-      resolution
-    }
-
-    switch (activeTab) {
-      case 'smart-prompt':
-        // Compile the smart prompt settings with general instruction prepended
-        const baseWithInstruction = generalInstruction 
-          ? `${generalInstruction}. ${prompt}`.trim()
-          : prompt
-        const payload = compileVideoPrompt({
-          basePrompt: baseWithInstruction,
-          settings: smartPromptSettings,
-          method: useStartFrame && startFrameUrl ? 'I2V' : 'T2V',
-          durationSeconds: duration,
-          aspectRatio,
-          startFrameUrl: useStartFrame ? startFrameUrl : undefined,
-          preserveCharacters: characters.map(c => c.name),
-        })
-        method = payload.method
-        finalPrompt = payload.basePrompt
-        data = {
-          method,
-          prompt: finalPrompt,
-          negativePrompt: payload.negativePrompt,
-          duration,
-          aspectRatio,
-          resolution,
-          startFrameUrl: useStartFrame ? startFrameUrl : undefined,
-        }
-        break
-      case 'extend':
-        method = 'EXT'
-        data = {
-          ...data,
-          method,
-          sourceVideoUrl
-        }
-        break
-      case 'interpolate':
-        method = 'FTV'
-        data = {
-          ...data,
-          method,
-          startFrameUrl,
-          endFrameUrl
-        }
-        break
-      case 'audio':
-        // Audio is just T2V with audio cues in prompt
-        method = 'T2V'
-        data = {
-          ...data,
-          method
-        }
-        break
-      case 'history':
-        // History tab doesn't generate
-        return
+      resolution,
     }
 
     await onGenerate(data)
   }
 
-  // Check if generation is possible
+  // Check if generation is possible - just need a prompt
   const canGenerate = useMemo(() => {
-    if (activeTab === 'history') return false
-    if (!prompt.trim() && activeTab !== 'extend') return false
-    
-    switch (activeTab) {
-      case 'smart-prompt':
-        return true
-      case 'extend':
-        return !!sourceVideoUrl
-      case 'interpolate':
-        return !!startFrameUrl && !!endFrameUrl
-      case 'audio':
-        return true
-    }
-    return false
-  }, [activeTab, prompt, sourceVideoUrl, startFrameUrl, endFrameUrl])
+    return prompt.trim().length > 0
+  }, [prompt])
 
   // Early return after all hooks if segment is not available
   if (!segment) {
