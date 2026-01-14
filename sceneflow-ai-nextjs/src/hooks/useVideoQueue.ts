@@ -135,6 +135,9 @@ export function useVideoQueue(
       } else if (segment.status === 'COMPLETE' && segment.activeAssetUrl) {
         // Fallback: if status is COMPLETE with any asset, consider it complete
         status = 'complete'
+      } else if (config.approvalStatus === 'rendered') {
+        // If user marked as rendered (In the Can), treat as complete even if segment status is inconsistent
+        status = 'complete'
       } else if (segment.status === 'GENERATING') {
         status = 'rendering'
       } else if (segment.status === 'ERROR') {

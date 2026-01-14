@@ -96,7 +96,7 @@ const methodBadgeConfig: Record<VideoGenerationMethod, { label: string; classNam
 // Status badge colors - Using film terminology
 const statusBadgeConfig = {
   'auto-ready': { label: 'Ready', className: 'bg-slate-500/20 text-slate-300 border-slate-500/50', icon: Clock },
-  'user-approved': { label: 'Print', className: 'bg-green-500/20 text-green-300 border-green-500/50', icon: CheckCircle },
+  'user-approved': { label: 'Lock', className: 'bg-green-500/20 text-green-300 border-green-500/50', icon: CheckCircle },
   'rendering': { label: 'Rolling', className: 'bg-blue-500/20 text-blue-300 border-blue-500/50', icon: Loader2 },
   'rendered': { label: 'In the Can', className: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50', icon: Film },
   'error': { label: 'Error', className: 'bg-red-500/20 text-red-300 border-red-500/50', icon: AlertCircle },
@@ -299,7 +299,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                 className="bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700"
               >
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Render Print ({statusCounts.approved})
+                Regenerate ({statusCounts.approved})
               </Button>
               <Button 
                 size="sm"
@@ -308,7 +308,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                 className="bg-indigo-600 hover:bg-indigo-700 text-white"
               >
                 <Play className="w-4 h-4 mr-2" />
-                Render All Segments
+                Generate All
               </Button>
               {statusCounts.rendered > 0 && (
                 <Button 
@@ -364,7 +364,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                   ? 'bg-indigo-900/10 border-indigo-500/30' 
                   : 'bg-slate-800/30 border-slate-700/50'
                 }
-                ${selectedSegmentIds.has(item.segmentId) ? 'ring-2 ring-amber-500/50' : ''}
+                ${selectedSegmentIds.has(item.segmentId) ? 'ring-4 ring-amber-500 bg-amber-500/10' : ''}
                 ${isCurrentlyRendering ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900' : ''}
               `}
               onClick={() => setSelectedSegment(segment)}
@@ -523,10 +523,10 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                         }}
                       >
                         <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
-                        Print
+                        Lock
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Keep this take - mark as final</TooltipContent>
+                    <TooltipContent>Lock this take as final</TooltipContent>
                   </Tooltip>
                   
                   <Tooltip>
@@ -544,10 +544,10 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                         }}
                       >
                         <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-                        Retake
+                        Regenerate
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Queue for re-render</TooltipContent>
+                    <TooltipContent>Queue for regeneration</TooltipContent>
                   </Tooltip>
                 </div>
               )}
