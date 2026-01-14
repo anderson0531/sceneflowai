@@ -161,6 +161,9 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   // Scene video player modal state
   const [isScenePlayerOpen, setIsScenePlayerOpen] = useState(false)
   
+  // Segment-specific playback: start player at this segment index
+  const [playFromSegmentIndex, setPlayFromSegmentIndex] = useState<number>(0)
+  
   // Audio track selection for video playback overlay
   const [selectedAudioTracks, setSelectedAudioTracks] = useState<SelectedAudioTracks>(DEFAULT_AUDIO_TRACKS)
   
@@ -440,10 +443,11 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                         className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/40 transition-colors group"
                         onClick={(e) => {
                           e.stopPropagation()
-                          // Open video preview - find segment's video URL
-                          const seg = segments.find(s => s.segmentId === item.segmentId)
-                          if (seg?.activeAssetUrl) {
-                            window.open(seg.activeAssetUrl, '_blank')
+                          // Open SceneVideoPlayer starting at this segment
+                          const segmentIndex = segments.findIndex(s => s.segmentId === item.segmentId)
+                          if (segmentIndex >= 0) {
+                            setPlayFromSegmentIndex(segmentIndex)
+                            setIsScenePlayerOpen(true)
                           }
                         }}
                         title="Play segment video"
@@ -793,7 +797,11 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
         segments={segments}
         sceneNumber={sceneNumber}
         isOpen={isScenePlayerOpen}
-        onClose={() => setIsScenePlayerOpen(false)}
+        onClose={() => {
+          setIsScenePlayerOpen(false)
+          setPlayFromSegmentIndex(0)
+        }}
+        startAtSegment={playFromSegmentIndex}
         audioTracks={selectedAudioTracks}
         sceneAudio={{
           narrationUrl: scene?.narrationAudioUrl,

@@ -26,6 +26,8 @@ import {
   Volume2,
   VolumeX,
   Film,
+  Maximize,
+  Minimize,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import {
@@ -85,9 +87,11 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
   const [isMuted, setIsMuted] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [segmentProgress, setSegmentProgress] = useState(0)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   
   // Audio overlay refs
   const narrationAudioRef = useRef<HTMLAudioElement | null>(null)
@@ -307,6 +311,26 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
     }
   }, [isMuted])
   
+  // Toggle fullscreen
+  const handleFullscreenToggle = useCallback(() => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen()
+      setIsFullscreen(true)
+    } else {
+      document.exitFullscreen()
+      setIsFullscreen(false)
+    }
+  }, [])
+  
+  // Listen for fullscreen changes (e.g., user presses Esc to exit)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
+  
   // Keyboard shortcuts
   useEffect(() => {
     if (!isOpen) return
@@ -330,16 +354,24 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
           e.preventDefault()
           handleMuteToggle()
           break
+        case 'f':
+          e.preventDefault()
+          handleFullscreenToggle()
+          break
         case 'Escape':
           e.preventDefault()
-          onClose()
+          if (document.fullscreenElement) {
+            document.exitFullscreen()
+          } else {
+            onClose()
+          }
           break
       }
     }
     
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, handlePlayPause, handleSkipBack, handleSkipForward, handleMuteToggle, onClose])
+  }, [isOpen, handlePlayPause, handleSkipBack, handleSkipForward, handleMuteToggle, handleFullscreenToggle, onClose])
   
   // Format time as MM:SS
   const formatTime = (seconds: number): string => {
@@ -353,7 +385,10 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black border-gray-800 flex flex-col">
+      <DialogContent 
+        ref={containerRef}
+        className="max-w-[95vw] max-h-[95vh] p-0 bg-black border-gray-800 flex flex-col"
+      >
         <DialogTitle className="sr-only">Scene {sceneNumber} Video Preview</DialogTitle>
         <DialogDescription className="sr-only">
           Playing {completedCount} of {totalSegments} rendered video segments
@@ -377,6 +412,19 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
             <span className="text-sm text-slate-400">
               {completedCount} of {totalSegments} segments rendered
             </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleFullscreenToggle}
+              className="text-white hover:bg-white/10"
+              title="Toggle fullscreen (F)"
+            >
+              {isFullscreen ? (
+                <Minimize className="w-5 h-5" />
+              ) : (
+                <Maximize className="w-5 h-5" />
+              )}
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -535,6 +583,20 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
                 <Volume2 className="w-5 h-5" />
               )}
             </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleFullscreenToggle}
+              className="text-white hover:bg-white/10"
+              title="Fullscreen (F)"
+            >
+              {isFullscreen ? (
+                <Minimize className="w-5 h-5" />
+              ) : (
+                <Maximize className="w-5 h-5" />
+              )}
+            </Button>
           </div>
           
           {/* Keyboard shortcuts hint */}
@@ -542,6 +604,7 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
             <span className="px-2">Space to play/pause</span>
             <span className="px-2">← → to skip</span>
             <span className="px-2">M to mute</span>
+            <span className="px-2">F for fullscreen</span>
             <span className="px-2">Esc to close</span>
           </div>
         </div>
