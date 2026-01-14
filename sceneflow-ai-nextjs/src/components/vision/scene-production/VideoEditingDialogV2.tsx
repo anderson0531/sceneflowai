@@ -101,21 +101,10 @@ export interface VideoEditingDialogProps {
 interface SmartPromptTabProps {
   segment: SceneSegment
   characters?: Array<{ name: string }>
-  sceneImageUrl?: string
-  previousSegmentLastFrame?: string | null
   prompt: string
   setPrompt: (p: string) => void
   smartPromptSettings: SmartPromptSettings
   setSmartPromptSettings: (s: SmartPromptSettings) => void
-  duration: number
-  setDuration: (d: number) => void
-  aspectRatio: '16:9' | '9:16'
-  setAspectRatio: (a: '16:9' | '9:16') => void
-  useStartFrame: boolean
-  setUseStartFrame: (u: boolean) => void
-  startFrameUrl: string
-  setStartFrameUrl: (u: string) => void
-  // NEW: General instruction for quick text-based guidance
   generalInstruction: string
   setGeneralInstruction: (i: string) => void
 }
@@ -123,20 +112,10 @@ interface SmartPromptTabProps {
 function SmartPromptTab({
   segment,
   characters = [],
-  sceneImageUrl,
-  previousSegmentLastFrame,
   prompt,
   setPrompt,
   smartPromptSettings,
   setSmartPromptSettings,
-  duration,
-  setDuration,
-  aspectRatio,
-  setAspectRatio,
-  useStartFrame,
-  setUseStartFrame,
-  startFrameUrl,
-  setStartFrameUrl,
   generalInstruction,
   setGeneralInstruction,
 }: SmartPromptTabProps) {
@@ -150,13 +129,12 @@ function SmartPromptTab({
     return compileVideoPrompt({
       basePrompt: baseWithInstruction,
       settings: smartPromptSettings,
-      method: useStartFrame && startFrameUrl ? 'I2V' : 'T2V',
-      durationSeconds: duration,
-      aspectRatio,
-      startFrameUrl: useStartFrame ? startFrameUrl : undefined,
+      method: 'T2V',
+      durationSeconds: 6,
+      aspectRatio: '16:9',
       preserveCharacters: characters.map(c => c.name),
     })
-  }, [prompt, generalInstruction, smartPromptSettings, useStartFrame, startFrameUrl, duration, aspectRatio, characters])
+  }, [prompt, generalInstruction, smartPromptSettings, characters])
 
   return (
     <div className="h-full flex flex-col">
@@ -954,20 +932,10 @@ export function VideoEditingDialog({
               <SmartPromptTab
                     segment={segment}
                     characters={characters}
-                    sceneImageUrl={sceneImageUrl}
-                    previousSegmentLastFrame={previousSegmentLastFrame}
                     prompt={prompt}
                     setPrompt={setPrompt}
                     smartPromptSettings={smartPromptSettings}
                     setSmartPromptSettings={setSmartPromptSettings}
-                    duration={duration}
-                    setDuration={setDuration}
-                    aspectRatio={aspectRatio}
-                    setAspectRatio={setAspectRatio}
-                    useStartFrame={useStartFrame}
-                    setUseStartFrame={setUseStartFrame}
-                    startFrameUrl={startFrameUrl}
-                    setStartFrameUrl={setStartFrameUrl}
                     generalInstruction={generalInstruction}
                     setGeneralInstruction={setGeneralInstruction}
                   />
@@ -979,7 +947,6 @@ export function VideoEditingDialog({
             <PreviewPanel
               segment={segment}
               sceneImageUrl={sceneImageUrl}
-              startFrameUrl={useStartFrame ? startFrameUrl : undefined}
               isGenerating={isGenerating}
             />
           </div>
