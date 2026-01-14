@@ -1154,15 +1154,19 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           sceneImageUrl={sceneImageUrl}
           characters={scene?.characters}
           onGenerate={async (data) => {
-            // Use the same generation handler
+            // Map VideoEditingDialog data to VideoGenerationConfig
             const segmentId = editingVideoSegment.segmentId
             updateConfig(segmentId, {
               ...editingVideoSegment.config,
-              videoPrompt: data.prompt,
-              negativePrompt: data.negativePrompt,
-              method: data.method,
-              duration: data.duration,
-              startFrameUrl: data.startFrameUrl,
+              mode: data.method,
+              prompt: data.prompt,
+              negativePrompt: data.negativePrompt || editingVideoSegment.config.negativePrompt,
+              duration: data.duration || editingVideoSegment.config.duration,
+              aspectRatio: data.aspectRatio || editingVideoSegment.config.aspectRatio,
+              resolution: data.resolution || editingVideoSegment.config.resolution,
+              startFrameUrl: data.startFrameUrl || editingVideoSegment.config.startFrameUrl,
+              endFrameUrl: data.endFrameUrl || editingVideoSegment.config.endFrameUrl,
+              sourceVideoUrl: data.sourceVideoUrl || editingVideoSegment.config.sourceVideoUrl,
             })
             processQueue({
               mode: 'selected',
