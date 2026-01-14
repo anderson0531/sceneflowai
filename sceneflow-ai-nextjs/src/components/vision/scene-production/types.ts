@@ -117,6 +117,7 @@ export type VideoGenerationMethod = 'T2V' | 'I2V' | 'EXT' | 'FTV' | 'REF'
 export type ApprovalStatus = 
   | 'auto-ready'      // System auto-configured, not yet user-reviewed
   | 'user-approved'   // User explicitly reviewed and approved settings
+  | 'locked'          // User locked this take - prevents regeneration
   | 'rendering'       // Currently generating video
   | 'rendered'        // Video successfully generated
   | 'error'           // Generation failed

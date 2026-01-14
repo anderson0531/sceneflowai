@@ -52,6 +52,7 @@ import {
   FastForward,
   Type,
   AlertCircle,
+  Play,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -67,6 +68,7 @@ interface DirectorDialogProps {
   scene?: SceneAudioData
   isOpen: boolean
   onSaveConfig: (config: VideoGenerationConfig) => void
+  onGenerate?: (segmentId: string, config: VideoGenerationConfig) => void
   onClose: () => void
 }
 
@@ -91,7 +93,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   sceneImageUrl,
   scene,
   isOpen, 
-  onSaveConfig, 
+  onSaveConfig,
+  onGenerate,
   onClose 
 }) => {
   // Get auto-drafted config
@@ -147,10 +150,36 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       startFrameUrl: autoConfig.startFrameUrl,
       endFrameUrl: autoConfig.endFrameUrl,
       sourceVideoUrl: autoConfig.sourceVideoUrl,
-      approvalStatus: 'user-approved',
+      approvalStatus: 'auto-ready',
       confidence: autoConfig.confidence,
     }
     onSaveConfig(savedConfig)
+  }
+  
+  // Handle generate - saves config AND triggers generation
+  const handleGenerate = () => {
+    const method = modeToMethod[mode]
+    const savedConfig: VideoGenerationConfig = {
+      mode: method,
+      prompt: method === 'FTV' ? motionPrompt : visualPrompt,
+      motionPrompt,
+      visualPrompt,
+      negativePrompt,
+      guidePrompt: guidePrompt || undefined,
+      aspectRatio,
+      resolution,
+      duration,
+      startFrameUrl: autoConfig.startFrameUrl,
+      endFrameUrl: autoConfig.endFrameUrl,
+      sourceVideoUrl: autoConfig.sourceVideoUrl,
+      approvalStatus: 'auto-ready',
+      confidence: autoConfig.confidence,
+    }
+    onSaveConfig(savedConfig)
+    if (onGenerate) {
+      onGenerate(segment.segmentId, savedConfig)
+    }
+    onClose()
   }
   
   const startFrameUrl = segment.startFrameUrl || segment.references?.startFrameUrl
@@ -457,10 +486,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               </Button>
               <Button 
                 className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
-                onClick={handleSave}
+                onClick={handleGenerate}
               >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Approve Settings
+                <Play className="w-4 h-4 mr-2" />
+                Generate
               </Button>
             </div>
           </div>

@@ -38,6 +38,9 @@ import {
   Music,
   Upload,
   RefreshCw,
+  Lock,
+  Unlock,
+  PlayCircle,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -96,7 +99,8 @@ const methodBadgeConfig: Record<VideoGenerationMethod, { label: string; classNam
 // Status badge colors - Using film terminology
 const statusBadgeConfig = {
   'auto-ready': { label: 'Ready', className: 'bg-slate-500/20 text-slate-300 border-slate-500/50', icon: Clock },
-  'user-approved': { label: 'Lock', className: 'bg-green-500/20 text-green-300 border-green-500/50', icon: CheckCircle },
+  'user-approved': { label: 'Approved', className: 'bg-blue-500/20 text-blue-300 border-blue-500/50', icon: CheckCircle },
+  'locked': { label: 'Locked', className: 'bg-green-500/20 text-green-300 border-green-500/50', icon: CheckCircle },
   'rendering': { label: 'Rolling', className: 'bg-blue-500/20 text-blue-300 border-blue-500/50', icon: Loader2 },
   'rendered': { label: 'In the Can', className: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50', icon: Film },
   'error': { label: 'Error', className: 'bg-red-500/20 text-red-300 border-red-500/50', icon: AlertCircle },
@@ -176,6 +180,17 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     }
   }, [selectedSegment, updateConfig])
   
+  // Handle generate from dialog - saves config and triggers single segment generation
+  const handleGenerateFromDialog = useCallback((segmentId: string, config: VideoGenerationConfig) => {
+    updateConfig(segmentId, config)
+    processQueue({
+      mode: 'selected',
+      priority: 'sequence',
+      delayBetween: 500,
+      selectedIds: [segmentId],
+    })
+  }, [updateConfig, processQueue])
+  
   // Handle batch render - approved only
   const handleRenderApproved = useCallback(() => {
     processQueue({
@@ -194,24 +209,34 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     })
   }, [processQueue])
   
-  // Handle batch render - selected segments only
+  // Handle batch render - selected segments only (excluding locked)
   const handleRenderSelected = useCallback(() => {
     if (selectedSegmentIds.size === 0) return
+    
+    // Filter out locked segments
+    const unlockedIds = Array.from(selectedSegmentIds).filter(id => {
+      const item = queue.find(q => q.segmentId === id)
+      return item && item.config.approvalStatus !== 'locked'
+    })
+    
+    if (unlockedIds.length === 0) return
+    
     processQueue({
       mode: 'selected',
       priority: 'sequence',
       delayBetween: 500,
-      selectedIds: Array.from(selectedSegmentIds),
+      selectedIds: unlockedIds,
     })
     // Clear selection after starting render
     setSelectedSegmentIds(new Set())
-  }, [processQueue, selectedSegmentIds])
+  }, [processQueue, selectedSegmentIds, queue])
   
-  // Mark segment as "Print" (keep this take - user approved)
-  const handleMarkPrint = useCallback((segmentId: string) => {
+  // Toggle segment lock status (locked/unlocked)
+  const handleToggleLock = useCallback((segmentId: string) => {
     const item = queue.find(q => q.segmentId === segmentId)
     if (item) {
-      updateConfig(segmentId, { ...item.config, approvalStatus: 'user-approved' })
+      const newStatus = item.config.approvalStatus === 'locked' ? 'auto-ready' : 'locked'
+      updateConfig(segmentId, { ...item.config, approvalStatus: newStatus })
     }
   }, [queue, updateConfig])
   
@@ -229,10 +254,17 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   const statusCounts = {
     approved: queue.filter(q => q.config.approvalStatus === 'user-approved').length,
     autoReady: queue.filter(q => q.config.approvalStatus === 'auto-ready').length,
+    locked: queue.filter(q => q.config.approvalStatus === 'locked').length,
     rendered: queue.filter(q => q.status === 'complete').length,
     retakes: queue.filter(q => q.status === 'complete' && q.config.approvalStatus === 'auto-ready').length,
     total: queue.length,
   }
+  
+  // Count selected segments that are NOT locked (eligible for generation)
+  const selectedUnlockedCount = Array.from(selectedSegmentIds).filter(id => {
+    const item = queue.find(q => q.segmentId === id)
+    return item && item.config.approvalStatus !== 'locked'
+  }).length
   
   // No segments state
   if (segments.length === 0) {
@@ -280,35 +312,15 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
             </>
           ) : (
             <>
-              {/* Render Selected - only show when segments are selected */}
-              {selectedSegmentIds.size > 0 && (
-                <Button 
-                  size="sm"
-                  onClick={handleRenderSelected}
-                  className="bg-amber-600 hover:bg-amber-700 text-white"
-                >
-                  <Play className="w-4 h-4 mr-2" />
-                  Render Selected ({selectedSegmentIds.size})
-                </Button>
-              )}
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleRenderApproved}
-                disabled={statusCounts.approved === 0}
-                className="bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700"
-              >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Regenerate ({statusCounts.approved})
-              </Button>
+              {/* Generate button - renders selected unlocked segments */}
               <Button 
                 size="sm"
-                onClick={handleRenderAll}
-                disabled={queue.every(q => q.status === 'complete')}
+                onClick={handleRenderSelected}
+                disabled={selectedUnlockedCount === 0}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white"
               >
                 <Play className="w-4 h-4 mr-2" />
-                Generate All
+                Generate ({selectedUnlockedCount})
               </Button>
               {statusCounts.rendered > 0 && (
                 <Button 
@@ -409,14 +421,36 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                     </div>
                   )}
                   
-                  {/* Complete Overlay */}
-                  {item.status === 'complete' && (
-                    <div className="absolute top-1 left-1">
-                      <Badge className="bg-emerald-500/80 text-white text-[10px] px-1.5 py-0">
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Done
-                      </Badge>
-                    </div>
+                  {/* Complete Overlay with Play Button */}
+                  {item.status === 'complete' && !isCurrentlyRendering && (
+                    <>
+                      <div className="absolute top-1 left-1 flex items-center gap-1">
+                        <Badge className="bg-emerald-500/80 text-white text-[10px] px-1.5 py-0">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Done
+                        </Badge>
+                        {item.config.approvalStatus === 'locked' && (
+                          <Badge className="bg-green-500/80 text-white text-[10px] px-1.5 py-0">
+                            <Lock className="w-3 h-3" />
+                          </Badge>
+                        )}
+                      </div>
+                      {/* Play Button Overlay */}
+                      <button
+                        className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/40 transition-colors group"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          // Open video preview - find segment's video URL
+                          const seg = segments.find(s => s.segmentId === item.segmentId)
+                          if (seg?.activeAssetUrl) {
+                            window.open(seg.activeAssetUrl, '_blank')
+                          }
+                        }}
+                        title="Play segment video"
+                      >
+                        <PlayCircle className="w-10 h-10 text-white/0 group-hover:text-white/90 transition-colors drop-shadow-lg" />
+                      </button>
+                    </>
                   )}
                 </div>
 
@@ -485,48 +519,57 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                     </>
                   )}
                   
-                  {/* Settings Icon */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="text-slate-500 hover:text-slate-300"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setSelectedSegment(segment)
-                        }}
-                      >
-                        <Settings2 className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Configure</TooltipContent>
-                  </Tooltip>
+                  {/* Take/Edit Button - Opens config dialog */}
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="text-xs bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700 px-2"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedSegment(segment)
+                    }}
+                  >
+                    <Settings2 className="w-3.5 h-3.5 mr-1" />
+                    {item.status === 'complete' ? 'Edit' : 'Take'} (1)
+                  </Button>
                 </div>
               </div>
               
-              {/* Print / Retake Actions for completed segments */}
+              {/* Lock / Regenerate Actions for completed segments */}
               {item.status === 'complete' && (
                 <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-700/50">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button 
-                        variant={item.config.approvalStatus === 'user-approved' ? 'default' : 'outline'}
+                        variant={item.config.approvalStatus === 'locked' ? 'default' : 'outline'}
                         size="sm"
-                        className={item.config.approvalStatus === 'user-approved' 
+                        className={item.config.approvalStatus === 'locked' 
                           ? 'flex-1 bg-green-600 hover:bg-green-700 text-white' 
                           : 'flex-1 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700'
                         }
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleMarkPrint(item.segmentId)
+                          handleToggleLock(item.segmentId)
                         }}
                       >
-                        <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
-                        Lock
+                        {item.config.approvalStatus === 'locked' ? (
+                          <>
+                            <Lock className="w-3.5 h-3.5 mr-1.5" />
+                            Locked
+                          </>
+                        ) : (
+                          <>
+                            <Unlock className="w-3.5 h-3.5 mr-1.5" />
+                            Lock
+                          </>
+                        )}
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Lock this take as final</TooltipContent>
+                    <TooltipContent>
+                      {item.config.approvalStatus === 'locked' 
+                        ? 'Unlock to allow regeneration' 
+                        : 'Lock this take for production'}
+                    </TooltipContent>
                   </Tooltip>
                   
                   <Tooltip>
@@ -741,6 +784,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           isOpen={!!selectedSegment}
           onClose={() => setSelectedSegment(null)}
           onSaveConfig={handleSaveConfig}
+          onGenerate={handleGenerateFromDialog}
         />
       )}
       
