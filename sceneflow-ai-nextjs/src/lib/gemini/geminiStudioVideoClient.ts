@@ -273,6 +273,22 @@ export async function generateVideoWithGeminiStudio(
   console.log('[Gemini Studio Video] Instance keys:', Object.keys(instance))
   console.log('[Gemini Studio Video] Parameters keys:', Object.keys(parameters))
   
+  // Debug: Log full request structure (with base64 truncated)
+  const debugRequestBody = JSON.parse(JSON.stringify(requestBody))
+  if (debugRequestBody.instances?.[0]?.image?.bytesBase64Encoded) {
+    debugRequestBody.instances[0].image.bytesBase64Encoded = `[BASE64_TRUNCATED: ${debugRequestBody.instances[0].image.bytesBase64Encoded.length} chars]`
+  }
+  if (debugRequestBody.instances?.[0]?.lastFrame?.bytesBase64Encoded) {
+    debugRequestBody.instances[0].lastFrame.bytesBase64Encoded = `[BASE64_TRUNCATED: ${debugRequestBody.instances[0].lastFrame.bytesBase64Encoded.length} chars]`
+  }
+  if (debugRequestBody.instances?.[0]?.referenceImages) {
+    debugRequestBody.instances[0].referenceImages = debugRequestBody.instances[0].referenceImages.map((ref: any) => ({
+      ...ref,
+      image: { ...ref.image, bytesBase64Encoded: `[BASE64_TRUNCATED: ${ref.image?.bytesBase64Encoded?.length || 0} chars]` }
+    }))
+  }
+  console.log('[Gemini Studio Video] Full request body (debug):', JSON.stringify(debugRequestBody, null, 2))
+  
   try {
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -284,7 +300,19 @@ export async function generateVideoWithGeminiStudio(
     
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('[Gemini Studio Video] Error response:', errorText)
+      console.error('[Gemini Studio Video] HTTP Status:', response.status)
+      console.error('[Gemini Studio Video] Error response (full):', errorText)
+      
+      // Try to parse JSON error for more details
+      try {
+        const errorJson = JSON.parse(errorText)
+        console.error('[Gemini Studio Video] Parsed error:', JSON.stringify(errorJson, null, 2))
+        if (errorJson.error?.details) {
+          console.error('[Gemini Studio Video] Error details:', JSON.stringify(errorJson.error.details, null, 2))
+        }
+      } catch {
+        // Not JSON, keep raw error
+      }
       
       // Handle specific error codes
       if (response.status === 429) {
@@ -294,9 +322,10 @@ export async function generateVideoWithGeminiStudio(
         }
       }
       if (response.status === 400) {
+        // Include the full error for debugging
         return {
           status: 'FAILED',
-          error: `Bad request: ${errorText}`
+          error: `Bad request (400): ${errorText.substring(0, 500)}`
         }
       }
       if (response.status === 403) {
