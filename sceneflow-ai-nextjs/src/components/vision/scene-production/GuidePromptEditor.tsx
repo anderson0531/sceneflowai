@@ -852,9 +852,9 @@ export function GuidePromptEditor({
   }, [])
   
   // ============================================================================
-  // INTELLIGENT PROMPT SYNTHESIS - Structured Audio Format for Veo 3.1
-  // Veo 3.1 requires explicit voice descriptors and clear audio instructions
-  // Format: [Visual Scene] + [AUDIO INSTRUCTIONS] with labeled sections
+  // INTELLIGENT PROMPT SYNTHESIS - Unified Veo 3.1 Speech Synthesis Format
+  // Veo 3.1 processes prompts as single stream for native speech synthesis
+  // Dialogue format: "Character speaks the following line [emotion]: 'text'"
   // ============================================================================
   const composedPrompt = useMemo(() => {
     const selectedElements = elements.filter(el => el.selected)
@@ -864,7 +864,6 @@ export function GuidePromptEditor({
     }
     
     const visualParts: string[] = []
-    const audioParts: string[] = []
     
     // 1. CINEMATOGRAPHY (from scene direction camera work)
     const directions = selectedElements.filter(el => el.type === 'direction')
@@ -886,13 +885,14 @@ export function GuidePromptEditor({
       }
     }
     
-    // 3. DIALOGUE with Explicit Voice Anchors for Veo 3.1
-    // Format: "CHARACTER_NAME, [voice descriptor], says [emotion]: "[dialogue]""
+    // 3. DIALOGUE with Integrated Speech Synthesis for Veo 3.1
+    // Format: "Character speaks the following line [with emotion]: 'dialogue text'"
+    // This unified format triggers Veo 3.1's native speech synthesis
     const dialogues = selectedElements.filter(el => el.type === 'dialogue')
     if (dialogues.length > 0) {
       dialogues.forEach(d => {
         const portion = getTextPortion(d.content, d.portionStart, d.portionEnd)
-        const charName = d.character || 'Character'
+        const charName = d.character || 'The character'
         const emotion = extractDialoguePerformance(portion)
         
         // Get voice style from character demographics
@@ -907,20 +907,33 @@ export function GuidePromptEditor({
           ? words.slice(0, 60).join(' ') + '...'
           : cleanDialogue
         
-        // Build explicit voice instruction for Veo 3.1
-        // Format: "CHARACTER, [voice descriptor], says [emotion]: "dialogue""
-        let dialogueInstruction = `${charName}, ${voiceStyle}`
+        // Build integrated speech instruction for Veo 3.1
+        // Use "speaks the following line" format which triggers speech synthesis
+        let emotionPhrase = ''
         if (emotion) {
-          dialogueInstruction += `, ${emotion}`
+          // Convert performance notes to delivery style
+          emotionPhrase = emotion.toLowerCase().includes('whisper') ? 'in a whisper' :
+                         emotion.toLowerCase().includes('shout') ? 'loudly' :
+                         emotion.toLowerCase().includes('sad') ? 'with sadness' :
+                         emotion.toLowerCase().includes('angry') ? 'angrily' :
+                         emotion.toLowerCase().includes('happy') ? 'happily' :
+                         emotion.toLowerCase().includes('fear') ? 'fearfully' :
+                         emotion.toLowerCase().includes('tired') ? 'wearily' :
+                         `${emotion.toLowerCase()}`
         }
-        dialogueInstruction += `: "${truncatedText}"`
         
-        audioParts.push(`DIALOGUE: ${dialogueInstruction}`)
+        // Integrated format: "Character speaks the following line [emotion]: 'text'"
+        const speakPhrase = emotionPhrase 
+          ? `${charName} speaks the following line ${emotionPhrase}:` 
+          : `${charName} speaks the following line:`
+        
+        // Add to visual parts for unified prompt (not separate audio block)
+        visualParts.push(`${speakPhrase} '${truncatedText}'`)
       })
     }
     
-    // 4. NARRATION with Explicit Voice Anchor
-    // Format: "[Voice descriptor] narrates: "[narration]""
+    // 4. NARRATION with Integrated Voice Synthesis for Veo 3.1
+    // Format: "A narrator [with voice style] speaks: 'narration text'"
     const narrations = selectedElements.filter(el => el.type === 'narration')
     if (narrations.length > 0) {
       const narrationText = narrations
@@ -938,23 +951,24 @@ export function GuidePromptEditor({
         ? words.slice(0, 60).join(' ') + '...'
         : narrationText
       
-      // Build explicit narration instruction
-      const narratorDesc = voiceAnchor || 'A clear, professional narrator'
-      audioParts.push(`VOICEOVER: ${narratorDesc} narrates: "${truncatedNarration}"`)
+      // Build integrated narration instruction - use voiceover format for Veo 3.1
+      const narratorDesc = voiceAnchor ? `A narrator with ${voiceAnchor.toLowerCase()}` : 'A professional narrator'
+      visualParts.push(`${narratorDesc} speaks the following voiceover: '${truncatedNarration}'`)
     }
     
-    // 5. AMBIENT AUDIO / SOUND EFFECTS with explicit descriptors
-    // Format: "Sound effect description (intensity, timing)"
+    // 5. AMBIENT AUDIO / SOUND EFFECTS - Integrated into scene description
+    // Format: "Audio includes [sound descriptions]"
     const sfxElements = selectedElements.filter(el => el.type === 'sfx')
     if (sfxElements.length > 0) {
       const sfxDescriptions = sfxElements
         .map(s => {
           const sfxText = getTextPortion(s.content, s.portionStart, s.portionEnd)
           // Parse for intensity/timing hints or add defaults
-          return sfxText
+          return sfxText.toLowerCase()
         })
-        .join('; ')
-      audioParts.push(`AMBIENT SOUNDS: ${sfxDescriptions}`)
+        .join(', ')
+      // Integrate audio as part of scene description
+      visualParts.push(`Audio includes ${sfxDescriptions}`)
     }
     
     // 6. CUSTOM NOTES (user additions)
@@ -962,13 +976,9 @@ export function GuidePromptEditor({
       visualParts.push(customAddition.trim())
     }
     
-    // Build final prompt with structured audio section
+    // Build final unified prompt - Veo 3.1 processes as single stream
+    // No separate [AUDIO INSTRUCTIONS] block - all integrated for speech synthesis
     let finalPrompt = visualParts.join('. ').replace(/\.\./g, '.').replace(/\s+/g, ' ').trim()
-    
-    if (audioParts.length > 0) {
-      // Add explicit audio instructions section for Veo 3.1
-      finalPrompt += '\n\n[AUDIO INSTRUCTIONS]\n' + audioParts.join('\n')
-    }
     
     return finalPrompt
   }, [elements, customAddition, narratorVoiceType, customVoiceDescription, selectedVoicePreset])

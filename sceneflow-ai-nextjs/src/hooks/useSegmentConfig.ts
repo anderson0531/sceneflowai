@@ -27,7 +27,11 @@ import type { VideoGenerationConfig, ApprovalStatus } from '@/components/vision/
  * Priority:
  * 1. segment.userInstruction (user override)
  * 2. segment.userEditedPrompt (user-edited version)
- * 3. Generated from segment metadata (action, camera, emotion)
+ * 3. segment.generatedPrompt (AI cinematic description with scene context)
+ * 4. Generated from segment metadata (action, camera, emotion)
+ * 
+ * Note: For Veo 3.1 speech synthesis, the generatedPrompt should include
+ * dialogue in the format: "Character speaks the following line [emotion]: 'text'"
  */
 function generateMotionPrompt(segment: SceneSegment): string {
   // Priority 1: User instruction override
@@ -38,6 +42,17 @@ function generateMotionPrompt(segment: SceneSegment): string {
   // Priority 2: User-edited prompt (can serve as motion instruction)
   if (segment.userEditedPrompt && segment.userEditedPrompt.trim()) {
     return segment.userEditedPrompt.trim()
+  }
+  
+  // Priority 3: AI-generated cinematic prompt (includes scene description & dialogue)
+  // This is critical for Veo 3.1 speech synthesis - it contains the full context
+  if (segment.generatedPrompt && segment.generatedPrompt.trim()) {
+    // Add camera motion context if available
+    const cameraMovement = segment.cameraMovement || ''
+    if (cameraMovement && cameraMovement.toLowerCase() !== 'static') {
+      return `Camera ${cameraMovement}. ${segment.generatedPrompt.trim()}`
+    }
+    return segment.generatedPrompt.trim()
   }
   
   const action = segment.action || segment.actionPrompt || ''
