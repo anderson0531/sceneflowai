@@ -109,6 +109,7 @@ export async function POST(
     let assetType: 'video' | 'image'
     let lastFrameUrl: string | null = null
     let veoVideoRef: string | undefined = undefined  // Store Veo video reference for video extension
+    let veoVideoRefExpiry: string | undefined = undefined  // ISO timestamp when veoVideoRef expires (48 hours)
     let methodSelectionResult: MethodSelectionResult | undefined = undefined  // Store method selection details
 
     if (genType === 'T2V' || genType === 'I2V') {
@@ -200,12 +201,26 @@ export async function POST(
         console.log('[Segment Asset Generation] Using start frame for', method)
       }
       
-      // EXT (Extend) mode: Veo video extension only works with videos still in Gemini's system.
-      // For our workflow (videos in Vercel Blob), we use I2V with the last frame instead.
-      // The SegmentPromptBuilder passes lastFrameUrl as startFrameUrl for EXT mode.
-      if (method === 'EXT' && startFrameUrl) {
-        videoOptions.startFrame = startFrameUrl
-        console.log('[Segment Asset Generation] Using last frame as start frame for EXT mode (I2V fallback)')
+      // EXT (Extend) mode: True video extension using Veo's native capability
+      // Priority 1: Use previousSegmentVeoRef if available (true extension)
+      // Priority 2: Fall back to I2V with the last frame as start frame
+      if (method === 'EXT') {
+        if (previousSegmentVeoRef) {
+          // True video extension - use the Veo video reference from previous generation
+          // This only works if the video is still in Gemini's 2-day cache
+          videoOptions.sourceVideo = previousSegmentVeoRef
+          console.log('[Segment Asset Generation] Using TRUE EXT mode with Veo video reference:', previousSegmentVeoRef)
+          // Note: When using sourceVideo, we don't need startFrame - Veo continues from where the video left off
+        } else if (startFrameUrl) {
+          // Fallback: No Veo reference available (video too old or from external source)
+          // Use I2V mode with the last frame as the start frame
+          videoOptions.startFrame = startFrameUrl
+          console.log('[Segment Asset Generation] EXT mode fallback: Using I2V with last frame (no valid veoVideoRef)')
+          console.log('[Segment Asset Generation] Tip: For seamless extension, generate videos back-to-back within 48 hours')
+        } else {
+          console.warn('[Segment Asset Generation] EXT mode requested but no veoVideoRef or startFrameUrl available')
+          console.warn('[Segment Asset Generation] Falling back to T2V mode')
+        }
       }
       
       // End Frame - used for FTV (Frame-to-Video/Interpolation) mode
@@ -371,8 +386,12 @@ export async function POST(
       // Store Veo video reference for future video extension
       // This allows using Veo's native video extension with this video
       veoVideoRef = finalResult.veoVideoRef
+      veoVideoRefExpiry = finalResult.veoVideoRefExpiry
       if (veoVideoRef) {
         console.log('[Segment Asset Generation] Stored Veo video reference:', veoVideoRef)
+        if (finalResult.veoVideoRefExpiry) {
+          console.log('[Segment Asset Generation] Veo reference expires:', finalResult.veoVideoRefExpiry)
+        }
       }
 
       // Extract last frame for I2V continuity
@@ -413,6 +432,7 @@ export async function POST(
       assetType,
       lastFrameUrl,
       veoVideoRef,  // Gemini Files API reference for video extension
+      veoVideoRefExpiry,  // ISO timestamp when veoVideoRef expires (48 hours from generation)
       status: assetType === 'video' && assetUrl.startsWith('job:') ? 'QUEUED' : 'COMPLETE',
       jobId: assetType === 'video' && assetUrl.startsWith('job:') ? assetUrl.replace('job:', '') : undefined,
       // Method selection info for UI feedback

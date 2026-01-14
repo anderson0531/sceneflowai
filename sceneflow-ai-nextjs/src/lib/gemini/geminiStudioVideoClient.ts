@@ -43,6 +43,9 @@ export interface GeminiVideoOptions {
   lastFrame?: string // For interpolation (FTV)
   referenceImages?: ReferenceImage[] // Up to 3 for Veo 3.1
   numberOfVideos?: number
+  // Veo 3.1 Extension Mode (EXT) - True video continuation
+  // Pass the veoVideoRef from a previous generation still in Gemini's 2-day cache
+  sourceVideo?: string // Gemini Files API reference (e.g., "files/xxx") for video extension
 }
 
 export interface GeminiVideoResult {
@@ -53,6 +56,10 @@ export interface GeminiVideoResult {
   mimeType?: string
   error?: string
   estimatedWaitSeconds?: number
+  // Veo video reference for future extension - stores Gemini Files API reference
+  // Valid for 2 days in Gemini's cache, required for true EXT mode
+  veoVideoRef?: string
+  veoVideoRefExpiry?: string // ISO timestamp when veoVideoRef expires (48 hours from generation)
 }
 
 // ============================================================================
@@ -123,6 +130,7 @@ export async function generateVideoWithGeminiStudio(
     duration: options.durationSeconds || 8,
     hasStartFrame: !!options.startFrame,
     hasLastFrame: !!options.lastFrame,
+    hasSourceVideo: !!options.sourceVideo,
     referenceImagesCount: options.referenceImages?.length || 0
   }))
   
@@ -170,6 +178,21 @@ export async function generateVideoWithGeminiStudio(
     parameters.sampleCount = options.numberOfVideos
   } else {
     parameters.sampleCount = 1
+  }
+  
+  // Add source video for EXT mode (true video extension)
+  // This uses a Veo-generated video reference from Gemini's Files API (valid for 2 days)
+  // Note: sourceVideo is mutually exclusive with startFrame - you either extend a video OR use an image
+  if (options.sourceVideo && !options.startFrame) {
+    // sourceVideo should be a Gemini Files API reference like "files/xxx"
+    // Pass it as a video object in the instance
+    instance.video = {
+      fileUri: options.sourceVideo.startsWith('files/') 
+        ? `https://generativelanguage.googleapis.com/v1beta/${options.sourceVideo}`
+        : options.sourceVideo
+    }
+    console.log('[Gemini Studio Video] Added source video for EXT (extension) mode')
+    console.log('[Gemini Studio Video] Source video ref:', options.sourceVideo)
   }
   
   // Add start frame for I2V mode
@@ -482,20 +505,38 @@ export async function checkGeminiVideoStatus(
       // Video may be a file reference that needs to be downloaded
       if (video?.name) {
         console.log('[Gemini Studio Video] Video completed! File:', video.name)
+        // Calculate expiry time (48 hours from now) for veoVideoRef cache
+        const expiryDate = new Date(Date.now() + 48 * 60 * 60 * 1000)
         return {
           status: 'COMPLETED',
           videoUrl: `file:${video.name}`,
-          operationName: operationName
+          operationName: operationName,
+          // Store the Gemini Files API reference for future video extension (EXT mode)
+          // Valid for 2 days in Gemini's cache
+          veoVideoRef: video.name,
+          veoVideoRefExpiry: expiryDate.toISOString()
         }
       }
       
       // Or it may have a direct URI
       if (video?.uri || video?.url) {
         console.log('[Gemini Studio Video] Video completed! URI:', video.uri || video.url)
+        // Try to extract file reference from URI for future extension
+        // Format: https://generativelanguage.googleapis.com/v1beta/files/xxx or files/xxx
+        const videoUri = video.uri || video.url
+        let extractedRef: string | undefined = undefined
+        const fileMatch = videoUri.match(/files\/([^/?]+)/)
+        if (fileMatch) {
+          extractedRef = `files/${fileMatch[1]}`
+        }
+        // Calculate expiry time (48 hours from now) for veoVideoRef cache
+        const expiryDate = new Date(Date.now() + 48 * 60 * 60 * 1000)
         return {
           status: 'COMPLETED',
-          videoUrl: video.uri || video.url,
-          operationName: operationName
+          videoUrl: videoUri,
+          operationName: operationName,
+          veoVideoRef: extractedRef,
+          veoVideoRefExpiry: extractedRef ? expiryDate.toISOString() : undefined
         }
       }
     }
@@ -597,5 +638,135 @@ export async function waitForGeminiVideoCompletion(
     status: 'FAILED',
     error: `Video generation timed out after ${maxWaitSeconds} seconds`,
     operationName: operationName
+  }
+}
+
+// ============================================================================
+// Video Modification (V2V Operations)
+// ============================================================================
+
+/**
+ * Configuration for video modification operations
+ */
+export interface VideoModifyConfig {
+  /** Operation mode: 'extend' continues video, 'edit' performs masked inpainting */
+  mode: 'extend' | 'edit'
+  /** Prompt describing the continuation or edit */
+  prompt: string
+  /** Source video reference (Gemini Files API ref like "files/xxx") - required */
+  sourceVideoRef: string
+  /** Mask image for edit mode - base64 or URL (white = edit region) */
+  maskImage?: string
+  /** Text instruction for edit mode (alternative to mask) */
+  editInstruction?: string
+  /** Video generation options */
+  options?: Omit<GeminiVideoOptions, 'sourceVideo' | 'startFrame' | 'lastFrame'>
+}
+
+export interface VideoModifyResult extends GeminiVideoResult {
+  /** The modification mode that was used */
+  modifyMode: 'extend' | 'edit'
+}
+
+/**
+ * Check if a veoVideoRef is still valid for extension (within 48-hour cache window)
+ */
+export function isVeoVideoRefValid(expiryIso?: string): boolean {
+  if (!expiryIso) return false
+  try {
+    const expiry = new Date(expiryIso)
+    return expiry.getTime() > Date.now()
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Modify an existing video using Veo 3.1 capabilities
+ * 
+ * Supports two modes:
+ * 1. **Extend** - Continue a video beyond its current length using the sourceVideoRef
+ *    - Requires a Veo-generated video still in Gemini's 2-day cache
+ *    - Prompt describes what happens next in the video
+ * 
+ * 2. **Edit** - Modify specific regions of a video using mask/instruction
+ *    - NOT YET AVAILABLE in Veo 3.1 public API (January 2026)
+ *    - Will return an informative error until API support is added
+ * 
+ * @param config - Video modification configuration
+ * @returns Promise<VideoModifyResult> - Result of the modification operation
+ */
+export async function modifyVideoWithGemini(
+  config: VideoModifyConfig
+): Promise<VideoModifyResult> {
+  const { mode, prompt, sourceVideoRef, maskImage, editInstruction, options = {} } = config
+  
+  console.log(`[Gemini Video Modify] Mode: ${mode}`)
+  console.log(`[Gemini Video Modify] Source video ref: ${sourceVideoRef}`)
+  
+  // Validate source video reference
+  if (!sourceVideoRef) {
+    return {
+      status: 'FAILED',
+      error: 'Source video reference is required for video modification',
+      modifyMode: mode
+    }
+  }
+  
+  // Handle EXTEND mode - use generateVideoWithGeminiStudio with sourceVideo
+  if (mode === 'extend') {
+    console.log('[Gemini Video Modify] Using extension mode')
+    
+    const result = await generateVideoWithGeminiStudio(prompt, {
+      ...options,
+      sourceVideo: sourceVideoRef
+    })
+    
+    return {
+      ...result,
+      modifyMode: 'extend'
+    }
+  }
+  
+  // Handle EDIT mode - NOT YET AVAILABLE
+  if (mode === 'edit') {
+    console.warn('[Gemini Video Modify] Edit (inpainting) mode requested but not yet available')
+    
+    // Check if mask or instruction was provided
+    const hasEditInput = !!maskImage || !!editInstruction
+    
+    return {
+      status: 'FAILED',
+      error: `⚠️ Video Editing (Inpainting) Not Yet Available
+
+Veo 3.1's video inpainting feature is not yet publicly available in the API (as of January 2026).
+
+${hasEditInput ? `Your edit request:
+${maskImage ? '• Mask image provided' : ''}
+${editInstruction ? `• Instruction: "${editInstruction}"` : ''}
+${prompt ? `• Prompt: "${prompt.substring(0, 100)}..."` : ''}
+
+` : ''}**Current Alternatives:**
+
+1. **Edit the frame, regenerate video**
+   - Use the Image Edit feature to modify a key frame
+   - Then regenerate the video segment using I2V mode
+
+2. **Use Reference Images**
+   - Add character/style reference images
+   - Regenerate with T2V + REF mode for consistency
+
+3. **Extend instead**
+   - If you want to continue the video, use "Extend" mode
+
+We'll enable this feature automatically when Veo 3.1 API support becomes available.`,
+      modifyMode: 'edit'
+    }
+  }
+  
+  return {
+    status: 'FAILED',
+    error: `Unknown modification mode: ${mode}`,
+    modifyMode: mode
   }
 }

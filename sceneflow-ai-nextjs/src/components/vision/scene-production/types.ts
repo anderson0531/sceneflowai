@@ -242,6 +242,9 @@ export interface SceneSegmentTake {
   // Veo video reference for extension - stores the Gemini Files API reference (e.g., "files/xxx")
   // This is needed for Veo video extension which only works with Veo-generated videos still in Gemini's system
   veoVideoRef?: string
+  // ISO timestamp when veoVideoRef expires (48 hours from generation)
+  // After this time, video extension falls back to I2V mode with the last frame
+  veoVideoRefExpiry?: string
 }
 
 export interface SceneSegmentReferences {
