@@ -566,8 +566,16 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
         </div>
 
         {/* Main Video Area */}
-        <div className="flex-1 flex items-center justify-center p-4 min-h-[50vh]">
-          <div className="relative w-full max-w-5xl aspect-video bg-slate-900 rounded-lg overflow-hidden">
+        <div className={cn(
+          "flex-1 flex items-center justify-center min-h-[50vh]",
+          isFullscreen ? "p-0" : "p-4"
+        )}>
+          <div className={cn(
+            "relative bg-slate-900 overflow-hidden",
+            isFullscreen 
+              ? "w-full h-full" 
+              : "w-full max-w-5xl aspect-video rounded-lg"
+          )}>
             {currentPlayable?.hasVideo ? (
               <video
                 ref={videoRef}
