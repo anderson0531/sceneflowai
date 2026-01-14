@@ -10,6 +10,7 @@
  * - Controls: play/pause, skip forward/back, close
  * - Segment indicator (e.g., "Segment 2 of 5")
  * - Fallback: shows start frame for incomplete segments
+ * - Audio overlay with timeline sync (start time, duration, volume per track)
  * 
  * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
  */
@@ -37,10 +38,10 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
-import type { SceneSegment, SelectedAudioTracks } from './types'
+import type { SceneSegment, SelectedAudioTracks, AudioClipConfig, SceneAudioConfig, AudioVolumes } from './types'
 
 /**
- * Audio URLs for scene playback overlay
+ * Audio URLs for scene playback overlay (legacy support)
  */
 interface SceneAudioUrls {
   narrationUrl?: string
@@ -59,8 +60,12 @@ interface SceneVideoPlayerProps {
   startAtSegment?: number
   /** Audio track selection for overlay playback */
   audioTracks?: SelectedAudioTracks
-  /** Audio URLs for overlay */
+  /** Audio URLs for overlay (legacy) */
   sceneAudio?: SceneAudioUrls
+  /** Enhanced audio config with timeline settings */
+  audioConfig?: SceneAudioConfig
+  /** Volume settings per track (0-1) */
+  audioVolumes?: AudioVolumes
 }
 
 interface PlayableSegment {
@@ -81,7 +86,18 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
   startAtSegment = 0,
   audioTracks,
   sceneAudio,
+  audioConfig,
+  audioVolumes,
 }) => {
+  // Default volumes if not provided
+  const defaultVolumes: AudioVolumes = {
+    narration: 0.8,
+    dialogue: 0.9,
+    music: 0.5,
+    sfx: 0.6,
+  }
+  const volumes = audioVolumes || defaultVolumes
+  
   // Current playback state
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(startAtSegment)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -93,43 +109,77 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const animationFrameRef = useRef<number | null>(null)
+  const sceneStartTimeRef = useRef<number>(0)  // Scene playback start timestamp
   
-  // Audio overlay refs
+  // Audio overlay refs with timeline sync
   const narrationAudioRef = useRef<HTMLAudioElement | null>(null)
   const musicAudioRef = useRef<HTMLAudioElement | null>(null)
   const dialogueAudiosRef = useRef<HTMLAudioElement[]>([])
   const sfxAudiosRef = useRef<HTMLAudioElement[]>([])
   
+  // Build audio config from legacy sceneAudio if audioConfig not provided
+  const effectiveAudioConfig: SceneAudioConfig | undefined = audioConfig || (sceneAudio ? {
+    narration: sceneAudio.narrationUrl ? {
+      url: sceneAudio.narrationUrl,
+      startTime: 0,
+      duration: 999, // Play for entire scene
+      volume: volumes.narration,
+    } : undefined,
+    music: sceneAudio.musicUrl ? {
+      url: sceneAudio.musicUrl,
+      startTime: 0,
+      duration: 999, // Will be clamped to total scene duration
+      volume: volumes.music,
+      loop: false,  // Don't loop - play for scene duration
+    } : undefined,
+    dialogue: sceneAudio.dialogueUrls?.map((url, i) => ({
+      url,
+      startTime: 0, // Legacy: no timing info
+      duration: 999,
+      volume: volumes.dialogue,
+    })),
+    sfx: sceneAudio.sfxUrls?.map((url, i) => ({
+      url,
+      startTime: 0,
+      duration: 999,
+      volume: volumes.sfx,
+    })),
+  } : undefined)
+  
   // Initialize audio elements when modal opens
   useEffect(() => {
-    if (isOpen && sceneAudio) {
+    if (isOpen && effectiveAudioConfig) {
       // Narration audio
-      if (sceneAudio.narrationUrl && audioTracks?.narration) {
-        narrationAudioRef.current = new Audio(sceneAudio.narrationUrl)
-        narrationAudioRef.current.volume = 0.8
+      if (effectiveAudioConfig.narration?.url && audioTracks?.narration) {
+        const config = effectiveAudioConfig.narration
+        narrationAudioRef.current = new Audio(config.url)
+        narrationAudioRef.current.volume = config.volume
       }
       
-      // Music audio
-      if (sceneAudio.musicUrl && audioTracks?.music) {
-        musicAudioRef.current = new Audio(sceneAudio.musicUrl)
-        musicAudioRef.current.volume = 0.4  // Lower volume for background
-        musicAudioRef.current.loop = true   // Loop music continuously
+      // Music audio - DON'T use loop, we control duration via timeline
+      if (effectiveAudioConfig.music?.url && audioTracks?.music) {
+        const config = effectiveAudioConfig.music
+        musicAudioRef.current = new Audio(config.url)
+        musicAudioRef.current.volume = config.volume
+        // Loop only if explicitly set AND duration exceeds audio file length
+        musicAudioRef.current.loop = config.loop || false
       }
       
-      // Dialogue audios (for future per-segment alignment)
-      if (sceneAudio.dialogueUrls && audioTracks?.dialogue) {
-        dialogueAudiosRef.current = sceneAudio.dialogueUrls.map(url => {
-          const audio = new Audio(url)
-          audio.volume = 0.9
+      // Dialogue audios with timeline support
+      if (effectiveAudioConfig.dialogue && audioTracks?.dialogue) {
+        dialogueAudiosRef.current = effectiveAudioConfig.dialogue.map(config => {
+          const audio = new Audio(config.url)
+          audio.volume = config.volume
           return audio
         })
       }
       
-      // SFX audios
-      if (sceneAudio.sfxUrls && audioTracks?.sfx) {
-        sfxAudiosRef.current = sceneAudio.sfxUrls.map(url => {
-          const audio = new Audio(url)
-          audio.volume = 0.6
+      // SFX audios with timeline support
+      if (effectiveAudioConfig.sfx && audioTracks?.sfx) {
+        sfxAudiosRef.current = effectiveAudioConfig.sfx.map(config => {
+          const audio = new Audio(config.url)
+          audio.volume = config.volume
           return audio
         })
       }
@@ -137,6 +187,9 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
     
     // Cleanup on close
     return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
       narrationAudioRef.current?.pause()
       musicAudioRef.current?.pause()
       dialogueAudiosRef.current.forEach(a => a.pause())
@@ -147,26 +200,23 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
       dialogueAudiosRef.current = []
       sfxAudiosRef.current = []
     }
-  }, [isOpen, sceneAudio, audioTracks])
+  }, [isOpen, effectiveAudioConfig, audioTracks, volumes])
   
-  // Sync audio playback with video state
+  // Apply volume changes dynamically
   useEffect(() => {
-    if (isPlaying) {
-      // Start all selected audio tracks
-      if (audioTracks?.narration && narrationAudioRef.current) {
-        narrationAudioRef.current.play().catch(() => {})
-      }
-      if (audioTracks?.music && musicAudioRef.current) {
-        musicAudioRef.current.play().catch(() => {})
-      }
-    } else {
-      // Pause all audio when video pauses
-      narrationAudioRef.current?.pause()
-      musicAudioRef.current?.pause()
-      dialogueAudiosRef.current.forEach(a => a.pause())
-      sfxAudiosRef.current.forEach(a => a.pause())
+    if (narrationAudioRef.current) {
+      narrationAudioRef.current.volume = isMuted ? 0 : volumes.narration
     }
-  }, [isPlaying, audioTracks])
+    if (musicAudioRef.current) {
+      musicAudioRef.current.volume = isMuted ? 0 : volumes.music
+    }
+    dialogueAudiosRef.current.forEach(a => {
+      a.volume = isMuted ? 0 : volumes.dialogue
+    })
+    sfxAudiosRef.current.forEach(a => {
+      a.volume = isMuted ? 0 : volumes.sfx
+    })
+  }, [volumes, isMuted])
   
   // Mute/unmute audio tracks with video
   useEffect(() => {
@@ -278,6 +328,75 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
       }
     }
   }, [isPlaying, currentPlayable, currentSegmentIndex])
+  
+  // Timeline-based audio sync - syncs all audio tracks to scene time
+  // This ensures music plays for the full scene duration, not per-segment
+  useEffect(() => {
+    if (!isPlaying || !effectiveAudioConfig) {
+      // Pause all audio when not playing
+      narrationAudioRef.current?.pause()
+      musicAudioRef.current?.pause()
+      dialogueAudiosRef.current.forEach(a => a.pause())
+      sfxAudiosRef.current.forEach(a => a.pause())
+      return
+    }
+    
+    // Helper to sync a single audio clip to scene timeline
+    const syncAudioToTimeline = (
+      audio: HTMLAudioElement | null,
+      config: AudioClipConfig | undefined,
+      sceneTime: number
+    ) => {
+      if (!audio || !config) return
+      
+      const clipStart = config.startTime
+      const clipEnd = config.startTime + Math.min(config.duration, totalDuration - config.startTime)
+      
+      // Check if we're within this clip's time window
+      if (sceneTime >= clipStart && sceneTime < clipEnd) {
+        const clipTime = sceneTime - clipStart
+        
+        // Sync audio position if drifted more than 0.3s
+        if (Math.abs(audio.currentTime - clipTime) > 0.3) {
+          audio.currentTime = Math.min(clipTime, audio.duration || clipTime)
+        }
+        
+        // Start if paused
+        if (audio.paused) {
+          audio.play().catch(() => {})
+        }
+      } else {
+        // Outside clip window - pause
+        if (!audio.paused) {
+          audio.pause()
+        }
+      }
+    }
+    
+    // Start music immediately and sync
+    if (effectiveAudioConfig.music && musicAudioRef.current && audioTracks?.music) {
+      syncAudioToTimeline(musicAudioRef.current, effectiveAudioConfig.music, currentTime)
+    }
+    
+    // Sync narration
+    if (effectiveAudioConfig.narration && narrationAudioRef.current && audioTracks?.narration) {
+      syncAudioToTimeline(narrationAudioRef.current, effectiveAudioConfig.narration, currentTime)
+    }
+    
+    // Sync dialogue clips
+    if (effectiveAudioConfig.dialogue && audioTracks?.dialogue) {
+      effectiveAudioConfig.dialogue.forEach((config, i) => {
+        syncAudioToTimeline(dialogueAudiosRef.current[i], config, currentTime)
+      })
+    }
+    
+    // Sync SFX clips
+    if (effectiveAudioConfig.sfx && audioTracks?.sfx) {
+      effectiveAudioConfig.sfx.forEach((config, i) => {
+        syncAudioToTimeline(sfxAudiosRef.current[i], config, currentTime)
+      })
+    }
+  }, [isPlaying, currentTime, effectiveAudioConfig, audioTracks, totalDuration])
   
   // Skip to next segment
   const handleSkipForward = useCallback(() => {

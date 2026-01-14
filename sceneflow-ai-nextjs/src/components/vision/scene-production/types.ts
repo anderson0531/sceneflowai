@@ -847,3 +847,35 @@ export interface AudioTrackData {
   enabled: boolean
 }
 
+/**
+ * Audio clip configuration for timeline-based playback
+ * Supports start time, duration, and volume for precise audio-video alignment
+ */
+export interface AudioClipConfig {
+  url: string
+  startTime: number    // In seconds, relative to scene start
+  duration: number     // In seconds
+  volume: number       // 0-1
+  loop?: boolean       // Whether to loop the audio
+}
+
+/**
+ * Complete audio configuration for scene playback with timeline settings
+ */
+export interface SceneAudioConfig {
+  narration?: AudioClipConfig
+  music?: AudioClipConfig
+  dialogue?: AudioClipConfig[]
+  sfx?: AudioClipConfig[]
+}
+
+/**
+ * Volume settings per track type
+ */
+export interface AudioVolumes {
+  narration: number
+  dialogue: number
+  music: number
+  sfx: number
+}
+
