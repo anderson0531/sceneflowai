@@ -98,6 +98,12 @@ export function useVideoQueue(
   
   // Build queue from segments and configs
   const queue = useMemo<DirectorQueueItem[]>(() => {
+    // Log initial segments to debug lock state persistence
+    console.log('[useVideoQueue] Building queue from segments:', segments.map(s => ({
+      id: s.segmentId,
+      lockedForProduction: s.lockedForProduction
+    })))
+    
     return segments.map((segment) => {
       const autoConfig = configsMap.get(segment.segmentId)
       const userConfig = userConfigs.get(segment.segmentId)
@@ -121,6 +127,7 @@ export function useVideoQueue(
       
       // If segment is locked in DB (persisted), override the approval status
       if (segment.lockedForProduction && config.approvalStatus !== 'locked') {
+        console.log('[useVideoQueue] Segment locked from DB:', segment.segmentId, segment.lockedForProduction)
         config = { ...config, approvalStatus: 'locked' as const }
       }
       

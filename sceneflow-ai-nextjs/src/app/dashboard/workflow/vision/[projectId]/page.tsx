@@ -1941,6 +1941,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Handle segment lock state changes (persists to DB for production lock)
   const handleLockSegment = useCallback(
     (sceneId: string, segmentId: string, locked: boolean) => {
+      console.log('[handleLockSegment] Persisting lock state:', { sceneId, segmentId, locked })
       applySceneProductionUpdate(sceneId, (current) => {
         if (!current) return current
         const segments = current.segments.map((segment) =>
@@ -1948,6 +1949,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             ? { ...segment, lockedForProduction: locked }
             : segment
         )
+        console.log('[handleLockSegment] Updated segments:', segments.map(s => ({ id: s.segmentId, locked: s.lockedForProduction })))
         return { ...current, segments }
       })
     },

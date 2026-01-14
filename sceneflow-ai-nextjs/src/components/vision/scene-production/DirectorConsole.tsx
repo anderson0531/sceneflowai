@@ -283,12 +283,23 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
       const newLockState = !isCurrentlyLocked
       const newStatus = newLockState ? 'locked' : 'auto-ready'
       
+      console.log('[DirectorConsole] Toggle lock:', { 
+        segmentId, 
+        currentLocked: isCurrentlyLocked,
+        newLocked: newLockState,
+        segmentLockedForProduction: segment.lockedForProduction,
+        configApprovalStatus: item.config.approvalStatus
+      })
+      
       // Update local queue state
       updateConfig(segmentId, { ...item.config, approvalStatus: newStatus })
       
       // Persist to DB if callback provided
       if (onLockSegment) {
+        console.log('[DirectorConsole] Calling onLockSegment:', segmentId, newLockState)
         onLockSegment(segmentId, newLockState)
+      } else {
+        console.warn('[DirectorConsole] onLockSegment callback not provided!')
       }
     }
   }, [queue, segments, updateConfig, onLockSegment])
