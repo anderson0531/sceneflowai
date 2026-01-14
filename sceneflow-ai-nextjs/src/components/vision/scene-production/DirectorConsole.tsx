@@ -428,8 +428,9 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           const segment = segments.find(s => s.segmentId === item.segmentId)
           if (!segment) return null
           
-          const methodConfig = methodBadgeConfig[item.config.mode]
-          const statusConfig = statusBadgeConfig[item.config.approvalStatus]
+          // Fallback to defaults if config values are not recognized
+          const methodConfig = methodBadgeConfig[item.config.mode] || methodBadgeConfig['I2V']
+          const statusConfig = statusBadgeConfig[item.config.approvalStatus] || statusBadgeConfig['auto-ready']
           const StatusIcon = statusConfig.icon
           const isCurrentlyRendering = currentSegmentId === item.segmentId
           
