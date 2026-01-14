@@ -29,6 +29,7 @@ import {
   Maximize,
   Minimize,
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import {
   Dialog,
@@ -311,10 +312,14 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
     }
   }, [isMuted])
   
-  // Toggle fullscreen
+  // Toggle fullscreen - use document.documentElement for true browser fullscreen (like Screening Room)
   const handleFullscreenToggle = useCallback(() => {
     if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen()
+      // Request fullscreen on the document element for true fullscreen experience
+      document.documentElement.requestFullscreen().catch(() => {
+        // Fallback to container if document fullscreen fails
+        containerRef.current?.requestFullscreen()
+      })
       setIsFullscreen(true)
     } else {
       document.exitFullscreen()
@@ -387,7 +392,12 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
         ref={containerRef}
-        className="max-w-[95vw] max-h-[95vh] p-0 bg-black border-gray-800 flex flex-col"
+        className={cn(
+          "p-0 bg-black border-gray-800 flex flex-col",
+          isFullscreen 
+            ? "max-w-none max-h-none w-screen h-screen rounded-none border-none" 
+            : "max-w-[95vw] max-h-[95vh]"
+        )}
       >
         <DialogTitle className="sr-only">Scene {sceneNumber} Video Preview</DialogTitle>
         <DialogDescription className="sr-only">
