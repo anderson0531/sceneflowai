@@ -53,6 +53,7 @@ import type {
   SceneAudioConfig,
 } from './types'
 import { DirectorDialog } from './DirectorDialog'
+import { VideoEditingDialog } from './VideoEditingDialog'
 import { SceneVideoPlayer } from './SceneVideoPlayer'
 import { useVideoQueue } from '@/hooks/useVideoQueue'
 import type { SceneAudioData } from './GuidePromptEditor'
@@ -152,6 +153,9 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   
   // Selected segment for DirectorDialog
   const [selectedSegment, setSelectedSegment] = useState<SceneSegment | null>(null)
+  
+  // Segment for VideoEditingDialog (editing completed videos)
+  const [editingVideoSegment, setEditingVideoSegment] = useState<SceneSegment | null>(null)
   
   // Segment selection for batch operations (checkboxes)
   const [selectedSegmentIds, setSelectedSegmentIds] = useState<Set<string>>(new Set())
@@ -581,12 +585,20 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                     </>
                   )}
                   
-                  {/* Take/Edit Button - Opens config dialog */}
+                  {/* Take/Edit Button - Opens config dialog or video editing dialog */}
                   <Button 
                     variant="outline" 
                     size="sm"
                     className="text-xs bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700 px-2"
-                    onClick={() => setSelectedSegment(segment)}
+                    onClick={() => {
+                      if (item.status === 'complete') {
+                        // Open VideoEditingDialog for completed segments
+                        setEditingVideoSegment(segment)
+                      } else {
+                        // Open DirectorDialog for segments not yet complete
+                        setSelectedSegment(segment)
+                      }
+                    }}
                   >
                     <Settings2 className="w-3.5 h-3.5 mr-1" />
                     {item.status === 'complete' ? 'Edit' : 'Take'} (1)
@@ -1130,6 +1142,38 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           })),
         } as SceneAudioConfig}
       />
+      
+      {/* VideoEditingDialog for editing completed segment videos */}
+      {editingVideoSegment && (
+        <VideoEditingDialog
+          open={!!editingVideoSegment}
+          onClose={() => setEditingVideoSegment(null)}
+          segment={editingVideoSegment}
+          allSegments={segments}
+          sceneImageUrl={sceneImageUrl}
+          characters={scene?.characters}
+          onGenerate={async (data) => {
+            // Use the same generation handler
+            const segmentId = editingVideoSegment.segmentId
+            updateConfig(segmentId, {
+              ...editingVideoSegment.config,
+              videoPrompt: data.prompt,
+              negativePrompt: data.negativePrompt,
+              method: data.method,
+              duration: data.duration,
+              startFrameUrl: data.startFrameUrl,
+            })
+            processQueue({
+              mode: 'selected',
+              priority: 'sequence',
+              delayBetween: 500,
+              selectedIds: [segmentId],
+            })
+            setEditingVideoSegment(null)
+          }}
+          isGenerating={isRendering && currentSegmentId === editingVideoSegment.segmentId}
+        />
+      )}
     </div>
     </TooltipProvider>
   )
