@@ -209,35 +209,6 @@ function SmartPromptTab({
         />
       </div>
 
-      {/* Start Frame Option */}
-      <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-        <input
-          type="checkbox"
-          id="use-start-frame"
-          checked={useStartFrame}
-          onChange={(e) => setUseStartFrame(e.target.checked)}
-          className="w-4 h-4 rounded border-gray-300"
-        />
-        <label htmlFor="use-start-frame" className="text-sm text-gray-700 dark:text-gray-300 flex-1">
-          Use starting image (Image-to-Video)
-        </label>
-        {useStartFrame && (
-          <Select value={startFrameUrl} onValueChange={setStartFrameUrl}>
-            <SelectTrigger className="w-32 h-8 text-xs">
-              <SelectValue placeholder="Select..." />
-            </SelectTrigger>
-            <SelectContent>
-              {sceneImageUrl && (
-                <SelectItem value={sceneImageUrl} className="text-xs">Scene Image</SelectItem>
-              )}
-              {previousSegmentLastFrame && (
-                <SelectItem value={previousSegmentLastFrame} className="text-xs">Previous Frame</SelectItem>
-              )}
-            </SelectContent>
-          </Select>
-        )}
-      </div>
-
       {/* Control Deck (Accordion Modules) */}
       <div className="flex-1 overflow-y-auto pr-1">
         <SmartPromptControlDeck
@@ -1050,72 +1021,18 @@ export function VideoEditingDialog({
     <Dialog open={open} onOpenChange={(value) => !isGenerating && !value && onClose()}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle className="flex items-center gap-2">
-                <Film className="w-5 h-5 text-sf-primary" />
-                Video Editor
-              </DialogTitle>
-              <DialogDescription>
-                Configure and generate video with Veo 3.1 advanced features
-              </DialogDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Select value={String(duration)} onValueChange={(v) => setDuration(Number(v))}>
-                <SelectTrigger className="w-24 h-8 text-xs">
-                  <Clock className="w-3 h-3 mr-1" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="4">4 sec</SelectItem>
-                  <SelectItem value="6">6 sec</SelectItem>
-                  <SelectItem value="8">8 sec</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={aspectRatio} onValueChange={(v) => setAspectRatio(v as '16:9' | '9:16')}>
-                <SelectTrigger className="w-20 h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="16:9">16:9</SelectItem>
-                  <SelectItem value="9:16">9:16</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <DialogTitle className="flex items-center gap-2">
+            <Film className="w-5 h-5 text-sf-primary" />
+            Video Editor
+          </DialogTitle>
         </DialogHeader>
 
-        {/* Split View: Tabs/Controls Left, Preview Right */}
+        {/* Split View: Controls Left, Preview Right */}
         <div className="flex-1 flex min-h-0">
           {/* Left Panel - Controls (40%) */}
           <div className="w-[40%] border-r border-gray-200 dark:border-gray-700 flex flex-col min-h-0">
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as VideoEditingTab)} className="flex flex-col h-full">
-              <TabsList className="grid grid-cols-5 m-4 mb-0">
-                <TabsTrigger value="smart-prompt" className="text-xs gap-1">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Smart
-                </TabsTrigger>
-                <TabsTrigger value="extend" className="text-xs gap-1">
-                  <Film className="w-3.5 h-3.5" />
-                  Extend
-                </TabsTrigger>
-                <TabsTrigger value="interpolate" className="text-xs gap-1">
-                  <ArrowRight className="w-3.5 h-3.5" />
-                  Frames
-                </TabsTrigger>
-                <TabsTrigger value="audio" className="text-xs gap-1">
-                  <Music className="w-3.5 h-3.5" />
-                  Audio
-                </TabsTrigger>
-                <TabsTrigger value="history" className="text-xs gap-1">
-                  <History className="w-3.5 h-3.5" />
-                  History
-                </TabsTrigger>
-              </TabsList>
-
-              <div className="flex-1 overflow-y-auto p-4">
-                <TabsContent value="smart-prompt" className="mt-0 h-full">
-                  <SmartPromptTab
+            <div className="flex-1 overflow-y-auto p-4">
+              <SmartPromptTab
                     segment={segment}
                     characters={characters}
                     sceneImageUrl={sceneImageUrl}
@@ -1135,41 +1052,7 @@ export function VideoEditingDialog({
                     generalInstruction={generalInstruction}
                     setGeneralInstruction={setGeneralInstruction}
                   />
-                </TabsContent>
-                <TabsContent value="extend" className="mt-0">
-                  <ExtendTab
-                    segment={segment}
-                    allSegments={allSegments}
-                    prompt={prompt}
-                    setPrompt={setPrompt}
-                    sourceVideoUrl={sourceVideoUrl}
-                    setSourceVideoUrl={setSourceVideoUrl}
-                    duration={duration}
-                    setDuration={setDuration}
-                  />
-                </TabsContent>
-                <TabsContent value="interpolate" className="mt-0">
-                  <InterpolateTab
-                    segment={segment}
-                    sceneImageUrl={sceneImageUrl}
-                    previousSegmentLastFrame={previousSegmentLastFrame}
-                    sceneReferences={sceneReferences}
-                    prompt={prompt}
-                    setPrompt={setPrompt}
-                    startFrameUrl={startFrameUrl}
-                    setStartFrameUrl={setStartFrameUrl}
-                    endFrameUrl={endFrameUrl}
-                    setEndFrameUrl={setEndFrameUrl}
-                  />
-                </TabsContent>
-                <TabsContent value="audio" className="mt-0">
-                  <AudioTab prompt={prompt} setPrompt={setPrompt} />
-                </TabsContent>
-                <TabsContent value="history" className="mt-0">
-                  <HistoryTab segment={segment} />
-                </TabsContent>
-              </div>
-            </Tabs>
+            </div>
           </div>
 
           {/* Right Panel - Preview (60%) */}
@@ -1187,38 +1070,30 @@ export function VideoEditingDialog({
         <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <Info className="w-3.5 h-3.5" />
-            <span>
-              {activeTab === 'smart-prompt' && 'Configure camera, performance, and style settings for optimal results'}
-              {activeTab === 'extend' && 'Extend existing Veo-generated videos up to 148 seconds total'}
-              {activeTab === 'interpolate' && 'Generate smooth transitions between two key frames'}
-              {activeTab === 'audio' && 'Include dialogue in quotes and describe sounds for audio generation'}
-              {activeTab === 'history' && 'View and manage all generated takes for this segment'}
-            </span>
+            <span>Configure camera, performance, and style settings for optimal results</span>
           </div>
           
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={onClose} disabled={isGenerating}>
               Cancel
             </Button>
-            {activeTab !== 'history' && (
-              <Button
-                onClick={handleGenerate}
-                disabled={!canGenerate || isGenerating}
-                className="gap-2"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4" />
-                    Generate Video
-                  </>
-                )}
-              </Button>
-            )}
+            <Button
+              onClick={handleGenerate}
+              disabled={!canGenerate || isGenerating}
+              className="gap-2"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4" />
+                  Edit Video
+                </>
+              )}
+            </Button>
           </div>
         </div>
       </DialogContent>
