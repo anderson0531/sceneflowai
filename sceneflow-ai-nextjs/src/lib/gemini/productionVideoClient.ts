@@ -21,8 +21,8 @@
 
 import { 
   generateVideoWithVeo, 
-  waitForVeoCompletion, 
-  downloadVeoVideo,
+  waitForVideoCompletion, 
+  downloadVideoFile,
   type VideoGenerationOptions,
   type VideoGenerationResult 
 } from './videoClient'
@@ -442,7 +442,7 @@ export async function waitForProductionVideoCompletion(
     const result = await waitForGeminiVideoCompletion(operationName, maxWaitSeconds, pollIntervalSeconds)
     return { ...result, provider: 'gemini' }
   } else {
-    const result = await waitForVeoCompletion(operationName, maxWaitSeconds, pollIntervalSeconds)
+    const result = await waitForVideoCompletion(operationName, maxWaitSeconds, pollIntervalSeconds)
     return { ...result, provider: 'vertex' }
   }
 }
@@ -457,7 +457,7 @@ export async function downloadProductionVideo(
   if (provider === 'gemini') {
     return downloadGeminiVideoFile(videoUrl)
   } else {
-    return downloadVeoVideo(videoUrl)
+    return downloadVideoFile(videoUrl)
   }
 }
 
