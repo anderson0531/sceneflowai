@@ -21,7 +21,7 @@ import type {
   SceneRenderAudioClip,
 } from '@/lib/video/renderTypes'
 import { RENDER_DEFAULTS } from '@/lib/video/renderTypes'
-import { uploadJobSpec, getOutputPath, getRenderBucket } from '@/lib/gcs/renderStorage'
+import { uploadJobSpec, getOutputPath, getRenderBucket, getSignedDownloadUrl } from '@/lib/gcs/renderStorage'
 import { isCloudRunJobsEnabled } from '@/lib/video/CloudRunJobsService'
 import { getJobStatus, setJobStatus } from '@/lib/render/jobStatusStore'
 
@@ -399,12 +399,26 @@ export async function GET(
       })
     }
     
+    // Convert gs:// URL to signed HTTPS URL if needed
+    let downloadUrl = jobStatus.downloadUrl
+    if (downloadUrl && downloadUrl.startsWith('gs://')) {
+      console.log(`[SceneRender] Converting gs:// URL to signed URL for job ${jobId}`)
+      try {
+        const signedUrl = await getSignedDownloadUrl(jobId)
+        if (signedUrl) {
+          downloadUrl = signedUrl
+        }
+      } catch (error) {
+        console.error(`[SceneRender] Failed to generate signed URL:`, error)
+      }
+    }
+    
     return NextResponse.json({
       success: true,
       jobId,
       status: jobStatus.status,
       progress: jobStatus.progress,
-      downloadUrl: jobStatus.downloadUrl,
+      downloadUrl: downloadUrl,
       error: jobStatus.error,
       createdAt: jobStatus.createdAt,
     })

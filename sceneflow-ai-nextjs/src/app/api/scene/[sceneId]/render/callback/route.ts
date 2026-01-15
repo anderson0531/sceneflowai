@@ -13,6 +13,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getJobStatus, setJobStatus, updateJobStatus } from '@/lib/render/jobStatusStore'
+import { getSignedDownloadUrl } from '@/lib/gcs/renderStorage'
 
 interface RenderCallbackPayload {
   jobId: string
@@ -44,6 +45,23 @@ export async function POST(
       )
     }
     
+    // Convert gs:// URL to signed HTTPS URL if needed
+    let downloadUrl = payload.outputUrl
+    if (downloadUrl && downloadUrl.startsWith('gs://')) {
+      console.log(`[SceneRenderCallback] Converting gs:// URL to signed URL for job ${payload.jobId}`)
+      try {
+        const signedUrl = await getSignedDownloadUrl(payload.jobId)
+        if (signedUrl) {
+          downloadUrl = signedUrl
+          console.log(`[SceneRenderCallback] Generated signed URL for job ${payload.jobId}`)
+        } else {
+          console.warn(`[SceneRenderCallback] Could not generate signed URL, file may not exist yet`)
+        }
+      } catch (error) {
+        console.error(`[SceneRenderCallback] Failed to generate signed URL:`, error)
+      }
+    }
+    
     // Update job status in store
     const existingJob = getJobStatus(payload.jobId)
     
@@ -51,7 +69,7 @@ export async function POST(
       updateJobStatus(payload.jobId, {
         status: payload.status,
         progress: payload.progress,
-        downloadUrl: payload.outputUrl,
+        downloadUrl: downloadUrl,
         error: payload.error,
       })
       
@@ -61,7 +79,7 @@ export async function POST(
       setJobStatus(payload.jobId, {
         status: payload.status,
         progress: payload.progress,
-        downloadUrl: payload.outputUrl,
+        downloadUrl: downloadUrl,
         error: payload.error,
         createdAt: new Date().toISOString(),
       })

@@ -194,6 +194,12 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   // Scene render dialog state
   const [isRenderDialogOpen, setIsRenderDialogOpen] = useState(false)
   
+  // Rendered scene MP4 URL (from Cloud Run render)
+  const [renderedSceneUrl, setRenderedSceneUrl] = useState<string | null>(null)
+  
+  // Scene video player for rendered MP4
+  const [isRenderedScenePlayerOpen, setIsRenderedScenePlayerOpen] = useState(false)
+  
   // Segment-specific playback: start player at this segment index
   const [playFromSegmentIndex, setPlayFromSegmentIndex] = useState<number>(0)
   
@@ -416,8 +422,19 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                     className="bg-emerald-600/20 border-emerald-500/50 text-emerald-300 hover:bg-emerald-600/30"
                   >
                     <Film className="w-4 h-4 mr-2" />
-                    Play Scene ({statusCounts.rendered})
+                    Play Segments ({statusCounts.rendered})
                   </Button>
+                  {renderedSceneUrl && (
+                    <Button 
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIsRenderedScenePlayerOpen(true)}
+                      className="bg-cyan-600/20 border-cyan-500/50 text-cyan-300 hover:bg-cyan-600/30"
+                    >
+                      <PlayCircle className="w-4 h-4 mr-2" />
+                      Play Scene
+                    </Button>
+                  )}
                   <Button 
                     size="sm"
                     variant="outline"
@@ -1231,8 +1248,45 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
         }}
         onRenderComplete={(downloadUrl) => {
           console.log('[DirectorConsole] Scene render complete:', downloadUrl)
+          setRenderedSceneUrl(downloadUrl)
         }}
       />
+      
+      {/* Rendered Scene MP4 Player Modal */}
+      {isRenderedScenePlayerOpen && renderedSceneUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-4xl p-4">
+            <button
+              onClick={() => setIsRenderedScenePlayerOpen(false)}
+              className="absolute -top-2 -right-2 z-10 p-2 bg-slate-800 rounded-full hover:bg-slate-700 text-slate-300"
+            >
+              ✕
+            </button>
+            <div className="bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
+              <div className="p-3 border-b border-slate-700 flex items-center justify-between">
+                <h3 className="text-white font-medium flex items-center gap-2">
+                  <PlayCircle className="w-5 h-5 text-cyan-400" />
+                  Scene {sceneNumber} - Rendered Video
+                </h3>
+                <a
+                  href={renderedSceneUrl}
+                  download={`scene-${sceneNumber}.mp4`}
+                  className="text-sm text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+                >
+                  <Download className="w-4 h-4" />
+                  Download MP4
+                </a>
+              </div>
+              <video
+                src={renderedSceneUrl}
+                controls
+                autoPlay
+                className="w-full aspect-video bg-black"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </TooltipProvider>
   )
