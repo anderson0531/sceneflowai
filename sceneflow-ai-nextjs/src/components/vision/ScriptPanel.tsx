@@ -2380,6 +2380,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       onSegmentDialogueAssignmentChange={onSegmentDialogueAssignmentChange}
                       onSegmentGenerate={onSegmentGenerate}
                       onSegmentUpload={onSegmentUpload}
+                      onLockSegment={onLockSegment}
+                      onRenderedSceneUrlChange={onRenderedSceneUrlChange}
                       onAddSegment={onAddSegment}
                       onAddFullSegment={onAddFullSegment}
                       onDeleteSegment={onDeleteSegment}
@@ -2858,6 +2860,8 @@ interface SceneCardProps {
   onSegmentGenerate?: (sceneId: string, segmentId: string, mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD', options?: { startFrameUrl?: string; prompt?: string; negativePrompt?: string; duration?: number; aspectRatio?: '16:9' | '9:16'; resolution?: '720p' | '1080p' }) => Promise<void>
   onSegmentUpload?: (sceneId: string, segmentId: string, file: File) => Promise<void>
   onLockSegment?: (sceneId: string, segmentId: string, locked: boolean) => void
+  /** Persist rendered scene URL to database */
+  onRenderedSceneUrlChange?: (sceneId: string, url: string | null) => void
   onAddSegment?: (sceneId: string, afterSegmentId: string | null, duration: number) => void
   onDeleteSegment?: (sceneId: string, segmentId: string) => void
   onSegmentResize?: (sceneId: string, segmentId: string, changes: { startTime?: number; duration?: number }) => void
@@ -3011,6 +3015,7 @@ function SceneCard({
   onSegmentGenerate,
   onSegmentUpload,
   onLockSegment,
+  onRenderedSceneUrlChange,
   onAddSegment,
   onAddFullSegment,
   onDeleteSegment,
