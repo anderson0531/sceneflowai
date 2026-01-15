@@ -5824,6 +5824,13 @@ function SceneCard({
                               'I2V'
                             )
                           }
+                          onOpenDirectorConsole={() => {
+                            const consoleId = `director-console-${scene.sceneId || scene.id || `scene-${sceneIdx}`}`
+                            const consoleEl = document.getElementById(consoleId)
+                            if (consoleEl) {
+                              consoleEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                            }
+                          }}
                           onEditFrame={(segmentId, frameType, frameUrl) => {
                             onOpenFrameEditModal?.(
                               sceneIdx,
@@ -5857,18 +5864,20 @@ function SceneCard({
                     {/* ==================== DIRECTOR'S CONSOLE ==================== */}
                     {/* Video generation workflow */}
                     {sceneProductionData?.segments && sceneProductionData.segments.length > 0 ? (
-                      <DirectorConsole
-                        sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
-                        sceneNumber={sceneNumber}
-                        projectId={projectId}
-                        productionData={sceneProductionData}
-                        sceneImageUrl={scene.imageUrl}
-                        scene={scene}
-                        onGenerate={onSegmentGenerate || (async () => {})}
-                        onSegmentUpload={onSegmentUpload ? (segmentId, file) => onSegmentUpload(scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId, file) : undefined}
-                        onLockSegment={onLockSegment ? (segmentId, locked) => onLockSegment(scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId, locked) : undefined}
-                        onRenderedSceneUrlChange={onRenderedSceneUrlChange ? (url) => onRenderedSceneUrlChange(scene.sceneId || scene.id || `scene-${sceneIdx}`, url) : undefined}
-                      />
+                      <div id={`director-console-${scene.sceneId || scene.id || `scene-${sceneIdx}`}`} className="scroll-mt-4">
+                        <DirectorConsole
+                          sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
+                          sceneNumber={sceneNumber}
+                          projectId={projectId}
+                          productionData={sceneProductionData}
+                          sceneImageUrl={scene.imageUrl}
+                          scene={scene}
+                          onGenerate={onSegmentGenerate || (async () => {})}
+                          onSegmentUpload={onSegmentUpload ? (segmentId, file) => onSegmentUpload(scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId, file) : undefined}
+                          onLockSegment={onLockSegment ? (segmentId, locked) => onLockSegment(scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId, locked) : undefined}
+                          onRenderedSceneUrlChange={onRenderedSceneUrlChange ? (url) => onRenderedSceneUrlChange(scene.sceneId || scene.id || `scene-${sceneIdx}`, url) : undefined}
+                        />
+                      </div>
                     ) : (
                       /* Fallback: SceneProductionManager when no segments yet */
                       <SceneProductionManager

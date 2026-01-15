@@ -42,6 +42,7 @@ export interface SegmentPairCardProps {
   onGenerateEndFrame: () => void
   onGenerateBothFrames: () => void
   onGenerateVideo: () => void
+  onOpenDirectorConsole?: () => void
   onEditFrame?: (frameType: 'start' | 'end', frameUrl: string) => void
   onUploadFrame?: (frameType: 'start' | 'end', file: File) => void
   onDownloadFrame?: (frameType: 'start' | 'end', frameUrl: string) => void
@@ -112,6 +113,7 @@ export function SegmentPairCard({
   onGenerateEndFrame,
   onGenerateBothFrames,
   onGenerateVideo,
+  onOpenDirectorConsole,
   onEditFrame,
   onUploadFrame,
   onDownloadFrame,
@@ -403,13 +405,6 @@ export function SegmentPairCard({
             </div>
           </div>
         </div>
-        
-        {/* Action Prompt */}
-        {(segment.actionPrompt || segment.action || segment.generatedPrompt) && (
-          <div className="mt-3 p-2 bg-slate-900/50 rounded text-xs text-slate-400 line-clamp-2">
-            {segment.actionPrompt || segment.action || segment.generatedPrompt}
-          </div>
-        )}
       </div>
       
       {/* Actions Footer */}
@@ -493,7 +488,7 @@ export function SegmentPairCard({
                 title="Regenerate start frame"
               >
                 <RefreshCw className="w-3 h-3 mr-1" />
-                Regen Start
+                Start
               </Button>
             )}
             {canRegenerateEnd && (
@@ -506,7 +501,7 @@ export function SegmentPairCard({
                 title="Regenerate end frame"
               >
                 <RefreshCw className="w-3 h-3 mr-1" />
-                Regen End
+                Finish
               </Button>
             )}
             
@@ -551,7 +546,7 @@ export function SegmentPairCard({
             <Button 
               size="sm" 
               variant="default"
-              onClick={(e) => { e.stopPropagation(); onGenerateVideo(); }}
+              onClick={(e) => { e.stopPropagation(); onOpenDirectorConsole ? onOpenDirectorConsole() : onGenerateVideo(); }}
               disabled={isGenerating}
               className="h-7 text-xs bg-green-600 hover:bg-green-700"
             >

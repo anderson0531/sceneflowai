@@ -43,6 +43,7 @@ export interface SegmentFrameTimelineProps {
   }) => Promise<void>
   onGenerateAllFrames: () => Promise<void>
   onGenerateVideo: (segmentId: string) => void
+  onOpenDirectorConsole?: () => void
   onEditFrame?: (segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
   onUploadFrame?: (segmentId: string, frameType: 'start' | 'end', file: File) => void
   isGenerating: boolean
@@ -107,6 +108,7 @@ export function SegmentFrameTimeline({
   onGenerateFrames,
   onGenerateAllFrames,
   onGenerateVideo,
+  onOpenDirectorConsole,
   onEditFrame,
   onUploadFrame,
   isGenerating,
@@ -115,7 +117,12 @@ export function SegmentFrameTimeline({
   characters = [],
   sceneDirection
 }: SegmentFrameTimelineProps) {
-  const [isExpanded, setIsExpanded] = useState(true)
+  // Calculate stats first to determine initial expanded state
+  const stats = useMemo(() => calculateTimelineStats(segments), [segments])
+  
+  // Auto-collapse when status is "All Ready" or "FTV Mode Ready"
+  const isAllReady = stats.fullyAnchored === stats.total && stats.total > 0
+  const [isExpanded, setIsExpanded] = useState(!isAllReady)
   
   // Frame prompt dialog state
   const [framePromptDialogOpen, setFramePromptDialogOpen] = useState(false)
@@ -123,8 +130,6 @@ export function SegmentFrameTimeline({
   const [dialogSegmentIndex, setDialogSegmentIndex] = useState(0)
   const [dialogFrameType, setDialogFrameType] = useState<'start' | 'end' | 'both'>('both')
   const [dialogPreviousEndFrame, setDialogPreviousEndFrame] = useState<string | null>(null)
-  
-  const stats = useMemo(() => calculateTimelineStats(segments), [segments])
   
   // Get previous segment's end frame for each segment (for CONTINUE transitions)
   const getPreviousEndFrame = useCallback((index: number): string | null => {
@@ -286,6 +291,7 @@ export function SegmentFrameTimeline({
                     onGenerateEndFrame={() => openFramePromptDialog(segment, index, 'end')}
                     onGenerateBothFrames={() => openFramePromptDialog(segment, index, 'both')}
                     onGenerateVideo={() => onGenerateVideo(segment.segmentId)}
+                    onOpenDirectorConsole={onOpenDirectorConsole}
                     onEditFrame={onEditFrame ? (frameType, frameUrl) => onEditFrame(segment.segmentId, frameType, frameUrl) : undefined}
                     onUploadFrame={onUploadFrame ? (frameType, file) => onUploadFrame(segment.segmentId, frameType, file) : undefined}
                     isGenerating={isGenerating && generatingSegmentId === segment.segmentId}
