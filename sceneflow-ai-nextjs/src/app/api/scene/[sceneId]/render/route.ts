@@ -171,19 +171,32 @@ export async function POST(
     try {
       jobSpecPath = await uploadJobSpec(jobSpec as never)
       console.log(`[SceneRender] Job spec uploaded: ${jobSpecPath}`)
-    } catch (uploadError) {
+    } catch (uploadError: unknown) {
+      const errorMessage = uploadError instanceof Error ? uploadError.message : String(uploadError)
       console.error('[SceneRender] Failed to upload job spec:', uploadError)
       
-      // For development/demo, return mock success
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[SceneRender] Development mode: returning mock response')
+      // Check if it's a bucket not found error - means GCS isn't set up yet
+      if (errorMessage.includes('bucket does not exist') || errorMessage.includes('notFound')) {
+        console.log('[SceneRender] GCS bucket not configured - Cloud Run render infrastructure not deployed')
         return NextResponse.json({
-          success: true,
+          success: false,
           jobId,
-          status: 'QUEUED',
-          message: 'Scene render job queued (development mock)',
-          estimatedDuration: totalDuration,
-        })
+          status: 'FAILED',
+          error: 'Scene rendering infrastructure not yet deployed. Please contact support or check the deployment guide.',
+          details: 'The GCS render bucket does not exist. Run: gsutil mb -l us-central1 gs://sceneflow-render-jobs',
+        }, { status: 503 })
+      }
+      
+      // For development/demo without GCS, return helpful message
+      if (process.env.NODE_ENV === 'development' || !process.env.GCS_RENDER_BUCKET) {
+        console.log('[SceneRender] Development mode: returning setup instructions')
+        return NextResponse.json({
+          success: false,
+          jobId,
+          status: 'FAILED',
+          error: 'Scene rendering requires Cloud Run infrastructure',
+          details: 'Set GCS_RENDER_BUCKET environment variable and create the bucket in GCP',
+        }, { status: 503 })
       }
       
       throw uploadError
