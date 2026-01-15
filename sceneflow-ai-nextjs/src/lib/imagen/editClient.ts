@@ -189,7 +189,7 @@ export async function editImageWithInstruction(
     const accessToken = await getVertexAIAuthToken()
     
     const requestBody = {
-      contents: [{ parts: contents }],
+      contents: [{ role: 'user', parts: contents }],
       generationConfig: {
         responseModalities: ['IMAGE', 'TEXT']
       }
@@ -336,7 +336,7 @@ In the WHITE masked areas, generate: ${prompt}`
     const accessToken = await getVertexAIAuthToken()
     
     const requestBody = {
-      contents: [{ parts: contents }],
+      contents: [{ role: 'user', parts: contents }],
       generationConfig: {
         responseModalities: ['IMAGE', 'TEXT']
       }
@@ -477,7 +477,7 @@ Make sure the expanded areas blend seamlessly with the original image, matching 
     const accessToken = await getVertexAIAuthToken()
     
     const requestBody: any = {
-      contents: [{ parts: contents }],
+      contents: [{ role: 'user', parts: contents }],
       generationConfig: {
         responseModalities: ['IMAGE', 'TEXT']
       }
