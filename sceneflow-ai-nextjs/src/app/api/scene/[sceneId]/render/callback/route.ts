@@ -8,10 +8,11 @@
  * - Job completes successfully  
  * - Job fails with error
  * 
- * Updates the job status in the database.
+ * Updates the job status in the shared store.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { getJobStatus, setJobStatus, updateJobStatus } from '@/lib/render/jobStatusStore'
 
 interface RenderCallbackPayload {
   jobId: string
@@ -20,19 +21,6 @@ interface RenderCallbackPayload {
   outputUrl?: string
   error?: string
 }
-
-// In-memory job status store (same as main route - should be in shared module)
-// For production, this should be in a database
-const jobStatusStore = new Map<string, {
-  status: 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED'
-  progress: number
-  downloadUrl?: string
-  error?: string
-  createdAt: string
-}>()
-
-// Export for use by parent route
-export { jobStatusStore }
 
 export async function POST(
   request: NextRequest,
@@ -57,11 +45,10 @@ export async function POST(
     }
     
     // Update job status in store
-    const existingJob = jobStatusStore.get(payload.jobId)
+    const existingJob = getJobStatus(payload.jobId)
     
     if (existingJob) {
-      jobStatusStore.set(payload.jobId, {
-        ...existingJob,
+      updateJobStatus(payload.jobId, {
         status: payload.status,
         progress: payload.progress,
         downloadUrl: payload.outputUrl,
@@ -71,7 +58,7 @@ export async function POST(
       console.log(`[SceneRenderCallback] Updated job ${payload.jobId} status to ${payload.status}`)
     } else {
       // Job not in memory - create entry
-      jobStatusStore.set(payload.jobId, {
+      setJobStatus(payload.jobId, {
         status: payload.status,
         progress: payload.progress,
         downloadUrl: payload.outputUrl,
