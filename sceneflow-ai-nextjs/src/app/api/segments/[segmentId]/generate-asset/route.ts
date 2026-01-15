@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { 
-  generateVideoWithGeminiStudio, 
-  waitForGeminiVideoCompletion, 
-  downloadGeminiVideoFile 
-} from '@/lib/gemini/geminiStudioVideoClient'
+  generateProductionVideo, 
+  waitForProductionVideoCompletion, 
+  downloadProductionVideo,
+  getEndpointStatus,
+  type ProductionVideoResult
+} from '@/lib/gemini/productionVideoClient'
 import { uploadImageToBlob, uploadVideoToBlob } from '@/lib/storage/blob'
 import { extractAndStoreLastFrame } from '@/lib/videoUtils'
 import { getServerSession } from 'next-auth'
@@ -298,9 +300,11 @@ export async function POST(
         }
       }
       
-      // Trigger video generation using Gemini Studio API (same auth as image generation)
-      console.log('[Segment Asset Generation] Using Gemini Studio Video API for Veo 3.1')
-      const veoResult = await generateVideoWithGeminiStudio(enhancedPrompt, videoOptions)
+      // Trigger video generation using Production Video Client
+      // Automatically uses Vertex AI with multi-region failover, falls back to Gemini API
+      console.log('[Segment Asset Generation] Using Production Video Client for Veo 3.1')
+      console.log('[Segment Asset Generation] Endpoint status:', JSON.stringify(getEndpointStatus()))
+      const veoResult = await generateProductionVideo(enhancedPrompt, videoOptions)
 
       if (veoResult.status === 'FAILED') {
         // Check if this is a rate limit error - return 429 instead of 500
@@ -320,11 +324,13 @@ export async function POST(
       }
 
       // If video is queued/processing, wait for completion (up to 4 minutes)
-      let finalResult = veoResult
+      let finalResult: ProductionVideoResult = veoResult
       if (veoResult.status === 'QUEUED' || veoResult.status === 'PROCESSING') {
         console.log('[Segment Asset Generation] Waiting for video completion...')
-        finalResult = await waitForGeminiVideoCompletion(
+        console.log('[Segment Asset Generation] Provider:', veoResult.provider, 'Region:', veoResult.region)
+        finalResult = await waitForProductionVideoCompletion(
           veoResult.operationName!,
+          veoResult.provider, // Route to correct provider
           240, // 4 minutes max wait
           10   // Poll every 10 seconds
         )
@@ -338,7 +344,8 @@ export async function POST(
       let videoBuffer: Buffer | null = null
       if (finalResult.videoUrl.startsWith('file:')) {
         console.log('[Segment Asset Generation] Downloading video from Files API...')
-        videoBuffer = await downloadGeminiVideoFile(finalResult.videoUrl)
+        console.log('[Segment Asset Generation] Provider:', finalResult.provider)
+        videoBuffer = await downloadProductionVideo(finalResult.videoUrl, finalResult.provider)
         if (!videoBuffer) {
           throw new Error('Failed to download video file')
         }
