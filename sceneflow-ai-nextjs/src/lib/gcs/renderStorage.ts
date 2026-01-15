@@ -8,17 +8,32 @@
 import { Storage } from '@google-cloud/storage'
 
 // Environment configuration
-const GCS_BUCKET = process.env.SCENEFLOW_RENDER_BUCKET || 'sceneflow-render-jobs'
-const GCP_PROJECT_ID = process.env.GCP_PROJECT_ID || ''
+const GCS_BUCKET = process.env.GCS_RENDER_BUCKET || process.env.SCENEFLOW_RENDER_BUCKET || 'sceneflow-render-jobs'
 
-// Initialize GCS client
+// Initialize GCS client with service account credentials
 let storageClient: Storage | null = null
 
 function getStorageClient(): Storage {
   if (!storageClient) {
-    storageClient = new Storage({
-      projectId: GCP_PROJECT_ID || undefined,
-    })
+    const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
+    
+    if (!credentialsJson) {
+      throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON not configured for GCS access')
+    }
+    
+    try {
+      const credentials = JSON.parse(credentialsJson)
+      
+      storageClient = new Storage({
+        credentials,
+        projectId: credentials.project_id,
+      })
+      
+      console.log('[RenderStorage] GCS client initialized with service account')
+    } catch (error) {
+      console.error('[RenderStorage] Failed to parse credentials:', error)
+      throw new Error('Invalid GOOGLE_APPLICATION_CREDENTIALS_JSON format')
+    }
   }
   return storageClient
 }
