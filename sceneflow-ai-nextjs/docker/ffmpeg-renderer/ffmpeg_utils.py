@@ -314,8 +314,9 @@ def build_concat_ffmpeg_command(
     # Build filter complex
     filter_parts = []
     
-    # Scale and normalize all video inputs
+    # Scale and normalize all video inputs, and prepare audio from each segment
     video_concat_inputs = []
+    audio_concat_inputs = []
     for i, segment in enumerate(video_segments):
         # Scale to target resolution and set framerate
         filter_str = (
@@ -325,8 +326,10 @@ def build_concat_ffmpeg_command(
         )
         filter_parts.append(filter_str)
         video_concat_inputs.append(f"[v{i}]")
+        # Reference audio stream from each video segment
+        audio_concat_inputs.append(f"[{i}:a]")
     
-    # Concatenate all video segments
+    # Concatenate all video segments (video only)
     if len(video_concat_inputs) > 1:
         concat_filter = f"{''.join(video_concat_inputs)}concat=n={len(video_segments)}:v=1:a=0[outv]"
         filter_parts.append(concat_filter)
@@ -334,9 +337,18 @@ def build_concat_ffmpeg_command(
     else:
         video_output = "[v0]"
     
-    # Audio mixing (if we have audio clips)
+    # Concatenate all source audio from video segments
+    if len(audio_concat_inputs) > 1:
+        src_audio_concat = f"{''.join(audio_concat_inputs)}concat=n={len(video_segments)}:v=0:a=1[src_audio]"
+        filter_parts.append(src_audio_concat)
+        src_audio_output = "[src_audio]"
+    else:
+        src_audio_output = "[0:a]"
+    
+    # Audio mixing: combine source audio with overlay audio clips
+    all_audio_inputs = [src_audio_output]  # Start with concatenated source audio
+    
     if audio_clips:
-        audio_mix_inputs = []
         for i, clip in enumerate(audio_clips):
             input_idx = audio_inputs_start + i
             delay_ms = int(clip.get('startTime', 0) * 1000)
@@ -344,20 +356,18 @@ def build_concat_ffmpeg_command(
             volume = clip.get('volume', 1.0)
             
             # Apply delay and volume adjustment
-            audio_filter = f"[{input_idx}:a]adelay={delay_ms}|{delay_ms},volume={volume}[a{i}]"
+            audio_filter = f"[{input_idx}:a]adelay={delay_ms}|{delay_ms},volume={volume}[overlay_a{i}]"
             filter_parts.append(audio_filter)
-            audio_mix_inputs.append(f"[a{i}]")
-        
-        # Mix all audio tracks
-        if len(audio_mix_inputs) > 1:
-            mix_filter = f"{''.join(audio_mix_inputs)}amix=inputs={len(audio_clips)}:duration=longest:normalize=0[outa]"
-            filter_parts.append(mix_filter)
-            audio_output = "[outa]"
-        else:
-            audio_output = "[a0]"
+            all_audio_inputs.append(f"[overlay_a{i}]")
+    
+    # Mix all audio tracks (source + overlay)
+    if len(all_audio_inputs) > 1:
+        mix_filter = f"{''.join(all_audio_inputs)}amix=inputs={len(all_audio_inputs)}:duration=longest:normalize=0[outa]"
+        filter_parts.append(mix_filter)
+        audio_output = "[outa]"
     else:
-        # No external audio - try to use audio from first video
-        audio_output = None
+        # Only source audio, no overlay
+        audio_output = src_audio_output
     
     # Add filter complex to command
     if filter_parts:
