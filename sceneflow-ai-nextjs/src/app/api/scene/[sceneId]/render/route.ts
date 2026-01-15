@@ -181,6 +181,14 @@ export async function POST(
       duration: seg.endTime - seg.startTime,
     }))
     
+    // Get volume settings from audioConfig (with defaults)
+    const narrationVolume = body.audioConfig.narrationVolume ?? 0.8
+    const dialogueVolume = body.audioConfig.dialogueVolume ?? 0.9
+    const musicVolume = body.audioConfig.musicVolume ?? 0.5
+    const sfxVolume = body.audioConfig.sfxVolume ?? 0.6
+    const segmentAudioVolume = body.audioConfig.segmentAudioVolume ?? 0.7
+    const includeSegmentAudio = body.audioConfig.includeSegmentAudio ?? false
+    
     // Build audio clips from selected tracks
     const audioClips: SceneRenderAudioClip[] = []
     
@@ -191,7 +199,7 @@ export async function POST(
           url: track.url,
           startTime: track.startTime,
           duration: track.duration,
-          volume: 0.8,
+          volume: narrationVolume,
           type: 'narration',
         })
       }
@@ -204,7 +212,7 @@ export async function POST(
           url: track.url,
           startTime: track.startTime,
           duration: track.duration,
-          volume: 0.9,
+          volume: dialogueVolume,
           type: 'dialogue',
           character: track.character,
         })
@@ -218,7 +226,7 @@ export async function POST(
           url: track.url,
           startTime: track.startTime,
           duration: track.duration,
-          volume: 0.5,
+          volume: musicVolume,
           type: 'music',
         })
       }
@@ -231,7 +239,7 @@ export async function POST(
           url: track.url,
           startTime: track.startTime,
           duration: track.duration,
-          volume: 0.6,
+          volume: sfxVolume,
           type: 'sfx',
         })
       }
@@ -255,6 +263,8 @@ export async function POST(
       createdAt: new Date().toISOString(),
       renderMode: 'concatenate', // Use video concatenation, not Ken Burns
       language: body.audioConfig.language,
+      includeSegmentAudio,
+      segmentAudioVolume,
     }
     
     console.log(`[SceneRender] Job spec created:`, {

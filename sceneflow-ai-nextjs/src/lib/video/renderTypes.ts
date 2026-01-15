@@ -245,8 +245,16 @@ export interface SceneRenderAudioConfig {
   includeMusic: boolean
   /** Include sound effects */
   includeSfx: boolean
+  /** Include original audio from video segments */
+  includeSegmentAudio: boolean
   /** Language code for dialogue/narration */
   language: string
+  /** Volume levels (0.0 to 1.0) */
+  narrationVolume: number
+  dialogueVolume: number
+  musicVolume: number
+  sfxVolume: number
+  segmentAudioVolume: number
 }
 
 /**
@@ -298,6 +306,10 @@ export interface SceneRenderJobSpec {
   renderMode: 'concatenate' | 'ken_burns'
   /** Language code */
   language: string
+  /** Whether to include original audio from video segments */
+  includeSegmentAudio?: boolean
+  /** Volume for segment audio (0.0 to 1.0) */
+  segmentAudioVolume?: number
 }
 
 /**

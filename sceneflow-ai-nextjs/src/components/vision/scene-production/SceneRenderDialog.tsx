@@ -24,6 +24,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import { Slider } from '@/components/ui/slider'
 import {
   Select,
   SelectContent,
@@ -44,8 +45,11 @@ import {
   Download,
   AlertCircle,
   CheckCircle2,
+  Globe,
+  Video,
 } from 'lucide-react'
 import type { SceneSegment, SceneProductionData } from './types'
+import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 
 interface AudioTrackInfo {
   type: 'narration' | 'dialogue' | 'music' | 'sfx'
@@ -97,6 +101,17 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
   const [includeDialogue, setIncludeDialogue] = useState(true)
   const [includeMusic, setIncludeMusic] = useState(false)
   const [includeSfx, setIncludeSfx] = useState(false)
+  const [includeSegmentAudio, setIncludeSegmentAudio] = useState(false)
+  
+  // Volume controls (0-1)
+  const [narrationVolume, setNarrationVolume] = useState(0.8)
+  const [dialogueVolume, setDialogueVolume] = useState(0.9)
+  const [musicVolume, setMusicVolume] = useState(0.5)
+  const [sfxVolume, setSfxVolume] = useState(0.6)
+  const [segmentAudioVolume, setSegmentAudioVolume] = useState(0.7)
+  
+  // Language selection
+  const [selectedLanguage, setSelectedLanguage] = useState('en')
   
   // Output settings
   const [resolution, setResolution] = useState<'720p' | '1080p' | '4K'>('1080p')
@@ -267,7 +282,13 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
             includeDialogue,
             includeMusic,
             includeSfx,
-            language: 'en',
+            includeSegmentAudio,
+            language: selectedLanguage,
+            narrationVolume,
+            dialogueVolume,
+            musicVolume,
+            sfxVolume,
+            segmentAudioVolume,
           },
           segments: segmentData,
           audioTracks,
@@ -391,79 +412,192 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
 
           {/* Audio Track Selection */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium text-slate-300">Audio Tracks</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium text-slate-300">Audio Tracks</Label>
+              {/* Language Selector */}
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4 text-slate-400" />
+                <Select
+                  value={selectedLanguage}
+                  onValueChange={setSelectedLanguage}
+                  disabled={isRendering}
+                >
+                  <SelectTrigger className="w-[130px] h-8 bg-slate-800 border-slate-700 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SUPPORTED_LANGUAGES.map(lang => (
+                      <SelectItem key={lang.code} value={lang.code} className="text-xs">
+                        {lang.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             
             <div className="space-y-2">
-              {/* Narration */}
-              <div className="flex items-center justify-between bg-slate-800/50 rounded-lg p-3">
-                <div className="flex items-center gap-2">
-                  <Mic2 className="w-4 h-4 text-blue-400" />
-                  <span className="text-sm text-slate-300">Narration</span>
-                  {audioData?.narrationUrl && (
-                    <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-300 border-blue-500/30">
-                      {formatDuration(audioData.narrationDuration || 0)}
+              {/* Segment Audio */}
+              <div className="bg-slate-800/50 rounded-lg p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Video className="w-4 h-4 text-cyan-400" />
+                    <span className="text-sm text-slate-300">Segment Audio</span>
+                    <Badge variant="outline" className="text-xs bg-cyan-500/10 text-cyan-300 border-cyan-500/30">
+                      Original
                     </Badge>
-                  )}
+                  </div>
+                  <Switch
+                    checked={includeSegmentAudio}
+                    onCheckedChange={setIncludeSegmentAudio}
+                    disabled={isRendering}
+                  />
                 </div>
-                <Switch
-                  checked={includeNarration}
-                  onCheckedChange={setIncludeNarration}
-                  disabled={!audioData?.narrationUrl || isRendering}
-                />
+                {includeSegmentAudio && (
+                  <div className="flex items-center gap-3 pt-1">
+                    <Slider
+                      value={[segmentAudioVolume * 100]}
+                      onValueChange={([val]) => setSegmentAudioVolume(val / 100)}
+                      max={100}
+                      step={1}
+                      disabled={isRendering}
+                      className="flex-1"
+                    />
+                    <span className="text-xs text-slate-400 w-10 text-right">{Math.round(segmentAudioVolume * 100)}%</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Narration */}
+              <div className="bg-slate-800/50 rounded-lg p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Mic2 className="w-4 h-4 text-blue-400" />
+                    <span className="text-sm text-slate-300">Narration</span>
+                    {audioData?.narrationUrl && (
+                      <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-300 border-blue-500/30">
+                        {formatDuration(audioData.narrationDuration || 0)}
+                      </Badge>
+                    )}
+                  </div>
+                  <Switch
+                    checked={includeNarration}
+                    onCheckedChange={setIncludeNarration}
+                    disabled={!audioData?.narrationUrl || isRendering}
+                  />
+                </div>
+                {includeNarration && audioData?.narrationUrl && (
+                  <div className="flex items-center gap-3 pt-1">
+                    <Slider
+                      value={[narrationVolume * 100]}
+                      onValueChange={([val]) => setNarrationVolume(val / 100)}
+                      max={100}
+                      step={1}
+                      disabled={isRendering}
+                      className="flex-1"
+                    />
+                    <span className="text-xs text-slate-400 w-10 text-right">{Math.round(narrationVolume * 100)}%</span>
+                  </div>
+                )}
               </div>
 
               {/* Dialogue */}
-              <div className="flex items-center justify-between bg-slate-800/50 rounded-lg p-3">
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-green-400" />
-                  <span className="text-sm text-slate-300">Dialogue</span>
-                  {audioData?.dialogueEntries && audioData.dialogueEntries.length > 0 && (
-                    <Badge variant="outline" className="text-xs bg-green-500/10 text-green-300 border-green-500/30">
-                      {audioData.dialogueEntries.filter(d => d.audioUrl).length} clips
-                    </Badge>
-                  )}
+              <div className="bg-slate-800/50 rounded-lg p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-green-400" />
+                    <span className="text-sm text-slate-300">Dialogue</span>
+                    {audioData?.dialogueEntries && audioData.dialogueEntries.length > 0 && (
+                      <Badge variant="outline" className="text-xs bg-green-500/10 text-green-300 border-green-500/30">
+                        {audioData.dialogueEntries.filter(d => d.audioUrl).length} clips
+                      </Badge>
+                    )}
+                  </div>
+                  <Switch
+                    checked={includeDialogue}
+                    onCheckedChange={setIncludeDialogue}
+                    disabled={!audioData?.dialogueEntries?.some(d => d.audioUrl) || isRendering}
+                  />
                 </div>
-                <Switch
-                  checked={includeDialogue}
-                  onCheckedChange={setIncludeDialogue}
-                  disabled={!audioData?.dialogueEntries?.some(d => d.audioUrl) || isRendering}
-                />
+                {includeDialogue && audioData?.dialogueEntries?.some(d => d.audioUrl) && (
+                  <div className="flex items-center gap-3 pt-1">
+                    <Slider
+                      value={[dialogueVolume * 100]}
+                      onValueChange={([val]) => setDialogueVolume(val / 100)}
+                      max={100}
+                      step={1}
+                      disabled={isRendering}
+                      className="flex-1"
+                    />
+                    <span className="text-xs text-slate-400 w-10 text-right">{Math.round(dialogueVolume * 100)}%</span>
+                  </div>
+                )}
               </div>
 
               {/* Music */}
-              <div className="flex items-center justify-between bg-slate-800/50 rounded-lg p-3">
-                <div className="flex items-center gap-2">
-                  <Music className="w-4 h-4 text-purple-400" />
-                  <span className="text-sm text-slate-300">Background Music</span>
-                  {audioData?.musicUrl && (
-                    <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-300 border-purple-500/30">
-                      {formatDuration(audioData.musicDuration || 0)}
-                    </Badge>
-                  )}
+              <div className="bg-slate-800/50 rounded-lg p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Music className="w-4 h-4 text-purple-400" />
+                    <span className="text-sm text-slate-300">Background Music</span>
+                    {audioData?.musicUrl && (
+                      <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-300 border-purple-500/30">
+                        {formatDuration(audioData.musicDuration || 0)}
+                      </Badge>
+                    )}
+                  </div>
+                  <Switch
+                    checked={includeMusic}
+                    onCheckedChange={setIncludeMusic}
+                    disabled={!audioData?.musicUrl || isRendering}
+                  />
                 </div>
-                <Switch
-                  checked={includeMusic}
-                  onCheckedChange={setIncludeMusic}
-                  disabled={!audioData?.musicUrl || isRendering}
-                />
+                {includeMusic && audioData?.musicUrl && (
+                  <div className="flex items-center gap-3 pt-1">
+                    <Slider
+                      value={[musicVolume * 100]}
+                      onValueChange={([val]) => setMusicVolume(val / 100)}
+                      max={100}
+                      step={1}
+                      disabled={isRendering}
+                      className="flex-1"
+                    />
+                    <span className="text-xs text-slate-400 w-10 text-right">{Math.round(musicVolume * 100)}%</span>
+                  </div>
+                )}
               </div>
 
               {/* SFX */}
-              <div className="flex items-center justify-between bg-slate-800/50 rounded-lg p-3">
-                <div className="flex items-center gap-2">
-                  <Volume2 className="w-4 h-4 text-amber-400" />
-                  <span className="text-sm text-slate-300">Sound Effects</span>
-                  {audioData?.sfxUrl && (
-                    <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-300 border-amber-500/30">
-                      {formatDuration(audioData.sfxDuration || 0)}
-                    </Badge>
-                  )}
+              <div className="bg-slate-800/50 rounded-lg p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Volume2 className="w-4 h-4 text-amber-400" />
+                    <span className="text-sm text-slate-300">Sound Effects</span>
+                    {audioData?.sfxUrl && (
+                      <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-300 border-amber-500/30">
+                        {formatDuration(audioData.sfxDuration || 0)}
+                      </Badge>
+                    )}
+                  </div>
+                  <Switch
+                    checked={includeSfx}
+                    onCheckedChange={setIncludeSfx}
+                    disabled={!audioData?.sfxUrl || isRendering}
+                  />
                 </div>
-                <Switch
-                  checked={includeSfx}
-                  onCheckedChange={setIncludeSfx}
-                  disabled={!audioData?.sfxUrl || isRendering}
-                />
+                {includeSfx && audioData?.sfxUrl && (
+                  <div className="flex items-center gap-3 pt-1">
+                    <Slider
+                      value={[sfxVolume * 100]}
+                      onValueChange={([val]) => setSfxVolume(val / 100)}
+                      max={100}
+                      step={1}
+                      disabled={isRendering}
+                      className="flex-1"
+                    />
+                    <span className="text-xs text-slate-400 w-10 text-right">{Math.round(sfxVolume * 100)}%</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
