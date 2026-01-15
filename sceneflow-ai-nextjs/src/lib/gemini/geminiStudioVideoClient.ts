@@ -99,6 +99,59 @@ Original message: ${reason}
 }
 
 // ============================================================================
+// Rate Limit Configuration
+// ============================================================================
+
+/**
+ * Veo API Rate Limit Configuration
+ * The Veo 3.1 API has strict rate limits (~10 RPM for most tiers)
+ */
+const VEO_RATE_LIMIT_CONFIG = {
+  MAX_RETRIES: 3,
+  INITIAL_DELAY_MS: 10000, // 10 seconds initial wait
+  MAX_DELAY_MS: 60000, // Max 60 seconds
+  BACKOFF_MULTIPLIER: 2,
+}
+
+// Track global rate limit state to prevent hammering the API
+let veoRateLimitedUntil: number | null = null
+
+/**
+ * Check if we're currently rate limited
+ */
+function isRateLimited(): boolean {
+  if (!veoRateLimitedUntil) return false
+  if (Date.now() >= veoRateLimitedUntil) {
+    veoRateLimitedUntil = null
+    return false
+  }
+  return true
+}
+
+/**
+ * Set rate limit cooldown
+ */
+function setRateLimitCooldown(durationMs: number = 60000): void {
+  veoRateLimitedUntil = Date.now() + durationMs
+  console.log(`[Gemini Studio Video] Rate limited until ${new Date(veoRateLimitedUntil).toISOString()}`)
+}
+
+/**
+ * Get remaining rate limit cooldown time in milliseconds
+ */
+function getRateLimitRemainingMs(): number {
+  if (!veoRateLimitedUntil) return 0
+  return Math.max(0, veoRateLimitedUntil - Date.now())
+}
+
+/**
+ * Sleep utility for retry delays
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+// ============================================================================
 // Main Video Generation Function
 // ============================================================================
 
@@ -114,6 +167,18 @@ export async function generateVideoWithGeminiStudio(
   
   if (!apiKey) {
     throw new Error('Missing GEMINI_API_KEY or GOOGLE_GEMINI_API_KEY environment variable')
+  }
+  
+  // Check if we're still in rate limit cooldown
+  if (isRateLimited()) {
+    const remainingMs = getRateLimitRemainingMs()
+    const remainingSec = Math.ceil(remainingMs / 1000)
+    console.log(`[Gemini Studio Video] Still rate limited, ${remainingSec}s remaining`)
+    return {
+      status: 'FAILED',
+      error: `Rate limited. Please wait ${remainingSec} seconds before trying again.`,
+      estimatedWaitSeconds: remainingSec
+    }
   }
   
   const model = 'veo-3.1-generate-preview'
@@ -347,9 +412,12 @@ export async function generateVideoWithGeminiStudio(
       
       // Handle specific error codes
       if (response.status === 429) {
+        // Set 60-second cooldown to prevent hammering the API
+        setRateLimitCooldown(60000)
         return {
           status: 'FAILED',
-          error: 'Rate limit exceeded. Please wait a moment and try again.'
+          error: 'Rate limit exceeded. The Veo API is temporarily unavailable. Please wait 60 seconds and try again.',
+          estimatedWaitSeconds: 60
         }
       }
       if (response.status === 400) {

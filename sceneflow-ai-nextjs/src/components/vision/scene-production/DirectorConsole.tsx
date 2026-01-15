@@ -232,7 +232,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     processQueue({
       mode: 'selected',
       priority: 'sequence',
-      delayBetween: 500,
+      delayBetween: 6000,
       selectedIds: [segmentId],
     })
   }, [updateConfig, processQueue])
@@ -242,7 +242,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     processQueue({
       mode: 'approved_only',
       priority: 'sequence',
-      delayBetween: 500,
+      delayBetween: 6000,
     })
   }, [processQueue])
   
@@ -251,7 +251,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     processQueue({
       mode: 'all',
       priority: 'approved_first',
-      delayBetween: 500,
+      delayBetween: 6000,
     })
   }, [processQueue])
   
@@ -270,7 +270,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     processQueue({
       mode: 'selected',
       priority: 'sequence',
-      delayBetween: 500,
+      delayBetween: 6000,
       selectedIds: unlockedIds,
     })
     // Clear selection after starting render
@@ -1168,7 +1168,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
             processQueue({
               mode: 'selected',
               priority: 'sequence',
-              delayBetween: 500,
+              delayBetween: 6000,
               selectedIds: [segmentId],
             })
             setEditingVideoSegment(null)
