@@ -30,8 +30,9 @@ import * as ActionWeights from './ActionWeights'
 import * as PromptEnhancer from './PromptEnhancer'
 import * as FrameGenerator from './FrameGenerator'
 import { SegmentValidation } from './SegmentValidation'
+import * as KeyframePromptBuilder from './keyframe-prompt-builder'
 
-export { ActionWeights, PromptEnhancer, FrameGenerator, SegmentValidation }
+export { ActionWeights, PromptEnhancer, FrameGenerator, SegmentValidation, KeyframePromptBuilder }
 
 // Re-export key types
 export type { ActionType, ActionWeightConfig } from './ActionWeights'
@@ -50,6 +51,11 @@ export type {
   ValidationSeverity,
   ValidationConfig 
 } from './SegmentValidation'
+export type {
+  KeyframeContext,
+  FramePromptRequest,
+  EnhancedFramePrompt
+} from './keyframe-prompt-builder'
 
 // Convenience re-exports of commonly used functions
 export const inferActionType = ActionWeights.inferActionType
@@ -62,3 +68,6 @@ export const validateFTVReadiness = FrameGenerator.validateFTVReadiness
 export const validateSegment = SegmentValidation.validateSegment.bind(SegmentValidation)
 export const validateAllSegments = SegmentValidation.validateAllSegments.bind(SegmentValidation)
 export const detectNewEntities = SegmentValidation.detectNewEntities.bind(SegmentValidation)
+export const buildKeyframePrompt = KeyframePromptBuilder.buildKeyframePrompt
+export const validateDirectionAdherence = KeyframePromptBuilder.validateDirectionAdherence
+export const enrichPromptWithDirection = KeyframePromptBuilder.enrichPromptWithDirection

@@ -46,6 +46,7 @@ import { ReportType, StoryboardData, SceneDirectionData } from '@/lib/types/repo
 import { ExportDialog } from './ExportDialog'
 import { isDirectionStale, isImageStale } from '@/lib/utils/contentHash'
 import { getKenBurnsConfig, generateKenBurnsKeyframes, type KenBurnsIntensity } from '@/lib/animation/kenBurns'
+import { SceneDirectionProvider } from '@/contexts/SceneDirectionContext'
 import { GenerateAudioDialog } from './GenerateAudioDialog'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { WebAudioMixer, type SceneAudioConfig, type AudioSource } from '@/lib/audio/webAudioMixer'
@@ -3192,8 +3193,8 @@ function SceneCard({
       dialogueAction: true, // Always unlocked
       directorsChair: stepCompletion.dialogueAction, // Keep for internal logic
       segmentBuilder: stepCompletion.dialogueAction, // Keep for internal logic (auto-segmentation)
-      storyboardPreViz: stepCompletion.dialogueAction, // Frame unlocks after Script is complete
-      callAction: stepCompletion.storyboardPreViz,  // Call Action unlocks after Frame step
+      storyboardPreViz: stepCompletion.dialogueAction, // Frame logic now merged into Call Action
+      callAction: stepCompletion.dialogueAction,  // Call Action unlocks after Script (Frame merged in)
     }
   }, [stepCompletion])
   
@@ -3254,7 +3255,7 @@ function SceneCard({
   const workflowTabs: Array<{ key: WorkflowStep; label: string; icon: React.ReactNode }> = useMemo(() => [
     { key: 'dialogueAction', label: 'Script', icon: <FileText className="w-4 h-4" /> },
     // Direction (directorsChair) is hidden - auto-generated from Script, accessible via Frame dialog and Export
-    { key: 'storyboardPreViz', label: 'Frame', icon: <Camera className="w-4 h-4" /> },
+    // Frame (storyboardPreViz) merged into Call Action for unified production workflow
     { key: 'callAction', label: 'Call Action', icon: <Clapperboard className="w-4 h-4" /> }
   ], [])
   
@@ -5756,6 +5757,7 @@ function SceneCard({
                 )}
 
                 {activeWorkflowTab === 'callAction' && (
+                  <SceneDirectionProvider direction={scene.detailedDirection || scene.sceneDirection}>
                   <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
                     {/* Scene Image Requirement Warning */}
                     {sceneImageWarning.show && (
@@ -5772,8 +5774,8 @@ function SceneCard({
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            // Switch to Frame tab to generate scene image
-                            setActiveWorkflowTab?.('storyboardPreViz')
+                            // Open scene image generation dialog
+                            onGenerateImage?.(sceneIdx)
                           }}
                           className="px-3 py-1.5 text-xs font-medium bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 rounded transition-colors"
                         >
@@ -5782,7 +5784,71 @@ function SceneCard({
                       </div>
                     )}
                     
-                    {/* Director's Console: Show when segments exist for batch rendering workflow */}
+                    {/* ==================== KEYFRAME STATE MACHINE ==================== */}
+                    {/* Merged from Frame tab - Frame generation and anchoring */}
+                    {sceneProductionData?.isSegmented && sceneProductionData.segments?.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-xs text-slate-400">
+                          <Camera className="w-4 h-4" />
+                          <span className="font-medium">Keyframe State Machine</span>
+                        </div>
+                        <SegmentFrameTimeline
+                          segments={sceneProductionData.segments}
+                          sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
+                          sceneNumber={sceneNumber}
+                          sceneImageUrl={scene.imageUrl}
+                          selectedSegmentIndex={selectedSegmentIndex}
+                          onSelectSegment={setSelectedSegmentIndex}
+                          onGenerateFrames={(segmentId, frameType, options) => 
+                            onGenerateSegmentFrames?.(
+                              scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                              segmentId,
+                              frameType,
+                              options
+                            ) ?? Promise.resolve()
+                          }
+                          onGenerateAllFrames={() => 
+                            onGenerateAllSegmentFrames?.(scene.sceneId || scene.id || `scene-${sceneIdx}`) ?? Promise.resolve()
+                          }
+                          onGenerateVideo={(segmentId) => 
+                            onSegmentGenerate?.(
+                              scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                              segmentId,
+                              'I2V'
+                            )
+                          }
+                          onEditFrame={(segmentId, frameType, frameUrl) => {
+                            onOpenFrameEditModal?.(
+                              sceneIdx,
+                              scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                              segmentId,
+                              frameType,
+                              frameUrl
+                            )
+                          }}
+                          onUploadFrame={(segmentId, frameType, file) => {
+                            onUploadFrame?.(
+                              scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                              segmentId,
+                              frameType,
+                              file
+                            )
+                          }}
+                          isGenerating={!!generatingFrameForSegment}
+                          generatingSegmentId={generatingFrameForSegment}
+                          generatingPhase={generatingFramePhase}
+                          characters={characters?.map(c => ({
+                            name: c.name,
+                            appearance: c.appearance || c.description,
+                            referenceUrl: (c as any).referenceImage
+                          }))}
+                          sceneDirection={scene.detailedDirection || scene.sceneDirection}
+                        />
+                      </div>
+                    )}
+                    
+                    {/* ==================== DIRECTOR'S CONSOLE ==================== */}
+                    {/* Video generation workflow */}
                     {sceneProductionData?.segments && sceneProductionData.segments.length > 0 ? (
                       <DirectorConsole
                         sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
@@ -5829,6 +5895,7 @@ function SceneCard({
                       />
                     )}
                   </div>
+                  </SceneDirectionProvider>
                 )}
               </div>
             </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
@@ -30,8 +30,21 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronUp,
+  Camera,
+  Sun,
+  Users,
+  Wind,
+  Sparkles,
+  CheckCircle2,
 } from 'lucide-react'
 import type { SceneSegment, TransitionType } from './types'
+import type { DetailedSceneDirection } from '@/types/scene-direction'
+import { useSceneDirectionOptional } from '@/contexts/SceneDirectionContext'
+import { 
+  buildKeyframePrompt, 
+  validateDirectionAdherence,
+  type KeyframeContext 
+} from '@/lib/intelligence/keyframe-prompt-builder'
 
 // ============================================================================
 // Types
@@ -47,6 +60,16 @@ export interface FramePromptDialogProps {
   sceneImageUrl?: string | null
   onGenerate: (options: FrameGenerationOptions) => void
   isGenerating?: boolean
+  /** Scene direction for intelligent prompt building */
+  sceneDirection?: DetailedSceneDirection | null
+  /** Characters for identity context */
+  characters?: Array<{
+    name: string
+    appearance?: string
+    ethnicity?: string
+    age?: string
+    wardrobe?: string
+  }>
 }
 
 export interface FrameGenerationOptions {
@@ -111,7 +134,13 @@ export function FramePromptDialog({
   sceneImageUrl,
   onGenerate,
   isGenerating = false,
+  sceneDirection: propSceneDirection,
+  characters = [],
 }: FramePromptDialogProps) {
+  // Try to get scene direction from context if not passed as prop
+  const contextDirection = useSceneDirectionOptional()
+  const sceneDirection = propSceneDirection || contextDirection?.direction || null
+  
   // State
   const [customPrompt, setCustomPrompt] = useState('')
   const [selectedNegativePresets, setSelectedNegativePresets] = useState<Set<string>>(
@@ -120,6 +149,8 @@ export function FramePromptDialog({
   const [customNegativePrompt, setCustomNegativePrompt] = useState('')
   const [usePreviousEndFrame, setUsePreviousEndFrame] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [showDirectionPanel, setShowDirectionPanel] = useState(false)
+  const [useIntelligentPrompt, setUseIntelligentPrompt] = useState(true)
 
   // Initialize prompt from segment when dialog opens
   useEffect(() => {
@@ -135,6 +166,46 @@ export function FramePromptDialog({
       }
     }
   }, [segment, open, previousEndFrameUrl, frameType])
+
+  // Build intelligent prompt using keyframe prompt builder
+  const intelligentPrompt = useMemo(() => {
+    if (!segment || !useIntelligentPrompt) return null
+    
+    const keyframeContext: KeyframeContext = {
+      segmentIndex,
+      transitionType: (segment.transitionType as 'CONTINUE' | 'CUT') || 'CUT',
+      previousEndFrameUrl: previousEndFrameUrl || undefined,
+      previousShotType: segment.shotType,
+      isPanTransition: segment.cameraMovement?.toLowerCase().includes('pan') || false,
+    }
+    
+    try {
+      return buildKeyframePrompt({
+        actionPrompt: segment.actionPrompt || segment.generatedPrompt || '',
+        framePosition: frameType === 'both' ? 'start' : frameType,
+        duration: segment.endTime - segment.startTime,
+        sceneDirection,
+        keyframeContext,
+        characters: characters.length > 0 ? characters : undefined,
+        previousFrameDescription: segment.references?.startFrameDescription || undefined,
+      })
+    } catch (err) {
+      console.error('[FramePromptDialog] Error building intelligent prompt:', err)
+      return null
+    }
+  }, [segment, segmentIndex, frameType, previousEndFrameUrl, sceneDirection, characters, useIntelligentPrompt])
+
+  // Validate current prompt against scene direction
+  const directionAdherence = useMemo(() => {
+    return validateDirectionAdherence(customPrompt, sceneDirection)
+  }, [customPrompt, sceneDirection])
+
+  // Apply intelligent prompt
+  const applyIntelligentPrompt = useCallback(() => {
+    if (intelligentPrompt) {
+      setCustomPrompt(intelligentPrompt.prompt)
+    }
+  }, [intelligentPrompt])
 
   // Build negative prompt from selected presets + custom
   const buildNegativePrompt = useCallback((): string => {
@@ -259,6 +330,150 @@ export function FramePromptDialog({
                   <div className="mt-3 px-6 py-2 bg-blue-500/10 rounded text-xs text-blue-300 flex items-center gap-2">
                     <AlertCircle className="w-3.5 h-3.5" />
                     This segment uses CONTINUE transition – recommended for visual continuity
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Scene Direction Reference Panel */}
+            {sceneDirection && (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setShowDirectionPanel(!showDirectionPanel)}
+                  className="flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white transition-colors w-full"
+                >
+                  {showDirectionPanel ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  <Camera className="w-4 h-4 text-amber-400" />
+                  Scene Direction Reference
+                  {directionAdherence.score < 0.75 && (
+                    <Badge variant="secondary" className="ml-auto text-[10px] bg-amber-500/20 text-amber-300">
+                      {directionAdherence.missingElements.length} missing
+                    </Badge>
+                  )}
+                  {directionAdherence.score >= 0.75 && (
+                    <CheckCircle2 className="w-3.5 h-3.5 ml-auto text-emerald-400" />
+                  )}
+                </button>
+                
+                {showDirectionPanel && (
+                  <div className="grid grid-cols-2 gap-3 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                    {/* Camera */}
+                    {sceneDirection.camera && (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                          <Camera className="w-3 h-3" />
+                          Camera
+                        </div>
+                        <p className="text-xs text-slate-300">
+                          {sceneDirection.camera.shots?.[0] || 'Medium Shot'}
+                          {sceneDirection.camera.movement && sceneDirection.camera.movement !== 'Static' && 
+                            ` • ${sceneDirection.camera.movement}`}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Lighting */}
+                    {sceneDirection.lighting && (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                          <Sun className="w-3 h-3" />
+                          Lighting
+                        </div>
+                        <p className="text-xs text-slate-300">
+                          {sceneDirection.lighting.overallMood || 'Natural'}
+                          {sceneDirection.lighting.timeOfDay && ` • ${sceneDirection.lighting.timeOfDay}`}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Emotional Beat */}
+                    {sceneDirection.talent?.emotionalBeat && (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                          <Users className="w-3 h-3" />
+                          Emotion
+                        </div>
+                        <p className="text-xs text-slate-300">
+                          {sceneDirection.talent.emotionalBeat}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Atmosphere */}
+                    {sceneDirection.scene?.atmosphere && (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                          <Wind className="w-3 h-3" />
+                          Atmosphere
+                        </div>
+                        <p className="text-xs text-slate-300">
+                          {sceneDirection.scene.atmosphere}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Direction Adherence Warning */}
+                {directionAdherence.score < 0.75 && directionAdherence.suggestions.length > 0 && (
+                  <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                    <p className="text-xs font-medium text-amber-300 mb-2">
+                      Missing scene direction elements:
+                    </p>
+                    <ul className="space-y-1">
+                      {directionAdherence.suggestions.slice(0, 3).map((suggestion, i) => (
+                        <li key={i} className="text-xs text-amber-200/80 flex items-center gap-2">
+                          <span className="w-1 h-1 rounded-full bg-amber-400" />
+                          {suggestion}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Intelligent Prompt Builder */}
+            {intelligentPrompt && (
+              <div className="p-4 rounded-lg border border-cyan-500/30 bg-cyan-500/5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-cyan-400" />
+                    <span className="text-sm font-medium text-cyan-300">AI-Enhanced Prompt</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={applyIntelligentPrompt}
+                    className="h-7 text-xs text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/20"
+                  >
+                    Apply Suggestion
+                  </Button>
+                </div>
+                <p className="text-xs text-slate-400 mb-2">
+                  Prompt enhanced with scene direction (camera, lighting, emotion):
+                </p>
+                <p className="text-xs text-slate-300 bg-slate-900/50 p-2 rounded font-mono leading-relaxed max-h-24 overflow-auto">
+                  {intelligentPrompt.prompt}
+                </p>
+                {intelligentPrompt.injectedDirection.emotion && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {intelligentPrompt.injectedDirection.camera && (
+                      <Badge variant="secondary" className="text-[10px] bg-slate-700">
+                        📷 {intelligentPrompt.injectedDirection.camera}
+                      </Badge>
+                    )}
+                    {intelligentPrompt.injectedDirection.lighting && (
+                      <Badge variant="secondary" className="text-[10px] bg-slate-700">
+                        💡 {intelligentPrompt.injectedDirection.lighting}
+                      </Badge>
+                    )}
+                    {intelligentPrompt.injectedDirection.emotion && (
+                      <Badge variant="secondary" className="text-[10px] bg-slate-700">
+                        ❤️ {intelligentPrompt.injectedDirection.emotion}
+                      </Badge>
+                    )}
                   </div>
                 )}
               </div>

@@ -22,6 +22,7 @@ import type {
   SceneSegment, 
   AnchorStatus 
 } from './types'
+import type { DetailedSceneDirection } from '@/types/scene-direction'
 
 // ============================================================================
 // Types
@@ -52,6 +53,8 @@ export interface SegmentFrameTimelineProps {
     appearance?: string
     referenceUrl?: string
   }>
+  /** Scene direction for intelligent prompt building */
+  sceneDirection?: DetailedSceneDirection | null
 }
 
 // ============================================================================
@@ -109,7 +112,8 @@ export function SegmentFrameTimeline({
   isGenerating,
   generatingSegmentId,
   generatingPhase,
-  characters = []
+  characters = [],
+  sceneDirection
 }: SegmentFrameTimelineProps) {
   const [isExpanded, setIsExpanded] = useState(true)
   
@@ -166,32 +170,34 @@ export function SegmentFrameTimeline({
 
   return (
     <div className="space-y-4">
-      {/* Header with Stats */}
-      <div>
+      {/* Compact Header with Status Bar */}
+      <div className="p-3 bg-slate-800/60 rounded-lg border border-slate-700/50">
         <div className="flex items-center justify-between">
           <button 
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-2 text-left hover:text-white transition-colors"
+            className="flex items-center gap-3 text-left hover:text-white transition-colors"
           >
             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            <h3 className="text-sm font-medium text-slate-200">
-              Keyframe State Machine
-            </h3>
-            <Badge variant="secondary" className="text-[10px] bg-slate-700 text-slate-300">
-              {stats.fullyAnchored}/{stats.total} ready
-            </Badge>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-medium text-slate-200">
+                Keyframe State Machine
+              </h3>
+              <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+                {stats.fullyAnchored}/{stats.total} ready
+              </Badge>
+            </div>
           </button>
           
-          <div className="flex items-center gap-2">
-            {/* Progress Indicator */}
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-              <div className="w-20 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+          <div className="flex items-center gap-3">
+            {/* Progress Bar - Compact */}
+            <div className="flex items-center gap-2">
+              <div className="w-24 h-2 bg-slate-700 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-green-500 transition-all duration-300"
+                  className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 transition-all duration-300"
                   style={{ width: `${stats.progressPercent}%` }}
                 />
               </div>
-              <span>{Math.round(stats.progressPercent)}%</span>
+              <span className="text-xs text-slate-400 w-10">{Math.round(stats.progressPercent)}%</span>
             </div>
             
             {/* Batch Generate Button */}
@@ -201,86 +207,109 @@ export function SegmentFrameTimeline({
                 variant="secondary"
                 onClick={onGenerateAllFrames}
                 disabled={isGenerating}
-                className="h-7 text-xs"
+                className="h-7 text-xs bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/30"
               >
-                <Wand2 className="w-3 h-3 mr-1" />
+                <Wand2 className="w-3 h-3 mr-1.5" />
                 Generate All Frames
               </Button>
             ) : stats.fullyAnchored === stats.total && stats.total > 0 ? (
-              <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                <CheckCircle2 className="w-3 h-3 mr-1" />
-                All Segments Ready
+              <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 h-7 px-3">
+                <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+                All Ready
               </Badge>
             ) : null}
           </div>
         </div>
         
-        {/* Stats Summary */}
-        <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
-          <span className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
+        {/* Stats Row - Inline */}
+        <div className="flex items-center gap-4 mt-2 text-xs">
+          <span className="flex items-center gap-1.5 text-slate-400">
+            <Clock className="w-3.5 h-3.5" />
             {stats.totalDuration.toFixed(1)}s total
           </span>
-          <span>•</span>
-          <span className="flex items-center gap-1 text-green-400">
-            <CheckCircle2 className="w-3 h-3" />
+          <span className="text-slate-600">•</span>
+          <span className="flex items-center gap-1.5 text-emerald-400">
+            <CheckCircle2 className="w-3.5 h-3.5" />
             {stats.fullyAnchored} anchored
           </span>
           {stats.startLocked > 0 && (
             <>
-              <span>•</span>
-              <span className="flex items-center gap-1 text-amber-400">
-                <ImageIcon className="w-3 h-3" />
+              <span className="text-slate-600">•</span>
+              <span className="flex items-center gap-1.5 text-amber-400">
+                <ImageIcon className="w-3.5 h-3.5" />
                 {stats.startLocked} partial
               </span>
             </>
           )}
           {stats.pending > 0 && (
             <>
-              <span>•</span>
-              <span className="flex items-center gap-1 text-slate-400">
-                <AlertCircle className="w-3 h-3" />
+              <span className="text-slate-600">•</span>
+              <span className="flex items-center gap-1.5 text-slate-500">
+                <AlertCircle className="w-3.5 h-3.5" />
                 {stats.pending} pending
               </span>
             </>
           )}
         </div>
-        
-        {isExpanded && (
-          <div className="mt-4 space-y-3">
-            {segments.map((segment, index) => (
-              <SegmentPairCard
-                key={segment.segmentId}
-                segment={segment}
-                segmentIndex={index}
-                isSelected={selectedSegmentIndex === index}
-                onSelect={() => onSelectSegment(index)}
-                onGenerateStartFrame={() => openFramePromptDialog(segment, index, 'start')}
-                onGenerateEndFrame={() => openFramePromptDialog(segment, index, 'end')}
-                onGenerateBothFrames={() => openFramePromptDialog(segment, index, 'both')}
-                onGenerateVideo={() => onGenerateVideo(segment.segmentId)}
-                onEditFrame={onEditFrame ? (frameType, frameUrl) => onEditFrame(segment.segmentId, frameType, frameUrl) : undefined}
-                onUploadFrame={onUploadFrame ? (frameType, file) => onUploadFrame(segment.segmentId, frameType, file) : undefined}
-                isGenerating={isGenerating && generatingSegmentId === segment.segmentId}
-                generatingPhase={generatingSegmentId === segment.segmentId ? generatingPhase : undefined}
-                previousSegmentEndFrame={getPreviousEndFrame(index)}
-                sceneImageUrl={sceneImageUrl}
-              />
-            ))}
-          </div>
-        )}
       </div>
+        
+      {/* Segment Cards with Shot Grouping */}
+      {isExpanded && (
+        <div className="space-y-2">
+          {segments.map((segment, index) => {
+            const isContinuationGroup = segment.transitionType === 'CONTINUE'
+            const nextIsContinuation = segments[index + 1]?.transitionType === 'CONTINUE'
+            const isFirstInGroup = !isContinuationGroup
+            const isLastInGroup = !nextIsContinuation
+            
+            return (
+              <div key={segment.segmentId}>
+                {/* Shot Change Divider */}
+                {segment.transitionType === 'CUT' && index > 0 && (
+                  <div className="flex items-center gap-2 py-2 px-3 my-1">
+                    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
+                    <span className="text-[10px] uppercase tracking-wider text-amber-500/60 font-medium">
+                      Shot Change
+                    </span>
+                    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
+                  </div>
+                )}
+                
+                {/* Segment Card with Continuation Border */}
+                <div className={`${isContinuationGroup ? 'border-l-2 border-blue-500/30 pl-2 ml-1' : ''}`}>
+                  <SegmentPairCard
+                    segment={segment}
+                    segmentIndex={index}
+                    isSelected={selectedSegmentIndex === index}
+                    onSelect={() => onSelectSegment(index)}
+                    onGenerateStartFrame={() => openFramePromptDialog(segment, index, 'start')}
+                    onGenerateEndFrame={() => openFramePromptDialog(segment, index, 'end')}
+                    onGenerateBothFrames={() => openFramePromptDialog(segment, index, 'both')}
+                    onGenerateVideo={() => onGenerateVideo(segment.segmentId)}
+                    onEditFrame={onEditFrame ? (frameType, frameUrl) => onEditFrame(segment.segmentId, frameType, frameUrl) : undefined}
+                    onUploadFrame={onUploadFrame ? (frameType, file) => onUploadFrame(segment.segmentId, frameType, file) : undefined}
+                    isGenerating={isGenerating && generatingSegmentId === segment.segmentId}
+                    generatingPhase={generatingSegmentId === segment.segmentId ? generatingPhase : undefined}
+                    previousSegmentEndFrame={getPreviousEndFrame(index)}
+                    sceneImageUrl={sceneImageUrl}
+                  />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
       
-      {/* FTV Mode Explanation */}
+      {/* FTV Mode Ready Banner */}
       {stats.fullyAnchored > 0 && (
-        <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+        <div className="p-3 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-lg">
           <div className="flex items-start gap-2">
-            <Video className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+            <Video className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
             <div className="text-xs">
-              <p className="text-green-300 font-medium">FTV Mode Ready</p>
-              <p className="text-green-400/70 mt-0.5">
-                {stats.fullyAnchored} segment{stats.fullyAnchored > 1 ? 's are' : ' is'} fully anchored with Start and End frames. 
-                Veo 3.1 will use both frames to generate constrained video with minimal character drift.
+              <p className="text-emerald-300 font-medium">FTV Mode Ready</p>
+              <p className="text-emerald-400/70 mt-0.5">
+                {stats.fullyAnchored} segment{stats.fullyAnchored > 1 ? 's are' : ' is'} anchored. 
+                Frame-to-Video generation will use both frames to constrain video output.
               </p>
             </div>
           </div>
@@ -298,6 +327,11 @@ export function SegmentFrameTimeline({
         sceneImageUrl={sceneImageUrl}
         onGenerate={handleDialogGenerate}
         isGenerating={isGenerating}
+        sceneDirection={sceneDirection}
+        characters={characters?.map(c => ({
+          name: c.name,
+          appearance: c.appearance,
+        }))}
       />
     </div>
   )

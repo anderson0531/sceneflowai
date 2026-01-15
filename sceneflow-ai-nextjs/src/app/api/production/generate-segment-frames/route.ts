@@ -10,9 +10,12 @@ import {
   getActionWeights,
   buildEndFramePrompt,
   enhancePrompt,
-  determineTransitionType
+  determineTransitionType,
+  buildKeyframePrompt,
+  type KeyframeContext
 } from '@/lib/intelligence'
 import type { TransitionType, ActionType, AnchorStatus } from '@/components/vision/scene-production/types'
+import type { DetailedSceneDirection } from '@/types/scene-direction'
 
 export const maxDuration = 120 // 2 minutes for potentially generating both frames
 export const runtime = 'nodejs'
@@ -65,6 +68,13 @@ interface FrameGenerationRequest {
   customPrompt?: string          // User-edited prompt to use instead of actionPrompt
   negativePrompt?: string        // Elements to avoid in generation
   usePreviousEndFrame?: boolean  // Copy previous end frame as start frame (skip generation)
+  
+  // NEW: Scene direction for intelligent prompt building
+  sceneDirection?: DetailedSceneDirection | null
+  
+  // Shot metadata for keyframe rules
+  previousShotType?: string      // For shot consistency on CONTINUE
+  isPanTransition?: boolean      // Whether this is a pan/dolly transition
 }
 
 interface FrameGenerationResponse {
@@ -123,7 +133,11 @@ export async function POST(req: NextRequest) {
       // NEW: User customization options
       customPrompt,
       negativePrompt,
-      usePreviousEndFrame = false
+      usePreviousEndFrame = false,
+      // NEW: Scene direction for intelligent prompts
+      sceneDirection,
+      previousShotType,
+      isPanTransition = false
     } = body
     
     // Use custom prompt if provided, otherwise fall back to action prompt
@@ -199,12 +213,23 @@ export async function POST(req: NextRequest) {
           console.log('[Generate Frames] Using scene image for new shot')
         }
         
-        // Build enhanced start frame prompt using custom prompt if provided
-        startFramePrompt = enhancePrompt(
-          `Opening frame: ${effectivePrompt}`,
-          {
-            actionType,
+        // Build enhanced start frame prompt using intelligent keyframe builder if scene direction available
+        if (sceneDirection && !customPrompt) {
+          // Use intelligent keyframe prompt builder
+          const keyframeContext: KeyframeContext = {
+            segmentIndex,
+            transitionType,
+            previousEndFrameUrl: previousEndFrameUrl || undefined,
+            previousShotType,
+            isPanTransition,
+          }
+          
+          const enhancedFrame = buildKeyframePrompt({
+            actionPrompt: effectivePrompt,
             framePosition: 'start',
+            duration,
+            sceneDirection,
+            keyframeContext,
             characters: characters.map(c => ({
               name: c.name,
               appearance: c.appearance,
@@ -212,15 +237,35 @@ export async function POST(req: NextRequest) {
               age: c.age,
               wardrobe: c.wardrobe
             })),
-            sceneContext: {
-              location: sceneContext.location || sceneContext.heading,
-              timeOfDay: sceneContext.timeOfDay,
-              atmosphere: sceneContext.atmosphere,
-              lighting: sceneContext.lighting
-            },
-            actionDescription: effectivePrompt
-          }
-        )
+          })
+          
+          startFramePrompt = enhancedFrame.prompt
+          console.log('[Generate Frames] Using intelligent keyframe prompt with scene direction')
+          console.log('[Generate Frames] Injected direction:', enhancedFrame.injectedDirection)
+        } else {
+          // Fallback to original enhancePrompt
+          startFramePrompt = enhancePrompt(
+            `Opening frame: ${effectivePrompt}`,
+            {
+              actionType,
+              framePosition: 'start',
+              characters: characters.map(c => ({
+                name: c.name,
+                appearance: c.appearance,
+                ethnicity: c.ethnicity,
+                age: c.age,
+                wardrobe: c.wardrobe
+              })),
+              sceneContext: {
+                location: sceneContext.location || sceneContext.heading,
+                timeOfDay: sceneContext.timeOfDay,
+                atmosphere: sceneContext.atmosphere,
+                lighting: sceneContext.lighting
+              },
+              actionDescription: effectivePrompt
+            }
+          )
+        }
         
         // Append negative prompt to main prompt (Gemini doesn't have native negative prompt support)
         if (negativePrompt) {
@@ -334,12 +379,22 @@ export async function POST(req: NextRequest) {
       }
       
       // Build enhanced end frame prompt using intelligence library
-      endFramePrompt = buildEndFramePrompt(
-        `Opening frame showing: ${actionPrompt}`,
-        actionPrompt,
-        duration,
-        {
-          actionType,
+      // Use intelligent keyframe builder if scene direction is available
+      if (sceneDirection) {
+        const keyframeContext: KeyframeContext = {
+          segmentIndex,
+          transitionType,
+          previousEndFrameUrl: previousEndFrameUrl || undefined,
+          previousShotType,
+          isPanTransition,
+        }
+        
+        const enhancedFrame = buildKeyframePrompt({
+          actionPrompt: effectivePrompt,
+          framePosition: 'end',
+          duration,
+          sceneDirection,
+          keyframeContext,
           characters: characters.map(c => ({
             name: c.name,
             appearance: c.appearance,
@@ -347,14 +402,36 @@ export async function POST(req: NextRequest) {
             age: c.age,
             wardrobe: c.wardrobe
           })),
-          sceneContext: {
-            location: sceneContext.location || sceneContext.heading,
-            timeOfDay: sceneContext.timeOfDay,
-            atmosphere: sceneContext.atmosphere,
-            lighting: sceneContext.lighting
+          previousFrameDescription: `Opening frame showing: ${actionPrompt}`,
+        })
+        
+        endFramePrompt = enhancedFrame.prompt
+        console.log('[Generate Frames] Using intelligent keyframe prompt for end frame')
+        console.log('[Generate Frames] Injected direction:', enhancedFrame.injectedDirection)
+      } else {
+        // Fallback to original buildEndFramePrompt
+        endFramePrompt = buildEndFramePrompt(
+          `Opening frame showing: ${actionPrompt}`,
+          actionPrompt,
+          duration,
+          {
+            actionType,
+            characters: characters.map(c => ({
+              name: c.name,
+              appearance: c.appearance,
+              ethnicity: c.ethnicity,
+              age: c.age,
+              wardrobe: c.wardrobe
+            })),
+            sceneContext: {
+              location: sceneContext.location || sceneContext.heading,
+              timeOfDay: sceneContext.timeOfDay,
+              atmosphere: sceneContext.atmosphere,
+              lighting: sceneContext.lighting
+            }
           }
-        }
-      )
+        )
+      }
       
       console.log('[Generate Frames] End frame prompt:', endFramePrompt.substring(0, 150))
       
