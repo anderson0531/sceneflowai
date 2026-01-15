@@ -108,6 +108,8 @@ interface DirectorConsoleProps {
   onSegmentUpload?: (segmentId: string, file: File) => void
   /** Persist lock status to database */
   onLockSegment?: (segmentId: string, locked: boolean) => void
+  /** Persist rendered scene URL to database */
+  onRenderedSceneUrlChange?: (url: string | null) => void
 }
 
 // Method badge colors and labels
@@ -139,6 +141,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   onGenerate,
   onSegmentUpload,
   onLockSegment,
+  onRenderedSceneUrlChange,
 }) => {
   const segments = productionData?.segments || []
   
@@ -194,8 +197,10 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   // Scene render dialog state
   const [isRenderDialogOpen, setIsRenderDialogOpen] = useState(false)
   
-  // Rendered scene MP4 URL (from Cloud Run render)
-  const [renderedSceneUrl, setRenderedSceneUrl] = useState<string | null>(null)
+  // Rendered scene MP4 URL (from Cloud Run render) - initialize from productionData
+  const [renderedSceneUrl, setRenderedSceneUrl] = useState<string | null>(
+    productionData?.renderedSceneUrl || null
+  )
   
   // Scene video player for rendered MP4
   const [isRenderedScenePlayerOpen, setIsRenderedScenePlayerOpen] = useState(false)
@@ -1249,6 +1254,10 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
         onRenderComplete={(downloadUrl) => {
           console.log('[DirectorConsole] Scene render complete:', downloadUrl)
           setRenderedSceneUrl(downloadUrl)
+          // Persist to database
+          if (onRenderedSceneUrlChange) {
+            onRenderedSceneUrlChange(downloadUrl)
+          }
         }}
       />
       

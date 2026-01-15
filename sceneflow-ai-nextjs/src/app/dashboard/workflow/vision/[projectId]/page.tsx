@@ -1956,6 +1956,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [applySceneProductionUpdate]
   )
 
+  // Handle rendered scene URL changes (persists to DB for Play Scene button)
+  const handleRenderedSceneUrlChange = useCallback(
+    (sceneId: string, url: string | null) => {
+      console.log('[handleRenderedSceneUrlChange] Persisting rendered URL:', { sceneId, url: url?.substring(0, 50) })
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        return { 
+          ...current, 
+          renderedSceneUrl: url,
+          renderedAt: url ? new Date().toISOString() : null,
+        }
+      })
+    },
+    [applySceneProductionUpdate]
+  )
+
   // Phase 7: Handle segment reordering (drag-and-drop)
   const handleReorderSegments = useCallback(
     (sceneId: string, oldIndex: number, newIndex: number) => {
@@ -7799,6 +7815,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSegmentGenerate={handleSegmentGenerate}
                 onSegmentUpload={handleSegmentUpload}
                 onLockSegment={handleLockSegment}
+                onRenderedSceneUrlChange={handleRenderedSceneUrlChange}
                 onAddSegment={handleAddSegment}
                 onAddFullSegment={handleAddFullSegment}
                 onDeleteSegment={handleDeleteSegment}

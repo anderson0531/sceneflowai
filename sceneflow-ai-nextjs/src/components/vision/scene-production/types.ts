@@ -378,6 +378,10 @@ export interface SceneProductionData {
   targetSegmentDuration: number
   segments: SceneSegment[]
   lastGeneratedAt?: string | null
+  /** URL of the rendered scene MP4 (combined segments + audio) */
+  renderedSceneUrl?: string | null
+  /** Timestamp when the scene was last rendered */
+  renderedAt?: string | null
 }
 
 export interface SceneProductionReferences {
