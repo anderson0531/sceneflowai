@@ -377,3 +377,215 @@ export function getCloudRunConfig() {
     enabled: isCloudRunJobsEnabled(),
   }
 }
+
+// ============================================================================
+// Scene-Level Render Functions (for Director's Console "Render Scene" feature)
+// ============================================================================
+
+import type {
+  SceneRenderJobSpec,
+  SceneRenderVideoSegment,
+  SceneRenderAudioClip,
+  CreateSceneRenderJobRequest,
+} from './renderTypes'
+
+/**
+ * Create and trigger a scene render job (video concatenation with audio mixing)
+ * 
+ * This differs from project render (Ken Burns on images) by:
+ * - Using existing MP4 segment videos
+ * - Concatenating videos instead of applying Ken Burns
+ * - Mixing multiple audio track types
+ */
+export async function createSceneRenderJob(
+  request: CreateSceneRenderJobRequest
+): Promise<CreateRenderJobResponse> {
+  const jobId = uuidv4()
+  
+  console.log(`[CloudRunJobs] Creating scene render job: ${jobId}`)
+  console.log(`[CloudRunJobs] Scene: ${request.sceneId}`)
+  console.log(`[CloudRunJobs] Resolution: ${request.resolution}`)
+  console.log(`[CloudRunJobs] Segments: ${request.segments.length}`)
+  
+  try {
+    // Build video segments from request
+    const videoSegments: SceneRenderVideoSegment[] = request.segments.map((seg) => ({
+      segmentId: seg.segmentId,
+      sequenceIndex: seg.sequenceIndex,
+      videoUrl: seg.videoUrl,
+      startTime: seg.startTime,
+      duration: seg.endTime - seg.startTime,
+    }))
+    
+    if (videoSegments.length === 0) {
+      return {
+        success: false,
+        jobId,
+        status: 'FAILED',
+        message: 'No video segments provided',
+      }
+    }
+    
+    // Build audio clips from audio tracks
+    const audioClips: SceneRenderAudioClip[] = []
+    
+    if (request.audioConfig.includeNarration && request.audioTracks.narration) {
+      for (const track of request.audioTracks.narration) {
+        audioClips.push({
+          url: track.url,
+          startTime: track.startTime,
+          duration: track.duration,
+          volume: 0.8,
+          type: 'narration',
+        })
+      }
+    }
+    
+    if (request.audioConfig.includeDialogue && request.audioTracks.dialogue) {
+      for (const track of request.audioTracks.dialogue) {
+        audioClips.push({
+          url: track.url,
+          startTime: track.startTime,
+          duration: track.duration,
+          volume: 0.9,
+          type: 'dialogue',
+          character: track.character,
+        })
+      }
+    }
+    
+    if (request.audioConfig.includeMusic && request.audioTracks.music) {
+      for (const track of request.audioTracks.music) {
+        audioClips.push({
+          url: track.url,
+          startTime: track.startTime,
+          duration: track.duration,
+          volume: 0.5,
+          type: 'music',
+        })
+      }
+    }
+    
+    if (request.audioConfig.includeSfx && request.audioTracks.sfx) {
+      for (const track of request.audioTracks.sfx) {
+        audioClips.push({
+          url: track.url,
+          startTime: track.startTime,
+          duration: track.duration,
+          volume: 0.6,
+          type: 'sfx',
+        })
+      }
+    }
+    
+    // Calculate estimated duration
+    const estimatedDuration = videoSegments.reduce((sum, seg) => sum + seg.duration, 0)
+    
+    // Build scene render job spec
+    const jobSpec: SceneRenderJobSpec = {
+      jobId,
+      projectId: request.projectId,
+      sceneId: request.sceneId,
+      sceneNumber: request.sceneNumber,
+      resolution: request.resolution,
+      fps: RENDER_DEFAULTS.fps,
+      videoSegments,
+      audioClips,
+      outputPath: getOutputPath(jobId),
+      callbackUrl: `${CALLBACK_BASE_URL}/api/scene/${request.sceneId}/render/callback`,
+      createdAt: new Date().toISOString(),
+      renderMode: 'concatenate',
+      language: request.audioConfig.language,
+    }
+    
+    console.log(`[CloudRunJobs] Scene job spec created:`, {
+      jobId,
+      segments: videoSegments.length,
+      audioClips: audioClips.length,
+      estimatedDuration,
+    })
+    
+    // Upload job spec to GCS
+    const jobSpecPath = await uploadJobSpec(jobSpec as never)
+    console.log(`[CloudRunJobs] Scene job spec uploaded: ${jobSpecPath}`)
+    
+    // Trigger Cloud Run Job with scene render mode
+    await triggerSceneRenderJob(jobId, jobSpecPath)
+    
+    return {
+      success: true,
+      jobId,
+      status: 'QUEUED',
+      message: 'Scene render job queued successfully',
+      estimatedDuration,
+    }
+    
+  } catch (error) {
+    console.error(`[CloudRunJobs] Failed to create scene render job:`, error)
+    return {
+      success: false,
+      jobId,
+      status: 'FAILED',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    }
+  }
+}
+
+/**
+ * Trigger a Cloud Run Job for scene rendering (video concatenation mode)
+ */
+async function triggerSceneRenderJob(jobId: string, jobSpecPath: string): Promise<void> {
+  // Check if we're in development/preview mode or missing config
+  if (!GCP_PROJECT_ID || !CLOUD_RUN_JOB_NAME) {
+    console.log(`[CloudRunJobs] Skipping Cloud Run trigger (missing configuration)`)
+    console.log(`[CloudRunJobs] Would trigger scene render job with:`)
+    console.log(`  - JOB_ID: ${jobId}`)
+    console.log(`  - JOB_SPEC_PATH: ${jobSpecPath}`)
+    console.log(`  - RENDER_MODE: concatenate`)
+    return
+  }
+  
+  const jobName = `projects/${GCP_PROJECT_ID}/locations/${GCP_REGION}/jobs/${CLOUD_RUN_JOB_NAME}`
+  const apiUrl = `https://run.googleapis.com/v2/${jobName}:run`
+  
+  console.log(`[CloudRunJobs] Triggering scene render Cloud Run Job`)
+  console.log(`[CloudRunJobs] Job: ${jobName}`)
+  
+  // Get access token
+  const accessToken = await getAccessToken()
+  
+  // Build the request body with environment overrides
+  // Include RENDER_MODE=concatenate to tell the FFmpeg renderer to concatenate videos
+  const requestBody = {
+    overrides: {
+      containerOverrides: [
+        {
+          env: [
+            { name: 'JOB_ID', value: jobId },
+            { name: 'JOB_SPEC_PATH', value: jobSpecPath },
+            { name: 'GCS_BUCKET', value: getRenderBucket() },
+            { name: 'RENDER_MODE', value: 'concatenate' },
+          ],
+        },
+      ],
+    },
+  }
+  
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(requestBody),
+  })
+  
+  if (!response.ok) {
+    const errorText = await response.text()
+    console.error(`[CloudRunJobs] Failed to trigger scene render job:`, errorText)
+    throw new Error(`Cloud Run API error: ${response.status} - ${errorText}`)
+  }
+  
+  const result = await response.json()
+  console.log(`[CloudRunJobs] Scene render job triggered:`, result.name || result.metadata?.name)
+}

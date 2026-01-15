@@ -212,3 +212,116 @@ export const RENDER_DEFAULTS = {
   },
   defaultAudioVolume: 1.0,
 } as const
+
+// ============================================================================
+// Scene-Level Render Types (for Director's Console "Render Scene" feature)
+// ============================================================================
+
+/**
+ * A video segment for scene rendering (uses existing MP4s, not images)
+ */
+export interface SceneRenderVideoSegment {
+  /** Unique segment ID */
+  segmentId: string
+  /** Sequence index in the scene (0, 1, 2...) */
+  sequenceIndex: number
+  /** URL to the MP4 video file (GCS or HTTPS) */
+  videoUrl: string
+  /** Start time in final output (seconds) */
+  startTime: number
+  /** Duration in seconds */
+  duration: number
+}
+
+/**
+ * Audio track selection for scene render
+ */
+export interface SceneRenderAudioConfig {
+  /** Include narration audio */
+  includeNarration: boolean
+  /** Include dialogue audio */
+  includeDialogue: boolean
+  /** Include background music */
+  includeMusic: boolean
+  /** Include sound effects */
+  includeSfx: boolean
+  /** Language code for dialogue/narration */
+  language: string
+}
+
+/**
+ * Audio clip for scene render with track type
+ */
+export interface SceneRenderAudioClip {
+  /** URL to the audio file (GCS or HTTPS) */
+  url: string
+  /** Start time in final output (seconds) */
+  startTime: number
+  /** Duration in seconds */
+  duration: number
+  /** Volume multiplier (0.0 to 1.0) */
+  volume: number
+  /** Audio track type */
+  type: 'narration' | 'dialogue' | 'music' | 'sfx'
+  /** Character name (for dialogue) */
+  character?: string
+}
+
+/**
+ * Complete scene render job specification
+ * Uploaded to GCS and processed by Cloud Run FFmpeg renderer
+ */
+export interface SceneRenderJobSpec {
+  /** Unique job ID (UUID) */
+  jobId: string
+  /** SceneFlow project ID */
+  projectId: string
+  /** Scene ID being rendered */
+  sceneId: string
+  /** Scene number (1-based) */
+  sceneNumber: number
+  /** Output resolution */
+  resolution: '720p' | '1080p' | '4K'
+  /** Frames per second */
+  fps: number
+  /** Video segments (existing MP4s to concatenate) */
+  videoSegments: SceneRenderVideoSegment[]
+  /** Audio clips with timing */
+  audioClips: SceneRenderAudioClip[]
+  /** GCS path for output video (gs://bucket/path) */
+  outputPath: string
+  /** Optional callback URL for status updates */
+  callbackUrl?: string
+  /** Job creation timestamp (ISO 8601) */
+  createdAt: string
+  /** Render mode: 'concatenate' for video concat, 'ken_burns' for image-based */
+  renderMode: 'concatenate' | 'ken_burns'
+  /** Language code */
+  language: string
+}
+
+/**
+ * Request body for creating a scene render job
+ */
+export interface CreateSceneRenderJobRequest {
+  projectId: string
+  sceneId: string
+  sceneNumber: number
+  resolution: '720p' | '1080p' | '4K'
+  audioConfig: SceneRenderAudioConfig
+  /** Video segments from Director's Console */
+  segments: Array<{
+    segmentId: string
+    sequenceIndex: number
+    videoUrl: string
+    startTime: number
+    endTime: number
+  }>
+  /** Audio tracks with timing */
+  audioTracks: {
+    narration?: Array<{ url: string; startTime: number; duration: number }>
+    dialogue?: Array<{ url: string; startTime: number; duration: number; character?: string }>
+    music?: Array<{ url: string; startTime: number; duration: number }>
+    sfx?: Array<{ url: string; startTime: number; duration: number }>
+  }
+}

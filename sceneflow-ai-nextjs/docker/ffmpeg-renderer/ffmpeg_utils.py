@@ -264,3 +264,129 @@ def run_ffmpeg(cmd: List[str], timeout: int = 3600) -> bool:
     except Exception as e:
         print(f"[FFmpeg] Exception: {e}")
         return False
+
+
+# ============================================================================
+# Video Concatenation Functions (for scene-level renders)
+# ============================================================================
+
+def build_concat_ffmpeg_command(
+    video_segments: List[Dict[str, Any]],
+    audio_clips: List[Dict[str, Any]],
+    output_path: str,
+    resolution: str = '1080p',
+    fps: int = 24,
+    temp_dir: str = '/tmp',
+) -> List[str]:
+    """
+    Build FFmpeg command for concatenating video segments with audio mixing.
+    
+    This is used for scene-level renders where we already have MP4 segments
+    and need to concatenate them with audio tracks.
+    
+    Args:
+        video_segments: List of video segments with paths and timing
+        audio_clips: List of audio clips with paths and timing
+        output_path: Path for output MP4 file
+        resolution: Output resolution ('720p', '1080p', '4K')
+        fps: Output frames per second
+        temp_dir: Directory containing downloaded assets
+    
+    Returns:
+        FFmpeg command as list of arguments
+    """
+    res = RESOLUTIONS.get(resolution, RESOLUTIONS['1080p'])
+    width, height = res['width'], res['height']
+    
+    cmd = ['ffmpeg', '-y']  # -y = overwrite output
+    
+    # Add input files (videos)
+    for i, segment in enumerate(video_segments):
+        video_path = os.path.join(temp_dir, 'assets', segment['localFile'])
+        cmd.extend(['-i', video_path])
+    
+    # Add audio input files
+    audio_inputs_start = len(video_segments)
+    for i, clip in enumerate(audio_clips):
+        audio_path = os.path.join(temp_dir, 'assets', clip['localFile'])
+        cmd.extend(['-i', audio_path])
+    
+    # Build filter complex
+    filter_parts = []
+    
+    # Scale and normalize all video inputs
+    video_concat_inputs = []
+    for i, segment in enumerate(video_segments):
+        # Scale to target resolution and set framerate
+        filter_str = (
+            f"[{i}:v]scale={width}:{height}:force_original_aspect_ratio=decrease,"
+            f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:black,"
+            f"fps={fps},setsar=1[v{i}]"
+        )
+        filter_parts.append(filter_str)
+        video_concat_inputs.append(f"[v{i}]")
+    
+    # Concatenate all video segments
+    if len(video_concat_inputs) > 1:
+        concat_filter = f"{''.join(video_concat_inputs)}concat=n={len(video_segments)}:v=1:a=0[outv]"
+        filter_parts.append(concat_filter)
+        video_output = "[outv]"
+    else:
+        video_output = "[v0]"
+    
+    # Audio mixing (if we have audio clips)
+    if audio_clips:
+        audio_mix_inputs = []
+        for i, clip in enumerate(audio_clips):
+            input_idx = audio_inputs_start + i
+            delay_ms = int(clip.get('startTime', 0) * 1000)
+            duration = clip.get('duration', 10)
+            volume = clip.get('volume', 1.0)
+            
+            # Apply delay and volume adjustment
+            audio_filter = f"[{input_idx}:a]adelay={delay_ms}|{delay_ms},volume={volume}[a{i}]"
+            filter_parts.append(audio_filter)
+            audio_mix_inputs.append(f"[a{i}]")
+        
+        # Mix all audio tracks
+        if len(audio_mix_inputs) > 1:
+            mix_filter = f"{''.join(audio_mix_inputs)}amix=inputs={len(audio_clips)}:duration=longest:normalize=0[outa]"
+            filter_parts.append(mix_filter)
+            audio_output = "[outa]"
+        else:
+            audio_output = "[a0]"
+    else:
+        # No external audio - try to use audio from first video
+        audio_output = None
+    
+    # Add filter complex to command
+    if filter_parts:
+        cmd.extend(['-filter_complex', ';'.join(filter_parts)])
+    
+    # Map outputs
+    cmd.extend(['-map', video_output])
+    if audio_output:
+        cmd.extend(['-map', audio_output])
+    
+    # Output settings
+    cmd.extend([
+        '-c:v', 'libx264',
+        '-preset', 'medium',
+        '-crf', '23',
+        '-pix_fmt', 'yuv420p',
+    ])
+    
+    if audio_output:
+        cmd.extend([
+            '-c:a', 'aac',
+            '-b:a', '192k',
+        ])
+    
+    # Set output duration based on total video length
+    total_duration = sum(seg.get('duration', 5) for seg in video_segments)
+    cmd.extend(['-t', str(total_duration)])
+    
+    # Output file
+    cmd.append(output_path)
+    
+    return cmd

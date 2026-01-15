@@ -42,6 +42,7 @@ import {
   Unlock,
   PlayCircle,
   Timer,
+  Download,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -55,6 +56,7 @@ import type {
 import { DirectorDialog } from './DirectorDialog'
 import { VideoEditingDialog } from './VideoEditingDialog'
 import { SceneVideoPlayer } from './SceneVideoPlayer'
+import { SceneRenderDialog } from './SceneRenderDialog'
 import { useVideoQueue } from '@/hooks/useVideoQueue'
 import type { SceneAudioData } from './GuidePromptEditor'
 
@@ -83,6 +85,7 @@ interface AudioTrackTimingState {
 interface DirectorConsoleProps {
   sceneId: string
   sceneNumber: number
+  projectId: string
   productionData: SceneProductionData | null
   sceneImageUrl?: string
   scene?: SceneAudioData
@@ -129,6 +132,7 @@ const statusBadgeConfig = {
 export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   sceneId,
   sceneNumber,
+  projectId,
   productionData,
   sceneImageUrl,
   scene,
@@ -186,6 +190,9 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   
   // Scene video player modal state
   const [isScenePlayerOpen, setIsScenePlayerOpen] = useState(false)
+  
+  // Scene render dialog state
+  const [isRenderDialogOpen, setIsRenderDialogOpen] = useState(false)
   
   // Segment-specific playback: start player at this segment index
   const [playFromSegmentIndex, setPlayFromSegmentIndex] = useState<number>(0)
@@ -401,15 +408,26 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                 Generate ({selectedUnlockedCount})
               </Button>
               {statusCounts.rendered > 0 && (
-                <Button 
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setIsScenePlayerOpen(true)}
-                  className="bg-emerald-600/20 border-emerald-500/50 text-emerald-300 hover:bg-emerald-600/30"
-                >
-                  <Film className="w-4 h-4 mr-2" />
-                  Play Scene ({statusCounts.rendered})
-                </Button>
+                <>
+                  <Button 
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setIsScenePlayerOpen(true)}
+                    className="bg-emerald-600/20 border-emerald-500/50 text-emerald-300 hover:bg-emerald-600/30"
+                  >
+                    <Film className="w-4 h-4 mr-2" />
+                    Play Scene ({statusCounts.rendered})
+                  </Button>
+                  <Button 
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setIsRenderDialogOpen(true)}
+                    className="bg-purple-600/20 border-purple-500/50 text-purple-300 hover:bg-purple-600/30"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Render Scene
+                  </Button>
+                </>
               )}
             </>
           )}
@@ -1188,6 +1206,33 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           isGenerating={isRendering && currentSegmentId === editingVideoSegment.segmentId}
         />
       )}
+      
+      {/* Scene Render Dialog - for exporting scene as MP4 */}
+      <SceneRenderDialog
+        open={isRenderDialogOpen}
+        onOpenChange={setIsRenderDialogOpen}
+        sceneId={sceneId}
+        sceneNumber={sceneNumber}
+        projectId={projectId}
+        segments={segments}
+        productionData={productionData}
+        audioData={{
+          narrationUrl: scene?.narrationAudioUrl || scene?.narrationAudio?.en?.url,
+          narrationDuration: 30, // TODO: Calculate from audio file
+          dialogueEntries: scene?.dialogueAudio?.en?.map(d => ({
+            audioUrl: d.audioUrl,
+            duration: 3, // TODO: Calculate from audio file
+            character: d.character,
+          })),
+          musicUrl: scene?.musicAudio,
+          musicDuration: 30, // TODO: Calculate from audio file
+          sfxUrl: scene?.sfx?.find(s => s.audioUrl)?.audioUrl,
+          sfxDuration: 5, // TODO: Calculate from audio file
+        }}
+        onRenderComplete={(downloadUrl) => {
+          console.log('[DirectorConsole] Scene render complete:', downloadUrl)
+        }}
+      />
     </div>
     </TooltipProvider>
   )

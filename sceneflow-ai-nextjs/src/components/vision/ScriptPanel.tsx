@@ -5853,6 +5853,7 @@ function SceneCard({
                       <DirectorConsole
                         sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
                         sceneNumber={sceneNumber}
+                        projectId={projectId}
                         productionData={sceneProductionData}
                         sceneImageUrl={scene.imageUrl}
                         scene={scene}
