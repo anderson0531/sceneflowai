@@ -303,6 +303,19 @@ export async function POST(
       const veoResult = await generateVideoWithGeminiStudio(enhancedPrompt, videoOptions)
 
       if (veoResult.status === 'FAILED') {
+        // Check if this is a rate limit error - return 429 instead of 500
+        if (veoResult.error?.toLowerCase().includes('rate limit')) {
+          const waitSeconds = (veoResult as any).estimatedWaitSeconds || 60
+          console.log('[Segment Asset Generation] Rate limited, returning 429 with retry after:', waitSeconds, 'seconds')
+          return NextResponse.json(
+            { 
+              error: veoResult.error,
+              retryAfter: waitSeconds,
+              isRateLimited: true
+            },
+            { status: 429 }
+          )
+        }
         throw new Error(veoResult.error || 'Video generation failed')
       }
 
@@ -448,6 +461,15 @@ export async function POST(
     
     // Parse and simplify Vertex AI error messages
     let errorMessage = error.message || 'Failed to generate asset'
+    let statusCode = 500
+    let retryAfter: number | undefined = undefined
+    
+    // Check for rate limit errors first - return 429 not 500
+    if (errorMessage.toLowerCase().includes('rate limit')) {
+      statusCode = 429
+      retryAfter = 60
+      errorMessage = 'Rate limit exceeded. Please wait 60 seconds and try again.'
+    }
     
     // Extract cleaner error from Vertex AI JSON responses
     if (errorMessage.includes('Vertex AI error')) {
@@ -479,9 +501,11 @@ export async function POST(
     return NextResponse.json(
       {
         error: errorMessage,
+        retryAfter,
+        isRateLimited: statusCode === 429,
         details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined,
       },
-      { status: 500 }
+      { status: statusCode }
     )
   }
 }

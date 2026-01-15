@@ -146,6 +146,8 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     currentSegmentId,
     completedCount,
     failedCount,
+    isRateLimitPaused,
+    rateLimitCountdown,
     updateConfig,
     processQueue,
     cancelRendering,
@@ -365,8 +367,17 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           {isRendering ? (
             <>
               <div className="flex items-center gap-2 text-sm text-slate-400">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Rendering {completedCount + 1} of {queue.length}...</span>
+                {isRateLimitPaused ? (
+                  <>
+                    <span className="text-amber-400 font-medium">⏸ Rate Limited</span>
+                    <span className="text-amber-300">Resuming in {rateLimitCountdown}s...</span>
+                  </>
+                ) : (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Rendering {completedCount + 1} of {queue.length}...</span>
+                  </>
+                )}
               </div>
               <Button 
                 variant="outline" 
@@ -410,12 +421,13 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
         <div className="space-y-2">
           <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-indigo-500 transition-all duration-300" 
+              className={`h-full transition-all duration-300 ${isRateLimitPaused ? 'bg-amber-500 animate-pulse' : 'bg-indigo-500'}`}
               style={{ width: `${progress}%` }}
             />
           </div>
           <div className="flex justify-between text-xs text-slate-500">
             <span>{completedCount} completed</span>
+            {isRateLimitPaused && <span className="text-amber-400">⏸ Paused ({rateLimitCountdown}s)</span>}
             {failedCount > 0 && <span className="text-red-400">{failedCount} failed</span>}
             <span>{progress}%</span>
           </div>

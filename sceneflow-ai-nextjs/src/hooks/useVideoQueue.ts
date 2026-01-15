@@ -39,6 +39,10 @@ export interface VideoQueueState {
   completedCount: number
   /** Count of failed segments */
   failedCount: number
+  /** Whether queue is paused due to rate limiting */
+  isRateLimitPaused: boolean
+  /** Seconds remaining until rate limit pause ends */
+  rateLimitCountdown: number
 }
 
 export interface VideoQueueActions {
@@ -95,6 +99,8 @@ export function useVideoQueue(
   const [completedCount, setCompletedCount] = useState(0)
   const [failedCount, setFailedCount] = useState(0)
   const [cancelRequested, setCancelRequested] = useState(false)
+  const [isRateLimitPaused, setIsRateLimitPaused] = useState(false)
+  const [rateLimitCountdown, setRateLimitCountdown] = useState(0)
   
   // Build queue from segments and configs
   const queue = useMemo<DirectorQueueItem[]>(() => {
@@ -296,10 +302,49 @@ export function useVideoQueue(
         
         completed++
         setCompletedCount(completed)
-      } catch (error) {
+      } catch (error: any) {
         console.error(`[VideoQueue] Failed to render segment ${item.segmentId}:`, error)
-        failed++
-        setFailedCount(failed)
+        
+        // Check if this is a rate limit error
+        const errorMessage = error?.message || error?.toString() || ''
+        const isRateLimit = errorMessage.toLowerCase().includes('rate limit') || 
+                           errorMessage.includes('429') ||
+                           errorMessage.includes('isRateLimited')
+        
+        if (isRateLimit) {
+          // Extract retry time or default to 60 seconds
+          const retryMatch = errorMessage.match(/(\d+)\s*seconds?/i)
+          const waitSeconds = retryMatch ? parseInt(retryMatch[1], 10) : 60
+          
+          console.log(`[VideoQueue] Rate limited! Pausing for ${waitSeconds} seconds...`)
+          toast.warning(`Rate limit hit. Pausing for ${waitSeconds} seconds...`, {
+            duration: 5000
+          })
+          
+          // Set paused state with countdown
+          setIsRateLimitPaused(true)
+          setRateLimitCountdown(waitSeconds)
+          
+          // Countdown timer
+          for (let sec = waitSeconds; sec > 0; sec--) {
+            if (cancelRequested) break
+            setRateLimitCountdown(sec)
+            await new Promise(r => setTimeout(r, 1000))
+          }
+          
+          setIsRateLimitPaused(false)
+          setRateLimitCountdown(0)
+          
+          if (!cancelRequested) {
+            toast.info('Rate limit cleared. Resuming queue...')
+            // Retry this segment (decrement i to redo this iteration)
+            i--
+            continue
+          }
+        } else {
+          failed++
+          setFailedCount(failed)
+        }
       }
       
       // Rate limiting delay between API calls
@@ -340,6 +385,8 @@ export function useVideoQueue(
     currentSegmentId,
     completedCount,
     failedCount,
+    isRateLimitPaused,
+    rateLimitCountdown,
     // Actions
     updateConfig,
     approveSegment,
