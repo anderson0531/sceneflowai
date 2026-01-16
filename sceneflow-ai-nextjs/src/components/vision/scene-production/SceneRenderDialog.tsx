@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/Button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Slider } from '@/components/ui/slider'
-import { Input } from '@/components/ui/input'
+import { Input } from '@/components/ui/Input'
 import {
   Select,
   SelectContent,
