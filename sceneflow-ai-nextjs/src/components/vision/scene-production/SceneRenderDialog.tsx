@@ -1,13 +1,9 @@
 /**
- * SceneRenderDialog - Configure and trigger scene video export
+ * SceneRenderDialog - "Scene Composer" Modal
  * 
- * Allows users to select:
- * - Audio tracks to include (narration, dialogue, music, SFX)
- * - Output resolution (720p, 1080p, 4K)
- * - Preview estimated duration
- * 
- * Triggers Cloud Run FFmpeg render job to concatenate
- * segment MP4s with audio tracks.
+ * Refactored design with two sections:
+ * - Section A: Video Sequence - Per-segment audio control
+ * - Section B: Audio Overlays - Track cards with timing offsets
  */
 
 'use client'
@@ -25,6 +21,7 @@ import { Button } from '@/components/ui/Button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Slider } from '@/components/ui/slider'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -47,17 +44,16 @@ import {
   CheckCircle2,
   Globe,
   Video,
-  ChevronDown,
-  ChevronUp,
+  VolumeX,
 } from 'lucide-react'
 import type { SceneSegment, SceneProductionData } from './types'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 
-interface AudioTrackInfo {
-  type: 'narration' | 'dialogue' | 'music' | 'sfx'
-  count: number
-  totalDuration: number
+// Audio track configuration with timing
+interface AudioTrackConfig {
   enabled: boolean
+  volume: number      // 0 to 1
+  startOffset: number // Start time in seconds
 }
 
 interface SceneRenderDialogProps {
@@ -68,7 +64,6 @@ interface SceneRenderDialogProps {
   projectId: string
   segments: SceneSegment[]
   productionData: SceneProductionData | null
-  /** Audio URLs from scene data */
   audioData?: {
     narrationUrl?: string
     narrationDuration?: number
@@ -98,40 +93,17 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
   audioData,
   onRenderComplete,
 }) => {
-  // Audio track selection state
-  const [includeNarration, setIncludeNarration] = useState(true)
-  const [includeDialogue, setIncludeDialogue] = useState(true)
-  const [includeMusic, setIncludeMusic] = useState(false)
-  const [includeSfx, setIncludeSfx] = useState(false)
-  const [includeSegmentAudio, setIncludeSegmentAudio] = useState(false)
+  // Per-segment audio settings: { [segmentId]: { includeAudio: boolean, volume: number } }
+  const [segmentAudioSettings, setSegmentAudioSettings] = useState<Record<string, { includeAudio: boolean; volume: number }>>({})
   
-  // Volume controls (0-1)
-  const [narrationVolume, setNarrationVolume] = useState(0.8)
-  const [dialogueVolume, setDialogueVolume] = useState(0.9)
-  const [musicVolume, setMusicVolume] = useState(0.5)
-  const [sfxVolume, setSfxVolume] = useState(0.6)
-  const [segmentAudioVolume, setSegmentAudioVolume] = useState(0.7)
-  
-  // Per-segment audio settings: { [segmentId]: { audioSource: 'original' | 'voiceover' | 'none', volume: number } }
-  type SegmentAudioSource = 'original' | 'voiceover' | 'none'
-  const [segmentAudioSettings, setSegmentAudioSettings] = useState<Record<string, { audioSource: SegmentAudioSource; volume: number }>>({})
-  
-  // Initialize per-segment audio settings when segments change
-  useEffect(() => {
-    const newSettings: Record<string, { audioSource: SegmentAudioSource; volume: number }> = {}
-    segments.forEach(s => {
-      if (s.activeAssetUrl && s.status === 'COMPLETE') {
-        newSettings[s.segmentId] = segmentAudioSettings[s.segmentId] || { audioSource: 'original', volume: 1.0 }
-      }
-    })
-    setSegmentAudioSettings(newSettings)
-  }, [segments]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Audio overlay track configurations with start offsets
+  const [narrationConfig, setNarrationConfig] = useState<AudioTrackConfig>({ enabled: true, volume: 0.8, startOffset: 0 })
+  const [dialogueConfig, setDialogueConfig] = useState<AudioTrackConfig>({ enabled: true, volume: 0.9, startOffset: 0 })
+  const [musicConfig, setMusicConfig] = useState<AudioTrackConfig>({ enabled: false, volume: 0.3, startOffset: 0 })
+  const [sfxConfig, setSfxConfig] = useState<AudioTrackConfig>({ enabled: false, volume: 0.6, startOffset: 0 })
   
   // Language selection
   const [selectedLanguage, setSelectedLanguage] = useState('en')
-  
-  // Per-segment audio expanded state
-  const [showPerSegmentAudio, setShowPerSegmentAudio] = useState(false)
   
   // Output settings
   const [resolution, setResolution] = useState<'720p' | '1080p' | '4K'>('1080p')
@@ -153,62 +125,16 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
     return renderedSegments.reduce((sum, s) => sum + (s.endTime - s.startTime), 0)
   }, [renderedSegments])
 
-  // Audio track summary
-  const audioTracks = useMemo((): AudioTrackInfo[] => {
-    const tracks: AudioTrackInfo[] = []
-    
-    if (audioData?.narrationUrl) {
-      tracks.push({
-        type: 'narration',
-        count: 1,
-        totalDuration: audioData.narrationDuration || 0,
-        enabled: includeNarration,
-      })
-    }
-    
-    if (audioData?.dialogueEntries?.length) {
-      const dialogueCount = audioData.dialogueEntries.filter(d => d.audioUrl).length
-      const dialogueDuration = audioData.dialogueEntries.reduce((sum, d) => sum + (d.duration || 0), 0)
-      if (dialogueCount > 0) {
-        tracks.push({
-          type: 'dialogue',
-          count: dialogueCount,
-          totalDuration: dialogueDuration,
-          enabled: includeDialogue,
-        })
+  // Initialize per-segment audio settings when segments change
+  useEffect(() => {
+    const newSettings: Record<string, { includeAudio: boolean; volume: number }> = {}
+    segments.forEach(s => {
+      if (s.activeAssetUrl && s.status === 'COMPLETE') {
+        newSettings[s.segmentId] = segmentAudioSettings[s.segmentId] || { includeAudio: true, volume: 1.0 }
       }
-    }
-    
-    if (audioData?.musicUrl) {
-      tracks.push({
-        type: 'music',
-        count: 1,
-        totalDuration: audioData.musicDuration || 0,
-        enabled: includeMusic,
-      })
-    }
-    
-    if (audioData?.sfxUrl) {
-      tracks.push({
-        type: 'sfx',
-        count: 1,
-        totalDuration: audioData.sfxDuration || 0,
-        enabled: includeSfx,
-      })
-    }
-    
-    return tracks
-  }, [audioData, includeNarration, includeDialogue, includeMusic, includeSfx])
-
-  // Get audio track icon
-  const getTrackIcon = (type: 'narration' | 'dialogue' | 'music' | 'sfx') => {
-    switch (type) {
-      case 'narration': return <Mic2 className="w-4 h-4" />
-      case 'dialogue': return <MessageSquare className="w-4 h-4" />
-      case 'music': return <Music className="w-4 h-4" />
-      case 'sfx': return <Volume2 className="w-4 h-4" />
-    }
-  }
+    })
+    setSegmentAudioSettings(newSettings)
+  }, [segments]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Format duration as mm:ss
   const formatDuration = (seconds: number) => {
@@ -216,6 +142,20 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
     const secs = Math.floor(seconds % 60)
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
+
+  // Mute/Unmute all segments
+  const handleMuteAll = (mute: boolean) => {
+    const newSettings = { ...segmentAudioSettings }
+    Object.keys(newSettings).forEach(key => {
+      newSettings[key] = { ...newSettings[key], includeAudio: !mute }
+    })
+    setSegmentAudioSettings(newSettings)
+  }
+
+  // Check if all segments are muted
+  const allSegmentsMuted = useMemo(() => {
+    return Object.values(segmentAudioSettings).every(s => !s.includeAudio)
+  }, [segmentAudioSettings])
 
   // Handle render button click
   const handleRender = async () => {
@@ -230,78 +170,45 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
     setDownloadUrl(null)
 
     try {
-      // Calculate cumulative start times for voiceover slicing
-      let cumulativeTime = 0
-      const segmentTimings: { start: number; duration: number }[] = []
-      renderedSegments.forEach(s => {
-        const duration = s.endTime - s.startTime
-        segmentTimings.push({ start: cumulativeTime, duration })
-        cumulativeTime += duration
-      })
-      
       // Build request payload with per-segment audio settings
       const segmentData = renderedSegments.map((s, idx) => {
-        const audioSettings = segmentAudioSettings[s.segmentId] || { audioSource: 'original' as SegmentAudioSource, volume: 1.0 }
-        const timing = segmentTimings[idx]
-        
-        // Determine voiceover URL for this segment
-        // Priority: dialogue clip for this segment > narration slice
-        let voiceoverUrl: string | undefined
-        let voiceoverStartTime: number | undefined
-        let voiceoverDuration: number | undefined
-        
-        if (audioSettings.audioSource === 'voiceover') {
-          // Check for dialogue clip for this segment
-          const dialogueClip = audioData?.dialogueEntries?.find((d, i) => i === idx && d.audioUrl)
-          if (dialogueClip?.audioUrl) {
-            voiceoverUrl = dialogueClip.audioUrl
-            voiceoverStartTime = 0
-            voiceoverDuration = dialogueClip.duration || timing.duration
-          } else if (audioData?.narrationUrl) {
-            // Fall back to narration slice
-            voiceoverUrl = audioData.narrationUrl
-            voiceoverStartTime = timing.start
-            voiceoverDuration = timing.duration
-          }
-        }
-        
+        const audioSettings = segmentAudioSettings[s.segmentId] || { includeAudio: true, volume: 1.0 }
         return {
           segmentId: s.segmentId,
           sequenceIndex: s.sequenceIndex,
           videoUrl: s.activeAssetUrl!,
           startTime: s.startTime,
           endTime: s.endTime,
-          audioSource: audioSettings.audioSource,
+          audioSource: audioSettings.includeAudio ? 'original' : 'none',
           audioVolume: audioSettings.volume,
-          voiceoverUrl,
-          voiceoverStartTime,
-          voiceoverDuration,
         }
       })
 
-      // Build audio tracks
+      // Build audio tracks with timing offsets
       const audioTracks: {
-        narration?: Array<{ url: string; startTime: number; duration: number }>
-        dialogue?: Array<{ url: string; startTime: number; duration: number; character?: string }>
-        music?: Array<{ url: string; startTime: number; duration: number }>
-        sfx?: Array<{ url: string; startTime: number; duration: number }>
+        narration?: Array<{ url: string; startTime: number; duration: number; volume: number }>
+        dialogue?: Array<{ url: string; startTime: number; duration: number; volume: number; character?: string }>
+        music?: Array<{ url: string; startTime: number; duration: number; volume: number }>
+        sfx?: Array<{ url: string; startTime: number; duration: number; volume: number }>
       } = {}
 
-      if (includeNarration && audioData?.narrationUrl) {
+      if (narrationConfig.enabled && audioData?.narrationUrl) {
         audioTracks.narration = [{
           url: audioData.narrationUrl,
-          startTime: 0,
+          startTime: narrationConfig.startOffset,
           duration: audioData.narrationDuration || totalDuration,
+          volume: narrationConfig.volume,
         }]
       }
 
-      if (includeDialogue && audioData?.dialogueEntries) {
+      if (dialogueConfig.enabled && audioData?.dialogueEntries) {
         const dialogueClips = audioData.dialogueEntries
           .filter(d => d.audioUrl)
-          .map((d, i) => ({
+          .map((d) => ({
             url: d.audioUrl!,
-            startTime: 0, // TODO: Calculate proper timing based on segment mapping
+            startTime: dialogueConfig.startOffset,
             duration: d.duration || 3,
+            volume: dialogueConfig.volume,
             character: d.character,
           }))
         if (dialogueClips.length > 0) {
@@ -309,19 +216,21 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
         }
       }
 
-      if (includeMusic && audioData?.musicUrl) {
+      if (musicConfig.enabled && audioData?.musicUrl) {
         audioTracks.music = [{
           url: audioData.musicUrl,
-          startTime: 0,
+          startTime: musicConfig.startOffset,
           duration: audioData.musicDuration || totalDuration,
+          volume: musicConfig.volume,
         }]
       }
 
-      if (includeSfx && audioData?.sfxUrl) {
+      if (sfxConfig.enabled && audioData?.sfxUrl) {
         audioTracks.sfx = [{
           url: audioData.sfxUrl,
-          startTime: 0,
+          startTime: sfxConfig.startOffset,
           duration: audioData.sfxDuration || totalDuration,
+          volume: sfxConfig.volume,
         }]
       }
 
@@ -338,17 +247,17 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
           sceneNumber,
           resolution,
           audioConfig: {
-            includeNarration,
-            includeDialogue,
-            includeMusic,
-            includeSfx,
-            includeSegmentAudio,
+            includeNarration: narrationConfig.enabled,
+            includeDialogue: dialogueConfig.enabled,
+            includeMusic: musicConfig.enabled,
+            includeSfx: sfxConfig.enabled,
+            includeSegmentAudio: !allSegmentsMuted,
             language: selectedLanguage,
-            narrationVolume,
-            dialogueVolume,
-            musicVolume,
-            sfxVolume,
-            segmentAudioVolume,
+            narrationVolume: narrationConfig.volume,
+            dialogueVolume: dialogueConfig.volume,
+            musicVolume: musicConfig.volume,
+            sfxVolume: sfxConfig.volume,
+            segmentAudioVolume: 1.0,
           },
           segments: segmentData,
           audioTracks,
@@ -377,7 +286,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
 
   // Poll job status until complete
   const pollJobStatus = async (jobId: string) => {
-    const maxAttempts = 120 // 10 minutes with 5s interval
+    const maxAttempts = 120
     let attempts = 0
 
     while (attempts < maxAttempts) {
@@ -402,7 +311,6 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
           throw new Error(data.error || 'Render job failed')
         }
 
-        // Update progress
         setProgress(30 + (data.progress || 0) * 0.7)
       } catch (err) {
         console.warn('[SceneRenderDialog] Poll error:', err)
@@ -412,14 +320,12 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
     throw new Error('Render timed out')
   }
 
-  // Handle download
   const handleDownload = () => {
     if (downloadUrl) {
       window.open(downloadUrl, '_blank')
     }
   }
 
-  // Reset state when dialog closes
   const handleOpenChange = (open: boolean) => {
     if (!open && status !== 'rendering') {
       setStatus('idle')
@@ -434,46 +340,205 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
   const isRendering = status === 'preparing' || status === 'uploading' || status === 'rendering'
   const canRender = renderedSegments.length > 0 && !isRendering
 
+  // Audio Track Card Component
+  const AudioTrackCard = ({
+    icon,
+    name,
+    duration,
+    clipCount,
+    config,
+    setConfig,
+    disabled,
+    iconColor,
+    accentColor,
+  }: {
+    icon: React.ReactNode
+    name: string
+    duration?: number
+    clipCount?: number
+    config: AudioTrackConfig
+    setConfig: (config: AudioTrackConfig) => void
+    disabled: boolean
+    iconColor: string
+    accentColor: string
+  }) => (
+    <div className={`bg-slate-800/50 rounded-lg p-3 space-y-3 border ${config.enabled && !disabled ? accentColor : 'border-transparent'}`}>
+      {/* Header Row */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className={disabled ? 'text-slate-600' : iconColor}>{icon}</span>
+          <span className={`text-sm font-medium ${disabled ? 'text-slate-500' : 'text-slate-200'}`}>{name}</span>
+          {duration !== undefined && duration > 0 && (
+            <Badge variant="outline" className="text-xs bg-slate-700/50 text-slate-400 border-slate-600">
+              {formatDuration(duration)}
+            </Badge>
+          )}
+          {clipCount !== undefined && clipCount > 0 && (
+            <Badge variant="outline" className="text-xs bg-slate-700/50 text-slate-400 border-slate-600">
+              {clipCount} clips
+            </Badge>
+          )}
+          {disabled && (
+            <span className="text-xs text-slate-600">Not available</span>
+          )}
+        </div>
+        <Switch
+          checked={config.enabled}
+          onCheckedChange={(enabled) => setConfig({ ...config, enabled })}
+          disabled={disabled || isRendering}
+        />
+      </div>
+      
+      {/* Controls Row - Only show when enabled and not disabled */}
+      {config.enabled && !disabled && (
+        <div className="grid grid-cols-2 gap-4">
+          {/* Start Time Input */}
+          <div className="space-y-1">
+            <label className="text-xs text-slate-500">Start at</label>
+            <div className="flex items-center gap-1">
+              <Input
+                type="number"
+                min={0}
+                step={0.5}
+                value={config.startOffset}
+                onChange={(e) => setConfig({ ...config, startOffset: parseFloat(e.target.value) || 0 })}
+                disabled={isRendering}
+                className="h-8 w-20 bg-slate-900 border-slate-700 text-sm text-center"
+              />
+              <span className="text-xs text-slate-500">sec</span>
+            </div>
+          </div>
+          
+          {/* Volume Slider */}
+          <div className="space-y-1">
+            <label className="text-xs text-slate-500">Volume</label>
+            <div className="flex items-center gap-2">
+              <Slider
+                value={[config.volume * 100]}
+                onValueChange={([val]) => setConfig({ ...config, volume: val / 100 })}
+                max={100}
+                step={1}
+                disabled={isRendering}
+                className="flex-1"
+              />
+              <span className="text-xs text-slate-400 w-8 text-right">{Math.round(config.volume * 100)}%</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[500px] bg-slate-900 border-slate-700">
+      <DialogContent className="sm:max-w-[520px] bg-slate-900 border-slate-700 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-white">
-            <Film className="w-5 h-5 text-indigo-400" />
-            Render Scene {sceneNumber}
+            <Film className="w-5 h-5 text-purple-400" />
+            Scene Composer
           </DialogTitle>
           <DialogDescription className="text-slate-400">
-            Combine video segments with audio into a final MP4
+            Configure video segments and audio tracks for Scene {sceneNumber}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Video Segments Summary */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-slate-300">Video Segments</Label>
-            <div className="flex items-center justify-between bg-slate-800/50 rounded-lg p-3">
+          
+          {/* ============================================ */}
+          {/* SECTION A: Video Sequence & Original Audio  */}
+          {/* ============================================ */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                <Video className="w-4 h-4 text-cyan-400" />
+                Video Sequence ({renderedSegments.length} Segments)
+              </Label>
               <div className="flex items-center gap-2">
-                <Film className="w-4 h-4 text-emerald-400" />
-                <span className="text-sm text-slate-300">
-                  {renderedSegments.length} of {segments.length} segments ready
+                <span className="text-xs text-slate-500">
+                  <Clock className="w-3 h-3 inline mr-1" />
+                  {formatDuration(totalDuration)}
                 </span>
-              </div>
-              <div className="flex items-center gap-1 text-sm text-slate-400">
-                <Clock className="w-4 h-4" />
-                {formatDuration(totalDuration)}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleMuteAll(!allSegmentsMuted)}
+                  disabled={isRendering || renderedSegments.length === 0}
+                  className="h-7 text-xs text-slate-400 hover:text-slate-200"
+                >
+                  {allSegmentsMuted ? (
+                    <>
+                      <Volume2 className="w-3 h-3 mr-1" />
+                      Unmute All
+                    </>
+                  ) : (
+                    <>
+                      <VolumeX className="w-3 h-3 mr-1" />
+                      Mute All
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
+            
+            {/* Segment List */}
+            <div className="bg-slate-800/30 rounded-lg border border-slate-700/50 max-h-48 overflow-y-auto">
+              {renderedSegments.map((segment, idx) => {
+                const settings = segmentAudioSettings[segment.segmentId] || { includeAudio: true, volume: 1.0 }
+                const duration = segment.endTime - segment.startTime
+                
+                return (
+                  <div 
+                    key={segment.segmentId} 
+                    className={`flex items-center justify-between px-3 py-2 ${idx !== renderedSegments.length - 1 ? 'border-b border-slate-700/50' : ''}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-mono text-slate-500 w-6">#{idx + 1}</span>
+                      <span className="text-sm text-slate-300">Segment {idx + 1}</span>
+                      <span className="text-xs text-slate-500">{formatDuration(duration)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {settings.includeAudio ? (
+                        <Volume2 className="w-4 h-4 text-cyan-400" />
+                      ) : (
+                        <VolumeX className="w-4 h-4 text-slate-600" />
+                      )}
+                      <Switch
+                        checked={settings.includeAudio}
+                        onCheckedChange={(checked) => {
+                          setSegmentAudioSettings(prev => ({
+                            ...prev,
+                            [segment.segmentId]: { ...settings, includeAudio: checked }
+                          }))
+                        }}
+                        disabled={isRendering}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+              {renderedSegments.length === 0 && (
+                <div className="px-3 py-4 text-center text-sm text-slate-500">
+                  No rendered segments available
+                </div>
+              )}
+            </div>
+            
             {renderedSegments.length < segments.length && (
               <p className="text-xs text-amber-400">
-                ⚠️ Some segments are not rendered yet
+                ⚠️ {segments.length - renderedSegments.length} segment(s) not yet rendered
               </p>
             )}
           </div>
 
-          {/* Audio Track Selection */}
+          {/* ============================================ */}
+          {/* SECTION B: Audio Overlays & Timing          */}
+          {/* ============================================ */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium text-slate-300">Audio Tracks</Label>
+              <Label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                <Music className="w-4 h-4 text-purple-400" />
+                Audio Tracks & Timing
+              </Label>
               {/* Language Selector */}
               <div className="flex items-center gap-2">
                 <Globe className="w-4 h-4 text-slate-400" />
@@ -482,7 +547,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
                   onValueChange={setSelectedLanguage}
                   disabled={isRendering}
                 >
-                  <SelectTrigger className="w-[130px] h-8 bg-slate-800 border-slate-700 text-xs">
+                  <SelectTrigger className="w-[120px] h-8 bg-slate-800 border-slate-700 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -497,235 +562,53 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
             </div>
             
             <div className="space-y-2">
-              {/* Segment Audio */}
-              <div className="bg-slate-800/50 rounded-lg p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Video className="w-4 h-4 text-cyan-400" />
-                    <span className="text-sm text-slate-300">Segment Audio</span>
-                    <Badge variant="outline" className="text-xs bg-cyan-500/10 text-cyan-300 border-cyan-500/30">
-                      Original
-                    </Badge>
-                  </div>
-                  <Switch
-                    checked={includeSegmentAudio}
-                    onCheckedChange={setIncludeSegmentAudio}
-                    disabled={isRendering}
-                  />
-                </div>
-                {includeSegmentAudio && (
-                  <>
-                    <div className="flex items-center gap-3 pt-1">
-                      <span className="text-xs text-slate-500 w-14">Master</span>
-                      <Slider
-                        value={[segmentAudioVolume * 100]}
-                        onValueChange={([val]) => setSegmentAudioVolume(val / 100)}
-                        max={100}
-                        step={1}
-                        disabled={isRendering}
-                        className="flex-1"
-                      />
-                      <span className="text-xs text-slate-400 w-10 text-right">{Math.round(segmentAudioVolume * 100)}%</span>
-                    </div>
-                    
-                    {/* Per-segment audio controls */}
-                    <button
-                      type="button"
-                      onClick={() => setShowPerSegmentAudio(!showPerSegmentAudio)}
-                      className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 transition-colors pt-1"
-                      disabled={isRendering}
-                    >
-                      {showPerSegmentAudio ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                      Per-Segment Controls ({renderedSegments.length} segments)
-                    </button>
-                    
-                    {showPerSegmentAudio && (
-                      <div className="space-y-2 pt-1 max-h-48 overflow-y-auto">
-                        {renderedSegments.map((segment, idx) => {
-                          const settings = segmentAudioSettings[segment.segmentId] || { audioSource: 'original' as SegmentAudioSource, volume: 1.0 }
-                          const hasVoiceover = !!(audioData?.narrationUrl || audioData?.dialogueEntries?.some(d => d.audioUrl))
-                          return (
-                            <div key={segment.segmentId} className="bg-slate-900/50 rounded p-2 space-y-2">
-                              <div className="flex items-center justify-between gap-2">
-                                <span className="text-xs text-slate-400 shrink-0">Seg {idx + 1}</span>
-                                <Select
-                                  value={settings.audioSource}
-                                  onValueChange={(value: SegmentAudioSource) => {
-                                    setSegmentAudioSettings(prev => ({
-                                      ...prev,
-                                      [segment.segmentId]: { ...settings, audioSource: value }
-                                    }))
-                                  }}
-                                  disabled={isRendering}
-                                >
-                                  <SelectTrigger className="h-7 text-xs bg-slate-800 border-slate-700 w-28">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="original" className="text-xs">Original</SelectItem>
-                                    <SelectItem value="voiceover" className="text-xs" disabled={!hasVoiceover}>Voiceover</SelectItem>
-                                    <SelectItem value="none" className="text-xs">None</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              {settings.audioSource !== 'none' && (
-                                <div className="flex items-center gap-2">
-                                  <Slider
-                                    value={[settings.volume * 100]}
-                                    onValueChange={([val]) => {
-                                      setSegmentAudioSettings(prev => ({
-                                        ...prev,
-                                        [segment.segmentId]: { ...settings, volume: val / 100 }
-                                      }))
-                                    }}
-                                    max={100}
-                                    step={1}
-                                    disabled={isRendering}
-                                    className="flex-1"
-                                  />
-                                  <span className="text-xs text-slate-500 w-8 text-right">{Math.round(settings.volume * 100)}%</span>
-                                </div>
-                              )}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
+              {/* Narration Track */}
+              <AudioTrackCard
+                icon={<Mic2 className="w-4 h-4" />}
+                name="Narration"
+                duration={audioData?.narrationDuration}
+                config={narrationConfig}
+                setConfig={setNarrationConfig}
+                disabled={!audioData?.narrationUrl}
+                iconColor="text-blue-400"
+                accentColor="border-blue-500/30"
+              />
 
-              {/* Narration */}
-              <div className="bg-slate-800/50 rounded-lg p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Mic2 className="w-4 h-4 text-blue-400" />
-                    <span className="text-sm text-slate-300">Narration</span>
-                    {audioData?.narrationUrl && (
-                      <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-300 border-blue-500/30">
-                        {formatDuration(audioData.narrationDuration || 0)}
-                      </Badge>
-                    )}
-                  </div>
-                  <Switch
-                    checked={includeNarration}
-                    onCheckedChange={setIncludeNarration}
-                    disabled={!audioData?.narrationUrl || isRendering}
-                  />
-                </div>
-                {includeNarration && audioData?.narrationUrl && (
-                  <div className="flex items-center gap-3 pt-1">
-                    <Slider
-                      value={[narrationVolume * 100]}
-                      onValueChange={([val]) => setNarrationVolume(val / 100)}
-                      max={100}
-                      step={1}
-                      disabled={isRendering}
-                      className="flex-1"
-                    />
-                    <span className="text-xs text-slate-400 w-10 text-right">{Math.round(narrationVolume * 100)}%</span>
-                  </div>
-                )}
-              </div>
+              {/* Dialogue Track */}
+              <AudioTrackCard
+                icon={<MessageSquare className="w-4 h-4" />}
+                name="Dialogue"
+                clipCount={audioData?.dialogueEntries?.filter(d => d.audioUrl).length}
+                config={dialogueConfig}
+                setConfig={setDialogueConfig}
+                disabled={!audioData?.dialogueEntries?.some(d => d.audioUrl)}
+                iconColor="text-green-400"
+                accentColor="border-green-500/30"
+              />
 
-              {/* Dialogue */}
-              <div className="bg-slate-800/50 rounded-lg p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4 text-green-400" />
-                    <span className="text-sm text-slate-300">Dialogue</span>
-                    {audioData?.dialogueEntries && audioData.dialogueEntries.length > 0 && (
-                      <Badge variant="outline" className="text-xs bg-green-500/10 text-green-300 border-green-500/30">
-                        {audioData.dialogueEntries.filter(d => d.audioUrl).length} clips
-                      </Badge>
-                    )}
-                  </div>
-                  <Switch
-                    checked={includeDialogue}
-                    onCheckedChange={setIncludeDialogue}
-                    disabled={!audioData?.dialogueEntries?.some(d => d.audioUrl) || isRendering}
-                  />
-                </div>
-                {includeDialogue && audioData?.dialogueEntries?.some(d => d.audioUrl) && (
-                  <div className="flex items-center gap-3 pt-1">
-                    <Slider
-                      value={[dialogueVolume * 100]}
-                      onValueChange={([val]) => setDialogueVolume(val / 100)}
-                      max={100}
-                      step={1}
-                      disabled={isRendering}
-                      className="flex-1"
-                    />
-                    <span className="text-xs text-slate-400 w-10 text-right">{Math.round(dialogueVolume * 100)}%</span>
-                  </div>
-                )}
-              </div>
+              {/* Background Music Track */}
+              <AudioTrackCard
+                icon={<Music className="w-4 h-4" />}
+                name="Background Music"
+                duration={audioData?.musicDuration}
+                config={musicConfig}
+                setConfig={setMusicConfig}
+                disabled={!audioData?.musicUrl}
+                iconColor="text-purple-400"
+                accentColor="border-purple-500/30"
+              />
 
-              {/* Music */}
-              <div className="bg-slate-800/50 rounded-lg p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Music className="w-4 h-4 text-purple-400" />
-                    <span className="text-sm text-slate-300">Background Music</span>
-                    {audioData?.musicUrl && (
-                      <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-300 border-purple-500/30">
-                        {formatDuration(audioData.musicDuration || 0)}
-                      </Badge>
-                    )}
-                  </div>
-                  <Switch
-                    checked={includeMusic}
-                    onCheckedChange={setIncludeMusic}
-                    disabled={!audioData?.musicUrl || isRendering}
-                  />
-                </div>
-                {includeMusic && audioData?.musicUrl && (
-                  <div className="flex items-center gap-3 pt-1">
-                    <Slider
-                      value={[musicVolume * 100]}
-                      onValueChange={([val]) => setMusicVolume(val / 100)}
-                      max={100}
-                      step={1}
-                      disabled={isRendering}
-                      className="flex-1"
-                    />
-                    <span className="text-xs text-slate-400 w-10 text-right">{Math.round(musicVolume * 100)}%</span>
-                  </div>
-                )}
-              </div>
-
-              {/* SFX */}
-              <div className="bg-slate-800/50 rounded-lg p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Volume2 className="w-4 h-4 text-amber-400" />
-                    <span className="text-sm text-slate-300">Sound Effects</span>
-                    {audioData?.sfxUrl && (
-                      <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-300 border-amber-500/30">
-                        {formatDuration(audioData.sfxDuration || 0)}
-                      </Badge>
-                    )}
-                  </div>
-                  <Switch
-                    checked={includeSfx}
-                    onCheckedChange={setIncludeSfx}
-                    disabled={!audioData?.sfxUrl || isRendering}
-                  />
-                </div>
-                {includeSfx && audioData?.sfxUrl && (
-                  <div className="flex items-center gap-3 pt-1">
-                    <Slider
-                      value={[sfxVolume * 100]}
-                      onValueChange={([val]) => setSfxVolume(val / 100)}
-                      max={100}
-                      step={1}
-                      disabled={isRendering}
-                      className="flex-1"
-                    />
-                    <span className="text-xs text-slate-400 w-10 text-right">{Math.round(sfxVolume * 100)}%</span>
-                  </div>
-                )}
-              </div>
+              {/* Sound Effects Track */}
+              <AudioTrackCard
+                icon={<Volume2 className="w-4 h-4" />}
+                name="Sound Effects"
+                duration={audioData?.sfxDuration}
+                config={sfxConfig}
+                setConfig={setSfxConfig}
+                disabled={!audioData?.sfxUrl}
+                iconColor="text-amber-400"
+                accentColor="border-amber-500/30"
+              />
             </div>
           </div>
 
@@ -812,7 +695,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
               <Button
                 onClick={handleRender}
                 disabled={!canRender}
-                className="bg-indigo-600 hover:bg-indigo-700"
+                className="bg-purple-600 hover:bg-purple-700"
               >
                 {isRendering ? (
                   <>
