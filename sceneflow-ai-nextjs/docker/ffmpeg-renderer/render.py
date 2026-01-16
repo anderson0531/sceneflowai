@@ -390,6 +390,18 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
             sys.exit(1)
         
         segment['localFile'] = local_file
+        
+        # Download voiceover audio if segment uses voiceover audio source
+        audio_source = segment.get('audioSource', 'original')
+        voiceover_url = segment.get('voiceoverUrl', '')
+        if audio_source == 'voiceover' and voiceover_url:
+            voiceover_file = download_asset(voiceover_url, 'voiceover', i)
+            if voiceover_file:
+                segment['voiceoverLocalFile'] = voiceover_file
+                log(f"Downloaded voiceover for segment {i}")
+            else:
+                log(f"Failed to download voiceover for segment {i}, falling back to original", 'WARN')
+                segment['audioSource'] = 'original'
     
     log(f"Downloaded {len(video_segments)} video segments")
     send_callback(callback_url, job_id, 'PROCESSING', 30)

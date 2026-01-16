@@ -112,15 +112,16 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
   const [sfxVolume, setSfxVolume] = useState(0.6)
   const [segmentAudioVolume, setSegmentAudioVolume] = useState(0.7)
   
-  // Per-segment audio settings: { [segmentId]: { includeAudio: boolean, volume: number } }
-  const [segmentAudioSettings, setSegmentAudioSettings] = useState<Record<string, { includeAudio: boolean; volume: number }>>({})
+  // Per-segment audio settings: { [segmentId]: { audioSource: 'original' | 'voiceover' | 'none', volume: number } }
+  type SegmentAudioSource = 'original' | 'voiceover' | 'none'
+  const [segmentAudioSettings, setSegmentAudioSettings] = useState<Record<string, { audioSource: SegmentAudioSource; volume: number }>>({})
   
   // Initialize per-segment audio settings when segments change
   useEffect(() => {
-    const newSettings: Record<string, { includeAudio: boolean; volume: number }> = {}
+    const newSettings: Record<string, { audioSource: SegmentAudioSource; volume: number }> = {}
     segments.forEach(s => {
       if (s.activeAssetUrl && s.status === 'COMPLETE') {
-        newSettings[s.segmentId] = segmentAudioSettings[s.segmentId] || { includeAudio: true, volume: 1.0 }
+        newSettings[s.segmentId] = segmentAudioSettings[s.segmentId] || { audioSource: 'original', volume: 1.0 }
       }
     })
     setSegmentAudioSettings(newSettings)
@@ -229,17 +230,52 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
     setDownloadUrl(null)
 
     try {
+      // Calculate cumulative start times for voiceover slicing
+      let cumulativeTime = 0
+      const segmentTimings: { start: number; duration: number }[] = []
+      renderedSegments.forEach(s => {
+        const duration = s.endTime - s.startTime
+        segmentTimings.push({ start: cumulativeTime, duration })
+        cumulativeTime += duration
+      })
+      
       // Build request payload with per-segment audio settings
-      const segmentData = renderedSegments.map(s => {
-        const audioSettings = segmentAudioSettings[s.segmentId] || { includeAudio: true, volume: 1.0 }
+      const segmentData = renderedSegments.map((s, idx) => {
+        const audioSettings = segmentAudioSettings[s.segmentId] || { audioSource: 'original' as SegmentAudioSource, volume: 1.0 }
+        const timing = segmentTimings[idx]
+        
+        // Determine voiceover URL for this segment
+        // Priority: dialogue clip for this segment > narration slice
+        let voiceoverUrl: string | undefined
+        let voiceoverStartTime: number | undefined
+        let voiceoverDuration: number | undefined
+        
+        if (audioSettings.audioSource === 'voiceover') {
+          // Check for dialogue clip for this segment
+          const dialogueClip = audioData?.dialogueEntries?.find((d, i) => i === idx && d.audioUrl)
+          if (dialogueClip?.audioUrl) {
+            voiceoverUrl = dialogueClip.audioUrl
+            voiceoverStartTime = 0
+            voiceoverDuration = dialogueClip.duration || timing.duration
+          } else if (audioData?.narrationUrl) {
+            // Fall back to narration slice
+            voiceoverUrl = audioData.narrationUrl
+            voiceoverStartTime = timing.start
+            voiceoverDuration = timing.duration
+          }
+        }
+        
         return {
           segmentId: s.segmentId,
           sequenceIndex: s.sequenceIndex,
           videoUrl: s.activeAssetUrl!,
           startTime: s.startTime,
           endTime: s.endTime,
-          includeAudio: audioSettings.includeAudio,
+          audioSource: audioSettings.audioSource,
           audioVolume: audioSettings.volume,
+          voiceoverUrl,
+          voiceoverStartTime,
+          voiceoverDuration,
         }
       })
 
@@ -504,25 +540,35 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
                     </button>
                     
                     {showPerSegmentAudio && (
-                      <div className="space-y-2 pt-1 max-h-40 overflow-y-auto">
+                      <div className="space-y-2 pt-1 max-h-48 overflow-y-auto">
                         {renderedSegments.map((segment, idx) => {
-                          const settings = segmentAudioSettings[segment.segmentId] || { includeAudio: true, volume: 1.0 }
+                          const settings = segmentAudioSettings[segment.segmentId] || { audioSource: 'original' as SegmentAudioSource, volume: 1.0 }
+                          const hasVoiceover = !!(audioData?.narrationUrl || audioData?.dialogueEntries?.some(d => d.audioUrl))
                           return (
-                            <div key={segment.segmentId} className="bg-slate-900/50 rounded p-2 space-y-1">
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs text-slate-400">Segment {idx + 1}</span>
-                                <Switch
-                                  checked={settings.includeAudio}
-                                  onCheckedChange={(checked) => {
+                            <div key={segment.segmentId} className="bg-slate-900/50 rounded p-2 space-y-2">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs text-slate-400 shrink-0">Seg {idx + 1}</span>
+                                <Select
+                                  value={settings.audioSource}
+                                  onValueChange={(value: SegmentAudioSource) => {
                                     setSegmentAudioSettings(prev => ({
                                       ...prev,
-                                      [segment.segmentId]: { ...settings, includeAudio: checked }
+                                      [segment.segmentId]: { ...settings, audioSource: value }
                                     }))
                                   }}
                                   disabled={isRendering}
-                                />
+                                >
+                                  <SelectTrigger className="h-7 text-xs bg-slate-800 border-slate-700 w-28">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="original" className="text-xs">Original</SelectItem>
+                                    <SelectItem value="voiceover" className="text-xs" disabled={!hasVoiceover}>Voiceover</SelectItem>
+                                    <SelectItem value="none" className="text-xs">None</SelectItem>
+                                  </SelectContent>
+                                </Select>
                               </div>
-                              {settings.includeAudio && (
+                              {settings.audioSource !== 'none' && (
                                 <div className="flex items-center gap-2">
                                   <Slider
                                     value={[settings.volume * 100]}

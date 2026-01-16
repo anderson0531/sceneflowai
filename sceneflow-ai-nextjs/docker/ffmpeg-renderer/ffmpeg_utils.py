@@ -309,8 +309,21 @@ def build_concat_ffmpeg_command(
         video_path = os.path.join(temp_dir, 'assets', segment['localFile'])
         cmd.extend(['-i', video_path])
     
-    # Add audio input files
-    audio_inputs_start = len(video_segments)
+    # Track input indices
+    video_input_count = len(video_segments)
+    
+    # Add voiceover input files for segments that use voiceover
+    voiceover_input_map = {}  # Maps segment index to input index
+    for i, segment in enumerate(video_segments):
+        audio_source = segment.get('audioSource', 'original')
+        voiceover_file = segment.get('voiceoverLocalFile')
+        if audio_source == 'voiceover' and voiceover_file:
+            voiceover_path = os.path.join(temp_dir, 'assets', voiceover_file)
+            cmd.extend(['-i', voiceover_path])
+            voiceover_input_map[i] = video_input_count + len(voiceover_input_map)
+    
+    # Add overlay audio input files (music, sfx, etc.)
+    audio_inputs_start = video_input_count + len(voiceover_input_map)
     for i, clip in enumerate(audio_clips):
         audio_path = os.path.join(temp_dir, 'assets', clip['localFile'])
         cmd.extend(['-i', audio_path])
@@ -332,20 +345,33 @@ def build_concat_ffmpeg_command(
         filter_parts.append(filter_str)
         video_concat_inputs.append(f"[v{i}]")
         
-        # Check per-segment audio settings (with fallback to global settings)
-        seg_include_audio = segment.get('includeAudio', include_segment_audio)
+        # Check per-segment audio source and volume
+        audio_source = segment.get('audioSource', 'original')
         seg_audio_volume = segment.get('audioVolume', segment_audio_volume)
+        duration = segment.get('duration', 5)
         
-        if seg_include_audio:
-            # Apply per-segment volume adjustment
+        if audio_source == 'original':
+            # Use original MP4 audio
             if seg_audio_volume != 1.0:
                 filter_parts.append(f"[{i}:a]volume={seg_audio_volume}[seg_audio_{i}]")
-                segment_audio_streams.append((f"[seg_audio_{i}]", segment.get('duration', 5)))
+                segment_audio_streams.append((f"[seg_audio_{i}]", duration))
             else:
-                segment_audio_streams.append((f"[{i}:a]", segment.get('duration', 5)))
+                segment_audio_streams.append((f"[{i}:a]", duration))
+        elif audio_source == 'voiceover' and i in voiceover_input_map:
+            # Use voiceover audio (with optional time slicing)
+            voiceover_input_idx = voiceover_input_map[i]
+            voiceover_start = segment.get('voiceoverStartTime', 0)
+            voiceover_duration = segment.get('voiceoverDuration', duration)
+            
+            # Build filter: extract time slice and apply volume
+            vo_filter = f"[{voiceover_input_idx}:a]atrim=start={voiceover_start}:duration={voiceover_duration},asetpts=PTS-STARTPTS"
+            if seg_audio_volume != 1.0:
+                vo_filter += f",volume={seg_audio_volume}"
+            vo_filter += f"[vo_audio_{i}]"
+            filter_parts.append(vo_filter)
+            segment_audio_streams.append((f"[vo_audio_{i}]", duration))
         else:
-            # Generate silence for this segment's duration
-            duration = segment.get('duration', 5)
+            # No audio - generate silence for this segment's duration
             filter_parts.append(f"anullsrc=channel_layout=stereo:sample_rate=48000,atrim=0:{duration}[silence_{i}]")
             segment_audio_streams.append((f"[silence_{i}]", duration))
     
@@ -361,8 +387,8 @@ def build_concat_ffmpeg_command(
     src_audio_output = None
     all_audio_inputs = []
     
-    # Concatenate all segment audio streams (with silence for excluded segments)
-    if include_segment_audio and len(segment_audio_streams) > 0:
+    # Concatenate all segment audio streams (each stream can be original, voiceover, or silence)
+    if len(segment_audio_streams) > 0:
         if len(segment_audio_streams) > 1:
             audio_stream_refs = ''.join([s[0] for s in segment_audio_streams])
             src_audio_concat = f"{audio_stream_refs}concat=n={len(segment_audio_streams)}:v=0:a=1[src_audio]"

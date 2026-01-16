@@ -179,8 +179,11 @@ export async function POST(
       videoUrl: seg.videoUrl,
       startTime: seg.startTime,
       duration: seg.endTime - seg.startTime,
-      includeAudio: seg.includeAudio ?? true,
+      audioSource: seg.audioSource ?? 'original',
       audioVolume: seg.audioVolume ?? 1.0,
+      voiceoverUrl: seg.voiceoverUrl,
+      voiceoverStartTime: seg.voiceoverStartTime,
+      voiceoverDuration: seg.voiceoverDuration,
     }))
     
     // Get volume settings from audioConfig (with defaults)

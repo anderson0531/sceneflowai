@@ -218,6 +218,11 @@ export const RENDER_DEFAULTS = {
 // ============================================================================
 
 /**
+ * Audio source options for a video segment
+ */
+export type SegmentAudioSource = 'original' | 'voiceover' | 'none'
+
+/**
  * A video segment for scene rendering (uses existing MP4s, not images)
  */
 export interface SceneRenderVideoSegment {
@@ -231,10 +236,16 @@ export interface SceneRenderVideoSegment {
   startTime: number
   /** Duration in seconds */
   duration: number
-  /** Include audio from this segment (defaults to true if not specified) */
-  includeAudio?: boolean
+  /** Audio source for this segment: 'original' (MP4 audio), 'voiceover' (TTS/dialogue), or 'none' */
+  audioSource?: SegmentAudioSource
   /** Volume level for this segment's audio (0.0 to 1.0, defaults to 1.0) */
   audioVolume?: number
+  /** URL to voiceover audio file (dialogue or narration clip) for this segment */
+  voiceoverUrl?: string
+  /** Start time within the voiceover file to use (for slicing narration) */
+  voiceoverStartTime?: number
+  /** Duration of voiceover to use (for slicing narration) */
+  voiceoverDuration?: number
 }
 
 /**
