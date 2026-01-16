@@ -173,16 +173,19 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
       // Build request payload with per-segment audio settings
       const segmentData = renderedSegments.map((s, idx) => {
         const audioSettings = segmentAudioSettings[s.segmentId] || { includeAudio: true, volume: 1.0 }
+        const audioSource = audioSettings.includeAudio ? 'original' : 'none'
+        console.log(`[SceneRender] Segment ${idx} (${s.segmentId}): includeAudio=${audioSettings.includeAudio}, audioSource=${audioSource}`)
         return {
           segmentId: s.segmentId,
           sequenceIndex: s.sequenceIndex,
           videoUrl: s.activeAssetUrl!,
           startTime: s.startTime,
           endTime: s.endTime,
-          audioSource: audioSettings.includeAudio ? 'original' : 'none',
+          audioSource,
           audioVolume: audioSettings.volume,
         }
       })
+      console.log('[SceneRender] Full segmentData:', JSON.stringify(segmentData, null, 2))
 
       // Build audio tracks with timing offsets
       const audioTracks: {

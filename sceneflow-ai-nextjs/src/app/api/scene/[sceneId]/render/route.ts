@@ -173,18 +173,22 @@ export async function POST(
     const jobId = uuidv4()
     
     // Build video segments for job spec (including per-segment audio settings)
-    const videoSegments: SceneRenderVideoSegment[] = body.segments.map((seg, idx) => ({
-      segmentId: seg.segmentId,
-      sequenceIndex: seg.sequenceIndex,
-      videoUrl: seg.videoUrl,
-      startTime: seg.startTime,
-      duration: seg.endTime - seg.startTime,
-      audioSource: seg.audioSource ?? 'original',
-      audioVolume: seg.audioVolume ?? 1.0,
-      voiceoverUrl: seg.voiceoverUrl,
-      voiceoverStartTime: seg.voiceoverStartTime,
-      voiceoverDuration: seg.voiceoverDuration,
-    }))
+    const videoSegments: SceneRenderVideoSegment[] = body.segments.map((seg, idx) => {
+      const audioSource = seg.audioSource ?? 'original'
+      console.log(`[SceneRender] API Segment ${idx}: audioSource='${audioSource}', audioVolume=${seg.audioVolume ?? 1.0}`)
+      return {
+        segmentId: seg.segmentId,
+        sequenceIndex: seg.sequenceIndex,
+        videoUrl: seg.videoUrl,
+        startTime: seg.startTime,
+        duration: seg.endTime - seg.startTime,
+        audioSource,
+        audioVolume: seg.audioVolume ?? 1.0,
+        voiceoverUrl: seg.voiceoverUrl,
+        voiceoverStartTime: seg.voiceoverStartTime,
+        voiceoverDuration: seg.voiceoverDuration,
+      }
+    })
     
     // Get volume settings from audioConfig (with defaults)
     const narrationVolume = body.audioConfig.narrationVolume ?? 0.8
