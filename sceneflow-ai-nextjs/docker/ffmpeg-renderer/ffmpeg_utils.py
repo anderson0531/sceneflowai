@@ -337,8 +337,9 @@ def build_concat_ffmpeg_command(
     
     for i, segment in enumerate(video_segments):
         # Scale to target resolution and set framerate
+        # setpts=PTS-STARTPTS resets video timestamps to start at 0 for proper concatenation sync
         filter_str = (
-            f"[{i}:v]scale={width}:{height}:force_original_aspect_ratio=decrease,"
+            f"[{i}:v]setpts=PTS-STARTPTS,scale={width}:{height}:force_original_aspect_ratio=decrease,"
             f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:black,"
             f"fps={fps},setsar=1[v{i}]"
         )
@@ -378,12 +379,12 @@ def build_concat_ffmpeg_command(
             filter_parts.append(vo_filter)
             segment_audio_streams.append((f"[vo_audio_{i}]", duration))
         else:
-            # No audio - generate silence for this segment's duration
-            # Use anullsrc with atrim to create exact-duration silence, normalize format for concat compatibility
-            silence_filter = f"anullsrc=channel_layout=stereo:sample_rate=48000,atrim=0:{duration},asetpts=PTS-STARTPTS,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo[silence_{i}]"
-            filter_parts.append(silence_filter)
-            segment_audio_streams.append((f"[silence_{i}]", duration))
-            print(f"[FFmpeg] Segment {i}: Generating {duration}s of silence (audioSource='none')")
+            # Muted segment - use volume=0 on original audio to preserve actual duration
+            # This keeps audio track timing in sync with video (instead of synthetic silence based on metadata duration)
+            print(f"[FFmpeg] Segment {i}: Muting original audio with volume=0 (preserves actual duration)")
+            audio_filter = f"[{i}:a]asetpts=PTS-STARTPTS,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo,volume=0[seg_audio_{i}]"
+            filter_parts.append(audio_filter)
+            segment_audio_streams.append((f"[seg_audio_{i}]", duration))
     
     # Concatenate all video segments (video only)
     if len(video_concat_inputs) > 1:
@@ -456,9 +457,8 @@ def build_concat_ffmpeg_command(
             '-b:a', '192k',
         ])
     
-    # Set output duration based on total video length
-    total_duration = sum(seg.get('duration', 5) for seg in video_segments)
-    cmd.extend(['-t', str(total_duration)])
+    # Note: Removed forced -t duration flag to let FFmpeg determine output length
+    # from actual concatenated video/audio streams (metadata duration may not match actual file duration)
     
     # Output file
     cmd.append(output_path)

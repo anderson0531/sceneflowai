@@ -110,6 +110,15 @@ interface OptimizePromptParams {
     wardrobeAccessories?: string // Character's accessories (e.g., "gold watch, leather briefcase")
     appearanceDescription?: string // AI-generated physical appearance (race, age, hair, skin tone)
   }>
+  /** Object/prop references from the Reference Library */
+  objectReferences?: Array<{
+    id: string
+    name: string
+    description?: string
+    imageUrl?: string
+    category?: 'prop' | 'vehicle' | 'set-piece' | 'costume' | 'technology' | 'other'
+    importance?: 'critical' | 'important' | 'background'
+  }>
 }
 
 /**
@@ -575,6 +584,26 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
       prompt += `Subject & Wardrobe: ${subjectWardrobeDescriptions.join('; ')}. `
     }
     
+    // PHASE 4b: Add object/prop references from Reference Library
+    if (params.objectReferences && params.objectReferences.length > 0) {
+      // Sort by importance: critical first
+      const sortedObjects = [...params.objectReferences].sort((a, b) => {
+        const order: Record<string, number> = { critical: 0, important: 1, background: 2 }
+        return (order[a.importance || 'background'] ?? 3) - (order[b.importance || 'background'] ?? 3)
+      })
+      
+      // Build object descriptions - include description for critical/important
+      const objectDescriptions = sortedObjects.map(obj => {
+        if ((obj.importance === 'critical' || obj.importance === 'important') && obj.description) {
+          return `${obj.name} (${obj.description})`
+        }
+        return obj.name
+      })
+      
+      prompt += `Key props in scene: ${objectDescriptions.join(', ')}. `
+      console.log('[Prompt Optimizer] Added', sortedObjects.length, 'object reference(s) to prompt:', objectDescriptions)
+    }
+    
     // Add scene/environment
     prompt += promptScene
     
@@ -609,7 +638,24 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
       params.characterReferences || []
     )
     
-    const prompt = `Cinematic frame without dialogue captions, subtitles, or UI overlays. In-world signage and text visible in the scene environment is acceptable. ${integratedPrompt}
+    // Build object references section
+    let objectSection = ''
+    if (params.objectReferences && params.objectReferences.length > 0) {
+      const sortedObjects = [...params.objectReferences].sort((a, b) => {
+        const order: Record<string, number> = { critical: 0, important: 1, background: 2 }
+        return (order[a.importance || 'background'] ?? 3) - (order[b.importance || 'background'] ?? 3)
+      })
+      const objectDescriptions = sortedObjects.map(obj => {
+        if ((obj.importance === 'critical' || obj.importance === 'important') && obj.description) {
+          return `${obj.name} (${obj.description})`
+        }
+        return obj.name
+      })
+      objectSection = ` Key props in scene: ${objectDescriptions.join(', ')}.`
+      console.log('[Prompt Optimizer] Added', sortedObjects.length, 'object reference(s) to TEXT-ONLY prompt')
+    }
+    
+    const prompt = `Cinematic frame without dialogue captions, subtitles, or UI overlays. In-world signage and text visible in the scene environment is acceptable.${objectSection} ${integratedPrompt}
 
 ${visualStyle} No dialogue captions, no subtitles, no watermarks.`
 
@@ -628,7 +674,25 @@ ${visualStyle} No dialogue captions, no subtitles, no watermarks.`
     return prompt.trim()
   } else {
     // NO CHARACTERS MODE: Just scene description with style
-    const prompt = `Cinematic frame without dialogue captions, subtitles, or UI overlays. In-world signage and text visible in the scene environment is acceptable. ${cleanedAction}
+    
+    // Build object references section
+    let objectSection = ''
+    if (params.objectReferences && params.objectReferences.length > 0) {
+      const sortedObjects = [...params.objectReferences].sort((a, b) => {
+        const order: Record<string, number> = { critical: 0, important: 1, background: 2 }
+        return (order[a.importance || 'background'] ?? 3) - (order[b.importance || 'background'] ?? 3)
+      })
+      const objectDescriptions = sortedObjects.map(obj => {
+        if ((obj.importance === 'critical' || obj.importance === 'important') && obj.description) {
+          return `${obj.name} (${obj.description})`
+        }
+        return obj.name
+      })
+      objectSection = ` Key props in scene: ${objectDescriptions.join(', ')}.`
+      console.log('[Prompt Optimizer] Added', sortedObjects.length, 'object reference(s) to NO CHARACTERS prompt')
+    }
+    
+    const prompt = `Cinematic frame without dialogue captions, subtitles, or UI overlays. In-world signage and text visible in the scene environment is acceptable.${objectSection} ${cleanedAction}
 
 ${visualStyle} No dialogue captions, no subtitles, no watermarks.`
 

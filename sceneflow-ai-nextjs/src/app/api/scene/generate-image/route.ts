@@ -227,7 +227,9 @@ export async function POST(req: NextRequest) {
       selectedCharacters = [], // Legacy support - array or extracted from object
       quality = 'auto',
       personGeneration,       // NEW: Optional personGeneration setting (default: 'allow_adult')
-      characterWardrobes = [] // NEW: Scene-level wardrobe overrides - array of { characterId, wardrobeId }
+      characterWardrobes = [], // NEW: Scene-level wardrobe overrides - array of { characterId, wardrobeId }
+      sceneReferences = [],   // NEW: Scene backdrop references from Reference Library
+      objectReferences = []   // NEW: Prop/object references from Reference Library
     } = body
     
     // Handle both legacy (selectedCharacters) and new (characters) formats
@@ -587,7 +589,8 @@ export async function POST(req: NextRequest) {
           sceneAction: customPrompt,  // Use custom prompt as base (preserves user edits)
           visualDescription: customPrompt,
           characterReferences: characterReferences,
-          artStyle: artStyle || 'photorealistic'
+          artStyle: artStyle || 'photorealistic',
+          objectReferences: objectReferences  // Include object references from Reference Library
         })
         console.log('[Scene Image] Added character references to user-edited prompt (re-optimized)')
       }
@@ -597,9 +600,13 @@ export async function POST(req: NextRequest) {
         sceneAction: fullSceneContext,
         visualDescription: fullSceneContext,
         characterReferences: characterReferences,
-        artStyle: artStyle || 'photorealistic'
+        artStyle: artStyle || 'photorealistic',
+        objectReferences: objectReferences  // Include object references from Reference Library
       })
       console.log('[Scene Image] Optimized scene description prompt')
+      if (objectReferences.length > 0) {
+        console.log('[Scene Image] Included', objectReferences.length, 'object reference(s) in prompt optimization')
+      }
     }
 
     // Validate we have a prompt to send to the model

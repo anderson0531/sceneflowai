@@ -5526,6 +5526,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           referenceImageUrl: c.referenceImage ? c.referenceImage.substring(0, 50) + '...' : 'none' 
         })))
       
+      // Log object references if provided
+      if (promptData.objectReferences?.length > 0) {
+        console.log('[generateSceneImage] Object references being sent:', 
+          promptData.objectReferences.map((o: any) => ({ 
+            name: o.name, 
+            hasImage: !!o.imageUrl,
+            importance: o.importance 
+          })))
+      }
+      
       console.log('[handleGenerateSceneImage] Making API call to /api/scene/generate-image...')
       const requestBody = { 
         projectId: projectId,
@@ -5538,6 +5548,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         shotType: promptData.shotType,
         cameraAngle: promptData.cameraAngle,
         lighting: promptData.lighting,
+        // Reference library data
+        sceneReferences: promptData.sceneReferences,
+        objectReferences: promptData.objectReferences,
         characters: sceneCharacters,  // Characters array
         quality: imageQuality
       }

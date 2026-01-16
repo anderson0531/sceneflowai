@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
 import { Copy, Check, Sparkles, Info, Loader2, ChevronDown, ChevronUp, Image as ImageIcon, Box } from 'lucide-react'
 import { artStylePresets } from '@/constants/artStylePresets'
-import { findSceneCharacters } from '../../lib/character/matching'
+import { findSceneCharacters, findSceneObjects } from '../../lib/character/matching'
 import { DetailedSceneDirection } from '@/types/scene-direction'
 import { VisualReference } from '@/types/visionReferences'
 
@@ -146,6 +146,7 @@ export function ScenePromptBuilder({
   // Reference Library state
   const [selectedSceneRefIds, setSelectedSceneRefIds] = useState<string[]>([])
   const [selectedObjectRefIds, setSelectedObjectRefIds] = useState<string[]>([])
+  const [autoDetectedObjectIds, setAutoDetectedObjectIds] = useState<string[]>([])  // Track auto-detected objects
   const [referenceLibraryOpen, setReferenceLibraryOpen] = useState(false)
   const [structure, setStructure] = useState<ScenePromptStructure>({
     location: '',
@@ -195,6 +196,29 @@ export function ScenePromptBuilder({
       
       if (detectedChars.length > 0) {
         updates.characters = detectedChars.map((c: any) => c.name)
+      }
+    }
+    
+    // AUTO-DETECT AND PRE-SELECT OBJECTS using smart matching
+    if (objectReferences && objectReferences.length > 0) {
+      const sceneText = [
+        scene.heading || '',
+        scene.action || '',
+        scene.visualDescription || '',
+        scene.sceneDirection?.scene?.keyProps?.join(' ') || ''
+      ].join(' ')
+      
+      const detectedObjects = findSceneObjects(
+        sceneText, 
+        objectReferences as any[], 
+        scene.sceneNumber
+      )
+      
+      if (detectedObjects.length > 0) {
+        const detectedIds = detectedObjects.map((obj: any) => obj.id)
+        setSelectedObjectRefIds(detectedIds)
+        setAutoDetectedObjectIds(detectedIds)  // Track which were auto-detected
+        console.log('[ScenePromptBuilder] Auto-detected objects:', detectedObjects.map((o: any) => o.name))
       }
     }
     
@@ -382,7 +406,7 @@ export function ScenePromptBuilder({
     }
     
     setStructure(prev => ({ ...prev, ...updates }))
-  }, [open, scene, availableCharacters])
+  }, [open, scene, availableCharacters, objectReferences])
 
   // Sync to advanced mode when switching
   useEffect(() => {
@@ -524,8 +548,25 @@ export function ScenePromptBuilder({
     // Object/prop references (from Reference Library)
     const selectedObjectRefs = objectReferences.filter(r => selectedObjectRefIds.includes(r.id))
     if (selectedObjectRefs.length > 0) {
-      const objectNames = selectedObjectRefs.map(r => r.name).join(', ')
-      parts.push(`featuring ${objectNames}`)
+      // Sort by importance: critical first, then important, then background
+      const sortedObjects = [...selectedObjectRefs].sort((a, b) => {
+        const order: Record<string, number> = { critical: 0, important: 1, background: 2 }
+        return (order[a.importance || 'background'] ?? 3) - (order[b.importance || 'background'] ?? 3)
+      })
+      
+      // Build object descriptions - include description for critical/important objects
+      const objectDescriptions = sortedObjects.map(obj => {
+        if ((obj.importance === 'critical' || obj.importance === 'important') && obj.description) {
+          return `${obj.name} (${obj.description})`
+        }
+        return obj.name
+      })
+      
+      if (objectDescriptions.length === 1) {
+        parts.push(`featuring the ${objectDescriptions[0]}`)
+      } else {
+        parts.push(`featuring props: ${objectDescriptions.join(', ')}`)
+      }
     }
     
     // Additional details
@@ -585,7 +626,9 @@ export function ScenePromptBuilder({
         name: ref.name,
         description: ref.description,
         imageUrl: ref.imageUrl,
-        type: 'object' as const
+        type: 'object' as const,
+        category: ref.category,      // prop, vehicle, set-piece, etc.
+        importance: ref.importance   // critical, important, background
       }))
     }
     
@@ -859,46 +902,64 @@ export function ScenePromptBuilder({
                         <label className="text-xs text-gray-400 flex items-center gap-1 mb-2">
                           <Box className="w-3 h-3" />
                           Props & Objects
+                          {autoDetectedObjectIds.length > 0 && (
+                            <span className="text-green-400 ml-2">
+                              ({autoDetectedObjectIds.length} auto-detected)
+                            </span>
+                          )}
                         </label>
                         <div className="grid grid-cols-4 gap-2">
-                          {objectReferences.map(ref => (
-                            <button
-                              key={ref.id}
-                              onClick={() => {
-                                setSelectedObjectRefIds(prev => 
-                                  prev.includes(ref.id) 
-                                    ? prev.filter(id => id !== ref.id)
-                                    : [...prev, ref.id]
-                                )
-                              }}
-                              className={`relative aspect-square rounded overflow-hidden border-2 transition-all ${
-                                selectedObjectRefIds.includes(ref.id)
-                                  ? 'border-purple-500 ring-2 ring-purple-500/50'
-                                  : 'border-gray-700 hover:border-gray-500'
-                              }`}
-                              title={ref.description || ref.name}
-                            >
-                              {ref.imageUrl ? (
-                                <img
-                                  src={ref.imageUrl}
-                                  alt={ref.name}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-full h-full bg-gray-700 flex items-center justify-center">
-                                  <Box className="w-4 h-4 text-gray-500" />
+                          {objectReferences.map(ref => {
+                            const isSelected = selectedObjectRefIds.includes(ref.id)
+                            const isAutoDetected = autoDetectedObjectIds.includes(ref.id)
+                            return (
+                              <button
+                                key={ref.id}
+                                onClick={() => {
+                                  setSelectedObjectRefIds(prev => 
+                                    prev.includes(ref.id) 
+                                      ? prev.filter(id => id !== ref.id)
+                                      : [...prev, ref.id]
+                                  )
+                                }}
+                                className={`relative aspect-square rounded overflow-hidden border-2 transition-all ${
+                                  isSelected
+                                    ? 'border-purple-500 ring-2 ring-purple-500/50'
+                                    : 'border-gray-700 hover:border-gray-500'
+                                }`}
+                                title={ref.description || ref.name}
+                              >
+                                {ref.imageUrl ? (
+                                  <img
+                                    src={ref.imageUrl}
+                                    alt={ref.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                                    <Box className="w-4 h-4 text-gray-500" />
+                                  </div>
+                                )}
+                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1">
+                                  <div className="text-[9px] text-white truncate">{ref.name}</div>
+                                  {isAutoDetected && isSelected && (
+                                    <div className="text-[8px] text-green-400">✓ Auto-detected</div>
+                                  )}
                                 </div>
-                              )}
-                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1">
-                                <div className="text-[9px] text-white truncate">{ref.name}</div>
-                              </div>
-                              {selectedObjectRefIds.includes(ref.id) && (
-                                <div className="absolute top-1 right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
-                                  <Check className="w-3 h-3 text-white" />
-                                </div>
-                              )}
-                            </button>
-                          ))}
+                                {isSelected && (
+                                  <div className="absolute top-1 right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
+                                    <Check className="w-3 h-3 text-white" />
+                                  </div>
+                                )}
+                                {/* Show importance badge for critical objects */}
+                                {ref.importance === 'critical' && (
+                                  <div className="absolute top-1 left-1 px-1 py-0.5 bg-red-500/80 rounded text-[8px] text-white">
+                                    Critical
+                                  </div>
+                                )}
+                              </button>
+                            )
+                          })}
                         </div>
                       </div>
                     )}
