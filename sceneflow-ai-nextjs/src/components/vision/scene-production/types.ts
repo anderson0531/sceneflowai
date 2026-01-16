@@ -373,15 +373,71 @@ export interface SegmentKeyframeSettings {
   useAutoDetect: boolean
 }
 
+// ============================================================================
+// Production Stream Types - Multi-Language Video Production
+// ============================================================================
+
+/**
+ * Audio mix configuration for a production stream
+ * Stores the timing and volume settings used during render
+ */
+export interface ProductionAudioMixConfig {
+  narration: { enabled: boolean; volume: number; startOffset: number }
+  dialogue: { enabled: boolean; volume: number; startOffset: number }
+  music: { enabled: boolean; volume: number; startOffset: number }
+  sfx: { enabled: boolean; volume: number; startOffset: number }
+  segmentAudio: { enabled: boolean; volume: number }
+}
+
+/**
+ * Production stream status
+ */
+export type ProductionStreamStatus = 'pending' | 'rendering' | 'complete' | 'failed' | 'stale'
+
+/**
+ * A rendered production stream for a specific language
+ * Enables multiple language versions of the same scene
+ */
+export interface ProductionStream {
+  /** Unique identifier for this production stream */
+  id: string
+  /** Language code (e.g., 'en', 'th', 'es') */
+  language: string
+  /** Human-readable language name (e.g., 'English', 'Thai', 'Spanish') */
+  languageLabel: string
+  /** URL of the rendered MP4 video (null until render completes) */
+  mp4Url?: string | null
+  /** Audio mix configuration used for this render */
+  audioMixConfig?: ProductionAudioMixConfig
+  /** Resolution of the rendered video */
+  resolution?: '720p' | '1080p' | '4K'
+  /** ISO timestamp when stream was created */
+  createdAt?: string
+  /** ISO timestamp when rendering started */
+  startedAt?: string
+  /** ISO timestamp when rendering completed */
+  completedAt?: string
+  /** Total duration in seconds */
+  duration?: number
+  /** Current status of the production stream */
+  status: ProductionStreamStatus
+  /** Hash of segments + audio for staleness detection */
+  sourceHash?: string
+  /** Error message if status is 'failed' */
+  error?: string
+}
+
 export interface SceneProductionData {
   isSegmented: boolean
   targetSegmentDuration: number
   segments: SceneSegment[]
   lastGeneratedAt?: string | null
-  /** URL of the rendered scene MP4 (combined segments + audio) */
+  /** @deprecated Use productionStreams instead. Kept for backwards compatibility. */
   renderedSceneUrl?: string | null
-  /** Timestamp when the scene was last rendered */
+  /** @deprecated Use productionStreams instead. Kept for backwards compatibility. */
   renderedAt?: string | null
+  /** Multi-language production streams */
+  productionStreams?: ProductionStream[]
 }
 
 export interface SceneProductionReferences {

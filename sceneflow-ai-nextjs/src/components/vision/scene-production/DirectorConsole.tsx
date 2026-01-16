@@ -52,13 +52,16 @@ import type {
   SelectedAudioTracks,
   AudioTrackTimingSettings,
   SceneAudioConfig,
+  ProductionStream,
 } from './types'
 import { DirectorDialog } from './DirectorDialog'
 import { VideoEditingDialog } from './VideoEditingDialog'
 import { SceneVideoPlayer } from './SceneVideoPlayer'
 import { SceneRenderDialog } from './SceneRenderDialog'
+import { ProductionStreamsPanel } from './ProductionStreamsPanel'
 import { useVideoQueue } from '@/hooks/useVideoQueue'
 import type { SceneAudioData } from './GuidePromptEditor'
+import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 
 // Default audio track selection state
 const DEFAULT_AUDIO_TRACKS: SelectedAudioTracks = {
@@ -205,6 +208,14 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   // Scene video player for rendered MP4
   const [isRenderedScenePlayerOpen, setIsRenderedScenePlayerOpen] = useState(false)
   
+  // Production streams state - multi-language video renders
+  const [productionStreams, setProductionStreams] = useState<ProductionStream[]>(
+    productionData?.productionStreams || []
+  )
+  const [renderingStreamId, setRenderingStreamId] = useState<string | null>(null)
+  const [streamRenderProgress, setStreamRenderProgress] = useState(0)
+  const [selectedStreamLanguage, setSelectedStreamLanguage] = useState('en')
+  
   // Segment-specific playback: start player at this segment index
   const [playFromSegmentIndex, setPlayFromSegmentIndex] = useState<number>(0)
   
@@ -336,6 +347,100 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
       setSelectedSegment(segment)
     }
   }, [segments])
+  
+  // === Production Streams Handlers ===
+  
+  // Render a new production stream for a specific language
+  const handleRenderProduction = useCallback(async (language: string, resolution: '720p' | '1080p' | '4K') => {
+    const languageInfo = SUPPORTED_LANGUAGES.find(l => l.code === language)
+    const streamId = `stream-${language}-${Date.now()}`
+    
+    // Create new stream entry
+    const newStream: ProductionStream = {
+      id: streamId,
+      language,
+      languageLabel: languageInfo?.name || language,
+      status: 'rendering',
+      resolution,
+      createdAt: new Date().toISOString(),
+    }
+    
+    setProductionStreams(prev => [...prev, newStream])
+    setRenderingStreamId(streamId)
+    setStreamRenderProgress(0)
+    setSelectedStreamLanguage(language)
+    
+    // Open the render dialog with the selected language
+    setIsRenderDialogOpen(true)
+  }, [])
+  
+  // Delete a production stream
+  const handleDeleteStream = useCallback((streamId: string) => {
+    setProductionStreams(prev => prev.filter(s => s.id !== streamId))
+  }, [])
+  
+  // Re-render an existing production stream
+  const handleReRenderStream = useCallback(async (streamId: string) => {
+    const stream = productionStreams.find(s => s.id === streamId)
+    if (!stream) return
+    
+    // Update stream status to rendering
+    setProductionStreams(prev => prev.map(s => 
+      s.id === streamId 
+        ? { ...s, status: 'rendering' as const, mp4Url: undefined }
+        : s
+    ))
+    setRenderingStreamId(streamId)
+    setStreamRenderProgress(0)
+    setSelectedStreamLanguage(stream.language)
+    
+    // Open render dialog
+    setIsRenderDialogOpen(true)
+  }, [productionStreams])
+  
+  // Preview a production stream
+  const handlePreviewStream = useCallback((streamId: string, mp4Url: string) => {
+    const stream = productionStreams.find(s => s.id === streamId)
+    if (stream) {
+      setRenderedSceneUrl(mp4Url)
+      setIsRenderedScenePlayerOpen(true)
+    }
+  }, [productionStreams])
+  
+  // Download a production stream
+  const handleDownloadStream = useCallback((streamId: string, mp4Url: string, language: string) => {
+    const link = document.createElement('a')
+    link.href = mp4Url
+    link.download = `scene-${sceneNumber}-${language}.mp4`
+    link.click()
+  }, [sceneNumber])
+  
+  // Update stream when render completes
+  const handleRenderComplete = useCallback((downloadUrl: string) => {
+    console.log('[DirectorConsole] Scene render complete:', downloadUrl)
+    setRenderedSceneUrl(downloadUrl)
+    
+    // If we were rendering a specific stream, update it
+    if (renderingStreamId) {
+      setProductionStreams(prev => prev.map(s => 
+        s.id === renderingStreamId 
+          ? { 
+              ...s, 
+              status: 'complete' as const, 
+              mp4Url: downloadUrl,
+              completedAt: new Date().toISOString(),
+            }
+          : s
+      ))
+      setRenderingStreamId(null)
+      setStreamRenderProgress(0)
+    }
+    
+    // Persist to database
+    if (onRenderedSceneUrlChange) {
+      onRenderedSceneUrlChange(downloadUrl)
+    }
+  }, [renderingStreamId, onRenderedSceneUrlChange])
   
   // Count segments by status
   const statusCounts = {
@@ -1134,6 +1239,26 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           Click any segment to customize its generation settings before batch rendering.
         </div>
       </div>
+      
+      {/* Production Streams Section - Multi-language video renders */}
+      {statusCounts.rendered > 0 && (
+        <div className="mt-4 p-4 bg-slate-800/50 rounded-lg border border-purple-500/30">
+          <ProductionStreamsPanel
+            productionStreams={productionStreams}
+            selectedLanguage={selectedStreamLanguage}
+            onRenderProduction={handleRenderProduction}
+            onDeleteStream={handleDeleteStream}
+            onReRenderStream={handleReRenderStream}
+            onPreviewStream={handlePreviewStream}
+            onDownloadStream={handleDownloadStream}
+            isRendering={!!renderingStreamId}
+            renderingStreamId={renderingStreamId}
+            renderProgress={streamRenderProgress}
+            hasSegmentChanges={false}
+            disabled={isRendering}
+          />
+        </div>
+      )}
 
       {/* DirectorDialog Modal */}
       {selectedSegment && (
@@ -1251,14 +1376,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           sfxUrl: scene?.sfx?.find(s => s.audioUrl)?.audioUrl,
           sfxDuration: 5, // TODO: Calculate from audio file
         }}
-        onRenderComplete={(downloadUrl) => {
-          console.log('[DirectorConsole] Scene render complete:', downloadUrl)
-          setRenderedSceneUrl(downloadUrl)
-          // Persist to database
-          if (onRenderedSceneUrlChange) {
-            onRenderedSceneUrlChange(downloadUrl)
-          }
-        }}
+        onRenderComplete={handleRenderComplete}
       />
       
       {/* Rendered Scene MP4 Player Modal */}

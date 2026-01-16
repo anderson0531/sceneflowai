@@ -28,6 +28,9 @@ export type { SceneBible, ProposedSegment, BuilderPhase } from './SegmentBuilder
 export { SegmentPreviewTimeline } from './SegmentPreviewTimeline'
 export { SegmentPromptEditor } from './SegmentPromptEditor'
 
+// Production Streams (Multi-language render outputs)
+export { ProductionStreamsPanel } from './ProductionStreamsPanel'
+
 // Prompt utilities
 export * from './methodPromptBuilder'
 export * from './promptSyncService'
