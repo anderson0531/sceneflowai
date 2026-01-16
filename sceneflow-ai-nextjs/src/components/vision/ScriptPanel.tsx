@@ -3618,10 +3618,10 @@ function SceneCard({
           </div>
         </div>
 
-        {/* Dedicated Workflow Tabs Row - Principal Navigation */}
+        {/* Dedicated Workflow Tabs Row - Full-Width Section Header */}
         {!isOutline && (
-          <div className="flex items-center justify-center py-3 border-b border-gray-700/50 mb-2">
-            <div className="inline-flex items-center bg-gray-900/60 rounded-xl p-1.5 gap-1">
+          <div className="w-full py-3 border-b border-gray-700/50 mb-2">
+            <div className="flex w-full items-center bg-gray-900/60 rounded-xl p-1.5 gap-1">
               {workflowTabs.map((tab) => {
                 const status = getStepStatus(tab.key)
                 const isComplete = status === 'complete'
@@ -3645,7 +3645,7 @@ function SceneCard({
                           }}
                           disabled={isLocked}
                           className={`
-                            relative min-w-[120px] px-5 py-2.5 text-sm font-semibold rounded-lg transition-all
+                            relative flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all
                             ${isActive 
                               ? 'bg-gradient-to-r from-blue-600/30 to-purple-600/30 text-white border border-blue-500/50 shadow-lg shadow-blue-500/20' 
                               : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
@@ -3665,10 +3665,10 @@ function SceneCard({
                                 className: `w-4 h-4 ${isActive ? 'text-blue-400' : ''}` 
                               })
                             )}
-                            <span className={isStale ? 'text-amber-300' : ''}>{tab.label}</span>
+                            <span className={`${isStale ? 'text-amber-300' : ''} truncate`}>{tab.label}</span>
                           </div>
                           {isActive && (
-                            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" />
+                            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" />
                           )}
                         </button>
                       </TooltipTrigger>

@@ -356,8 +356,9 @@ def build_concat_ffmpeg_command(
         if audio_source == 'original':
             # Use original MP4 audio - normalize format for concat compatibility
             print(f"[FFmpeg] Segment {i}: Using ORIGINAL audio from MP4")
-            # Always normalize audio format to ensure concat compatibility with silence streams
-            audio_filter = f"[{i}:a]aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo"
+            # Always normalize audio format AND reset timestamps to ensure concat compatibility
+            # asetpts=PTS-STARTPTS ensures audio starts at 0 for proper concatenation with silence streams
+            audio_filter = f"[{i}:a]asetpts=PTS-STARTPTS,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo"
             if seg_audio_volume != 1.0:
                 audio_filter += f",volume={seg_audio_volume}"
             audio_filter += f"[seg_audio_{i}]"
