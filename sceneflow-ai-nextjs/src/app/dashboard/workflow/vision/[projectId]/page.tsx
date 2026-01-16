@@ -6246,6 +6246,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const updatedScenes = [...currentScenes]
           const scene = { ...updatedScenes[sceneIdx] }
           
+          // Use the language parameter for storing audio (default to 'en')
+          const targetLanguage = language || 'en'
+          
           if (audioType === 'narration') {
             // Initialize narrationAudio if it doesn't exist
             if (!scene.narrationAudio) {
@@ -6254,17 +6257,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               scene.narrationAudio = { ...scene.narrationAudio }
             }
             
-            // Store English narration audio
-            scene.narrationAudio['en'] = {
+            // Store narration audio under the target language key
+            scene.narrationAudio[targetLanguage] = {
               url: data.audioUrl,
               duration: data.duration || undefined,
               generatedAt: new Date().toISOString(),
               voiceId: voiceConfig.voiceId
             }
             
-            // Maintain backward compatibility: set narrationAudioUrl
-            scene.narrationAudioUrl = data.audioUrl
-            scene.narrationAudioGeneratedAt = new Date().toISOString()
+            // Maintain backward compatibility: set narrationAudioUrl only for English
+            if (targetLanguage === 'en') {
+              scene.narrationAudioUrl = data.audioUrl
+              scene.narrationAudioGeneratedAt = new Date().toISOString()
+            }
             
             updatedScenes[sceneIdx] = scene
           } else if (audioType === 'description') {
@@ -6274,16 +6279,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               scene.descriptionAudio = { ...scene.descriptionAudio }
             }
 
-            scene.descriptionAudio['en'] = {
+            // Store description audio under the target language key
+            scene.descriptionAudio[targetLanguage] = {
               url: data.audioUrl,
               duration: data.duration || undefined,
               generatedAt: new Date().toISOString(),
               voiceId: voiceConfig.voiceId
             }
 
-            // Maintain backward compatibility: set descriptionAudioUrl
-            scene.descriptionAudioUrl = data.audioUrl
-            scene.descriptionAudioGeneratedAt = new Date().toISOString()
+            // Maintain backward compatibility: set descriptionAudioUrl only for English
+            if (targetLanguage === 'en') {
+              scene.descriptionAudioUrl = data.audioUrl
+              scene.descriptionAudioGeneratedAt = new Date().toISOString()
+            }
 
             updatedScenes[sceneIdx] = scene
           } else if (audioType === 'dialogue' && characterName) {
@@ -6299,12 +6307,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               scene.dialogueAudio = { ...scene.dialogueAudio }
             }
             
-            // Initialize English dialogue array if it doesn't exist
-            if (!scene.dialogueAudio['en']) {
-              scene.dialogueAudio['en'] = []
+            // Initialize dialogue array for target language if it doesn't exist
+            if (!scene.dialogueAudio[targetLanguage]) {
+              scene.dialogueAudio[targetLanguage] = []
             }
             
-            const dialogueArray = [...scene.dialogueAudio['en']]
+            const dialogueArray = [...scene.dialogueAudio[targetLanguage]]
             const existingIndex = dialogueArray.findIndex((d: any) => 
               d.character === characterName && d.dialogueIndex === dialogueIndex
             )
@@ -6323,7 +6331,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               dialogueArray.push(dialogueEntry)
             }
             
-            scene.dialogueAudio['en'] = dialogueArray
+            scene.dialogueAudio[targetLanguage] = dialogueArray
             scene.dialogueAudioGeneratedAt = new Date().toISOString()
             
             updatedScenes[sceneIdx] = scene

@@ -84,7 +84,11 @@ export async function POST(req: NextRequest) {
     if (language !== 'en') {
       try {
         console.log(`[Scene Audio] Translating text to ${language}...`)
-        const translateResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/translate/google`, {
+        // Use VERCEL_URL for server-side fetch in production, fallback to NEXT_PUBLIC_BASE_URL or localhost
+        const baseUrl = process.env.VERCEL_URL 
+          ? `https://${process.env.VERCEL_URL}` 
+          : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+        const translateResponse = await fetch(`${baseUrl}/api/translate/google`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
