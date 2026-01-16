@@ -75,6 +75,15 @@ interface FrameGenerationRequest {
   // Shot metadata for keyframe rules
   previousShotType?: string      // For shot consistency on CONTINUE
   isPanTransition?: boolean      // Whether this is a pan/dolly transition
+  
+  // Object references (auto-detected from segment text for prop/set consistency)
+  objectReferences?: Array<{
+    name: string
+    description?: string
+    category?: 'prop' | 'vehicle' | 'set-piece' | 'costume' | 'technology' | 'other'
+    importance?: 'critical' | 'important' | 'background'
+    imageUrl?: string
+  }>
 }
 
 interface FrameGenerationResponse {
@@ -137,7 +146,9 @@ export async function POST(req: NextRequest) {
       // NEW: Scene direction for intelligent prompts
       sceneDirection,
       previousShotType,
-      isPanTransition = false
+      isPanTransition = false,
+      // NEW: Object references for prop consistency
+      objectReferences = []
     } = body
     
     // Use custom prompt if provided, otherwise fall back to action prompt
@@ -236,6 +247,13 @@ export async function POST(req: NextRequest) {
               ethnicity: c.ethnicity,
               age: c.age,
               wardrobe: c.wardrobe
+            })),
+            objectReferences: objectReferences.map(obj => ({
+              name: obj.name,
+              description: obj.description,
+              category: obj.category,
+              importance: obj.importance,
+              imageUrl: obj.imageUrl
             })),
           })
           
@@ -401,6 +419,13 @@ export async function POST(req: NextRequest) {
             ethnicity: c.ethnicity,
             age: c.age,
             wardrobe: c.wardrobe
+          })),
+          objectReferences: objectReferences.map(obj => ({
+            name: obj.name,
+            description: obj.description,
+            category: obj.category,
+            importance: obj.importance,
+            imageUrl: obj.imageUrl
           })),
           previousFrameDescription: `Opening frame showing: ${actionPrompt}`,
         })

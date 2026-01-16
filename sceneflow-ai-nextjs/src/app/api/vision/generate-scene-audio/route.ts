@@ -26,11 +26,12 @@ interface AudioGenerationRequest {
   voiceConfig: VoiceConfig
   characterName?: string // For dialogue
   dialogueIndex?: number // For dialogue - index of the dialog line in the scene
+  language?: string // Target language for TTS (default: 'en')
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, sceneIndex, audioType, text, voiceConfig, characterName, dialogueIndex }: AudioGenerationRequest & { text: string } = await req.json()
+    const { projectId, sceneIndex, audioType, text, voiceConfig, characterName, dialogueIndex, language: requestedLanguage }: AudioGenerationRequest & { text: string } = await req.json()
 
     // Log the request for debugging
     console.log('[Scene Audio] Request:', { 
@@ -75,9 +76,40 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Scene Audio] Generating ${audioType} for scene ${sceneIndex}`)
 
-    // Text is always in English - no translation needed
-    const language = 'en'
+    // Use requested language or default to English
+    const language = requestedLanguage || 'en'
     let textToGenerate = text
+
+    // Translate text if non-English language is requested
+    if (language !== 'en') {
+      try {
+        console.log(`[Scene Audio] Translating text to ${language}...`)
+        const translateResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/translate/google`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: textToGenerate,
+            targetLanguage: language,
+            sourceLanguage: 'en'
+          })
+        })
+        
+        if (translateResponse.ok) {
+          const translateData = await translateResponse.json()
+          if (translateData.translatedText) {
+            console.log(`[Scene Audio] Translation successful:`, {
+              original: textToGenerate.substring(0, 50),
+              translated: translateData.translatedText.substring(0, 50)
+            })
+            textToGenerate = translateData.translatedText
+          }
+        } else {
+          console.warn(`[Scene Audio] Translation failed, using original text:`, await translateResponse.text())
+        }
+      } catch (translateError) {
+        console.error(`[Scene Audio] Translation error, using original text:`, translateError)
+      }
+    }
 
     // Step 2: Optimize text for TTS (remove stage directions, clean up)
     const optimized = optimizeTextForTTS(textToGenerate)

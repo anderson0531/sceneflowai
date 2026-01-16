@@ -12,8 +12,9 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { CheckCircle2, AlertCircle, XCircle, Loader, Sparkles } from 'lucide-react'
+import { CheckCircle2, AlertCircle, XCircle, Loader, Sparkles, Globe } from 'lucide-react'
 import { getAvailableLanguages, hasLanguageAudio } from '@/lib/audio/languageDetection'
+import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 
 interface GenerationProgress {
   status: 'idle' | 'running' | 'completed' | 'error'
@@ -62,8 +63,8 @@ export function GenerateAudioDialog({
   mode = 'foreground',
   onRunInBackground,
 }: GenerateAudioDialogProps) {
-  // Hardcode English - multi-language support deferred
-  const selectedLanguage = 'en'
+  // Language selection for multi-language TTS support
+  const [selectedLanguage, setSelectedLanguage] = useState('en')
   const [audioTypes, setAudioTypes] = useState({
     narration: true,
     dialogue: true,
@@ -79,6 +80,8 @@ export function GenerateAudioDialog({
       setStayOpen(true)
       setIncludeCharacters(false)
       setIncludeSceneImages(false)
+      // Reset to English when dialog opens (user can change)
+      setSelectedLanguage('en')
     }
   }, [open])
 
@@ -270,6 +273,39 @@ export function GenerateAudioDialog({
               )}
             </div>
           )}
+
+          {/* Language Selection */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Globe className="w-4 h-4 text-blue-400" />
+              <label className="text-sm font-medium text-gray-200">Target Language</label>
+            </div>
+            <Select
+              value={selectedLanguage}
+              onValueChange={setSelectedLanguage}
+              disabled={isRunning}
+            >
+              <SelectTrigger className="w-full bg-gray-800 border-gray-600 text-gray-200">
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border-gray-600">
+                {SUPPORTED_LANGUAGES.map((lang) => (
+                  <SelectItem 
+                    key={lang.code} 
+                    value={lang.code}
+                    className="text-gray-200 hover:bg-gray-700 focus:bg-gray-700"
+                  >
+                    {lang.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedLanguage !== 'en' && (
+              <p className="text-xs text-amber-400">
+                ⚡ Text will be translated from English to {SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name} before generating audio
+              </p>
+            )}
+          </div>
 
           {/* Audio Types Selection */}
           <div className="space-y-3">

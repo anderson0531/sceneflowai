@@ -56,7 +56,7 @@ import ScriptReviewModal from '@/components/vision/ScriptReviewModal'
 import { SceneEditorModal } from '@/components/vision/SceneEditorModalV2'
 import { NavigationWarningDialog } from '@/components/workflow/NavigationWarningDialog'
 import { FilmTreatmentReviewModal } from '@/components/vision/FilmTreatmentReviewModal'
-import { findSceneCharacters } from '../../../../../lib/character/matching'
+import { findSceneCharacters, findSceneObjects } from '../../../../../lib/character/matching'
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 import { v4 as uuidv4 } from 'uuid'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
@@ -1695,6 +1695,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const prevSeg = productionData?.segments?.[segmentIndex - 1]
           previousEndFrameUrl = prevSeg?.endFrameUrl || prevSeg?.references?.endFrameUrl
         }
+        
+        // Auto-detect objects from segment text for prop consistency
+        const segmentText = [
+          segment.userEditedPrompt || segment.generatedPrompt || segment.action || '',
+          scene?.action || '',
+          scene?.visualDescription || ''
+        ].join(' ')
+        
+        const detectedObjects = findSceneObjects(
+          segmentText,
+          objectReferences as any[],
+          scene?.sceneNumber
+        )
 
         const response = await fetch('/api/production/generate-segment-frames', {
           method: 'POST',
@@ -1737,7 +1750,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               timeOfDay: typeof scene?.heading === 'string' 
                 ? (scene.heading.includes('NIGHT') ? 'NIGHT' : scene.heading.includes('DAY') ? 'DAY' : undefined)
                 : undefined
-            }
+            },
+            // Auto-detected object references for prop consistency
+            objectReferences: detectedObjects.map(obj => ({
+              name: obj.name,
+              description: obj.description,
+              category: obj.category,
+              importance: obj.importance,
+              imageUrl: obj.imageUrl
+            }))
           })
         })
 
@@ -6010,13 +6031,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Handle generate scene audio
   // Optional sceneOverride parameter allows passing scene data directly (avoids stale state issues in sequential operations)
   // NOTE: 'description' audioType is deprecated - scene description is now read-only context, not an audio track
-  const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue' | 'description', characterName?: string, dialogueIndex?: number, sceneOverride?: any) => {
+  const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue' | 'description', characterName?: string, dialogueIndex?: number, language?: string, sceneOverride?: any) => {
     // Debug logging for audio generation diagnostics
     console.log('[Generate Scene Audio] START:', {
       sceneIdx,
       audioType,
       characterName,
       dialogueIndex,
+      language: language || 'en',
       hasSceneOverride: !!sceneOverride,
       hasNarrationVoice: !!narrationVoice,
       narrationVoiceId: narrationVoice?.voiceId,
@@ -6201,7 +6223,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           text,
           voiceConfig,
           characterName,
-          dialogueIndex
+          dialogueIndex,
+          language: language || 'en'
         }),
       })
 
@@ -7103,8 +7126,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const task = generationTasks[i]
           try {
             if (task.type === 'description' || task.type === 'narration' || task.type === 'dialogue') {
-              // Pass cleanedScene directly to avoid stale state issues
-              await handleGenerateSceneAudio(sceneIndex, task.type, task.character, task.dialogueIndex, cleanedScene)
+              // Pass cleanedScene directly to avoid stale state issues (language defaults to 'en')
+              await handleGenerateSceneAudio(sceneIndex, task.type, task.character, task.dialogueIndex, undefined, cleanedScene)
             } else if (task.type === 'music') {
               await generateMusicForScene(sceneIndex, cleanedScene)
             } else if (task.type === 'sfx' && task.sfxIndex !== undefined) {

@@ -885,7 +885,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     audioTypes: { narration: boolean; dialogue: boolean; music: boolean; sfx: boolean },
     options?: { stayOpen: boolean; generateCharacters?: boolean; generateSceneImages?: boolean }
   ) => {
-    // Note: language param is accepted but ignored - always generate in English
+    // Pass language parameter to enable multi-language TTS with translation
     const stayOpen = options?.stayOpen ?? true
     const includeCharacters = options?.generateCharacters ?? false
     const includeSceneImages = options?.generateSceneImages ?? false
@@ -1037,7 +1037,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             message: `Generating narration for scene ${sceneIdx + 1} of ${scenes.length}`,
           } : prev)
 
-          await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined)
+          await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined, language)
 
           completedSteps += 1
           updateDialogProgress((prev) => prev ? {
@@ -1059,7 +1059,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               message: `Generating dialogue ${processedDialogue} of ${totalDialogueLines}${entry.character ? ` • ${entry.character}` : ''}`,
             } : prev)
 
-            await onGenerateSceneAudio(sceneIdx, 'dialogue', entry.character, entry.__index)
+            await onGenerateSceneAudio(sceneIdx, 'dialogue', entry.character, entry.__index, language)
 
             completedSteps += 1
             updateDialogProgress((prev) => prev ? {

@@ -64,6 +64,15 @@ export interface FramePromptRequest {
     wardrobe?: string
   }>
   
+  /** Objects/props in the segment (auto-detected from segment text) */
+  objectReferences?: Array<{
+    name: string
+    description?: string
+    category?: 'prop' | 'vehicle' | 'set-piece' | 'costume' | 'technology' | 'other'
+    importance?: 'critical' | 'important' | 'background'
+    imageUrl?: string
+  }>
+  
   /** Optional: Previous end frame description for continuity */
   previousFrameDescription?: string
 }
@@ -327,6 +336,42 @@ function buildCharacterBlock(
   return characterDescriptions.join('; ') + '. '
 }
 
+/**
+ * Build object/prop identity block for visual consistency
+ * Auto-detected objects are included to maintain prop continuity across frames
+ */
+function buildObjectBlock(
+  objectReferences: FramePromptRequest['objectReferences']
+): string {
+  if (!objectReferences?.length) return ''
+  
+  // Sort by importance: critical > important > background
+  const sortedObjects = [...objectReferences].sort((a, b) => {
+    const order: Record<string, number> = { critical: 0, important: 1, background: 2 }
+    return (order[a.importance || 'background'] ?? 3) - (order[b.importance || 'background'] ?? 3)
+  })
+  
+  // Limit to top 3 objects to avoid prompt bloat
+  const topObjects = sortedObjects.slice(0, 3)
+  
+  const objectDescriptions = topObjects
+    .map(obj => {
+      // For critical/important objects, include description if available
+      if ((obj.importance === 'critical' || obj.importance === 'important') && obj.description) {
+        // Keep description concise
+        const shortDesc = obj.description.length > 50 
+          ? obj.description.substring(0, 50).trim() + '...' 
+          : obj.description
+        return `${obj.name} (${shortDesc})`
+      }
+      return obj.name
+    })
+  
+  if (objectDescriptions.length === 0) return ''
+  
+  return `Key props: ${objectDescriptions.join(', ')}. `
+}
+
 // ============================================================================
 // Main Builder
 // ============================================================================
@@ -345,6 +390,7 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
     sceneDirection,
     keyframeContext,
     characters,
+    objectReferences,
     previousFrameDescription
   } = request
   
@@ -396,22 +442,28 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
     promptParts.push(characterBlock)
   }
   
-  // 7. Core action/visual content
+  // 7. Object/prop identities (auto-detected from segment text)
+  const objectBlock = buildObjectBlock(objectReferences)
+  if (objectBlock) {
+    promptParts.push(objectBlock)
+  }
+  
+  // 8. Core action/visual content
   promptParts.push(actionPrompt.trim())
   
-  // 8. Talent/performance direction (critical for emotion)
+  // 9. Talent/performance direction (critical for emotion)
   const talentBlock = buildTalentBlock(sceneDirection?.talent, actionPrompt)
   if (talentBlock) {
     promptParts.push(' ' + talentBlock)
   }
   
-  // 9. Atmosphere
+  // 10. Atmosphere
   const atmosphereBlock = buildAtmosphereBlock(sceneDirection?.scene)
   if (atmosphereBlock) {
     promptParts.push(atmosphereBlock)
   }
   
-  // 10. Quality suffix
+  // 11. Quality suffix
   promptParts.push('Cinematic quality, 8K, photorealistic.')
   
   // Determine reference image usage
