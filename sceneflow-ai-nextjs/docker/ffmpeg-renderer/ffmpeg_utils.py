@@ -350,6 +350,9 @@ def build_concat_ffmpeg_command(
         seg_audio_volume = segment.get('audioVolume', segment_audio_volume)
         duration = segment.get('duration', 5)
         
+        # Debug: Log per-segment audio settings
+        print(f"[FFmpeg] Segment {i}: audioSource='{audio_source}', volume={seg_audio_volume}, duration={duration}")
+        
         if audio_source == 'original':
             # Use original MP4 audio
             if seg_audio_volume != 1.0:

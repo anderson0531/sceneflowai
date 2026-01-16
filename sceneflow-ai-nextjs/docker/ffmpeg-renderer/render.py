@@ -276,6 +276,13 @@ def main():
         include_segment_audio = job_spec.get('includeSegmentAudio', True)
         segment_audio_volume = job_spec.get('segmentAudioVolume', 1.0)
         log(f"Video Segments: {len(video_segments)}")
+        
+        # Debug: Log per-segment audio settings from job spec
+        for i, seg in enumerate(video_segments):
+            audio_src = seg.get('audioSource', 'original')
+            audio_vol = seg.get('audioVolume', 1.0)
+            log(f"  Segment {i}: audioSource='{audio_src}', audioVolume={audio_vol}")
+        
         log(f"Audio clips: {len(audio_clips)}")
         log(f"Include Segment Audio: {include_segment_audio}")
         log(f"Segment Audio Volume: {segment_audio_volume}")
