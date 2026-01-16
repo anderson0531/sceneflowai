@@ -277,6 +277,8 @@ def build_concat_ffmpeg_command(
     resolution: str = '1080p',
     fps: int = 24,
     temp_dir: str = '/tmp',
+    include_segment_audio: bool = True,
+    segment_audio_volume: float = 1.0,
 ) -> List[str]:
     """
     Build FFmpeg command for concatenating video segments with audio mixing.
@@ -291,6 +293,8 @@ def build_concat_ffmpeg_command(
         resolution: Output resolution ('720p', '1080p', '4K')
         fps: Output frames per second
         temp_dir: Directory containing downloaded assets
+        include_segment_audio: Whether to include audio from video segments
+        segment_audio_volume: Volume level for segment audio (0.0 to 1.0)
     
     Returns:
         FFmpeg command as list of arguments
@@ -314,9 +318,10 @@ def build_concat_ffmpeg_command(
     # Build filter complex
     filter_parts = []
     
-    # Scale and normalize all video inputs, and prepare audio from each segment
+    # Scale and normalize all video inputs, and optionally prepare audio from each segment
     video_concat_inputs = []
-    audio_concat_inputs = []
+    segment_audio_streams = []  # Track audio streams with their per-segment settings
+    
     for i, segment in enumerate(video_segments):
         # Scale to target resolution and set framerate
         filter_str = (
@@ -326,8 +331,23 @@ def build_concat_ffmpeg_command(
         )
         filter_parts.append(filter_str)
         video_concat_inputs.append(f"[v{i}]")
-        # Reference audio stream from each video segment
-        audio_concat_inputs.append(f"[{i}:a]")
+        
+        # Check per-segment audio settings (with fallback to global settings)
+        seg_include_audio = segment.get('includeAudio', include_segment_audio)
+        seg_audio_volume = segment.get('audioVolume', segment_audio_volume)
+        
+        if seg_include_audio:
+            # Apply per-segment volume adjustment
+            if seg_audio_volume != 1.0:
+                filter_parts.append(f"[{i}:a]volume={seg_audio_volume}[seg_audio_{i}]")
+                segment_audio_streams.append((f"[seg_audio_{i}]", segment.get('duration', 5)))
+            else:
+                segment_audio_streams.append((f"[{i}:a]", segment.get('duration', 5)))
+        else:
+            # Generate silence for this segment's duration
+            duration = segment.get('duration', 5)
+            filter_parts.append(f"anullsrc=channel_layout=stereo:sample_rate=48000,atrim=0:{duration}[silence_{i}]")
+            segment_audio_streams.append((f"[silence_{i}]", duration))
     
     # Concatenate all video segments (video only)
     if len(video_concat_inputs) > 1:
@@ -337,17 +357,22 @@ def build_concat_ffmpeg_command(
     else:
         video_output = "[v0]"
     
-    # Concatenate all source audio from video segments
-    if len(audio_concat_inputs) > 1:
-        src_audio_concat = f"{''.join(audio_concat_inputs)}concat=n={len(video_segments)}:v=0:a=1[src_audio]"
-        filter_parts.append(src_audio_concat)
-        src_audio_output = "[src_audio]"
-    else:
-        src_audio_output = "[0:a]"
+    # Initialize audio tracking
+    src_audio_output = None
+    all_audio_inputs = []
+    
+    # Concatenate all segment audio streams (with silence for excluded segments)
+    if include_segment_audio and len(segment_audio_streams) > 0:
+        if len(segment_audio_streams) > 1:
+            audio_stream_refs = ''.join([s[0] for s in segment_audio_streams])
+            src_audio_concat = f"{audio_stream_refs}concat=n={len(segment_audio_streams)}:v=0:a=1[src_audio]"
+            filter_parts.append(src_audio_concat)
+            src_audio_output = "[src_audio]"
+        else:
+            src_audio_output = segment_audio_streams[0][0]
+        all_audio_inputs.append(src_audio_output)
     
     # Audio mixing: combine source audio with overlay audio clips
-    all_audio_inputs = [src_audio_output]  # Start with concatenated source audio
-    
     if audio_clips:
         for i, clip in enumerate(audio_clips):
             input_idx = audio_inputs_start + i
@@ -360,14 +385,17 @@ def build_concat_ffmpeg_command(
             filter_parts.append(audio_filter)
             all_audio_inputs.append(f"[overlay_a{i}]")
     
-    # Mix all audio tracks (source + overlay)
+    # Mix all audio tracks (source + overlay) or use single source
     if len(all_audio_inputs) > 1:
         mix_filter = f"{''.join(all_audio_inputs)}amix=inputs={len(all_audio_inputs)}:duration=longest:normalize=0[outa]"
         filter_parts.append(mix_filter)
         audio_output = "[outa]"
+    elif len(all_audio_inputs) == 1:
+        # Only one audio source (either segment audio or single overlay)
+        audio_output = all_audio_inputs[0]
     else:
-        # Only source audio, no overlay
-        audio_output = src_audio_output
+        # No audio at all
+        audio_output = None
     
     # Add filter complex to command
     if filter_parts:

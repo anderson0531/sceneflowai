@@ -273,10 +273,14 @@ def main():
     if render_mode == 'concatenate':
         # Video concatenation mode (for scene renders)
         video_segments = job_spec.get('videoSegments', [])
+        include_segment_audio = job_spec.get('includeSegmentAudio', True)
+        segment_audio_volume = job_spec.get('segmentAudioVolume', 1.0)
         log(f"Video Segments: {len(video_segments)}")
         log(f"Audio clips: {len(audio_clips)}")
+        log(f"Include Segment Audio: {include_segment_audio}")
+        log(f"Segment Audio Volume: {segment_audio_volume}")
         render_video_concatenation(job_id, video_segments, audio_clips, output_path_gcs, 
-                                   resolution, fps, callback_url)
+                                   resolution, fps, callback_url, include_segment_audio, segment_audio_volume)
     else:
         # Ken Burns mode (for project renders with images)
         segments = job_spec.get('segments', [])
@@ -361,7 +365,8 @@ def render_ken_burns(job_id: str, segments: list, audio_clips: list,
 
 
 def render_video_concatenation(job_id: str, video_segments: list, audio_clips: list,
-                               output_path_gcs: str, resolution: str, fps: int, callback_url: str):
+                               output_path_gcs: str, resolution: str, fps: int, callback_url: str,
+                               include_segment_audio: bool = True, segment_audio_volume: float = 1.0):
     """Render by concatenating video segments with audio mixing."""
     
     # Send processing status
@@ -419,6 +424,8 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
         resolution=resolution,
         fps=fps,
         temp_dir=TEMP_DIR,
+        include_segment_audio=include_segment_audio,
+        segment_audio_volume=segment_audio_volume,
     )
     
     log(f"FFmpeg command length: {len(ffmpeg_cmd)} args")

@@ -12,7 +12,7 @@
 
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -47,6 +47,8 @@ import {
   CheckCircle2,
   Globe,
   Video,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 import type { SceneSegment, SceneProductionData } from './types'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
@@ -110,8 +112,25 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
   const [sfxVolume, setSfxVolume] = useState(0.6)
   const [segmentAudioVolume, setSegmentAudioVolume] = useState(0.7)
   
+  // Per-segment audio settings: { [segmentId]: { includeAudio: boolean, volume: number } }
+  const [segmentAudioSettings, setSegmentAudioSettings] = useState<Record<string, { includeAudio: boolean; volume: number }>>({})
+  
+  // Initialize per-segment audio settings when segments change
+  useEffect(() => {
+    const newSettings: Record<string, { includeAudio: boolean; volume: number }> = {}
+    segments.forEach(s => {
+      if (s.activeAssetUrl && s.status === 'COMPLETE') {
+        newSettings[s.segmentId] = segmentAudioSettings[s.segmentId] || { includeAudio: true, volume: 1.0 }
+      }
+    })
+    setSegmentAudioSettings(newSettings)
+  }, [segments]) // eslint-disable-line react-hooks/exhaustive-deps
+  
   // Language selection
   const [selectedLanguage, setSelectedLanguage] = useState('en')
+  
+  // Per-segment audio expanded state
+  const [showPerSegmentAudio, setShowPerSegmentAudio] = useState(false)
   
   // Output settings
   const [resolution, setResolution] = useState<'720p' | '1080p' | '4K'>('1080p')
@@ -210,14 +229,19 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
     setDownloadUrl(null)
 
     try {
-      // Build request payload
-      const segmentData = renderedSegments.map(s => ({
-        segmentId: s.segmentId,
-        sequenceIndex: s.sequenceIndex,
-        videoUrl: s.activeAssetUrl!,
-        startTime: s.startTime,
-        endTime: s.endTime,
-      }))
+      // Build request payload with per-segment audio settings
+      const segmentData = renderedSegments.map(s => {
+        const audioSettings = segmentAudioSettings[s.segmentId] || { includeAudio: true, volume: 1.0 }
+        return {
+          segmentId: s.segmentId,
+          sequenceIndex: s.sequenceIndex,
+          videoUrl: s.activeAssetUrl!,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          includeAudio: audioSettings.includeAudio,
+          audioVolume: audioSettings.volume,
+        }
+      })
 
       // Build audio tracks
       const audioTracks: {
@@ -454,17 +478,74 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
                   />
                 </div>
                 {includeSegmentAudio && (
-                  <div className="flex items-center gap-3 pt-1">
-                    <Slider
-                      value={[segmentAudioVolume * 100]}
-                      onValueChange={([val]) => setSegmentAudioVolume(val / 100)}
-                      max={100}
-                      step={1}
+                  <>
+                    <div className="flex items-center gap-3 pt-1">
+                      <span className="text-xs text-slate-500 w-14">Master</span>
+                      <Slider
+                        value={[segmentAudioVolume * 100]}
+                        onValueChange={([val]) => setSegmentAudioVolume(val / 100)}
+                        max={100}
+                        step={1}
+                        disabled={isRendering}
+                        className="flex-1"
+                      />
+                      <span className="text-xs text-slate-400 w-10 text-right">{Math.round(segmentAudioVolume * 100)}%</span>
+                    </div>
+                    
+                    {/* Per-segment audio controls */}
+                    <button
+                      type="button"
+                      onClick={() => setShowPerSegmentAudio(!showPerSegmentAudio)}
+                      className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 transition-colors pt-1"
                       disabled={isRendering}
-                      className="flex-1"
-                    />
-                    <span className="text-xs text-slate-400 w-10 text-right">{Math.round(segmentAudioVolume * 100)}%</span>
-                  </div>
+                    >
+                      {showPerSegmentAudio ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                      Per-Segment Controls ({renderedSegments.length} segments)
+                    </button>
+                    
+                    {showPerSegmentAudio && (
+                      <div className="space-y-2 pt-1 max-h-40 overflow-y-auto">
+                        {renderedSegments.map((segment, idx) => {
+                          const settings = segmentAudioSettings[segment.segmentId] || { includeAudio: true, volume: 1.0 }
+                          return (
+                            <div key={segment.segmentId} className="bg-slate-900/50 rounded p-2 space-y-1">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-slate-400">Segment {idx + 1}</span>
+                                <Switch
+                                  checked={settings.includeAudio}
+                                  onCheckedChange={(checked) => {
+                                    setSegmentAudioSettings(prev => ({
+                                      ...prev,
+                                      [segment.segmentId]: { ...settings, includeAudio: checked }
+                                    }))
+                                  }}
+                                  disabled={isRendering}
+                                />
+                              </div>
+                              {settings.includeAudio && (
+                                <div className="flex items-center gap-2">
+                                  <Slider
+                                    value={[settings.volume * 100]}
+                                    onValueChange={([val]) => {
+                                      setSegmentAudioSettings(prev => ({
+                                        ...prev,
+                                        [segment.segmentId]: { ...settings, volume: val / 100 }
+                                      }))
+                                    }}
+                                    max={100}
+                                    step={1}
+                                    disabled={isRendering}
+                                    className="flex-1"
+                                  />
+                                  <span className="text-xs text-slate-500 w-8 text-right">{Math.round(settings.volume * 100)}%</span>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 

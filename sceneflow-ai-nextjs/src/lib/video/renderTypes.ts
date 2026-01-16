@@ -231,6 +231,10 @@ export interface SceneRenderVideoSegment {
   startTime: number
   /** Duration in seconds */
   duration: number
+  /** Include audio from this segment (defaults to true if not specified) */
+  includeAudio?: boolean
+  /** Volume level for this segment's audio (0.0 to 1.0, defaults to 1.0) */
+  audioVolume?: number
 }
 
 /**

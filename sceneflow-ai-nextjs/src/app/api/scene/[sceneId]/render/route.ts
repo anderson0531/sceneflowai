@@ -172,13 +172,15 @@ export async function POST(
     // Generate job ID
     const jobId = uuidv4()
     
-    // Build video segments for job spec
+    // Build video segments for job spec (including per-segment audio settings)
     const videoSegments: SceneRenderVideoSegment[] = body.segments.map((seg, idx) => ({
       segmentId: seg.segmentId,
       sequenceIndex: seg.sequenceIndex,
       videoUrl: seg.videoUrl,
       startTime: seg.startTime,
       duration: seg.endTime - seg.startTime,
+      includeAudio: seg.includeAudio ?? true,
+      audioVolume: seg.audioVolume ?? 1.0,
     }))
     
     // Get volume settings from audioConfig (with defaults)
