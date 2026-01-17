@@ -709,6 +709,7 @@ function AudioTrackRow({
   audioUrl,
   audioDuration,
   videoTotalDuration,
+  segmentCount,
   subtitle,
   clipCount,
   hasAudio,
