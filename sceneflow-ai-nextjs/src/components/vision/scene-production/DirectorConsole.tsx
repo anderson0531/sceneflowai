@@ -1242,22 +1242,22 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
       </div>
       
       {/* Scene Production Mixer - Unified render workflow */}
-      {statusCounts.rendered > 0 && scene?.id && (
+      {statusCounts.rendered > 0 && sceneId && (
         <SceneProductionMixer
-          sceneId={scene.id}
+          sceneId={sceneId}
           sceneNumber={sceneNumber}
           projectId={projectId}
           segments={segments}
           productionData={productionData}
           audioAssets={{
-            narrationAudioUrl: scene.narrationAudioUrl,
-            narrationAudio: scene.narrationAudio,
-            narration: scene.narration,
-            dialogueAudio: scene.dialogueAudio,
-            dialogue: scene.dialogue,
-            musicAudio: scene.musicAudio,
-            music: scene.music,
-            sfx: scene.sfx,
+            narrationAudioUrl: scene?.narrationAudioUrl,
+            narrationAudio: scene?.narrationAudio,
+            narration: scene?.narration,
+            dialogueAudio: scene?.dialogueAudio,
+            dialogue: scene?.dialogue,
+            musicAudio: scene?.musicAudio,
+            music: scene?.music,
+            sfx: scene?.sfx,
           }}
           onRenderComplete={(downloadUrl, language) => {
             handleRenderProduction(language)
