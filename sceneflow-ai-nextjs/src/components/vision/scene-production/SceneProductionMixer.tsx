@@ -50,6 +50,7 @@ import {
 } from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
+import { MixerTimeline } from './MixerTimeline'
 import type { SceneSegment, SceneProductionData, ProductionStream } from './types'
 
 // ============================================================================
@@ -146,6 +147,40 @@ function formatTime(secs: number): string {
   const m = Math.floor(secs / 60)
   const s = Math.floor(secs % 60)
   return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+function formatTimeWithMs(secs: number): string {
+  const m = Math.floor(secs / 60)
+  const s = Math.floor(secs % 60)
+  const ms = Math.round((secs % 1) * 10)
+  return `${m}:${s.toString().padStart(2, '0')}.${ms}`
+}
+
+/**
+ * Parse time string in format "M:SS", "M:SS.s", or just seconds number
+ * Returns seconds as float, or NaN if invalid
+ */
+function parseTime(input: string): number {
+  const trimmed = input.trim()
+  
+  // Try parsing as plain number first (seconds)
+  const asNumber = parseFloat(trimmed)
+  if (!isNaN(asNumber) && !trimmed.includes(':')) {
+    return Math.max(0, asNumber)
+  }
+  
+  // Parse M:SS or M:SS.s format
+  const match = trimmed.match(/^(\d+):(\d{1,2})(?:\.(\d))?$/)
+  if (match) {
+    const minutes = parseInt(match[1], 10)
+    const seconds = parseInt(match[2], 10)
+    const tenths = match[3] ? parseInt(match[3], 10) / 10 : 0
+    if (seconds < 60) {
+      return Math.max(0, minutes * 60 + seconds + tenths)
+    }
+  }
+  
+  return NaN
 }
 
 // ============================================================================
@@ -914,6 +949,61 @@ function AudioTrackRow({
               {Math.round(config.volume * 100)}%
             </span>
           </div>
+          
+          {/* Start Time (Delay) */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-gray-500 uppercase w-16">Start At</span>
+            <div className="flex items-center gap-1 flex-1">
+              <Input
+                type="text"
+                value={formatTimeWithMs(config.startOffset)}
+                onChange={(e) => {
+                  const seconds = parseTime(e.target.value)
+                  if (!isNaN(seconds)) {
+                    onConfigChange({ ...config, startOffset: seconds })
+                  }
+                }}
+                onBlur={(e) => {
+                  // Reformat on blur to normalize input
+                  const seconds = parseTime(e.target.value)
+                  if (!isNaN(seconds)) {
+                    onConfigChange({ ...config, startOffset: seconds })
+                  }
+                }}
+                placeholder="0:00"
+                className="w-20 h-7 text-xs font-mono bg-gray-800 border-gray-600 text-center"
+                disabled={disabled}
+              />
+              <span className="text-[10px] text-gray-500">(m:ss)</span>
+            </div>
+            {/* Quick offset buttons */}
+            <div className="flex gap-1">
+              <button
+                onClick={() => onConfigChange({ ...config, startOffset: Math.max(0, config.startOffset - 1) })}
+                disabled={disabled || config.startOffset <= 0}
+                className="w-6 h-6 rounded bg-gray-700 hover:bg-gray-600 text-gray-400 text-xs disabled:opacity-40"
+              >
+                -1
+              </button>
+              <button
+                onClick={() => onConfigChange({ ...config, startOffset: config.startOffset + 1 })}
+                disabled={disabled}
+                className="w-6 h-6 rounded bg-gray-700 hover:bg-gray-600 text-gray-400 text-xs disabled:opacity-40"
+              >
+                +1
+              </button>
+            </div>
+          </div>
+          
+          {/* Timing warnings */}
+          {config.startOffset > 0 && videoTotalDuration && config.startOffset >= videoTotalDuration && (
+            <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-red-500/10 border border-red-500/30">
+              <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+              <span className="text-[11px] text-red-400">
+                Audio starts at {formatTime(config.startOffset)} but video is only {formatTime(videoTotalDuration)} long
+              </span>
+            </div>
+          )}
         </div>
       )}
       
@@ -1478,6 +1568,19 @@ export function SceneProductionMixer({
                 }
                 hasAudio={!!currentAudioUrls.music}
                 disabled={isRendering}
+              />
+              
+              {/* Timeline Overview - Visual representation of all tracks */}
+              <MixerTimeline
+                audioTracks={audioTracks}
+                onTrackChange={updateTrackConfig}
+                videoTotalDuration={videoTotalDuration}
+                narrationDuration={currentAudioUrls.narrationDuration}
+                dialogueDuration={currentAudioUrls.dialogue.reduce((sum, d) => sum + ((d as { duration?: number }).duration || 3), 0)}
+                musicDuration={30} // Music typically loops, assume 30s
+                sfxDuration={currentAudioUrls.sfx.reduce((sum, s) => sum + (s.duration || 2), 0)}
+                disabled={isRendering}
+                className="mt-4"
               />
             </div>
           </div>
