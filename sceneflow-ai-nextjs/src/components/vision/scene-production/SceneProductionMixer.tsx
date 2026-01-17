@@ -924,17 +924,21 @@ function AudioTrackRow({
 }
 
 /**
- * SegmentAudioControls - Mute/unmute individual segment audio
+ * SegmentAudioControls - Mute/unmute and volume control for individual segment audio
  */
 function SegmentAudioControls({
   segments,
   segmentConfigs,
   onConfigChange,
+  masterVolume,
+  onMasterVolumeChange,
   disabled,
 }: {
   segments: SceneSegment[]
   segmentConfigs: Record<string, SegmentAudioConfig>
   onConfigChange: (configs: Record<string, SegmentAudioConfig>) => void
+  masterVolume: number
+  onMasterVolumeChange: (volume: number) => void
   disabled?: boolean
 }) {
   const allMuted = Object.values(segmentConfigs).every(c => !c.includeAudio)
@@ -955,9 +959,18 @@ function SegmentAudioControls({
     })
   }
   
+  const updateSegmentVolume = (segmentId: string, volume: number) => {
+    const current = segmentConfigs[segmentId] || { includeAudio: true, volume: 1.0 }
+    onConfigChange({
+      ...segmentConfigs,
+      [segmentId]: { ...current, volume }
+    })
+  }
+  
   return (
-    <div className="p-3 bg-gray-800/50 rounded-lg">
-      <div className="flex items-center justify-between mb-2">
+    <div className="p-3 bg-gray-800/50 rounded-lg space-y-3">
+      {/* Header with master volume */}
+      <div className="flex items-center justify-between">
         <span className="text-xs text-gray-400 uppercase tracking-wide">Segment Audio</span>
         <button
           onClick={toggleAll}
@@ -967,24 +980,68 @@ function SegmentAudioControls({
           {allMuted ? 'Unmute All' : 'Mute All'}
         </button>
       </div>
-      <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-4 gap-2">
+      
+      {/* Master Volume Slider */}
+      <div className="flex items-center gap-3">
+        <Volume2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
+        <Slider
+          value={[masterVolume * 100]}
+          onValueChange={([v]) => onMasterVolumeChange(v / 100)}
+          max={100}
+          step={1}
+          disabled={disabled}
+          className="flex-1"
+        />
+        <span className="text-xs text-gray-400 w-10 text-right">{Math.round(masterVolume * 100)}%</span>
+      </div>
+      
+      {/* Individual Segment Controls */}
+      <div className="space-y-2">
         {segments.map((seg, i) => {
           const config = segmentConfigs[seg.segmentId] || { includeAudio: true, volume: 1.0 }
           return (
-            <button
+            <div 
               key={seg.segmentId}
-              onClick={() => toggleSegment(seg.segmentId)}
-              disabled={disabled}
               className={`
-                p-2 rounded text-xs font-medium transition-colors
+                flex items-center gap-2 p-2 rounded transition-colors
                 ${config.includeAudio 
-                  ? 'bg-purple-600/30 text-purple-300 border border-purple-500/40' 
-                  : 'bg-gray-700/50 text-gray-500 border border-gray-600/50'
+                  ? 'bg-purple-600/20 border border-purple-500/30' 
+                  : 'bg-gray-700/30 border border-gray-600/30'
                 }
               `}
             >
-              #{i + 1} {config.includeAudio ? '🔊' : '🔇'}
-            </button>
+              {/* Mute/Unmute Button */}
+              <button
+                onClick={() => toggleSegment(seg.segmentId)}
+                disabled={disabled}
+                className={`
+                  w-10 h-8 rounded text-xs font-medium transition-colors flex-shrink-0
+                  ${config.includeAudio 
+                    ? 'bg-purple-600/40 text-purple-300 hover:bg-purple-600/60' 
+                    : 'bg-gray-700/50 text-gray-500 hover:bg-gray-600/50'
+                  }
+                `}
+              >
+                #{i + 1}
+              </button>
+              
+              {/* Volume Slider (only when enabled) */}
+              {config.includeAudio ? (
+                <>
+                  <Slider
+                    value={[config.volume * 100]}
+                    onValueChange={([v]) => updateSegmentVolume(seg.segmentId, v / 100)}
+                    max={100}
+                    step={1}
+                    disabled={disabled}
+                    className="flex-1"
+                  />
+                  <span className="text-xs text-gray-400 w-10 text-right">{Math.round(config.volume * 100)}%</span>
+                </>
+              ) : (
+                <span className="flex-1 text-xs text-gray-500 italic">Muted</span>
+              )}
+            </div>
           )
         })}
       </div>
@@ -1021,6 +1078,7 @@ export function SceneProductionMixer({
   
   // === Segment Audio Configs ===
   const [segmentAudioConfigs, setSegmentAudioConfigs] = useState<Record<string, SegmentAudioConfig>>({})
+  const [masterSegmentVolume, setMasterSegmentVolume] = useState(0.8)
   
   // Initialize segment configs
   useEffect(() => {
@@ -1230,7 +1288,7 @@ export function SceneProductionMixer({
             dialogueVolume: audioTracks.dialogue.volume,
             musicVolume: audioTracks.music.volume,
             sfxVolume: audioTracks.sfx.volume,
-            segmentAudioVolume: 1.0,
+            segmentAudioVolume: masterSegmentVolume,
           },
           segments: segmentData,
           audioTracks: audioTracksPayload,
@@ -1349,6 +1407,8 @@ export function SceneProductionMixer({
                 segments={renderedSegments}
                 segmentConfigs={segmentAudioConfigs}
                 onConfigChange={setSegmentAudioConfigs}
+                masterVolume={masterSegmentVolume}
+                onMasterVolumeChange={setMasterSegmentVolume}
                 disabled={isRendering}
               />
             </div>
