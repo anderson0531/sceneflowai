@@ -3016,6 +3016,7 @@ function SceneCard({
   onSegmentUpload,
   onLockSegment,
   onRenderedSceneUrlChange,
+  onProductionDataChange,
   onAddSegment,
   onAddFullSegment,
   onDeleteSegment,
@@ -5886,6 +5887,7 @@ function SceneCard({
                           onSegmentUpload={onSegmentUpload ? (segmentId, file) => onSegmentUpload(scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId, file) : undefined}
                           onLockSegment={onLockSegment ? (segmentId, locked) => onLockSegment(scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId, locked) : undefined}
                           onRenderedSceneUrlChange={onRenderedSceneUrlChange ? (url) => onRenderedSceneUrlChange(scene.sceneId || scene.id || `scene-${sceneIdx}`, url) : undefined}
+                          onProductionDataChange={onProductionDataChange ? (data) => onProductionDataChange(scene.sceneId || scene.id || `scene-${sceneIdx}`, data) : undefined}
                         />
                       </div>
                     ) : (

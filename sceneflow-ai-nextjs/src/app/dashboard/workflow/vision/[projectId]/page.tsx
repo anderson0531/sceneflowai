@@ -1993,6 +1993,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [applySceneProductionUpdate]
   )
 
+  // Handle production data changes (persists production streams and other data)
+  const handleProductionDataChange = useCallback(
+    (sceneId: string, data: SceneProductionData) => {
+      console.log('[handleProductionDataChange] Persisting production data:', { sceneId, hasStreams: !!data.productionStreams, streamCount: data.productionStreams?.length })
+      applySceneProductionUpdate(sceneId, () => data)
+    },
+    [applySceneProductionUpdate]
+  )
+
   // Phase 7: Handle segment reordering (drag-and-drop)
   const handleReorderSegments = useCallback(
     (sceneId: string, oldIndex: number, newIndex: number) => {
@@ -7860,6 +7869,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSegmentUpload={handleSegmentUpload}
                 onLockSegment={handleLockSegment}
                 onRenderedSceneUrlChange={handleRenderedSceneUrlChange}
+                onProductionDataChange={handleProductionDataChange}
                 onAddSegment={handleAddSegment}
                 onAddFullSegment={handleAddFullSegment}
                 onDeleteSegment={handleDeleteSegment}

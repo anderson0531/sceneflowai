@@ -116,6 +116,8 @@ interface DirectorConsoleProps {
   onLockSegment?: (segmentId: string, locked: boolean) => void
   /** Persist rendered scene URL to database */
   onRenderedSceneUrlChange?: (url: string | null) => void
+  /** Persist production data (including production streams) to database */
+  onProductionDataChange?: (data: SceneProductionData) => void
 }
 
 // Method badge colors and labels
@@ -382,8 +384,17 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   
   // Delete a production stream
   const handleDeleteStream = useCallback((streamId: string) => {
-    setProductionStreams(prev => prev.filter(s => s.id !== streamId))
-  }, [])
+    const updatedStreams = productionStreams.filter(s => s.id !== streamId)
+    setProductionStreams(updatedStreams)
+    
+    // Persist to database
+    if (onProductionDataChange && productionData) {
+      onProductionDataChange({
+        ...productionData,
+        productionStreams: updatedStreams,
+      })
+    }
+  }, [productionStreams, productionData, onProductionDataChange])
   
   // Re-render an existing production stream
   const handleReRenderStream = useCallback(async (streamId: string) => {
@@ -847,7 +858,8 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
             
             // Update or add the completed stream
             const languageInfo = SUPPORTED_LANGUAGES.find(l => l.code === language)
-            setProductionStreams(prev => {
+            const updatedStreams = (() => {
+              const prev = productionStreams
               // Check if there's an existing stream for this language
               const existingIndex = prev.findIndex(s => s.language === language)
               if (existingIndex >= 0) {
@@ -867,11 +879,23 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                 mp4Url: downloadUrl,
                 completedAt: new Date().toISOString(),
               }]
-            })
+            })()
             
-            // Persist to database
+            setProductionStreams(updatedStreams)
+            
+            // Persist to database - both URL and production streams
             if (onRenderedSceneUrlChange) {
               onRenderedSceneUrlChange(downloadUrl)
+            }
+            
+            // Persist production streams to database
+            if (onProductionDataChange && productionData) {
+              onProductionDataChange({
+                ...productionData,
+                renderedSceneUrl: downloadUrl,
+                renderedAt: new Date().toISOString(),
+                productionStreams: updatedStreams,
+              })
             }
           }}
           onProductionStreamsChange={(streams) => {
