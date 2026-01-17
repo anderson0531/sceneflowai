@@ -1245,19 +1245,27 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
       {statusCounts.rendered > 0 && scene?.id && (
         <SceneProductionMixer
           sceneId={scene.id}
+          sceneNumber={sceneNumber}
+          projectId={projectId}
           segments={segments}
-          videoPreviewUrl={segments[0]?.videoUrl}
+          productionData={productionData}
           audioAssets={{
-            narrationUrl: scene.narrationAudioUrl,
-            dialogueUrls: scene.dialogueAudio || {},
-            sfxUrls: scene.sfx?.filter(s => s.audioUrl).map(s => s.audioUrl!) || [],
-            musicUrl: scene.musicAudio,
+            narrationAudioUrl: scene.narrationAudioUrl,
+            narrationAudio: scene.narrationAudio,
+            narration: scene.narration,
+            dialogueAudio: scene.dialogueAudio,
+            dialogue: scene.dialogue,
+            musicAudio: scene.musicAudio,
+            music: scene.music,
+            sfx: scene.sfx,
           }}
-          productionStreams={productionStreams}
-          onRenderComplete={(stream) => {
-            handleRenderProduction(stream.language)
+          onRenderComplete={(downloadUrl, language) => {
+            handleRenderProduction(language)
           }}
-          disabled={isRendering}
+          onProductionStreamsChange={(streams) => {
+            setProductionStreams(streams)
+          }}
+          isGeneratingSegments={isRendering}
         />
       )}
       
