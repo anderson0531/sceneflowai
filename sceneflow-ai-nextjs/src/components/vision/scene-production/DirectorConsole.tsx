@@ -150,6 +150,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   onSegmentUpload,
   onLockSegment,
   onRenderedSceneUrlChange,
+  onProductionDataChange,
 }) => {
   const segments = productionData?.segments || []
   
