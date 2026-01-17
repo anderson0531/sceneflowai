@@ -3090,8 +3090,8 @@ function SceneCard({
   const [musicCollapsed, setMusicCollapsed] = useState(false)
   const [sfxCollapsed, setSfxCollapsed] = useState(false)
   const [sceneCastCollapsed, setSceneCastCollapsed] = useState(true) // Collapsed by default - wardrobe selection is advanced
-  // Scene Image section: expanded when image exists, collapsed when empty to encourage generation
-  const [sceneImageCollapsed, setSceneImageCollapsed] = useState(!scene.imageUrl)
+  // Scene Image section: collapsed by default
+  const [sceneImageCollapsed, setSceneImageCollapsed] = useState(true)
   
   // Determine active step for Co-Pilot
   const activeStep: WorkflowStep | null = activeWorkflowTab
@@ -3827,6 +3827,11 @@ function SceneCard({
                           e.stopPropagation()
                           const currentlyComplete = stepCompletion[activeStep as keyof typeof stepCompletion]
                           onMarkWorkflowComplete(sceneIdx, activeStep, !currentlyComplete)
+                          
+                          // Auto-switch to Call Action when Script is marked as Done
+                          if (activeStep === 'dialogueAction' && !currentlyComplete) {
+                            setActiveWorkflowTab('callAction')
+                          }
                         }}
                         className={`px-2 py-1 text-xs rounded-lg transition flex items-center gap-1 ${
                           stepCompletion[activeStep as keyof typeof stepCompletion]
