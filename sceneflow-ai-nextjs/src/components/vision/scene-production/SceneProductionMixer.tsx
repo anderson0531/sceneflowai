@@ -58,8 +58,10 @@ import type { SceneSegment, SceneProductionData, ProductionStream } from './type
 
 export interface AudioTrackConfig {
   enabled: boolean
-  volume: number      // 0 to 1
-  startOffset: number // Start time in seconds
+  volume: number       // 0 to 1
+  startOffset: number  // Legacy: Start time in seconds
+  startSegment: number // Segment index where audio starts (0-based)
+  endSegment: number   // Segment index where audio ends (0-based, -1 = all remaining)
 }
 
 export interface MixerAudioTracks {
@@ -266,6 +268,24 @@ function ScenePreviewPlayer({
   // Timer for audio-extended playback (when video is frozen)
   const audioTimerRef = useRef<NodeJS.Timeout | null>(null)
   
+  // Helper: Calculate start time for a segment index
+  const getSegmentStartTime = useCallback((segmentIndex: number) => {
+    let elapsed = 0
+    for (let i = 0; i < Math.min(segmentIndex, segments.length); i++) {
+      elapsed += segments[i].endTime - segments[i].startTime
+    }
+    return elapsed
+  }, [segments])
+  
+  // Helper: Calculate end time for a segment index (end of that segment)
+  const getSegmentEndTime = useCallback((segmentIndex: number) => {
+    let elapsed = 0
+    for (let i = 0; i <= Math.min(segmentIndex, segments.length - 1); i++) {
+      elapsed += segments[i].endTime - segments[i].startTime
+    }
+    return elapsed
+  }, [segments])
+  
   // Calculate progress percentage
   const progressPercent = totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0
   
@@ -361,11 +381,18 @@ function ScenePreviewPlayer({
   
   // Sync audio tracks with video playback
   useEffect(() => {
-    // Narration sync
+    // Helper to get effective end segment
+    const getEffectiveEndSegment = (config: { endSegment: number }) => 
+      config.endSegment === -1 ? segments.length - 1 : Math.min(config.endSegment, segments.length - 1)
+    
+    // Narration sync - uses segment range
     if (narrationRef.current && audioTracks.narration.enabled) {
       narrationRef.current.volume = isMuted ? 0 : audioTracks.narration.volume
-      const narrationStartTime = audioTracks.narration.startOffset
+      const narrationStartTime = getSegmentStartTime(audioTracks.narration.startSegment)
+      const narrationEndSegment = getEffectiveEndSegment(audioTracks.narration)
+      const narrationVideoEndTime = getSegmentEndTime(narrationEndSegment)
       
+      // Play from segment start, continue even if audio extends beyond video segment
       if (isPlaying && currentTime >= narrationStartTime) {
         const narrationLocalTime = currentTime - narrationStartTime
         if (Math.abs(narrationRef.current.currentTime - narrationLocalTime) > 0.5) {
@@ -381,10 +408,10 @@ function ScenePreviewPlayer({
       narrationRef.current.pause()
     }
     
-    // Music sync
+    // Music sync - uses segment range
     if (musicRef.current && audioTracks.music.enabled) {
       musicRef.current.volume = isMuted ? 0 : audioTracks.music.volume
-      const musicStartTime = audioTracks.music.startOffset
+      const musicStartTime = getSegmentStartTime(audioTracks.music.startSegment)
       
       if (isPlaying && currentTime >= musicStartTime) {
         const musicLocalTime = currentTime - musicStartTime
@@ -401,14 +428,19 @@ function ScenePreviewPlayer({
       musicRef.current.pause()
     }
     
-    // Dialogue sync - play clips based on their start times
+    // Dialogue sync - uses segment range, play clips within range
     if (audioTracks.dialogue.enabled && currentAudioUrls.dialogue.length > 0) {
+      const dialogueStartTime = getSegmentStartTime(audioTracks.dialogue.startSegment)
+      const dialogueEndSegment = getEffectiveEndSegment(audioTracks.dialogue)
+      const dialogueVideoEndTime = getSegmentEndTime(dialogueEndSegment)
+      
       currentAudioUrls.dialogue.forEach((clip, idx) => {
         const audioEl = dialogueRefs.current[idx]
         if (!audioEl || !clip.audioUrl) return
         
         audioEl.volume = isMuted ? 0 : audioTracks.dialogue.volume
-        const clipStart = clip.startTime || (idx * 3) // Default spacing if no startTime
+        // Offset clip timing by dialogue track start segment
+        const clipStart = dialogueStartTime + (clip.startTime || (idx * 3))
         const clipEnd = clipStart + (clip.duration || 3)
         
         if (isPlaying && currentTime >= clipStart && currentTime < clipEnd) {
@@ -427,7 +459,7 @@ function ScenePreviewPlayer({
       // Pause all dialogue
       dialogueRefs.current.forEach(el => el?.pause())
     }
-  }, [isPlaying, currentTime, audioTracks, currentAudioUrls, isMuted])
+  }, [isPlaying, currentTime, audioTracks, currentAudioUrls, isMuted, segments, getSegmentStartTime, getSegmentEndTime])
   
   // Load new segment video when segment index changes
   useEffect(() => {
@@ -690,6 +722,7 @@ function AudioTrackRow({
   audioUrl?: string
   audioDuration?: number
   videoTotalDuration?: number
+  segmentCount?: number
   subtitle?: string
   clipCount?: number
   hasAudio: boolean
@@ -698,6 +731,11 @@ function AudioTrackRow({
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPreviewPlaying, setIsPreviewPlaying] = useState(false)
   const colors = TRACK_COLORS[type]
+  
+  // Calculate effective end segment (-1 means last segment)
+  const effectiveEndSegment = config.endSegment === -1 
+    ? (segmentCount || 1) - 1 
+    : Math.min(config.endSegment, (segmentCount || 1) - 1)
   
   // Calculate time delta for elastic timing warning
   const timeDelta = (audioDuration && videoTotalDuration && audioDuration > videoTotalDuration) 
@@ -804,40 +842,65 @@ function AudioTrackRow({
       
       {/* Controls Row - Only visible when enabled */}
       {config.enabled && hasAudio && (
-        <div className="flex items-center gap-4 sm:gap-6 pt-3 border-t border-gray-700/50">
-          {/* Start Offset */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-gray-500 uppercase w-8 sm:w-10">Start</span>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => onConfigChange({ ...config, startOffset: Math.max(0, config.startOffset - 0.5) })}
-                className="w-6 h-6 flex items-center justify-center bg-gray-700 hover:bg-gray-600 rounded text-gray-300 text-xs"
-                disabled={disabled}
-              >
-                −
-              </button>
-              <Input
-                type="number"
-                step="0.1"
-                value={config.startOffset}
-                onChange={(e) => onConfigChange({ ...config, startOffset: Math.max(0, parseFloat(e.target.value) || 0) })}
-                className="w-12 sm:w-14 h-7 text-center text-xs bg-gray-800 border-gray-600"
-                disabled={disabled}
-              />
-              <button
-                onClick={() => onConfigChange({ ...config, startOffset: config.startOffset + 0.5 })}
-                className="w-6 h-6 flex items-center justify-center bg-gray-700 hover:bg-gray-600 rounded text-gray-300 text-xs"
-                disabled={disabled}
-              >
-                +
-              </button>
-              <span className="text-[10px] text-gray-500">s</span>
+        <div className="flex flex-col gap-3 pt-3 border-t border-gray-700/50">
+          {/* Segment Range Selector */}
+          {segmentCount && segmentCount > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-gray-500 uppercase w-16">Segments</span>
+              <div className="flex items-center gap-1 flex-wrap">
+                {Array.from({ length: segmentCount }).map((_, i) => {
+                  const isInRange = i >= config.startSegment && i <= effectiveEndSegment
+                  const isStart = i === config.startSegment
+                  const isEnd = i === effectiveEndSegment
+                  
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        if (i < config.startSegment) {
+                          // Clicked before range - extend start backward
+                          onConfigChange({ ...config, startSegment: i })
+                        } else if (i > effectiveEndSegment) {
+                          // Clicked after range - extend end forward
+                          onConfigChange({ ...config, endSegment: i })
+                        } else if (isStart && config.startSegment < effectiveEndSegment) {
+                          // Clicked start - shrink from start
+                          onConfigChange({ ...config, startSegment: i + 1 })
+                        } else if (isEnd && effectiveEndSegment > config.startSegment) {
+                          // Clicked end - shrink from end  
+                          onConfigChange({ ...config, endSegment: i - 1 })
+                        } else if (isStart && isEnd) {
+                          // Single segment selected - reset to all
+                          onConfigChange({ ...config, startSegment: 0, endSegment: -1 })
+                        }
+                      }}
+                      disabled={disabled}
+                      className={`
+                        w-8 h-7 rounded text-[10px] font-medium transition-colors
+                        ${isInRange 
+                          ? 'bg-purple-600/40 text-purple-200 border border-purple-500/50' 
+                          : 'bg-gray-700/50 text-gray-500 border border-gray-600/40 hover:bg-gray-600/50'
+                        }
+                        ${isStart && isEnd ? 'rounded-lg' : isStart ? 'rounded-l-lg rounded-r-none' : isEnd ? 'rounded-r-lg rounded-l-none' : 'rounded-none'}
+                      `}
+                    >
+                      #{i + 1}
+                    </button>
+                  )
+                })}
+              </div>
+              <span className="text-[10px] text-gray-500 ml-1">
+                {config.startSegment === 0 && effectiveEndSegment === (segmentCount - 1)
+                  ? 'All'
+                  : `#${config.startSegment + 1}${config.startSegment !== effectiveEndSegment ? ` → #${effectiveEndSegment + 1}` : ''}`
+                }
+              </span>
             </div>
-          </div>
+          )}
           
           {/* Volume */}
-          <div className="flex-1 flex items-center gap-2">
-            <span className="text-[10px] text-gray-500 uppercase w-10 sm:w-12">Volume</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-gray-500 uppercase w-16">Volume</span>
             <Slider
               value={[config.volume * 100]}
               onValueChange={([v]) => onConfigChange({ ...config, volume: v / 100 })}
@@ -949,10 +1012,10 @@ export function SceneProductionMixer({
   
   // === Audio Track Configs ===
   const [audioTracks, setAudioTracks] = useState<MixerAudioTracks>({
-    narration: { enabled: true, volume: 0.8, startOffset: 0 },
-    dialogue: { enabled: true, volume: 0.9, startOffset: 0 },
-    music: { enabled: false, volume: 0.4, startOffset: 0 },
-    sfx: { enabled: false, volume: 0.6, startOffset: 0 },
+    narration: { enabled: true, volume: 0.8, startOffset: 0, startSegment: 0, endSegment: -1 },
+    dialogue: { enabled: true, volume: 0.9, startOffset: 0, startSegment: 0, endSegment: -1 },
+    music: { enabled: false, volume: 0.4, startOffset: 0, startSegment: 0, endSegment: -1 },
+    sfx: { enabled: false, volume: 0.6, startOffset: 0, startSegment: 0, endSegment: -1 },
   })
   
   // === Segment Audio Configs ===
@@ -1300,6 +1363,7 @@ export function SceneProductionMixer({
                 audioUrl={currentAudioUrls.narration}
                 audioDuration={currentAudioUrls.narrationDuration}
                 videoTotalDuration={videoTotalDuration}
+                segmentCount={renderedSegments.length}
                 subtitle={audioAssets.narration ? `"${audioAssets.narration.slice(0, 60)}..."` : undefined}
                 hasAudio={!!currentAudioUrls.narration}
                 disabled={isRendering}
@@ -1312,6 +1376,7 @@ export function SceneProductionMixer({
                 config={audioTracks.dialogue}
                 onConfigChange={(c) => updateTrackConfig('dialogue', c)}
                 audioUrl={currentAudioUrls.dialogue[0]?.audioUrl}
+                segmentCount={renderedSegments.length}
                 clipCount={currentAudioUrls.dialogue.length}
                 subtitle={currentAudioUrls.dialogue.length > 0 
                   ? `${currentAudioUrls.dialogue.length} clip${currentAudioUrls.dialogue.length > 1 ? 's' : ''} • ${languageLabel}`
@@ -1328,6 +1393,7 @@ export function SceneProductionMixer({
                 config={audioTracks.sfx}
                 onConfigChange={(c) => updateTrackConfig('sfx', c)}
                 audioUrl={currentAudioUrls.sfx[0]?.audioUrl}
+                segmentCount={renderedSegments.length}
                 clipCount={currentAudioUrls.sfx.length}
                 subtitle={currentAudioUrls.sfx.length > 0 
                   ? currentAudioUrls.sfx.map(s => s.description).filter(Boolean).join(', ').slice(0, 50)
@@ -1344,6 +1410,7 @@ export function SceneProductionMixer({
                 config={audioTracks.music}
                 onConfigChange={(c) => updateTrackConfig('music', c)}
                 audioUrl={currentAudioUrls.music}
+                segmentCount={renderedSegments.length}
                 subtitle={typeof audioAssets.music === 'string' 
                   ? audioAssets.music.slice(0, 50) 
                   : audioAssets.music?.description?.slice(0, 50)
