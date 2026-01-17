@@ -43,6 +43,8 @@ import {
   PlayCircle,
   Timer,
   Download,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -197,6 +199,9 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   
   // Scene video player modal state
   const [isScenePlayerOpen, setIsScenePlayerOpen] = useState(false)
+  
+  // Collapsible state - default closed when segments are generated
+  const [isExpanded, setIsExpanded] = useState(false)
   
   // Scene render dialog state
   const [isRenderDialogOpen, setIsRenderDialogOpen] = useState(false)
@@ -475,57 +480,61 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   return (
     <TooltipProvider>
     <div className="space-y-6">
-      {/* Header / Control Bar */}
-      <div className="flex justify-between items-start gap-4 flex-wrap">
-        <div>
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Clapperboard className="w-5 h-5 text-indigo-400" />
-            Director's Console
-          </h2>
-          <p className="text-sm text-slate-400 mt-1">
-            Review prompts or auto-generate the scene. {statusCounts.approved} approved, {statusCounts.rendered} rendered of {statusCounts.total} segments.
-          </p>
-        </div>
-        
-        <div className="flex gap-3 items-center">
-          {isRendering ? (
-            <>
-              <div className="flex items-center gap-2 text-sm text-slate-400">
-                {isRateLimitPaused ? (
-                  <>
-                    <span className="text-amber-400 font-medium">⏸ Rate Limited</span>
-                    <span className="text-amber-300">Resuming in {rateLimitCountdown}s...</span>
-                  </>
-                ) : (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Rendering {completedCount + 1} of {queue.length}...</span>
-                  </>
-                )}
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={cancelRendering}
-                className="bg-slate-800 border-slate-700 text-slate-300"
-              >
-                Cancel
-              </Button>
-            </>
-          ) : (
-            <>
-              {/* Generate button - renders selected unlocked segments */}
-              <Button 
-                size="sm"
-                onClick={handleRenderSelected}
-                disabled={selectedUnlockedCount === 0}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white"
-              >
-                <Play className="w-4 h-4 mr-2" />
-                Generate ({selectedUnlockedCount})
-              </Button>
-              {statusCounts.rendered > 0 && (
-                <>
+      {/* Header / Control Bar - Collapsible */}
+      <div className="p-3 bg-slate-800/60 rounded-lg border border-slate-700/50">
+        <div className="flex justify-between items-center">
+          <button 
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex items-center gap-3 text-left hover:text-white transition-colors"
+          >
+            {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+            <div className="flex items-center gap-2">
+              <Clapperboard className="w-5 h-5 text-indigo-400" />
+              <h2 className="text-lg font-semibold text-white">Director's Console</h2>
+              <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+                {statusCounts.rendered}/{statusCounts.total} rendered
+              </Badge>
+            </div>
+          </button>
+          
+          <div className="flex gap-3 items-center">
+            {isRendering ? (
+              <>
+                <div className="flex items-center gap-2 text-sm text-slate-400">
+                  {isRateLimitPaused ? (
+                    <>
+                      <span className="text-amber-400 font-medium">⏸ Rate Limited</span>
+                      <span className="text-amber-300">Resuming in {rateLimitCountdown}s...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Rendering {completedCount + 1} of {queue.length}...</span>
+                    </>
+                  )}
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={cancelRendering}
+                  className="bg-slate-800 border-slate-700 text-slate-300"
+                >
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <>
+                {/* Generate button - renders selected unlocked segments */}
+                <Button 
+                  size="sm"
+                  onClick={handleRenderSelected}
+                  disabled={selectedUnlockedCount === 0}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Generate ({selectedUnlockedCount})
+                </Button>
+                {statusCounts.rendered > 0 && (
                   <Button 
                     size="sm"
                     variant="outline"
@@ -535,33 +544,16 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                     <Film className="w-4 h-4 mr-2" />
                     Play Segments ({statusCounts.rendered})
                   </Button>
-                  {renderedSceneUrl && (
-                    <Button 
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setIsRenderedScenePlayerOpen(true)}
-                      className="bg-cyan-600/20 border-cyan-500/50 text-cyan-300 hover:bg-cyan-600/30"
-                    >
-                      <PlayCircle className="w-4 h-4 mr-2" />
-                      Play Scene
-                    </Button>
-                  )}
-                  <Button 
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setIsRenderDialogOpen(true)}
-                    className="bg-purple-600/20 border-purple-500/50 text-purple-300 hover:bg-purple-600/30"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Render Scene
-                  </Button>
-                </>
-              )}
-            </>
-          )}
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
       
+      {/* Collapsible Content */}
+      {isExpanded && (
+      <>
       {/* Progress Bar (visible during rendering) */}
       {isRendering && (
         <div className="space-y-2">
@@ -822,7 +814,8 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           )
         })}
       </div>
-
+      </>
+      )}
 
       
       {/* Scene Production Mixer - Unified render workflow */}
