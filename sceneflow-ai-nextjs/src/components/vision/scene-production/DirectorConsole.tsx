@@ -481,19 +481,24 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     <TooltipProvider>
     <div className="space-y-6">
       {/* Header / Control Bar - Collapsible */}
-      <div className="p-3 bg-slate-800/60 rounded-lg border border-slate-700/50">
-        <div className="flex justify-between items-center">
+      <div className="bg-gray-900/50 rounded-xl border border-indigo-500/30 overflow-hidden">
+        <div className="px-4 sm:px-5 py-4 bg-indigo-900/20 border-b border-indigo-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <button 
             onClick={() => setIsExpanded(!isExpanded)}
             className="flex items-center gap-3 text-left hover:text-white transition-colors"
           >
             {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-            <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-lg bg-indigo-600/20 flex items-center justify-center">
               <Clapperboard className="w-5 h-5 text-indigo-400" />
-              <h2 className="text-lg font-semibold text-white">Director's Console</h2>
-              <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
-                {statusCounts.rendered}/{statusCounts.total} rendered
-              </Badge>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-white">Director's Console</h3>
+                <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+                  {statusCounts.rendered}/{statusCounts.total} rendered
+                </Badge>
+              </div>
+              <p className="text-xs text-gray-400">Generate and manage video segments</p>
             </div>
           </button>
           
@@ -837,7 +842,37 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
             sfx: scene?.sfx,
           }}
           onRenderComplete={(downloadUrl, language) => {
-            handleRenderProduction(language)
+            // Update the rendered scene URL
+            setRenderedSceneUrl(downloadUrl)
+            
+            // Update or add the completed stream
+            const languageInfo = SUPPORTED_LANGUAGES.find(l => l.code === language)
+            setProductionStreams(prev => {
+              // Check if there's an existing stream for this language
+              const existingIndex = prev.findIndex(s => s.language === language)
+              if (existingIndex >= 0) {
+                // Update existing stream to complete
+                return prev.map((s, i) => 
+                  i === existingIndex 
+                    ? { ...s, status: 'complete' as const, mp4Url: downloadUrl, completedAt: new Date().toISOString() }
+                    : s
+                )
+              }
+              // Add new completed stream
+              return [...prev, {
+                id: `stream-${language}-${Date.now()}`,
+                language,
+                languageLabel: languageInfo?.name || language,
+                status: 'complete' as const,
+                mp4Url: downloadUrl,
+                completedAt: new Date().toISOString(),
+              }]
+            })
+            
+            // Persist to database
+            if (onRenderedSceneUrlChange) {
+              onRenderedSceneUrlChange(downloadUrl)
+            }
           }}
           onProductionStreamsChange={(streams) => {
             setProductionStreams(streams)

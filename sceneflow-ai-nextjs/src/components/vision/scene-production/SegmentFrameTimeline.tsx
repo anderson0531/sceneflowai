@@ -176,20 +176,24 @@ export function SegmentFrameTimeline({
   return (
     <div className="space-y-4">
       {/* Compact Header with Status Bar */}
-      <div className="p-3 bg-slate-800/60 rounded-lg border border-slate-700/50">
-        <div className="flex items-center justify-between">
+      <div className="bg-gray-900/50 rounded-xl border border-cyan-500/30 overflow-hidden">
+        <div className="px-4 sm:px-5 py-4 bg-cyan-900/20 border-b border-cyan-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <button 
             onClick={() => setIsExpanded(!isExpanded)}
             className="flex items-center gap-3 text-left hover:text-white transition-colors"
           >
             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-medium text-slate-200">
-                Keyframe State Machine
-              </h3>
-              <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
-                {stats.fullyAnchored}/{stats.total} ready
-              </Badge>
+            <div className="w-10 h-10 rounded-lg bg-cyan-600/20 flex items-center justify-center">
+              <ImageIcon className="w-5 h-5 text-cyan-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-white">Keyframe State Machine</h3>
+                <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+                  {stats.fullyAnchored}/{stats.total} ready
+                </Badge>
+              </div>
+              <p className="text-xs text-gray-400">Anchor start and end frames for video generation</p>
             </div>
           </button>
           
@@ -227,7 +231,8 @@ export function SegmentFrameTimeline({
         </div>
         
         {/* Stats Row - Inline */}
-        <div className="flex items-center gap-4 mt-2 text-xs">
+        {isExpanded && (
+        <div className="flex items-center gap-4 px-4 py-2 text-xs border-t border-cyan-500/10 bg-gray-900/30">
           <span className="flex items-center gap-1.5 text-slate-400">
             <Clock className="w-3.5 h-3.5" />
             {stats.totalDuration.toFixed(1)}s total
@@ -256,6 +261,7 @@ export function SegmentFrameTimeline({
             </>
           )}
         </div>
+        )}
       </div>
         
       {/* Segment Cards with Shot Grouping */}
