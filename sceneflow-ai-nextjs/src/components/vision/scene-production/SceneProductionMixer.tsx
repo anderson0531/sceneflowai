@@ -229,6 +229,7 @@ function ScenePreviewPlayer({
   totalDuration,
   isMuted,
   onToggleMute,
+  segmentAudioConfigs,
 }: {
   segments: SceneSegment[]
   audioTracks: MixerAudioTracks
@@ -241,6 +242,7 @@ function ScenePreviewPlayer({
   totalDuration: number
   isMuted: boolean
   onToggleMute: () => void
+  segmentAudioConfigs: Record<string, SegmentAudioConfig>
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const narrationRef = useRef<HTMLAudioElement>(null)
@@ -390,7 +392,7 @@ function ScenePreviewPlayer({
           <video
             ref={videoRef}
             className="w-full h-full object-contain"
-            muted={isMuted}
+            muted={isMuted || !segmentAudioConfigs[currentSegment.segment.segmentId]?.includeAudio}
             playsInline
           />
         ) : (
@@ -1057,6 +1059,7 @@ export function SceneProductionMixer({
                 totalDuration={totalDuration}
                 isMuted={isMuted}
                 onToggleMute={() => setIsMuted(prev => !prev)}
+                segmentAudioConfigs={segmentAudioConfigs}
               />
               
               <SegmentAudioControls
