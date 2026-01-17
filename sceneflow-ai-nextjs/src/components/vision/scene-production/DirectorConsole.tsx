@@ -823,35 +823,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
         })}
       </div>
 
-      {/* AI Tip */}
-      <div className="flex items-start gap-3 p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-lg">
-        <Sparkles className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-slate-400">
-          <span className="text-indigo-300 font-medium">Pro Tip:</span>{' '}
-          Segments with both Start and End frames use Frame-to-Video interpolation for best quality. 
-          Click any segment to customize its generation settings before batch rendering.
-        </div>
-      </div>
-      
-      {/* AI Tip */}
-      <div className="flex items-start gap-3 p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-lg">
-        <Sparkles className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-slate-400">
-          <span className="text-indigo-300 font-medium">Pro Tip:</span>{' '}
-          Segments with both Start and End frames use Frame-to-Video interpolation for best quality. 
-          Click any segment to customize its generation settings before batch rendering.
-        </div>
-      </div>
-      
-      {/* AI Tip */}
-      <div className="flex items-start gap-3 p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-lg">
-        <Sparkles className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-slate-400">
-          <span className="text-indigo-300 font-medium">Pro Tip:</span>{' '}
-          Segments with both Start and End frames use Frame-to-Video interpolation for best quality. 
-          Click any segment to customize its generation settings before batch rendering.
-        </div>
-      </div>
+
       
       {/* Scene Production Mixer - Unified render workflow */}
       {statusCounts.rendered > 0 && sceneId && (

@@ -34,6 +34,7 @@ import {
   Clock,
   SkipBack,
   SkipForward,
+  AlertTriangle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
@@ -221,12 +222,16 @@ function ResolutionSelector({
 
 /**
  * ScenePreviewPlayer - Video player with concatenated segments and audio sync
+ * 
+ * Implements "Elastic Timing" - audio can extend beyond video duration
+ * by freezing the last video frame while audio continues.
  */
 function ScenePreviewPlayer({
   segments,
   audioTracks,
   currentAudioUrls,
   totalDuration,
+  videoTotalDuration,
   isMuted,
   onToggleMute,
   segmentAudioConfigs,
@@ -235,11 +240,12 @@ function ScenePreviewPlayer({
   audioTracks: MixerAudioTracks
   currentAudioUrls: {
     narration?: string
-    dialogue: Array<{ audioUrl?: string }>
+    dialogue: Array<{ audioUrl?: string; duration?: number; startTime?: number }>
     music?: string
-    sfx: Array<{ audioUrl?: string }>
+    sfx: Array<{ audioUrl?: string; duration?: number; startTime?: number }>
   }
-  totalDuration: number
+  totalDuration: number      // Scene duration (max of video/audio)
+  videoTotalDuration: number // Video-only duration
   isMuted: boolean
   onToggleMute: () => void
   segmentAudioConfigs: Record<string, SegmentAudioConfig>
@@ -247,50 +253,100 @@ function ScenePreviewPlayer({
   const videoRef = useRef<HTMLVideoElement>(null)
   const narrationRef = useRef<HTMLAudioElement>(null)
   const musicRef = useRef<HTMLAudioElement>(null)
+  const dialogueRefs = useRef<(HTMLAudioElement | null)[]>([])
   
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0)
+  const [isVideoFrozen, setIsVideoFrozen] = useState(false)
   
-  // Find current segment based on playhead position
-  const currentSegment = useMemo(() => {
-    let elapsed = 0
-    for (let i = 0; i < segments.length; i++) {
-      const seg = segments[i]
-      const segDuration = seg.endTime - seg.startTime
-      if (currentTime < elapsed + segDuration) {
-        return { segment: seg, index: i, localTime: currentTime - elapsed }
-      }
-      elapsed += segDuration
-    }
-    return { segment: segments[segments.length - 1], index: segments.length - 1, localTime: 0 }
-  }, [segments, currentTime])
+  // Track loaded video URL to prevent duplicate loads
+  const loadedVideoUrlRef = useRef<string | null>(null)
   
+  // Timer for audio-extended playback (when video is frozen)
+  const audioTimerRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Calculate progress percentage
   const progressPercent = totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0
   
+  // Current segment (based on segment index, not time-based calculation)
+  const currentSegment = useMemo(() => {
+    if (currentSegmentIndex >= 0 && currentSegmentIndex < segments.length) {
+      return { segment: segments[currentSegmentIndex], index: currentSegmentIndex }
+    }
+    return { segment: segments[0], index: 0 }
+  }, [segments, currentSegmentIndex])
+  
+  // Calculate cumulative start time for current segment
+  const segmentStartTime = useMemo(() => {
+    let elapsed = 0
+    for (let i = 0; i < currentSegmentIndex; i++) {
+      elapsed += segments[i].endTime - segments[i].startTime
+    }
+    return elapsed
+  }, [segments, currentSegmentIndex])
+
   // Handle video time updates
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
     
     const handleTimeUpdate = () => {
+      if (isVideoFrozen) return // Don't update from video when frozen
+      
       // Calculate global time based on segment position + local time
-      let globalTime = 0
-      for (let i = 0; i < currentSegmentIndex; i++) {
-        globalTime += segments[i].endTime - segments[i].startTime
-      }
-      globalTime += video.currentTime
+      const globalTime = segmentStartTime + video.currentTime
       setCurrentTime(globalTime)
     }
     
     const handleEnded = () => {
-      // Move to next segment
+      // Check if we should advance to next segment or freeze
       if (currentSegmentIndex < segments.length - 1) {
+        // Move to next segment
         setCurrentSegmentIndex(prev => prev + 1)
       } else {
-        setIsPlaying(false)
-        setCurrentTime(0)
-        setCurrentSegmentIndex(0)
+        // Last segment ended - check if audio extends beyond video
+        const audioEndTime = Math.max(
+          audioTracks.narration.enabled && currentAudioUrls.narration 
+            ? audioTracks.narration.startOffset + (currentAudioUrls.dialogue[0]?.duration || totalDuration)
+            : 0,
+          ...(audioTracks.dialogue.enabled 
+            ? currentAudioUrls.dialogue.map(d => (d.startTime || 0) + (d.duration || 0))
+            : [0]),
+          audioTracks.music.enabled && currentAudioUrls.music ? totalDuration : 0
+        )
+        
+        if (audioEndTime > videoTotalDuration && currentTime < audioEndTime) {
+          // Freeze video on last frame, continue audio
+          setIsVideoFrozen(true)
+          
+          // Start timer to continue advancing currentTime for audio playback
+          const startFreezeTime = videoTotalDuration
+          const remainingTime = audioEndTime - startFreezeTime
+          let elapsedFrozen = 0
+          
+          audioTimerRef.current = setInterval(() => {
+            elapsedFrozen += 0.1
+            setCurrentTime(startFreezeTime + elapsedFrozen)
+            
+            if (elapsedFrozen >= remainingTime) {
+              // Audio complete - end playback
+              if (audioTimerRef.current) {
+                clearInterval(audioTimerRef.current)
+                audioTimerRef.current = null
+              }
+              setIsPlaying(false)
+              setIsVideoFrozen(false)
+              setCurrentTime(0)
+              setCurrentSegmentIndex(0)
+            }
+          }, 100)
+        } else {
+          // No audio extension - normal end
+          setIsPlaying(false)
+          setCurrentTime(0)
+          setCurrentSegmentIndex(0)
+        }
       }
     }
     
@@ -301,42 +357,101 @@ function ScenePreviewPlayer({
       video.removeEventListener('timeupdate', handleTimeUpdate)
       video.removeEventListener('ended', handleEnded)
     }
-  }, [currentSegmentIndex, segments])
+  }, [currentSegmentIndex, segments, segmentStartTime, isVideoFrozen, audioTracks, currentAudioUrls, totalDuration, videoTotalDuration, currentTime])
   
-  // Sync audio tracks with video
+  // Sync audio tracks with video playback
   useEffect(() => {
+    // Narration sync
     if (narrationRef.current && audioTracks.narration.enabled) {
       narrationRef.current.volume = isMuted ? 0 : audioTracks.narration.volume
-      if (isPlaying && currentTime >= audioTracks.narration.startOffset) {
-        narrationRef.current.currentTime = currentTime - audioTracks.narration.startOffset
-        narrationRef.current.play().catch(() => {})
+      const narrationStartTime = audioTracks.narration.startOffset
+      
+      if (isPlaying && currentTime >= narrationStartTime) {
+        const narrationLocalTime = currentTime - narrationStartTime
+        if (Math.abs(narrationRef.current.currentTime - narrationLocalTime) > 0.5) {
+          narrationRef.current.currentTime = narrationLocalTime
+        }
+        if (narrationRef.current.paused) {
+          narrationRef.current.play().catch(() => {})
+        }
       } else {
         narrationRef.current.pause()
       }
+    } else if (narrationRef.current) {
+      narrationRef.current.pause()
     }
     
+    // Music sync
     if (musicRef.current && audioTracks.music.enabled) {
       musicRef.current.volume = isMuted ? 0 : audioTracks.music.volume
-      if (isPlaying && currentTime >= audioTracks.music.startOffset) {
-        musicRef.current.currentTime = currentTime - audioTracks.music.startOffset
-        musicRef.current.play().catch(() => {})
+      const musicStartTime = audioTracks.music.startOffset
+      
+      if (isPlaying && currentTime >= musicStartTime) {
+        const musicLocalTime = currentTime - musicStartTime
+        if (Math.abs(musicRef.current.currentTime - musicLocalTime) > 0.5) {
+          musicRef.current.currentTime = musicLocalTime
+        }
+        if (musicRef.current.paused) {
+          musicRef.current.play().catch(() => {})
+        }
       } else {
         musicRef.current.pause()
       }
+    } else if (musicRef.current) {
+      musicRef.current.pause()
     }
-  }, [isPlaying, currentTime, audioTracks, isMuted])
+    
+    // Dialogue sync - play clips based on their start times
+    if (audioTracks.dialogue.enabled && currentAudioUrls.dialogue.length > 0) {
+      currentAudioUrls.dialogue.forEach((clip, idx) => {
+        const audioEl = dialogueRefs.current[idx]
+        if (!audioEl || !clip.audioUrl) return
+        
+        audioEl.volume = isMuted ? 0 : audioTracks.dialogue.volume
+        const clipStart = clip.startTime || (idx * 3) // Default spacing if no startTime
+        const clipEnd = clipStart + (clip.duration || 3)
+        
+        if (isPlaying && currentTime >= clipStart && currentTime < clipEnd) {
+          const clipLocalTime = currentTime - clipStart
+          if (Math.abs(audioEl.currentTime - clipLocalTime) > 0.5) {
+            audioEl.currentTime = clipLocalTime
+          }
+          if (audioEl.paused) {
+            audioEl.play().catch(() => {})
+          }
+        } else {
+          audioEl.pause()
+        }
+      })
+    } else {
+      // Pause all dialogue
+      dialogueRefs.current.forEach(el => el?.pause())
+    }
+  }, [isPlaying, currentTime, audioTracks, currentAudioUrls, isMuted])
   
-  // Load new segment video when segment changes
+  // Load new segment video when segment index changes
   useEffect(() => {
     const video = videoRef.current
-    if (video && currentSegment.segment?.activeAssetUrl) {
-      video.src = currentSegment.segment.activeAssetUrl
+    const newUrl = currentSegment.segment?.activeAssetUrl
+    
+    if (video && newUrl && newUrl !== loadedVideoUrlRef.current) {
+      loadedVideoUrlRef.current = newUrl
+      video.src = newUrl
       video.load()
-      if (isPlaying) {
+      if (isPlaying && !isVideoFrozen) {
         video.play().catch(() => {})
       }
     }
-  }, [currentSegmentIndex, currentSegment.segment?.activeAssetUrl])
+  }, [currentSegmentIndex, currentSegment.segment?.activeAssetUrl, isPlaying, isVideoFrozen])
+  
+  // Cleanup audio timer on unmount
+  useEffect(() => {
+    return () => {
+      if (audioTimerRef.current) {
+        clearInterval(audioTimerRef.current)
+      }
+    }
+  }, [])
   
   const handlePlayPause = () => {
     const video = videoRef.current
@@ -346,9 +461,17 @@ function ScenePreviewPlayer({
       video.pause()
       narrationRef.current?.pause()
       musicRef.current?.pause()
+      dialogueRefs.current.forEach(el => el?.pause())
+      if (audioTimerRef.current) {
+        clearInterval(audioTimerRef.current)
+        audioTimerRef.current = null
+      }
       setIsPlaying(false)
+      setIsVideoFrozen(false)
     } else {
-      video.play().catch(() => {})
+      if (!isVideoFrozen) {
+        video.play().catch(() => {})
+      }
       setIsPlaying(true)
     }
   }
@@ -356,13 +479,21 @@ function ScenePreviewPlayer({
   const handleSeek = (percent: number) => {
     const targetTime = (percent / 100) * totalDuration
     
-    // Find target segment
+    // Clear any frozen state
+    setIsVideoFrozen(false)
+    if (audioTimerRef.current) {
+      clearInterval(audioTimerRef.current)
+      audioTimerRef.current = null
+    }
+    
+    // Find target segment based on video time (capped to video duration)
+    const videoTargetTime = Math.min(targetTime, videoTotalDuration)
     let elapsed = 0
     for (let i = 0; i < segments.length; i++) {
       const segDuration = segments[i].endTime - segments[i].startTime
-      if (targetTime < elapsed + segDuration) {
+      if (videoTargetTime < elapsed + segDuration) {
         setCurrentSegmentIndex(i)
-        const localTime = targetTime - elapsed
+        const localTime = videoTargetTime - elapsed
         if (videoRef.current) {
           videoRef.current.currentTime = localTime
         }
@@ -371,9 +502,24 @@ function ScenePreviewPlayer({
       }
       elapsed += segDuration
     }
+    
+    // If seeking beyond video, seek to end of last segment
+    setCurrentSegmentIndex(segments.length - 1)
+    if (videoRef.current) {
+      const lastSegDuration = segments[segments.length - 1].endTime - segments[segments.length - 1].startTime
+      videoRef.current.currentTime = lastSegDuration
+    }
+    setCurrentTime(targetTime)
   }
   
   const skipToSegment = (direction: 'prev' | 'next') => {
+    // Clear frozen state
+    setIsVideoFrozen(false)
+    if (audioTimerRef.current) {
+      clearInterval(audioTimerRef.current)
+      audioTimerRef.current = null
+    }
+    
     if (direction === 'prev') {
       setCurrentSegmentIndex(Math.max(0, currentSegmentIndex - 1))
     } else {
@@ -382,6 +528,7 @@ function ScenePreviewPlayer({
     if (videoRef.current) {
       videoRef.current.currentTime = 0
     }
+    loadedVideoUrlRef.current = null // Force reload
   }
   
   return (
@@ -411,6 +558,12 @@ function ScenePreviewPlayer({
           <Badge variant="outline" className="bg-black/60 border-purple-500/50 text-purple-300 text-xs">
             Seg {currentSegmentIndex + 1}/{segments.length}
           </Badge>
+          {isVideoFrozen && (
+            <Badge variant="outline" className="bg-amber-500/20 border-amber-500/50 text-amber-300 text-xs animate-pulse">
+              <Pause className="w-3 h-3 mr-1" />
+              Extended Audio
+            </Badge>
+          )}
         </div>
         
         {/* Play Button Overlay */}
@@ -499,6 +652,15 @@ function ScenePreviewPlayer({
       {currentAudioUrls.music && (
         <audio ref={musicRef} src={currentAudioUrls.music} preload="auto" loop />
       )}
+      {/* Dialogue audio elements - one per clip */}
+      {currentAudioUrls.dialogue.map((clip, idx) => clip.audioUrl && (
+        <audio 
+          key={idx} 
+          ref={el => { dialogueRefs.current[idx] = el }} 
+          src={clip.audioUrl} 
+          preload="auto" 
+        />
+      ))}
     </div>
   )
 }
@@ -514,6 +676,7 @@ function AudioTrackRow({
   onConfigChange,
   audioUrl,
   audioDuration,
+  videoTotalDuration,
   subtitle,
   clipCount,
   hasAudio,
@@ -526,6 +689,7 @@ function AudioTrackRow({
   onConfigChange: (config: AudioTrackConfig) => void
   audioUrl?: string
   audioDuration?: number
+  videoTotalDuration?: number
   subtitle?: string
   clipCount?: number
   hasAudio: boolean
@@ -534,6 +698,11 @@ function AudioTrackRow({
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPreviewPlaying, setIsPreviewPlaying] = useState(false)
   const colors = TRACK_COLORS[type]
+  
+  // Calculate time delta for elastic timing warning
+  const timeDelta = (audioDuration && videoTotalDuration && audioDuration > videoTotalDuration) 
+    ? audioDuration - videoTotalDuration 
+    : 0
   
   const togglePreview = () => {
     if (!audioRef.current) return
@@ -591,9 +760,20 @@ function AudioTrackRow({
                 {formatTime(audioDuration)}
               </span>
             )}
+            {timeDelta > 0 && (
+              <Badge variant="outline" className="text-[10px] text-amber-400 border-amber-500/30 bg-amber-500/10 flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" />
+                +{timeDelta.toFixed(1)}s extended
+              </Badge>
+            )}
           </div>
           {subtitle && (
             <p className="text-xs text-gray-500 truncate mt-0.5">{subtitle}</p>
+          )}
+          {timeDelta > 0 && (
+            <p className="text-xs text-amber-400/80 mt-0.5">
+              Audio exceeds video • Video will freeze on last frame
+            </p>
           )}
         </div>
         
@@ -838,10 +1018,48 @@ export function SceneProductionMixer({
     return segments.filter(s => s.status === 'COMPLETE' && s.activeAssetUrl)
   }, [segments])
   
-  // Calculate total duration from segments
-  const totalDuration = useMemo(() => {
+  // Calculate video-only duration from segments
+  const videoTotalDuration = useMemo(() => {
     return renderedSegments.reduce((sum, s) => sum + (s.endTime - s.startTime), 0)
   }, [renderedSegments])
+  
+  // Calculate max audio duration across all enabled tracks
+  const maxAudioDuration = useMemo(() => {
+    let maxDuration = 0
+    
+    // Narration duration
+    if (audioTracks.narration.enabled && currentAudioUrls.narrationDuration) {
+      maxDuration = Math.max(maxDuration, audioTracks.narration.startOffset + currentAudioUrls.narrationDuration)
+    }
+    
+    // Dialogue duration - sum of all clips or last clip end time
+    if (audioTracks.dialogue.enabled && currentAudioUrls.dialogue.length > 0) {
+      const dialogueEndTimes = currentAudioUrls.dialogue.map((clip, idx) => {
+        const startTime = clip.startTime || (idx * 3) // Default spacing if no startTime
+        const duration = clip.duration || 3
+        return startTime + duration
+      })
+      maxDuration = Math.max(maxDuration, ...dialogueEndTimes)
+    }
+    
+    // Music typically loops, so doesn't extend duration
+    // SFX duration
+    if (audioTracks.sfx.enabled && currentAudioUrls.sfx.length > 0) {
+      const sfxEndTimes = currentAudioUrls.sfx.map(clip => {
+        const startTime = clip.startTime || 0
+        const duration = clip.duration || 2
+        return startTime + duration
+      })
+      maxDuration = Math.max(maxDuration, ...sfxEndTimes)
+    }
+    
+    return maxDuration
+  }, [audioTracks, currentAudioUrls])
+  
+  // Total duration = max of video and audio (Elastic Timing)
+  const totalDuration = useMemo(() => {
+    return Math.max(videoTotalDuration, maxAudioDuration)
+  }, [videoTotalDuration, maxAudioDuration])
   
   // Get language label
   const languageLabel = useMemo(() => {
@@ -1057,6 +1275,7 @@ export function SceneProductionMixer({
                 audioTracks={audioTracks}
                 currentAudioUrls={currentAudioUrls}
                 totalDuration={totalDuration}
+                videoTotalDuration={videoTotalDuration}
                 isMuted={isMuted}
                 onToggleMute={() => setIsMuted(prev => !prev)}
                 segmentAudioConfigs={segmentAudioConfigs}
@@ -1080,6 +1299,7 @@ export function SceneProductionMixer({
                 onConfigChange={(c) => updateTrackConfig('narration', c)}
                 audioUrl={currentAudioUrls.narration}
                 audioDuration={currentAudioUrls.narrationDuration}
+                videoTotalDuration={videoTotalDuration}
                 subtitle={audioAssets.narration ? `"${audioAssets.narration.slice(0, 60)}..."` : undefined}
                 hasAudio={!!currentAudioUrls.narration}
                 disabled={isRendering}
