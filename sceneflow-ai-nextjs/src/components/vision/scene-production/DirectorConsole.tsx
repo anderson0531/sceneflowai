@@ -59,6 +59,7 @@ import { VideoEditingDialog } from './VideoEditingDialog'
 import { SceneVideoPlayer } from './SceneVideoPlayer'
 import { SceneRenderDialog } from './SceneRenderDialog'
 import { ProductionStreamsPanel } from './ProductionStreamsPanel'
+import { SceneProductionMixer } from './SceneProductionMixer'
 import { useVideoQueue } from '@/hooks/useVideoQueue'
 import type { SceneAudioData } from './GuidePromptEditor'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
@@ -1240,8 +1241,28 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
         </div>
       </div>
       
-      {/* Production Streams Section - Multi-language video renders */}
-      {statusCounts.rendered > 0 && (
+      {/* Scene Production Mixer - Unified render workflow */}
+      {statusCounts.rendered > 0 && scene?.id && (
+        <SceneProductionMixer
+          sceneId={scene.id}
+          segments={segments}
+          videoPreviewUrl={segments[0]?.videoUrl}
+          audioAssets={{
+            narrationUrl: scene.narrationAudioUrl,
+            dialogueUrls: scene.dialogueAudio || {},
+            sfxUrls: scene.sfx?.filter(s => s.audioUrl).map(s => s.audioUrl!) || [],
+            musicUrl: scene.musicAudio,
+          }}
+          productionStreams={productionStreams}
+          onRenderComplete={(stream) => {
+            handleRenderProduction(stream.language)
+          }}
+          disabled={isRendering}
+        />
+      )}
+      
+      {/* Legacy Production Streams Panel - for viewing existing streams */}
+      {productionStreams.length > 0 && (
         <div className="mt-4 p-4 bg-slate-800/50 rounded-lg border border-purple-500/30">
           <ProductionStreamsPanel
             productionStreams={productionStreams}

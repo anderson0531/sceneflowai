@@ -30,6 +30,7 @@ export { SegmentPromptEditor } from './SegmentPromptEditor'
 
 // Production Streams (Multi-language render outputs)
 export { ProductionStreamsPanel } from './ProductionStreamsPanel'
+export { SceneProductionMixer } from './SceneProductionMixer'
 
 // Prompt utilities
 export * from './methodPromptBuilder'
