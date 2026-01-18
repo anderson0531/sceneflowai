@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Dialog,
@@ -30,6 +30,13 @@ export function NavigationWarningDialog({
 }: NavigationWarningDialogProps) {
   const router = useRouter()
   const [isNavigating, setIsNavigating] = useState(false)
+
+  // Reset isNavigating state when dialog closes (user cancels or clicks outside)
+  useEffect(() => {
+    if (!open) {
+      setIsNavigating(false)
+    }
+  }, [open])
 
   const handleConfirm = () => {
     setIsNavigating(true)

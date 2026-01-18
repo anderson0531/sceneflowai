@@ -203,7 +203,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
 
   return (
     <div className="flex pt-16">
-      <aside className="w-64 shrink-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/90 h-[calc(100vh-4rem)] overflow-y-auto sticky top-16">
+      <aside className="w-64 shrink-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/90 h-[calc(100vh-4rem)] overflow-y-auto sticky top-16 z-30 relative">
         <div className="flex flex-col h-full">
           {/* Main Navigation */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
