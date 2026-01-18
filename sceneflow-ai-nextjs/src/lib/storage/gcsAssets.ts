@@ -24,7 +24,8 @@
 import { Storage, Bucket, File } from '@google-cloud/storage'
 
 // Environment configuration
-const GCS_ASSETS_BUCKET = process.env.GCS_ASSETS_BUCKET || 'sceneflow-assets'
+// Note: .trim() is critical - environment variables can have trailing newlines
+const GCS_ASSETS_BUCKET = (process.env.GCS_ASSETS_BUCKET || 'sceneflow-assets').trim()
 const DEFAULT_SIGNED_URL_EXPIRY_HOURS = 168 // 7 days
 
 // Singleton storage client
