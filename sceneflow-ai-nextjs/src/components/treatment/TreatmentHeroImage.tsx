@@ -59,17 +59,31 @@ export function TreatmentHeroImage({
     setImageError(false)
   }, [image?.url])
   
-  // Proxy GCS URLs to bypass CORS restrictions
-  const getProxiedUrl = (url: string | undefined): string | undefined => {
+  // Get the display URL - use direct URL for public GCS URLs (no query params)
+  // Only proxy signed URLs (which have query params like ?GoogleAccessId=...)
+  const getDisplayUrl = (url: string | undefined): string | undefined => {
     if (!url) return undefined
-    // If it's a GCS URL, proxy it through our API
-    if (url.includes('storage.googleapis.com') || url.includes('storage.cloud.google.com')) {
-      return `/api/proxy/image?url=${encodeURIComponent(url)}`
+    
+    // Check if this is a GCS URL
+    const isGcsUrl = url.includes('storage.googleapis.com') || url.includes('storage.cloud.google.com')
+    
+    if (isGcsUrl) {
+      // If URL has query params (signed URL), use proxy to avoid encoding issues
+      // If no query params (public URL), use directly
+      const hasQueryParams = url.includes('?')
+      if (hasQueryParams) {
+        console.log('[TreatmentHeroImage] Using proxy for signed URL')
+        return `/api/proxy/image?url=${encodeURIComponent(url)}`
+      } else {
+        console.log('[TreatmentHeroImage] Using direct public URL')
+        return url
+      }
     }
+    
     return url
   }
   
-  const displayUrl = getProxiedUrl(image?.url)
+  const displayUrl = getDisplayUrl(image?.url)
   
   // Calculate aspect ratio padding
   const aspectRatioPadding = {

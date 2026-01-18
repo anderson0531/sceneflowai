@@ -131,18 +131,24 @@ export async function uploadToGCS(
     resumable: data.length > 5 * 1024 * 1024, // Resumable for files > 5MB
   })
   
-  // Generate signed URL for access (7 days default)
-  const [signedUrl] = await file.getSignedUrl({
-    action: 'read',
-    expires: Date.now() + DEFAULT_SIGNED_URL_EXPIRY_HOURS * 60 * 60 * 1000,
-  })
+  // Make the file publicly readable for direct browser access
+  // This avoids signed URL signature issues and CORS problems
+  try {
+    await file.makePublic()
+    console.log(`[GCS Assets] Made file public: ${path}`)
+  } catch (publicError) {
+    console.warn(`[GCS Assets] Could not make file public (bucket may need IAM update): ${publicError}`)
+  }
+  
+  // Use public URL for direct browser access (no signature needed)
+  const publicUrl = `https://storage.googleapis.com/${GCS_ASSETS_BUCKET}/${path}`
   
   console.log(`[GCS Assets] Successfully uploaded: gs://${GCS_ASSETS_BUCKET}/${path}`)
   
   return {
-    url: signedUrl,
+    url: publicUrl,  // Use public URL instead of signed URL for browser compatibility
     gcsPath: `gs://${GCS_ASSETS_BUCKET}/${path}`,
-    publicUrl: `https://storage.googleapis.com/${GCS_ASSETS_BUCKET}/${path}`,
+    publicUrl: publicUrl,
   }
 }
 
