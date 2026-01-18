@@ -41,6 +41,8 @@ export function NavigationWarningDialog({
   const handleConfirm = () => {
     setIsNavigating(true)
     onConfirm?.()
+    // Close the dialog before navigating
+    onOpenChange(false)
     router.push(targetHref)
   }
 
