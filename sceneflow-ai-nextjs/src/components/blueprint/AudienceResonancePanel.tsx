@@ -803,42 +803,7 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
                   />
                 ))}
                 
-                {/* Recommendations */}
-                {analysis.recommendations.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-slate-700/30">
-                    <h4 className="text-xs text-gray-500 uppercase tracking-wide mb-2">
-                      Top Recommendations
-                    </h4>
-                    {analysis.recommendations.slice(0, 3).map((rec) => (
-                      <div 
-                        key={rec.id}
-                        className="flex items-start gap-3 p-3 bg-slate-800/30 rounded-lg border border-slate-700/30 mb-2"
-                      >
-                        <TrendingUp className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-white font-medium">{rec.title}</p>
-                          <p className="text-xs text-gray-400 mt-1">{rec.description}</p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className="text-[10px] text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded">
-                              +{rec.expectedImpact} pts
-                            </span>
-                            <span className="text-[10px] text-gray-500 capitalize">
-                              {rec.effort} effort
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
-              
-              {/* Credits Used */}
-              {analysis.creditsUsed > 0 && (
-                <p className="text-[10px] text-gray-600 text-center">
-                  Analysis used {analysis.creditsUsed} credits
-                </p>
-              )}
             </motion.div>
           )}
         </AnimatePresence>

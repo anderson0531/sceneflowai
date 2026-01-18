@@ -33,7 +33,7 @@ export const WEIGHT_FORMULA = 'Score = (Concept × 0.25) + (Character × 0.25) +
 // =============================================================================
 
 export const READY_FOR_PRODUCTION_THRESHOLD = 80
-export const MAX_ITERATIONS = 3
+export const MAX_ITERATIONS = 5
 
 // =============================================================================
 // AXIS CHECKPOINTS (Pass/Fail Gates)
@@ -593,14 +593,17 @@ export function applyHysteresisSmoothing(
 
 /**
  * Enforce score floor to prevent catastrophic drops
- * Max drop per iteration is 15 points
+ * Iteration 3+: No drops allowed (maxDrop = 0)
+ * Earlier iterations: Max 10 point drop
  */
 export function enforceScoreFloor(
   newScore: number,
   previousScore: number | null,
-  maxDrop: number = 15
+  iteration: number = 1
 ): number {
   if (previousScore === null) return newScore
+  // After iteration 2, lock in gains - no regression allowed
+  const maxDrop = iteration >= 3 ? 0 : 10
   const floor = previousScore - maxDrop
   return Math.max(newScore, floor)
 }

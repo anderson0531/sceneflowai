@@ -442,8 +442,9 @@ async function analyzeWithGemini(
   })
   
   // Apply score floor to overall score
+  // On iteration 3+, no regression allowed (maxDrop = 0)
   const smoothedOverallScore = previousAnalysis 
-    ? enforceScoreFloor(overallScore, previousAnalysis.score)
+    ? enforceScoreFloor(overallScore, previousAnalysis.score, iteration)
     : overallScore
   
   const smoothedGreenlightScore: GreenlightScore = {
@@ -463,7 +464,7 @@ async function analyzeWithGemini(
     recommendations,
     analysisVersion: '2.0', // Updated for gradient scoring
     generatedAt: new Date().toISOString(),
-    creditsUsed: 500 // Approximate credit cost
+    creditsUsed: 0 // Credits shown in sidebar balance instead
   }
 }
 
@@ -608,10 +609,12 @@ Return JSON:
   "recommendations": [{"priority": "high"|"medium"|"low", "title": string, "description": string, "expected_impact": number}]
 }
 
-SCORING SCALE: 0-10 per checkpoint (0=missing, 5=weak, 7=adequate, 10=excellent). Score 7+ = checkpoint passed.
-RULES: Weaknesses (score<7) need actionable=true, fix_suggestion (specific text), checkpoint_id, axis_id. Provide 3+ insights, 2+ recommendations.
+SCORING SCALE: 0-10 per checkpoint (0=missing, 5=weak, 7=adequate, 9=strong, 10=excellent). Score 7+ = checkpoint passed.
+PATH TO 90+: For scores below 90, generate fixes for checkpoints scoring < 9. To reach 90+, most checkpoints need 9-10.
+RULES: Weaknesses (score<7) MUST have actionable=true, fix_suggestion (specific text), checkpoint_id, axis_id. Checkpoints 7-8 should ALSO have fix_suggestion if overall score is below target.
+ALWAYS provide at least 3 actionable insights with fix_suggestion when score < 90. Include recommendations for polish/enhancement even when core issues are fixed.
 ${iteration >= 2 ? `Avoid: ${iterationFocus.restrictedSuggestions.slice(0, 3).join(', ')}` : ''}
-${iteration >= 3 ? 'FINAL: Accept unless FATAL FLAW.' : ''}`
+${iteration >= 3 ? 'FINAL: Accept unless FATAL FLAW. Still provide enhancement suggestions if score < 90.' : ''}`
 }
 
 function getGenreGuidelines(genre: string): string {
