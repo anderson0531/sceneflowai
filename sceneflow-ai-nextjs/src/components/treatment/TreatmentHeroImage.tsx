@@ -59,6 +59,18 @@ export function TreatmentHeroImage({
     setImageError(false)
   }, [image?.url])
   
+  // Proxy GCS URLs to bypass CORS restrictions
+  const getProxiedUrl = (url: string | undefined): string | undefined => {
+    if (!url) return undefined
+    // If it's a GCS URL, proxy it through our API
+    if (url.includes('storage.googleapis.com') || url.includes('storage.cloud.google.com')) {
+      return `/api/proxy/image?url=${encodeURIComponent(url)}`
+    }
+    return url
+  }
+  
+  const displayUrl = getProxiedUrl(image?.url)
+  
   // Calculate aspect ratio padding
   const aspectRatioPadding = {
     '16:9': 'pb-[56.25%]',      // 9/16 = 0.5625
@@ -87,12 +99,16 @@ export function TreatmentHeroImage({
       {/* Aspect ratio container */}
       <div className={cn('relative w-full', aspectRatioPadding)}>
         {/* Image or placeholder */}
-        {hasImage ? (
+        {hasImage && displayUrl ? (
           <img
-            src={image.url}
+            src={displayUrl}
             alt={`${title} - Hero Image`}
             className="absolute inset-0 w-full h-full object-cover"
-            onError={() => setImageError(true)}
+            onError={() => {
+              console.log('[TreatmentHeroImage] Image failed to load:', displayUrl?.substring(0, 60))
+              setImageError(true)
+            }}
+            onLoad={() => console.log('[TreatmentHeroImage] Image loaded successfully')}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center z-10">
