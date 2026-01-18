@@ -206,6 +206,26 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     setError(null)
     
     try {
+      // Build previous analysis context for re-analysis (maintains scoring baseline)
+      const previousAnalysisContext = isReanalysis && analysis ? {
+        score: analysis.greenlightScore?.score || 0,
+        axisScores: {
+          originality: analysis.axes.find(a => a.id === 'originality')?.score || 50,
+          genreFidelity: analysis.axes.find(a => a.id === 'genre-fidelity')?.score || 50,
+          characterDepth: analysis.axes.find(a => a.id === 'character-depth')?.score || 50,
+          pacing: analysis.axes.find(a => a.id === 'pacing')?.score || 50,
+          commercialViability: analysis.axes.find(a => a.id === 'commercial-viability')?.score || 50
+        },
+        passedCheckpoints: serverCheckpointResults 
+          ? Object.entries(serverCheckpointResults).flatMap(([, axisResults]) => 
+              Object.entries(axisResults)
+                .filter(([, result]) => result.passed)
+                .map(([checkpointId]) => checkpointId)
+            )
+          : [],
+        appliedFixes
+      } : undefined
+      
       const response = await fetch('/api/treatment/analyze-resonance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -222,7 +242,8 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
           },
           intent,
           quickAnalysis: quickMode,
-          iteration: nextIteration
+          iteration: nextIteration,
+          previousAnalysis: previousAnalysisContext
         })
       })
       

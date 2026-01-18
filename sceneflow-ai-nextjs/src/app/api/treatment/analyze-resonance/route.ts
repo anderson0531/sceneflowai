@@ -12,6 +12,7 @@ import type {
   AudienceIntent,
   CheckpointResults,
   AxisCheckpointResults,
+  PreviousAnalysisContext,
   getGreenlightTier
 } from '@/lib/types/audienceResonance'
 import {
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
   
   try {
     const body: AnalyzeResonanceRequest = await request.json()
-    const { treatment, intent, quickAnalysis = false, iteration = 1 } = body
+    const { treatment, intent, quickAnalysis = false, iteration = 1, previousAnalysis } = body
     
     if (!treatment) {
       return NextResponse.json({
@@ -79,8 +80,11 @@ export async function POST(request: NextRequest) {
     
     // Full AI analysis
     console.log(`[Resonance] Starting analysis (iteration ${effectiveIteration}/${MAX_ITERATIONS}) for "${treatment.title}" with intent:`, intent)
+    if (previousAnalysis) {
+      console.log(`[Resonance] Re-analysis with baseline score: ${previousAnalysis.score}, ${previousAnalysis.passedCheckpoints.length} passed checkpoints`)
+    }
     
-    const analysis = await analyzeWithGemini(treatment, intent, reqId, effectiveIteration)
+    const analysis = await analyzeWithGemini(treatment, intent, reqId, effectiveIteration, previousAnalysis)
     
     const isReadyForProduction = analysis.greenlightScore.score >= READY_FOR_PRODUCTION_THRESHOLD
     
@@ -262,10 +266,11 @@ async function analyzeWithGemini(
   treatment: AnalyzeResonanceRequest['treatment'],
   intent: AudienceIntent,
   reqId: string,
-  iteration: number = 1
+  iteration: number = 1,
+  previousAnalysis?: PreviousAnalysisContext
 ): Promise<AudienceResonanceAnalysis> {
   
-  const prompt = buildAnalysisPrompt(treatment, intent, iteration)
+  const prompt = buildAnalysisPrompt(treatment, intent, iteration, previousAnalysis)
   
   console.log(`[Resonance] Calling Vertex AI Gemini for analysis (iteration ${iteration})...`)
   
@@ -387,8 +392,11 @@ async function analyzeWithGemini(
     effort: r.effort === 'quick' ? 'quick' : r.effort === 'significant' ? 'significant' : 'moderate'
   }))
   
-  // Parse checkpoint results from Gemini response
-  const checkpointResults = parseCheckpointResults(parsed.checkpoints_passed)
+  // Parse checkpoint results from Gemini response, preserving previously passed checkpoints
+  const checkpointResults = parseCheckpointResults(
+    parsed.checkpoints_passed, 
+    previousAnalysis?.passedCheckpoints
+  )
   
   return {
     intent,
@@ -407,7 +415,8 @@ async function analyzeWithGemini(
 function buildAnalysisPrompt(
   treatment: AnalyzeResonanceRequest['treatment'],
   intent: AudienceIntent,
-  iteration: number = 1
+  iteration: number = 1,
+  previousAnalysis?: PreviousAnalysisContext
 ): string {
   const genreLabel = intent.primaryGenre.replace('-', ' ')
   const demoLabel = intent.targetDemographic.replace(/-/g, ' ')
@@ -426,10 +435,26 @@ function buildAnalysisPrompt(
     `${c.name} (${c.role}): ${truncateText(c.description, 150)}`
   ).join('\n') || 'Not provided'
   
+  // Build baseline anchoring context for re-analysis
+  const baselineContext = previousAnalysis ? `
+PREVIOUS ANALYSIS BASELINE (Iteration ${iteration - 1}):
+- Overall Score: ${previousAnalysis.score}/100
+- Axis Scores: Originality ${previousAnalysis.axisScores.originality}, Genre ${previousAnalysis.axisScores.genreFidelity}, Character ${previousAnalysis.axisScores.characterDepth}, Pacing ${previousAnalysis.axisScores.pacing}, Commercial ${previousAnalysis.axisScores.commercialViability}
+- Checkpoints Passed: ${previousAnalysis.passedCheckpoints.length > 0 ? previousAnalysis.passedCheckpoints.join(', ') : 'None'}
+- Fixes Applied: ${previousAnalysis.appliedFixes.length}
+
+RE-ANALYSIS SCORING RULES:
+1. BASELINE ANCHORING: Start from the previous score (${previousAnalysis.score}) as baseline
+2. CHECKPOINT PRESERVATION: Checkpoints that passed before (${previousAnalysis.passedCheckpoints.join(', ') || 'none'}) should REMAIN passed unless content was REMOVED
+3. SCORE DIRECTION: After fixes are applied, scores should generally IMPROVE or stay stable, not decrease
+4. NO REGRESSION: Do NOT lower axis scores unless the treatment text was made WORSE (content removed or contradicted)
+5. INCREMENTAL IMPROVEMENT: Each fix applied should contribute +2-10 points to relevant axis
+` : ''
+
   return `You are a Creative Executive. Analyze this treatment for market viability.
 
 INTENT: ${genreLabel} | ${demoLabel} | ${toneLabel}
-
+${baselineContext}
 TREATMENT:
 Title: ${treatment.title || 'Untitled'}
 Logline: ${truncateText(treatment.logline, 300) || 'Not provided'}
@@ -520,10 +545,17 @@ function getDemographicGuidelines(demo: string): string {
 }
 
 /**
+/**
  * Parse checkpoints_passed from Gemini response into structured CheckpointResults
  * Maps each checkpoint to passed/failed status with penalty values from axis definitions
+ * 
+ * @param rawCheckpoints - Checkpoints reported as passed by Gemini
+ * @param previouslyPassedCheckpoints - Checkpoint IDs that passed in previous iteration (should be preserved)
  */
-function parseCheckpointResults(rawCheckpoints: Record<string, string[]> | undefined): CheckpointResults {
+function parseCheckpointResults(
+  rawCheckpoints: Record<string, string[]> | undefined,
+  previouslyPassedCheckpoints?: string[]
+): CheckpointResults {
   // Axis ID mapping from prompt format to our format
   const axisIdMap: Record<string, keyof CheckpointResults> = {
     'concept_originality': 'concept-originality',
@@ -532,6 +564,9 @@ function parseCheckpointResults(rawCheckpoints: Record<string, string[]> | undef
     'genre_fidelity': 'genre-fidelity',
     'commercial_viability': 'commercial-viability'
   }
+  
+  // Build a Set for O(1) lookup of previously passed checkpoints
+  const preservedCheckpoints = new Set(previouslyPassedCheckpoints || [])
   
   // Initialize with empty results
   const results: CheckpointResults = {
@@ -545,8 +580,24 @@ function parseCheckpointResults(rawCheckpoints: Record<string, string[]> | undef
   // NOTE: Uses module-level CHECKPOINT_PENALTIES cache (computed once at load)
   // This avoids rebuilding the penalty map on every request (85 iterations saved)
   
-  // If no checkpoints from Gemini, return empty results
+  // If no checkpoints from Gemini, check if we have previously passed checkpoints to preserve
   if (!rawCheckpoints || typeof rawCheckpoints !== 'object') {
+    if (preservedCheckpoints.size > 0) {
+      console.log(`[Resonance] No new checkpoint data from Gemini, preserving ${preservedCheckpoints.size} previously passed checkpoints`)
+      // Populate results with preserved checkpoints
+      for (const axis of ALL_SCORING_AXES) {
+        const axisResults: AxisCheckpointResults = {}
+        for (const checkpoint of axis.checkpoints) {
+          const passed = preservedCheckpoints.has(checkpoint.id)
+          axisResults[checkpoint.id] = {
+            passed,
+            penalty: passed ? 0 : checkpoint.failPenalty
+          }
+        }
+        results[axis.id as keyof CheckpointResults] = axisResults
+      }
+      return results
+    }
     console.log('[Resonance] No checkpoint data from Gemini, returning empty results')
     return results
   }
@@ -564,12 +615,21 @@ function parseCheckpointResults(rawCheckpoints: Record<string, string[]> | undef
     if (!axisConfig) continue
     
     // Mark each checkpoint as passed or failed
+    // PRESERVE: If a checkpoint was previously passed, keep it passed (no regression)
     const axisResults: AxisCheckpointResults = {}
     for (const checkpoint of axisConfig.checkpoints) {
-      const passed = Array.isArray(passedCheckpointIds) && passedCheckpointIds.includes(checkpoint.id)
+      const passedNow = Array.isArray(passedCheckpointIds) && passedCheckpointIds.includes(checkpoint.id)
+      const wasPassedBefore = preservedCheckpoints.has(checkpoint.id)
+      // Checkpoint is passed if either: it passes now OR it passed before (no regression)
+      const passed = passedNow || wasPassedBefore
       axisResults[checkpoint.id] = {
         passed,
         penalty: passed ? 0 : checkpoint.failPenalty
+      }
+      
+      // Log preservation events
+      if (wasPassedBefore && !passedNow) {
+        console.log(`[Resonance] Preserving checkpoint "${checkpoint.id}" (passed before, would have regressed)`)
       }
     }
     

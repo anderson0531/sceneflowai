@@ -227,6 +227,20 @@ export interface AudienceResonanceAnalysis {
 // API REQUEST/RESPONSE
 // =============================================================================
 
+// Previous analysis context for re-analysis (maintains scoring baseline)
+export interface PreviousAnalysisContext {
+  score: number // Previous greenlight score
+  axisScores: {
+    originality: number
+    genreFidelity: number
+    characterDepth: number
+    pacing: number
+    commercialViability: number
+  }
+  passedCheckpoints: string[] // Checkpoint IDs that previously passed
+  appliedFixes: string[] // Fix IDs that were applied
+}
+
 export interface AnalyzeResonanceRequest {
   treatmentId: string
   treatment: {
@@ -247,6 +261,7 @@ export interface AnalyzeResonanceRequest {
   includeHeatMap?: boolean
   quickAnalysis?: boolean // Heuristic-only, no AI (free tier)
   iteration?: number // Current refinement iteration (1-3, capped at 3)
+  previousAnalysis?: PreviousAnalysisContext // For re-analysis: maintains baseline
 }
 
 export interface AnalyzeResonanceResponse {
