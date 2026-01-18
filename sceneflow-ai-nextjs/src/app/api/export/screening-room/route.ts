@@ -231,6 +231,47 @@ export async function POST(request: NextRequest) {
       console.log(`[Export] Player settings: volume=${playerSettings.volume}, musicVolume=${playerSettings.musicVolume}, kenBurns=${playerSettings.kenBurnsIntensity}, narration=${playerSettings.narrationEnabled}`);
     }
 
+    // ========== VALIDATION: Check scenes have images before proceeding ==========
+    const scenesWithImages: ScreeningRoomScene[] = [];
+    const scenesWithoutImages: number[] = [];
+
+    for (let i = 0; i < scenes.length; i++) {
+      const scene = scenes[i];
+      const imageUrl = scene.imageUrl || scene.thumbnailUrl;
+      
+      if (imageUrl && imageUrl.trim() !== '') {
+        scenesWithImages.push(scene);
+      } else {
+        scenesWithoutImages.push(i + 1); // 1-indexed for user display
+        console.warn(`[Export] Scene ${i + 1} has no image URL, will be skipped`);
+      }
+    }
+
+    // Require at least one scene with an image
+    if (scenesWithImages.length === 0) {
+      console.error(`[Export] No scenes have images. Cannot render animatic.`);
+      return NextResponse.json(
+        { 
+          error: 'No scenes with images',
+          message: `None of the ${scenes.length} scenes have generated images. Please generate visuals for your scenes in the Vision phase before rendering an animatic.`,
+          details: {
+            totalScenes: scenes.length,
+            scenesWithoutImages: scenesWithoutImages.length,
+            firstMissing: scenesWithoutImages.slice(0, 10),
+          }
+        },
+        { status: 400 }
+      );
+    }
+
+    // Log if some scenes are missing images (partial render is allowed)
+    if (scenesWithoutImages.length > 0) {
+      console.warn(`[Export] ${scenesWithoutImages.length} of ${scenes.length} scenes missing images. Rendering ${scenesWithImages.length} scenes.`);
+    } else {
+      console.log(`[Export] All ${scenes.length} scenes have images.`);
+    }
+    // ========== END VALIDATION ==========
+
     // Validate Cloud Run is configured
     if (!isCloudRunConfigured()) {
       console.error('[Export] Cloud Run FFmpeg rendering is not configured');
@@ -254,16 +295,18 @@ export async function POST(request: NextRequest) {
     // Generate unique job ID
     const jobId = uuidv4();
     
-    // Build the render job spec
+    // Build the render job spec using ONLY scenes with images
     const jobSpec = buildRenderJobSpec(
       jobId,
       projectId,
-      scenes,
+      scenesWithImages,  // Use validated scenes with images
       validLanguage,
       validResolution as 'sd' | 'hd' | 'fhd',
       title,
       playerSettings
     );
+
+    console.log(`[Export] Job spec built with ${scenesWithImages.length} valid scenes`);
 
     // Upload job spec to GCS
     const jobSpecPath = await uploadJobSpec(jobSpec);
@@ -297,11 +340,19 @@ export async function POST(request: NextRequest) {
     await triggerCloudRunJob(jobId, jobSpecPath);
     console.log(`[Export] Cloud Run Job triggered for job ${jobId}`);
 
+    // Calculate estimated duration from validated scenes
+    const estimatedDuration = scenesWithImages.reduce((sum, s) => sum + (s.duration || 5), 0);
+
     return NextResponse.json({
       success: true,
       jobId,
-      message: 'Animatic render job submitted successfully',
+      message: scenesWithoutImages.length > 0 
+        ? `Animatic render started with ${scenesWithImages.length} of ${scenes.length} scenes (${scenesWithoutImages.length} scenes skipped - no images)`
+        : `Animatic render started with ${scenesWithImages.length} scenes`,
       provider: 'cloud-run',
+      scenesIncluded: scenesWithImages.length,
+      scenesSkipped: scenesWithoutImages.length,
+      estimatedDuration,
     });
   } catch (error) {
     console.error('[Export] Error processing export request:', error);
