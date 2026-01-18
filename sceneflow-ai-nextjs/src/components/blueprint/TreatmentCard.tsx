@@ -397,7 +397,7 @@ export function TreatmentCard() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
-                              aria-label="Refine blueprint"
+                              aria-label="Edit blueprint"
                               title="Refine (E)"
                               onClick={() => setRefineOpen(true)}
                               className="h-8 w-8 border border-gray-700 text-gray-200 hover:bg-gray-800"
