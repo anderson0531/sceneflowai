@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { uploadJobSpec, getOutputPath, getRenderBucket } from '@/lib/gcs/renderStorage';
 import { triggerCloudRunJob, isCloudRunJobsEnabled } from '@/lib/video/CloudRunJobsService';
 import { RenderJobSpec, RenderSegment, RenderAudioClip } from '@/lib/video/renderTypes';
@@ -191,6 +193,17 @@ function buildRenderJobSpec(
 
 export async function POST(request: NextRequest) {
   try {
+    // Authenticate user
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id || session?.user?.email;
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required', code: 'AUTH_REQUIRED' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json() as ExportRequest;
     const { projectId, scenes, language, resolution, title, playerSettings } = body;
 
@@ -264,7 +277,7 @@ export async function POST(request: NextRequest) {
     await RenderJob.create({
       id: jobId,
       project_id: projectId,
-      user_id: projectId, // Use projectId as user_id for now (can be updated with actual user ID)
+      user_id: userId,
       status: 'QUEUED',
       progress: 0,
       language: validLanguage,
