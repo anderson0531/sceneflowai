@@ -103,6 +103,14 @@ type Props = {
 
 // Section-specific instruction templates
 const SECTION_TEMPLATES: Record<string, { id: string; label: string; text: string }[]> = {
+  tips: [
+    { id: 'add-twist', label: 'Add Unexpected Twist', text: 'Add an unexpected twist to the logline that subverts audience expectations.' },
+    { id: 'subvert-trope', label: 'Subvert Genre Trope', text: 'Identify and subvert a common genre trope to make the story feel fresh.' },
+    { id: 'raise-stakes', label: 'Raise the Stakes', text: 'Increase the personal and external stakes to create more urgency and tension.' },
+    { id: 'add-irony', label: 'Add Dramatic Irony', text: 'Introduce dramatic irony where the audience knows something characters don\'t.' },
+    { id: 'moral-dilemma', label: 'Add Moral Dilemma', text: 'Give the protagonist a difficult moral choice with no easy answer.' },
+    { id: 'unique-hook', label: 'Unique Hook', text: 'Create a distinctive hook that makes this story stand out in the genre.' },
+  ],
   core: [
     { id: 'sharpen-logline', label: 'Sharpen Logline', text: 'Make the logline more compelling with a stronger hook and clearer stakes.' },
     { id: 'clarify-genre', label: 'Clarify Genre', text: 'Ensure genre expectations are clear and consistent throughout.' },
@@ -345,9 +353,10 @@ export function BlueprintRefineDialog({
   onApply,
   projectId
 }: Props) {
-  const [activeTab, setActiveTab] = useState('core')
+  const [activeTab, setActiveTab] = useState('tips')
   const [draft, setDraft] = useState<Partial<TreatmentVariant>>({})
   const [selectedInstructions, setSelectedInstructions] = useState<Record<string, string[]>>({
+    tips: [],
     core: [],
     story: [],
     tone: [],
@@ -355,6 +364,7 @@ export function BlueprintRefineDialog({
     characters: [],
   })
   const [customInstructions, setCustomInstructions] = useState<Record<string, string>>({
+    tips: '',
     core: '',
     story: '',
     tone: '',
@@ -517,23 +527,52 @@ export function BlueprintRefineDialog({
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          <TabsList className="grid grid-cols-5 bg-slate-800/50 mb-4 flex-shrink-0">
-            <TabsTrigger value="core" className="text-xs">Core Info</TabsTrigger>
-            <TabsTrigger value="story" className="text-xs">Story Setup</TabsTrigger>
-            <TabsTrigger value="tone" className="text-xs">Tone & Style</TabsTrigger>
-            <TabsTrigger value="beats" className="text-xs">Beats</TabsTrigger>
-            <TabsTrigger value="characters" className="text-xs">Characters</TabsTrigger>
+          <TabsList className="grid grid-cols-6 bg-slate-800/50 mb-4 flex-shrink-0">
+            <TabsTrigger value="tips" className="text-xs gap-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/20 data-[state=active]:border-cyan-500/50 data-[state=active]:border">
+              <Sparkles className="w-3 h-3" />
+              Tips
+            </TabsTrigger>
+            <TabsTrigger value="core" className="text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/20 data-[state=active]:border-cyan-500/50 data-[state=active]:border">Core Info</TabsTrigger>
+            <TabsTrigger value="story" className="text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/20 data-[state=active]:border-cyan-500/50 data-[state=active]:border">Story Setup</TabsTrigger>
+            <TabsTrigger value="tone" className="text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/20 data-[state=active]:border-cyan-500/50 data-[state=active]:border">Tone & Style</TabsTrigger>
+            <TabsTrigger value="beats" className="text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/20 data-[state=active]:border-cyan-500/50 data-[state=active]:border">Beats</TabsTrigger>
+            <TabsTrigger value="characters" className="text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/20 data-[state=active]:border-cyan-500/50 data-[state=active]:border">Characters</TabsTrigger>
           </TabsList>
           
           <div className="flex-1 overflow-y-auto pr-2 min-h-0">
+            {/* Tips Tab */}
+            <TabsContent value="tips" className="space-y-4 mt-0">
+              <div className="p-4 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-xl border border-cyan-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="w-5 h-5 text-cyan-400" />
+                  <h3 className="text-lg font-semibold text-white">Improvement Tips</h3>
+                </div>
+                <p className="text-sm text-gray-400 mb-4">
+                  Select tips to apply to your entire Blueprint. These general improvements will enhance your story's appeal and originality.
+                </p>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  {SECTION_TEMPLATES.tips.map(tip => (
+                    <button
+                      key={tip.id}
+                      onClick={() => toggleInstruction('tips', tip.id)}
+                      className={cn(
+                        'p-3 rounded-lg border text-left transition-all',
+                        selectedInstructions.tips?.includes(tip.id)
+                          ? 'bg-cyan-500/20 border-cyan-500/50'
+                          : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'
+                      )}
+                    >
+                      <span className="text-sm font-medium text-white">{tip.label}</span>
+                      <p className="text-xs text-gray-400 mt-1">{tip.text}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </TabsContent>
+            
             {/* Core Info Tab */}
             <TabsContent value="core" className="space-y-4 mt-0">
-              <SectionHeader 
-                icon={FileText} 
-                title="Core Identifying Information" 
-                description="Title, logline, genre, and audience targeting"
-              />
-              
               <InstructionChips
                 section="core"
                 selected={selectedInstructions.core}
@@ -615,12 +654,6 @@ export function BlueprintRefineDialog({
             
             {/* Story Setup Tab */}
             <TabsContent value="story" className="space-y-4 mt-0">
-              <SectionHeader 
-                icon={MapPin} 
-                title="Story Setup" 
-                description="Synopsis, setting, protagonist, and antagonist"
-              />
-              
               <InstructionChips
                 section="story"
                 selected={selectedInstructions.story}
@@ -669,12 +702,6 @@ export function BlueprintRefineDialog({
             
             {/* Tone & Style Tab */}
             <TabsContent value="tone" className="space-y-4 mt-0">
-              <SectionHeader 
-                icon={Palette} 
-                title="Tone, Style & Themes" 
-                description="Visual style, mood, and thematic elements"
-              />
-              
               <InstructionChips
                 section="tone"
                 selected={selectedInstructions.tone}
@@ -714,12 +741,6 @@ export function BlueprintRefineDialog({
             
             {/* Beats Tab */}
             <TabsContent value="beats" className="space-y-4 mt-0">
-              <SectionHeader 
-                icon={Clock} 
-                title="Beats & Runtime" 
-                description="Story structure and pacing"
-              />
-              
               <InstructionChips
                 section="beats"
                 selected={selectedInstructions.beats}
@@ -764,12 +785,6 @@ export function BlueprintRefineDialog({
             
             {/* Characters Tab */}
             <TabsContent value="characters" className="space-y-4 mt-0">
-              <SectionHeader 
-                icon={Users} 
-                title="Characters" 
-                description="Character details and psychological depth"
-              />
-              
               <InstructionChips
                 section="characters"
                 selected={selectedInstructions.characters}
