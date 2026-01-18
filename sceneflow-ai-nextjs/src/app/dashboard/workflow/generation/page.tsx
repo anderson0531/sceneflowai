@@ -7,6 +7,7 @@ import { VideoPreview } from '@/components/editor/VideoPreview';
 import { Timeline } from '@/components/editor/Timeline';
 import { AssetPanel } from '@/components/editor/AssetPanel';
 import { EffectsPanel } from '@/components/editor/EffectsPanel';
+import { AnimaticStreamsPanel } from '@/components/export/AnimaticStreamsPanel';
 import { useEditorStore } from '@/store/editorStore';
 import { Button } from '@/components/ui/Button';
 import { Download, ArrowLeft, Loader } from 'lucide-react';
@@ -160,9 +161,15 @@ export default function PolishPage() {
       
       {/* Main Layout */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left: Asset Panel */}
-        <div className="w-64 bg-gray-900 border-r border-gray-800 overflow-y-auto">
+        {/* Left: Asset Panel + Animatic Streams */}
+        <div className="w-64 bg-gray-900 border-r border-gray-800 overflow-y-auto flex flex-col">
           <AssetPanel />
+          {currentProject?.id && (
+            <AnimaticStreamsPanel 
+              projectId={currentProject.id} 
+              className="mt-4 mx-2 mb-4"
+            />
+          )}
         </div>
         
         {/* Center: Preview */}

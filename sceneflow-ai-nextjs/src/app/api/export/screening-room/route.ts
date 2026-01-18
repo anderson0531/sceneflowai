@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { RenderStorage } from '@/lib/gcs/renderStorage';
-import { CloudRunJobsService } from '@/lib/video/CloudRunJobsService';
-import { RenderJobSpec, RenderSegment, AudioTrack } from '@/lib/video/renderTypes';
+import { uploadJobSpec, getOutputPath, getRenderBucket } from '@/lib/gcs/renderStorage';
+import { triggerCloudRunJob, isCloudRunJobsEnabled } from '@/lib/video/CloudRunJobsService';
+import { RenderJobSpec, RenderSegment, RenderAudioClip } from '@/lib/video/renderTypes';
 import RenderJob from '@/models/RenderJob';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -88,15 +88,25 @@ function isCloudRunConfigured(): boolean {
 }
 
 // Ken Burns intensity settings
-function getKenBurnsZoom(intensity: 'subtle' | 'medium' | 'dramatic' | undefined): { startZoom: number; endZoom: number } {
+function getKenBurnsZoom(intensity: 'subtle' | 'medium' | 'dramatic' | undefined): { zoomStart: number; zoomEnd: number } {
   switch (intensity) {
     case 'subtle':
-      return { startZoom: 1.0, endZoom: 1.05 };
+      return { zoomStart: 1.0, zoomEnd: 1.05 };
     case 'dramatic':
-      return { startZoom: 1.0, endZoom: 1.25 };
+      return { zoomStart: 1.0, zoomEnd: 1.25 };
     case 'medium':
     default:
-      return { startZoom: 1.0, endZoom: 1.15 };
+      return { zoomStart: 1.0, zoomEnd: 1.15 };
+  }
+}
+
+// Map sd/hd/fhd to standard resolution format
+function mapResolution(resolution: 'sd' | 'hd' | 'fhd'): '720p' | '1080p' | '4K' {
+  switch (resolution) {
+    case 'sd': return '720p';
+    case 'hd': return '1080p';
+    case 'fhd': return '4K';
+    default: return '1080p';
   }
 }
 
@@ -110,15 +120,14 @@ function buildRenderJobSpec(
   title?: string,
   playerSettings?: PlayerSettings
 ): RenderJobSpec {
-  const { width, height } = getResolutionDimensions(resolution);
-  const { startZoom, endZoom } = getKenBurnsZoom(playerSettings?.kenBurnsIntensity);
+  const { zoomStart, zoomEnd } = getKenBurnsZoom(playerSettings?.kenBurnsIntensity);
   
   // Apply player volume settings (default to 1.0)
   const audioVolume = playerSettings?.volume ?? 1.0;
   
   let currentTime = 0;
   const segments: RenderSegment[] = [];
-  const audioTracks: AudioTrack[] = [];
+  const audioClips: RenderAudioClip[] = [];
 
   for (let i = 0; i < scenes.length; i++) {
     const scene = scenes[i];
@@ -131,29 +140,29 @@ function buildRenderJobSpec(
 
     // Add segment for this scene with player's Ken Burns intensity
     segments.push({
+      segmentId: scene.id || `segment-${i}`,
       imageUrl,
       duration: scene.duration,
       startTime: currentTime,
-      kenBurnsEffect: {
-        startZoom,
-        endZoom,
-        startX: 0.5,
-        startY: 0.5,
-        endX: 0.5,
-        endY: 0.5,
+      kenBurns: {
+        zoomStart,
+        zoomEnd,
+        panX: 0,
+        panY: 0,
       },
     });
 
-    // Add audio track for this scene if available (respecting narrationEnabled and volume)
+    // Add audio clip for this scene if available (respecting narrationEnabled and volume)
     // Note: In screening room, all audio is narration audio
     if (playerSettings?.narrationEnabled !== false) {
       const audioUrl = getAudioUrlForLanguage(scene, language);
       if (audioUrl) {
-        audioTracks.push({
-          audioUrl,
+        audioClips.push({
+          url: audioUrl,
           startTime: currentTime,
           duration: scene.duration,
           volume: audioVolume,
+          type: 'narration',
         });
       }
     }
@@ -168,20 +177,15 @@ function buildRenderJobSpec(
   return {
     jobId,
     projectId,
+    projectTitle: title || `Animatic-${projectId}`,
+    resolution: mapResolution(resolution),
+    fps: 24,
     segments,
-    audioTracks,
-    output: {
-      format: 'mp4',
-      resolution,
-      fps: 24,
-      width,
-      height,
-    },
-    metadata: {
-      title: title || `Export-${projectId}`,
-      language,
-      createdAt: new Date().toISOString(),
-    },
+    audioClips,
+    outputPath: getOutputPath(jobId),
+    callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://sceneflowai.studio'}/api/export/render-callback`,
+    createdAt: new Date().toISOString(),
+    language,
   };
 }
 
@@ -249,9 +253,8 @@ export async function POST(request: NextRequest) {
     );
 
     // Upload job spec to GCS
-    const renderStorage = new RenderStorage();
-    await renderStorage.uploadJobSpec(jobId, jobSpec);
-    console.log(`[Export] Job spec uploaded to GCS for job ${jobId}`);
+    const jobSpecPath = await uploadJobSpec(jobSpec);
+    console.log(`[Export] Job spec uploaded to GCS for job ${jobId}: ${jobSpecPath}`);
 
     // Map resolution format for database
     const dbResolution = validResolution === 'sd' ? '720p' : validResolution === 'hd' ? '1080p' : '4K';
@@ -268,18 +271,18 @@ export async function POST(request: NextRequest) {
       resolution: dbResolution as '720p' | '1080p' | '4K',
       include_subtitles: false,
       estimated_duration: scenes.reduce((sum, s) => sum + s.duration, 0),
+      render_type: 'animatic', // Mark as animatic render for Final Cut phase
     });
     console.log(`[Export] Database record created for job ${jobId}`);
 
     // Trigger Cloud Run Job
-    const cloudRunService = new CloudRunJobsService();
-    await cloudRunService.triggerRenderJob(jobId);
+    await triggerCloudRunJob(jobId, jobSpecPath);
     console.log(`[Export] Cloud Run Job triggered for job ${jobId}`);
 
     return NextResponse.json({
       success: true,
       jobId,
-      message: 'Render job submitted successfully',
+      message: 'Animatic render job submitted successfully',
       provider: 'cloud-run',
     });
   } catch (error) {
@@ -289,7 +292,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json(
       { 
-        error: 'Failed to start video export',
+        error: 'Failed to start animatic render',
         details: errorMessage 
       },
       { status: 500 }

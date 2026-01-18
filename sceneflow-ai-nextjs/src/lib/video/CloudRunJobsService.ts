@@ -300,7 +300,7 @@ export async function createRenderJob(
  * @param jobId - The render job ID
  * @param jobSpecPath - GCS path to job spec JSON
  */
-async function triggerCloudRunJob(jobId: string, jobSpecPath: string): Promise<void> {
+export async function triggerCloudRunJob(jobId: string, jobSpecPath: string): Promise<void> {
   // Check if we're in development/preview mode or missing config
   if (!GCP_PROJECT_ID || !CLOUD_RUN_JOB_NAME) {
     console.log(`[CloudRunJobs] Skipping Cloud Run trigger (missing configuration)`)

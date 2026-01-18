@@ -9,6 +9,7 @@ import { DataTypes, Model, Optional } from 'sequelize'
 import { sequelize } from '../config/database'
 
 export type RenderJobStatus = 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED'
+export type RenderType = 'animatic' | 'scene_video' | 'project_video'
 
 export interface RenderJobAttributes {
   id: string
@@ -19,6 +20,7 @@ export interface RenderJobAttributes {
   resolution: '720p' | '1080p' | '4K'
   language: string
   include_subtitles: boolean
+  render_type: RenderType
   estimated_duration: number | null
   cloud_run_execution_id: string | null
   output_path: string | null
@@ -34,7 +36,7 @@ export interface RenderJobCreationAttributes extends Optional<
   RenderJobAttributes,
   'id' | 'status' | 'progress' | 'created_at' | 'updated_at' | 'completed_at' |
   'cloud_run_execution_id' | 'output_path' | 'download_url' | 'download_url_expires_at' |
-  'error' | 'estimated_duration'
+  'error' | 'estimated_duration' | 'render_type'
 > {}
 
 export class RenderJob extends Model<RenderJobAttributes, RenderJobCreationAttributes>
@@ -47,6 +49,7 @@ export class RenderJob extends Model<RenderJobAttributes, RenderJobCreationAttri
   public resolution!: '720p' | '1080p' | '4K'
   public language!: string
   public include_subtitles!: boolean
+  public render_type!: RenderType
   public estimated_duration!: number | null
   public cloud_run_execution_id!: string | null
   public output_path!: string | null
@@ -113,6 +116,12 @@ RenderJob.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,
+    },
+    render_type: {
+      type: DataTypes.ENUM('animatic', 'scene_video', 'project_video'),
+      allowNull: false,
+      defaultValue: 'scene_video',
+      comment: 'Type of render: animatic (from Screening Room), scene_video, or project_video',
     },
     estimated_duration: {
       type: DataTypes.FLOAT,
@@ -182,6 +191,14 @@ RenderJob.init(
       {
         name: 'render_jobs_created_at_idx',
         fields: ['created_at'],
+      },
+      {
+        name: 'render_jobs_render_type_idx',
+        fields: ['render_type'],
+      },
+      {
+        name: 'render_jobs_project_render_type_idx',
+        fields: ['project_id', 'render_type'],
       },
     ],
   }
