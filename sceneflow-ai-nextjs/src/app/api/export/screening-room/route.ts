@@ -272,21 +272,26 @@ export async function POST(request: NextRequest) {
     // Map resolution format for database
     const dbResolution = validResolution === 'sd' ? '720p' : validResolution === 'hd' ? '1080p' : '4K';
 
-    // Create database record for tracking
-    // Note: Using jobId as the primary key (id field)
-    await RenderJob.create({
-      id: jobId,
-      project_id: projectId,
-      user_id: userId,
-      status: 'QUEUED',
-      progress: 0,
-      language: validLanguage,
-      resolution: dbResolution as '720p' | '1080p' | '4K',
-      include_subtitles: false,
-      estimated_duration: scenes.reduce((sum, s) => sum + s.duration, 0),
-      render_type: 'animatic', // Mark as animatic render for Final Cut phase
-    });
-    console.log(`[Export] Database record created for job ${jobId}`);
+    // Create database record for tracking (non-blocking - render proceeds even if tracking fails)
+    try {
+      await RenderJob.create({
+        id: jobId,
+        project_id: projectId,
+        user_id: userId,
+        status: 'QUEUED',
+        progress: 0,
+        language: validLanguage,
+        resolution: dbResolution as '720p' | '1080p' | '4K',
+        include_subtitles: false,
+        estimated_duration: scenes.reduce((sum, s) => sum + s.duration, 0),
+        render_type: 'animatic', // Mark as animatic render for Final Cut phase
+      });
+      console.log(`[Export] Database record created for job ${jobId}`);
+    } catch (dbError) {
+      // Log but don't fail - render can proceed without tracking
+      console.warn(`[Export] Failed to create database record for job ${jobId}:`, dbError);
+      console.warn(`[Export] Proceeding with render anyway - tracking disabled for this job`);
+    }
 
     // Trigger Cloud Run Job
     await triggerCloudRunJob(jobId, jobSpecPath);
