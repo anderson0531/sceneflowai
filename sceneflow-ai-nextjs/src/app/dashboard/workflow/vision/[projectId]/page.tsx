@@ -599,6 +599,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [sceneProductionState, setSceneProductionState] = useState<Record<string, SceneProductionData>>({})
   const [sceneBookmark, setSceneBookmark] = useState<SceneBookmark | null>(null)
   
+  // Script Review state - for Director and Audience review scoring
+  const [directorReview, setDirectorReview] = useState<any>(null)
+  const [audienceReview, setAudienceReview] = useState<any>(null)
+  const [showReviewModal, setShowReviewModal] = useState(false)
+  const [isGeneratingReviews, setIsGeneratingReviews] = useState(false)
+  const [reviewsOutdated, setReviewsOutdated] = useState(false)
+  
   // Collapsible sidebar sections
   const [sectionsOpen, setSectionsOpen] = useState({
     workflow: true,
@@ -734,6 +741,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       setSceneBookmark(null)
     }
   }, [project])
+
+  // Load existing script reviews from project metadata
+  useEffect(() => {
+    const reviews = project?.metadata?.visionPhase?.reviews
+    if (reviews) {
+      if (reviews.director) {
+        setDirectorReview(reviews.director)
+      }
+      if (reviews.audience) {
+        setAudienceReview(reviews.audience)
+      }
+      // Check if reviews might be outdated (script changed since review)
+      // We could compare script hash here if needed
+      setReviewsOutdated(false)
+    }
+  }, [project?.metadata?.visionPhase?.reviews])
 
   // Auto-select first scene when scenes are loaded
   useEffect(() => {
@@ -3063,12 +3086,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [project?.id, project?.metadata]
   )
   
-  // Script review state
-  const [directorReview, setDirectorReview] = useState<any>(null)
-  const [audienceReview, setAudienceReview] = useState<any>(null)
-  const [isGeneratingReviews, setIsGeneratingReviews] = useState(false)
-  const [showReviewModal, setShowReviewModal] = useState(false)
-  const [reviewsOutdated, setReviewsOutdated] = useState(false)
+  // Revise script state
   const [reviseScriptInstruction, setReviseScriptInstruction] = useState<string>('')
   
   // Scene editor state
