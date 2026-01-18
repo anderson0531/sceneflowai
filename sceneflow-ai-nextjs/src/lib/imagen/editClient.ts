@@ -16,6 +16,7 @@
 
 import { EditMode, AspectRatioPreset } from '@/types/imageEdit'
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
+import { downloadFromGCS, isGcsPublicUrl } from '@/lib/storage/gcsAssets'
 
 // Vertex AI configuration
 function getVertexConfig() {
@@ -94,11 +95,23 @@ async function imageToBase64(imageSource: string): Promise<string> {
   }
   
   // Raw base64 (no data: prefix)
-  if (!imageSource.startsWith('http')) {
+  if (!imageSource.startsWith('http') && !imageSource.startsWith('gs://')) {
     return imageSource
   }
   
-  // Download from URL
+  // For GCS URLs, use authenticated download to avoid 403 errors
+  if (imageSource.startsWith('gs://') || isGcsPublicUrl(imageSource)) {
+    console.log('[Image Edit] Using authenticated GCS download')
+    try {
+      const buffer = await downloadFromGCS(imageSource)
+      return buffer.toString('base64')
+    } catch (gcsError: any) {
+      console.warn('[Image Edit] GCS auth download failed, trying public fetch:', gcsError.message)
+      // Fall through to regular fetch as fallback
+    }
+  }
+  
+  // Download from URL (for non-GCS or fallback)
   const response = await fetch(imageSource)
   if (!response.ok) {
     throw new Error(`Failed to download image: ${response.status} ${response.statusText}`)

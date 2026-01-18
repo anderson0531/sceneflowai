@@ -281,6 +281,57 @@ export function isGcsUri(url: string): boolean {
   return url.startsWith('gs://')
 }
 
+/**
+ * Check if a URL is a GCS public URL (storage.googleapis.com)
+ */
+export function isGcsPublicUrl(url: string): boolean {
+  return url.includes('storage.googleapis.com') || url.includes('storage.cloud.google.com')
+}
+
+/**
+ * Download a file from GCS using authenticated access
+ * Works for both signed URLs and public URLs that might have access issues
+ */
+export async function downloadFromGCS(urlOrPath: string): Promise<Buffer> {
+  let bucketName: string
+  let filePath: string
+  
+  // Parse gs://bucket/path format
+  if (urlOrPath.startsWith('gs://')) {
+    const match = urlOrPath.match(/^gs:\/\/([^/]+)\/(.+)$/)
+    if (!match) {
+      throw new Error(`Invalid GCS path: ${urlOrPath}`)
+    }
+    [, bucketName, filePath] = match
+  } 
+  // Parse https://storage.googleapis.com/bucket/path format
+  else if (isGcsPublicUrl(urlOrPath)) {
+    try {
+      const url = new URL(urlOrPath.split('?')[0]) // Remove query params (signed URL params)
+      const pathParts = url.pathname.split('/').filter(Boolean)
+      if (pathParts.length < 2) {
+        throw new Error(`Invalid GCS URL path: ${url.pathname}`)
+      }
+      bucketName = pathParts[0]
+      filePath = pathParts.slice(1).join('/')
+    } catch (error) {
+      throw new Error(`Failed to parse GCS URL: ${urlOrPath}`)
+    }
+  } else {
+    throw new Error(`Not a GCS URL or path: ${urlOrPath}`)
+  }
+  
+  console.log(`[GCS Assets] Downloading authenticated: gs://${bucketName}/${filePath}`)
+  
+  const storage = getStorageClient()
+  const file = storage.bucket(bucketName).file(filePath)
+  
+  const [contents] = await file.download()
+  console.log(`[GCS Assets] Downloaded ${contents.length} bytes`)
+  
+  return contents
+}
+
 // ============================================================================
 // Deletion
 // ============================================================================
