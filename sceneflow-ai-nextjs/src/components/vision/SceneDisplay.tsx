@@ -66,7 +66,7 @@ function buildKeyframeSequence(
     if (startUrl) {
       keyframes.push({
         url: startUrl,
-        duration: segmentDuration || fallbackDuration, // Use full segment duration for start frame only
+        duration: (segmentDuration || fallbackDuration) * 2, // Double duration for slower frame transitions
         segmentIndex: idx,
         isStartFrame: true
       })
