@@ -164,15 +164,19 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
 
   // Auto-generate hero image for treatment variant
   // Uses sessionStorage to prevent duplicate generation across navigation
-  const generateHeroImage = async (variant: any) => {
+  const generateHeroImage = async (variant: any, force: boolean = false) => {
     if (!variant?.title) return
     
     // Check if hero image already exists on the variant
     // Consider image ready if URL exists (status may be missing from database loads)
     const hasExistingImage = variant.heroImage?.url && (variant.heroImage?.status === 'ready' || !variant.heroImage?.status)
-    if (hasExistingImage) {
+    if (hasExistingImage && !force) {
       console.log('[StudioPage] Hero image already exists, skipping generation')
       return
+    }
+    
+    if (force) {
+      console.log('[StudioPage] Force regenerating hero image...')
     }
     
     // Use sessionStorage to prevent duplicate generation during navigation
@@ -727,7 +731,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                     genre={guide.treatmentVariants[0]?.genre}
                     aspectRatio="2.39:1"
                     className="mb-6"
-                    onRegenerate={() => generateHeroImage(guide.treatmentVariants[0])}
+                    onRegenerate={() => generateHeroImage(guide.treatmentVariants[0], true)}
                     isGenerating={isGeneratingHeroImage}
                     error={heroImageError}
                   />
