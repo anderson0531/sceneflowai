@@ -106,10 +106,25 @@ export async function GET(
     const jobStatus = await getJobStatus(renderId)
     
     if (!jobStatus) {
-      return NextResponse.json(
-        { error: 'Job not found' },
-        { status: 404 }
-      )
+      // Job not found in database - this can happen if:
+      // 1. The DB insert failed but the render was triggered anyway (non-blocking)
+      // 2. The job ID is simply invalid
+      // 
+      // Return a processing status so the client keeps polling.
+      // The Cloud Run callback will eventually update the status when done.
+      console.log(`[Export Video Status] Job ${renderId} not found in DB - may be processing without tracking`)
+      
+      return NextResponse.json({
+        success: true,
+        jobId: renderId,
+        provider: 'cloud-run',
+        status: 'rendering',
+        progress: 25,
+        url: null,
+        error: null,
+        message: 'Job is processing. Status tracking may be delayed.',
+        metadata: {},
+      })
     }
 
     console.log(`[Export Video Status] Job ${renderId}:`, {
