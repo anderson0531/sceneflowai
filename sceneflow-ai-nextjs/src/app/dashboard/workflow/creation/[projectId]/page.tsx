@@ -20,7 +20,32 @@ import type {
   VideoGenerationRequest,
   VideoModelKey,
 } from '@/components/creation/types'
-import { uploadAssetToBlob } from '@/lib/storage/upload'
+
+/**
+ * Client-side upload helper that uses the API endpoint
+ */
+async function uploadAssetViaAPI(file: File, projectId: string): Promise<string> {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('projectId', projectId)
+  
+  // Determine the correct endpoint based on file type
+  const isAudio = file.type.startsWith('audio/')
+  const endpoint = isAudio ? '/api/upload/audio' : '/api/upload/image'
+  
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    body: formData,
+  })
+  
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Upload failed' }))
+    throw new Error(error.error || 'Upload failed')
+  }
+  
+  const result = await response.json()
+  return result.url || result.imageUrl || result.audioUrl
+}
 
 interface CreationHubJobPayload {
   id: string
@@ -386,7 +411,7 @@ export default function CreationHubPage({ params }: { params: Promise<{ projectI
 
   const handleUploadAsset = async (sceneId: string, file: File, type: CreationAssetType): Promise<CreationSceneAsset> => {
     if (!project?.id) throw new Error('Project not loaded')
-    const uploadedUrl = await uploadAssetToBlob(file, file.name.replace(/\s+/g, '-').toLowerCase(), project.id)
+    const uploadedUrl = await uploadAssetViaAPI(file, project.id)
     const duration = await measureMediaDuration(file)
     const asset: CreationSceneAsset = {
       id: crypto.randomUUID(),

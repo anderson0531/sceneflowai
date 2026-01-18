@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { put } from '@vercel/blob'
+import { uploadFileToGCS } from '@/lib/storage/gcsAssets'
 import { moderateUpload, createUploadBlockedResponse, getUserModerationContext } from '@/lib/moderation'
 
 export const runtime = 'nodejs'
@@ -7,7 +7,7 @@ export const runtime = 'nodejs'
 /**
  * Image Upload API
  * 
- * Accepts image files and uploads them to Vercel Blob storage.
+ * Accepts image files and uploads them to Google Cloud Storage.
  * Used for uploading keyframe images (Start/End frames) from external sources.
  * 
  * Content Moderation:
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const file = formData.get('file') as File
     const userId = formData.get('userId') as string || 'anonymous'
-    const projectId = formData.get('projectId') as string | undefined
+    const projectId = formData.get('projectId') as string || 'default'
     
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
@@ -45,30 +45,30 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Upload to Vercel Blob first (needed for moderation check)
-    const blob = await put(file.name, file, {
-      access: 'public',
-      addRandomSuffix: true
+    // Upload to GCS
+    const result = await uploadFileToGCS(file, {
+      projectId,
+      category: 'images',
+      subcategory: 'frames',
     })
 
     // Content moderation check (100% for uploads)
     const moderationContext = await getUserModerationContext(userId, projectId)
-    const moderationResult = await moderateUpload(blob.url, file.type, moderationContext)
+    const moderationResult = await moderateUpload(result.url, file.type, moderationContext)
 
     if (!moderationResult.allowed) {
-      // Delete the uploaded blob if blocked
-      console.log('[Image Upload] Content blocked, deleting blob:', blob.url)
-      // Note: Vercel Blob doesn't have a delete API in the client SDK
-      // The blob will be cleaned up by storage lifecycle policy
+      // Delete the uploaded file if blocked
+      console.log('[Image Upload] Content blocked, deleting from GCS:', result.gcsPath)
+      // Note: Could call deleteFromGCS here, but lifecycle policy will clean up
       
       return createUploadBlockedResponse(moderationResult.result)
     }
 
-    console.log('[Image Upload] Uploaded and moderated:', blob.url)
+    console.log('[Image Upload] Uploaded and moderated:', result.url)
 
     return NextResponse.json({ 
       success: true,
-      imageUrl: blob.url 
+      imageUrl: result.url 
     })
   } catch (error: any) {
     console.error('[Image Upload] Error:', error)

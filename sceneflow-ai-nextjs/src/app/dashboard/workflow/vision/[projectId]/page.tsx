@@ -65,8 +65,33 @@ import { DetailedSceneDirection } from '@/types/scene-direction'
 import { cn } from '@/lib/utils'
 import { VisionReferencesSidebar } from '@/components/vision/VisionReferencesSidebar'
 import { VisualReference, VisualReferenceType, VisionReferencesPayload } from '@/types/visionReferences'
-import { uploadAssetToBlob } from '@/lib/storage/upload'
 import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production'
+
+/**
+ * Client-side upload helper that uses the API endpoint
+ */
+async function uploadAssetViaAPI(file: File, projectId: string): Promise<string> {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('projectId', projectId)
+  
+  // Determine the correct endpoint based on file type
+  const isAudio = file.type.startsWith('audio/')
+  const endpoint = isAudio ? '/api/upload/audio' : '/api/upload/image'
+  
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    body: formData,
+  })
+  
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Upload failed' }))
+    throw new Error(error.error || 'Upload failed')
+  }
+  
+  const result = await response.json()
+  return result.url || result.imageUrl || result.audioUrl
+}
 
 // Scene Analysis interface for score generation
 interface SceneAnalysis {
@@ -1078,7 +1103,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
         const safeName = payload.file.name.replace(/\s+/g, '-').toLowerCase()
         const filename = `${type}-reference-${crypto.randomUUID()}-${safeName}`
-        imageUrl = await uploadAssetToBlob(payload.file, filename, project.id)
+        imageUrl = await uploadAssetViaAPI(payload.file, project.id)
       }
 
       const newReference: VisualReference = {

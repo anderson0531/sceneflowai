@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { put } from '@vercel/blob'
+import { uploadToGCS } from '@/lib/storage/gcsAssets'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,6 +10,7 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File
+    const projectId = formData.get('projectId') as string || 'default'
     
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
@@ -41,19 +42,22 @@ export async function POST(request: NextRequest) {
     const timestamp = Date.now()
     const randomId = Math.random().toString(36).substring(7)
     const extension = file.name.split('.').pop() || 'mp3'
-    const filename = `audio/${timestamp}-${randomId}.${extension}`
+    const filename = `${timestamp}-${randomId}.${extension}`
 
-    // Upload to Vercel Blob
-    const blob = await put(filename, buffer, {
-      access: 'public',
+    // Upload to GCS
+    const result = await uploadToGCS(buffer, {
+      projectId,
+      category: 'audio',
+      subcategory: 'sfx',
+      filename,
       contentType: file.type,
     })
 
-    console.log('[Audio Upload] File uploaded successfully:', blob.url)
+    console.log('[Audio Upload] File uploaded successfully:', result.url)
 
     return NextResponse.json({ 
       success: true, 
-      audioUrl: blob.url,
+      audioUrl: result.url,
       filename: file.name,
       size: file.size
     })

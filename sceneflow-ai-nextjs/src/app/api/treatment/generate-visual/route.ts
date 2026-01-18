@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
-import { put } from '@vercel/blob'
+import { uploadToGCS } from '@/lib/storage/gcsAssets'
 import { DEFAULT_PROMPT_TEMPLATES, TREATMENT_VISUAL_CREDITS } from '@/types/treatment-visuals'
 import type { TreatmentMood, TreatmentVisuals, GeneratedImage, CharacterPortrait, ActAnchor } from '@/types/treatment-visuals'
 import type { FilmTreatmentData } from '@/lib/types/reports'
@@ -203,16 +203,19 @@ async function generateHeroImage(
     imageSize: '2K'
   })
   
-  // Upload to blob storage
+  // Upload to GCS
   const imageBuffer = Buffer.from(base64Image.split(',')[1] || base64Image, 'base64')
-  const blob = await put(`treatment-visuals/${projectId}/hero-${Date.now()}.png`, imageBuffer, {
-    access: 'public',
-    contentType: 'image/png'
+  const result = await uploadToGCS(imageBuffer, {
+    projectId,
+    category: 'images',
+    subcategory: 'treatment',
+    filename: `hero-${Date.now()}.png`,
+    contentType: 'image/png',
   })
   
   return {
     id: `hero-${projectId}-${Date.now()}`,
-    url: blob.url,
+    url: result.url,
     prompt,
     generatedAt: new Date().toISOString(),
     aspectRatio: '16:9',
@@ -251,9 +254,12 @@ async function generateCharacterPortrait(
   })
   
   const imageBuffer = Buffer.from(base64Image.split(',')[1] || base64Image, 'base64')
-  const blob = await put(`treatment-visuals/${projectId}/character-${character.name.replace(/\s+/g, '-')}-${Date.now()}.png`, imageBuffer, {
-    access: 'public',
-    contentType: 'image/png'
+  const result = await uploadToGCS(imageBuffer, {
+    projectId,
+    category: 'images',
+    subcategory: 'characters',
+    filename: `${character.name.replace(/\s+/g, '-')}-${Date.now()}.png`,
+    contentType: 'image/png',
   })
   
   return {
@@ -261,7 +267,7 @@ async function generateCharacterPortrait(
     role: roleType,
     image: {
       id: `char-${character.name.replace(/\s+/g, '-')}-${Date.now()}`,
-      url: blob.url,
+      url: result.url,
       prompt,
       generatedAt: new Date().toISOString(),
       aspectRatio: '3:4',
@@ -295,9 +301,12 @@ async function generateActAnchor(
   })
   
   const imageBuffer = Buffer.from(base64Image.split(',')[1] || base64Image, 'base64')
-  const blob = await put(`treatment-visuals/${projectId}/act${actNumber}-${Date.now()}.png`, imageBuffer, {
-    access: 'public',
-    contentType: 'image/png'
+  const result = await uploadToGCS(imageBuffer, {
+    projectId,
+    category: 'images',
+    subcategory: 'treatment',
+    filename: `act${actNumber}-${Date.now()}.png`,
+    contentType: 'image/png',
   })
   
   return {
@@ -305,7 +314,7 @@ async function generateActAnchor(
     title: `Act ${actNumber}`,
     establishingShot: {
       id: `act${actNumber}-${projectId}-${Date.now()}`,
-      url: blob.url,
+      url: result.url,
       prompt,
       generatedAt: new Date().toISOString(),
       aspectRatio: '21:9',

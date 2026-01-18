@@ -1,16 +1,18 @@
-import { put } from '@vercel/blob';
+/**
+ * Upload helper functions
+ * 
+ * These functions delegate to the appropriate storage backend (GCS).
+ * They use dynamic imports to avoid bundling server-only code in client builds.
+ */
 
 export async function uploadAssetToBlob(
   file: File | Blob,
   filename: string,
   projectId: string
 ): Promise<string> {
-  const blob = await put(`projects/${projectId}/assets/${filename}`, file, {
-    access: 'public',
-    addRandomSuffix: true
-  });
-  
-  return blob.url;
+  // Dynamic import to avoid bundling @google-cloud/storage in client builds
+  const { uploadAsset } = await import('./gcsAssets');
+  return uploadAsset(file, filename, projectId);
 }
 
 export async function uploadGeneratedVideo(

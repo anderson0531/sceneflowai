@@ -25,6 +25,10 @@ import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 interface SceneForExport {
   id: string
   title?: string
+  sceneNumber?: number
+  imageUrl?: string
+  thumbnailUrl?: string
+  duration?: number
   segments?: Array<{
     id?: string
     segmentId?: string

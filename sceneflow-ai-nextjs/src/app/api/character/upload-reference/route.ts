@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { put } from '@vercel/blob'
+import { uploadToGCS } from '@/lib/storage/gcsAssets'
 import { uploadImageToGCS } from '@/lib/storage/gcs'
 import { analyzeCharacterImage } from '@/lib/imagen/visionAnalyzer'
 
@@ -21,33 +21,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing projectId or characterName' }, { status: 400 })
     }
     
-    console.log('[Upload Reference] Starting sequential upload for', characterName)
+    console.log('[Upload Reference] Starting upload for', characterName)
     
-    // Step 1: Upload to Vercel Blob first (for UI display/thumbnails)
-    const blobResult = await put(
-      `character-refs/${projectId}/${characterName}-${Date.now()}.${file.name.split('.').pop()}`,
-      file,
-      { access: 'public' }
-    )
+    // Convert file to buffer
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+    const extension = file.name.split('.').pop() || 'jpg'
     
-    console.log('[Upload Reference] Vercel Blob URL:', blobResult.url)
+    // Step 1: Upload to GCS Assets bucket (for UI display/thumbnails)
+    const result = await uploadToGCS(buffer, {
+      projectId,
+      category: 'images',
+      subcategory: 'characters',
+      filename: `${characterName.replace(/\s+/g, '-')}-${Date.now()}.${extension}`,
+      contentType: file.type || 'image/jpeg',
+    })
     
-    // Step 2: Fetch from Vercel Blob and upload to GCS (for Imagen API)
-    // This avoids hitting Vercel's function payload limit by splitting the operations
-    const imageResponse = await fetch(blobResult.url)
-    if (!imageResponse.ok) {
-      throw new Error('Failed to fetch image from Vercel Blob')
-    }
+    console.log('[Upload Reference] GCS Assets URL:', result.url)
     
-    const imageBuffer = Buffer.from(await imageResponse.arrayBuffer())
-    const gcsUrl = await uploadImageToGCS(imageBuffer, characterName)
+    // Step 2: Also upload to character-specific bucket for Imagen API (gs:// URL needed)
+    const gcsUrl = await uploadImageToGCS(buffer, characterName)
     
-    console.log('[Upload Reference] GCS URL:', gcsUrl)
+    console.log('[Upload Reference] GCS URI:', gcsUrl)
     
     // AUTO-ANALYZE: Extract detailed description using Gemini Vision
     let visionDescription = null
     try {
-      visionDescription = await analyzeCharacterImage(blobResult.url, characterName)
+      visionDescription = await analyzeCharacterImage(result.url, characterName)
       console.log(`[Upload Reference] Auto-analyzed with Gemini Vision`)
     } catch (error) {
       console.error('[Upload Reference] Vision analysis failed:', error)
@@ -56,9 +56,9 @@ export async function POST(req: NextRequest) {
     
     return NextResponse.json({ 
       success: true, 
-      url: blobResult.url,  // Vercel Blob URL for UI
-      gcsUrl: gcsUrl,  // GCS URL for Imagen API
-      visionDescription  // Include in response for client to save
+      url: result.url,  // Signed URL for UI
+      gcsUrl: gcsUrl,   // GCS URI for Imagen API
+      visionDescription // Include in response for client to save
     })
   } catch (error: any) {
     console.error('[Upload Reference] Error:', error)

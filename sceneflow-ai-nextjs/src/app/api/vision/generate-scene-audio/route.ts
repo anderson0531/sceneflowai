@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { put, del } from '@vercel/blob'
+import { uploadToGCS } from '@/lib/storage/gcsAssets'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { optimizeTextForTTS } from '../../../../lib/tts/textOptimizer'
@@ -178,7 +178,7 @@ export async function POST(req: NextRequest) {
       audioDuration = (wordCount / 150) * 60
     }
 
-    // Step 6: Upload to Vercel Blob
+    // Step 6: Upload to GCS
     const languageSuffix = language !== 'en' ? `-${language}` : ''
     const fileDescriptor = audioType === 'description'
       ? 'description'
@@ -186,21 +186,25 @@ export async function POST(req: NextRequest) {
         ? 'narration'
         : characterName || 'dialogue'
 
-    const fileName = `audio/${projectId}/scene-${sceneIndex}-${fileDescriptor}${languageSuffix}-${Date.now()}.mp3`
+    const fileName = `scene-${sceneIndex}-${fileDescriptor}${languageSuffix}-${Date.now()}.mp3`
 
-    const blob = await put(fileName, audioBuffer, {
-      access: 'public',
+    const result = await uploadToGCS(audioBuffer, {
+      projectId,
+      category: 'audio',
+      subcategory: audioType === 'dialogue' ? 'dialogue' : 'narration',
+      filename: fileName,
       contentType: 'audio/mpeg',
+      language: language !== 'en' ? language : undefined,
     })
 
-    console.log(`[Scene Audio] Uploaded to Blob:`, blob.url)
+    console.log(`[Scene Audio] Uploaded to GCS:`, result.url)
 
     // Step 7: Update scene in project metadata with language-specific storage
     await updateSceneAudio(
       projectId, 
       sceneIndex, 
       audioType, 
-      blob.url, 
+      result.url, 
       language,
       audioDuration,
       finalVoiceConfig.voiceId,

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { put } from '@vercel/blob'
+import { uploadToGCS } from '@/lib/storage/gcsAssets'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import sharp from 'sharp'
@@ -64,11 +64,14 @@ export async function POST(req: NextRequest) {
     
     console.log(`[Scene Upload] Final image: 1920x1080 (16:9), ${Math.round(croppedBuffer.length / 1024)}KB`)
 
-    // Upload cropped image to Vercel Blob
-    const filename = `scenes/${projectId}-scene-${sceneNumber}-${Date.now()}.jpg`
-    const blob = await put(filename, croppedBuffer, {
-      access: 'public',
-      contentType: 'image/jpeg'
+    // Upload cropped image to GCS
+    const filename = `scene-${sceneNumber}-${Date.now()}.jpg`
+    const result = await uploadToGCS(croppedBuffer, {
+      projectId,
+      category: 'images',
+      subcategory: 'scenes',
+      filename,
+      contentType: 'image/jpeg',
     })
 
     // Update Database
@@ -104,7 +107,7 @@ export async function POST(req: NextRequest) {
         ? {
             ...s,
             sceneNumber: sceneNumber, // Ensure sceneNumber is set
-            imageUrl: blob.url,
+            imageUrl: result.url,
             imageGeneratedAt: new Date().toISOString(),
             imageSource: 'upload'
           }
@@ -141,9 +144,9 @@ export async function POST(req: NextRequest) {
     }
 
     const updateResult = await project.update({ metadata: updatedMetadata })
-    console.log(`[Scene Upload] Database update successful, returning imageUrl: ${blob.url.substring(0, 50)}`)
+    console.log(`[Scene Upload] Database update successful, returning imageUrl: ${result.url.substring(0, 50)}`)
 
-    return NextResponse.json({ success: true, imageUrl: blob.url })
+    return NextResponse.json({ success: true, imageUrl: result.url })
   } catch (error: any) {
     console.error('Upload error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })

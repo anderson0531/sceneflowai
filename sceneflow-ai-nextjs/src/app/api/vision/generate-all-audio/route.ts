@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { optimizeTextForTTS } from '../../../../lib/tts/textOptimizer'
-import { put } from '@vercel/blob'
+import { uploadToGCS } from '@/lib/storage/gcsAssets'
 
 export const maxDuration = 300 // 5 minutes for batch generation
 export const runtime = 'nodejs'
@@ -31,16 +31,19 @@ async function generateAndSaveMusicForScene(scene: any, projectId: string, scene
     const arrayBuffer = await musicResponse.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
     
-    // Upload to Vercel Blob storage
+    // Upload to GCS
     const timestamp = Date.now()
-    const filename = `audio/${projectId}/scene${sceneIdx}/music-${timestamp}.mp3`
-    const blob = await put(filename, buffer, {
-      access: 'public',
+    const filename = `scene${sceneIdx}-music-${timestamp}.mp3`
+    const result = await uploadToGCS(buffer, {
+      projectId,
+      category: 'audio',
+      subcategory: 'music',
+      filename,
       contentType: 'audio/mpeg',
     })
     
-    console.log(`[Batch Audio] Music saved for scene ${sceneIdx + 1}: ${blob.url}`)
-    return blob.url
+    console.log(`[Batch Audio] Music saved for scene ${sceneIdx + 1}: ${result.url}`)
+    return result.url
   } catch (error: any) {
     console.error(`[Batch Audio] Music generation failed for scene ${sceneIdx + 1}:`, error?.message || String(error))
     return null
@@ -72,16 +75,19 @@ async function generateAndSaveSFXForScene(scene: any, projectId: string, sceneId
     const arrayBuffer = await sfxResponse.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
     
-    // Upload to Vercel Blob storage
+    // Upload to GCS
     const timestamp = Date.now()
-    const filename = `audio/${projectId}/scene${sceneIdx}/sfx-${sfxIdx}-${timestamp}.mp3`
-    const blob = await put(filename, buffer, {
-      access: 'public',
+    const filename = `scene${sceneIdx}-sfx-${sfxIdx}-${timestamp}.mp3`
+    const result = await uploadToGCS(buffer, {
+      projectId,
+      category: 'audio',
+      subcategory: 'sfx',
+      filename,
       contentType: 'audio/mpeg',
     })
     
-    console.log(`[Batch Audio] SFX ${sfxIdx + 1} saved for scene ${sceneIdx + 1}: ${blob.url}`)
-    return blob.url
+    console.log(`[Batch Audio] SFX ${sfxIdx + 1} saved for scene ${sceneIdx + 1}: ${result.url}`)
+    return result.url
   } catch (error: any) {
     console.error(`[Batch Audio] SFX generation failed for scene ${sceneIdx + 1}, SFX ${sfxIdx + 1}:`, error?.message || String(error))
     return null
