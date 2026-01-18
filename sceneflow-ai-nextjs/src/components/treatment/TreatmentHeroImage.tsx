@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { 
   RefreshCw, 
@@ -43,6 +43,11 @@ export function TreatmentHeroImage({
 }: TreatmentHeroImageProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [imageError, setImageError] = useState(false)
+  
+  // Reset image error when URL changes (e.g., after regeneration)
+  useEffect(() => {
+    setImageError(false)
+  }, [image?.url])
   
   // Calculate aspect ratio padding
   const aspectRatioPadding = {
