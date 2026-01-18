@@ -29,6 +29,8 @@ import {
   type ToneProfile,
   type CheckpointResults,
   type AppliedFix,
+  type TargetScoreProfile,
+  getTargetProfileForIntent,
   GENRE_OPTIONS,
   DEMOGRAPHIC_OPTIONS,
   TONE_OPTIONS,
@@ -111,6 +113,14 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     cachedState?.isScoreEstimated || false
   )
   
+  // Intent lock and target profile - prevents auto-detection from overwriting user selections
+  const [hasIntentLock, setHasIntentLockLocal] = useState(
+    cachedState?.hasIntentLock || false
+  )
+  const [targetProfile, setTargetProfileLocal] = useState<TargetScoreProfile | null>(
+    cachedState?.targetProfile || null
+  )
+  
   // Wrapper functions to sync local state with Zustand store
   const setIntent = useCallback((value: AudienceIntent | ((prev: AudienceIntent) => AudienceIntent)) => {
     setIntentLocal(prev => {
@@ -186,6 +196,17 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     setStoreAnalysis(treatmentId, { isScoreEstimated: value })
   }, [treatmentId, setStoreAnalysis])
   
+  // Intent lock and target profile setters
+  const setHasIntentLock = useCallback((value: boolean) => {
+    setHasIntentLockLocal(value)
+    setStoreAnalysis(treatmentId, { hasIntentLock: value })
+  }, [treatmentId, setStoreAnalysis])
+  
+  const setTargetProfile = useCallback((value: TargetScoreProfile | null) => {
+    setTargetProfileLocal(value)
+    setStoreAnalysis(treatmentId, { targetProfile: value })
+  }, [treatmentId, setStoreAnalysis])
+  
   // Sync with prop changes
   useEffect(() => {
     if (treatmentProp && treatmentProp !== localTreatment) {
@@ -193,8 +214,11 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     }
   }, [treatmentProp])
   
-  // Auto-detect intent from treatment
+  // Auto-detect intent from treatment - ONLY when not locked
   useEffect(() => {
+    // Skip auto-detection if intent is locked (user has started analysis)
+    if (hasIntentLock) return
+    
     if (treatment) {
       const detectedIntent = detectIntentFromTreatment(treatment)
       setIntent(prev => ({
@@ -211,6 +235,13 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
       return
     }
     
+    // Lock intent and create target profile on first analysis
+    if (!hasIntentLock) {
+      setHasIntentLock(true)
+      const profile = getTargetProfileForIntent(intent)
+      setTargetProfile(profile)
+    }
+    
     // Increment iteration count only for re-analysis (after applying fixes)
     const nextIteration = isReanalysis ? iterationCount + 1 : (iterationCount || 1)
     
@@ -218,8 +249,26 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     setError(null)
     
     try {
+      // Build checkpoint scores with local overrides applied
+      // This tells the API what scores the user expects after fixes
+      const checkpointScoresWithOverrides = (() => {
+        const scores: Record<string, number> = {}
+        // Start with server results
+        if (serverCheckpointResults) {
+          for (const [, axisResults] of Object.entries(serverCheckpointResults)) {
+            for (const [checkpointId, result] of Object.entries(axisResults)) {
+              scores[checkpointId] = result.score ?? (result.passed ? 10 : 0)
+            }
+          }
+        }
+        // Apply local overrides (user's optimistic scores from applied fixes)
+        for (const override of checkpointOverrides) {
+          scores[override.checkpointId] = override.overrideScore ?? 8
+        }
+        return scores
+      })()
+      
       // Build previous analysis context for re-analysis (maintains scoring baseline)
-      // Now uses gradient checkpoint scores (0-10) instead of binary pass/fail
       const previousAnalysisContext = isReanalysis && analysis ? {
         score: analysis.greenlightScore?.score || 0,
         axisScores: {
@@ -229,16 +278,8 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
           pacing: analysis.axes.find(a => a.id === 'pacing')?.score || 50,
           commercialViability: analysis.axes.find(a => a.id === 'commercial-viability')?.score || 50
         },
-        // Gradient checkpoint scores (0-10 scale)
-        checkpointScores: serverCheckpointResults 
-          ? Object.entries(serverCheckpointResults).reduce((acc, [axisId, axisResults]) => {
-              for (const [checkpointId, result] of Object.entries(axisResults)) {
-                // Use gradient score if available, otherwise derive from passed boolean
-                acc[checkpointId] = result.score ?? (result.passed ? 10 : 0)
-              }
-              return acc
-            }, {} as Record<string, number>)
-          : {},
+        // Gradient checkpoint scores (0-10 scale) with local overrides applied
+        checkpointScores: checkpointScoresWithOverrides,
         // Legacy: passed checkpoints list for backward compatibility
         passedCheckpoints: serverCheckpointResults 
           ? Object.entries(serverCheckpointResults).flatMap(([, axisResults]) => 
@@ -268,7 +309,9 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
           intent,
           quickAnalysis: quickMode,
           iteration: nextIteration,
-          previousAnalysis: previousAnalysisContext
+          previousAnalysis: previousAnalysisContext,
+          // Target profile for stable scoring path
+          targetProfile: targetProfile || getTargetProfileForIntent(intent)
         })
       })
       
@@ -321,7 +364,7 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     } finally {
       setIsAnalyzing(false)
     }
-  }, [treatment, intent, previousScore, appliedFixes, appliedFixDetails, iterationCount, serverCheckpointResults])
+  }, [treatment, intent, previousScore, appliedFixes, appliedFixDetails, iterationCount, serverCheckpointResults, checkpointOverrides, hasIntentLock, targetProfile, setHasIntentLock, setTargetProfile])
   
   // Apply fix suggestion
   const applyFix = useCallback(async (insight: ResonanceInsight) => {
@@ -450,13 +493,17 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     setIterationCountLocal(0)
     setIsReadyForProductionLocal(false)
     setAppliedFixesLocal([])
+    setAppliedFixDetailsLocal([])
     setPendingFixesCountLocal(0)
     setScoreDelta(null)
     setPreviousScoreLocal(null)
-    // Reset local scoring state - NEW
+    // Reset local scoring state
     setServerCheckpointResultsLocal(null)
     setCheckpointOverridesLocal([])
     setIsScoreEstimatedLocal(false)
+    // Reset intent lock and target profile - allows new target for new intent
+    setHasIntentLockLocal(false)
+    setTargetProfileLocal(null)
     // Clear store for this treatment
     clearStoreAnalysis(treatmentId)
   }
@@ -467,14 +514,18 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     setIterationCountLocal(0)
     setIsReadyForProductionLocal(false)
     setAppliedFixesLocal([])
+    setAppliedFixDetailsLocal([])
     setPendingFixesCountLocal(0)
     setScoreDelta(null)
     setPreviousScoreLocal(null)
     setError(null)
-    // Reset local scoring state - NEW
+    // Reset local scoring state
     setServerCheckpointResultsLocal(null)
     setCheckpointOverridesLocal([])
     setIsScoreEstimatedLocal(false)
+    // Reset intent lock and target profile
+    setHasIntentLockLocal(false)
+    setTargetProfileLocal(null)
     // Clear store for this treatment
     clearStoreAnalysis(treatmentId)
   }

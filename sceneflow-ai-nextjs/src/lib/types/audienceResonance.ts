@@ -280,6 +280,7 @@ export interface AnalyzeResonanceRequest {
   quickAnalysis?: boolean // Heuristic-only, no AI (free tier)
   iteration?: number // Current refinement iteration (1-3, capped at 3)
   previousAnalysis?: PreviousAnalysisContext // For re-analysis: maintains baseline
+  targetProfile?: TargetScoreProfile // Locked target for stable scoring path
 }
 
 export interface AnalyzeResonanceResponse {
@@ -361,4 +362,151 @@ export const DEFAULT_INTENT: AudienceIntent = {
   primaryGenre: 'drama',
   targetDemographic: 'millennials-25-34',
   toneProfile: 'dark-gritty'
+}
+
+// =============================================================================
+// TARGET SCORE PROFILE
+// Defines intent-specific scoring targets for a stable path to 90+
+// =============================================================================
+
+export interface TargetScoreProfile {
+  intent: AudienceIntent
+  
+  // Per-axis target scores for this intent combination (what 90+ looks like)
+  axisTargets: {
+    originality: number
+    genreFidelity: number
+    characterDepth: number
+    pacing: number
+    commercialViability: number
+  }
+  
+  // Weight modifiers for this genre (multipliers, 1.0 = default)
+  axisWeightModifiers: {
+    originality: number
+    genreFidelity: number
+    characterDepth: number
+    pacing: number
+    commercialViability: number
+  }
+  
+  // Minimum passing scores per checkpoint (some checkpoints less critical for certain genres)
+  checkpointMinimums: Record<string, number>
+  
+  // Overall target to consider "ready"
+  readyThreshold: number
+  
+  // Created timestamp
+  createdAt: string
+}
+
+/**
+ * Generate a TargetScoreProfile for a given intent.
+ * This defines what a 90+ score looks like for this genre/audience/tone combination.
+ */
+export function getTargetProfileForIntent(intent: AudienceIntent): TargetScoreProfile {
+  // Genre-specific weight adjustments
+  const genreWeights: Partial<Record<PrimaryGenre, Partial<TargetScoreProfile['axisWeightModifiers']>>> = {
+    'horror': {
+      genreFidelity: 1.3,  // Genre conventions critical for horror
+      pacing: 1.2,         // Pacing crucial for suspense
+      characterDepth: 0.9  // Slightly less critical
+    },
+    'drama': {
+      characterDepth: 1.4, // Character is everything in drama
+      genreFidelity: 0.9,  // Less rigid conventions
+      originality: 1.1
+    },
+    'thriller': {
+      pacing: 1.3,         // Pacing essential
+      genreFidelity: 1.2,
+      commercialViability: 1.1
+    },
+    'comedy': {
+      originality: 1.2,    // Fresh jokes matter
+      genreFidelity: 1.1,
+      pacing: 1.2          // Timing is everything
+    },
+    'action': {
+      pacing: 1.3,
+      commercialViability: 1.2,
+      genreFidelity: 1.1
+    },
+    'romance': {
+      characterDepth: 1.3,
+      genreFidelity: 1.2,
+      originality: 1.0
+    },
+    'sci-fi': {
+      originality: 1.4,    // World-building crucial
+      genreFidelity: 1.0,
+      commercialViability: 0.9
+    },
+    'fantasy': {
+      originality: 1.3,
+      characterDepth: 1.1,
+      genreFidelity: 1.0
+    }
+  }
+
+  // Tone-specific adjustments
+  const toneAdjustments: Partial<Record<ToneProfile, Partial<TargetScoreProfile['axisWeightModifiers']>>> = {
+    'inspirational': {
+      characterDepth: 1.2,
+      originality: 1.0
+    },
+    'dark-gritty': {
+      genreFidelity: 1.1,
+      pacing: 1.1
+    },
+    'light-comedic': {
+      originality: 1.1,
+      pacing: 1.2
+    },
+    'suspenseful': {
+      pacing: 1.3,
+      genreFidelity: 1.1
+    }
+  }
+
+  // Default weights
+  const baseWeights = {
+    originality: 1.0,
+    genreFidelity: 1.0,
+    characterDepth: 1.0,
+    pacing: 1.0,
+    commercialViability: 1.0
+  }
+
+  // Apply genre weights
+  const genreModifiers = genreWeights[intent.primaryGenre] || {}
+  const afterGenre = { ...baseWeights, ...genreModifiers }
+
+  // Apply tone adjustments (additive, not replacement)
+  const toneModifiers = toneAdjustments[intent.toneProfile] || {}
+  const finalWeights = {
+    originality: afterGenre.originality * (toneModifiers.originality || 1.0),
+    genreFidelity: afterGenre.genreFidelity * (toneModifiers.genreFidelity || 1.0),
+    characterDepth: afterGenre.characterDepth * (toneModifiers.characterDepth || 1.0),
+    pacing: afterGenre.pacing * (toneModifiers.pacing || 1.0),
+    commercialViability: afterGenre.commercialViability * (toneModifiers.commercialViability || 1.0)
+  }
+
+  // Target scores for 90+ (what each axis should aim for)
+  const axisTargets = {
+    originality: 85,
+    genreFidelity: 90,
+    characterDepth: 85,
+    pacing: 88,
+    commercialViability: 85
+  }
+
+  return {
+    intent,
+    axisTargets,
+    axisWeightModifiers: finalWeights,
+    checkpointMinimums: {}, // Can be extended per-genre
+    readyThreshold: 80,
+    createdAt: new Date().toISOString()
+  }
 }

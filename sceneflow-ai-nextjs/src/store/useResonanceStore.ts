@@ -13,7 +13,8 @@ import type {
   AudienceIntent, 
   AudienceResonanceAnalysis,
   CheckpointResults,
-  AppliedFix
+  AppliedFix,
+  TargetScoreProfile
 } from '@/lib/types/audienceResonance';
 import { DEFAULT_INTENT } from '@/lib/types/audienceResonance';
 import type { CheckpointOverride } from '@/lib/treatment/localScoring';
@@ -34,6 +35,10 @@ export interface ResonanceCacheEntry {
   serverCheckpointResults: CheckpointResults | null; // Original results from API
   checkpointOverrides: CheckpointOverride[]; // User-applied fixes
   isScoreEstimated: boolean; // True if using local calculation with overrides
+  
+  // NEW: Intent lock and target profile
+  hasIntentLock: boolean; // Prevents auto-detection from overwriting user intent
+  targetProfile: TargetScoreProfile | null; // Locked target for this intent
 }
 
 // Maximum number of treatments to cache in localStorage
@@ -93,6 +98,9 @@ const createDefaultEntry = (): ResonanceCacheEntry => ({
   serverCheckpointResults: null,
   checkpointOverrides: [],
   isScoreEstimated: false,
+  // NEW: Intent lock and target profile
+  hasIntentLock: false,
+  targetProfile: null,
 });
 
 export const useResonanceStore = create<ResonanceState>()(

@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
   
   try {
     const body: AnalyzeResonanceRequest = await request.json()
-    const { treatment, intent, quickAnalysis = false, iteration = 1, previousAnalysis } = body
+    const { treatment, intent, quickAnalysis = false, iteration = 1, previousAnalysis, targetProfile } = body
     
     if (!treatment) {
       return NextResponse.json({
@@ -91,8 +91,11 @@ export async function POST(request: NextRequest) {
     if (previousAnalysis) {
       console.log(`[Resonance] Re-analysis with baseline score: ${previousAnalysis.score}, ${previousAnalysis.passedCheckpoints.length} passed checkpoints`)
     }
+    if (targetProfile) {
+      console.log(`[Resonance] Using locked target profile with axis weights:`, targetProfile.axisWeightModifiers)
+    }
     
-    const analysis = await analyzeWithGemini(treatment, intent, reqId, effectiveIteration, previousAnalysis)
+    const analysis = await analyzeWithGemini(treatment, intent, reqId, effectiveIteration, previousAnalysis, targetProfile)
     
     const isReadyForProduction = analysis.greenlightScore.score >= READY_FOR_PRODUCTION_THRESHOLD
     
@@ -275,10 +278,11 @@ async function analyzeWithGemini(
   intent: AudienceIntent,
   reqId: string,
   iteration: number = 1,
-  previousAnalysis?: PreviousAnalysisContext
+  previousAnalysis?: PreviousAnalysisContext,
+  targetProfile?: AnalyzeResonanceRequest['targetProfile']
 ): Promise<AudienceResonanceAnalysis> {
   
-  const prompt = buildAnalysisPrompt(treatment, intent, iteration, previousAnalysis)
+  const prompt = buildAnalysisPrompt(treatment, intent, iteration, previousAnalysis, targetProfile)
   
   console.log(`[Resonance] Calling Vertex AI Gemini for analysis (iteration ${iteration})...`)
   
@@ -407,6 +411,10 @@ async function analyzeWithGemini(
   )
   
   // Apply hysteresis smoothing to prevent score volatility
+  // Reduce anchor strength on later iterations to allow scores to reach target faster
+  // Iteration 1: 30% anchor (responsive), Iteration 2: 20%, Iteration 3: 10% (allow reaching target)
+  const iterationAnchorStrength = iteration === 1 ? 0.30 : iteration === 2 ? 0.20 : 0.10
+  
   const rawAxisScores = {
     originality: axes.find(a => a.id === 'originality')?.score || 50,
     genreFidelity: axes.find(a => a.id === 'genre-fidelity')?.score || 50,
@@ -416,7 +424,7 @@ async function analyzeWithGemini(
   }
   
   const smoothedScores = previousAnalysis 
-    ? applyHysteresisSmoothing(rawAxisScores, previousAnalysis.axisScores)
+    ? applyHysteresisSmoothing(rawAxisScores, previousAnalysis.axisScores, iterationAnchorStrength)
     : rawAxisScores
   
   // Update axes with smoothed scores
@@ -460,7 +468,8 @@ function buildAnalysisPrompt(
   treatment: AnalyzeResonanceRequest['treatment'],
   intent: AudienceIntent,
   iteration: number = 1,
-  previousAnalysis?: PreviousAnalysisContext
+  previousAnalysis?: PreviousAnalysisContext,
+  targetProfile?: AnalyzeResonanceRequest['targetProfile']
 ): string {
   const genreLabel = intent.primaryGenre.replace('-', ' ')
   const demoLabel = intent.targetDemographic.replace(/-/g, ' ')
@@ -479,6 +488,29 @@ function buildAnalysisPrompt(
     `${c.name} (${c.role}): ${truncateText(c.description, 150)}`
   ).join('\n') || 'Not provided'
   
+  // Build target profile context for consistent scoring toward 90+
+  const targetContext = targetProfile ? `
+TARGET SCORING PROFILE (locked for this intent):
+This profile defines what 90+ looks like for ${genreLabel}/${demoLabel}/${toneLabel}.
+Score improvements should move TOWARD these targets, not away from them.
+
+Axis Weight Modifiers (higher = more important for this genre):
+- Originality: ${targetProfile.axisWeightModifiers.originality.toFixed(1)}x
+- Genre Fidelity: ${targetProfile.axisWeightModifiers.genreFidelity.toFixed(1)}x  
+- Character Depth: ${targetProfile.axisWeightModifiers.characterDepth.toFixed(1)}x
+- Pacing: ${targetProfile.axisWeightModifiers.pacing.toFixed(1)}x
+- Commercial Viability: ${targetProfile.axisWeightModifiers.commercialViability.toFixed(1)}x
+
+Axis Targets for 90+ score:
+- Originality: ${targetProfile.axisTargets.originality}
+- Genre Fidelity: ${targetProfile.axisTargets.genreFidelity}
+- Character Depth: ${targetProfile.axisTargets.characterDepth}
+- Pacing: ${targetProfile.axisTargets.pacing}
+- Commercial Viability: ${targetProfile.axisTargets.commercialViability}
+
+STABLE SCORING: Score progress should be CUMULATIVE. Each applied fix moves closer to target.
+` : ''
+
   // Build baseline anchoring context for re-analysis (Verification/Editor persona)
   const baselineContext = previousAnalysis ? `
 YOU ARE NOW A SCREENPLAY DOCTOR verifying specific improvements, NOT a fresh critic.
@@ -504,6 +536,7 @@ VERIFICATION SCORING RULES:
   return `You are a Creative Executive. Analyze this treatment for market viability.
 
 INTENT: ${genreLabel} | ${demoLabel} | ${toneLabel}
+${targetContext}
 ${baselineContext}
 TREATMENT:
 Title: ${treatment.title || 'Untitled'}
