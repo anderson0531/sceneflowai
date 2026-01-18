@@ -78,7 +78,7 @@ export function TreatmentHeroImage({
             onError={() => setImageError(true)}
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center z-10">
             {isGenerating || image?.status === 'generating' ? (
               <div className="flex flex-col items-center gap-3">
                 <div className="relative">
