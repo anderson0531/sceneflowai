@@ -44,8 +44,18 @@ export function TreatmentHeroImage({
   const [isHovered, setIsHovered] = useState(false)
   const [imageError, setImageError] = useState(false)
   
+  // Debug: Log what we receive
+  console.log('[TreatmentHeroImage] Render:', {
+    hasUrl: !!image?.url,
+    urlPreview: image?.url?.substring(0, 60),
+    status: image?.status,
+    imageError,
+    isGenerating
+  })
+  
   // Reset image error when URL changes (e.g., after regeneration)
   useEffect(() => {
+    console.log('[TreatmentHeroImage] URL changed, resetting imageError. New URL:', image?.url?.substring(0, 60))
     setImageError(false)
   }, [image?.url])
   

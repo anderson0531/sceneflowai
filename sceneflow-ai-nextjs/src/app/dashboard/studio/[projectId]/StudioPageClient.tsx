@@ -724,17 +724,24 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               <div className="p-6 space-y-6">
                 {/* Billboard Hero Image - shows when treatment exists */}
                 {guide.treatmentVariants && guide.treatmentVariants.length > 0 && guide.treatmentVariants[0]?.title && (
-                  <TreatmentHeroImage
-                    image={guide.treatmentVariants[0]?.heroImage || null}
-                    title={guide.treatmentVariants[0]?.title || guide.title || 'Untitled'}
-                    subtitle={guide.treatmentVariants[0]?.logline}
-                    genre={guide.treatmentVariants[0]?.genre}
-                    aspectRatio="2.39:1"
-                    className="mb-6"
-                    onRegenerate={() => generateHeroImage(guide.treatmentVariants[0], true)}
-                    isGenerating={isGeneratingHeroImage}
-                    error={heroImageError}
-                  />
+                  <>
+                    {console.log('[StudioPage] Passing to TreatmentHeroImage:', {
+                      hasHeroImage: !!guide.treatmentVariants[0]?.heroImage,
+                      heroImageUrl: guide.treatmentVariants[0]?.heroImage?.url?.substring(0, 60),
+                      heroImageStatus: guide.treatmentVariants[0]?.heroImage?.status
+                    })}
+                    <TreatmentHeroImage
+                      image={guide.treatmentVariants[0]?.heroImage || null}
+                      title={guide.treatmentVariants[0]?.title || guide.title || 'Untitled'}
+                      subtitle={guide.treatmentVariants[0]?.logline}
+                      genre={guide.treatmentVariants[0]?.genre}
+                      aspectRatio="2.39:1"
+                      className="mb-6"
+                      onRegenerate={() => generateHeroImage(guide.treatmentVariants[0], true)}
+                      isGenerating={isGeneratingHeroImage}
+                      error={heroImageError}
+                    />
+                  </>
                 )}
 
                 {/* Empty Blueprint State - Show prominent CTA when no Blueprint exists */}
