@@ -180,8 +180,22 @@ export interface ToneHeatMapSegment {
 // =============================================================================
 
 export interface CheckpointResult {
-  passed: boolean
-  penalty: number // 0 if passed, penalty value if failed
+  // Gradient scoring (0-10 scale) - primary scoring method
+  score: number           // 0-10 scale (7+ = passed)
+  feedback?: string       // AI's explanation for the score
+  
+  // Backward compatibility fields (derived from score)
+  passed: boolean         // Derived: score >= 7
+  penalty: number         // Derived: (10 - score) / 10 * maxPenalty
+}
+
+// Applied fix tracking for prompt injection
+export interface AppliedFix {
+  id: string
+  checkpointId: string
+  axisId: string
+  fixText: string         // The fix suggestion text that was applied
+  appliedAt: string       // ISO timestamp
 }
 
 export type AxisCheckpointResults = Record<string, CheckpointResult>
@@ -237,8 +251,12 @@ export interface PreviousAnalysisContext {
     pacing: number
     commercialViability: number
   }
-  passedCheckpoints: string[] // Checkpoint IDs that previously passed
-  appliedFixes: string[] // Fix IDs that were applied
+  // Gradient checkpoint scores (0-10 scale)
+  checkpointScores: Record<string, number> // checkpoint ID → 0-10 score
+  // Full applied fix objects for prompt injection
+  appliedFixes: AppliedFix[]
+  // Legacy: passedCheckpoints derived from checkpointScores >= 7
+  passedCheckpoints: string[]
 }
 
 export interface AnalyzeResonanceRequest {

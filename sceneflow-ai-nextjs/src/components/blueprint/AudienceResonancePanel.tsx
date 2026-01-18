@@ -28,6 +28,7 @@ import {
   type PrimaryGenre,
   type ToneProfile,
   type CheckpointResults,
+  type AppliedFix,
   GENRE_OPTIONS,
   DEMOGRAPHIC_OPTIONS,
   TONE_OPTIONS,
@@ -84,6 +85,9 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
   const [appliedFixes, setAppliedFixesLocal] = useState<string[]>(
     cachedState?.appliedFixes || []
   )
+  const [appliedFixDetails, setAppliedFixDetailsLocal] = useState<AppliedFix[]>(
+    cachedState?.appliedFixDetails || []
+  )
   
   // Iteration tracking for diminishing returns
   const [iterationCount, setIterationCountLocal] = useState(
@@ -130,6 +134,14 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     setAppliedFixesLocal(prev => {
       const newValue = typeof value === 'function' ? value(prev) : value
       setStoreAnalysis(treatmentId, { appliedFixes: newValue })
+      return newValue
+    })
+  }, [treatmentId, setStoreAnalysis])
+  
+  const setAppliedFixDetails = useCallback((value: AppliedFix[] | ((prev: AppliedFix[]) => AppliedFix[])) => {
+    setAppliedFixDetailsLocal(prev => {
+      const newValue = typeof value === 'function' ? value(prev) : value
+      setStoreAnalysis(treatmentId, { appliedFixDetails: newValue })
       return newValue
     })
   }, [treatmentId, setStoreAnalysis])
@@ -207,6 +219,7 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     
     try {
       // Build previous analysis context for re-analysis (maintains scoring baseline)
+      // Now uses gradient checkpoint scores (0-10) instead of binary pass/fail
       const previousAnalysisContext = isReanalysis && analysis ? {
         score: analysis.greenlightScore?.score || 0,
         axisScores: {
@@ -216,6 +229,17 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
           pacing: analysis.axes.find(a => a.id === 'pacing')?.score || 50,
           commercialViability: analysis.axes.find(a => a.id === 'commercial-viability')?.score || 50
         },
+        // Gradient checkpoint scores (0-10 scale)
+        checkpointScores: serverCheckpointResults 
+          ? Object.entries(serverCheckpointResults).reduce((acc, [axisId, axisResults]) => {
+              for (const [checkpointId, result] of Object.entries(axisResults)) {
+                // Use gradient score if available, otherwise derive from passed boolean
+                acc[checkpointId] = result.score ?? (result.passed ? 10 : 0)
+              }
+              return acc
+            }, {} as Record<string, number>)
+          : {},
+        // Legacy: passed checkpoints list for backward compatibility
         passedCheckpoints: serverCheckpointResults 
           ? Object.entries(serverCheckpointResults).flatMap(([, axisResults]) => 
               Object.entries(axisResults)
@@ -223,7 +247,8 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
                 .map(([checkpointId]) => checkpointId)
             )
           : [],
-        appliedFixes
+        // Full applied fix details with fix text for AI verification
+        appliedFixes: appliedFixDetails
       } : undefined
       
       const response = await fetch('/api/treatment/analyze-resonance', {
@@ -296,7 +321,7 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     } finally {
       setIsAnalyzing(false)
     }
-  }, [treatment, intent, previousScore, appliedFixes, iterationCount])
+  }, [treatment, intent, previousScore, appliedFixes, appliedFixDetails, iterationCount, serverCheckpointResults])
   
   // Apply fix suggestion
   const applyFix = useCallback(async (insight: ResonanceInsight) => {
@@ -334,12 +359,23 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
         setAppliedFixes(prev => [...prev, insight.id])
         setPendingFixesCount(prev => prev + 1)
         
+        // Track full fix details for API verification (gradient scoring)
+        const fixDetail: AppliedFix = {
+          id: insight.id,
+          checkpointId: insight.checkpointId || '',
+          axisId: insight.axisId || '',
+          fixText: insight.fixSuggestion || '',
+          appliedAt: new Date().toISOString()
+        }
+        setAppliedFixDetails(prev => [...prev, fixDetail])
+        
         // LOCAL SCORING: Add checkpoint override if insight has checkpointId - NEW
         if (insight.checkpointId && insight.axisId && serverCheckpointResults) {
           const newOverride: CheckpointOverride = {
             checkpointId: insight.checkpointId,
             axisId: insight.axisId,
-            overridePassed: true // User applied the fix
+            overridePassed: true, // User applied the fix
+            overrideScore: 8 // Gradient: 8/10 for locally-applied fix (pending AI verification)
           }
           
           setCheckpointOverrides(prev => {
@@ -397,7 +433,7 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     } finally {
       setApplyingFix(null)
     }
-  }, [treatment, onFixApplied, onTreatmentUpdate, runAnalysis, serverCheckpointResults, checkpointOverrides, analysis, previousScore, setAnalysis, setIsScoreEstimated, setCheckpointOverrides, setPreviousScore, setIsReadyForProduction, setAppliedFixes, setPendingFixesCount, iterationCount])
+  }, [treatment, onFixApplied, onTreatmentUpdate, runAnalysis, serverCheckpointResults, checkpointOverrides, analysis, previousScore, setAnalysis, setIsScoreEstimated, setCheckpointOverrides, setPreviousScore, setIsReadyForProduction, setAppliedFixes, setAppliedFixDetails, setPendingFixesCount, iterationCount])
   
   // Toggle insight expansion
   const toggleInsight = (id: string) => {

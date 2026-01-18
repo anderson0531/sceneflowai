@@ -532,3 +532,121 @@ READY THRESHOLD: ${READY_FOR_PRODUCTION_THRESHOLD}/100. If score >= ${READY_FOR_
 ${iteration >= MAX_ITERATIONS ? 'FINAL ITERATION: Accept unless FATAL FLAW exists.' : ''}
 `
 }
+
+// =============================================================================
+// GRADIENT SCORING FUNCTIONS
+// =============================================================================
+
+/**
+ * Calculate axis score using gradient (0-10) checkpoint scores
+ * Uses weighted average for smoother scoring (max ~4% swing per checkpoint)
+ */
+export function calculateAxisScoreGradient(
+  checkpointScores: Record<string, number>,
+  axis: AxisConfig
+): number {
+  let totalPoints = 0
+  let maxPossible = 0
+  
+  for (const checkpoint of axis.checkpoints) {
+    const score = checkpointScores[checkpoint.id] ?? 5 // Default to mid-score if missing
+    const weight = 1.0 // All checkpoints equally weighted within axis
+    totalPoints += score * weight
+    maxPossible += 10 * weight
+  }
+  
+  if (maxPossible === 0) return 50 // Fallback
+  return Math.round((totalPoints / maxPossible) * 100)
+}
+
+/**
+ * Apply hysteresis smoothing to prevent score volatility on re-analysis
+ * New Score = (Previous * anchorStrength) + (Current * (1 - anchorStrength))
+ */
+export function applyHysteresisSmoothing(
+  newScores: {
+    originality: number
+    genreFidelity: number
+    characterDepth: number
+    pacing: number
+    commercialViability: number
+  },
+  previousScores: {
+    originality: number
+    genreFidelity: number
+    characterDepth: number
+    pacing: number
+    commercialViability: number
+  } | null,
+  anchorStrength: number = 0.3 // 30% locked to history (was 40%, reduced for responsiveness)
+): typeof newScores {
+  if (!previousScores) return newScores
+  
+  return {
+    originality: Math.round(previousScores.originality * anchorStrength + newScores.originality * (1 - anchorStrength)),
+    genreFidelity: Math.round(previousScores.genreFidelity * anchorStrength + newScores.genreFidelity * (1 - anchorStrength)),
+    characterDepth: Math.round(previousScores.characterDepth * anchorStrength + newScores.characterDepth * (1 - anchorStrength)),
+    pacing: Math.round(previousScores.pacing * anchorStrength + newScores.pacing * (1 - anchorStrength)),
+    commercialViability: Math.round(previousScores.commercialViability * anchorStrength + newScores.commercialViability * (1 - anchorStrength))
+  }
+}
+
+/**
+ * Enforce score floor to prevent catastrophic drops
+ * Max drop per iteration is 15 points
+ */
+export function enforceScoreFloor(
+  newScore: number,
+  previousScore: number | null,
+  maxDrop: number = 15
+): number {
+  if (previousScore === null) return newScore
+  const floor = previousScore - maxDrop
+  return Math.max(newScore, floor)
+}
+
+/**
+ * Convert gradient score (0-10) to legacy passed/penalty format
+ */
+export function scoreToLegacyFormat(
+  score: number,
+  maxPenalty: number
+): { passed: boolean; penalty: number } {
+  const passed = score >= 7 // 7+ = passed
+  const penalty = passed ? 0 : Math.round(((10 - score) / 10) * maxPenalty)
+  return { passed, penalty }
+}
+
+/**
+ * Convert legacy passed/penalty to gradient score (0-10)
+ */
+export function legacyToGradientScore(
+  passed: boolean,
+  penalty: number,
+  maxPenalty: number
+): number {
+  if (passed) return 10
+  if (maxPenalty === 0) return 5
+  // Map penalty to score: higher penalty = lower score
+  const penaltyRatio = penalty / maxPenalty
+  return Math.round(10 - (penaltyRatio * 10))
+}
+
+/**
+ * Get all checkpoint IDs for an axis
+ */
+export function getAxisCheckpointIds(axisId: string): string[] {
+  const axis = ALL_SCORING_AXES.find(a => a.id === axisId)
+  return axis ? axis.checkpoints.map(c => c.id) : []
+}
+
+/**
+ * Get max penalty for a checkpoint
+ */
+export function getCheckpointMaxPenalty(checkpointId: string): number {
+  for (const axis of ALL_SCORING_AXES) {
+    const checkpoint = axis.checkpoints.find(c => c.id === checkpointId)
+    if (checkpoint) return checkpoint.failPenalty
+  }
+  return 20 // Default
+}

@@ -37,7 +37,8 @@ import {
 export interface CheckpointOverride {
   checkpointId: string
   axisId: keyof CheckpointResults
-  overridePassed: boolean // User marked this as "fixed"
+  overridePassed: boolean // User marked this as "fixed" (kept for backward compatibility)
+  overrideScore?: number  // Gradient score (0-10), default 8 for applied fixes
 }
 
 export interface LocalScoreResult {
@@ -156,6 +157,7 @@ export function calculateLocalScore(
 
 /**
  * Apply user overrides to checkpoint results
+ * Now supports gradient scoring (0-10 scale) in addition to boolean passed/failed
  */
 function applyOverrides(
   serverResults: CheckpointResults,
@@ -170,16 +172,25 @@ function applyOverrides(
     'commercial-viability': { ...serverResults['commercial-viability'] }
   }
   
-  // Apply each override
+  // Apply each override with gradient scoring
   for (const override of overrides) {
     const axisResults = results[override.axisId]
     if (!axisResults) continue
     
-    const penalty = getCheckpointPenalty(override.axisId, override.checkpointId)
+    const maxPenalty = getCheckpointPenalty(override.axisId, override.checkpointId)
+    
+    // Use gradient score if provided (0-10), otherwise derive from boolean
+    // Default to 8/10 for applied fixes (user fixed it but not yet AI-verified)
+    const gradientScore = override.overrideScore ?? (override.overridePassed ? 8 : 0)
+    
+    // Calculate penalty based on gradient: 0/10 = full penalty, 10/10 = no penalty
+    const penaltyFraction = (10 - gradientScore) / 10
+    const computedPenalty = Math.round(maxPenalty * penaltyFraction)
     
     axisResults[override.checkpointId] = {
-      passed: override.overridePassed,
-      penalty: override.overridePassed ? 0 : penalty
+      score: gradientScore,
+      passed: gradientScore >= 7, // 7+ = passing
+      penalty: computedPenalty
     }
   }
   

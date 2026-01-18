@@ -12,7 +12,8 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import type { 
   AudienceIntent, 
   AudienceResonanceAnalysis,
-  CheckpointResults
+  CheckpointResults,
+  AppliedFix
 } from '@/lib/types/audienceResonance';
 import { DEFAULT_INTENT } from '@/lib/types/audienceResonance';
 import type { CheckpointOverride } from '@/lib/treatment/localScoring';
@@ -22,7 +23,8 @@ export interface ResonanceCacheEntry {
   intent: AudienceIntent;
   analysis: AudienceResonanceAnalysis | null;
   previousScore: number | null;
-  appliedFixes: string[];
+  appliedFixes: string[];  // Quick lookup list of insight IDs
+  appliedFixDetails: AppliedFix[];  // Full fix details for API verification
   iterationCount: number;
   isReadyForProduction: boolean;
   pendingFixesCount: number;
@@ -82,6 +84,7 @@ const createDefaultEntry = (): ResonanceCacheEntry => ({
   analysis: null,
   previousScore: null,
   appliedFixes: [],
+  appliedFixDetails: [],  // Full fix details for API verification
   iterationCount: 0,
   isReadyForProduction: false,
   pendingFixesCount: 0,

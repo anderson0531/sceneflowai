@@ -22,7 +22,15 @@ import {
   MAX_ITERATIONS,
   getIterationFocus,
   isSuggestionRestricted,
-  ALL_SCORING_AXES
+  ALL_SCORING_AXES,
+  applyHysteresisSmoothing,
+  enforceScoreFloor,
+  calculateAxisScoreGradient,
+  CONCEPT_ORIGINALITY_AXIS,
+  CHARACTER_DEPTH_AXIS,
+  PACING_STRUCTURE_AXIS,
+  GENRE_FIDELITY_AXIS,
+  COMMERCIAL_VIABILITY_AXIS
 } from '@/lib/treatment/scoringChecklist'
 
 // MODULE-LEVEL CACHE: Build checkpoint penalty lookup once at module load
@@ -392,21 +400,57 @@ async function analyzeWithGemini(
     effort: r.effort === 'quick' ? 'quick' : r.effort === 'significant' ? 'significant' : 'moderate'
   }))
   
-  // Parse checkpoint results from Gemini response, preserving previously passed checkpoints
-  const checkpointResults = parseCheckpointResults(
-    parsed.checkpoints_passed, 
-    previousAnalysis?.passedCheckpoints
+  // Parse checkpoint results from Gemini response (now using 0-10 gradient scores)
+  const checkpointResults = parseCheckpointResultsGradient(
+    parsed.checkpoint_scores,
+    previousAnalysis?.checkpointScores
   )
+  
+  // Apply hysteresis smoothing to prevent score volatility
+  const rawAxisScores = {
+    originality: axes.find(a => a.id === 'originality')?.score || 50,
+    genreFidelity: axes.find(a => a.id === 'genre-fidelity')?.score || 50,
+    characterDepth: axes.find(a => a.id === 'character-depth')?.score || 50,
+    pacing: axes.find(a => a.id === 'pacing')?.score || 50,
+    commercialViability: axes.find(a => a.id === 'commercial-viability')?.score || 50
+  }
+  
+  const smoothedScores = previousAnalysis 
+    ? applyHysteresisSmoothing(rawAxisScores, previousAnalysis.axisScores)
+    : rawAxisScores
+  
+  // Update axes with smoothed scores
+  const smoothedAxes = axes.map(axis => {
+    const smoothedScore = axis.id === 'originality' ? smoothedScores.originality
+      : axis.id === 'genre-fidelity' ? smoothedScores.genreFidelity
+      : axis.id === 'character-depth' ? smoothedScores.characterDepth
+      : axis.id === 'pacing' ? smoothedScores.pacing
+      : axis.id === 'commercial-viability' ? smoothedScores.commercialViability
+      : axis.score
+    return { ...axis, score: smoothedScore }
+  })
+  
+  // Apply score floor to overall score
+  const smoothedOverallScore = previousAnalysis 
+    ? enforceScoreFloor(overallScore, previousAnalysis.score)
+    : overallScore
+  
+  const smoothedGreenlightScore: GreenlightScore = {
+    ...greenlightScore,
+    score: smoothedOverallScore,
+    tier: getGreenlightTierLocal(smoothedOverallScore).tier as any,
+    label: getGreenlightTierLocal(smoothedOverallScore).label
+  }
   
   return {
     intent,
     treatmentId: reqId,
-    greenlightScore,
-    axes,
+    greenlightScore: smoothedGreenlightScore,
+    axes: smoothedAxes,
     checkpointResults,
     insights,
     recommendations,
-    analysisVersion: '1.0',
+    analysisVersion: '2.0', // Updated for gradient scoring
     generatedAt: new Date().toISOString(),
     creditsUsed: 500 // Approximate credit cost
   }
@@ -435,20 +479,26 @@ function buildAnalysisPrompt(
     `${c.name} (${c.role}): ${truncateText(c.description, 150)}`
   ).join('\n') || 'Not provided'
   
-  // Build baseline anchoring context for re-analysis
+  // Build baseline anchoring context for re-analysis (Verification/Editor persona)
   const baselineContext = previousAnalysis ? `
+YOU ARE NOW A SCREENPLAY DOCTOR verifying specific improvements, NOT a fresh critic.
+The user has applied ${previousAnalysis.appliedFixes.length} fix(es) since the last analysis.
+
 PREVIOUS ANALYSIS BASELINE (Iteration ${iteration - 1}):
 - Overall Score: ${previousAnalysis.score}/100
 - Axis Scores: Originality ${previousAnalysis.axisScores.originality}, Genre ${previousAnalysis.axisScores.genreFidelity}, Character ${previousAnalysis.axisScores.characterDepth}, Pacing ${previousAnalysis.axisScores.pacing}, Commercial ${previousAnalysis.axisScores.commercialViability}
-- Checkpoints Passed: ${previousAnalysis.passedCheckpoints.length > 0 ? previousAnalysis.passedCheckpoints.join(', ') : 'None'}
-- Fixes Applied: ${previousAnalysis.appliedFixes.length}
-
-RE-ANALYSIS SCORING RULES:
-1. BASELINE ANCHORING: Start from the previous score (${previousAnalysis.score}) as baseline
-2. CHECKPOINT PRESERVATION: Checkpoints that passed before (${previousAnalysis.passedCheckpoints.join(', ') || 'none'}) should REMAIN passed unless content was REMOVED
-3. SCORE DIRECTION: After fixes are applied, scores should generally IMPROVE or stay stable, not decrease
-4. NO REGRESSION: Do NOT lower axis scores unless the treatment text was made WORSE (content removed or contradicted)
-5. INCREMENTAL IMPROVEMENT: Each fix applied should contribute +2-10 points to relevant axis
+- Checkpoint Scores: ${Object.entries(previousAnalysis.checkpointScores || {}).filter(([, s]) => s < 7).map(([id, s]) => `${id}:${s}/10`).join(', ') || 'All >= 7'}
+${previousAnalysis.appliedFixes.length > 0 ? `
+APPLIED FIXES (verify these improvements):
+${previousAnalysis.appliedFixes.map((fix, i) => `${i + 1}. [${fix.checkpointId}] "${fix.fixText}"`).join('\n')}
+` : ''}
+VERIFICATION SCORING RULES:
+1. VERIFY FIXES: For each applied fix, evaluate if it addresses the checkpoint (0-10 scale)
+2. PARTIAL SUCCESS COUNTS: If a fix is even partially successful, INCREASE the checkpoint score
+3. NO UNRELATED REGRESSION: Do NOT lower scores for checkpoints that were not fixed
+4. BASELINE ANCHORING: Scores should generally IMPROVE or stay stable after fixes
+5. PRESERVE PASSING: Checkpoints scoring 7+ before should remain 7+ unless content was removed
+6. INCREMENTAL IMPROVEMENT: Each fix applied should contribute +2-10 points to relevant axis
 ` : ''
 
   return `You are a Creative Executive. Analyze this treatment for market viability.
@@ -487,12 +537,24 @@ Return JSON:
   "character_depth_score": number (0-100),
   "pacing_score": number (0-100),
   "commercial_viability_score": number (0-100),
-  "checkpoints_passed": {
-    "concept_originality": ["hook-or-twist"],
-    "character_depth": ["protagonist-goal"],
-    "pacing_structure": [],
-    "genre_fidelity": [],
-    "commercial_viability": []
+  "checkpoint_scores": {
+    "hook-or-twist": number (0-10, where 7+ = pass),
+    "cliche-avoidance": number (0-10),
+    "unique-setting-or-premise": number (0-10),
+    "protagonist-goal": number (0-10),
+    "protagonist-flaw": number (0-10),
+    "antagonist-defined": number (0-10),
+    "character-ghost": number (0-10),
+    "three-act-structure": number (0-10),
+    "inciting-incident-placement": number (0-10),
+    "low-point-mentioned": number (0-10),
+    "midpoint-shift": number (0-10),
+    "genre-keywords": number (0-10),
+    "genre-conventions-met": number (0-10),
+    "tone-consistency": number (0-10),
+    "protagonist-demographic-match": number (0-10),
+    "demographic-themes": number (0-10),
+    "marketable-logline": number (0-10)
   },
   "insights": [
     {
@@ -510,7 +572,8 @@ Return JSON:
   "recommendations": [{"priority": "high"|"medium"|"low", "title": string, "description": string, "expected_impact": number}]
 }
 
-RULES: Weaknesses need actionable=true, fix_suggestion (specific text), checkpoint_id, axis_id. Provide 3+ insights, 2+ recommendations.
+SCORING SCALE: 0-10 per checkpoint (0=missing, 5=weak, 7=adequate, 10=excellent). Score 7+ = checkpoint passed.
+RULES: Weaknesses (score<7) need actionable=true, fix_suggestion (specific text), checkpoint_id, axis_id. Provide 3+ insights, 2+ recommendations.
 ${iteration >= 2 ? `Avoid: ${iterationFocus.restrictedSuggestions.slice(0, 3).join(', ')}` : ''}
 ${iteration >= 3 ? 'FINAL: Accept unless FATAL FLAW.' : ''}`
 }
@@ -546,7 +609,64 @@ function getDemographicGuidelines(demo: string): string {
 
 /**
 /**
- * Parse checkpoints_passed from Gemini response into structured CheckpointResults
+ * Parse checkpoint_scores from Gemini response into structured CheckpointResults
+ * Uses gradient scoring (0-10) instead of binary pass/fail
+ * 
+ * @param checkpointScores - Checkpoint ID to score (0-10) mapping from Gemini
+ * @param previousCheckpointScores - Previous scores for baseline preservation
+ */
+function parseCheckpointResultsGradient(
+  checkpointScores: Record<string, number> | undefined,
+  previousCheckpointScores?: Record<string, number>
+): CheckpointResults {
+  // Initialize with default scores
+  const results: CheckpointResults = {
+    'concept-originality': {},
+    'character-depth': {},
+    'pacing-structure': {},
+    'genre-fidelity': {},
+    'commercial-viability': {}
+  }
+  
+  // Process each axis
+  for (const axis of ALL_SCORING_AXES) {
+    const axisResults: AxisCheckpointResults = {}
+    
+    for (const checkpoint of axis.checkpoints) {
+      // Get current score from AI (default to 5 if missing)
+      let score = checkpointScores?.[checkpoint.id] ?? 5
+      
+      // Clamp to 0-10 range
+      score = Math.max(0, Math.min(10, Math.round(score)))
+      
+      // Preserve previous score if it was higher (no regression for passing checkpoints)
+      const previousScore = previousCheckpointScores?.[checkpoint.id]
+      if (previousScore !== undefined && previousScore >= 7 && score < previousScore) {
+        console.log(`[Resonance] Preserving checkpoint "${checkpoint.id}" score: ${previousScore} -> ${score} (keeping ${previousScore})`)
+        score = previousScore
+      }
+      
+      // Convert to result format with backward compatibility
+      const passed = score >= 7
+      const penalty = passed ? 0 : Math.round(((10 - score) / 10) * checkpoint.failPenalty)
+      
+      axisResults[checkpoint.id] = {
+        score,
+        passed,
+        penalty,
+        feedback: '' // Feedback will be in insights
+      }
+    }
+    
+    results[axis.id as keyof CheckpointResults] = axisResults
+  }
+  
+  console.log('[Resonance] Parsed gradient checkpoint results')
+  return results
+}
+
+/**
+ * LEGACY: Parse checkpoints_passed from Gemini response into structured CheckpointResults
  * Maps each checkpoint to passed/failed status with penalty values from axis definitions
  * 
  * @param rawCheckpoints - Checkpoints reported as passed by Gemini
