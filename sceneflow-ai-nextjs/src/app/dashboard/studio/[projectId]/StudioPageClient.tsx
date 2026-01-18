@@ -57,6 +57,18 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   // Hero image error state
   const [heroImageError, setHeroImageError] = useState<string | null>(null)
   
+  // Clear stale hero-gen flags on mount (in case previous generation failed without cleanup)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Clear all hero-gen flags from previous sessions
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('hero-gen-')) {
+          sessionStorage.removeItem(key)
+        }
+      })
+    }
+  }, [])
+  
   // Reimagine dialog state for initial generation
   const [showReimaginDialog, setShowReimaginDialog] = useState(false)
   
@@ -238,12 +250,12 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       const errorMessage = error?.message || 'Failed to generate hero image'
       setHeroImageError(errorMessage)
       try { const { toast } = require('sonner'); toast.error('Hero image generation failed. Click the image to retry.') } catch {}
-    } finally {
-      setIsGeneratingHeroImage(false)
-      // Clear the generation flag on error (so user can retry)
-      if (heroImageError && typeof window !== 'undefined') {
+      // Clear the generation flag on error so user can retry
+      if (typeof window !== 'undefined') {
         sessionStorage.removeItem(`hero-gen-${variant.id || variant.title}`)
       }
+    } finally {
+      setIsGeneratingHeroImage(false)
     }
   }
 
