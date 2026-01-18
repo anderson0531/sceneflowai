@@ -429,10 +429,11 @@ export async function POST(request: NextRequest) {
       visuals
     })
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Treatment visual generation error:', error)
+    const errorMessage = error?.message || 'Unknown error'
     return NextResponse.json(
-      { error: 'Failed to generate treatment visuals' },
+      { error: 'Failed to generate treatment visuals', details: errorMessage },
       { status: 500 }
     )
   }

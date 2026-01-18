@@ -230,7 +230,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           sessionStorage.removeItem(`hero-gen-${variant.id || variant.title}`)
         }
       } else if (data.error) {
-        throw new Error(data.error)
+        const details = data.details ? `: ${data.details}` : ''
+        throw new Error(`${data.error}${details}`)
       }
     } catch (error: any) {
       console.error('[StudioPage] Hero image generation error:', error)
