@@ -479,10 +479,7 @@ export function BlueprintRefineDialog({
   
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent 
-        className="max-w-4xl max-h-[85vh] flex flex-col overflow-hidden bg-slate-900 border-slate-700 relative"
-        style={{ top: '5%', transform: 'translateX(-50%)' }}
-      >
+      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col overflow-hidden bg-slate-900 border-slate-700">
         {/* Freeze overlay during AI refinement */}
         {isRefining && (
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
