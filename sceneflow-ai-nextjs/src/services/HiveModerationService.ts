@@ -615,6 +615,12 @@ export class HiveModerationService {
     windowHours: number = 24
   ): Promise<number> {
     try {
+      // Skip lookup for anonymous users - the user_id column is UUID type
+      // and 'anonymous' is not a valid UUID, causing database errors
+      if (!userId || userId === 'anonymous') {
+        return 0;
+      }
+
       const windowStart = new Date();
       windowStart.setHours(windowStart.getHours() - windowHours);
 

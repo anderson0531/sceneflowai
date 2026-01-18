@@ -182,8 +182,9 @@ export async function editImageWithInstruction(
     contents.push({ text: editPrompt })
     
     // Use Vertex AI Gemini endpoint for image editing
-    // Note: gemini-2.5-flash supports image generation on Vertex AI
-    const model = 'gemini-2.5-flash'
+    // Note: Only gemini-3-pro-image-preview and gemini-2.5-flash-image support image output
+    // gemini-2.5-flash does NOT support image generation (Multi-modal output not supported error)
+    const model = 'gemini-3-pro-image-preview'
     const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
     
     const accessToken = await getVertexAIAuthToken()
@@ -330,7 +331,8 @@ In the WHITE masked areas, generate: ${prompt}`
     contents.push({ text: editPrompt })
     
     // Use Vertex AI Gemini endpoint
-    const model = 'gemini-2.5-flash'
+    // Note: Only gemini-3-pro-image-preview and gemini-2.5-flash-image support image output
+    const model = 'gemini-3-pro-image-preview'
     const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
     
     const accessToken = await getVertexAIAuthToken()
@@ -471,7 +473,8 @@ Make sure the expanded areas blend seamlessly with the original image, matching 
     contents.push({ text: editPrompt })
     
     // Use Vertex AI Gemini endpoint
-    const model = 'gemini-2.5-flash'
+    // Note: Only gemini-3-pro-image-preview and gemini-2.5-flash-image support image output
+    const model = 'gemini-3-pro-image-preview'
     const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
     
     const accessToken = await getVertexAIAuthToken()
