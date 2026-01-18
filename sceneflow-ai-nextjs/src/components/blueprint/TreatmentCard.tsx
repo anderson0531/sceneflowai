@@ -393,12 +393,12 @@ export function TreatmentCard() {
                     <TooltipProvider>
                       <div className="flex items-center gap-1">
 
-                        {/* Refine - precise section editing */}
+                        {/* Edit Blueprint - precise section editing */}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
                               aria-label="Edit blueprint"
-                              title="Refine (E)"
+                              title="Edit Blueprint (E)"
                               onClick={() => setRefineOpen(true)}
                               className="h-8 w-8 border border-gray-700 text-gray-200 hover:bg-gray-800"
                               variant="outline"
@@ -407,7 +407,7 @@ export function TreatmentCard() {
                               <PencilLine className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Refine (E)</TooltipContent>
+                          <TooltipContent>Edit Blueprint (E)</TooltipContent>
                         </Tooltip>
 
                         {/* Reimagine - major story changes */}
