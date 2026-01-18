@@ -18,22 +18,77 @@ import type { PrimaryGenre, TargetDemographic, ToneProfile } from '@/lib/types/a
 // SCORING WEIGHTS (User-specified)
 // =============================================================================
 
-export const SCORING_WEIGHTS = {
-  'concept-originality': 0.25,
+// Default weights - users can customize these
+export const DEFAULT_SCORING_WEIGHTS = {
+  'concept-originality': 0.15,  // Lower weight - often subjective, hard to improve at treatment level
   'character-depth': 0.25,
-  'pacing-structure': 0.20,
-  'genre-fidelity': 0.15,
-  'commercial-viability': 0.15
+  'pacing-structure': 0.15,     // Lower weight - best addressed in script phase
+  'genre-fidelity': 0.20,
+  'commercial-viability': 0.25
 } as const
 
-export const WEIGHT_FORMULA = 'Score = (Concept × 0.25) + (Character × 0.25) + (Pacing × 0.20) + (Genre × 0.15) + (Viability × 0.15)'
+// Mutable weights for backward compatibility
+export const SCORING_WEIGHTS = { ...DEFAULT_SCORING_WEIGHTS }
+
+// Weight presets for different production goals
+export const WEIGHT_PRESETS = {
+  'balanced': {
+    name: 'Balanced',
+    description: 'Equal emphasis on all dimensions',
+    weights: {
+      'concept-originality': 0.20,
+      'character-depth': 0.20,
+      'pacing-structure': 0.20,
+      'genre-fidelity': 0.20,
+      'commercial-viability': 0.20
+    }
+  },
+  'commercial': {
+    name: 'Commercial Focus',
+    description: 'Prioritize market appeal and audience engagement',
+    weights: {
+      'concept-originality': 0.15,
+      'character-depth': 0.20,
+      'pacing-structure': 0.15,
+      'genre-fidelity': 0.20,
+      'commercial-viability': 0.30
+    }
+  },
+  'artistic': {
+    name: 'Artistic Vision',
+    description: 'Prioritize originality and character depth',
+    weights: {
+      'concept-originality': 0.30,
+      'character-depth': 0.30,
+      'pacing-structure': 0.15,
+      'genre-fidelity': 0.15,
+      'commercial-viability': 0.10
+    }
+  },
+  'genre-driven': {
+    name: 'Genre-Driven',
+    description: 'Prioritize genre conventions and commercial appeal',
+    weights: {
+      'concept-originality': 0.10,
+      'character-depth': 0.20,
+      'pacing-structure': 0.15,
+      'genre-fidelity': 0.30,
+      'commercial-viability': 0.25
+    }
+  }
+} as const
+
+export type WeightPresetKey = keyof typeof WEIGHT_PRESETS
+export type ScoringWeights = Record<string, number>
+
+export const WEIGHT_FORMULA = 'Score = (Concept × 0.15) + (Character × 0.25) + (Pacing × 0.15) + (Genre × 0.20) + (Viability × 0.25)'
 
 // =============================================================================
 // GOOD ENOUGH THRESHOLD
 // =============================================================================
 
 export const READY_FOR_PRODUCTION_THRESHOLD = 80
-export const MAX_ITERATIONS = 5
+export const MAX_ITERATIONS = 2
 
 // =============================================================================
 // AXIS CHECKPOINTS (Pass/Fail Gates)
@@ -423,24 +478,17 @@ export interface IterationFocus {
 export const ITERATION_FOCUS: IterationFocus[] = [
   {
     iteration: 1,
-    focusAreas: ['Major Structural Blocks', 'Missing Core Elements'],
-    description: 'Focus on major blocks: missing logline, weak/missing acts, undefined protagonist',
+    focusAreas: ['Major Structural Blocks', 'Missing Core Elements', 'Core Story Foundation'],
+    description: 'Focus on foundational issues: logline, acts, protagonist, antagonist, genre conventions',
     maxImpact: '+20-40 points',
     restrictedSuggestions: []
   },
   {
     iteration: 2,
-    focusAreas: ['Tone Consistency', 'Genre Alignment', 'Character Depth'],
-    description: 'Focus on tone consistency and secondary elements',
-    maxImpact: '+10-20 points',
-    restrictedSuggestions: ['word choice', 'phrasing', 'stylistic']
-  },
-  {
-    iteration: 3,
-    focusAreas: ['Fatal Flaws Only'],
-    description: 'Accept current state unless a fatal flaw (broken logic, major contradiction) exists',
-    maxImpact: '+5-10 points',
-    restrictedSuggestions: ['better words', 'more flair', 'enhanced description', 'stylistic improvements', 'word choice', 'phrasing', 'polish']
+    focusAreas: ['Tone Refinement', 'Genre Polish', 'Character Nuance'],
+    description: 'Final refinement - accept current state unless critical issues remain. Further improvements happen in script phase.',
+    maxImpact: '+5-15 points',
+    restrictedSuggestions: ['word choice', 'phrasing', 'stylistic', 'better words', 'more flair', 'enhanced description']
   }
 ]
 
@@ -448,7 +496,7 @@ export const ITERATION_FOCUS: IterationFocus[] = [
  * Get iteration focus configuration
  */
 export function getIterationFocus(iteration: number): IterationFocus {
-  if (iteration >= 3) return ITERATION_FOCUS[2]
+  if (iteration >= 2) return ITERATION_FOCUS[1] // Cap at iteration 2
   return ITERATION_FOCUS[Math.max(0, iteration - 1)]
 }
 
@@ -467,8 +515,201 @@ export function isSuggestionRestricted(suggestion: string, iteration: number): b
 }
 
 // =============================================================================
-// ENDING TYPE EXPECTATIONS BY TONE
+// SCORE NARRATIVE EXPLANATIONS
 // =============================================================================
+
+export type FixPhase = 'blueprint' | 'script' | 'both'
+
+export interface AxisNarrative {
+  axisId: string
+  axisLabel: string
+  lowScoreExplanation: string
+  mediumScoreExplanation: string
+  highScoreExplanation: string
+  bestFixedIn: FixPhase
+  blueprintTips: string[]
+  scriptTips: string[]
+}
+
+export const AXIS_NARRATIVES: Record<string, AxisNarrative> = {
+  'concept-originality': {
+    axisId: 'concept-originality',
+    axisLabel: 'Concept Originality',
+    lowScoreExplanation: 'The concept feels familiar or relies heavily on common tropes without subversion.',
+    mediumScoreExplanation: 'The concept has some unique elements but could be more distinctive.',
+    highScoreExplanation: 'The concept feels fresh and offers a compelling hook that stands out.',
+    bestFixedIn: 'blueprint',
+    blueprintTips: [
+      'Add an unexpected twist to the logline',
+      'Subvert a common genre trope',
+      'Make the setting more specific and unusual'
+    ],
+    scriptTips: [
+      'Add unique dialogue patterns',
+      'Include unexpected scene reversals'
+    ]
+  },
+  'character-depth': {
+    axisId: 'character-depth',
+    axisLabel: 'Character Depth',
+    lowScoreExplanation: 'Characters lack clear goals, flaws, or backstory that drive their actions.',
+    mediumScoreExplanation: 'Main characters are defined but could have stronger motivations or internal conflicts.',
+    highScoreExplanation: 'Characters are well-defined with clear goals, flaws, and compelling backstories.',
+    bestFixedIn: 'blueprint',
+    blueprintTips: [
+      'Define the protagonist\'s specific external goal',
+      'Add a character flaw that creates internal conflict',
+      'Include a "ghost" - a past trauma that haunts them'
+    ],
+    scriptTips: [
+      'Show character flaws through actions, not exposition',
+      'Add moments of vulnerability in dialogue'
+    ]
+  },
+  'pacing-structure': {
+    axisId: 'pacing-structure',
+    axisLabel: 'Pacing & Structure',
+    lowScoreExplanation: 'The story structure is unclear or missing key beats (inciting incident, midpoint, low point).',
+    mediumScoreExplanation: 'Basic structure is present but some beats could be stronger or better placed.',
+    highScoreExplanation: 'Clear three-act structure with well-placed story beats and good momentum.',
+    bestFixedIn: 'script',
+    blueprintTips: [
+      'Ensure all three acts are clearly defined',
+      'Identify the inciting incident explicitly',
+      'Add a midpoint turn and low point'
+    ],
+    scriptTips: [
+      'Balance scene lengths for better rhythm',
+      'Ensure rising tension through Act 2',
+      'Cut scenes that don\'t advance plot or character'
+    ]
+  },
+  'genre-fidelity': {
+    axisId: 'genre-fidelity',
+    axisLabel: 'Genre Fidelity',
+    lowScoreExplanation: 'The treatment doesn\'t meet audience expectations for the selected genre.',
+    mediumScoreExplanation: 'Genre conventions are present but tone may be inconsistent.',
+    highScoreExplanation: 'Strong genre identity with consistent tone and expected conventions delivered.',
+    bestFixedIn: 'blueprint',
+    blueprintTips: [
+      'Add genre-specific keywords and imagery',
+      'Ensure essential genre conventions are present',
+      'Maintain consistent tone throughout'
+    ],
+    scriptTips: [
+      'Use genre-appropriate dialogue style',
+      'Include set-piece scenes expected by genre fans'
+    ]
+  },
+  'commercial-viability': {
+    axisId: 'commercial-viability',
+    axisLabel: 'Commercial Viability',
+    lowScoreExplanation: 'The story may not resonate with the target demographic or lacks marketable elements.',
+    mediumScoreExplanation: 'Good audience potential but could strengthen demographic appeal.',
+    highScoreExplanation: 'Strong market appeal with clear demographic targeting and pitchable logline.',
+    bestFixedIn: 'blueprint',
+    blueprintTips: [
+      'Ensure protagonist matches target demographic age/concerns',
+      'Include themes that resonate with the audience',
+      'Strengthen the logline for marketing'
+    ],
+    scriptTips: [
+      'Add relatable dialogue for target audience',
+      'Include scenes that showcase marketable moments'
+    ]
+  }
+}
+
+/**
+ * Get narrative explanation for a score
+ */
+export function getScoreNarrative(axisId: string, score: number): {
+  explanation: string
+  bestFixedIn: FixPhase
+  tips: string[]
+} {
+  const narrative = AXIS_NARRATIVES[axisId]
+  if (!narrative) {
+    return {
+      explanation: 'Score information not available.',
+      bestFixedIn: 'blueprint',
+      tips: []
+    }
+  }
+  
+  let explanation: string
+  if (score < 60) {
+    explanation = narrative.lowScoreExplanation
+  } else if (score < 80) {
+    explanation = narrative.mediumScoreExplanation
+  } else {
+    explanation = narrative.highScoreExplanation
+  }
+  
+  const tips = narrative.bestFixedIn === 'script' 
+    ? narrative.scriptTips 
+    : narrative.blueprintTips
+  
+  return {
+    explanation,
+    bestFixedIn: narrative.bestFixedIn,
+    tips
+  }
+}
+
+/**
+ * Generate overall score narrative summary
+ */
+export function generateScoreSummary(scores: {
+  originality: number
+  characterDepth: number
+  pacing: number
+  genreFidelity: number
+  commercialViability: number
+}, overallScore: number): {
+  summary: string
+  blueprintFocus: string[]
+  scriptFocus: string[]
+} {
+  const weakAreas: string[] = []
+  const blueprintFocus: string[] = []
+  const scriptFocus: string[] = []
+  
+  const scoreMap = {
+    'concept-originality': scores.originality,
+    'character-depth': scores.characterDepth,
+    'pacing-structure': scores.pacing,
+    'genre-fidelity': scores.genreFidelity,
+    'commercial-viability': scores.commercialViability
+  }
+  
+  for (const [axisId, score] of Object.entries(scoreMap)) {
+    if (score < 70) {
+      const narrative = AXIS_NARRATIVES[axisId]
+      if (narrative) {
+        weakAreas.push(narrative.axisLabel)
+        if (narrative.bestFixedIn === 'script') {
+          scriptFocus.push(`${narrative.axisLabel}: ${narrative.scriptTips[0]}`)
+        } else {
+          blueprintFocus.push(`${narrative.axisLabel}: ${narrative.blueprintTips[0]}`)
+        }
+      }
+    }
+  }
+  
+  let summary: string
+  if (overallScore >= 80) {
+    summary = 'Your treatment is strong and ready for production. Minor refinements can be made during script editing.'
+  } else if (overallScore >= 70) {
+    summary = `Good foundation with room for improvement in ${weakAreas.slice(0, 2).join(' and ')}. Consider addressing key issues before proceeding.`
+  } else if (overallScore >= 60) {
+    summary = `Your treatment needs work on ${weakAreas.slice(0, 3).join(', ')}. Focus on foundational elements in the Blueprint phase.`
+  } else {
+    summary = 'Focus on establishing core story elements: protagonist goal, clear structure, and genre conventions.'
+  }
+  
+  return { summary, blueprintFocus, scriptFocus }
+}
 
 export const ENDING_EXPECTATIONS: Record<string, { acceptable: string[]; penalized: string[] }> = {
   'dark-gritty': {

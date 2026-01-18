@@ -21,6 +21,8 @@ import {
 } from 'lucide-react'
 import { GreenlightScore } from './GreenlightScore'
 import { ResonanceRadarChart, ResonanceRadarLegend } from '@/components/charts/ResonanceRadarChart'
+import { WeightCustomizer } from './WeightCustomizer'
+import { ScoreNarrative } from './ScoreNarrative'
 import {
   type AudienceIntent,
   type AudienceResonanceAnalysis,
@@ -36,7 +38,14 @@ import {
   TONE_OPTIONS,
   DEFAULT_INTENT
 } from '@/lib/types/audienceResonance'
-import { READY_FOR_PRODUCTION_THRESHOLD, MAX_ITERATIONS } from '@/lib/treatment/scoringChecklist'
+import { 
+  READY_FOR_PRODUCTION_THRESHOLD, 
+  MAX_ITERATIONS,
+  DEFAULT_SCORING_WEIGHTS,
+  WEIGHT_PRESETS,
+  AXIS_NARRATIVES,
+  type WeightPresetKey 
+} from '@/lib/treatment/scoringChecklist'
 import { useResonanceStore, type ResonanceCacheEntry } from '@/store/useResonanceStore'
 import { 
   calculateLocalScore, 
@@ -119,6 +128,14 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
   )
   const [targetProfile, setTargetProfileLocal] = useState<TargetScoreProfile | null>(
     cachedState?.targetProfile || null
+  )
+  
+  // Custom scoring weights
+  const [customWeights, setCustomWeightsLocal] = useState<Record<string, number>>(
+    cachedState?.customWeights || { ...DEFAULT_SCORING_WEIGHTS }
+  )
+  const [weightPreset, setWeightPresetLocal] = useState<WeightPresetKey | 'custom' | null>(
+    cachedState?.weightPreset || null
   )
   
   // Wrapper functions to sync local state with Zustand store
@@ -205,6 +222,17 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
   const setTargetProfile = useCallback((value: TargetScoreProfile | null) => {
     setTargetProfileLocal(value)
     setStoreAnalysis(treatmentId, { targetProfile: value })
+  }, [treatmentId, setStoreAnalysis])
+  
+  // Custom weights setters
+  const setCustomWeights = useCallback((value: Record<string, number>) => {
+    setCustomWeightsLocal(value)
+    setStoreAnalysis(treatmentId, { customWeights: value })
+  }, [treatmentId, setStoreAnalysis])
+  
+  const setWeightPreset = useCallback((value: WeightPresetKey | 'custom' | null) => {
+    setWeightPresetLocal(value)
+    setStoreAnalysis(treatmentId, { weightPreset: value })
   }, [treatmentId, setStoreAnalysis])
   
   // Sync with prop changes
@@ -592,6 +620,15 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
             />
           </div>
           
+          {/* Weight Customizer */}
+          <WeightCustomizer
+            weights={customWeights}
+            preset={weightPreset}
+            onWeightsChange={setCustomWeights}
+            onPresetChange={setWeightPreset}
+            disabled={hasIntentLock} // Disable after first analysis
+          />
+          
           {/* Iteration Progress */}
           {iterationCount > 0 && (
             <div className="mt-3 flex items-center justify-between text-xs">
@@ -783,6 +820,18 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
                   size="md" 
                 />
                 <ResonanceRadarLegend axes={analysis.axes} />
+                
+                {/* Score Narrative */}
+                <ScoreNarrative
+                  scores={{
+                    originality: analysis.axes.find(a => a.id === 'originality')?.score || 50,
+                    characterDepth: analysis.axes.find(a => a.id === 'character-depth')?.score || 50,
+                    pacing: analysis.axes.find(a => a.id === 'pacing')?.score || 50,
+                    genreFidelity: analysis.axes.find(a => a.id === 'genre-fidelity')?.score || 50,
+                    commercialViability: analysis.axes.find(a => a.id === 'commercial-viability')?.score || 50
+                  }}
+                  overallScore={analysis.greenlightScore?.score || 0}
+                />
               </div>
               
               {/* Insights Accordion */}
@@ -949,6 +998,34 @@ function InsightCard({
                 <p className="text-xs text-gray-500">
                   Section: <span className="text-gray-400">{insight.treatmentSection}</span>
                 </p>
+              )}
+              
+              {/* Best Fixed In indicator - only show for weaknesses */}
+              {insight.status === 'weakness' && insight.axisId && (
+                (() => {
+                  const narrative = AXIS_NARRATIVES[insight.axisId]
+                  if (!narrative) return null
+                  const isScriptFix = narrative.bestFixedIn === 'script'
+                  return (
+                    <div className={`inline-flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-md border ${
+                      isScriptFix 
+                        ? 'text-purple-400 bg-purple-400/10 border-purple-400/20' 
+                        : 'text-cyan-400 bg-cyan-400/10 border-cyan-400/20'
+                    }`}>
+                      {isScriptFix ? (
+                        <>
+                          <Film className="w-3 h-3" />
+                          Best addressed in Script phase
+                        </>
+                      ) : (
+                        <>
+                          <Lightbulb className="w-3 h-3" />
+                          Can be fixed in Blueprint
+                        </>
+                      )}
+                    </div>
+                  )
+                })()
               )}
               
               {/* Fix Button - hidden when applied */}

@@ -18,6 +18,7 @@ import type {
 } from '@/lib/types/audienceResonance';
 import { DEFAULT_INTENT } from '@/lib/types/audienceResonance';
 import type { CheckpointOverride } from '@/lib/treatment/localScoring';
+import { DEFAULT_SCORING_WEIGHTS, type WeightPresetKey } from '@/lib/treatment/scoringChecklist';
 
 // Cache entry for a single treatment's resonance analysis
 export interface ResonanceCacheEntry {
@@ -39,6 +40,10 @@ export interface ResonanceCacheEntry {
   // NEW: Intent lock and target profile
   hasIntentLock: boolean; // Prevents auto-detection from overwriting user intent
   targetProfile: TargetScoreProfile | null; // Locked target for this intent
+  
+  // NEW: Custom scoring weights
+  customWeights: Record<string, number> | null; // User's custom weight configuration
+  weightPreset: WeightPresetKey | 'custom' | null; // Which preset is active
 }
 
 // Maximum number of treatments to cache in localStorage
@@ -101,6 +106,9 @@ const createDefaultEntry = (): ResonanceCacheEntry => ({
   // NEW: Intent lock and target profile
   hasIntentLock: false,
   targetProfile: null,
+  // NEW: Custom scoring weights
+  customWeights: null, // null = use default weights
+  weightPreset: null, // null = not yet selected
 });
 
 export const useResonanceStore = create<ResonanceState>()(
@@ -189,5 +197,9 @@ export const useResonanceForTreatment = (treatmentId: string) => {
     serverCheckpointResults: cached?.serverCheckpointResults || null,
     checkpointOverrides: cached?.checkpointOverrides || [],
     isScoreEstimated: cached?.isScoreEstimated || false,
+    
+    // NEW: Custom weights getters
+    customWeights: cached?.customWeights || DEFAULT_SCORING_WEIGHTS,
+    weightPreset: cached?.weightPreset || null,
   };
 };
