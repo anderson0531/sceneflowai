@@ -53,7 +53,9 @@ export function TreatmentHeroImage({
     '4:3': 'pb-[75%]'
   }[aspectRatio]
   
-  const hasImage = image?.url && image.status === 'ready' && !imageError
+  // Consider image ready if URL exists and either no status or status is 'ready'
+  // This handles both fresh API responses and database-loaded images
+  const hasImage = image?.url && (image.status === 'ready' || !image.status) && !imageError
   
   return (
     <div 

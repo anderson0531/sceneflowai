@@ -168,7 +168,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     if (!variant?.title) return
     
     // Check if hero image already exists on the variant
-    if (variant.heroImage?.url) {
+    // Consider image ready if URL exists (status may be missing from database loads)
+    const hasExistingImage = variant.heroImage?.url && (variant.heroImage?.status === 'ready' || !variant.heroImage?.status)
+    if (hasExistingImage) {
       console.log('[StudioPage] Hero image already exists, skipping generation')
       return
     }
