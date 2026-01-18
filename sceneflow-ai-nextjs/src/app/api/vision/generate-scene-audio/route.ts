@@ -224,7 +224,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      audioUrl: result.url,
+      audioUrl: blob.url,
       audioType,
       language,
       duration: audioDuration,

@@ -16,7 +16,6 @@
 
 import { EditMode, AspectRatioPreset } from '@/types/imageEdit'
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
-import { downloadFromGCS, isGcsPublicUrl } from '@/lib/storage/gcsAssets'
 
 // Vertex AI configuration
 function getVertexConfig() {
@@ -95,23 +94,11 @@ async function imageToBase64(imageSource: string): Promise<string> {
   }
   
   // Raw base64 (no data: prefix)
-  if (!imageSource.startsWith('http') && !imageSource.startsWith('gs://')) {
+  if (!imageSource.startsWith('http')) {
     return imageSource
   }
   
-  // For GCS URLs, use authenticated download to avoid 403 errors
-  if (imageSource.startsWith('gs://') || isGcsPublicUrl(imageSource)) {
-    console.log('[Image Edit] Using authenticated GCS download')
-    try {
-      const buffer = await downloadFromGCS(imageSource)
-      return buffer.toString('base64')
-    } catch (gcsError: any) {
-      console.warn('[Image Edit] GCS auth download failed, trying public fetch:', gcsError.message)
-      // Fall through to regular fetch as fallback
-    }
-  }
-  
-  // Download from URL (for non-GCS or fallback)
+  // Download from URL
   const response = await fetch(imageSource)
   if (!response.ok) {
     throw new Error(`Failed to download image: ${response.status} ${response.statusText}`)
@@ -195,9 +182,8 @@ export async function editImageWithInstruction(
     contents.push({ text: editPrompt })
     
     // Use Vertex AI Gemini endpoint for image editing
-    // Note: Only gemini-3-pro-image-preview and gemini-2.5-flash-image support image output
-    // gemini-2.5-flash does NOT support image generation (Multi-modal output not supported error)
-    const model = 'gemini-3-pro-image-preview'
+    // Note: gemini-2.5-flash supports image generation on Vertex AI
+    const model = 'gemini-2.5-flash'
     const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
     
     const accessToken = await getVertexAIAuthToken()
@@ -344,8 +330,7 @@ In the WHITE masked areas, generate: ${prompt}`
     contents.push({ text: editPrompt })
     
     // Use Vertex AI Gemini endpoint
-    // Note: Only gemini-3-pro-image-preview and gemini-2.5-flash-image support image output
-    const model = 'gemini-3-pro-image-preview'
+    const model = 'gemini-2.5-flash'
     const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
     
     const accessToken = await getVertexAIAuthToken()
@@ -486,8 +471,7 @@ Make sure the expanded areas blend seamlessly with the original image, matching 
     contents.push({ text: editPrompt })
     
     // Use Vertex AI Gemini endpoint
-    // Note: Only gemini-3-pro-image-preview and gemini-2.5-flash-image support image output
-    const model = 'gemini-3-pro-image-preview'
+    const model = 'gemini-2.5-flash'
     const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
     
     const accessToken = await getVertexAIAuthToken()
