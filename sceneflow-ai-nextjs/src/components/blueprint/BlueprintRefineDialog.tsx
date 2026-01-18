@@ -496,16 +496,24 @@ export function BlueprintRefineDialog({
           </div>
         )}
         
-        <DialogHeader>
+        <DialogHeader className="flex flex-row items-center justify-between gap-4 pb-2">
           <DialogTitle className="flex items-center gap-2 text-xl">
             <PencilLine className="w-5 h-5 text-cyan-400" />
             <span>Edit Blueprint</span>
-            {hasChanges && (
-              <span className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-full">
-                Unsaved Changes
-              </span>
-            )}
           </DialogTitle>
+          <div className="flex items-center gap-3 mr-8">
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleApply}
+              size="sm"
+              className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Apply Changes
+            </Button>
+          </div>
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
@@ -554,45 +562,55 @@ export function BlueprintRefineDialog({
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-xs text-gray-400">Genre</label>
-                    <Input
+                    <select
                       value={draft.genre || ''}
                       onChange={(e) => updateDraft('genre', e.target.value)}
-                      className="bg-slate-800/50 border-slate-700"
-                    />
+                      className="w-full h-10 px-3 rounded-md bg-slate-800/50 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                    >
+                      <option value="">Select genre...</option>
+                      <option value="Action">Action</option>
+                      <option value="Comedy">Comedy</option>
+                      <option value="Drama">Drama</option>
+                      <option value="Horror">Horror</option>
+                      <option value="Thriller">Thriller</option>
+                      <option value="Sci-Fi">Sci-Fi</option>
+                      <option value="Sci-Fi Thriller">Sci-Fi Thriller</option>
+                      <option value="Fantasy">Fantasy</option>
+                      <option value="Romance">Romance</option>
+                      <option value="Documentary">Documentary</option>
+                      <option value="Animation">Animation</option>
+                      <option value="Mystery">Mystery</option>
+                      <option value="Adventure">Adventure</option>
+                      <option value="Crime">Crime</option>
+                      <option value="Family">Family</option>
+                      <option value="Musical">Musical</option>
+                      <option value="War">War</option>
+                      <option value="Western">Western</option>
+                      <option value="Biographical">Biographical</option>
+                    </select>
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs text-gray-400">Target Audience</label>
-                    <Input
+                    <select
                       value={draft.target_audience || ''}
                       onChange={(e) => updateDraft('target_audience', e.target.value)}
-                      className="bg-slate-800/50 border-slate-700"
-                    />
+                      className="w-full h-10 px-3 rounded-md bg-slate-800/50 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                    >
+                      <option value="">Select audience...</option>
+                      <option value="General Audience">General Audience</option>
+                      <option value="Gen Z (18-24)">Gen Z (18-24)</option>
+                      <option value="Millennials (25-34)">Millennials (25-34)</option>
+                      <option value="Gen X (35-54)">Gen X (35-54)</option>
+                      <option value="Boomers (55+)">Boomers (55+)</option>
+                      <option value="Teens (13-17)">Teens (13-17)</option>
+                      <option value="Family (All Ages)">Family (All Ages)</option>
+                      <option value="Mature (21+)">Mature (21+)</option>
+                      <option value="Adults (18-49)">Adults (18-49)</option>
+                    </select>
                   </div>
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <Textarea
-                  value={customInstructions.core}
-                  onChange={(e) => setCustomInstructions(prev => ({ ...prev, core: e.target.value }))}
-                  placeholder="Add specific refinement instructions..."
-                  className="min-h-[60px] bg-slate-800/50 border-slate-700 text-sm"
-                />
-                <Button
-                  onClick={() => refineSection('core')}
-                  disabled={isRefining === 'core'}
-                  variant="outline"
-                  size="sm"
-                  className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10"
-                >
-                  {isRefining === 'core' ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Wand2 className="w-4 h-4 mr-2" />
-                  )}
-                  Refine Core Info
-                </Button>
-              </div>
             </TabsContent>
             
             {/* Story Setup Tab */}
@@ -647,28 +665,6 @@ export function BlueprintRefineDialog({
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <Textarea
-                  value={customInstructions.story}
-                  onChange={(e) => setCustomInstructions(prev => ({ ...prev, story: e.target.value }))}
-                  placeholder="Add specific refinement instructions..."
-                  className="min-h-[60px] bg-slate-800/50 border-slate-700 text-sm"
-                />
-                <Button
-                  onClick={() => refineSection('story')}
-                  disabled={isRefining === 'story'}
-                  variant="outline"
-                  size="sm"
-                  className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10"
-                >
-                  {isRefining === 'story' ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Wand2 className="w-4 h-4 mr-2" />
-                  )}
-                  Refine Story Setup
-                </Button>
-              </div>
             </TabsContent>
             
             {/* Tone & Style Tab */}
@@ -714,28 +710,6 @@ export function BlueprintRefineDialog({
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <Textarea
-                  value={customInstructions.tone}
-                  onChange={(e) => setCustomInstructions(prev => ({ ...prev, tone: e.target.value }))}
-                  placeholder="Add specific refinement instructions..."
-                  className="min-h-[60px] bg-slate-800/50 border-slate-700 text-sm"
-                />
-                <Button
-                  onClick={() => refineSection('tone')}
-                  disabled={isRefining === 'tone'}
-                  variant="outline"
-                  size="sm"
-                  className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10"
-                >
-                  {isRefining === 'tone' ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Wand2 className="w-4 h-4 mr-2" />
-                  )}
-                  Refine Tone & Style
-                </Button>
-              </div>
             </TabsContent>
             
             {/* Beats Tab */}
@@ -786,28 +760,6 @@ export function BlueprintRefineDialog({
                 )}
               </div>
               
-              <div className="space-y-2">
-                <Textarea
-                  value={customInstructions.beats}
-                  onChange={(e) => setCustomInstructions(prev => ({ ...prev, beats: e.target.value }))}
-                  placeholder="Add specific refinement instructions..."
-                  className="min-h-[60px] bg-slate-800/50 border-slate-700 text-sm"
-                />
-                <Button
-                  onClick={() => refineSection('beats')}
-                  disabled={isRefining === 'beats'}
-                  variant="outline"
-                  size="sm"
-                  className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10"
-                >
-                  {isRefining === 'beats' ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Wand2 className="w-4 h-4 mr-2" />
-                  )}
-                  Refine Beats
-                </Button>
-              </div>
             </TabsContent>
             
             {/* Characters Tab */}
@@ -838,47 +790,9 @@ export function BlueprintRefineDialog({
                   <p className="text-sm text-gray-500 text-center py-4">No characters defined yet</p>
                 )}
               </div>
-              
-              <div className="space-y-2">
-                <Textarea
-                  value={customInstructions.characters}
-                  onChange={(e) => setCustomInstructions(prev => ({ ...prev, characters: e.target.value }))}
-                  placeholder="Add specific refinement instructions..."
-                  className="min-h-[60px] bg-slate-800/50 border-slate-700 text-sm"
-                />
-                <Button
-                  onClick={() => refineSection('characters')}
-                  disabled={isRefining === 'characters'}
-                  variant="outline"
-                  size="sm"
-                  className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10"
-                >
-                  {isRefining === 'characters' ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Wand2 className="w-4 h-4 mr-2" />
-                  )}
-                  Refine Characters
-                </Button>
-              </div>
             </TabsContent>
           </div>
         </Tabs>
-        
-        {/* Actions */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-slate-700 flex-shrink-0">
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleApply}
-            disabled={!hasChanges}
-            className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
-          >
-            <Save className="w-4 h-4 mr-2" />
-            Apply Changes
-          </Button>
-        </div>
       </DialogContent>
     </Dialog>
   )
