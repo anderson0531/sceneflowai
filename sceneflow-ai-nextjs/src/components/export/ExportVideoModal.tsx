@@ -43,6 +43,14 @@ interface SceneForExport {
   dialogueAudio?: any
 }
 
+interface PlayerSettings {
+  volume: number
+  musicVolume: number
+  playbackSpeed: number
+  kenBurnsIntensity: 'subtle' | 'medium' | 'dramatic'
+  narrationEnabled: boolean
+}
+
 interface ExportVideoModalProps {
   isOpen: boolean
   onClose: () => void
@@ -50,6 +58,7 @@ interface ExportVideoModalProps {
   projectTitle?: string
   availableLanguages: string[] // Language codes that have generated audio
   scenes?: SceneForExport[] // Scene data to export
+  playerSettings?: PlayerSettings // Player settings to apply to the render
 }
 
 type Resolution = '720p' | '1080p' | '4K'
@@ -68,6 +77,7 @@ export function ExportVideoModal({
   projectTitle = 'Untitled Project',
   availableLanguages,
   scenes = [],
+  playerSettings,
 }: ExportVideoModalProps) {
   // Form state
   const [language, setLanguage] = useState<string>(availableLanguages[0] || 'en')
@@ -169,6 +179,7 @@ export function ExportVideoModal({
           resolution,
           includeSubtitles,
           scenes,
+          playerSettings,
         }),
       })
 
@@ -232,10 +243,10 @@ export function ExportVideoModal({
         <DialogHeader>
           <DialogTitle className="text-xl flex items-center gap-2">
             <Film className="w-5 h-5 text-blue-400" />
-            Export as MP4
+            Render Animatic
           </DialogTitle>
           <DialogDescription className="text-gray-400">
-            Export &quot;{projectTitle}&quot; as a video file with your selected audio track.
+            Render &quot;{projectTitle}&quot; as a video file with your player settings applied.
           </DialogDescription>
         </DialogHeader>
 

@@ -32,6 +32,9 @@ interface SceneDisplayProps {
 /**
  * Build an array of keyframe images from segments with timing
  * Falls back to scene.imageUrl if no segment keyframes exist
+ * 
+ * NOTE: Only uses START frame images (not end frames) for cleaner
+ * visual progression through the animatic.
  */
 function buildKeyframeSequence(
   scene: any,
@@ -53,32 +56,22 @@ function buildKeyframeSequence(
     return []
   }
   
-  // Build keyframes from segments
+  // Build keyframes from segments - ONLY use start frames
   productionData.segments.forEach((segment, idx) => {
     const segmentDuration = (segment.endTime || 0) - (segment.startTime || 0)
-    const frameDuration = Math.max(segmentDuration / 2, 2) // Split segment duration between start/end, min 2s
     
-    // Get frame URLs from multiple possible locations
+    // Get start frame URL from multiple possible locations
     const startUrl = segment.startFrameUrl || segment.references?.startFrameUrl
-    const endUrl = segment.endFrameUrl || segment.references?.endFrameUrl
     
     if (startUrl) {
       keyframes.push({
         url: startUrl,
-        duration: frameDuration,
+        duration: segmentDuration || fallbackDuration, // Use full segment duration for start frame only
         segmentIndex: idx,
         isStartFrame: true
       })
     }
-    
-    if (endUrl && endUrl !== startUrl) {
-      keyframes.push({
-        url: endUrl,
-        duration: frameDuration,
-        segmentIndex: idx,
-        isStartFrame: false
-      })
-    }
+    // NOTE: End frames are intentionally skipped for cleaner visual progression
   })
   
   // Fallback to scene image if no keyframes found

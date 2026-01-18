@@ -5,6 +5,14 @@ import { RenderJobSpec, RenderSegment, AudioTrack } from '@/lib/video/renderType
 import RenderJob from '@/models/RenderJob';
 import { v4 as uuidv4 } from 'uuid';
 
+export interface PlayerSettings {
+  volume: number;
+  musicVolume: number;
+  playbackSpeed: number;
+  kenBurnsIntensity: 'subtle' | 'medium' | 'dramatic';
+  narrationEnabled: boolean;
+}
+
 export interface ScreeningRoomScene {
   id: string;
   title: string;
@@ -32,6 +40,7 @@ export interface ExportRequest {
   language: string;
   resolution: 'sd' | 'hd' | 'fhd';
   title?: string;
+  playerSettings?: PlayerSettings;
 }
 
 // Map resolution string to dimensions
@@ -78,6 +87,19 @@ function isCloudRunConfigured(): boolean {
   );
 }
 
+// Ken Burns intensity settings
+function getKenBurnsZoom(intensity: 'subtle' | 'medium' | 'dramatic' | undefined): { startZoom: number; endZoom: number } {
+  switch (intensity) {
+    case 'subtle':
+      return { startZoom: 1.0, endZoom: 1.05 };
+    case 'dramatic':
+      return { startZoom: 1.0, endZoom: 1.25 };
+    case 'medium':
+    default:
+      return { startZoom: 1.0, endZoom: 1.15 };
+  }
+}
+
 // Build job spec for Cloud Run FFmpeg rendering
 function buildRenderJobSpec(
   jobId: string,
@@ -85,9 +107,14 @@ function buildRenderJobSpec(
   scenes: ScreeningRoomScene[],
   language: string,
   resolution: 'sd' | 'hd' | 'fhd',
-  title?: string
+  title?: string,
+  playerSettings?: PlayerSettings
 ): RenderJobSpec {
   const { width, height } = getResolutionDimensions(resolution);
+  const { startZoom, endZoom } = getKenBurnsZoom(playerSettings?.kenBurnsIntensity);
+  
+  // Apply player volume settings (default to 1.0)
+  const audioVolume = playerSettings?.volume ?? 1.0;
   
   let currentTime = 0;
   const segments: RenderSegment[] = [];
@@ -102,14 +129,14 @@ function buildRenderJobSpec(
       continue;
     }
 
-    // Add segment for this scene
+    // Add segment for this scene with player's Ken Burns intensity
     segments.push({
       imageUrl,
       duration: scene.duration,
       startTime: currentTime,
       kenBurnsEffect: {
-        startZoom: 1.0,
-        endZoom: 1.15,
+        startZoom,
+        endZoom,
         startX: 0.5,
         startY: 0.5,
         endX: 0.5,
@@ -117,15 +144,18 @@ function buildRenderJobSpec(
       },
     });
 
-    // Add audio track for this scene if available
-    const audioUrl = getAudioUrlForLanguage(scene, language);
-    if (audioUrl) {
-      audioTracks.push({
-        audioUrl,
-        startTime: currentTime,
-        duration: scene.duration,
-        volume: 1.0,
-      });
+    // Add audio track for this scene if available (respecting narrationEnabled and volume)
+    // Note: In screening room, all audio is narration audio
+    if (playerSettings?.narrationEnabled !== false) {
+      const audioUrl = getAudioUrlForLanguage(scene, language);
+      if (audioUrl) {
+        audioTracks.push({
+          audioUrl,
+          startTime: currentTime,
+          duration: scene.duration,
+          volume: audioVolume,
+        });
+      }
     }
 
     currentTime += scene.duration;
@@ -158,7 +188,7 @@ function buildRenderJobSpec(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json() as ExportRequest;
-    const { projectId, scenes, language, resolution, title } = body;
+    const { projectId, scenes, language, resolution, title, playerSettings } = body;
 
     // Validate required fields
     if (!projectId) {
@@ -180,6 +210,9 @@ export async function POST(request: NextRequest) {
 
     console.log(`[Export] Starting export for project ${projectId} with ${scenes.length} scenes`);
     console.log(`[Export] Language: ${validLanguage}, Resolution: ${validResolution}`);
+    if (playerSettings) {
+      console.log(`[Export] Player settings: volume=${playerSettings.volume}, musicVolume=${playerSettings.musicVolume}, kenBurns=${playerSettings.kenBurnsIntensity}, narration=${playerSettings.narrationEnabled}`);
+    }
 
     // Validate Cloud Run is configured
     if (!isCloudRunConfigured()) {
@@ -211,7 +244,8 @@ export async function POST(request: NextRequest) {
       scenes,
       validLanguage,
       validResolution as 'sd' | 'hd' | 'fhd',
-      title
+      title,
+      playerSettings
     );
 
     // Upload job spec to GCS

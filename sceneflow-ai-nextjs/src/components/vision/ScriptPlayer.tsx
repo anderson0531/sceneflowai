@@ -1095,10 +1095,10 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
           <button
             onClick={() => setShowExportModal(true)}
             className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center gap-2 px-3"
-            title="Export as MP4"
+            title="Render Animatic"
           >
             <Download className="w-5 h-5" />
-            <span className="text-sm hidden xl:inline">Export MP4</span>
+            <span className="text-sm hidden xl:inline">Render Animatic</span>
           </button>
         </div>
 
@@ -1289,6 +1289,13 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
         projectTitle={script?.title || 'Untitled Project'}
         availableLanguages={availableLanguages}
         scenes={scenes}
+        playerSettings={{
+          volume: playerState.volume,
+          musicVolume: playerState.musicVolume,
+          playbackSpeed: playerState.playbackSpeed,
+          kenBurnsIntensity: playerState.kenBurnsIntensity,
+          narrationEnabled: playerState.narrationEnabled,
+        }}
       />
     </div>
   )
