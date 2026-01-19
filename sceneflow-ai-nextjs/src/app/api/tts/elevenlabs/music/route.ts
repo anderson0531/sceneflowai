@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { put } from '@vercel/blob'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
-    const { text, duration } = await request.json()
+    const { text, duration, projectId, sceneId, saveToBlob = false } = await request.json()
 
     if (!text || typeof text !== 'string') {
       return NextResponse.json({ error: 'Missing text parameter' }, { status: 400 })
@@ -64,6 +65,22 @@ export async function POST(request: NextRequest) {
 
     const arrayBuffer = await response.arrayBuffer()
     console.log('[Music] Music generated successfully, size:', arrayBuffer.byteLength)
+    
+    // Optionally save to Vercel Blob for persistence
+    if (saveToBlob) {
+      const timestamp = Date.now()
+      const filename = `audio/music/${projectId || 'default'}/${sceneId || 'music'}-${timestamp}.mp3`
+      const blob = await put(filename, Buffer.from(arrayBuffer), {
+        access: 'public',
+        contentType: 'audio/mpeg',
+      })
+      console.log('[Music] Saved to blob:', blob.url)
+      return NextResponse.json({
+        url: blob.url,
+        size: arrayBuffer.byteLength,
+        duration: durationSeconds,
+      })
+    }
     
     return new Response(arrayBuffer, {
       status: 200,

@@ -1,9 +1,10 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { CREDIT_COSTS, getCreditCost } from '@/lib/credits/creditCosts'
 import { CreditService } from '@/services/CreditService'
 import { AudioWatermarkService } from '@/services/AudioWatermarkService'
+import { put } from '@vercel/blob'
 
 export const dynamic = 'force-dynamic'
 
@@ -115,7 +116,7 @@ export async function POST(request: NextRequest) {
     }
     const userId = session.user.id
 
-    const { text, voiceId, parallel = true, projectId, sceneId, voiceName, isClonedVoice = false, language = 'en' } = await request.json()
+    const { text, voiceId, parallel = true, projectId, sceneId, voiceName, isClonedVoice = false, language = 'en', saveToBlob = false, audioType = 'dialogue' } = await request.json()
 
     if (!text || typeof text !== 'string') {
       return new Response(JSON.stringify({ error: 'Missing text' }), { status: 400 })
@@ -184,6 +185,22 @@ export async function POST(request: NextRequest) {
         console.error('🎤 TTS: Failed to charge credits:', chargeError)
       }
       
+      // Optionally save to Vercel Blob for persistence
+      if (saveToBlob) {
+        const timestamp = Date.now()
+        const filename = `audio/${audioType}/${projectId || 'default'}/${sceneId || 'audio'}-${timestamp}.mp3`
+        const blob = await put(filename, watermarkedAudio, {
+          access: 'public',
+          contentType: 'audio/mpeg',
+        })
+        console.log(`🎤 TTS: Saved to blob: ${blob.url}`)
+        return NextResponse.json({
+          url: blob.url,
+          provenance: provenance.contentHash.substring(0, 16),
+          size: watermarkedAudio.length,
+        })
+      }
+      
       return new Response(watermarkedAudio, {
         status: 200,
         headers: {
@@ -242,6 +259,22 @@ export async function POST(request: NextRequest) {
       console.log(`🎤 TTS: Charged ${CREDIT_COST} credits to user ${userId}`)
     } catch (chargeError: any) {
       console.error('🎤 TTS: Failed to charge credits:', chargeError)
+    }
+    
+    // Optionally save to Vercel Blob for persistence
+    if (saveToBlob) {
+      const timestamp = Date.now()
+      const filename = `audio/${audioType}/${projectId || 'default'}/${sceneId || 'audio'}-${timestamp}.mp3`
+      const blob = await put(filename, watermarkedAudio, {
+        access: 'public',
+        contentType: 'audio/mpeg',
+      })
+      console.log(`🎤 TTS: Saved to blob: ${blob.url}`)
+      return NextResponse.json({
+        url: blob.url,
+        provenance: provenance.contentHash.substring(0, 16),
+        size: watermarkedAudio.length,
+      })
     }
     
     return new Response(watermarkedAudio, {
