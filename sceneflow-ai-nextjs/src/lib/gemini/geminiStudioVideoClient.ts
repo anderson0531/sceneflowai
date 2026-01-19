@@ -20,6 +20,8 @@
  * @see https://ai.google.dev/gemini-api/docs/video
  */
 
+import { getVeoModel, DEFAULT_VIDEO_QUALITY } from '@/lib/config/modelConfig'
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -46,6 +48,7 @@ export interface GeminiVideoOptions {
   // Veo 3.1 Extension Mode (EXT) - True video continuation
   // Pass the veoVideoRef from a previous generation still in Gemini's 2-day cache
   sourceVideo?: string // Gemini Files API reference (e.g., "files/xxx") for video extension
+  quality?: 'fast' | 'standard' // Video quality tier: fast (Veo 3.0 Fast) or standard (Veo 3.1)
 }
 
 export interface GeminiVideoResult {
@@ -181,13 +184,15 @@ export async function generateVideoWithGeminiStudio(
     }
   }
   
-  const model = 'veo-3.1-generate-preview'
+  // Select model based on quality tier (default: fast for cost efficiency)
+  const quality = options.quality || DEFAULT_VIDEO_QUALITY
+  const model = getVeoModel(quality)
   // Use the Gemini API predictLongRunning endpoint for video generation
   // Based on Python SDK: google/genai/models.py _generate_videos method
   // The endpoint is :predictLongRunning, same as Vertex but with different auth
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:predictLongRunning?key=${apiKey}`
   
-  console.log(`[Gemini Studio Video] Generating with ${model}...`)
+  console.log(`[Gemini Studio Video] Generating with ${model} (quality: ${quality})...`)
   console.log(`[Gemini Studio Video] Prompt preview: ${prompt.substring(0, 200)}...`)
   console.log(`[Gemini Studio Video] Options:`, JSON.stringify({
     aspectRatio: options.aspectRatio || '16:9',

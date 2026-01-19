@@ -1,5 +1,6 @@
 import { GoogleAuth } from 'google-auth-library'
 import { fetchWithRetry } from '../utils/retry'
+import { getImagenModel, DEFAULT_IMAGE_QUALITY, type ModelQuality } from '@/lib/config/modelConfig'
 
 let authClient: any = null
 
@@ -51,10 +52,10 @@ export async function getVertexAIAuthToken(): Promise<string> {
 /**
  * Generate image using Vertex AI Imagen 
  * Uses imagen-3.0-capability-001 for subject customization with reference images
- * Uses imagen-3.0-generate-001 for standard generation without references
+ * Uses imagen-3.0-generate-001 or imagen-3.0-fast-generate-001 for standard generation
  * 
  * @param prompt - Text description of image to generate
- * @param options - Generation options (aspect ratio, number of images, reference images)
+ * @param options - Generation options (aspect ratio, number of images, reference images, quality tier)
  * @returns Base64-encoded image data URL
  */
 export async function callVertexAIImagen(
@@ -63,7 +64,8 @@ export async function callVertexAIImagen(
     aspectRatio?: '1:1' | '9:16' | '16:9' | '4:3' | '3:4'
     numberOfImages?: number
     negativePrompt?: string
-    quality?: 'max' | 'auto'
+    quality?: 'max' | 'auto'  // Legacy Imagen quality setting
+    modelQuality?: ModelQuality  // Model tier: fast or standard
     personGeneration?: 'allow_adult' | 'allow_all' | 'dont_allow'
     referenceImages?: Array<{
       referenceId: number
@@ -83,14 +85,13 @@ export async function callVertexAIImagen(
     throw new Error('GCP_PROJECT_ID not configured')
   }
   
-  // Use capability model for subject customization with reference images
-  // Use standard model for generation without references
+  // Select model based on quality tier (default: fast for cost efficiency)
+  // Uses capability model for subject customization with reference images
   const hasReferenceImages = options.referenceImages && options.referenceImages.length > 0
-  const MODEL_ID = hasReferenceImages 
-    ? 'imagen-3.0-capability-001'  // Required for subject customization
-    : 'imagen-3.0-generate-001'    // Standard generation
+  const quality = options.modelQuality || DEFAULT_IMAGE_QUALITY
+  const MODEL_ID = getImagenModel(quality, hasReferenceImages)
   
-  console.log(`[Imagen] Generating image with ${MODEL_ID}...`)
+  console.log(`[Imagen] Generating image with ${MODEL_ID} (quality: ${quality})...`)
   console.log('[Imagen] FULL Prompt:', prompt)
   console.log('[Imagen] Project:', projectId, 'Region:', region)
   console.log('[Imagen] Has reference images:', hasReferenceImages)

@@ -8,9 +8,11 @@
  * Supports:
  * - imagen-3.0-generate-001 for standard generation
  * - imagen-3.0-capability-001 for subject customization with reference images
+ * - imagen-3.0-fast-generate-001 for faster, cost-efficient generation
  */
 
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
+import { getImagenModel, DEFAULT_IMAGE_QUALITY, type ModelQuality } from '@/lib/config/modelConfig'
 
 interface ReferenceImage {
   referenceId: number
@@ -26,6 +28,7 @@ interface ImageGenerationOptions {
   personGeneration?: 'allow_adult' | 'allow_all' | 'dont_allow'
   referenceImages?: ReferenceImage[]
   negativePrompt?: string  // Terms to avoid in generation (e.g., "casual clothes, jeans")
+  quality?: ModelQuality  // Image quality tier: fast or standard
 }
 
 /**
@@ -49,10 +52,10 @@ export async function generateImageWithGemini(
   
   const hasReferenceImages = options.referenceImages && options.referenceImages.length > 0
   
-  // Use capability model for subject customization, standard model otherwise
-  const model = hasReferenceImages 
-    ? 'imagen-3.0-capability-001'
-    : 'imagen-3.0-generate-001'
+  // Select model based on quality tier (default: fast for cost efficiency)
+  // Uses capability model for subject customization with reference images
+  const quality = options.quality || DEFAULT_IMAGE_QUALITY
+  const model = getImagenModel(quality, hasReferenceImages)
   
   // Build final prompt with negative prompt suffix if provided
   let finalPrompt = prompt
@@ -62,7 +65,7 @@ export async function generateImageWithGemini(
     finalPrompt = prompt
   }
   
-  console.log(`[Vertex Imagen] Generating image with ${model}...`)
+  console.log(`[Vertex Imagen] Generating image with ${model} (quality: ${quality})...`)
   console.log('[Vertex Imagen] Prompt:', finalPrompt.substring(0, 200))
   console.log('[Vertex Imagen] Has reference images:', hasReferenceImages)
   console.log('[Vertex Imagen] Project:', projectId, 'Location:', location)

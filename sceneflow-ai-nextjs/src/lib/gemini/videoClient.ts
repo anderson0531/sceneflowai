@@ -1,4 +1,5 @@
 import { JWT } from 'google-auth-library';
+import { getVeoModel, DEFAULT_VIDEO_QUALITY } from '@/lib/config/modelConfig';
 
 /**
  * Get Google OAuth2 Bearer token for Vertex AI
@@ -155,6 +156,7 @@ interface VideoGenerationOptions {
   lastFrame?: string // For interpolation
   referenceImages?: ReferenceImage[] // Up to 3 for Veo 3.1
   sourceVideoUrl?: string // URL of video to extend (EXT mode) - Veo handles frame continuity automatically
+  quality?: 'fast' | 'standard' // Video quality tier: fast (Veo 3.0 Fast) or standard (Veo 3.1)
 }
 
 interface VideoGenerationResult {
@@ -183,7 +185,7 @@ async function urlToBase64(url: string): Promise<{ base64: string; mimeType: str
 }
 
 /**
- * Trigger video generation using Veo 3.1
+ * Trigger video generation using Veo
  * Returns an operation name for polling
  */
 export async function generateVideoWithVeo(
@@ -194,11 +196,13 @@ export async function generateVideoWithVeo(
   const project = process.env.VERTEX_PROJECT_ID
   // Veo models are only available in us-central1 (not in us-east1 like Imagen)
   const location = process.env.VEO_LOCATION || 'us-central1'
-  const model = 'veo-3.1-generate-preview'
+  // Select model based on quality tier (default: fast for cost efficiency)
+  const quality = options.quality || DEFAULT_VIDEO_QUALITY
+  const model = getVeoModel(quality)
   if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
   // Vertex endpoint: https://LOCATION-aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/LOCATION/publishers/google/models/MODEL:predictLongRunning
   const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:predictLongRunning`
-  console.log(`[Veo Video] Generating video with ${model} on Vertex AI...`)
+  console.log(`[Veo Video] Generating video with ${model} (quality: ${quality}) on Vertex AI...`)
   console.log('[Veo Video] Prompt:', prompt.substring(0, 200))
   console.log('[Veo Video] Options:', JSON.stringify({
     aspectRatio: options.aspectRatio || '16:9',
@@ -432,8 +436,19 @@ export async function checkVideoGenerationStatus(
   // We call: POST https://{location}-aiplatform.googleapis.com/v1/{operationName}:fetchPredictOperation
   // But actually, the simpler approach is to use the full operation name with a GET request
   
-  // Veo uses the publisher endpoint format for fetching operation status
-  const model = 'veo-3.1-generate-preview'
+  // Extract model from operation name if present, otherwise use default (fast)
+  // Format: projects/{project}/locations/{location}/publishers/google/models/{model}/operations/{opId}
+  let model: string
+  const modelMatch = operationName.match(/models\/([^\/]+)\/operations/)
+  if (modelMatch) {
+    model = modelMatch[1]
+    console.log('[Veo Video] Extracted model from operation name:', model)
+  } else {
+    // Fallback to default model
+    model = getVeoModel(DEFAULT_VIDEO_QUALITY)
+    console.log('[Veo Video] Using default model for status check:', model)
+  }
+  
   let opId = operationName
   if (operationName.includes('/operations/')) {
     opId = operationName.split('/operations/').pop() || operationName
