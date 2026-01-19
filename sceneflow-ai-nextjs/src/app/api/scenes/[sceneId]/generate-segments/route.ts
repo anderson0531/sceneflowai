@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
 import { moderatePrompt, getUserModerationContext, createBlockedResponse } from '@/lib/moderation'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
 export const maxDuration = 120
 export const runtime = 'nodejs'
@@ -908,23 +909,52 @@ Return ONLY valid JSON array. No markdown code blocks, no explanatory text.
 }
 
 async function callGeminiForIntelligentSegmentation(prompt: string): Promise<IntelligentSegment[]> {
-  // Use Vertex AI for Gemini (pay-as-you-go, no free tier limits)
+  // Try Vertex AI first, fall back to Gemini API with API key
   const projectId = process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID
-  if (!projectId) {
-    throw new Error('Vertex AI not configured (VERTEX_PROJECT_ID required)')
-  }
-
-  console.log(`[Scene Segmentation] Using Vertex AI Gemini`)
+  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
   
-  const result = await generateText(prompt, {
-    model: 'gemini-2.5-flash',
-    temperature: 0.7,
-    maxOutputTokens: 16384,
-    responseMimeType: 'application/json'
+  // Try Vertex AI first if configured
+  if (projectId) {
+    try {
+      console.log(`[Scene Segmentation] Trying Vertex AI Gemini...`)
+      
+      const result = await generateText(prompt, {
+        model: 'gemini-2.5-flash',
+        temperature: 0.7,
+        maxOutputTokens: 16384,
+        responseMimeType: 'application/json'
+      })
+      
+      console.log(`[Scene Segmentation] Success with Vertex AI`)
+      return parseGeminiResponseText(result.text)
+    } catch (vertexError: any) {
+      console.warn(`[Scene Segmentation] Vertex AI failed, trying Gemini API fallback:`, vertexError?.message)
+      // Fall through to Gemini API fallback
+    }
+  }
+  
+  // Fallback: Use Gemini API with API key (generativelanguage.googleapis.com)
+  if (!geminiApiKey) {
+    throw new Error('Gemini API not configured: neither Vertex AI nor GEMINI_API_KEY available')
+  }
+  
+  console.log(`[Scene Segmentation] Using Gemini API with API key (fallback)`)
+  
+  const genAI = new GoogleGenerativeAI(geminiApiKey)
+  const model = genAI.getGenerativeModel({ 
+    model: 'gemini-2.0-flash-exp',
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 16384,
+      responseMimeType: 'application/json'
+    }
   })
   
-  console.log(`[Scene Segmentation] Success with Vertex AI`)
-  return parseGeminiResponseText(result.text)
+  const result = await model.generateContent(prompt)
+  const responseText = result.response.text()
+  
+  console.log(`[Scene Segmentation] Success with Gemini API fallback`)
+  return parseGeminiResponseText(responseText)
 }
 
 function parseGeminiResponseText(text: string): IntelligentSegment[] {
