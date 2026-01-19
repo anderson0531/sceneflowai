@@ -5,10 +5,7 @@
  * Files are stored in public/demo-assets/ and served via Next.js static file serving.
  * 
  * This is a temporary workaround for creating demo content.
- * 
- * File Size Limits:
- * - Images: 10MB
- * - Videos: 100MB
+ * No file size limits for local storage.
  */
 
 import { writeFile, mkdir, unlink } from 'fs/promises'
@@ -17,10 +14,6 @@ import path from 'path'
 
 // Base directory for demo assets (relative to project root)
 const DEMO_ASSETS_DIR = 'public/demo-assets'
-
-// File size limits
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024  // 10MB
-const MAX_VIDEO_SIZE = 100 * 1024 * 1024 // 100MB
 
 export interface LocalUploadResult {
   url: string           // Public URL for accessing the asset
@@ -67,10 +60,6 @@ export async function uploadImageLocally(
     prefix?: string
   }
 ): Promise<LocalUploadResult> {
-  if (buffer.length > MAX_IMAGE_SIZE) {
-    throw new Error(`Image size ${Math.round(buffer.length / 1024 / 1024)}MB exceeds limit of ${MAX_IMAGE_SIZE / 1024 / 1024}MB`)
-  }
-
   const subcategory = options.subcategory || 'images'
   const dir = await ensureAssetDir(subcategory)
   
@@ -117,12 +106,6 @@ export async function uploadVideoLocally(
     prefix?: string
   }
 ): Promise<LocalUploadResult> {
-  if (buffer.length > MAX_VIDEO_SIZE) {
-    const sizeMB = Math.round(buffer.length / 1024 / 1024)
-    const limitMB = MAX_VIDEO_SIZE / 1024 / 1024
-    throw new Error(`Video size ${sizeMB}MB exceeds limit of ${limitMB}MB. Please compress or trim your video.`)
-  }
-
   const dir = await ensureAssetDir('videos')
   
   const prefix = options.prefix || options.segmentId || 'video'
@@ -159,8 +142,8 @@ export async function deleteLocalAsset(url: string): Promise<void> {
 }
 
 /**
- * Get the maximum file sizes
+ * Get the maximum file sizes (unlimited for local storage)
  */
 export function getFileSizeLimits(): { image: number; video: number } {
-  return { image: MAX_IMAGE_SIZE, video: MAX_VIDEO_SIZE }
+  return { image: Infinity, video: Infinity }
 }

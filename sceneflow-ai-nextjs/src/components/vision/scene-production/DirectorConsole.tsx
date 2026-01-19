@@ -45,6 +45,7 @@ import {
   Download,
   ChevronUp,
   ChevronDown,
+  Copy,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -752,6 +753,36 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                       </Tooltip>
                     </>
                   )}
+                  
+                  {/* Copy Prompt Button - For external generation */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-slate-500 hover:text-amber-400"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          const prompt = item.config.prompt || segment.userEditedPrompt || segment.generatedPrompt || ''
+                          if (prompt) {
+                            navigator.clipboard.writeText(prompt)
+                            import('sonner').then(({ toast }) => {
+                              toast.success('Prompt copied to clipboard!', {
+                                description: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
+                              })
+                            })
+                          } else {
+                            import('sonner').then(({ toast }) => {
+                              toast.error('No prompt available for this segment')
+                            })
+                          }
+                        }}
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Copy Prompt for External Generation</TooltipContent>
+                  </Tooltip>
                   
                   {/* Take/Edit Button - Opens config dialog or video editing dialog */}
                   <Button 

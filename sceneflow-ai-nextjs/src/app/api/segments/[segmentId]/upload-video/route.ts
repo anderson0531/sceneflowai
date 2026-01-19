@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { uploadVideoLocally, getFileSizeLimits } from '@/lib/storage/localAssets'
-
-const MAX_VIDEO_SIZE = 100 * 1024 * 1024 // 100MB
+import { uploadVideoLocally } from '@/lib/storage/localAssets'
 
 /**
  * Upload a video segment for demo mode.
  * Stores locally in public/demo-assets/videos/
+ * No file size limits for local storage.
  */
 export async function POST(
   req: NextRequest,
@@ -30,16 +29,6 @@ export async function POST(
       return NextResponse.json(
         { error: 'File must be a video' },
         { status: 400 }
-      )
-    }
-
-    // Check file size before reading
-    if (file.size > MAX_VIDEO_SIZE) {
-      const sizeMB = Math.round(file.size / 1024 / 1024)
-      const limitMB = MAX_VIDEO_SIZE / 1024 / 1024
-      return NextResponse.json(
-        { error: `Video size ${sizeMB}MB exceeds limit of ${limitMB}MB. Please compress or trim your video.` },
-        { status: 413 }
       )
     }
 
@@ -77,10 +66,8 @@ export async function POST(
 }
 
 export async function GET() {
-  const limits = getFileSizeLimits()
   return NextResponse.json({
-    maxVideoSize: limits.video,
-    maxVideoSizeMB: limits.video / 1024 / 1024,
+    maxVideoSize: 'unlimited',
     supportedFormats: ['video/mp4', 'video/webm', 'video/quicktime'],
   })
 }
