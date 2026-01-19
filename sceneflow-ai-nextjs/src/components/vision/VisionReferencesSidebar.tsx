@@ -4,7 +4,8 @@ import React, { useState } from 'react'
 import { DndContext } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, BookOpen, Wand2, Loader2, Upload } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, BookOpen, Wand2, Loader2, Upload, Copy } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/Input'
@@ -17,6 +18,8 @@ import { ObjectSuggestionPanel } from './ObjectSuggestionPanel'
 import { ImageEditModal } from './ImageEditModal'
 
 interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'compact'> {
+  /** Project ID for uploads */
+  projectId?: string
   sceneReferences: VisualReference[]
   objectReferences: VisualReference[]
   onCreateReference: (type: VisualReferenceType, payload: { name: string; description?: string; file?: File | null }) => Promise<void> | void
@@ -72,9 +75,13 @@ interface DraggableReferenceCardProps {
   onEditImage?: (imageUrl: string, referenceId: string, type: 'scene' | 'object') => void
   /** Reference type for edit context */
   referenceType?: 'scene' | 'object'
+  /** Project ID for uploads */
+  projectId?: string
+  /** Callback when an image is uploaded */
+  onImageUploaded?: (referenceId: string, referenceType: 'scene' | 'object', imageUrl: string) => void
 }
 
-function DraggableReferenceCard({ reference, onRemove, scenes, onInsertBackdropSegment, onEditImage, referenceType }: DraggableReferenceCardProps) {
+function DraggableReferenceCard({ reference, onRemove, scenes, onInsertBackdropSegment, onEditImage, referenceType, projectId, onImageUploaded }: DraggableReferenceCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `visual-reference-${reference.id}`,
     data: {
@@ -88,6 +95,54 @@ function DraggableReferenceCard({ reference, onRemove, scenes, onInsertBackdropS
 
   const [isExpanded, setIsExpanded] = useState(false)
   const [showSceneSelector, setShowSceneSelector] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+
+  // Handle file upload for reference image
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || !projectId || !referenceType) return
+
+    setIsUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('projectId', projectId)
+      formData.append('referenceId', reference.id)
+      formData.append('referenceType', referenceType)
+
+      const response = await fetch('/api/reference/upload-image', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
+        throw new Error('Upload failed')
+      }
+
+      const result = await response.json()
+      toast.success(`${referenceType === 'scene' ? 'Scene' : 'Object'} image uploaded`)
+      
+      // Notify parent component of the update
+      if (onImageUploaded) {
+        onImageUploaded(reference.id, referenceType, result.imageUrl)
+      }
+    } catch (error) {
+      console.error('Upload error:', error)
+      toast.error('Failed to upload image')
+    } finally {
+      setIsUploading(false)
+      // Reset input
+      event.target.value = ''
+    }
+  }
+
+  // Copy generation prompt to clipboard
+  const handleCopyPrompt = () => {
+    // Build a prompt from the reference data
+    const prompt = reference.generationPrompt || reference.description || reference.name
+    navigator.clipboard.writeText(prompt)
+    toast.success('Prompt copied to clipboard')
+  }
 
   // Helper to get scene label
   const getSceneLabel = (scene: SceneForBackdrop): string => {
@@ -145,6 +200,41 @@ function DraggableReferenceCard({ reference, onRemove, scenes, onInsertBackdropS
         
         {/* Row 3: Action Buttons */}
         <div className="flex items-center gap-2">
+          {/* Hidden file input for upload */}
+          <input
+            type="file"
+            id={`reference-upload-${reference.id}`}
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
+          {/* Upload button - always show for objects, or if projectId is available */}
+          {projectId && referenceType && (
+            <button
+              onPointerDown={(e) => {
+                e.stopPropagation()
+                e.preventDefault()
+                document.getElementById(`reference-upload-${reference.id}`)?.click()
+              }}
+              disabled={isUploading}
+              className="p-1.5 rounded-md text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors disabled:opacity-50"
+              title="Upload image"
+            >
+              {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+            </button>
+          )}
+          {/* Copy Prompt button */}
+          <button
+            onPointerDown={(e) => {
+              e.stopPropagation()
+              e.preventDefault()
+              handleCopyPrompt()
+            }}
+            className="p-1.5 rounded-md text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+            title="Copy prompt"
+          >
+            <Copy className="w-4 h-4" />
+          </button>
           {/* Add to Timeline button - only for scene backdrops */}
           {canAddToTimeline && (
             <button
@@ -589,6 +679,7 @@ function AddReferenceDialog({ open, onClose, onSubmit, onGenerateObject, type, i
 
 export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   const {
+    projectId,
     characters,
     onRegenerateCharacter,
     onGenerateCharacter,
@@ -881,6 +972,12 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                     onInsertBackdropSegment={onInsertBackdropSegment}
                     onEditImage={handleEditReferenceImage}
                     referenceType="scene"
+                    projectId={projectId}
+                    onImageUploaded={(refId, refType, imageUrl) => {
+                      if (onUpdateReferenceImage) {
+                        onUpdateReferenceImage(refType, refId, imageUrl)
+                      }
+                    }}
                   />
                 ))
               )}
@@ -923,6 +1020,12 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                     onRemove={() => onRemoveReference('object', reference.id)}
                     onEditImage={handleEditReferenceImage}
                     referenceType="object"
+                    projectId={projectId}
+                    onImageUploaded={(refId, refType, imageUrl) => {
+                      if (onUpdateReferenceImage) {
+                        onUpdateReferenceImage(refType, refId, imageUrl)
+                      }
+                    }}
                   />
                 ))
               )}

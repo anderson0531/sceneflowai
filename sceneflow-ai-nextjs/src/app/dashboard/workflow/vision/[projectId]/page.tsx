@@ -8156,6 +8156,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               {/* Narration Voice Selector */}
               
               <VisionReferencesSidebar
+                projectId={projectId}
                 characters={characters}
                 onRegenerateCharacter={handleRegenerateCharacter}
                 onGenerateCharacter={handleGenerateCharacter}
