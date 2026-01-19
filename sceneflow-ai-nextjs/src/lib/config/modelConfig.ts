@@ -17,6 +17,13 @@
  */
 
 // =============================================================================
+// COMMON TYPES
+// =============================================================================
+
+/** Unified quality type for video/image clients */
+export type ModelQuality = 'fast' | 'standard';
+
+// =============================================================================
 // VIDEO GENERATION MODELS (Veo)
 // =============================================================================
 
@@ -34,8 +41,10 @@ export const VEO_MODELS = {
 export const DEFAULT_VEO_QUALITY: VeoQualityTier = 'fast';
 
 /** Get Veo model name for quality tier */
-export function getVeoModel(quality: VeoQualityTier = DEFAULT_VEO_QUALITY): string {
-  return VEO_MODELS[quality];
+export function getVeoModel(quality: VeoQualityTier | ModelQuality = DEFAULT_VEO_QUALITY): string {
+  // Map 'standard' to 'premium' for backward compatibility
+  const tier = quality === 'standard' ? 'premium' : (quality as VeoQualityTier);
+  return VEO_MODELS[tier] || VEO_MODELS.fast;
 }
 
 /** Estimated cost per second for each Veo tier */
@@ -74,14 +83,16 @@ export const DEFAULT_IMAGEN_QUALITY: ImagenQualityTier = 'fast';
  * Note: If reference images are provided, always uses 'capability' model
  */
 export function getImagenModel(
-  quality: ImagenQualityTier = DEFAULT_IMAGEN_QUALITY,
+  quality: ImagenQualityTier | ModelQuality = DEFAULT_IMAGEN_QUALITY,
   hasReferenceImages: boolean = false
 ): string {
   // Reference images require capability model regardless of quality setting
   if (hasReferenceImages) {
     return IMAGEN_MODELS.capability;
   }
-  return IMAGEN_MODELS[quality];
+  // Handle ModelQuality type (fast/standard)
+  const tier = quality as ImagenQualityTier;
+  return IMAGEN_MODELS[tier] || IMAGEN_MODELS.fast;
 }
 
 /** Estimated cost per image for each Imagen tier */
@@ -121,3 +132,13 @@ export function getEnvImagenQuality(): ImagenQualityTier {
   }
   return DEFAULT_IMAGEN_QUALITY;
 }
+
+// =============================================================================
+// BACKWARD COMPATIBILITY ALIASES
+// =============================================================================
+
+/** Alias for backward compatibility with video clients */
+export const DEFAULT_VIDEO_QUALITY: ModelQuality = 'fast';
+
+/** Alias for backward compatibility with image clients */
+export const DEFAULT_IMAGE_QUALITY: ModelQuality = 'fast';
