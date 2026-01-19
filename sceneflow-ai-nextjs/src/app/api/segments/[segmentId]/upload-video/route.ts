@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { uploadVideoLocally } from '@/lib/storage/localAssets'
+import { put } from '@vercel/blob'
 
 /**
  * Upload a video segment for demo mode.
- * Stores locally in public/demo-assets/videos/
- * No file size limits for local storage.
+ * Stores in Vercel Blob storage (bypassing GCS).
+ * No file size limits.
  */
 export async function POST(
   req: NextRequest,
@@ -38,23 +38,26 @@ export async function POST(
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
-    // Upload to local storage
-    const result = await uploadVideoLocally(buffer, {
-      filename: file.name,
-      segmentId,
-      prefix: `segment-${segmentId}`,
+    // Determine file extension from content type
+    const ext = file.type === 'video/webm' ? 'webm' : file.type === 'video/quicktime' ? 'mov' : 'mp4'
+    const filename = `segments/${segmentId}/video-${Date.now()}.${ext}`
+
+    // Upload to Vercel Blob
+    const blob = await put(filename, buffer, {
+      access: 'public',
+      contentType: file.type,
     })
 
-    console.log(`[Upload Video] Success: ${result.url}`)
+    console.log(`[Upload Video] Success: ${blob.url}`)
 
     return NextResponse.json({
       success: true,
-      url: result.url,
-      assetUrl: result.url,
+      url: blob.url,
+      assetUrl: blob.url,
       assetType: 'video',
       status: 'UPLOADED',
-      size: result.size,
-      filename: result.filename,
+      size: file.size,
+      filename: file.name,
     })
   } catch (error: any) {
     console.error('[Upload Video] Error:', error.message)

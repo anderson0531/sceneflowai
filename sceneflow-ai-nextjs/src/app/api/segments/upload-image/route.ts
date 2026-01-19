@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { uploadImageLocally, uploadBase64ImageLocally } from '@/lib/storage/localAssets'
-
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024 // 10MB
+import { put } from '@vercel/blob'
 
 /**
  * Upload a frame/image for demo mode.
  * Supports both multipart form data and base64 JSON.
- * Stores locally in public/demo-assets/
+ * Stores in Vercel Blob (bypassing GCS).
  */
 export async function POST(req: NextRequest) {
   try {
@@ -14,8 +12,9 @@ export async function POST(req: NextRequest) {
     
     let buffer: Buffer
     let filename: string
-    let subcategory: 'scenes' | 'frames' = 'frames'
+    let subcategory: string = 'frames'
     let prefix: string | undefined
+    let mimeType: string = 'image/jpeg'
 
     if (contentType.includes('multipart/form-data')) {
       // Handle form data upload
@@ -33,19 +32,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'File must be an image' }, { status: 400 })
       }
 
-      if (file.size > MAX_IMAGE_SIZE) {
-        const sizeMB = Math.round(file.size / 1024 / 1024)
-        return NextResponse.json(
-          { error: `Image size ${sizeMB}MB exceeds limit of 10MB` },
-          { status: 413 }
-        )
-      }
-
       const arrayBuffer = await file.arrayBuffer()
       buffer = Buffer.from(arrayBuffer)
       filename = file.name
-      subcategory = (category as any) || 'frames'
+      subcategory = category || 'frames'
       prefix = segmentId ? `${segmentId}-${frameType || 'frame'}` : undefined
+      mimeType = file.type
 
     } else {
       // Handle JSON with base64 image
@@ -56,32 +48,39 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'No image provided' }, { status: 400 })
       }
 
-      const result = await uploadBase64ImageLocally(image, {
-        filename: providedFilename || 'frame.jpg',
-        subcategory: cat || 'frames',
-        prefix: segmentId ? `${segmentId}-${frameType || 'frame'}` : undefined,
-      })
-
-      return NextResponse.json({
-        success: true,
-        url: result.url,
-        size: result.size,
-        filename: result.filename,
-      })
+      // Parse base64 data URL
+      const matches = image.match(/^data:([^;]+);base64,(.+)$/)
+      if (matches) {
+        mimeType = matches[1]
+        buffer = Buffer.from(matches[2], 'base64')
+      } else {
+        buffer = Buffer.from(image, 'base64')
+      }
+      
+      filename = providedFilename || 'frame.jpg'
+      subcategory = cat || 'frames'
+      prefix = segmentId ? `${segmentId}-${frameType || 'frame'}` : undefined
     }
 
-    // Upload buffer to local storage
-    const result = await uploadImageLocally(buffer, {
-      filename,
-      subcategory,
-      prefix,
+    // Build blob path
+    const ext = mimeType.split('/')[1] || 'jpg'
+    const blobPath = prefix 
+      ? `${subcategory}/${prefix}-${Date.now()}.${ext}`
+      : `${subcategory}/${Date.now()}.${ext}`
+
+    // Upload to Vercel Blob
+    const blob = await put(blobPath, buffer, {
+      access: 'public',
+      contentType: mimeType,
     })
+
+    console.log(`[Upload Image] Uploaded to Vercel Blob: ${blob.url}`)
 
     return NextResponse.json({
       success: true,
-      url: result.url,
-      size: result.size,
-      filename: result.filename,
+      url: blob.url,
+      size: buffer.length,
+      filename: filename,
     })
   } catch (error: any) {
     console.error('[Upload Image] Error:', error.message)
