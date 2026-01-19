@@ -937,6 +937,11 @@ Generate the segments now:`
       return
     }
 
+    if (!projectId) {
+      toast.error('Project ID not available. Please refresh the page.')
+      return
+    }
+
     setIsProcessingPaste(true)
     
     try {
@@ -958,31 +963,90 @@ Generate the segments now:`
         throw new Error('Invalid response format: missing segments array')
       }
 
-      // Transform to segment format expected by the system
-      const segments = parsed.segments.map((seg: any, index: number) => ({
-        segmentId: `segment-${Date.now()}-${index}`,
-        label: seg.label || `Segment ${index + 1}`,
-        prompt: seg.prompt,
-        duration: seg.duration || 5,
-        shotType: seg.shotType,
-        cameraMovement: seg.cameraMovement,
-        order: index,
-        status: 'pending' as const,
-        references: {}
-      }))
+      // Transform to segment format expected by the system (matching SceneSegment type)
+      const transformedSegments = parsed.segments.map((seg: any, index: number) => {
+        // Calculate start and end times based on cumulative durations
+        const startTime = parsed.segments.slice(0, index).reduce((acc: number, s: any) => acc + (s.duration || 5), 0)
+        const endTime = startTime + (seg.duration || 5)
 
-      // Save segments via API
-      const response = await fetch(`/api/scenes/${sceneId}/segments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ segments })
+        return {
+          segmentId: `segment-${Date.now()}-${index}`,
+          sequenceIndex: index,
+          startTime,
+          endTime,
+          status: 'READY' as const,
+          generatedPrompt: seg.prompt,
+          userEditedPrompt: null,
+          activeAssetUrl: null,
+          assetType: null,
+          references: {
+            startFrameUrl: null,
+            endFrameUrl: null,
+            characterIds: [],
+            sceneRefIds: [],
+            objectRefIds: [],
+          },
+          takes: [],
+          shotType: seg.shotType,
+          cameraMovement: seg.cameraMovement,
+          subject: seg.label,
+          shotNumber: index + 1,
+        }
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to save segments')
+      // Calculate average duration
+      const totalDuration = transformedSegments.reduce((acc: number, seg: any) => acc + (seg.endTime - seg.startTime), 0)
+      const avgDuration = totalDuration / transformedSegments.length
+
+      // Build the production data
+      const newProductionData = {
+        isSegmented: true,
+        targetSegmentDuration: Math.round(avgDuration),
+        segments: transformedSegments,
+        lastGeneratedAt: new Date().toISOString(),
       }
 
-      toast.success(`Created ${segments.length} segments successfully`, {
+      // Fetch current project to merge metadata
+      const projectResponse = await fetch(`/api/projects/${projectId}`)
+      if (!projectResponse.ok) {
+        throw new Error('Failed to fetch project data')
+      }
+      const projectData = await projectResponse.json()
+      const currentProject = projectData.project || projectData
+
+      const existingMetadata = currentProject.metadata || {}
+      const existingVisionPhase = existingMetadata.visionPhase || {}
+      const existingProduction = existingVisionPhase.production || {}
+      const existingProductionScenes = existingProduction.scenes || {}
+
+      // Build updated metadata with new segments
+      const updatedMetadata = {
+        ...existingMetadata,
+        visionPhase: {
+          ...existingVisionPhase,
+          production: {
+            ...existingProduction,
+            lastUpdated: new Date().toISOString(),
+            scenes: {
+              ...existingProductionScenes,
+              [sceneId]: newProductionData
+            }
+          }
+        }
+      }
+
+      // Save via project API
+      const saveResponse = await fetch(`/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ metadata: updatedMetadata })
+      })
+
+      if (!saveResponse.ok) {
+        throw new Error('Failed to save segments to project')
+      }
+
+      toast.success(`Created ${transformedSegments.length} segments successfully`, {
         description: 'Segments are ready for video generation'
       })
       
