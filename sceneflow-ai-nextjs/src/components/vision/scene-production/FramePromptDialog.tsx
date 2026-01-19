@@ -36,6 +36,7 @@ import {
   Wind,
   Sparkles,
   CheckCircle2,
+  Copy,
 } from 'lucide-react'
 import type { SceneSegment, TransitionType } from './types'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
@@ -143,6 +144,7 @@ export function FramePromptDialog({
   
   // State
   const [customPrompt, setCustomPrompt] = useState('')
+  const [copiedPrompt, setCopiedPrompt] = useState(false)
   const [selectedNegativePresets, setSelectedNegativePresets] = useState<Set<string>>(
     new Set(DEFAULT_NEGATIVE_PRESETS)
   )
@@ -568,6 +570,27 @@ export function FramePromptDialog({
         </ScrollArea>
 
         <DialogFooter className="mt-4 pt-4 border-t border-slate-700">
+          {/* Copy Prompt for external generation */}
+          <Button
+            variant="outline"
+            onClick={async () => {
+              const promptToCopy = customPrompt.trim() || intelligentPrompt?.prompt || ''
+              if (promptToCopy) {
+                try {
+                  await navigator.clipboard.writeText(promptToCopy)
+                  setCopiedPrompt(true)
+                  setTimeout(() => setCopiedPrompt(false), 2000)
+                } catch (err) {
+                  console.error('Failed to copy prompt:', err)
+                }
+              }
+            }}
+            disabled={!customPrompt.trim() && !intelligentPrompt?.prompt}
+            className="mr-auto gap-2 text-cyan-400 border-cyan-500/30 hover:bg-cyan-500/10"
+          >
+            <Copy className="w-4 h-4" />
+            {copiedPrompt ? 'Copied!' : 'Copy Prompt'}
+          </Button>
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
