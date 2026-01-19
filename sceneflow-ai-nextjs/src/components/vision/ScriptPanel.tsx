@@ -13,7 +13,7 @@
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
@@ -4536,6 +4536,54 @@ function SceneCard({
                                           <FolderPlus className="w-5 h-5 text-white" />
                                         </button>
                                       )}
+                                      {/* Upload Scene Image Button */}
+                                      {onUploadKeyframe && (
+                                        <>
+                                          <input
+                                            type="file"
+                                            id={`upload-scene-image-${sceneIdx}`}
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={(e) => {
+                                              const file = e.target.files?.[0]
+                                              if (file) {
+                                                onUploadKeyframe(sceneIdx, file)
+                                              }
+                                              e.target.value = ''
+                                            }}
+                                          />
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation()
+                                              document.getElementById(`upload-scene-image-${sceneIdx}`)?.click()
+                                            }}
+                                            className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors"
+                                            title="Upload Scene Image"
+                                          >
+                                            <Upload className="w-5 h-5 text-white" />
+                                          </button>
+                                        </>
+                                      )}
+                                      {/* Copy Image Prompt Button */}
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          const promptParts = []
+                                          if (scene.visualDescription) promptParts.push(scene.visualDescription)
+                                          else if (scene.action) promptParts.push(scene.action)
+                                          if (scene.heading) promptParts.push(`Setting: ${scene.heading}`)
+                                          if (scenePrompt) promptParts.push(scenePrompt)
+                                          const prompt = promptParts.join('\n\n') || scene.summary || 'No prompt available'
+                                          navigator.clipboard.writeText(prompt)
+                                          toast.success('Image prompt copied to clipboard!', {
+                                            description: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
+                                          })
+                                        }}
+                                        className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors"
+                                        title="Copy Image Prompt for External Generation"
+                                      >
+                                        <Copy className="w-5 h-5 text-white" />
+                                      </button>
                                     </div>
                                     <p className="text-[10px] text-gray-500 mt-2 text-center">
                                       This image anchors your scene vision for Screening Room and Frame generation
@@ -4550,21 +4598,73 @@ function SceneCard({
                                     <p className="text-xs text-gray-500 text-center mb-3 max-w-xs">
                                       Generate a reference image to visualize your scene before video production. This anchors visual consistency for frames and videos.
                                     </p>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        onOpenPromptBuilder?.(sceneIdx)
-                                      }}
-                                      disabled={isGenerating}
-                                      className="text-xs px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-2 transition-colors"
-                                    >
-                                      {isGenerating ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                      ) : (
-                                        <Sparkles className="w-4 h-4" />
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          onOpenPromptBuilder?.(sceneIdx)
+                                        }}
+                                        disabled={isGenerating}
+                                        className="text-xs px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-2 transition-colors"
+                                      >
+                                        {isGenerating ? (
+                                          <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                          <Sparkles className="w-4 h-4" />
+                                        )}
+                                        Generate
+                                      </button>
+                                      {/* Upload Scene Image Button */}
+                                      {onUploadKeyframe && (
+                                        <>
+                                          <input
+                                            type="file"
+                                            id={`upload-scene-image-empty-${sceneIdx}`}
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={(e) => {
+                                              const file = e.target.files?.[0]
+                                              if (file) {
+                                                onUploadKeyframe(sceneIdx, file)
+                                              }
+                                              e.target.value = ''
+                                            }}
+                                          />
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation()
+                                              document.getElementById(`upload-scene-image-empty-${sceneIdx}`)?.click()
+                                            }}
+                                            className="text-xs px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-2 transition-colors"
+                                            title="Upload Scene Image"
+                                          >
+                                            <Upload className="w-4 h-4" />
+                                            Upload
+                                          </button>
+                                        </>
                                       )}
-                                      Generate Scene Image
-                                    </button>
+                                      {/* Copy Image Prompt Button */}
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          const promptParts: string[] = []
+                                          if (scene.visualDescription) promptParts.push(scene.visualDescription)
+                                          else if (scene.action) promptParts.push(scene.action)
+                                          if (scene.heading) promptParts.push(`Setting: ${scene.heading}`)
+                                          if (scenePrompt) promptParts.push(scenePrompt)
+                                          const prompt = promptParts.join('\n\n') || scene.summary || 'No prompt available'
+                                          navigator.clipboard.writeText(prompt)
+                                          toast.success('Image prompt copied to clipboard!', {
+                                            description: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
+                                          })
+                                        }}
+                                        className="text-xs px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg flex items-center gap-2 transition-colors"
+                                        title="Copy Image Prompt for External Generation"
+                                      >
+                                        <Copy className="w-4 h-4" />
+                                        Copy Prompt
+                                      </button>
+                                    </div>
                                   </div>
                                 )}
                               </motion.div>
