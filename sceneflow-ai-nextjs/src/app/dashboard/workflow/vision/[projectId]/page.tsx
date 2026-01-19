@@ -2267,39 +2267,84 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   const handleSegmentUpload = useCallback(
     async (sceneId: string, segmentId: string, file: File) => {
-      const objectUrl = URL.createObjectURL(file)
+      // Show uploading state immediately
       applySceneProductionUpdate(sceneId, (current) => {
         if (!current) return current
         const segments = current.segments.map((segment) =>
           segment.segmentId === segmentId
-            ? {
-                ...segment,
-                status: 'UPLOADED',
-                assetType: file.type.startsWith('image') ? 'image' : 'video',
-                activeAssetUrl: objectUrl,
-                takes: [
-                  {
-                    id: `${segmentId}-take-${Date.now()}`,
-                    createdAt: new Date().toISOString(),
-                    assetUrl: objectUrl,
-                    thumbnailUrl: file.type.startsWith('image') ? objectUrl : segment.activeAssetUrl,
-                    status: 'UPLOADED',
-                    notes: 'User upload',
-                  },
-                  ...segment.takes,
-                ],
-              }
+            ? { ...segment, status: 'GENERATING' as const }
             : segment
         )
         return { ...current, segments }
       })
 
       try {
-        const { toast } = require('sonner')
-        toast.success('Uploaded media linked to segment.')
-      } catch {}
+        // Upload to server (local storage for demo mode)
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('projectId', project?.id || 'default')
+
+        const response = await fetch(`/api/segments/${segmentId}/upload-video`, {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || `Upload failed: ${response.status}`)
+        }
+
+        const result = await response.json()
+        const assetUrl = result.url || result.assetUrl
+
+        // Update segment with uploaded asset
+        applySceneProductionUpdate(sceneId, (current) => {
+          if (!current) return current
+          const segments = current.segments.map((segment) =>
+            segment.segmentId === segmentId
+              ? {
+                  ...segment,
+                  status: 'UPLOADED' as const,
+                  assetType: file.type.startsWith('image') ? 'image' : 'video',
+                  activeAssetUrl: assetUrl,
+                  takes: [
+                    {
+                      id: `${segmentId}-take-${Date.now()}`,
+                      createdAt: new Date().toISOString(),
+                      assetUrl: assetUrl,
+                      thumbnailUrl: file.type.startsWith('image') ? assetUrl : segment.activeAssetUrl,
+                      status: 'UPLOADED' as const,
+                      notes: 'User upload',
+                    },
+                    ...segment.takes,
+                  ],
+                }
+              : segment
+          )
+          return { ...current, segments }
+        })
+
+        const { toast } = await import('sonner')
+        toast.success(`Uploaded ${file.type.startsWith('image') ? 'image' : 'video'} to segment`)
+      } catch (error: any) {
+        console.error('[Segment Upload] Error:', error)
+        
+        // Revert to draft state on error
+        applySceneProductionUpdate(sceneId, (current) => {
+          if (!current) return current
+          const segments = current.segments.map((segment) =>
+            segment.segmentId === segmentId
+              ? { ...segment, status: 'DRAFT' as const }
+              : segment
+          )
+          return { ...current, segments }
+        })
+
+        const { toast } = await import('sonner')
+        toast.error(error.message || 'Upload failed')
+      }
     },
-    [applySceneProductionUpdate]
+    [applySceneProductionUpdate, project?.id]
   )
   
   // Handle adding a new segment
