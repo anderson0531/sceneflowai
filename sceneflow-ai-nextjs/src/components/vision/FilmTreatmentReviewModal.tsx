@@ -20,7 +20,9 @@ import {
   Sparkles,
   Target,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  ListOrdered,
+  Clock
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
