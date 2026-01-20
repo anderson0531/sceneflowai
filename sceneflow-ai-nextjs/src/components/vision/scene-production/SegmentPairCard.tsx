@@ -16,7 +16,8 @@ import {
   Pencil,
   RefreshCw,
   Upload,
-  Download
+  Download,
+  Film
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
@@ -46,6 +47,8 @@ export interface SegmentPairCardProps {
   onEditFrame?: (frameType: 'start' | 'end', frameUrl: string) => void
   onUploadFrame?: (frameType: 'start' | 'end', file: File) => void
   onDownloadFrame?: (frameType: 'start' | 'end', frameUrl: string) => void
+  /** Callback for animatic settings changes (image duration + frame selection) */
+  onAnimaticSettingsChange?: (settings: { imageDuration?: number; frameSelection?: 'start' | 'end' | 'both' }) => void
   isGenerating: boolean
   generatingPhase?: 'start' | 'end' | 'video'
   previousSegmentEndFrame?: string | null
@@ -117,6 +120,7 @@ export function SegmentPairCard({
   onEditFrame,
   onUploadFrame,
   onDownloadFrame,
+  onAnimaticSettingsChange,
   isGenerating,
   generatingPhase,
   previousSegmentEndFrame,
@@ -192,6 +196,91 @@ export function SegmentPairCard({
             <Clock className="w-3 h-3" />
             {duration.toFixed(1)}s
           </span>
+          
+          {/* Animatic Duration Control - Screening Room image display duration */}
+          {onAnimaticSettingsChange && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1 bg-slate-800/50 rounded px-1.5 py-0.5 border border-slate-700">
+                  <Film className="w-3 h-3 text-purple-400" />
+                  <input
+                    type="number"
+                    min="1"
+                    max="60"
+                    step="0.5"
+                    value={segment.imageDuration ?? (duration * 2)}
+                    onChange={(e) => {
+                      e.stopPropagation()
+                      const value = parseFloat(e.target.value)
+                      if (!isNaN(value) && value >= 1 && value <= 60) {
+                        onAnimaticSettingsChange({ imageDuration: value })
+                      }
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-10 text-xs text-purple-300 bg-transparent border-none outline-none text-center"
+                  />
+                  <span className="text-[10px] text-slate-500">s</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                Screening Room image duration
+              </TooltipContent>
+            </Tooltip>
+          )}
+          
+          {/* Frame Selection Toggle - Which frames to show in Screening Room */}
+          {onAnimaticSettingsChange && (
+            <div className="flex items-center gap-0.5 bg-slate-800/50 rounded border border-slate-700">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onAnimaticSettingsChange({ frameSelection: 'start' }) }}
+                    className={cn(
+                      "px-1.5 py-0.5 text-[10px] rounded-l transition-colors",
+                      (segment.frameSelection ?? 'start') === 'start' 
+                        ? "bg-purple-500/30 text-purple-300" 
+                        : "text-slate-500 hover:text-slate-300"
+                    )}
+                  >
+                    S
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">Start frame only</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onAnimaticSettingsChange({ frameSelection: 'both' }) }}
+                    className={cn(
+                      "px-1.5 py-0.5 text-[10px] transition-colors",
+                      segment.frameSelection === 'both' 
+                        ? "bg-purple-500/30 text-purple-300" 
+                        : "text-slate-500 hover:text-slate-300"
+                    )}
+                  >
+                    S+E
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">Both frames (split duration)</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onAnimaticSettingsChange({ frameSelection: 'end' }) }}
+                    className={cn(
+                      "px-1.5 py-0.5 text-[10px] rounded-r transition-colors",
+                      segment.frameSelection === 'end' 
+                        ? "bg-purple-500/30 text-purple-300" 
+                        : "text-slate-500 hover:text-slate-300"
+                    )}
+                  >
+                    E
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">End frame only</TooltipContent>
+              </Tooltip>
+            </div>
+          )}
           
           {/* Anchor Status Badge */}
           <Badge 

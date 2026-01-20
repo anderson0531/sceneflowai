@@ -336,6 +336,22 @@ export interface SceneSegment {
   // Production lock - prevents regeneration in Director's Console
   // Persisted to DB, survives page reloads
   lockedForProduction?: boolean
+  
+  // ============================================================================
+  // Screening Room Animatic Settings
+  // ============================================================================
+  
+  // Total image display duration for Screening Room player (in seconds)
+  // Controls how long this segment's frame(s) display in the animatic
+  // Default: (endTime - startTime) * 2
+  imageDuration?: number
+  
+  // Which frame(s) to display in the Screening Room player
+  // 'start' = only start frame for full duration
+  // 'end' = only end frame for full duration  
+  // 'both' = start frame for half duration, then end frame for half duration
+  // Default: 'start'
+  frameSelection?: 'start' | 'end' | 'both'
 }
 
 // Character presence in a segment

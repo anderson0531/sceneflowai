@@ -46,6 +46,8 @@ export interface SegmentFrameTimelineProps {
   onOpenDirectorConsole?: () => void
   onEditFrame?: (segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
   onUploadFrame?: (segmentId: string, frameType: 'start' | 'end', file: File) => void
+  /** Update segment animatic settings for Screening Room (duration + frame selection) */
+  onSegmentAnimaticSettingsChange?: (segmentId: string, settings: { imageDuration?: number; frameSelection?: 'start' | 'end' | 'both' }) => void
   isGenerating: boolean
   generatingSegmentId?: string | null
   generatingPhase?: 'start' | 'end' | 'video'
@@ -111,6 +113,7 @@ export function SegmentFrameTimeline({
   onOpenDirectorConsole,
   onEditFrame,
   onUploadFrame,
+  onSegmentAnimaticSettingsChange,
   isGenerating,
   generatingSegmentId,
   generatingPhase,
@@ -300,6 +303,7 @@ export function SegmentFrameTimeline({
                     onOpenDirectorConsole={onOpenDirectorConsole}
                     onEditFrame={onEditFrame ? (frameType, frameUrl) => onEditFrame(segment.segmentId, frameType, frameUrl) : undefined}
                     onUploadFrame={onUploadFrame ? (frameType, file) => onUploadFrame(segment.segmentId, frameType, file) : undefined}
+                    onAnimaticSettingsChange={onSegmentAnimaticSettingsChange ? (settings) => onSegmentAnimaticSettingsChange(segment.segmentId, settings) : undefined}
                     isGenerating={isGenerating && generatingSegmentId === segment.segmentId}
                     generatingPhase={generatingSegmentId === segment.segmentId ? generatingPhase : undefined}
                     previousSegmentEndFrame={getPreviousEndFrame(index)}

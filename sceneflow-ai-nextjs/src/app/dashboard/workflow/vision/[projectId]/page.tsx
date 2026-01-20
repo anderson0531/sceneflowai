@@ -2025,6 +2025,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [applySceneProductionUpdate]
   )
 
+  // Handle segment animatic settings changes for Screening Room player
+  // Controls image duration and frame selection (start/end/both)
+  const handleSegmentAnimaticSettingsChange = useCallback(
+    (sceneId: string, segmentId: string, settings: { imageDuration?: number; frameSelection?: 'start' | 'end' | 'both' }) => {
+      console.log('[handleSegmentAnimaticSettingsChange] Updating:', { sceneId, segmentId, settings })
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        const segments = current.segments.map((segment) =>
+          segment.segmentId === segmentId
+            ? { 
+                ...segment, 
+                ...(settings.imageDuration !== undefined && { imageDuration: settings.imageDuration }),
+                ...(settings.frameSelection !== undefined && { frameSelection: settings.frameSelection })
+              }
+            : segment
+        )
+        return { ...current, segments }
+      })
+    },
+    [applySceneProductionUpdate]
+  )
+
   // Handle rendered scene URL changes (persists to DB for Play Scene button)
   const handleRenderedSceneUrlChange = useCallback(
     (sceneId: string, url: string | null) => {
@@ -7956,6 +7978,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSegmentGenerate={handleSegmentGenerate}
                 onSegmentUpload={handleSegmentUpload}
                 onLockSegment={handleLockSegment}
+                onSegmentAnimaticSettingsChange={handleSegmentAnimaticSettingsChange}
                 onRenderedSceneUrlChange={handleRenderedSceneUrlChange}
                 onProductionDataChange={handleProductionDataChange}
                 onAddSegment={handleAddSegment}

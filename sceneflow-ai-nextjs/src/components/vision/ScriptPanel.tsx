@@ -180,6 +180,8 @@ interface ScriptPanelProps {
   onSegmentGenerate?: (sceneId: string, segmentId: string, mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD', options?: { startFrameUrl?: string; prompt?: string; negativePrompt?: string; duration?: number; aspectRatio?: '16:9' | '9:16'; resolution?: '720p' | '1080p' }) => Promise<void>
   onSegmentUpload?: (sceneId: string, segmentId: string, file: File) => Promise<void>
   onLockSegment?: (sceneId: string, segmentId: string, locked: boolean) => void
+  /** Update segment animatic settings for Screening Room (duration + frame selection) */
+  onSegmentAnimaticSettingsChange?: (sceneId: string, segmentId: string, settings: { imageDuration?: number; frameSelection?: 'start' | 'end' | 'both' }) => void
   /** Persist rendered scene URL to database */
   onRenderedSceneUrlChange?: (sceneId: string, url: string | null) => void
   onAddSegment?: (sceneId: string, afterSegmentId: string | null, duration: number) => void
@@ -2860,6 +2862,8 @@ interface SceneCardProps {
   onSegmentGenerate?: (sceneId: string, segmentId: string, mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD', options?: { startFrameUrl?: string; prompt?: string; negativePrompt?: string; duration?: number; aspectRatio?: '16:9' | '9:16'; resolution?: '720p' | '1080p' }) => Promise<void>
   onSegmentUpload?: (sceneId: string, segmentId: string, file: File) => Promise<void>
   onLockSegment?: (sceneId: string, segmentId: string, locked: boolean) => void
+  /** Update segment animatic settings for Screening Room (duration + frame selection) */
+  onSegmentAnimaticSettingsChange?: (sceneId: string, segmentId: string, settings: { imageDuration?: number; frameSelection?: 'start' | 'end' | 'both' }) => void
   /** Persist rendered scene URL to database */
   onRenderedSceneUrlChange?: (sceneId: string, url: string | null) => void
   onAddSegment?: (sceneId: string, afterSegmentId: string | null, duration: number) => void
@@ -5696,6 +5700,13 @@ function SceneCard({
                         isGenerating={!!generatingFrameForSegment}
                         generatingSegmentId={generatingFrameForSegment}
                         generatingPhase={generatingFramePhase}
+                        onSegmentAnimaticSettingsChange={onSegmentAnimaticSettingsChange ? 
+                          (segmentId, settings) => onSegmentAnimaticSettingsChange(
+                            scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                            segmentId,
+                            settings
+                          ) : undefined
+                        }
                         characters={characters?.map(c => ({
                           name: c.name,
                           appearance: c.appearance || c.description,
@@ -5962,6 +5973,13 @@ function SceneCard({
                           isGenerating={!!generatingFrameForSegment}
                           generatingSegmentId={generatingFrameForSegment}
                           generatingPhase={generatingFramePhase}
+                          onSegmentAnimaticSettingsChange={onSegmentAnimaticSettingsChange ? 
+                            (segmentId, settings) => onSegmentAnimaticSettingsChange(
+                              scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                              segmentId,
+                              settings
+                            ) : undefined
+                          }
                           characters={characters?.map(c => ({
                             name: c.name,
                             appearance: c.appearance || c.description,

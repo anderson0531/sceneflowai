@@ -56,22 +56,62 @@ function buildKeyframeSequence(
     return []
   }
   
-  // Build keyframes from segments - ONLY use start frames
+  // Build keyframes from segments based on frameSelection and imageDuration settings
   productionData.segments.forEach((segment, idx) => {
     const segmentDuration = (segment.endTime || 0) - (segment.startTime || 0)
     
-    // Get start frame URL from multiple possible locations
+    // Get frame URLs from multiple possible locations
     const startUrl = segment.startFrameUrl || segment.references?.startFrameUrl
+    const endUrl = segment.endFrameUrl || segment.references?.endFrameUrl
     
-    if (startUrl) {
-      keyframes.push({
-        url: startUrl,
-        duration: (segmentDuration || fallbackDuration) * 2, // Double duration for slower frame transitions
-        segmentIndex: idx,
-        isStartFrame: true
-      })
+    // Use imageDuration if set, otherwise default to segmentDuration * 2
+    const totalDuration = segment.imageDuration ?? (segmentDuration || fallbackDuration) * 2
+    const frameSelection = segment.frameSelection ?? 'start'
+    
+    if (frameSelection === 'start') {
+      // Start frame only - use full duration
+      if (startUrl) {
+        keyframes.push({
+          url: startUrl,
+          duration: totalDuration,
+          segmentIndex: idx,
+          isStartFrame: true
+        })
+      }
+    } else if (frameSelection === 'end') {
+      // End frame only - use full duration, fall back to start if end unavailable
+      const url = endUrl || startUrl
+      if (url) {
+        keyframes.push({
+          url: url,
+          duration: totalDuration,
+          segmentIndex: idx,
+          isStartFrame: !endUrl
+        })
+      }
+    } else if (frameSelection === 'both') {
+      // Both frames - split duration evenly
+      const halfDuration = totalDuration / 2
+      if (startUrl) {
+        keyframes.push({
+          url: startUrl,
+          duration: halfDuration,
+          segmentIndex: idx,
+          isStartFrame: true
+        })
+      }
+      if (endUrl) {
+        keyframes.push({
+          url: endUrl,
+          duration: halfDuration,
+          segmentIndex: idx,
+          isStartFrame: false
+        })
+      } else if (startUrl && !endUrl) {
+        // If end frame missing, extend start frame to full duration
+        keyframes[keyframes.length - 1].duration = totalDuration
+      }
     }
-    // NOTE: End frames are intentionally skipped for cleaner visual progression
   })
   
   // Fallback to scene image if no keyframes found
