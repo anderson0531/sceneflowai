@@ -197,88 +197,91 @@ export function SegmentPairCard({
             {duration.toFixed(1)}s
           </span>
           
-          {/* Animatic Duration Control - Screening Room image display duration */}
+          {/* Screening Room Settings - Combined Duration + Frame Selection */}
           {onAnimaticSettingsChange && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-1 bg-slate-800/50 rounded px-1.5 py-0.5 border border-slate-700">
-                  <Film className="w-3 h-3 text-purple-400" />
-                  <input
-                    type="number"
-                    min="1"
-                    max="60"
-                    step="0.5"
-                    value={segment.imageDuration ?? (duration * 2)}
-                    onChange={(e) => {
-                      e.stopPropagation()
-                      const value = parseFloat(e.target.value)
-                      if (!isNaN(value) && value >= 1 && value <= 60) {
-                        onAnimaticSettingsChange({ imageDuration: value })
-                      }
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-10 text-xs text-purple-300 bg-transparent border-none outline-none text-center"
-                  />
-                  <span className="text-[10px] text-slate-500">s</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="text-xs">
-                Screening Room image duration
-              </TooltipContent>
-            </Tooltip>
-          )}
-          
-          {/* Frame Selection Toggle - Which frames to show in Screening Room */}
-          {onAnimaticSettingsChange && (
-            <div className="flex items-center gap-0.5 bg-slate-800/50 rounded border border-slate-700">
+            <div className="flex items-center gap-1.5 bg-slate-800/50 rounded-md px-2 py-1 border border-purple-500/30">
+              <Film className="w-3 h-3 text-purple-400 flex-shrink-0" />
+              <span className="text-[10px] text-purple-300 font-medium whitespace-nowrap">Screening Room:</span>
+              
+              {/* Duration Input */}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onAnimaticSettingsChange({ frameSelection: 'start' }) }}
-                    className={cn(
-                      "px-1.5 py-0.5 text-[10px] rounded-l transition-colors",
-                      (segment.frameSelection ?? 'start') === 'start' 
-                        ? "bg-purple-500/30 text-purple-300" 
-                        : "text-slate-500 hover:text-slate-300"
-                    )}
-                  >
-                    S
-                  </button>
+                  <div className="flex items-center gap-0.5">
+                    <input
+                      type="number"
+                      min="1"
+                      max="120"
+                      step="1"
+                      value={segment.imageDuration ?? Math.round(duration * 2)}
+                      onChange={(e) => {
+                        e.stopPropagation()
+                        const value = parseFloat(e.target.value)
+                        if (!isNaN(value) && value >= 1 && value <= 120) {
+                          onAnimaticSettingsChange({ imageDuration: value })
+                        }
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-14 text-xs text-purple-300 bg-slate-900/50 border border-slate-600 rounded px-1 py-0.5 text-center"
+                    />
+                    <span className="text-[10px] text-slate-400">sec</span>
+                  </div>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">Start frame only</TooltipContent>
+                <TooltipContent side="top" className="text-xs max-w-48">
+                  Image display duration in Screening Room. Set to match your narration/dialogue length.
+                </TooltipContent>
               </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onAnimaticSettingsChange({ frameSelection: 'both' }) }}
-                    className={cn(
-                      "px-1.5 py-0.5 text-[10px] transition-colors",
-                      segment.frameSelection === 'both' 
-                        ? "bg-purple-500/30 text-purple-300" 
-                        : "text-slate-500 hover:text-slate-300"
-                    )}
-                  >
-                    S+E
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">Both frames (split duration)</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onAnimaticSettingsChange({ frameSelection: 'end' }) }}
-                    className={cn(
-                      "px-1.5 py-0.5 text-[10px] rounded-r transition-colors",
-                      segment.frameSelection === 'end' 
-                        ? "bg-purple-500/30 text-purple-300" 
-                        : "text-slate-500 hover:text-slate-300"
-                    )}
-                  >
-                    E
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">End frame only</TooltipContent>
-              </Tooltip>
+              
+              {/* Frame Selection Toggle */}
+              <div className="flex items-center gap-0.5 bg-slate-900/50 rounded border border-slate-600 ml-1">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onAnimaticSettingsChange({ frameSelection: 'start' }) }}
+                      className={cn(
+                        "px-1.5 py-0.5 text-[10px] rounded-l transition-colors",
+                        (segment.frameSelection ?? 'start') === 'start' 
+                          ? "bg-purple-500/40 text-purple-200" 
+                          : "text-slate-500 hover:text-slate-300"
+                      )}
+                    >
+                      S
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">Start frame only</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onAnimaticSettingsChange({ frameSelection: 'both' }) }}
+                      className={cn(
+                        "px-1.5 py-0.5 text-[10px] transition-colors",
+                        segment.frameSelection === 'both' 
+                          ? "bg-purple-500/40 text-purple-200" 
+                          : "text-slate-500 hover:text-slate-300"
+                      )}
+                    >
+                      S+E
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">Both frames (split duration evenly)</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onAnimaticSettingsChange({ frameSelection: 'end' }) }}
+                      className={cn(
+                        "px-1.5 py-0.5 text-[10px] rounded-r transition-colors",
+                        segment.frameSelection === 'end' 
+                          ? "bg-purple-500/40 text-purple-200" 
+                          : "text-slate-500 hover:text-slate-300"
+                      )}
+                    >
+                      E
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">End frame only</TooltipContent>
+                </Tooltip>
+              </div>
             </div>
           )}
           
