@@ -42,6 +42,22 @@ interface FilmTreatmentVariant {
   narrative_style?: string
   key_themes?: string[]
   audience?: string
+  beats?: Array<{
+    title?: string
+    beat_title?: string
+    intent?: string
+    minutes?: number
+    description?: string
+    emotional_arc?: string
+  }>
+  act_breakdown?: Array<{
+    title?: string
+    beat_title?: string
+    intent?: string
+    minutes?: number
+    description?: string
+    emotional_arc?: string
+  }>
 }
 
 interface FilmTreatmentReviewModalProps {
@@ -282,6 +298,52 @@ export function FilmTreatmentReviewModal({
               </p>
             </div>
           )}
+
+          {/* Story Beats */}
+          {(() => {
+            const beats = filmTreatmentVariant.beats || filmTreatmentVariant.act_breakdown
+            if (!beats || beats.length === 0) return null
+            return (
+              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">
+                  <ListOrdered className="w-4 h-4" />
+                  Story Beats ({beats.length})
+                </div>
+                <div className="space-y-3">
+                  {beats.map((beat, idx) => (
+                    <div key={idx} className="flex gap-3 p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 flex items-center justify-center text-xs font-medium">
+                        {idx + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {beat.title || beat.beat_title || `Beat ${idx + 1}`}
+                          </span>
+                          {beat.minutes && (
+                            <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                              <Clock className="w-3 h-3" />
+                              {beat.minutes} min
+                            </span>
+                          )}
+                        </div>
+                        {(beat.intent || beat.description) && (
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            {beat.intent || beat.description}
+                          </p>
+                        )}
+                        {beat.emotional_arc && (
+                          <p className="text-xs text-purple-600 dark:text-purple-400 mt-1 italic">
+                            {beat.emotional_arc}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Full Treatment HTML (collapsible) */}
           {filmTreatmentHtml && (
