@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { uploadFileToGCS } from '@/lib/storage/gcsAssets'
+import { put } from '@vercel/blob'
 import { moderateUpload, createUploadBlockedResponse, getUserModerationContext } from '@/lib/moderation'
 
 export const runtime = 'nodejs'
@@ -7,7 +7,7 @@ export const runtime = 'nodejs'
 /**
  * Image Upload API
  * 
- * Accepts image files and uploads them to Google Cloud Storage.
+ * Accepts image files and uploads them to Vercel Blob storage.
  * Used for uploading keyframe images (Start/End frames) from external sources.
  * 
  * Content Moderation:
@@ -45,30 +45,33 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Upload to GCS
-    const result = await uploadFileToGCS(file, {
-      projectId,
-      category: 'images',
-      subcategory: 'frames',
+    // Generate filename with timestamp
+    const timestamp = Date.now()
+    const extension = file.name.split('.').pop() || 'png'
+    const filename = `images/frames/${projectId}/${timestamp}.${extension}`
+
+    // Upload to Vercel Blob
+    const blob = await put(filename, file, {
+      access: 'public',
+      contentType: file.type,
     })
+
+    const imageUrl = blob.url
 
     // Content moderation check (100% for uploads)
     const moderationContext = await getUserModerationContext(userId, projectId)
-    const moderationResult = await moderateUpload(result.url, file.type, moderationContext)
+    const moderationResult = await moderateUpload(imageUrl, file.type, moderationContext)
 
     if (!moderationResult.allowed) {
-      // Delete the uploaded file if blocked
-      console.log('[Image Upload] Content blocked, deleting from GCS:', result.gcsPath)
-      // Note: Could call deleteFromGCS here, but lifecycle policy will clean up
-      
+      console.log('[Image Upload] Content blocked:', imageUrl)
       return createUploadBlockedResponse(moderationResult.result)
     }
 
-    console.log('[Image Upload] Uploaded and moderated:', result.url)
+    console.log('[Image Upload] Uploaded to Vercel Blob:', imageUrl)
 
     return NextResponse.json({ 
       success: true,
-      imageUrl: result.url 
+      imageUrl: imageUrl 
     })
   } catch (error: any) {
     console.error('[Image Upload] Error:', error)
