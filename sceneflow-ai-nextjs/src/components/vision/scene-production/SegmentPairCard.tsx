@@ -221,7 +221,7 @@ export function SegmentPairCard({
                         }
                       }}
                       onClick={(e) => e.stopPropagation()}
-                      className="w-14 text-xs text-purple-300 bg-slate-900/50 border border-slate-600 rounded px-1 py-0.5 text-center"
+                      className="w-16 text-xs text-purple-300 bg-slate-900/50 border border-slate-600 rounded px-2 py-0.5 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     <span className="text-[10px] text-slate-400">sec</span>
                   </div>
