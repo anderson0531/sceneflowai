@@ -55,6 +55,7 @@ interface PlayerState {
   narrationEnabled: boolean
   kenBurnsIntensity: 'subtle' | 'medium' | 'dramatic'
   showVoicePanel: boolean
+  sceneTransitionDelay: number // Delay in seconds before auto-advancing to next scene
   voiceAssignments: {
     narrator: string
     characters: Record<string, string>
@@ -263,6 +264,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
     narrationEnabled: true, // Narration/description audio enabled by default
     kenBurnsIntensity: 'medium', // Default Ken Burns intensity
     showVoicePanel: false,
+    sceneTransitionDelay: 3, // 3 second delay before auto-advancing to next scene
     voiceAssignments: {
       narrator: 'en-US-Studio-O', // Default: Sophia
       characters: {},
@@ -276,6 +278,10 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false) // Export video modal
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Scene transition state for visual indicator
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const [transitionCountdown, setTransitionCountdown] = useState(0)
 
   // Language state - use pre-generated audio files
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en') // Default: English
@@ -690,12 +696,41 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
     return config
   }, [selectedLanguage, getAudioForLanguage])
 
+  // Helper function to run transition countdown with visual indicator
+  const runTransitionCountdown = useCallback(async (delaySeconds: number, sessionId: number): Promise<boolean> => {
+    setIsTransitioning(true)
+    setTransitionCountdown(delaySeconds)
+    
+    for (let i = delaySeconds; i > 0; i--) {
+      // Check if session is still valid
+      if (playbackSessionRef.current !== sessionId || playbackCancelledRef.current) {
+        setIsTransitioning(false)
+        setTransitionCountdown(0)
+        return false
+      }
+      setTransitionCountdown(i)
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    }
+    
+    setIsTransitioning(false)
+    setTransitionCountdown(0)
+    
+    // Final check before returning success
+    if (playbackSessionRef.current !== sessionId || playbackCancelledRef.current) {
+      return false
+    }
+    return true
+  }, [])
+
   // Generate and play audio for current scene
-  const playSceneAudio = useCallback(async (sceneIndex: number) => {
+  const playSceneAudio = useCallback(async (sceneIndex: number, sessionId?: number) => {
     if (sceneIndex < 0 || sceneIndex >= scenes.length) return
     
-    // Check if playback was cancelled before starting
-    if (playbackCancelledRef.current) {
+    // Use provided sessionId or current session
+    const activeSession = sessionId ?? playbackSessionRef.current
+    
+    // Check if playback was cancelled or session changed before starting
+    if (playbackCancelledRef.current || playbackSessionRef.current !== activeSession) {
       return
     }
 
@@ -704,7 +739,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
 
     try {
       // Check cancellation before starting translation mode
-      if (playbackCancelledRef.current) {
+      if (playbackCancelledRef.current || playbackSessionRef.current !== activeSession) {
         setIsLoadingAudio(false)
         return
       }
@@ -741,7 +776,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
         }
         
         // Check cancellation before calculating timeline
-        if (playbackCancelledRef.current) {
+        if (playbackCancelledRef.current || playbackSessionRef.current !== activeSession) {
           setIsLoadingAudio(false)
           return
         }
@@ -761,7 +796,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
         audioConfig.sceneDuration = Math.max(audioConfig.sceneDuration || 0, fallbackDuration)
         
         // Check cancellation after async calculation
-        if (playbackCancelledRef.current) {
+        if (playbackCancelledRef.current || playbackSessionRef.current !== activeSession) {
           setIsLoadingAudio(false)
           return
         }
@@ -773,24 +808,30 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
           console.warn('[Player] No audio available in calculated config for scene', sceneIndex + 1, 'Config:', audioConfig)                                    
           setIsLoadingAudio(false)
           
-          // Minimum scene display time (3 seconds) even if no audio, plus 3 second delay before advancing
-          const minDisplayTime = 3000
+          // Minimum scene display time (use configurable delay) plus scene duration
           const sceneDuration = (scene.duration || 5) * 1000
-          const waitTime = Math.max(minDisplayTime, sceneDuration) + 3000 // Add 3 second delay before advancing
+          const transitionDelay = playerState.sceneTransitionDelay
           
-          if (playerState.isPlaying) {
-            setTimeout(() => {
-              // Only auto-advance if still playing, not manually paused, and not manual navigation
-              if (playerState.isPlaying && playerState.autoAdvance !== false && !isManualNavigationRef.current) {
-                nextScene()
-              }
-            }, waitTime)
+          if (playerState.isPlaying && playerState.autoAdvance !== false && !isManualNavigationRef.current) {
+            // Wait for scene duration first
+            await new Promise(resolve => setTimeout(resolve, sceneDuration))
+            
+            // Check session still valid
+            if (playbackSessionRef.current !== activeSession || playbackCancelledRef.current) {
+              return
+            }
+            
+            // Run visual countdown
+            const shouldAdvance = await runTransitionCountdown(transitionDelay, activeSession)
+            if (shouldAdvance && playerState.isPlaying && playerState.autoAdvance !== false) {
+              nextScene()
+            }
           }
           return
         }
         
         // Check cancellation before starting playback
-        if (playbackCancelledRef.current) {
+        if (playbackCancelledRef.current || playbackSessionRef.current !== activeSession) {
           setIsLoadingAudio(false)
           return
         }
@@ -807,16 +848,15 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
             await audioMixerRef.current.playScene(audioConfig)
             
             // Check cancellation after audio completes
-            if (playbackCancelledRef.current) {
+            if (playbackCancelledRef.current || playbackSessionRef.current !== activeSession) {
               setIsLoadingAudio(false)
               return
             }
             
-            // Add 3 second delay before advancing to next scene
-            await new Promise(resolve => setTimeout(resolve, 3000))
+            // Run visual transition countdown using configurable delay
+            const shouldAdvance = await runTransitionCountdown(playerState.sceneTransitionDelay, activeSession)
             
-            // Check cancellation after delay
-            if (playbackCancelledRef.current) {
+            if (!shouldAdvance) {
               setIsLoadingAudio(false)
               return
             }
@@ -824,24 +864,25 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
           } catch (error) {
             console.error('[Player] Web Audio Mixer error:', error)
             setIsLoadingAudio(false)
-            // Fallback to scene duration on error
-            const minDisplayTime = 3000
-            const sceneDuration = (scene.duration || 5) * 1000
-            const waitTime = Math.max(minDisplayTime, sceneDuration) + 3000 // Add 3 second delay
             
-            if (playerState.isPlaying) {
-              setTimeout(() => {
-                if (playerState.isPlaying && playerState.autoAdvance && !isManualNavigationRef.current) {
-                  nextScene()
-                }
-              }, waitTime)
+            // Check if session still valid before attempting fallback
+            if (playbackSessionRef.current !== activeSession || playbackCancelledRef.current) {
+              return
+            }
+            
+            // Fallback: run transition countdown on error
+            if (playerState.isPlaying && playerState.autoAdvance && !isManualNavigationRef.current) {
+              const shouldAdvance = await runTransitionCountdown(playerState.sceneTransitionDelay, activeSession)
+              if (shouldAdvance) {
+                nextScene()
+              }
             }
             return
           }
         }
         
-                // Auto-advance to next scene after delay (only if still playing, auto-advance enabled, and not manual navigation)                                                                          
-        if (playerState.isPlaying && playerState.autoAdvance && !isManualNavigationRef.current) {
+                // Auto-advance to next scene (only if still playing, auto-advance enabled, session valid, and not manual navigation)                                                                          
+        if (playerState.isPlaying && playerState.autoAdvance && !isManualNavigationRef.current && playbackSessionRef.current === activeSession) {
           nextScene()
         }
         return
@@ -864,19 +905,23 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
 
       if (!fullText) {
         setIsLoadingAudio(false)
-        // Minimum scene display time (3 seconds) even if no text, plus 3 second delay before advancing
-        const minDisplayTime = 3000
-        const sceneDuration = (scene.duration || 5) * 1000
-        const waitTime = Math.max(minDisplayTime, sceneDuration) + 3000 // Add 3 second delay before advancing
         
-        // Auto-advance to next scene if no audio
-        if (playerState.isPlaying) {
-          setTimeout(() => {
-            // Only auto-advance if still playing, auto-advance is enabled, and not manual navigation
-            if (playerState.isPlaying && playerState.autoAdvance !== false && !isManualNavigationRef.current) {
-              nextScene()
-            }
-          }, waitTime)
+        // Auto-advance to next scene if no audio (using configurable delay with visual countdown)
+        if (playerState.isPlaying && playerState.autoAdvance !== false && !isManualNavigationRef.current) {
+          // Wait for scene duration first
+          const sceneDuration = (scene.duration || 5) * 1000
+          await new Promise(resolve => setTimeout(resolve, sceneDuration))
+          
+          // Check session still valid
+          if (playbackSessionRef.current !== activeSession || playbackCancelledRef.current) {
+            return
+          }
+          
+          // Run visual countdown
+          const shouldAdvance = await runTransitionCountdown(playerState.sceneTransitionDelay, activeSession)
+          if (shouldAdvance && playerState.isPlaying && playerState.autoAdvance !== false) {
+            nextScene()
+          }
         }
         return
       }
@@ -911,21 +956,20 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       console.error('[Player] Audio error:', error)
       setIsLoadingAudio(false)
       
-      // Minimum scene display time even on error, plus 3 second delay before advancing
-      const minDisplayTime = 3000
-      const sceneDuration = (scene.duration || 5) * 1000
-      const waitTime = Math.max(minDisplayTime, sceneDuration) + 3000 // Add 3 second delay before advancing
+      // Check if session still valid before attempting fallback
+      if (playbackSessionRef.current !== activeSession || playbackCancelledRef.current) {
+        return
+      }
       
-      // Auto-advance even on error (only if auto-advance enabled and not manual navigation)
-      if (playerState.isPlaying) {
-        setTimeout(() => {
-          if (playerState.isPlaying && playerState.autoAdvance !== false && !isManualNavigationRef.current) {
-            nextScene()
-          }
-        }, waitTime)
+      // Auto-advance even on error (using configurable delay with visual countdown)
+      if (playerState.isPlaying && playerState.autoAdvance !== false && !isManualNavigationRef.current) {
+        const shouldAdvance = await runTransitionCountdown(playerState.sceneTransitionDelay, activeSession)
+        if (shouldAdvance && playerState.isPlaying) {
+          nextScene()
+        }
       }
     }
-  }, [scenes, playerState.isPlaying, playerState.playbackSpeed, playerState.volume, selectedLanguage])
+  }, [scenes, playerState.isPlaying, playerState.playbackSpeed, playerState.volume, playerState.sceneTransitionDelay, playerState.autoAdvance, playerState.musicVolume, selectedLanguage, runTransitionCountdown, calculateAudioTimeline, getAudioForLanguage])
 
 
   // Track if this is the first play to prevent immediate skipping
@@ -936,11 +980,21 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
   
   // Track if navigation is manual vs auto-advance (to prevent conflicts)
   const isManualNavigationRef = useRef(false)
+  
+  // Unique session ID to track which playback is currently valid
+  // This prevents stale callbacks from previous scenes from triggering auto-advance
+  const playbackSessionRef = useRef(0)
 
     // Play/pause audio when state changes
   useEffect(() => {
-    // Cancel any ongoing playback when scene changes
+    // Increment session ID to invalidate any pending callbacks from previous scene
+    playbackSessionRef.current += 1
+    const currentSession = playbackSessionRef.current
+    
+    // Cancel any ongoing playback and clear transition state
     playbackCancelledRef.current = true
+    setIsTransitioning(false)
+    setTransitionCountdown(0)
     
     if (playerState.isPlaying && !isLoadingAudio) {
       // Stop current audio immediately to prevent overlap
@@ -952,17 +1006,26 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
         audioRef.current.currentTime = 0
       }
       
-      // Reset cancellation flag for new playback
-      playbackCancelledRef.current = false
-      
-      // On first play, ensure we stay on the initial scene
-      if (isFirstPlayRef.current) {
-        isFirstPlayRef.current = false
-        // Force play from the initial scene index, not currentSceneIndex which might have changed                                                              
-        playSceneAudio(initialScene)
-      } else {
-        playSceneAudio(playerState.currentSceneIndex)
-      }
+      // Small delay to ensure stop() has fully resolved before starting new playback
+      // This prevents race conditions where old promises resolve after new playback starts
+      setTimeout(() => {
+        // Verify this is still the active session
+        if (playbackSessionRef.current !== currentSession) {
+          return
+        }
+        
+        // Reset cancellation flag for new playback
+        playbackCancelledRef.current = false
+        
+        // On first play, ensure we stay on the initial scene
+        if (isFirstPlayRef.current) {
+          isFirstPlayRef.current = false
+          // Force play from the initial scene index, not currentSceneIndex which might have changed                                                              
+          playSceneAudio(initialScene, currentSession)
+        } else {
+          playSceneAudio(playerState.currentSceneIndex, currentSession)
+        }
+      }, 100) // 100ms delay to ensure cleanup completes
     } else if (!playerState.isPlaying) {
       // Pause/stop both HTMLAudioElement and Web Audio Mixer
       if (audioRef.current) {
@@ -979,7 +1042,15 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
   }
 
     const nextScene = () => {
+    // Immediately invalidate any pending callbacks
+    playbackSessionRef.current += 1
+    playbackCancelledRef.current = true
     isManualNavigationRef.current = true
+    
+    // Clear transition state
+    setIsTransitioning(false)
+    setTransitionCountdown(0)
+    
     setPlayerState(prev => {
       const nextIndex = prev.currentSceneIndex + 1
       if (nextIndex >= scenes.length) {
@@ -988,32 +1059,48 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       }
       return { ...prev, currentSceneIndex: nextIndex }
     })
-    // Reset manual navigation flag after a short delay
+    // Reset manual navigation flag after a longer delay to ensure new playback starts
     setTimeout(() => {
       isManualNavigationRef.current = false
-    }, 100)
+    }, 500)
   }
 
   const previousScene = () => {
+    // Immediately invalidate any pending callbacks
+    playbackSessionRef.current += 1
+    playbackCancelledRef.current = true
     isManualNavigationRef.current = true
+    
+    // Clear transition state
+    setIsTransitioning(false)
+    setTransitionCountdown(0)
+    
     setPlayerState(prev => ({
       ...prev,
       currentSceneIndex: Math.max(0, prev.currentSceneIndex - 1)
     }))
-    // Reset manual navigation flag after a short delay
+    // Reset manual navigation flag after a longer delay to ensure new playback starts
     setTimeout(() => {
       isManualNavigationRef.current = false
-    }, 100)
+    }, 500)
   }
 
   const jumpToScene = (sceneIndex: number) => {
     if (sceneIndex >= 0 && sceneIndex < scenes.length) {
+      // Immediately invalidate any pending callbacks
+      playbackSessionRef.current += 1
+      playbackCancelledRef.current = true
       isManualNavigationRef.current = true
+      
+      // Clear transition state
+      setIsTransitioning(false)
+      setTransitionCountdown(0)
+      
       setPlayerState(prev => ({ ...prev, currentSceneIndex: sceneIndex }))
-      // Reset manual navigation flag after a short delay
+      // Reset manual navigation flag after a longer delay to ensure new playback starts
       setTimeout(() => {
         isManualNavigationRef.current = false
-      }, 100)
+      }, 500)
     }
   }
 
@@ -1046,6 +1133,24 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
     <div className="fixed inset-0 z-50 bg-black">
       {/* Hidden audio element */}
       <audio ref={audioRef} />
+      
+      {/* Scene Transition Overlay - Visual countdown before next scene */}
+      {isTransitioning && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
+          <div className="bg-black/70 rounded-2xl px-8 py-6 flex flex-col items-center gap-3 backdrop-blur-sm border border-white/10">
+            <div className="text-white/80 text-sm font-medium">Next scene in</div>
+            <div className="text-white text-5xl font-bold tabular-nums">
+              {transitionCountdown}
+            </div>
+            <div className="w-16 h-1 bg-white/20 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-blue-500 transition-all duration-1000 ease-linear"
+                style={{ width: `${(transitionCountdown / playerState.sceneTransitionDelay) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Progress Bar - Slightly thicker on mobile for better visibility */}
       <div className="absolute top-0 left-0 right-0 z-20 h-1 sm:h-0.5 bg-gray-600" style={{ top: 'env(safe-area-inset-top, 0)' }}>
