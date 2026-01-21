@@ -5829,25 +5829,37 @@ function SceneCard({
                       }
                       
                       // Build SFX clips for timeline
+                      // SFX audio URLs can be in scene.sfxAudio array OR scene.sfx[idx].audioUrl
                       let maxSfxEnd = 0
-                      if (scene.sfxAudio && scene.sfxAudio.length > 0) {
-                        const sfxClips: AudioTrackClip[] = scene.sfxAudio
-                          .filter((url: string) => url)
-                          .map((url: string, idx: number) => {
-                            const sfxDef = scene.sfx?.[idx] || {}
-                            // Use stored duration or estimate at 2s
-                            const duration = sfxDef.duration || 2
-                            // Use specified time or distribute evenly
-                            const startTime = sfxDef.time ?? (1 + idx * 2)
-                            maxSfxEnd = Math.max(maxSfxEnd, startTime + duration)
-                            return {
-                              id: `sfx-${idx}`,
-                              url,
-                              startTime,
-                              duration,
-                              label: typeof sfxDef === 'string' ? sfxDef.slice(0, 20) : (sfxDef.description?.slice(0, 20) || `SFX ${idx + 1}`)
-                            }
+                      const sfxList = scene.sfx || []
+                      const sfxAudioList = scene.sfxAudio || []
+                      
+                      if (sfxList.length > 0 || sfxAudioList.length > 0) {
+                        const sfxClips: AudioTrackClip[] = []
+                        const maxLength = Math.max(sfxList.length, sfxAudioList.length)
+                        
+                        for (let idx = 0; idx < maxLength; idx++) {
+                          const sfxDef = sfxList[idx] || {}
+                          // Get URL from sfxAudio array first, then fallback to sfx[idx].audioUrl
+                          const url = sfxAudioList[idx] || (typeof sfxDef !== 'string' && sfxDef.audioUrl)
+                          
+                          if (!url) continue
+                          
+                          // Use stored duration or estimate at 2s
+                          const duration = (typeof sfxDef !== 'string' && sfxDef.duration) || 2
+                          // Use specified time or distribute evenly
+                          const startTime = (typeof sfxDef !== 'string' && (sfxDef.time ?? sfxDef.startTime)) ?? (1 + idx * 2)
+                          maxSfxEnd = Math.max(maxSfxEnd, startTime + duration)
+                          
+                          sfxClips.push({
+                            id: `sfx-${idx}`,
+                            url,
+                            startTime,
+                            duration,
+                            label: typeof sfxDef === 'string' ? sfxDef.slice(0, 20) : (sfxDef.description?.slice(0, 20) || `SFX ${idx + 1}`)
                           })
+                        }
+                        
                         if (sfxClips.length > 0) {
                           audioTracks.sfx = sfxClips
                         }
@@ -5926,25 +5938,6 @@ function SceneCard({
                               </motion.div>
                             )}
                           </AnimatePresence>
-                          
-                          {/* Generate Segments button when no segments exist */}
-                          {(!sceneProductionData?.isSegmented || !sceneProductionData?.segments?.length) && !audioTimelineCollapsed && (
-                            <div className="p-3 border-t border-cyan-500/20 bg-cyan-900/10">
-                              <button
-                                onClick={() => {
-                                  const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
-                                  onInitializeSceneProduction?.(sceneId, { targetDuration: sceneDuration })
-                                }}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 rounded-lg text-cyan-300 text-sm font-medium transition-colors"
-                              >
-                                <Layers className="w-4 h-4" />
-                                Generate Segments
-                              </button>
-                              <p className="text-[10px] text-gray-500 mt-2 text-center">
-                                AI will analyze your scene to create video segments
-                              </p>
-                            </div>
-                          )}
                           
                           {/* Segment controls footer when segment selected */}
                           {sceneProductionData?.segments?.length > 0 && !audioTimelineCollapsed && selectedSegmentId && (
