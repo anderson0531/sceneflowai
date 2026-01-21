@@ -560,16 +560,18 @@ export function AudioTimeline({
             />
           ))}
           
-          {/* Audio clips - hide muted clips from timeline */}
-          {clips.filter(clip => !mutedClips.has(clip.id)).map((clip) => {
+          {/* Audio clips - show muted clips dimmed instead of hiding */}
+          {clips.map((clip) => {
             const isSelected = selectedClipId === clip.id
+            const isClipMuted = mutedClips.has(clip.id)
             
             return (
               <div
                 key={clip.id}
                 className={cn(
                   "absolute top-1 bottom-1 rounded-sm flex items-center px-1 overflow-hidden cursor-pointer transition-all group/clip",
-                  isTrackMuted ? "opacity-40" : "opacity-90",
+                  isTrackMuted ? "opacity-40" : isClipMuted ? "opacity-30" : "opacity-90",
+                  isClipMuted && "border border-dashed border-gray-500",
                   isSelected && "ring-2 ring-cyan-400 ring-offset-1 ring-offset-gray-900 z-10",
                   color
                 )}
@@ -757,9 +759,6 @@ export function AudioTimeline({
         className="relative cursor-pointer"
         onClick={handleTimelineClick}
       >
-        {/* Segments Track - above audio tracks */}
-        {renderSegmentTrack()}
-        
         {/* Narration Track */}
         {renderTrack(
           'Narration',
