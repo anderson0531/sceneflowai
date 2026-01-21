@@ -3627,8 +3627,8 @@ function SceneCard({
 
         {/* Dedicated Workflow Tabs Row - Full-Width Section Header */}
         {!isOutline && (
-          <div className="w-full py-3 border-b border-gray-700/50 mb-2">
-            <div className="flex w-full items-center bg-gray-900/60 rounded-xl p-1.5 gap-1">
+          <div className="w-full py-3 mb-2">
+            <div className="flex w-full items-center bg-gray-900/80 rounded-xl p-1.5 gap-1 border-2 border-blue-500/50 shadow-lg shadow-blue-500/20">
               {workflowTabs.map((tab) => {
                 const status = getStepStatus(tab.key)
                 const isComplete = status === 'complete'
@@ -4269,7 +4269,7 @@ function SceneCard({
                             {audioTimelineCollapsed ? <ChevronDown className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronUp className="w-3.5 h-3.5 text-cyan-400" />}
                           </button>
                           <Layers className="w-4 h-4 text-cyan-400" />
-                          <span className="text-xs font-medium text-cyan-300">Scene Timeline</span>
+                          <span className="text-xs font-medium text-cyan-300">Screening Room Audio Timeline</span>
                           <span className="text-[10px] text-gray-500 ml-auto">{sceneDuration.toFixed(1)}s total</span>
                         </div>
                         <AnimatePresence>
@@ -4322,30 +4322,20 @@ function SceneCard({
                           </div>
                         )}
                         
-                        {/* Segment controls footer when segments exist */}
-                        {sceneProductionData?.segments?.length > 0 && !audioTimelineCollapsed && (
-                          <div className="px-3 py-2 border-t border-cyan-500/20 bg-cyan-900/10 flex items-center justify-between">
-                            <span className="text-[10px] text-gray-500">
-                              {sceneProductionData.segments.length} segment{sceneProductionData.segments.length !== 1 ? 's' : ''}
-                              {selectedSegmentId && (
-                                <span className="ml-2 text-cyan-400">
-                                  • Seg {(sceneProductionData.segments.findIndex(s => s.segmentId === selectedSegmentId) + 1) || '?'} selected
-                                </span>
-                              )}
-                            </span>
+                        {/* Segment controls footer when segment selected */}
+                        {sceneProductionData?.segments?.length > 0 && !audioTimelineCollapsed && selectedSegmentId && (
+                          <div className="px-3 py-2 border-t border-cyan-500/20 bg-cyan-900/10 flex items-center justify-end">
                             <div className="flex items-center gap-2">
-                              {/* Edit Segment button - only when segment selected */}
-                              {selectedSegmentId && (
-                                <button
-                                  onClick={() => setEditSegmentDialogOpen(true)}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 rounded text-amber-300 text-xs font-medium transition-colors"
-                                >
-                                  <Pencil className="w-3.5 h-3.5" />
-                                  Edit Segment
-                                </button>
-                              )}
-                              {/* Delete Segment button - only when segment selected and more than 1 segment */}
-                              {selectedSegmentId && sceneProductionData.segments.length > 1 && (
+                              {/* Edit Segment button */}
+                              <button
+                                onClick={() => setEditSegmentDialogOpen(true)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 rounded text-amber-300 text-xs font-medium transition-colors"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                                Edit Segment
+                              </button>
+                              {/* Delete Segment button - only when more than 1 segment */}
+                              {sceneProductionData.segments.length > 1 && (
                                 <button
                                   onClick={() => setDeleteConfirmOpen(true)}
                                   className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 rounded text-red-300 text-xs font-medium transition-colors"
@@ -4354,14 +4344,6 @@ function SceneCard({
                                   Delete
                                 </button>
                               )}
-                              {/* Add Segment button */}
-                              <button
-                                onClick={() => setAddSegmentDialogOpen(true)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 rounded text-cyan-300 text-xs font-medium transition-colors"
-                              >
-                                <Plus className="w-3.5 h-3.5" />
-                                Add Segment
-                              </button>
                             </div>
                           </div>
                         )}
