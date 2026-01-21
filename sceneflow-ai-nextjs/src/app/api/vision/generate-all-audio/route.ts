@@ -3,6 +3,7 @@ import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { optimizeTextForTTS } from '../../../../lib/tts/textOptimizer'
 import { put } from '@vercel/blob'
+import { toCanonicalName, generateAliases } from '../../../../lib/character/canonical'
 
 export const maxDuration = 300 // 5 minutes for batch generation
 export const runtime = 'nodejs'
@@ -224,10 +225,37 @@ export async function POST(req: NextRequest) {
                 console.log(`[Batch Audio] Processing dialogue ${dialogueIndex + 1}/${scene.dialogue.length} for character: "${dialogueLine.character}"`)       
                 
                 // Primary: Match by ID (most reliable)
-                // Fallback: Case-insensitive name (for legacy projects)
-                const character = dialogueLine.characterId
-                  ? characters.find((c: any) => c.id === dialogueLine.characterId)                                                                              
-                  : characters.find((c: any) => c.name.toLowerCase() === dialogueLine.character.toLowerCase())                                                  
+                let character = dialogueLine.characterId
+                  ? characters.find((c: any) => c.id === dialogueLine.characterId)
+                  : null
+                
+                // Enhanced fallback matching using canonical names
+                // This handles screenplay annotations like (V.O.), (O.S.), (CONT'D) and name variations
+                if (!character && dialogueLine.character) {
+                  const canonicalSearchName = toCanonicalName(dialogueLine.character)
+                  console.log(`[Batch Audio] Using canonical name matching: "${dialogueLine.character}" → "${canonicalSearchName}"`)
+                  
+                  // Try exact canonical match first
+                  const exactMatch = characters.find((c: any) => 
+                    toCanonicalName(c.name) === canonicalSearchName
+                  )
+                  
+                  if (exactMatch) {
+                    character = exactMatch
+                    console.log(`[Batch Audio] Matched via exact canonical name: ${exactMatch.name}`)
+                  } else {
+                    // Try alias matching (first name, last name, nickname variations)
+                    character = characters.find((c: any) => {
+                      const aliases = generateAliases(toCanonicalName(c.name), c.name)
+                      return aliases.some(alias => 
+                        toCanonicalName(alias) === canonicalSearchName
+                      )
+                    })
+                    if (character) {
+                      console.log(`[Batch Audio] Matched via alias: ${character.name}`)
+                    }
+                  }
+                }
                 
                 console.log(`[Batch Audio] Found character:`, character ? {
                   id: character.id,
