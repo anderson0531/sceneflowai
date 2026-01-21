@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
-import { Play, Pause, Volume2, VolumeX, Mic, Music, Zap, SkipBack, SkipForward, X, RotateCcw, Pencil, AlertTriangle, Layers, Link2 } from 'lucide-react'
+import { Play, Pause, Volume2, VolumeX, Mic, Music, Zap, SkipBack, SkipForward, X, RotateCcw, Pencil, AlertTriangle, Layers, Link2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
@@ -44,6 +44,7 @@ interface AudioTimelineProps {
   onAudioClipChange?: (trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
   onSegmentChange?: (segmentId: string, changes: { startTime?: number; duration?: number }) => void
   onAudioError?: (clipId: string, url: string) => void
+  onRealignAudio?: (mutedClipIds: Set<string>) => void  // Callback to realign audio with current mute state
 }
 
 function formatTime(seconds: number): string {
@@ -64,6 +65,7 @@ export function AudioTimeline({
   onAudioClipChange,
   onSegmentChange,
   onAudioError,
+  onRealignAudio,
 }: AudioTimelineProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -726,6 +728,20 @@ export function AudioTimeline({
           >
             <Link2 className="w-3 h-3" />
             Snap
+          </Button>
+        )}
+        
+        {/* Realign Audio Button */}
+        {onRealignAudio && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onRealignAudio(mutedClips)}
+            className="h-7 text-[10px] gap-1 px-2 text-amber-400 hover:text-amber-300 hover:bg-amber-500/20"
+            title="Realign audio timeline (sequential: Narration → SFX/Dialogue interleaved). Muted clips will be skipped."
+          >
+            <RefreshCw className="w-3 h-3" />
+            Realign
           </Button>
         )}
         

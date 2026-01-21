@@ -31,6 +31,7 @@ import { getAvailableLanguages, getAudioUrl, getAudioDuration as getStoredAudioD
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { toast } from 'sonner'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
+import { calculateSequentialAlignment, AUDIO_ALIGNMENT_BUFFERS, type AlignmentClip } from '@/components/vision/scene-production/audioTrackBuilder'
 
 interface ScreeningRoomProps {
   script: any
@@ -525,155 +526,136 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
    * Returns timing information for concurrent playback
    * Uses language-specific audio files and stored durations
    * 
-   * NOTE: Scene description audio is DISABLED - not played in Screening Room
+   * SEQUENTIAL ALIGNMENT: Narration → SFX1 → Dialogue1 → SFX2 → Dialogue2 → ...
+   * Music spans from 0 to total duration + buffer
    */
   const calculateAudioTimeline = useCallback(async (scene: any): Promise<SceneAudioConfig> => {
     const config: SceneAudioConfig = {}
-    let totalDuration = 0
-    let narrationEndTime = 0
-    let sfxCursor = 0
-    let dialogueCursor = 0
+    const { NARRATION_BUFFER, INTER_CLIP_BUFFER, MUSIC_END_BUFFER } = AUDIO_ALIGNMENT_BUFFERS
     
-    // Get language-specific audio URLs (description excluded - not played)
+    // Get language-specific audio URLs
     const narrationUrl = getAudioForLanguage(scene, selectedLanguage, 'narration')
     const dialogueArray = scene.dialogueAudio?.[selectedLanguage] || (selectedLanguage === 'en' ? scene.dialogueAudio : null)
     
-    // Music starts at scene beginning (concurrent with everything)
-    if (scene.musicAudio) {
-      config.music = scene.musicAudio
-    }
+    // ========================================================================
+    // STEP 1: Build AlignmentClip arrays for sequential alignment
+    // ========================================================================
     
-    // DISABLED: Scene description audio is no longer played in Screening Room
-    // Description audio was previously played before narration, but this has been
-    // removed per user request. The description audio is still generated and stored
-    // for potential future use, but not played during screening room playback.
-
-    // Narration starts after configured delay or custom startTime offset from Phase 2
-    // Custom startTime from audio panel takes precedence over default delay
+    // Build narration clip
+    let narrationClip: AlignmentClip | null = null
     if (narrationUrl) {
-      config.narration = narrationUrl
-      const customNarrationStartTime = scene.narrationAudio?.[selectedLanguage]?.startTime
-      const narrationOffset = typeof customNarrationStartTime === 'number' 
-        ? customNarrationStartTime 
-        : NARRATION_DELAY_SECONDS
-      config.narrationOffsetSeconds = narrationOffset
       const storedDuration = getStoredAudioDuration(scene, selectedLanguage, 'narration')
       const narrationDuration = await resolveAudioDuration(narrationUrl, storedDuration)
-      narrationEndTime = narrationOffset + narrationDuration
-      totalDuration = Math.max(totalDuration, narrationEndTime)
+      narrationClip = {
+        id: 'narration',
+        type: 'narration',
+        url: narrationUrl,
+        duration: narrationDuration,
+        label: 'Narration',
+      }
     }
-
-    // Voice anchor time is when narration ends (description is disabled)
-    const voiceAnchorTime = narrationEndTime
-
-    // SFX queue begins after narration finishes
-    const resolvedSfx: AudioSource[] = []
-    sfxCursor = voiceAnchorTime
+    
+    // Build SFX clips
+    const sfxClips: AlignmentClip[] = []
     if (scene.sfxAudio && scene.sfxAudio.length > 0) {
       for (let idx = 0; idx < scene.sfxAudio.length; idx++) {
         const sfxUrl = scene.sfxAudio[idx]
         if (!sfxUrl) continue
-
+        
         const sfxDef = scene.sfx?.[idx] || {}
         const sfxDuration = await resolveAudioDuration(sfxUrl, sfxDef.duration)
-        // Phase 4: Respect user-saved timing unconditionally - no voiceAnchorTime floor
-        // User's intentional edits take priority over automated constraints
-        const startTime = typeof sfxDef.time === 'number'
-          ? sfxDef.time  // User-saved timing: use directly
-          : Math.max(sfxCursor, voiceAnchorTime)  // Auto: sequential after anchor
-        resolvedSfx.push({
+        sfxClips.push({
+          id: `sfx-${idx}`,
+          type: 'sfx',
           url: sfxUrl,
-          startTime
+          duration: sfxDuration,
+          label: typeof sfxDef === 'string' ? sfxDef.slice(0, 20) : (sfxDef.description?.slice(0, 20) || `SFX ${idx + 1}`),
+          sfxIndex: idx,
         })
-        sfxCursor = startTime + sfxDuration + SFX_GAP_SECONDS
-        totalDuration = Math.max(totalDuration, sfxCursor)
       }
     }
-    if (resolvedSfx.length > 0) {
-      config.sfx = resolvedSfx
-    }
-
-    // Dialogue waits for narration/SFX to finish and plays sequentially
-    const resolvedDialogue: AudioSource[] = []
-    dialogueCursor = Math.max(sfxCursor, voiceAnchorTime)
     
+    // Build dialogue clips - sort by timestamp for correct order
+    const dialogueClips: AlignmentClip[] = []
     if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
-      // NUCLEAR FIX: Sort audio by generation timestamp to ensure correct order
-      // Since audio is generated sequentially (line 1, 2, 3...), timestamps should be sequential
-      // This bypasses any issues with stored dialogueIndex values
-      
-      console.log('🔴🔴🔴 [ScriptPlayer] NUCLEAR TIMESTAMP SORTING ACTIVE 🔴🔴🔴')
-      
       const scriptDialogue = scene.dialogue || []
       
       // Helper: Extract timestamp from audio URL for ordering
       const getUrlTimestamp = (url: string): number => {
-        // URLs like: scene-0-ALEX%20ANDERSON-1765440437476.mp3
         const match = url?.match(/(\d{13})\.mp3/)
         return match ? parseInt(match[1], 10) : 0
       }
       
-      console.log('[ScriptPlayer] Script dialogue count:', scriptDialogue.length)
-      console.log('[ScriptPlayer] Audio entries count:', dialogueArray.length)
-      console.log('[ScriptPlayer] Audio entries with timestamps:', dialogueArray.map((d: any, i: number) => ({
-        arrayPos: i,
-        character: d.character,
-        dialogueIndex: d.dialogueIndex,
-        timestamp: getUrlTimestamp(d.audioUrl),
-        url: d.audioUrl?.slice(-50)
-      })))
-      
       // Sort audio entries by timestamp (generation order)
-      // This ensures audio plays in the order it was generated
       const sortedByTimestamp = [...dialogueArray]
-        .filter((d: any) => d.audioUrl) // Only entries with audio
+        .filter((d: any) => d.audioUrl)
         .sort((a: any, b: any) => {
           const tsA = getUrlTimestamp(a.audioUrl)
           const tsB = getUrlTimestamp(b.audioUrl)
           return tsA - tsB
         })
       
-      console.log('[ScriptPlayer] Sorted by timestamp:', sortedByTimestamp.map((d: any, i: number) => ({
-        order: i,
-        character: d.character,
-        dialogueIndex: d.dialogueIndex,
-        timestamp: getUrlTimestamp(d.audioUrl)
-      })))
-      
-      // Use script dialogue count to determine how many to play
       // Take only as many audio entries as there are script lines
       const orderedAudio = sortedByTimestamp.slice(0, scriptDialogue.length)
-      
-      console.log('[ScriptPlayer] Final ordered audio (by timestamp):', orderedAudio.map((d: any, i: number) => ({
-        playOrder: i,
-        character: d.character,
-        storedDialogueIndex: d.dialogueIndex,
-        timestamp: getUrlTimestamp(d.audioUrl),
-        customStartTime: d.startTime,
-        url: d.audioUrl?.slice(-40)
-      })))
       
       for (let i = 0; i < orderedAudio.length; i++) {
         const dialogue = orderedAudio[i]
         if (dialogue.audioUrl) {
-          // Phase 4: Respect user-saved timing unconditionally - no voiceAnchorTime floor
-          // User's intentional edits take priority over automated constraints
-          const customDialogueStartTime = typeof dialogue.startTime === 'number' ? dialogue.startTime : null
-          const startTime = customDialogueStartTime !== null 
-            ? customDialogueStartTime  // User-saved timing: use directly
-            : Math.max(dialogueCursor, voiceAnchorTime) // Auto: sequential after previous dialogue
-          
-          resolvedDialogue.push({
-            url: dialogue.audioUrl,
-            startTime
-          })
-
           const dialogueDuration = await resolveAudioDuration(dialogue.audioUrl, dialogue.duration)
-          // Update cursor for next dialogue (even if current used custom time)
-          dialogueCursor = Math.max(dialogueCursor, startTime) + dialogueDuration + DIALOGUE_GAP_SECONDS
-          totalDuration = Math.max(totalDuration, startTime + dialogueDuration)
+          dialogueClips.push({
+            id: `dialogue-${i}`,
+            type: 'dialogue',
+            url: dialogue.audioUrl,
+            duration: dialogueDuration,
+            label: dialogue.character || `Line ${i + 1}`,
+            dialogueIndex: dialogue.dialogueIndex ?? i,
+          })
         }
       }
+    }
+    
+    // ========================================================================
+    // STEP 2: Calculate sequential alignment (no muted clips in playback)
+    // ========================================================================
+    
+    const alignment = calculateSequentialAlignment(narrationClip, sfxClips, dialogueClips, new Set())
+    
+    console.log('[ScriptPlayer] Sequential alignment calculated:', {
+      clipCount: alignment.clips.length,
+      totalDuration: alignment.totalDuration,
+      musicDuration: alignment.musicDuration,
+    })
+    
+    // ========================================================================
+    // STEP 3: Apply alignment to config
+    // ========================================================================
+    
+    // Narration
+    if (narrationUrl && narrationClip) {
+      config.narration = narrationUrl
+      const narrationAligned = alignment.clips.find(c => c.type === 'narration')
+      config.narrationOffsetSeconds = narrationAligned?.startTime ?? 0
+    }
+    
+    // SFX
+    const resolvedSfx: AudioSource[] = []
+    for (const clip of alignment.clips.filter(c => c.type === 'sfx' && !c.isMuted)) {
+      resolvedSfx.push({
+        url: clip.url,
+        startTime: clip.startTime,
+      })
+    }
+    if (resolvedSfx.length > 0) {
+      config.sfx = resolvedSfx
+    }
+    
+    // Dialogue
+    const resolvedDialogue: AudioSource[] = []
+    for (const clip of alignment.clips.filter(c => c.type === 'dialogue' && !c.isMuted)) {
+      resolvedDialogue.push({
+        url: clip.url,
+        startTime: clip.startTime,
+      })
     }
     if (resolvedDialogue.length > 0) {
       config.dialogue = resolvedDialogue
@@ -683,12 +665,15 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
         startTime: d.startTime
       })))
     }
-
-    // Calculate total duration (description no longer included since it's disabled)
-    totalDuration = Math.max(totalDuration, dialogueCursor, narrationEndTime, sfxCursor)
     
+    // Music: starts at 0, spans entire scene + buffer
+    if (scene.musicAudio) {
+      config.music = scene.musicAudio
+    }
+    
+    // Scene duration
     const declaredDuration = normalizeDuration(scene?.duration)
-    const resolvedDuration = Math.max(totalDuration, declaredDuration ?? 0)
+    const resolvedDuration = Math.max(alignment.totalDuration, declaredDuration ?? 0)
     if (resolvedDuration > 0) {
       config.sceneDuration = resolvedDuration
     }

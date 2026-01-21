@@ -23,6 +23,7 @@ import { AddSegmentDialog } from './scene-production/AddSegmentDialog'
 import { EditSegmentDialog } from './scene-production/EditSegmentDialog'
 import { DirectorConsole } from './scene-production/DirectorConsole'
 import { AudioTimeline, type AudioTracksData, type AudioTrackClip } from './scene-production/AudioTimeline'
+import { applySequentialAlignmentToScene, AUDIO_ALIGNMENT_BUFFERS } from './scene-production/audioTrackBuilder'
 import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings, SceneSegment } from './scene-production/types'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -5759,8 +5760,7 @@ function SceneCard({
                     {/* ==================== SCREENING ROOM AUDIO TIMELINE ==================== */}
                     {/* Audio timeline for Screening Room playback alignment */}
                     {(() => {
-                      // Build audio tracks data from scene
-                      // Note: Description audio is deprecated - scene descriptions are context for user, not production audio
+                      // Build audio tracks data from scene using sequential alignment
                       const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
                       
                       // Get dialogue audio array
@@ -5774,35 +5774,15 @@ function SceneCard({
                       // Check if we have any audio to display
                       const hasSfxAudio = scene.sfxAudio && scene.sfxAudio.length > 0 && scene.sfxAudio.some((url: string) => url)
                       const hasMusicAudio = !!(scene.musicAudio || scene.music?.url)
-                      // Note: Description audio is deprecated - it's scene context for user, not production audio
                       const hasAnyAudio = narrationUrl || dialogueAudioArray.some((d: any) => d?.audioUrl) || hasSfxAudio || hasMusicAudio
                       if (!hasAnyAudio) return null
                       
-                      // Calculate scene duration from audio
-                      // Note: Description audio is deprecated - it was scene context for user, not production audio
-                      // Narration is now the primary voiceover track and always starts at 0
-                      const narrDurationFromAudio = scene.narrationAudio?.[selectedLanguage]?.duration ?? 0
-                      const narrDuration = scene.narrationDuration ?? narrDurationFromAudio
-                      const narrStartTime = scene.narrationStartTime ?? 0
+                      // ================================================================
+                      // Use sequential alignment system for consistent timing
+                      // ================================================================
+                      const alignment = applySequentialAlignmentToScene(scene, selectedLanguage, new Set())
                       
-                      // Calculate dialogue end times
-                      let maxDialogueEnd = 0
-                      const dialogueClips: AudioTrackClip[] = dialogueAudioArray
-                        .filter((d: any) => d?.audioUrl)
-                        .map((d: any, idx: number) => {
-                          const startTime = d.startTime ?? (narrStartTime + narrDuration + 0.5 + (idx * 3)) // Estimate if not set
-                          const duration = d.duration || 3
-                          maxDialogueEnd = Math.max(maxDialogueEnd, startTime + duration)
-                          return {
-                            id: `dialogue-${idx}`,
-                            url: d.audioUrl,
-                            startTime,
-                            duration,
-                            label: d.character || `Line ${idx + 1}`
-                          }
-                        })
-                      
-                      // Build audio tracks - voiceover is now an array for Description + Narration
+                      // Build audio tracks using aligned timings
                       const audioTracks: AudioTracksData = {
                         voiceover: [],
                         dialogue: [],
@@ -5810,27 +5790,37 @@ function SceneCard({
                         sfx: []
                       }
                       
-                      // Note: Description audio is deprecated - it was scene context for user, not production audio
-                      // Only Narration is added to the voiceover track now
-                      
-                      // Add Narration to voiceover track (blue)
+                      // Add Narration to voiceover track (blue) with aligned timing
                       if (narrationUrl) {
                         audioTracks.voiceover!.push({
                           id: 'narration',
                           url: narrationUrl,
-                          startTime: narrStartTime,
-                          duration: narrDuration || 5,
+                          startTime: alignment.narrationStartTime,
+                          duration: alignment.narrationDuration || 5,
                           label: 'Narration'
                         })
                       }
+                      
+                      // Add dialogue clips with aligned timings
+                      const dialogueClips: AudioTrackClip[] = dialogueAudioArray
+                        .filter((d: any) => d?.audioUrl)
+                        .map((d: any, idx: number) => {
+                          // Find aligned timing for this dialogue
+                          const alignedTiming = alignment.dialogueTimings.find(t => t.index === idx)
+                          return {
+                            id: `dialogue-${idx}`,
+                            url: d.audioUrl,
+                            startTime: alignedTiming?.startTime ?? (alignment.narrationStartTime + alignment.narrationDuration + 1 + (idx * 4)),
+                            duration: alignedTiming?.duration ?? d.duration ?? 3,
+                            label: d.character || `Line ${idx + 1}`
+                          }
+                        })
                       
                       if (dialogueClips.length > 0) {
                         audioTracks.dialogue = dialogueClips
                       }
                       
-                      // Build SFX clips for timeline
-                      // SFX audio URLs can be in scene.sfxAudio array OR scene.sfx[idx].audioUrl
-                      let maxSfxEnd = 0
+                      // Add SFX clips with aligned timings
                       const sfxList = scene.sfx || []
                       const sfxAudioList = scene.sfxAudio || []
                       
@@ -5840,22 +5830,18 @@ function SceneCard({
                         
                         for (let idx = 0; idx < maxLength; idx++) {
                           const sfxDef = sfxList[idx] || {}
-                          // Get URL from sfxAudio array first, then fallback to sfx[idx].audioUrl
                           const url = sfxAudioList[idx] || (typeof sfxDef !== 'string' && sfxDef.audioUrl)
                           
                           if (!url) continue
                           
-                          // Use stored duration or estimate at 2s
-                          const duration = (typeof sfxDef !== 'string' && sfxDef.duration) || 2
-                          // Use specified time or distribute evenly
-                          const startTime = (typeof sfxDef !== 'string' && (sfxDef.time ?? sfxDef.startTime)) ?? (1 + idx * 2)
-                          maxSfxEnd = Math.max(maxSfxEnd, startTime + duration)
+                          // Find aligned timing for this SFX
+                          const alignedTiming = alignment.sfxTimings.find(t => t.index === idx)
                           
                           sfxClips.push({
                             id: `sfx-${idx}`,
                             url,
-                            startTime,
-                            duration,
+                            startTime: alignedTiming?.startTime ?? (1 + idx * 2),
+                            duration: alignedTiming?.duration ?? (typeof sfxDef !== 'string' && sfxDef.duration) ?? 2,
                             label: typeof sfxDef === 'string' ? sfxDef.slice(0, 20) : (sfxDef.description?.slice(0, 20) || `SFX ${idx + 1}`)
                           })
                         }
@@ -5865,31 +5851,20 @@ function SceneCard({
                         }
                       }
                       
-                      // Add Music to music track (purple) - actual background music
+                      // Add Music with duration spanning entire scene + buffer
                       const musicUrl = scene.musicAudio || scene.music?.url
-                      let maxMusicEnd = 0
                       if (musicUrl) {
-                        const musicStartTime = scene.musicStartTime ?? 0
-                        const musicDuration = scene.musicDuration ?? scene.music?.duration ?? 30
-                        maxMusicEnd = musicStartTime + musicDuration
                         audioTracks.music!.push({
                           id: 'music',
                           url: musicUrl,
-                          startTime: musicStartTime,
-                          duration: musicDuration,
+                          startTime: 0,
+                          duration: alignment.musicDuration,
                           label: 'Background Music'
                         })
                       }
                       
-                      // Calculate total scene duration for timeline
-                      const sceneDuration = Math.max(
-                        10,
-                        narrStartTime + narrDuration,
-                        maxDialogueEnd,
-                        maxSfxEnd,
-                        maxMusicEnd,
-                        scene.duration || 0
-                      ) + 2 // Add 2s buffer
+                      // Use aligned total duration
+                      const sceneDuration = alignment.totalDuration + 2 // Add 2s buffer for display
                       
                       return (
                         <div className="bg-slate-900/80 rounded-lg border border-cyan-500/30 overflow-hidden">
@@ -5933,6 +5908,49 @@ function SceneCard({
                                   onSegmentChange={(segmentId, changes) => {
                                     const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
                                     onSegmentResize?.(sceneId, segmentId, changes)
+                                  }}
+                                  onRealignAudio={(mutedClipIds) => {
+                                    // Recalculate alignment with muted clips and persist to scene
+                                    const newAlignment = applySequentialAlignmentToScene(scene, selectedLanguage, mutedClipIds)
+                                    
+                                    // Update narration timing
+                                    if (audioTracks?.voiceover?.length) {
+                                      onAudioClipChange?.(sceneIdx, 'voiceover', 'narration', {
+                                        startTime: newAlignment.narrationStartTime,
+                                        duration: newAlignment.narrationDuration,
+                                      })
+                                    }
+                                    
+                                    // Update each dialogue clip timing
+                                    newAlignment.dialogueTimings.forEach((timing) => {
+                                      onAudioClipChange?.(sceneIdx, 'dialogue', `dialogue-${timing.index}`, {
+                                        startTime: timing.startTime,
+                                        duration: timing.duration,
+                                      })
+                                    })
+                                    
+                                    // Update each SFX clip timing
+                                    newAlignment.sfxTimings.forEach((timing) => {
+                                      onAudioClipChange?.(sceneIdx, 'sfx', `sfx-${timing.index}`, {
+                                        startTime: timing.startTime,
+                                        duration: timing.duration,
+                                      })
+                                    })
+                                    
+                                    // Update music duration
+                                    if (audioTracks?.music?.length) {
+                                      onAudioClipChange?.(sceneIdx, 'music', 'music', {
+                                        startTime: 0,
+                                        duration: newAlignment.musicDuration,
+                                      })
+                                    }
+                                    
+                                    console.log('[ScriptPanel] Audio realigned:', {
+                                      sceneIdx,
+                                      mutedClipCount: mutedClipIds.size,
+                                      totalDuration: newAlignment.totalDuration,
+                                      musicDuration: newAlignment.musicDuration,
+                                    })
                                   }}
                                 />
                               </motion.div>

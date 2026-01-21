@@ -351,3 +351,254 @@ export function hasAudioForLanguage(tracks: AudioTracksDataV2): boolean {
   if (tracks.sfx.some(s => s.url)) return true
   return false
 }
+
+// ============================================================================
+// SEQUENTIAL ALIGNMENT SYSTEM
+// ============================================================================
+
+/**
+ * Buffer constants for audio alignment (in seconds)
+ */
+export const AUDIO_ALIGNMENT_BUFFERS = {
+  NARRATION_BUFFER: 1,    // Buffer after narration ends
+  INTER_CLIP_BUFFER: 1,   // Buffer between SFX/Dialogue clips
+  MUSIC_END_BUFFER: 3,    // Buffer at end of music for fade-out
+}
+
+/**
+ * Represents an audio clip for sequential alignment
+ */
+export interface AlignmentClip {
+  id: string
+  type: 'narration' | 'sfx' | 'dialogue' | 'music'
+  url: string
+  duration: number        // Actual duration from audio file
+  originalStartTime?: number  // Original position (for reference)
+  label?: string
+  isMuted?: boolean       // Whether this clip is muted
+  sfxIndex?: number       // Original index in SFX array
+  dialogueIndex?: number  // Original index in dialogue array
+}
+
+/**
+ * Result of sequential alignment calculation
+ */
+export interface AlignmentResult {
+  clips: Array<AlignmentClip & { startTime: number }>
+  totalDuration: number   // Total scene duration including buffers
+  musicDuration: number   // Calculated music duration (totalDuration + buffer)
+}
+
+/**
+ * Calculate sequential alignment for audio clips.
+ * 
+ * Sequence: Narration → interleaved SFX/Dialogue → remaining items → Music spans all
+ * 
+ * @param narration - Narration clip (optional)
+ * @param sfxClips - Array of SFX clips
+ * @param dialogueClips - Array of dialogue clips
+ * @param mutedClipIds - Set of clip IDs that are muted (will be skipped in alignment)
+ * @returns AlignmentResult with calculated start times
+ */
+export function calculateSequentialAlignment(
+  narration: AlignmentClip | null,
+  sfxClips: AlignmentClip[],
+  dialogueClips: AlignmentClip[],
+  mutedClipIds: Set<string> = new Set()
+): AlignmentResult {
+  const { NARRATION_BUFFER, INTER_CLIP_BUFFER, MUSIC_END_BUFFER } = AUDIO_ALIGNMENT_BUFFERS
+  
+  const result: Array<AlignmentClip & { startTime: number }> = []
+  let cursor = 0
+  
+  // 1. Narration starts at 0s (if not muted)
+  if (narration && narration.url && !mutedClipIds.has(narration.id)) {
+    const narrationWithTime = {
+      ...narration,
+      startTime: 0,
+      isMuted: false,
+    }
+    result.push(narrationWithTime)
+    cursor = narration.duration + NARRATION_BUFFER
+  } else if (narration && mutedClipIds.has(narration.id)) {
+    // Muted narration: keep at position 0 but don't advance cursor
+    result.push({
+      ...narration,
+      startTime: 0,
+      isMuted: true,
+    })
+  }
+  
+  // 2. Interleave SFX and Dialogue
+  // Pattern: SFX1 → Dialogue1 → SFX2 → Dialogue2 → ...
+  const maxPairs = Math.max(sfxClips.length, dialogueClips.length)
+  
+  for (let i = 0; i < maxPairs; i++) {
+    // Process SFX at index i
+    if (i < sfxClips.length) {
+      const sfx = sfxClips[i]
+      if (sfx.url) {
+        const isMuted = mutedClipIds.has(sfx.id)
+        if (!isMuted) {
+          result.push({
+            ...sfx,
+            startTime: cursor,
+            isMuted: false,
+          })
+          cursor += sfx.duration + INTER_CLIP_BUFFER
+        } else {
+          // Muted SFX: show at current cursor position but don't advance
+          result.push({
+            ...sfx,
+            startTime: cursor,
+            isMuted: true,
+          })
+        }
+      }
+    }
+    
+    // Process Dialogue at index i
+    if (i < dialogueClips.length) {
+      const dialogue = dialogueClips[i]
+      if (dialogue.url) {
+        const isMuted = mutedClipIds.has(dialogue.id)
+        if (!isMuted) {
+          result.push({
+            ...dialogue,
+            startTime: cursor,
+            isMuted: false,
+          })
+          cursor += dialogue.duration + INTER_CLIP_BUFFER
+        } else {
+          // Muted dialogue: show at current cursor position but don't advance
+          result.push({
+            ...dialogue,
+            startTime: cursor,
+            isMuted: true,
+          })
+        }
+      }
+    }
+  }
+  
+  // 3. Calculate total duration and music duration
+  const totalDuration = cursor > 0 ? cursor : 10  // Minimum 10s scene
+  const musicDuration = totalDuration + MUSIC_END_BUFFER
+  
+  return {
+    clips: result,
+    totalDuration,
+    musicDuration,
+  }
+}
+
+/**
+ * Apply sequential alignment to scene audio data.
+ * Returns updated audio arrays with new startTime values.
+ * 
+ * @param scene - The scene object containing audio data
+ * @param language - The language to apply alignment for
+ * @param mutedClipIds - Set of clip IDs that are muted
+ * @returns Object with updated narration, dialogue, sfx, and music timing
+ */
+export function applySequentialAlignmentToScene(
+  scene: any,
+  language: string = 'en',
+  mutedClipIds: Set<string> = new Set()
+): {
+  narrationStartTime: number
+  narrationDuration: number
+  dialogueTimings: Array<{ index: number; startTime: number; duration: number }>
+  sfxTimings: Array<{ index: number; startTime: number; duration: number }>
+  musicStartTime: number
+  musicDuration: number
+  totalDuration: number
+} {
+  // Extract narration
+  const narrationAudio = scene.narrationAudio?.[language] || scene.narrationAudio?.en
+  const narrationUrl = narrationAudio?.url || scene.narrationAudioUrl
+  const narrationDuration = narrationAudio?.duration || scene.narrationDuration || 0
+  
+  const narration: AlignmentClip | null = narrationUrl ? {
+    id: 'narration',
+    type: 'narration',
+    url: narrationUrl,
+    duration: narrationDuration,
+    label: 'Narration',
+  } : null
+  
+  // Extract SFX clips
+  const sfxClips: AlignmentClip[] = []
+  const sfxAudioArray = scene.sfxAudio || []
+  const sfxDefArray = scene.sfx || []
+  
+  for (let i = 0; i < Math.max(sfxAudioArray.length, sfxDefArray.length); i++) {
+    const url = sfxAudioArray[i]
+    const sfxDef = sfxDefArray[i] || {}
+    if (url) {
+      sfxClips.push({
+        id: `sfx-${i}`,
+        type: 'sfx',
+        url,
+        duration: sfxDef.duration || 2,
+        label: typeof sfxDef === 'string' ? sfxDef.slice(0, 20) : (sfxDef.description?.slice(0, 20) || `SFX ${i + 1}`),
+        sfxIndex: i,
+      })
+    }
+  }
+  
+  // Extract dialogue clips
+  const dialogueClips: AlignmentClip[] = []
+  const dialogueAudioArray = scene.dialogueAudio?.[language] || scene.dialogueAudio?.en || []
+  
+  if (Array.isArray(dialogueAudioArray)) {
+    dialogueAudioArray.forEach((audio: any, i: number) => {
+      if (audio?.audioUrl) {
+        dialogueClips.push({
+          id: `dialogue-${i}`,
+          type: 'dialogue',
+          url: audio.audioUrl,
+          duration: audio.duration || 3,
+          label: audio.character || `Line ${i + 1}`,
+          dialogueIndex: audio.dialogueIndex ?? i,
+        })
+      }
+    })
+  }
+  
+  // Calculate alignment
+  const alignment = calculateSequentialAlignment(narration, sfxClips, dialogueClips, mutedClipIds)
+  
+  // Build result
+  const dialogueTimings: Array<{ index: number; startTime: number; duration: number }> = []
+  const sfxTimings: Array<{ index: number; startTime: number; duration: number }> = []
+  let narrationStartTime = 0
+  
+  for (const clip of alignment.clips) {
+    if (clip.type === 'narration' && !clip.isMuted) {
+      narrationStartTime = clip.startTime
+    } else if (clip.type === 'dialogue' && clip.dialogueIndex !== undefined) {
+      dialogueTimings.push({
+        index: clip.dialogueIndex,
+        startTime: clip.startTime,
+        duration: clip.duration,
+      })
+    } else if (clip.type === 'sfx' && clip.sfxIndex !== undefined) {
+      sfxTimings.push({
+        index: clip.sfxIndex,
+        startTime: clip.startTime,
+        duration: clip.duration,
+      })
+    }
+  }
+  
+  return {
+    narrationStartTime,
+    narrationDuration,
+    dialogueTimings,
+    sfxTimings,
+    musicStartTime: 0,
+    musicDuration: alignment.musicDuration,
+    totalDuration: alignment.totalDuration,
+  }
+}
