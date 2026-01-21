@@ -4133,224 +4133,6 @@ function SceneCard({
                     </div>
                   )}
                   
-                  {/* Audio Timeline Visualization - Always visible strip showing audio alignment */}
-                  {(() => {
-                    // Build audio tracks data from scene
-                    // Note: Description audio is deprecated - scene descriptions are context for user, not production audio
-                    const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
-                    
-                    // Get dialogue audio array
-                    let dialogueAudioArray: any[] = []
-                    if (Array.isArray(scene.dialogueAudio)) {
-                      dialogueAudioArray = scene.dialogueAudio
-                    } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
-                      dialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
-                    }
-                    
-                    // Check if we have any audio to display
-                    const hasSfxAudio = scene.sfxAudio && scene.sfxAudio.length > 0 && scene.sfxAudio.some((url: string) => url)
-                    const hasMusicAudio = !!(scene.musicAudio || scene.music?.url)
-                    // Note: Description audio is deprecated - it's scene context for user, not production audio
-                    const hasAnyAudio = narrationUrl || dialogueAudioArray.some((d: any) => d?.audioUrl) || hasSfxAudio || hasMusicAudio
-                    if (!hasAnyAudio) return null
-                    
-                    // Calculate scene duration from audio
-                    // Note: Description audio is deprecated - it was scene context for user, not production audio
-                    // Narration is now the primary voiceover track and always starts at 0
-                    const narrDurationFromAudio = scene.narrationAudio?.[selectedLanguage]?.duration ?? 0
-                    const narrDuration = scene.narrationDuration ?? narrDurationFromAudio
-                    const narrStartTime = scene.narrationStartTime ?? 0
-                    
-                    // Calculate dialogue end times
-                    let maxDialogueEnd = 0
-                    const dialogueClips: AudioTrackClip[] = dialogueAudioArray
-                      .filter((d: any) => d?.audioUrl)
-                      .map((d: any, idx: number) => {
-                        const startTime = d.startTime ?? (narrStartTime + narrDuration + 0.5 + (idx * 3)) // Estimate if not set
-                        const duration = d.duration || 3
-                        maxDialogueEnd = Math.max(maxDialogueEnd, startTime + duration)
-                        return {
-                          id: `dialogue-${idx}`,
-                          url: d.audioUrl,
-                          startTime,
-                          duration,
-                          label: d.character || `Line ${idx + 1}`
-                        }
-                      })
-                    
-                    // Build audio tracks - voiceover is now an array for Description + Narration
-                    const audioTracks: AudioTracksData = {
-                      voiceover: [],
-                      dialogue: [],
-                      music: [],
-                      sfx: []
-                    }
-                    
-                    // Note: Description audio is deprecated - it was scene context for user, not production audio
-                    // Only Narration is added to the voiceover track now
-                    
-                    // Add Narration to voiceover track (blue)
-                    if (narrationUrl) {
-                      audioTracks.voiceover!.push({
-                        id: 'narration',
-                        url: narrationUrl,
-                        startTime: narrStartTime,
-                        duration: narrDuration || 5,
-                        label: 'Narration'
-                      })
-                    }
-                    
-                    if (dialogueClips.length > 0) {
-                      audioTracks.dialogue = dialogueClips
-                    }
-                    
-                    // Build SFX clips for timeline
-                    let maxSfxEnd = 0
-                    if (scene.sfxAudio && scene.sfxAudio.length > 0) {
-                      const sfxClips: AudioTrackClip[] = scene.sfxAudio
-                        .filter((url: string) => url)
-                        .map((url: string, idx: number) => {
-                          const sfxDef = scene.sfx?.[idx] || {}
-                          // Use stored duration or estimate at 2s
-                          const duration = sfxDef.duration || 2
-                          // Use specified time or distribute evenly
-                          const startTime = sfxDef.time ?? (1 + idx * 2)
-                          maxSfxEnd = Math.max(maxSfxEnd, startTime + duration)
-                          return {
-                            id: `sfx-${idx}`,
-                            url,
-                            startTime,
-                            duration,
-                            label: typeof sfxDef === 'string' ? sfxDef.slice(0, 20) : (sfxDef.description?.slice(0, 20) || `SFX ${idx + 1}`)
-                          }
-                        })
-                      if (sfxClips.length > 0) {
-                        audioTracks.sfx = sfxClips
-                      }
-                    }
-                    
-                    // Add Music to music track (purple) - actual background music
-                    const musicUrl = scene.musicAudio || scene.music?.url
-                    let maxMusicEnd = 0
-                    if (musicUrl) {
-                      const musicStartTime = scene.musicStartTime ?? 0
-                      const musicDuration = scene.musicDuration ?? scene.music?.duration ?? 30
-                      maxMusicEnd = musicStartTime + musicDuration
-                      audioTracks.music!.push({
-                        id: 'music',
-                        url: musicUrl,
-                        startTime: musicStartTime,
-                        duration: musicDuration,
-                        label: 'Background Music'
-                      })
-                    }
-                    
-                    // Calculate total scene duration for timeline
-                    const sceneDuration = Math.max(
-                      10,
-                      narrStartTime + narrDuration,
-                      maxDialogueEnd,
-                      maxSfxEnd,
-                      maxMusicEnd,
-                      scene.duration || 0
-                    ) + 2 // Add 2s buffer
-                    
-                    return (
-                      <div className="bg-slate-900/80 rounded-lg border border-cyan-500/30 overflow-hidden">
-                        <div className="px-3 py-2 bg-cyan-900/20 border-b border-cyan-500/20 flex items-center gap-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setAudioTimelineCollapsed(!audioTimelineCollapsed)
-                            }}
-                            className="p-1 hover:bg-cyan-500/20 rounded transition-colors"
-                            title={audioTimelineCollapsed ? 'Show scene timeline' : 'Hide scene timeline'}
-                          >
-                            {audioTimelineCollapsed ? <ChevronDown className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronUp className="w-3.5 h-3.5 text-cyan-400" />}
-                          </button>
-                          <Layers className="w-4 h-4 text-cyan-400" />
-                          <span className="text-xs font-medium text-cyan-300">Screening Room Audio Timeline</span>
-                          <span className="text-[10px] text-gray-500 ml-auto">{sceneDuration.toFixed(1)}s total</span>
-                        </div>
-                        <AnimatePresence>
-                          {!audioTimelineCollapsed && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              transition={{ duration: 0.2 }}
-                            >
-                              <AudioTimeline
-                                sceneDuration={sceneDuration}
-                                segments={sceneProductionData?.segments?.map(seg => ({
-                                  startTime: seg.startTime,
-                                  endTime: seg.endTime,
-                                  segmentId: seg.segmentId,
-                                  sequenceIndex: seg.sequenceIndex,
-                                })) || []}
-                                audioTracks={audioTracks}
-                                selectedSegmentId={selectedSegmentId}
-                                onSegmentSelect={setSelectedSegmentId}
-                                onAudioClipChange={(trackType, clipId, changes) => {
-                                  onAudioClipChange?.(sceneIdx, trackType, clipId, changes)
-                                }}
-                                onSegmentChange={(segmentId, changes) => {
-                                  const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
-                                  onSegmentResize?.(sceneId, segmentId, changes)
-                                }}
-                              />
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                        
-                        {/* Generate Segments button when no segments exist */}
-                        {(!sceneProductionData?.isSegmented || !sceneProductionData?.segments?.length) && !audioTimelineCollapsed && (
-                          <div className="p-3 border-t border-cyan-500/20 bg-cyan-900/10">
-                            <button
-                              onClick={() => {
-                                const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
-                                onInitializeSceneProduction?.(sceneId, { targetDuration: sceneDuration })
-                              }}
-                              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 rounded-lg text-cyan-300 text-sm font-medium transition-colors"
-                            >
-                              <Layers className="w-4 h-4" />
-                              Generate Segments
-                            </button>
-                            <p className="text-[10px] text-gray-500 mt-2 text-center">
-                              AI will analyze your scene to create video segments
-                            </p>
-                          </div>
-                        )}
-                        
-                        {/* Segment controls footer when segment selected */}
-                        {sceneProductionData?.segments?.length > 0 && !audioTimelineCollapsed && selectedSegmentId && (
-                          <div className="px-3 py-2 border-t border-cyan-500/20 bg-cyan-900/10 flex items-center justify-end">
-                            <div className="flex items-center gap-2">
-                              {/* Edit Segment button */}
-                              <button
-                                onClick={() => setEditSegmentDialogOpen(true)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 rounded text-amber-300 text-xs font-medium transition-colors"
-                              >
-                                <Pencil className="w-3.5 h-3.5" />
-                                Edit Segment
-                              </button>
-                              {/* Delete Segment button - only when more than 1 segment */}
-                              {sceneProductionData.segments.length > 1 && (
-                                <button
-                                  onClick={() => setDeleteConfirmOpen(true)}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 rounded text-red-300 text-xs font-medium transition-colors"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                  Delete
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })()}
-                  
                   {/* Scene Reference Image - visual anchor for Screening Room and Frame generation */}
                   {(() => {
                     const hasImage = !!scene.imageUrl
@@ -5973,6 +5755,225 @@ function SceneCard({
                         />
                       </div>
                     )}
+                    
+                    {/* ==================== SCREENING ROOM AUDIO TIMELINE ==================== */}
+                    {/* Audio timeline for Screening Room playback alignment */}
+                    {(() => {
+                      // Build audio tracks data from scene
+                      // Note: Description audio is deprecated - scene descriptions are context for user, not production audio
+                      const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
+                      
+                      // Get dialogue audio array
+                      let dialogueAudioArray: any[] = []
+                      if (Array.isArray(scene.dialogueAudio)) {
+                        dialogueAudioArray = scene.dialogueAudio
+                      } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
+                        dialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
+                      }
+                      
+                      // Check if we have any audio to display
+                      const hasSfxAudio = scene.sfxAudio && scene.sfxAudio.length > 0 && scene.sfxAudio.some((url: string) => url)
+                      const hasMusicAudio = !!(scene.musicAudio || scene.music?.url)
+                      // Note: Description audio is deprecated - it's scene context for user, not production audio
+                      const hasAnyAudio = narrationUrl || dialogueAudioArray.some((d: any) => d?.audioUrl) || hasSfxAudio || hasMusicAudio
+                      if (!hasAnyAudio) return null
+                      
+                      // Calculate scene duration from audio
+                      // Note: Description audio is deprecated - it was scene context for user, not production audio
+                      // Narration is now the primary voiceover track and always starts at 0
+                      const narrDurationFromAudio = scene.narrationAudio?.[selectedLanguage]?.duration ?? 0
+                      const narrDuration = scene.narrationDuration ?? narrDurationFromAudio
+                      const narrStartTime = scene.narrationStartTime ?? 0
+                      
+                      // Calculate dialogue end times
+                      let maxDialogueEnd = 0
+                      const dialogueClips: AudioTrackClip[] = dialogueAudioArray
+                        .filter((d: any) => d?.audioUrl)
+                        .map((d: any, idx: number) => {
+                          const startTime = d.startTime ?? (narrStartTime + narrDuration + 0.5 + (idx * 3)) // Estimate if not set
+                          const duration = d.duration || 3
+                          maxDialogueEnd = Math.max(maxDialogueEnd, startTime + duration)
+                          return {
+                            id: `dialogue-${idx}`,
+                            url: d.audioUrl,
+                            startTime,
+                            duration,
+                            label: d.character || `Line ${idx + 1}`
+                          }
+                        })
+                      
+                      // Build audio tracks - voiceover is now an array for Description + Narration
+                      const audioTracks: AudioTracksData = {
+                        voiceover: [],
+                        dialogue: [],
+                        music: [],
+                        sfx: []
+                      }
+                      
+                      // Note: Description audio is deprecated - it was scene context for user, not production audio
+                      // Only Narration is added to the voiceover track now
+                      
+                      // Add Narration to voiceover track (blue)
+                      if (narrationUrl) {
+                        audioTracks.voiceover!.push({
+                          id: 'narration',
+                          url: narrationUrl,
+                          startTime: narrStartTime,
+                          duration: narrDuration || 5,
+                          label: 'Narration'
+                        })
+                      }
+                      
+                      if (dialogueClips.length > 0) {
+                        audioTracks.dialogue = dialogueClips
+                      }
+                      
+                      // Build SFX clips for timeline
+                      let maxSfxEnd = 0
+                      if (scene.sfxAudio && scene.sfxAudio.length > 0) {
+                        const sfxClips: AudioTrackClip[] = scene.sfxAudio
+                          .filter((url: string) => url)
+                          .map((url: string, idx: number) => {
+                            const sfxDef = scene.sfx?.[idx] || {}
+                            // Use stored duration or estimate at 2s
+                            const duration = sfxDef.duration || 2
+                            // Use specified time or distribute evenly
+                            const startTime = sfxDef.time ?? (1 + idx * 2)
+                            maxSfxEnd = Math.max(maxSfxEnd, startTime + duration)
+                            return {
+                              id: `sfx-${idx}`,
+                              url,
+                              startTime,
+                              duration,
+                              label: typeof sfxDef === 'string' ? sfxDef.slice(0, 20) : (sfxDef.description?.slice(0, 20) || `SFX ${idx + 1}`)
+                            }
+                          })
+                        if (sfxClips.length > 0) {
+                          audioTracks.sfx = sfxClips
+                        }
+                      }
+                      
+                      // Add Music to music track (purple) - actual background music
+                      const musicUrl = scene.musicAudio || scene.music?.url
+                      let maxMusicEnd = 0
+                      if (musicUrl) {
+                        const musicStartTime = scene.musicStartTime ?? 0
+                        const musicDuration = scene.musicDuration ?? scene.music?.duration ?? 30
+                        maxMusicEnd = musicStartTime + musicDuration
+                        audioTracks.music!.push({
+                          id: 'music',
+                          url: musicUrl,
+                          startTime: musicStartTime,
+                          duration: musicDuration,
+                          label: 'Background Music'
+                        })
+                      }
+                      
+                      // Calculate total scene duration for timeline
+                      const sceneDuration = Math.max(
+                        10,
+                        narrStartTime + narrDuration,
+                        maxDialogueEnd,
+                        maxSfxEnd,
+                        maxMusicEnd,
+                        scene.duration || 0
+                      ) + 2 // Add 2s buffer
+                      
+                      return (
+                        <div className="bg-slate-900/80 rounded-lg border border-cyan-500/30 overflow-hidden">
+                          <div className="px-3 py-2 bg-cyan-900/20 border-b border-cyan-500/20 flex items-center gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setAudioTimelineCollapsed(!audioTimelineCollapsed)
+                              }}
+                              className="p-1 hover:bg-cyan-500/20 rounded transition-colors"
+                              title={audioTimelineCollapsed ? 'Show scene timeline' : 'Hide scene timeline'}
+                            >
+                              {audioTimelineCollapsed ? <ChevronDown className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronUp className="w-3.5 h-3.5 text-cyan-400" />}
+                            </button>
+                            <Layers className="w-4 h-4 text-cyan-400" />
+                            <span className="text-xs font-medium text-cyan-300">Screening Room Audio Timeline</span>
+                            <span className="text-[10px] text-gray-500 ml-auto">{sceneDuration.toFixed(1)}s total</span>
+                          </div>
+                          <AnimatePresence>
+                            {!audioTimelineCollapsed && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                <AudioTimeline
+                                  sceneDuration={sceneDuration}
+                                  segments={sceneProductionData?.segments?.map(seg => ({
+                                    startTime: seg.startTime,
+                                    endTime: seg.endTime,
+                                    segmentId: seg.segmentId,
+                                    sequenceIndex: seg.sequenceIndex,
+                                  })) || []}
+                                  audioTracks={audioTracks}
+                                  selectedSegmentId={selectedSegmentId}
+                                  onSegmentSelect={setSelectedSegmentId}
+                                  onAudioClipChange={(trackType, clipId, changes) => {
+                                    onAudioClipChange?.(sceneIdx, trackType, clipId, changes)
+                                  }}
+                                  onSegmentChange={(segmentId, changes) => {
+                                    const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
+                                    onSegmentResize?.(sceneId, segmentId, changes)
+                                  }}
+                                />
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                          
+                          {/* Generate Segments button when no segments exist */}
+                          {(!sceneProductionData?.isSegmented || !sceneProductionData?.segments?.length) && !audioTimelineCollapsed && (
+                            <div className="p-3 border-t border-cyan-500/20 bg-cyan-900/10">
+                              <button
+                                onClick={() => {
+                                  const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
+                                  onInitializeSceneProduction?.(sceneId, { targetDuration: sceneDuration })
+                                }}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 rounded-lg text-cyan-300 text-sm font-medium transition-colors"
+                              >
+                                <Layers className="w-4 h-4" />
+                                Generate Segments
+                              </button>
+                              <p className="text-[10px] text-gray-500 mt-2 text-center">
+                                AI will analyze your scene to create video segments
+                              </p>
+                            </div>
+                          )}
+                          
+                          {/* Segment controls footer when segment selected */}
+                          {sceneProductionData?.segments?.length > 0 && !audioTimelineCollapsed && selectedSegmentId && (
+                            <div className="px-3 py-2 border-t border-cyan-500/20 bg-cyan-900/10 flex items-center justify-end">
+                              <div className="flex items-center gap-2">
+                                {/* Edit Segment button */}
+                                <button
+                                  onClick={() => setEditSegmentDialogOpen(true)}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 rounded text-amber-300 text-xs font-medium transition-colors"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                  Edit Segment
+                                </button>
+                                {/* Delete Segment button - only when more than 1 segment */}
+                                {sceneProductionData.segments.length > 1 && (
+                                  <button
+                                    onClick={() => setDeleteConfirmOpen(true)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 rounded text-red-300 text-xs font-medium transition-colors"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    Delete
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })()}
                     
                     {/* ==================== DIRECTOR'S CONSOLE ==================== */}
                     {/* Video generation workflow */}
