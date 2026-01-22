@@ -32,6 +32,8 @@ interface GenerateSegmentsRequest {
   narrationDurationSeconds?: number
   narrationText?: string
   narrationAudioUrl?: string
+  // NEW: Audio-aware segmentation - includes dialogue duration
+  totalAudioDurationSeconds?: number
   // NEW: Preview mode - returns proposals without committing
   previewMode?: boolean
 }
@@ -82,6 +84,8 @@ export async function POST(
       narrationDurationSeconds,
       narrationText,
       narrationAudioUrl,
+      // NEW: Audio-aware segmentation - includes dialogue duration
+      totalAudioDurationSeconds,
       // NEW: Preview mode - returns proposals without committing to DB
       previewMode = false
     } = body
@@ -177,11 +181,21 @@ export async function POST(
       narrationDriven,
       narrationDurationSeconds,
       narrationText,
-      narrationAudioUrl
+      narrationAudioUrl,
+      // NEW: Total audio duration for minimum segment calculation
+      totalAudioDurationSeconds
     })
     
+    // Calculate minimum segments required based on total audio duration
+    // Each segment can be max 8 seconds (Veo 3.1 constraint)
+    const MAX_SEGMENT_SECONDS = 8
+    const effectiveAudioDuration = totalAudioDurationSeconds || sceneData.estimatedTotalDuration
+    const minimumSegmentsRequired = Math.ceil(effectiveAudioDuration / MAX_SEGMENT_SECONDS)
+    
+    console.log(`[Scene Segmentation] Audio duration: ${effectiveAudioDuration}s, min segments required: ${minimumSegmentsRequired}`)
+    
     // Generate intelligent segmentation prompt
-    const prompt = generateIntelligentSegmentationPrompt(sceneData, preferredDuration)
+    const prompt = generateIntelligentSegmentationPrompt(sceneData, preferredDuration, minimumSegmentsRequired)
 
     // Pre-screen prompt content before generation to prevent unfunded credits
     // This runs at 100% coverage - text moderation is ~$0.0005/1K chars
@@ -389,6 +403,8 @@ function buildComprehensiveSceneData(
     narrationDurationSeconds?: number
     narrationText?: string
     narrationAudioUrl?: string
+    // NEW: Total audio duration (includes dialogue)
+    totalAudioDurationSeconds?: number
   }
 ): ComprehensiveSceneData {
   // Extract heading
@@ -709,7 +725,8 @@ function detectEmotionalTone(text: string): string {
 
 function generateIntelligentSegmentationPrompt(
   sceneData: ComprehensiveSceneData,
-  preferredDuration: number
+  preferredDuration: number,
+  minimumSegmentsRequired: number = 1
 ): string {
   // Enhanced character list with wardrobe and reference image info
   const characterList = sceneData.characters.length > 0
@@ -724,6 +741,18 @@ function generateIntelligentSegmentationPrompt(
   const dialogueText = sceneData.dialogue.length > 0
     ? sceneData.dialogue.map((d, idx) => `[${idx}] ${d.character}${d.emotion ? ` (${d.emotion})` : ''}: "${d.text}"`).join('\n')
     : 'No dialogue in this scene.'
+
+  // Build minimum segment constraint instruction
+  const minimumSegmentInstruction = minimumSegmentsRequired > 1
+    ? `
+**AUDIO-DURATION CONSTRAINT (MANDATORY):**
+Based on the total audio duration (narration + dialogue), you MUST create at least ${minimumSegmentsRequired} segments.
+This ensures that each segment stays within the 8-second maximum for Veo 3.1 video generation.
+- Total audio requires minimum ${minimumSegmentsRequired} segments
+- DO NOT create fewer than ${minimumSegmentsRequired} segments
+- Split long narration/dialogue at natural sentence boundaries
+`
+    : ''
 
   // Build additional instructions based on reference options
   const referenceInstructions = sceneData.includeReferencesInPrompts
@@ -771,13 +800,13 @@ ${sceneData.narrationBeats?.map((beat, idx) =>
 
   return `
 **SYSTEM ROLE:** You are an AI Video Director and Editor optimized for Veo 3.1 generation workflows. Your goal is to translate a linear script and scene description into distinct, generation-ready video segments with RICH CINEMATIC PROMPTS.
-${referenceInstructions}${transitionInstructions}${narrationInstructions}
+${referenceInstructions}${transitionInstructions}${narrationInstructions}${minimumSegmentInstruction}
 **OPERATIONAL CONSTRAINTS:**
 1. **Duration:** Target ${preferredDuration} seconds per segment (8 seconds absolute max for Veo 3.1). **MINIMUM 4 seconds per segment** unless absolutely necessary for a dramatic cut.
 2. **Continuity:** You must utilize specific **Methods** to ensure consistency (matching lighting, character appearance, and room tone).
 3. **Lookahead:** Each segment must define the "End Frame State" to prepare for the *next* segment's generation method.
 4. **Dialogue Integration:** Veo 3.1 generates speech from text. You MUST include character dialogue directly in prompts.
-5. **SEGMENT EFFICIENCY:** Create as FEW segments as possible while respecting the duration limit. **Combine multiple dialogue lines into a single segment** when they occur in the same shot/angle or in a two-shot conversation. A segment with 2-4 lines of back-and-forth dialogue is PREFERRED over creating a new segment for each line.
+5. **SEGMENT EFFICIENCY:** Create as FEW segments as possible while respecting the duration limit. **Combine multiple dialogue lines into a single segment** when they occur in the same shot/angle or in a two-shot conversation. A segment with 2-4 lines of back-and-forth dialogue is PREFERRED over creating a new segment for each line.${minimumSegmentsRequired > 1 ? `\n6. **MINIMUM SEGMENTS:** You MUST create at least ${minimumSegmentsRequired} segments to cover the audio duration.` : ''}
 
 **INPUT DATA:**
 

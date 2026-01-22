@@ -572,6 +572,8 @@ export function SegmentBuilder({
           narrationDurationSeconds: audioMetadata.narrationDurationSeconds,
           narrationText: audioMetadata.narrationText,
           narrationAudioUrl: audioMetadata.narrationAudioUrl,
+          // Pass total audio duration for minimum segment calculation
+          totalAudioDurationSeconds: audioMetadata.totalAudioDurationSeconds,
           // Request preview mode (segments not committed)
           previewMode: true,
         }),

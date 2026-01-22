@@ -1983,6 +1983,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           narrationText: generationOptions?.narrationText,
           narrationDuration: generationOptions?.narrationDuration,
           narrationAudioUrl: generationOptions?.narrationAudioUrl,
+          // Audio-aware segmentation - ensures minimum segments for audio duration
+          totalAudioDurationSeconds: generationOptions?.totalAudioDurationSeconds,
         }),
       })
 

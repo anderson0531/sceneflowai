@@ -249,14 +249,26 @@ export function buildAudioTracksForLanguage(
   }
   
   // Build SFX tracks
+  // SFX should start with dialogue (as background audio), not before it
+  // If no dialogue, start after narration ends
+  const sfxAnchorTime = dialogueClips.length > 0
+    ? dialogueClips[0].startTime  // Start with first dialogue
+    : (tracks.voiceover 
+        ? tracks.voiceover.startTime + tracks.voiceover.duration  // After narration
+        : 0)  // Fallback to scene start if no audio
+  
   if (Array.isArray(scene.sfxAudio)) {
     scene.sfxAudio.forEach((sfxUrl: string, idx: number) => {
       if (sfxUrl && typeof sfxUrl === 'string' && sfxUrl.trim()) {
         const sfxDef = scene.sfx?.[idx]
+        // Use explicit startTime if set, otherwise position relative to anchor
+        const explicitStartTime = sfxDef?.startTime
+        const defaultStartTime = sfxAnchorTime + (idx * 2) // Space SFX 2s apart from anchor
+        
         tracks.sfx.push({
           id: `sfx-${idx}`,
           url: sfxUrl,
-          startTime: sfxDef?.startTime || idx * 2,
+          startTime: explicitStartTime ?? defaultStartTime,
           duration: sfxDef?.duration || 2,
           label: sfxDef?.name || sfxDef?.description || `SFX ${idx + 1}`,
           volume: 0.8,

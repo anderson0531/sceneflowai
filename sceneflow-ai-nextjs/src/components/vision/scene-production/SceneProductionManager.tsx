@@ -49,6 +49,8 @@ export interface SegmentGenerationOptions {
   narrationText?: string
   narrationDuration?: number
   narrationAudioUrl?: string
+  // Audio-aware segmentation - total audio duration for minimum segment calculation
+  totalAudioDurationSeconds?: number
 }
 
 interface SceneProductionManagerProps {
@@ -264,6 +266,34 @@ export function SceneProductionManager({
   // NEW: Narration-driven segmentation state
   const [narrationDriven, setNarrationDriven] = useState(false)
   const [narrationDurationSeconds, setNarrationDurationSeconds] = useState<number | undefined>(undefined)
+  
+  // Compute total audio duration from narration + dialogue for minimum segment calculation
+  const totalAudioDurationSeconds = useMemo(() => {
+    // Get narration/description duration
+    const narrationDuration = narrationDurationSeconds
+      || scene?.narrationDuration
+      || scene?.narrationAudio?.en?.duration
+      || scene?.descriptionAudio?.en?.duration
+      || 0
+    
+    // Calculate dialogue duration
+    let dialogueDuration = 0
+    const dialogueAudio = scene?.dialogueAudio?.en || scene?.dialogueAudio || []
+    if (Array.isArray(dialogueAudio)) {
+      dialogueDuration = dialogueAudio.reduce((acc: number, d: any) => {
+        return acc + (d.duration || 3) // Default 3s per line
+      }, 0)
+    } else if (Array.isArray(scene?.dialogue)) {
+      // Estimate from text if no audio metadata
+      dialogueDuration = scene.dialogue.reduce((acc: number, d: any) => {
+        const text = d.text || d.line || ''
+        return acc + (d.duration || text.split(/\s+/).length / 2.5) // ~2.5 words per second
+      }, 0)
+    }
+    
+    // Total is max of narration vs dialogue (they overlap), plus buffer for gaps
+    return Math.max(narrationDuration, dialogueDuration) + 2
+  }, [narrationDurationSeconds, scene?.narrationDuration, scene?.narrationAudio, scene?.descriptionAudio, scene?.dialogueAudio, scene?.dialogue])
   
   // NEW: Manual prompt/paste workflow state (workaround for Vertex AI billing)
   const [showPasteDialog, setShowPasteDialog] = useState(false)
@@ -861,6 +891,8 @@ export function SceneProductionManager({
       narrationText: narrationDriven ? scene?.narration : undefined,
       narrationDuration: narrationDriven && narrationDurationSeconds ? narrationDurationSeconds : undefined,
       narrationAudioUrl: narrationDriven ? scene?.narrationAudioUrl : undefined,
+      // Audio-aware segmentation: ensures minimum segments to cover audio duration
+      totalAudioDurationSeconds,
     }
     
     // Simulate progress updates
