@@ -212,6 +212,89 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
   const scenes = React.useMemo(() => {
     return normalizeScenes(script)
   }, [script])
+
+  // Create a fingerprint of audio URLs in scenes to detect content changes
+  // This catches cases where script object reference doesn't change but audio URLs do
+  // Includes entry COUNTS to detect when dialogue/SFX lines are added/removed
+  const audioFingerprint = React.useMemo(() => {
+    return scenes.map((s: any, i: number) => {
+      // Dialogue: get URLs from multi-language or legacy array format, include count
+      const dialogueArray = s.dialogueAudio?.en || (Array.isArray(s.dialogueAudio) ? s.dialogueAudio : [])
+      const dialogueUrls = dialogueArray.map((d: any) => d.audioUrl || '').filter(Boolean).join(',')
+      const dialogueCount = dialogueArray.length
+      
+      // SFX: properly handle array format (NOT sfxAudioUrl singular)
+      const sfxArray = Array.isArray(s.sfxAudio) ? s.sfxAudio : []
+      const sfxUrls = sfxArray.filter(Boolean).join(',')
+      const sfxCount = sfxArray.length
+      
+      // Include counts to detect added/removed entries even if URLs reused
+      return `${i}:${s.narrationAudioUrl || ''}|D${dialogueCount}:${dialogueUrls}|S${sfxCount}:${sfxUrls}`
+    }).join('||')
+  }, [scenes])
+
+  // CRITICAL: Clear audio caches when script/audio content changes
+  // This prevents "ghost audio" where old cached audio plays alongside new audio
+  // NOTE: Do NOT reset isPlaying here - let user control playback state
+  const previousFingerprintRef = React.useRef<string>('')
+  React.useEffect(() => {
+    // Skip on initial mount - only react to CHANGES
+    if (previousFingerprintRef.current && previousFingerprintRef.current !== audioFingerprint) {
+      // Stop any currently playing audio and clear caches
+      if (audioMixerRef.current) {
+        audioMixerRef.current.stop()  // Stop active playback
+        audioMixerRef.current.clearCache()  // Clear cached audio buffers
+      }
+      
+      // Clear duration cache so durations are recalculated
+      audioDurationCache.clear()
+      
+      // DO NOT reset isPlaying - the previous fix broke playback by doing this
+      // User-initiated playback should continue; cache is cleared so new audio loads
+    }
+    previousFingerprintRef.current = audioFingerprint
+  }, [audioFingerprint])  // Trigger on actual audio content changes, not just object reference
+  
+  const [playerState, setPlayerState] = useState<PlayerState>({
+    isPlaying: false,
+    currentSceneIndex: initialScene,
+    playbackSpeed: 1.0,
+    volume: 1.0,
+    musicVolume: 0.15, // 15% default volume for music
+    autoAdvance: true, // Auto-advance enabled by default
+    narrationEnabled: true, // Narration/description audio enabled by default
+    kenBurnsIntensity: 'medium', // Default Ken Burns intensity
+    showVoicePanel: false,
+    sceneTransitionDelay: 3, // 3 second delay before auto-advancing to next scene
+    voiceAssignments: {
+      narrator: 'en-US-Studio-O', // Default: Sophia
+      characters: {},
+      voiceover: 'en-US-Studio-O'
+    }
+  })
+
+  // Auto-hide controls state
+  const [showControls, setShowControls] = useState(true)
+  const [showCaptions, setShowCaptions] = useState(false) // Default to off
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [showExportModal, setShowExportModal] = useState(false) // Export video modal
+  const [showImportDialog, setShowImportDialog] = useState(false) // Import translated dialogue modal
+  const [importText, setImportText] = useState('') // Text pasted by user for import
+  const [importTargetLang, setImportTargetLang] = useState<string>('') // Target language for import
+  const [exportCopied, setExportCopied] = useState(false) // Show copied feedback
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Scene transition state for visual indicator
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const [transitionCountdown, setTransitionCountdown] = useState(0)
+
+  // Language state - use pre-generated audio files
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('en') // Default: English
+  
+  // Translation state for captions
+  const [translatedNarration, setTranslatedNarration] = useState<string | null>(null)
+  const [translatedDialogue, setTranslatedDialogue] = useState<string[] | null>(null)
+  const translationCacheRef = useRef<Map<string, { narration?: string; dialogue?: string[] }>>(new Map())
   
   // Handler to export dialogue for external translation (Google Translate web UI)
   // Formats all scenes' narration and dialogue as numbered lines for easy copy/paste
@@ -328,7 +411,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
     
     // If currently viewing imported language, update display
     if (selectedLanguage === importTargetLang) {
-      const currentScene = scenes[playerState.currentSceneIndex]
       const cacheKey = `${playerState.currentSceneIndex}-${importTargetLang}`
       const cached = newCache.get(cacheKey)
       if (cached) {
@@ -341,89 +423,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
     setShowImportDialog(false)
     setImportText('')
   }, [importText, importTargetLang, scenes, selectedLanguage, playerState.currentSceneIndex])
-
-  // Create a fingerprint of audio URLs in scenes to detect content changes
-  // This catches cases where script object reference doesn't change but audio URLs do
-  // Includes entry COUNTS to detect when dialogue/SFX lines are added/removed
-  const audioFingerprint = React.useMemo(() => {
-    return scenes.map((s: any, i: number) => {
-      // Dialogue: get URLs from multi-language or legacy array format, include count
-      const dialogueArray = s.dialogueAudio?.en || (Array.isArray(s.dialogueAudio) ? s.dialogueAudio : [])
-      const dialogueUrls = dialogueArray.map((d: any) => d.audioUrl || '').filter(Boolean).join(',')
-      const dialogueCount = dialogueArray.length
-      
-      // SFX: properly handle array format (NOT sfxAudioUrl singular)
-      const sfxArray = Array.isArray(s.sfxAudio) ? s.sfxAudio : []
-      const sfxUrls = sfxArray.filter(Boolean).join(',')
-      const sfxCount = sfxArray.length
-      
-      // Include counts to detect added/removed entries even if URLs reused
-      return `${i}:${s.narrationAudioUrl || ''}|D${dialogueCount}:${dialogueUrls}|S${sfxCount}:${sfxUrls}`
-    }).join('||')
-  }, [scenes])
-
-  // CRITICAL: Clear audio caches when script/audio content changes
-  // This prevents "ghost audio" where old cached audio plays alongside new audio
-  // NOTE: Do NOT reset isPlaying here - let user control playback state
-  const previousFingerprintRef = React.useRef<string>('')
-  React.useEffect(() => {
-    // Skip on initial mount - only react to CHANGES
-    if (previousFingerprintRef.current && previousFingerprintRef.current !== audioFingerprint) {
-      // Stop any currently playing audio and clear caches
-      if (audioMixerRef.current) {
-        audioMixerRef.current.stop()  // Stop active playback
-        audioMixerRef.current.clearCache()  // Clear cached audio buffers
-      }
-      
-      // Clear duration cache so durations are recalculated
-      audioDurationCache.clear()
-      
-      // DO NOT reset isPlaying - the previous fix broke playback by doing this
-      // User-initiated playback should continue; cache is cleared so new audio loads
-    }
-    previousFingerprintRef.current = audioFingerprint
-  }, [audioFingerprint])  // Trigger on actual audio content changes, not just object reference
-  
-  const [playerState, setPlayerState] = useState<PlayerState>({
-    isPlaying: false,
-    currentSceneIndex: initialScene,
-    playbackSpeed: 1.0,
-    volume: 1.0,
-    musicVolume: 0.15, // 15% default volume for music
-    autoAdvance: true, // Auto-advance enabled by default
-    narrationEnabled: true, // Narration/description audio enabled by default
-    kenBurnsIntensity: 'medium', // Default Ken Burns intensity
-    showVoicePanel: false,
-    sceneTransitionDelay: 3, // 3 second delay before auto-advancing to next scene
-    voiceAssignments: {
-      narrator: 'en-US-Studio-O', // Default: Sophia
-      characters: {},
-      voiceover: 'en-US-Studio-O'
-    }
-  })
-
-  // Auto-hide controls state
-  const [showControls, setShowControls] = useState(true)
-  const [showCaptions, setShowCaptions] = useState(false) // Default to off
-  const [showMobileMenu, setShowMobileMenu] = useState(false)
-  const [showExportModal, setShowExportModal] = useState(false) // Export video modal
-  const [showImportDialog, setShowImportDialog] = useState(false) // Import translated dialogue modal
-  const [importText, setImportText] = useState('') // Text pasted by user for import
-  const [importTargetLang, setImportTargetLang] = useState<string>('') // Target language for import
-  const [exportCopied, setExportCopied] = useState(false) // Show copied feedback
-  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  
-  // Scene transition state for visual indicator
-  const [isTransitioning, setIsTransitioning] = useState(false)
-  const [transitionCountdown, setTransitionCountdown] = useState(0)
-
-  // Language state - use pre-generated audio files
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('en') // Default: English
-  
-  // Translation state for captions
-  const [translatedNarration, setTranslatedNarration] = useState<string | null>(null)
-  const [translatedDialogue, setTranslatedDialogue] = useState<string[] | null>(null)
-  const translationCacheRef = useRef<Map<string, { narration?: string; dialogue?: string[] }>>(new Map())
   
   // Get available languages from scenes - recalculate when scenes or script changes
   const availableLanguages = React.useMemo(() => {
