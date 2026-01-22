@@ -1240,7 +1240,7 @@ export function AudioTimeline({
               if (el) audioRefs.current.set(clip.id, el)
               else audioRefs.current.delete(clip.id)
             }}
-            src={clip.url}
+            src={encodeURI(clip.url)}
             preload="auto"
             onError={() => {
               console.warn(`[AudioTimeline] Audio failed to load: ${clip.url}`)

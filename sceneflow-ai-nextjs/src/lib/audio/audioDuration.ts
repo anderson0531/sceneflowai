@@ -36,8 +36,8 @@ export async function getAudioDuration(url: string): Promise<number> {
       reject(new Error(`Failed to load audio: ${error}`))
     })
     
-    // Set source and load
-    audio.src = url
+    // Set source and load - encode URL to handle filenames with spaces
+    audio.src = encodeURI(url)
     audio.load()
     
     // Timeout after 10 seconds

@@ -104,7 +104,9 @@ export class WebAudioMixer {
       // Add cache-busting query param to bypass browser cache
       // Note: Do NOT add custom headers like Cache-Control as they trigger CORS preflight
       // which Vercel Blob Storage doesn't handle for cross-origin requests
-      const fetchUrl = url.includes('?') ? url : `${url}?_t=${Date.now()}`
+      const rawUrl = url.includes('?') ? url : `${url}?_t=${Date.now()}`
+      // Encode URL to handle filenames with spaces (e.g., character names like "Dr. Benjamin Anderson")
+      const fetchUrl = encodeURI(rawUrl)
       
       const response = await fetch(fetchUrl, {
         cache: 'no-store',

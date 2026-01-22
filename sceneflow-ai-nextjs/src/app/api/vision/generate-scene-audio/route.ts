@@ -180,11 +180,20 @@ export async function POST(req: NextRequest) {
 
     // Step 6: Upload to Vercel Blob
     const languageSuffix = language !== 'en' ? `-${language}` : ''
+    
+    // Sanitize character name for URL-safe filenames (replace spaces/special chars with dashes)
+    const sanitizeForFilename = (str: string): string => {
+      return str
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+    }
+    
     const fileDescriptor = audioType === 'description'
       ? 'description'
       : audioType === 'narration'
         ? 'narration'
-        : characterName || 'dialogue'
+        : sanitizeForFilename(characterName || 'dialogue')
 
     const fileName = `audio/${audioType}/${projectId}/scene-${sceneIndex}-${fileDescriptor}${languageSuffix}-${Date.now()}.mp3`
 
