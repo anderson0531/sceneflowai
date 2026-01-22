@@ -1276,9 +1276,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
           setSelectedLanguage(lang)
         }}
         supportedLanguages={selectableLanguages}
-        onExportDialogue={handleExportDialogue}
-        onImportDialogue={() => setShowImportDialog(true)}
-        exportCopied={exportCopied}
+        // NOTE: Export/Import moved to Production header (ScriptPanel)
       />
 
       {/* Main Content Area */}
