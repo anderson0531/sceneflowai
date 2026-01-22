@@ -313,24 +313,30 @@ export async function POST(req: NextRequest) {
               
               const musicUrl = await generateAndSaveMusicForScene(scene, projectId, i, baseUrl)
               if (musicUrl) {
-                // Update scene in database
-                const updatedScenes = [...scenes]
-                if (!updatedScenes[i].musicAudio) {
-                  updatedScenes[i].musicAudio = musicUrl
+                // CRITICAL FIX: Reload fresh project data to avoid overwriting narration/dialogue audio
+                // that was saved by generate-scene-audio calls earlier in this loop
+                const freshProject = await Project.findByPk(projectId)
+                const freshMetadata = freshProject?.metadata || {}
+                const freshVisionPhase = freshMetadata.visionPhase || {}
+                const freshScenes = freshVisionPhase.script?.script?.scenes || []
+                
+                // Update only the music field on the fresh data
+                if (!freshScenes[i]?.musicAudio) {
+                  freshScenes[i].musicAudio = musicUrl
                   musicCount++
                   
-                  // Save to database
+                  // Save to database with fresh data
                   await Project.update(
                     {
                       metadata: {
-                        ...metadata,
+                        ...freshMetadata,
                         visionPhase: {
-                          ...visionPhase,
+                          ...freshVisionPhase,
                           script: {
-                            ...visionPhase.script,
+                            ...freshVisionPhase.script,
                             script: {
-                              ...visionPhase.script?.script,
-                              scenes: updatedScenes
+                              ...freshVisionPhase.script?.script,
+                              scenes: freshScenes
                             }
                           }
                         }
@@ -362,22 +368,29 @@ export async function POST(req: NextRequest) {
               }
               
               if (sfxUrls.length > 0) {
-                // Update scene in database
-                const updatedScenes = [...scenes]
-                updatedScenes[i].sfxAudio = sfxUrls
+                // CRITICAL FIX: Reload fresh project data to avoid overwriting narration/dialogue/music audio
+                // that was saved earlier in this loop
+                const freshProject = await Project.findByPk(projectId)
+                const freshMetadata = freshProject?.metadata || {}
+                const freshVisionPhase = freshMetadata.visionPhase || {}
+                const freshScenes = freshVisionPhase.script?.script?.scenes || []
                 
-                // Save to database
+                // Update only the SFX field on the fresh data
+                freshScenes[i].sfxAudio = sfxUrls
+                sfxCount = sfxUrls.filter(Boolean).length
+                
+                // Save to database with fresh data
                 await Project.update(
                   {
                     metadata: {
-                      ...metadata,
+                      ...freshMetadata,
                       visionPhase: {
-                        ...visionPhase,
+                        ...freshVisionPhase,
                         script: {
-                          ...visionPhase.script,
+                          ...freshVisionPhase.script,
                           script: {
-                            ...visionPhase.script?.script,
-                            scenes: updatedScenes
+                            ...freshVisionPhase.script?.script,
+                            scenes: freshScenes
                           }
                         }
                       }
