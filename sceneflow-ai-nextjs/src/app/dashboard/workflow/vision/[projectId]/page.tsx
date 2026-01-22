@@ -2666,9 +2666,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           return current
         }
         
-        // For single-shot, use narration duration if available, else 6 seconds
+        // For single-shot, use narration duration if available, else 5 seconds
+        // Cap at 8 seconds for video generation (Veo 3.1 model limit)
+        // This is intentional for video - images edited later can have longer durations
         const establishingDuration = type === 'single-shot' && narrationDuration > 0 
-          ? Math.min(narrationDuration, 8) // Cap at 8 seconds for single clip
+          ? Math.min(narrationDuration, 8) // Veo 3.1 video limit
           : 5
         
         // Generate appropriate prompt based on type
@@ -2871,12 +2873,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const segment = current.segments[segmentIndex]
         const originalDuration = segment.endTime - segment.startTime
         
-        // Calculate new values with 8-second max constraint
+        // Calculate new values - enforce minimum 0.5s for all
         let newStartTime = changes.startTime ?? segment.startTime
         let newDuration = changes.duration ?? originalDuration
         
-        // Enforce maximum 8 seconds for Veo 3.1 model limits
-        newDuration = Math.min(8, Math.max(0.5, newDuration))
+        // Enforce maximum 8 seconds ONLY for video assets (Veo 3.1 model limit)
+        // Image-based keyframes have no upper duration limit
+        const isVideoAsset = segment.assetType === 'video'
+        newDuration = isVideoAsset 
+          ? Math.min(8, Math.max(0.5, newDuration))
+          : Math.max(0.5, newDuration)
         
         // Ensure start time is not negative and doesn't overlap with previous segment
         if (segmentIndex > 0) {

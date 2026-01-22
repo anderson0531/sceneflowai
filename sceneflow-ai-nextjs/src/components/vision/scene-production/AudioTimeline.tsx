@@ -13,6 +13,7 @@ export interface SegmentClip {
   duration: number
   label?: string
   sequenceIndex: number
+  assetType?: 'video' | 'image' | null
 }
 
 export interface AudioTrackClip {
@@ -35,7 +36,7 @@ export interface AudioTracksData {
 
 interface AudioTimelineProps {
   sceneDuration: number  // Total scene duration in seconds
-  segments?: Array<{ startTime: number; endTime: number; segmentId: string; sequenceIndex?: number }>
+  segments?: Array<{ startTime: number; endTime: number; segmentId: string; sequenceIndex?: number; assetType?: 'video' | 'image' | null }>
   audioTracks?: AudioTracksData
   selectedSegmentId?: string | null  // Externally controlled segment selection
   onSegmentSelect?: (segmentId: string | null) => void  // Callback when segment is selected
@@ -223,6 +224,7 @@ export function AudioTimeline({
       duration: seg.endTime - seg.startTime,
       label: `Seg ${(seg.sequenceIndex ?? idx) + 1}`,
       sequenceIndex: seg.sequenceIndex ?? idx,
+      assetType: seg.assetType,
     }))
   }, [segments])
 
@@ -1161,7 +1163,18 @@ export function AudioTimeline({
               
               {/* Duration - EDITABLE with +/- buttons */}
               <div>
-                <label className="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Duration</label>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <label className="text-[9px] font-medium text-gray-500 uppercase">Duration</label>
+                  {segData.assetType === 'video' ? (
+                    <span className="text-[8px] text-amber-400" title="Video segments are limited to 8 seconds (Veo 3.1 limit)">
+                      max 8s
+                    </span>
+                  ) : (
+                    <span className="text-[8px] text-emerald-400" title="Image keyframes have no duration limit">
+                      ∞
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={(e) => {
