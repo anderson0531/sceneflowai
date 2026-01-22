@@ -342,30 +342,50 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
   
   // Handler to import translated dialogue from external translation
   // Parses numbered format and stores translations in translatedDialogue state
+  // UPDATED: Uses position-based matching to work with Google Translate output
+  // (Google Translate translates labels like "NARRATION" → "คำบรรยาย" in Thai)
   const handleImportDialogue = useCallback(() => {
     if (!importText.trim() || !importTargetLang) {
       toast.error('Please paste translated text and select a language')
       return
     }
     
+    // Build expected line types from original scenes FIRST
+    // This tells us which line numbers are narration vs dialogue based on position
+    const expectedTypes = new Map<number, 'narration' | 'dialogue'>()
+    let expectedLineNum = 1
+    scenes.forEach((scene: any) => {
+      if (scene.narration) {
+        expectedTypes.set(expectedLineNum++, 'narration')
+      }
+      if (scene.dialogue && Array.isArray(scene.dialogue)) {
+        scene.dialogue.forEach((d: any) => {
+          if (d.line) {
+            expectedTypes.set(expectedLineNum++, 'dialogue')
+          }
+        })
+      }
+    })
+    
     // Parse the imported text - extract numbered lines
+    // UPDATED: Relaxed regex that accepts any translated label (not just A-Z uppercase)
+    // Format: [number] any_label: translated_text
     const translatedLines: Map<number, { type: 'narration' | 'dialogue'; text: string }> = new Map()
-    const linePattern = /\[(\d+)\]\s*([A-Z_]+(?:\s+[A-Z_]+)*):\s*(.+)/g
+    const linePattern = /\[(\d+)\]\s*[^:]+:\s*(.+)/g
     let match
     
     while ((match = linePattern.exec(importText)) !== null) {
       const lineNum = parseInt(match[1], 10)
-      const label = match[2].trim()
-      const text = match[3].trim()
+      const text = match[2].trim()
       
-      translatedLines.set(lineNum, {
-        type: label === 'NARRATION' ? 'narration' : 'dialogue',
-        text
-      })
+      // Use position-based type from expectedTypes, not the translated label
+      const type = expectedTypes.get(lineNum) || 'dialogue'
+      
+      translatedLines.set(lineNum, { type, text })
     }
     
     if (translatedLines.size === 0) {
-      toast.error('No valid translations found. Ensure format: [1] CHARACTER: text')
+      toast.error('No valid translations found. Ensure format: [1] LABEL: text')
       return
     }
     
@@ -377,22 +397,22 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       const cacheKey = `${sceneIdx}-${importTargetLang}`
       const translations: { narration?: string; dialogue?: string[] } = {}
       
-      // Import narration translation
+      // Import narration translation (position-based - no longer checks type)
       if (scene.narration) {
         const imported = translatedLines.get(lineNum)
-        if (imported && imported.type === 'narration') {
+        if (imported) {
           translations.narration = imported.text
         }
         lineNum++
       }
       
-      // Import dialogue translations
+      // Import dialogue translations (position-based)
       if (scene.dialogue && Array.isArray(scene.dialogue)) {
         translations.dialogue = []
         scene.dialogue.forEach((d: any) => {
           if (d.line) {
             const imported = translatedLines.get(lineNum)
-            if (imported && imported.type === 'dialogue') {
+            if (imported) {
               translations.dialogue!.push(imported.text)
             } else {
               translations.dialogue!.push(d.line) // Fallback to original
