@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
-import { Play, Pause, Volume2, VolumeX, Mic, Music, Zap, SkipBack, SkipForward, X, RotateCcw, Pencil, AlertTriangle, Layers, Link2, RefreshCw } from 'lucide-react'
+import { Play, Pause, Volume2, VolumeX, Mic, Music, Zap, SkipBack, SkipForward, X, RotateCcw, Pencil, AlertTriangle, Film, Link2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
@@ -615,11 +615,11 @@ export function AudioTimeline({
     if (segmentClips.length === 0) return null
     
     return (
-      <div className="flex items-stretch h-10 group border-b-2 border-cyan-500/30">
+      <div className="flex items-stretch h-10 group border-b-2 border-orange-500/30">
         {/* Track Label */}
-        <div className="w-20 flex-shrink-0 flex items-center gap-1 px-2 bg-cyan-900/20 border-r border-gray-300 dark:border-gray-700">
-          <Layers className="w-3 h-3 text-cyan-400" />
-          <span className="text-[10px] font-medium truncate text-cyan-300">Segments</span>
+        <div className="w-20 flex-shrink-0 flex items-center gap-1 px-2 bg-orange-900/20 border-r border-gray-300 dark:border-gray-700">
+          <Film className="w-3 h-3 text-orange-400" />
+          <span className="text-[10px] font-medium truncate text-orange-300">Keyframes</span>
         </div>
         
         {/* Track Timeline */}
@@ -636,8 +636,8 @@ export function AudioTimeline({
                 key={seg.segmentId}
                 className={cn(
                   "absolute top-1 bottom-1 rounded-sm flex items-center px-1 overflow-hidden cursor-pointer transition-all",
-                  "bg-gradient-to-r from-cyan-600 to-cyan-700 opacity-90",
-                  isSelected && "ring-2 ring-cyan-400 ring-offset-1 ring-offset-gray-900 z-10"
+                  "bg-gradient-to-r from-orange-600 to-amber-600 opacity-90",
+                  isSelected && "ring-2 ring-orange-400 ring-offset-1 ring-offset-gray-900 z-10"
                 )}
                 style={{
                   left: seg.startTime * pixelsPerSecond,
@@ -651,7 +651,7 @@ export function AudioTimeline({
                   handleSegmentSelect(seg.segmentId)
                 }}
               >
-                {/* Segment label */}
+                {/* Keyframe label */}
                 {seg.duration * pixelsPerSecond > 30 && (
                   <span className="text-[8px] text-white font-medium truncate relative z-10">
                     {seg.label}
@@ -1072,15 +1072,15 @@ export function AudioTimeline({
         }
         
         return (
-          <div className="border-t-2 border-cyan-500 bg-cyan-500/10 p-3 transition-all">
+          <div className="border-t-2 border-orange-500 bg-orange-500/10 p-3 transition-all">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase text-cyan-400">SEGMENT</span>
+                <span className="text-[10px] font-bold uppercase text-orange-400">KEYFRAME</span>
                 <span className="text-xs font-medium text-white truncate max-w-[150px]">
-                  {segData.label || `Segment ${segData.sequenceIndex + 1}`}
+                  {segData.label || `Keyframe ${segData.sequenceIndex + 1}`}
                 </span>
                 {enableAudioSnap && (
-                  <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 text-[9px] font-medium">
+                  <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 text-[9px] font-medium">
                     <Link2 className="w-2.5 h-2.5" />
                     Snap On
                   </span>

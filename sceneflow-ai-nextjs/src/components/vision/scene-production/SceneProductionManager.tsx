@@ -77,6 +77,8 @@ interface SceneProductionManagerProps {
   onAddSegment?: (sceneId: string, afterSegmentId: string | null, duration: number) => void
   onDeleteSegment?: (sceneId: string, segmentId: string) => void
   onSegmentResize?: (sceneId: string, segmentId: string, changes: { startTime?: number; duration?: number }) => void
+  /** Apply intelligent auto-alignment of keyframes to audio anchors */
+  onApplyIntelligentAlignment?: (sceneId: string, language?: string) => void
   onAudioClipChange?: (sceneId: string, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
   // Phase 7: Segment reordering
   onReorderSegments?: (sceneId: string, oldIndex: number, newIndex: number) => void
@@ -127,6 +129,7 @@ export function SceneProductionManager({
   onAddSegment,
   onDeleteSegment,
   onSegmentResize,
+  onApplyIntelligentAlignment,
   onAudioClipChange,
   onReorderSegments,
   onEditImage,
@@ -199,6 +202,9 @@ export function SceneProductionManager({
     },
     [sceneId, onSegmentResize]
   )
+  
+  // NOTE: handleApplyIntelligentAlignmentWrapper is defined AFTER selectedLanguage (line ~520)
+  // to avoid TDZ (Temporal Dead Zone) errors in minified production builds
   
   const handleAudioClipChangeWrapper = useCallback(
     (trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => {
@@ -498,6 +504,17 @@ export function SceneProductionManager({
       localStorage.setItem('sceneflow-selected-language', selectedLanguage)
     }
   }, [selectedLanguage])
+  
+  // Wrapper for intelligent auto-alignment of keyframes to audio
+  // Defined after selectedLanguage to avoid TDZ errors
+  const handleApplyIntelligentAlignmentWrapper = useCallback(
+    () => {
+      if (onApplyIntelligentAlignment) {
+        onApplyIntelligentAlignment(sceneId, selectedLanguage)
+      }
+    },
+    [sceneId, onApplyIntelligentAlignment, selectedLanguage]
+  )
   
   // V2 Timeline: Audio clip change wrapper with AudioTrackType
   const handleAudioClipChangeV2Wrapper = useCallback(
@@ -1808,6 +1825,7 @@ Example format:
               onAddEstablishingShot={onAddEstablishingShot ? () => handleAddEstablishingShotWrapper('single-shot') : undefined}
               onAudioError={handleAudioError}
               sceneFrameUrl={scene?.imageUrl}
+              onApplyIntelligentAlignment={onApplyIntelligentAlignment ? handleApplyIntelligentAlignmentWrapper : undefined}
               isSidePanelVisible={isSidePanelVisible}
               onToggleSidePanel={() => setIsSidePanelVisible(!isSidePanelVisible)}
             />

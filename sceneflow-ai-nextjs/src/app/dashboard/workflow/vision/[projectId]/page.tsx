@@ -66,6 +66,8 @@ import { cn } from '@/lib/utils'
 import { VisionReferencesSidebar } from '@/components/vision/VisionReferencesSidebar'
 import { VisualReference, VisualReferenceType, VisionReferencesPayload } from '@/types/visionReferences'
 import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production'
+import { applyIntelligentDefaults } from '@/lib/audio/anchoredTiming'
+import { buildAudioTracksForLanguage } from '@/components/vision/scene-production/audioTrackBuilder'
 
 /**
  * Client-side upload helper that uses the API endpoint
@@ -2916,6 +2918,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       })
     },
     [applySceneProductionUpdate]
+  )
+  
+  // Handle intelligent auto-alignment of keyframes to audio
+  const handleApplyIntelligentAlignment = useCallback(
+    (sceneId: string, language: string = 'en') => {
+      // Get the scene to access its audio tracks
+      const sceneIndex = scenes.findIndex((s, i) => getSceneProductionKey(s, i) === sceneId)
+      if (sceneIndex === -1) return
+      
+      const scene = scenes[sceneIndex]
+      const audioTracks = buildAudioTracksForLanguage(scene, language)
+      
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current || current.segments.length === 0) return current
+        
+        // Apply intelligent defaults to segments
+        const alignedSegments = applyIntelligentDefaults(current.segments, audioTracks)
+        
+        console.log('[Auto-Align] Applied intelligent alignment to', alignedSegments.length, 'keyframes')
+        
+        return { ...current, segments: alignedSegments }
+      })
+    },
+    [applySceneProductionUpdate, scenes]
   )
   
   // Handle audio clip changes (start time, duration) with persistence
@@ -8093,6 +8119,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onAddFullSegment={handleAddFullSegment}
                 onDeleteSegment={handleDeleteSegment}
                 onSegmentResize={handleSegmentResize}
+                onApplyIntelligentAlignment={handleApplyIntelligentAlignment}
                 onReorderSegments={handleReorderSegments}
                 onAudioClipChange={handleAudioClipChange}
                 onCleanupStaleAudioUrl={handleCleanupStaleAudioUrl}

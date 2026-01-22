@@ -352,3 +352,121 @@ export function getUsedAnchorTypes(segments: SceneSegment[]): AudioAnchor['type'
   })
   return Array.from(types)
 }
+
+// ============================================================================
+// Intelligent Default Alignment
+// ============================================================================
+
+/**
+ * Automatically assigns audio anchors to keyframes based on available audio.
+ * 
+ * Strategy:
+ * 1. First keyframe anchors to narration start (if narration exists) or first dialogue
+ * 2. Subsequent keyframes anchor to dialogue clips in sequence
+ * 3. If more keyframes than dialogue, remaining keyframes use 'split-even' on narration
+ * 4. Uses 'fill-to-next' duration mode so each keyframe extends to next anchor
+ * 
+ * This creates a natural flow where keyframes transition at audio boundaries.
+ * 
+ * @param segments - Scene segments to apply defaults to
+ * @param audioTracks - Audio track data to anchor to
+ * @returns Segments with audioAnchor and durationMode applied
+ */
+export function applyIntelligentDefaults(
+  segments: SceneSegment[],
+  audioTracks: AudioTracksData
+): SceneSegment[] {
+  if (segments.length === 0) return segments
+  
+  // Collect available audio clips with their timing
+  const narrationClips = (audioTracks.voiceover || []).filter(v => 
+    v.label?.toLowerCase().includes('narration')
+  )
+  const descriptionClips = (audioTracks.voiceover || []).filter(v => 
+    v.label?.toLowerCase().includes('description')
+  )
+  const dialogueClips = audioTracks.dialogue || []
+  
+  // Sort by start time
+  const sortedDialogue = [...dialogueClips].sort((a, b) => a.startTime - b.startTime)
+  
+  // Determine anchor strategy
+  const hasNarration = narrationClips.length > 0
+  const hasDescription = descriptionClips.length > 0
+  const hasDialogue = sortedDialogue.length > 0
+  
+  // If no audio at all, return segments unchanged
+  if (!hasNarration && !hasDescription && !hasDialogue) {
+    return segments
+  }
+  
+  const result: SceneSegment[] = []
+  let dialogueIndex = 0
+  
+  for (let i = 0; i < segments.length; i++) {
+    const segment = { ...segments[i] }
+    
+    if (i === 0) {
+      // First keyframe: anchor to narration/description start, or first dialogue
+      if (hasNarration) {
+        segment.audioAnchor = {
+          type: 'narration',
+          position: 'start',
+          offsetSeconds: 0
+        }
+        segment.durationMode = hasDialogue ? 'fill-to-next' : (segments.length > 1 ? 'split-even' : 'match-audio')
+      } else if (hasDescription) {
+        segment.audioAnchor = {
+          type: 'description',
+          position: 'start',
+          offsetSeconds: 0
+        }
+        segment.durationMode = hasDialogue ? 'fill-to-next' : (segments.length > 1 ? 'split-even' : 'match-audio')
+      } else if (hasDialogue) {
+        // Anchor to first dialogue
+        segment.audioAnchor = {
+          type: 'dialogue',
+          position: 'start',
+          trackIndex: 0,
+          characterName: sortedDialogue[0].label,
+          offsetSeconds: 0
+        }
+        segment.durationMode = sortedDialogue.length > 1 ? 'fill-to-next' : 'match-audio'
+        dialogueIndex = 1 // Next keyframe starts at second dialogue
+      }
+    } else if (dialogueIndex < sortedDialogue.length) {
+      // Subsequent keyframes: anchor to dialogue clips in sequence
+      const dialogueClip = sortedDialogue[dialogueIndex]
+      segment.audioAnchor = {
+        type: 'dialogue',
+        position: 'start',
+        trackIndex: dialogueIndex,
+        characterName: dialogueClip.label,
+        offsetSeconds: 0
+      }
+      segment.durationMode = dialogueIndex < sortedDialogue.length - 1 ? 'fill-to-next' : 'match-audio'
+      dialogueIndex++
+    } else if (hasNarration) {
+      // More keyframes than dialogue: split evenly across narration
+      segment.audioAnchor = {
+        type: 'narration',
+        position: 'start',
+        offsetSeconds: 0
+      }
+      segment.durationMode = 'split-even'
+    } else if (hasDescription) {
+      // Fall back to description if no narration
+      segment.audioAnchor = {
+        type: 'description',
+        position: 'start',
+        offsetSeconds: 0
+      }
+      segment.durationMode = 'split-even'
+    }
+    // If we've exhausted all anchor options, segment keeps its original timing
+    
+    result.push(segment)
+  }
+  
+  return result
+}

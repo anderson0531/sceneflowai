@@ -172,6 +172,8 @@ export function SceneTimelineV2({
   onSegmentTimeChange,
   onFitSegmentToDialogue,
   onOpenSegmentPromptDialog,
+  // Phase 9: Intelligent audio anchoring
+  onApplyIntelligentAlignment,
   isSidePanelVisible = true,
   onToggleSidePanel,
 }: SceneTimelineV2Props & {
@@ -1103,6 +1105,20 @@ export function SceneTimelineV2({
             </Button>
           )}
           
+          {/* Auto-Align Keyframes to Audio */}
+          {onApplyIntelligentAlignment && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1 px-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900/20"
+              onClick={onApplyIntelligentAlignment}
+              title="Auto-align keyframes to narration/dialogue start positions"
+            >
+              <Magnet className="w-3 h-3" />
+              Auto-Align
+            </Button>
+          )}
+          
           {/* Open Segment Prompt Dialog */}
           {onOpenSegmentPromptDialog && selectedSegmentId && (
             <Button
@@ -1228,8 +1244,8 @@ export function SceneTimelineV2({
               className="flex-shrink-0 flex items-center gap-2 px-3 bg-gray-100 dark:bg-gray-800"
               style={{ width: TRACK_LABEL_WIDTH }}
             >
-              <Layers className="w-4 h-4 text-sf-primary" />
-              <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Segments</span>
+              <Film className="w-4 h-4 text-orange-500" />
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Keyframes</span>
             </div>
             
             <div className="flex-1 relative bg-gray-50 dark:bg-gray-900/50">
@@ -1241,12 +1257,12 @@ export function SceneTimelineV2({
                         id: clip.id, 
                         startTime: clip.startTime, 
                         duration: clip.duration, 
-                        label: clip.isEstablishingShot ? 'Estab.' : `Seg ${clip.sequenceIndex + 1}`,
+                        label: clip.isEstablishingShot ? 'Estab.' : `KF ${clip.sequenceIndex + 1}`,
                         url: clip.url,
                         thumbnailUrl: clip.thumbnailUrl,
                       },
                       'visual',
-                      'bg-gradient-to-r from-blue-500 to-blue-600',
+                      'bg-gradient-to-r from-orange-500 to-amber-500',
                       true
                     )}
                   </SortableClipWrapper>

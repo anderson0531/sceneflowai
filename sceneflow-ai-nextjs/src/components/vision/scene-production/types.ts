@@ -608,6 +608,8 @@ export interface SceneTimelineV2Props {
   onSegmentTimeChange?: (segmentId: string, newStartTime: number, newEndTime: number) => void
   onFitSegmentToDialogue?: (segmentId: string) => void
   onOpenSegmentPromptDialog?: (segmentId: string) => void
+  // Phase 9: Intelligent audio anchoring
+  onApplyIntelligentAlignment?: () => void
 }
 
 // ============================================================================

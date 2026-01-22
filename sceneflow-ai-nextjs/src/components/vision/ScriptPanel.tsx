@@ -200,6 +200,8 @@ interface ScriptPanelProps {
   onAddSegment?: (sceneId: string, afterSegmentId: string | null, duration: number) => void
   onDeleteSegment?: (sceneId: string, segmentId: string) => void
   onSegmentResize?: (sceneId: string, segmentId: string, changes: { startTime?: number; duration?: number }) => void
+  /** Apply intelligent auto-alignment of keyframes to audio anchors */
+  onApplyIntelligentAlignment?: (sceneId: string, language?: string) => void
   onReorderSegments?: (sceneId: string, oldIndex: number, newIndex: number) => void
   onAudioClipChange?: (sceneIndex: number, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
   onCleanupStaleAudioUrl?: (sceneId: string, staleUrl: string) => void
@@ -3138,6 +3140,8 @@ interface SceneCardProps {
   onAddSegment?: (sceneId: string, afterSegmentId: string | null, duration: number) => void
   onDeleteSegment?: (sceneId: string, segmentId: string) => void
   onSegmentResize?: (sceneId: string, segmentId: string, changes: { startTime?: number; duration?: number }) => void
+  /** Apply intelligent auto-alignment of keyframes to audio anchors */
+  onApplyIntelligentAlignment?: (sceneId: string, language?: string) => void
   onReorderSegments?: (sceneId: string, oldIndex: number, newIndex: number) => void
   onAudioClipChange?: (sceneIndex: number, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
   onCleanupStaleAudioUrl?: (sceneId: string, staleUrl: string) => void
@@ -6289,6 +6293,7 @@ function SceneCard({
                         onAddSegment={onAddSegment}
                         onDeleteSegment={onDeleteSegment}
                         onSegmentResize={onSegmentResize}
+                        onApplyIntelligentAlignment={onApplyIntelligentAlignment}
                         onReorderSegments={onReorderSegments}
                         onAudioClipChange={onAudioClipChange}
                         onCleanupStaleAudioUrl={onCleanupStaleAudioUrl}
