@@ -6269,12 +6269,63 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       
       let text: string | undefined
+      const targetLanguage = language || 'en'
+      
+      // PRIORITY: Check stored translations first for non-English languages
+      // This allows audio generation to use imported translations (via ScriptPanel)
+      const sceneTranslation = storedTranslations?.[targetLanguage]?.[sceneIdx]
+      const useStoredTranslation = targetLanguage !== 'en' && sceneTranslation
+      
       if (audioType === 'narration') {
-        text = scene.narration || scene.action
+        // Use stored translation if available, otherwise fall back to English
+        if (useStoredTranslation && sceneTranslation?.narration) {
+          text = sceneTranslation.narration
+          console.log('[Generate Scene Audio] Using stored translation for narration:', {
+            language: targetLanguage,
+            sceneIdx,
+            textPreview: text?.substring(0, 50)
+          })
+        } else {
+          text = scene.narration || scene.action
+          if (targetLanguage !== 'en') {
+            console.warn('[Generate Scene Audio] No stored translation found for narration, falling back to English:', {
+              language: targetLanguage,
+              sceneIdx,
+              hasStoredTranslations: !!storedTranslations,
+              hasLanguage: !!storedTranslations?.[targetLanguage],
+              hasScene: !!storedTranslations?.[targetLanguage]?.[sceneIdx]
+            })
+          }
+        }
       } else if (audioType === 'description') {
         text = scene.visualDescription || scene.action || scene.summary || scene.heading
       } else {
-        text = dialogueLine?.line
+        // Dialogue: use stored translation by dialogueIndex
+        if (useStoredTranslation && sceneTranslation?.dialogue && dialogueIndex !== undefined) {
+          const translatedLine = sceneTranslation.dialogue[dialogueIndex]
+          if (translatedLine) {
+            text = translatedLine
+            console.log('[Generate Scene Audio] Using stored translation for dialogue:', {
+              language: targetLanguage,
+              sceneIdx,
+              dialogueIndex,
+              textPreview: text?.substring(0, 50)
+            })
+          } else {
+            text = dialogueLine?.line
+            console.warn('[Generate Scene Audio] No stored translation for dialogue line, falling back:', {
+              language: targetLanguage,
+              sceneIdx,
+              dialogueIndex,
+              availableTranslations: sceneTranslation?.dialogue?.length || 0
+            })
+          }
+        } else {
+          text = dialogueLine?.line
+          if (targetLanguage !== 'en') {
+            console.warn('[Generate Scene Audio] No stored translation for dialogue, falling back to English')
+          }
+        }
       }
 
       // Debug logging for text extraction
