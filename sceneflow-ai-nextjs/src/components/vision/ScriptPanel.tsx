@@ -22,9 +22,10 @@ import { SegmentBuilder } from './scene-production/SegmentBuilder'
 import { AddSegmentDialog } from './scene-production/AddSegmentDialog'
 import { EditSegmentDialog } from './scene-production/EditSegmentDialog'
 import { DirectorConsole } from './scene-production/DirectorConsole'
-import { AudioTimeline, type AudioTracksData, type AudioTrackClip } from './scene-production/AudioTimeline'
+import { SceneTimelineV2 } from './scene-production/SceneTimelineV2'
 import { applySequentialAlignmentToScene, AUDIO_ALIGNMENT_BUFFERS } from './scene-production/audioTrackBuilder'
-import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings, SceneSegment } from './scene-production/types'
+import { type AudioTracksData, type AudioTrackClip } from './scene-production/AudioTimeline'
+import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings, SceneSegment, AudioTrackType } from './scene-production/types'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -6163,67 +6164,33 @@ function SceneCard({
                                 exit={{ opacity: 0, height: 0 }}
                                 transition={{ duration: 0.2 }}
                               >
-                                <AudioTimeline
-                                  sceneDuration={sceneDuration}
-                                  segments={sceneProductionData?.segments?.map(seg => ({
-                                    startTime: seg.startTime,
-                                    endTime: seg.endTime,
-                                    segmentId: seg.segmentId,
-                                    sequenceIndex: seg.sequenceIndex,
-                                  })) || []}
-                                  audioTracks={audioTracks}
+                                <SceneTimelineV2
+                                  segments={sceneProductionData?.segments || []}
+                                  scene={scene}
                                   selectedSegmentId={selectedSegmentId}
+                                  selectedLanguage={selectedLanguage}
+                                  onLanguageChange={(lang) => {
+                                    // Language change is handled at the panel level
+                                    console.log('[ScriptPanel] Language change requested:', lang)
+                                  }}
                                   onSegmentSelect={setSelectedSegmentId}
-                                  onAudioClipChange={(trackType, clipId, changes) => {
+                                  onVisualClipChange={(clipId, changes) => {
+                                    const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
+                                    onSegmentResize?.(sceneId, clipId, changes)
+                                  }}
+                                  onAudioClipChange={(trackType: AudioTrackType, clipId: string, changes: { startTime?: number; duration?: number }) => {
                                     onAudioClipChange?.(sceneIdx, trackType, clipId, changes)
                                   }}
-                                  onSegmentChange={(segmentId, changes) => {
+                                  onDeleteSegment={(segmentId) => {
                                     const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
-                                    onSegmentResize?.(sceneId, segmentId, changes)
+                                    onDeleteSegment?.(sceneId, segmentId)
                                   }}
-                                  onRealignAudio={(mutedClipIds) => {
-                                    // Recalculate alignment with muted clips and persist to scene
-                                    const newAlignment = applySequentialAlignmentToScene(scene, selectedLanguage, mutedClipIds)
-                                    
-                                    // Update narration timing
-                                    if (audioTracks?.voiceover?.length) {
-                                      onAudioClipChange?.(sceneIdx, 'voiceover', 'narration', {
-                                        startTime: newAlignment.narrationStartTime,
-                                        duration: newAlignment.narrationDuration,
-                                      })
-                                    }
-                                    
-                                    // Update each dialogue clip timing
-                                    newAlignment.dialogueTimings.forEach((timing) => {
-                                      onAudioClipChange?.(sceneIdx, 'dialogue', `dialogue-${timing.index}`, {
-                                        startTime: timing.startTime,
-                                        duration: timing.duration,
-                                      })
-                                    })
-                                    
-                                    // Update each SFX clip timing
-                                    newAlignment.sfxTimings.forEach((timing) => {
-                                      onAudioClipChange?.(sceneIdx, 'sfx', `sfx-${timing.index}`, {
-                                        startTime: timing.startTime,
-                                        duration: timing.duration,
-                                      })
-                                    })
-                                    
-                                    // Update music duration
-                                    if (audioTracks?.music?.length) {
-                                      onAudioClipChange?.(sceneIdx, 'music', 'music', {
-                                        startTime: 0,
-                                        duration: newAlignment.musicDuration,
-                                      })
-                                    }
-                                    
-                                    console.log('[ScriptPanel] Audio realigned:', {
-                                      sceneIdx,
-                                      mutedClipCount: mutedClipIds.size,
-                                      totalDuration: newAlignment.totalDuration,
-                                      musicDuration: newAlignment.musicDuration,
-                                    })
+                                  onReorderSegments={(oldIndex, newIndex) => {
+                                    const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
+                                    onReorderSegments?.(sceneId, oldIndex, newIndex)
                                   }}
+                                  onApplyIntelligentAlignment={onApplyIntelligentAlignment}
+                                  sceneFrameUrl={scene?.imageUrl}
                                 />
                               </motion.div>
                             )}
