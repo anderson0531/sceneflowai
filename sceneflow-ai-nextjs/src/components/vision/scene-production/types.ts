@@ -231,6 +231,46 @@ export interface PromptContext {
   scriptVersion?: string
 }
 
+// ============================================================================
+// Audio Anchor Types - For automatic keyframe-to-audio alignment
+// ============================================================================
+
+/**
+ * Types of audio tracks that keyframes can anchor to
+ */
+export type AudioAnchorType = 'narration' | 'dialogue' | 'description' | 'sfx' | 'music'
+
+/**
+ * Position within an audio clip to anchor to
+ */
+export type AudioAnchorPosition = 'start' | 'end'
+
+/**
+ * Audio anchor configuration for automatic keyframe timing
+ * When set, the segment's display timing in Screening Room is automatically
+ * calculated based on the referenced audio clip's position and duration.
+ */
+export interface AudioAnchor {
+  // Type of audio track to anchor to
+  type: AudioAnchorType
+  // For dialogue: which character's audio clip (by index or character name)
+  trackIndex?: number
+  characterName?: string
+  // Whether to align to start or end of the audio clip
+  position: AudioAnchorPosition
+  // Optional offset from anchor point (positive = after, negative = before)
+  offsetSeconds?: number
+}
+
+/**
+ * Duration calculation mode for anchored segments
+ * - 'manual': Use imageDuration value directly
+ * - 'fill-to-next': Extend to next segment's anchor or end of scene
+ * - 'match-audio': Match the anchored audio clip's duration
+ * - 'split-even': Split duration evenly with sibling segments on same audio
+ */
+export type DurationMode = 'manual' | 'fill-to-next' | 'match-audio' | 'split-even'
+
 export interface SceneSegmentTake {
   id: string
   createdAt: string
@@ -352,6 +392,21 @@ export interface SceneSegment {
   // 'both' = start frame for half duration, then end frame for half duration
   // Default: 'start'
   frameSelection?: 'start' | 'end' | 'both'
+  
+  // ============================================================================
+  // Audio Anchor Settings (for Screening Room timing alignment)
+  // ============================================================================
+  
+  // Audio anchor - automatically calculates display startTime from audio position
+  // When set, the segment's keyframe display timing syncs to the referenced audio clip
+  audioAnchor?: AudioAnchor
+  
+  // Duration mode - how to calculate display duration when anchored
+  // 'manual' = use imageDuration value
+  // 'fill-to-next' = extend to next segment's anchor or end of scene
+  // 'match-audio' = match the anchored audio clip's duration
+  // 'split-even' = split duration evenly with sibling segments on same audio
+  durationMode?: DurationMode
 }
 
 // Character presence in a segment

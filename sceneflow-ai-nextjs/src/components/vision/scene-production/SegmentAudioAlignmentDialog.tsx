@@ -30,6 +30,13 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Slider } from '@/components/ui/slider'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   Mic,
   MessageSquare,
   Clock,
@@ -41,9 +48,11 @@ import {
   Play,
   Pause,
   Volume2,
+  Anchor,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { SceneSegment, AudioTrackClipV2 } from './types'
+import { SceneSegment, AudioTrackClipV2, AudioAnchorType, AudioAnchorPosition, DurationMode, AudioAnchor } from './types'
+import { describeAnchor, describeDurationMode } from '@/lib/audio/anchoredTiming'
 
 // ============================================================================
 // Types
@@ -83,6 +92,9 @@ export interface SegmentAlignmentUpdates {
   dialogueLineIds?: string[]
   linkedAudioClipId?: string
   characterFocus?: string[]
+  // Audio anchor settings for automatic timing
+  audioAnchor?: AudioAnchor | null
+  durationMode?: DurationMode
 }
 
 // ============================================================================
@@ -108,6 +120,26 @@ export function SegmentAudioAlignmentDialog({
   )
   const [linkedAudioClipId, setLinkedAudioClipId] = useState<string | undefined>()
   
+  // Audio anchor state
+  const [anchorType, setAnchorType] = useState<AudioAnchorType | 'none'>(
+    segment.audioAnchor?.type || 'none'
+  )
+  const [anchorPosition, setAnchorPosition] = useState<AudioAnchorPosition>(
+    segment.audioAnchor?.position || 'start'
+  )
+  const [anchorTrackIndex, setAnchorTrackIndex] = useState<number | undefined>(
+    segment.audioAnchor?.trackIndex
+  )
+  const [anchorCharacterName, setAnchorCharacterName] = useState<string | undefined>(
+    segment.audioAnchor?.characterName
+  )
+  const [anchorOffset, setAnchorOffset] = useState(
+    segment.audioAnchor?.offsetSeconds || 0
+  )
+  const [durationMode, setDurationMode] = useState<DurationMode>(
+    segment.durationMode || 'manual'
+  )
+  
   // Audio preview state
   const [isPlayingPreview, setIsPlayingPreview] = useState(false)
   const [previewAudioUrl, setPreviewAudioUrl] = useState<string | null>(null)
@@ -117,6 +149,13 @@ export function SegmentAudioAlignmentDialog({
     setStartTime(segment.startTime)
     setEndTime(segment.endTime)
     setSelectedDialogueIds(new Set(segment.dialogueLineIds || []))
+    // Sync audio anchor state
+    setAnchorType(segment.audioAnchor?.type || 'none')
+    setAnchorPosition(segment.audioAnchor?.position || 'start')
+    setAnchorTrackIndex(segment.audioAnchor?.trackIndex)
+    setAnchorCharacterName(segment.audioAnchor?.characterName)
+    setAnchorOffset(segment.audioAnchor?.offsetSeconds || 0)
+    setDurationMode(segment.durationMode || 'manual')
   }, [segment])
   
   // Calculate duration
@@ -164,15 +203,26 @@ export function SegmentAudioAlignmentDialog({
   
   // Handle save
   const handleSave = useCallback(() => {
+    // Build audio anchor object if type is set
+    const audioAnchor: AudioAnchor | null = anchorType !== 'none' ? {
+      type: anchorType,
+      position: anchorPosition,
+      trackIndex: anchorTrackIndex,
+      characterName: anchorCharacterName,
+      offsetSeconds: anchorOffset || undefined,
+    } : null
+    
     onSave({
       segmentId: segment.segmentId,
       startTime,
       endTime,
       dialogueLineIds: Array.from(selectedDialogueIds),
       linkedAudioClipId,
+      audioAnchor,
+      durationMode: anchorType !== 'none' ? durationMode : undefined,
     })
     onClose()
-  }, [segment.segmentId, startTime, endTime, selectedDialogueIds, linkedAudioClipId, onSave, onClose])
+  }, [segment.segmentId, startTime, endTime, selectedDialogueIds, linkedAudioClipId, anchorType, anchorPosition, anchorTrackIndex, anchorCharacterName, anchorOffset, durationMode, onSave, onClose])
   
   // Get alignment status color
   const getAlignmentColor = () => {
@@ -343,6 +393,118 @@ export function SegmentAudioAlignmentDialog({
                       )}
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Audio Anchor Section - Automatic Timing Alignment */}
+            <div className="space-y-3 p-3 rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-900/10">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold flex items-center gap-2">
+                  <Anchor className="w-4 h-4 text-purple-500" />
+                  Audio Anchor
+                </h4>
+                <Badge variant="outline" className={anchorType !== 'none' ? 'text-purple-500 border-purple-500' : 'text-gray-400'}>
+                  {anchorType !== 'none' ? 'Anchored' : 'Manual'}
+                </Badge>
+              </div>
+              
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Anchor this keyframe to an audio clip for automatic timing alignment in Screening Room.
+              </p>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs text-gray-500">Anchor To</Label>
+                  <Select 
+                    value={anchorType === 'none' ? 'none' : (anchorType === 'dialogue' && anchorTrackIndex !== undefined ? `dialogue-${anchorTrackIndex}` : anchorType)}
+                    onValueChange={(val) => {
+                      if (val === 'none') {
+                        setAnchorType('none')
+                        setAnchorTrackIndex(undefined)
+                        setAnchorCharacterName(undefined)
+                      } else if (val.startsWith('dialogue-')) {
+                        setAnchorType('dialogue')
+                        const idx = parseInt(val.replace('dialogue-', ''))
+                        setAnchorTrackIndex(idx)
+                        setAnchorCharacterName(dialogueClips[idx]?.label || undefined)
+                      } else {
+                        setAnchorType(val as AudioAnchorType)
+                        setAnchorTrackIndex(undefined)
+                        setAnchorCharacterName(undefined)
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="h-8">
+                      <SelectValue placeholder="None (manual)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None (manual)</SelectItem>
+                      {narrationClip && <SelectItem value="narration">Narration</SelectItem>}
+                      <SelectItem value="description">Description</SelectItem>
+                      {dialogueClips.map((clip, idx) => (
+                        <SelectItem key={clip.id} value={`dialogue-${idx}`}>
+                          Dialogue: {clip.label || `#${idx + 1}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label className="text-xs text-gray-500">Position</Label>
+                  <Select value={anchorPosition} onValueChange={(val) => setAnchorPosition(val as AudioAnchorPosition)}>
+                    <SelectTrigger className="h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="start">Start of audio</SelectItem>
+                      <SelectItem value="end">End of audio</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              {anchorType !== 'none' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-gray-500">Duration Mode</Label>
+                    <Select value={durationMode} onValueChange={(val) => setDurationMode(val as DurationMode)}>
+                      <SelectTrigger className="h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="manual">Manual</SelectItem>
+                        <SelectItem value="match-audio">Match audio length</SelectItem>
+                        <SelectItem value="fill-to-next">Fill to next anchor</SelectItem>
+                        <SelectItem value="split-even">Split evenly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label className="text-xs text-gray-500">Offset</Label>
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        step={0.1}
+                        value={anchorOffset}
+                        onChange={(e) => setAnchorOffset(parseFloat(e.target.value) || 0)}
+                        className="h-8 text-sm"
+                      />
+                      <span className="text-xs text-gray-400">s</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Duration mode explanation */}
+              {anchorType !== 'none' && (
+                <div className="text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 p-2 rounded">
+                  {durationMode === 'manual' && 'Duration set manually via imageDuration setting'}
+                  {durationMode === 'match-audio' && 'Duration matches the anchored audio clip length'}
+                  {durationMode === 'fill-to-next' && 'Duration extends to the next anchor point or scene end'}
+                  {durationMode === 'split-even' && 'Duration split evenly with other keyframes on same audio'}
                 </div>
               )}
             </div>

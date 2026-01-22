@@ -4,7 +4,8 @@ import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import { Loader } from 'lucide-react'
 import { getKenBurnsConfig, generateKenBurnsKeyframes, getKenBurnsConfigFromKeyframes } from '@/lib/animation/kenBurns'
 import type { KenBurnsIntensity } from '@/lib/animation/kenBurns'
-import type { SceneSegment, SceneProductionData } from '@/components/vision/scene-production/types'
+import type { SceneSegment, SceneProductionData, AudioTracksData } from '@/components/vision/scene-production/types'
+import { calculateAnchoredTiming, hasAudioAnchors } from '@/lib/audio/anchoredTiming'
 
 interface KeyframeImage {
   url: string
@@ -27,11 +28,16 @@ interface SceneDisplayProps {
   productionData?: SceneProductionData
   // New: Scene audio duration for timing sync
   sceneDuration?: number
+  // New: Audio tracks for anchored timing calculation
+  audioTracks?: AudioTracksData
 }
 
 /**
  * Build an array of keyframe images from segments with timing
  * Falls back to scene.imageUrl if no segment keyframes exist
+ * 
+ * Supports audio-anchored timing: when segments have audioAnchor configured,
+ * their display duration is automatically calculated from audio positions.
  * 
  * NOTE: Only uses START frame images (not end frames) for cleaner
  * visual progression through the animatic.
@@ -39,7 +45,8 @@ interface SceneDisplayProps {
 function buildKeyframeSequence(
   scene: any,
   productionData?: SceneProductionData,
-  fallbackDuration: number = 4
+  fallbackDuration: number = 4,
+  audioTracks?: AudioTracksData
 ): KeyframeImage[] {
   const keyframes: KeyframeImage[] = []
   
@@ -56,6 +63,16 @@ function buildKeyframeSequence(
     return []
   }
   
+  // Calculate anchored timing if audio tracks provided and any segments have anchors
+  const useAnchoring = audioTracks && hasAudioAnchors(productionData.segments)
+  const anchoredTimingMap = useAnchoring
+    ? new Map(calculateAnchoredTiming(
+        productionData.segments,
+        audioTracks,
+        fallbackDuration * productionData.segments.length
+      ).map(t => [t.segmentId, t]))
+    : null
+  
   // Build keyframes from segments based on frameSelection and imageDuration settings
   productionData.segments.forEach((segment, idx) => {
     const segmentDuration = (segment.endTime || 0) - (segment.startTime || 0)
@@ -64,8 +81,11 @@ function buildKeyframeSequence(
     const startUrl = segment.startFrameUrl || segment.references?.startFrameUrl
     const endUrl = segment.endFrameUrl || segment.references?.endFrameUrl
     
-    // Use imageDuration if set, otherwise default to segmentDuration * 2
-    const totalDuration = segment.imageDuration ?? (segmentDuration || fallbackDuration) * 2
+    // Use anchored timing if available, otherwise fall back to imageDuration or default
+    const anchoredTiming = anchoredTimingMap?.get(segment.segmentId)
+    const totalDuration = anchoredTiming?.isAnchored 
+      ? anchoredTiming.displayDuration 
+      : (segment.imageDuration ?? (segmentDuration || fallbackDuration) * 2)
     const frameSelection = segment.frameSelection ?? 'start'
     
     if (frameSelection === 'start') {
@@ -138,12 +158,13 @@ export function SceneDisplay({
   translatedDialogue, 
   kenBurnsIntensity = 'medium',
   productionData,
-  sceneDuration
+  sceneDuration,
+  audioTracks
 }: SceneDisplayProps) {
-  // Build keyframe sequence
+  // Build keyframe sequence (with anchored timing if audioTracks provided)
   const keyframes = useMemo(() => 
-    buildKeyframeSequence(scene, productionData, sceneDuration || 4),
-    [scene, productionData, sceneDuration]
+    buildKeyframeSequence(scene, productionData, sceneDuration || 4, audioTracks),
+    [scene, productionData, sceneDuration, audioTracks]
   )
   
   // Current keyframe index for cycling
