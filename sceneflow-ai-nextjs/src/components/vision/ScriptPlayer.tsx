@@ -19,7 +19,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { X, Subtitles, Menu, RefreshCw, Download } from 'lucide-react'
+import { X, Subtitles, Menu, RefreshCw, Download, Upload, FileText, Copy, Check } from 'lucide-react'
 import { SceneDisplay } from './SceneDisplay'
 import { PlaybackControls } from './PlaybackControls'
 import { VoiceAssignmentPanel } from './VoiceAssignmentPanel'
@@ -212,6 +212,135 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
   const scenes = React.useMemo(() => {
     return normalizeScenes(script)
   }, [script])
+  
+  // Handler to export dialogue for external translation (Google Translate web UI)
+  // Formats all scenes' narration and dialogue as numbered lines for easy copy/paste
+  const handleExportDialogue = useCallback(() => {
+    const lines: string[] = []
+    let lineNum = 1
+    
+    scenes.forEach((scene: any, sceneIdx: number) => {
+      lines.push(`=== Scene ${sceneIdx + 1} ===`)
+      
+      // Export narration
+      if (scene.narration) {
+        lines.push(`[${lineNum}] NARRATION: ${scene.narration}`)
+        lineNum++
+      }
+      
+      // Export dialogue
+      if (scene.dialogue && Array.isArray(scene.dialogue)) {
+        scene.dialogue.forEach((d: any) => {
+          if (d.line) {
+            const charName = d.character?.toUpperCase() || 'CHARACTER'
+            lines.push(`[${lineNum}] ${charName}: ${d.line}`)
+            lineNum++
+          }
+        })
+      }
+      
+      lines.push('') // Blank line between scenes
+    })
+    
+    const exportText = lines.join('\n')
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(exportText)
+      .then(() => {
+        setExportCopied(true)
+        toast.success('Dialogue exported! Paste into Google Translate, then import the translation.')
+        setTimeout(() => setExportCopied(false), 2000)
+      })
+      .catch((err) => {
+        console.error('Failed to copy:', err)
+        toast.error('Failed to copy to clipboard')
+      })
+  }, [scenes])
+  
+  // Handler to import translated dialogue from external translation
+  // Parses numbered format and stores translations in translatedDialogue state
+  const handleImportDialogue = useCallback(() => {
+    if (!importText.trim() || !importTargetLang) {
+      toast.error('Please paste translated text and select a language')
+      return
+    }
+    
+    // Parse the imported text - extract numbered lines
+    const translatedLines: Map<number, { type: 'narration' | 'dialogue'; text: string }> = new Map()
+    const linePattern = /\[(\d+)\]\s*([A-Z_]+(?:\s+[A-Z_]+)*):\s*(.+)/g
+    let match
+    
+    while ((match = linePattern.exec(importText)) !== null) {
+      const lineNum = parseInt(match[1], 10)
+      const label = match[2].trim()
+      const text = match[3].trim()
+      
+      translatedLines.set(lineNum, {
+        type: label === 'NARRATION' ? 'narration' : 'dialogue',
+        text
+      })
+    }
+    
+    if (translatedLines.size === 0) {
+      toast.error('No valid translations found. Ensure format: [1] CHARACTER: text')
+      return
+    }
+    
+    // Build translations cache for each scene
+    let lineNum = 1
+    const newCache = new Map(translationCacheRef.current)
+    
+    scenes.forEach((scene: any, sceneIdx: number) => {
+      const cacheKey = `${sceneIdx}-${importTargetLang}`
+      const translations: { narration?: string; dialogue?: string[] } = {}
+      
+      // Import narration translation
+      if (scene.narration) {
+        const imported = translatedLines.get(lineNum)
+        if (imported && imported.type === 'narration') {
+          translations.narration = imported.text
+        }
+        lineNum++
+      }
+      
+      // Import dialogue translations
+      if (scene.dialogue && Array.isArray(scene.dialogue)) {
+        translations.dialogue = []
+        scene.dialogue.forEach((d: any) => {
+          if (d.line) {
+            const imported = translatedLines.get(lineNum)
+            if (imported && imported.type === 'dialogue') {
+              translations.dialogue!.push(imported.text)
+            } else {
+              translations.dialogue!.push(d.line) // Fallback to original
+            }
+            lineNum++
+          }
+        })
+      }
+      
+      if (translations.narration || translations.dialogue) {
+        newCache.set(cacheKey, translations)
+      }
+    })
+    
+    translationCacheRef.current = newCache
+    
+    // If currently viewing imported language, update display
+    if (selectedLanguage === importTargetLang) {
+      const currentScene = scenes[playerState.currentSceneIndex]
+      const cacheKey = `${playerState.currentSceneIndex}-${importTargetLang}`
+      const cached = newCache.get(cacheKey)
+      if (cached) {
+        setTranslatedNarration(cached.narration || null)
+        setTranslatedDialogue(cached.dialogue || null)
+      }
+    }
+    
+    toast.success(`Imported ${translatedLines.size} translations for ${SUPPORTED_LANGUAGES.find(l => l.code === importTargetLang)?.name || importTargetLang}`)
+    setShowImportDialog(false)
+    setImportText('')
+  }, [importText, importTargetLang, scenes, selectedLanguage, playerState.currentSceneIndex])
 
   // Create a fingerprint of audio URLs in scenes to detect content changes
   // This catches cases where script object reference doesn't change but audio URLs do
@@ -278,6 +407,10 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
   const [showCaptions, setShowCaptions] = useState(false) // Default to off
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false) // Export video modal
+  const [showImportDialog, setShowImportDialog] = useState(false) // Import translated dialogue modal
+  const [importText, setImportText] = useState('') // Text pasted by user for import
+  const [importTargetLang, setImportTargetLang] = useState<string>('') // Target language for import
+  const [exportCopied, setExportCopied] = useState(false) // Show copied feedback
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Scene transition state for visual indicator
@@ -1182,6 +1315,25 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
               </option>
             ))}
           </select>
+          
+          {/* Export/Import Dialogue for Translation */}
+          <div className="flex items-center border-l border-white/20 ml-1 pl-2 gap-1">
+            <button
+              onClick={handleExportDialogue}
+              className="p-2 rounded-lg hover:bg-amber-500/20 text-amber-400 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+              title="Export Dialogue for Translation (copies to clipboard)"
+            >
+              {exportCopied ? <Check className="w-5 h-5 text-green-400" /> : <FileText className="w-5 h-5" />}
+            </button>
+            <button
+              onClick={() => setShowImportDialog(true)}
+              className="p-2 rounded-lg hover:bg-amber-500/20 text-amber-400 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+              title="Import Translated Dialogue"
+            >
+              <Upload className="w-5 h-5" />
+            </button>
+          </div>
+          
           <button
             onClick={() => setShowExportModal(true)}
             className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center gap-2 px-3"
@@ -1255,6 +1407,9 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
           setSelectedLanguage(lang)
         }}
         supportedLanguages={selectableLanguages}
+        onExportDialogue={handleExportDialogue}
+        onImportDialogue={() => setShowImportDialog(true)}
+        exportCopied={exportCopied}
       />
 
       {/* Main Content Area */}
@@ -1387,6 +1542,85 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
           narrationEnabled: playerState.narrationEnabled,
         }}
       />
+      
+      {/* Import Translated Dialogue Modal */}
+      {showImportDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="bg-gray-900 border border-gray-700 rounded-xl w-full max-w-2xl mx-4 shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-700">
+              <div>
+                <h3 className="text-lg font-semibold text-white">Import Translated Dialogue</h3>
+                <p className="text-sm text-gray-400 mt-1">Paste text from Google Translate</p>
+              </div>
+              <button
+                onClick={() => { setShowImportDialog(false); setImportText(''); }}
+                className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {/* Content */}
+            <div className="p-4 space-y-4">
+              {/* Instructions */}
+              <div className="bg-amber-900/30 border border-amber-700/50 rounded-lg p-3">
+                <h4 className="text-sm font-medium text-amber-400 mb-2">Instructions:</h4>
+                <ol className="text-xs text-amber-200/80 space-y-1 list-decimal list-inside">
+                  <li>Click the Export button (📄) to copy dialogue to clipboard</li>
+                  <li>Paste into <a href="https://translate.google.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-amber-100">translate.google.com</a></li>
+                  <li>Select target language and copy the translated text</li>
+                  <li>Paste below and select the matching language</li>
+                </ol>
+              </div>
+              
+              {/* Language Selector */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Target Language</label>
+                <select
+                  value={importTargetLang}
+                  onChange={(e) => setImportTargetLang(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                >
+                  <option value="">Select language...</option>
+                  {SUPPORTED_LANGUAGES.filter(l => l.code !== 'en').map(lang => (
+                    <option key={lang.code} value={lang.code}>{lang.name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              {/* Textarea */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Translated Text</label>
+                <textarea
+                  value={importText}
+                  onChange={(e) => setImportText(e.target.value)}
+                  placeholder={`Paste translated text here...\n\nExample format:\n=== Scene 1 ===\n[1] NARRATION: La ciudad duerme bajo una manta de niebla...\n[2] ALEX: Nunca pensé que terminaría así.`}
+                  className="w-full h-48 px-3 py-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none font-mono text-sm"
+                />
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-700">
+              <button
+                onClick={() => { setShowImportDialog(false); setImportText(''); }}
+                className="px-4 py-2 rounded-lg text-gray-300 hover:bg-white/10 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleImportDialogue}
+                disabled={!importText.trim() || !importTargetLang}
+                className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-medium transition-colors flex items-center gap-2"
+              >
+                <Upload className="w-4 h-4" />
+                Import Translations
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

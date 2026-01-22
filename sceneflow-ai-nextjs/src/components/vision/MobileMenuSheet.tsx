@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { X, Subtitles, Globe } from 'lucide-react'
+import { X, Subtitles, Globe, FileText, Upload } from 'lucide-react'
 
 interface MobileMenuSheetProps {
   open: boolean
@@ -11,6 +11,9 @@ interface MobileMenuSheetProps {
   selectedLanguage: string
   onLanguageChange: (language: string) => void
   supportedLanguages: Array<{ code: string; name: string }>
+  onExportDialogue?: () => void
+  onImportDialogue?: () => void
+  exportCopied?: boolean
 }
 
 export function MobileMenuSheet({
@@ -20,7 +23,10 @@ export function MobileMenuSheet({
   onToggleCaptions,
   selectedLanguage,
   onLanguageChange,
-  supportedLanguages
+  supportedLanguages,
+  onExportDialogue,
+  onImportDialogue,
+  exportCopied
 }: MobileMenuSheetProps) {
   if (!open) return null
 
@@ -93,6 +99,37 @@ export function MobileMenuSheet({
               ))}
             </select>
           </div>
+          
+          {/* Translation Export/Import */}
+          {(onExportDialogue || onImportDialogue) && (
+            <div className="p-4 rounded-lg bg-amber-900/30 border border-amber-700/50 min-h-[56px]">
+              <label className="flex items-center gap-3 mb-3 text-amber-400">
+                <Globe className="w-5 h-5" />
+                <span className="text-base font-medium">Manual Translation</span>
+              </label>
+              <p className="text-xs text-amber-200/70 mb-3">Export dialogue, translate via Google Translate, then import</p>
+              <div className="flex gap-2">
+                {onExportDialogue && (
+                  <button
+                    onClick={() => { onExportDialogue(); onClose(); }}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium transition-colors"
+                  >
+                    <FileText className="w-4 h-4" />
+                    {exportCopied ? 'Copied!' : 'Export'}
+                  </button>
+                )}
+                {onImportDialogue && (
+                  <button
+                    onClick={() => { onImportDialogue(); onClose(); }}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium transition-colors"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Import
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>
