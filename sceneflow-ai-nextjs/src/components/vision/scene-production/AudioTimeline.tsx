@@ -775,6 +775,9 @@ export function AudioTimeline({
         className="relative cursor-pointer"
         onClick={handleTimelineClick}
       >
+        {/* Keyframes Track - shows segment timing on timeline */}
+        {renderSegmentTrack()}
+        
         {/* Narration Track */}
         {renderTrack(
           'Narration',
