@@ -944,6 +944,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const updatedScenes = [...script.script.scenes]
       const currentScene = updatedScenes[sceneIdx]
       
+      // Guard against invalid scene index
+      if (!currentScene) {
+        console.warn('[handleMarkWorkflowComplete] Invalid scene index:', sceneIdx)
+        return
+      }
+      
       // Update workflow completions on the scene
       const workflowCompletions = currentScene.workflowCompletions || {}
       updatedScenes[sceneIdx] = {

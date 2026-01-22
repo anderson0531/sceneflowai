@@ -3299,6 +3299,7 @@ function SceneCard({
   onAddFullSegment,
   onDeleteSegment,
   onSegmentResize,
+  onApplyIntelligentAlignment,
   onReorderSegments,
   onAudioClipChange,
   onCleanupStaleAudioUrl,
