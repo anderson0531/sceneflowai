@@ -8112,6 +8112,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 sceneAudioTracks={{}}
                   bookmarkedScene={sceneBookmark}
                   onBookmarkScene={handleBookmarkScene}
+                  onJumpToBookmark={handleJumpToBookmark}
                   onMarkWorkflowComplete={handleMarkWorkflowComplete}
                   onDismissStaleWarning={handleDismissStaleWarning}
                 sceneReferences={sceneReferences}
