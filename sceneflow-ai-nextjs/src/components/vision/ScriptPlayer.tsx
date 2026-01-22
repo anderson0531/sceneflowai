@@ -44,6 +44,8 @@ interface ScreeningRoomProps {
   sceneProductionState?: Record<string, SceneProductionData>
   /** Project ID for export and other operations */
   projectId?: string
+  /** Stored translations from Production page - pre-translated narration/dialogue per scene per language */
+  storedTranslations?: Record<string, Record<number, { narration?: string; dialogue?: string[] }>>
 }
 
 interface PlayerState {
@@ -150,7 +152,7 @@ async function resolveAudioDuration(url: string, stored?: unknown): Promise<numb
   return fallback
 }
 
-export function ScreeningRoom({ script, characters, onClose, initialScene = 0, scriptEditedAt, sceneProductionState, projectId }: ScreeningRoomProps) {
+export function ScreeningRoom({ script, characters, onClose, initialScene = 0, scriptEditedAt, sceneProductionState, projectId, storedTranslations }: ScreeningRoomProps) {
   // Audio mixer ref - defined early so it can be used in script change effect
   const audioMixerRef = useRef<WebAudioMixer | null>(null)
   
@@ -483,6 +485,18 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       return
     }
     
+    // Check stored translations from Production page first (imported via export/import)
+    const storedForLanguage = storedTranslations?.[selectedLanguage]
+    const storedForScene = storedForLanguage?.[playerState.currentSceneIndex]
+    if (storedForScene) {
+      console.log(`[Captions] Using stored translation for scene ${playerState.currentSceneIndex + 1} in ${selectedLanguage}`)
+      setTranslatedNarration(storedForScene.narration || null)
+      setTranslatedDialogue(storedForScene.dialogue || null)
+      // Also cache for consistency
+      translationCacheRef.current.set(cacheKey, storedForScene)
+      return
+    }
+    
     // If cached, use cached translations
     if (cached) {
       setTranslatedNarration(cached.narration || null)
@@ -490,7 +504,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       return
     }
     
-    // Translate narration and dialogue
+    // Translate narration and dialogue via API (fallback)
     const translateCaptions = async () => {
       try {
         const translations: { narration?: string; dialogue?: string[] } = {}
@@ -577,7 +591,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
     
     translateCaptions()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedLanguage, playerState.currentSceneIndex])
+  }, [selectedLanguage, playerState.currentSceneIndex, storedTranslations])
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [isLoadingAudio, setIsLoadingAudio] = useState(false)

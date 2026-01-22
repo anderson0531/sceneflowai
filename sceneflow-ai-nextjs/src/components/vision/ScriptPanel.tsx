@@ -13,7 +13,7 @@
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
@@ -88,6 +88,18 @@ interface DialogGenerationProgress {
   completedSteps: number
   totalSteps: number
   message: string
+}
+
+// Translation storage types for per-scene, per-language translations
+export interface SceneTranslation {
+  narration?: string
+  dialogue?: string[] // Indexed by dialogue position
+}
+
+export interface ProjectTranslations {
+  [languageCode: string]: {
+    [sceneIndex: number]: SceneTranslation
+  }
 }
 
 const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -264,6 +276,9 @@ interface ScriptPanelProps {
   projectTitle?: string
   projectLogline?: string
   projectDuration?: string
+  // Translation storage for multi-language support
+  storedTranslations?: ProjectTranslations
+  onSaveTranslations?: (langCode: string, translations: { [sceneIndex: number]: SceneTranslation }) => Promise<void>
 }
 
 // Transform score analysis data to review format
@@ -492,7 +507,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle, projectLogline, projectDuration }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle, projectLogline, projectDuration, storedTranslations, onSaveTranslations }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -510,6 +525,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [costCalculatorOpen, setCostCalculatorOpen] = useState(false)
   const [generateAudioDialogOpen, setGenerateAudioDialogOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en')
+  
+  // Translation import/export state
+  const [translationImportOpen, setTranslationImportOpen] = useState(false)
+  const [importText, setImportText] = useState('')
   
   // Collapsible UI state with localStorage persistence
   const [sceneNavigationCollapsed, setSceneNavigationCollapsed] = useState(() => {
@@ -2033,6 +2052,137 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // NOTE: Mute functionality removed due to minification TDZ bug
   // TODO: Re-add after refactoring ScriptPanel into smaller sub-components
 
+  // Export dialogue for translation - generates numbered format for external translation tools
+  const handleExportDialogue = useCallback(() => {
+    if (!scenes || scenes.length === 0) {
+      toast.error('No scenes to export')
+      return
+    }
+    
+    let lineNumber = 1
+    const exportLines: string[] = []
+    
+    scenes.forEach((scene, sceneIdx) => {
+      exportLines.push(`=== Scene ${sceneIdx + 1} ===`)
+      
+      // Add narration
+      if (scene.narration) {
+        exportLines.push(`[${lineNumber}] NARRATION: ${scene.narration}`)
+        lineNumber++
+      }
+      
+      // Add dialogue
+      if (scene.dialogue && Array.isArray(scene.dialogue)) {
+        scene.dialogue.forEach((d: any) => {
+          const charName = (d.character || 'CHARACTER').toUpperCase().replace(/\s+/g, '_')
+          exportLines.push(`[${lineNumber}] ${charName}: ${d.line}`)
+          lineNumber++
+        })
+      }
+      
+      exportLines.push('') // Empty line between scenes
+    })
+    
+    const exportText = exportLines.join('\n')
+    navigator.clipboard.writeText(exportText)
+    toast.success(`Copied ${lineNumber - 1} lines for ${SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name || selectedLanguage} translation`)
+  }, [scenes, selectedLanguage])
+  
+  // Import translated dialogue - parses numbered format and stores translations
+  const handleImportDialogue = useCallback(async () => {
+    if (!importText.trim()) {
+      toast.error('Please paste translated text first')
+      return
+    }
+    
+    if (selectedLanguage === 'en') {
+      toast.error('Please select a non-English language first')
+      return
+    }
+    
+    // Build expected line types from original scenes (position-based matching)
+    const expectedTypes = new Map<number, 'narration' | 'dialogue'>()
+    let lineNumber = 1
+    scenes.forEach((scene) => {
+      if (scene.narration) {
+        expectedTypes.set(lineNumber, 'narration')
+        lineNumber++
+      }
+      if (scene.dialogue && Array.isArray(scene.dialogue)) {
+        scene.dialogue.forEach(() => {
+          expectedTypes.set(lineNumber, 'dialogue')
+          lineNumber++
+        })
+      }
+    })
+    
+    // Parse using relaxed regex that accepts translated labels
+    const linePattern = /\[(\d+)\]\s*[^:]+:\s*(.+)/g
+    const translatedLines = new Map<number, string>()
+    
+    let match
+    while ((match = linePattern.exec(importText)) !== null) {
+      const lineNum = parseInt(match[1], 10)
+      const text = match[2].trim()
+      translatedLines.set(lineNum, text)
+    }
+    
+    if (translatedLines.size === 0) {
+      toast.error('No translations found. Make sure the format is: [1] LABEL: translated text')
+      return
+    }
+    
+    // Build translations object per scene
+    const sceneTranslations: { [sceneIndex: number]: SceneTranslation } = {}
+    
+    lineNumber = 1
+    scenes.forEach((scene, sceneIdx) => {
+      const sceneTranslation: SceneTranslation = {}
+      
+      // Match narration by position
+      if (scene.narration) {
+        const translatedText = translatedLines.get(lineNumber)
+        if (translatedText) {
+          sceneTranslation.narration = translatedText
+        }
+        lineNumber++
+      }
+      
+      // Match dialogue by position
+      if (scene.dialogue && Array.isArray(scene.dialogue)) {
+        sceneTranslation.dialogue = []
+        scene.dialogue.forEach(() => {
+          const translatedText = translatedLines.get(lineNumber)
+          if (translatedText) {
+            sceneTranslation.dialogue!.push(translatedText)
+          } else {
+            sceneTranslation.dialogue!.push('') // Placeholder for missing translations
+          }
+          lineNumber++
+        })
+      }
+      
+      if (sceneTranslation.narration || (sceneTranslation.dialogue && sceneTranslation.dialogue.length > 0)) {
+        sceneTranslations[sceneIdx] = sceneTranslation
+      }
+    })
+    
+    // Save translations to project
+    if (onSaveTranslations) {
+      try {
+        await onSaveTranslations(selectedLanguage, sceneTranslations)
+        toast.success(`Imported ${translatedLines.size} translations for ${SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name || selectedLanguage}`)
+        setTranslationImportOpen(false)
+        setImportText('')
+      } catch (error) {
+        console.error('[ScriptPanel] Failed to save translations:', error)
+        toast.error('Failed to save translations')
+      }
+    } else {
+      toast.error('Translation storage not configured')
+    }
+  }, [importText, selectedLanguage, scenes, onSaveTranslations])
+
   const handleOpenSceneBuilder = (sceneIdx: number) => {
     setSceneBuilderIdx(sceneIdx)
     setSceneBuilderOpen(true)
@@ -2228,6 +2378,63 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 </SelectContent>
               </Select>
             </div>
+            
+            {/* Translation Export/Import Icons - only show for non-English languages */}
+            {selectedLanguage !== 'en' && (
+              <div className="flex items-center gap-1">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleExportDialogue}
+                        className="h-8 w-8 p-0 text-slate-400 hover:text-green-400 hover:bg-green-500/10"
+                      >
+                        <Download className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p className="text-xs">Export script for {SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name} translation</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setTranslationImportOpen(true)}
+                        className="h-8 w-8 p-0 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10"
+                      >
+                        <Upload className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p className="text-xs">Import {SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name} translation</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                
+                {/* Show indicator if translations exist for this language */}
+                {storedTranslations?.[selectedLanguage] && Object.keys(storedTranslations[selectedLanguage]).length > 0 && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center">
+                          <CheckCircle className="w-4 h-4 text-green-400" />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p className="text-xs">{Object.keys(storedTranslations[selectedLanguage]).length} scenes translated</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
+            )}
           </div>
         </div>
         
@@ -2629,6 +2836,51 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         mode={dialogGenerationMode}
         onRunInBackground={isDialogGenerating && dialogGenerationMode === 'foreground' ? handleRunGenerationInBackground : undefined}
       />
+      
+      {/* Translation Import Modal */}
+      <Dialog open={translationImportOpen} onOpenChange={setTranslationImportOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Languages className="w-5 h-5 text-blue-400" />
+              Import {SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name} Translation
+            </DialogTitle>
+            <DialogDescription>
+              Paste your translated script below. The format should match the exported format:
+              <code className="block mt-2 p-2 bg-slate-800 rounded text-xs">
+                [1] TRANSLATED_LABEL: translated text
+              </code>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 my-4">
+            <textarea
+              className="w-full h-64 p-3 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder={`Paste translated script here...\n\nExample:\n=== ฉากที่ 1 ===\n[1] คำบรรยาย: ข้อความภาษาไทย...\n[2] ตัวละคร: บทสนทนาภาษาไทย...`}
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setTranslationImportOpen(false)
+                setImportText('')
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleImportDialogue}
+              disabled={!importText.trim()}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Import Translation
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       
       {/* Report Preview Modals */}
       {script && (

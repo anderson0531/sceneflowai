@@ -757,6 +757,63 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       setReviewsOutdated(false)
     }
   }, [project?.metadata?.visionPhase?.reviews])
+  
+  // Load stored translations from project metadata
+  const storedTranslations = useMemo(() => {
+    return (project?.metadata?.visionPhase?.translations || {}) as Record<string, Record<number, { narration?: string; dialogue?: string[] }>>
+  }, [project?.metadata?.visionPhase?.translations])
+  
+  // Save translations callback
+  const handleSaveTranslations = useCallback(async (langCode: string, translations: Record<number, { narration?: string; dialogue?: string[] }>) => {
+    try {
+      const existingMetadata = project?.metadata || {}
+      const existingVisionPhase = existingMetadata.visionPhase || {}
+      const existingTranslations = existingVisionPhase.translations || {}
+      
+      const updatedTranslations = {
+        ...existingTranslations,
+        [langCode]: translations
+      }
+      
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          metadata: {
+            ...existingMetadata,
+            visionPhase: {
+              ...existingVisionPhase,
+              translations: updatedTranslations
+            }
+          }
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to save translations')
+      }
+      
+      // Update local project state to reflect saved translations
+      setProject(prev => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          metadata: {
+            ...prev.metadata,
+            visionPhase: {
+              ...prev.metadata?.visionPhase,
+              translations: updatedTranslations
+            }
+          }
+        }
+      })
+      
+      console.log(`[VisionPage] Saved ${Object.keys(translations).length} scene translations for ${langCode}`)
+    } catch (error) {
+      console.error('[VisionPage] Error saving translations:', error)
+      throw error
+    }
+  }, [project, projectId])
 
   // Auto-select first scene when scenes are loaded
   useEffect(() => {
@@ -8059,6 +8116,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 }}
                 openScriptEditorWithInstruction={reviseScriptInstruction || null}
                 onClearScriptEditorInstruction={() => setReviseScriptInstruction('')}
+                storedTranslations={storedTranslations}
+                onSaveTranslations={handleSaveTranslations}
               belowDashboardSlot={({ openGenerateAudio, openPromptBuilder }) => (
                 <div className="rounded-2xl border border-white/10 bg-slate950/40 shadow-inner">
                   <div className="px-5 py-5">
@@ -8236,6 +8295,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           scriptEditedAt={scriptEditedAt}
           sceneProductionState={sceneProductionState}
           projectId={projectId}
+          storedTranslations={storedTranslations}
         />
       )}
 
