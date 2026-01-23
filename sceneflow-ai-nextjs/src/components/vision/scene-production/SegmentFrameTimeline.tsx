@@ -13,12 +13,25 @@ import {
   ChevronUp,
   Layers,
   RefreshCw,
-  Copy
+  Copy,
+  ClipboardPaste,
+  Sparkles,
+  Film
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import { SegmentPairCard } from './SegmentPairCard'
 import { FramePromptDialog, type FrameGenerationOptions } from './FramePromptDialog'
 import type { 
@@ -61,8 +74,8 @@ export interface SegmentFrameTimelineProps {
   }>
   /** Scene direction for intelligent prompt building */
   sceneDirection?: DetailedSceneDirection | null
-  /** Callback to open resegment dialog - triggers segment regeneration */
-  onResegment?: () => void
+  /** Callback to trigger segment regeneration - optionally accepts pre-parsed segments */
+  onResegment?: (segments?: any[]) => void
   /** 
    * TEMPORARY WORKAROUND: Scene data for copy prompt functionality
    * TODO: Remove when Vertex AI billing is resolved and direct API calls work
@@ -233,6 +246,85 @@ Generate ${minSegmentsNeeded}+ segments now:`
     navigator.clipboard.writeText(prompt)
     toast.success('Segmentation prompt copied to clipboard')
   }, [buildSegmentationPrompt])
+
+  // Regeneration dialog state
+  const [showResegmentDialog, setShowResegmentDialog] = useState(false)
+  const [showPasteDialog, setShowPasteDialog] = useState(false)
+  const [pastedJson, setPastedJson] = useState('')
+  const [isProcessingPaste, setIsProcessingPaste] = useState(false)
+  const [copiedPrompt, setCopiedPrompt] = useState(false)
+
+  const handleCopyPromptInDialog = useCallback(() => {
+    const prompt = buildSegmentationPrompt()
+    navigator.clipboard.writeText(prompt)
+    setCopiedPrompt(true)
+    toast.success('Segmentation prompt copied to clipboard')
+    setTimeout(() => setCopiedPrompt(false), 2000)
+  }, [buildSegmentationPrompt])
+
+  const handleProcessPastedResults = useCallback(async () => {
+    if (!pastedJson.trim() || !onResegment) return
+
+    setIsProcessingPaste(true)
+    try {
+      // Try to extract JSON from the pasted content
+      let jsonContent = pastedJson.trim()
+      
+      // Handle markdown code blocks
+      const jsonMatch = jsonContent.match(/```(?:json)?\s*([\s\S]*?)```/)
+      if (jsonMatch) {
+        jsonContent = jsonMatch[1].trim()
+      }
+      
+      // Parse the JSON
+      let parsed: any
+      try {
+        parsed = JSON.parse(jsonContent)
+      } catch (parseError) {
+        // Try to find JSON array in the content
+        const arrayMatch = jsonContent.match(/\[\s*\{[\s\S]*\}\s*\]/)
+        if (arrayMatch) {
+          parsed = JSON.parse(arrayMatch[0])
+        } else {
+          throw new Error('Could not find valid JSON in the pasted content')
+        }
+      }
+      
+      // Extract segments array
+      const segments = Array.isArray(parsed) ? parsed : parsed.segments
+      if (!Array.isArray(segments) || segments.length === 0) {
+        throw new Error('No segments found in the pasted JSON')
+      }
+      
+      // Transform to expected format if needed
+      const transformedSegments = segments.map((seg: any, idx: number) => ({
+        segmentId: seg.segmentId || `segment-${idx}`,
+        label: seg.label || seg.description || `Segment ${idx + 1}`,
+        startTime: seg.startTime || 0,
+        endTime: seg.endTime || (seg.startTime || 0) + (seg.duration || 5),
+        duration: seg.duration || (seg.endTime - seg.startTime) || 5,
+        prompt: seg.prompt || seg.description || '',
+        shotType: seg.shotType || 'medium',
+        cameraMovement: seg.cameraMovement || 'static',
+        transitionType: seg.transitionType || (idx === 0 ? 'FADE' : 'CUT'),
+        status: 'DRAFT' as const,
+        anchorStatus: 'pending' as const,
+      }))
+      
+      // Call onResegment with the parsed segments
+      await onResegment(transformedSegments)
+      
+      toast.success(`Created ${transformedSegments.length} segments from pasted results`)
+      setShowPasteDialog(false)
+      setShowResegmentDialog(false)
+      setPastedJson('')
+    } catch (error: any) {
+      console.error('Error processing pasted results:', error)
+      toast.error(error.message || 'Failed to process pasted results')
+    } finally {
+      setIsProcessingPaste(false)
+    }
+  }, [pastedJson, onResegment])
   // ============================================================================
   // END TEMPORARY WORKAROUND
   // ============================================================================
@@ -359,7 +451,7 @@ Generate ${minSegmentsNeeded}+ segments now:`
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={onResegment}
+                    onClick={() => setShowResegmentDialog(true)}
                     className="h-7 text-xs text-amber-400 hover:text-amber-300 hover:bg-amber-500/20 border border-amber-500/30"
                     title="Regenerate segments (opens generation dialog)"
                   >
@@ -489,6 +581,137 @@ Generate ${minSegmentsNeeded}+ segments now:`
           appearance: c.appearance,
         }))}
       />
+
+      {/* Regenerate Segments Dialog */}
+      <Dialog open={showResegmentDialog} onOpenChange={setShowResegmentDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+                <Film className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <DialogTitle className="text-left">Regenerate Segments</DialogTitle>
+                <DialogDescription className="text-left">
+                  Use the manual workaround to regenerate segments via external AI.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-4">
+            <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+              <h4 className="text-sm font-medium text-amber-300 mb-2">Manual Workflow</h4>
+              <ol className="text-xs text-amber-200/80 space-y-2 list-decimal list-inside">
+                <li>Click <strong>Copy Prompt</strong> to copy the segmentation prompt</li>
+                <li>Paste into <a href="https://aistudio.google.com" target="_blank" rel="noopener noreferrer" className="underline text-amber-400 hover:text-amber-300">Google AI Studio</a> or ChatGPT</li>
+                <li>Copy the JSON response from the AI</li>
+                <li>Click <strong>Paste Results</strong> to import the segments</li>
+              </ol>
+            </div>
+          </div>
+          
+          <DialogFooter className="mt-6 flex-col sm:flex-row gap-2">
+            <div className="flex gap-2 mr-auto">
+              <Button 
+                type="button"
+                variant="outline" 
+                size="sm"
+                onClick={handleCopyPromptInDialog}
+                className="text-xs"
+              >
+                <Copy className="w-3.5 h-3.5 mr-1.5" />
+                {copiedPrompt ? 'Copied!' : 'Copy Prompt'}
+              </Button>
+              <Button 
+                type="button"
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowPasteDialog(true)}
+                className="text-xs"
+              >
+                <ClipboardPaste className="w-3.5 h-3.5 mr-1.5" />
+                Paste Results
+              </Button>
+            </div>
+            
+            <Button 
+              variant="outline" 
+              onClick={() => setShowResegmentDialog(false)}
+            >
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Paste Results Dialog */}
+      <Dialog open={showPasteDialog} onOpenChange={setShowPasteDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+                <ClipboardPaste className="h-5 w-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <DialogTitle className="text-left">Paste AI Results</DialogTitle>
+                <DialogDescription className="text-left">
+                  Paste the JSON response from Gemini or ChatGPT to create segments.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">JSON Response</Label>
+              <Textarea
+                placeholder='Paste the JSON response here...
+
+Example format:
+[
+  {
+    "startTime": 0.0,
+    "endTime": 7.5,
+    "description": "Opening shot...",
+    "transitionType": "FADE"
+  }
+]'
+                value={pastedJson}
+                onChange={(e) => setPastedJson(e.target.value)}
+                className="min-h-[200px] font-mono text-xs"
+              />
+            </div>
+            
+            <p className="text-xs text-gray-500">
+              Supports JSON arrays or objects with a "segments" property. 
+              Markdown code blocks are automatically extracted.
+            </p>
+          </div>
+          
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setShowPasteDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleProcessPastedResults} 
+              disabled={isProcessingPaste || !pastedJson.trim()}
+            >
+              {isProcessingPaste ? (
+                <>
+                  <span className="animate-spin mr-2">⏳</span>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Create Segments
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

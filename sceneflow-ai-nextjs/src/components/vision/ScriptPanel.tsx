@@ -5768,11 +5768,11 @@ function SceneCard({
                             duration: d.duration || 3
                           }))
                         })()}
-                        // Regenerate segments reuses existing initialization function
-                        onResegment={onInitializeSceneProduction ? () => {
+                        // Regenerate segments - accepts optional pre-parsed segments from Paste Results
+                        onResegment={onInitializeSceneProduction ? (segments?: any[]) => {
                           onInitializeSceneProduction(
                             scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                            { targetDuration: scene.duration || 8 }
+                            { targetDuration: scene.duration || 8, segments }
                           )
                         } : undefined}
                       />
@@ -6065,11 +6065,11 @@ function SceneCard({
                               duration: d.duration || 3
                             }))
                           })()}
-                          // Regenerate segments reuses existing initialization function
-                          onResegment={onInitializeSceneProduction ? () => {
+                          // Regenerate segments - accepts optional pre-parsed segments from Paste Results
+                          onResegment={onInitializeSceneProduction ? (segments?: any[]) => {
                             onInitializeSceneProduction(
                               scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                              { targetDuration: scene.duration || 8 }
+                              { targetDuration: scene.duration || 8, segments }
                             )
                           } : undefined}
                         />

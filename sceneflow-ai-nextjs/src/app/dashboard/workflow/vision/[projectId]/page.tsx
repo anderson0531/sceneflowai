@@ -1965,9 +1965,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   const handleInitializeSceneProduction = useCallback(
-    async (sceneId: string, { targetDuration, generationOptions }: { targetDuration: number; generationOptions?: any }) => {
+    async (sceneId: string, { targetDuration, generationOptions, segments: prePardsedSegments }: { targetDuration: number; generationOptions?: any; segments?: any[] }) => {
       if (!project?.id) {
         throw new Error('Project must be loaded before segmenting a scene.')
+      }
+
+      // If pre-parsed segments are provided (from Paste Results), skip API call
+      if (prePardsedSegments && prePardsedSegments.length > 0) {
+        const productionData: SceneProductionData = {
+          isSegmented: true,
+          targetSegmentDuration: targetDuration,
+          segments: prePardsedSegments,
+          lastGeneratedAt: new Date().toISOString(),
+        }
+
+        // Use applySceneProductionUpdate to update state and persist to DB
+        applySceneProductionUpdate(sceneId, () => productionData)
+
+        try {
+          const { toast } = require('sonner')
+          toast.success(`Scene segmented into ${productionData.segments.length} blocks.`)
+        } catch {}
+        return
       }
 
       const response = await fetch(`/api/scenes/${encodeURIComponent(sceneId)}/generate-segments`, {
