@@ -5752,6 +5752,10 @@ function SceneCard({
                           appearance: c.appearance || c.description,
                           referenceUrl: (c as any).referenceImage
                         }))}
+                        // Scene context for enhanced prompt generation
+                        sceneHeading={scene.heading}
+                        sceneVisualDescription={scene.visualDescription || scene.action}
+                        sceneDirection={scene.detailedDirection || scene.sceneDirection}
                         // TEMPORARY WORKAROUND: Props for copy prompt functionality
                         // TODO: Remove when Vertex AI billing is resolved
                         sceneNarration={scene.narration || scene.action}
@@ -6048,6 +6052,9 @@ function SceneCard({
                             appearance: c.appearance || c.description,
                             referenceUrl: (c as any).referenceImage
                           }))}
+                          // Scene context for enhanced prompt generation
+                          sceneHeading={scene.heading}
+                          sceneVisualDescription={scene.visualDescription || scene.action}
                           sceneDirection={scene.detailedDirection || scene.sceneDirection}
                           // TEMPORARY WORKAROUND: Props for copy prompt functionality
                           // TODO: Remove when Vertex AI billing is resolved

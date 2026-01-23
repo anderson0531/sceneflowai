@@ -87,6 +87,10 @@ export interface SegmentFrameTimelineProps {
   narrationAudioDuration?: number
   /** Audio durations for each dialogue line (seconds) */
   dialogueAudioDurations?: Array<{ character?: string; duration: number }>
+  /** Scene heading (e.g., "INT. APARTMENT - NIGHT") */
+  sceneHeading?: string
+  /** Visual description/action of the scene */
+  sceneVisualDescription?: string
 }
 
 // ============================================================================
@@ -155,7 +159,9 @@ export function SegmentFrameTimeline({
   sceneDialogue,
   targetSegmentDuration = 8,
   narrationAudioDuration,
-  dialogueAudioDurations
+  dialogueAudioDurations,
+  sceneHeading,
+  sceneVisualDescription
 }: SegmentFrameTimelineProps) {
   // Calculate stats first to determine initial expanded state
   const stats = useMemo(() => calculateTimelineStats(segments), [segments])
@@ -169,77 +175,145 @@ export function SegmentFrameTimeline({
   // TODO: Remove this entire section when Vertex AI billing is resolved
   // ============================================================================
   const buildSegmentationPrompt = useCallback(() => {
-    // Build dialogue text with durations if available
+    // Build dialogue text with durations
     const dialogueWithDurations = sceneDialogue && sceneDialogue.length > 0
       ? sceneDialogue.map((d, i) => {
           const char = d.character || d.speaker || 'Unknown'
           const text = d.line || d.text || ''
           const duration = dialogueAudioDurations?.[i]?.duration || d.duration
           return duration 
-            ? `- ${char}: "${text}" (${duration.toFixed(1)}s audio)`
-            : `- ${char}: "${text}"`
+            ? `${i + 1}. ${char}: "${text}" (${duration.toFixed(1)}s audio)`
+            : `${i + 1}. ${char}: "${text}"`
         }).join('\n')
-      : ''
+      : 'No dialogue'
     
-    // Calculate total audio duration from actual audio files
+    // Build character descriptions
+    const characterDescriptions = characters && characters.length > 0
+      ? characters.map(c => `- ${c.name}: ${c.appearance || 'No description'}${c.referenceUrl ? ' [has reference image]' : ''}`).join('\n')
+      : 'No character information'
+    
+    // Build scene direction context
+    let sceneDirectionContext = ''
+    if (sceneDirection) {
+      sceneDirectionContext = `
+CINEMATOGRAPHY DIRECTION:
+- Camera: ${sceneDirection.camera?.shots?.join(', ') || 'Not specified'} | ${sceneDirection.camera?.movement || 'Static'}
+- Lighting: ${sceneDirection.lighting?.overallMood || 'Not specified'} | ${sceneDirection.lighting?.timeOfDay || 'Day'}
+- Location: ${sceneDirection.scene?.location || 'Not specified'}
+- Key Props: ${sceneDirection.scene?.keyProps?.join(', ') || 'None specified'}
+- Atmosphere: ${sceneDirection.scene?.atmosphere || 'Not specified'}
+- Talent Blocking: ${sceneDirection.talent?.blocking || 'Not specified'}
+- Emotional Beat: ${sceneDirection.talent?.emotionalBeat || 'Not specified'}`
+    }
+    
+    // Calculate total durations
     const totalDialogueDuration = dialogueAudioDurations?.reduce((sum, d) => sum + d.duration, 0) || 0
-    const totalAudioDuration = Math.max(narrationAudioDuration || 0, totalDialogueDuration) || stats.totalDuration
-    const minSegmentsNeeded = Math.ceil(totalAudioDuration / targetSegmentDuration)
+    const narrationDuration = narrationAudioDuration || 0
     
-    // Build audio duration breakdown section
-    let audioDurationBreakdown = 'AUDIO DURATION BREAKDOWN:\n'
-    if (narrationAudioDuration) {
-      const narrationSegments = Math.ceil(narrationAudioDuration / targetSegmentDuration)
-      audioDurationBreakdown += `- Narration: ${narrationAudioDuration.toFixed(1)}s → requires ${narrationSegments} segment${narrationSegments > 1 ? 's' : ''} (${targetSegmentDuration}s each)\n`
-    }
-    if (dialogueAudioDurations && dialogueAudioDurations.length > 0) {
-      audioDurationBreakdown += `- Dialogue lines:\n`
-      dialogueAudioDurations.forEach((d, i) => {
-        const segmentsForLine = Math.ceil(d.duration / targetSegmentDuration)
-        audioDurationBreakdown += `  ${i + 1}. ${d.character || 'Speaker'}: ${d.duration.toFixed(1)}s\n`
-      })
-      audioDurationBreakdown += `- Total dialogue: ${totalDialogueDuration.toFixed(1)}s\n`
-    }
-    audioDurationBreakdown += `- TOTAL AUDIO: ${totalAudioDuration.toFixed(1)}s\n`
-    audioDurationBreakdown += `- MINIMUM SEGMENTS REQUIRED: ${minSegmentsNeeded} (at ${targetSegmentDuration}s max each)`
+    // IMPORTANT: Narration and dialogue often play in parallel
+    // The total scene duration is the MAX of the two, not the sum
+    const totalSceneDuration = Math.max(narrationDuration, totalDialogueDuration) || stats.totalDuration
     
-    return `You are a professional film editor analyzing a scene for video segment generation.
+    // Calculate minimum segments needed based on duration
+    const minSegmentsForDuration = Math.ceil(totalSceneDuration / targetSegmentDuration)
+    
+    // ALSO: Each dialogue line may need its own visual coverage (emotional beat)
+    const dialogueLineCount = sceneDialogue?.length || 0
+    
+    // Recommended segments = MAX(duration-based, dialogue-line-based + 1 for establishing shot)
+    const recommendedSegments = Math.max(minSegmentsForDuration, dialogueLineCount > 0 ? dialogueLineCount + 1 : 3)
+    
+    return `You are an expert film editor and visual storyteller creating segments for AI video generation.
 
-SCENE CONTENT:
-Narration: ${sceneNarration || 'No narration'}
-Dialogue:
-${dialogueWithDurations || 'No dialogue'}
+=== SCENE INFORMATION ===
+Scene ${sceneNumber}: ${sceneHeading || 'Untitled Scene'}
+Visual Description: ${sceneVisualDescription || sceneNarration || 'No description provided'}
+${sceneDirectionContext}
 
-${audioDurationBreakdown}
+=== CHARACTERS IN SCENE ===
+${characterDescriptions}
+Note: Reference images will be used to ensure character consistency in keyframe generation.
 
-SEGMENT-TO-AUDIO ALIGNMENT RULES:
-1. Each segment MUST be ≤ ${targetSegmentDuration} seconds (Veo 3.1 hard limit)
-2. Segment boundaries should align with audio content:
-   - For ${narrationAudioDuration?.toFixed(1) || 'N/A'}s narration → create ${Math.ceil((narrationAudioDuration || 0) / targetSegmentDuration)} aligned segments
-   - Place segment breaks at natural pauses, sentence boundaries, or emotional beats
-3. Total segment duration MUST cover ALL ${totalAudioDuration.toFixed(1)}s of audio
-4. Use CONTINUE transition for segments within the same shot/camera angle
-5. Use CUT, FADE, or DISSOLVE for scene/shot changes
+=== AUDIO CONTENT ===
+NARRATION (voiceover): 
+${sceneNarration || 'No narration'}
+Duration: ${narrationDuration.toFixed(1)}s
 
-OUTPUT FORMAT (JSON array):
+DIALOGUE (sync to characters on screen):
+${dialogueWithDurations}
+Total Dialogue Duration: ${totalDialogueDuration.toFixed(1)}s
+
+=== TIMING REQUIREMENTS ===
+- Total Scene Duration: ${totalSceneDuration.toFixed(1)}s
+- Maximum Segment Duration: ${targetSegmentDuration}s (Veo 3.1 limit)
+- Minimum Segments for Duration: ${minSegmentsForDuration}
+- Dialogue Lines Requiring Visual Coverage: ${dialogueLineCount}
+- RECOMMENDED SEGMENTS: ${recommendedSegments}+
+
+=== SEGMENTATION RULES ===
+1. Each segment MUST be ≤ ${targetSegmentDuration} seconds
+2. Create at least ONE SEGMENT PER DIALOGUE LINE to visually cover the speaker's emotion/action
+3. Narration plays over ALL segments - describe visuals that illustrate the narration
+4. Place segment breaks at:
+   - Dialogue line boundaries (new speaker = potential new shot)
+   - Emotional beats or action changes
+   - Camera angle changes
+5. First segment should establish the scene (wide shot or environmental context)
+6. Each segment needs START and END keyframes that define the video motion
+
+=== OUTPUT FORMAT ===
+Generate a JSON array. Each segment MUST include:
+- startTime/endTime: Timing in seconds
+- label: Short descriptive name
+- shotType: wide/medium/close-up/extreme-close-up/over-shoulder
+- cameraMovement: static/pan-left/pan-right/dolly-in/dolly-out/crane-up/crane-down
+- transitionType: FADE/CUT/DISSOLVE/CONTINUE
+- startFramePrompt: Detailed image generation prompt for the START keyframe
+- endFramePrompt: Detailed image generation prompt for the END keyframe  
+- videoPrompt: Motion description for video generation using start→end frames
+
+Example:
 [
   {
     "startTime": 0.0,
-    "endTime": 7.5,
-    "description": "Opening shot - covers narration 0-7.5s describing...",
-    "transitionType": "FADE"
+    "endTime": 5.5,
+    "label": "Establishing - Grief's Solitude",
+    "shotType": "wide",
+    "cameraMovement": "slow-dolly-in",
+    "transitionType": "FADE",
+    "audioAlignment": "Covers narration 0-5.5s introducing Ben's grief",
+    "startFramePrompt": "Wide shot of dimly lit apartment, Ben Anderson (elderly man, gray hair, weary expression) silhouetted against rain-streaked window, sparse furniture, old photos on wall, cool blue lighting, cinematic composition",
+    "endFramePrompt": "Medium-wide shot, camera has moved closer to Ben, his face now partially visible in profile, same rain-streaked window, grief visible in posture, shoulders slumped",
+    "videoPrompt": "Slow dolly in from wide shot to medium-wide, Ben remains still gazing out window, rain continues streaking down glass, subtle movement in his breathing"
   },
   {
-    "startTime": 7.5,
-    "endTime": 15.0,
-    "description": "Continuation - covers narration 7.5-15s showing...",
-    "transitionType": "CONTINUE"
-  },
-  ...
+    "startTime": 5.5,
+    "endTime": 10.0,
+    "label": "Dialogue 1 - Whispered Regret",  
+    "shotType": "close-up",
+    "cameraMovement": "static",
+    "transitionType": "CUT",
+    "audioAlignment": "Ben speaks: 'Elara... I tried to warn you' (4.4s)",
+    "startFramePrompt": "Close-up of Ben's face, eyes glistening with unshed tears, lips beginning to part, soft key light from window, shallow depth of field, grief-stricken expression",
+    "endFramePrompt": "Same close-up, Ben's expression has shifted to guilt and regret, eyes now cast downward, a single tear on cheek",
+    "videoPrompt": "Static close-up, subtle facial acting as Ben whispers with grief, minimal movement, emotional performance"
+  }
 ]
 
-Generate ${minSegmentsNeeded}+ segments now:`
-  }, [sceneNarration, sceneDialogue, stats.totalDuration, targetSegmentDuration, narrationAudioDuration, dialogueAudioDurations])
+Generate ${recommendedSegments}+ segments now:`
+  }, [
+    sceneNumber,
+    sceneHeading,
+    sceneVisualDescription,
+    sceneNarration, 
+    sceneDialogue, 
+    characters,
+    sceneDirection,
+    stats.totalDuration, 
+    targetSegmentDuration, 
+    narrationAudioDuration, 
+    dialogueAudioDurations
+  ])
 
   const handleCopyPrompt = useCallback(() => {
     const prompt = buildSegmentationPrompt()
@@ -303,10 +377,19 @@ Generate ${minSegmentsNeeded}+ segments now:`
         startTime: seg.startTime || 0,
         endTime: seg.endTime || (seg.startTime || 0) + (seg.duration || 5),
         duration: seg.duration || (seg.endTime - seg.startTime) || 5,
-        prompt: seg.prompt || seg.description || '',
+        // Use videoPrompt as primary prompt, fallback to description
+        prompt: seg.videoPrompt || seg.prompt || seg.description || '',
+        // NEW: Start and end frame prompts for keyframe generation
+        startFramePrompt: seg.startFramePrompt || '',
+        endFramePrompt: seg.endFramePrompt || '',
+        // NEW: Video generation prompt (uses start/end frames)
+        videoPrompt: seg.videoPrompt || seg.prompt || '',
+        // Shot and camera info
         shotType: seg.shotType || 'medium',
         cameraMovement: seg.cameraMovement || 'static',
         transitionType: seg.transitionType || (idx === 0 ? 'FADE' : 'CUT'),
+        // Audio alignment info
+        audioAlignment: seg.audioAlignment || '',
         status: 'DRAFT' as const,
         anchorStatus: 'pending' as const,
       }))
