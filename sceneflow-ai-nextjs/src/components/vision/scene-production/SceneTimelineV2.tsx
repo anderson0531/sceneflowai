@@ -333,11 +333,15 @@ export function SceneTimelineV2({
   
   const [trackEnabled, setTrackEnabled] = useState<Record<string, boolean>>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sceneflow-track-enabled-v3')
+      const saved = localStorage.getItem('sceneflow-track-enabled-v4')
       if (saved) return JSON.parse(saved)
     }
-    return { voiceover: true, description: true, dialogue: true, music: true, sfx: true }
+    return { keyframes: true, voiceover: true, description: true, dialogue: true, music: true, sfx: true }
   })
+  
+  // Track if we've auto-applied alignment for this scene (prevent repeated auto-align)
+  const [hasAutoAligned, setHasAutoAligned] = useState(false)
+  const prevAudioHashRef = useRef<string>('')
   
   // Persist track settings
   useEffect(() => {
@@ -348,9 +352,35 @@ export function SceneTimelineV2({
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('sceneflow-track-enabled-v3', JSON.stringify(trackEnabled))
+      localStorage.setItem('sceneflow-track-enabled-v4', JSON.stringify(trackEnabled))
     }
   }, [trackEnabled])
+  
+  // Auto-apply intelligent alignment when audio tracks first become available
+  useEffect(() => {
+    // Only auto-align if:
+    // 1. We have an alignment handler
+    // 2. We haven't already auto-aligned for this audio state
+    // 3. Audio hash has changed (new audio loaded)
+    // 4. There is actual audio to align to
+    if (!onApplyIntelligentAlignment) return
+    if (hasAutoAligned && prevAudioHashRef.current === audioHash) return
+    
+    const hasAnyAudio = filteredAudioTracks.voiceover || 
+                        filteredAudioTracks.dialogue.length > 0 ||
+                        filteredAudioTracks.description
+    
+    if (hasAnyAudio && audioHash !== prevAudioHashRef.current) {
+      console.log('[SceneTimelineV2] Auto-applying intelligent alignment for new audio')
+      // Small delay to ensure audio durations are loaded
+      const timer = setTimeout(() => {
+        onApplyIntelligentAlignment()
+        setHasAutoAligned(true)
+      }, 500)
+      prevAudioHashRef.current = audioHash
+      return () => clearTimeout(timer)
+    }
+  }, [audioHash, filteredAudioTracks, hasAutoAligned, onApplyIntelligentAlignment])
   
   // Immediately mute/pause audio when track is disabled
   useEffect(() => {
@@ -1237,15 +1267,34 @@ export function SceneTimelineV2({
           </div>
         </div>
         
-        {/* Segments Track - Primary visual segmentation */}
+        {/* Segments Track - Primary visual segmentation (Keyframes/Video) */}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <div className={cn("flex items-stretch transition-all duration-200", isTimelineExpanded ? "h-24" : "h-16")}>
+          <div className={cn(
+            "flex items-stretch transition-all duration-200", 
+            isTimelineExpanded ? "h-24" : "h-16",
+            !(trackEnabled.keyframes ?? true) && "opacity-50"
+          )}>
             <div 
-              className="flex-shrink-0 flex items-center gap-2 px-3 bg-gray-100 dark:bg-gray-800"
+              className="flex-shrink-0 flex items-center justify-between px-3 bg-gray-100 dark:bg-gray-800"
               style={{ width: TRACK_LABEL_WIDTH }}
             >
-              <Film className="w-4 h-4 text-orange-500" />
-              <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Keyframes</span>
+              <div className="flex items-center gap-2">
+                <Film className="w-4 h-4 text-orange-500" />
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Keyframes</span>
+              </div>
+              {/* Mute/Unmute toggle for Keyframes track */}
+              <button
+                className={cn(
+                  "p-1.5 rounded transition-colors",
+                  (trackEnabled.keyframes ?? true)
+                    ? "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" 
+                    : "text-red-400 hover:text-red-500"
+                )}
+                onClick={() => setTrackEnabled(prev => ({ ...prev, keyframes: !(prev.keyframes ?? true) }))}
+                title={(trackEnabled.keyframes ?? true) ? 'Hide keyframes' : 'Show keyframes'}
+              >
+                {(trackEnabled.keyframes ?? true) ? <Layers className="w-4 h-4" /> : <X className="w-4 h-4" />}
+              </button>
             </div>
             
             <div className="flex-1 relative bg-gray-50 dark:bg-gray-900/50">

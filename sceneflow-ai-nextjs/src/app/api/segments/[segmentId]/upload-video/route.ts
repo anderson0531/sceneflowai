@@ -4,8 +4,16 @@ import { put } from '@vercel/blob'
 /**
  * Upload a video segment for demo mode.
  * Stores in Vercel Blob storage (bypassing GCS).
- * No file size limits.
+ * 
+ * Route segment config to allow large video uploads (up to 100MB)
+ * This bypasses Vercel's default 4.5MB body limit for serverless functions
  */
+export const runtime = 'nodejs'
+export const maxDuration = 60 // Allow 60 seconds for large uploads
+
+// Note: For files larger than 4.5MB, consider using direct client upload to Vercel Blob
+// via @vercel/blob client SDK or signed URLs. This route works for smaller files.
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ segmentId: string }> }

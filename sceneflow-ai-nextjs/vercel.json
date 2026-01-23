@@ -31,6 +31,10 @@
     },
     "src/app/api/cron/voice-cleanup/route.ts": {
       "maxDuration": 60
+    },
+    "src/app/api/segments/[segmentId]/upload-video/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
     }
   },
   "crons": [
