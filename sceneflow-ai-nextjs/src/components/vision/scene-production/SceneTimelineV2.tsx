@@ -66,6 +66,7 @@ interface VisualClip {
   segmentId: string
   url?: string
   thumbnailUrl?: string
+  endThumbnailUrl?: string  // End frame for FTV display
   startTime: number
   duration: number
   originalDuration: number
@@ -77,6 +78,8 @@ interface VisualClip {
   isEstablishingShot?: boolean
   establishingShotType?: string
   shotNumber?: number
+  anchorStatus?: 'pending' | 'start-locked' | 'end-pending' | 'fully-anchored'
+  exceedsVideoLimit?: boolean  // true if duration > 8s (will need split for video generation)
 }
 
 interface DragState {
@@ -411,23 +414,29 @@ export function SceneTimelineV2({
   // ============================================================================
   
   const visualClips = useMemo<VisualClip[]>(() => {
-    return segments.map(seg => ({
-      id: seg.segmentId,
-      segmentId: seg.segmentId,
-      url: seg.activeAssetUrl || undefined,
-      thumbnailUrl: seg.references?.startFrameUrl || seg.activeAssetUrl || undefined,
-      startTime: seg.startTime,
-      duration: seg.endTime - seg.startTime,
-      originalDuration: seg.endTime - seg.startTime,
-      trimStart: 0,
-      trimEnd: 0,
-      status: seg.status,
-      sequenceIndex: seg.sequenceIndex,
-      prompt: seg.generatedPrompt || seg.userEditedPrompt,
-      isEstablishingShot: seg.isEstablishingShot,
-      establishingShotType: seg.establishingShotType,
-      shotNumber: seg.shotNumber,
-    }))
+    return segments.map(seg => {
+      const duration = seg.endTime - seg.startTime
+      return {
+        id: seg.segmentId,
+        segmentId: seg.segmentId,
+        url: seg.activeAssetUrl || undefined,
+        thumbnailUrl: seg.references?.startFrameUrl || seg.activeAssetUrl || undefined,
+        endThumbnailUrl: seg.references?.endFrameUrl || seg.endFrameUrl || undefined,
+        startTime: seg.startTime,
+        duration,
+        originalDuration: duration,
+        trimStart: 0,
+        trimEnd: 0,
+        status: seg.status,
+        sequenceIndex: seg.sequenceIndex,
+        prompt: seg.generatedPrompt || seg.userEditedPrompt,
+        isEstablishingShot: seg.isEstablishingShot,
+        establishingShotType: seg.establishingShotType,
+        shotNumber: seg.shotNumber,
+        anchorStatus: seg.anchorStatus,
+        exceedsVideoLimit: duration > 8,
+      }
+    })
   }, [segments])
   
   const sceneDuration = useMemo(() => {
@@ -604,17 +613,18 @@ export function SceneTimelineV2({
           } else {
             onAudioClipChange?.(dragState.trackType as AudioTrackType, dragState.clipId, { startTime: newStart, duration: newDuration })
           }
-        }, 100)
+        }, 50) // Reduced from 100ms for faster persistence
       }
       
-      // Clear local offsets after a brief delay (wait for prop update)
+      // Clear local offsets after a longer delay to prevent snap-back
+      // Wait for prop update to complete before clearing optimistic state
       setTimeout(() => {
         setLocalClipOffsets(prev => {
           const next = { ...prev }
           delete next[dragState.clipId]
           return next
         })
-      }, 200)
+      }, 500) // Increased from 200ms to 500ms
       
       setDragState(null)
     }
@@ -814,7 +824,17 @@ export function SceneTimelineV2({
   }, [])
   
   const renderClip = (
-    clip: { id: string; startTime: number; duration: number; label?: string; url?: string; thumbnailUrl?: string },
+    clip: { 
+      id: string; 
+      startTime: number; 
+      duration: number; 
+      label?: string; 
+      url?: string; 
+      thumbnailUrl?: string;
+      endThumbnailUrl?: string;
+      anchorStatus?: 'pending' | 'start-locked' | 'end-pending' | 'fully-anchored';
+      exceedsVideoLimit?: boolean;
+    },
     trackType: 'visual' | AudioTrackType,
     color: string,
     showThumbnail: boolean = false
@@ -841,12 +861,59 @@ export function SceneTimelineV2({
           handleClipMouseDown(e, trackType, clip.id, 'move', clip.startTime, clip.duration)
         }}
       >
+        {/* Background with thumbnail(s) */}
         <div className={cn("absolute inset-0", color)}>
-          {showThumbnail && clip.thumbnailUrl && (
+          {showThumbnail && trackType === 'visual' && (clip.thumbnailUrl || clip.endThumbnailUrl) ? (
+            // Visual segments show start and end frames side by side
+            <div className="absolute inset-0 flex">
+              {/* Start frame - left half or full width if no end frame */}
+              {clip.thumbnailUrl && (
+                <div 
+                  className={cn(
+                    "h-full bg-cover bg-center opacity-70",
+                    clip.endThumbnailUrl ? "w-1/2 border-r border-white/30" : "w-full"
+                  )}
+                  style={{ backgroundImage: `url(${clip.thumbnailUrl})` }}
+                >
+                  {clip.endThumbnailUrl && (
+                    <div className="absolute bottom-0.5 left-0.5 bg-black/60 px-1 rounded text-[7px] text-white/80">S</div>
+                  )}
+                </div>
+              )}
+              {/* End frame - right half */}
+              {clip.endThumbnailUrl && (
+                <div 
+                  className="w-1/2 h-full bg-cover bg-center opacity-70"
+                  style={{ backgroundImage: `url(${clip.endThumbnailUrl})` }}
+                >
+                  <div className="absolute bottom-0.5 right-0.5 bg-black/60 px-1 rounded text-[7px] text-white/80">E</div>
+                </div>
+              )}
+            </div>
+          ) : showThumbnail && clip.thumbnailUrl ? (
             <div 
               className="absolute inset-0 bg-cover bg-center opacity-60"
               style={{ backgroundImage: `url(${clip.thumbnailUrl})` }}
             />
+          ) : null}
+          
+          {/* Anchor status badge for visual clips */}
+          {trackType === 'visual' && clip.anchorStatus && clip.anchorStatus !== 'pending' && (
+            <div className={cn(
+              "absolute top-0.5 left-0.5 px-1 py-0.5 rounded text-[7px] font-medium",
+              clip.anchorStatus === 'fully-anchored' && "bg-green-500/90 text-white",
+              clip.anchorStatus === 'start-locked' && "bg-amber-500/90 text-white",
+              clip.anchorStatus === 'end-pending' && "bg-blue-500/90 text-white"
+            )}>
+              {clip.anchorStatus === 'fully-anchored' ? '✓ FTV' : clip.anchorStatus === 'start-locked' ? 'S✓' : 'E?'}
+            </div>
+          )}
+          
+          {/* Video limit warning badge */}
+          {trackType === 'visual' && clip.exceedsVideoLimit && (
+            <div className="absolute top-0.5 right-6 bg-amber-500/90 px-1 py-0.5 rounded text-[7px] font-medium text-white" title="Segment exceeds 8s - will be split for video generation">
+              &gt;8s
+            </div>
           )}
         </div>
         
@@ -959,7 +1026,9 @@ export function SceneTimelineV2({
           
           {clips.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-xs text-gray-400 italic">No audio</span>
+              <span className="text-xs text-gray-400 italic">
+                {staleUrls.size > 0 ? 'Audio file missing - regenerate' : 'No audio'}
+              </span>
             </div>
           )}
         </div>
@@ -1309,6 +1378,9 @@ export function SceneTimelineV2({
                         label: clip.isEstablishingShot ? 'Estab.' : `KF ${clip.sequenceIndex + 1}`,
                         url: clip.url,
                         thumbnailUrl: clip.thumbnailUrl,
+                        endThumbnailUrl: clip.endThumbnailUrl,
+                        anchorStatus: clip.anchorStatus,
+                        exceedsVideoLimit: clip.exceedsVideoLimit,
                       },
                       'visual',
                       'bg-gradient-to-r from-orange-500 to-amber-500',
@@ -1333,16 +1405,17 @@ export function SceneTimelineV2({
           </div>
         </DndContext>
         
-        {/* Audio tracks - separate Narration and Description tracks */}
-        {filteredAudioTracks.voiceover && renderAudioTrack(
+        {/* Audio tracks - show based on original data, render valid clips only */}
+        {/* Track rows stay visible even if audio 404'd, showing "file missing" state */}
+        {(audioTracks.voiceover || filteredAudioTracks.voiceover) && renderAudioTrack(
           'voiceover',
           'Narration',
           <Mic className="w-4 h-4 text-green-500" />,
-          [filteredAudioTracks.voiceover],
+          filteredAudioTracks.voiceover ? [filteredAudioTracks.voiceover] : [],
           'bg-gradient-to-r from-green-500 to-green-600'
         )}
         
-        {filteredAudioTracks.dialogue.length > 0 && renderAudioTrack(
+        {(audioTracks.dialogue.length > 0 || filteredAudioTracks.dialogue.length > 0) && renderAudioTrack(
           'dialogue',
           'Dialogue',
           <MessageSquare className="w-4 h-4 text-purple-500" />,
@@ -1350,21 +1423,64 @@ export function SceneTimelineV2({
           'bg-gradient-to-r from-purple-500 to-purple-600'
         )}
         
-        {filteredAudioTracks.music && renderAudioTrack(
+        {(audioTracks.music || filteredAudioTracks.music) && renderAudioTrack(
           'music',
           'Music',
           <Music className="w-4 h-4 text-amber-500" />,
-          [filteredAudioTracks.music],
+          filteredAudioTracks.music ? [filteredAudioTracks.music] : [],
           'bg-gradient-to-r from-amber-500 to-amber-600'
         )}
         
-        {filteredAudioTracks.sfx.length > 0 && renderAudioTrack(
+        {(audioTracks.sfx.length > 0 || filteredAudioTracks.sfx.length > 0) && renderAudioTrack(
           'sfx',
           'SFX',
           <Zap className="w-4 h-4 text-red-500" />,
           filteredAudioTracks.sfx,
           'bg-gradient-to-r from-red-500 to-red-600'
         )}
+        
+        {/* Segment coverage warning - show when segments don't cover audio duration */}
+        {(() => {
+          // Calculate total audio duration
+          let totalAudioDuration = 0
+          if (filteredAudioTracks.voiceover) {
+            totalAudioDuration = Math.max(totalAudioDuration, filteredAudioTracks.voiceover.startTime + filteredAudioTracks.voiceover.duration)
+          }
+          if (filteredAudioTracks.dialogue.length > 0) {
+            const lastDialogueEnd = Math.max(...filteredAudioTracks.dialogue.map(d => d.startTime + d.duration))
+            totalAudioDuration = Math.max(totalAudioDuration, lastDialogueEnd)
+          }
+          
+          // Check if segments cover the audio
+          const segmentCoverage = sceneDuration
+          const coverageGap = totalAudioDuration - segmentCoverage
+          const MAX_SEGMENT_SECONDS = 8
+          const segmentsNeeded = Math.ceil(totalAudioDuration / MAX_SEGMENT_SECONDS)
+          const segmentShortfall = segmentsNeeded - visualClips.length
+          
+          if (coverageGap > 0.5 && segmentShortfall > 0) {
+            return (
+              <div className="flex items-center justify-between px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border-t border-amber-200 dark:border-amber-800">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-500" />
+                  <span className="text-xs text-amber-700 dark:text-amber-300">
+                    Audio is {totalAudioDuration.toFixed(1)}s but segments only cover {segmentCoverage.toFixed(1)}s. 
+                    Add {segmentShortfall} more segment{segmentShortfall > 1 ? 's' : ''} or click Auto-Align.
+                  </span>
+                </div>
+                {onApplyIntelligentAlignment && (
+                  <button
+                    onClick={onApplyIntelligentAlignment}
+                    className="text-xs px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded transition-colors"
+                  >
+                    Auto-Align
+                  </button>
+                )}
+              </div>
+            )
+          }
+          return null
+        })()}
         
         {/* No audio indicator */}
         {!hasAudio && (

@@ -2935,6 +2935,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
   
   // Handle intelligent auto-alignment of keyframes to audio
+  // This also adjusts segment count to match audio duration requirements
   const handleApplyIntelligentAlignment = useCallback(
     (sceneId: string, language: string = 'en') => {
       // Get the scene to access its audio tracks
@@ -2944,11 +2945,81 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const scene = scenes[sceneIndex]
       const audioTracks = buildAudioTracksForLanguage(scene, language)
       
+      // Calculate total audio duration from narration + dialogue
+      let totalAudioDuration = 0
+      
+      // Get narration/voiceover duration
+      const narrationDuration = audioTracks.voiceover?.duration || 0
+      totalAudioDuration = Math.max(totalAudioDuration, narrationDuration)
+      
+      // Get dialogue end time (last dialogue clip end)
+      if (audioTracks.dialogue && audioTracks.dialogue.length > 0) {
+        const lastDialogue = audioTracks.dialogue.reduce((latest, clip) => {
+          const clipEnd = clip.startTime + clip.duration
+          return clipEnd > latest ? clipEnd : latest
+        }, 0)
+        totalAudioDuration = Math.max(totalAudioDuration, lastDialogue)
+      }
+      
+      // Calculate minimum segments required (max 8s per video segment)
+      const MAX_SEGMENT_SECONDS = 8
+      const minimumSegmentsRequired = Math.max(1, Math.ceil(totalAudioDuration / MAX_SEGMENT_SECONDS))
+      
+      console.log(`[Auto-Align] Audio duration: ${totalAudioDuration.toFixed(1)}s, minimum segments: ${minimumSegmentsRequired}`)
+      
       applySceneProductionUpdate(sceneId, (current) => {
-        if (!current || current.segments.length === 0) return current
+        if (!current) return current
         
-        // Apply intelligent defaults to segments
-        const alignedSegments = applyIntelligentDefaults(current.segments, audioTracks)
+        let segments = [...current.segments]
+        
+        // If we need more segments, add them
+        if (segments.length < minimumSegmentsRequired) {
+          const segmentsToAdd = minimumSegmentsRequired - segments.length
+          console.log(`[Auto-Align] Adding ${segmentsToAdd} segments to cover audio duration`)
+          
+          // Get the last segment's end time as starting point
+          const lastSegment = segments[segments.length - 1]
+          let nextStartTime = lastSegment ? lastSegment.endTime : 0
+          
+          // Calculate duration for new segments (split remaining time evenly)
+          const remainingDuration = totalAudioDuration - nextStartTime
+          const newSegmentDuration = Math.min(MAX_SEGMENT_SECONDS, remainingDuration / segmentsToAdd)
+          
+          for (let i = 0; i < segmentsToAdd; i++) {
+            const newSegmentId = `segment-${Date.now()}-${segments.length + i}`
+            const duration = Math.min(newSegmentDuration, MAX_SEGMENT_SECONDS)
+            
+            segments.push({
+              segmentId: newSegmentId,
+              sceneId: current.sceneId,
+              sequenceIndex: segments.length,
+              startTime: nextStartTime,
+              endTime: nextStartTime + duration,
+              status: 'DRAFT' as const,
+              assetType: null,
+              activeAssetUrl: null,
+              references: {},
+            })
+            
+            nextStartTime += duration
+          }
+          
+          toast.success(`Added ${segmentsToAdd} segment${segmentsToAdd > 1 ? 's' : ''} to cover ${totalAudioDuration.toFixed(1)}s of audio`)
+        }
+        
+        // Redistribute segment timing to cover audio duration evenly
+        if (segments.length > 0 && totalAudioDuration > 0) {
+          const segmentDuration = totalAudioDuration / segments.length
+          segments = segments.map((seg, idx) => ({
+            ...seg,
+            sequenceIndex: idx,
+            startTime: idx * segmentDuration,
+            endTime: (idx + 1) * segmentDuration,
+          }))
+        }
+        
+        // Apply intelligent anchor defaults to segments
+        const alignedSegments = applyIntelligentDefaults(segments, audioTracks)
         
         console.log('[Auto-Align] Applied intelligent alignment to', alignedSegments.length, 'keyframes')
         
