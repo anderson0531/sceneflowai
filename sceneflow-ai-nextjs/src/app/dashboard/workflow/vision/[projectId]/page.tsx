@@ -6570,7 +6570,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (data.success) {
         // Use functional update to ensure we're working with latest state
         // This is critical when multiple audio generations run sequentially
-        let updatedScenesForDb: any[] = []
+        // NOTE: We do NOT save to database here - the API's updateSceneAudio() already
+        // persisted the Vercel Blob URL. Saving here would overwrite with stale state.
         
         setScript((prevScript: any) => {
           // Robust scene lookup using normalizeScenes helper
@@ -6686,9 +6687,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           })
           
-          // Capture for database save (outside the callback)
-          updatedScenesForDb = updatedScenes
-          
           // Preserve original script structure when updating
           // Check which path the original data used
           if (prevScript?.script?.scenes) {
@@ -6716,15 +6714,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }
         })
         
-        // Persist to database (fire and forget, don't block UI)
-        // Use a small delay to ensure state update has processed
-        setTimeout(() => {
-          if (updatedScenesForDb.length > 0) {
-            saveScenesToDatabase(updatedScenesForDb).catch(err => {
-              console.error('[Generate Scene Audio] Failed to save to database:', err)
-            })
-          }
-        }, 100)
+        // NOTE: Database save is handled by the API's updateSceneAudio() function.
+        // Do NOT call saveScenesToDatabase here - it would overwrite with stale state
+        // and lose the Vercel Blob URLs that the API just persisted.
         
         try { const { toast } = require('sonner'); toast.success('Audio generated!') } catch {}
       } else {
