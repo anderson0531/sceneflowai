@@ -210,9 +210,25 @@ CINEMATOGRAPHY DIRECTION:
     const totalDialogueDuration = dialogueAudioDurations?.reduce((sum, d) => sum + d.duration, 0) || 0
     const narrationDuration = narrationAudioDuration || 0
     
-    // IMPORTANT: Narration and dialogue often play in parallel
-    // The total scene duration is the MAX of the two, not the sum
-    const totalSceneDuration = Math.max(narrationDuration, totalDialogueDuration) || stats.totalDuration
+    // IMPORTANT: Audio plays SEQUENTIALLY - narration first, then dialogue lines in order
+    // Total scene duration = narration + all dialogue (NOT parallel)
+    const totalSceneDuration = (narrationDuration + totalDialogueDuration) || stats.totalDuration
+    
+    // Build timeline breakdown showing sequential audio structure
+    let timelineBreakdown = ''
+    let currentTime = 0
+    if (narrationDuration > 0) {
+      timelineBreakdown += `${currentTime.toFixed(1)}s - ${narrationDuration.toFixed(1)}s: NARRATION (${narrationDuration.toFixed(1)}s)\n`
+      currentTime = narrationDuration
+    }
+    if (dialogueAudioDurations && dialogueAudioDurations.length > 0) {
+      dialogueAudioDurations.forEach((d, i) => {
+        const endTime = currentTime + d.duration
+        const speaker = sceneDialogue?.[i]?.character || 'Unknown'
+        timelineBreakdown += `${currentTime.toFixed(1)}s - ${endTime.toFixed(1)}s: ${speaker} dialogue (${d.duration.toFixed(1)}s)\n`
+        currentTime = endTime
+      })
+    }
     
     // Calculate minimum segments needed based on duration
     const minSegmentsForDuration = Math.ceil(totalSceneDuration / targetSegmentDuration)
@@ -243,12 +259,17 @@ DIALOGUE (sync to characters on screen):
 ${dialogueWithDurations}
 Total Dialogue Duration: ${totalDialogueDuration.toFixed(1)}s
 
+=== AUDIO TIMELINE (SEQUENTIAL PLAYBACK) ===
+${timelineBreakdown || 'No audio timeline available'}
+
 === TIMING REQUIREMENTS ===
-- Total Scene Duration: ${totalSceneDuration.toFixed(1)}s
+- Total Scene Duration: ${totalSceneDuration.toFixed(1)}s (narration + dialogue sequential)
 - Maximum Segment Duration: ${targetSegmentDuration}s (Veo 3.1 limit)
 - Minimum Segments for Duration: ${minSegmentsForDuration}
 - Dialogue Lines Requiring Visual Coverage: ${dialogueLineCount}
 - RECOMMENDED SEGMENTS: ${recommendedSegments}+
+
+IMPORTANT: Segments MUST cover the FULL ${totalSceneDuration.toFixed(1)}s duration. The last segment should end at ${totalSceneDuration.toFixed(1)}s.
 
 === SEGMENTATION RULES ===
 1. Each segment MUST be ≤ ${targetSegmentDuration} seconds
