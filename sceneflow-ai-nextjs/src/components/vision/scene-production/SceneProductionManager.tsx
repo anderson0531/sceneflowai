@@ -926,6 +926,15 @@ export function SceneProductionManager({
     const sceneDescription = scene?.description || ''
     const dialogueList = scene?.dialogue || []
     
+    // Calculate total audio duration from scene - use narration duration or estimate from dialogue
+    const estimatedNarrationDuration = sceneNarration ? Math.ceil(sceneNarration.split(' ').length / 2.5) : 0
+    const estimatedDialogueDuration = Array.isArray(dialogueList) 
+      ? dialogueList.reduce((acc: number, d: any) => acc + Math.ceil((d.line || d.text || '').split(' ').length / 2.5), 0)
+      : 0
+    const totalAudioDuration = Math.max(estimatedNarrationDuration + estimatedDialogueDuration, targetDuration)
+    const minimumSegments = Math.ceil(totalAudioDuration / 8)
+    const totalSegmentDuration = minimumSegments * 8
+    
     const dialogueText = Array.isArray(dialogueList) 
       ? dialogueList.map((d: any) => `${d.character || d.speaker}: "${d.line || d.text}"`).join('\n')
       : ''
@@ -937,16 +946,21 @@ SCENE CONTEXT:
 - Description: ${sceneDescription}
 ${dialogueText ? `- Dialogue:\n${dialogueText}` : ''}
 
-TARGET DURATION: ${targetDuration} seconds
+TOTAL AUDIO DURATION: ${totalAudioDuration} seconds (narration + dialogue)
+TARGET SEGMENT DURATION: ${targetDuration} seconds per segment (max 8s for Veo 3.1)
+MINIMUM SEGMENTS REQUIRED: ${minimumSegments} segments (to cover ${totalAudioDuration}s of audio within 8s limit)
+TOTAL VIDEO DURATION TARGET: ${totalSegmentDuration} seconds (${minimumSegments} segments × 8s)
 ${customInstructions ? `CUSTOM INSTRUCTIONS: ${customInstructions}` : ''}
 
 REQUIREMENTS:
-1. Break the scene into 4-8 segments (each 3-10 seconds)
-2. Each segment needs a detailed visual prompt for AI video generation
-3. Include camera movements (pan, zoom, dolly, crane, tracking)
-4. Specify shot types (wide, medium, close-up, extreme close-up)
-5. Describe lighting, mood, and atmosphere
-6. Ensure visual continuity between segments
+1. Create EXACTLY ${minimumSegments} segments to cover the ${totalAudioDuration}s of audio
+2. Each segment must be ${Math.min(targetDuration, 8)} seconds (8 seconds absolute max for Veo 3.1)
+3. Total segment duration should be ${totalSegmentDuration} seconds
+4. Each segment needs a detailed visual prompt for AI video generation
+5. Include camera movements (pan, zoom, dolly, crane, tracking)
+6. Specify shot types (wide, medium, close-up, extreme close-up)
+7. Describe lighting, mood, and atmosphere
+8. Ensure visual continuity between segments
 
 RESPOND WITH VALID JSON ONLY (no markdown, no code blocks):
 {
@@ -954,15 +968,15 @@ RESPOND WITH VALID JSON ONLY (no markdown, no code blocks):
     {
       "label": "Segment name",
       "prompt": "Detailed visual prompt for video generation including camera movement, shot type, lighting, action, and mood",
-      "duration": 5,
+      "duration": ${Math.min(targetDuration, 8)},
       "shotType": "wide|medium|closeup|extreme-closeup",
       "cameraMovement": "static|pan|zoom|dolly|crane|tracking"
     }
   ],
-  "totalDuration": ${targetDuration}
+  "totalDuration": ${totalSegmentDuration}
 }
 
-Generate the segments now:`
+Generate ${minimumSegments} segments now:`
   }
 
   const handleCopyPrompt = async () => {
@@ -1818,19 +1832,39 @@ Example format:
           </p>
           <div className="flex items-center gap-2">
             {productionData?.isSegmented && (
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={isInitializing}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setShowConfirmDialog(true)
-                }}
-                className="shrink-0"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Resegment
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyPrompt}
+                  className="shrink-0"
+                >
+                  <Copy className="w-4 h-4 mr-2" />
+                  {copiedPrompt ? 'Copied!' : 'Copy Prompt'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowPasteDialog(true)}
+                  className="shrink-0"
+                >
+                  <ClipboardPaste className="w-4 h-4 mr-2" />
+                  Paste Results
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isInitializing}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setShowConfirmDialog(true)
+                  }}
+                  className="shrink-0"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Resegment
+                </Button>
+              </>
             )}
           </div>
         </div>

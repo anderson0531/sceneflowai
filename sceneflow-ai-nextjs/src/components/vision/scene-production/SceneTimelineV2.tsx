@@ -1464,8 +1464,10 @@ export function SceneTimelineV2({
                 <div className="flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-amber-500" />
                   <span className="text-xs text-amber-700 dark:text-amber-300">
-                    Audio is {totalAudioDuration.toFixed(1)}s but segments only cover {segmentCoverage.toFixed(1)}s. 
-                    Add {segmentShortfall} more segment{segmentShortfall > 1 ? 's' : ''} or click Auto-Align.
+                    {visualClips.length === 0 
+                      ? `Audio is ${totalAudioDuration.toFixed(1)}s. Generate ${segmentsNeeded} segments (${segmentsNeeded} × 8s = ${segmentsNeeded * 8}s) to cover the audio.`
+                      : `Audio is ${totalAudioDuration.toFixed(1)}s but segments only cover ${segmentCoverage.toFixed(1)}s. Add ${segmentShortfall} more segment${segmentShortfall > 1 ? 's' : ''} or click Auto-Align.`
+                    }
                   </span>
                 </div>
                 {onApplyIntelligentAlignment && (
