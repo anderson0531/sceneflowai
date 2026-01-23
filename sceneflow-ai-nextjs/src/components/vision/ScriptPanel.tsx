@@ -5752,6 +5752,11 @@ function SceneCard({
                           appearance: c.appearance || c.description,
                           referenceUrl: (c as any).referenceImage
                         }))}
+                        // TEMPORARY WORKAROUND: Props for copy prompt functionality
+                        // TODO: Remove when Vertex AI billing is resolved
+                        sceneNarration={scene.narration || scene.action}
+                        sceneDialogue={scene.dialogue}
+                        targetSegmentDuration={8}
                       />
                     ) : (
                       /* Fallback: Simple single-frame viewer when no segments exist */
@@ -6026,6 +6031,11 @@ function SceneCard({
                             referenceUrl: (c as any).referenceImage
                           }))}
                           sceneDirection={scene.detailedDirection || scene.sceneDirection}
+                          // TEMPORARY WORKAROUND: Props for copy prompt functionality
+                          // TODO: Remove when Vertex AI billing is resolved
+                          sceneNarration={scene.narration || scene.action}
+                          sceneDialogue={scene.dialogue}
+                          targetSegmentDuration={8}
                         />
                       </div>
                     )}

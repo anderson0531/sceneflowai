@@ -11,8 +11,11 @@ import {
   Video,
   ChevronDown,
   ChevronUp,
-  Layers
+  Layers,
+  RefreshCw,
+  Copy
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -58,6 +61,15 @@ export interface SegmentFrameTimelineProps {
   }>
   /** Scene direction for intelligent prompt building */
   sceneDirection?: DetailedSceneDirection | null
+  /** Callback to open resegment dialog - triggers segment regeneration */
+  onResegment?: () => void
+  /** 
+   * TEMPORARY WORKAROUND: Scene data for copy prompt functionality
+   * TODO: Remove when Vertex AI billing is resolved and direct API calls work
+   */
+  sceneNarration?: string
+  sceneDialogue?: Array<{ character?: string; speaker?: string; line?: string; text?: string }>
+  targetSegmentDuration?: number
 }
 
 // ============================================================================
@@ -118,7 +130,13 @@ export function SegmentFrameTimeline({
   generatingSegmentId,
   generatingPhase,
   characters = [],
-  sceneDirection
+  sceneDirection,
+  // TEMPORARY WORKAROUND: Props for copy prompt functionality
+  // TODO: Remove when Vertex AI billing is resolved
+  onResegment,
+  sceneNarration,
+  sceneDialogue,
+  targetSegmentDuration = 8
 }: SegmentFrameTimelineProps) {
   // Calculate stats first to determine initial expanded state
   const stats = useMemo(() => calculateTimelineStats(segments), [segments])
@@ -126,6 +144,55 @@ export function SegmentFrameTimeline({
   // Auto-collapse when status is "All Ready" or "FTV Mode Ready"
   const isAllReady = stats.fullyAnchored === stats.total && stats.total > 0
   const [isExpanded, setIsExpanded] = useState(!isAllReady)
+
+  // ============================================================================
+  // TEMPORARY WORKAROUND: Copy Prompt Functionality
+  // TODO: Remove this entire section when Vertex AI billing is resolved
+  // ============================================================================
+  const buildSegmentationPrompt = useCallback(() => {
+    const dialogueText = sceneDialogue && sceneDialogue.length > 0
+      ? sceneDialogue.map(d => `${d.character || d.speaker || 'Unknown'}: "${d.line || d.text}"`).join('\n')
+      : ''
+    
+    return `You are a professional film editor analyzing a scene for video segment generation.
+
+SCENE CONTENT:
+Narration: ${sceneNarration || 'No narration'}
+Dialogue:
+${dialogueText || 'No dialogue'}
+
+AUDIO DURATION: ${stats.totalDuration.toFixed(1)} seconds
+TARGET SEGMENT DURATION: ${targetSegmentDuration}s maximum (Veo 3.1 constraint)
+MINIMUM SEGMENTS NEEDED: ${Math.ceil(stats.totalDuration / targetSegmentDuration)}
+
+TASK: Create intelligent segments that:
+1. Each segment ≤ ${targetSegmentDuration} seconds
+2. Natural breaks at dialogue pauses, action beats, or emotional shifts
+3. Cover the ENTIRE ${stats.totalDuration.toFixed(1)}s audio duration
+4. Include transition types (CUT, FADE, DISSOLVE, CONTINUE)
+
+OUTPUT FORMAT (JSON array):
+[
+  {
+    "startTime": 0.0,
+    "endTime": 6.5,
+    "description": "Opening shot description...",
+    "transitionType": "FADE"
+  },
+  ...
+]
+
+Generate segments now:`
+  }, [sceneNarration, sceneDialogue, stats.totalDuration, targetSegmentDuration])
+
+  const handleCopyPrompt = useCallback(() => {
+    const prompt = buildSegmentationPrompt()
+    navigator.clipboard.writeText(prompt)
+    toast.success('Segmentation prompt copied to clipboard')
+  }, [buildSegmentationPrompt])
+  // ============================================================================
+  // END TEMPORARY WORKAROUND
+  // ============================================================================
   
   // Frame prompt dialog state
   const [framePromptDialogOpen, setFramePromptDialogOpen] = useState(false)
@@ -230,6 +297,36 @@ export function SegmentFrameTimeline({
                 All Ready
               </Badge>
             ) : null}
+            
+            {/* TEMPORARY WORKAROUND: Copy Prompt + Resegment buttons */}
+            {/* TODO: Remove when Vertex AI billing is resolved */}
+            {stats.total > 0 && (
+              <>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleCopyPrompt}
+                  className="h-7 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50"
+                  title="Copy segmentation prompt for AI Studio"
+                >
+                  <Copy className="w-3 h-3 mr-1" />
+                  Copy Prompt
+                </Button>
+                {onResegment && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={onResegment}
+                    className="h-7 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50"
+                    title="Regenerate segments"
+                  >
+                    <RefreshCw className="w-3 h-3 mr-1" />
+                    Resegment
+                  </Button>
+                )}
+              </>
+            )}
+            {/* END TEMPORARY WORKAROUND */}
           </div>
         </div>
         
