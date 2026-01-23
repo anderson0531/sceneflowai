@@ -5757,6 +5757,24 @@ function SceneCard({
                         sceneNarration={scene.narration || scene.action}
                         sceneDialogue={scene.dialogue}
                         targetSegmentDuration={8}
+                        // Audio duration props for segment-to-audio alignment
+                        narrationAudioDuration={scene.narrationAudio?.[selectedLanguage]?.duration}
+                        dialogueAudioDurations={(() => {
+                          const dialogueArray = Array.isArray(scene.dialogueAudio) 
+                            ? scene.dialogueAudio 
+                            : scene.dialogueAudio?.[selectedLanguage] || []
+                          return dialogueArray.map((d: any, i: number) => ({
+                            character: scene.dialogue?.[i]?.character || scene.dialogue?.[i]?.speaker || d.character || 'Speaker',
+                            duration: d.duration || 3
+                          }))
+                        })()}
+                        // Regenerate segments reuses existing initialization function
+                        onResegment={onInitializeSceneProduction ? () => {
+                          onInitializeSceneProduction(
+                            scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                            { targetDuration: scene.duration || 8 }
+                          )
+                        } : undefined}
                       />
                     ) : (
                       /* Fallback: Simple single-frame viewer when no segments exist */
@@ -6036,6 +6054,24 @@ function SceneCard({
                           sceneNarration={scene.narration || scene.action}
                           sceneDialogue={scene.dialogue}
                           targetSegmentDuration={8}
+                          // Audio duration props for segment-to-audio alignment
+                          narrationAudioDuration={scene.narrationAudio?.[selectedLanguage]?.duration}
+                          dialogueAudioDurations={(() => {
+                            const dialogueArray = Array.isArray(scene.dialogueAudio) 
+                              ? scene.dialogueAudio 
+                              : scene.dialogueAudio?.[selectedLanguage] || []
+                            return dialogueArray.map((d: any, i: number) => ({
+                              character: scene.dialogue?.[i]?.character || scene.dialogue?.[i]?.speaker || d.character || 'Speaker',
+                              duration: d.duration || 3
+                            }))
+                          })()}
+                          // Regenerate segments reuses existing initialization function
+                          onResegment={onInitializeSceneProduction ? () => {
+                            onInitializeSceneProduction(
+                              scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                              { targetDuration: scene.duration || 8 }
+                            )
+                          } : undefined}
                         />
                       </div>
                     )}

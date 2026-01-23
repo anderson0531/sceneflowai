@@ -68,8 +68,12 @@ export interface SegmentFrameTimelineProps {
    * TODO: Remove when Vertex AI billing is resolved and direct API calls work
    */
   sceneNarration?: string
-  sceneDialogue?: Array<{ character?: string; speaker?: string; line?: string; text?: string }>
+  sceneDialogue?: Array<{ character?: string; speaker?: string; line?: string; text?: string; duration?: number }>
   targetSegmentDuration?: number
+  /** Audio duration for narration track (seconds) */
+  narrationAudioDuration?: number
+  /** Audio durations for each dialogue line (seconds) */
+  dialogueAudioDurations?: Array<{ character?: string; duration: number }>
 }
 
 // ============================================================================
@@ -136,7 +140,9 @@ export function SegmentFrameTimeline({
   onResegment,
   sceneNarration,
   sceneDialogue,
-  targetSegmentDuration = 8
+  targetSegmentDuration = 8,
+  narrationAudioDuration,
+  dialogueAudioDurations
 }: SegmentFrameTimelineProps) {
   // Calculate stats first to determine initial expanded state
   const stats = useMemo(() => calculateTimelineStats(segments), [segments])
@@ -150,40 +156,77 @@ export function SegmentFrameTimeline({
   // TODO: Remove this entire section when Vertex AI billing is resolved
   // ============================================================================
   const buildSegmentationPrompt = useCallback(() => {
-    const dialogueText = sceneDialogue && sceneDialogue.length > 0
-      ? sceneDialogue.map(d => `${d.character || d.speaker || 'Unknown'}: "${d.line || d.text}"`).join('\n')
+    // Build dialogue text with durations if available
+    const dialogueWithDurations = sceneDialogue && sceneDialogue.length > 0
+      ? sceneDialogue.map((d, i) => {
+          const char = d.character || d.speaker || 'Unknown'
+          const text = d.line || d.text || ''
+          const duration = dialogueAudioDurations?.[i]?.duration || d.duration
+          return duration 
+            ? `- ${char}: "${text}" (${duration.toFixed(1)}s audio)`
+            : `- ${char}: "${text}"`
+        }).join('\n')
       : ''
+    
+    // Calculate total audio duration from actual audio files
+    const totalDialogueDuration = dialogueAudioDurations?.reduce((sum, d) => sum + d.duration, 0) || 0
+    const totalAudioDuration = Math.max(narrationAudioDuration || 0, totalDialogueDuration) || stats.totalDuration
+    const minSegmentsNeeded = Math.ceil(totalAudioDuration / targetSegmentDuration)
+    
+    // Build audio duration breakdown section
+    let audioDurationBreakdown = 'AUDIO DURATION BREAKDOWN:\n'
+    if (narrationAudioDuration) {
+      const narrationSegments = Math.ceil(narrationAudioDuration / targetSegmentDuration)
+      audioDurationBreakdown += `- Narration: ${narrationAudioDuration.toFixed(1)}s → requires ${narrationSegments} segment${narrationSegments > 1 ? 's' : ''} (${targetSegmentDuration}s each)\n`
+    }
+    if (dialogueAudioDurations && dialogueAudioDurations.length > 0) {
+      audioDurationBreakdown += `- Dialogue lines:\n`
+      dialogueAudioDurations.forEach((d, i) => {
+        const segmentsForLine = Math.ceil(d.duration / targetSegmentDuration)
+        audioDurationBreakdown += `  ${i + 1}. ${d.character || 'Speaker'}: ${d.duration.toFixed(1)}s\n`
+      })
+      audioDurationBreakdown += `- Total dialogue: ${totalDialogueDuration.toFixed(1)}s\n`
+    }
+    audioDurationBreakdown += `- TOTAL AUDIO: ${totalAudioDuration.toFixed(1)}s\n`
+    audioDurationBreakdown += `- MINIMUM SEGMENTS REQUIRED: ${minSegmentsNeeded} (at ${targetSegmentDuration}s max each)`
     
     return `You are a professional film editor analyzing a scene for video segment generation.
 
 SCENE CONTENT:
 Narration: ${sceneNarration || 'No narration'}
 Dialogue:
-${dialogueText || 'No dialogue'}
+${dialogueWithDurations || 'No dialogue'}
 
-AUDIO DURATION: ${stats.totalDuration.toFixed(1)} seconds
-TARGET SEGMENT DURATION: ${targetSegmentDuration}s maximum (Veo 3.1 constraint)
-MINIMUM SEGMENTS NEEDED: ${Math.ceil(stats.totalDuration / targetSegmentDuration)}
+${audioDurationBreakdown}
 
-TASK: Create intelligent segments that:
-1. Each segment ≤ ${targetSegmentDuration} seconds
-2. Natural breaks at dialogue pauses, action beats, or emotional shifts
-3. Cover the ENTIRE ${stats.totalDuration.toFixed(1)}s audio duration
-4. Include transition types (CUT, FADE, DISSOLVE, CONTINUE)
+SEGMENT-TO-AUDIO ALIGNMENT RULES:
+1. Each segment MUST be ≤ ${targetSegmentDuration} seconds (Veo 3.1 hard limit)
+2. Segment boundaries should align with audio content:
+   - For ${narrationAudioDuration?.toFixed(1) || 'N/A'}s narration → create ${Math.ceil((narrationAudioDuration || 0) / targetSegmentDuration)} aligned segments
+   - Place segment breaks at natural pauses, sentence boundaries, or emotional beats
+3. Total segment duration MUST cover ALL ${totalAudioDuration.toFixed(1)}s of audio
+4. Use CONTINUE transition for segments within the same shot/camera angle
+5. Use CUT, FADE, or DISSOLVE for scene/shot changes
 
 OUTPUT FORMAT (JSON array):
 [
   {
     "startTime": 0.0,
-    "endTime": 6.5,
-    "description": "Opening shot description...",
+    "endTime": 7.5,
+    "description": "Opening shot - covers narration 0-7.5s describing...",
     "transitionType": "FADE"
+  },
+  {
+    "startTime": 7.5,
+    "endTime": 15.0,
+    "description": "Continuation - covers narration 7.5-15s showing...",
+    "transitionType": "CONTINUE"
   },
   ...
 ]
 
-Generate segments now:`
-  }, [sceneNarration, sceneDialogue, stats.totalDuration, targetSegmentDuration])
+Generate ${minSegmentsNeeded}+ segments now:`
+  }, [sceneNarration, sceneDialogue, stats.totalDuration, targetSegmentDuration, narrationAudioDuration, dialogueAudioDurations])
 
   const handleCopyPrompt = useCallback(() => {
     const prompt = buildSegmentationPrompt()
@@ -317,11 +360,11 @@ Generate segments now:`
                     size="sm"
                     variant="ghost"
                     onClick={onResegment}
-                    className="h-7 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50"
-                    title="Regenerate segments"
+                    className="h-7 text-xs text-amber-400 hover:text-amber-300 hover:bg-amber-500/20 border border-amber-500/30"
+                    title="Regenerate segments (opens generation dialog)"
                   >
                     <RefreshCw className="w-3 h-3 mr-1" />
-                    Resegment
+                    Regenerate Segments
                   </Button>
                 )}
               </>
