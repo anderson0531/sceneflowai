@@ -62,8 +62,8 @@ export interface SegmentFrameTimelineProps {
   onOpenDirectorConsole?: () => void
   onEditFrame?: (segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
   onUploadFrame?: (segmentId: string, frameType: 'start' | 'end', file: File) => void
-  /** Update segment animatic settings for Screening Room (duration + frame selection) */
-  onSegmentAnimaticSettingsChange?: (segmentId: string, settings: { imageDuration?: number; frameSelection?: 'start' | 'end' | 'both' }) => void
+  /** Update segment animatic settings for Screening Room (duration) */
+  onSegmentAnimaticSettingsChange?: (segmentId: string, settings: { imageDuration?: number }) => void
   isGenerating: boolean
   generatingSegmentId?: string | null
   generatingPhase?: 'start' | 'end' | 'video'

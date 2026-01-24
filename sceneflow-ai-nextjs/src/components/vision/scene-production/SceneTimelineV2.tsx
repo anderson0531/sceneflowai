@@ -80,7 +80,6 @@ interface VisualClip {
   shotNumber?: number
   anchorStatus?: 'pending' | 'start-locked' | 'end-pending' | 'fully-anchored'
   exceedsVideoLimit?: boolean  // true if duration > 8s (will need split for video generation)
-  frameSelection?: 'start' | 'end' | 'both'  // Which frames to display in timeline
 }
 
 interface DragState {
@@ -436,7 +435,6 @@ export function SceneTimelineV2({
         shotNumber: seg.shotNumber,
         anchorStatus: seg.anchorStatus,
         exceedsVideoLimit: duration > 8,
-        frameSelection: seg.frameSelection ?? 'start',
       }
     })
   }, [segments])
@@ -866,51 +864,32 @@ export function SceneTimelineV2({
         {/* Background with thumbnail(s) */}
         <div className={cn("absolute inset-0", color)}>
           {showThumbnail && trackType === 'visual' && (clip.thumbnailUrl || clip.endThumbnailUrl) ? (
-            // Visual segments show frames based on frameSelection setting
+            // Visual segments always show both frames side by side
             <div className="absolute inset-0 flex">
-              {/* Frame selection determines what to show */}
-              {clip.frameSelection === 'start' || !clip.frameSelection ? (
-                // Start frame only - full width
-                clip.thumbnailUrl && (
+              {/* Always show both frames - start on left, end on right */}
+              <>
+                {clip.thumbnailUrl && (
                   <div 
-                    className="w-full h-full bg-cover bg-center opacity-70"
+                    className={cn(
+                      "h-full bg-cover bg-center opacity-70",
+                      clip.endThumbnailUrl ? "w-1/2 border-r border-white/30" : "w-full"
+                    )}
                     style={{ backgroundImage: `url(${clip.thumbnailUrl})` }}
-                  />
-                )
-              ) : clip.frameSelection === 'end' ? (
-                // End frame only - full width
-                (clip.endThumbnailUrl || clip.thumbnailUrl) && (
+                  >
+                    {clip.endThumbnailUrl && (
+                      <div className="absolute bottom-0.5 left-0.5 bg-black/60 px-1 rounded text-[7px] text-white/80">S</div>
+                    )}
+                  </div>
+                )}
+                {clip.endThumbnailUrl && (
                   <div 
-                    className="w-full h-full bg-cover bg-center opacity-70"
-                    style={{ backgroundImage: `url(${clip.endThumbnailUrl || clip.thumbnailUrl})` }}
-                  />
-                )
-              ) : clip.frameSelection === 'both' ? (
-                // Both frames - side by side
-                <>
-                  {clip.thumbnailUrl && (
-                    <div 
-                      className={cn(
-                        "h-full bg-cover bg-center opacity-70",
-                        clip.endThumbnailUrl ? "w-1/2 border-r border-white/30" : "w-full"
-                      )}
-                      style={{ backgroundImage: `url(${clip.thumbnailUrl})` }}
-                    >
-                      {clip.endThumbnailUrl && (
-                        <div className="absolute bottom-0.5 left-0.5 bg-black/60 px-1 rounded text-[7px] text-white/80">S</div>
-                      )}
-                    </div>
-                  )}
-                  {clip.endThumbnailUrl && (
-                    <div 
-                      className="w-1/2 h-full bg-cover bg-center opacity-70"
-                      style={{ backgroundImage: `url(${clip.endThumbnailUrl})` }}
-                    >
-                      <div className="absolute bottom-0.5 right-0.5 bg-black/60 px-1 rounded text-[7px] text-white/80">E</div>
-                    </div>
-                  )}
-                </>
-              ) : null}
+                    className="w-1/2 h-full bg-cover bg-center opacity-70"
+                    style={{ backgroundImage: `url(${clip.endThumbnailUrl})` }}
+                  >
+                    <div className="absolute bottom-0.5 right-0.5 bg-black/60 px-1 rounded text-[7px] text-white/80">E</div>
+                  </div>
+                )}
+              </>
             </div>
           ) : showThumbnail && clip.thumbnailUrl ? (
             <div 
@@ -1065,32 +1044,21 @@ export function SceneTimelineV2({
   const currentVisualClip = getCurrentVisualClip(currentTime)
   const hasAudio = hasAudioForLanguage(filteredAudioTracks)
   
-  // Determine which frame to display based on frameSelection and position within clip
+  // Always display both frames - start frame for first half of duration, end frame for second half
   const getDisplayFrameUrl = useCallback((): string | undefined => {
     if (!currentVisualClip) return undefined
     
-    const frameSelection = currentVisualClip.frameSelection ?? 'start'
     const clipStartTime = currentVisualClip.startTime
     const clipDuration = currentVisualClip.duration
     const positionInClip = currentTime - clipStartTime
     const halfDuration = clipDuration / 2
     
-    if (frameSelection === 'start') {
-      // Start frame only - use for full duration
+    // Always use "both" logic - switch from start to end frame at half duration
+    if (positionInClip < halfDuration) {
       return currentVisualClip.thumbnailUrl
-    } else if (frameSelection === 'end') {
-      // End frame only - use for full duration
+    } else {
       return currentVisualClip.endThumbnailUrl || currentVisualClip.thumbnailUrl
-    } else if (frameSelection === 'both') {
-      // Both frames - switch at half duration
-      if (positionInClip < halfDuration) {
-        return currentVisualClip.thumbnailUrl
-      } else {
-        return currentVisualClip.endThumbnailUrl || currentVisualClip.thumbnailUrl
-      }
     }
-    
-    return currentVisualClip.thumbnailUrl
   }, [currentVisualClip, currentTime])
   
   const displayFrameUrl = getDisplayFrameUrl()

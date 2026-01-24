@@ -2130,9 +2130,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   // Handle segment animatic settings changes for Screening Room player
-  // Controls image duration and frame selection (start/end/both)
+  // Controls image duration
   const handleSegmentAnimaticSettingsChange = useCallback(
-    (sceneId: string, segmentId: string, settings: { imageDuration?: number; frameSelection?: 'start' | 'end' | 'both' }) => {
+    (sceneId: string, segmentId: string, settings: { imageDuration?: number }) => {
       console.log('[handleSegmentAnimaticSettingsChange] Updating:', { sceneId, segmentId, settings })
       applySceneProductionUpdate(sceneId, (current) => {
         if (!current) return current
@@ -2140,8 +2140,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           segment.segmentId === segmentId
             ? { 
                 ...segment, 
-                ...(settings.imageDuration !== undefined && { imageDuration: settings.imageDuration }),
-                ...(settings.frameSelection !== undefined && { frameSelection: settings.frameSelection })
+                ...(settings.imageDuration !== undefined && { imageDuration: settings.imageDuration })
               }
             : segment
         )

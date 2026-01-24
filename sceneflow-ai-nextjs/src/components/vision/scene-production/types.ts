@@ -399,13 +399,6 @@ export interface SceneSegment {
   // Default: (endTime - startTime) * 2
   imageDuration?: number
   
-  // Which frame(s) to display in the Screening Room player
-  // 'start' = only start frame for full duration
-  // 'end' = only end frame for full duration  
-  // 'both' = start frame for half duration, then end frame for half duration
-  // Default: 'start'
-  frameSelection?: 'start' | 'end' | 'both'
-  
   // ============================================================================
   // Audio Anchor Settings (for Screening Room timing alignment)
   // ============================================================================

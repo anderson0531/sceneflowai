@@ -16,8 +16,7 @@ import {
   Pencil,
   RefreshCw,
   Upload,
-  Download,
-  Film
+  Download
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
@@ -47,8 +46,8 @@ export interface SegmentPairCardProps {
   onEditFrame?: (frameType: 'start' | 'end', frameUrl: string) => void
   onUploadFrame?: (frameType: 'start' | 'end', file: File) => void
   onDownloadFrame?: (frameType: 'start' | 'end', frameUrl: string) => void
-  /** Callback for animatic settings changes (image duration + frame selection) */
-  onAnimaticSettingsChange?: (settings: { imageDuration?: number; frameSelection?: 'start' | 'end' | 'both' }) => void
+  /** Callback for animatic settings changes (image duration) */
+  onAnimaticSettingsChange?: (settings: { imageDuration?: number }) => void
   isGenerating: boolean
   generatingPhase?: 'start' | 'end' | 'video'
   previousSegmentEndFrame?: string | null
@@ -196,66 +195,6 @@ export function SegmentPairCard({
             <Clock className="w-3 h-3" />
             {duration.toFixed(1)}s
           </span>
-          
-          {/* Screening Room Frame Selection - Duration is set via timeline */}
-          {onAnimaticSettingsChange && (
-            <div className="flex items-center gap-1.5 bg-slate-800/50 rounded-md px-2 py-1 border border-purple-500/30">
-              <Film className="w-3 h-3 text-purple-400 flex-shrink-0" />
-              <span className="text-[10px] text-purple-300 font-medium whitespace-nowrap">Screening Room:</span>
-              
-              {/* Frame Selection Toggle - which frames to display */}
-              <div className="flex items-center gap-0.5 bg-slate-900/50 rounded border border-slate-600">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onAnimaticSettingsChange({ frameSelection: 'start' }) }}
-                      className={cn(
-                        "px-1.5 py-0.5 text-[10px] rounded-l transition-colors",
-                        (segment.frameSelection ?? 'start') === 'start' 
-                          ? "bg-purple-500/40 text-purple-200" 
-                          : "text-slate-500 hover:text-slate-300"
-                      )}
-                    >
-                      S
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">Start frame only</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onAnimaticSettingsChange({ frameSelection: 'both' }) }}
-                      className={cn(
-                        "px-1.5 py-0.5 text-[10px] transition-colors",
-                        segment.frameSelection === 'both' 
-                          ? "bg-purple-500/40 text-purple-200" 
-                          : "text-slate-500 hover:text-slate-300"
-                      )}
-                    >
-                      S+E
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">Both frames (split duration evenly)</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onAnimaticSettingsChange({ frameSelection: 'end' }) }}
-                      className={cn(
-                        "px-1.5 py-0.5 text-[10px] rounded-r transition-colors",
-                        segment.frameSelection === 'end' 
-                          ? "bg-purple-500/40 text-purple-200" 
-                          : "text-slate-500 hover:text-slate-300"
-                      )}
-                    >
-                      E
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">End frame only</TooltipContent>
-                </Tooltip>
-              </div>
-            </div>
-          )}
           
           {/* Anchor Status Badge */}
           <Badge 
