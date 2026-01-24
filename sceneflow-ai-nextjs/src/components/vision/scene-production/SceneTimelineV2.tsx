@@ -1065,6 +1065,36 @@ export function SceneTimelineV2({
   const currentVisualClip = getCurrentVisualClip(currentTime)
   const hasAudio = hasAudioForLanguage(filteredAudioTracks)
   
+  // Determine which frame to display based on frameSelection and position within clip
+  const getDisplayFrameUrl = useCallback((): string | undefined => {
+    if (!currentVisualClip) return undefined
+    
+    const frameSelection = currentVisualClip.frameSelection ?? 'start'
+    const clipStartTime = currentVisualClip.startTime
+    const clipDuration = currentVisualClip.duration
+    const positionInClip = currentTime - clipStartTime
+    const halfDuration = clipDuration / 2
+    
+    if (frameSelection === 'start') {
+      // Start frame only - use for full duration
+      return currentVisualClip.thumbnailUrl
+    } else if (frameSelection === 'end') {
+      // End frame only - use for full duration
+      return currentVisualClip.endThumbnailUrl || currentVisualClip.thumbnailUrl
+    } else if (frameSelection === 'both') {
+      // Both frames - switch at half duration
+      if (positionInClip < halfDuration) {
+        return currentVisualClip.thumbnailUrl
+      } else {
+        return currentVisualClip.endThumbnailUrl || currentVisualClip.thumbnailUrl
+      }
+    }
+    
+    return currentVisualClip.thumbnailUrl
+  }, [currentVisualClip, currentTime])
+  
+  const displayFrameUrl = getDisplayFrameUrl()
+  
   return (
     <div className="space-y-4">
       {/* Scene Video Player - Above Timeline */}
@@ -1079,8 +1109,8 @@ export function SceneTimelineV2({
               className="w-full h-full object-contain" 
               src={currentVisualClip.url}
             />
-          ) : currentVisualClip?.thumbnailUrl ? (
-            <img src={currentVisualClip.thumbnailUrl} alt="Preview" className="w-full h-full object-contain" />
+          ) : displayFrameUrl ? (
+            <img src={displayFrameUrl} alt="Preview" className="w-full h-full object-contain" />
           ) : sceneFrameUrl ? (
             <img src={sceneFrameUrl} alt="Scene Frame" className="w-full h-full object-contain" />
           ) : (
