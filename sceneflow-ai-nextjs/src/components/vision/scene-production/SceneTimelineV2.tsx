@@ -80,6 +80,7 @@ interface VisualClip {
   shotNumber?: number
   anchorStatus?: 'pending' | 'start-locked' | 'end-pending' | 'fully-anchored'
   exceedsVideoLimit?: boolean  // true if duration > 8s (will need split for video generation)
+  frameSelection?: 'start' | 'end' | 'both'  // Which frames to display in timeline
 }
 
 interface DragState {
@@ -435,6 +436,7 @@ export function SceneTimelineV2({
         shotNumber: seg.shotNumber,
         anchorStatus: seg.anchorStatus,
         exceedsVideoLimit: duration > 8,
+        frameSelection: seg.frameSelection ?? 'start',
       }
     })
   }, [segments])
@@ -864,31 +866,51 @@ export function SceneTimelineV2({
         {/* Background with thumbnail(s) */}
         <div className={cn("absolute inset-0", color)}>
           {showThumbnail && trackType === 'visual' && (clip.thumbnailUrl || clip.endThumbnailUrl) ? (
-            // Visual segments show start and end frames side by side
+            // Visual segments show frames based on frameSelection setting
             <div className="absolute inset-0 flex">
-              {/* Start frame - left half or full width if no end frame */}
-              {clip.thumbnailUrl && (
-                <div 
-                  className={cn(
-                    "h-full bg-cover bg-center opacity-70",
-                    clip.endThumbnailUrl ? "w-1/2 border-r border-white/30" : "w-full"
+              {/* Frame selection determines what to show */}
+              {clip.frameSelection === 'start' || !clip.frameSelection ? (
+                // Start frame only - full width
+                clip.thumbnailUrl && (
+                  <div 
+                    className="w-full h-full bg-cover bg-center opacity-70"
+                    style={{ backgroundImage: `url(${clip.thumbnailUrl})` }}
+                  />
+                )
+              ) : clip.frameSelection === 'end' ? (
+                // End frame only - full width
+                (clip.endThumbnailUrl || clip.thumbnailUrl) && (
+                  <div 
+                    className="w-full h-full bg-cover bg-center opacity-70"
+                    style={{ backgroundImage: `url(${clip.endThumbnailUrl || clip.thumbnailUrl})` }}
+                  />
+                )
+              ) : clip.frameSelection === 'both' ? (
+                // Both frames - side by side
+                <>
+                  {clip.thumbnailUrl && (
+                    <div 
+                      className={cn(
+                        "h-full bg-cover bg-center opacity-70",
+                        clip.endThumbnailUrl ? "w-1/2 border-r border-white/30" : "w-full"
+                      )}
+                      style={{ backgroundImage: `url(${clip.thumbnailUrl})` }}
+                    >
+                      {clip.endThumbnailUrl && (
+                        <div className="absolute bottom-0.5 left-0.5 bg-black/60 px-1 rounded text-[7px] text-white/80">S</div>
+                      )}
+                    </div>
                   )}
-                  style={{ backgroundImage: `url(${clip.thumbnailUrl})` }}
-                >
                   {clip.endThumbnailUrl && (
-                    <div className="absolute bottom-0.5 left-0.5 bg-black/60 px-1 rounded text-[7px] text-white/80">S</div>
+                    <div 
+                      className="w-1/2 h-full bg-cover bg-center opacity-70"
+                      style={{ backgroundImage: `url(${clip.endThumbnailUrl})` }}
+                    >
+                      <div className="absolute bottom-0.5 right-0.5 bg-black/60 px-1 rounded text-[7px] text-white/80">E</div>
+                    </div>
                   )}
-                </div>
-              )}
-              {/* End frame - right half */}
-              {clip.endThumbnailUrl && (
-                <div 
-                  className="w-1/2 h-full bg-cover bg-center opacity-70"
-                  style={{ backgroundImage: `url(${clip.endThumbnailUrl})` }}
-                >
-                  <div className="absolute bottom-0.5 right-0.5 bg-black/60 px-1 rounded text-[7px] text-white/80">E</div>
-                </div>
-              )}
+                </>
+              ) : null}
             </div>
           ) : showThumbnail && clip.thumbnailUrl ? (
             <div 
