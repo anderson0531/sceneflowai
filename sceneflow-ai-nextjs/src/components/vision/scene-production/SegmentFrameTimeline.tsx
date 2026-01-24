@@ -391,27 +391,42 @@ Generate ${recommendedSegments}+ segments now:`
         throw new Error('No segments found in the pasted JSON')
       }
       
-      // Transform to expected format if needed
+      // Transform to expected format - include ALL required SceneSegment fields
       const transformedSegments = segments.map((seg: any, idx: number) => ({
+        // Required fields for SceneSegment interface
         segmentId: seg.segmentId || `segment-${idx}`,
-        label: seg.label || seg.description || `Segment ${idx + 1}`,
+        sequenceIndex: idx,
         startTime: seg.startTime || 0,
         endTime: seg.endTime || (seg.startTime || 0) + (seg.duration || 5),
-        duration: seg.duration || (seg.endTime - seg.startTime) || 5,
-        // Use videoPrompt as primary prompt, fallback to description
-        prompt: seg.videoPrompt || seg.prompt || seg.description || '',
-        // NEW: Start and end frame prompts for keyframe generation
+        status: 'DRAFT' as const,
+        assetType: 'IMAGE' as const,
+        references: {
+          startFrameUrl: null,
+          endFrameUrl: null,
+          startFrameDescription: seg.startFramePrompt || '',
+          endFrameDescription: seg.endFramePrompt || '',
+        },
+        takes: [], // Empty takes array - required field
+        
+        // Optional metadata
+        label: seg.label || seg.description || `Segment ${idx + 1}`,
+        
+        // Prompts - for keyframe generation dialog
+        generatedPrompt: seg.startFramePrompt || seg.videoPrompt || seg.prompt || seg.description || '',
+        actionPrompt: seg.videoPrompt || seg.prompt || '',
         startFramePrompt: seg.startFramePrompt || '',
         endFramePrompt: seg.endFramePrompt || '',
-        // NEW: Video generation prompt (uses start/end frames)
         videoPrompt: seg.videoPrompt || seg.prompt || '',
+        
         // Shot and camera info
         shotType: seg.shotType || 'medium',
         cameraMovement: seg.cameraMovement || 'static',
         transitionType: seg.transitionType || (idx === 0 ? 'FADE' : 'CUT'),
+        
         // Audio alignment info
         audioAlignment: seg.audioAlignment || '',
-        status: 'DRAFT' as const,
+        
+        // Keyframe state machine
         anchorStatus: 'pending' as const,
       }))
       

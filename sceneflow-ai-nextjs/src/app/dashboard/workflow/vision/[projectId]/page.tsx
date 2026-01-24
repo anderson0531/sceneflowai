@@ -1978,6 +1978,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       // If pre-parsed segments are provided (from Paste Results), skip API call
       if (prePardsedSegments && prePardsedSegments.length > 0) {
+        console.log('[handleInitializeSceneProduction] Processing pasted segments:', {
+          sceneId,
+          segmentCount: prePardsedSegments.length,
+          firstSegment: prePardsedSegments[0]?.segmentId,
+          hasRequiredFields: {
+            sequenceIndex: prePardsedSegments[0]?.sequenceIndex !== undefined,
+            references: !!prePardsedSegments[0]?.references,
+            takes: Array.isArray(prePardsedSegments[0]?.takes),
+          }
+        })
+        
         const productionData: SceneProductionData = {
           isSegmented: true,
           targetSegmentDuration: targetDuration,
@@ -1986,6 +1997,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
 
         // Use applySceneProductionUpdate to update state and persist to DB
+        console.log('[handleInitializeSceneProduction] Calling applySceneProductionUpdate for:', sceneId)
         applySceneProductionUpdate(sceneId, () => productionData)
 
         try {
