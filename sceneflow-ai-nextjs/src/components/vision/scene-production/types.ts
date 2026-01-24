@@ -367,6 +367,19 @@ export interface SceneSegment {
   // Action prompt: describes what happens during this segment (for AI generation)
   actionPrompt?: string
   
+  // ============================================================================
+  // Pasted/AI-Generated Frame Prompts (from Copy Prompt/Paste Results workflow)
+  // ============================================================================
+  
+  // Start frame generation prompt (from pasted AI segmentation results)
+  startFramePrompt?: string
+  
+  // End frame generation prompt (from pasted AI segmentation results)
+  endFramePrompt?: string
+  
+  // Video generation prompt describing motion between start/end frames
+  videoPrompt?: string
+  
   // Start frame URL (convenience accessor, also in references.startFrameUrl)
   startFrameUrl?: string | null
   

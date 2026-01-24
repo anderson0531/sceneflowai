@@ -157,7 +157,23 @@ export function FramePromptDialog({
   // Initialize prompt from segment when dialog opens
   useEffect(() => {
     if (segment && open) {
-      const basePrompt = segment.userEditedPrompt || segment.generatedPrompt || segment.actionPrompt || ''
+      // Priority: Use pasted frame-specific prompts first, then fall back to other prompts
+      let basePrompt = ''
+      
+      if (frameType === 'start' && segment.startFramePrompt) {
+        // Use the AI-generated start frame prompt from pasted results
+        basePrompt = segment.startFramePrompt
+      } else if (frameType === 'end' && segment.endFramePrompt) {
+        // Use the AI-generated end frame prompt from pasted results
+        basePrompt = segment.endFramePrompt
+      } else if (frameType === 'both' && segment.startFramePrompt) {
+        // For 'both' mode, start with the start frame prompt
+        basePrompt = segment.startFramePrompt
+      } else {
+        // Fall back to existing prompts
+        basePrompt = segment.userEditedPrompt || segment.generatedPrompt || segment.actionPrompt || ''
+      }
+      
       setCustomPrompt(basePrompt)
       
       // Auto-check "use previous end frame" for CONTINUE transitions when available
@@ -170,8 +186,28 @@ export function FramePromptDialog({
   }, [segment, open, previousEndFrameUrl, frameType])
 
   // Build intelligent prompt using keyframe prompt builder
+  // If pasted prompts exist (startFramePrompt/endFramePrompt), return those directly
   const intelligentPrompt = useMemo(() => {
     if (!segment || !useIntelligentPrompt) return null
+    
+    // If we have pasted frame-specific prompts, use them directly instead of building
+    const pastedPrompt = frameType === 'start' || frameType === 'both' 
+      ? segment.startFramePrompt 
+      : segment.endFramePrompt
+    
+    if (pastedPrompt) {
+      // Return the pasted prompt as the "intelligent" suggestion
+      return {
+        prompt: pastedPrompt,
+        injectedDirection: {
+          shotType: segment.shotType || 'medium',
+          cameraMovement: segment.cameraMovement || 'static',
+          lighting: null,
+          emotionalBeat: segment.emotionalBeat || null,
+        },
+        confidence: 1.0, // High confidence since it's from AI-generated paste
+      }
+    }
     
     const keyframeContext: KeyframeContext = {
       segmentIndex,
