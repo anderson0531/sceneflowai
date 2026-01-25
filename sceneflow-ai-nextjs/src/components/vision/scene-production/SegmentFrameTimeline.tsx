@@ -328,6 +328,23 @@ Total Dialogue Duration: ${totalDialogueDuration.toFixed(1)}s
 === AUDIO TIMELINE (SEQUENTIAL PLAYBACK) ===
 ${timelineBreakdown || 'No audio timeline available'}
 
+=== REQUIRED SEGMENT SYNC POINTS ===
+${(() => {
+  // Generate explicit sync points for AI to follow
+  let syncPoints = ''
+  let dialogueStartTime = narrationDuration + (narrationDuration > 0 && numDialogueLines > 0 ? audioTransitionDelay : 0)
+  
+  if (numDialogueLines > 0) {
+    dialogueAudioDurations?.forEach((d, i) => {
+      const speaker = sceneDialogue?.[i]?.character || 'Unknown'
+      syncPoints += `- Dialogue ${i + 1} (${speaker}): Segment MUST START at ${dialogueStartTime.toFixed(1)}s\n`
+      dialogueStartTime += d.duration + (i < numDialogueLines - 1 ? audioTransitionDelay : 0)
+    })
+  }
+  
+  return syncPoints || '- No dialogue sync points'
+})()}
+
 === TIMING REQUIREMENTS ===
 - Total Scene Duration: ${totalSceneDuration.toFixed(1)}s (narration + dialogue sequential)
 - Maximum Segment Duration: ${targetSegmentDuration}s (Veo 3.1 limit)
@@ -341,9 +358,18 @@ IMPORTANT: Segments MUST cover the FULL ${totalSceneDuration.toFixed(1)}s durati
 1. Each segment MUST be ≤ ${targetSegmentDuration} seconds
 2. Create at least ONE SEGMENT PER DIALOGUE LINE to visually cover the speaker's emotion/action
 3. Narration plays over ALL segments - describe visuals that illustrate the narration
-4. AUDIO TIMING: Account for ${audioTransitionDelay}s transition gaps between audio clips
-   - These gaps appear in the timeline as [TRANSITION GAP]
-   - Use transition gaps for camera moves, establishing shots, or reaction beats
+4. **CRITICAL AUDIO-TO-SEGMENT ALIGNMENT:**
+   - Dialogue segments MUST START at the EXACT dialogue audio start time (see AUDIO TIMELINE above)
+   - Transition gaps (${audioTransitionDelay}s) are ABSORBED INTO the preceding segment's end time
+   - The gap time is used for camera movement, reaction shots, or establishing beats
+   - Example using the timeline above:
+     * If narration ends at 19.6s and dialogue 1 starts at 21.6s:
+       - Narration segment(s) should END at 21.6s (absorbing the 2s gap)
+       - Dialogue 1 segment MUST START at exactly 21.6s (sync with audio)
+     * If dialogue 1 ends at 26.0s and dialogue 2 starts at 28.0s:
+       - Dialogue 1 segment should END at 28.0s (absorbing the 2s gap)
+       - Dialogue 2 segment MUST START at exactly 28.0s
+   - This ensures video renders sync perfectly with audio playback
 5. Place segment breaks at:
    - Dialogue line boundaries (new speaker = potential new shot)
    - Emotional beats or action changes
@@ -397,31 +423,44 @@ Use the "Trigger + Wardrobe + Action" pattern instead:
    - Include character movement AND camera movement
    - Add quality descriptors: "smooth continuous motion, photorealistic movement, cinematic pacing"
 
-Example segment (NOTE: physical descriptions OMITTED for characters with reference images):
+Example segments showing CORRECT timing alignment (physical descriptions OMITTED for characters with reference images):
+NOTE: Dialogue 1 starts at 21.6s in audio timeline, so segment 3 ends at 21.6s and segment 4 starts at 21.6s
 [
   {
     "startTime": 0.0,
-    "endTime": 5.5,
+    "endTime": 7.0,
     "label": "Establishing - Grief's Solitude",
     "shotType": "wide",
     "cameraMovement": "slow-dolly-in",
     "transitionType": "FADE",
-    "audioAlignment": "Covers narration 0-5.5s introducing Ben's grief",
-    "startFramePrompt": "Cinematic wide shot, INT. HOME OFFICE - NIGHT. Dr. Benjamin Anderson, wearing a slightly rumpled tweed jacket over a worn dress shirt and dark trousers, sits alone at a standard-height wooden desk covered with realistic clutter, stacks of paper, and vintage tech equipment. Rain streaks the dark window behind him. Low-key lighting creates a moody, noir atmosphere with warm desk lamp glow contrasting cold blue moonlight. He holds a small framed photo, head bowed in profound grief. The room features floor-to-ceiling bookshelves. Proportionally correct to environment with realistic human scale. ${stylePreset.promptSuffix}, cinematic lighting, film grain.",
-    "endFramePrompt": "Medium-wide shot, camera has dollied closer to Dr. Benjamin Anderson in same rumpled tweed jacket. The cluttered desk is more visible—old papers mixed with tablet devices, cold coffee cups, and prescription bottles. He is still looking down at the framed photo, his posture heavy with grief, shoulders slumped. The blue light from a holographic monitor rims his silhouette against the rain-streaked window. Same warm desk lamp provides soft key light. Proportionally correct to environment. ${stylePreset.promptSuffix}, cinematic lighting, film grain.",
-    "videoPrompt": "Slow, creeping dolly-in towards Dr. Benjamin Anderson, smooth continuous motion establishing the isolation and heavy atmosphere. Rain on the window provides subtle background movement. Subtle breathing motion visible. Photorealistic movement, cinematic pacing."
+    "audioAlignment": "Covers narration 0-7s, establishing shot",
+    "startFramePrompt": "Cinematic wide shot, INT. HOME OFFICE - NIGHT. Dr. Benjamin Anderson, wearing a slightly rumpled tweed jacket over a worn dress shirt and dark trousers, sits alone at a standard-height wooden desk covered with realistic clutter. Rain streaks the dark window behind him. Low-key lighting with warm desk lamp glow contrasting cold blue moonlight. He holds a small framed photo, head bowed in profound grief. Floor-to-ceiling bookshelves. Proportionally correct. ${stylePreset.promptSuffix}, cinematic lighting, film grain.",
+    "endFramePrompt": "Medium-wide shot, camera has dollied closer to Dr. Benjamin Anderson. The cluttered desk is more visible. He is still looking down at the framed photo, posture heavy with grief. Blue light from holographic monitor rims his silhouette. Proportionally correct. ${stylePreset.promptSuffix}, cinematic lighting, film grain.",
+    "videoPrompt": "Slow dolly-in towards Dr. Benjamin Anderson, establishing isolation. Rain on window provides subtle movement. Photorealistic movement, cinematic pacing."
   },
   {
-    "startTime": 5.5,
-    "endTime": 10.0,
+    "startTime": 14.0,
+    "endTime": 21.6,
+    "label": "Narration End + Transition",
+    "shotType": "extreme-close-up",
+    "cameraMovement": "static",
+    "transitionType": "DISSOLVE",
+    "audioAlignment": "Covers narration 14-19.6s PLUS 2s transition gap before dialogue 1",
+    "startFramePrompt": "Extreme close-up on Dr. Benjamin Anderson's trembling hands holding framed photo. Weathered hands, slightly faded photo behind glass. Dim lighting. Proportionally correct. ${stylePreset.promptSuffix}, cinematic lighting, film grain.",
+    "endFramePrompt": "Same framing, teardrop on glass of picture frame. Hands shaking more visibly. Lighting flickers faintly from off-camera holographic screen. Proportionally correct. ${stylePreset.promptSuffix}, cinematic lighting, film grain.",
+    "videoPrompt": "Static shot on trembling hands. Tear falls onto frame during transition gap. Lighting flickers. Photorealistic movement, cinematic pacing."
+  },
+  {
+    "startTime": 21.6,
+    "endTime": 28.0,
     "label": "Dialogue 1 - Whispered Regret",  
     "shotType": "close-up",
     "cameraMovement": "static",
     "transitionType": "CUT",
-    "audioAlignment": "Dr. Benjamin Anderson speaks: 'Elara... I tried to warn you' (4.4s)",
-    "startFramePrompt": "Close-up of Dr. Benjamin Anderson, INT. HOME OFFICE - NIGHT. Wearing rumpled tweed jacket, collar visible. Expression of grief-stricken anguish, eyes glistening with unshed tears. Soft warm key light from desk lamp illuminates one side of face, cool blue holographic light rims the other side. Lips beginning to part as if about to speak. Shallow depth of field with cluttered office bokeh background. Proportionally correct. ${stylePreset.promptSuffix}, cinematic lighting, film grain.",
-    "endFramePrompt": "Same close-up framing of Dr. Benjamin Anderson. His expression has shifted from grief to guilt and deep regret. Eyes now cast downward, a single tear track visible on cheek. Trembling hands visible at edge of frame. Same chiaroscuro lighting from desk lamp and holographic screen. Proportionally correct. ${stylePreset.promptSuffix}, cinematic lighting, film grain.",
-    "videoPrompt": "Static close-up with subtle facial acting as Dr. Benjamin Anderson whispers with grief. Minimal camera movement, emotional performance focus. Subtle eye movement, lip trembling, tear forming. Smooth continuous motion, photorealistic movement, cinematic pacing."
+    "audioAlignment": "EXACT SYNC: Dialogue 1 starts at 21.6s - 'Elara... I tried to warn you' (4.4s) + 2s gap",
+    "startFramePrompt": "Close-up of Dr. Benjamin Anderson, INT. HOME OFFICE - NIGHT. Wearing rumpled tweed jacket. Expression of grief-stricken anguish, eyes wet with tears. Chiaroscuro lighting from desk lamp and holographic light. Lips parting to speak. Shallow depth of field. Proportionally correct. ${stylePreset.promptSuffix}, cinematic lighting, film grain.",
+    "endFramePrompt": "Same close-up. Expression shifted to guilt and deep regret. Eyes cast downward, tear track on cheek. Trembling hands at edge of frame. Proportionally correct. ${stylePreset.promptSuffix}, cinematic lighting, film grain.",
+    "videoPrompt": "Static close-up, subtle facial acting as Dr. Benjamin Anderson whispers with grief. Eye movement, lip trembling, tear forming. Photorealistic movement, cinematic pacing."
   }
 ]
 
