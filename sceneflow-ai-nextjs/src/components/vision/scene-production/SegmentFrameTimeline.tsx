@@ -18,6 +18,7 @@ import {
   Sparkles,
   Film
 } from 'lucide-react'
+import { artStylePresets, type ArtStylePreset } from '@/constants/artStylePresets'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
@@ -91,6 +92,8 @@ export interface SegmentFrameTimelineProps {
   sceneHeading?: string
   /** Visual description/action of the scene */
   sceneVisualDescription?: string
+  /** Art style preset ID for prompt generation (default: 'photorealistic') */
+  artStyle?: string
 }
 
 // ============================================================================
@@ -161,10 +164,17 @@ export function SegmentFrameTimeline({
   narrationAudioDuration,
   dialogueAudioDurations,
   sceneHeading,
-  sceneVisualDescription
+  sceneVisualDescription,
+  artStyle = 'photorealistic'
 }: SegmentFrameTimelineProps) {
   // Calculate stats first to determine initial expanded state
   const stats = useMemo(() => calculateTimelineStats(segments), [segments])
+  
+  // Get the style preset for prompt generation
+  const stylePreset = useMemo(() => {
+    const preset = artStylePresets.find(s => s.id === artStyle)
+    return preset || artStylePresets.find(s => s.id === 'photorealistic')!
+  }, [artStyle])
   
   // Auto-collapse when status is "All Ready" or "FTV Mode Ready"
   const isAllReady = stats.fullyAnchored === stats.total && stats.total > 0
@@ -187,9 +197,43 @@ export function SegmentFrameTimeline({
         }).join('\n')
       : 'No dialogue'
     
-    // Build character descriptions
+    // Build character descriptions with wardrobe details for optimized prompts
     const characterDescriptions = characters && characters.length > 0
-      ? characters.map(c => `- ${c.name}: ${c.appearance || 'No description'}${c.referenceUrl ? ' [has reference image]' : ''}`).join('\n')
+      ? characters.map(c => {
+          const parts: string[] = [`- ${c.name}:`]
+          
+          // Physical appearance
+          const appearanceParts: string[] = []
+          if (c.ethnicity) appearanceParts.push(c.ethnicity)
+          if (c.age) appearanceParts.push(c.age)
+          if (c.build) appearanceParts.push(c.build)
+          if (c.hairStyle && c.hairColor) appearanceParts.push(`${c.hairColor} ${c.hairStyle} hair`)
+          else if (c.hairColor) appearanceParts.push(`${c.hairColor} hair`)
+          if (c.eyeColor) appearanceParts.push(`${c.eyeColor} eyes`)
+          if (c.expression) appearanceParts.push(c.expression)
+          if (c.keyFeature) appearanceParts.push(c.keyFeature)
+          
+          if (appearanceParts.length > 0) {
+            parts.push(`  Appearance: ${appearanceParts.join(', ')}`)
+          } else if (c.appearance) {
+            parts.push(`  Appearance: ${c.appearance}`)
+          }
+          
+          // Wardrobe/costume details (critical for visual consistency)
+          const wardrobeParts: string[] = []
+          if (c.defaultWardrobe) wardrobeParts.push(c.defaultWardrobe)
+          if (c.wardrobeAccessories) wardrobeParts.push(c.wardrobeAccessories)
+          if (wardrobeParts.length > 0) {
+            parts.push(`  Wardrobe: ${wardrobeParts.join(', ')}`)
+          }
+          
+          // Reference image indicator
+          if (c.referenceUrl || c.referenceImage) {
+            parts.push(`  [HAS REFERENCE IMAGE - use for identity lock]`)
+          }
+          
+          return parts.join('\n')
+        }).join('\n')
       : 'No character information'
     
     // Build scene direction context
@@ -293,6 +337,34 @@ Generate a JSON array. Each segment MUST include:
 - endFramePrompt: Detailed image generation prompt for the END keyframe  
 - videoPrompt: Motion description for video generation using start→end frames
 
+=== IMAGE PROMPT GUIDELINES (CRITICAL FOR QUALITY) ===
+Generate DETAILED, PROFESSIONAL prompts for startFramePrompt and endFramePrompt:
+
+1. CHARACTER DETAILS (Required):
+   - Use FULL character name (e.g., "Dr. Benjamin Anderson" not "Ben")
+   - Include COMPLETE wardrobe from character description (e.g., "wearing charcoal grey performance shirt, dark navy technical blazer, black trousers, matte leather derby shoes")
+   - Include physical attributes: ethnicity, build, hair color/style, expression
+   - Match character to their reference image identity
+
+2. ENVIRONMENT DETAILS (Required):
+   - Specify exact location from scene heading (e.g., "cluttered home office at night")
+   - Include key props with realistic detail (e.g., "wooden desk covered with stacks of paper, coffee mugs, scattered wires")
+   - Describe lighting conditions precisely (e.g., "dim warm glow of desk lamp contrasting with bright blue holographic light")
+   - Add atmospheric elements (e.g., "bookshelf-lined walls, rain-streaked window")
+
+3. TECHNICAL REQUIREMENTS (Required):
+   - Include proportion statement: "proportionally correct to the environment"
+   - Specify shot composition clearly (e.g., "over-the-shoulder shot from behind")
+   - Add depth/focus guidance (e.g., "shallow depth of field", "sharp foreground silhouette")
+
+4. STYLE SUFFIX (Required):
+   - End EVERY image prompt with: "${stylePreset.promptSuffix}, cinematic lighting, film grain"
+
+5. VIDEO PROMPT REQUIREMENTS:
+   - Describe smooth, continuous motion
+   - Include character movement AND camera movement
+   - Add quality descriptors: "smooth continuous motion, photorealistic movement, cinematic pacing"
+
 Example:
 [
   {
@@ -303,9 +375,9 @@ Example:
     "cameraMovement": "slow-dolly-in",
     "transitionType": "FADE",
     "audioAlignment": "Covers narration 0-5.5s introducing Ben's grief",
-    "startFramePrompt": "Wide shot of dimly lit apartment, Ben Anderson (elderly man, gray hair, weary expression) silhouetted against rain-streaked window, sparse furniture, old photos on wall, cool blue lighting, cinematic composition",
-    "endFramePrompt": "Medium-wide shot, camera has moved closer to Ben, his face now partially visible in profile, same rain-streaked window, grief visible in posture, shoulders slumped",
-    "videoPrompt": "Slow dolly in from wide shot to medium-wide, Ben remains still gazing out window, rain continues streaking down glass, subtle movement in his breathing"
+    "startFramePrompt": "Wide establishing shot of Dr. Benjamin Anderson, a gaunt man in his early 60s with salt-and-pepper disheveled hair, wearing a slightly rumpled tweed jacket over a worn dress shirt. He sits alone in his cluttered home office at night, surrounded by vintage tech equipment, scattered papers, and medical journals. Rain streaks the dark window behind him. Low-key lighting creates a moody, noir atmosphere with warm desk lamp glow contrasting cold blue moonlight. He holds a small framed photo, head bowed in grief. The room features floor-to-ceiling bookshelves and a worn leather chair. Proportionally correct to environment. Ultra-realistic, photorealistic, cinematic lighting, film grain.",
+    "endFramePrompt": "Medium-wide shot, camera has dollied closer to Dr. Benjamin Anderson in same rumpled tweed jacket. The cluttered desk is more visible—old papers mixed with tablet devices, cold coffee cups, and prescription bottles. Ben is still looking down at the framed photo of his late wife, his posture heavy with grief, shoulders slumped. The blue light from a holographic monitor rims his silhouette against the rain-streaked window. Same warm desk lamp provides soft key light. Proportionally correct to environment. Ultra-realistic, photorealistic, cinematic lighting, film grain.",
+    "videoPrompt": "Slow, creeping dolly-in towards Dr. Benjamin Anderson, smooth continuous motion establishing the isolation and heavy atmosphere. Rain on the window provides subtle background movement. Subtle breathing motion visible. Photorealistic movement, cinematic pacing."
   },
   {
     "startTime": 5.5,
@@ -315,9 +387,9 @@ Example:
     "cameraMovement": "static",
     "transitionType": "CUT",
     "audioAlignment": "Ben speaks: 'Elara... I tried to warn you' (4.4s)",
-    "startFramePrompt": "Close-up of Ben's face, eyes glistening with unshed tears, lips beginning to part, soft key light from window, shallow depth of field, grief-stricken expression",
-    "endFramePrompt": "Same close-up, Ben's expression has shifted to guilt and regret, eyes now cast downward, a single tear on cheek",
-    "videoPrompt": "Static close-up, subtle facial acting as Ben whispers with grief, minimal movement, emotional performance"
+    "startFramePrompt": "Close-up of Dr. Benjamin Anderson's grief-stricken face. Gaunt features, salt-and-pepper hair disheveled at temples, deep-set weary eyes glistening with unshed tears. Wearing rumpled tweed jacket collar visible. Soft warm key light from desk lamp illuminates one side of face, cool blue holographic light rims the other side. Lips beginning to part as if about to speak. Shallow depth of field with cluttered office bokeh background. Ultra-realistic, photorealistic, cinematic lighting, film grain.",
+    "endFramePrompt": "Same close-up framing of Dr. Benjamin Anderson. His expression has shifted from grief to guilt and deep regret. Eyes now cast downward, a single tear track visible on weathered cheek. The trembling in his hands (visible at edge of frame) has intensified. Same chiaroscuro lighting from desk lamp and holographic screen. Proportionally correct. Ultra-realistic, photorealistic, cinematic lighting, film grain.",
+    "videoPrompt": "Static close-up with subtle facial acting as Dr. Benjamin Anderson whispers with grief. Minimal camera movement, emotional performance focus. Subtle eye movement, lip trembling, tear forming. Smooth continuous motion, photorealistic movement, cinematic pacing."
   }
 ]
 
@@ -333,7 +405,8 @@ Generate ${recommendedSegments}+ segments now:`
     stats.totalDuration, 
     targetSegmentDuration, 
     narrationAudioDuration, 
-    dialogueAudioDurations
+    dialogueAudioDurations,
+    stylePreset
   ])
 
   const handleCopyPrompt = useCallback(() => {
