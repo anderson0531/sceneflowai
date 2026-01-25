@@ -372,8 +372,8 @@ export function hasAudioForLanguage(tracks: AudioTracksDataV2): boolean {
  * Buffer constants for audio alignment (in seconds)
  */
 export const AUDIO_ALIGNMENT_BUFFERS = {
-  NARRATION_BUFFER: 1,    // Buffer after narration ends
-  INTER_CLIP_BUFFER: 1,   // Buffer between SFX/Dialogue clips
+  NARRATION_BUFFER: 2,    // Buffer after narration ends (2s gap before dialogue)
+  INTER_CLIP_BUFFER: 2,   // Buffer between SFX/Dialogue clips (2s gap for natural pacing)
   MUSIC_END_BUFFER: 5,    // Buffer at end of music for fade-out (totalAudio + 5s)
 }
 
