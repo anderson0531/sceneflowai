@@ -94,6 +94,8 @@ export interface SegmentFrameTimelineProps {
   sceneVisualDescription?: string
   /** Art style preset ID for prompt generation (default: 'photorealistic') */
   artStyle?: string
+  /** Transition delay between audio clips in seconds (default: 2.0) */
+  audioTransitionDelay?: number
 }
 
 // ============================================================================
@@ -165,7 +167,8 @@ export function SegmentFrameTimeline({
   dialogueAudioDurations,
   sceneHeading,
   sceneVisualDescription,
-  artStyle = 'photorealistic'
+  artStyle = 'photorealistic',
+  audioTransitionDelay = 2.0
 }: SegmentFrameTimelineProps) {
   // Calculate stats first to determine initial expanded state
   const stats = useMemo(() => calculateTimelineStats(segments), [segments])
@@ -253,17 +256,30 @@ CINEMATOGRAPHY DIRECTION:
     // Calculate total durations
     const totalDialogueDuration = dialogueAudioDurations?.reduce((sum, d) => sum + d.duration, 0) || 0
     const narrationDuration = narrationAudioDuration || 0
+    const numDialogueLines = dialogueAudioDurations?.length || 0
+    
+    // Calculate number of transitions (gaps between audio clips)
+    // Transition after narration (if exists) + transitions between dialogue lines
+    const numTransitions = (narrationDuration > 0 ? 1 : 0) + Math.max(0, numDialogueLines - 1)
+    const totalTransitionTime = numTransitions * audioTransitionDelay
     
     // IMPORTANT: Audio plays SEQUENTIALLY - narration first, then dialogue lines in order
-    // Total scene duration = narration + all dialogue (NOT parallel)
-    const totalSceneDuration = (narrationDuration + totalDialogueDuration) || stats.totalDuration
+    // Total scene duration = narration + all dialogue + transition gaps (NOT parallel)
+    const totalSceneDuration = (narrationDuration + totalDialogueDuration + totalTransitionTime) || stats.totalDuration
     
-    // Build timeline breakdown showing sequential audio structure
+    // Build timeline breakdown showing sequential audio structure with transition gaps
     let timelineBreakdown = ''
     let currentTime = 0
     if (narrationDuration > 0) {
-      timelineBreakdown += `${currentTime.toFixed(1)}s - ${narrationDuration.toFixed(1)}s: NARRATION (${narrationDuration.toFixed(1)}s)\n`
-      currentTime = narrationDuration
+      const narrationEnd = currentTime + narrationDuration
+      timelineBreakdown += `${currentTime.toFixed(1)}s - ${narrationEnd.toFixed(1)}s: NARRATION (${narrationDuration.toFixed(1)}s)\n`
+      currentTime = narrationEnd
+      // Add transition gap after narration if dialogue follows
+      if (numDialogueLines > 0) {
+        const gapEnd = currentTime + audioTransitionDelay
+        timelineBreakdown += `${currentTime.toFixed(1)}s - ${gapEnd.toFixed(1)}s: [TRANSITION GAP]\n`
+        currentTime = gapEnd
+      }
     }
     if (dialogueAudioDurations && dialogueAudioDurations.length > 0) {
       dialogueAudioDurations.forEach((d, i) => {
@@ -271,6 +287,12 @@ CINEMATOGRAPHY DIRECTION:
         const speaker = sceneDialogue?.[i]?.character || 'Unknown'
         timelineBreakdown += `${currentTime.toFixed(1)}s - ${endTime.toFixed(1)}s: ${speaker} dialogue (${d.duration.toFixed(1)}s)\n`
         currentTime = endTime
+        // Add transition gap between dialogue lines (not after the last one)
+        if (i < dialogueAudioDurations.length - 1) {
+          const gapEnd = currentTime + audioTransitionDelay
+          timelineBreakdown += `${currentTime.toFixed(1)}s - ${gapEnd.toFixed(1)}s: [TRANSITION GAP]\n`
+          currentTime = gapEnd
+        }
       })
     }
     
@@ -319,12 +341,15 @@ IMPORTANT: Segments MUST cover the FULL ${totalSceneDuration.toFixed(1)}s durati
 1. Each segment MUST be ≤ ${targetSegmentDuration} seconds
 2. Create at least ONE SEGMENT PER DIALOGUE LINE to visually cover the speaker's emotion/action
 3. Narration plays over ALL segments - describe visuals that illustrate the narration
-4. Place segment breaks at:
+4. AUDIO TIMING: Account for ${audioTransitionDelay}s transition gaps between audio clips
+   - These gaps appear in the timeline as [TRANSITION GAP]
+   - Use transition gaps for camera moves, establishing shots, or reaction beats
+5. Place segment breaks at:
    - Dialogue line boundaries (new speaker = potential new shot)
    - Emotional beats or action changes
    - Camera angle changes
-5. First segment should establish the scene (wide shot or environmental context)
-6. Each segment needs START and END keyframes that define the video motion
+6. First segment should establish the scene (wide shot or environmental context)
+7. Each segment needs START and END keyframes that define the video motion
 
 === OUTPUT FORMAT ===
 Generate a JSON array. Each segment MUST include:
@@ -413,7 +438,8 @@ Generate ${recommendedSegments}+ segments now:`
     targetSegmentDuration, 
     narrationAudioDuration, 
     dialogueAudioDurations,
-    stylePreset
+    stylePreset,
+    audioTransitionDelay
   ])
 
   const handleCopyPrompt = useCallback(() => {
