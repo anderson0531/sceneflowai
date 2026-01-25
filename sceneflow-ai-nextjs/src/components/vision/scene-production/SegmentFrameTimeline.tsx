@@ -344,20 +344,20 @@ Generate DETAILED, PROFESSIONAL prompts for startFramePrompt and endFramePrompt:
    - Use FULL character name (e.g., "Dr. Benjamin Anderson" not "Ben")
    - Include COMPLETE wardrobe from character description (e.g., "wearing charcoal grey performance shirt, dark navy technical blazer, black trousers, matte leather derby shoes")
    - Include physical attributes: ethnicity, build, hair color/style, expression
-   - Match character to their reference image identity
+   - Include emotional state matching the dialogue/narration beat
 
 2. ENVIRONMENT DETAILS (Required):
-   - Specify exact location from scene heading (e.g., "cluttered home office at night")
-   - Include key props with realistic detail (e.g., "wooden desk covered with stacks of paper, coffee mugs, scattered wires")
+   - Specify exact location from scene heading (e.g., "INT. HOME OFFICE - NIGHT")
+   - Include key props with realistic detail (e.g., "standard-height wooden desk covered with stacks of paper, coffee mugs, scattered wires")
    - Describe lighting conditions precisely (e.g., "dim warm glow of desk lamp contrasting with bright blue holographic light")
    - Add atmospheric elements (e.g., "bookshelf-lined walls, rain-streaked window")
 
 3. TECHNICAL REQUIREMENTS (Required):
-   - Include proportion statement: "proportionally correct to the environment"
+   - Include proportion statement: "proportionally correct to the environment" or "realistic human scale"
    - Specify shot composition clearly (e.g., "over-the-shoulder shot from behind")
    - Add depth/focus guidance (e.g., "shallow depth of field", "sharp foreground silhouette")
 
-4. STYLE SUFFIX (Required):
+4. STYLE SUFFIX (Required - ADD TO END OF EVERY PROMPT):
    - End EVERY image prompt with: "${stylePreset.promptSuffix}, cinematic lighting, film grain"
 
 5. VIDEO PROMPT REQUIREMENTS:
@@ -365,7 +365,7 @@ Generate DETAILED, PROFESSIONAL prompts for startFramePrompt and endFramePrompt:
    - Include character movement AND camera movement
    - Add quality descriptors: "smooth continuous motion, photorealistic movement, cinematic pacing"
 
-Example:
+Example segment with COMPLETE prompt format:
 [
   {
     "startTime": 0.0,
@@ -375,8 +375,8 @@ Example:
     "cameraMovement": "slow-dolly-in",
     "transitionType": "FADE",
     "audioAlignment": "Covers narration 0-5.5s introducing Ben's grief",
-    "startFramePrompt": "Wide establishing shot of Dr. Benjamin Anderson, a gaunt man in his early 60s with salt-and-pepper disheveled hair, wearing a slightly rumpled tweed jacket over a worn dress shirt. He sits alone in his cluttered home office at night, surrounded by vintage tech equipment, scattered papers, and medical journals. Rain streaks the dark window behind him. Low-key lighting creates a moody, noir atmosphere with warm desk lamp glow contrasting cold blue moonlight. He holds a small framed photo, head bowed in grief. The room features floor-to-ceiling bookshelves and a worn leather chair. Proportionally correct to environment. Ultra-realistic, photorealistic, cinematic lighting, film grain.",
-    "endFramePrompt": "Medium-wide shot, camera has dollied closer to Dr. Benjamin Anderson in same rumpled tweed jacket. The cluttered desk is more visible—old papers mixed with tablet devices, cold coffee cups, and prescription bottles. Ben is still looking down at the framed photo of his late wife, his posture heavy with grief, shoulders slumped. The blue light from a holographic monitor rims his silhouette against the rain-streaked window. Same warm desk lamp provides soft key light. Proportionally correct to environment. Ultra-realistic, photorealistic, cinematic lighting, film grain.",
+    "startFramePrompt": "Cinematic wide shot, INT. HOME OFFICE - NIGHT. Dr. Benjamin Anderson, a gaunt man in his early 60s with salt-and-pepper disheveled hair, wearing a slightly rumpled tweed jacket over a worn dress shirt. He sits alone in his cluttered home office at night, surrounded by vintage tech equipment, scattered papers, and medical journals on a standard-height wooden desk. Rain streaks the dark window behind him. Low-key lighting creates a moody, noir atmosphere with warm desk lamp glow contrasting cold blue moonlight. He holds a small framed photo, head bowed in profound grief. The room features floor-to-ceiling bookshelves and a worn leather chair. Proportionally correct to environment with realistic human scale. ${stylePreset.promptSuffix}, cinematic lighting, film grain.",
+    "endFramePrompt": "Medium-wide shot, camera has dollied closer to Dr. Benjamin Anderson in same rumpled tweed jacket. The cluttered desk is more visible—old papers mixed with tablet devices, cold coffee cups, and prescription bottles. Ben is still looking down at the framed photo of his late wife, his posture heavy with grief, shoulders slumped. The blue light from a holographic monitor rims his silhouette against the rain-streaked window. Same warm desk lamp provides soft key light. Proportionally correct to environment. ${stylePreset.promptSuffix}, cinematic lighting, film grain.",
     "videoPrompt": "Slow, creeping dolly-in towards Dr. Benjamin Anderson, smooth continuous motion establishing the isolation and heavy atmosphere. Rain on the window provides subtle background movement. Subtle breathing motion visible. Photorealistic movement, cinematic pacing."
   },
   {
@@ -386,9 +386,9 @@ Example:
     "shotType": "close-up",
     "cameraMovement": "static",
     "transitionType": "CUT",
-    "audioAlignment": "Ben speaks: 'Elara... I tried to warn you' (4.4s)",
-    "startFramePrompt": "Close-up of Dr. Benjamin Anderson's grief-stricken face. Gaunt features, salt-and-pepper hair disheveled at temples, deep-set weary eyes glistening with unshed tears. Wearing rumpled tweed jacket collar visible. Soft warm key light from desk lamp illuminates one side of face, cool blue holographic light rims the other side. Lips beginning to part as if about to speak. Shallow depth of field with cluttered office bokeh background. Ultra-realistic, photorealistic, cinematic lighting, film grain.",
-    "endFramePrompt": "Same close-up framing of Dr. Benjamin Anderson. His expression has shifted from grief to guilt and deep regret. Eyes now cast downward, a single tear track visible on weathered cheek. The trembling in his hands (visible at edge of frame) has intensified. Same chiaroscuro lighting from desk lamp and holographic screen. Proportionally correct. Ultra-realistic, photorealistic, cinematic lighting, film grain.",
+    "audioAlignment": "Dr. Benjamin Anderson speaks: 'Elara... I tried to warn you' (4.4s)",
+    "startFramePrompt": "Close-up of Dr. Benjamin Anderson's grief-stricken face, INT. HOME OFFICE - NIGHT. Gaunt features, salt-and-pepper hair disheveled at temples, deep-set weary eyes glistening with unshed tears. Wearing rumpled tweed jacket collar visible. Soft warm key light from desk lamp illuminates one side of face, cool blue holographic light rims the other side. Lips beginning to part as if about to speak. Shallow depth of field with cluttered office bokeh background. Expression of profound grief-stricken anguish. Proportionally correct. ${stylePreset.promptSuffix}, cinematic lighting, film grain.",
+    "endFramePrompt": "Same close-up framing of Dr. Benjamin Anderson. His expression has shifted from grief to guilt and deep regret. Eyes now cast downward, a single tear track visible on weathered cheek. The trembling in his hands (visible at edge of frame) has intensified. Same chiaroscuro lighting from desk lamp and holographic screen. Shadows deepening around his eyes. Proportionally correct. ${stylePreset.promptSuffix}, cinematic lighting, film grain.",
     "videoPrompt": "Static close-up with subtle facial acting as Dr. Benjamin Anderson whispers with grief. Minimal camera movement, emotional performance focus. Subtle eye movement, lip trembling, tear forming. Smooth continuous motion, photorealistic movement, cinematic pacing."
   }
 ]
