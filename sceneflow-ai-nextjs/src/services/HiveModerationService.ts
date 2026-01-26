@@ -608,6 +608,14 @@ export class HiveModerationService {
   // ===========================================================================
 
   /**
+   * Check if a string is a valid UUID format
+   */
+  private static isValidUUID(str: string): boolean {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
+  }
+
+  /**
    * Get user's violation count in the recent window
    */
   static async getUserViolationCount(
@@ -615,6 +623,13 @@ export class HiveModerationService {
     windowHours: number = 24
   ): Promise<number> {
     try {
+      // Skip database query for non-UUID user IDs (e.g., 'anonymous')
+      // The user_id column is UUID type and will error on non-UUID values
+      if (!this.isValidUUID(userId)) {
+        console.log(`[HiveModeration] Skipping violation count for non-UUID userId: ${userId}`);
+        return 0;
+      }
+
       const windowStart = new Date();
       windowStart.setHours(windowStart.getHours() - windowHours);
 

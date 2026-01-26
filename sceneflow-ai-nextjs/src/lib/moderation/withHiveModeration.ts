@@ -14,6 +14,12 @@
  * @version 2.36
  */
 
+// =============================================================================
+// MODERATION BYPASS FLAG
+// Set to false to disable Hive moderation (useful for debugging or when Hive is down)
+// =============================================================================
+const HIVE_MODERATION_ENABLED = process.env.HIVE_MODERATION_ENABLED !== 'false';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { HiveModerationService, type HiveModerationResult } from '../../services/HiveModerationService';
 import { 
@@ -368,6 +374,12 @@ export async function moderateUpload(
   mimeType: string,
   context: ModerationContext
 ): Promise<ContentModerationResult> {
+  // Bypass moderation if disabled
+  if (!HIVE_MODERATION_ENABLED) {
+    console.log('[Moderation] BYPASSED - Hive moderation disabled');
+    return { allowed: true, shouldRefund: false };
+  }
+
   const { userId, projectId, priorViolations } = context;
 
   console.log(`[Moderation] Upload check: user=${userId} type=${mimeType}`);
@@ -478,7 +490,10 @@ export async function getUserModerationContext(
   projectId?: string,
   tier: PlanTier = 'starter'
 ): Promise<ModerationContext> {
-  const priorViolations = await HiveModerationService.getUserViolationCount(userId, 24);
+  // Skip violation check if moderation is disabled
+  const priorViolations = HIVE_MODERATION_ENABLED 
+    ? await HiveModerationService.getUserViolationCount(userId, 24)
+    : 0;
 
   return {
     userId,
