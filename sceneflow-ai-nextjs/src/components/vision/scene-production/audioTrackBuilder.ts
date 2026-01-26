@@ -130,9 +130,11 @@ export function buildAudioTracksForLanguage(
   // Users who want scene description narrated can include it in their narration text
   
   // Build dialogue tracks - check multiple sources
+  // Use AUDIO_ALIGNMENT_BUFFERS for consistent timing with segment generation
+  const { NARRATION_BUFFER, INTER_CLIP_BUFFER } = AUDIO_ALIGNMENT_BUFFERS
   const dialogueClips: AudioTrackClipV2[] = []
   let currentTime = tracks.voiceover 
-    ? (tracks.voiceover.startTime + tracks.voiceover.duration + 0.5) 
+    ? (tracks.voiceover.startTime + tracks.voiceover.duration + NARRATION_BUFFER) 
     : 0
   
   // Get current dialogue lines for validation
@@ -201,7 +203,7 @@ export function buildAudioTracksForLanguage(
           isStale: !!staleReason,
           staleReason: staleReason || undefined,
         })
-        currentTime += duration + 0.5
+        currentTime += duration + INTER_CLIP_BUFFER
       }
     })
   }
@@ -225,7 +227,7 @@ export function buildAudioTracksForLanguage(
           characterName: d.character,
           dialogueIndex: idx,
         })
-        currentTime += duration + 0.5
+        currentTime += duration + INTER_CLIP_BUFFER
       }
     })
   }

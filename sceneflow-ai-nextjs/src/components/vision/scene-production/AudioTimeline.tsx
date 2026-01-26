@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
-import { Play, Pause, Volume2, VolumeX, Mic, Music, Zap, SkipBack, SkipForward, X, RotateCcw, Pencil, AlertTriangle, Film, Link2, RefreshCw } from 'lucide-react'
+import { Play, Pause, Volume2, VolumeX, Mic, Music, Zap, SkipBack, SkipForward, X, RotateCcw, Pencil, AlertTriangle, Film, Link2, RefreshCw, Lock, Unlock, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
@@ -102,6 +102,23 @@ export function AudioTimeline({
       localStorage.setItem('sceneflow-audio-snap-enabled', enableAudioSnap.toString())
     }
   }, [enableAudioSnap])
+  
+  // Segment lock toggle - when enabled, segments cannot be moved/resized
+  // Default to locked to prevent accidental changes (timeline is for audio alignment)
+  const [segmentsLocked, setSegmentsLocked] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sceneflow-segments-locked')
+      return saved !== 'false'  // Default to locked
+    }
+    return true
+  })
+  
+  // Persist segment lock setting
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sceneflow-segments-locked', segmentsLocked.toString())
+    }
+  }, [segmentsLocked])
   
   // Per-clip mute state - persisted to localStorage
   const [mutedClips, setMutedClips] = useState<Set<string>>(() => {
@@ -245,6 +262,49 @@ export function AudioTimeline({
     }
     return seg
   }, [selectedSegmentId, segmentClips, optimisticValues])
+
+  // Auto-align audio clips to segment start times
+  // Matches dialogue clips to dialogue segments (skipping establishing shot segments)
+  const handleAutoAlignAudio = useCallback(() => {
+    if (!onAudioClipChange || segmentClips.length === 0) return
+    
+    // Get dialogue clips sorted by current start time
+    const dialogueClips = allClips
+      .filter(c => c.type === 'dialogue')
+      .sort((a, b) => a.clip.startTime - b.clip.startTime)
+    
+    if (dialogueClips.length === 0) return
+    
+    // Get segments that could be dialogue segments
+    // Sort by start time and take the last N segments where N = number of dialogue clips
+    // This assumes early segments are establishing/narration shots
+    const sortedSegments = [...segmentClips].sort((a, b) => a.startTime - b.startTime)
+    const dialogueSegmentCount = dialogueClips.length
+    const startIdx = Math.max(0, sortedSegments.length - dialogueSegmentCount)
+    const dialogueSegments = sortedSegments.slice(startIdx)
+    
+    // Align each dialogue clip to corresponding segment start
+    dialogueClips.forEach((clipWrapper, i) => {
+      if (i < dialogueSegments.length) {
+        const targetStart = dialogueSegments[i].startTime
+        // Only update if there's a meaningful difference
+        if (Math.abs(clipWrapper.clip.startTime - targetStart) > 0.1) {
+          onAudioClipChange('dialogue', clipWrapper.clip.id, { startTime: targetStart })
+        }
+      }
+    })
+    
+    // Align SFX to the first dialogue segment start (if any)
+    const sfxClips = allClips.filter(c => c.type === 'sfx')
+    if (sfxClips.length > 0 && dialogueSegments.length > 0) {
+      const sfxStart = dialogueSegments[0].startTime
+      sfxClips.forEach(clipWrapper => {
+        if (Math.abs(clipWrapper.clip.startTime - sfxStart) > 0.1) {
+          onAudioClipChange('sfx', clipWrapper.clip.id, { startTime: sfxStart })
+        }
+      })
+    }
+  }, [allClips, segmentClips, onAudioClipChange])
 
   // Find nearest audio boundary for snap functionality
   const findNearestAudioBoundary = useCallback((time: number, threshold: number = 0.15): number | null => {
@@ -733,6 +793,39 @@ export function AudioTimeline({
           </Button>
         )}
         
+        {/* Auto-Align Audio to Segments Button */}
+        {onAudioClipChange && segmentClips.length > 0 && allClips.filter(c => c.type === 'dialogue').length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleAutoAlignAudio}
+            className="h-7 text-[10px] gap-1 px-2 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20"
+            title="Auto-align dialogue audio to segment start times"
+          >
+            <Wand2 className="w-3 h-3" />
+            Auto-Align
+          </Button>
+        )}
+        
+        {/* Segment Lock Toggle */}
+        {segmentClips.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSegmentsLocked(!segmentsLocked)}
+            className={cn(
+              "h-7 text-[10px] gap-1 px-2",
+              segmentsLocked 
+                ? "text-amber-400 bg-amber-500/20 hover:bg-amber-500/30" 
+                : "text-gray-400 hover:text-gray-300"
+            )}
+            title={segmentsLocked ? 'Unlock segments for editing' : 'Lock segments (prevent accidental changes)'}
+          >
+            {segmentsLocked ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
+            {segmentsLocked ? 'Locked' : 'Unlocked'}
+          </Button>
+        )}
+        
         {/* Realign Audio Button */}
         {onRealignAudio && (
           <Button
@@ -1112,12 +1205,19 @@ export function AudioTimeline({
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
+                      if (segmentsLocked) return
                       let newStart = Math.max(0, segData.startTime - 0.5)
                       newStart = applySnap(newStart)
                       onSegmentChange?.(selectedSegmentId!, { startTime: newStart })
                     }}
-                    className="w-5 h-5 flex items-center justify-center bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-gray-300 text-xs font-bold"
-                    title="-0.5s"
+                    disabled={segmentsLocked}
+                    className={cn(
+                      "w-5 h-5 flex items-center justify-center border rounded text-xs font-bold",
+                      segmentsLocked 
+                        ? "bg-gray-800 border-gray-700 text-gray-600 cursor-not-allowed" 
+                        : "bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-300"
+                    )}
+                    title={segmentsLocked ? "Unlock segments to edit" : "-0.5s"}
                   >−</button>
                   <input
                     type="text"
@@ -1126,7 +1226,7 @@ export function AudioTimeline({
                     onFocus={() => setEditingSegStartTime(segData.startTime.toFixed(1))}
                     onChange={(e) => setEditingSegStartTime(e.target.value)}
                     onBlur={() => {
-                      if (editingSegStartTime !== null) {
+                      if (editingSegStartTime !== null && !segmentsLocked) {
                         const parsed = parseFloat(editingSegStartTime)
                         if (!isNaN(parsed)) {
                           let newStart = Math.max(0, Math.min(sceneDuration, parsed))
@@ -1136,6 +1236,7 @@ export function AudioTimeline({
                       }
                       setEditingSegStartTime(null)
                     }}
+                    disabled={segmentsLocked}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         (e.target as HTMLInputElement).blur()
@@ -1150,12 +1251,19 @@ export function AudioTimeline({
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
+                      if (segmentsLocked) return
                       let newStart = Math.min(sceneDuration, segData.startTime + 0.5)
                       newStart = applySnap(newStart)
                       onSegmentChange?.(selectedSegmentId!, { startTime: newStart })
                     }}
-                    className="w-5 h-5 flex items-center justify-center bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-gray-300 text-xs font-bold"
-                    title="+0.5s"
+                    disabled={segmentsLocked}
+                    className={cn(
+                      "w-5 h-5 flex items-center justify-center border rounded text-xs font-bold",
+                      segmentsLocked 
+                        ? "bg-gray-800 border-gray-700 text-gray-600 cursor-not-allowed" 
+                        : "bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-300"
+                    )}
+                    title={segmentsLocked ? "Unlock segments to edit" : "+0.5s"}
                   >+</button>
                   <span className="text-gray-500">s</span>
                 </div>
@@ -1179,11 +1287,18 @@ export function AudioTimeline({
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
+                      if (segmentsLocked) return
                       const newDuration = Math.max(0.5, segData.duration - 0.5)
                       onSegmentChange?.(selectedSegmentId!, { duration: newDuration })
                     }}
-                    className="w-5 h-5 flex items-center justify-center bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-gray-300 text-xs font-bold"
-                    title="-0.5s"
+                    disabled={segmentsLocked}
+                    className={cn(
+                      "w-5 h-5 flex items-center justify-center border rounded text-xs font-bold",
+                      segmentsLocked 
+                        ? "bg-gray-800 border-gray-700 text-gray-600 cursor-not-allowed" 
+                        : "bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-300"
+                    )}
+                    title={segmentsLocked ? "Unlock segments to edit" : "-0.5s"}
                   >−</button>
                   <input
                     type="text"
@@ -1192,7 +1307,7 @@ export function AudioTimeline({
                     onFocus={() => setEditingSegDuration(segData.duration.toFixed(1))}
                     onChange={(e) => setEditingSegDuration(e.target.value)}
                     onBlur={() => {
-                      if (editingSegDuration !== null) {
+                      if (editingSegDuration !== null && !segmentsLocked) {
                         const parsed = parseFloat(editingSegDuration)
                         if (!isNaN(parsed)) {
                           const newDuration = Math.max(0.5, parsed)
@@ -1201,6 +1316,7 @@ export function AudioTimeline({
                       }
                       setEditingSegDuration(null)
                     }}
+                    disabled={segmentsLocked}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         (e.target as HTMLInputElement).blur()
@@ -1215,11 +1331,18 @@ export function AudioTimeline({
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
+                      if (segmentsLocked) return
                       const newDuration = segData.duration + 0.5
                       onSegmentChange?.(selectedSegmentId!, { duration: newDuration })
                     }}
-                    className="w-5 h-5 flex items-center justify-center bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-gray-300 text-xs font-bold"
-                    title="+0.5s"
+                    disabled={segmentsLocked}
+                    className={cn(
+                      "w-5 h-5 flex items-center justify-center border rounded text-xs font-bold",
+                      segmentsLocked 
+                        ? "bg-gray-800 border-gray-700 text-gray-600 cursor-not-allowed" 
+                        : "bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-300"
+                    )}
+                    title={segmentsLocked ? "Unlock segments to edit" : "+0.5s"}
                   >+</button>
                   <span className="text-gray-500">s</span>
                 </div>
