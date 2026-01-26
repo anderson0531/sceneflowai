@@ -251,21 +251,20 @@ export function buildAudioTracksForLanguage(
   }
   
   // Build SFX tracks
-  // SFX should start with dialogue (as background audio), not before it
-  // If no dialogue, start after narration ends
-  const sfxAnchorTime = dialogueClips.length > 0
-    ? dialogueClips[0].startTime  // Start with first dialogue
-    : (tracks.voiceover 
-        ? tracks.voiceover.startTime + tracks.voiceover.duration  // After narration
-        : 0)  // Fallback to scene start if no audio
+  // SFX should start after narration ends (same anchor as dialogue)
+  // This ensures consistent timing behavior across all audio types
+  const sfxAnchorTime = tracks.voiceover 
+    ? tracks.voiceover.startTime + tracks.voiceover.duration + AUDIO_ALIGNMENT_BUFFERS.NARRATION_BUFFER
+    : 0  // Fallback to scene start if no narration
   
   if (Array.isArray(scene.sfxAudio)) {
     scene.sfxAudio.forEach((sfxUrl: string, idx: number) => {
       if (sfxUrl && typeof sfxUrl === 'string' && sfxUrl.trim()) {
         const sfxDef = scene.sfx?.[idx]
-        // Use explicit startTime if set, otherwise position relative to anchor
-        const explicitStartTime = sfxDef?.startTime
-        const defaultStartTime = sfxAnchorTime + (idx * 2) // Space SFX 2s apart from anchor
+        // Use explicit time if set (from user edits), otherwise position relative to anchor
+        // Note: VisionPage writes to 'time' property, so we read from that
+        const explicitStartTime = sfxDef?.time ?? sfxDef?.startTime // Support both for backwards compatibility
+        const defaultStartTime = sfxAnchorTime + (idx * AUDIO_ALIGNMENT_BUFFERS.INTER_CLIP_BUFFER) // Space SFX apart using buffer
         
         tracks.sfx.push({
           id: `sfx-${idx}`,
