@@ -129,6 +129,22 @@ export function useTimelinePlayback({
   const startTimeRef = useRef<number>(0)
   const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map())
   
+  // Refs to avoid recreating animate callback (prevents infinite loops)
+  const trackVolumesRef = useRef(trackVolumes)
+  const trackEnabledRef = useRef(trackEnabled)
+  const audioClipsRef = useRef(audioClips)
+  const sceneDurationRef = useRef(sceneDuration)
+  const onPlaybackEndRef = useRef(onPlaybackEnd)
+  const onTimeUpdateRef = useRef(onTimeUpdate)
+  
+  // Keep refs in sync with state/props
+  useEffect(() => { trackVolumesRef.current = trackVolumes }, [trackVolumes])
+  useEffect(() => { trackEnabledRef.current = trackEnabled }, [trackEnabled])
+  useEffect(() => { audioClipsRef.current = audioClips }, [audioClips])
+  useEffect(() => { sceneDurationRef.current = sceneDuration }, [sceneDuration])
+  useEffect(() => { onPlaybackEndRef.current = onPlaybackEnd }, [onPlaybackEnd])
+  useEffect(() => { onTimeUpdateRef.current = onTimeUpdate }, [onTimeUpdate])
+  
   // ============================================================================
   // Audio Element Management
   // ============================================================================
@@ -217,8 +233,14 @@ export function useTimelinePlayback({
   const animate = useCallback(() => {
     const elapsed = (performance.now() - startTimeRef.current) / 1000
     
+    // Read current values from refs to avoid stale closures
+    const currentSceneDuration = sceneDurationRef.current
+    const currentAudioClips = audioClipsRef.current
+    const currentTrackEnabled = trackEnabledRef.current
+    const currentTrackVolumes = trackVolumesRef.current
+    
     // Check if playback should end
-    if (elapsed >= sceneDuration) {
+    if (elapsed >= currentSceneDuration) {
       setCurrentTime(0)
       setIsPlaying(false)
       
@@ -228,20 +250,20 @@ export function useTimelinePlayback({
         audio.currentTime = 0
       })
       
-      onPlaybackEnd?.()
+      onPlaybackEndRef.current?.()
       return
     }
     
     setCurrentTime(elapsed)
     
     // Sync audio clips with drift correction
-    audioClips.forEach(clip => {
+    currentAudioClips.forEach(clip => {
       const key = `${clip.id}:${clip.url}`
       const audio = audioRefs.current.get(key)
       if (!audio) return
       
-      const isEnabled = trackEnabled[clip.trackType]
-      const volume = trackVolumes[clip.trackType]
+      const isEnabled = currentTrackEnabled[clip.trackType]
+      const volume = currentTrackVolumes[clip.trackType]
       
       // Apply volume (0 if track disabled)
       audio.volume = isEnabled ? volume : 0
@@ -279,11 +301,11 @@ export function useTimelinePlayback({
     
     // Notify listeners
     const clip = getCurrentVisualClip(elapsed)
-    onTimeUpdate?.(elapsed, clip?.segmentId)
+    onTimeUpdateRef.current?.(elapsed, clip?.segmentId)
     
     // Continue animation loop
     animationRef.current = requestAnimationFrame(animate)
-  }, [sceneDuration, audioClips, trackEnabled, trackVolumes, getCurrentVisualClip, onPlaybackEnd, onTimeUpdate])
+  }, [getCurrentVisualClip]) // Only stable dependency
   
   // ============================================================================
   // Playback Controls
@@ -320,14 +342,15 @@ export function useTimelinePlayback({
   }, [isPlaying, play, pause])
   
   const seekTo = useCallback((time: number) => {
-    const newTime = Math.max(0, Math.min(sceneDuration, time))
+    const currentSceneDuration = sceneDurationRef.current
+    const newTime = Math.max(0, Math.min(currentSceneDuration, time))
     setCurrentTime(newTime)
     startTimeRef.current = performance.now() - newTime * 1000
     
     // If playing, audio will resync on next animate frame
     // If paused, seek audio elements directly
     if (!isPlaying) {
-      audioClips.forEach(clip => {
+      audioClipsRef.current.forEach(clip => {
         const key = `${clip.id}:${clip.url}`
         const audio = audioRefs.current.get(key)
         if (!audio) return
@@ -341,8 +364,8 @@ export function useTimelinePlayback({
       })
     }
     
-    onTimeUpdate?.(newTime, getCurrentVisualClip(newTime)?.segmentId)
-  }, [sceneDuration, isPlaying, audioClips, getCurrentVisualClip, onTimeUpdate])
+    onTimeUpdateRef.current?.(newTime, getCurrentVisualClip(newTime)?.segmentId)
+  }, [isPlaying, getCurrentVisualClip]) // Only stable dependencies
   
   const reset = useCallback(() => {
     pause()

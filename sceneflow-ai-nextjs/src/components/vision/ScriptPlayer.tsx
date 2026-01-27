@@ -398,6 +398,16 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
     return segmentsToVisualClips(currentProductionData.segments, currentSceneDuration)
   }, [currentProductionData?.segments, currentSceneDuration])
 
+  // Callbacks for the playback hook - defined outside to avoid recreation
+  const handlePlaybackEnd = useCallback(() => {
+    // Scene audio finished - trigger auto-advance logic
+    // (handled by existing playSceneAudio effect)
+  }, [])
+  
+  const handleTimeUpdate = useCallback((time: number, segmentId?: string) => {
+    // Time update callback - can be used for captions sync etc.
+  }, [])
+
   // Unified playback hook - replaces the disconnected playhead mechanism
   // This uses HTMLAudioElement with drift correction, matching SceneTimelineV2's approach
   const {
@@ -431,15 +441,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       music: true,
       sfx: true,
     },
-    onPlaybackEnd: useCallback(() => {
-      // Scene audio finished - trigger auto-advance logic
-      if (playerState.autoAdvance && playerState.isPlaying) {
-        // The auto-advance will be handled by the existing playSceneAudio effect
-      }
-    }, [playerState.autoAdvance, playerState.isPlaying]),
-    onTimeUpdate: useCallback((time: number, segmentId?: string) => {
-      // Time update callback - can be used for captions sync etc.
-    }, []),
+    onPlaybackEnd: handlePlaybackEnd,
+    onTimeUpdate: handleTimeUpdate,
   })
 
   // Sync music volume changes to the hook
