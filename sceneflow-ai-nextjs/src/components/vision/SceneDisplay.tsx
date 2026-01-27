@@ -30,6 +30,9 @@ interface SceneDisplayProps {
   sceneDuration?: number
   // New: Audio tracks for anchored timing calculation
   audioTracks?: AudioTracksData
+  // Playhead time from parent for synchronized frame display
+  // When provided, uses playhead-based frame selection instead of timer-based
+  currentTime?: number
 }
 
 /**
@@ -168,7 +171,8 @@ export function SceneDisplay({
   kenBurnsIntensity = 'medium',
   productionData,
   sceneDuration,
-  audioTracks
+  audioTracks,
+  currentTime
 }: SceneDisplayProps) {
   // Build keyframe sequence (with anchored timing if audioTracks provided)
   const keyframes = useMemo(() => 
@@ -176,15 +180,34 @@ export function SceneDisplay({
     [scene, productionData, sceneDuration, audioTracks]
   )
   
-  // Current keyframe index for cycling
-  const [currentKeyframeIndex, setCurrentKeyframeIndex] = useState(0)
+  // Playhead-based frame selection: derive current keyframe from currentTime
+  // This replaces the timer-based approach when currentTime is provided
+  const playheadKeyframeIndex = useMemo(() => {
+    if (currentTime === undefined || keyframes.length <= 1) return 0
+    
+    let elapsed = 0
+    for (let i = 0; i < keyframes.length; i++) {
+      const frameEnd = elapsed + keyframes[i].duration
+      if (currentTime < frameEnd) {
+        return i
+      }
+      elapsed = frameEnd
+    }
+    return keyframes.length - 1
+  }, [currentTime, keyframes])
+  
+  // Timer-based state for when currentTime is not provided (fallback)
+  const [timerKeyframeIndex, setTimerKeyframeIndex] = useState(0)
   const [prevKeyframeIndex, setPrevKeyframeIndex] = useState(-1)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   
-  // Reset keyframe index when scene changes
+  // Use playhead-based index when currentTime provided, otherwise timer-based
+  const currentKeyframeIndex = currentTime !== undefined ? playheadKeyframeIndex : timerKeyframeIndex
+  
+  // Reset timer-based keyframe index when scene changes (only for fallback mode)
   useEffect(() => {
-    setCurrentKeyframeIndex(0)
+    setTimerKeyframeIndex(0)
     setPrevKeyframeIndex(-1)
     setIsTransitioning(false)
     if (timerRef.current) {
@@ -192,21 +215,24 @@ export function SceneDisplay({
     }
   }, [sceneIndex, keyframes.length])
   
-  // Cycle through keyframes with timing
+  // Timer-based keyframe cycling (fallback when currentTime not provided)
+  // When currentTime IS provided, playhead-based selection handles frame switching
   useEffect(() => {
+    // Skip timer-based cycling when using playhead sync
+    if (currentTime !== undefined) return
     if (keyframes.length <= 1) return
     
-    const currentKeyframe = keyframes[currentKeyframeIndex]
+    const currentKeyframe = keyframes[timerKeyframeIndex]
     if (!currentKeyframe) return
     
     // Schedule next keyframe transition
     timerRef.current = setTimeout(() => {
-      setPrevKeyframeIndex(currentKeyframeIndex)
+      setPrevKeyframeIndex(timerKeyframeIndex)
       setIsTransitioning(true)
       
       // After crossfade starts, update index
       setTimeout(() => {
-        setCurrentKeyframeIndex((prev) => (prev + 1) % keyframes.length)
+        setTimerKeyframeIndex((prev) => (prev + 1) % keyframes.length)
         // Clear transition after fade completes
         setTimeout(() => {
           setIsTransitioning(false)
@@ -219,7 +245,7 @@ export function SceneDisplay({
         clearTimeout(timerRef.current)
       }
     }
-  }, [currentKeyframeIndex, keyframes])
+  }, [currentTime, timerKeyframeIndex, keyframes])
   
   // Get current segment's keyframe settings for Ken Burns
   const currentKeyframe = keyframes[currentKeyframeIndex]

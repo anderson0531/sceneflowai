@@ -317,6 +317,44 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
     }
   })
 
+  // Playhead time for synchronized visual frame display
+  // Uses requestAnimationFrame to stay in sync with audio playback
+  const [currentPlayheadTime, setCurrentPlayheadTime] = useState(0)
+  const playheadAnimationRef = useRef<number | null>(null)
+  const scenePlaybackStartRef = useRef<number>(0)
+
+  // Animation loop for playhead sync when playing
+  useEffect(() => {
+    if (playerState.isPlaying) {
+      scenePlaybackStartRef.current = performance.now() - currentPlayheadTime * 1000
+      
+      const animate = () => {
+        const elapsed = (performance.now() - scenePlaybackStartRef.current) / 1000
+        setCurrentPlayheadTime(elapsed)
+        playheadAnimationRef.current = requestAnimationFrame(animate)
+      }
+      playheadAnimationRef.current = requestAnimationFrame(animate)
+    } else {
+      if (playheadAnimationRef.current) {
+        cancelAnimationFrame(playheadAnimationRef.current)
+        playheadAnimationRef.current = null
+      }
+    }
+    
+    return () => {
+      if (playheadAnimationRef.current) {
+        cancelAnimationFrame(playheadAnimationRef.current)
+        playheadAnimationRef.current = null
+      }
+    }
+  }, [playerState.isPlaying])
+
+  // Reset playhead when scene changes
+  useEffect(() => {
+    setCurrentPlayheadTime(0)
+    scenePlaybackStartRef.current = performance.now()
+  }, [playerState.currentSceneIndex])
+
   // Auto-hide controls state
   const [showControls, setShowControls] = useState(true)
   const [showCaptions, setShowCaptions] = useState(false) // Default to off
@@ -1405,6 +1443,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
                 productionData={productionData}
                 sceneDuration={sceneDuration}
                 audioTracks={timelineTracks || undefined}
+                currentTime={playerState.isPlaying ? currentPlayheadTime : undefined}
               />
             )
           })()}
