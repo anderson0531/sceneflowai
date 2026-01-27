@@ -24,7 +24,7 @@ import { ScriptPanel } from '@/components/vision/ScriptPanel'
 import { SceneSelector } from '@/components/vision/SceneSelector'
 import { SceneGallery } from '@/components/vision/SceneGallery'
 import { GenerationProgress } from '@/components/vision/GenerationProgress'
-import { ScreeningRoom } from '@/components/vision/ScriptPlayer'
+import { ScreeningRoomV2 } from '@/components/vision/ScreeningRoomV2'
 import { ImageQualitySelector } from '@/components/vision/ImageQualitySelector'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
 import { Button, buttonVariants } from '@/components/ui/Button'
@@ -8478,9 +8478,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         )}
       </div>
 
-      {/* Screening Room (Full-screen overlay) */}
+      {/* Screening Room V2 (Full-screen overlay) */}
       {isPlayerOpen && script && (
-        <ScreeningRoom
+        <ScreeningRoomV2
           script={script}
           characters={characters}
           onClose={() => setIsPlayerOpen(false)}

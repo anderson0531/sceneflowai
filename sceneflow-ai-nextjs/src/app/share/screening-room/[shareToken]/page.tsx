@@ -1,7 +1,7 @@
 'use client'
 
 import React, { use, useEffect, useState } from 'react'
-import { ScreeningRoom } from '@/components/vision/ScriptPlayer'
+import { ScreeningRoomV2 } from '@/components/vision/ScreeningRoomV2'
 import { Loader, AlertCircle } from 'lucide-react'
 
 export default function SharedScreeningRoomPage({ params }: { params: Promise<{ shareToken: string }> }) {
@@ -84,7 +84,7 @@ export default function SharedScreeningRoomPage({ params }: { params: Promise<{ 
         </div>
       </div>
 
-      <ScreeningRoom
+      <ScreeningRoomV2
         script={projectData.script}
         characters={projectData.characters || []}
         sceneProductionState={projectData.sceneProductionState}

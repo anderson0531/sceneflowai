@@ -4,12 +4,14 @@ import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react'
 import { 
   X, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, 
   SlidersHorizontal, Mic, MessageSquare, Music, Zap,
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Move
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Move, Subtitles, RefreshCw
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { SegmentData } from '@/types/screenplay'
 import { buildAudioTracksForLanguage, flattenAudioTracks, type AudioTrackClipV2 } from '@/components/vision/scene-production/audioTrackBuilder'
+import { getAvailableLanguages } from '@/lib/audio/languageDetection'
+import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 
 // ============================================================================
 // Volume Settings Types & Persistence
@@ -110,10 +112,16 @@ interface FullscreenPlayerProps {
   segments: SegmentData[]
   scene: any
   sceneId: string
+  /** All scenes for language detection and scene navigation */
+  allScenes?: any[]
+  /** Script title to display in header */
+  scriptTitle?: string
   language?: string
   initialTime?: number
   onClose: () => void
   onPlayheadChange?: (time: number, segmentId?: string) => void
+  /** Callback when language is changed - parent should update segments/scene */
+  onLanguageChange?: (language: string) => void
   // Scene navigation
   currentSceneIndex?: number
   totalScenes?: number
@@ -131,10 +139,13 @@ export function FullscreenPlayer({
   segments,
   scene,
   sceneId,
+  allScenes = [],
+  scriptTitle,
   language = 'en',
   initialTime = 0,
   onClose,
   onPlayheadChange,
+  onLanguageChange,
   currentSceneIndex = 0,
   totalScenes = 1,
   onNextScene,
@@ -152,6 +163,10 @@ export function FullscreenPlayer({
   const [showVolumeMixer, setShowVolumeMixer] = useState(false)
   const [trackVolumes, setTrackVolumes] = useState<TrackVolumes>(DEFAULT_VOLUMES)
   
+  // Language state
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(language)
+  const [showCaptions, setShowCaptions] = useState(false)
+  
   // Scene transition state
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [transitionCountdown, setTransitionCountdown] = useState(0)
@@ -162,6 +177,24 @@ export function FullscreenPlayer({
   
   // Refs for transition cancellation
   const transitionCancelledRef = useRef(false)
+  
+  // ============================================================================
+  // Language Detection
+  // ============================================================================
+  const availableLanguages = useMemo(() => {
+    if (allScenes.length === 0) return ['en']
+    return getAvailableLanguages(allScenes)
+  }, [allScenes])
+  
+  const selectableLanguages = useMemo(() => {
+    return SUPPORTED_LANGUAGES.filter(lang => availableLanguages.includes(lang.code))
+  }, [availableLanguages])
+  
+  // Handle language change
+  const handleLanguageChange = useCallback((newLanguage: string) => {
+    setSelectedLanguage(newLanguage)
+    onLanguageChange?.(newLanguage)
+  }, [onLanguageChange])
   
   // Refs for volume state (to avoid stale closures in animation loop)
   const trackVolumesRef = useRef<TrackVolumes>(DEFAULT_VOLUMES)
@@ -727,25 +760,61 @@ export function FullscreenPlayer({
         }`}
         style={{ cursor: showControls ? 'auto' : 'none' }}
       >
-        {/* Top Bar - Close Button + Scene Info */}
-        <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/60 to-transparent flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleClose}
-            className="text-white hover:bg-white/20"
-          >
-            <X className="h-6 w-6" />
-          </Button>
-          
-          {/* Scene indicator */}
-          {totalScenes > 1 && (
-            <div className="text-white/80 text-sm">
-              Scene {currentSceneIndex + 1} of {totalScenes}
+        {/* Top Bar - Title + Language Selector + Close */}
+        <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent flex items-center justify-between" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
+          {/* Left: Title */}
+          <div className="text-white flex-1 min-w-0">
+            <h2 className="text-lg sm:text-xl font-semibold truncate">Screening Room</h2>
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-400">
+              <span className="truncate hidden sm:block">{scriptTitle || 'Untitled Script'}</span>
+              {totalScenes > 1 && (
+                <span className="text-white/60">
+                  • Scene {currentSceneIndex + 1} of {totalScenes}
+                </span>
+              )}
             </div>
-          )}
+          </div>
           
-          <div className="w-10" /> {/* Spacer for balance */}
+          {/* Right: Controls */}
+          <div className="flex items-center gap-2">
+            {/* Captions Toggle */}
+            <button
+              onClick={() => setShowCaptions(prev => !prev)}
+              className={`p-2 rounded-lg hover:bg-white/10 text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center ${
+                showCaptions ? 'bg-white/20' : ''
+              }`}
+              title="Toggle Captions"
+            >
+              <Subtitles className="w-5 h-5" />
+            </button>
+            
+            {/* Language Selector */}
+            {selectableLanguages.length > 1 && (
+              <select
+                value={selectedLanguage}
+                onChange={(e) => handleLanguageChange(e.target.value)}
+                className="px-3 py-1.5 rounded-lg bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-colors text-sm min-h-[44px]"
+                title="Select Language"
+              >
+                {selectableLanguages.map(lang => (
+                  <option key={lang.code} value={lang.code} className="bg-gray-800 text-white">
+                    {lang.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            
+            {/* Close Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleClose}
+              className="text-white hover:bg-white/20 ml-2"
+              title="Exit Screening Room"
+            >
+              <X className="h-6 w-6" />
+            </Button>
+          </div>
         </div>
         
         {/* Bottom Controls */}
