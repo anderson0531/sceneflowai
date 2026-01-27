@@ -19,9 +19,10 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { X, Subtitles, Menu, RefreshCw, Download, Upload, FileText, Copy, Check } from 'lucide-react'
+import { X, Subtitles, Menu, RefreshCw, Download, Upload, FileText, Copy, Check, Maximize } from 'lucide-react'
 import { SceneDisplay } from './SceneDisplay'
 import { PlaybackControls } from './PlaybackControls'
+import { FullscreenPlayer } from './FullscreenPlayer'
 import { VoiceAssignmentPanel } from './VoiceAssignmentPanel'
 import { MobileMenuSheet } from './MobileMenuSheet'
 import { ExportVideoModal } from '@/components/export/ExportVideoModal'
@@ -479,6 +480,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
   const [showCaptions, setShowCaptions] = useState(false) // Default to off
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false) // Export video modal
+  const [showFullscreenPlayer, setShowFullscreenPlayer] = useState(false) // Fullscreen player modal
   // NOTE: Export/Import for translations moved to ScriptPanel (Production header)
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
@@ -1621,6 +1623,23 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       <div className={`absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 to-transparent transition-opacity duration-300 ${
         showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}>
+        {/* Fullscreen Button - positioned in top-right of controls area */}
+        <div className="absolute top-4 right-4">
+          <button
+            onClick={() => {
+              // Stop current playback before launching fullscreen
+              if (playerState.isPlaying) {
+                setPlayerState(prev => ({ ...prev, isPlaying: false }))
+              }
+              setShowFullscreenPlayer(true)
+            }}
+            className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+            title="Fullscreen Player (Experimental)"
+            disabled={!currentProductionData?.segments?.length}
+          >
+            <Maximize className="w-5 h-5" />
+          </button>
+        </div>
                 <PlaybackControls
           isPlaying={playerState.isPlaying}
           currentSceneIndex={playerState.currentSceneIndex}
@@ -1665,6 +1684,20 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
           narrationEnabled: playerState.narrationEnabled,
         }}
       />
+      
+      {/* Fullscreen Player */}
+      {showFullscreenPlayer && currentProductionData?.segments && (
+        <FullscreenPlayer
+          segments={currentProductionData.segments}
+          sceneId={currentSceneId}
+          initialTime={0}
+          onClose={() => setShowFullscreenPlayer(false)}
+          onPlayheadChange={(time, segmentId) => {
+            // Optionally sync back to ScriptPlayer state
+          }}
+          defaultLanguage={selectedLanguage as 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'ja' | 'ko' | 'zh'}
+        />
+      )}
       
       {/* NOTE: Import modal moved to ScriptPanel (Production header) */}
     </div>
