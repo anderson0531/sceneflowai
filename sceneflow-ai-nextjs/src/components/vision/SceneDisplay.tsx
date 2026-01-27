@@ -48,6 +48,61 @@ interface SceneDisplayProps {
  * TIMING: The sceneDuration parameter is the TOTAL scene duration.
  * Per-segment fallback is computed as sceneDuration / segmentCount.
  */
+/**
+ * Derive segment durations from audio tracks when segment timing is missing.
+ * Uses the primary audio (voiceover/narration or first dialogue) to calculate
+ * how long each segment should display, matching the Timeline approach.
+ */
+function deriveSegmentDurationsFromAudio(
+  segments: SceneSegment[],
+  audioTracks: AudioTracksData,
+  sceneDuration: number
+): Map<string, number> {
+  const durationMap = new Map<string, number>()
+  const segmentCount = segments.length
+  
+  // Calculate total audio duration from tracks
+  let totalAudioDuration = 0
+  
+  // Check voiceover/narration track
+  if (audioTracks.voiceover?.duration) {
+    totalAudioDuration = Math.max(totalAudioDuration, 
+      (audioTracks.voiceover.startTime || 0) + audioTracks.voiceover.duration)
+  }
+  
+  // Check dialogue clips
+  if (audioTracks.dialogue?.length) {
+    audioTracks.dialogue.forEach(clip => {
+      if (clip.duration) {
+        totalAudioDuration = Math.max(totalAudioDuration, 
+          (clip.startTime || 0) + clip.duration)
+      }
+    })
+  }
+  
+  // Check music track
+  if (audioTracks.music?.duration) {
+    totalAudioDuration = Math.max(totalAudioDuration, 
+      (audioTracks.music.startTime || 0) + audioTracks.music.duration)
+  }
+  
+  // Use audio duration if valid, otherwise fall back to sceneDuration
+  const effectiveDuration = totalAudioDuration > 0 ? totalAudioDuration : sceneDuration
+  const perSegmentDuration = effectiveDuration / segmentCount
+  
+  // Assign equal duration to each segment (matching Timeline behavior)
+  segments.forEach((segment, idx) => {
+    // If segment has valid bounds, use them; otherwise use calculated duration
+    const segmentBoundsDuration = (segment.endTime || 0) - (segment.startTime || 0)
+    const duration = segmentBoundsDuration > 0 
+      ? segmentBoundsDuration 
+      : perSegmentDuration
+    durationMap.set(segment.segmentId, duration)
+  })
+  
+  return durationMap
+}
+
 function buildKeyframeSequence(
   scene: any,
   productionData?: SceneProductionData,
@@ -72,7 +127,8 @@ function buildKeyframeSequence(
     return []
   }
   
-  // Calculate anchored timing if audio tracks provided and any segments have anchors
+  // ALWAYS calculate timing from audio tracks when available (not just when anchors exist)
+  // This ensures Screening Room matches Timeline playback timing
   const useAnchoring = audioTracks && hasAudioAnchors(productionData.segments)
   const anchoredTimingMap = useAnchoring
     ? new Map(calculateAnchoredTiming(
@@ -82,22 +138,52 @@ function buildKeyframeSequence(
       ).map(t => [t.segmentId, t]))
     : null
   
+  // Derive segment durations from audio tracks as fallback when no explicit timing
+  const audioDerivedDurations = audioTracks 
+    ? deriveSegmentDurationsFromAudio(productionData.segments, audioTracks, sceneDuration)
+    : null
+  
   // Build keyframes from segments based on frameSelection and timing from segment bounds
   productionData.segments.forEach((segment, idx) => {
     // Calculate segment duration from timeline bounds (endTime - startTime)
     // This matches how SceneTimelineV2 calculates visual clip duration
-    const segmentDuration = (segment.endTime || 0) - (segment.startTime || 0)
+    const segmentBoundsDuration = (segment.endTime || 0) - (segment.startTime || 0)
     
     // Get frame URLs from multiple possible locations
     const startUrl = segment.startFrameUrl || segment.references?.startFrameUrl
     const endUrl = segment.endFrameUrl || segment.references?.endFrameUrl
     
-    // Priority: anchored timing > segment bounds > imageDuration override > per-segment fallback
+    // Priority: anchored timing > segment bounds > audio-derived > imageDuration > per-segment fallback
     // This ensures Screening Room timing matches Timeline playback
     const anchoredTiming = anchoredTimingMap?.get(segment.segmentId)
-    const totalDuration = anchoredTiming?.isAnchored 
-      ? anchoredTiming.displayDuration 
-      : (segmentDuration > 0 ? segmentDuration : (segment.imageDuration ?? perSegmentFallback))
+    const audioDerivedDuration = audioDerivedDurations?.get(segment.segmentId)
+    
+    // Resolve duration with clear priority chain
+    let totalDuration: number
+    if (anchoredTiming?.isAnchored) {
+      totalDuration = anchoredTiming.displayDuration
+    } else if (segmentBoundsDuration > 0) {
+      totalDuration = segmentBoundsDuration
+    } else if (audioDerivedDuration && audioDerivedDuration > 0) {
+      totalDuration = audioDerivedDuration
+    } else if (segment.imageDuration && segment.imageDuration > 0) {
+      totalDuration = segment.imageDuration
+    } else {
+      totalDuration = perSegmentFallback
+    }
+    
+    // Debug logging for timing issues (can be removed after verification)
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[SceneDisplay] Segment ${idx} timing:`, {
+        segmentId: segment.segmentId,
+        segmentBoundsDuration,
+        audioDerivedDuration,
+        imageDuration: segment.imageDuration,
+        perSegmentFallback,
+        resolvedDuration: totalDuration
+      })
+    }
+    
     const frameSelection = segment.frameSelection ?? (endUrl ? 'both' : 'start')
     
     if (frameSelection === 'start') {
