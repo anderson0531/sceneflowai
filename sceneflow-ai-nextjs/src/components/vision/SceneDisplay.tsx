@@ -41,13 +41,19 @@ interface SceneDisplayProps {
  * 
  * NOTE: Uses START and END frames when both are available to
  * match timeline playback and keyframe timing.
+ * 
+ * TIMING: The sceneDuration parameter is the TOTAL scene duration.
+ * Per-segment fallback is computed as sceneDuration / segmentCount.
  */
 function buildKeyframeSequence(
   scene: any,
   productionData?: SceneProductionData,
-  fallbackDuration: number = 4,
+  sceneDuration: number = 4,
   audioTracks?: AudioTracksData
 ): KeyframeImage[] {
+  // Calculate per-segment fallback duration (total scene duration / segment count)
+  const segmentCount = productionData?.segments?.length || 1
+  const perSegmentFallback = sceneDuration / segmentCount
   const keyframes: KeyframeImage[] = []
   
   if (!productionData?.isSegmented || !productionData?.segments?.length) {
@@ -55,7 +61,7 @@ function buildKeyframeSequence(
     if (scene.imageUrl) {
       return [{
         url: scene.imageUrl,
-        duration: fallbackDuration,
+        duration: sceneDuration,
         segmentIndex: 0,
         isStartFrame: true
       }]
@@ -69,7 +75,7 @@ function buildKeyframeSequence(
     ? new Map(calculateAnchoredTiming(
         productionData.segments,
         audioTracks,
-        fallbackDuration * productionData.segments.length
+        sceneDuration
       ).map(t => [t.segmentId, t]))
     : null
   
@@ -81,11 +87,11 @@ function buildKeyframeSequence(
     const startUrl = segment.startFrameUrl || segment.references?.startFrameUrl
     const endUrl = segment.endFrameUrl || segment.references?.endFrameUrl
     
-    // Use anchored timing if available, otherwise fall back to imageDuration or default
+    // Use anchored timing if available, otherwise fall back to imageDuration or segment duration or per-segment default
     const anchoredTiming = anchoredTimingMap?.get(segment.segmentId)
     const totalDuration = anchoredTiming?.isAnchored 
       ? anchoredTiming.displayDuration 
-      : (segment.imageDuration ?? (segmentDuration || fallbackDuration))
+      : (segment.imageDuration ?? (segmentDuration || perSegmentFallback))
     const frameSelection = segment.frameSelection ?? (endUrl ? 'both' : 'start')
     
     if (frameSelection === 'start') {
@@ -138,7 +144,7 @@ function buildKeyframeSequence(
   if (keyframes.length === 0 && scene.imageUrl) {
     return [{
       url: scene.imageUrl,
-      duration: fallbackDuration,
+      duration: sceneDuration,
       segmentIndex: 0,
       isStartFrame: true
     }]
