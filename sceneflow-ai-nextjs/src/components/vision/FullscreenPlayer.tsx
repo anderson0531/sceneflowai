@@ -5,7 +5,7 @@ import { X, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { SegmentData } from '@/types/screenplay'
-import { buildAudioTracksForLanguage, AudioClip, type AudioTrack as ImportedAudioTrack } from '@/components/vision/scene-production/audioTrackBuilder'
+import { flattenAudioTracks, type AudioTracksDataV2, type AudioTrackClipV2 } from '@/components/vision/scene-production/audioTrackBuilder'
 
 // ============================================================================
 // Types
@@ -22,11 +22,11 @@ interface VisualClip {
 
 interface FullscreenPlayerProps {
   segments: SegmentData[]
+  audioTracks?: AudioTracksDataV2 | null
   sceneId: string
   initialTime?: number
   onClose: () => void
   onPlayheadChange?: (time: number, segmentId?: string) => void
-  defaultLanguage?: 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'ja' | 'ko' | 'zh'
 }
 
 // ============================================================================
@@ -35,11 +35,11 @@ interface FullscreenPlayerProps {
 
 export function FullscreenPlayer({
   segments,
+  audioTracks,
   sceneId,
   initialTime = 0,
   onClose,
   onPlayheadChange,
-  defaultLanguage = 'en',
 }: FullscreenPlayerProps) {
   // ============================================================================
   // State
@@ -73,14 +73,11 @@ export function FullscreenPlayer({
   }, [segments])
   
   // ============================================================================
-  // Build Audio Tracks (using the same pattern as SceneTimelineV2)
+  // Flatten Audio Tracks to Clips (using flattenAudioTracks like SceneTimelineV2)
   // ============================================================================
-  const audioTracks = useMemo<ImportedAudioTrack[]>(() => {
-    return buildAudioTracksForLanguage(segments, defaultLanguage)
-  }, [segments, defaultLanguage])
-  
-  const allAudioClips = useMemo<AudioClip[]>(() => {
-    return audioTracks.flatMap(track => track.clips)
+  const allAudioClips = useMemo<AudioTrackClipV2[]>(() => {
+    if (!audioTracks) return []
+    return flattenAudioTracks(audioTracks)
   }, [audioTracks])
   
   // ============================================================================
