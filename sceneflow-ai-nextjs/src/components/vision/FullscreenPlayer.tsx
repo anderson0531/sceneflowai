@@ -111,8 +111,9 @@ export function FullscreenPlayer({
   // Audio Element Management
   // ============================================================================
   useEffect(() => {
-    // Preload audio elements
+    // Preload audio elements - only for clips with valid URLs
     allAudioClips.forEach(clip => {
+      if (!clip.url) return // Skip clips without URLs
       const audioKey = `${clip.id}:${clip.url}`
       if (!audioRefs.current.has(audioKey)) {
         const audio = new Audio(clip.url)
@@ -220,6 +221,7 @@ export function FullscreenPlayer({
         
         // Sync audio clips
         allAudioClips.forEach(clip => {
+          if (!clip.url) return // Skip clips without URLs
           const audioKey = `${clip.id}:${clip.url}`
           const audio = audioRefs.current.get(audioKey)
           
@@ -363,17 +365,17 @@ export function FullscreenPlayer({
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center cursor-none"
+      className="fixed inset-0 z-[100] bg-black"
       onMouseMove={showControlsTemporarily}
       onClick={showControlsTemporarily}
     >
-      {/* Image Display */}
-      <div className="flex-1 w-full flex items-center justify-center overflow-hidden">
+      {/* Image Display - Full Screen */}
+      <div className="absolute inset-0 flex items-center justify-center">
         {currentClip?.thumbnailUrl ? (
           <img
             src={currentClip.thumbnailUrl}
             alt={`Segment ${currentClipIndex + 1}`}
-            className="max-w-full max-h-full object-contain"
+            className="w-full h-full object-contain"
             draggable={false}
           />
         ) : (
@@ -433,18 +435,16 @@ export function FullscreenPlayer({
                 <SkipBack className="h-6 w-6" />
               </Button>
               
-              <Button
-                variant="ghost"
-                size="lg"
+              <button
                 onClick={togglePlayback}
-                className="text-white hover:bg-white/20 h-14 w-14 rounded-full"
+                className="flex items-center justify-center w-16 h-16 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors"
               >
                 {isPlaying ? (
                   <Pause className="h-8 w-8" />
                 ) : (
                   <Play className="h-8 w-8 ml-1" />
                 )}
-              </Button>
+              </button>
               
               <Button
                 variant="ghost"
