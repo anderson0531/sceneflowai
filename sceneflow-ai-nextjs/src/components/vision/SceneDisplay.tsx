@@ -79,19 +79,22 @@ function buildKeyframeSequence(
       ).map(t => [t.segmentId, t]))
     : null
   
-  // Build keyframes from segments based on frameSelection and imageDuration settings
+  // Build keyframes from segments based on frameSelection and timing from segment bounds
   productionData.segments.forEach((segment, idx) => {
+    // Calculate segment duration from timeline bounds (endTime - startTime)
+    // This matches how SceneTimelineV2 calculates visual clip duration
     const segmentDuration = (segment.endTime || 0) - (segment.startTime || 0)
     
     // Get frame URLs from multiple possible locations
     const startUrl = segment.startFrameUrl || segment.references?.startFrameUrl
     const endUrl = segment.endFrameUrl || segment.references?.endFrameUrl
     
-    // Use anchored timing if available, otherwise fall back to imageDuration or segment duration or per-segment default
+    // Priority: anchored timing > segment bounds > imageDuration override > per-segment fallback
+    // This ensures Screening Room timing matches Timeline playback
     const anchoredTiming = anchoredTimingMap?.get(segment.segmentId)
     const totalDuration = anchoredTiming?.isAnchored 
       ? anchoredTiming.displayDuration 
-      : (segment.imageDuration ?? (segmentDuration || perSegmentFallback))
+      : (segmentDuration > 0 ? segmentDuration : (segment.imageDuration ?? perSegmentFallback))
     const frameSelection = segment.frameSelection ?? (endUrl ? 'both' : 'start')
     
     if (frameSelection === 'start') {
