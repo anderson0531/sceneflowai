@@ -1697,6 +1697,13 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
           onPlayheadChange={(time, segmentId) => {
             // Optionally sync back to ScriptPlayer state
           }}
+          // Scene navigation
+          currentSceneIndex={playerState.currentSceneIndex}
+          totalScenes={scenes.length}
+          onNextScene={nextScene}
+          onPreviousScene={previousScene}
+          autoAdvance={playerState.autoAdvance}
+          sceneTransitionDelay={playerState.sceneTransitionDelay}
         />
       )}
       
