@@ -225,6 +225,28 @@ export function FullscreenPlayer({
   }, [audioTracks])
   
   // ============================================================================
+  // Get Track Type from Clip ID (clips don't have a 'type' field, derive from id)
+  // ============================================================================
+  const getTrackTypeFromClip = useCallback((clip: AudioTrackClipV2): string => {
+    return getTrackTypeFromClipId(clip.id, clip.label)
+  }, [])
+  
+  // Pure function version for use in animation loop (no closure issues)
+  const getTrackTypeFromClipId = (id: string, label?: string): string => {
+    if (id.startsWith('vo-') || id.startsWith('voiceover')) return 'voiceover'
+    if (id.startsWith('desc-') || id.startsWith('description')) return 'description'
+    if (id.startsWith('dialogue')) return 'dialogue'
+    if (id.startsWith('music')) return 'music'
+    if (id.startsWith('sfx')) return 'sfx'
+    // Fallback: check label
+    const labelLower = (label || '').toLowerCase()
+    if (labelLower.includes('narration') || labelLower.includes('voiceover')) return 'voiceover'
+    if (labelLower.includes('description')) return 'description'
+    if (labelLower.includes('music') || labelLower.includes('background')) return 'music'
+    return 'dialogue' // Default to dialogue for character names
+  }
+  
+  // ============================================================================
   // Get Volume for Track Type (uses refs to avoid stale closures in animation loop)
   // ============================================================================
   const getVolumeForTrack = useCallback((trackType: string): number => {
@@ -317,10 +339,11 @@ export function FullscreenPlayer({
       const clipId = key.split(':')[0]
       const clip = allAudioClips.find(c => c.id === clipId)
       if (clip) {
-        audio.volume = getVolumeForTrack(clip.type)
+        const trackType = getTrackTypeFromClip(clip)
+        audio.volume = getVolumeForTrack(trackType)
       }
     })
-  }, [trackVolumes, isMuted, allAudioClips, getVolumeForTrack])
+  }, [trackVolumes, isMuted, allAudioClips, getVolumeForTrack, getTrackTypeFromClip])
   
   // ============================================================================
   // Cleanup animation on unmount
@@ -456,8 +479,9 @@ export function FullscreenPlayer({
           const audio = audioRefs.current.get(audioKey)
           
           if (audio) {
-            // Apply per-track volume
-            audio.volume = getVolumeForTrack(clip.type)
+            // Apply per-track volume (derive type from clip id)
+            const trackType = getTrackTypeFromClipId(clip.id, clip.label)
+            audio.volume = getVolumeForTrack(trackType)
             
             const clipStart = clip.startTime
             const clipEnd = clip.startTime + clip.duration
