@@ -1,11 +1,56 @@
 'use client'
 
 import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react'
-import { X, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react'
+import { X, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, SlidersHorizontal, Mic, MessageSquare, Music, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { SegmentData } from '@/types/screenplay'
 import { buildAudioTracksForLanguage, flattenAudioTracks, type AudioTrackClipV2 } from '@/components/vision/scene-production/audioTrackBuilder'
+
+// ============================================================================
+// Volume Settings Types & Persistence
+// ============================================================================
+
+interface TrackVolumes {
+  voiceover: number
+  dialogue: number
+  music: number
+  sfx: number
+  master: number
+}
+
+const DEFAULT_VOLUMES: TrackVolumes = {
+  voiceover: 1,
+  dialogue: 1,
+  music: 0.5,
+  sfx: 0.7,
+  master: 1,
+}
+
+const VOLUME_STORAGE_KEY = 'sceneflow-fullscreen-player-volumes'
+
+function loadVolumeSettings(): TrackVolumes {
+  if (typeof window === 'undefined') return DEFAULT_VOLUMES
+  try {
+    const stored = localStorage.getItem(VOLUME_STORAGE_KEY)
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      return { ...DEFAULT_VOLUMES, ...parsed }
+    }
+  } catch (e) {
+    console.warn('Failed to load volume settings:', e)
+  }
+  return DEFAULT_VOLUMES
+}
+
+function saveVolumeSettings(volumes: TrackVolumes): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(VOLUME_STORAGE_KEY, JSON.stringify(volumes))
+  } catch (e) {
+    console.warn('Failed to save volume settings:', e)
+  }
+}
 
 // ============================================================================
 // Types
@@ -50,6 +95,14 @@ export function FullscreenPlayer({
   const [currentTime, setCurrentTime] = useState(initialTime)
   const [isMuted, setIsMuted] = useState(false)
   const [showControls, setShowControls] = useState(true)
+  const [showVolumeMixer, setShowVolumeMixer] = useState(false)
+  const [trackVolumes, setTrackVolumes] = useState<TrackVolumes>(DEFAULT_VOLUMES)
+  
+  // Load persisted volume settings on mount
+  useEffect(() => {
+    const savedVolumes = loadVolumeSettings()
+    setTrackVolumes(savedVolumes)
+  }, [])
   
   // ============================================================================
   // Refs (critical for avoiding re-render loops)
@@ -89,6 +142,38 @@ export function FullscreenPlayer({
     if (!audioTracks) return []
     return flattenAudioTracks(audioTracks)
   }, [audioTracks])
+  
+  // ============================================================================
+  // Get Volume for Track Type
+  // ============================================================================
+  const getVolumeForTrack = useCallback((trackType: string): number => {
+    if (isMuted) return 0
+    const master = trackVolumes.master
+    switch (trackType) {
+      case 'voiceover':
+      case 'description':
+        return trackVolumes.voiceover * master
+      case 'dialogue':
+        return trackVolumes.dialogue * master
+      case 'music':
+        return trackVolumes.music * master
+      case 'sfx':
+        return trackVolumes.sfx * master
+      default:
+        return master
+    }
+  }, [trackVolumes, isMuted])
+  
+  // ============================================================================
+  // Update Volume and Persist
+  // ============================================================================
+  const updateTrackVolume = useCallback((track: keyof TrackVolumes, value: number) => {
+    setTrackVolumes(prev => {
+      const updated = { ...prev, [track]: value }
+      saveVolumeSettings(updated)
+      return updated
+    })
+  }, [])
   
   // ============================================================================
   // Calculate Scene Duration
@@ -236,7 +321,8 @@ export function FullscreenPlayer({
           const audio = audioRefs.current.get(audioKey)
           
           if (audio) {
-            audio.volume = isMuted ? 0 : 1
+            // Apply per-track volume
+            audio.volume = getVolumeForTrack(clip.type)
             
             const clipStart = clip.startTime
             const clipEnd = clip.startTime + clip.duration
@@ -268,7 +354,7 @@ export function FullscreenPlayer({
       
       animationRef.current = requestAnimationFrame(animate)
     }
-  }, [isPlaying, currentTime, sceneDuration, allAudioClips, isMuted, getCurrentVisualClip, onPlayheadChange])
+  }, [isPlaying, currentTime, sceneDuration, allAudioClips, getVolumeForTrack, getCurrentVisualClip, onPlayheadChange])
   
   // ============================================================================
   // Seek to Time
@@ -466,13 +552,24 @@ export function FullscreenPlayer({
               </Button>
             </div>
             
-            {/* Right: Mute Button + Segment Info */}
-            <div className="flex items-center gap-4 min-w-[100px] justify-end">
+            {/* Right: Volume Controls + Segment Info */}
+            <div className="flex items-center gap-4 min-w-[160px] justify-end">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowVolumeMixer(v => !v)}
+                className={`text-white hover:bg-white/20 ${showVolumeMixer ? 'bg-white/20' : ''}`}
+                title="Volume Mixer"
+              >
+                <SlidersHorizontal className="h-5 w-5" />
+              </Button>
+              
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsMuted(m => !m)}
                 className="text-white hover:bg-white/20"
+                title={isMuted ? 'Unmute' : 'Mute'}
               >
                 {isMuted ? (
                   <VolumeX className="h-5 w-5" />
@@ -487,6 +584,120 @@ export function FullscreenPlayer({
             </div>
           </div>
         </div>
+        
+        {/* Volume Mixer Panel */}
+        {showVolumeMixer && (
+          <div 
+            className="absolute bottom-32 right-4 bg-gray-900/95 backdrop-blur-sm rounded-lg p-4 w-72 shadow-xl border border-gray-700"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-white text-sm font-semibold mb-4 flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4" />
+              Volume Mixer
+            </div>
+            
+            {/* Master Volume */}
+            <div className="mb-4 pb-4 border-b border-gray-700">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-gray-300 text-sm">
+                  <Volume2 className="h-4 w-4" />
+                  Master
+                </div>
+                <span className="text-gray-400 text-xs">{Math.round(trackVolumes.master * 100)}%</span>
+              </div>
+              <Slider
+                value={[trackVolumes.master]}
+                max={1}
+                step={0.01}
+                onValueChange={(v) => updateTrackVolume('master', v[0])}
+                className="w-full"
+              />
+            </div>
+            
+            {/* Voiceover/Narration */}
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-green-400 text-sm">
+                  <Mic className="h-4 w-4" />
+                  Narration
+                </div>
+                <span className="text-gray-400 text-xs">{Math.round(trackVolumes.voiceover * 100)}%</span>
+              </div>
+              <Slider
+                value={[trackVolumes.voiceover]}
+                max={1}
+                step={0.01}
+                onValueChange={(v) => updateTrackVolume('voiceover', v[0])}
+                className="w-full"
+              />
+            </div>
+            
+            {/* Dialogue */}
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-purple-400 text-sm">
+                  <MessageSquare className="h-4 w-4" />
+                  Dialogue
+                </div>
+                <span className="text-gray-400 text-xs">{Math.round(trackVolumes.dialogue * 100)}%</span>
+              </div>
+              <Slider
+                value={[trackVolumes.dialogue]}
+                max={1}
+                step={0.01}
+                onValueChange={(v) => updateTrackVolume('dialogue', v[0])}
+                className="w-full"
+              />
+            </div>
+            
+            {/* Music */}
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-orange-400 text-sm">
+                  <Music className="h-4 w-4" />
+                  Music
+                </div>
+                <span className="text-gray-400 text-xs">{Math.round(trackVolumes.music * 100)}%</span>
+              </div>
+              <Slider
+                value={[trackVolumes.music]}
+                max={1}
+                step={0.01}
+                onValueChange={(v) => updateTrackVolume('music', v[0])}
+                className="w-full"
+              />
+            </div>
+            
+            {/* SFX */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-red-400 text-sm">
+                  <Zap className="h-4 w-4" />
+                  Sound Effects
+                </div>
+                <span className="text-gray-400 text-xs">{Math.round(trackVolumes.sfx * 100)}%</span>
+              </div>
+              <Slider
+                value={[trackVolumes.sfx]}
+                max={1}
+                step={0.01}
+                onValueChange={(v) => updateTrackVolume('sfx', v[0])}
+                className="w-full"
+              />
+            </div>
+            
+            {/* Reset Button */}
+            <button
+              onClick={() => {
+                setTrackVolumes(DEFAULT_VOLUMES)
+                saveVolumeSettings(DEFAULT_VOLUMES)
+              }}
+              className="mt-4 w-full text-center text-gray-400 text-xs hover:text-white transition-colors"
+            >
+              Reset to defaults
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
