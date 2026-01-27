@@ -137,12 +137,18 @@ export function useTimelinePlayback({
   const onPlaybackEndRef = useRef(onPlaybackEnd)
   const onTimeUpdateRef = useRef(onTimeUpdate)
   
+  // Refs for play/pause stability - prevents callback recreation on every currentTime change
+  const isPlayingRef = useRef(isPlaying)
+  const currentTimeRef = useRef(currentTime)
+  
   // Keep refs in sync with state/props
   useEffect(() => { trackVolumesRef.current = trackVolumes }, [trackVolumes])
   useEffect(() => { trackEnabledRef.current = trackEnabled }, [trackEnabled])
   useEffect(() => { audioClipsRef.current = audioClips }, [audioClips])
   useEffect(() => { sceneDurationRef.current = sceneDuration }, [sceneDuration])
   useEffect(() => { onPlaybackEndRef.current = onPlaybackEnd }, [onPlaybackEnd])
+  useEffect(() => { isPlayingRef.current = isPlaying }, [isPlaying])
+  useEffect(() => { currentTimeRef.current = currentTime }, [currentTime])
   useEffect(() => { onTimeUpdateRef.current = onTimeUpdate }, [onTimeUpdate])
   
   // ============================================================================
@@ -312,16 +318,16 @@ export function useTimelinePlayback({
   // ============================================================================
   
   const play = useCallback(() => {
-    if (isPlaying) return
+    if (isPlayingRef.current) return
     
     // Anchor start time to current position
-    startTimeRef.current = performance.now() - currentTime * 1000
+    startTimeRef.current = performance.now() - currentTimeRef.current * 1000
     setIsPlaying(true)
     animationRef.current = requestAnimationFrame(animate)
-  }, [isPlaying, currentTime, animate])
+  }, [animate]) // Only depends on animate which is stable
   
   const pause = useCallback(() => {
-    if (!isPlaying) return
+    if (!isPlayingRef.current) return
     
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current)
@@ -331,15 +337,15 @@ export function useTimelinePlayback({
     // Pause all audio
     audioRefs.current.forEach(audio => audio.pause())
     setIsPlaying(false)
-  }, [isPlaying])
+  }, []) // No dependencies - uses refs
   
   const togglePlayback = useCallback(() => {
-    if (isPlaying) {
+    if (isPlayingRef.current) {
       pause()
     } else {
       play()
     }
-  }, [isPlaying, play, pause])
+  }, [play, pause])
   
   const seekTo = useCallback((time: number) => {
     const currentSceneDuration = sceneDurationRef.current
@@ -349,7 +355,7 @@ export function useTimelinePlayback({
     
     // If playing, audio will resync on next animate frame
     // If paused, seek audio elements directly
-    if (!isPlaying) {
+    if (!isPlayingRef.current) {
       audioClipsRef.current.forEach(clip => {
         const key = `${clip.id}:${clip.url}`
         const audio = audioRefs.current.get(key)
@@ -365,7 +371,7 @@ export function useTimelinePlayback({
     }
     
     onTimeUpdateRef.current?.(newTime, getCurrentVisualClip(newTime)?.segmentId)
-  }, [isPlaying, getCurrentVisualClip]) // Only stable dependencies
+  }, [getCurrentVisualClip]) // Only stable dependency - uses refs for isPlaying
   
   const reset = useCallback(() => {
     pause()
