@@ -1686,11 +1686,12 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       />
       
       {/* Fullscreen Player */}
-      {showFullscreenPlayer && currentProductionData?.segments && (
+      {showFullscreenPlayer && currentProductionData?.segments && currentScene && (
         <FullscreenPlayer
           segments={currentProductionData.segments}
-          audioTracks={currentProductionData.audioTracks}
+          scene={currentScene}
           sceneId={currentSceneId}
+          language={selectedLanguage}
           initialTime={0}
           onClose={() => setShowFullscreenPlayer(false)}
           onPlayheadChange={(time, segmentId) => {

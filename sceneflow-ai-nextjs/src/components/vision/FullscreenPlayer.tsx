@@ -5,7 +5,7 @@ import { X, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { SegmentData } from '@/types/screenplay'
-import { flattenAudioTracks, type AudioTracksDataV2, type AudioTrackClipV2 } from '@/components/vision/scene-production/audioTrackBuilder'
+import { buildAudioTracksForLanguage, flattenAudioTracks, type AudioTrackClipV2 } from '@/components/vision/scene-production/audioTrackBuilder'
 
 // ============================================================================
 // Types
@@ -22,8 +22,9 @@ interface VisualClip {
 
 interface FullscreenPlayerProps {
   segments: SegmentData[]
-  audioTracks?: AudioTracksDataV2 | null
+  scene: any
   sceneId: string
+  language?: string
   initialTime?: number
   onClose: () => void
   onPlayheadChange?: (time: number, segmentId?: string) => void
@@ -35,8 +36,9 @@ interface FullscreenPlayerProps {
 
 export function FullscreenPlayer({
   segments,
-  audioTracks,
+  scene,
   sceneId,
+  language = 'en',
   initialTime = 0,
   onClose,
   onPlayheadChange,
@@ -71,6 +73,14 @@ export function FullscreenPlayer({
       duration: seg.endTime - seg.startTime,
     }))
   }, [segments])
+  
+  // ============================================================================
+  // Build Audio Tracks from Scene (like SceneTimelineV2)
+  // ============================================================================
+  const audioTracks = useMemo(() => {
+    if (!scene) return null
+    return buildAudioTracksForLanguage(scene, language)
+  }, [scene, language])
   
   // ============================================================================
   // Flatten Audio Tracks to Clips (using flattenAudioTracks like SceneTimelineV2)
