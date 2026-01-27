@@ -33,6 +33,9 @@ interface SceneDisplayProps {
   // Playhead time from parent for synchronized frame display
   // When provided, uses playhead-based frame selection instead of timer-based
   currentTime?: number
+  // Direct display frame URL from playback hook (overrides keyframe selection)
+  // When provided, this takes precedence over internal frame selection
+  hookDisplayFrameUrl?: string
 }
 
 /**
@@ -258,7 +261,8 @@ export function SceneDisplay({
   productionData,
   sceneDuration,
   audioTracks,
-  currentTime
+  currentTime,
+  hookDisplayFrameUrl
 }: SceneDisplayProps) {
   // Build keyframe sequence (with anchored timing if audioTracks provided)
   const keyframes = useMemo(() => 
@@ -364,7 +368,9 @@ export function SceneDisplay({
     )
   }
 
-  const currentImageUrl = currentKeyframe?.url || scene.imageUrl
+  // Use hook-provided display URL if available (from unified playback hook)
+  // Otherwise fall back to keyframe-based selection
+  const currentImageUrl = hookDisplayFrameUrl || currentKeyframe?.url || scene.imageUrl
   const prevImageUrl = prevKeyframeIndex >= 0 ? keyframes[prevKeyframeIndex]?.url : null
 
   return (

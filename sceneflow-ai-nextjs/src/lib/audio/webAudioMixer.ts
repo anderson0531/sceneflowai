@@ -533,6 +533,17 @@ export class WebAudioMixer {
   }
 
   /**
+   * Get current playback time in seconds
+   * Returns elapsed time since scene start, useful for syncing visuals with audio
+   */
+  getCurrentTime(): number {
+    if (!this.isPlaying || !this.audioContext) {
+      return 0
+    }
+    return this.audioContext.currentTime - this.sceneStartTime
+  }
+
+  /**
    * Cleanup resources
    */
   dispose(): void {

@@ -18,7 +18,7 @@
  */
 'use client'
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { X, Subtitles, Menu, RefreshCw, Download, Upload, FileText, Copy, Check } from 'lucide-react'
 import { SceneDisplay } from './SceneDisplay'
 import { PlaybackControls } from './PlaybackControls'
@@ -26,12 +26,14 @@ import { VoiceAssignmentPanel } from './VoiceAssignmentPanel'
 import { MobileMenuSheet } from './MobileMenuSheet'
 import { ExportVideoModal } from '@/components/export/ExportVideoModal'
 import { WebAudioMixer, SceneAudioConfig, type AudioSource } from '@/lib/audio/webAudioMixer'
+import { useTimelinePlayback, segmentsToVisualClips, audioTracksToClips, type AudioClip } from '@/hooks/useTimelinePlayback'
 import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAvailableLanguages, getAudioUrl, getAudioDuration as getStoredAudioDuration } from '@/lib/audio/languageDetection'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { toast } from 'sonner'
 import type { SceneProductionData, AudioTracksData } from '@/components/vision/scene-production/types'
 import { calculateSequentialAlignment, AUDIO_ALIGNMENT_BUFFERS, type AlignmentClip } from '@/components/vision/scene-production/audioTrackBuilder'
+
 
 interface ScreeningRoomProps {
   script: any
@@ -317,43 +319,157 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
     }
   })
 
-  // Playhead time for synchronized visual frame display
-  // Uses requestAnimationFrame to stay in sync with audio playback
-  const [currentPlayheadTime, setCurrentPlayheadTime] = useState(0)
-  const playheadAnimationRef = useRef<number | null>(null)
-  const scenePlaybackStartRef = useRef<number>(0)
+  // Get current scene and production data for hook integration
+  const currentScene = scenes[playerState.currentSceneIndex]
+  const currentSceneId = currentScene?.id || currentScene?.sceneId || `scene-${playerState.currentSceneIndex}`
+  const currentProductionData = sceneProductionState?.[currentSceneId]
+  const currentTimelineTracks = useMemo(() => 
+    normalizeTimelineAudioTracks(currentProductionData?.audioTracks),
+    [currentProductionData?.audioTracks]
+  )
+  const currentSceneDuration = useMemo(() => 
+    (resolveSceneDurationFromSegments(currentProductionData?.segments) ?? currentScene?.duration) || 8,
+    [currentProductionData?.segments, currentScene?.duration]
+  )
 
-  // Animation loop for playhead sync when playing
-  useEffect(() => {
-    if (playerState.isPlaying) {
-      scenePlaybackStartRef.current = performance.now() - currentPlayheadTime * 1000
-      
-      const animate = () => {
-        const elapsed = (performance.now() - scenePlaybackStartRef.current) / 1000
-        setCurrentPlayheadTime(elapsed)
-        playheadAnimationRef.current = requestAnimationFrame(animate)
-      }
-      playheadAnimationRef.current = requestAnimationFrame(animate)
-    } else {
-      if (playheadAnimationRef.current) {
-        cancelAnimationFrame(playheadAnimationRef.current)
-        playheadAnimationRef.current = null
-      }
+  // Build audio clips for the new unified playback hook
+  const sceneAudioClips = useMemo((): AudioClip[] => {
+    const clips: AudioClip[] = []
+    
+    if (!currentTimelineTracks) return clips
+    
+    // Voiceover/Narration (only if enabled)
+    if (playerState.narrationEnabled && currentTimelineTracks.voiceover?.url) {
+      clips.push({
+        id: 'voiceover-0',
+        url: currentTimelineTracks.voiceover.url,
+        startTime: currentTimelineTracks.voiceover.startTime || 0,
+        duration: currentTimelineTracks.voiceover.duration || currentSceneDuration,
+        trackType: 'voiceover',
+        label: 'Narration',
+      })
     }
     
-    return () => {
-      if (playheadAnimationRef.current) {
-        cancelAnimationFrame(playheadAnimationRef.current)
-        playheadAnimationRef.current = null
+    // Dialogue
+    currentTimelineTracks.dialogue?.forEach((clip, index) => {
+      if (clip.url) {
+        clips.push({
+          id: `dialogue-${index}`,
+          url: clip.url,
+          startTime: clip.startTime || 0,
+          duration: clip.duration || 3,
+          trackType: 'dialogue',
+          label: clip.label || `Dialogue ${index + 1}`,
+        })
       }
+    })
+    
+    // Music
+    if (currentTimelineTracks.music?.url) {
+      clips.push({
+        id: 'music-0',
+        url: currentTimelineTracks.music.url,
+        startTime: currentTimelineTracks.music.startTime || 0,
+        duration: currentTimelineTracks.music.duration || currentSceneDuration,
+        trackType: 'music',
+        loop: true, // Background music loops
+      })
     }
-  }, [playerState.isPlaying])
+    
+    // SFX
+    currentTimelineTracks.sfx?.forEach((clip, index) => {
+      if (clip.url) {
+        clips.push({
+          id: `sfx-${index}`,
+          url: clip.url,
+          startTime: clip.startTime || 0,
+          duration: clip.duration || 2,
+          trackType: 'sfx',
+        })
+      }
+    })
+    
+    return clips
+  }, [currentTimelineTracks, currentSceneDuration, playerState.narrationEnabled])
 
-  // Reset playhead when scene changes
+  // Build visual clips from segments for the unified playback hook
+  const sceneVisualClips = useMemo(() => {
+    if (!currentProductionData?.segments) return []
+    return segmentsToVisualClips(currentProductionData.segments, currentSceneDuration)
+  }, [currentProductionData?.segments, currentSceneDuration])
+
+  // Unified playback hook - replaces the disconnected playhead mechanism
+  // This uses HTMLAudioElement with drift correction, matching SceneTimelineV2's approach
+  const {
+    isPlaying: hookIsPlaying,
+    currentTime: hookCurrentTime,
+    currentVisualClip: hookVisualClip,
+    displayFrameUrl: hookDisplayFrameUrl,
+    trackVolumes,
+    trackEnabled,
+    audioRefs: hookAudioRefs,
+    play: hookPlay,
+    pause: hookPause,
+    togglePlayback: hookTogglePlayback,
+    seekTo: hookSeekTo,
+    setTrackVolume,
+    setTrackEnabled,
+    reset: hookReset,
+  } = useTimelinePlayback({
+    sceneDuration: currentSceneDuration,
+    audioClips: sceneAudioClips,
+    visualClips: sceneVisualClips,
+    initialVolumes: {
+      voiceover: 1,
+      dialogue: 1,
+      music: playerState.musicVolume,
+      sfx: 1,
+    },
+    initialEnabled: {
+      voiceover: playerState.narrationEnabled,
+      dialogue: true,
+      music: true,
+      sfx: true,
+    },
+    onPlaybackEnd: useCallback(() => {
+      // Scene audio finished - trigger auto-advance logic
+      if (playerState.autoAdvance && playerState.isPlaying) {
+        // The auto-advance will be handled by the existing playSceneAudio effect
+      }
+    }, [playerState.autoAdvance, playerState.isPlaying]),
+    onTimeUpdate: useCallback((time: number, segmentId?: string) => {
+      // Time update callback - can be used for captions sync etc.
+    }, []),
+  })
+
+  // Sync music volume changes to the hook
   useEffect(() => {
-    setCurrentPlayheadTime(0)
-    scenePlaybackStartRef.current = performance.now()
-  }, [playerState.currentSceneIndex])
+    setTrackVolume('music', playerState.musicVolume)
+  }, [playerState.musicVolume, setTrackVolume])
+
+  // Sync narration enabled to the hook
+  useEffect(() => {
+    setTrackEnabled('voiceover', playerState.narrationEnabled)
+  }, [playerState.narrationEnabled, setTrackEnabled])
+
+  // Reset hook when scene changes
+  useEffect(() => {
+    hookReset()
+  }, [playerState.currentSceneIndex, hookReset])
+
+  // Sync playerState.isPlaying with the hook's play/pause
+  // This drives the unified HTMLAudioElement-based playback
+  useEffect(() => {
+    if (playerState.isPlaying && !hookIsPlaying) {
+      hookPlay()
+    } else if (!playerState.isPlaying && hookIsPlaying) {
+      hookPause()
+    }
+  }, [playerState.isPlaying, hookIsPlaying, hookPlay, hookPause])
+
+  // Legacy: Keep currentPlayheadTime in sync for SceneDisplay compatibility
+  // This is now driven by the hook's currentTime instead of independent animation
+  const currentPlayheadTime = hookCurrentTime
 
   // Auto-hide controls state
   const [showControls, setShowControls] = useState(true)
@@ -1267,7 +1383,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
     }))
   }
 
-  const currentScene = scenes[playerState.currentSceneIndex]
+  // currentScene is already defined above for hook integration
 
   return (
     <div className="fixed inset-0 z-50 bg-black">
@@ -1423,11 +1539,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
           playerState.showVoicePanel ? 'lg:mr-80' : ''
         }`}>
           {(() => {
-            // Get scene ID for production data lookup
-            const sceneId = currentScene?.id || currentScene?.sceneId || `scene-${playerState.currentSceneIndex}`
-            const productionData = sceneProductionState?.[sceneId]
-            const timelineTracks = normalizeTimelineAudioTracks(productionData?.audioTracks)
-            const sceneDuration = (resolveSceneDurationFromSegments(productionData?.segments) ?? currentScene?.duration) || 8
+            // Note: currentScene, sceneId, productionData, etc. are now defined at component top
+            // for hook integration. Use them here directly.
             
             return (
               <SceneDisplay
@@ -1440,10 +1553,11 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
                 translatedNarration={translatedNarration || undefined}
                 translatedDialogue={translatedDialogue || undefined}
                 kenBurnsIntensity={playerState.kenBurnsIntensity}
-                productionData={productionData}
-                sceneDuration={sceneDuration}
-                audioTracks={timelineTracks || undefined}
-                currentTime={playerState.isPlaying ? currentPlayheadTime : undefined}
+                productionData={currentProductionData}
+                sceneDuration={currentSceneDuration}
+                audioTracks={currentTimelineTracks || undefined}
+                currentTime={playerState.isPlaying ? hookCurrentTime : undefined}
+                hookDisplayFrameUrl={playerState.isPlaying ? hookDisplayFrameUrl : undefined}
               />
             )
           })()}
