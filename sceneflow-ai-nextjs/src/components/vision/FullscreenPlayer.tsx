@@ -163,10 +163,24 @@ export function FullscreenPlayer({
   // Refs for transition cancellation
   const transitionCancelledRef = useRef(false)
   
+  // Refs for volume state (to avoid stale closures in animation loop)
+  const trackVolumesRef = useRef<TrackVolumes>(DEFAULT_VOLUMES)
+  const isMutedRef = useRef(false)
+  
+  // Keep refs in sync with state
+  useEffect(() => {
+    trackVolumesRef.current = trackVolumes
+  }, [trackVolumes])
+  
+  useEffect(() => {
+    isMutedRef.current = isMuted
+  }, [isMuted])
+  
   // Load persisted settings on mount
   useEffect(() => {
     const savedVolumes = loadVolumeSettings()
     setTrackVolumes(savedVolumes)
+    trackVolumesRef.current = savedVolumes
     const savedPan = loadPanSettings()
     setPanIntensity(savedPan)
   }, [])
@@ -211,25 +225,25 @@ export function FullscreenPlayer({
   }, [audioTracks])
   
   // ============================================================================
-  // Get Volume for Track Type
+  // Get Volume for Track Type (uses refs to avoid stale closures in animation loop)
   // ============================================================================
   const getVolumeForTrack = useCallback((trackType: string): number => {
-    if (isMuted) return 0
-    const master = trackVolumes.master
+    if (isMutedRef.current) return 0
+    const master = trackVolumesRef.current.master
     switch (trackType) {
       case 'voiceover':
       case 'description':
-        return trackVolumes.voiceover * master
+        return trackVolumesRef.current.voiceover * master
       case 'dialogue':
-        return trackVolumes.dialogue * master
+        return trackVolumesRef.current.dialogue * master
       case 'music':
-        return trackVolumes.music * master
+        return trackVolumesRef.current.music * master
       case 'sfx':
-        return trackVolumes.sfx * master
+        return trackVolumesRef.current.sfx * master
       default:
         return master
     }
-  }, [trackVolumes, isMuted])
+  }, []) // No dependencies - always reads from refs
   
   // ============================================================================
   // Update Volume and Persist
