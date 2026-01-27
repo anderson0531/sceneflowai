@@ -30,7 +30,7 @@ import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAvailableLanguages, getAudioUrl, getAudioDuration as getStoredAudioDuration } from '@/lib/audio/languageDetection'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { toast } from 'sonner'
-import type { SceneProductionData } from '@/components/vision/scene-production/types'
+import type { SceneProductionData, AudioTracksData } from '@/components/vision/scene-production/types'
 import { calculateSequentialAlignment, AUDIO_ALIGNMENT_BUFFERS, type AlignmentClip } from '@/components/vision/scene-production/audioTrackBuilder'
 
 interface ScreeningRoomProps {
@@ -84,6 +84,48 @@ function normalizeDuration(value: unknown): number | null {
     }
   }
   return null
+}
+
+function normalizeTimelineAudioTracks(raw: unknown): AudioTracksData | null {
+  if (!raw || typeof raw !== 'object') return null
+  const data = raw as AudioTracksData
+
+  const normalizeClip = (clip?: { url?: string | null; startTime?: number; duration?: number }): { url: string; startTime: number; duration: number } | null => {
+    if (!clip?.url) return null
+    return {
+      url: clip.url,
+      startTime: Number.isFinite(clip.startTime as number) ? (clip.startTime as number) : 0,
+      duration: Number.isFinite(clip.duration as number) ? (clip.duration as number) : 0,
+    }
+  }
+
+  const voiceover = normalizeClip(data.voiceover ?? data.narration)
+  const music = normalizeClip(data.music ?? undefined)
+
+  const dialogue = Array.isArray(data.dialogue)
+    ? data.dialogue.map(d => normalizeClip(d)).filter((d): d is { url: string; startTime: number; duration: number } => Boolean(d))
+    : []
+
+  const sfx = Array.isArray(data.sfx)
+    ? data.sfx.map(s => normalizeClip(s)).filter((s): s is { url: string; startTime: number; duration: number } => Boolean(s))
+    : []
+
+  if (!voiceover && !music && dialogue.length === 0 && sfx.length === 0) {
+    return null
+  }
+
+  return {
+    voiceover: voiceover ? { id: 'voiceover', url: voiceover.url, startTime: voiceover.startTime, duration: voiceover.duration } : undefined,
+    dialogue: dialogue.length > 0 ? dialogue.map((clip, index) => ({ id: `dialogue-${index}`, url: clip.url, startTime: clip.startTime, duration: clip.duration })) : undefined,
+    music: music ? { id: 'music', url: music.url, startTime: music.startTime, duration: music.duration } : undefined,
+    sfx: sfx.length > 0 ? sfx.map((clip, index) => ({ id: `sfx-${index}`, url: clip.url, startTime: clip.startTime, duration: clip.duration })) : undefined,
+  }
+}
+
+function resolveSceneDurationFromSegments(segments?: Array<{ endTime?: number }>): number | null {
+  if (!segments || segments.length === 0) return null
+  const maxEnd = segments.reduce((max, seg) => Math.max(max, seg.endTime ?? 0), 0)
+  return maxEnd > 0 ? maxEnd : null
 }
 
 // Helper function to normalize scenes from various data paths
@@ -547,9 +589,57 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
    * SEQUENTIAL ALIGNMENT: Narration → SFX1 → Dialogue1 → SFX2 → Dialogue2 → ...
    * Music spans from 0 to total duration + buffer
    */
-  const calculateAudioTimeline = useCallback(async (scene: any): Promise<SceneAudioConfig> => {
+  const calculateAudioTimeline = useCallback(async (scene: any, timelineTracks?: AudioTracksData | null): Promise<SceneAudioConfig> => {
     const config: SceneAudioConfig = {}
     const { NARRATION_BUFFER, INTER_CLIP_BUFFER, MUSIC_END_BUFFER } = AUDIO_ALIGNMENT_BUFFERS
+
+    if (timelineTracks) {
+      let sceneDuration = 0
+      if (timelineTracks.voiceover?.url) {
+        const duration = timelineTracks.voiceover.duration || await resolveAudioDuration(timelineTracks.voiceover.url, timelineTracks.voiceover.duration)
+        config.narration = timelineTracks.voiceover.url
+        config.narrationOffsetSeconds = timelineTracks.voiceover.startTime || 0
+        sceneDuration = Math.max(sceneDuration, (timelineTracks.voiceover.startTime || 0) + duration)
+      }
+
+      if (timelineTracks.music?.url) {
+        const duration = timelineTracks.music.duration || await resolveAudioDuration(timelineTracks.music.url, timelineTracks.music.duration)
+        config.music = timelineTracks.music.url
+        sceneDuration = Math.max(sceneDuration, (timelineTracks.music.startTime || 0) + duration)
+      }
+
+      if (timelineTracks.dialogue && timelineTracks.dialogue.length > 0) {
+        const dialogueSources: AudioSource[] = []
+        for (const clip of timelineTracks.dialogue) {
+          if (!clip?.url) continue
+          const duration = clip.duration || await resolveAudioDuration(clip.url, clip.duration)
+          dialogueSources.push({ url: clip.url, startTime: clip.startTime || 0, duration })
+          sceneDuration = Math.max(sceneDuration, (clip.startTime || 0) + duration)
+        }
+        if (dialogueSources.length > 0) {
+          config.dialogue = dialogueSources
+        }
+      }
+
+      if (timelineTracks.sfx && timelineTracks.sfx.length > 0) {
+        const sfxSources: AudioSource[] = []
+        for (const clip of timelineTracks.sfx) {
+          if (!clip?.url) continue
+          const duration = clip.duration || await resolveAudioDuration(clip.url, clip.duration)
+          sfxSources.push({ url: clip.url, startTime: clip.startTime || 0, duration })
+          sceneDuration = Math.max(sceneDuration, (clip.startTime || 0) + duration)
+        }
+        if (sfxSources.length > 0) {
+          config.sfx = sfxSources
+        }
+      }
+
+      if (sceneDuration > 0) {
+        config.sceneDuration = sceneDuration
+      }
+
+      return config
+    }
     
     // Get language-specific audio URLs
     const narrationUrl = getAudioForLanguage(scene, selectedLanguage, 'narration')
@@ -738,6 +828,9 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
     }
 
     const scene = scenes[sceneIndex]
+    const sceneId = scene?.id || scene?.sceneId || `scene-${sceneIndex}`
+    const productionData = sceneProductionState?.[sceneId]
+    const timelineTracks = normalizeTimelineAudioTracks(productionData?.audioTracks)
     setIsLoadingAudio(true)
 
     try {
@@ -769,7 +862,13 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
                            (url.startsWith('http://') || url.startsWith('https://')))
       
       // Description audio excluded from this check since it's no longer played
-      const hasPreGeneratedAudio = hasValidNarration || hasValidMusic || hasValidDialogue || hasValidSFX
+      const hasTimelineAudio = Boolean(
+        timelineTracks?.voiceover?.url ||
+        timelineTracks?.music?.url ||
+        (timelineTracks?.dialogue && timelineTracks.dialogue.length > 0) ||
+        (timelineTracks?.sfx && timelineTracks.sfx.length > 0)
+      )
+      const hasPreGeneratedAudio = hasValidNarration || hasValidMusic || hasValidDialogue || hasValidSFX || hasTimelineAudio
       
       if (hasPreGeneratedAudio) {
         // Fade out and stop any currently playing audio
@@ -785,7 +884,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
         }
         
         // Calculate audio timeline for concurrent playback
-        const audioConfig = await calculateAudioTimeline(scene)
+        const audioConfig = await calculateAudioTimeline(scene, timelineTracks)
         
         // Filter out narration if narrationEnabled is false
         // (Description is already not included in the timeline)
@@ -795,7 +894,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
         }
         
         // Ensure scene duration covers either calculated audio length or storyboard duration
-        const fallbackDuration = scene.duration || 5
+        const fallbackDuration = (resolveSceneDurationFromSegments(productionData?.segments) ?? scene.duration) || 5
         audioConfig.sceneDuration = Math.max(audioConfig.sceneDuration || 0, fallbackDuration)
         
         // Check cancellation after async calculation
@@ -1289,8 +1388,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
             // Get scene ID for production data lookup
             const sceneId = currentScene?.id || currentScene?.sceneId || `scene-${playerState.currentSceneIndex}`
             const productionData = sceneProductionState?.[sceneId]
-            // Use scene duration if available, else default to 4 seconds per keyframe
-            const sceneDuration = currentScene?.duration || 8
+            const timelineTracks = normalizeTimelineAudioTracks(productionData?.audioTracks)
+            const sceneDuration = (resolveSceneDurationFromSegments(productionData?.segments) ?? currentScene?.duration) || 8
             
             return (
               <SceneDisplay
@@ -1305,6 +1404,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
                 kenBurnsIntensity={playerState.kenBurnsIntensity}
                 productionData={productionData}
                 sceneDuration={sceneDuration}
+                audioTracks={timelineTracks || undefined}
               />
             )
           })()}

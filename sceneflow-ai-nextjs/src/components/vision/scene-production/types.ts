@@ -504,11 +504,36 @@ export interface ProductionStream {
   error?: string
 }
 
+// ============================================================================
+// Timeline Audio (V1) Types - Used by Screening Room + Scene Timeline
+// ============================================================================
+
+export interface AudioTrackClip {
+  id: string
+  url?: string | null
+  startTime: number
+  duration: number
+  label?: string
+  volume?: number
+  trimStart?: number
+  trimEnd?: number
+}
+
+export interface AudioTracksData {
+  voiceover?: AudioTrackClip | null
+  narration?: AudioTrackClip | null
+  dialogue?: AudioTrackClip[]
+  music?: AudioTrackClip | null
+  sfx?: AudioTrackClip[]
+}
+
 export interface SceneProductionData {
   isSegmented: boolean
   targetSegmentDuration: number
   segments: SceneSegment[]
   lastGeneratedAt?: string | null
+  /** Optional timeline audio clips for this scene */
+  audioTracks?: AudioTracksData
   /** @deprecated Use productionStreams instead. Kept for backwards compatibility. */
   renderedSceneUrl?: string | null
   /** @deprecated Use productionStreams instead. Kept for backwards compatibility. */

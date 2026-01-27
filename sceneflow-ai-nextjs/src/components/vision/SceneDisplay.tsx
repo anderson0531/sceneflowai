@@ -39,8 +39,8 @@ interface SceneDisplayProps {
  * Supports audio-anchored timing: when segments have audioAnchor configured,
  * their display duration is automatically calculated from audio positions.
  * 
- * NOTE: Only uses START frame images (not end frames) for cleaner
- * visual progression through the animatic.
+ * NOTE: Uses START and END frames when both are available to
+ * match timeline playback and keyframe timing.
  */
 function buildKeyframeSequence(
   scene: any,
@@ -85,8 +85,8 @@ function buildKeyframeSequence(
     const anchoredTiming = anchoredTimingMap?.get(segment.segmentId)
     const totalDuration = anchoredTiming?.isAnchored 
       ? anchoredTiming.displayDuration 
-      : (segment.imageDuration ?? (segmentDuration || fallbackDuration) * 2)
-    const frameSelection = segment.frameSelection ?? 'start'
+      : (segment.imageDuration ?? (segmentDuration || fallbackDuration))
+    const frameSelection = segment.frameSelection ?? (endUrl ? 'both' : 'start')
     
     if (frameSelection === 'start') {
       // Start frame only - use full duration
