@@ -691,6 +691,10 @@ export interface AudioTrackClipV2 {
   // Stale audio warning
   isStale?: boolean           // True if audio doesn't match current dialogue
   staleReason?: string        // Human-readable reason for stale status
+  // Smart segment-aligned timing (for multi-language support)
+  actualDuration?: number     // Actual audio duration (may differ from timeline duration)
+  baselineDuration?: number   // Duration in baseline language (for delta calculation)
+  durationDelta?: number      // Difference: actualDuration - baselineDuration
 }
 
 /**

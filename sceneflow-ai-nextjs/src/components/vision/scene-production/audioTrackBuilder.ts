@@ -307,18 +307,18 @@ export function determineBaselineLanguage(scene: any): string {
 /**
  * Build audio tracks using baseline language timing with target language URLs.
  * 
- * This ensures timeline positions stay consistent across languages:
- * - Baseline language (default: English) determines all startTime values
- * - Target language audio URLs are swapped in
- * - Music and SFX are language-independent (always from scene)
+ * SMART SEGMENT-ALIGNED TIMING:
+ * - Uses target language's actual audio durations
+ * - When narration is longer than baseline, shifts dialogue start times
+ * - Stores delta information for segment extension (freeze-frame on longer audio)
  * 
- * This fixes the issue where switching languages caused timeline misalignment
- * because each language recalculated positions from its own audio durations.
+ * Example: English narration is 19.6s spanning 3 segments. Thai narration is 24s.
+ * The third segment will be extended (freeze-frame) until Thai narration completes.
  * 
  * @param scene - The scene object containing audio data
  * @param targetLanguage - The language to get audio URLs from
- * @param baselineLanguage - The language to use for timing (default: 'en' or first available)
- * @returns AudioTracksDataV2 with baseline timing and target language URLs
+ * @param baselineLanguage - The language to use for timing reference (default: 'en' or first available)
+ * @returns AudioTracksDataV2 with smart timing and target language URLs
  */
 export function buildAudioTracksWithBaselineTiming(
   scene: any,
@@ -343,51 +343,60 @@ export function buildAudioTracksWithBaselineTiming(
     return buildAudioTracksForLanguage(scene, targetLanguage)
   }
   
-  // Build baseline tracks first (for timing positions)
+  // Build baseline tracks first (for timing reference)
   const baselineTracks = buildAudioTracksForLanguage(scene, effectiveBaseline)
   
   // Build target tracks (for URLs and actual durations)
   const targetTracks = buildAudioTracksForLanguage(scene, targetLanguage)
   
-  // Create result with baseline timing and target URLs
+  // Calculate narration duration delta
+  const baselineNarrationDuration = baselineTracks.voiceover?.duration || 0
+  const targetNarrationDuration = targetTracks.voiceover?.duration || 0
+  const narrationDurationDelta = targetNarrationDuration - baselineNarrationDuration
+  
+  // When target narration is longer, shift dialogue/sfx start times
+  const dialogueShift = Math.max(0, narrationDurationDelta)
+  
+  // Create result with smart timing
   const result: AudioTracksDataV2 = {
     voiceover: null,
     description: null,
     dialogue: [],
     music: baselineTracks.music,  // Music is language-independent
-    sfx: baselineTracks.sfx,      // SFX is language-independent
+    sfx: [],
   }
   
-  // Voiceover: Use baseline timing, target URL
-  if (baselineTracks.voiceover && targetTracks.voiceover?.url) {
+  // Voiceover: Use target URL and ACTUAL duration (allows freeze-frame on segment)
+  if (targetTracks.voiceover?.url) {
     result.voiceover = {
-      ...baselineTracks.voiceover,           // Keep baseline startTime and position
-      url: targetTracks.voiceover.url,        // Use target language URL
+      ...targetTracks.voiceover,              // Use target's actual timing
+      startTime: 0,                            // Narration always starts at 0
       language: targetLanguage,
-      // Note: We keep baseline duration for timeline layout consistency
-      // The actual audio may be slightly longer/shorter, which is acceptable
-      // Audio will play to completion but timeline positions remain stable
-      actualDuration: targetTracks.voiceover.duration,  // Store actual duration for reference
+      // Store delta info for segment extension calculation
+      baselineDuration: baselineNarrationDuration,
+      durationDelta: narrationDurationDelta,
+      actualDuration: targetNarrationDuration,
     }
-  } else if (targetTracks.voiceover?.url) {
-    // No baseline voiceover but target has one - use target timing
-    result.voiceover = targetTracks.voiceover
+  } else if (baselineTracks.voiceover && !targetTracks.voiceover?.url) {
+    // Baseline has voiceover but target doesn't - this is unusual but handle gracefully
+    result.voiceover = null
   }
   
   // Description: Same pattern as voiceover
-  if (baselineTracks.description && targetTracks.description?.url) {
+  if (targetTracks.description?.url) {
+    const baselineDescDuration = baselineTracks.description?.duration || 0
+    const targetDescDuration = targetTracks.description.duration
     result.description = {
-      ...baselineTracks.description,
-      url: targetTracks.description.url,
+      ...targetTracks.description,
       language: targetLanguage,
-      actualDuration: targetTracks.description.duration,
+      baselineDuration: baselineDescDuration,
+      durationDelta: targetDescDuration - baselineDescDuration,
+      actualDuration: targetDescDuration,
     }
-  } else if (targetTracks.description?.url) {
-    result.description = targetTracks.description
   }
   
-  // Dialogue: Map baseline positions to target URLs by index
-  // Each dialogue clip keeps its baseline startTime but gets target URL
+  // Dialogue: Use baseline positions but SHIFT by narration delta + use actual durations
+  const { NARRATION_BUFFER, INTER_CLIP_BUFFER } = AUDIO_ALIGNMENT_BUFFERS
   const targetDialogueMap = new Map<number, typeof targetTracks.dialogue[0]>()
   targetTracks.dialogue.forEach(clip => {
     if (clip.dialogueIndex !== undefined) {
@@ -395,38 +404,201 @@ export function buildAudioTracksWithBaselineTiming(
     }
   })
   
+  // Running cursor for dialogue positioning (starts after narration + buffer + shift)
+  let dialogueCursor = targetNarrationDuration > 0 
+    ? targetNarrationDuration + NARRATION_BUFFER 
+    : (baselineNarrationDuration > 0 ? baselineNarrationDuration + NARRATION_BUFFER : 0)
+  
   baselineTracks.dialogue.forEach((baselineClip, idx) => {
-    // Try to find matching target clip by dialogueIndex
     const targetClip = targetDialogueMap.get(baselineClip.dialogueIndex ?? idx)
     
     if (targetClip?.url) {
+      const baselineDuration = baselineClip.duration
+      const targetDuration = targetClip.duration
+      const durationDelta = targetDuration - baselineDuration
+      
       result.dialogue.push({
-        ...baselineClip,                      // Keep baseline startTime and position
+        ...baselineClip,                      // Keep baseline metadata
         url: targetClip.url,                  // Use target language URL
+        startTime: dialogueCursor,            // Position sequentially after shift
+        duration: targetDuration,             // Use ACTUAL target duration
         language: targetLanguage,
-        actualDuration: targetClip.duration,  // Store actual duration for reference
+        baselineDuration,
+        durationDelta,
+        actualDuration: targetDuration,
       })
+      
+      // Advance cursor by target duration + buffer
+      dialogueCursor += targetDuration + INTER_CLIP_BUFFER
     }
-    // If no target clip exists for this dialogue line, it's omitted
-    // (the baseline had dialogue but target language doesn't have audio for it)
   })
   
   // Handle extra dialogue clips in target that don't exist in baseline
-  // (target language has more dialogue audio than baseline - rare but possible)
   targetTracks.dialogue.forEach(targetClip => {
     const existsInResult = result.dialogue.some(
       d => d.dialogueIndex === targetClip.dialogueIndex
     )
     if (!existsInResult && targetClip.url) {
-      // Add at the end - no baseline timing available
       result.dialogue.push({
         ...targetClip,
+        startTime: dialogueCursor,
         language: targetLanguage,
+        baselineDuration: 0,  // No baseline reference
+        durationDelta: targetClip.duration,  // Entire duration is "extra"
       })
+      dialogueCursor += targetClip.duration + INTER_CLIP_BUFFER
     }
   })
   
+  // SFX: Shift by narration delta (SFX anchors to post-narration)
+  baselineTracks.sfx.forEach((sfxClip) => {
+    result.sfx.push({
+      ...sfxClip,
+      startTime: sfxClip.startTime + dialogueShift,  // Shift by narration delta
+    })
+  })
+  
   return result
+}
+
+/**
+ * Segment timing result with extension info for freeze-frame
+ */
+export interface SegmentTimingResult {
+  segmentIndex: number
+  startTime: number
+  endTime: number
+  baseDuration: number      // Original segment duration
+  displayDuration: number   // Actual display duration (may be extended)
+  isExtended: boolean       // True if segment was extended for longer audio
+  extensionReason?: 'narration' | 'dialogue'
+}
+
+/**
+ * Calculate segment display timing for a specific language.
+ * 
+ * This function determines when each segment should display, extending
+ * the last segment of an audio section when the audio is longer than baseline.
+ * 
+ * Example: English narration covers segments 0-2 (19.6s). Thai narration is 24s.
+ * Segment 2's displayDuration will be extended by 4.4s (freeze-frame effect).
+ * 
+ * @param segments - Array of scene segments with baselineDuration
+ * @param audioTracks - Audio tracks from buildAudioTracksWithBaselineTiming
+ * @returns Array of segment timings with extension info
+ */
+export function calculateSegmentTimingForLanguage(
+  segments: Array<{ duration: number; segmentIndex?: number }>,
+  audioTracks: AudioTracksDataV2
+): SegmentTimingResult[] {
+  const results: SegmentTimingResult[] = []
+  
+  if (!segments || segments.length === 0) {
+    return results
+  }
+  
+  // Get narration delta (if narration is longer than baseline)
+  const narrationDelta = audioTracks.voiceover?.durationDelta || 0
+  const narrationDuration = audioTracks.voiceover?.duration || 0
+  const baselineNarrationDuration = audioTracks.voiceover?.baselineDuration || narrationDuration
+  
+  // Calculate cumulative segment times from baseline
+  let cumulativeTime = 0
+  const segmentTimes: Array<{ start: number; end: number; baseDuration: number }> = []
+  
+  segments.forEach((seg) => {
+    const baseDuration = seg.duration || 0
+    segmentTimes.push({
+      start: cumulativeTime,
+      end: cumulativeTime + baseDuration,
+      baseDuration,
+    })
+    cumulativeTime += baseDuration
+  })
+  
+  // Find which segment the baseline narration ends in
+  let narrationEndSegmentIndex = -1
+  if (baselineNarrationDuration > 0) {
+    for (let i = 0; i < segmentTimes.length; i++) {
+      const seg = segmentTimes[i]
+      if (baselineNarrationDuration <= seg.end) {
+        narrationEndSegmentIndex = i
+        break
+      }
+    }
+    // If narration extends beyond all segments, last segment is the anchor
+    if (narrationEndSegmentIndex === -1 && segmentTimes.length > 0) {
+      narrationEndSegmentIndex = segmentTimes.length - 1
+    }
+  }
+  
+  // Calculate display timing for each segment
+  let displayCursor = 0
+  
+  segments.forEach((seg, idx) => {
+    const baseDuration = seg.duration || 0
+    let displayDuration = baseDuration
+    let isExtended = false
+    let extensionReason: 'narration' | 'dialogue' | undefined
+    
+    // If this segment is where baseline narration ends, AND target narration is longer,
+    // extend this segment by the delta (freeze-frame until narration completes)
+    if (idx === narrationEndSegmentIndex && narrationDelta > 0) {
+      displayDuration = baseDuration + narrationDelta
+      isExtended = true
+      extensionReason = 'narration'
+    }
+    
+    results.push({
+      segmentIndex: seg.segmentIndex ?? idx,
+      startTime: displayCursor,
+      endTime: displayCursor + displayDuration,
+      baseDuration,
+      displayDuration,
+      isExtended,
+      extensionReason,
+    })
+    
+    displayCursor += displayDuration
+  })
+  
+  // Handle dialogue extensions (for segments that contain dialogue)
+  // Each dialogue clip is associated with a segment (dialogueIndex + narration segments offset)
+  // If dialogue is longer than baseline, extend that segment
+  audioTracks.dialogue.forEach((dialogueClip) => {
+    const durationDelta = dialogueClip.durationDelta || 0
+    if (durationDelta > 0 && dialogueClip.dialogueIndex !== undefined) {
+      // Dialogue segments typically start after narration segments
+      // The mapping is: segment (narrationEndSegmentIndex + 1 + dialogueIndex)
+      // But this depends on scene structure. For now, we extend based on timing.
+      
+      const dialogueStart = dialogueClip.startTime
+      
+      // Find which segment this dialogue starts in
+      for (let i = 0; i < results.length; i++) {
+        const segResult = results[i]
+        // Check if dialogue starts within this segment's display window
+        if (dialogueStart >= segResult.startTime && dialogueStart < segResult.endTime) {
+          // Extend this segment by the dialogue delta (if not already extended more)
+          if (!segResult.isExtended) {
+            segResult.displayDuration += durationDelta
+            segResult.endTime += durationDelta
+            segResult.isExtended = true
+            segResult.extensionReason = 'dialogue'
+            
+            // Shift all subsequent segments
+            for (let j = i + 1; j < results.length; j++) {
+              results[j].startTime += durationDelta
+              results[j].endTime += durationDelta
+            }
+          }
+          break
+        }
+      }
+    }
+  })
+  
+  return results
 }
 
 /**
