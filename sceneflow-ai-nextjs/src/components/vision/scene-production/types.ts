@@ -469,23 +469,94 @@ export interface ProductionAudioMixConfig {
 /**
  * Production stream status
  */
-export type ProductionStreamStatus = 'pending' | 'rendering' | 'complete' | 'failed' | 'stale'
+export type ProductionStreamStatus = 'pending' | 'rendering' | 'complete' | 'failed' | 'stale' | 'outdated'
 
 /**
- * A rendered production stream for a specific language
- * Enables multiple language versions of the same scene
+ * Stream type - animatic (Ken Burns keyframes) vs video (AI-generated video)
+ */
+export type ProductionStreamType = 'animatic' | 'video'
+
+/**
+ * Ken Burns intensity for animatic rendering
+ */
+export type KenBurnsIntensity = 'off' | 'subtle' | 'medium' | 'dramatic'
+
+/**
+ * Transition style between keyframes
+ */
+export type TransitionStyle = 'cut' | 'crossfade' | 'fade-to-black'
+
+/**
+ * Render settings specific to animatic streams
+ */
+export interface AnimaticRenderSettings {
+  type: 'animatic'
+  /** Ken Burns pan/zoom intensity */
+  kenBurnsIntensity: KenBurnsIntensity
+  /** Transition style between keyframes */
+  transitionStyle: TransitionStyle
+  /** Transition duration in seconds (for crossfade/fade-to-black) */
+  transitionDuration: number
+  /** Whether to burn in subtitles */
+  includeSubtitles: boolean
+  /** Subtitle styling (if includeSubtitles is true) */
+  subtitleStyle?: SubtitleStyle
+}
+
+/**
+ * Render settings specific to video streams
+ */
+export interface VideoRenderSettings {
+  type: 'video'
+  /** Whether to upscale to higher resolution */
+  upscale: boolean
+  /** Upscale model to use */
+  upscaleModel?: 'standard' | 'cinematic'
+  /** Motion intensity for AI video generation */
+  motionIntensity: 'low' | 'medium' | 'high'
+  /** Whether to burn in subtitles */
+  includeSubtitles: boolean
+  /** Subtitle styling (if includeSubtitles is true) */
+  subtitleStyle?: SubtitleStyle
+}
+
+/**
+ * Subtitle style configuration for burned-in subtitles
+ */
+export interface SubtitleStyle {
+  fontFamily: string
+  fontSize: number
+  color: string
+  backgroundColor: string
+  position: 'bottom' | 'top'
+}
+
+/**
+ * Discriminated union of render settings
+ */
+export type ProductionRenderSettings = AnimaticRenderSettings | VideoRenderSettings
+
+/**
+ * A rendered production stream for a specific language and type
+ * Enables multiple language versions AND animatic vs video versions of the same scene
  */
 export interface ProductionStream {
   /** Unique identifier for this production stream */
   id: string
+  /** Stream type: animatic (Ken Burns) or video (AI-generated) */
+  streamType: ProductionStreamType
   /** Language code (e.g., 'en', 'th', 'es') */
   language: string
   /** Human-readable language name (e.g., 'English', 'Thai', 'Spanish') */
   languageLabel: string
   /** URL of the rendered MP4 video (null until render completes) */
   mp4Url?: string | null
+  /** File size in bytes */
+  fileSize?: number
   /** Audio mix configuration used for this render */
   audioMixConfig?: ProductionAudioMixConfig
+  /** Render settings used (animatic or video specific) */
+  renderSettings?: ProductionRenderSettings
   /** Resolution of the rendered video */
   resolution?: '720p' | '1080p' | '4K'
   /** ISO timestamp when stream was created */
@@ -502,6 +573,43 @@ export interface ProductionStream {
   sourceHash?: string
   /** Error message if status is 'failed' */
   error?: string
+  /** Render job ID for tracking */
+  renderJobId?: string
+}
+
+/**
+ * Type guard to check if a stream is an animatic stream
+ */
+export function isAnimaticStream(stream: ProductionStream): boolean {
+  return stream.streamType === 'animatic'
+}
+
+/**
+ * Type guard to check if a stream is a video stream
+ */
+export function isVideoStream(stream: ProductionStream): boolean {
+  return stream.streamType === 'video'
+}
+
+/**
+ * Default animatic render settings
+ */
+export const DEFAULT_ANIMATIC_SETTINGS: AnimaticRenderSettings = {
+  type: 'animatic',
+  kenBurnsIntensity: 'subtle',
+  transitionStyle: 'crossfade',
+  transitionDuration: 0.5,
+  includeSubtitles: false,
+}
+
+/**
+ * Default video render settings
+ */
+export const DEFAULT_VIDEO_SETTINGS: VideoRenderSettings = {
+  type: 'video',
+  upscale: false,
+  motionIntensity: 'medium',
+  includeSubtitles: false,
 }
 
 // ============================================================================

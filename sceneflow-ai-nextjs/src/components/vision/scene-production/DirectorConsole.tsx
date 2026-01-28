@@ -365,9 +365,10 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     const languageInfo = SUPPORTED_LANGUAGES.find(l => l.code === language)
     const streamId = `stream-${language}-${Date.now()}`
     
-    // Create new stream entry
+    // Create new stream entry (default to video for backward compatibility)
     const newStream: ProductionStream = {
       id: streamId,
+      streamType: 'video', // Default to video; animatic rendering uses different flow
       language,
       languageLabel: languageInfo?.name || language,
       status: 'rendering',

@@ -52,6 +52,33 @@ export interface RenderAudioClip {
 }
 
 /**
+ * Stream type for render jobs
+ */
+export type RenderStreamType = 'animatic' | 'video'
+
+/**
+ * Render type for job categorization
+ */
+export type RenderType = 
+  | 'scene_animatic'    // Single scene animatic (Ken Burns)
+  | 'scene_video'       // Single scene AI video
+  | 'project_animatic'  // Full project animatic
+  | 'project_video'     // Full project video
+  | 'project_final'     // Final cut with mixed streams
+
+/**
+ * Ken Burns settings for animatic rendering
+ */
+export interface AnimaticKenBurnsConfig {
+  /** Intensity level */
+  intensity: 'off' | 'subtle' | 'medium' | 'dramatic'
+  /** Transition between segments */
+  transitionStyle: 'cut' | 'crossfade' | 'fade-to-black'
+  /** Transition duration in seconds */
+  transitionDuration: number
+}
+
+/**
  * Complete render job specification
  * This is uploaded to GCS as job_spec.json and read by the Cloud Run renderer
  */
@@ -60,8 +87,14 @@ export interface RenderJobSpec {
   jobId: string
   /** SceneFlow project ID */
   projectId: string
+  /** Scene ID (for scene-level renders) */
+  sceneId?: string
   /** Project title (for metadata) */
   projectTitle: string
+  /** Render type */
+  renderType: RenderType
+  /** Stream type (animatic or video) */
+  streamType: RenderStreamType
   /** Output resolution */
   resolution: '720p' | '1080p' | '4K'
   /** Frames per second */
@@ -80,6 +113,8 @@ export interface RenderJobSpec {
   language?: string
   /** Include subtitles in video (future feature) */
   includeSubtitles?: boolean
+  /** Ken Burns configuration (for animatic renders) */
+  kenBurnsConfig?: AnimaticKenBurnsConfig
 }
 
 /**
@@ -100,6 +135,14 @@ export interface RenderJobRecord {
   id: string
   /** SceneFlow project ID */
   projectId: string
+  /** Scene ID (for scene-level renders) */
+  sceneId?: string
+  /** User ID */
+  userId?: string
+  /** Render type */
+  renderType?: RenderType
+  /** Stream type (animatic or video) */
+  streamType?: RenderStreamType
   /** Current status */
   status: RenderJobStatus
   /** Progress percentage (0-100) */
@@ -110,12 +153,18 @@ export interface RenderJobRecord {
   outputPath?: string
   /** Signed download URL (generated after completion) */
   downloadUrl?: string
+  /** URL expiration time */
+  downloadUrlExpiresAt?: Date
   /** Error message (if failed) */
   error?: string
   /** Output resolution */
   resolution: '720p' | '1080p' | '4K'
+  /** Language code */
+  language?: string
   /** Estimated duration in seconds */
   estimatedDuration?: number
+  /** File size in bytes */
+  fileSize?: number
   /** Job creation time */
   createdAt: Date
   /** Last update time */

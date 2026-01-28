@@ -9,11 +9,13 @@ import { DataTypes, Model, Optional } from 'sequelize'
 import { sequelize } from '../config/database'
 
 export type RenderJobStatus = 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED'
-export type RenderType = 'animatic' | 'scene_video' | 'project_video'
+export type RenderType = 'animatic' | 'scene_video' | 'project_video' | 'scene_animatic' | 'project_animatic' | 'project_final'
+export type StreamType = 'animatic' | 'video'
 
 export interface RenderJobAttributes {
   id: string
   project_id: string
+  scene_id: string | null
   user_id: string
   status: RenderJobStatus
   progress: number
@@ -21,7 +23,9 @@ export interface RenderJobAttributes {
   language: string
   include_subtitles: boolean
   render_type: RenderType
+  stream_type: StreamType
   estimated_duration: number | null
+  file_size: number | null
   cloud_run_execution_id: string | null
   output_path: string | null
   download_url: string | null
@@ -36,13 +40,14 @@ export interface RenderJobCreationAttributes extends Optional<
   RenderJobAttributes,
   'id' | 'status' | 'progress' | 'created_at' | 'updated_at' | 'completed_at' |
   'cloud_run_execution_id' | 'output_path' | 'download_url' | 'download_url_expires_at' |
-  'error' | 'estimated_duration' | 'render_type'
+  'error' | 'estimated_duration' | 'render_type' | 'stream_type' | 'scene_id' | 'file_size'
 > {}
 
 export class RenderJob extends Model<RenderJobAttributes, RenderJobCreationAttributes>
   implements RenderJobAttributes {
   public id!: string
   public project_id!: string
+  public scene_id!: string | null
   public user_id!: string
   public status!: RenderJobStatus
   public progress!: number
@@ -50,7 +55,9 @@ export class RenderJob extends Model<RenderJobAttributes, RenderJobCreationAttri
   public language!: string
   public include_subtitles!: boolean
   public render_type!: RenderType
+  public stream_type!: StreamType
   public estimated_duration!: number | null
+  public file_size!: number | null
   public cloud_run_execution_id!: string | null
   public output_path!: string | null
   public download_url!: string | null
@@ -79,6 +86,11 @@ RenderJob.init(
         model: 'projects',
         key: 'id',
       },
+    },
+    scene_id: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: 'Scene ID for scene-level renders (null for project-level)',
     },
     user_id: {
       type: DataTypes.UUID,
@@ -118,15 +130,26 @@ RenderJob.init(
       defaultValue: false,
     },
     render_type: {
-      type: DataTypes.ENUM('animatic', 'scene_video', 'project_video'),
+      type: DataTypes.STRING(50),
       allowNull: false,
       defaultValue: 'scene_video',
-      comment: 'Type of render: animatic (from Screening Room), scene_video, or project_video',
+      comment: 'Type of render: scene_animatic, scene_video, project_animatic, project_video, project_final',
+    },
+    stream_type: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+      defaultValue: 'video',
+      comment: 'Stream type: animatic (Ken Burns) or video (AI-generated)',
     },
     estimated_duration: {
       type: DataTypes.FLOAT,
       allowNull: true,
       comment: 'Estimated video duration in seconds',
+    },
+    file_size: {
+      type: DataTypes.BIGINT,
+      allowNull: true,
+      comment: 'Output file size in bytes',
     },
     cloud_run_execution_id: {
       type: DataTypes.STRING(255),
@@ -197,8 +220,20 @@ RenderJob.init(
         fields: ['render_type'],
       },
       {
+        name: 'render_jobs_stream_type_idx',
+        fields: ['stream_type'],
+      },
+      {
+        name: 'render_jobs_scene_id_idx',
+        fields: ['scene_id'],
+      },
+      {
         name: 'render_jobs_project_render_type_idx',
         fields: ['project_id', 'render_type'],
+      },
+      {
+        name: 'render_jobs_project_scene_stream_idx',
+        fields: ['project_id', 'scene_id', 'stream_type', 'language'],
       },
     ],
   }
