@@ -73,6 +73,10 @@ async function getJobStatus(jobId: string) {
     language: job.language,
     createdAt: job.created_at,
     completedAt: job.completed_at,
+    // Scene-level render fields
+    sceneId: job.scene_id || null,
+    streamType: job.stream_type || null,
+    renderType: job.render_type || null,
   }
 }
 
