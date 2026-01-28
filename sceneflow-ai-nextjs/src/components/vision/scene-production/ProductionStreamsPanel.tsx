@@ -15,18 +15,34 @@ import {
   Loader2,
   Film,
   Clock,
-  XCircle
+  XCircle,
+  Clapperboard,
+  Video as VideoIcon
 } from 'lucide-react'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
-import type { ProductionStream, ProductionStreamStatus, ProductionAudioMixConfig } from './types'
+import type { 
+  ProductionStream, 
+  ProductionStreamStatus, 
+  ProductionStreamType,
+  AnimaticRenderSettings,
+  KenBurnsIntensity
+} from './types'
+
+// ============================================================================
+// Types & Props
+// ============================================================================
 
 interface ProductionStreamsPanelProps {
   /** Existing production streams for this scene */
   productionStreams: ProductionStream[]
   /** Currently selected language for audio tracks */
   selectedLanguage: string
-  /** Callback to render a new production stream */
-  onRenderProduction: (language: string, resolution: '720p' | '1080p' | '4K') => Promise<void>
+  /** Callback to render a new animatic production stream */
+  onRenderAnimatic?: (language: string, resolution: '720p' | '1080p' | '4K', settings: AnimaticRenderSettings) => Promise<void>
+  /** Callback to render a new video production stream */
+  onRenderVideo?: (language: string, resolution: '720p' | '1080p' | '4K') => Promise<void>
+  /** Legacy callback for backwards compatibility - renders as animatic */
+  onRenderProduction?: (language: string, resolution: '720p' | '1080p' | '4K') => Promise<void>
   /** Callback to delete a production stream */
   onDeleteStream: (streamId: string) => void
   /** Callback to re-render an existing stream */
@@ -43,9 +59,15 @@ interface ProductionStreamsPanelProps {
   renderProgress?: number
   /** Whether the segments have changed since last render */
   hasSegmentChanges?: boolean
+  /** Whether video generation is available (requires segment videos) */
+  videoGenerationAvailable?: boolean
   /** Disabled state */
   disabled?: boolean
 }
+
+// ============================================================================
+// Constants & Helpers
+// ============================================================================
 
 const FLAG_EMOJIS: Record<string, string> = {
   en: '🇺🇸',
@@ -62,6 +84,32 @@ const FLAG_EMOJIS: Record<string, string> = {
   ar: '🇸🇦',
   ru: '🇷🇺'
 }
+
+const STREAM_TYPE_CONFIG: Record<ProductionStreamType, { icon: React.ReactNode; label: string; description: string }> = {
+  animatic: { 
+    icon: <Clapperboard className="w-4 h-4" />, 
+    label: 'Animatic', 
+    description: 'Ken Burns animation with keyframes'
+  },
+  video: { 
+    icon: <VideoIcon className="w-4 h-4" />, 
+    label: 'Video', 
+    description: 'Full AI-generated video'
+  },
+}
+
+const KEN_BURNS_OPTIONS: { value: KenBurnsIntensity; label: string }[] = [
+  { value: 'off', label: 'Off' },
+  { value: 'subtle', label: 'Subtle' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'dramatic', label: 'Dramatic' },
+]
+
+const TRANSITION_OPTIONS: { value: 'cut' | 'crossfade' | 'fade-to-black'; label: string }[] = [
+  { value: 'cut', label: 'Cut' },
+  { value: 'crossfade', label: 'Crossfade' },
+  { value: 'fade-to-black', label: 'Fade to Black' },
+]
 
 const STATUS_CONFIG: Record<ProductionStreamStatus, { icon: React.ReactNode; label: string; className: string }> = {
   pending: { icon: <Clock className="w-4 h-4" />, label: 'Pending', className: 'text-gray-400' },
@@ -112,15 +160,23 @@ function ProductionStreamCard({
 }) {
   const statusConfig = STATUS_CONFIG[stream.status]
   const flag = FLAG_EMOJIS[stream.language] || '🌐'
+  const streamTypeConfig = STREAM_TYPE_CONFIG[stream.streamType || 'animatic']
   
   return (
     <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg border border-gray-700/50 hover:border-gray-600/50 transition-colors">
-      {/* Left: Language and status */}
+      {/* Left: Language, type, and status */}
       <div className="flex items-center gap-3 min-w-0">
         <span className="text-xl" title={stream.languageLabel}>{flag}</span>
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-medium text-gray-200 truncate">{stream.languageLabel}</span>
+            {/* Stream type badge */}
+            <span className={`flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ${
+              stream.streamType === 'video' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-purple-500/20 text-purple-300'
+            }`}>
+              {streamTypeConfig.icon}
+              {streamTypeConfig.label}
+            </span>
             <span className={`flex items-center gap-1 text-xs ${statusConfig.className}`}>
               {statusConfig.icon}
               {statusConfig.label}
@@ -220,7 +276,9 @@ function ProductionStreamCard({
 export function ProductionStreamsPanel({
   productionStreams,
   selectedLanguage,
-  onRenderProduction,
+  onRenderAnimatic,
+  onRenderVideo,
+  onRenderProduction, // Legacy - maps to onRenderAnimatic
   onDeleteStream,
   onReRenderStream,
   onPreviewStream,
@@ -229,15 +287,34 @@ export function ProductionStreamsPanel({
   renderingStreamId,
   renderProgress,
   hasSegmentChanges = false,
+  videoGenerationAvailable = false,
   disabled = false
 }: ProductionStreamsPanelProps) {
   const [newLanguage, setNewLanguage] = useState(selectedLanguage)
   const [newResolution, setNewResolution] = useState<'720p' | '1080p' | '4K'>('1080p')
+  const [selectedStreamType, setSelectedStreamType] = useState<ProductionStreamType>('animatic')
   
-  // Languages that already have production streams
-  const existingLanguages = useMemo(() => 
-    new Set(productionStreams.map(s => s.language)),
+  // Animatic-specific settings
+  const [kenBurnsIntensity, setKenBurnsIntensity] = useState<KenBurnsIntensity>('subtle')
+  const [transitionStyle, setTransitionStyle] = useState<'cut' | 'crossfade' | 'fade-to-black'>('crossfade')
+  
+  // Filter streams by type
+  const animaticStreams = useMemo(() => 
+    productionStreams.filter(s => !s.streamType || s.streamType === 'animatic'),
     [productionStreams]
+  )
+  
+  const videoStreams = useMemo(() => 
+    productionStreams.filter(s => s.streamType === 'video'),
+    [productionStreams]
+  )
+  
+  const currentStreams = selectedStreamType === 'animatic' ? animaticStreams : videoStreams
+  
+  // Languages that already have production streams of current type
+  const existingLanguages = useMemo(() => 
+    new Set(currentStreams.map(s => s.language)),
+    [currentStreams]
   )
   
   // Available languages for new production
@@ -248,7 +325,24 @@ export function ProductionStreamsPanel({
   
   const handleRenderNew = async () => {
     if (!newLanguage) return
-    await onRenderProduction(newLanguage, newResolution)
+    
+    if (selectedStreamType === 'animatic') {
+      const settings: AnimaticRenderSettings = {
+        kenBurnsIntensity,
+        transitionStyle,
+        transitionDuration: 0.5,
+        includeSubtitles: false,
+      }
+      
+      if (onRenderAnimatic) {
+        await onRenderAnimatic(newLanguage, newResolution, settings)
+      } else if (onRenderProduction) {
+        // Legacy fallback
+        await onRenderProduction(newLanguage, newResolution)
+      }
+    } else if (selectedStreamType === 'video' && onRenderVideo) {
+      await onRenderVideo(newLanguage, newResolution)
+    }
   }
   
   return (
@@ -272,10 +366,50 @@ export function ProductionStreamsPanel({
         )}
       </div>
       
-      {/* Existing Streams */}
-      {productionStreams.length > 0 && (
+      {/* Stream Type Tabs */}
+      <div className="flex gap-1 p-1 bg-gray-800/50 rounded-lg">
+        <button
+          onClick={() => setSelectedStreamType('animatic')}
+          className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 text-sm rounded transition-colors ${
+            selectedStreamType === 'animatic'
+              ? 'bg-purple-600 text-white'
+              : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
+          }`}
+        >
+          <Clapperboard className="w-4 h-4" />
+          Animatic
+          {animaticStreams.length > 0 && (
+            <span className="px-1.5 py-0.5 text-xs bg-white/20 rounded">
+              {animaticStreams.length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setSelectedStreamType('video')}
+          disabled={!videoGenerationAvailable && videoStreams.length === 0}
+          className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 text-sm rounded transition-colors ${
+            selectedStreamType === 'video'
+              ? 'bg-indigo-600 text-white'
+              : !videoGenerationAvailable && videoStreams.length === 0
+              ? 'text-gray-600 cursor-not-allowed'
+              : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
+          }`}
+          title={!videoGenerationAvailable && videoStreams.length === 0 ? 'Generate segment videos first' : undefined}
+        >
+          <VideoIcon className="w-4 h-4" />
+          Video
+          {videoStreams.length > 0 && (
+            <span className="px-1.5 py-0.5 text-xs bg-white/20 rounded">
+              {videoStreams.length}
+            </span>
+          )}
+        </button>
+      </div>
+      
+      {/* Existing Streams (filtered by type) */}
+      {currentStreams.length > 0 && (
         <div className="space-y-2">
-          {productionStreams.map(stream => (
+          {currentStreams.map(stream => (
             <ProductionStreamCard
               key={stream.id}
               stream={stream}
@@ -335,8 +469,12 @@ export function ProductionStreamsPanel({
         <Button
           size="sm"
           onClick={handleRenderNew}
-          disabled={disabled || isRendering || !newLanguage}
-          className="h-8 bg-purple-600 hover:bg-purple-700 text-white"
+          disabled={disabled || isRendering || !newLanguage || (selectedStreamType === 'video' && !videoGenerationAvailable)}
+          className={`h-8 text-white ${
+            selectedStreamType === 'animatic' 
+              ? 'bg-purple-600 hover:bg-purple-700' 
+              : 'bg-indigo-600 hover:bg-indigo-700'
+          }`}
         >
           {isRendering ? (
             <>
@@ -346,19 +484,81 @@ export function ProductionStreamsPanel({
           ) : (
             <>
               <Plus className="w-4 h-4 mr-1" />
-              Render Production
+              Render {STREAM_TYPE_CONFIG[selectedStreamType].label}
             </>
           )}
         </Button>
       </div>
       
+      {/* Animatic Settings (only shown when animatic tab is selected) */}
+      {selectedStreamType === 'animatic' && (
+        <div className="flex items-center gap-4 p-3 bg-gray-800/30 rounded-lg border border-gray-700/50">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400">Ken Burns:</span>
+            <Select
+              value={kenBurnsIntensity}
+              onValueChange={(v) => setKenBurnsIntensity(v as KenBurnsIntensity)}
+              disabled={disabled || isRendering}
+            >
+              <SelectTrigger className="w-[100px] h-7 bg-gray-800 border-gray-600 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border-gray-600">
+                {KEN_BURNS_OPTIONS.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value} className="text-gray-200 text-xs">
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400">Transitions:</span>
+            <Select
+              value={transitionStyle}
+              onValueChange={(v) => setTransitionStyle(v as 'cut' | 'crossfade' | 'fade-to-black')}
+              disabled={disabled || isRendering}
+            >
+              <SelectTrigger className="w-[110px] h-7 bg-gray-800 border-gray-600 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border-gray-600">
+                {TRANSITION_OPTIONS.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value} className="text-gray-200 text-xs">
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+      
+      {/* Video tab notice when video generation not available */}
+      {selectedStreamType === 'video' && !videoGenerationAvailable && (
+        <div className="p-3 bg-indigo-900/20 border border-indigo-700/50 rounded-lg">
+          <p className="text-xs text-indigo-300 text-center">
+            Generate AI video segments first to create a video production stream.
+            Video streams stitch together your AI-generated clips with audio.
+          </p>
+        </div>
+      )}
+      
       {/* Help text */}
-      {productionStreams.length === 0 && (
+      {currentStreams.length === 0 && selectedStreamType === 'animatic' && (
         <p className="text-xs text-gray-500 text-center">
-          Create production streams to render your scene with audio in different languages.
-          Video segments are generated once; audio overlays are language-specific.
+          Create animatic streams to render your scene with Ken Burns animation and audio.
+          Great for early reviews and storyboard presentations.
+        </p>
+      )}
+      {currentStreams.length === 0 && selectedStreamType === 'video' && videoGenerationAvailable && (
+        <p className="text-xs text-gray-500 text-center">
+          Create video streams to combine your AI-generated video segments with audio.
+          This is your final production output.
         </p>
       )}
     </div>
   )
 }
+
