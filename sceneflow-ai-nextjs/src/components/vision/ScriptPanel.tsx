@@ -470,7 +470,7 @@ const getSceneDomId = (scene: any, index: number) => {
 }
 
 // Sortable Scene Card Wrapper for drag-and-drop
-function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onEditImage, totalScenes, onNavigateScene, scenes, script, onScriptChange, setEditingImageData, setImageEditModalOpen, ...props }: any) {
+function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onEditImage, totalScenes, onNavigateScene, scenes, script, onScriptChange, setEditingImageData, setImageEditModalOpen, getPlaybackOffsetForScene, handlePlaybackOffsetChange, getSuggestedOffsetForScene, ...props }: any) {
   const {
     attributes,
     listeners,
@@ -506,6 +506,9 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
         onScriptChange={onScriptChange}
         setEditingImageData={setEditingImageData}
         setImageEditModalOpen={setImageEditModalOpen}
+        getPlaybackOffsetForScene={getPlaybackOffsetForScene}
+        handlePlaybackOffsetChange={handlePlaybackOffsetChange}
+        getSuggestedOffsetForScene={getSuggestedOffsetForScene}
       />
     </div>
   )
@@ -2727,6 +2730,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                           setImageEditModalOpen={setImageEditModalOpen}
                           sceneReferences={sceneReferences}
                           objectReferences={objectReferences}
+                          getPlaybackOffsetForScene={getPlaybackOffsetForScene}
+                          handlePlaybackOffsetChange={handlePlaybackOffsetChange}
+                          getSuggestedOffsetForScene={getSuggestedOffsetForScene}
                 />
                     )
                   })}
@@ -3284,6 +3290,10 @@ interface SceneCardProps {
   // Visual references for SegmentBuilder
   sceneReferences?: Array<{ id: string; name: string; description?: string; imageUrl?: string }>
   objectReferences?: Array<{ id: string; name: string; description?: string; imageUrl?: string }>
+  // Language playback offset for translated audio alignment
+  getPlaybackOffsetForScene?: (sceneId: string, language: string) => number
+  handlePlaybackOffsetChange?: (sceneId: string, sceneIdx: number, language: string, offset: number) => void
+  getSuggestedOffsetForScene?: (scene: any) => number | undefined
 }
 
 function SceneCard({
@@ -3402,6 +3412,9 @@ function SceneCard({
   onUpdateSceneWardrobe,
   sceneReferences = [],
   objectReferences = [],
+  getPlaybackOffsetForScene,
+  handlePlaybackOffsetChange,
+  getSuggestedOffsetForScene,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(null)
@@ -6277,11 +6290,11 @@ function SceneCard({
                                   scene={scene}
                                   selectedSegmentId={selectedSegmentId}
                                   selectedLanguage={selectedLanguage}
-                                  playbackOffset={getPlaybackOffsetForScene(scene.sceneId || scene.id || `scene-${sceneIdx}`, selectedLanguage)}
-                                  suggestedOffset={getSuggestedOffsetForScene(scene)}
+                                  playbackOffset={getPlaybackOffsetForScene?.(scene.sceneId || scene.id || `scene-${sceneIdx}`, selectedLanguage) ?? 0}
+                                  suggestedOffset={getSuggestedOffsetForScene?.(scene)}
                                   onPlaybackOffsetChange={(offset) => {
                                     const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
-                                    handlePlaybackOffsetChange(sceneId, sceneIdx, selectedLanguage, offset)
+                                    handlePlaybackOffsetChange?.(sceneId, sceneIdx, selectedLanguage, offset)
                                   }}
                                   onLanguageChange={(lang) => {
                                     // Language change is handled at the panel level
