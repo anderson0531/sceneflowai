@@ -1,6 +1,7 @@
 interface GenerateTTSParams {
   text: string
   voiceId: string
+  language?: string  // ISO language code for proper duration estimation
 }
 
 interface GenerateSFXParams {
@@ -8,17 +9,47 @@ interface GenerateSFXParams {
   duration?: number
 }
 
+// Languages that don't use spaces between words (CJK + Southeast Asian)
+const NON_SPACE_LANGUAGES = ['th', 'zh', 'ja', 'ko', 'lo', 'km', 'my', 'vi']
+
+/**
+ * Estimate audio duration from text
+ * Uses character count for non-space languages, word count for space-delimited
+ */
+function estimateDuration(text: string, language: string = 'en'): number {
+  if (NON_SPACE_LANGUAGES.includes(language)) {
+    // Thai, Chinese, Japanese, Korean: ~5-7 characters per second
+    return Math.max(1, text.length / 6)
+  }
+  // Space-delimited languages: ~150 words per minute = 2.5 words/second
+  const wordCount = text.split(/\s+/).filter(w => w.length > 0).length
+  return Math.max(1, wordCount / 2.5)
+}
+
+/**
+ * Estimate audio duration from blob size
+ * More reliable than text-based estimation, especially for non-English
+ */
+function estimateDurationFromBlob(blobSize: number, language: string = 'en'): number {
+  // MP3 bitrates: 128kbps (16KB/s) for English, 192kbps (24KB/s) for non-English
+  const bytesPerSecond = language !== 'en' ? 24000 : 16000
+  return Math.max(1, blobSize / bytesPerSecond)
+}
+
 /**
  * Generate narration or dialogue audio using ElevenLabs TTS
  * Returns blob URL and estimated duration
  */
 export async function generateTTSAudio(params: GenerateTTSParams): Promise<{ mp3Url: string; duration: number }> {
+  const language = params.language || 'en'
+  
   const response = await fetch('/api/tts/elevenlabs', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       text: params.text,
-      voiceId: params.voiceId
+      voiceId: params.voiceId,
+      language: language
     })
   })
 
@@ -29,9 +60,20 @@ export async function generateTTSAudio(params: GenerateTTSParams): Promise<{ mp3
 
   const blob = await response.blob()
   
-  // Estimate duration (rough: ~150 words per minute)
-  const wordCount = params.text.split(/\s+/).length
-  const estimatedDuration = (wordCount / 150) * 60
+  // PRIMARY: Estimate duration from blob size (works for ALL languages)
+  // This is more reliable than text-based estimation, especially for Thai/Chinese/etc.
+  let estimatedDuration = estimateDurationFromBlob(blob.size, language)
+  
+  // FALLBACK: If blob size is suspiciously small, use text-based estimation
+  if (estimatedDuration < 1 && params.text.length > 10) {
+    estimatedDuration = estimateDuration(params.text, language)
+  }
+  
+  console.log('[trackGenerator] Duration estimate:', {
+    blobSize: blob.size,
+    language,
+    duration: estimatedDuration.toFixed(2)
+  })
 
   // Upload to Vercel Blob
   const formData = new FormData()

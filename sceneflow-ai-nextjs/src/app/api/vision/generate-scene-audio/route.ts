@@ -169,13 +169,16 @@ export async function POST(req: NextRequest) {
     let audioDuration: number | null = null
     try {
       const wordCount = optimized.text.split(/\s+/).length
-      audioDuration = await getAudioDurationFromBuffer(audioBuffer, wordCount)
-      console.log('[Scene Audio] Actual duration:', audioDuration, 'seconds')
+      // Pass language for proper buffer-size fallback (critical for Thai/Chinese/Japanese)
+      audioDuration = await getAudioDurationFromBuffer(audioBuffer, wordCount, language)
+      console.log('[Scene Audio] Duration calculated:', audioDuration?.toFixed(2), 'seconds', 'language:', language)
     } catch (error) {
       console.warn('[Scene Audio] Could not get audio duration:', error)
-      // Fallback to estimation
-      const wordCount = optimized.text.split(/\s+/).length
-      audioDuration = (wordCount / 150) * 60
+      // Buffer-size fallback (works for ALL languages including Thai)
+      // Non-English uses 192kbps (24KB/s), English uses 128kbps (16KB/s)
+      const bytesPerSecond = language !== 'en' ? 24000 : 16000
+      audioDuration = audioBuffer.length / bytesPerSecond
+      console.log('[Scene Audio] Buffer-based fallback duration:', audioDuration?.toFixed(2), 'seconds')
     }
 
     // Step 6: Upload to Vercel Blob
