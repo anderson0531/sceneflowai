@@ -285,6 +285,183 @@ export function buildAudioTracksForLanguage(
 }
 
 /**
+ * Determine the baseline language for audio timing.
+ * 
+ * Priority:
+ * 1. English ('en') if it has audio
+ * 2. First available language with audio
+ * 3. Fallback to 'en'
+ */
+export function determineBaselineLanguage(scene: any): string {
+  const available = detectAvailableLanguages(scene)
+  
+  // Prefer English if available
+  if (available.includes('en')) {
+    return 'en'
+  }
+  
+  // Otherwise use first available language
+  return available[0] || 'en'
+}
+
+/**
+ * Build audio tracks using baseline language timing with target language URLs.
+ * 
+ * This ensures timeline positions stay consistent across languages:
+ * - Baseline language (default: English) determines all startTime values
+ * - Target language audio URLs are swapped in
+ * - Music and SFX are language-independent (always from scene)
+ * 
+ * This fixes the issue where switching languages caused timeline misalignment
+ * because each language recalculated positions from its own audio durations.
+ * 
+ * @param scene - The scene object containing audio data
+ * @param targetLanguage - The language to get audio URLs from
+ * @param baselineLanguage - The language to use for timing (default: 'en' or first available)
+ * @returns AudioTracksDataV2 with baseline timing and target language URLs
+ */
+export function buildAudioTracksWithBaselineTiming(
+  scene: any,
+  targetLanguage: string = 'en',
+  baselineLanguage?: string
+): AudioTracksDataV2 {
+  const emptyTracks: AudioTracksDataV2 = {
+    voiceover: null,
+    description: null,
+    dialogue: [],
+    music: null,
+    sfx: [],
+  }
+  
+  if (!scene) return emptyTracks
+  
+  // Determine baseline language if not specified
+  const effectiveBaseline = baselineLanguage || determineBaselineLanguage(scene)
+  
+  // If target is same as baseline, just build normally
+  if (targetLanguage === effectiveBaseline) {
+    return buildAudioTracksForLanguage(scene, targetLanguage)
+  }
+  
+  // Build baseline tracks first (for timing positions)
+  const baselineTracks = buildAudioTracksForLanguage(scene, effectiveBaseline)
+  
+  // Build target tracks (for URLs and actual durations)
+  const targetTracks = buildAudioTracksForLanguage(scene, targetLanguage)
+  
+  // Create result with baseline timing and target URLs
+  const result: AudioTracksDataV2 = {
+    voiceover: null,
+    description: null,
+    dialogue: [],
+    music: baselineTracks.music,  // Music is language-independent
+    sfx: baselineTracks.sfx,      // SFX is language-independent
+  }
+  
+  // Voiceover: Use baseline timing, target URL
+  if (baselineTracks.voiceover && targetTracks.voiceover?.url) {
+    result.voiceover = {
+      ...baselineTracks.voiceover,           // Keep baseline startTime and position
+      url: targetTracks.voiceover.url,        // Use target language URL
+      language: targetLanguage,
+      // Note: We keep baseline duration for timeline layout consistency
+      // The actual audio may be slightly longer/shorter, which is acceptable
+      // Audio will play to completion but timeline positions remain stable
+      actualDuration: targetTracks.voiceover.duration,  // Store actual duration for reference
+    }
+  } else if (targetTracks.voiceover?.url) {
+    // No baseline voiceover but target has one - use target timing
+    result.voiceover = targetTracks.voiceover
+  }
+  
+  // Description: Same pattern as voiceover
+  if (baselineTracks.description && targetTracks.description?.url) {
+    result.description = {
+      ...baselineTracks.description,
+      url: targetTracks.description.url,
+      language: targetLanguage,
+      actualDuration: targetTracks.description.duration,
+    }
+  } else if (targetTracks.description?.url) {
+    result.description = targetTracks.description
+  }
+  
+  // Dialogue: Map baseline positions to target URLs by index
+  // Each dialogue clip keeps its baseline startTime but gets target URL
+  const targetDialogueMap = new Map<number, typeof targetTracks.dialogue[0]>()
+  targetTracks.dialogue.forEach(clip => {
+    if (clip.dialogueIndex !== undefined) {
+      targetDialogueMap.set(clip.dialogueIndex, clip)
+    }
+  })
+  
+  baselineTracks.dialogue.forEach((baselineClip, idx) => {
+    // Try to find matching target clip by dialogueIndex
+    const targetClip = targetDialogueMap.get(baselineClip.dialogueIndex ?? idx)
+    
+    if (targetClip?.url) {
+      result.dialogue.push({
+        ...baselineClip,                      // Keep baseline startTime and position
+        url: targetClip.url,                  // Use target language URL
+        language: targetLanguage,
+        actualDuration: targetClip.duration,  // Store actual duration for reference
+      })
+    }
+    // If no target clip exists for this dialogue line, it's omitted
+    // (the baseline had dialogue but target language doesn't have audio for it)
+  })
+  
+  // Handle extra dialogue clips in target that don't exist in baseline
+  // (target language has more dialogue audio than baseline - rare but possible)
+  targetTracks.dialogue.forEach(targetClip => {
+    const existsInResult = result.dialogue.some(
+      d => d.dialogueIndex === targetClip.dialogueIndex
+    )
+    if (!existsInResult && targetClip.url) {
+      // Add at the end - no baseline timing available
+      result.dialogue.push({
+        ...targetClip,
+        language: targetLanguage,
+      })
+    }
+  })
+  
+  return result
+}
+
+/**
+ * Check if user has overridden timing for a specific language.
+ * Returns true if the scene has language-specific timing overrides stored.
+ */
+export function hasLanguageTimingOverride(scene: any, language: string): boolean {
+  // Check for user timing overrides stored in scene metadata
+  return scene?.audioTimingOverrides?.[language] != null
+}
+
+/**
+ * Reset timing overrides for a language back to baseline.
+ * This function returns the data needed to update the scene - it does NOT mutate the scene.
+ * 
+ * @param scene - The scene object
+ * @param language - The language to reset
+ * @returns Object with audioTimingOverrides update, or null if no override exists
+ */
+export function getResetTimingOverrideData(
+  scene: any, 
+  language: string
+): { audioTimingOverrides: Record<string, null> } | null {
+  if (!hasLanguageTimingOverride(scene, language)) {
+    return null
+  }
+  
+  return {
+    audioTimingOverrides: {
+      [language]: null,  // Clear the override for this language
+    }
+  }
+}
+
+/**
  * Build complete timeline audio state from scene data.
  * Derives all languages and their audio tracks.
  */

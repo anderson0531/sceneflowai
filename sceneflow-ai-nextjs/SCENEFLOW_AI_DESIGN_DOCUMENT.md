@@ -1,6 +1,6 @@
 # SceneFlow AI - Application Design Document
 
-**Version**: 2.46  
+**Version**: 2.47  
 **Last Updated**: January 28, 2026  
 **Status**: Production
 
@@ -128,6 +128,7 @@ The user-facing terminology differs from internal code names for branding purpos
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2026-01-28 | Hybrid Payment Strategy: Google Play + PWA (v2.47) | **Strategic pivot to Google Play Billing as primary payment processor with PWA desktop access post-registration**. Problem: Traditional payment processors (Stripe, Paddle) denied approval twice due to pre-launch status and AI content generation risk factors. New AI SaaS platforms face higher scrutiny due to industry-wide chargeback rates and fraud concerns. **Solution - 3-Phase Payment Strategy**: 1) **Google Play Billing Primary** - Android app handles subscription purchases via Google Play Billing (15-30% fee). Users register and subscribe in-app, then access full PWA features on desktop with same account. Compliant with Google Play policy (in-app purchases must use Play Billing for digital goods), 2) **Unified Entitlement System** - Server-side subscription verification via Google Play Developer API. `user_subscriptions` table in Supabase tracks provider, tier, status, expiry. Cross-platform entitlement checks ensure PWA users have access based on Play Store purchase. Real-Time Developer Notifications (RTDN) webhook handles subscription state changes (renewal, cancellation, expiry), 3) **Fallback Payment Reapplication** - After 2-3 months of beta testing with 50-100 users, reapply to Stripe/Paddle with documented usage metrics, low churn rates, and product stability evidence. Web-only purchases can bypass Play Store fees once approved. **Pre-Release Testing Phase**: Google Startup credits application in progress. Beta user tracking infrastructure with free credit allocation (no payment integration required). Collect testimonials, usage metrics, and feedback for payment processor reapplication. **Key Architecture Components**: `playStoreVerification.ts` for server-side purchase validation, `entitlements.ts` for unified subscription status, `/api/payments/play-store-webhook` for RTDN, `useEntitlements.ts` React hook for feature gating. **Database**: `user_subscriptions` table with provider, tier, token, status, expiry fields. Indexes on user_id and provider_token for efficient lookups. **UX Flow**: Download Android app → Create account → Subscribe via Play Billing → Login to PWA on desktop → Full feature access synced automatically. **Compliance**: Google Play Billing required for in-app digital purchases; web purchases unrestricted once alternative processor approved. See Section 12.2 for full architecture details. | 🟡 Planned |
 | 2026-01-28 | Production Architecture: Dual Stream Types with Storage Management (v2.46) | **Comprehensive production stream system supporting animatic + video dual tracks with shared review and storage lifecycle management**. Problem: Users needed flexible production export options - animatic-only for quick previews vs full video renders, plus the ability to share cuts for stakeholder feedback and manage growing storage costs. **Solution - 6-Phase Implementation**: 1) **Production Stream Types** - Extended `ProductionStream` with `streamType: 'animatic' | 'video'` discrimination. Added `renderSettings` for stream-specific config (Ken Burns intensity, transition style, resolution) and `fileSize` tracking. Extended `RenderType` with `'scene_animatic'` and `'project_final'`, 2) **Scene Animatic API** (`/api/export/scene-animatic`) - Single-scene animatic render endpoint accepting sceneId, projectId, language, resolution, segments[], audioClips[], settings. Creates RenderJob with scene_id and stream_type='animatic'. Triggers Cloud Run FFmpeg pipeline. Updated `/api/export/video/status/[renderId]` to return sceneId and streamType for frontend scene updates, 3) **Production Streams UI** - Enhanced `ProductionStreamsPanel.tsx` with stream type tabs (Animatic 🎬 / Video 🎥). Animatic tab shows Ken Burns intensity slider, transition style selector (dissolve/cut/fade). Video tab shows video generation availability indicator. Stream cards display type badge with render settings, 4) **Final Cut Stream Selection** - New `FinalCutStreamSelector.tsx` component (443 lines) for per-scene stream type selection during export. SceneStreamRow allows radio selection between animatic/video per scene. Quick access buttons: "All Animatic", "All Video", "Smart Select" (prefers video, falls back to animatic). Validation shows readiness state and missing stream warnings. Export button triggers onExport with FinalCutConfig, 5) **Shared Review Summarization** (`/api/review/summarize`) - Gemini-powered feedback analysis for stakeholder review sessions. Calculates average scores across categories (overall, pacing, visual, audio, story). Per-scene score breakdown with response counts. AI generates actionable revision recommendations with priority levels. Returns `FeedbackSummary` with aiSummary and revisionRecommendations[], 6) **Storage Management APIs** - Complete storage lifecycle endpoints: `GET /api/storage/usage` (breakdown by type/class with tier-aware limits, warnings, cost estimation), `POST /api/storage/archive` (archive to GCS Nearline/Coldline), `POST /api/storage/delete` (permanent deletion with confirmation), `POST /api/storage/restore` (restore from cold storage, costs credits), `GET /api/storage/restore` (restore progress), `GET/DELETE /api/storage/production-streams` (list/delete stream files with per-type breakdown). **Key Types Added**: `StreamType`, `FinalCutConfig`, `FeedbackSummary`, `SharedReviewLink`, `SceneFeedback`, `ProductionStreamFile`. **Storage Cost Model**: Standard GCS ~$0.02/GB/month, Nearline for 30+ day inactive, auto-cleanup for 90+ day archived. Restore costs STORAGE_LIMITS.RESTORE_CREDITS per file. **Workflow**: Render scene animatics → Preview in Screening Room → Render full videos when ready → Select stream types per scene for Final Cut → Share for review → Summarize feedback → Apply revisions → Archive old streams. **Files Created**: `scene-animatic/route.ts`, `FinalCutStreamSelector.tsx`, `review/summarize/route.ts`, `storage/usage/route.ts`, `storage/archive/route.ts`, `storage/delete/route.ts`, `storage/restore/route.ts`, `storage/production-streams/route.ts`. **Files Modified**: `ProductionStreamsPanel.tsx`, `productionStreams.ts` (types), `video/status/[renderId]/route.ts`. | ✅ Implemented |
 | 2026-01-02 | Audio Timeline Phase 4 - User Intent Priority (v2.45) | **Removed legacy timing constraints that override user's intentional edits, added muted clip hiding, Reset to Auto, and Edited indicator**. Problem: Audio timeline editing let users set custom start times, but 1) Legacy playback logic enforced `Math.max(userTime, voiceAnchorTime)` constraints that overrode user edits - dialogue/SFX couldn't start before narration ended, 2) Muted clips still visible on timeline (just dimmed with opacity-40), 3) SFX property mismatch - handler saved to `startTime` but reader expected `time`, 4) No way to reset edited clips to auto-calculated baseline, 5) No visual indicator for user-edited clips. **Solution - 5 Key Fixes**: 1) **Removed voiceAnchorTime Constraints** - `ScriptPlayer.tsx` now uses user-saved timing values directly without `Math.max()` floor. Dialogue/SFX with explicit `startTime`/`time` values play at that exact time, even if before narration ends. Auto-calculated clips still use sequential logic. Comment: "User's intentional edits take priority over automated constraints", 2) **Fixed SFX Property Mismatch** - `page.tsx` `handleAudioClipChange` now saves SFX timing to `time` property (not `startTime`) matching how `ScriptPanel.tsx` reads from `sfxDef.time`, 3) **Hide Muted Clips from Timeline** - `AudioTimeline.tsx` now filters out muted clips via `.filter(clip => !mutedClips.has(clip.id)).map()` instead of just dimming. Removed strikethrough overlay and hover mute button (no longer needed since clips are hidden). Muted clips still playback-skipped and stored in localStorage, 4) **Reset to Auto Button** - Selected Clip Panel now shows "Reset" button (RotateCcw icon) when clip has edited timing. Clicking resets startTime to 0 (auto-calculated baseline). Button only appears when `hasEditedTiming` is true, 5) **Edited Indicator Badge** - Selected Clip Panel shows amber "Edited" badge (Pencil icon) next to clip label when startTime > 0 (differs from auto-calculated). Helps users identify which clips have been manually adjusted. **UX Philosophy**: "Expertly automate the baseline build, then give user control to refine." Initial timing is auto-calculated (narration after description, dialogue after narration, etc.) but once user explicitly edits, their intent is respected without constraint. **Key Files**: `ScriptPlayer.tsx` (removed Math.max constraints), `page.tsx` (SFX time property fix), `AudioTimeline.tsx` (hide muted clips, Reset button, Edited badge, new icons). | ✅ Implemented |
 | 2026-01-01 | Timeline Clip Selection & Per-Clip Mute UX (v2.44) | **Added selectable audio clips with per-clip muting, inline timing controls, and keyboard shortcuts to SceneTimeline component**. Problem: 1) Mute controls in ScriptPanel caused "undefined" errors due to minification TDZ bugs in the 5000+ line component, 2) Audio clips on timeline were not selectable or editable, 3) No way to mute individual clips (only entire tracks), 4) No visual feedback for clip selection. **Solution - 6 Key Features**: 1) **Per-Clip Mute State** - Added `mutedClips: Set<string>` state persisted to localStorage under `sceneflow-muted-clips`. New `toggleClipMute()` handler manages clip-level muting. Muted clips show red strikethrough pattern overlay with 40% opacity, 2) **Clip Selection** - Added `selectedClipId` and `selectedClipTrackType` state. Clicking any audio clip selects it with cyan ring highlight (`ring-2 ring-cyan-400`). Click on empty space or ESC to deselect, 3) **Hover Mute Toggle** - Each audio clip shows a speaker icon on hover (top-right corner). Click toggles mute. Muted clips show persistent red VolumeX icon, 4) **Selected Clip Panel** - When an audio clip is selected, a color-coded panel appears below timeline showing: clip label, mute button, start time input, duration (read-only), end time (calculated), track volume slider, and keyboard shortcut hints. Border color matches track type (blue=narration, emerald=dialogue, purple=music, amber=SFX), 5) **Keyboard Shortcuts** - `M` toggles mute on selected clip, `←`/`→` adjusts start time by 0.1s (Shift+arrow for 0.5s), `Esc` deselects. Uses global keydown listener with proper cleanup, 6) **Playback Integration** - Audio playback now respects both track mute (`audioMuteState`) AND clip mute (`mutedClips`). Clips are skipped during playback if either their track or the individual clip is muted. Uses `mutedClipsRef` to avoid minification closure issues. **Design Decisions**: 1) Per-clip mute stored in localStorage (session persistence) not saved to project data - muting is a preview/editing workflow tool, not a final export setting, 2) Both track-level and clip-level mute supported for flexibility - track mute for "solo other tracks" workflow, clip mute for fine-tuning, 3) Controls live in SceneTimeline component to avoid ScriptPanel's minification bugs. **Key Files**: `SceneTimeline.tsx` (1397 lines - added ~150 lines for selection, muting, panel, shortcuts). **Removed**: Mute buttons from ScriptPanel audio cards (caused runtime errors). | ✅ Implemented |
@@ -1303,6 +1304,9 @@ STRIPE_WEBHOOK_SECRET=...
 |----------|------|--------|-------|
 | 🔴 High | Migrate to Vertex AI Gemini for image generation | TODO | Currently using Gemini Studio (AI Studio) with 10 RPM limit. Vertex AI provides 60+ RPM for production scale. Same API format, different auth. |
 | 🟡 Medium | Re-test Vertex AI Imagen reference images | TODO | Reference image handling failed during January 2026 testing. Veo handles refs correctly but Imagen does not. Retry after Google updates API. |
+| 🔴 High | Google Play Billing Hybrid Payment Integration | PLANNED | Use Play Store for subscription purchases via Android app, with PWA desktop access post-registration. See Section 12.2 for full architecture. |
+| 🟡 Medium | Beta User Testing Infrastructure | IN PROGRESS | 50-100 user pre-release testing with credit-based free tier. Collect usage metrics for payment processor reapplication. |
+| 🟢 Low | Stripe/Paddle Reapplication | BLOCKED | Reapply after beta testing demonstrates user engagement, low churn, and product stability. Requires 2-3 months of documented usage. |
 
 ### Phase 1: Core Functionality (Current)
 - ✅ Ideation & Scripting
@@ -1402,7 +1406,115 @@ RENDER_CALLBACK_API_KEY=your-secret-key  # Optional
 
 ---
 
-## 12.2 Ken Burns Effect Implementation
+## 12.2 Hybrid Payment Architecture: Google Play + PWA
+
+**Status**: 🟡 Planned (Target: Q2 2026)
+
+**Purpose**: Use Google Play Billing as the primary payment processor with Android app registration, enabling PWA desktop access post-subscription. This bypasses traditional payment processor (Stripe/Paddle) approval challenges for new AI SaaS platforms.
+
+**Background**: Traditional payment processors (Stripe, Paddle) have denied approval twice due to pre-launch status and AI content generation risk factors. This hybrid approach leverages Google Play's established infrastructure while maintaining full PWA functionality.
+
+**Architecture**:
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      User Journey                                │
+├─────────────────────────────────────────────────────────────────┤
+│  1. Download Android App (Play Store)                            │
+│  2. Create account & subscribe (Google Play Billing)             │
+│  3. Login to PWA on desktop with same account                    │
+│  4. Full access to SceneFlow AI features on any device           │
+└─────────────────────────────────────────────────────────────────┘
+
+         Android App                    PWA (Desktop/Mobile Web)
+         ───────────                    ────────────────────────
+         • Registration                 • Full production workflow
+         • Subscription purchase        • Timeline editor
+         • Basic feature access         • Audio anchoring
+         • Credential sync              • Export & rendering
+                │                                  │
+                └──────────────┬───────────────────┘
+                               │
+                    ┌──────────▼──────────┐
+                    │   Supabase Backend   │
+                    │  • User accounts     │
+                    │  • Entitlements      │
+                    │  • Play Store sync   │
+                    └──────────────────────┘
+```
+
+**Key Components**:
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| Play Store Verification | `src/lib/payments/playStoreVerification.ts` | Server-side Google Play purchase validation |
+| Unified Entitlements | `src/lib/payments/entitlements.ts` | Cross-platform subscription status check |
+| RTDN Webhook | `/api/payments/play-store-webhook` | Real-time subscription state updates |
+| Feature Gating | `src/hooks/useEntitlements.ts` | React hook for feature access control |
+
+**Google Play SKUs**:
+```typescript
+const PLAY_STORE_SKUS = {
+  'sceneflow_creator_monthly': { tier: 'creator', credits: 4500, price: 49.00 },
+  'sceneflow_creator_yearly': { tier: 'creator', credits: 54000, price: 470.00 },
+  'sceneflow_studio_monthly': { tier: 'studio', credits: 15000, price: 149.00 },
+  'sceneflow_studio_yearly': { tier: 'studio', credits: 180000, price: 1430.00 },
+}
+```
+
+**Database Schema** (Supabase):
+```sql
+CREATE TABLE user_subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  provider TEXT NOT NULL CHECK (provider IN ('google_play', 'stripe', 'apple')),
+  provider_subscription_id TEXT NOT NULL,
+  provider_token TEXT,
+  tier TEXT NOT NULL,
+  status TEXT DEFAULT 'active',
+  expires_at TIMESTAMPTZ,
+  auto_renewing BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, provider)
+);
+
+CREATE INDEX idx_subscriptions_user ON user_subscriptions(user_id);
+CREATE INDEX idx_subscriptions_token ON user_subscriptions(provider_token);
+```
+
+**Entitlement Flow**:
+1. User purchases subscription in Android app
+2. App sends purchase token to backend
+3. Backend verifies with Google Play Developer API
+4. Backend creates/updates `user_subscriptions` record
+5. PWA login checks entitlements via same Supabase table
+6. Features gated based on subscription tier
+
+**Google Play RTDN (Real-Time Developer Notifications)**:
+- Webhook receives subscription state changes (renewal, cancellation, expiry)
+- Updates `user_subscriptions` table in real-time
+- Ensures PWA reflects current subscription status immediately
+
+**Fallback Strategy**:
+1. **Primary**: Google Play Billing (Android app)
+2. **Phase 2**: Reapply to Stripe/Paddle after 3 months of beta usage data
+3. **Phase 3**: Add Apple In-App Purchase for iOS users
+
+**Environment Variables**:
+```
+GOOGLE_PLAY_PACKAGE_NAME=com.sceneflow.ai
+GOOGLE_PLAY_SERVICE_ACCOUNT={"type":"service_account",...}
+PLAY_STORE_WEBHOOK_SECRET=your-webhook-secret
+```
+
+**Compliance Notes**:
+- Google Play Billing required for in-app digital purchases (15-30% fee)
+- Web purchases via PWA can use any processor once approved
+- No linking to external payment from within Android app for digital goods
+
+---
+
+## 12.3 Ken Burns Effect Implementation
 
 **Status**: ✅ Implemented (December 2024)
 
@@ -1440,7 +1552,7 @@ function getSceneAwareKenBurns(scene: Scene): KenBurnsConfig {
 
 ---
 
-## 12.3 Image Editing Feature
+## 12.4 Image Editing Feature
 
 **Status**: ✅ Implemented (December 2025)
 

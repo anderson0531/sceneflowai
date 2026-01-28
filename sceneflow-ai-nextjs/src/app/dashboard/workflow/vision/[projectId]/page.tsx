@@ -67,7 +67,7 @@ import { VisionReferencesSidebar } from '@/components/vision/VisionReferencesSid
 import { VisualReference, VisualReferenceType, VisionReferencesPayload } from '@/types/visionReferences'
 import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production'
 import { applyIntelligentDefaults } from '@/lib/audio/anchoredTiming'
-import { buildAudioTracksForLanguage } from '@/components/vision/scene-production/audioTrackBuilder'
+import { buildAudioTracksForLanguage, buildAudioTracksWithBaselineTiming, determineBaselineLanguage } from '@/components/vision/scene-production/audioTrackBuilder'
 
 /**
  * Client-side upload helper that uses the API endpoint
@@ -2979,7 +2979,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (sceneIndex === -1) return
       
       const scene = scenes[sceneIndex]
-      const audioTracks = buildAudioTracksForLanguage(scene, language)
+      // Use baseline timing to ensure consistent positions across languages
+      const baselineLanguage = determineBaselineLanguage(scene)
+      const audioTracks = buildAudioTracksWithBaselineTiming(scene, language, baselineLanguage)
       
       // Calculate total audio duration from narration + dialogue
       let totalAudioDuration = 0

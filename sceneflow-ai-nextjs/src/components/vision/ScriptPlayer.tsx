@@ -33,7 +33,7 @@ import { getAvailableLanguages, getAudioUrl, getAudioDuration as getStoredAudioD
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { toast } from 'sonner'
 import type { SceneProductionData, AudioTracksData } from '@/components/vision/scene-production/types'
-import { calculateSequentialAlignment, AUDIO_ALIGNMENT_BUFFERS, type AlignmentClip } from '@/components/vision/scene-production/audioTrackBuilder'
+import { calculateSequentialAlignment, AUDIO_ALIGNMENT_BUFFERS, determineBaselineLanguage, type AlignmentClip } from '@/components/vision/scene-production/audioTrackBuilder'
 
 
 interface ScreeningRoomProps {
@@ -800,24 +800,40 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       return config
     }
     
-    // Get language-specific audio URLs
-    const narrationUrl = getAudioForLanguage(scene, selectedLanguage, 'narration')
-    const dialogueArray = scene.dialogueAudio?.[selectedLanguage] || (selectedLanguage === 'en' ? scene.dialogueAudio : null)
-    
     // ========================================================================
-    // STEP 1: Build AlignmentClip arrays for sequential alignment
+    // BASELINE TIMING FIX: Use English audio for timing, swap URLs for target language
+    // This ensures timeline positions stay consistent across all languages
     // ========================================================================
     
-    // Build narration clip
+    // Determine baseline language (English if available, else first with audio)
+    const baselineLanguage = determineBaselineLanguage(scene)
+    const isUsingBaseline = selectedLanguage !== baselineLanguage
+    
+    // Get audio URLs for BOTH baseline (for timing) and target (for playback)
+    const baselineNarrationUrl = getAudioForLanguage(scene, baselineLanguage, 'narration')
+    const targetNarrationUrl = getAudioForLanguage(scene, selectedLanguage, 'narration')
+    const narrationUrl = targetNarrationUrl || baselineNarrationUrl // Fallback to baseline if target missing
+    
+    const baselineDialogueArray = scene.dialogueAudio?.[baselineLanguage] || (baselineLanguage === 'en' ? scene.dialogueAudio : null)
+    const targetDialogueArray = scene.dialogueAudio?.[selectedLanguage] || (selectedLanguage === 'en' ? scene.dialogueAudio : null)
+    
+    // ========================================================================
+    // STEP 1: Build AlignmentClip arrays using BASELINE language for timing
+    // ========================================================================
+    
+    // Build narration clip using BASELINE duration for timing calculation
     let narrationClip: AlignmentClip | null = null
-    if (narrationUrl) {
-      const storedDuration = getStoredAudioDuration(scene, selectedLanguage, 'narration')
-      const narrationDuration = await resolveAudioDuration(narrationUrl, storedDuration)
+    if (baselineNarrationUrl || targetNarrationUrl) {
+      // Use baseline duration for timing (to keep positions consistent)
+      const baselineDuration = baselineNarrationUrl 
+        ? await resolveAudioDuration(baselineNarrationUrl, getStoredAudioDuration(scene, baselineLanguage, 'narration'))
+        : await resolveAudioDuration(targetNarrationUrl!, getStoredAudioDuration(scene, selectedLanguage, 'narration'))
+      
       narrationClip = {
         id: 'narration',
         type: 'narration',
-        url: narrationUrl,
-        duration: narrationDuration,
+        url: baselineNarrationUrl || targetNarrationUrl!, // Use baseline for alignment calculation
+        duration: baselineDuration, // Baseline duration for consistent positioning
         label: 'Narration',
       }
     }
@@ -842,9 +858,14 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       }
     }
     
-    // Build dialogue clips - sort by timestamp for correct order
+    // Build dialogue clips using BASELINE timing, then we'll swap URLs in STEP 3
+    // This ensures positions stay consistent across languages
     const dialogueClips: AlignmentClip[] = []
-    if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
+    const dialogueUrlMap = new Map<number, string>() // Map dialogueIndex -> target URL
+    
+    // First, build clips using BASELINE audio for timing calculation
+    const dialogueArrayForTiming = baselineDialogueArray || targetDialogueArray
+    if (Array.isArray(dialogueArrayForTiming) && dialogueArrayForTiming.length > 0) {
       const scriptDialogue = scene.dialogue || []
       
       // Helper: Extract timestamp from audio URL for ordering
@@ -853,8 +874,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
         return match ? parseInt(match[1], 10) : 0
       }
       
-      // Sort audio entries by timestamp (generation order)
-      const sortedByTimestamp = [...dialogueArray]
+      // Sort baseline audio entries by timestamp (generation order)
+      const sortedByTimestamp = [...dialogueArrayForTiming]
         .filter((d: any) => d.audioUrl)
         .sort((a: any, b: any) => {
           const tsA = getUrlTimestamp(a.audioUrl)
@@ -868,12 +889,13 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       for (let i = 0; i < orderedAudio.length; i++) {
         const dialogue = orderedAudio[i]
         if (dialogue.audioUrl) {
+          // Use baseline duration for timing calculation
           const dialogueDuration = await resolveAudioDuration(dialogue.audioUrl, dialogue.duration)
           dialogueClips.push({
             id: `dialogue-${i}`,
             type: 'dialogue',
-            url: dialogue.audioUrl,
-            duration: dialogueDuration,
+            url: dialogue.audioUrl, // Baseline URL for alignment calculation
+            duration: dialogueDuration, // Baseline duration for consistent positioning
             label: dialogue.character || `Line ${i + 1}`,
             dialogueIndex: dialogue.dialogueIndex ?? i,
           })
@@ -881,8 +903,28 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       }
     }
     
+    // Build map of target language URLs (to swap in during STEP 3)
+    if (Array.isArray(targetDialogueArray) && targetDialogueArray.length > 0) {
+      const scriptDialogue = scene.dialogue || []
+      const getUrlTimestamp = (url: string): number => {
+        const match = url?.match(/(\d{13})\.mp3/)
+        return match ? parseInt(match[1], 10) : 0
+      }
+      const sortedTarget = [...targetDialogueArray]
+        .filter((d: any) => d.audioUrl)
+        .sort((a: any, b: any) => getUrlTimestamp(a.audioUrl) - getUrlTimestamp(b.audioUrl))
+        .slice(0, scriptDialogue.length)
+      
+      sortedTarget.forEach((dialogue: any, i: number) => {
+        if (dialogue.audioUrl) {
+          dialogueUrlMap.set(dialogue.dialogueIndex ?? i, dialogue.audioUrl)
+        }
+      })
+    }
+    
     // ========================================================================
     // STEP 2: Calculate sequential alignment (no muted clips in playback)
+    // Uses BASELINE durations so positions are consistent across languages
     // ========================================================================
     
     const alignment = calculateSequentialAlignment(narrationClip, sfxClips, dialogueClips, new Set())
@@ -891,20 +933,23 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       clipCount: alignment.clips.length,
       totalDuration: alignment.totalDuration,
       musicDuration: alignment.musicDuration,
+      baselineLanguage,
+      targetLanguage: selectedLanguage,
+      isUsingBaseline,
     })
     
     // ========================================================================
-    // STEP 3: Apply alignment to config
+    // STEP 3: Apply alignment to config - USE TARGET LANGUAGE URLs with BASELINE POSITIONS
     // ========================================================================
     
-    // Narration
+    // Narration: Use TARGET language URL with BASELINE position
     if (narrationUrl && narrationClip) {
-      config.narration = narrationUrl
+      config.narration = narrationUrl // Target language URL (or fallback)
       const narrationAligned = alignment.clips.find(c => c.type === 'narration')
-      config.narrationOffsetSeconds = narrationAligned?.startTime ?? 0
+      config.narrationOffsetSeconds = narrationAligned?.startTime ?? 0 // Baseline position
     }
     
-    // SFX
+    // SFX (language-independent, no URL swap needed)
     const resolvedSfx: AudioSource[] = []
     for (const clip of alignment.clips.filter(c => c.type === 'sfx' && !c.isMuted)) {
       resolvedSfx.push({
@@ -916,20 +961,23 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       config.sfx = resolvedSfx
     }
     
-    // Dialogue
+    // Dialogue: Use TARGET language URLs with BASELINE positions
     const resolvedDialogue: AudioSource[] = []
     for (const clip of alignment.clips.filter(c => c.type === 'dialogue' && !c.isMuted)) {
+      // Get target language URL if available, otherwise use baseline URL
+      const targetUrl = dialogueUrlMap.get(clip.dialogueIndex ?? -1) || clip.url
       resolvedDialogue.push({
-        url: clip.url,
-        startTime: clip.startTime,
+        url: targetUrl, // Target language URL
+        startTime: clip.startTime, // Baseline position
       })
     }
     if (resolvedDialogue.length > 0) {
       config.dialogue = resolvedDialogue
-      console.log('[ScriptPlayer] Final config.dialogue being sent to WebAudioMixer:', resolvedDialogue.map((d, i) => ({
+      console.log('[ScriptPlayer] Final config.dialogue (baseline positions, target URLs):', resolvedDialogue.map((d, i) => ({
         index: i,
         url: d.url.slice(-40),
-        startTime: d.startTime
+        startTime: d.startTime,
+        language: selectedLanguage
       })))
     }
     

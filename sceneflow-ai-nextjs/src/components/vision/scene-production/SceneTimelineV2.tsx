@@ -18,7 +18,7 @@ import { createPortal } from 'react-dom'
 import { 
   Play, Pause, Volume2, VolumeX, Mic, Music, Zap, 
   SkipBack, SkipForward, Film, Plus, Trash2, X, Maximize2, Minimize2, 
-  MessageSquare, GripVertical, Globe, AlertCircle, Download, Layers, Magnet, Link2, Pencil
+  MessageSquare, GripVertical, Globe, AlertCircle, Download, Layers, Magnet, Link2, Pencil, Anchor
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
@@ -32,7 +32,9 @@ import {
 } from './types'
 import {
   buildAudioTracksForLanguage,
+  buildAudioTracksWithBaselineTiming,
   detectAvailableLanguages,
+  determineBaselineLanguage,
   hashAudioUrls,
   flattenAudioTracks,
   hasAudioForLanguage,
@@ -189,9 +191,14 @@ export function SceneTimelineV2({
   
   const availableLanguages = useMemo(() => detectAvailableLanguages(scene), [scene])
   
+  // Determine baseline language (English if available, else first language with audio)
+  const baselineLanguage = useMemo(() => determineBaselineLanguage(scene), [scene])
+  
+  // Build audio tracks with baseline timing (English positions) but target language URLs
+  // This ensures timeline positions stay consistent when switching languages
   const audioTracks = useMemo(() => {
-    return buildAudioTracksForLanguage(scene, selectedLanguage)
-  }, [scene, selectedLanguage])
+    return buildAudioTracksWithBaselineTiming(scene, selectedLanguage, baselineLanguage)
+  }, [scene, selectedLanguage, baselineLanguage])
   
   const audioHash = useMemo(() => hashAudioUrls(audioTracks), [audioTracks])
   
@@ -1140,6 +1147,16 @@ export function SceneTimelineV2({
                   ))}
                 </SelectContent>
               </Select>
+              {/* Baseline timing indicator - shows when using non-baseline language */}
+              {selectedLanguage !== baselineLanguage && (
+                <div 
+                  className="flex items-center gap-1 px-2 py-1 bg-blue-900/30 border border-blue-700/50 rounded text-[10px] text-blue-300"
+                  title={`Timeline positions anchored to ${LANGUAGE_LABELS[baselineLanguage] || baselineLanguage.toUpperCase()} timing`}
+                >
+                  <Anchor className="w-3 h-3" />
+                  <span>{LANGUAGE_LABELS[baselineLanguage] || baselineLanguage.toUpperCase()}</span>
+                </div>
+              )}
             </>
           )}
           
@@ -1284,19 +1301,31 @@ export function SceneTimelineV2({
           
           {/* Language selector */}
           {availableLanguages.length > 1 && (
-            <Select value={selectedLanguage} onValueChange={onLanguageChange}>
-              <SelectTrigger className="h-7 w-[120px] text-xs">
-                <Globe className="w-3 h-3 mr-1" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {availableLanguages.map(lang => (
-                  <SelectItem key={lang} value={lang} className="text-xs">
-                    {LANGUAGE_LABELS[lang] || lang.toUpperCase()}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <>
+              <Select value={selectedLanguage} onValueChange={onLanguageChange}>
+                <SelectTrigger className="h-7 w-[120px] text-xs">
+                  <Globe className="w-3 h-3 mr-1" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableLanguages.map(lang => (
+                    <SelectItem key={lang} value={lang} className="text-xs">
+                      {LANGUAGE_LABELS[lang] || lang.toUpperCase()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {/* Baseline timing indicator */}
+              {selectedLanguage !== baselineLanguage && (
+                <div 
+                  className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700/50 rounded text-[10px] text-blue-700 dark:text-blue-300"
+                  title={`Timeline positions anchored to ${LANGUAGE_LABELS[baselineLanguage] || baselineLanguage.toUpperCase()} timing`}
+                >
+                  <Anchor className="w-3 h-3" />
+                  <span>{LANGUAGE_LABELS[baselineLanguage] || baselineLanguage.toUpperCase()}</span>
+                </div>
+              )}
+            </>
           )}
           
           {/* Timeline expand toggle - increases track heights for better visibility */}

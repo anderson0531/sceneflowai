@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { SegmentData } from '@/types/screenplay'
-import { buildAudioTracksForLanguage, flattenAudioTracks, type AudioTrackClipV2 } from '@/components/vision/scene-production/audioTrackBuilder'
+import { buildAudioTracksForLanguage, buildAudioTracksWithBaselineTiming, determineBaselineLanguage, flattenAudioTracks, type AudioTrackClipV2 } from '@/components/vision/scene-production/audioTrackBuilder'
 import { getAvailableLanguages } from '@/lib/audio/languageDetection'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 
@@ -243,11 +243,14 @@ export function FullscreenPlayer({
   
   // ============================================================================
   // Build Audio Tracks from Scene (like SceneTimelineV2)
+  // Uses baseline timing to keep positions consistent across languages
   // ============================================================================
+  const baselineLanguage = useMemo(() => scene ? determineBaselineLanguage(scene) : 'en', [scene])
+  
   const audioTracks = useMemo(() => {
     if (!scene) return null
-    return buildAudioTracksForLanguage(scene, language)
-  }, [scene, language])
+    return buildAudioTracksWithBaselineTiming(scene, language, baselineLanguage)
+  }, [scene, language, baselineLanguage])
   
   // ============================================================================
   // Flatten Audio Tracks to Clips (using flattenAudioTracks like SceneTimelineV2)
