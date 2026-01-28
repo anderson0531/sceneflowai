@@ -534,57 +534,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // Key: sceneId, Value: { languageCode: offsetSeconds }
   const [playbackOffsets, setPlaybackOffsets] = useState<Record<string, Record<string, number>>>({})
   
-  // Get playback offset for current scene/language
-  const getPlaybackOffsetForScene = useCallback((sceneId: string, language: string): number => {
-    // First check local state
-    if (playbackOffsets[sceneId]?.[language] !== undefined) {
-      return playbackOffsets[sceneId][language]
-    }
-    // Otherwise fall back to scene data
-    const scene = scenes.find(s => (s.sceneId || s.id) === sceneId)
-    if (scene) {
-      return getLanguagePlaybackOffset(scene, language)
-    }
-    return 0
-  }, [playbackOffsets, scenes])
-  
-  // Save playback offset for a scene/language (updates local state + persists to script)
-  const handlePlaybackOffsetChange = useCallback((sceneId: string, sceneIdx: number, language: string, offset: number) => {
-    // Update local state immediately for responsive UI
-    setPlaybackOffsets(prev => ({
-      ...prev,
-      [sceneId]: {
-        ...(prev[sceneId] || {}),
-        [language]: offset
-      }
-    }))
-    
-    // Persist to scene data via onScriptChange
-    const updatedScenes = [...scenes]
-    const scene = updatedScenes[sceneIdx]
-    if (scene) {
-      scene.languagePlaybackOffsets = {
-        ...(scene.languagePlaybackOffsets || {}),
-        [language]: offset
-      }
-      const updatedScript = {
-        ...script,
-        script: {
-          ...script.script,
-          scenes: updatedScenes
-        }
-      }
-      onScriptChange(updatedScript)
-      console.log('[Playback Offset] Saved:', { sceneId, language, offset })
-    }
-  }, [scenes, script, onScriptChange])
-  
-  // Get suggested playback offset for a scene based on audio duration differences
-  const getSuggestedOffsetForScene = useCallback((scene: any): number | undefined => {
-    if (!scene || selectedLanguage === 'en') return undefined
-    return calculateSuggestedOffset(scene, selectedLanguage, 'en')
-  }, [selectedLanguage])
-  
   // Translation import/export state
   const [translationImportOpen, setTranslationImportOpen] = useState(false)
   const [importText, setImportText] = useState('')
@@ -783,6 +732,57 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   }, [])
 
   const scenes = useMemo(() => normalizeScenes(script), [script])
+
+  // Get playback offset for current scene/language (must be after scenes is defined)
+  const getPlaybackOffsetForScene = useCallback((sceneId: string, language: string): number => {
+    // First check local state
+    if (playbackOffsets[sceneId]?.[language] !== undefined) {
+      return playbackOffsets[sceneId][language]
+    }
+    // Otherwise fall back to scene data
+    const scene = scenes.find(s => (s.sceneId || s.id) === sceneId)
+    if (scene) {
+      return getLanguagePlaybackOffset(scene, language)
+    }
+    return 0
+  }, [playbackOffsets, scenes])
+  
+  // Save playback offset for a scene/language (updates local state + persists to script)
+  const handlePlaybackOffsetChange = useCallback((sceneId: string, sceneIdx: number, language: string, offset: number) => {
+    // Update local state immediately for responsive UI
+    setPlaybackOffsets(prev => ({
+      ...prev,
+      [sceneId]: {
+        ...(prev[sceneId] || {}),
+        [language]: offset
+      }
+    }))
+    
+    // Persist to scene data via onScriptChange
+    const updatedScenes = [...scenes]
+    const scene = updatedScenes[sceneIdx]
+    if (scene) {
+      scene.languagePlaybackOffsets = {
+        ...(scene.languagePlaybackOffsets || {}),
+        [language]: offset
+      }
+      const updatedScript = {
+        ...script,
+        script: {
+          ...script.script,
+          scenes: updatedScenes
+        }
+      }
+      onScriptChange(updatedScript)
+      console.log('[Playback Offset] Saved:', { sceneId, language, offset })
+    }
+  }, [scenes, script, onScriptChange])
+  
+  // Get suggested playback offset for a scene based on audio duration differences
+  const getSuggestedOffsetForScene = useCallback((scene: any): number | undefined => {
+    if (!scene || selectedLanguage === 'en') return undefined
+    return calculateSuggestedOffset(scene, selectedLanguage, 'en')
+  }, [selectedLanguage])
 
   // Always show single scene - use selectedSceneIndex or default to first scene
   const displayedScenes = useMemo(() => {
