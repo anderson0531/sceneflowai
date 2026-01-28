@@ -14,6 +14,7 @@
 import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import { FullscreenPlayer } from './FullscreenPlayer'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
+import { getLanguagePlaybackOffset } from '@/components/vision/scene-production/audioTrackBuilder'
 
 interface ScreeningRoomV2Props {
   script: any
@@ -201,6 +202,7 @@ export function ScreeningRoomV2({
       onPreviousScene={goToPreviousScene}
       autoAdvance={true}
       sceneTransitionDelay={3}
+      playbackOffset={getLanguagePlaybackOffset(currentScene, selectedLanguage)}
     />
   )
 }

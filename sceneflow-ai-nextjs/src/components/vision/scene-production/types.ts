@@ -753,6 +753,10 @@ export interface SceneTimelineV2Props {
   onOpenSegmentPromptDialog?: (segmentId: string) => void
   // Phase 9: Intelligent audio anchoring
   onApplyIntelligentAlignment?: () => void
+  // Phase 10: Language playback offset for translated audio
+  playbackOffset?: number  // Per-segment offset in seconds for current language
+  suggestedOffset?: number // Auto-calculated suggested offset based on audio delta
+  onPlaybackOffsetChange?: (offset: number) => void  // Save offset for current language
 }
 
 // ============================================================================

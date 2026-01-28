@@ -129,6 +129,8 @@ interface FullscreenPlayerProps {
   onPreviousScene?: () => void
   autoAdvance?: boolean
   sceneTransitionDelay?: number
+  /** Per-segment playback offset (for translated audio alignment) */
+  playbackOffset?: number
 }
 
 // ============================================================================
@@ -152,6 +154,7 @@ export function FullscreenPlayer({
   onPreviousScene,
   autoAdvance = true,
   sceneTransitionDelay = 3,
+  playbackOffset = 0,
 }: FullscreenPlayerProps) {
   // ============================================================================
   // State
@@ -228,24 +231,35 @@ export function FullscreenPlayer({
   const containerRef = useRef<HTMLDivElement>(null)
   
   // ============================================================================
-  // Build Visual Clips from Segments
-  // ============================================================================
-  const visualClips = useMemo<VisualClip[]>(() => {
-    return segments.map(seg => ({
-      id: seg.segmentId,
-      segmentId: seg.segmentId,
-      thumbnailUrl: seg.references?.startFrameUrl || seg.activeAssetUrl || undefined,
-      endThumbnailUrl: seg.references?.endFrameUrl || seg.endFrameUrl || undefined,
-      startTime: seg.startTime,
-      duration: seg.endTime - seg.startTime,
-    }))
-  }, [segments])
-  
-  // ============================================================================
   // Build Audio Tracks from Scene (like SceneTimelineV2)
   // Uses baseline timing to keep positions consistent across languages
   // ============================================================================
   const baselineLanguage = useMemo(() => scene ? determineBaselineLanguage(scene) : 'en', [scene])
+  
+  // ============================================================================
+  // Build Visual Clips from Segments
+  // Apply playback offset for translated audio alignment
+  // ============================================================================
+  const visualClips = useMemo<VisualClip[]>(() => {
+    // Determine effective offset (only for non-baseline languages)
+    const effectiveOffset = selectedLanguage !== baselineLanguage ? playbackOffset : 0
+    
+    let cumulativeOffset = 0
+    return segments.map(seg => {
+      const baseDuration = seg.endTime - seg.startTime
+      const clip = {
+        id: seg.segmentId,
+        segmentId: seg.segmentId,
+        thumbnailUrl: seg.references?.startFrameUrl || seg.activeAssetUrl || undefined,
+        endThumbnailUrl: seg.references?.endFrameUrl || seg.endFrameUrl || undefined,
+        startTime: seg.startTime + cumulativeOffset,
+        duration: baseDuration + effectiveOffset,
+      }
+      // Accumulate offset for subsequent segments
+      cumulativeOffset += effectiveOffset
+      return clip
+    })
+  }, [segments, playbackOffset, selectedLanguage, baselineLanguage])
   
   const audioTracks = useMemo(() => {
     if (!scene) return null

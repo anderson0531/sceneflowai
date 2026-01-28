@@ -633,6 +633,114 @@ export function getResetTimingOverrideData(
   }
 }
 
+// ============================================================================
+// LANGUAGE PLAYBACK OFFSET SYSTEM
+// ============================================================================
+
+/**
+ * Get the playback offset for a specific language.
+ * 
+ * Playback offset extends each segment's display duration for translated audio.
+ * Example: Thai audio is 2x longer than English, so user sets +2s offset.
+ * Each segment displays 2 seconds longer when viewing Thai.
+ * 
+ * English (baseline) always has 0 offset.
+ * 
+ * @param scene - Scene object with optional languagePlaybackOffsets
+ * @param language - ISO language code (e.g., 'th', 'es')
+ * @returns Offset in seconds (default: 0)
+ */
+export function getLanguagePlaybackOffset(scene: any, language: string): number {
+  // English is always baseline (no offset)
+  if (language === 'en') return 0
+  
+  return scene?.languagePlaybackOffsets?.[language] ?? 0
+}
+
+/**
+ * Calculate suggested playback offset based on audio duration delta.
+ * 
+ * Compares total audio duration between target and baseline language,
+ * then divides by segment count to suggest per-segment offset.
+ * 
+ * @param scene - Scene with audio data
+ * @param targetLanguage - Language to calculate offset for
+ * @param baselineLanguage - Reference language (default: 'en')
+ * @returns Suggested offset in seconds
+ */
+export function calculateSuggestedOffset(
+  scene: any,
+  targetLanguage: string,
+  baselineLanguage: string = 'en'
+): number {
+  if (targetLanguage === baselineLanguage) return 0
+  
+  // Get narration durations
+  const baselineNarration = scene?.narrationAudio?.[baselineLanguage]?.duration || 0
+  const targetNarration = scene?.narrationAudio?.[targetLanguage]?.duration || 0
+  
+  // Get dialogue durations
+  const baselineDialogue = (scene?.dialogueAudio?.[baselineLanguage] || [])
+    .reduce((sum: number, d: any) => sum + (d?.duration || 0), 0)
+  const targetDialogue = (scene?.dialogueAudio?.[targetLanguage] || [])
+    .reduce((sum: number, d: any) => sum + (d?.duration || 0), 0)
+  
+  // Total duration delta
+  const baselineTotal = baselineNarration + baselineDialogue
+  const targetTotal = targetNarration + targetDialogue
+  const totalDelta = targetTotal - baselineTotal
+  
+  // If target is shorter or same, no offset needed
+  if (totalDelta <= 0) return 0
+  
+  // Get segment count
+  const segmentCount = scene?.segments?.length || 1
+  
+  // Suggested offset = delta / segments (distribute evenly)
+  const suggestedOffset = totalDelta / segmentCount
+  
+  // Round to nearest 0.5s for cleaner UX
+  return Math.round(suggestedOffset * 2) / 2
+}
+
+/**
+ * Apply playback offset to segment durations.
+ * 
+ * Used during animatic playback to extend segment display times
+ * for languages with longer audio.
+ * 
+ * @param segments - Array of segments with duration
+ * @param offset - Per-segment offset in seconds
+ * @returns Segments with adjusted durations
+ */
+export function applyPlaybackOffsetToSegments<T extends { duration: number }>(
+  segments: T[],
+  offset: number
+): T[] {
+  if (offset === 0) return segments
+  
+  return segments.map(seg => ({
+    ...seg,
+    duration: seg.duration + offset,
+  }))
+}
+
+/**
+ * Calculate total scene duration with playback offset applied.
+ * 
+ * @param baseDuration - Original scene duration
+ * @param segmentCount - Number of segments
+ * @param offset - Per-segment offset
+ * @returns Adjusted total duration
+ */
+export function calculateOffsetSceneDuration(
+  baseDuration: number,
+  segmentCount: number,
+  offset: number
+): number {
+  return baseDuration + (segmentCount * offset)
+}
+
 /**
  * Build complete timeline audio state from scene data.
  * Derives all languages and their audio tracks.

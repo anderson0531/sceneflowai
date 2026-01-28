@@ -23,7 +23,7 @@ import { AddSegmentDialog } from './scene-production/AddSegmentDialog'
 import { EditSegmentDialog } from './scene-production/EditSegmentDialog'
 import { DirectorConsole } from './scene-production/DirectorConsole'
 import { SceneTimelineV2 } from './scene-production/SceneTimelineV2'
-import { applySequentialAlignmentToScene, AUDIO_ALIGNMENT_BUFFERS } from './scene-production/audioTrackBuilder'
+import { applySequentialAlignmentToScene, AUDIO_ALIGNMENT_BUFFERS, getLanguagePlaybackOffset, calculateSuggestedOffset } from './scene-production/audioTrackBuilder'
 import { type AudioTracksData, type AudioTrackClip } from './scene-production/AudioTimeline'
 import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings, SceneSegment, AudioTrackType } from './scene-production/types'
 import { Button } from '@/components/ui/Button'
@@ -529,6 +529,61 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [costCalculatorOpen, setCostCalculatorOpen] = useState(false)
   const [generateAudioDialogOpen, setGenerateAudioDialogOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en')
+  
+  // Language playback offset per scene (for translated audio alignment)
+  // Key: sceneId, Value: { languageCode: offsetSeconds }
+  const [playbackOffsets, setPlaybackOffsets] = useState<Record<string, Record<string, number>>>({})
+  
+  // Get playback offset for current scene/language
+  const getPlaybackOffsetForScene = useCallback((sceneId: string, language: string): number => {
+    // First check local state
+    if (playbackOffsets[sceneId]?.[language] !== undefined) {
+      return playbackOffsets[sceneId][language]
+    }
+    // Otherwise fall back to scene data
+    const scene = scenes.find(s => (s.sceneId || s.id) === sceneId)
+    if (scene) {
+      return getLanguagePlaybackOffset(scene, language)
+    }
+    return 0
+  }, [playbackOffsets, scenes])
+  
+  // Save playback offset for a scene/language (updates local state + persists to script)
+  const handlePlaybackOffsetChange = useCallback((sceneId: string, sceneIdx: number, language: string, offset: number) => {
+    // Update local state immediately for responsive UI
+    setPlaybackOffsets(prev => ({
+      ...prev,
+      [sceneId]: {
+        ...(prev[sceneId] || {}),
+        [language]: offset
+      }
+    }))
+    
+    // Persist to scene data via onScriptChange
+    const updatedScenes = [...scenes]
+    const scene = updatedScenes[sceneIdx]
+    if (scene) {
+      scene.languagePlaybackOffsets = {
+        ...(scene.languagePlaybackOffsets || {}),
+        [language]: offset
+      }
+      const updatedScript = {
+        ...script,
+        script: {
+          ...script.script,
+          scenes: updatedScenes
+        }
+      }
+      onScriptChange(updatedScript)
+      console.log('[Playback Offset] Saved:', { sceneId, language, offset })
+    }
+  }, [scenes, script, onScriptChange])
+  
+  // Get suggested playback offset for a scene based on audio duration differences
+  const getSuggestedOffsetForScene = useCallback((scene: any): number | undefined => {
+    if (!scene || selectedLanguage === 'en') return undefined
+    return calculateSuggestedOffset(scene, selectedLanguage, 'en')
+  }, [selectedLanguage])
   
   // Translation import/export state
   const [translationImportOpen, setTranslationImportOpen] = useState(false)
@@ -6222,6 +6277,12 @@ function SceneCard({
                                   scene={scene}
                                   selectedSegmentId={selectedSegmentId}
                                   selectedLanguage={selectedLanguage}
+                                  playbackOffset={getPlaybackOffsetForScene(scene.sceneId || scene.id || `scene-${sceneIdx}`, selectedLanguage)}
+                                  suggestedOffset={getSuggestedOffsetForScene(scene)}
+                                  onPlaybackOffsetChange={(offset) => {
+                                    const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
+                                    handlePlaybackOffsetChange(sceneId, sceneIdx, selectedLanguage, offset)
+                                  }}
                                   onLanguageChange={(lang) => {
                                     // Language change is handled at the panel level
                                     console.log('[ScriptPanel] Language change requested:', lang)

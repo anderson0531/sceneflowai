@@ -33,7 +33,7 @@ import { getAvailableLanguages, getAudioUrl, getAudioDuration as getStoredAudioD
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { toast } from 'sonner'
 import type { SceneProductionData, AudioTracksData } from '@/components/vision/scene-production/types'
-import { calculateSequentialAlignment, AUDIO_ALIGNMENT_BUFFERS, determineBaselineLanguage, type AlignmentClip } from '@/components/vision/scene-production/audioTrackBuilder'
+import { calculateSequentialAlignment, AUDIO_ALIGNMENT_BUFFERS, determineBaselineLanguage, getLanguagePlaybackOffset, type AlignmentClip } from '@/components/vision/scene-production/audioTrackBuilder'
 
 
 interface ScreeningRoomProps {
@@ -1752,6 +1752,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
           onPreviousScene={previousScene}
           autoAdvance={playerState.autoAdvance}
           sceneTransitionDelay={playerState.sceneTransitionDelay}
+          // Language playback offset for translated audio alignment
+          playbackOffset={getLanguagePlaybackOffset(currentScene, selectedLanguage)}
         />
       )}
       

@@ -18,7 +18,7 @@ import { createPortal } from 'react-dom'
 import { 
   Play, Pause, Volume2, VolumeX, Mic, Music, Zap, 
   SkipBack, SkipForward, Film, Plus, Trash2, X, Maximize2, Minimize2, 
-  MessageSquare, GripVertical, Globe, AlertCircle, Download, Layers, Magnet, Link2, Pencil, Anchor
+  MessageSquare, GripVertical, Globe, AlertCircle, Download, Layers, Magnet, Link2, Pencil, Anchor, Clock
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
@@ -179,6 +179,10 @@ export function SceneTimelineV2({
   onOpenSegmentPromptDialog,
   // Phase 9: Intelligent audio anchoring
   onApplyIntelligentAlignment,
+  // Phase 10: Language playback offset
+  playbackOffset = 0,
+  suggestedOffset,
+  onPlaybackOffsetChange,
   isSidePanelVisible = true,
   onToggleSidePanel,
 }: SceneTimelineV2Props & {
@@ -421,17 +425,25 @@ export function SceneTimelineV2({
   // ============================================================================
   
   const visualClips = useMemo<VisualClip[]>(() => {
+    // Apply playback offset for non-baseline languages
+    // This extends each segment's display duration for translated audio
+    const effectiveOffset = selectedLanguage !== baselineLanguage ? playbackOffset : 0
+    
+    let cumulativeStart = 0
     return segments.map(seg => {
-      const duration = seg.endTime - seg.startTime
-      return {
+      const baseDuration = seg.endTime - seg.startTime
+      // Display duration = base + offset (for animatic playback)
+      const displayDuration = baseDuration + effectiveOffset
+      
+      const clip = {
         id: seg.segmentId,
         segmentId: seg.segmentId,
         url: seg.activeAssetUrl || undefined,
         thumbnailUrl: seg.references?.startFrameUrl || seg.activeAssetUrl || undefined,
         endThumbnailUrl: seg.references?.endFrameUrl || seg.endFrameUrl || undefined,
-        startTime: seg.startTime,
-        duration,
-        originalDuration: duration,
+        startTime: cumulativeStart,  // Use cumulative start for offset display
+        duration: displayDuration,
+        originalDuration: baseDuration,  // Keep original for video generation reference
         trimStart: 0,
         trimEnd: 0,
         status: seg.status,
@@ -441,10 +453,13 @@ export function SceneTimelineV2({
         establishingShotType: seg.establishingShotType,
         shotNumber: seg.shotNumber,
         anchorStatus: seg.anchorStatus,
-        exceedsVideoLimit: duration > 8,
+        exceedsVideoLimit: baseDuration > 8,  // Use original duration for video limit check
       }
+      
+      cumulativeStart += displayDuration
+      return clip
     })
-  }, [segments])
+  }, [segments, playbackOffset, selectedLanguage, baselineLanguage])
   
   const sceneDuration = useMemo(() => {
     if (visualClips.length === 0) return 10
@@ -1155,6 +1170,35 @@ export function SceneTimelineV2({
                 >
                   <Anchor className="w-3 h-3" />
                   <span>{LANGUAGE_LABELS[baselineLanguage] || baselineLanguage.toUpperCase()}</span>
+                </div>
+              )}
+              {/* Playback Offset Control - for translated audio alignment */}
+              {selectedLanguage !== baselineLanguage && onPlaybackOffsetChange && (
+                <div 
+                  className="flex items-center gap-2 px-2 py-1 bg-purple-900/30 border border-purple-700/50 rounded"
+                  title="Extend each segment for translated audio playback"
+                >
+                  <Clock className="w-3 h-3 text-purple-300" />
+                  <span className="text-[10px] text-purple-300">Delay:</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="10"
+                    step="0.5"
+                    value={playbackOffset}
+                    onChange={(e) => onPlaybackOffsetChange(parseFloat(e.target.value) || 0)}
+                    className="w-12 h-5 px-1 text-[10px] text-center bg-purple-950 border border-purple-700 rounded text-purple-200 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  />
+                  <span className="text-[10px] text-purple-300">s</span>
+                  {suggestedOffset !== undefined && suggestedOffset > 0 && playbackOffset === 0 && (
+                    <button
+                      onClick={() => onPlaybackOffsetChange(suggestedOffset)}
+                      className="text-[9px] px-1.5 py-0.5 bg-purple-700 hover:bg-purple-600 rounded text-purple-100 transition-colors"
+                      title={`Apply suggested offset of +${suggestedOffset}s based on audio duration difference`}
+                    >
+                      +{suggestedOffset}s
+                    </button>
+                  )}
                 </div>
               )}
             </>
