@@ -6051,11 +6051,6 @@ function SceneCard({
                     {/* ==================== KEYFRAME STATE MACHINE ==================== */}
                     {/* Merged from Frame tab - Frame generation and anchoring */}
                     {sceneProductionData?.isSegmented && sceneProductionData.segments?.length > 0 && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-xs text-slate-400">
-                          <Camera className="w-4 h-4" />
-                          <span className="font-medium">Keyframe State Machine</span>
-                        </div>
                         <SegmentFrameTimeline
                           segments={sceneProductionData.segments}
                           sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
@@ -6148,7 +6143,6 @@ function SceneCard({
                             )
                           } : undefined}
                         />
-                      </div>
                     )}
                     
                     {/* ==================== SCREENING ROOM AUDIO TIMELINE ==================== */}
