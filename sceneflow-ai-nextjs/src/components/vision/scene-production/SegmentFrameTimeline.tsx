@@ -657,7 +657,7 @@ Generate ${recommendedSegments}+ segments now:`
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-semibold text-white">Keyframe State Machine</h3>
+                <h3 className="!text-base !leading-normal !mb-0 font-semibold text-white">Keyframe State Machine</h3>
                 <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
                   {stats.fullyAnchored}/{stats.total} ready
                 </Badge>

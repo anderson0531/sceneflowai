@@ -1452,11 +1452,11 @@ export function SceneProductionMixer({
       {/* Header */}
       <div className="px-4 sm:px-5 py-4 bg-purple-900/20 border-b border-purple-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-purple-600/20 flex items-center justify-center">
-            <Film className="w-5 h-5 text-purple-400" />
+          <div className="w-8 h-8 rounded-lg bg-purple-600/20 flex items-center justify-center">
+            <Film className="w-4 h-4 text-purple-400" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">Scene Production Mixer</h3>
+            <h3 className="!text-base !leading-normal !mb-0 font-semibold text-white">Scene Production Mixer</h3>
             <p className="text-xs text-gray-400">Configure audio tracks and render your scene</p>
           </div>
         </div>

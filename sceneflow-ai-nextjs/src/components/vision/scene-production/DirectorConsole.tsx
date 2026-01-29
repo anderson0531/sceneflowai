@@ -483,7 +483,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     return (
       <div className="p-8 text-center">
         <Clapperboard className="w-16 h-16 mx-auto mb-4 text-slate-500 opacity-30" />
-        <h3 className="text-base font-semibold text-slate-300 mb-2">No Segments Available</h3>
+        <h3 className="!text-base !leading-normal font-semibold text-slate-300 mb-2">No Segments Available</h3>
         <p className="text-sm text-slate-500">
           Initialize scene production in the Frame step first to create video segments.
         </p>
@@ -507,7 +507,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-semibold text-white">Director's Console</h3>
+                <h3 className="!text-base !leading-normal !mb-0 font-semibold text-white">Director's Console</h3>
                 <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
                   {statusCounts.rendered}/{statusCounts.total} rendered
                 </Badge>
@@ -1089,7 +1089,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
             </button>
             <div className="bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
               <div className="p-3 border-b border-slate-700 flex items-center justify-between">
-                <h3 className="text-white font-medium flex items-center gap-2">
+                <h3 className="!text-sm !leading-normal !mb-0 text-white font-medium flex items-center gap-2">
                   <PlayCircle className="w-5 h-5 text-cyan-400" />
                   Scene {sceneNumber} - Rendered Video
                 </h3>
