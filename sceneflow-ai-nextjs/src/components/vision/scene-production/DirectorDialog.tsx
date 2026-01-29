@@ -16,7 +16,7 @@
 
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -110,6 +110,40 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const [resolution, setResolution] = useState<'720p' | '1080p'>(autoConfig.resolution)
   const [duration, setDuration] = useState(autoConfig.duration)
   const [guidePrompt, setGuidePrompt] = useState('')
+  
+  // Calculate dynamic Visual Fidelity based on currently selected mode
+  const visualFidelity = useMemo(() => {
+    const hasStartFrame = !!(segment.startFrameUrl || segment.references?.startFrameUrl)
+    const hasEndFrame = !!(segment.endFrameUrl || segment.references?.endFrameUrl)
+    const activePrompt = mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt
+    
+    // Base scores by method (reflects retake risk)
+    const baseScores: Record<string, number> = {
+      'FRAME_TO_VIDEO': 92,   // Best: both frames constrain output
+      'IMAGE_TO_VIDEO': 75,   // Good: start frame anchors generation
+      'EXTEND': 68,           // Moderate: uses existing video context
+      'TEXT_TO_VIDEO': 35,    // Lowest: no visual reference
+    }
+    
+    let score = baseScores[mode] || 50
+    
+    // Prompt quality bonus (based on length and specificity)
+    const wordCount = (activePrompt || '').split(/\s+/).filter(w => w).length
+    if (wordCount >= 20 && wordCount <= 80) score += 4
+    else if (wordCount >= 10) score += 2
+    
+    // Specific motion/visual terms improve fidelity
+    const promptLower = (activePrompt || '').toLowerCase()
+    if (promptLower.includes('camera')) score += 2
+    if (promptLower.includes('slowly') || promptLower.includes('smoothly')) score += 1
+    if (promptLower.includes('cinematic') || promptLower.includes('photorealistic')) score += 1
+    
+    // Frame availability bonuses - suggest better method
+    if (mode === 'IMAGE_TO_VIDEO' && hasEndFrame) score += 5
+    if (mode === 'TEXT_TO_VIDEO' && hasStartFrame) score += 10
+    
+    return Math.min(100, Math.max(10, Math.round(score)))
+  }, [mode, segment, motionPrompt, visualPrompt])
   
   // Sync prompt based on mode
   useEffect(() => {
@@ -372,12 +406,12 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               <Badge 
                 variant="outline" 
                 className={`bg-slate-800/80 border-slate-600 ${
-                  autoConfig.confidence >= 85 ? 'text-green-400' :
-                  autoConfig.confidence >= 70 ? 'text-yellow-400' :
+                  visualFidelity >= 85 ? 'text-green-400' :
+                  visualFidelity >= 70 ? 'text-yellow-400' :
                   'text-orange-400'
                 }`}
               >
-                Visual Fidelity: {autoConfig.confidence}%
+                Visual Fidelity: {visualFidelity}%
               </Badge>
             </div>
           </div>
