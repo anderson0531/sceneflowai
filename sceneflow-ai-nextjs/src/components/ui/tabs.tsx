@@ -46,7 +46,7 @@ const TabsTrigger = React.forwardRef<
     )}
     {...props}
   >
-    <span className="relative z-10">{(props as any)?.children}</span>
+    <span className="relative z-10 inline-flex items-center gap-2">{(props as any)?.children}</span>
     <span
       aria-hidden
       className={cn(

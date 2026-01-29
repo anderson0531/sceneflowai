@@ -181,42 +181,118 @@ function detectRecommendedMethod(segment: SceneSegment): VideoGenerationMethod {
 /**
  * Generates confidence score for the recommended method
  * 
- * FRAME-FIRST: FTV/I2V get higher confidence because they use
- * frame anchors which produce more consistent character appearance.
+ * VISUAL FIDELITY SCORE: Predicts the likelihood of accurate generation
+ * without character drift, hallucinations, or needing retakes.
+ * 
+ * Higher scores = fewer "slot machine" retakes
+ * Lower scores = warn user about potential inconsistencies
+ * 
+ * Score factors:
+ * - Method type (FTV > I2V > EXT > T2V)
+ * - Frame anchors (more constraints = higher fidelity)
+ * - Prompt quality (specific, detailed prompts = better results)
+ * - Character references (helps maintain consistency)
  */
 function calculateConfidence(segment: SceneSegment, method: VideoGenerationMethod): number {
   const hasStartFrame = !!(segment.startFrameUrl || segment.references?.startFrameUrl)
   const hasEndFrame = !!(segment.endFrameUrl || segment.references?.endFrameUrl)
-  const hasPrompt = !!(segment.generatedPrompt || segment.userEditedPrompt)
   const hasCharacterRefs = (segment.references?.characterRefs?.length || 0) > 0
+  
+  // Get the active prompt for quality analysis
+  const activePrompt = segment.userEditedPrompt || segment.generatedPrompt || segment.userInstruction || ''
+  const promptQuality = analyzePromptQuality(activePrompt)
   
   let confidence = 50 // Base confidence
   
   switch (method) {
     case 'FTV':
-      // Both frames = highest confidence (best character lock)
-      confidence = 95
-      if (hasPrompt) confidence += 5
+      // Frame-to-Video: HIGHEST FIDELITY
+      // Both start+end frames constrain the output, minimizing drift
+      confidence = 92
+      // Prompt quality adds up to 8 points for perfect prompt
+      confidence += Math.round(promptQuality * 0.08)
       break
+      
     case 'I2V':
-      // Start frame = good confidence
-      confidence = 80
-      if (hasPrompt) confidence += 10
+      // Image-to-Video: GOOD FIDELITY
+      // Start frame anchors the beginning, but ending is unconstrained
+      confidence = 75
+      // Prompt is more important here since ending is unconstrained
+      confidence += Math.round(promptQuality * 0.12)
       if (hasCharacterRefs) confidence += 5
       break
+      
     case 'EXT':
-      // Extension = medium confidence (depends on source video quality)
-      confidence = 70
+      // Extend: MODERATE FIDELITY
+      // Uses previous video context but drift increases with extensions
+      confidence = 68
+      confidence += Math.round(promptQuality * 0.08)
       break
+      
     case 'T2V':
-      // Text only = low confidence (character drift risk)
-      confidence = 45
-      if (hasPrompt) confidence += 10
+      // Text-to-Video: LOWEST FIDELITY
+      // No visual reference = highest risk of drift/hallucination
+      confidence = 35
+      // Prompt quality is critical for T2V - adds up to 20 points
+      confidence += Math.round(promptQuality * 0.20)
       if (hasCharacterRefs) confidence += 10
       break
   }
   
-  return Math.min(100, confidence)
+  return Math.min(100, Math.max(10, confidence))
+}
+
+/**
+ * Analyzes prompt quality to estimate generation accuracy
+ * Returns a score from 0-100
+ * 
+ * Factors:
+ * - Length (too short = vague, too long = potentially conflicting)
+ * - Specificity (concrete nouns, actions vs abstract concepts)
+ * - Motion clarity (for video: describes actions, camera movement)
+ * - Quality markers (cinematic, photorealistic, etc.)
+ */
+function analyzePromptQuality(prompt: string): number {
+  if (!prompt || prompt.trim().length === 0) return 0
+  
+  const text = prompt.toLowerCase()
+  const wordCount = prompt.split(/\s+/).length
+  
+  let score = 50 // Base score
+  
+  // Length scoring: optimal is 30-80 words
+  if (wordCount < 10) score -= 20      // Too vague
+  else if (wordCount < 20) score -= 10 // A bit short
+  else if (wordCount <= 80) score += 15 // Good length
+  else if (wordCount <= 120) score += 5 // Slightly long
+  else score -= 10                      // Too long, may conflict
+  
+  // Specificity: concrete visual descriptors
+  const specificTerms = [
+    'camera', 'slowly', 'smoothly', 'gradually', 'subtle',
+    'lighting', 'shadow', 'bright', 'dark', 'golden',
+    'close-up', 'wide shot', 'medium shot', 'tracking',
+    'expression', 'gesture', 'posture', 'movement'
+  ]
+  const specificCount = specificTerms.filter(term => text.includes(term)).length
+  score += Math.min(15, specificCount * 3)
+  
+  // Motion/action clarity (important for video)
+  const actionTerms = ['moves', 'walks', 'turns', 'looks', 'reaches', 'speaks', 'gestures', 'stands', 'sits']
+  const hasActions = actionTerms.some(term => text.includes(term))
+  if (hasActions) score += 10
+  
+  // Quality markers that help guide generation
+  const qualityMarkers = ['cinematic', 'photorealistic', 'film grain', 'professional', 'high quality', '8k', '4k']
+  const hasQuality = qualityMarkers.some(term => text.includes(term))
+  if (hasQuality) score += 5
+  
+  // Negative: vague/abstract terms that can cause inconsistency
+  const vagueTerms = ['beautiful', 'amazing', 'cool', 'nice', 'interesting', 'dynamic']
+  const vagueCount = vagueTerms.filter(term => text.includes(term)).length
+  score -= vagueCount * 5
+  
+  return Math.min(100, Math.max(0, score))
 }
 
 /**

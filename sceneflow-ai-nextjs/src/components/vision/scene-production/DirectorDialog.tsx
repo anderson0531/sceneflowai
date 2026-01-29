@@ -367,10 +367,17 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               </Badge>
             </div>
             
-            {/* Confidence indicator */}
+            {/* Visual Fidelity indicator - predicts generation accuracy and consistency */}
             <div className="absolute bottom-2 left-2">
-              <Badge variant="outline" className="bg-slate-800/80 text-slate-300 border-slate-600">
-                AI Confidence: {autoConfig.confidence}%
+              <Badge 
+                variant="outline" 
+                className={`bg-slate-800/80 border-slate-600 ${
+                  autoConfig.confidence >= 85 ? 'text-green-400' :
+                  autoConfig.confidence >= 70 ? 'text-yellow-400' :
+                  'text-orange-400'
+                }`}
+              >
+                Visual Fidelity: {autoConfig.confidence}%
               </Badge>
             </div>
           </div>
