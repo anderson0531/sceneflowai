@@ -211,11 +211,11 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
         
         {/* Header */}
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
-            <Wand2 className="w-5 h-5 text-indigo-400" />
+          <DialogTitle className="text-lg font-medium text-white flex items-center gap-2">
+            <Wand2 className="w-4 h-4 text-indigo-400" />
             Generate Video: Segment {segment.sequenceIndex + 1}
           </DialogTitle>
-          <DialogDescription className="text-slate-400">
+          <DialogDescription className="text-sm text-slate-400">
             Review and customize generation parameters before rendering.
           </DialogDescription>
         </DialogHeader>
@@ -257,41 +257,44 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
             )}
             
             <Tabs value={mode} onValueChange={setMode}>
-              <TabsList className="bg-slate-800 w-full grid grid-cols-4">
+              <TabsList className="bg-slate-800/80 w-full grid grid-cols-2 md:grid-cols-4 gap-1 p-1">
                 <TabsTrigger 
                   value="TEXT_TO_VIDEO" 
-                  className="data-[state=active]:bg-indigo-600"
+                  className="gap-2 data-[state=active]:bg-indigo-600"
                   disabled={!tabStates.TEXT_TO_VIDEO}
                 >
-                  <Type className="w-4 h-4 mr-2" />
-                  Text-to-Video
+                  <Type className="w-4 h-4" />
+                  <span className="hidden sm:inline">Text-to-Video</span>
+                  <span className="sm:hidden">T2V</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="IMAGE_TO_VIDEO" 
-                  className="data-[state=active]:bg-indigo-600 disabled:opacity-50"
+                  className="gap-2 data-[state=active]:bg-indigo-600 disabled:opacity-50"
                   disabled={!tabStates.IMAGE_TO_VIDEO}
                   title={tabDisabledReasons.IMAGE_TO_VIDEO}
                 >
-                  <ImageIcon className="w-4 h-4 mr-2" />
-                  Image-to-Video
+                  <ImageIcon className="w-4 h-4" />
+                  <span className="hidden sm:inline">Image-to-Video</span>
+                  <span className="sm:hidden">I2V</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="FRAME_TO_VIDEO" 
-                  className="data-[state=active]:bg-purple-600 disabled:opacity-50"
+                  className="gap-2 data-[state=active]:bg-purple-600 disabled:opacity-50"
                   disabled={!tabStates.FRAME_TO_VIDEO}
                   title={tabDisabledReasons.FRAME_TO_VIDEO}
                 >
-                  <Film className="w-4 h-4 mr-2" />
-                  Frame-to-Video
+                  <Film className="w-4 h-4" />
+                  <span className="hidden sm:inline">Frame-to-Video</span>
+                  <span className="sm:hidden">FTV</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="EXTEND" 
-                  className="data-[state=active]:bg-indigo-600 disabled:opacity-50"
+                  className="gap-2 data-[state=active]:bg-indigo-600 disabled:opacity-50"
                   disabled={!tabStates.EXTEND}
                   title={tabDisabledReasons.EXTEND}
                 >
-                  <FastForward className="w-4 h-4 mr-2" />
-                  Extend
+                  <FastForward className="w-4 h-4" />
+                  <span>Extend</span>
                 </TabsTrigger>
               </TabsList>
             </Tabs>

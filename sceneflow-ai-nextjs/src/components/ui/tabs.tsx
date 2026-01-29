@@ -33,7 +33,7 @@ const TabsTrigger = React.forwardRef<
     ref={ref}
     className={cn(
       // base
-      "relative inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-sm font-semibold uppercase tracking-wide",
+      "relative inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium",
       "transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950",
       "disabled:pointer-events-none disabled:opacity-50",
       // colors
@@ -41,7 +41,7 @@ const TabsTrigger = React.forwardRef<
       // active bg + bottom indicator
       "data-[state=active]:bg-gray-800",
       // size & hit area
-      "min-w-[64px]",
+      "min-w-[56px]",
       className
     )}
     {...props}
