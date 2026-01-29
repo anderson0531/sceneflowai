@@ -4520,65 +4520,6 @@ function SceneCard({
                                 Ready
                               </span>
                             )}
-                            {/* Ken Burns Effect Toggle */}
-                            {hasImage && (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <button
-                                    onClick={(e) => e.stopPropagation()}
-                                    className={`ml-2 text-xs px-2 py-0.5 rounded flex items-center gap-1 transition-colors ${
-                                      currentKenBurns === 'off'
-                                        ? 'bg-slate-700/50 text-slate-400 border border-slate-600'
-                                        : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40'
-                                    }`}
-                                    title="Ken Burns motion effect for video"
-                                  >
-                                    <Film className="w-3 h-3" />
-                                    <span className="capitalize">{currentKenBurns === 'off' ? 'Static' : `Motion: ${currentKenBurns}`}</span>
-                                    <ChevronDown className="w-3 h-3 opacity-60" />
-                                  </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="bg-slate-900 border-slate-700" align="start">
-                                  <DropdownMenuLabel className="text-xs text-gray-400">Ken Burns Motion Effect</DropdownMenuLabel>
-                                  <DropdownMenuSeparator className="bg-slate-700" />
-                                  {(['off', 'subtle', 'medium', 'dramatic'] as const).map((intensity) => (
-                                    <DropdownMenuItem
-                                      key={intensity}
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        // Update scene kenBurnsIntensity via onScriptChange
-                                        const updatedScenes = [...(scenes || [])]
-                                        if (updatedScenes[sceneIdx]) {
-                                          updatedScenes[sceneIdx] = {
-                                            ...updatedScenes[sceneIdx],
-                                            kenBurnsIntensity: intensity
-                                          }
-                                          const updatedScript = {
-                                            ...script,
-                                            script: {
-                                              ...script?.script,
-                                              scenes: updatedScenes
-                                            }
-                                          }
-                                          onScriptChange(updatedScript)
-                                        }
-                                      }}
-                                      className={`text-xs cursor-pointer ${
-                                        currentKenBurns === intensity ? 'bg-cyan-500/20 text-cyan-300' : 'text-gray-300 hover:bg-slate-800'
-                                      }`}
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        {currentKenBurns === intensity && <CheckCircle2 className="w-3 h-3 text-cyan-400" />}
-                                        <span className="capitalize">{intensity === 'off' ? 'Off (Static)' : intensity}</span>
-                                      </div>
-                                      <span className="text-[10px] text-gray-500 ml-auto">
-                                        {intensity === 'off' ? 'No motion' : intensity === 'subtle' ? 'Gentle pan' : intensity === 'medium' ? 'Standard' : 'Dynamic'}
-                                      </span>
-                                    </DropdownMenuItem>
-                                  ))}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            )}
                           </div>
                           <AnimatePresence>
                             {!sceneImageCollapsed && (
