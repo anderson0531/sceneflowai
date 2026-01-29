@@ -483,7 +483,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     return (
       <div className="p-8 text-center">
         <Clapperboard className="w-16 h-16 mx-auto mb-4 text-slate-500 opacity-30" />
-        <h3 className="text-lg font-medium text-slate-300 mb-2">No Segments Available</h3>
+        <h3 className="text-base font-semibold text-slate-300 mb-2">No Segments Available</h3>
         <p className="text-sm text-slate-500">
           Initialize scene production in the Frame step first to create video segments.
         </p>
@@ -502,12 +502,12 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
             className="flex items-center gap-3 text-left hover:text-white transition-colors"
           >
             {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-            <div className="w-10 h-10 rounded-lg bg-indigo-600/20 flex items-center justify-center">
-              <Clapperboard className="w-5 h-5 text-indigo-400" />
+            <div className="w-8 h-8 rounded-lg bg-indigo-600/20 flex items-center justify-center">
+              <Clapperboard className="w-4 h-4 text-indigo-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-semibold text-white">Director's Console</h3>
+                <h3 className="text-base font-semibold text-white">Director's Console</h3>
                 <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
                   {statusCounts.rendered}/{statusCounts.total} rendered
                 </Badge>
