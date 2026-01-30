@@ -53,6 +53,109 @@ interface ProjectSceneData {
 }
 
 // ============================================================================
+// Demo Mode Data
+// ============================================================================
+
+const createDemoStream = (): FinalCutStream => {
+  const demoScenes: StreamScene[] = Array.from({ length: 10 }, (_, i) => {
+    const sceneNumber = i + 1
+    const startTime = i * 30 // Each scene is 30 seconds
+    const segments: StreamSegment[] = [
+      {
+        id: `demo-segment-${sceneNumber}-1`,
+        sceneId: `demo-scene-${sceneNumber}`,
+        sequenceIndex: 0,
+        sourceSegmentId: `src-segment-${sceneNumber}-1`,
+        assetUrl: '',
+        assetType: 'image',
+        startTime: 0,
+        endTime: 15,
+        durationMs: 15000,
+        overlays: [],
+        audioTracks: []
+      },
+      {
+        id: `demo-segment-${sceneNumber}-2`,
+        sceneId: `demo-scene-${sceneNumber}`,
+        sequenceIndex: 1,
+        sourceSegmentId: `src-segment-${sceneNumber}-2`,
+        assetUrl: '',
+        assetType: 'image',
+        startTime: 15,
+        endTime: 30,
+        durationMs: 15000,
+        overlays: [],
+        audioTracks: []
+      }
+    ]
+
+    return {
+      id: `stream-scene-${sceneNumber}`,
+      streamId: 'demo-stream',
+      sceneNumber,
+      sourceSceneId: `demo-scene-${sceneNumber}`,
+      segments,
+      startTime,
+      endTime: startTime + 30,
+      durationMs: 30000,
+      heading: getDemoSceneHeading(sceneNumber),
+      visualDescription: getDemoSceneDescription(sceneNumber)
+    }
+  })
+
+  return {
+    id: 'demo-stream',
+    projectId: 'demo-project',
+    language: 'en',
+    format: 'full-video',
+    name: 'Demo Stream (10 Scenes)',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    scenes: demoScenes,
+    totalDurationMs: 300000, // 5 minutes
+    transitions: [],
+    status: 'draft',
+    exportSettings: {
+      resolution: '1080p',
+      frameRate: 24,
+      codec: 'h264'
+    }
+  }
+}
+
+const getDemoSceneHeading = (sceneNumber: number): string => {
+  const headings = [
+    'INT. COFFEE SHOP - DAY',
+    'EXT. CITY STREET - DAY',
+    'INT. OFFICE BUILDING - DAY',
+    'EXT. PARK - AFTERNOON',
+    'INT. APARTMENT - EVENING',
+    'EXT. ROOFTOP - SUNSET',
+    'INT. RESTAURANT - NIGHT',
+    'EXT. ALLEYWAY - NIGHT',
+    'INT. CAR (MOVING) - NIGHT',
+    'EXT. BEACH - DAWN'
+  ]
+  return headings[sceneNumber - 1] || `SCENE ${sceneNumber}`
+}
+
+const getDemoSceneDescription = (sceneNumber: number): string => {
+  const descriptions = [
+    'Two characters meet for the first time over coffee, tension builds.',
+    'The protagonist walks through a bustling city, lost in thought.',
+    'A crucial meeting takes place with unexpected revelations.',
+    'A moment of reflection as characters discuss their next move.',
+    'Quiet evening scene, character prepares for what\'s to come.',
+    'Dramatic confrontation with stunning sunset backdrop.',
+    'Celebratory dinner turns into heated argument.',
+    'Chase sequence through dark alleys, high stakes.',
+    'Intense conversation as characters race against time.',
+    'Resolution and new beginning as sun rises over the ocean.'
+  ]
+  return descriptions[sceneNumber - 1] || `Scene ${sceneNumber} visual description.`
+}
+
+// ============================================================================
 // FinalCutPage Component
 // ============================================================================
 
@@ -61,6 +164,9 @@ export default function FinalCutPage() {
   const searchParams = useSearchParams()
   const { currentProject, updateProject } = useStore()
   
+  // Check for demo mode
+  const isDemo = searchParams.get('demo') === 'true'
+  
   // State
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -68,13 +174,23 @@ export default function FinalCutPage() {
   const [selectedStreamId, setSelectedStreamId] = useState<string | null>(null)
   
   // Get project ID from URL or current project
-  const projectId = searchParams.get('projectId') || currentProject?.id
+  const projectId = searchParams.get('projectId') || currentProject?.id || (isDemo ? 'demo-project' : undefined)
   
   // ============================================================================
   // Initialize from project data
   // ============================================================================
   
   useEffect(() => {
+    // Demo mode - load demo stream
+    if (isDemo) {
+      const demoStream = createDemoStream()
+      setStreams([demoStream])
+      setSelectedStreamId(demoStream.id)
+      setIsLoading(false)
+      return
+    }
+    
+    // Normal mode - require currentProject
     if (!currentProject) {
       router.push('/dashboard')
       return
@@ -107,7 +223,7 @@ export default function FinalCutPage() {
     }
     
     initializeStreams()
-  }, [currentProject, router])
+  }, [currentProject, router, isDemo])
   
   // ============================================================================
   // Create default stream from project data
@@ -385,7 +501,7 @@ export default function FinalCutPage() {
     )
   }
   
-  if (!currentProject) {
+  if (!currentProject && !isDemo) {
     return (
       <div className="min-h-screen bg-dark-bg flex items-center justify-center">
         <div className="text-center text-white">
@@ -405,13 +521,24 @@ export default function FinalCutPage() {
   
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col">
+      {/* Demo Mode Banner */}
+      {isDemo && (
+        <div className="bg-amber-500/20 border-b border-amber-500/30 px-4 py-2">
+          <div className="flex items-center justify-center gap-2 text-amber-400 text-sm">
+            <Film className="w-4 h-4" />
+            <span className="font-medium">Demo Mode</span>
+            <span className="text-amber-400/70">- Viewing 10-scene test project. No data will be saved.</span>
+          </div>
+        </div>
+      )}
+      
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 border-b border-gray-800 bg-gray-900">
         <div className="flex items-center gap-4">
-          <Link href={`/dashboard/workflow/vision/${projectId}`}>
+          <Link href={isDemo ? '/dashboard' : `/dashboard/workflow/vision/${projectId}`}>
             <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Production
+              {isDemo ? 'Exit Demo' : 'Back to Production'}
             </Button>
           </Link>
           
@@ -470,7 +597,7 @@ export default function FinalCutPage() {
           
           <div className="h-6 w-px bg-gray-700" />
           
-          <Link href={`/dashboard/workflow/premiere?projectId=${projectId}`}>
+          <Link href={`/dashboard/workflow/premiere?projectId=${projectId}${isDemo ? '&demo=true' : ''}`}>
             <Button
               size="sm"
               className="bg-sf-primary hover:bg-sf-accent"

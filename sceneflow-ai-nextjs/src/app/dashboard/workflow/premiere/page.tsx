@@ -68,6 +68,90 @@ function createMockAnalytics(screeningId: string): ScreeningAnalytics {
 }
 
 // ============================================================================
+// Demo Mode Data
+// ============================================================================
+
+function createDemoStream(): FinalCutStream {
+  const demoScenes = Array.from({ length: 10 }, (_, i) => ({
+    id: `stream-scene-${i + 1}`,
+    streamId: 'demo-stream',
+    sceneNumber: i + 1,
+    sourceSceneId: `demo-scene-${i + 1}`,
+    segments: [
+      {
+        id: `demo-segment-${i + 1}-1`,
+        sceneId: `demo-scene-${i + 1}`,
+        sequenceIndex: 0,
+        sourceSegmentId: `src-segment-${i + 1}`,
+        assetUrl: '',
+        assetType: 'image' as const,
+        startTime: 0,
+        endTime: 30,
+        durationMs: 30000,
+        overlays: [],
+        audioTracks: []
+      }
+    ],
+    startTime: i * 30,
+    endTime: (i + 1) * 30,
+    durationMs: 30000,
+    heading: `SCENE ${i + 1}`,
+    visualDescription: `Demo scene ${i + 1} visual description.`
+  }))
+
+  return {
+    id: 'demo-stream',
+    projectId: 'demo-project',
+    language: 'en',
+    format: 'full-video',
+    name: 'Demo Stream (10 Scenes)',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    scenes: demoScenes,
+    totalDurationMs: 300000,
+    transitions: [],
+    status: 'draft',
+    exportSettings: {
+      resolution: '1080p',
+      frameRate: 24,
+      codec: 'h264'
+    }
+  }
+}
+
+function createDemoScreening(stream: FinalCutStream): ScreeningSession {
+  return {
+    id: 'demo-screening',
+    projectId: 'demo-project',
+    streamId: stream.id,
+    title: 'Demo Test Screening',
+    description: 'This is a demo screening for testing the Premiere interface.',
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    accessType: 'public',
+    shareUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/s/demo-screening`,
+    viewerCount: 15,
+    viewers: [],
+    feedbackEnabled: true,
+    comments: [
+      {
+        id: 'demo-comment-1',
+        screeningId: 'demo-screening',
+        viewerName: 'Demo Viewer',
+        timestamp: 45,
+        content: 'This scene transition is fantastic!',
+        createdAt: new Date().toISOString()
+      }
+    ],
+    reactions: [
+      { type: 'like', timestamp: 30, count: 5 },
+      { type: 'love', timestamp: 60, count: 3 }
+    ],
+    status: 'active'
+  }
+}
+
+// ============================================================================
 // PremierePage Component
 // ============================================================================
 
@@ -75,6 +159,9 @@ export default function PremierePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { currentProject, updateProject } = useStore()
+  
+  // Check for demo mode
+  const isDemo = searchParams.get('demo') === 'true'
   
   // State
   const [isLoading, setIsLoading] = useState(true)
@@ -89,13 +176,27 @@ export default function PremierePage() {
   const [selectedScreeningId, setSelectedScreeningId] = useState<string | null>(null)
   
   // Get project ID from URL or current project
-  const projectId = searchParams.get('projectId') || currentProject?.id
+  const projectId = searchParams.get('projectId') || currentProject?.id || (isDemo ? 'demo-project' : undefined)
   
   // ============================================================================
   // Initialize from project data
   // ============================================================================
   
   useEffect(() => {
+    // Demo mode - load demo data
+    if (isDemo) {
+      const demoStream = createDemoStream()
+      const demoScreening = createDemoScreening(demoStream)
+      setStreams([demoStream])
+      setScreenings([demoScreening])
+      setSelectedScreeningId(demoScreening.id)
+      setPublishJobs([])
+      setConnectedPlatforms(['file-download', 'youtube', 'vimeo'])
+      setIsLoading(false)
+      return
+    }
+    
+    // Normal mode - require currentProject
     if (!currentProject) {
       router.push('/dashboard')
       return
@@ -129,7 +230,7 @@ export default function PremierePage() {
     }
     
     initialize()
-  }, [currentProject, router])
+  }, [currentProject, router, isDemo])
   
   // ============================================================================
   // Screening Management
@@ -299,7 +400,7 @@ export default function PremierePage() {
     )
   }
   
-  if (!currentProject) {
+  if (!currentProject && !isDemo) {
     return (
       <div className="min-h-screen bg-dark-bg flex items-center justify-center">
         <div className="text-center text-white">
@@ -317,7 +418,7 @@ export default function PremierePage() {
     )
   }
   
-  if (streams.length === 0) {
+  if (streams.length === 0 && !isDemo) {
     return (
       <div className="min-h-screen bg-dark-bg flex items-center justify-center">
         <div className="text-center text-white max-w-md">
@@ -338,10 +439,21 @@ export default function PremierePage() {
   
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col">
+      {/* Demo Mode Banner */}
+      {isDemo && (
+        <div className="bg-blue-500/20 border-b border-blue-500/30 px-4 py-2">
+          <div className="flex items-center justify-center gap-2 text-blue-400 text-sm">
+            <Eye className="w-4 h-4" />
+            <span className="font-medium">Demo Mode</span>
+            <span className="text-blue-400/70">- Viewing test screening data. No data will be saved.</span>
+          </div>
+        </div>
+      )}
+      
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 border-b border-gray-800 bg-gray-900">
         <div className="flex items-center gap-4">
-          <Link href={`/dashboard/workflow/final-cut?projectId=${projectId}`}>
+          <Link href={isDemo ? `/dashboard/workflow/final-cut?demo=true` : `/dashboard/workflow/final-cut?projectId=${projectId}`}>
             <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Final Cut
@@ -354,26 +466,28 @@ export default function PremierePage() {
             <Eye className="w-5 h-5 text-blue-400" />
             <div>
               <h1 className="text-lg font-semibold text-white">Premiere</h1>
-              <p className="text-xs text-gray-500">{currentProject.title}</p>
+              <p className="text-xs text-gray-500">{isDemo ? 'Demo Project' : currentProject?.title}</p>
             </div>
           </div>
         </div>
         
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSave}
-            disabled={isSaving}
-            className="text-gray-400 hover:text-white"
-          >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4 mr-2" />
-            )}
-            Save
-          </Button>
+          {!isDemo && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSave}
+              disabled={isSaving}
+              className="text-gray-400 hover:text-white"
+            >
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Save
+            </Button>
+          )}
         </div>
       </header>
       
