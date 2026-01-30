@@ -548,54 +548,58 @@ export default function FinalCutPage() {
             <Film className="w-5 h-5 text-purple-400" />
             <div>
               <h1 className="text-lg font-semibold text-white">Final Cut</h1>
-              <p className="text-xs text-gray-500">{currentProject.title}</p>
+              <p className="text-xs text-gray-500">{isDemo ? 'Demo Project' : currentProject?.title}</p>
             </div>
           </div>
         </div>
         
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSave}
-            disabled={isSaving}
-            className="text-gray-400 hover:text-white"
-          >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4 mr-2" />
-            )}
-            Save
-          </Button>
+          {!isDemo && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSave}
+                disabled={isSaving}
+                className="text-gray-400 hover:text-white"
+              >
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                Save
+              </Button>
           
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-gray-400 hover:text-white"
-          >
-            <Share2 className="w-4 h-4 mr-2" />
-            Share
-          </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-gray-400 hover:text-white"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                Share
+              </Button>
           
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-gray-400 hover:text-white"
-          >
-            <Settings className="w-4 h-4 mr-2" />
-            Settings
-          </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-gray-400 hover:text-white"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </Button>
           
-          <Button
-            size="sm"
-            className="bg-purple-600 hover:bg-purple-700"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
+              <Button
+                size="sm"
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export
+              </Button>
           
-          <div className="h-6 w-px bg-gray-700" />
+              <div className="h-6 w-px bg-gray-700" />
+            </>
+          )}
           
           <Link href={`/dashboard/workflow/premiere?projectId=${projectId}${isDemo ? '&demo=true' : ''}`}>
             <Button
