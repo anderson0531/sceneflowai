@@ -1591,7 +1591,7 @@ export function SceneTimelineV2({
         {/* Playhead */}
         <div
           className="absolute top-0 bottom-0 w-0.5 bg-red-500 pointer-events-none z-20"
-          style={{ left: currentTime * pixelsPerSecond }}
+          style={{ left: TRACK_LABEL_WIDTH + currentTime * pixelsPerSecond }}
         >
           <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rotate-45" />
         </div>
