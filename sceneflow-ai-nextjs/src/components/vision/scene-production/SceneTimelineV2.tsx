@@ -1013,8 +1013,8 @@ export function SceneTimelineV2({
     return (
       <div className={cn("flex items-stretch border-t border-gray-200 dark:border-gray-700 transition-all duration-200", isTimelineExpanded ? "h-14" : "h-10")}>
         <div 
-          className="flex-shrink-0 flex items-center justify-between px-3 bg-gray-100 dark:bg-gray-800"
-          style={{ width: TRACK_LABEL_WIDTH }}
+          className="flex-shrink-0 flex items-center justify-between px-3 bg-gray-100 dark:bg-gray-800 z-30 border-r border-gray-200 dark:border-gray-700"
+          style={{ width: TRACK_LABEL_WIDTH, position: 'sticky', left: 0, marginLeft: -TRACK_LABEL_WIDTH }}
         >
           <div className="flex items-center gap-2">
             {icon}
@@ -1406,13 +1406,13 @@ export function SceneTimelineV2({
       </div>
       
       {/* Timeline tracks - horizontal scroll enabled */}
-      <div ref={timelineRef} className="relative overflow-x-auto" onClick={handleTimelineClick}>
-        <div className={cn("min-w-[600px]", isTimelineWide && "min-w-[1000px]")}>
+      <div ref={timelineRef} className="relative overflow-x-auto overflow-y-visible" onClick={handleTimelineClick}>
+        <div className={cn("min-w-[600px]", isTimelineWide && "min-w-[1000px]")} style={{ marginLeft: TRACK_LABEL_WIDTH }}>
         {/* Time ruler */}
         <div className="flex items-stretch h-6 border-b border-gray-200 dark:border-gray-700">
           <div 
-            className="flex-shrink-0 bg-gray-100 dark:bg-gray-800"
-            style={{ width: TRACK_LABEL_WIDTH }}
+            className="flex-shrink-0 bg-gray-100 dark:bg-gray-800 z-30 border-r border-gray-200 dark:border-gray-700"
+            style={{ width: TRACK_LABEL_WIDTH, position: 'sticky', left: 0, marginLeft: -TRACK_LABEL_WIDTH }}
           />
           <div className="flex-1 relative bg-gray-50 dark:bg-gray-900/30">
             {timeMarkers.map(t => (
@@ -1437,8 +1437,8 @@ export function SceneTimelineV2({
             !(trackEnabled.keyframes ?? true) && "opacity-50"
           )}>
             <div 
-              className="flex-shrink-0 flex items-center justify-between px-3 bg-gray-100 dark:bg-gray-800"
-              style={{ width: TRACK_LABEL_WIDTH }}
+              className="flex-shrink-0 flex items-center justify-between px-3 bg-gray-100 dark:bg-gray-800 z-30 border-r border-gray-200 dark:border-gray-700"
+              style={{ width: TRACK_LABEL_WIDTH, position: 'sticky', left: 0, marginLeft: -TRACK_LABEL_WIDTH }}
             >
               <div className="flex items-center gap-2">
                 <Film className="w-4 h-4 text-orange-500" />
@@ -1590,8 +1590,8 @@ export function SceneTimelineV2({
         
         {/* Playhead */}
         <div
-          className="absolute top-0 bottom-0 w-0.5 bg-red-500 pointer-events-none z-30"
-          style={{ left: TRACK_LABEL_WIDTH + currentTime * pixelsPerSecond }}
+          className="absolute top-0 bottom-0 w-0.5 bg-red-500 pointer-events-none z-20"
+          style={{ left: currentTime * pixelsPerSecond }}
         >
           <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rotate-45" />
         </div>
