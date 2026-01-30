@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useStore } from '@/store/useStore'
 import { Button } from '@/components/ui/Button'
 import { 
-  ArrowLeft, 
+  ArrowLeft,
+  ArrowRight,
   Save, 
   Download, 
   Share2, 
@@ -407,10 +408,10 @@ export default function FinalCutPage() {
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 border-b border-gray-800 bg-gray-900">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard/workflow/vision">
+          <Link href={`/dashboard/workflow/vision/${projectId}`}>
             <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
+              Back to Production
             </Button>
           </Link>
           
@@ -466,6 +467,18 @@ export default function FinalCutPage() {
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
+          
+          <div className="h-6 w-px bg-gray-700" />
+          
+          <Link href={`/dashboard/workflow/premiere?projectId=${projectId}`}>
+            <Button
+              size="sm"
+              className="bg-sf-primary hover:bg-sf-accent"
+            >
+              Continue to Premiere
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Link>
         </div>
       </header>
       

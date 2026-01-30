@@ -13,7 +13,7 @@ import {
   Heart
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/input'
+import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/utils'
 import type { TimestampedComment, ScreeningReaction } from '@/lib/types/finalCut'
 

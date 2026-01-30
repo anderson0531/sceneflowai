@@ -326,7 +326,7 @@ export default function PremierePage() {
           <p className="text-gray-400 mb-4">
             Create a Final Cut stream first before setting up screenings and publishing.
           </p>
-          <Link href="/dashboard/workflow/final-cut">
+          <Link href={`/dashboard/workflow/final-cut?projectId=${projectId}`}>
             <Button className="bg-purple-600 hover:bg-purple-700">
               Go to Final Cut
             </Button>
@@ -341,7 +341,7 @@ export default function PremierePage() {
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 border-b border-gray-800 bg-gray-900">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard/workflow/final-cut">
+          <Link href={`/dashboard/workflow/final-cut?projectId=${projectId}`}>
             <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Final Cut

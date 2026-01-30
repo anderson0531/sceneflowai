@@ -8043,6 +8043,39 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   return (
     <div className="h-full flex flex-col bg-gray-50 dark:bg-sf-background overflow-x-hidden max-w-full">
       
+      {/* Workflow Navigation Header */}
+      <header className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 shrink-0">
+        <div className="flex items-center gap-3">
+          <Link href={`/dashboard/studio/${projectId}`}>
+            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+              <ArrowLeft className="w-4 h-4 mr-1.5" />
+              <span className="hidden sm:inline">Back to Blueprint</span>
+              <span className="sm:hidden">Blueprint</span>
+            </Button>
+          </Link>
+          
+          <div className="h-5 w-px bg-gray-300 dark:bg-gray-700" />
+          
+          <div className="flex items-center gap-2">
+            <Video className="w-4 h-4 text-sf-primary" />
+            <span className="text-sm font-medium text-gray-900 dark:text-white">Production</span>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Link href={`/dashboard/workflow/final-cut?projectId=${projectId}`}>
+            <Button
+              size="sm"
+              className="bg-sf-primary hover:bg-sf-accent text-white"
+            >
+              <span className="hidden sm:inline">Continue to Final Cut</span>
+              <span className="sm:hidden">Final Cut</span>
+              <ArrowRight className="w-4 h-4 ml-1.5" />
+            </Button>
+          </Link>
+        </div>
+      </header>
+      
       <div className="flex-1 overflow-hidden overflow-x-hidden px-4 py-1 max-w-full min-w-0">
         <PanelGroup direction="horizontal" className="h-full max-w-full min-w-0 overflow-x-hidden">
           {/* Main Content: Script with Scene Cards */}
