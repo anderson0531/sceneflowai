@@ -3231,6 +3231,7 @@ interface SceneCardProps {
       name: string
       description: string
       accessories?: string
+      previewImageUrl?: string
       isDefault: boolean
       createdAt: string
     }>
@@ -5026,12 +5027,22 @@ function SceneCard({
                                     <TooltipProvider>
                                       <Tooltip>
                                         <TooltipTrigger asChild>
-                                          <span className="text-xs text-violet-400 truncate max-w-[150px]">
-                                            {currentWardrobe.description.slice(0, 30)}{currentWardrobe.description.length > 30 ? '...' : ''}
-                                          </span>
+                                          <button className="p-1 text-violet-400 hover:text-violet-300 hover:bg-violet-800/30 rounded transition-colors">
+                                            <Info className="w-4 h-4" />
+                                          </button>
                                         </TooltipTrigger>
-                                        <TooltipContent className="bg-gray-900 text-white border border-gray-700 max-w-xs">
-                                          <p className="text-xs">{currentWardrobe.description}</p>
+                                        <TooltipContent className="bg-gray-900 text-white border border-gray-700 max-w-xs p-3">
+                                          {currentWardrobe.previewImageUrl && (
+                                            <div className="mb-2">
+                                              <img 
+                                                src={currentWardrobe.previewImageUrl} 
+                                                alt={`${character.name} - ${currentWardrobe.name}`}
+                                                className="w-20 h-20 object-cover rounded-md border border-gray-600"
+                                              />
+                                            </div>
+                                          )}
+                                          <p className="text-xs font-medium text-violet-300 mb-1">{currentWardrobe.name}</p>
+                                          <p className="text-xs text-gray-300">{currentWardrobe.description}</p>
                                           {currentWardrobe.accessories && (
                                             <p className="text-xs text-gray-400 mt-1">Accessories: {currentWardrobe.accessories}</p>
                                           )}
