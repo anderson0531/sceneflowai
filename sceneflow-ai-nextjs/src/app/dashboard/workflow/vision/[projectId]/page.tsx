@@ -112,6 +112,7 @@ interface CharacterWardrobe {
   name: string  // e.g., "Office Attire", "Casual", "Formal Event"
   description: string  // Detailed wardrobe description for image prompts
   accessories?: string  // Optional accessories
+  previewImageUrl?: string  // Generated preview image of character in this wardrobe
   isDefault: boolean
   createdAt: string
 }
@@ -3774,6 +3775,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     // New collection-based fields
     wardrobeId?: string;
     wardrobeName?: string;
+    previewImageUrl?: string;
     action?: 'add' | 'update' | 'delete' | 'setDefault';
   }) => {
     try {
@@ -3816,7 +3818,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           // Update existing wardrobe
           wardrobes = wardrobes.map(w => 
             w.id === wardrobe.wardrobeId 
-              ? { ...w, description: wardrobe.defaultWardrobe || w.description, accessories: wardrobe.wardrobeAccessories || w.accessories }
+              ? { 
+                  ...w, 
+                  description: wardrobe.defaultWardrobe || w.description, 
+                  accessories: wardrobe.wardrobeAccessories || w.accessories,
+                  ...(wardrobe.previewImageUrl ? { previewImageUrl: wardrobe.previewImageUrl } : {})
+                }
               : w
           )
         } else if (wardrobe.action === 'delete' && wardrobe.wardrobeId) {

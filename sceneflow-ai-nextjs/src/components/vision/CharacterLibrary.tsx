@@ -29,6 +29,7 @@ export interface CharacterLibraryProps {
     wardrobeAccessories?: string;
     wardrobeId?: string;
     wardrobeName?: string;
+    previewImageUrl?: string;
     action?: 'add' | 'update' | 'delete' | 'setDefault';
   }) => void
   onAddCharacter?: (characterData: any) => void
@@ -59,6 +60,7 @@ interface CharacterWardrobe {
   accessories?: string
   isDefault: boolean
   createdAt: string
+  previewImageUrl?: string  // AI-generated preview of character in this outfit
 }
 
 interface CharacterCardProps {
@@ -489,6 +491,16 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false)
   const [showAddWardrobeForm, setShowAddWardrobeForm] = useState(false) // Toggle for add new wardrobe form
   
+  // Enhance reference state
+  const [isEnhancingReference, setIsEnhancingReference] = useState(false)
+  const [enhanceIterationCount, setEnhanceIterationCount] = useState(character.enhanceIterationCount || 0)
+  const [showEnhanceConfirm, setShowEnhanceConfirm] = useState(false)
+  const [enhancedPreviewUrl, setEnhancedPreviewUrl] = useState<string | null>(null)
+  
+  // Wardrobe preview generation state
+  const [generatingPreviewFor, setGeneratingPreviewFor] = useState<string | null>(null)
+  const [isGeneratingAllPreviews, setIsGeneratingAllPreviews] = useState(false)
+  
   // Get wardrobes collection (or migrate from legacy format)
   const wardrobes: CharacterWardrobe[] = character.wardrobes || (
     (character.defaultWardrobe || character.wardrobeAccessories) ? [{
@@ -672,6 +684,195 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
     toast.success('Default wardrobe updated')
   }
 
+  // Handle enhancing the character reference image
+  const handleEnhanceReference = async () => {
+    if (!character.referenceImage) {
+      toast.error('No reference image to enhance')
+      return
+    }
+
+    if (enhanceIterationCount >= 3) {
+      toast.error('Maximum enhancement iterations reached. Please upload a new source image.')
+      return
+    }
+
+    setIsEnhancingReference(true)
+    try {
+      const response = await fetch('/api/character/enhance-reference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          characterId,
+          sourceImageUrl: character.referenceImage,
+          characterName: character.name,
+          appearanceDescription: character.appearanceDescription || generateFallbackDescription(character),
+          iterationCount: enhanceIterationCount,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        if (error.code === 'INSUFFICIENT_CREDITS') {
+          toast.error(`Insufficient credits. Need ${error.required} credits.`)
+          return
+        }
+        throw new Error(error.error || 'Enhancement failed')
+      }
+
+      const result = await response.json()
+      
+      // Show preview for confirmation
+      setEnhancedPreviewUrl(result.enhancedImageUrl)
+      setShowEnhanceConfirm(true)
+      setEnhanceIterationCount(result.iterationCount)
+      
+      toast.success(`Enhanced! ${result.remainingIterations} iteration(s) remaining.`)
+    } catch (error) {
+      console.error('[Enhance Reference] Error:', error)
+      toast.error(error instanceof Error ? error.message : 'Enhancement failed')
+    } finally {
+      setIsEnhancingReference(false)
+    }
+  }
+  
+  // Accept the enhanced image
+  const handleAcceptEnhanced = () => {
+    if (enhancedPreviewUrl) {
+      // Update the character's reference image via upload handler
+      // The parent component should handle updating the character
+      onUpload && fetch(enhancedPreviewUrl)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], `enhanced-${characterId}.png`, { type: 'image/png' })
+          onUpload(file)
+        })
+      setShowEnhanceConfirm(false)
+      setEnhancedPreviewUrl(null)
+      toast.success('Enhanced reference applied!')
+    }
+  }
+  
+  // Generate wardrobe preview image
+  const handleGenerateWardrobePreview = async (wardrobeId: string) => {
+    const wardrobe = wardrobes.find(w => w.id === wardrobeId)
+    if (!wardrobe || !character.referenceImage) {
+      toast.error('Character reference image is required')
+      return
+    }
+
+    setGeneratingPreviewFor(wardrobeId)
+    try {
+      const response = await fetch('/api/character/generate-wardrobe-preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          characterId,
+          wardrobeId,
+          characterName: character.name,
+          characterReferenceImageUrl: character.referenceImage,
+          appearanceDescription: character.appearanceDescription || generateFallbackDescription(character),
+          wardrobeDescription: wardrobe.description,
+          wardrobeAccessories: wardrobe.accessories,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        if (error.code === 'INSUFFICIENT_CREDITS') {
+          toast.error(`Insufficient credits. Need ${error.required} credits.`)
+          return
+        }
+        throw new Error(error.error || 'Preview generation failed')
+      }
+
+      const result = await response.json()
+      
+      // Update wardrobe with preview URL
+      onUpdateWardrobe?.(characterId, {
+        wardrobeId,
+        action: 'update',
+        defaultWardrobe: wardrobe.description,
+        wardrobeAccessories: wardrobe.accessories,
+        previewImageUrl: result.previewImageUrl
+      })
+      
+      toast.success('Wardrobe preview generated!')
+    } catch (error) {
+      console.error('[Wardrobe Preview] Error:', error)
+      toast.error(error instanceof Error ? error.message : 'Preview generation failed')
+    } finally {
+      setGeneratingPreviewFor(null)
+    }
+  }
+  
+  // Generate all wardrobe previews
+  const handleGenerateAllPreviews = async () => {
+    const wardrobesWithoutPreviews = wardrobes.filter(w => !w.previewImageUrl)
+    if (wardrobesWithoutPreviews.length === 0) {
+      toast.info('All wardrobes already have previews')
+      return
+    }
+    
+    if (!character.referenceImage) {
+      toast.error('Character reference image is required')
+      return
+    }
+
+    setIsGeneratingAllPreviews(true)
+    try {
+      const response = await fetch('/api/character/generate-wardrobe-preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          characterId,
+          characterName: character.name,
+          characterReferenceImageUrl: character.referenceImage,
+          appearanceDescription: character.appearanceDescription || generateFallbackDescription(character),
+          batch: true,
+          wardrobes: wardrobesWithoutPreviews.map(w => ({
+            wardrobeId: w.id,
+            description: w.description,
+            accessories: w.accessories
+          }))
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        if (error.code === 'INSUFFICIENT_CREDITS') {
+          toast.error(`Insufficient credits. Need ${error.required} credits for ${error.wardrobeCount} previews.`)
+          return
+        }
+        throw new Error(error.error || 'Batch preview generation failed')
+      }
+
+      const result = await response.json()
+      
+      // Update each wardrobe with its preview URL
+      for (const item of result.results) {
+        if (item.success) {
+          const wardrobe = wardrobes.find(w => w.id === item.wardrobeId)
+          if (wardrobe) {
+            onUpdateWardrobe?.(characterId, {
+              wardrobeId: item.wardrobeId,
+              action: 'update',
+              defaultWardrobe: wardrobe.description,
+              wardrobeAccessories: wardrobe.accessories,
+              previewImageUrl: item.previewImageUrl
+            })
+          }
+        }
+      }
+      
+      toast.success(`Generated ${result.successCount} preview(s)!`)
+    } catch (error) {
+      console.error('[Wardrobe Preview Batch] Error:', error)
+      toast.error(error instanceof Error ? error.message : 'Batch preview generation failed')
+    } finally {
+      setIsGeneratingAllPreviews(false)
+    }
+  }
+
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `character-reference-${characterId}`,
     data: {
@@ -729,7 +930,22 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                   <Wand2 className="w-4 h-4" />
                 </button>
               )}
-                            <button 
+              {/* Enhance Reference Button */}
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (isEnhancingReference) return
+                  handleEnhanceReference()
+                }}
+                disabled={isEnhancingReference || enhanceIterationCount >= 3}
+                className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-blue-500 text-white hover:from-purple-600 hover:to-blue-600 transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                title={enhanceIterationCount >= 3 
+                  ? 'Max iterations reached - upload new image' 
+                  : `Enhance reference (${3 - enhanceIterationCount} left)`}
+              >
+                {isEnhancingReference ? <Loader className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              </button>
+              <button 
                 onClick={(e) => {
                   e.stopPropagation()
                   if (isUploading) return
@@ -1177,6 +1393,30 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                   {/* Wardrobe Collection List */}
                   {wardrobes.length > 0 ? (
                     <div className="space-y-2">
+                      {/* Generate All Previews Button */}
+                      {wardrobes.some(w => !w.previewImageUrl) && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleGenerateAllPreviews()
+                          }}
+                          disabled={isGeneratingAllPreviews || generatingPreviewFor !== null}
+                          className="w-full flex items-center justify-center gap-1.5 px-2 py-2 text-xs bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isGeneratingAllPreviews ? (
+                            <>
+                              <Loader className="w-3.5 h-3.5 animate-spin" />
+                              Generating Previews...
+                            </>
+                          ) : (
+                            <>
+                              <ImageIcon className="w-3.5 h-3.5" />
+                              Generate All Previews ({wardrobes.filter(w => !w.previewImageUrl).length} × 5 credits)
+                            </>
+                          )}
+                        </button>
+                      )}
+                      
                       {wardrobes.map((w) => (
                         <div 
                           key={w.id}
@@ -1187,6 +1427,36 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                           }`}
                         >
                           <div className="flex items-start justify-between gap-2">
+                            {/* Wardrobe Preview Thumbnail */}
+                            <div className="flex-shrink-0 w-14 h-14 rounded overflow-hidden bg-gray-200 dark:bg-gray-700">
+                              {w.previewImageUrl ? (
+                                <img 
+                                  src={w.previewImageUrl} 
+                                  alt={`${w.name} preview`}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleGenerateWardrobePreview(w.id)
+                                  }}
+                                  disabled={generatingPreviewFor !== null || isGeneratingAllPreviews}
+                                  className="w-full h-full flex flex-col items-center justify-center gap-0.5 text-gray-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors disabled:opacity-50"
+                                  title="Generate preview (5 credits)"
+                                >
+                                  {generatingPreviewFor === w.id ? (
+                                    <Loader className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <ImageIcon className="w-4 h-4" />
+                                      <span className="text-[8px]">Preview</span>
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                            
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-1.5">
                                 <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
@@ -1332,6 +1602,70 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
             Approve
           </button>
         )}
+        
+        {/* Enhance Reference Confirmation Dialog */}
+        <Dialog open={showEnhanceConfirm} onOpenChange={setShowEnhanceConfirm}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-500" />
+                Enhanced Reference Preview
+              </DialogTitle>
+              <DialogDescription>
+                Compare the original and enhanced versions. Accept to replace, or try again ({3 - enhanceIterationCount} iteration{3 - enhanceIterationCount !== 1 ? 's' : ''} remaining).
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-2 gap-4 py-4">
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-500">Original</p>
+                <div className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
+                  {character.referenceImage && (
+                    <img src={character.referenceImage} alt="Original" className="w-full h-full object-cover" />
+                  )}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-purple-500">Enhanced</p>
+                <div className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
+                  {enhancedPreviewUrl && (
+                    <img src={enhancedPreviewUrl} alt="Enhanced" className="w-full h-full object-cover" />
+                  )}
+                </div>
+              </div>
+            </div>
+            <DialogFooter className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowEnhanceConfirm(false)
+                  setEnhancedPreviewUrl(null)
+                }}
+              >
+                Keep Original
+              </Button>
+              {enhanceIterationCount < 3 && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowEnhanceConfirm(false)
+                    setEnhancedPreviewUrl(null)
+                    handleEnhanceReference()
+                  }}
+                  disabled={isEnhancingReference}
+                >
+                  {isEnhancingReference ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
+                  Try Again
+                </Button>
+              )}
+              <Button
+                onClick={handleAcceptEnhanced}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white"
+              >
+                Accept Enhanced
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )
