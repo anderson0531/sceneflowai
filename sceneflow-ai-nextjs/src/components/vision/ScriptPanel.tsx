@@ -6506,11 +6506,12 @@ function SceneCard({
                                     setAnimaticRenderDialogOpen(true)
                                   }}
                                 />
+                              </div>
                               )}
                             </div>
                           )
                         })()}
-                            </motion.div>
+                        </motion.div>
                           )}
                         </AnimatePresence>
                       </div>
