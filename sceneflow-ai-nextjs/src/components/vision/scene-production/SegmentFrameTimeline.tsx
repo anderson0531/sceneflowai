@@ -646,15 +646,15 @@ Generate ${recommendedSegments}+ segments now:`
   return (
     <div className="space-y-4">
       {/* Keyframe Generation Header - FTV Mode Ready style */}
-      <div className="p-3 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-lg">
+      <div className="p-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-lg">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <button 
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-2 transition-colors group"
+            className="flex items-center gap-3 transition-colors group"
           >
-            {isExpanded ? <ChevronDown className="w-4 h-4 text-cyan-400" /> : <ChevronRight className="w-4 h-4 text-cyan-400" />}
-            <ImageIcon className="w-4 h-4 text-cyan-400" />
-            <span className="text-cyan-300 font-medium text-xs">Keyframe Generation</span>
+            {isExpanded ? <ChevronDown className="w-4 h-4 text-cyan-400 flex-shrink-0" /> : <ChevronRight className="w-4 h-4 text-cyan-400 flex-shrink-0" />}
+            <ImageIcon className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+            <span className="text-cyan-300 font-medium">Keyframe Generation</span>
             <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
               {stats.fullyAnchored}/{stats.total} ready
             </Badge>
@@ -808,12 +808,12 @@ Generate ${recommendedSegments}+ segments now:`
       
       {/* FTV Mode Ready Banner */}
       {stats.fullyAnchored > 0 && (
-        <div className="p-3 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-lg">
-          <div className="flex items-start gap-2">
+        <div className="p-4 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-lg">
+          <div className="flex items-start gap-3">
             <Video className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
-            <div className="text-xs">
+            <div>
               <p className="text-emerald-300 font-medium">FTV Mode Ready</p>
-              <p className="text-emerald-400/70 mt-0.5">
+              <p className="text-emerald-400/70 text-sm mt-0.5">
                 {stats.fullyAnchored} segment{stats.fullyAnchored > 1 ? 's are' : ' is'} anchored. 
                 Frame-to-Video generation will use both frames to constrain video output.
               </p>

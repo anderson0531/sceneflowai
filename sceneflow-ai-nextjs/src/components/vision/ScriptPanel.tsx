@@ -6059,16 +6059,16 @@ function SceneCard({
                         {/* Storyboard Builder Header - FTV Mode Ready style */}
                         <button 
                           onClick={() => setStoryboardBuilderCollapsed(!storyboardBuilderCollapsed)}
-                          className="w-full p-3 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-lg hover:from-cyan-500/15 hover:to-blue-500/15 transition-colors"
+                          className="w-full p-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-lg hover:from-cyan-500/15 hover:to-blue-500/15 transition-colors"
                         >
-                          <div className="flex items-center gap-2">
-                            {storyboardBuilderCollapsed ? <ChevronRight className="w-4 h-4 text-cyan-400" /> : <ChevronDown className="w-4 h-4 text-cyan-400" />}
-                            <div className="flex items-center justify-center w-5 h-5 rounded bg-cyan-500/20 text-cyan-300 text-[10px] font-bold">1</div>
-                            <Layers className="w-4 h-4 text-cyan-400" />
+                          <div className="flex items-center gap-3">
+                            {storyboardBuilderCollapsed ? <ChevronRight className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />}
+                            <div className="flex items-center justify-center w-5 h-5 rounded bg-cyan-500/20 text-cyan-300 text-[10px] font-bold flex-shrink-0">1</div>
+                            <Layers className="w-4 h-4 text-cyan-400 flex-shrink-0" />
                             <div className="text-left">
-                              <p className="text-cyan-300 font-medium text-xs">Storyboard Builder</p>
+                              <p className="text-cyan-300 font-medium">Storyboard Builder</p>
                             </div>
-                            <span className="text-cyan-400/70 text-xs ml-auto hidden sm:inline">Build keyframes and preview your storyboard</span>
+                            <span className="text-cyan-400/70 text-sm ml-auto hidden sm:inline">Build keyframes and preview your storyboard</span>
                           </div>
                         </button>
                         
@@ -6286,21 +6286,21 @@ function SceneCard({
                       const sceneDuration = alignment.totalDuration + 2 // Add 2s buffer for display
                       
                       return (
-                        <div className="p-3 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-lg">
-                          <div className="flex items-center gap-2">
+                        <div className="p-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-lg">
+                          <div className="flex items-center gap-3">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
                                 setAudioTimelineCollapsed(!audioTimelineCollapsed)
                               }}
-                              className="flex items-center gap-2 transition-colors group"
+                              className="flex items-center gap-3 transition-colors group"
                               title={audioTimelineCollapsed ? 'Show storyboard editor' : 'Hide storyboard editor'}
                             >
-                              {audioTimelineCollapsed ? <ChevronRight className="w-4 h-4 text-cyan-400" /> : <ChevronDown className="w-4 h-4 text-cyan-400" />}
-                              <Layers className="w-4 h-4 text-cyan-400" />
-                              <span className="text-cyan-300 font-medium text-xs">Storyboard Editor</span>
+                              {audioTimelineCollapsed ? <ChevronRight className="w-4 h-4 text-cyan-400 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-cyan-400 flex-shrink-0" />}
+                              <Layers className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                              <span className="text-cyan-300 font-medium">Storyboard Editor</span>
                             </button>
-                            <span className="text-cyan-400/70 text-xs ml-auto">{sceneDuration.toFixed(1)}s total</span>
+                            <span className="text-cyan-400/70 text-sm ml-auto">{sceneDuration.toFixed(1)}s total</span>
                           </div>
                           <AnimatePresence>
                             {!audioTimelineCollapsed && (
@@ -6394,16 +6394,16 @@ function SceneCard({
                         {/* Video Production Header - FTV Mode Ready style */}
                         <button 
                           onClick={() => setVideoProductionCollapsed(!videoProductionCollapsed)}
-                          className="w-full p-3 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-lg hover:from-indigo-500/15 hover:to-purple-500/15 transition-colors"
+                          className="w-full p-4 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-lg hover:from-indigo-500/15 hover:to-purple-500/15 transition-colors"
                         >
-                          <div className="flex items-center gap-2">
-                            {videoProductionCollapsed ? <ChevronRight className="w-4 h-4 text-indigo-400" /> : <ChevronDown className="w-4 h-4 text-indigo-400" />}
-                            <div className="flex items-center justify-center w-5 h-5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-bold">2</div>
-                            <Film className="w-4 h-4 text-indigo-400" />
+                          <div className="flex items-center gap-3">
+                            {videoProductionCollapsed ? <ChevronRight className="w-4 h-4 text-indigo-400 mt-0.5 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-indigo-400 mt-0.5 flex-shrink-0" />}
+                            <div className="flex items-center justify-center w-5 h-5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-bold flex-shrink-0">2</div>
+                            <Film className="w-4 h-4 text-indigo-400 flex-shrink-0" />
                             <div className="text-left">
-                              <p className="text-indigo-300 font-medium text-xs">Video Production</p>
+                              <p className="text-indigo-300 font-medium">Video Production</p>
                             </div>
-                            <span className="text-indigo-400/70 text-xs ml-auto hidden sm:inline">Generate AI videos and edit your final cut</span>
+                            <span className="text-indigo-400/70 text-sm ml-auto hidden sm:inline">Generate AI videos and edit your final cut</span>
                           </div>
                         </button>
                         
@@ -6442,8 +6442,6 @@ function SceneCard({
                             seg.status === 'COMPLETE' && seg.activeAssetUrl?.includes('.mp4')
                           )
                           
-                          if (!hasRenderedVideos) return null
-                          
                           // Build audio tracks for video editor
                           const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
                           let dialogueAudioArray: any[] = []
@@ -6453,16 +6451,25 @@ function SceneCard({
                             dialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
                           }
                           const hasAnyAudio = narrationUrl || dialogueAudioArray.some((d: any) => d?.audioUrl)
+                          const completedCount = sceneProductionData?.segments?.filter((s: SceneSegment) => s.status === 'COMPLETE').length || 0
+                          const totalCount = sceneProductionData?.segments?.length || 0
                           
                           return (
-                            <div className="p-3 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-lg">
-                              <div className="flex items-center gap-2 mb-3">
-                                <Film className="w-4 h-4 text-emerald-400" />
-                                <span className="text-emerald-300 font-medium text-xs">Video Editor</span>
-                                <span className="text-emerald-400/70 text-xs ml-auto">
-                                  {sceneProductionData?.segments?.filter((s: SceneSegment) => s.status === 'COMPLETE').length || 0}/{sceneProductionData?.segments?.length || 0} videos ready
+                            <div className="p-4 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-lg">
+                              <div className="flex items-center gap-3 mb-3">
+                                <Film className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                                <span className="text-emerald-300 font-medium">Video Editor</span>
+                                <span className="text-emerald-400/70 text-sm ml-auto">
+                                  {completedCount}/{totalCount} videos ready
                                 </span>
                               </div>
+                              {!hasRenderedVideos ? (
+                                <div className="flex flex-col items-center justify-center py-8 text-center">
+                                  <Film className="w-8 h-8 text-emerald-400/30 mb-3" />
+                                  <p className="text-emerald-300/70 font-medium">No videos rendered yet</p>
+                                  <p className="text-emerald-400/50 text-sm mt-1">Generate video clips above to start editing your final cut</p>
+                                </div>
+                              ) : (
                               <div>
                                 <SceneTimelineV2
                                   segments={sceneProductionData?.segments || []}
@@ -6499,7 +6506,7 @@ function SceneCard({
                                     setAnimaticRenderDialogOpen(true)
                                   }}
                                 />
-                              </div>
+                              )}
                             </div>
                           )
                         })()}

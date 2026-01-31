@@ -496,19 +496,19 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     <TooltipProvider>
     <div className="space-y-6">
       {/* Video Generation Header - FTV Mode Ready style */}
-      <div className="p-3 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-lg">
+      <div className="p-4 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-lg">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <button 
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-2 transition-colors group"
+            className="flex items-center gap-3 transition-colors group"
           >
-            {isExpanded ? <ChevronDown className="w-4 h-4 text-indigo-400" /> : <ChevronRight className="w-4 h-4 text-indigo-400" />}
-            <Clapperboard className="w-4 h-4 text-indigo-400" />
-            <span className="text-indigo-300 font-medium text-xs">Video Generation</span>
+            {isExpanded ? <ChevronDown className="w-4 h-4 text-indigo-400 flex-shrink-0" /> : <ChevronRight className="w-4 h-4 text-indigo-400 flex-shrink-0" />}
+            <Clapperboard className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+            <span className="text-indigo-300 font-medium">Video Generation</span>
             <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
               {statusCounts.rendered}/{statusCounts.total} rendered
             </Badge>
-            <span className="text-indigo-400/70 text-xs hidden sm:inline ml-2">Generate video clips from keyframes using AI</span>
+            <span className="text-indigo-400/70 text-sm hidden sm:inline ml-2">Generate video clips from keyframes using AI</span>
           </button>
           
           <div className="flex gap-3 items-center">
