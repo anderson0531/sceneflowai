@@ -645,37 +645,30 @@ Generate ${recommendedSegments}+ segments now:`
   return (
     <div className="space-y-4">
       {/* Compact Header with Status Bar */}
-      <div className="bg-gray-900/50 rounded-xl border border-cyan-500/30 overflow-hidden">
-        <div className="px-4 sm:px-5 py-3 bg-cyan-900/20 border-b border-cyan-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className="bg-gray-900/30 rounded-lg overflow-hidden">
+        <div className="px-4 py-2.5 bg-cyan-900/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <button 
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-3 text-left hover:text-white transition-colors"
+            className="flex items-center gap-2.5 text-left transition-colors group"
           >
-            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            <div className="w-8 h-8 rounded-lg bg-cyan-600/20 flex items-center justify-center">
-              <ImageIcon className="w-4 h-4 text-cyan-400" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-white">Keyframe Generation</h3>
-                <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
-                  {stats.fullyAnchored}/{stats.total} ready
-                </Badge>
-              </div>
-              <p className="text-xs text-gray-400">Generate start and end keyframes for each segment</p>
-            </div>
+            {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-400" />}
+            <ImageIcon className="w-4 h-4 text-cyan-400" />
+            <span className="text-xs font-medium text-slate-300 group-hover:text-white">Keyframe Generation</span>
+            <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+              {stats.fullyAnchored}/{stats.total} ready
+            </Badge>
           </button>
           
           <div className="flex items-center gap-3">
             {/* Progress Bar - Compact */}
             <div className="flex items-center gap-2">
-              <div className="w-24 h-2 bg-slate-700 rounded-full overflow-hidden">
+              <div className="w-20 h-1.5 bg-slate-700 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 transition-all duration-300"
                   style={{ width: `${stats.progressPercent}%` }}
                 />
               </div>
-              <span className="text-xs text-slate-400 w-10">{Math.round(stats.progressPercent)}%</span>
+              <span className="text-[10px] text-slate-500 w-8">{Math.round(stats.progressPercent)}%</span>
             </div>
             
             {/* Batch Generate Button */}
@@ -685,14 +678,14 @@ Generate ${recommendedSegments}+ segments now:`
                 variant="secondary"
                 onClick={onGenerateAllFrames}
                 disabled={isGenerating}
-                className="h-7 text-xs bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/30"
+                className="h-6 text-[10px] bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/30"
               >
-                <Wand2 className="w-3 h-3 mr-1.5" />
-                Generate All Frames
+                <Wand2 className="w-3 h-3 mr-1" />
+                Generate All
               </Button>
             ) : stats.fullyAnchored === stats.total && stats.total > 0 ? (
-              <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 h-7 px-3">
-                <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+              <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 h-6 px-2 text-[10px]">
+                <CheckCircle2 className="w-3 h-3 mr-1" />
                 All Ready
               </Badge>
             ) : null}
@@ -705,7 +698,7 @@ Generate ${recommendedSegments}+ segments now:`
                   size="sm"
                   variant="ghost"
                   onClick={handleCopyPrompt}
-                  className="h-7 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50"
+                  className="h-6 text-[10px] text-slate-400 hover:text-white hover:bg-slate-700/50"
                   title="Copy segmentation prompt for AI Studio"
                 >
                   <Copy className="w-3 h-3 mr-1" />
@@ -716,7 +709,7 @@ Generate ${recommendedSegments}+ segments now:`
                     size="sm"
                     variant="ghost"
                     onClick={() => setShowResegmentDialog(true)}
-                    className="h-7 text-xs text-amber-400 hover:text-amber-300 hover:bg-amber-500/20 border border-amber-500/30"
+                    className="h-6 text-[10px] text-amber-400 hover:text-amber-300 hover:bg-amber-500/20 border border-amber-500/30"
                     title="Regenerate segments (opens generation dialog)"
                   >
                     <RefreshCw className="w-3 h-3 mr-1" />

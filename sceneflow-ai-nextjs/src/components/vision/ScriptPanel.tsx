@@ -571,6 +571,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     }
   }, [audioTimelineCollapsed])
   
+  // Container collapse states for production workflow
+  const [storyboardBuilderCollapsed, setStoryboardBuilderCollapsed] = useState(false)
+  const [videoProductionCollapsed, setVideoProductionCollapsed] = useState(false)
+  
   // Image Edit Modal state
   const [imageEditModalOpen, setImageEditModalOpen] = useState(false)
   const [editingImageData, setEditingImageData] = useState<{ 
@@ -6052,18 +6056,29 @@ function SceneCard({
                     {/* ==================== STORYBOARD BUILDER CONTAINER ==================== */}
                     {/* Groups: Keyframe Generation + Storyboard Editor - simplified to 2-step workflow */}
                     {sceneProductionData?.isSegmented && sceneProductionData.segments?.length > 0 && (
-                      <div className="bg-slate-900/50 rounded-xl border border-cyan-500/20 p-4 space-y-4">
-                        {/* Storyboard Builder Container Header */}
-                        <div className="flex items-center gap-3 pb-3 border-b border-cyan-500/20">
-                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-cyan-600/30 text-cyan-300 text-sm font-bold">1</div>
-                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-600/20 to-blue-600/20 flex items-center justify-center">
-                            <Layers className="w-5 h-5 text-cyan-400" />
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-semibold text-white">Storyboard Builder</h3>
-                            <p className="text-xs text-gray-400">Build keyframes and preview your storyboard</p>
-                          </div>
-                        </div>
+                      <div className="bg-slate-900/50 rounded-xl border border-cyan-500/20 overflow-hidden">
+                        {/* Storyboard Builder Container Header - Clickable to collapse */}
+                        <button 
+                          onClick={() => setStoryboardBuilderCollapsed(!storyboardBuilderCollapsed)}
+                          className="w-full px-4 py-3 flex items-center gap-3 hover:bg-cyan-900/10 transition-colors"
+                        >
+                          {storyboardBuilderCollapsed ? <ChevronRight className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                          <div className="flex items-center justify-center w-6 h-6 rounded-md bg-cyan-600/20 text-cyan-300 text-xs font-bold">1</div>
+                          <Layers className="w-4 h-4 text-cyan-400" />
+                          <span className="text-sm font-medium text-white">Storyboard Builder</span>
+                          <span className="text-xs text-gray-500 ml-auto hidden sm:inline">Build keyframes and preview your storyboard</span>
+                        </button>
+                        
+                        {/* Collapsible Content */}
+                        <AnimatePresence>
+                          {!storyboardBuilderCollapsed && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="p-4 pt-0 space-y-4"
+                            >
                         
                         {/* Keyframe Generation */}
                         <SegmentFrameTimeline
@@ -6268,20 +6283,20 @@ function SceneCard({
                       const sceneDuration = alignment.totalDuration + 2 // Add 2s buffer for display
                       
                       return (
-                        <div className="bg-slate-900/80 rounded-lg border border-cyan-500/30 overflow-hidden">
-                          <div className="px-3 py-2 bg-cyan-900/20 border-b border-cyan-500/20 flex items-center gap-2">
+                        <div className="bg-gray-900/30 rounded-lg overflow-hidden">
+                          <div className="px-4 py-2.5 bg-cyan-900/10 flex items-center gap-2.5">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
                                 setAudioTimelineCollapsed(!audioTimelineCollapsed)
                               }}
-                              className="p-1 hover:bg-cyan-500/20 rounded transition-colors"
+                              className="flex items-center gap-2.5 transition-colors group"
                               title={audioTimelineCollapsed ? 'Show storyboard editor' : 'Hide storyboard editor'}
                             >
-                              {audioTimelineCollapsed ? <ChevronDown className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronUp className="w-3.5 h-3.5 text-cyan-400" />}
+                              {audioTimelineCollapsed ? <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-400" /> : <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-400" />}
+                              <Layers className="w-4 h-4 text-cyan-400" />
+                              <span className="text-xs font-medium text-slate-300 group-hover:text-white">Storyboard Editor</span>
                             </button>
-                            <Layers className="w-4 h-4 text-cyan-400" />
-                            <span className="text-sm font-semibold text-cyan-300">Storyboard Editor</span>
                             <span className="text-[10px] text-gray-500 ml-auto">{sceneDuration.toFixed(1)}s total</span>
                           </div>
                           <AnimatePresence>
@@ -6362,24 +6377,38 @@ function SceneCard({
                         </div>
                       )
                     })()}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     )}
                     
                     {/* ==================== VIDEO PRODUCTION CONTAINER ==================== */}
                     {/* Groups: Video Generation (DirectorConsole) + Video Editor */}
                     {sceneProductionData?.segments && sceneProductionData.segments.length > 0 && (
-                      <div className="bg-slate-900/50 rounded-xl border border-indigo-500/20 p-4 space-y-4">
-                        {/* Video Production Container Header */}
-                        <div className="flex items-center gap-3 pb-3 border-b border-indigo-500/20">
-                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600/30 text-indigo-300 text-sm font-bold">2</div>
-                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-600/20 to-purple-600/20 flex items-center justify-center">
-                            <Film className="w-5 h-5 text-indigo-400" />
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-semibold text-white">Video Production</h3>
-                            <p className="text-xs text-gray-400">Generate AI videos and edit your final cut</p>
-                          </div>
-                        </div>
+                      <div className="bg-slate-900/50 rounded-xl border border-indigo-500/20 overflow-hidden">
+                        {/* Video Production Container Header - Clickable to collapse */}
+                        <button 
+                          onClick={() => setVideoProductionCollapsed(!videoProductionCollapsed)}
+                          className="w-full px-4 py-3 flex items-center gap-3 hover:bg-indigo-900/10 transition-colors"
+                        >
+                          {videoProductionCollapsed ? <ChevronRight className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                          <div className="flex items-center justify-center w-6 h-6 rounded-md bg-indigo-600/20 text-indigo-300 text-xs font-bold">2</div>
+                          <Film className="w-4 h-4 text-indigo-400" />
+                          <span className="text-sm font-medium text-white">Video Production</span>
+                          <span className="text-xs text-gray-500 ml-auto hidden sm:inline">Generate AI videos and edit your final cut</span>
+                        </button>
+                        
+                        {/* Collapsible Content */}
+                        <AnimatePresence>
+                          {!videoProductionCollapsed && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="p-4 pt-0 space-y-4"
+                            >
                         
                         {/* Video Generation */}
                         <div id={`director-console-${scene.sceneId || scene.id || `scene-${sceneIdx}`}`} className="scroll-mt-4">
@@ -6418,10 +6447,10 @@ function SceneCard({
                           const hasAnyAudio = narrationUrl || dialogueAudioArray.some((d: any) => d?.audioUrl)
                           
                           return (
-                            <div className="bg-slate-900/80 rounded-lg border border-emerald-500/30 overflow-hidden">
-                              <div className="px-3 py-2 bg-emerald-900/20 border-b border-emerald-500/20 flex items-center gap-2">
+                            <div className="bg-gray-900/30 rounded-lg overflow-hidden">
+                              <div className="px-4 py-2.5 bg-emerald-900/10 flex items-center gap-2.5">
                                 <Film className="w-4 h-4 text-emerald-400" />
-                                <span className="text-sm font-semibold text-emerald-300">Video Editor</span>
+                                <span className="text-xs font-medium text-slate-300">Video Editor</span>
                                 <span className="text-[10px] text-gray-500 ml-auto">
                                   {sceneProductionData?.segments?.filter((s: SceneSegment) => s.status === 'COMPLETE').length || 0}/{sceneProductionData?.segments?.length || 0} videos ready
                                 </span>
@@ -6466,6 +6495,9 @@ function SceneCard({
                             </div>
                           )
                         })()}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     )}
                     
