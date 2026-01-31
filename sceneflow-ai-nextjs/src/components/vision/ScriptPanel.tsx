@@ -6437,9 +6437,9 @@ function SceneCard({
                         
                         {/* Video Editor - Edit final cut with rendered videos */}
                         {(() => {
-                          // Check if any segments have rendered videos
+                          // Check if any segments have rendered or uploaded videos
                           const hasRenderedVideos = sceneProductionData?.segments?.some((seg: SceneSegment) => 
-                            seg.status === 'COMPLETE' && seg.activeAssetUrl?.includes('.mp4')
+                            (seg.status === 'COMPLETE' || seg.status === 'UPLOADED') && seg.activeAssetUrl?.includes('.mp4')
                           )
                           
                           // Build audio tracks for video editor
@@ -6451,7 +6451,7 @@ function SceneCard({
                             dialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
                           }
                           const hasAnyAudio = narrationUrl || dialogueAudioArray.some((d: any) => d?.audioUrl)
-                          const completedCount = sceneProductionData?.segments?.filter((s: SceneSegment) => s.status === 'COMPLETE').length || 0
+                          const completedCount = sceneProductionData?.segments?.filter((s: SceneSegment) => s.status === 'COMPLETE' || s.status === 'UPLOADED').length || 0
                           const totalCount = sceneProductionData?.segments?.length || 0
                           
                           return (
