@@ -571,10 +571,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     }
   }, [audioTimelineCollapsed])
   
-  // Container collapse states for production workflow
-  const [storyboardBuilderCollapsed, setStoryboardBuilderCollapsed] = useState(false)
-  const [videoProductionCollapsed, setVideoProductionCollapsed] = useState(false)
-  
   // Image Edit Modal state
   const [imageEditModalOpen, setImageEditModalOpen] = useState(false)
   const [editingImageData, setEditingImageData] = useState<{ 
@@ -3495,6 +3491,9 @@ function SceneCard({
   const [sceneCastCollapsed, setSceneCastCollapsed] = useState(true) // Collapsed by default - wardrobe selection is advanced
   // Scene Image section: collapsed by default
   const [sceneImageCollapsed, setSceneImageCollapsed] = useState(true)
+  // Production workflow container collapse states
+  const [storyboardBuilderCollapsed, setStoryboardBuilderCollapsed] = useState(false)
+  const [videoProductionCollapsed, setVideoProductionCollapsed] = useState(false)
   
   // Determine active step for Co-Pilot
   const activeStep: WorkflowStep | null = activeWorkflowTab
