@@ -11,6 +11,7 @@ import {
   Video,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
   Layers,
   RefreshCw,
   Copy,

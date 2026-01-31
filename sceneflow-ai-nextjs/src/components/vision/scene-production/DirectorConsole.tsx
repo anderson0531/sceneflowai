@@ -45,6 +45,7 @@ import {
   Download,
   ChevronUp,
   ChevronDown,
+  ChevronRight,
   Copy,
 } from 'lucide-react'
 import type { 
