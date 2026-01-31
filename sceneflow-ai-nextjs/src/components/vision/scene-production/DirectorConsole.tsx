@@ -494,26 +494,20 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   return (
     <TooltipProvider>
     <div className="space-y-6">
-      {/* Header / Control Bar - Collapsible */}
-      <div className="bg-gray-900/50 rounded-xl border border-indigo-500/30 overflow-hidden">
-        <div className="px-4 sm:px-5 py-3 bg-indigo-900/20 border-b border-indigo-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      {/* Video Generation Header - FTV Mode Ready style */}
+      <div className="p-3 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-lg">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <button 
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-3 text-left hover:text-white transition-colors"
+            className="flex items-center gap-2 transition-colors group"
           >
-            {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-            <div className="w-8 h-8 rounded-lg bg-indigo-600/20 flex items-center justify-center">
-              <Clapperboard className="w-4 h-4 text-indigo-400" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-white">Video Generation</h3>
-                <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
-                  {statusCounts.rendered}/{statusCounts.total} rendered
-                </Badge>
-              </div>
-              <p className="text-xs text-gray-400">Generate video clips from keyframes using AI</p>
-            </div>
+            {isExpanded ? <ChevronDown className="w-4 h-4 text-indigo-400" /> : <ChevronRight className="w-4 h-4 text-indigo-400" />}
+            <Clapperboard className="w-4 h-4 text-indigo-400" />
+            <span className="text-indigo-300 font-medium text-xs">Video Generation</span>
+            <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+              {statusCounts.rendered}/{statusCounts.total} rendered
+            </Badge>
+            <span className="text-indigo-400/70 text-xs hidden sm:inline ml-2">Generate video clips from keyframes using AI</span>
           </button>
           
           <div className="flex gap-3 items-center">

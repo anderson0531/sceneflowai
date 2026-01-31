@@ -644,16 +644,16 @@ Generate ${recommendedSegments}+ segments now:`
 
   return (
     <div className="space-y-4">
-      {/* Compact Header with Status Bar */}
-      <div className="bg-gray-900/30 rounded-lg overflow-hidden">
-        <div className="px-4 py-2.5 bg-cyan-900/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      {/* Keyframe Generation Header - FTV Mode Ready style */}
+      <div className="p-3 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-lg">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <button 
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-2.5 text-left transition-colors group"
+            className="flex items-center gap-2 transition-colors group"
           >
-            {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-400" />}
+            {isExpanded ? <ChevronDown className="w-4 h-4 text-cyan-400" /> : <ChevronRight className="w-4 h-4 text-cyan-400" />}
             <ImageIcon className="w-4 h-4 text-cyan-400" />
-            <span className="text-xs font-medium text-slate-300 group-hover:text-white">Keyframe Generation</span>
+            <span className="text-cyan-300 font-medium text-xs">Keyframe Generation</span>
             <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
               {stats.fullyAnchored}/{stats.total} ready
             </Badge>
@@ -668,7 +668,7 @@ Generate ${recommendedSegments}+ segments now:`
                   style={{ width: `${stats.progressPercent}%` }}
                 />
               </div>
-              <span className="text-[10px] text-slate-500 w-8">{Math.round(stats.progressPercent)}%</span>
+              <span className="text-cyan-400/70 text-[10px] w-8">{Math.round(stats.progressPercent)}%</span>
             </div>
             
             {/* Batch Generate Button */}
