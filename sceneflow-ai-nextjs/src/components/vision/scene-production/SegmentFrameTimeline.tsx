@@ -652,17 +652,18 @@ Generate ${recommendedSegments}+ segments now:`
             className="flex items-center gap-3 text-left hover:text-white transition-colors"
           >
             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-cyan-600/30 text-cyan-300 text-sm font-bold">1</div>
             <div className="w-10 h-10 rounded-lg bg-cyan-600/20 flex items-center justify-center">
               <ImageIcon className="w-5 h-5 text-cyan-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="!text-lg !leading-normal !mb-0 font-semibold text-white">Keyframe State Machine</h3>
+                <h3 className="!text-lg !leading-normal !mb-0 font-semibold text-white">Storyboard Builder</h3>
                 <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
                   {stats.fullyAnchored}/{stats.total} ready
                 </Badge>
               </div>
-              <p className="text-xs text-gray-400">Anchor start and end frames for video generation</p>
+              <p className="text-xs text-gray-400">Generate start and end keyframes for each segment</p>
             </div>
           </button>
           

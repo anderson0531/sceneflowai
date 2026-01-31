@@ -502,17 +502,18 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
             className="flex items-center gap-3 text-left hover:text-white transition-colors"
           >
             {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600/30 text-indigo-300 text-sm font-bold">3</div>
             <div className="w-10 h-10 rounded-lg bg-indigo-600/20 flex items-center justify-center">
               <Clapperboard className="w-5 h-5 text-indigo-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="!text-lg !leading-normal !mb-0 font-semibold text-white">Director's Console</h3>
+                <h3 className="!text-lg !leading-normal !mb-0 font-semibold text-white">Video Production</h3>
                 <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
                   {statusCounts.rendered}/{statusCounts.total} rendered
                 </Badge>
               </div>
-              <p className="text-xs text-gray-400">Generate and manage video segments</p>
+              <p className="text-xs text-gray-400">Generate video clips from keyframes using AI</p>
             </div>
           </button>
           

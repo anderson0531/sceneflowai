@@ -23,6 +23,7 @@ import { AddSegmentDialog } from './scene-production/AddSegmentDialog'
 import { EditSegmentDialog } from './scene-production/EditSegmentDialog'
 import { DirectorConsole } from './scene-production/DirectorConsole'
 import { SceneTimelineV2 } from './scene-production/SceneTimelineV2'
+import { SceneRenderDialog } from './scene-production/SceneRenderDialog'
 import { applySequentialAlignmentToScene, AUDIO_ALIGNMENT_BUFFERS, getLanguagePlaybackOffset, calculateSuggestedOffset } from './scene-production/audioTrackBuilder'
 import { type AudioTracksData, type AudioTrackClip } from './scene-production/AudioTimeline'
 import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings, SceneSegment, AudioTrackType } from './scene-production/types'
@@ -619,6 +620,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // Scene review modal state
   const [showSceneReviewModal, setShowSceneReviewModal] = useState(false)
   const [selectedSceneForReview, setSelectedSceneForReview] = useState<number | null>(null)
+  
+  // Animatic render dialog state
+  const [animaticRenderDialogOpen, setAnimaticRenderDialogOpen] = useState(false)
+  const [animaticRenderSceneIdx, setAnimaticRenderSceneIdx] = useState<number | null>(null)
   
   // Drag and drop functionality
   const sensors = useSensors(
@@ -2840,6 +2845,50 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           }}
         />
       )}
+
+      {/* Animatic Render Dialog - for exporting keyframe-based animatic as MP4 */}
+      {animaticRenderSceneIdx !== null && (() => {
+        const scene = scenes[animaticRenderSceneIdx]
+        const sceneId = scene?.sceneId || scene?.id || `scene-${animaticRenderSceneIdx}`
+        const sceneProductionData = getSceneProductionData?.(sceneId)
+        
+        // Build audio data from scene
+        const narrationUrl = scene?.narrationAudio?.[selectedLanguage]?.url || scene?.narrationAudioUrl
+        const narrationDuration = scene?.narrationAudio?.[selectedLanguage]?.duration
+        const dialogueAudioArray = Array.isArray(scene?.dialogueAudio) 
+          ? scene.dialogueAudio 
+          : scene?.dialogueAudio?.[selectedLanguage] || []
+        
+        return (
+          <SceneRenderDialog
+            open={animaticRenderDialogOpen}
+            onOpenChange={(open) => {
+              setAnimaticRenderDialogOpen(open)
+              if (!open) setAnimaticRenderSceneIdx(null)
+            }}
+            sceneId={sceneId}
+            sceneNumber={animaticRenderSceneIdx + 1}
+            projectId={projectId}
+            segments={sceneProductionData?.segments || []}
+            productionData={sceneProductionData || null}
+            audioData={{
+              narrationUrl,
+              narrationDuration,
+              dialogueEntries: dialogueAudioArray.map((d: any, i: number) => ({
+                audioUrl: d?.audioUrl,
+                duration: d?.duration,
+                character: scene?.dialogue?.[i]?.character || d?.character
+              })),
+              musicUrl: scene?.musicAudio || scene?.music?.url,
+              musicDuration: scene?.music?.duration,
+            }}
+            onRenderComplete={(downloadUrl) => {
+              toast.success('Animatic rendered successfully!')
+              console.log('[ScriptPanel] Animatic render complete:', downloadUrl)
+            }}
+          />
+        )
+      })()}
 
       {/* Scene Prompt Builder Modal */}
       {sceneBuilderIdx !== null && (
@@ -6000,8 +6049,8 @@ function SceneCard({
                       </div>
                     )}
                     
-                    {/* ==================== KEYFRAME STATE MACHINE ==================== */}
-                    {/* Merged from Frame tab - Frame generation and anchoring */}
+                    {/* ==================== STEP 1: STORYBOARD BUILDER ==================== */}
+                    {/* Generate start/end keyframes for each segment */}
                     {sceneProductionData?.isSegmented && sceneProductionData.segments?.length > 0 && (
                         <SegmentFrameTimeline
                           segments={sceneProductionData.segments}
@@ -6097,8 +6146,8 @@ function SceneCard({
                         />
                     )}
                     
-                    {/* ==================== SCREENING ROOM AUDIO TIMELINE ==================== */}
-                    {/* Audio timeline for Screening Room playback alignment */}
+                    {/* ==================== STEP 2: ANIMATIC EDITOR ==================== */}
+                    {/* Edit animatic timing with audio alignment */}
                     {(() => {
                       // Build audio tracks data from scene using sequential alignment
                       const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
@@ -6219,8 +6268,9 @@ function SceneCard({
                             >
                               {audioTimelineCollapsed ? <ChevronDown className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronUp className="w-3.5 h-3.5 text-cyan-400" />}
                             </button>
+                            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-cyan-600/30 text-cyan-300 text-[10px] font-bold">2</div>
                             <Layers className="w-4 h-4 text-cyan-400" />
-                            <span className="text-xs font-medium text-cyan-300">Screening Room Audio Timeline</span>
+                            <span className="text-xs font-medium text-cyan-300">Animatic Editor</span>
                             <span className="text-[10px] text-gray-500 ml-auto">{sceneDuration.toFixed(1)}s total</span>
                           </div>
                           <AnimatePresence>
@@ -6243,8 +6293,8 @@ function SceneCard({
                                     handlePlaybackOffsetChange?.(sceneId, sceneIdx, selectedLanguage, offset)
                                   }}
                                   onLanguageChange={(lang) => {
-                                    // Language change is handled at the panel level
-                                    console.log('[ScriptPanel] Language change requested:', lang)
+                                    // Update panel-level language state
+                                    setSelectedLanguage(lang)
                                   }}
                                   onSegmentSelect={setSelectedSegmentId}
                                   onVisualClipChange={(clipId, changes) => {
@@ -6264,6 +6314,10 @@ function SceneCard({
                                   }}
                                   onApplyIntelligentAlignment={onApplyIntelligentAlignment}
                                   sceneFrameUrl={scene?.imageUrl}
+                                  onGenerateSceneMp4={() => {
+                                    setAnimaticRenderSceneIdx(sceneIdx)
+                                    setAnimaticRenderDialogOpen(true)
+                                  }}
                                 />
                               </motion.div>
                             )}
@@ -6298,8 +6352,8 @@ function SceneCard({
                       )
                     })()}
                     
-                    {/* ==================== DIRECTOR'S CONSOLE ==================== */}
-                    {/* Video generation workflow */}
+                    {/* ==================== STEP 3: VIDEO PRODUCTION ==================== */}
+                    {/* Generate video clips from keyframes using AI */}
                     {sceneProductionData?.segments && sceneProductionData.segments.length > 0 ? (
                       <div id={`director-console-${scene.sceneId || scene.id || `scene-${sceneIdx}`}`} className="scroll-mt-4">
                         <DirectorConsole
@@ -6351,6 +6405,77 @@ function SceneCard({
                         onDeleteTake={onDeleteTake ? (takeSceneId: string, segmentId: string, takeId: string) => onDeleteTake(takeSceneId, segmentId, takeId) : undefined}
                       />
                     )}
+                    
+                    {/* ==================== STEP 4: VIDEO EDITOR ==================== */}
+                    {/* Edit and render final video with produced video segments */}
+                    {(() => {
+                      // Check if any segments have rendered videos
+                      const hasRenderedVideos = sceneProductionData?.segments?.some((seg: SceneSegment) => 
+                        seg.status === 'COMPLETE' && seg.activeAssetUrl?.includes('.mp4')
+                      )
+                      
+                      if (!hasRenderedVideos) return null
+                      
+                      // Build audio tracks for video editor (same logic as Animatic Editor)
+                      const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
+                      let dialogueAudioArray: any[] = []
+                      if (Array.isArray(scene.dialogueAudio)) {
+                        dialogueAudioArray = scene.dialogueAudio
+                      } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
+                        dialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
+                      }
+                      const hasAnyAudio = narrationUrl || dialogueAudioArray.some((d: any) => d?.audioUrl)
+                      
+                      return (
+                        <div className="bg-slate-900/80 rounded-lg border border-emerald-500/30 overflow-hidden">
+                          <div className="px-3 py-2 bg-emerald-900/20 border-b border-emerald-500/20 flex items-center gap-2">
+                            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-600/30 text-emerald-300 text-[10px] font-bold">4</div>
+                            <Film className="w-4 h-4 text-emerald-400" />
+                            <span className="text-xs font-medium text-emerald-300">Video Editor</span>
+                            <span className="text-[10px] text-gray-500 ml-auto">
+                              {sceneProductionData?.segments?.filter((s: SceneSegment) => s.status === 'COMPLETE').length || 0}/{sceneProductionData?.segments?.length || 0} videos ready
+                            </span>
+                          </div>
+                          <div className="p-3">
+                            <SceneTimelineV2
+                              segments={sceneProductionData?.segments || []}
+                              scene={scene}
+                              selectedSegmentId={selectedSegmentId}
+                              selectedLanguage={selectedLanguage}
+                              playbackOffset={getPlaybackOffsetForScene?.(scene.sceneId || scene.id || `scene-${sceneIdx}`, selectedLanguage) ?? 0}
+                              suggestedOffset={getSuggestedOffsetForScene?.(scene)}
+                              onPlaybackOffsetChange={(offset) => {
+                                const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
+                                handlePlaybackOffsetChange?.(sceneId, sceneIdx, selectedLanguage, offset)
+                              }}
+                              onLanguageChange={(lang) => setSelectedLanguage(lang)}
+                              onSegmentSelect={setSelectedSegmentId}
+                              onVisualClipChange={(clipId, changes) => {
+                                const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
+                                onSegmentResize?.(sceneId, clipId, changes)
+                              }}
+                              onAudioClipChange={(trackType: AudioTrackType, clipId: string, changes: { startTime?: number; duration?: number }) => {
+                                onAudioClipChange?.(sceneIdx, trackType, clipId, changes)
+                              }}
+                              onDeleteSegment={(segmentId) => {
+                                const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
+                                onDeleteSegment?.(sceneId, segmentId)
+                              }}
+                              onReorderSegments={(oldIndex, newIndex) => {
+                                const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
+                                onReorderSegments?.(sceneId, oldIndex, newIndex)
+                              }}
+                              onApplyIntelligentAlignment={onApplyIntelligentAlignment}
+                              sceneFrameUrl={scene?.imageUrl}
+                              onGenerateSceneMp4={() => {
+                                setAnimaticRenderSceneIdx(sceneIdx)
+                                setAnimaticRenderDialogOpen(true)
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })()}
                   </div>
                   </SceneDirectionProvider>
                 )}
