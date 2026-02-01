@@ -43,9 +43,9 @@ export function CueCommandBar() {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="bg-gradient-to-r from-gray-900/95 to-gray-800/95 backdrop-blur-sm rounded-xl border border-indigo-500/20 shadow-lg p-6"
+      className="bg-gradient-to-r from-gray-900/95 to-gray-800/95 backdrop-blur-sm rounded-xl border border-indigo-500/20 shadow-lg p-5"
     >
-      <h2 className="text-2xl font-semibold text-white">
+      <h2 className="text-xl font-semibold text-white">
         Welcome back, <span className="text-indigo-400">{userName}</span>
       </h2>
     </motion.div>

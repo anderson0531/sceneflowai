@@ -6,6 +6,7 @@ import { ActiveProjectsContainer } from './components/ActiveProjectsContainer'
 import { SpendingAnalyticsWidget } from './components/SpendingAnalyticsWidget'
 import { QuickActionsGrid } from './components/QuickActionsGrid'
 import { StorageWidget } from './components/StorageWidget'
+import { ProductSwitcher } from '@/components/layout/ProductSwitcher'
 import { useDashboardData } from '@/hooks/useDashboardData'
 import { useEnhancedStore } from '@/store/enhancedStore'
 import { Loader2 } from 'lucide-react'
@@ -69,10 +70,17 @@ export default function ClientDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-4 md:p-8 font-sans">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Row 1: Cue Command Bar */}
-        <CueCommandBar />
+    <div className="min-h-screen bg-gray-950 text-white p-4 md:p-6 font-sans">
+      <div className="max-w-7xl mx-auto space-y-5">
+        {/* Row 1: Welcome + Product Switcher */}
+        <div className="space-y-4">
+          <CueCommandBar />
+          
+          {/* Product Navigation Bar */}
+          <div className="bg-gray-900/60 backdrop-blur-sm rounded-xl border border-gray-800 p-1.5">
+            <ProductSwitcher className="justify-center md:justify-start" />
+          </div>
+        </div>
         
         {/* Row 2: Current Project - Shows only the selected project */}
         <ActiveProjectsContainer projects={displayProjects} />

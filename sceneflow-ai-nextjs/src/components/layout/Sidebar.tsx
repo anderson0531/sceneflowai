@@ -23,6 +23,7 @@ import {
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect } from 'react'
+import { ProductSwitcher } from './ProductSwitcher'
 
 const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement> & { size?: number }> = ({ size = 24, className, ...props }) => (
   <svg
@@ -208,6 +209,14 @@ export function Sidebar() {
           {/* Main Navigation */}
           <div className="flex-1 overflow-y-auto">
             <div className="p-4">
+              {/* Product Switcher - Collapsible for Mobile */}
+              <div className="mb-6 pb-4 border-b border-gray-200 dark:border-gray-700/50">
+                <h3 className="nav-section-header mb-3 text-sm font-bold text-gray-500 dark:text-gray-400 tracking-wide uppercase">
+                  Products
+                </h3>
+                <ProductSwitcher vertical className="gap-1" />
+              </div>
+
               <h3 className="nav-section-header mb-4 text-base font-bold text-gray-600 dark:text-gray-300 tracking-wide">
                 MAIN
               </h3>

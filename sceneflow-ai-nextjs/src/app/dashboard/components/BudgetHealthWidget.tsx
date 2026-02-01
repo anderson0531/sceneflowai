@@ -56,11 +56,11 @@ export function BudgetHealthWidget({
         transition={{ duration: 0.6, delay: 0.2 }}
         className="flex-1 bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700"
       >
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-indigo-600/20 rounded-lg flex items-center justify-center">
-            <CreditCard className="w-5 h-5 text-indigo-400" />
+        <div className="flex items-center gap-2.5 mb-3">
+          <div className="w-9 h-9 bg-indigo-600/20 rounded-lg flex items-center justify-center">
+            <CreditCard className="w-4 h-4 text-indigo-400" />
           </div>
-          <h2 className="text-xl font-semibold text-white">Budget Health</h2>
+          <h2 className="text-lg font-semibold text-white">Budget Health</h2>
         </div>
 
         {/* Stats Grid */}

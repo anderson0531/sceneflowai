@@ -35,13 +35,13 @@ export function SpendingAnalyticsWidget({ usedCredits = 0 }: SpendingAnalyticsWi
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.4 }}
-      className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700"
+      className="bg-gray-800 p-5 rounded-xl shadow-lg border border-gray-700"
     >
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 bg-purple-600/20 rounded-lg flex items-center justify-center">
-          <BarChart3 className="w-5 h-5 text-purple-400" />
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className="w-9 h-9 bg-purple-600/20 rounded-lg flex items-center justify-center">
+          <BarChart3 className="w-4 h-4 text-purple-400" />
         </div>
-        <h2 className="text-xl font-semibold text-white">Spending Analytics</h2>
+        <h2 className="text-lg font-semibold text-white">Spending Analytics</h2>
       </div>
 
       {/* Month Comparison */}
