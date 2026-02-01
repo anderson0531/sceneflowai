@@ -63,7 +63,7 @@ export function StorageWidget({ storageUsedGb = 0, storageLimitGb = 10 }: Storag
           <HardDrive className="w-4 h-4 text-emerald-400" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-white">Storage</h2>
+          <h2 className="dashboard-widget-title text-lg font-semibold text-white">Storage</h2>
           <p className="text-xs text-gray-400">Cloud asset storage</p>
         </div>
       </div>

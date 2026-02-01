@@ -97,7 +97,7 @@ export const DashboardCard = forwardRef<HTMLDivElement, DashboardCardProps>(
               )}
               <div>
                 {title && (
-                  <h3 className="text-lg font-semibold text-white leading-tight">
+                  <h3 className="dashboard-widget-title text-lg font-semibold text-white leading-tight">
                     {title}
                   </h3>
                 )}

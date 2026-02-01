@@ -41,7 +41,7 @@ export function SpendingAnalyticsWidget({ usedCredits = 0 }: SpendingAnalyticsWi
         <div className="w-9 h-9 bg-purple-600/20 rounded-lg flex items-center justify-center">
           <BarChart3 className="w-4 h-4 text-purple-400" />
         </div>
-        <h2 className="text-lg font-semibold text-white">Spending Analytics</h2>
+        <h2 className="dashboard-widget-title text-lg font-semibold text-white">Spending Analytics</h2>
       </div>
 
       {/* Month Comparison */}

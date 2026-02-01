@@ -88,7 +88,7 @@ export function QuickActionsGrid() {
       className="bg-gray-800 p-5 rounded-xl shadow-lg border border-gray-700"
     >
       <div className="flex items-center gap-2.5 mb-3">
-        <h2 className="text-lg font-semibold text-white">⚡ Quick Actions</h2>
+        <h2 className="dashboard-widget-title text-lg font-semibold text-white">⚡ Quick Actions</h2>
       </div>
 
       {/* Product Actions - 2x2 Grid */}
