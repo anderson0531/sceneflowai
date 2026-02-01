@@ -358,10 +358,8 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
           {/* Screening Room Section */}
           {config.sectionVisibility.screeningRoom && (
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-              <button
-                onClick={() => {
-                  window.dispatchEvent(new CustomEvent('production:screening-room'))
-                }}
+              <Link
+                href="/dashboard/workflow/premiere"
                 className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wider hover:text-gray-700 dark:hover:text-gray-300 transition-colors group"
               >
                 <div className="flex items-center gap-2">
@@ -372,9 +370,9 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
                   <span>Open</span>
                   <ChevronDown className="w-3 h-3 rotate-[-90deg]" />
                 </div>
-              </button>
+              </Link>
               <p className="text-[10px] text-slate-500 mt-1.5 pl-5">
-                Review animatic before video generation
+                Test audience reactions & gather feedback
               </p>
             </div>
           )}

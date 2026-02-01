@@ -45,7 +45,7 @@ const productActions = [
   },
   { 
     label: 'Screening Room', 
-    tagline: 'Analytics',
+    tagline: 'Test & Feedback',
     icon: <BarChart2 className="w-5 h-5" />, 
     href: '/dashboard/workflow/premiere',
     color: 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20'

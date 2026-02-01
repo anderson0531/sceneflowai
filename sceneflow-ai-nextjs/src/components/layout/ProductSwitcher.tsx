@@ -77,7 +77,7 @@ export const products: Product[] = [
   {
     id: 'screening-room',
     name: 'Screening Room',
-    tagline: 'Analytics & Review',
+    tagline: 'Test & Feedback',
     icon: <BarChart2 className="w-5 h-5" />,
     href: '/dashboard/workflow/premiere',
     color: 'text-emerald-400',
