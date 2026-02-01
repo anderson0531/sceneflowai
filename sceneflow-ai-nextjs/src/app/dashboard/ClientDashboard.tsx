@@ -70,10 +70,10 @@ export default function ClientDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-4 md:p-6 font-sans">
-      <div className="max-w-7xl mx-auto space-y-5">
+    <div className="min-h-screen bg-gray-950 text-white p-6 md:p-8 font-sans">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Row 1: Welcome + Product Switcher */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           <CueCommandBar />
           
           {/* Product Navigation Bar */}
@@ -97,8 +97,8 @@ export default function ClientDashboard() {
           addonCredits={addonCredits}
         />
         
-        {/* Row 4: Analytics + Quick Actions + Storage */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Row 4: Analytics + Quick Actions + Storage - Z-pattern layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <SpendingAnalyticsWidget usedCredits={usedCredits} />
           <QuickActionsGrid />
           <StorageWidget 
