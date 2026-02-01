@@ -1,12 +1,18 @@
 'use client'
 
-// Landing page with dedicated Header component - Optimized structure (12 sections)
+// Landing page with dedicated Header component - "Living Pipeline" Ecosystem Architecture
 import dynamic from 'next/dynamic'
 import { Header } from './components/Header'
 import { HeroSection } from './components/HeroSection'
 import { TrustSignals } from './components/TrustSignals'
 import { GoogleCloudBadge } from './components/GoogleCloudBadge'
 import { FounderSection } from './components/FounderSection'
+
+// New "Living Pipeline" Ecosystem Sections
+const ModularShowcase = dynamic(() => import('@/components/landing/ModularShowcase'), { ssr: false })
+const UnifiedWorkflow = dynamic(() => import('@/components/landing/UnifiedWorkflow'), { ssr: false })
+const PricingCredits = dynamic(() => import('@/components/landing/PricingCredits'), { ssr: false })
+
 // Value Proposition Sections - Streamlined for clarity and conversion
 const SlotMachineSection = dynamic(() => import('@/components/landing/SlotMachineSection'), { ssr: false })
 const HowItWorks = dynamic(() => import('./components/HowItWorks').then(m => m.HowItWorks), { ssr: false })
@@ -20,11 +26,10 @@ const AutomationSection = dynamic(() => import('@/components/landing/AutomationS
 const FeatureHighlight = dynamic(() => import('./components/FeatureHighlight').then(m => m.FeatureHighlight), { ssr: false })
 const TestimonialsSection = dynamic(() => import('@/components/landing/TestimonialsSection'), { ssr: false })
 const UseCasesSection = dynamic(() => import('@/components/landing/UseCasesSection'), { ssr: false })
-const Pricing = dynamic(() => import('./components/Pricing').then(m => m.Pricing), { ssr: false })
-const FAQ = dynamic(() => import('./components/FAQ').then(m => m.FAQ), { ssr: false })
 const FloatingNav = dynamic(() => import('@/components/landing/FloatingNav'), { ssr: false })
 const FloatingCTA = dynamic(() => import('@/components/landing/FloatingCTA'), { ssr: false })
 const ExitIntentPopup = dynamic(() => import('@/components/landing/ExitIntentPopup'), { ssr: false })
+import { FAQ } from './components/FAQ'
 import { FinalCTA } from './components/FinalCTA'
 import { Footer } from './components/Footer'
 
@@ -35,42 +40,66 @@ export default function LandingPage() {
       <FloatingNav />
       <FloatingCTA />
       <ExitIntentPopup />
-      {/* 1. Hero: Value prop + Social proof badges */}
+      
+      {/* 1. Hero: "The AI Studio That Adapts to You" + Pipeline Animation */}
       <HeroSection />
+      
       {/* 2. Trust: Powered by Google Cloud credibility */}
       <TrustSignals />
+      
       {/* 2.5. Google Cloud: Showcase Google AI integration */}
       <GoogleCloudBadge />
-      {/* 3. Problem: Slot machine metaphor - why current tools fail */}
+      
+      {/* 3. Modular Showcase: 4 modules with standalone value + ecosystem bonuses */}
+      <ModularShowcase />
+      
+      {/* 4. Unified Workflow: "Better Together" split comparison */}
+      <UnifiedWorkflow />
+      
+      {/* 5. Problem: Slot machine metaphor - why current tools fail */}
       <SlotMachineSection />
-      {/* 4. How: Simple 3-step process - moved earlier per optimization */}
+      
+      {/* 6. How: Simple 4-step process */}
       <HowItWorks />
-      {/* 5. Storyteller Mode: Audio-first creator targeting - Faceless channels & podcasters */}
+      
+      {/* 7. Storyteller Mode: Audio-first creator targeting */}
       <CreatorFastTrackHero />
       <StorytellerFeatureSection />
-      {/* 6. Solution: Financial safety with budget controls */}
+      
+      {/* 8. Solution: Financial safety with budget controls */}
       <FinancialFirewallSection />
-      {/* 6.5. Value Calculator: Cost, Time, and Expertise savings */}
+      
+      {/* 8.5. Value Calculator: Cost, Time, and Expertise savings */}
       <ProductivityValueSection />
-      {/* 7. Technical: Frame-anchored architecture + precision features */}
+      
+      {/* 9. Technical: Frame-anchored architecture */}
       <FrameAnchoredSection />
-      {/* 8. Automation: One-click generation for complete production workflow */}
+      
+      {/* 10. Automation: One-click generation */}
       <AutomationSection />
-      {/* 9. Features: All-in-one platform capabilities */}
+      
+      {/* 11. Features: All-in-one platform capabilities */}
       <FeatureHighlight />
-      {/* 10. Testimonials: Creator stories and social proof */}
+      
+      {/* 12. Testimonials: Creator stories */}
       <TestimonialsSection />
-      {/* 11. Proof: Real use cases with video demos by persona */}
+      
+      {/* 13. Proof: Real use cases with video demos */}
       <UseCasesSection />
-      {/* 12. Pricing: Full production value tiers with animatic features */}
-      <Pricing />
-      {/* 12.5. Founder: Leadership and vision */}
+      
+      {/* 14. Pricing: Usage-based credits with project calculator */}
+      <PricingCredits />
+      
+      {/* 15. Founder: Leadership and vision */}
       <FounderSection />
-      {/* 13. FAQ: Objection handling */}
+      
+      {/* 16. FAQ: Objection handling */}
       <FAQ />
-      {/* 14. Final CTA: Conversion */}
+      
+      {/* 17. Final CTA: Conversion */}
       <FinalCTA />
-      {/* 15. Footer: Navigation */}
+      
+      {/* 18. Footer: Navigation */}
       <Footer />
     </div>
   )

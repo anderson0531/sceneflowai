@@ -4,9 +4,10 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 import { useState } from 'react'
 import { DemoVideoModal } from './DemoVideoModal'
-import { Play, ArrowRight, Sparkles, Film, Mic2, Video, Users, Volume2, VolumeX } from 'lucide-react'
+import { Play, ArrowRight, Sparkles, Film, Mic2, Video, Users, Volume2, VolumeX, Workflow } from 'lucide-react'
 import { useRef } from 'react'
 import Image from 'next/image'
+import { PipelineFlow } from '@/components/landing/PipelineFlow'
 
 export function HeroSection() {
   const [isDemoOpen, setIsDemoOpen] = useState(false)
@@ -94,9 +95,9 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
           >
-            <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white">Direct the Vision.</span>
-            <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400">
-              Automate the Production
+            <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white">The AI Studio</span>
+            <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400">
+              That Adapts to You
             </span>
           </motion.h1>
 
@@ -107,27 +108,38 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.7 }}
           >
-            Stop juggling 9 different tools. Experience the first <span className="text-white font-semibold">unified workflow</span> powered by Google&apos;s Veo 3 and Gemini 3.0—turning your script into professional cinema in minutes, not weeks.
+            Use our <span className="text-white font-semibold">specialized tools</span> to solve a single problem, or connect them for a seamless <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 font-semibold">Concept-to-Publish</span> production workflow—powered by Google&apos;s Veo 3 and Gemini 3.0.
           </motion.p>
 
-          {/* Key Capabilities Pills */}
-          <motion.div 
-            className="flex flex-wrap justify-center gap-3 mb-10"
+          {/* Pipeline Visual - The Living Pipeline */}
+          <motion.div
+            className="mb-12"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.9 }}
           >
-            {[
-              { icon: Film, label: 'AI Script Generation', color: 'text-cyan-400 border-cyan-500/30 bg-cyan-500/10' },
-              { icon: Users, label: 'Character Consistency', color: 'text-purple-400 border-purple-500/30 bg-purple-500/10' },
-              { icon: Video, label: 'Video Generation', color: 'text-amber-400 border-amber-500/30 bg-amber-500/10' },
-              { icon: Mic2, label: 'AI Voice Acting', color: 'text-green-400 border-green-500/30 bg-green-500/10' },
-            ].map((item, i) => (
-              <div key={i} className={`flex items-center gap-2 px-4 py-2 rounded-full border ${item.color} backdrop-blur-sm`}>
-                <item.icon className="w-4 h-4" />
-                <span className="text-sm font-medium text-white">{item.label}</span>
-              </div>
-            ))}
+            <PipelineFlow 
+              className="max-w-5xl mx-auto"
+              onModuleClick={(moduleId) => {
+                const element = document.getElementById(`module-${moduleId}`)
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth' })
+                }
+              }}
+            />
+          </motion.div>
+
+          {/* Workflow Toggle Hint */}
+          <motion.div 
+            className="flex flex-wrap justify-center gap-3 mb-10"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.1 }}
+          >
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-700 bg-gray-800/50 backdrop-blur-sm">
+              <Workflow className="w-4 h-4 text-purple-400" />
+              <span className="text-sm font-medium text-gray-300">Hover modules to explore • Click to learn more</span>
+            </div>
           </motion.div>
 
           {/* CTA Buttons */}
@@ -135,28 +147,28 @@ export function HeroSection() {
             className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1.1 }}
+            transition={{ duration: 0.8, delay: 1.3 }}
           >
             <Button
               size="lg"
               onClick={() => window.location.href = '/?signup=1'}
               className="bg-gradient-to-r from-cyan-500 via-purple-500 to-amber-500 hover:from-cyan-400 hover:via-purple-400 hover:to-amber-400 text-white px-8 py-4 text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-500/25"
             >
-              Start for $9
+              Start a Project
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
             
-            {/* TEMPORARILY HIDDEN FOR PAYMENT PROCESSOR COMPLIANCE - Re-enable after replacing Avatar-like images
             <Button
               variant="outline"
               size="lg"
               className="border-gray-600 text-gray-200 hover:bg-white/10 hover:text-white hover:border-gray-400 px-8 py-4 text-lg font-semibold transition-all duration-200"
-              onClick={() => setIsDemoOpen(true)}
+              onClick={() => {
+                const element = document.getElementById('pricing')
+                if (element) element.scrollIntoView({ behavior: 'smooth' })
+              }}
             >
-              <Play className="w-5 h-5 mr-2 fill-current" />
-              Watch Demo
+              View Pricing
             </Button>
-            */}
           </motion.div>
 
           {/* Microcopy */}
@@ -164,23 +176,23 @@ export function HeroSection() {
             className="mb-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 1.2 }}
+            transition={{ duration: 0.6, delay: 1.4 }}
           >
             <p className="text-sm text-gray-400">
-              <span className="text-amber-400 font-medium">☕ Less than two coffees</span>
+              <span className="text-emerald-400 font-medium">✓ Pay only for what you use</span>
               <span className="text-gray-500 mx-2">•</span>
-              <span>Test drive with 1,000 credits</span>
+              <span>Base access from $29/mo</span>
               <span className="text-gray-500 mx-2">•</span>
-              <span className="text-gray-500">Explorer • $9</span>
+              <span className="text-gray-500">Credits for AI generation</span>
             </p>
           </motion.div>
 
           {/* Early Access Social Proof (merged from SocialProof section) */}
           <motion.div 
-            className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 mb-16 py-4 px-6 rounded-xl bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-amber-500/5 border border-white/5 max-w-2xl mx-auto"
+            className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 py-4 px-6 rounded-xl bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-amber-500/5 border border-white/5 max-w-2xl mx-auto"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 1.4 }}
+            transition={{ duration: 0.6, delay: 1.6 }}
           >
             <div className="flex items-center gap-2 text-sm">
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
@@ -190,84 +202,6 @@ export function HeroSection() {
             <div className="flex items-center gap-2 text-sm">
               <span className="text-gray-300">New features shipping monthly</span>
             </div>
-          </motion.div>
-          
-          {/* TEMPORARILY HIDDEN FOR PAYMENT PROCESSOR COMPLIANCE - Re-enable after replacing Avatar-like images
-          <motion.div 
-            className="relative max-w-5xl mx-auto"
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1.3 }}
-          >
-            <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-purple-500/20">
-              <div className="aspect-[16/9] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden group">
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  preload="auto"
-                  className="w-full h-full object-cover"
-                  poster="/demo/hero-poster.jpg"
-                >
-                  <source src="/demo/hero-demo.mp4#t=0.1" type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-                <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-slate-800/80 backdrop-blur-sm rounded-lg border border-white/10">
-                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                  <span className="text-xs text-gray-300">Virtual Production Studio</span>
-                </div>
-                <button
-                  onClick={toggleMute}
-                  className="absolute bottom-4 right-4 p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm transition-all opacity-60 hover:opacity-100"
-                  title={isMuted ? 'Unmute' : 'Mute'}
-                >
-                  {isMuted ? (
-                    <VolumeX className="w-5 h-5 text-white/80" />
-                  ) : (
-                    <Volume2 className="w-5 h-5 text-white/80" />
-                  )}
-                </button>
-              </div>
-            </div>
-            <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-amber-500/20 rounded-2xl blur-2xl -z-10" />
-          </motion.div>
-          */}
-          
-          {/* Temporary placeholder while video assets are being updated */}
-          <motion.div 
-            className="relative max-w-4xl mx-auto"
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1.3 }}
-          >
-            <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-purple-500/20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-              <div className="aspect-[16/9] flex items-center justify-center">
-                <div className="text-center p-8">
-                  <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-r from-cyan-500 via-purple-500 to-amber-500 flex items-center justify-center">
-                    <Film className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">AI-Powered Video Production</h3>
-                  <p className="text-gray-400 max-w-md mx-auto">Script generation, character consistency, voice acting, and video rendering—all in one platform.</p>
-                  <div className="flex items-center justify-center gap-6 mt-6">
-                    <div className="flex items-center gap-2 text-sm text-gray-300">
-                      <Sparkles className="w-4 h-4 text-cyan-400" />
-                      <span>AI Characters</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-300">
-                      <Mic2 className="w-4 h-4 text-purple-400" />
-                      <span>Voice Synthesis</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-300">
-                      <Video className="w-4 h-4 text-amber-400" />
-                      <span>Video Export</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-amber-500/20 rounded-2xl blur-2xl -z-10" />
           </motion.div>
         </motion.div>
       </div>
