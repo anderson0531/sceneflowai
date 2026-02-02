@@ -38,20 +38,30 @@ import { cn } from '@/lib/utils'
 // Types
 // ============================================================================
 
+interface ProjectOption {
+  id: string
+  title: string
+}
+
 interface CreateScreeningModalProps {
   isOpen: boolean
   onClose: () => void
-  projectId: string
+  /** Single project ID (if opening from a specific project context) */
+  projectId?: string
   projectTitle?: string
+  /** List of projects to choose from (for dashboard context) */
+  projects?: ProjectOption[]
   streamId?: string
   onScreeningCreated?: (screening: CreatedScreening) => void
+  /** Alias for onScreeningCreated for compatibility */
+  onSuccess?: () => void
 }
 
 interface CreatedScreening {
   id: string
   title: string
   shareUrl: string
-  fullShareUrl: string
+  fullShareUrl?: string
   accessType: string
   expiresAt: string
 }
@@ -65,13 +75,25 @@ type AccessType = 'public' | 'password' | 'invite-only'
 export function CreateScreeningModal({
   isOpen,
   onClose,
-  projectId,
+  projectId: initialProjectId,
   projectTitle = 'Untitled Project',
+  projects = [],
   streamId,
   onScreeningCreated,
+  onSuccess,
 }: CreateScreeningModalProps) {
+  // Determine if we're in project selection mode
+  const hasProjectList = projects.length > 0
+  const defaultProjectId = initialProjectId || (projects.length === 1 ? projects[0].id : '')
+  const defaultProjectTitle = initialProjectId 
+    ? projectTitle 
+    : projects.length === 1 
+      ? projects[0].title 
+      : ''
+  
   // Form state
-  const [title, setTitle] = useState(projectTitle + ' - Screening')
+  const [selectedProjectId, setSelectedProjectId] = useState(defaultProjectId)
+  const [title, setTitle] = useState(defaultProjectTitle ? `${defaultProjectTitle} - Screening` : '')
   const [description, setDescription] = useState('')
   const [accessType, setAccessType] = useState<AccessType>('public')
   const [password, setPassword] = useState('')
@@ -93,7 +115,23 @@ export function CreateScreeningModal({
   // Create Screening
   // ============================================================================
   
+  // Handle project selection change
+  const handleProjectChange = (newProjectId: string) => {
+    setSelectedProjectId(newProjectId)
+    const selectedProject = projects.find(p => p.id === newProjectId)
+    if (selectedProject) {
+      setTitle(`${selectedProject.title} - Screening`)
+    }
+  }
+  
   const handleCreate = async () => {
+    const effectiveProjectId = selectedProjectId || initialProjectId
+    
+    if (!effectiveProjectId) {
+      setError('Please select a project')
+      return
+    }
+    
     if (!title.trim()) {
       setError('Title is required')
       return
@@ -112,7 +150,7 @@ export function CreateScreeningModal({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          projectId,
+          projectId: effectiveProjectId,
           streamId,
           title: title.trim(),
           description: description.trim() || undefined,
@@ -132,8 +170,13 @@ export function CreateScreeningModal({
       }
       
       const data = await response.json()
-      setCreatedScreening(data.screening)
-      onScreeningCreated?.(data.screening)
+      const screening = {
+        ...data.screening,
+        fullShareUrl: data.screening.shareUrl || data.screening.fullShareUrl,
+      }
+      setCreatedScreening(screening)
+      onScreeningCreated?.(screening)
+      onSuccess?.()
     } catch (err: any) {
       setError(err.message || 'Failed to create screening')
     } finally {
@@ -173,6 +216,8 @@ export function CreateScreeningModal({
     setCollectDemographics(true)
     setCreatedScreening(null)
     setError(null)
+    setSelectedProjectId(defaultProjectId)
+    setTitle(defaultProjectTitle ? `${defaultProjectTitle} - Screening` : '')
     onClose()
   }
   
@@ -283,6 +328,27 @@ export function CreateScreeningModal({
             ) : (
               // Form
               <div className="space-y-6">
+                {/* Project Selector (when multiple projects available) */}
+                {hasProjectList && projects.length > 1 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Select Project
+                    </label>
+                    <select
+                      value={selectedProjectId}
+                      onChange={(e) => handleProjectChange(e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                    >
+                      <option value="">Choose a project...</option>
+                      {projects.map((project) => (
+                        <option key={project.id} value={project.id}>
+                          {project.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                
                 {/* Title */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
