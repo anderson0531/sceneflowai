@@ -1,39 +1,39 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Lightbulb, Clapperboard, Film, Rocket, ArrowRight } from 'lucide-react'
+import { Lightbulb, Film, Scissors, Rocket, ArrowRight } from 'lucide-react'
 
 export function HowItWorks() {
   const steps = [
     {
       icon: <Lightbulb className="w-10 h-10" />,
       title: '1. Blueprint',
-      subtitle: 'Ideation',
-      description: 'Start with your idea. AI generates a professional film treatment with story structure and character breakdowns.',
+      subtitle: 'Story Development',
+      description: 'AI-assisted ideation with proprietary Audience Resonance™ scoring. Get automated story fixes, professional script generation, and industry-standard exports—then refine every detail through guided dialogs.',
       color: 'from-cyan-500 to-cyan-600',
       borderColor: 'border-cyan-500/30',
     },
     {
-      icon: <Clapperboard className="w-10 h-10" />,
-      title: '2. Script & Review',
-      subtitle: 'Perfect Your Screenplay',
-      description: 'Transform your treatment into a full script. Get Director & Audience scoring with category breakdowns. Apply AI revision recommendations before generation—the most cost-effective step.',
-      color: 'from-purple-500 to-purple-600',
-      borderColor: 'border-purple-500/30',
-    },
-    {
       icon: <Film className="w-10 h-10" />,
-      title: '3. Production',
-      subtitle: 'Images, Audio & Video',
-      description: 'Generate storyboards with Imagen 3. Add premium ElevenLabs voices with multi-language dubbing. Render scenes with Veo 3.1 frame-anchored precision.',
+      title: '2. Production',
+      subtitle: 'Your Creative Bible',
+      description: 'Production Bible locks character, wardrobe, and location references for frame-perfect consistency. 800+ premium voices with cloning. Imagen 4 storyboards flow to Veo 3 video—each frame AI-generated, each cut director-approved.',
       color: 'from-amber-500 to-amber-600',
       borderColor: 'border-amber-500/30',
     },
     {
+      icon: <Scissors className="w-10 h-10" />,
+      title: '3. Final Cut',
+      subtitle: 'Professional Editor',
+      description: 'Full NLE timeline with transitions, overlays, and multi-track audio mixing. Import external clips, add reusable intros and ads, upscale to 4K/8K with Topaz AI. Every automation has an override—you\'re always in control.',
+      color: 'from-purple-500 to-purple-600',
+      borderColor: 'border-purple-500/30',
+    },
+    {
       icon: <Rocket className="w-10 h-10" />,
-      title: '4. The Premiere',
-      subtitle: 'Review & Export',
-      description: 'Preview in the Screening Room with Ken Burns animation. Export your finished film in HD/4K, ready for any platform.',
+      title: '4. Premiere',
+      subtitle: 'Audience Intelligence',
+      description: 'Screening Room with Biometric Sentiment Player—upload any video for AI focus group analysis. Automated publishing generates titles, descriptions, and promo clips. One-click export to YouTube, Vimeo, and beyond.',
       color: 'from-green-500 to-green-600',
       borderColor: 'border-green-500/30',
     },
@@ -58,8 +58,11 @@ export function HowItWorks() {
               Cinematic Excellence
             </span>
           </h2>
-          <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-2xl mx-auto">
+          <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-2xl mx-auto mb-4">
             Our streamlined workflow takes you from initial concept to finished film in record time.
+          </p>
+          <p className="text-cyan-400 font-medium text-sm md:text-base">
+            Every step is expertly automated. Every step gives you full control.
           </p>
         </motion.div>
 

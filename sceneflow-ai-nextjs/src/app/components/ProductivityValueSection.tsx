@@ -592,9 +592,8 @@ export default function ProductivityValueSection() {
               <DollarSign className="w-5 h-5 text-white" />
             </div>
             <div className="text-emerald-300 text-sm font-medium mb-1">Potential Savings</div>
-            <div className="text-4xl font-bold text-white mb-1">
-              Significant
-              <span className="text-lg text-emerald-400">*</span>
+            <div className="text-2xl font-bold text-white mb-1">
+              Significant<span className="text-emerald-400">*</span>
             </div>
             <div className="text-gray-400 text-sm">vs individual tool stack</div>
           </div>
@@ -608,9 +607,8 @@ export default function ProductivityValueSection() {
               <Clock className="w-5 h-5 text-white" />
             </div>
             <div className="text-cyan-300 text-sm font-medium mb-1">Reclaim</div>
-            <div className="text-4xl font-bold text-white mb-1">
-              Hours
-              <span className="text-lg text-cyan-400">*</span>
+            <div className="text-2xl font-bold text-white mb-1">
+              Hours<span className="text-cyan-400">*</span> Per Project
             </div>
             <div className="text-gray-400 text-sm">with one-click automation</div>
           </div>
@@ -624,9 +622,8 @@ export default function ProductivityValueSection() {
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
             <div className="text-purple-300 text-sm font-medium mb-1">Skip</div>
-            <div className="text-4xl font-bold text-white mb-1">
-              The
-              <span className="text-lg text-purple-400"> learning curve</span>
+            <div className="text-2xl font-bold text-white mb-1">
+              The Learning Curve
             </div>
             <div className="text-gray-400 text-sm">with integrated AI tools</div>
           </div>

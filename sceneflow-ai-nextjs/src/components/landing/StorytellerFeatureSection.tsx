@@ -111,7 +111,7 @@ export function StorytellerFeatureSection() {
         <h3 className="text-center text-sm font-medium text-gray-500 uppercase tracking-wider mb-8">
           Perfect For These Content Types
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
           {contentCategories.map((category, idx) => {
             const CategoryIcon = category.icon
             return (
