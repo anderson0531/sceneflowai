@@ -79,11 +79,11 @@ export const products: Product[] = [
     name: 'Screening Room',
     tagline: 'Test & Feedback',
     icon: <BarChart2 className="w-5 h-5" />,
-    href: '/dashboard/workflow/premiere',
+    href: '/screening-room',
     color: 'text-emerald-400',
     hoverColor: 'hover:bg-emerald-500/10 hover:text-emerald-300',
     activeColor: 'bg-emerald-500/15 text-emerald-300 border-emerald-400',
-    matchPaths: ['/dashboard/workflow/premiere', '/s/', '/share/screening-room']
+    matchPaths: ['/screening-room', '/dashboard/workflow/premiere', '/s/', '/share/screening-room']
   },
 ]
 
