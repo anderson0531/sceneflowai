@@ -4,7 +4,8 @@ import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react'
 import { 
   X, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, 
   SlidersHorizontal, Mic, MessageSquare, Music, Zap,
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Move, Subtitles, RefreshCw
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Move, Subtitles, RefreshCw,
+  Camera, Smile
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
@@ -12,6 +13,12 @@ import { SegmentData } from '@/types/screenplay'
 import { buildAudioTracksForLanguage, buildAudioTracksWithBaselineTiming, determineBaselineLanguage, flattenAudioTracks, type AudioTrackClipV2 } from '@/components/vision/scene-production/audioTrackBuilder'
 import { getAvailableLanguages } from '@/lib/audio/languageDetection'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
+// Audience Feedback Components
+import { EmojiReactionBar } from '@/components/screening-room/EmojiReactionBar'
+import { ConsentModal } from '@/components/screening-room/ConsentModal'
+import { useEmotionTracker, type EmotionData } from '@/hooks/useEmotionTracker'
+import { useMicroBehaviorTracking, type MicroBehaviorEvent } from '@/hooks/useMicroBehaviorTracking'
+import type { TimelineReactionType, SessionDemographics, DetectedEmotion } from '@/lib/types/behavioralAnalytics'
 
 // ============================================================================
 // Volume Settings Types & Persistence
@@ -131,6 +138,35 @@ interface FullscreenPlayerProps {
   sceneTransitionDelay?: number
   /** Per-segment playback offset (for translated audio alignment) */
   playbackOffset?: number
+  // Audience Feedback Mode
+  /** Enable audience feedback features (emoji reactions, biometrics) */
+  enableAudienceFeedback?: boolean
+  /** Screening ID for analytics tracking */
+  screeningId?: string
+  /** Session ID for this viewing session */
+  sessionId?: string
+  /** Callback when audience feedback event occurs */
+  onAudienceFeedback?: (event: AudienceFeedbackEvent) => void
+}
+
+// Audience Feedback Event type
+export interface AudienceFeedbackEvent {
+  type: 'emoji' | 'biometric' | 'behavior'
+  timestamp: number
+  videoTime: number
+  data: {
+    // Emoji reaction
+    reactionType?: TimelineReactionType
+    emoji?: string
+    // Biometric data
+    emotion?: DetectedEmotion
+    intensity?: number
+    confidence?: number
+    gazeOnScreen?: boolean
+    // Behavior data
+    action?: string
+    value?: number
+  }
 }
 
 // ============================================================================
@@ -155,6 +191,11 @@ export function FullscreenPlayer({
   autoAdvance = true,
   sceneTransitionDelay = 3,
   playbackOffset = 0,
+  // Audience Feedback
+  enableAudienceFeedback = false,
+  screeningId,
+  sessionId,
+  onAudienceFeedback,
 }: FullscreenPlayerProps) {
   // ============================================================================
   // State
@@ -180,6 +221,104 @@ export function FullscreenPlayer({
   
   // Refs for transition cancellation
   const transitionCancelledRef = useRef(false)
+  
+  // ============================================================================
+  // Audience Feedback State
+  // ============================================================================
+  const [showConsentModal, setShowConsentModal] = useState(enableAudienceFeedback)
+  const [cameraConsent, setCameraConsent] = useState(false)
+  const [demographics, setDemographics] = useState<SessionDemographics | undefined>()
+  const [feedbackReady, setFeedbackReady] = useState(false)
+  const [currentDetectedEmotion, setCurrentDetectedEmotion] = useState<DetectedEmotion | null>(null)
+  
+  // Video ref for emotion tracking (we'll use a hidden video element)
+  const emotionVideoRef = useRef<HTMLVideoElement>(null)
+  
+  // ============================================================================
+  // Audience Feedback Handlers
+  // ============================================================================
+  
+  // Handle consent completion
+  const handleConsentComplete = useCallback((consent: { cameraConsent: boolean; demographics?: SessionDemographics }) => {
+    setCameraConsent(consent.cameraConsent)
+    setDemographics(consent.demographics)
+    setShowConsentModal(false)
+    setFeedbackReady(true)
+  }, [])
+  
+  // Handle emoji reaction
+  const handleEmojiReaction = useCallback((timestamp: number, reactionType: TimelineReactionType, emoji: string) => {
+    const event: AudienceFeedbackEvent = {
+      type: 'emoji',
+      timestamp: Date.now(),
+      videoTime: timestamp,
+      data: {
+        reactionType,
+        emoji,
+      },
+    }
+    onAudienceFeedback?.(event)
+    console.log('[FullscreenPlayer] Emoji reaction:', reactionType, 'at', timestamp.toFixed(2) + 's')
+  }, [onAudienceFeedback])
+  
+  // Handle emotion detection from camera
+  const handleEmotionDetected = useCallback((emotionData: EmotionData) => {
+    setCurrentDetectedEmotion(emotionData.emotion)
+    const event: AudienceFeedbackEvent = {
+      type: 'biometric',
+      timestamp: Date.now(),
+      videoTime: emotionData.timestamp,
+      data: {
+        emotion: emotionData.emotion,
+        intensity: emotionData.intensity,
+        confidence: emotionData.confidence,
+        gazeOnScreen: emotionData.gazeOnScreen,
+      },
+    }
+    onAudienceFeedback?.(event)
+  }, [onAudienceFeedback])
+  
+  // Handle micro-behavior events
+  const handleBehaviorEvent = useCallback((behaviorEvent: MicroBehaviorEvent) => {
+    const event: AudienceFeedbackEvent = {
+      type: 'behavior',
+      timestamp: Date.now(),
+      videoTime: behaviorEvent.timestamp,
+      data: {
+        action: behaviorEvent.action,
+        value: behaviorEvent.value,
+      },
+    }
+    onAudienceFeedback?.(event)
+  }, [onAudienceFeedback])
+  
+  // ============================================================================
+  // Emotion Tracker Hook (only active when camera consent granted)
+  // ============================================================================
+  const emotionTracker = useEmotionTracker({
+    videoRef: emotionVideoRef,
+    enabled: enableAudienceFeedback && cameraConsent && feedbackReady,
+    sampleRate: 2,
+    onEmotionDetected: handleEmotionDetected,
+  })
+  
+  // ============================================================================
+  // Micro-Behavior Tracking Hook
+  // ============================================================================
+  const behaviorTracker = useMicroBehaviorTracking({
+    videoRef: emotionVideoRef,
+    enabled: enableAudienceFeedback && feedbackReady,
+    onEvent: handleBehaviorEvent,
+  })
+  
+  // Start emotion tracking when camera consent is granted
+  useEffect(() => {
+    if (enableAudienceFeedback && cameraConsent && feedbackReady && !emotionTracker.isActive) {
+      emotionTracker.startTracking().catch(err => {
+        console.warn('[FullscreenPlayer] Failed to start emotion tracking:', err)
+      })
+    }
+  }, [enableAudienceFeedback, cameraConsent, feedbackReady, emotionTracker])
   
   // ============================================================================
   // Language Detection
@@ -1118,7 +1257,58 @@ export function FullscreenPlayer({
             </div>
           </div>
         )}
+        
+        {/* ================================================================== */}
+        {/* Audience Feedback Features */}
+        {/* ================================================================== */}
+        
+        {/* Emoji Reaction Bar - shows when audience feedback is enabled and consent given */}
+        {enableAudienceFeedback && feedbackReady && (
+          <EmojiReactionBar
+            currentTime={currentTime}
+            visible={showControls}
+            onReaction={handleEmojiReaction}
+            compact={false}
+            position="bottom"
+          />
+        )}
+        
+        {/* Current Emotion Indicator - shows detected emotion when camera tracking is active */}
+        {enableAudienceFeedback && cameraConsent && emotionTracker.isActive && currentDetectedEmotion && (
+          <div className="absolute top-4 right-4 z-30 flex items-center gap-2 px-3 py-2 bg-black/60 backdrop-blur-sm rounded-full border border-white/10">
+            <Camera className="w-4 h-4 text-green-400" />
+            <span className="text-xs text-gray-300">
+              {currentDetectedEmotion === 'happy' && '😊 Happy'}
+              {currentDetectedEmotion === 'surprised' && '😲 Surprised'}
+              {currentDetectedEmotion === 'confused' && '😕 Confused'}
+              {currentDetectedEmotion === 'engaged' && '🎯 Engaged'}
+              {currentDetectedEmotion === 'bored' && '🥱 Bored'}
+              {currentDetectedEmotion === 'sad' && '😢 Sad'}
+              {currentDetectedEmotion === 'neutral' && '😐 Neutral'}
+              {currentDetectedEmotion === 'unknown' && '❓ Detecting...'}
+            </span>
+          </div>
+        )}
+        
+        {/* Camera indicator when tracking is active */}
+        {enableAudienceFeedback && cameraConsent && emotionTracker.isActive && (
+          <div className="absolute top-4 left-4 z-30">
+            <div className="flex items-center gap-1.5 px-2 py-1 bg-red-500/20 rounded-full">
+              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+              <span className="text-xs text-red-400">Sensing</span>
+            </div>
+          </div>
+        )}
       </div>
+      
+      {/* Consent Modal - shows before playback when audience feedback is enabled */}
+      {enableAudienceFeedback && showConsentModal && (
+        <ConsentModal
+          onConsentComplete={handleConsentComplete}
+          screeningTitle={scriptTitle}
+          showDemographics={true}
+        />
+      )}
     </div>
   )
 }

@@ -6,13 +6,14 @@
  * - Scene navigation
  * - Language selection  
  * - Audio cache management
+ * - Test audience feedback (emoji reactions, biometrics)
  * 
  * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
  */
 'use client'
 
 import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react'
-import { FullscreenPlayer } from './FullscreenPlayer'
+import { FullscreenPlayer, type AudienceFeedbackEvent } from './FullscreenPlayer'
 import type { SceneProductionData } from '@/components/vision/scene-production/types'
 import { getLanguagePlaybackOffset } from '@/components/vision/scene-production/audioTrackBuilder'
 
@@ -29,6 +30,15 @@ interface ScreeningRoomV2Props {
   projectId?: string
   /** Stored translations from Production page */
   storedTranslations?: Record<string, Record<number, { narration?: string; dialogue?: string[] }>>
+  // Audience Feedback Mode
+  /** Enable audience feedback features (emoji reactions, facial recognition, biometrics) */
+  enableAudienceFeedback?: boolean
+  /** Screening ID for analytics tracking */
+  screeningId?: string
+  /** Session ID for this viewing session */
+  sessionId?: string
+  /** Callback when audience feedback event occurs */
+  onAudienceFeedback?: (event: AudienceFeedbackEvent) => void
 }
 
 // Helper function to normalize scenes from various data paths
@@ -68,6 +78,11 @@ export function ScreeningRoomV2({
   sceneProductionState,
   projectId,
   storedTranslations,
+  // Audience Feedback
+  enableAudienceFeedback = false,
+  screeningId,
+  sessionId,
+  onAudienceFeedback,
 }: ScreeningRoomV2Props) {
   // ============================================================================
   // Scene State
@@ -203,6 +218,11 @@ export function ScreeningRoomV2({
       autoAdvance={true}
       sceneTransitionDelay={3}
       playbackOffset={getLanguagePlaybackOffset(currentScene, selectedLanguage)}
+      // Audience Feedback
+      enableAudienceFeedback={enableAudienceFeedback}
+      screeningId={screeningId}
+      sessionId={sessionId}
+      onAudienceFeedback={onAudienceFeedback}
     />
   )
 }
