@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid'
 import '@/models'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
+import { resolveUser } from '@/lib/userHelper'
 
 export const dynamic = 'force-dynamic'
 
@@ -135,6 +136,16 @@ export async function GET(
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    
+    // Resolve user ID (handles email to UUID conversion)
+    let userId: string
+    try {
+      const resolvedUser = await resolveUser(session.user.id)
+      userId = resolvedUser.id
+    } catch (err) {
+      console.error('[GET /api/screening/[id]/feedback] Failed to resolve user:', err)
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
 
     const { id: screeningId } = await params
 
@@ -147,7 +158,7 @@ export async function GET(
     const { project, screening } = result
 
     // Verify ownership
-    if (project.user_id !== session.user.id) {
+    if (project.user_id !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 

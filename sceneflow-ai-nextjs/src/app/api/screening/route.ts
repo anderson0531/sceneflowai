@@ -14,6 +14,7 @@ import { authOptions } from '@/lib/auth'
 import '@/models' // Import models to register with Sequelize
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
+import { resolveUser } from '@/lib/userHelper'
 import type { ScreeningSession, ScreeningAccessType } from '@/lib/types/finalCut'
 
 export const dynamic = 'force-dynamic'
@@ -30,6 +31,16 @@ export async function POST(request: NextRequest) {
     }
 
     await sequelize.authenticate()
+    
+    // Resolve user ID (handles email to UUID conversion)
+    let userId: string
+    try {
+      const resolvedUser = await resolveUser(session.user.id)
+      userId = resolvedUser.id
+    } catch (err) {
+      console.error('[POST /api/screening] Failed to resolve user:', err)
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
 
     const body = await request.json()
     const {
@@ -56,7 +67,7 @@ export async function POST(request: NextRequest) {
 
     // Verify project ownership
     const project: any = await Project.findOne({
-      where: { id: projectId, user_id: session.user.id }
+      where: { id: projectId, user_id: userId }
     })
 
     if (!project) {
@@ -93,7 +104,7 @@ export async function POST(request: NextRequest) {
       shareToken,
       collectBiometrics,
       collectDemographics,
-      createdBy: session.user.id,
+      createdBy: userId,
     }
 
     // Store screening in project metadata
@@ -141,6 +152,16 @@ export async function GET(request: NextRequest) {
     }
 
     await sequelize.authenticate()
+    
+    // Resolve user ID (handles email to UUID conversion)
+    let userId: string
+    try {
+      const resolvedUser = await resolveUser(session.user.id)
+      userId = resolvedUser.id
+    } catch (err) {
+      console.error('[GET /api/screening] Failed to resolve user:', err)
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
 
     const { searchParams } = new URL(request.url)
     const projectId = searchParams.get('projectId')
@@ -151,7 +172,7 @@ export async function GET(request: NextRequest) {
 
     // Verify project ownership
     const project: any = await Project.findOne({
-      where: { id: projectId, user_id: session.user.id }
+      where: { id: projectId, user_id: userId }
     })
 
     if (!project) {
