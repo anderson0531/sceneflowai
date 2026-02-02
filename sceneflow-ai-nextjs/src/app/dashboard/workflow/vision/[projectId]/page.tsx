@@ -15,7 +15,7 @@ Implement the fix * Do NOT create separate `scenes` state - this causes sync bug
 // Force rebuild: 2024-11-01
 
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels'
 import { upload } from '@vercel/blob/client'
 import { cleanupStaleAudio, clearAllSceneAudio } from '@/lib/audio/cleanupAudio'
@@ -721,6 +721,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     }
   }, [project, projectId])
+
+  // Handle openPlayer query param from Screening Room dashboard
+  const searchParams = useSearchParams()
+  useEffect(() => {
+    if (searchParams.get('openPlayer') === 'true') {
+      setIsPlayerOpen(true)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     const references = project?.metadata?.visionPhase?.references as VisionReferencesPayload | undefined

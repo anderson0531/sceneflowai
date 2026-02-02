@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   BarChart3,
   Film,
@@ -22,10 +23,12 @@ import {
   Smile,
   Sparkles,
   ArrowRight,
+  Loader2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
+import { useDashboardData, type DashboardProject } from '@/hooks/useDashboardData'
 
 // ============================================================================
 // Types
@@ -69,93 +72,55 @@ interface AggregatedStats {
 }
 
 // ============================================================================
-// Mock Data (for development - replace with actual API calls)
+// Helper: Convert Dashboard Projects to Screening Items
 // ============================================================================
 
-const MOCK_PROJECTS: Project[] = [
-  { id: 'proj-1', name: 'The Last Sunset', thumbnail: '' },
-  { id: 'proj-2', name: 'Urban Dreams', thumbnail: '' },
-  { id: 'proj-3', name: 'Beyond the Horizon', thumbnail: '' },
-]
+function projectToScreeningItem(project: DashboardProject): ScreeningItem {
+  // Determine status based on project progress
+  let status: ScreeningItem['status'] = 'draft'
+  if (project.progress >= 100) {
+    status = 'completed'
+  } else if (project.progress > 0) {
+    status = 'active'
+  }
 
-const MOCK_SCREENINGS: ScreeningItem[] = [
-  {
-    id: 'scr-1',
-    projectId: 'proj-1',
-    projectName: 'The Last Sunset',
-    title: 'Opening Sequence v2',
-    type: 'storyboard',
-    status: 'active',
-    viewerCount: 24,
-    averageCompletion: 78,
-    avgWatchTime: 245,
-    createdAt: '2026-01-28T10:00:00Z',
-  },
-  {
-    id: 'scr-2',
-    projectId: 'proj-1',
-    projectName: 'The Last Sunset',
-    title: 'Act 2 Rough Cut',
-    type: 'scenes',
-    status: 'active',
-    viewerCount: 18,
-    averageCompletion: 65,
-    avgWatchTime: 312,
-    createdAt: '2026-01-25T14:30:00Z',
-  },
-  {
-    id: 'scr-3',
-    projectId: 'proj-2',
-    projectName: 'Urban Dreams',
-    title: 'Full Film Final Cut',
-    type: 'premiere',
-    status: 'completed',
-    viewerCount: 156,
-    averageCompletion: 89,
-    avgWatchTime: 1842,
-    createdAt: '2026-01-20T09:00:00Z',
-  },
-  {
-    id: 'scr-4',
-    projectId: 'proj-2',
-    projectName: 'Urban Dreams',
-    title: 'Teaser Trailer',
-    type: 'premiere',
-    status: 'active',
-    viewerCount: 89,
-    averageCompletion: 94,
-    avgWatchTime: 62,
-    createdAt: '2026-01-22T16:00:00Z',
-  },
-  {
-    id: 'scr-5',
-    projectId: 'proj-3',
-    projectName: 'Beyond the Horizon',
-    title: 'Character Introduction',
-    type: 'storyboard',
-    status: 'draft',
-    viewerCount: 0,
+  // Get thumbnail from metadata if available
+  const thumbnail = project.metadata?.thumbnailUrl || project.metadata?.thumbnail || undefined
+
+  return {
+    id: project.id,
+    projectId: project.id,
+    projectName: project.title,
+    title: project.title,
+    type: 'storyboard', // Projects in Production phase are storyboard screenings
+    status,
+    viewerCount: 0, // Will be populated when analytics are implemented
     averageCompletion: 0,
     avgWatchTime: 0,
-    createdAt: '2026-02-01T11:00:00Z',
-  },
-]
+    createdAt: project.createdAt,
+    thumbnail,
+  }
+}
 
-const MOCK_STATS: AggregatedStats = {
-  totalScreenings: 5,
-  totalViewers: 287,
-  averageCompletion: 81.5,
-  averageWatchTime: 615,
+// ============================================================================
+// Default Stats (for when no analytics data exists)
+// ============================================================================
+
+const DEFAULT_STATS: AggregatedStats = {
+  totalScreenings: 0,
+  totalViewers: 0,
+  averageCompletion: 0,
+  averageWatchTime: 0,
   emotionBreakdown: {
-    happy: 32,
-    surprised: 18,
-    engaged: 35,
-    neutral: 8,
-    confused: 4,
-    bored: 3,
+    happy: 0,
+    surprised: 0,
+    engaged: 0,
+    neutral: 0,
+    confused: 0,
+    bored: 0,
   },
-  completionTrend: 'up',
-  viewerTrend: 'up',
+  completionTrend: 'stable',
+  viewerTrend: 'stable',
 }
 
 // ============================================================================
@@ -414,8 +379,23 @@ function ProjectFilter({
  * Screening Card
  */
 function ScreeningCard({ screening }: { screening: ScreeningItem }) {
+  const router = useRouter()
   const tabConfig = SCREENING_TABS.find((t) => t.id === screening.type)
   const Icon = tabConfig?.icon || Eye
+
+  // Handle play button click - route to appropriate player
+  const handlePlay = () => {
+    if (screening.type === 'storyboard') {
+      // Route to Vision page with openPlayer query param to auto-open the Screening Room player
+      router.push(`/dashboard/workflow/vision/${screening.projectId}?openPlayer=true`)
+    } else if (screening.type === 'scenes') {
+      // Route to Final Cut editor
+      router.push(`/dashboard/workflow/final-cut?projectId=${screening.projectId}`)
+    } else {
+      // Route to Premiere
+      router.push(`/dashboard/workflow/premiere?projectId=${screening.projectId}`)
+    }
+  }
 
   return (
     <motion.div
@@ -453,7 +433,10 @@ function ScreeningCard({ screening }: { screening: ScreeningItem }) {
         </div>
 
         {/* Play Overlay */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/50">
+        <div 
+          className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 cursor-pointer"
+          onClick={handlePlay}
+        >
           <button className="w-14 h-14 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 flex items-center justify-center transition-colors">
             <Play className="w-7 h-7 text-emerald-400 ml-0.5" fill="currentColor" />
           </button>
@@ -483,16 +466,11 @@ function ScreeningCard({ screening }: { screening: ScreeningItem }) {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          <Link
-            href={`/dashboard/workflow/premiere?screeningId=${screening.id}`}
-            className="flex-1"
-          >
-            <Button size="sm" variant="outline" className="w-full">
-              <BarChart3 className="w-4 h-4 mr-1" />
-              Analytics
-            </Button>
-          </Link>
-          <Link href={`/s/${screening.id}`} target="_blank">
+          <Button size="sm" variant="outline" className="flex-1" onClick={handlePlay}>
+            <Play className="w-4 h-4 mr-1" />
+            Play
+          </Button>
+          <Link href={`/dashboard/workflow/vision/${screening.projectId}`}>
             <Button size="sm" variant="outline">
               <ExternalLink className="w-4 h-4" />
             </Button>
@@ -510,42 +488,67 @@ function ScreeningCard({ screening }: { screening: ScreeningItem }) {
 export default function ScreeningRoomDashboardPage() {
   const [activeTab, setActiveTab] = useState<string>('all')
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
+  
+  // Fetch real projects from the API
+  const { projects: dashboardProjects, isLoading } = useDashboardData()
+
+  // Convert dashboard projects to Project format for filter
+  const projects: Project[] = useMemo(() => {
+    return dashboardProjects.map(p => ({
+      id: p.id,
+      name: p.title,
+      thumbnail: p.metadata?.thumbnailUrl || p.metadata?.thumbnail,
+    }))
+  }, [dashboardProjects])
+
+  // Convert projects to screening items (storyboard type for now)
+  const screenings: ScreeningItem[] = useMemo(() => {
+    return dashboardProjects.map(projectToScreeningItem)
+  }, [dashboardProjects])
 
   // Filter screenings based on tab and project selection
   const filteredScreenings = useMemo(() => {
-    return MOCK_SCREENINGS.filter((screening) => {
+    return screenings.filter((screening) => {
       const matchesTab = activeTab === 'all' || screening.type === activeTab
       const matchesProject = !selectedProjectId || screening.projectId === selectedProjectId
       return matchesTab && matchesProject
     })
-  }, [activeTab, selectedProjectId])
+  }, [screenings, activeTab, selectedProjectId])
 
   // Calculate filtered stats
   const filteredStats = useMemo(() => {
     if (filteredScreenings.length === 0) {
-      return {
-        ...MOCK_STATS,
-        totalScreenings: 0,
-        totalViewers: 0,
-        averageCompletion: 0,
-        averageWatchTime: 0,
-      }
+      return DEFAULT_STATS
     }
 
     const totalViewers = filteredScreenings.reduce((sum, s) => sum + s.viewerCount, 0)
-    const avgCompletion =
-      filteredScreenings.reduce((sum, s) => sum + s.averageCompletion, 0) / filteredScreenings.length
-    const avgWatchTime =
-      filteredScreenings.reduce((sum, s) => sum + s.avgWatchTime, 0) / filteredScreenings.length
+    const avgCompletion = filteredScreenings.length > 0
+      ? filteredScreenings.reduce((sum, s) => sum + s.averageCompletion, 0) / filteredScreenings.length
+      : 0
+    const avgWatchTime = filteredScreenings.length > 0
+      ? filteredScreenings.reduce((sum, s) => sum + s.avgWatchTime, 0) / filteredScreenings.length
+      : 0
 
     return {
-      ...MOCK_STATS,
+      ...DEFAULT_STATS,
       totalScreenings: filteredScreenings.length,
       totalViewers,
       averageCompletion: Math.round(avgCompletion * 10) / 10,
       averageWatchTime: Math.round(avgWatchTime),
     }
   }, [filteredScreenings])
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mx-auto mb-4" />
+          <p className="text-gray-400">Loading your projects...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 p-6">
@@ -566,14 +569,14 @@ export default function ScreeningRoomDashboardPage() {
             
             <div className="flex items-center gap-3">
               <ProjectFilter
-                projects={MOCK_PROJECTS}
+                projects={projects}
                 selectedProjectId={selectedProjectId}
                 onSelect={setSelectedProjectId}
               />
-              <Link href="/dashboard/workflow/premiere">
+              <Link href="/dashboard/studio/new-project">
                 <Button className="bg-emerald-600 hover:bg-emerald-500">
                   <Sparkles className="w-4 h-4 mr-2" />
-                  New Screening
+                  New Project
                 </Button>
               </Link>
             </div>
@@ -634,17 +637,17 @@ export default function ScreeningRoomDashboardPage() {
               <span className="text-sm font-medium text-white">Quick Actions</span>
             </div>
             <div className="space-y-2">
-              <Link href="/dashboard/workflow/storyboard" className="block">
+              <Link href="/dashboard/studio/new-project" className="block">
                 <button className="w-full flex items-center gap-3 px-4 py-3 bg-gray-800/50 hover:bg-gray-800 border border-gray-700 rounded-lg transition-colors text-left">
                   <Film className="w-5 h-5 text-amber-400" />
-                  <span className="text-sm text-white flex-1">Create Storyboard Screening</span>
+                  <span className="text-sm text-white flex-1">Create Storyboard Project</span>
                   <ArrowRight className="w-4 h-4 text-gray-500" />
                 </button>
               </Link>
               <Link href="/dashboard/workflow/final-cut" className="block">
                 <button className="w-full flex items-center gap-3 px-4 py-3 bg-gray-800/50 hover:bg-gray-800 border border-gray-700 rounded-lg transition-colors text-left">
                   <Scissors className="w-5 h-5 text-blue-400" />
-                  <span className="text-sm text-white flex-1">Create Scene Screening</span>
+                  <span className="text-sm text-white flex-1">Open Final Cut Editor</span>
                   <ArrowRight className="w-4 h-4 text-gray-500" />
                 </button>
               </Link>
@@ -693,15 +696,15 @@ export default function ScreeningRoomDashboardPage() {
                     <tab.icon className="w-8 h-8 text-gray-500" />
                   </div>
                   <h3 className="text-lg font-semibold text-white mb-2">
-                    No {tab.label} Screenings
+                    No {tab.label}
                   </h3>
                   <p className="text-gray-400 mb-6 max-w-md mx-auto">
-                    {tab.description}. Create your first screening to start collecting audience insights.
+                    {tab.description}. Create your first project to start collecting audience insights.
                   </p>
-                  <Link href="/dashboard/workflow/premiere">
+                  <Link href="/dashboard/studio/new-project">
                     <Button className="bg-emerald-600 hover:bg-emerald-500">
                       <Sparkles className="w-4 h-4 mr-2" />
-                      Create Screening
+                      Create Project
                     </Button>
                   </Link>
                 </motion.div>
