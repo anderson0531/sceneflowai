@@ -5,8 +5,7 @@ import dynamic from 'next/dynamic'
 import { Header } from './components/Header'
 import { HeroSection } from './components/HeroSection'
 import { TrustSignals } from './components/TrustSignals'
-import { GoogleCloudBadge } from './components/GoogleCloudBadge'
-import { FounderSection } from './components/FounderSection'
+import { EngineeringTrust } from '@/components/landing/EngineeringTrust'
 
 // New "Living Pipeline" Ecosystem Sections
 const ModularShowcase = dynamic(() => import('@/components/landing/ModularShowcase'), { ssr: false })
@@ -46,9 +45,6 @@ export default function LandingPage() {
       
       {/* 2. Trust: Powered by Google Cloud credibility */}
       <TrustSignals />
-      
-      {/* 2.5. Google Cloud: Showcase Google AI integration */}
-      <GoogleCloudBadge />
       
       {/* 3. Modular Showcase: 4 modules with standalone value + ecosystem bonuses */}
       <ModularShowcase />
@@ -90,8 +86,8 @@ export default function LandingPage() {
       {/* 14. Pricing: Usage-based credits with project calculator */}
       <PricingCredits />
       
-      {/* 15. Founder: Leadership and vision */}
-      <FounderSection />
+      {/* 15. Engineering: Platform trust and security */}
+      <EngineeringTrust />
       
       {/* 16. FAQ: Objection handling */}
       <FAQ />
