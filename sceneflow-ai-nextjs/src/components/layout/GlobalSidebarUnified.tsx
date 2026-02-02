@@ -359,7 +359,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
           {config.sectionVisibility.screeningRoom && (
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
               <Link
-                href="/dashboard/workflow/premiere"
+                href="/screening-room"
                 className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wider hover:text-gray-700 dark:hover:text-gray-300 transition-colors group"
               >
                 <div className="flex items-center gap-2">
