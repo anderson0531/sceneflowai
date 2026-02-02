@@ -8,6 +8,7 @@
  * - ConsentModal: Privacy consent and demographics collection
  * - EmojiReactionBar: Timeline emoji reactions
  * - ScreeningRoomDashboard: Main dashboard with tabbed screenings
+ * - CreateScreeningModal: Modal for creating new screenings with share links
  * - ABTestModal: A/B test configuration
  * - InsightsView: Analytics visualization with heatmaps
  * - ExternalUpload: Drag-and-drop video upload for Final Cut tab
@@ -27,6 +28,7 @@ export { AudiencePlayer } from './AudiencePlayer'
 export { ConsentModal } from './ConsentModal'
 export { EmojiReactionBar, InlineEmojiReaction } from './EmojiReactionBar'
 export { ScreeningRoomDashboard } from './ScreeningRoomDashboard'
+export { CreateScreeningModal } from './CreateScreeningModal'
 export { ABTestModal } from './ABTestModal'
 export { InsightsView } from './InsightsView'
 export { ExternalUpload } from './ExternalUpload'

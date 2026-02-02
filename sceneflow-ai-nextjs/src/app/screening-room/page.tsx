@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -24,10 +24,15 @@ import {
   Sparkles,
   ArrowRight,
   Loader2,
+  Plus,
+  Share2,
+  Copy,
+  Check,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
+import { CreateScreeningModal } from '@/components/screening-room'
 import { useDashboardData, type DashboardProject } from '@/hooks/useDashboardData'
 
 // ============================================================================
@@ -488,9 +493,10 @@ function ScreeningCard({ screening }: { screening: ScreeningItem }) {
 export default function ScreeningRoomDashboardPage() {
   const [activeTab, setActiveTab] = useState<string>('all')
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   
   // Fetch real projects from the API
-  const { projects: dashboardProjects, isLoading } = useDashboardData()
+  const { projects: dashboardProjects, isLoading, refresh } = useDashboardData()
 
   // Convert dashboard projects to Project format for filter
   const projects: Project[] = useMemo(() => {
@@ -573,12 +579,13 @@ export default function ScreeningRoomDashboardPage() {
                 selectedProjectId={selectedProjectId}
                 onSelect={setSelectedProjectId}
               />
-              <Link href="/dashboard/studio/new-project">
-                <Button className="bg-emerald-600 hover:bg-emerald-500">
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  New Project
-                </Button>
-              </Link>
+              <Button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="bg-emerald-600 hover:bg-emerald-500"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                Share Screening
+              </Button>
             </div>
           </div>
           <p className="text-gray-400">
@@ -701,18 +708,30 @@ export default function ScreeningRoomDashboardPage() {
                   <p className="text-gray-400 mb-6 max-w-md mx-auto">
                     {tab.description}. Create your first project to start collecting audience insights.
                   </p>
-                  <Link href="/dashboard/studio/new-project">
-                    <Button className="bg-emerald-600 hover:bg-emerald-500">
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Create Project
-                    </Button>
-                  </Link>
+                  <Button 
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="bg-emerald-600 hover:bg-emerald-500"
+                  >
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share Screening
+                  </Button>
                 </motion.div>
               )}
             </TabsContent>
           ))}
         </Tabs>
       </div>
+
+      {/* Create Screening Modal */}
+      <CreateScreeningModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        projects={projects.map(p => ({ id: p.id, title: p.name }))}
+        onSuccess={() => {
+          // Refetch to show new screening
+          refresh?.()
+        }}
+      />
     </div>
   )
 }

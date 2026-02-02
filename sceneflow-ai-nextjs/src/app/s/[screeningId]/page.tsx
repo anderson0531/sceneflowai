@@ -1,128 +1,126 @@
 'use client'
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+/**
+ * Audience Screening Viewer Page
+ * 
+ * Public page for test audience to watch screenings with:
+ * - Password protection (if enabled)
+ * - Consent modal for biometrics
+ * - Emoji reactions and comments
+ * - Full behavioral analytics tracking
+ * 
+ * Supports two modes:
+ * 1. Premiere mode: Single video with AudiencePlayer
+ * 2. Storyboard mode: Scene-based with ScreeningRoomV2
+ * 
+ * @route /s/[screeningId]
+ */
+
+import React, { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { AudiencePlayer } from '@/components/screening-room/AudiencePlayer'
+import { ScreeningRoomV2 } from '@/components/vision/ScreeningRoomV2'
+import type { AudienceFeedbackEvent } from '@/components/vision/FullscreenPlayer'
 import {
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  Maximize,
-  MessageSquare,
-  ThumbsUp,
-  ThumbsDown,
-  Heart,
-  Lightbulb,
   Loader2,
   AlertCircle,
   Lock,
-  Send,
-  Clock
+  Film,
+  Clock,
+  Eye,
 } from 'lucide-react'
-import type {
-  ScreeningSession,
-  TimestampedComment,
-  ScreeningReaction,
-  ReactionType
-} from '@/lib/types/finalCut'
 
 // ============================================================================
 // Types
 // ============================================================================
 
-interface ScreeningViewerState {
-  isLoading: boolean
-  error: string | null
+interface ScreeningData {
+  id: string
+  projectId: string
+  title: string
+  description?: string
+  accessType: string
   requiresPassword: boolean
-  screening: ScreeningSession | null
-  videoUrl: string | null
+  feedbackEnabled: boolean
+  collectBiometrics: boolean
+  collectDemographics: boolean
+}
+
+interface VideoData {
+  screeningType: 'premiere' | 'storyboard' | 'scenes'
+  videoUrl?: string
+  scenes?: any[]
+  productionScenes?: Record<string, any>
+  script?: any
+  characters?: any[]
+  title: string
+  description?: string
+  feedbackEnabled: boolean
+  collectBiometrics: boolean
+  collectDemographics: boolean
+}
+
+interface PageState {
+  phase: 'loading' | 'password' | 'error' | 'expired' | 'ready'
+  error?: string
+  screening?: ScreeningData
+  videoData?: VideoData
+  sessionId?: string
 }
 
 // ============================================================================
-// ScreeningViewerPage Component
+// Component
 // ============================================================================
 
-export default function ScreeningViewerPage() {
+export default function AudienceScreeningPage() {
   const params = useParams()
   const screeningId = params.screeningId as string
   
-  // State
-  const [state, setState] = useState<ScreeningViewerState>({
-    isLoading: true,
-    error: null,
-    requiresPassword: false,
-    screening: null,
-    videoUrl: null
-  })
+  const [state, setState] = useState<PageState>({ phase: 'loading' })
   const [password, setPassword] = useState('')
   const [passwordError, setPasswordError] = useState(false)
-  
-  // Video state
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [isMuted, setIsMuted] = useState(false)
-  const [volume, setVolume] = useState(1)
-  const [isFullscreen, setIsFullscreen] = useState(false)
-  
-  // Comment state
-  const [showCommentInput, setShowCommentInput] = useState(false)
-  const [commentText, setCommentText] = useState('')
-  const [viewerName, setViewerName] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  
-  // Local feedback
-  const [localComments, setLocalComments] = useState<TimestampedComment[]>([])
-  const [localReactions, setLocalReactions] = useState<ScreeningReaction[]>([])
+  const [isValidating, setIsValidating] = useState(false)
   
   // ============================================================================
-  // Load screening data
+  // Load screening metadata
   // ============================================================================
   
   useEffect(() => {
     const loadScreening = async () => {
-      setState(prev => ({ ...prev, isLoading: true, error: null }))
-      
       try {
-        // In production, fetch from API
-        // For demo, simulate loading
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        const response = await fetch(`/api/screening/${screeningId}`)
         
-        // Mock screening data
-        const mockScreening: ScreeningSession = {
-          id: screeningId,
-          projectId: 'demo-project',
-          streamId: 'stream-1',
-          title: 'Sample Film - Test Screening',
-          description: 'Please watch and provide your feedback. We value your input!',
-          createdAt: new Date().toISOString(),
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          accessType: 'public',
-          shareUrl: window.location.href,
-          viewerCount: 0,
-          viewers: [],
-          feedbackEnabled: true,
-          comments: [],
-          reactions: [],
-          status: 'active'
+        if (response.status === 404) {
+          setState({ phase: 'error', error: 'Screening not found' })
+          return
         }
         
-        setState({
-          isLoading: false,
-          error: null,
-          requiresPassword: false,
-          screening: mockScreening,
-          videoUrl: '/sample-video.mp4' // Would be real video URL
-        })
+        if (response.status === 410) {
+          setState({ phase: 'expired' })
+          return
+        }
+        
+        if (!response.ok) {
+          setState({ phase: 'error', error: 'Failed to load screening' })
+          return
+        }
+        
+        const data = await response.json()
+        
+        if (data.screening.requiresPassword) {
+          setState({ 
+            phase: 'password', 
+            screening: data.screening 
+          })
+        } else {
+          // Load video data directly
+          await loadVideoData()
+        }
       } catch (error) {
-        setState(prev => ({
-          ...prev,
-          isLoading: false,
-          error: 'Failed to load screening. It may have expired or been removed.'
-        }))
+        console.error('Failed to load screening:', error)
+        setState({ phase: 'error', error: 'Failed to load screening' })
       }
     }
     
@@ -130,140 +128,138 @@ export default function ScreeningViewerPage() {
   }, [screeningId])
   
   // ============================================================================
-  // Password verification
+  // Load video data after access is granted
+  // ============================================================================
+  
+  const loadVideoData = useCallback(async (accessToken?: string) => {
+    try {
+      const url = accessToken 
+        ? `/api/screening/${screeningId}/video?token=${accessToken}`
+        : `/api/screening/${screeningId}/video`
+        
+      const response = await fetch(url)
+      
+      if (!response.ok) {
+        const data = await response.json()
+        setState({ phase: 'error', error: data.error || 'Failed to load video' })
+        return
+      }
+      
+      const data = await response.json()
+      
+      // Generate session ID for this viewing
+      const sessionId = `session-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+      
+      setState({
+        phase: 'ready',
+        screening: state.screening,
+        videoData: data,
+        sessionId,
+      })
+    } catch (error) {
+      console.error('Failed to load video:', error)
+      setState({ phase: 'error', error: 'Failed to load video' })
+    }
+  }, [screeningId, state.screening])
+  
+  // ============================================================================
+  // Password validation
   // ============================================================================
   
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setPasswordError(false)
+    setIsValidating(true)
     
-    // In production, verify password with API
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    // Simulate password check
-    if (password === 'demo') {
-      setState(prev => ({ ...prev, requiresPassword: false }))
-    } else {
+    try {
+      const response = await fetch(`/api/screening/${screeningId}/validate-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      })
+      
+      if (!response.ok) {
+        setPasswordError(true)
+        return
+      }
+      
+      const data = await response.json()
+      await loadVideoData(data.accessToken)
+    } catch (error) {
+      console.error('Password validation failed:', error)
       setPasswordError(true)
+    } finally {
+      setIsValidating(false)
     }
   }
   
   // ============================================================================
-  // Video controls
+  // Handle feedback events
   // ============================================================================
   
-  const togglePlay = useCallback(() => {
-    if (!videoRef.current) return
+  const handleAudienceFeedback = useCallback(async (event: AudienceFeedbackEvent) => {
+    if (!state.videoData?.feedbackEnabled) return
     
-    if (isPlaying) {
-      videoRef.current.pause()
-    } else {
-      videoRef.current.play()
+    try {
+      if (event.type === 'emoji') {
+        await fetch(`/api/screening/${screeningId}/feedback`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'reaction',
+            sessionId: state.sessionId,
+            timestamp: event.videoTime,
+            reactionType: event.data.reactionType,
+            emoji: event.data.emoji,
+          }),
+        })
+      }
+      // Biometric and behavior events are handled by the analytics service
+    } catch (error) {
+      console.error('Failed to submit feedback:', error)
     }
-    setIsPlaying(!isPlaying)
-  }, [isPlaying])
-  
-  const handleTimeUpdate = useCallback(() => {
-    if (!videoRef.current) return
-    setCurrentTime(videoRef.current.currentTime)
-  }, [])
-  
-  const handleLoadedMetadata = useCallback(() => {
-    if (!videoRef.current) return
-    setDuration(videoRef.current.duration)
-  }, [])
-  
-  const handleSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!videoRef.current) return
-    const time = parseFloat(e.target.value)
-    videoRef.current.currentTime = time
-    setCurrentTime(time)
-  }, [])
-  
-  const toggleMute = useCallback(() => {
-    if (!videoRef.current) return
-    videoRef.current.muted = !isMuted
-    setIsMuted(!isMuted)
-  }, [isMuted])
-  
-  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!videoRef.current) return
-    const vol = parseFloat(e.target.value)
-    videoRef.current.volume = vol
-    setVolume(vol)
-    setIsMuted(vol === 0)
-  }, [])
-  
-  const toggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen()
-      setIsFullscreen(true)
-    } else {
-      document.exitFullscreen()
-      setIsFullscreen(false)
-    }
-  }, [])
+  }, [screeningId, state.sessionId, state.videoData?.feedbackEnabled])
   
   // ============================================================================
-  // Feedback
+  // Handle session events
   // ============================================================================
   
-  const handleAddComment = useCallback(async () => {
-    if (!commentText.trim() || !viewerName.trim()) return
-    
-    setSubmitting(true)
-    
-    const newComment: TimestampedComment = {
-      id: `comment-${Date.now()}`,
-      viewerId: `viewer-${Date.now()}`,
-      viewerName: viewerName.trim(),
-      timestamp: currentTime,
-      text: commentText.trim(),
-      createdAt: new Date().toISOString(),
-      isResolved: false
-    }
-    
-    // In production, submit to API
-    await new Promise(resolve => setTimeout(resolve, 300))
-    
-    setLocalComments(prev => [...prev, newComment])
-    setCommentText('')
-    setShowCommentInput(false)
-    setSubmitting(false)
-  }, [commentText, viewerName, currentTime])
+  const handleSessionStart = useCallback((sessionId: string, cameraConsent: boolean) => {
+    console.log('[Screening] Session started:', sessionId, 'Camera:', cameraConsent)
+  }, [])
   
-  const handleAddReaction = useCallback((type: ReactionType) => {
-    const newReaction: ScreeningReaction = {
-      id: `reaction-${Date.now()}`,
-      viewerId: 'viewer-anon',
-      timestamp: currentTime,
-      type,
-      createdAt: new Date().toISOString()
-    }
-    
-    setLocalReactions(prev => [...prev, newReaction])
-  }, [currentTime])
-  
-  // ============================================================================
-  // Helpers
-  // ============================================================================
-  
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
+  const handleComplete = useCallback((sessionId: string) => {
+    console.log('[Screening] Session completed:', sessionId)
+  }, [])
   
   // ============================================================================
   // Render: Loading
   // ============================================================================
   
-  if (state.isLoading) {
+  if (state.phase === 'loading') {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-blue-400 mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 text-purple-500 animate-spin mx-auto mb-4" />
           <p className="text-gray-400">Loading screening...</p>
+        </div>
+      </div>
+    )
+  }
+  
+  // ============================================================================
+  // Render: Expired
+  // ============================================================================
+  
+  if (state.phase === 'expired') {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center max-w-md px-4">
+          <Clock className="w-16 h-16 text-orange-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-white mb-2">Screening Expired</h1>
+          <p className="text-gray-400">
+            This screening link has expired. Please contact the creator for a new link.
+          </p>
         </div>
       </div>
     )
@@ -273,14 +269,12 @@ export default function ScreeningViewerPage() {
   // Render: Error
   // ============================================================================
   
-  if (state.error) {
+  if (state.phase === 'error') {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-          <h1 className="text-xl font-semibold text-white mb-2">
-            Screening Unavailable
-          </h1>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center max-w-md px-4">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-white mb-2">Unable to Load</h1>
           <p className="text-gray-400">{state.error}</p>
         </div>
       </div>
@@ -291,327 +285,116 @@ export default function ScreeningViewerPage() {
   // Render: Password Required
   // ============================================================================
   
-  if (state.requiresPassword) {
+  if (state.phase === 'password') {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="w-full max-w-sm bg-gray-900 rounded-lg p-6 border border-gray-800">
-          <div className="text-center mb-6">
-            <Lock className="w-10 h-10 text-amber-400 mx-auto mb-3" />
-            <h1 className="text-xl font-semibold text-white">
-              Protected Screening
-            </h1>
-            <p className="text-sm text-gray-400 mt-1">
-              Enter the password to view this screening
-            </p>
-          </div>
-          
-          <form onSubmit={handlePasswordSubmit}>
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={`mb-4 ${passwordError ? 'border-red-500' : ''}`}
-            />
-            
-            {passwordError && (
-              <p className="text-sm text-red-400 mb-4">
-                Incorrect password. Please try again.
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-full max-w-md px-4">
+          <div className="bg-gray-900 rounded-2xl border border-gray-800 p-8">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Lock className="w-8 h-8 text-purple-400" />
+              </div>
+              <h1 className="text-2xl font-bold text-white mb-2">
+                {state.screening?.title || 'Private Screening'}
+              </h1>
+              <p className="text-gray-400">
+                This screening is password protected
               </p>
-            )}
+            </div>
             
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-              Enter Screening
-            </Button>
-          </form>
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div>
+                <Input
+                  type="password"
+                  placeholder="Enter password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={`w-full bg-gray-800 border-gray-700 text-white ${
+                    passwordError ? 'border-red-500' : ''
+                  }`}
+                  autoFocus
+                />
+                {passwordError && (
+                  <p className="text-red-400 text-sm mt-2">Incorrect password</p>
+                )}
+              </div>
+              
+              <Button
+                type="submit"
+                className="w-full bg-purple-600 hover:bg-purple-700"
+                disabled={!password || isValidating}
+              >
+                {isValidating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  <>
+                    <Eye className="w-4 h-4 mr-2" />
+                    Watch Screening
+                  </>
+                )}
+              </Button>
+            </form>
+          </div>
         </div>
       </div>
     )
   }
   
   // ============================================================================
-  // Render: Screening Viewer
+  // Render: Ready - Show Player
   // ============================================================================
   
-  return (
-    <div className="min-h-screen bg-black flex flex-col">
-      {/* Header */}
-      <header className="px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-semibold text-white">
-              {state.screening?.title}
-            </h1>
-            {state.screening?.description && (
-              <p className="text-sm text-gray-400">{state.screening.description}</p>
-            )}
-          </div>
-          
-          <div className="text-sm text-gray-500">
-            Test Screening
-          </div>
+  if (state.phase === 'ready' && state.videoData) {
+    const { videoData, sessionId } = state
+    
+    // Premiere mode: Single video with AudiencePlayer
+    if (videoData.screeningType === 'premiere' && videoData.videoUrl) {
+      return (
+        <AudiencePlayer
+          screeningId={screeningId}
+          videoUrl={videoData.videoUrl}
+          title={videoData.title}
+          description={videoData.description}
+          collectDemographics={videoData.collectDemographics}
+          onSessionStart={handleSessionStart}
+          onComplete={handleComplete}
+        />
+      )
+    }
+    
+    // Storyboard mode: Scene-based with ScreeningRoomV2
+    if (videoData.screeningType === 'storyboard' && videoData.script) {
+      return (
+        <ScreeningRoomV2
+          script={videoData.script}
+          characters={videoData.characters || []}
+          onClose={() => window.close()}
+          sceneProductionState={videoData.productionScenes}
+          enableAudienceFeedback={videoData.feedbackEnabled}
+          screeningId={screeningId}
+          sessionId={sessionId}
+          onAudienceFeedback={handleAudienceFeedback}
+        />
+      )
+    }
+    
+    // Fallback: No playable content
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center max-w-md px-4">
+          <Film className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-white mb-2">Content Not Ready</h1>
+          <p className="text-gray-400">
+            This screening doesn&apos;t have playable content yet. 
+            Please contact the creator.
+          </p>
         </div>
-      </header>
-      
-      {/* Video Player */}
-      <main className="flex-1 flex flex-col lg:flex-row gap-4 p-4 max-w-7xl mx-auto w-full">
-        <div className="flex-1">
-          {/* Video Container */}
-          <div className="relative bg-gray-950 rounded-lg overflow-hidden aspect-video">
-            {/* Placeholder video (would be real video in production) */}
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
-              <div className="text-center">
-                <p className="text-gray-400 mb-2">Video Preview</p>
-                <p className="text-xs text-gray-600">
-                  (Video playback would appear here)
-                </p>
-              </div>
-            </div>
-            
-            {/* Video element (hidden for demo) */}
-            <video
-              ref={videoRef}
-              className="w-full h-full object-contain hidden"
-              onTimeUpdate={handleTimeUpdate}
-              onLoadedMetadata={handleLoadedMetadata}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-            >
-              <source src={state.videoUrl || ''} type="video/mp4" />
-            </video>
-            
-            {/* Controls Overlay */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4">
-              {/* Progress Bar */}
-              <div className="mb-3">
-                <input
-                  type="range"
-                  min={0}
-                  max={duration || 300} // Default 5 min for demo
-                  value={currentTime}
-                  onChange={handleSeek}
-                  className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
-                  style={{
-                    background: `linear-gradient(to right, #3b82f6 ${(currentTime / (duration || 300)) * 100}%, #4b5563 ${(currentTime / (duration || 300)) * 100}%)`
-                  }}
-                />
-              </div>
-              
-              {/* Control Buttons */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {/* Play/Pause */}
-                  <button
-                    onClick={togglePlay}
-                    className="text-white hover:text-blue-400 transition-colors"
-                  >
-                    {isPlaying ? (
-                      <Pause className="w-6 h-6" />
-                    ) : (
-                      <Play className="w-6 h-6" />
-                    )}
-                  </button>
-                  
-                  {/* Volume */}
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={toggleMute}
-                      className="text-white hover:text-blue-400 transition-colors"
-                    >
-                      {isMuted ? (
-                        <VolumeX className="w-5 h-5" />
-                      ) : (
-                        <Volume2 className="w-5 h-5" />
-                      )}
-                    </button>
-                    <input
-                      type="range"
-                      min={0}
-                      max={1}
-                      step={0.1}
-                      value={isMuted ? 0 : volume}
-                      onChange={handleVolumeChange}
-                      className="w-16 h-1 bg-gray-600 rounded appearance-none cursor-pointer"
-                    />
-                  </div>
-                  
-                  {/* Time Display */}
-                  <div className="text-sm text-gray-300">
-                    {formatTime(currentTime)} / {formatTime(duration || 300)}
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  {/* Fullscreen */}
-                  <button
-                    onClick={toggleFullscreen}
-                    className="text-white hover:text-blue-400 transition-colors"
-                  >
-                    <Maximize className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Reaction Bar */}
-          {state.screening?.feedbackEnabled && (
-            <div className="mt-4 flex items-center gap-2">
-              <span className="text-sm text-gray-400 mr-2">React:</span>
-              
-              <button
-                onClick={() => handleAddReaction('like')}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-800 hover:bg-gray-700 text-white text-sm transition-colors"
-              >
-                <ThumbsUp className="w-4 h-4" />
-                <span>{localReactions.filter(r => r.type === 'like').length}</span>
-              </button>
-              
-              <button
-                onClick={() => handleAddReaction('love')}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-800 hover:bg-gray-700 text-white text-sm transition-colors"
-              >
-                <Heart className="w-4 h-4" />
-                <span>{localReactions.filter(r => r.type === 'love').length}</span>
-              </button>
-              
-              <button
-                onClick={() => handleAddReaction('confused')}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-800 hover:bg-gray-700 text-white text-sm transition-colors"
-              >
-                <Lightbulb className="w-4 h-4" />
-                <span>{localReactions.filter(r => r.type === 'confused').length}</span>
-              </button>
-              
-              <div className="flex-1" />
-              
-              <button
-                onClick={() => setShowCommentInput(!showCommentInput)}
-                className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm transition-colors"
-              >
-                <MessageSquare className="w-4 h-4" />
-                Add Comment at {formatTime(currentTime)}
-              </button>
-            </div>
-          )}
-          
-          {/* Comment Input */}
-          {showCommentInput && (
-            <div className="mt-4 p-4 bg-gray-900 rounded-lg border border-gray-800">
-              <div className="flex items-center gap-2 mb-3">
-                <Clock className="w-4 h-4 text-blue-400" />
-                <span className="text-sm text-gray-300">
-                  Comment at {formatTime(currentTime)}
-                </span>
-              </div>
-              
-              <div className="space-y-3">
-                <Input
-                  placeholder="Your name"
-                  value={viewerName}
-                  onChange={(e) => setViewerName(e.target.value)}
-                  className="bg-gray-800 border-gray-700"
-                />
-                
-                <textarea
-                  placeholder="Share your feedback..."
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 resize-none"
-                  rows={3}
-                />
-                
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowCommentInput(false)}
-                    className="text-gray-400"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleAddComment}
-                    disabled={!commentText.trim() || !viewerName.trim() || submitting}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    {submitting ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4 mr-2" />
-                        Submit
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        {/* Comments Panel */}
-        {state.screening?.feedbackEnabled && (
-          <aside className="w-full lg:w-80 bg-gray-900/50 rounded-lg border border-gray-800 p-4">
-            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <MessageSquare className="w-5 h-5" />
-              Feedback
-              <span className="ml-auto text-sm text-gray-500">
-                {localComments.length}
-              </span>
-            </h2>
-            
-            {localComments.length === 0 ? (
-              <div className="text-center py-8">
-                <MessageSquare className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">
-                  No comments yet. Be the first to share your feedback!
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3 max-h-[500px] overflow-auto">
-                {localComments
-                  .sort((a, b) => a.timestamp - b.timestamp)
-                  .map((comment) => (
-                    <div
-                      key={comment.id}
-                      className="p-3 bg-gray-800/50 rounded-lg"
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-xs text-white">
-                          {comment.viewerName[0].toUpperCase()}
-                        </div>
-                        <span className="text-sm font-medium text-white">
-                          {comment.viewerName}
-                        </span>
-                        <button
-                          onClick={() => {
-                            if (videoRef.current) {
-                              videoRef.current.currentTime = comment.timestamp
-                            }
-                            setCurrentTime(comment.timestamp)
-                          }}
-                          className="ml-auto text-xs text-blue-400 hover:text-blue-300"
-                        >
-                          {formatTime(comment.timestamp)}
-                        </button>
-                      </div>
-                      <p className="text-sm text-gray-300">{comment.text}</p>
-                    </div>
-                  ))}
-              </div>
-            )}
-          </aside>
-        )}
-      </main>
-      
-      {/* Footer */}
-      <footer className="px-4 py-3 bg-gray-900/50 border-t border-gray-800 text-center">
-        <p className="text-xs text-gray-500">
-          This is a private test screening. Please do not share or distribute.
-        </p>
-      </footer>
-    </div>
-  )
+      </div>
+    )
+  }
+  
+  return null
 }
