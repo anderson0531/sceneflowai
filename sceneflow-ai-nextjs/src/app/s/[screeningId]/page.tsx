@@ -148,8 +148,32 @@ export default function AudienceScreeningPage() {
       
       const data = await response.json()
       
-      // Generate session ID for this viewing
-      const sessionId = `session-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+      // Initialize session via API (this increments viewer count)
+      let sessionId = `session-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+      try {
+        const sessionResponse = await fetch(`/api/screening/${screeningId}/session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cameraConsentGranted: false, // Will be updated after consent modal
+            deviceInfo: {
+              userAgent: navigator.userAgent,
+              screenWidth: window.screen.width,
+              screenHeight: window.screen.height,
+              isMobile: /Mobi|Android/i.test(navigator.userAgent),
+            },
+          }),
+        })
+        
+        if (sessionResponse.ok) {
+          const sessionData = await sessionResponse.json()
+          sessionId = sessionData.sessionId
+          console.log('[Screening] Session initialized:', sessionId)
+        }
+      } catch (err) {
+        console.error('[Screening] Failed to initialize session:', err)
+        // Continue with local session ID
+      }
       
       setState({
         phase: 'ready',

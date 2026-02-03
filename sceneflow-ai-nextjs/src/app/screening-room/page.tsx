@@ -487,6 +487,44 @@ function ScreeningCard({ screening }: { screening: ScreeningItem }) {
 }
 
 // ============================================================================
+// Analytics Data Type
+// ============================================================================
+
+interface ScreeningAnalyticsData {
+  screeningId: string
+  projectId: string
+  title: string
+  screeningType: string
+  viewerCount: number
+  avgCompletion: number
+  avgWatchTime: number
+  emotionBreakdown: {
+    happy: number
+    surprised: number
+    engaged: number
+    neutral: number
+    confused: number
+    bored: number
+  }
+}
+
+interface DashboardAnalyticsResponse {
+  totalScreenings: number
+  totalViewers: number
+  averageCompletion: number
+  averageWatchTime: number
+  emotionBreakdown: {
+    happy: number
+    surprised: number
+    engaged: number
+    neutral: number
+    confused: number
+    bored: number
+  }
+  screeningStats: Record<string, ScreeningAnalyticsData>
+}
+
+// ============================================================================
 // Main Component
 // ============================================================================
 
@@ -494,9 +532,36 @@ export default function ScreeningRoomDashboardPage() {
   const [activeTab, setActiveTab] = useState<string>('all')
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [analyticsData, setAnalyticsData] = useState<DashboardAnalyticsResponse | null>(null)
+  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false)
   
   // Fetch real projects from the API
   const { projects: dashboardProjects, isLoading, refresh } = useDashboardData()
+
+  // Fetch analytics data when projects load
+  useEffect(() => {
+    async function fetchAnalytics() {
+      if (dashboardProjects.length === 0) return
+      
+      setIsLoadingAnalytics(true)
+      try {
+        const url = selectedProjectId 
+          ? `/api/analytics/dashboard?projectId=${selectedProjectId}`
+          : '/api/analytics/dashboard'
+        const response = await fetch(url)
+        if (response.ok) {
+          const data = await response.json()
+          setAnalyticsData(data)
+        }
+      } catch (err) {
+        console.error('Failed to fetch analytics:', err)
+      } finally {
+        setIsLoadingAnalytics(false)
+      }
+    }
+    
+    fetchAnalytics()
+  }, [dashboardProjects, selectedProjectId])
 
   // Convert dashboard projects to Project format for filter
   const projects: Project[] = useMemo(() => {
@@ -507,10 +572,31 @@ export default function ScreeningRoomDashboardPage() {
     }))
   }, [dashboardProjects])
 
-  // Convert projects to screening items (storyboard type for now)
+  // Convert projects to screening items and merge with analytics
   const screenings: ScreeningItem[] = useMemo(() => {
-    return dashboardProjects.map(projectToScreeningItem)
-  }, [dashboardProjects])
+    return dashboardProjects.map(project => {
+      const baseItem = projectToScreeningItem(project)
+      
+      // Try to find analytics for this project's screenings
+      if (analyticsData?.screeningStats) {
+        // Look for any screening matching this project
+        const projectStats = Object.values(analyticsData.screeningStats).find(
+          s => s.projectId === project.id
+        )
+        if (projectStats) {
+          return {
+            ...baseItem,
+            viewerCount: projectStats.viewerCount,
+            averageCompletion: projectStats.avgCompletion,
+            avgWatchTime: projectStats.avgWatchTime,
+            type: (projectStats.screeningType || 'storyboard') as ScreeningItem['type'],
+          }
+        }
+      }
+      
+      return baseItem
+    })
+  }, [dashboardProjects, analyticsData])
 
   // Filter screenings based on tab and project selection
   const filteredScreenings = useMemo(() => {
@@ -521,8 +607,22 @@ export default function ScreeningRoomDashboardPage() {
     })
   }, [screenings, activeTab, selectedProjectId])
 
-  // Calculate filtered stats
-  const filteredStats = useMemo(() => {
+  // Calculate filtered stats - use analytics data when available
+  const filteredStats = useMemo((): AggregatedStats => {
+    // If we have analytics data from the API, use it
+    if (analyticsData) {
+      return {
+        totalScreenings: analyticsData.totalScreenings || filteredScreenings.length,
+        totalViewers: analyticsData.totalViewers,
+        averageCompletion: Math.round(analyticsData.averageCompletion * 100) / 100,
+        averageWatchTime: Math.round(analyticsData.averageWatchTime),
+        emotionBreakdown: analyticsData.emotionBreakdown || DEFAULT_STATS.emotionBreakdown,
+        completionTrend: analyticsData.averageCompletion > 50 ? 'up' : analyticsData.averageCompletion > 0 ? 'stable' : 'stable',
+        viewerTrend: analyticsData.totalViewers > 0 ? 'up' : 'stable',
+      }
+    }
+    
+    // Fallback to calculating from screenings
     if (filteredScreenings.length === 0) {
       return DEFAULT_STATS
     }
@@ -542,7 +642,7 @@ export default function ScreeningRoomDashboardPage() {
       averageCompletion: Math.round(avgCompletion * 10) / 10,
       averageWatchTime: Math.round(avgWatchTime),
     }
-  }, [filteredScreenings])
+  }, [filteredScreenings, analyticsData])
 
   // Loading state
   if (isLoading) {
