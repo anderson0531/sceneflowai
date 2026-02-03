@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
     await project.update({ metadata: updatedMetadata })
 
     // Return success with share URL
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sceneflow.ai'
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sceneflowai.studio'
     const fullShareUrl = `${baseUrl}/s/${screeningId}`
 
     return NextResponse.json({

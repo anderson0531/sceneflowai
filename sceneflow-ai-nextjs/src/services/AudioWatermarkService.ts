@@ -326,7 +326,7 @@ export class AudioWatermarkService {
       signature
     })).toString('base64url')
 
-    return `${process.env.NEXT_PUBLIC_BASE_URL || 'https://sceneflow.ai'}/verify/audio?data=${verifyData}`
+    return `${process.env.NEXT_PUBLIC_BASE_URL || 'https://sceneflowai.studio'}/verify/audio?data=${verifyData}`
   }
 }
 
