@@ -29,6 +29,9 @@ import {
   UserCircle,
   Loader2,
   ExternalLink,
+  Film,
+  Play,
+  Video,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -93,6 +96,7 @@ export function CreateScreeningModal({
   
   // Form state
   const [selectedProjectId, setSelectedProjectId] = useState(defaultProjectId)
+  const [screeningType, setScreeningType] = useState<'storyboard' | 'scenes' | 'premiere'>('storyboard')
   const [title, setTitle] = useState(defaultProjectTitle ? `${defaultProjectTitle} - Screening` : '')
   const [description, setDescription] = useState('')
   const [accessType, setAccessType] = useState<AccessType>('public')
@@ -152,6 +156,7 @@ export function CreateScreeningModal({
         body: JSON.stringify({
           projectId: effectiveProjectId,
           streamId,
+          screeningType,
           title: title.trim(),
           description: description.trim() || undefined,
           accessType,
@@ -214,6 +219,7 @@ export function CreateScreeningModal({
     setFeedbackEnabled(true)
     setCollectBiometrics(true)
     setCollectDemographics(true)
+    setScreeningType('storyboard')
     setCreatedScreening(null)
     setError(null)
     setSelectedProjectId(defaultProjectId)
@@ -348,6 +354,59 @@ export function CreateScreeningModal({
                     </select>
                   </div>
                 )}
+                
+                {/* Screening Type */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Content Type
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setScreeningType('storyboard')}
+                      className={cn(
+                        "p-3 rounded-lg border text-sm font-medium transition-colors",
+                        screeningType === 'storyboard'
+                          ? "border-purple-500 bg-purple-500/10 text-purple-400"
+                          : "border-gray-700 text-gray-400 hover:border-gray-600"
+                      )}
+                    >
+                      <Film className="w-4 h-4 mx-auto mb-1" />
+                      <span>Animatic</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setScreeningType('scenes')}
+                      className={cn(
+                        "p-3 rounded-lg border text-sm font-medium transition-colors",
+                        screeningType === 'scenes'
+                          ? "border-purple-500 bg-purple-500/10 text-purple-400"
+                          : "border-gray-700 text-gray-400 hover:border-gray-600"
+                      )}
+                    >
+                      <Play className="w-4 h-4 mx-auto mb-1" />
+                      <span>Scene Videos</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setScreeningType('premiere')}
+                      className={cn(
+                        "p-3 rounded-lg border text-sm font-medium transition-colors",
+                        screeningType === 'premiere'
+                          ? "border-purple-500 bg-purple-500/10 text-purple-400"
+                          : "border-gray-700 text-gray-400 hover:border-gray-600"
+                      )}
+                    >
+                      <Video className="w-4 h-4 mx-auto mb-1" />
+                      <span>Final Cut</span>
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    {screeningType === 'storyboard' && 'Show keyframe images with narration and music'}
+                    {screeningType === 'scenes' && 'Show rendered AI-generated scene videos'}
+                    {screeningType === 'premiere' && 'Show the final exported video'}
+                  </p>
+                </div>
                 
                 {/* Title */}
                 <div>

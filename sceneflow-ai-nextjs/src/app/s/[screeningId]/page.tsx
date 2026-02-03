@@ -53,6 +53,7 @@ interface VideoData {
   videoUrl?: string
   scenes?: any[]
   productionScenes?: Record<string, any>
+  sceneProductionState?: Record<string, any>
   script?: any
   characters?: any[]
   title: string
@@ -372,7 +373,7 @@ export default function AudienceScreeningPage() {
           script={videoData.script}
           characters={videoData.characters || []}
           onClose={() => window.close()}
-          sceneProductionState={videoData.productionScenes}
+          sceneProductionState={videoData.sceneProductionState || videoData.productionScenes || {}}
           enableAudienceFeedback={videoData.feedbackEnabled}
           screeningId={screeningId}
           sessionId={sessionId}

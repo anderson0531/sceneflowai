@@ -71,42 +71,89 @@ export async function GET(
     // This could be a specific stream URL or the project's video
     const metadata = (project.metadata as Record<string, any>) || {}
     
-    // Look for video URL in various locations
+    // Determine screening type from the screening settings or default to storyboard
+    const screeningType = screening.screeningType || 'storyboard'
+    
+    // Look for video URL in various locations (for premiere/final cut screenings)
     let videoUrl = screening.videoUrl 
       || metadata.videoUrl 
       || metadata.streamUrl
       || metadata.exportedVideoUrl
     
-    // If no direct video URL, the screening might be for a storyboard
-    // Return project scenes for the ScreeningRoomV2 player
-    if (!videoUrl) {
-      const scenes = metadata.scenes || []
-      
+    // For premiere screenings with video, return AudiencePlayer format
+    if (screeningType === 'premiere' && videoUrl) {
       return NextResponse.json({
         success: true,
-        type: 'storyboard',
+        screeningType: 'premiere',
+        videoUrl,
         projectId: project.id,
         projectTitle: project.title,
-        scenes: scenes.map((scene: any) => ({
-          id: scene.id,
-          sceneNumber: scene.sceneNumber,
-          title: scene.title,
-          description: scene.description,
-          thumbnailUrl: scene.thumbnailUrl || scene.imageUrl,
-          audioUrl: scene.audioUrl,
-          duration: scene.duration || 5,
-        })),
-        totalDuration: scenes.reduce((sum: number, s: any) => sum + (s.duration || 5), 0),
+        title: screening.title,
+        description: screening.description,
+        feedbackEnabled: screening.feedbackEnabled ?? true,
+        collectBiometrics: screening.collectBiometrics ?? false,
       })
     }
-
-    // Return video URL for the AudiencePlayer
+    
+    // For storyboard/animatic screenings, get scenes from visionPhase
+    const visionPhase = metadata.visionPhase || {}
+    
+    // Try multiple paths to find scenes (based on ScreeningRoomV2's normalizeScenes logic)
+    const scenes = visionPhase.script?.script?.scenes 
+      || visionPhase.scenes 
+      || metadata.scenes 
+      || []
+    
+    // Get characters for the script
+    const characters = visionPhase.characters || metadata.characters || []
+    
+    // Get production data (for keyframe segments)
+    const productionScenes = visionPhase.production?.scenes || {}
+    
+    // Build script object for ScreeningRoomV2
+    const script = visionPhase.script || { 
+      title: project.title,
+      script: { scenes } 
+    }
+    
+    // Check if we have any content
+    if (scenes.length === 0) {
+      return NextResponse.json({
+        success: false,
+        error: 'No scenes available for this screening',
+        screeningType,
+        projectId: project.id,
+      }, { status: 404 })
+    }
+    
+    // Return storyboard data for ScreeningRoomV2
     return NextResponse.json({
       success: true,
-      type: 'video',
-      videoUrl,
+      screeningType: 'storyboard',
       projectId: project.id,
       projectTitle: project.title,
+      title: screening.title,
+      description: screening.description,
+      feedbackEnabled: screening.feedbackEnabled ?? true,
+      collectBiometrics: screening.collectBiometrics ?? false,
+      collectDemographics: screening.collectDemographics ?? false,
+      // Full script object for ScreeningRoomV2
+      script,
+      characters,
+      // Production data for keyframe playback
+      sceneProductionState: productionScenes,
+      // Simplified scenes list for fallback
+      scenes: scenes.map((scene: any, index: number) => ({
+        id: scene.id || scene.sceneId || `scene-${index}`,
+        sceneNumber: scene.sceneNumber || index + 1,
+        title: scene.title || `Scene ${index + 1}`,
+        description: scene.description,
+        thumbnailUrl: scene.thumbnailUrl || scene.imageUrl,
+        audioUrl: scene.audioUrl,
+        duration: scene.duration || 5,
+      })),
+      totalScenes: scenes.length,
+      totalDuration: scenes.reduce((sum: number, s: any) => sum + (s.duration || 5), 0),
     })
   } catch (error: any) {
     console.error('[GET /api/screening/[id]/video] Error:', error)

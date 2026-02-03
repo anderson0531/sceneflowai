@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
     const {
       projectId,
       streamId,
+      screeningType = 'storyboard',
       title,
       description,
       accessType = 'public',
@@ -83,10 +84,11 @@ export async function POST(request: NextRequest) {
     expiresAt.setDate(expiresAt.getDate() + expiresInDays)
 
     // Build screening session
-    const screening: ScreeningSession & { shareToken: string; collectBiometrics: boolean; collectDemographics: boolean; createdBy: string } = {
+    const screening: ScreeningSession & { shareToken: string; collectBiometrics: boolean; collectDemographics: boolean; createdBy: string; screeningType: string } = {
       id: screeningId,
       projectId,
       streamId: streamId || projectId, // Default to project if no specific stream
+      screeningType,
       title,
       description,
       createdAt: new Date().toISOString(),
