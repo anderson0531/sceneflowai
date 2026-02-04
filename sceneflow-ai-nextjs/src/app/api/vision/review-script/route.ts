@@ -359,56 +359,51 @@ FINAL CHECK before outputting:
     throw new Error('Failed to parse audience resonance review JSON')
   }
 
-  // SCORE RECALCULATION: Calculate score strictly from deductions (ignore AI's arbitrary score)
+  // Keep deductions as qualitative feedback (shown to user, but not used for score calculation)
   const deductions = review.deductions || []
-  const totalDeductions = deductions.reduce((sum: number, d: any) => sum + (d.points || 0), 0)
-  // Floor at 40 to prevent overly harsh scores - no script should score below 40
-  const calculatedScore = Math.max(40, 100 - totalDeductions)
-  
-  // Apply auto cap if needed, but always use calculated score from deductions
-  const enforcedScore = Math.min(calculatedScore, autoScoreCap)
-  
-  if (enforcedScore !== review.overallScore) {
-    console.log(`[Audience Resonance] Score override: AI returned ${review.overallScore}, but deductions total ${totalDeductions} pts -> Final: ${enforcedScore}`)
-  }
-  
-  // Apply the calculated score (ignore AI's arbitrary score)
-  review.overallScore = enforcedScore
   review.deductions = deductions
   
-  // Recalculate dimensional scores based on deduction categories for consistency
-  const categoryDeductions: Record<string, number> = {}
-  for (const d of deductions) {
-    const cat = d.category || 'General'
-    categoryDeductions[cat] = (categoryDeductions[cat] || 0) + (d.points || 0)
+  // SCORE CALCULATION: Use weighted average of dimensional scores
+  // This ensures the overall score aligns with the dimensional analysis radar chart
+  const categories = review.categories || []
+  
+  // Define weights for each dimension (must sum to 100)
+  const dimensionWeights: Record<string, number> = {
+    'Dialogue Subtext': 20,
+    'Structural Integrity': 20,
+    'Emotional Arc': 20,
+    'Visual Storytelling': 15,
+    'Pacing & Rhythm': 15,
+    'Show vs Tell Ratio': 10
   }
   
-  // Map deduction categories to dimension names
-  const dimensionMap: Record<string, string[]> = {
-    'Dialogue Subtext': ['Dialogue Issues', 'Dialogue'],
-    'Structural Integrity': ['Structural Issues', 'Structure'],
-    'Emotional Arc': ['Character Issues', 'Emotional', 'Pacing Issues'],
-    'Visual Storytelling': ['Visual Storytelling', 'Visual'],
-    'Pacing & Rhythm': ['Pacing Issues', 'Pacing', 'Redundancy Issues'],
-    'Show vs Tell Ratio': ['Narration/Description Issues', 'Narration', 'Show vs Tell']
+  // Calculate weighted average from dimensional scores
+  let weightedSum = 0
+  let totalWeight = 0
+  
+  for (const cat of categories) {
+    const weight = dimensionWeights[cat.name] || cat.weight || 0
+    const score = cat.score || 70 // Default to 70 if missing
+    weightedSum += score * weight
+    totalWeight += weight
   }
   
-  // Recalculate each dimension score based on related deductions
-  if (review.categories && Array.isArray(review.categories)) {
-    review.categories = review.categories.map((cat: any) => {
-      const relatedCategories = dimensionMap[cat.name] || []
-      let dimDeductions = 0
-      for (const relCat of relatedCategories) {
-        dimDeductions += categoryDeductions[relCat] || 0
-      }
-      // Each dimension starts at 100, minus deductions (scaled x2 for visibility)
-      const dimScore = Math.max(0, Math.min(100, 100 - (dimDeductions * 2)))
-      return { ...cat, score: dimScore }
-    })
+  // Calculate overall score from weighted dimensional average
+  const weightedScore = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 70
+  
+  // Apply auto cap if needed (for high narration scripts)
+  const enforcedScore = Math.min(weightedScore, autoScoreCap)
+  
+  if (enforcedScore !== review.overallScore) {
+    console.log(`[Audience Resonance] Score calculation: AI returned ${review.overallScore}, Weighted dimensional avg: ${weightedScore}, Cap: ${autoScoreCap} -> Final: ${enforcedScore}`)
   }
   
-  // Log final score breakdown
-  console.log(`[Audience Resonance] Final score: ${review.overallScore} (100 - ${totalDeductions} deductions, cap: ${autoScoreCap})`)
+  // Apply the weighted score (aligned with dimensional analysis)
+  review.overallScore = enforcedScore
+  
+  // Log the calculation breakdown
+  const totalDeductions = deductions.reduce((sum: number, d: any) => sum + (d.points || 0), 0)
+  console.log(`[Audience Resonance] Final score: ${review.overallScore} (weighted avg of ${categories.length} dimensions, deductions for feedback: ${totalDeductions} pts)`)
   
   // Normalize recommendations
   if (review.recommendations && Array.isArray(review.recommendations)) {
