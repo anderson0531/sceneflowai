@@ -4063,9 +4063,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const data = await response.json()
         
         if (data.success) {
-          console.log('[Script Review] Reviews generated successfully:', {
-            directorScore: data.director?.overallScore,
-            audienceScore: data.audience?.overallScore
+          // New API returns audienceResonance as primary review, director is deprecated (null)
+          const audienceData = data.audienceResonance || data.audience
+          console.log('[Script Review] Audience Resonance generated successfully:', {
+            audienceScore: audienceData?.overallScore,
+            showVsTellRatio: audienceData?.showVsTellRatio,
+            deductionsCount: audienceData?.deductions?.length || 0
           })
           
           // Save reviews to project metadata BEFORE updating local state
@@ -4107,20 +4110,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             console.log('[Script Review] Reviews saved successfully to database')
             
             // Update local state only after successful save
-            setDirectorReview(data.director)
-            setAudienceReview(data.audience)
+            // Director review is deprecated - user is the director
+            setDirectorReview(null)
+            setAudienceReview(data.audienceResonance || data.audience)
             setReviewsOutdated(false)
             
-            console.log('[Script Review] State updated with new reviews:', {
-              directorScore: data.director?.overallScore,
-              audienceScore: data.audience?.overallScore
+            console.log('[Script Review] State updated with Audience Resonance:', {
+              audienceScore: (data.audienceResonance || data.audience)?.overallScore
             })
             
             // No need to reload project - reviews are already in state and saved to DB
           } else {
             // If no project in state, still update local state
-            setDirectorReview(data.director)
-            setAudienceReview(data.audience)
+            setDirectorReview(null)
+            setAudienceReview(data.audienceResonance || data.audience)
             setReviewsOutdated(false)
           }
           
@@ -4147,13 +4150,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // ============================================================================
   
   // Compute sidebar data for the unified GlobalSidebar
+  // Director review removed - user is the director. Only Audience Resonance is shown.
   const sidebarReviewScores = useMemo(() => {
-    if (!directorReview?.overallScore && !audienceReview?.overallScore) return null
+    if (!audienceReview?.overallScore) return null
     return {
-      director: directorReview?.overallScore ?? null,
+      director: null, // Deprecated - user is the director
       audience: audienceReview?.overallScore ?? null
     }
-  }, [directorReview?.overallScore, audienceReview?.overallScore])
+  }, [audienceReview?.overallScore])
   
   const sidebarProjectStats = useMemo(() => {
     const scriptScenes = normalizeScenes(script)

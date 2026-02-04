@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X, Film, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2 } from 'lucide-react'
+import { X, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
@@ -18,6 +17,44 @@ interface Voice {
 // Recommendation can be either a string (legacy) or an object with text, priority, category
 type RecommendationItem = string | { text: string; priority: 'critical' | 'high' | 'medium' | 'optional'; category: string }
 
+interface Deduction {
+  reason: string
+  points: number
+  category: string
+}
+
+interface SceneAnalysis {
+  sceneNumber: number
+  sceneHeading: string
+  score: number
+  pacing: 'slow' | 'moderate' | 'fast'
+  tension: 'low' | 'medium' | 'high'
+  characterDevelopment: 'minimal' | 'moderate' | 'strong'
+  visualPotential: 'low' | 'medium' | 'high'
+  notes: string
+}
+
+interface AudienceResonanceReview {
+  overallScore: number
+  baseScore?: number
+  deductions?: Deduction[]
+  categories: {
+    name: string
+    score: number
+    weight?: number
+  }[]
+  showVsTellRatio?: number
+  analysis: string
+  strengths: string[]
+  improvements: string[]
+  recommendations: RecommendationItem[]
+  sceneAnalysis?: SceneAnalysis[]
+  targetDemographic?: string
+  emotionalImpact?: string
+  generatedAt: string
+}
+
+// Legacy Review interface for backward compatibility
 interface Review {
   overallScore: number
   categories: {
@@ -31,7 +68,7 @@ interface Review {
   generatedAt: string
 }
 
-// Helper to extract text from a recommendation (handles both string and object formats)
+// Helper to extract text from a recommendation
 const getRecommendationText = (rec: RecommendationItem): string => {
   return typeof rec === 'string' ? rec : rec.text
 }
@@ -47,11 +84,160 @@ const getPriorityColor = (priority?: string): string => {
   }
 }
 
+// Radar Chart Component for dimensional scores
+function RadarChart({ categories }: { categories: { name: string; score: number; weight?: number }[] }) {
+  const size = 280
+  const center = size / 2
+  const radius = 100
+  const levels = 5
+
+  // Calculate points for each category
+  const angleStep = (2 * Math.PI) / categories.length
+  
+  // Generate polygon points for each level (grid lines)
+  const getLevelPoints = (level: number) => {
+    const levelRadius = (radius * level) / levels
+    return categories.map((_, i) => {
+      const angle = i * angleStep - Math.PI / 2
+      return {
+        x: center + levelRadius * Math.cos(angle),
+        y: center + levelRadius * Math.sin(angle)
+      }
+    })
+  }
+
+  // Generate data polygon points
+  const dataPoints = categories.map((cat, i) => {
+    const angle = i * angleStep - Math.PI / 2
+    const normalizedScore = (cat.score / 100) * radius
+    return {
+      x: center + normalizedScore * Math.cos(angle),
+      y: center + normalizedScore * Math.sin(angle)
+    }
+  })
+
+  const dataPolygon = dataPoints.map(p => `${p.x},${p.y}`).join(' ')
+
+  // Get score color
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return '#22c55e' // green
+    if (score >= 70) return '#3b82f6' // blue  
+    if (score >= 60) return '#f59e0b' // amber
+    return '#ef4444' // red
+  }
+
+  const avgScore = categories.reduce((sum, c) => sum + c.score, 0) / categories.length
+  const fillColor = getScoreColor(avgScore)
+
+  return (
+    <div className="flex flex-col items-center">
+      <svg width={size} height={size} className="overflow-visible">
+        {/* Background levels */}
+        {[1, 2, 3, 4, 5].map(level => {
+          const points = getLevelPoints(level)
+          const polygon = points.map(p => `${p.x},${p.y}`).join(' ')
+          return (
+            <polygon
+              key={level}
+              points={polygon}
+              fill="none"
+              stroke="currentColor"
+              strokeOpacity={0.15}
+              strokeWidth={1}
+            />
+          )
+        })}
+
+        {/* Axis lines */}
+        {categories.map((_, i) => {
+          const angle = i * angleStep - Math.PI / 2
+          const endX = center + radius * Math.cos(angle)
+          const endY = center + radius * Math.sin(angle)
+          return (
+            <line
+              key={i}
+              x1={center}
+              y1={center}
+              x2={endX}
+              y2={endY}
+              stroke="currentColor"
+              strokeOpacity={0.2}
+              strokeWidth={1}
+            />
+          )
+        })}
+
+        {/* Data polygon */}
+        <polygon
+          points={dataPolygon}
+          fill={fillColor}
+          fillOpacity={0.25}
+          stroke={fillColor}
+          strokeWidth={2}
+        />
+
+        {/* Data points */}
+        {dataPoints.map((point, i) => (
+          <circle
+            key={i}
+            cx={point.x}
+            cy={point.y}
+            r={4}
+            fill={fillColor}
+          />
+        ))}
+
+        {/* Labels */}
+        {categories.map((cat, i) => {
+          const angle = i * angleStep - Math.PI / 2
+          const labelRadius = radius + 35
+          const x = center + labelRadius * Math.cos(angle)
+          const y = center + labelRadius * Math.sin(angle)
+          
+          // Shorten category names
+          const shortName = cat.name
+            .replace('Dialogue Subtext', 'Dialogue')
+            .replace('Structural Integrity', 'Structure')
+            .replace('Emotional Arc', 'Emotion')
+            .replace('Visual Storytelling', 'Visual')
+            .replace('Pacing & Rhythm', 'Pacing')
+            .replace('Show vs Tell Ratio', 'Show/Tell')
+
+          return (
+            <g key={i}>
+              <text
+                x={x}
+                y={y - 8}
+                textAnchor="middle"
+                className="fill-current text-xs font-medium"
+              >
+                {shortName}
+              </text>
+              <text
+                x={x}
+                y={y + 8}
+                textAnchor="middle"
+                className={`text-xs font-bold ${
+                  cat.score >= 70 ? 'fill-green-600 dark:fill-green-400' :
+                  cat.score >= 50 ? 'fill-yellow-600 dark:fill-yellow-400' :
+                  'fill-red-600 dark:fill-red-400'
+                }`}
+              >
+                {cat.score}
+              </text>
+            </g>
+          )
+        })}
+      </svg>
+    </div>
+  )
+}
+
 interface ScriptReviewModalProps {
   isOpen: boolean
   onClose: () => void
-  directorReview: Review | null
-  audienceReview: Review | null
+  directorReview: Review | null // Deprecated, kept for compatibility
+  audienceReview: AudienceResonanceReview | Review | null
   onRegenerate: () => void
   isGenerating: boolean
   onReviseScript?: (recommendations: string[]) => void
@@ -60,40 +246,36 @@ interface ScriptReviewModalProps {
 export default function ScriptReviewModal({
   isOpen,
   onClose,
-  directorReview,
+  directorReview, // No longer used - user is the director
   audienceReview,
   onRegenerate,
   isGenerating,
   onReviseScript
 }: ScriptReviewModalProps) {
-  const [activeTab, setActiveTab] = useState<'director' | 'audience'>('director')
   const [voices, setVoices] = useState<Voice[]>([])
-  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('pNInz6obpgDQGcFmaJgB') // Adam default
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('pNInz6obpgDQGcFmaJgB')
   const [playingSection, setPlayingSection] = useState<string | null>(null)
   const [loadingSection, setLoadingSection] = useState<string | null>(null)
+  const [showDeductions, setShowDeductions] = useState(false)
+  const [showSceneAnalysis, setShowSceneAnalysis] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  
-  // Audio cache: maps sectionId to { url: string, voiceId: string, textHash: string }
   const audioCacheRef = useRef<Map<string, { url: string; voiceId: string; textHash: string }>>(new Map())
-  
-  // Simple hash function for text comparison
+
   const hashText = (text: string): string => {
     let hash = 0
     for (let i = 0; i < text.length; i++) {
       const char = text.charCodeAt(i)
       hash = ((hash << 5) - hash) + char
-      hash = hash & hash // Convert to 32bit integer
+      hash = hash & hash
     }
     return hash.toString(36)
   }
 
-  // Fetch ElevenLabs voices on mount
   useEffect(() => {
     if (isOpen) {
       fetchVoices()
     }
     return () => {
-      // Cleanup audio on unmount
       if (audioRef.current) {
         audioRef.current.pause()
         audioRef.current = null
@@ -113,20 +295,16 @@ export default function ScriptReviewModal({
     }
   }
 
-  // Check if we have a valid cached audio for this section
   const getCachedAudio = (sectionId: string, text: string): string | null => {
     const cached = audioCacheRef.current.get(sectionId)
     if (!cached) return null
-    
     const textHash = hashText(text)
-    // Cache is valid if same voice and same text
     if (cached.voiceId === selectedVoiceId && cached.textHash === textHash) {
       return cached.url
     }
     return null
   }
 
-  // Store audio in cache
   const cacheAudio = (sectionId: string, text: string, url: string) => {
     audioCacheRef.current.set(sectionId, {
       url,
@@ -135,34 +313,28 @@ export default function ScriptReviewModal({
     })
   }
 
-  // Check if section has cached audio
   const hasCachedAudio = (sectionId: string, text: string): boolean => {
     return getCachedAudio(sectionId, text) !== null
   }
 
   const playSection = async (sectionId: string, text: string, forceRegenerate = false) => {
-    // Stop current playback
     if (audioRef.current) {
       audioRef.current.pause()
       audioRef.current = null
     }
 
-    // If clicking same section, just stop
     if (playingSection === sectionId) {
       setPlayingSection(null)
       return
     }
 
-    // Check cache first (unless force regenerating)
     const cachedUrl = !forceRegenerate ? getCachedAudio(sectionId, text) : null
     
     if (cachedUrl) {
-      // Play from cache - instant playback!
       audioRef.current = new Audio(cachedUrl)
       audioRef.current.onended = () => setPlayingSection(null)
       audioRef.current.onerror = () => {
         setPlayingSection(null)
-        // Remove from cache if playback fails
         audioCacheRef.current.delete(sectionId)
       }
       await audioRef.current.play()
@@ -178,7 +350,7 @@ export default function ScriptReviewModal({
         body: JSON.stringify({
           text,
           voiceId: selectedVoiceId,
-          parallel: true, // Enable parallel paragraph processing for faster TTS
+          parallel: true,
           stability: 0.5,
           similarityBoost: 0.75
         })
@@ -188,8 +360,6 @@ export default function ScriptReviewModal({
 
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
-      
-      // Cache the generated audio
       cacheAudio(sectionId, text, url)
       
       audioRef.current = new Audio(url)
@@ -220,7 +390,6 @@ export default function ScriptReviewModal({
 
     return (
       <div className="flex items-center gap-0.5">
-        {/* Play/Stop Button */}
         <Button
           variant="ghost"
           size="sm"
@@ -237,7 +406,6 @@ export default function ScriptReviewModal({
             <Volume2 className={`w-4 h-4 ${isCached ? 'text-green-500' : 'text-blue-500'}`} />
           )}
         </Button>
-        {/* Regenerate Button - only show if cached */}
         {isCached && !isPlaying && (
           <Button
             variant="ghost"
@@ -257,207 +425,49 @@ export default function ScriptReviewModal({
   if (!isOpen) return null
 
   const getScoreColor = (score: number): string => {
-    if (score >= 90) return 'text-green-600 dark:text-green-400'
-    if (score >= 75) return 'text-blue-600 dark:text-blue-400'
+    if (score >= 80) return 'text-green-600 dark:text-green-400'
+    if (score >= 70) return 'text-blue-600 dark:text-blue-400'
     if (score >= 60) return 'text-yellow-600 dark:text-yellow-400'
     return 'text-red-600 dark:text-red-400'
   }
 
   const getScoreBgColor = (score: number): string => {
-    if (score >= 90) return 'bg-green-100 dark:bg-green-900/30'
-    if (score >= 75) return 'bg-blue-100 dark:bg-blue-900/30'
+    if (score >= 80) return 'bg-green-100 dark:bg-green-900/30'
+    if (score >= 70) return 'bg-blue-100 dark:bg-blue-900/30'
     if (score >= 60) return 'bg-yellow-100 dark:bg-yellow-900/30'
     return 'bg-red-100 dark:bg-red-900/30'
   }
 
-  const renderReview = (review: Review | null, type: 'director' | 'audience') => {
-    if (!review) {
-      return (
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-          <Star className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>No {type} review available</p>
-        </div>
-      )
-    }
-
-    return (
-      <div className="space-y-6">
-        {/* Overall Score */}
-        <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2">
-              {type === 'director' ? (
-                <Film className="w-5 h-5" />
-              ) : (
-                <Users className="w-5 h-5" />
-              )}
-              {type === 'director' ? "Director's Perspective" : "Audience Perspective"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center">
-              <div className={`text-4xl font-bold ${getScoreColor(review.overallScore)}`}>
-                {review.overallScore}
-              </div>
-              <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">out of 100</div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
-                <div 
-                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${review.overallScore}%` }}
-                />
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                Generated {new Date(review.generatedAt).toLocaleString()}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Category Breakdown */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">📊 Category Breakdown</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {review.categories.map((category, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">{category.name}</span>
-                    <span className={`text-sm font-semibold ${getScoreColor(category.score)}`}>
-                      {category.score}/100
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                    <div 
-                      className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
-                      style={{ width: `${category.score}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Analysis */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">💡 Analysis</CardTitle>
-            <AudioButton sectionId={`${type}-analysis`} text={review.analysis} />
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">
-              {review.analysis}
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Strengths */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">✨ Strengths</CardTitle>
-            <AudioButton sectionId={`${type}-strengths`} text={`Strengths: ${review.strengths.join('. ')}`} />
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2">
-              {review.strengths.map((strength, index) => (
-                <li key={index} className="flex items-start gap-2 text-sm">
-                  <span className="text-green-500 mt-1">•</span>
-                  <span>{strength}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-
-        {/* Areas for Improvement */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">⚠️ Areas for Improvement</CardTitle>
-            <AudioButton sectionId={`${type}-improvements`} text={`Areas for improvement: ${review.improvements.join('. ')}`} />
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2">
-              {review.improvements.map((improvement, index) => (
-                <li key={index} className="flex items-start gap-2 text-sm">
-                  <span className="text-yellow-500 mt-1">•</span>
-                  <span>{improvement}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-
-        {/* Recommendations */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">🎯 Recommendations</CardTitle>
-            <div className="flex items-center gap-2">
-              <AudioButton sectionId={`${type}-recommendations`} text={`Recommendations: ${review.recommendations.map(r => getRecommendationText(r)).join('. ')}`} />
-              {onReviseScript && (
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => onReviseScript(review.recommendations.map(r => getRecommendationText(r)))}
-                  className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white"
-                >
-                  <Wand2 className="w-3 h-3" />
-                  Revise Script
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-3">
-              {review.recommendations.map((recommendation, index) => {
-                const isObject = typeof recommendation !== 'string'
-                const text = getRecommendationText(recommendation)
-                const priority = isObject ? recommendation.priority : undefined
-                const category = isObject ? recommendation.category : undefined
-                
-                return (
-                  <li key={index} className="flex items-start gap-2 text-sm">
-                    <span className="text-blue-500 mt-1 flex-shrink-0">•</span>
-                    <div className="flex-1">
-                      <span>{text}</span>
-                      {(priority || category) && (
-                        <div className="flex gap-2 mt-1">
-                          {priority && (
-                            <Badge variant="secondary" className={`text-xs ${getPriorityColor(priority)}`}>
-                              {priority}
-                            </Badge>
-                          )}
-                          {category && (
-                            <Badge variant="outline" className="text-xs">
-                              {category}
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
-          </CardContent>
-        </Card>
-      </div>
-    )
+  const getScoreLabel = (score: number): string => {
+    if (score >= 90) return 'Masterwork'
+    if (score >= 80) return 'Professional Quality'
+    if (score >= 70) return 'Solid Draft'
+    if (score >= 60) return 'Working Draft'
+    if (score >= 50) return 'Early Draft'
+    return 'Concept Stage'
   }
 
+  // Cast to AudienceResonanceReview for new features
+  const review = audienceReview as AudienceResonanceReview | null
+  const deductions = review?.deductions || []
+  const sceneAnalysis = review?.sceneAnalysis || []
+  const showVsTellRatio = review?.showVsTellRatio ?? 0
+  const totalDeductions = deductions.reduce((sum, d) => sum + d.points, 0)
+
   const exportAsPDF = () => {
-    // TODO: Implement PDF export functionality
     console.log('Export as PDF functionality to be implemented')
   }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex flex-col gap-4 p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Script Review & Analysis</h2>
+            <div className="flex items-center gap-3">
+              <Target className="w-6 h-6 text-purple-500" />
+              <h2 className="text-xl font-semibold">Audience Resonance Analysis</h2>
+            </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -471,31 +481,31 @@ export default function ScriptReviewModal({
               <Button
                 variant="outline"
                 size="sm"
-              onClick={onRegenerate}
-              disabled={isGenerating}
-              className="flex items-center gap-2"
-            >
-              {isGenerating ? (
-                <Loader className="w-4 h-4 animate-spin" />
-              ) : (
-                <RefreshCw className="w-4 h-4" />
-              )}
-              Regenerate
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                stopPlayback()
-                onClose()
-              }}
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
+                onClick={onRegenerate}
+                disabled={isGenerating}
+                className="flex items-center gap-2"
+              >
+                {isGenerating ? (
+                  <Loader className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )}
+                Regenerate
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  stopPlayback()
+                  onClose()
+                }}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
           
-          {/* Voice Selector Row */}
+          {/* Voice Selector */}
           <div className="flex items-center gap-3">
             <Volume2 className="w-4 h-4 text-gray-500" />
             <span className="text-sm text-gray-600 dark:text-gray-400">Playback Voice:</span>
@@ -526,27 +536,316 @@ export default function ScriptReviewModal({
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'director' | 'audience')}>
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="director" className="flex items-center gap-2">
-                <Film className="w-4 h-4" />
-                Director ({directorReview?.overallScore || 'N/A'})
-              </TabsTrigger>
-              <TabsTrigger value="audience" className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Audience ({audienceReview?.overallScore || 'N/A'})
-              </TabsTrigger>
-            </TabsList>
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-160px)]">
+          {!review ? (
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+              <Target className="w-16 h-16 mx-auto mb-4 opacity-50" />
+              <p className="text-lg">No audience resonance analysis available</p>
+              <p className="text-sm mt-2">Click "Regenerate" to generate a new analysis</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Score Overview with Radar Chart */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Overall Score Card */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="w-5 h-5 text-purple-500" />
+                      Overall Resonance Score
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center mb-4">
+                      <div className={`text-5xl font-bold ${getScoreColor(review.overallScore)}`}>
+                        {review.overallScore}
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {getScoreLabel(review.overallScore)}
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mt-3">
+                        <div 
+                          className={`h-3 rounded-full transition-all duration-500 ${
+                            review.overallScore >= 80 ? 'bg-green-500' :
+                            review.overallScore >= 70 ? 'bg-blue-500' :
+                            review.overallScore >= 60 ? 'bg-yellow-500' :
+                            'bg-red-500'
+                          }`}
+                          style={{ width: `${review.overallScore}%` }}
+                        />
+                      </div>
+                    </div>
 
-            <TabsContent value="director">
-              {renderReview(directorReview, 'director')}
-            </TabsContent>
+                    {/* Deduction Breakdown Toggle */}
+                    {deductions.length > 0 && (
+                      <div className="mt-4 border-t pt-4">
+                        <button
+                          onClick={() => setShowDeductions(!showDeductions)}
+                          className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <TrendingDown className="w-4 h-4 text-red-500" />
+                            <span className="text-sm font-medium">
+                              Score Breakdown: 100 → {review.overallScore}
+                            </span>
+                            <Badge variant="destructive" className="text-xs">
+                              -{totalDeductions} points
+                            </Badge>
+                          </div>
+                          {showDeductions ? (
+                            <ChevronUp className="w-4 h-4" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4" />
+                          )}
+                        </button>
+                        
+                        {showDeductions && (
+                          <div className="mt-3 space-y-2 pl-6">
+                            {deductions.map((d, i) => (
+                              <div key={i} className="flex items-start gap-2 text-sm">
+                                <span className="text-red-500 font-mono">-{d.points}</span>
+                                <span className="text-gray-600 dark:text-gray-400">{d.reason}</span>
+                                <Badge variant="outline" className="text-xs ml-auto">
+                                  {d.category}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
 
-            <TabsContent value="audience">
-              {renderReview(audienceReview, 'audience')}
-            </TabsContent>
-          </Tabs>
+                    {/* Show vs Tell Ratio */}
+                    {showVsTellRatio > 0 && (
+                      <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">Show vs Tell Ratio:</span>
+                          <span className={`font-medium ${
+                            showVsTellRatio <= 10 ? 'text-green-600' :
+                            showVsTellRatio <= 15 ? 'text-blue-600' :
+                            showVsTellRatio <= 25 ? 'text-yellow-600' :
+                            'text-red-600'
+                          }`}>
+                            {showVsTellRatio.toFixed(1)}% narration
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {showVsTellRatio <= 10 ? '✓ Excellent - minimal narration' :
+                           showVsTellRatio <= 15 ? '○ Good - within professional range' :
+                           showVsTellRatio <= 25 ? '△ High - consider reducing narration' :
+                           '✗ Excessive - significant revision needed'}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Meta info */}
+                    <div className="mt-4 text-xs text-gray-500 dark:text-gray-400 text-center">
+                      Generated {new Date(review.generatedAt).toLocaleString()}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Radar Chart */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Dimensional Analysis</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex justify-center">
+                    <RadarChart categories={review.categories} />
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Target Audience & Emotional Impact */}
+              {(review.targetDemographic || review.emotionalImpact) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {review.targetDemographic && (
+                    <Card className="bg-purple-50 dark:bg-purple-900/20">
+                      <CardContent className="pt-4">
+                        <div className="text-sm font-medium text-purple-700 dark:text-purple-300">Target Demographic</div>
+                        <div className="text-sm mt-1">{review.targetDemographic}</div>
+                      </CardContent>
+                    </Card>
+                  )}
+                  {review.emotionalImpact && (
+                    <Card className="bg-blue-50 dark:bg-blue-900/20">
+                      <CardContent className="pt-4">
+                        <div className="text-sm font-medium text-blue-700 dark:text-blue-300">Expected Emotional Impact</div>
+                        <div className="text-sm mt-1">{review.emotionalImpact}</div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              )}
+
+              {/* Analysis */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg">💡 Analysis</CardTitle>
+                  <AudioButton sectionId="analysis" text={review.analysis} />
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                    {review.analysis}
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Strengths & Improvements Side by Side */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Strengths */}
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-lg">✨ Strengths</CardTitle>
+                    <AudioButton sectionId="strengths" text={`Strengths: ${review.strengths.join('. ')}`} />
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {review.strengths.map((strength, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm">
+                          <span className="text-green-500 mt-1">•</span>
+                          <span>{strength}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+
+                {/* Improvements */}
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-lg">⚠️ Areas for Improvement</CardTitle>
+                    <AudioButton sectionId="improvements" text={`Areas for improvement: ${review.improvements.join('. ')}`} />
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {review.improvements.map((improvement, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm">
+                          <span className="text-yellow-500 mt-1">•</span>
+                          <span>{improvement}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Recommendations */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg">🎯 Recommendations</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <AudioButton sectionId="recommendations" text={`Recommendations: ${review.recommendations.map(r => getRecommendationText(r)).join('. ')}`} />
+                    {onReviseScript && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => onReviseScript(review.recommendations.map(r => getRecommendationText(r)))}
+                        className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white"
+                      >
+                        <Wand2 className="w-3 h-3" />
+                        Revise Script
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3">
+                    {review.recommendations.map((recommendation, index) => {
+                      const isObject = typeof recommendation !== 'string'
+                      const text = getRecommendationText(recommendation)
+                      const priority = isObject ? recommendation.priority : undefined
+                      const category = isObject ? recommendation.category : undefined
+                      
+                      return (
+                        <li key={index} className="flex items-start gap-2 text-sm">
+                          <span className="text-blue-500 mt-1 flex-shrink-0">•</span>
+                          <div className="flex-1">
+                            <span>{text}</span>
+                            {(priority || category) && (
+                              <div className="flex gap-2 mt-1">
+                                {priority && (
+                                  <Badge variant="secondary" className={`text-xs ${getPriorityColor(priority)}`}>
+                                    {priority}
+                                  </Badge>
+                                )}
+                                {category && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {category}
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </CardContent>
+              </Card>
+
+              {/* Scene Analysis (Collapsible) */}
+              {sceneAnalysis.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <button
+                      onClick={() => setShowSceneAnalysis(!showSceneAnalysis)}
+                      className="flex items-center justify-between w-full text-left"
+                    >
+                      <CardTitle className="text-lg">🎬 Scene-by-Scene Analysis</CardTitle>
+                      {showSceneAnalysis ? (
+                        <ChevronUp className="w-5 h-5" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5" />
+                      )}
+                    </button>
+                  </CardHeader>
+                  {showSceneAnalysis && (
+                    <CardContent>
+                      <div className="space-y-4">
+                        {sceneAnalysis.map((scene, index) => (
+                          <div 
+                            key={index} 
+                            className={`p-4 rounded-lg border ${
+                              scene.score >= 80 ? 'border-green-200 bg-green-50 dark:bg-green-900/10 dark:border-green-800' :
+                              scene.score >= 60 ? 'border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10 dark:border-yellow-800' :
+                              'border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-800'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="font-medium">
+                                Scene {scene.sceneNumber}: {scene.sceneHeading}
+                              </div>
+                              <div className={`text-lg font-bold ${getScoreColor(scene.score)}`}>
+                                {scene.score}
+                              </div>
+                            </div>
+                            <div className="flex gap-2 mb-2 flex-wrap">
+                              <Badge variant="outline" className="text-xs">
+                                Pacing: {scene.pacing}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                Tension: {scene.tension}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                Character: {scene.characterDevelopment}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                Visual: {scene.visualPotential}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {scene.notes}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

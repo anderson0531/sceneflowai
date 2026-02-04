@@ -1,12 +1,12 @@
 'use client'
 
 import React from 'react'
-import { ChevronUp, ChevronDown, BarChart3, FileText, Sparkles } from 'lucide-react'
+import { ChevronUp, ChevronDown, BarChart3, FileText, Sparkles, Target } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface ReviewScores {
-  director: number | null
-  audience: number | null
+  director: number | null // Deprecated - user is the director
+  audience: number | null // Audience Resonance score
 }
 
 interface ReviewScoresPanelProps {
@@ -19,29 +19,42 @@ interface ReviewScoresPanelProps {
 
 /**
  * Get stoplight gradient colors for score cards based on score value
- * - Green: >= 85 (Excellent)
- * - Yellow: >= 75 (Good)
- * - Red: < 75 (Needs improvement)
+ * Calibrated for deduction-based scoring where 60-70 is a typical first draft
+ * - Green: >= 80 (Professional quality)
+ * - Blue: >= 70 (Solid draft)
+ * - Yellow: >= 60 (Working draft)
+ * - Red: < 60 (Needs significant work)
  */
 export function getScoreCardClasses(score: number): {
   gradient: string
   border: string
   text: string
   label: string
+  qualityLabel: string
 } {
-  if (score >= 85) {
+  if (score >= 80) {
     return {
       gradient: 'bg-gradient-to-br from-green-500/10 to-green-600/5 dark:from-green-500/20 dark:to-green-600/10',
       border: 'border-green-200/50 dark:border-green-500/20',
       text: 'text-green-600 dark:text-green-400',
       label: 'text-green-500/70 dark:text-green-400/60',
+      qualityLabel: 'Professional'
     }
-  } else if (score >= 75) {
+  } else if (score >= 70) {
+    return {
+      gradient: 'bg-gradient-to-br from-blue-500/10 to-blue-600/5 dark:from-blue-500/20 dark:to-blue-600/10',
+      border: 'border-blue-200/50 dark:border-blue-500/20',
+      text: 'text-blue-600 dark:text-blue-400',
+      label: 'text-blue-500/70 dark:text-blue-400/60',
+      qualityLabel: 'Solid Draft'
+    }
+  } else if (score >= 60) {
     return {
       gradient: 'bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 dark:from-yellow-500/20 dark:to-yellow-600/10',
       border: 'border-yellow-200/50 dark:border-yellow-500/20',
       text: 'text-yellow-600 dark:text-yellow-400',
       label: 'text-yellow-500/70 dark:text-yellow-400/60',
+      qualityLabel: 'Working Draft'
     }
   } else {
     return {
@@ -49,14 +62,18 @@ export function getScoreCardClasses(score: number): {
       border: 'border-red-200/50 dark:border-red-500/20',
       text: 'text-red-600 dark:text-red-400',
       label: 'text-red-500/70 dark:text-red-400/60',
+      qualityLabel: 'Early Draft'
     }
   }
 }
 
 /**
- * Review Scores Panel - Displays Director and Audience scores with stoplight color coding
+ * Review Scores Panel - Displays Audience Resonance score with color coding
  * Used in the global sidebar for Production and later workflow phases
  * Shows "Generate Review" button when no scores exist yet
+ * 
+ * Note: Director review has been deprecated - the user IS the director.
+ * Only Audience Resonance (how the script will resonate with audiences) is shown.
  */
 export function ReviewScoresPanel({
   scores,
@@ -65,7 +82,8 @@ export function ReviewScoresPanel({
   isGenerating = false,
   className,
 }: ReviewScoresPanelProps) {
-  const hasScores = scores.director !== null || scores.audience !== null
+  // Only check audience score since director is deprecated
+  const hasScores = scores.audience !== null
 
   const handleUpdateReviews = () => {
     window.dispatchEvent(new CustomEvent('production:update-reviews'))
@@ -83,8 +101,8 @@ export function ReviewScoresPanel({
         className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
       >
         <div className="flex items-center gap-2">
-          <Sparkles className="w-3.5 h-3.5 text-purple-500" />
-          <span>Review Scores</span>
+          <Target className="w-3.5 h-3.5 text-purple-500" />
+          <span>Audience Resonance</span>
         </div>
         {isOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
       </button>
@@ -94,7 +112,7 @@ export function ReviewScoresPanel({
             /* No scores yet - show Generate Review button */
             <div className="text-center py-3">
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                No reviews generated yet
+                Analyze how your script will resonate with audiences
               </p>
               <button
                 onClick={handleUpdateReviews}
@@ -104,85 +122,66 @@ export function ReviewScoresPanel({
                 {isGenerating ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Generating...</span>
+                    <span>Analyzing...</span>
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4" />
-                    <span>Generate Review</span>
+                    <Target className="w-4 h-4" />
+                    <span>Analyze Resonance</span>
                   </>
                 )}
               </button>
             </div>
           ) : (
-            /* Has scores - show score cards and action buttons */
+            /* Has scores - show single Audience Resonance card and action buttons */
             <>
-          {/* Score Cards */}
-          <div className="grid grid-cols-2 gap-2">
-          {/* Director Score Card */}
-          {(() => {
-            const directorColors = getScoreCardClasses(scores.director || 0)
-            return (
-              <div
-                className={cn(
-                  'rounded-lg p-2.5 border text-center',
-                  directorColors.gradient,
-                  directorColors.border
-                )}
-              >
-                <div className={cn('text-xl font-bold', directorColors.text)}>
-                  {scores.director ?? '-'}
-                </div>
-                <div className={cn('text-xs uppercase tracking-wide font-medium', directorColors.label)}>
-                  Director
-                </div>
-              </div>
-            )
-          })()}
-          {/* Audience Score Card */}
-          {(() => {
-            const audienceColors = getScoreCardClasses(scores.audience || 0)
-            return (
-              <div
-                className={cn(
-                  'rounded-lg p-2.5 border text-center',
-                  audienceColors.gradient,
-                  audienceColors.border
-                )}
-              >
-                <div className={cn('text-xl font-bold', audienceColors.text)}>
-                  {scores.audience ?? '-'}
-                </div>
-                <div className={cn('text-xs uppercase tracking-wide font-medium', audienceColors.label)}>
-                  Audience
-                </div>
-              </div>
-            )
-          })()}
-        </div>
+              {/* Single Audience Resonance Score Card */}
+              {(() => {
+                const colors = getScoreCardClasses(scores.audience || 0)
+                return (
+                  <div
+                    className={cn(
+                      'rounded-lg p-4 border text-center',
+                      colors.gradient,
+                      colors.border
+                    )}
+                  >
+                    <div className={cn('text-3xl font-bold', colors.text)}>
+                      {scores.audience ?? '-'}
+                    </div>
+                    <div className={cn('text-xs uppercase tracking-wide font-medium mt-1', colors.label)}>
+                      {colors.qualityLabel}
+                    </div>
+                  </div>
+                )
+              })()}
 
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={handleUpdateReviews}
-            disabled={isGenerating}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <BarChart3 className="w-3.5 h-3.5" />
-            <span>Update</span>
-          </button>
-          <button
-            onClick={handleReviewAnalysis}
-            disabled={isGenerating}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Analysis</span>
-          </button>
-        </div>
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={handleUpdateReviews}
+                  disabled={isGenerating}
+                  className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isGenerating ? (
+                    <div className="w-3.5 h-3.5 border-2 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+                  ) : (
+                    <BarChart3 className="w-3.5 h-3.5" />
+                  )}
+                  <span>Re-analyze</span>
+                </button>
+                <button
+                  onClick={handleReviewAnalysis}
+                  disabled={isGenerating}
+                  className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>Full Report</span>
+                </button>
+              </div>
             </>
           )}
-      </div>
+        </div>
       )}
     </div>
   )
