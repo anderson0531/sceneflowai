@@ -192,12 +192,12 @@ PRE-CALCULATED METRICS:
 - Dialogue Words: ${showVsTellMetrics.dialogueWords}
 ${autoCapReason ? `- AUTO CAP: ${autoCapReason}` : ''}
 
-## MANDATORY FIRST-DRAFT DEDUCTIONS (Apply if ANY apply)
+## CONDITIONAL DEDUCTIONS (Apply only if metrics warrant)
 
-For a script with ${sceneCount} scenes, check these REQUIRED issues:
+For a script with ${sceneCount} scenes, check these issues:
 
 ${sceneCount > 80 ? `- **-10 points**: Excessive scene count (${sceneCount} scenes). Most feature films have 40-60 scenes. Many scenes may be too short or redundant.` : ''}
-${showVsTellMetrics.ratio > 5 ? `- **-${Math.min(15, Math.round(showVsTellMetrics.ratio))} points**: Narration overuse (${showVsTellMetrics.ratio.toFixed(1)}% is narration). Professional scripts minimize narration.` : ''}
+${showVsTellMetrics.ratio > 15 ? `- **-${Math.min(15, Math.round(showVsTellMetrics.ratio - 10))} points**: Narration overuse (${showVsTellMetrics.ratio.toFixed(1)}% is narration). Professional scripts aim for under 15%.` : `Note: Narration ratio is ${showVsTellMetrics.ratio.toFixed(1)}% which is within acceptable range (under 15%). Do NOT deduct for narration.`}
 
 Scene Content:
 ${sceneSummaries}
@@ -357,25 +357,52 @@ FINAL CHECK before outputting:
     throw new Error('Failed to parse audience resonance review JSON')
   }
 
-  // SCORE RECALCULATION: Override Gemini's score with calculated score from deductions
+  // SCORE RECALCULATION: Calculate score strictly from deductions (ignore AI's arbitrary score)
   const deductions = review.deductions || []
   const totalDeductions = deductions.reduce((sum: number, d: any) => sum + (d.points || 0), 0)
   const calculatedScore = Math.max(0, 100 - totalDeductions)
   
-  // Take the LOWER of: Gemini's score, calculated score from deductions, or auto cap
-  const enforcedScore = Math.min(
-    review.overallScore || 100,
-    calculatedScore,
-    autoScoreCap
-  )
+  // Apply auto cap if needed, but always use calculated score from deductions
+  const enforcedScore = Math.min(calculatedScore, autoScoreCap)
   
   if (enforcedScore !== review.overallScore) {
-    console.log(`[Audience Resonance] Score adjustment: Gemini=${review.overallScore}, Calculated=${calculatedScore}, Cap=${autoScoreCap} -> Final=${enforcedScore}`)
+    console.log(`[Audience Resonance] Score override: AI returned ${review.overallScore}, but deductions total ${totalDeductions} pts -> Final: ${enforcedScore}`)
   }
   
-  // Apply the enforced score
+  // Apply the calculated score (ignore AI's arbitrary score)
   review.overallScore = enforcedScore
   review.deductions = deductions
+  
+  // Recalculate dimensional scores based on deduction categories for consistency
+  const categoryDeductions: Record<string, number> = {}
+  for (const d of deductions) {
+    const cat = d.category || 'General'
+    categoryDeductions[cat] = (categoryDeductions[cat] || 0) + (d.points || 0)
+  }
+  
+  // Map deduction categories to dimension names
+  const dimensionMap: Record<string, string[]> = {
+    'Dialogue Subtext': ['Dialogue Issues', 'Dialogue'],
+    'Structural Integrity': ['Structural Issues', 'Structure'],
+    'Emotional Arc': ['Character Issues', 'Emotional', 'Pacing Issues'],
+    'Visual Storytelling': ['Visual Storytelling', 'Visual'],
+    'Pacing & Rhythm': ['Pacing Issues', 'Pacing', 'Redundancy Issues'],
+    'Show vs Tell Ratio': ['Narration/Description Issues', 'Narration', 'Show vs Tell']
+  }
+  
+  // Recalculate each dimension score based on related deductions
+  if (review.categories && Array.isArray(review.categories)) {
+    review.categories = review.categories.map((cat: any) => {
+      const relatedCategories = dimensionMap[cat.name] || []
+      let dimDeductions = 0
+      for (const relCat of relatedCategories) {
+        dimDeductions += categoryDeductions[relCat] || 0
+      }
+      // Each dimension starts at 100, minus deductions (scaled x2 for visibility)
+      const dimScore = Math.max(0, Math.min(100, 100 - (dimDeductions * 2)))
+      return { ...cat, score: dimScore }
+    })
+  }
   
   // Log final score breakdown
   console.log(`[Audience Resonance] Final score: ${review.overallScore} (100 - ${totalDeductions} deductions, cap: ${autoScoreCap})`)
