@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown } from 'lucide-react'
+import { X, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { VoiceSelectorDialog } from '@/components/tts/VoiceSelectorDialog'
+import type { CharacterContext } from '@/lib/voiceRecommendation'
 
 interface Voice {
   voice_id: string
@@ -266,13 +267,35 @@ export default function ScriptReviewModal({
   onReviseScript
 }: ScriptReviewModalProps) {
   const [voices, setVoices] = useState<Voice[]>([])
-  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('') // Empty until voices load
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('CwhRBWXzGAHq8TQ4Fs17') // Roger - professional narrator
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Roger')
+  const [voiceSelectorOpen, setVoiceSelectorOpen] = useState(false)
   const [playingSection, setPlayingSection] = useState<string | null>(null)
   const [loadingSection, setLoadingSection] = useState<string | null>(null)
   const [showDeductions, setShowDeductions] = useState(false)
   const [showSceneAnalysis, setShowSceneAnalysis] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const audioCacheRef = useRef<Map<string, { url: string; voiceId: string; textHash: string }>>(new Map())
+
+  // Character context for Review Expert voice recommendations
+  // Voices that match: authoritative, mature, professional narrators
+  const reviewExpertContext: CharacterContext = {
+    name: 'Review Expert',
+    role: 'narrator',
+    gender: 'male',
+    age: 'middle',
+    personality: 'authoritative, knowledgeable, articulate, measured, insightful',
+    description: 'A trusted film critic and screenplay analyst with decades of experience. Speaks with clarity and gravitas, like a seasoned documentary narrator or respected film reviewer. Professional, warm but analytical tone.'
+  }
+
+  // Handle voice selection from dialog
+  const handleVoiceSelect = (voiceId: string, voiceName: string) => {
+    setSelectedVoiceId(voiceId)
+    setSelectedVoiceName(voiceName)
+    setVoiceSelectorOpen(false)
+    // Clear audio cache since voice changed
+    audioCacheRef.current.clear()
+  }
 
   const hashText = (text: string): string => {
     let hash = 0
@@ -303,11 +326,20 @@ export default function ScriptReviewModal({
         const data = await res.json()
         const voiceList = data.voices || []
         setVoices(voiceList)
-        // Set default voice if not already set
-        if (!selectedVoiceId && voiceList.length > 0) {
-          // Try to find Adam voice, otherwise use first voice
-          const adamVoice = voiceList.find((v: Voice) => v.name === 'Adam' || v.voice_id === 'pNInz6obpgDQGcFmaJgB')
-          setSelectedVoiceId(adamVoice?.voice_id || voiceList[0].voice_id)
+        // Verify default voice exists and update name
+        if (voiceList.length > 0) {
+          const currentVoice = voiceList.find((v: Voice) => v.voice_id === selectedVoiceId)
+          if (currentVoice) {
+            setSelectedVoiceName(currentVoice.name)
+          } else {
+            // Fallback to Roger or first professional narrator voice
+            const roger = voiceList.find((v: Voice) => v.name === 'Roger' || v.voice_id === 'CwhRBWXzGAHq8TQ4Fs17')
+            const fallback = roger || voiceList[0]
+            if (fallback) {
+              setSelectedVoiceId(fallback.voice_id)
+              setSelectedVoiceName(fallback.name)
+            }
+          }
         }
       }
     } catch (err) {
@@ -542,27 +574,15 @@ export default function ScriptReviewModal({
           <div className="flex items-center gap-3">
             <Volume2 className="w-4 h-4 text-gray-500" />
             <span className="text-sm text-gray-600 dark:text-gray-400">Playback Voice:</span>
-            <Select 
-              value={selectedVoiceId || undefined} 
-              onValueChange={setSelectedVoiceId}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setVoiceSelectorOpen(true)}
+              className="flex items-center gap-2 h-8 min-w-[180px] justify-between"
             >
-              <SelectTrigger className="w-[200px] h-8 text-sm">
-                <SelectValue placeholder={voices.length === 0 ? "Loading voices..." : "Select voice"}>
-                  {selectedVoiceId ? voices.find(v => v.voice_id === selectedVoiceId)?.name || 'Select voice' : undefined}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                {voices.length === 0 ? (
-                  <SelectItem value="loading" disabled>Loading voices...</SelectItem>
-                ) : (
-                  voices.map((voice) => (
-                    <SelectItem key={voice.voice_id} value={voice.voice_id}>
-                      {voice.name}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
+              <span className="truncate">{selectedVoiceName || 'Select voice...'}</span>
+              <Settings2 className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+            </Button>
             {playingSection && (
               <Button
                 variant="outline"
@@ -889,6 +909,16 @@ export default function ScriptReviewModal({
             </div>
           )}
         </div>
+
+        {/* Voice Selector Dialog */}
+        <VoiceSelectorDialog
+          open={voiceSelectorOpen}
+          onOpenChange={setVoiceSelectorOpen}
+          provider="elevenlabs"
+          selectedVoiceId={selectedVoiceId}
+          onSelectVoice={handleVoiceSelect}
+          characterContext={reviewExpertContext}
+        />
       </div>
     </div>
   )
