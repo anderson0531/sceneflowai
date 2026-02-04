@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, Settings2 } from 'lucide-react'
+import { X, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, Settings2, Check, Square, CheckSquare } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { VoiceSelectorDialog } from '@/components/tts/VoiceSelectorDialog'
+import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
+import { toast } from 'sonner'
 import type { CharacterContext } from '@/lib/voiceRecommendation'
 
 interface Voice {
@@ -258,6 +260,11 @@ interface ScriptReviewModalProps {
   onRegenerate: () => void
   isGenerating: boolean
   onReviseScript?: (recommendations: string[]) => void
+  // New props for inline revision
+  projectId?: string
+  script?: any
+  characters?: any[]
+  onScriptOptimized?: (optimizedScript: any) => void
 }
 
 export default function ScriptReviewModal({
@@ -267,7 +274,11 @@ export default function ScriptReviewModal({
   audienceReview,
   onRegenerate,
   isGenerating,
-  onReviseScript
+  onReviseScript,
+  projectId,
+  script,
+  characters,
+  onScriptOptimized
 }: ScriptReviewModalProps) {
   const [voices, setVoices] = useState<Voice[]>([])
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>(() => {
@@ -305,6 +316,11 @@ export default function ScriptReviewModal({
   const [showSceneAnalysis, setShowSceneAnalysis] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const audioCacheRef = useRef<Map<string, { url: string; voiceId: string; textHash: string }>>(new Map())
+
+  // State for inline revision with selectable recommendations
+  const [selectedRecommendationIndices, setSelectedRecommendationIndices] = useState<Set<number>>(new Set())
+  const [isRevising, setIsRevising] = useState(false)
+  const { execute } = useProcessWithOverlay()
 
   // Character context for Review Expert voice recommendations
   // Voices that match: authoritative, mature, professional narrators
@@ -541,6 +557,122 @@ export default function ScriptReviewModal({
         )}
       </div>
     )
+  }
+
+  // Initialize all recommendations as selected when review loads
+  useEffect(() => {
+    if (audienceReview && 'recommendations' in audienceReview && audienceReview.recommendations.length > 0) {
+      const allIndices = new Set(audienceReview.recommendations.map((_, i) => i))
+      setSelectedRecommendationIndices(allIndices)
+    }
+  }, [audienceReview])
+
+  // Toggle recommendation selection
+  const toggleRecommendation = (index: number) => {
+    setSelectedRecommendationIndices(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(index)) {
+        newSet.delete(index)
+      } else {
+        newSet.add(index)
+      }
+      return newSet
+    })
+  }
+
+  // Select/deselect all recommendations
+  const toggleAllRecommendations = (selectAll: boolean) => {
+    if (selectAll && audienceReview && 'recommendations' in audienceReview) {
+      setSelectedRecommendationIndices(new Set(audienceReview.recommendations.map((_, i) => i)))
+    } else {
+      setSelectedRecommendationIndices(new Set())
+    }
+  }
+
+  // Inline revision handler - calls optimize-script API directly
+  const handleInlineRevise = async () => {
+    if (!projectId || !script || !onScriptOptimized) {
+      // Fall back to legacy behavior if new props not provided
+      if (onReviseScript && audienceReview && 'recommendations' in audienceReview) {
+        const selectedRecs = audienceReview.recommendations
+          .filter((_, i) => selectedRecommendationIndices.has(i))
+          .map(r => getRecommendationText(r))
+        onReviseScript(selectedRecs)
+      }
+      return
+    }
+
+    if (selectedRecommendationIndices.size === 0) {
+      toast.error('Please select at least one recommendation to apply')
+      return
+    }
+
+    // Build instruction from selected recommendations
+    const review = audienceReview as AudienceResonanceReview
+    const selectedRecs = review.recommendations
+      .filter((_, i) => selectedRecommendationIndices.has(i))
+      .map(r => getRecommendationText(r))
+    
+    const instruction = selectedRecs.map((rec, i) => `${i + 1}. ${rec}`).join('\n\n')
+
+    setIsRevising(true)
+    try {
+      await execute(async () => {
+        let response = await fetch('/api/vision/optimize-script', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId,
+            script,
+            instruction,
+            characters: characters || [],
+            audienceReview: review
+          })
+        })
+
+        if (!response.ok) {
+          if (response.status === 422) {
+            // Retry with compact response
+            toast.message('Retrying with compact optimization...')
+            response = await fetch('/api/vision/optimize-script', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                projectId,
+                script,
+                instruction,
+                characters: characters || [],
+                compact: true,
+                audienceReview: review
+              })
+            })
+          }
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            throw new Error(errorData.error || 'Failed to optimize script')
+          }
+        }
+
+        const data = await response.json()
+        
+        if (data.optimizedScript) {
+          // Apply the optimized script
+          onScriptOptimized(data.optimizedScript)
+          toast.success(`Script revised with ${selectedRecs.length} recommendation${selectedRecs.length > 1 ? 's' : ''} applied!`)
+          onClose()
+        } else {
+          throw new Error('No optimized script returned')
+        }
+      }, { 
+        message: `Revising script with ${selectedRecs.length} recommendation${selectedRecs.length > 1 ? 's' : ''}...`, 
+        estimatedDuration: 30 
+      })
+    } catch (err: any) {
+      console.error('[Script Revision] Error:', err)
+      toast.error(err.message || 'Failed to revise script')
+    } finally {
+      setIsRevising(false)
+    }
   }
 
   if (!isOpen) return null
@@ -854,32 +986,70 @@ export default function ScriptReviewModal({
                   <CardTitle className="text-lg">🎯 Recommendations</CardTitle>
                   <div className="flex items-center gap-2">
                     <AudioButton sectionId="recommendations" text={`Recommendations: ${review.recommendations.map(r => getRecommendationText(r)).join('. ')}`} />
-                    {onReviseScript && (
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => onReviseScript(review.recommendations.map(r => getRecommendationText(r)))}
-                        className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white"
-                      >
-                        <Wand2 className="w-3 h-3" />
-                        Revise Script
-                      </Button>
-                    )}
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-3">
+                  {/* Selection controls */}
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <span>{selectedRecommendationIndices.size} of {review.recommendations.length} selected</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleAllRecommendations(true)}
+                        className="text-xs h-7 px-2"
+                      >
+                        Select All
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleAllRecommendations(false)}
+                        className="text-xs h-7 px-2"
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Selectable recommendations list */}
+                  <ul className="space-y-2">
                     {review.recommendations.map((recommendation, index) => {
                       const isObject = typeof recommendation !== 'string'
                       const text = getRecommendationText(recommendation)
                       const priority = isObject ? recommendation.priority : undefined
                       const category = isObject ? recommendation.category : undefined
+                      const isSelected = selectedRecommendationIndices.has(index)
                       
                       return (
-                        <li key={index} className="flex items-start gap-2 text-sm">
-                          <span className="text-blue-500 mt-1 flex-shrink-0">•</span>
+                        <li 
+                          key={index} 
+                          className={`flex items-start gap-2 text-sm p-2 rounded-lg cursor-pointer transition-colors ${
+                            isSelected 
+                              ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800' 
+                              : 'hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent'
+                          }`}
+                          onClick={() => toggleRecommendation(index)}
+                        >
+                          {/* Checkbox */}
+                          <button
+                            type="button"
+                            className="mt-0.5 flex-shrink-0"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleRecommendation(index)
+                            }}
+                          >
+                            {isSelected ? (
+                              <CheckSquare className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                            ) : (
+                              <Square className="w-4 h-4 text-gray-400" />
+                            )}
+                          </button>
                           <div className="flex-1">
-                            <span>{text}</span>
+                            <span className={isSelected ? 'text-gray-900 dark:text-gray-100' : 'text-gray-600 dark:text-gray-400'}>{text}</span>
                             {(priority || category) && (
                               <div className="flex gap-2 mt-1">
                                 {priority && (
@@ -899,6 +1069,29 @@ export default function ScriptReviewModal({
                       )
                     })}
                   </ul>
+                  
+                  {/* Revise Script button */}
+                  <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleInlineRevise}
+                      disabled={selectedRecommendationIndices.size === 0 || isRevising}
+                      className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
+                    >
+                      {isRevising ? (
+                        <>
+                          <Loader className="w-4 h-4 animate-spin" />
+                          Revising Script...
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="w-4 h-4" />
+                          Revise Script with {selectedRecommendationIndices.size} Recommendation{selectedRecommendationIndices.size !== 1 ? 's' : ''}
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
 

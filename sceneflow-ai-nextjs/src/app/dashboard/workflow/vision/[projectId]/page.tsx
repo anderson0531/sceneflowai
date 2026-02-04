@@ -8571,12 +8571,50 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         audienceReview={audienceReview}
         onRegenerate={handleGenerateReviews}
         isGenerating={isGeneratingReviews}
+        projectId={projectId}
+        script={script?.script}
+        characters={characters}
+        onScriptOptimized={async (optimizedScript) => {
+          // Apply the optimized script directly
+          if (optimizedScript?.scenes) {
+            const updatedScript = {
+              ...script,
+              script: {
+                ...script?.script,
+                scenes: optimizedScript.scenes
+              }
+            }
+            setScript(updatedScript)
+            
+            // Persist to database
+            try {
+              const existingMetadata = project?.metadata || {}
+              const existingVisionPhase = existingMetadata.visionPhase || {}
+              
+              await fetch(`/api/projects/${projectId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  metadata: {
+                    ...existingMetadata,
+                    visionPhase: {
+                      ...existingVisionPhase,
+                      script: updatedScript
+                    }
+                  }
+                })
+              })
+            } catch (error) {
+              console.error('[ScriptReview] Failed to save optimized script:', error)
+              toast.error('Script revised but failed to save to database')
+            }
+          }
+        }}
         onReviseScript={(recommendations: string[]) => {
-          // Format recommendations as instruction text
+          // Legacy fallback - opens Script Editor
           const instruction = recommendations.map((rec, i) => `${i + 1}. ${rec}`).join('\n\n')
           setReviseScriptInstruction(instruction)
           setShowReviewModal(false)
-          // Script editor will open automatically via openScriptEditorWithInstruction prop
           toast.success('Opening Script Editor with review recommendations...')
         }}
       />
