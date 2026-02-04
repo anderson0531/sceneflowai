@@ -15,6 +15,9 @@ interface Voice {
   labels?: Record<string, string>
 }
 
+// Recommendation can be either a string (legacy) or an object with text, priority, category
+type RecommendationItem = string | { text: string; priority: 'critical' | 'high' | 'medium' | 'optional'; category: string }
+
 interface Review {
   overallScore: number
   categories: {
@@ -24,8 +27,24 @@ interface Review {
   analysis: string
   strengths: string[]
   improvements: string[]
-  recommendations: string[]
+  recommendations: RecommendationItem[]
   generatedAt: string
+}
+
+// Helper to extract text from a recommendation (handles both string and object formats)
+const getRecommendationText = (rec: RecommendationItem): string => {
+  return typeof rec === 'string' ? rec : rec.text
+}
+
+// Helper to get priority color
+const getPriorityColor = (priority?: string): string => {
+  switch (priority) {
+    case 'critical': return 'text-red-600 bg-red-100 dark:bg-red-900/30'
+    case 'high': return 'text-orange-600 bg-orange-100 dark:bg-orange-900/30'
+    case 'medium': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30'
+    case 'optional': return 'text-gray-600 bg-gray-100 dark:bg-gray-700'
+    default: return ''
+  }
 }
 
 interface ScriptReviewModalProps {
@@ -375,12 +394,12 @@ export default function ScriptReviewModal({
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">🎯 Recommendations</CardTitle>
             <div className="flex items-center gap-2">
-              <AudioButton sectionId={`${type}-recommendations`} text={`Recommendations: ${review.recommendations.join('. ')}`} />
+              <AudioButton sectionId={`${type}-recommendations`} text={`Recommendations: ${review.recommendations.map(r => getRecommendationText(r)).join('. ')}`} />
               {onReviseScript && (
                 <Button
                   variant="default"
                   size="sm"
-                  onClick={() => onReviseScript(review.recommendations)}
+                  onClick={() => onReviseScript(review.recommendations.map(r => getRecommendationText(r)))}
                   className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white"
                 >
                   <Wand2 className="w-3 h-3" />
@@ -390,13 +409,36 @@ export default function ScriptReviewModal({
             </div>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-2">
-              {review.recommendations.map((recommendation, index) => (
-                <li key={index} className="flex items-start gap-2 text-sm">
-                  <span className="text-blue-500 mt-1">•</span>
-                  <span>{recommendation}</span>
-                </li>
-              ))}
+            <ul className="space-y-3">
+              {review.recommendations.map((recommendation, index) => {
+                const isObject = typeof recommendation !== 'string'
+                const text = getRecommendationText(recommendation)
+                const priority = isObject ? recommendation.priority : undefined
+                const category = isObject ? recommendation.category : undefined
+                
+                return (
+                  <li key={index} className="flex items-start gap-2 text-sm">
+                    <span className="text-blue-500 mt-1 flex-shrink-0">•</span>
+                    <div className="flex-1">
+                      <span>{text}</span>
+                      {(priority || category) && (
+                        <div className="flex gap-2 mt-1">
+                          {priority && (
+                            <Badge variant="secondary" className={`text-xs ${getPriorityColor(priority)}`}>
+                              {priority}
+                            </Badge>
+                          )}
+                          {category && (
+                            <Badge variant="outline" className="text-xs">
+                              {category}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                )
+              })}
             </ul>
           </CardContent>
         </Card>
