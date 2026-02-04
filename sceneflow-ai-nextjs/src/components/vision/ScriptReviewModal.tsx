@@ -665,7 +665,8 @@ export default function ScriptReviewModal({
         }
       }, { 
         message: `Revising script with ${selectedRecs.length} recommendation${selectedRecs.length > 1 ? 's' : ''}...`, 
-        estimatedDuration: 30 
+        // Large scripts take longer - estimate based on scene count
+        estimatedDuration: Math.min(180, Math.max(30, (script?.scenes?.length || 10) * 1.5))
       })
     } catch (err: any) {
       console.error('[Script Revision] Error:', err)

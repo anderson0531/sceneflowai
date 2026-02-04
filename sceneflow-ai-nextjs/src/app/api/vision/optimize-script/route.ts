@@ -322,13 +322,20 @@ ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce si
   const sceneCount = script.scenes?.length || 0
   const estimatedTokens = Math.min(65536, Math.max(16384, sceneCount * 400 + 2000))
   
+  // Calculate timeout based on scene count - large scripts need more time
+  // Base: 90s, +2s per scene, max 280s (leave buffer for Vercel's 300s limit)
+  const timeoutMs = Math.min(280000, Math.max(90000, 90000 + sceneCount * 2000))
+  
   console.log('[Script Optimization] Calling Vertex AI Gemini...')
+  console.log(`[Script Optimization] Timeout: ${timeoutMs / 1000}s, Max tokens: ${estimatedTokens}`)
   
   const result = await generateText(prompt, {
     model: 'gemini-2.5-flash',
     temperature: 0.2,
     maxOutputTokens: estimatedTokens,
-    responseMimeType: 'application/json'
+    responseMimeType: 'application/json',
+    timeoutMs,
+    maxRetries: 1 // Don't retry on timeout, just fail fast
   })
   
   const analysisText = result.text
