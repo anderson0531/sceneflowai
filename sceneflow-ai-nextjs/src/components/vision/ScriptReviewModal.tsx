@@ -15,6 +15,9 @@ interface Voice {
   labels?: Record<string, string>
 }
 
+// LocalStorage key for persisting voice selection
+const REVIEW_VOICE_STORAGE_KEY = 'sceneflow-audience-resonance-voice'
+
 // Recommendation can be either a string (legacy) or an object with text, priority, category
 type RecommendationItem = string | { text: string; priority: 'critical' | 'high' | 'medium' | 'optional'; category: string }
 
@@ -267,8 +270,34 @@ export default function ScriptReviewModal({
   onReviseScript
 }: ScriptReviewModalProps) {
   const [voices, setVoices] = useState<Voice[]>([])
-  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('CwhRBWXzGAHq8TQ4Fs17') // Roger - professional narrator
-  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Roger')
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(REVIEW_VOICE_STORAGE_KEY)
+        if (stored) {
+          const { voiceId } = JSON.parse(stored)
+          if (voiceId) return voiceId
+        }
+      } catch (e) {
+        console.warn('Failed to load review voice from localStorage:', e)
+      }
+    }
+    return 'CwhRBWXzGAHq8TQ4Fs17' // Roger - professional narrator (default)
+  })
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(REVIEW_VOICE_STORAGE_KEY)
+        if (stored) {
+          const { voiceName } = JSON.parse(stored)
+          if (voiceName) return voiceName
+        }
+      } catch (e) {
+        // Already warned above
+      }
+    }
+    return 'Roger'
+  })
   const [voiceSelectorOpen, setVoiceSelectorOpen] = useState(false)
   const [playingSection, setPlayingSection] = useState<string | null>(null)
   const [loadingSection, setLoadingSection] = useState<string | null>(null)
@@ -295,6 +324,14 @@ export default function ScriptReviewModal({
     setVoiceSelectorOpen(false)
     // Clear audio cache since voice changed
     audioCacheRef.current.clear()
+    // Persist to localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(REVIEW_VOICE_STORAGE_KEY, JSON.stringify({ voiceId, voiceName }))
+      } catch (e) {
+        console.warn('Failed to save review voice to localStorage:', e)
+      }
+    }
   }
 
   const hashText = (text: string): string => {
@@ -326,18 +363,31 @@ export default function ScriptReviewModal({
         const data = await res.json()
         const voiceList = data.voices || []
         setVoices(voiceList)
-        // Verify default voice exists and update name
+        // Verify persisted/default voice exists and update name
         if (voiceList.length > 0) {
           const currentVoice = voiceList.find((v: Voice) => v.voice_id === selectedVoiceId)
           if (currentVoice) {
+            // Voice exists, just ensure name is correct
             setSelectedVoiceName(currentVoice.name)
           } else {
-            // Fallback to Roger or first professional narrator voice
+            // Persisted voice not found - fallback to Roger or first available
+            console.log('Selected voice not in list, using fallback voice')
             const roger = voiceList.find((v: Voice) => v.name === 'Roger' || v.voice_id === 'CwhRBWXzGAHq8TQ4Fs17')
             const fallback = roger || voiceList[0]
             if (fallback) {
               setSelectedVoiceId(fallback.voice_id)
               setSelectedVoiceName(fallback.name)
+              // Update localStorage with the valid fallback
+              if (typeof window !== 'undefined') {
+                try {
+                  localStorage.setItem(REVIEW_VOICE_STORAGE_KEY, JSON.stringify({ 
+                    voiceId: fallback.voice_id, 
+                    voiceName: fallback.name 
+                  }))
+                } catch (e) {
+                  // Ignore storage errors
+                }
+              }
             }
           }
         }
