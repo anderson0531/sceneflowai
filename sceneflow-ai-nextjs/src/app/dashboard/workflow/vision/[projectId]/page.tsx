@@ -4073,6 +4073,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           
           // Save reviews to project metadata BEFORE updating local state
           if (project) {
+            // Get existing review history (keep last 5 reviews)
+            const existingHistory = project.metadata?.visionPhase?.reviewHistory || []
+            const currentReview = project.metadata?.visionPhase?.reviews?.audience
+            
+            // Add current review to history if it exists and is different
+            let updatedHistory = [...existingHistory]
+            if (currentReview?.overallScore !== undefined) {
+              updatedHistory = [
+                {
+                  score: currentReview.overallScore,
+                  generatedAt: currentReview.generatedAt || project.metadata?.visionPhase?.reviews?.lastUpdated,
+                  dimensionalScores: currentReview.categories?.map((c: any) => ({ name: c.name, score: c.score })) || []
+                },
+                ...existingHistory
+              ].slice(0, 5) // Keep only last 5 reviews
+            }
+            
             const updatedMetadata = {
               ...project.metadata,
               visionPhase: {
@@ -4083,6 +4100,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   lastUpdated: data.generatedAt,
                   scriptHash: generateScriptHash(script)
                 },
+                reviewHistory: updatedHistory,
                 script: script,
                 scenes: scenes,
                 characters: characters,
@@ -8575,6 +8593,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         script={script?.script}
         characters={characters}
         scoreOutdated={reviewsOutdated}
+        reviewHistory={project?.metadata?.visionPhase?.reviewHistory || []}
         onScriptOptimized={async (optimizedScript) => {
           // Apply the optimized script directly
           if (optimizedScript?.scenes) {

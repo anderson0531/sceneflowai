@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, Settings2, Check, Square, CheckSquare, BarChart3, MessageSquare, ListChecks, Film } from 'lucide-react'
+import { X, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Settings2, Check, Square, CheckSquare, BarChart3, MessageSquare, ListChecks, Film } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -268,6 +268,8 @@ interface ScriptReviewModalProps {
   onScriptOptimized?: (optimizedScript: any) => void
   // Score outdated indicator
   scoreOutdated?: boolean
+  // Review history for score trend
+  reviewHistory?: Array<{ score: number; generatedAt: string; dimensionalScores?: any[] }>
 }
 
 type ReviewTab = 'overview' | 'feedback' | 'recommendations' | 'scenes'
@@ -284,7 +286,8 @@ export default function ScriptReviewModal({
   script,
   characters,
   onScriptOptimized,
-  scoreOutdated
+  scoreOutdated,
+  reviewHistory = []
 }: ScriptReviewModalProps) {
   const [voices, setVoices] = useState<Voice[]>([])
   const [activeTab, setActiveTab] = useState<ReviewTab>('overview')
@@ -873,12 +876,36 @@ export default function ScriptReviewModal({
                   </CardHeader>
                   <CardContent>
                     <div className="text-center mb-4">
-                      <div className={`text-5xl font-bold ${getScoreColor(review.overallScore)}`}>
-                        {review.overallScore}
+                      <div className="flex items-center justify-center gap-2">
+                        <div className={`text-5xl font-bold ${getScoreColor(review.overallScore)}`}>
+                          {review.overallScore}
+                        </div>
+                        {/* Score trend indicator */}
+                        {reviewHistory.length > 0 && (() => {
+                          const previousScore = reviewHistory[0]?.score
+                          const delta = review.overallScore - previousScore
+                          if (delta === 0) return null
+                          return (
+                            <div className={`flex items-center text-sm font-medium ${delta > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                              {delta > 0 ? (
+                                <TrendingUp className="w-4 h-4 mr-1" />
+                              ) : (
+                                <TrendingDown className="w-4 h-4 mr-1" />
+                              )}
+                              {delta > 0 ? '+' : ''}{delta}
+                            </div>
+                          )
+                        })()}
                       </div>
                       <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         {getScoreLabel(review.overallScore)}
                       </div>
+                      {/* Show previous score context if available */}
+                      {reviewHistory.length > 0 && reviewHistory[0]?.score !== review.overallScore && (
+                        <div className="text-xs text-gray-400 mt-1">
+                          Previous: {reviewHistory[0]?.score} ({new Date(reviewHistory[0]?.generatedAt).toLocaleDateString()})
+                        </div>
+                      )}
                       <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mt-3">
                         <div 
                           className={`h-3 rounded-full transition-all duration-500 ${
@@ -921,6 +948,19 @@ export default function ScriptReviewModal({
                               <div key={i} className="flex items-start gap-2 text-sm">
                                 <span className="text-red-500 font-mono shrink-0">-{d.points}</span>
                                 <span className="text-gray-600 dark:text-gray-400 flex-1">{d.reason}</span>
+                                {d.importance && (
+                                  <Badge 
+                                    variant="outline" 
+                                    className={`text-xs shrink-0 ${
+                                      d.importance === 'critical' ? 'border-red-500 text-red-500' :
+                                      d.importance === 'high' ? 'border-orange-500 text-orange-500' :
+                                      d.importance === 'medium' ? 'border-yellow-500 text-yellow-500' :
+                                      'border-gray-400 text-gray-400'
+                                    }`}
+                                  >
+                                    {d.importance}
+                                  </Badge>
+                                )}
                                 <Badge variant="outline" className="text-xs shrink-0">
                                   {d.category}
                                 </Badge>
@@ -1181,7 +1221,7 @@ export default function ScriptReviewModal({
                           <CardTitle className="text-lg">🎬 Scene-by-Scene Analysis</CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <div className="space-y-4">
+                          <div className="max-h-[500px] overflow-y-auto space-y-4 pr-2">
                             {sceneAnalysis.map((scene, index) => (
                               <div 
                                 key={index} 

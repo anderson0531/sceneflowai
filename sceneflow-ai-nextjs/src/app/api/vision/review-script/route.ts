@@ -202,51 +202,57 @@ ${showVsTellMetrics.ratio > 15 ? `- **-${Math.min(15, Math.round(showVsTellMetri
 Scene Content:
 ${sceneSummaries}
 
-## DEDUCTION RUBRIC (Apply selectively - only for clear, significant issues)
+## DEDUCTION RUBRIC WITH IMPORTANCE LEVELS
+
+Each deduction has an importance level that affects how much it impacts the audience experience:
+- **critical**: Major issue that breaks immersion or confuses audience (full point value)
+- **high**: Noticeable issue that detracts from the experience (full point value)
+- **medium**: Minor issue that most viewers would overlook (half point value for scoring)
+- **low**: Polish issue for final drafts only (quarter point value for scoring)
 
 ### Dialogue Issues
-- **-5 points**: "On-the-nose" dialogue - characters say exactly what they feel without subtext
-- **-4 points**: Characters all sound the same (no distinct voices)
-- **-3 points**: Exposition dumps through dialogue ("As you know, Bob...")
-- **-3 points**: Repetitive dialogue beats (same argument repeated without progression)
+- **-5 points** (high): "On-the-nose" dialogue - characters say exactly what they feel without subtext
+- **-4 points** (medium): Characters all sound the same (no distinct voices)
+- **-3 points** (low): Exposition dumps through dialogue ("As you know, Bob...")
+- **-3 points** (low): Repetitive dialogue beats (same argument repeated without progression)
 
 ### Narration/Description Issues  
-- **-7 points**: Narration explains emotions instead of showing through action/behavior
-- **-5 points**: "Purple prose" - overly poetic/flowery narration that slows pacing
-- **-4 points**: Camera direction in action lines (unnecessary "we see", "we hear")
-- **-3 points**: Telling internal thoughts that should be dramatized
+- **-7 points** (high): Narration explains emotions instead of showing through action/behavior
+- **-5 points** (medium): "Purple prose" - overly poetic/flowery narration that slows pacing
+- **-4 points** (low): Camera direction in action lines (unnecessary "we see", "we hear")
+- **-3 points** (low): Telling internal thoughts that should be dramatized
 
 ### Structural Issues
-- **-5 points**: No clear inciting incident in first 10% of script
-- **-5 points**: Saggy middle - second act lacks escalation or new information
-- **-4 points**: Rushed resolution - climax/resolution happens too abruptly
-- **-3 points per instance**: Scenes that repeat same emotional beat without progression (max -12)
+- **-5 points** (critical): No clear inciting incident in first 10% of script
+- **-5 points** (high): Saggy middle - second act lacks escalation or new information
+- **-4 points** (medium): Rushed resolution - climax/resolution happens too abruptly
+- **-3 points per instance** (medium): Scenes that repeat same emotional beat without progression (max -12)
 
 ### Character Issues
-- **-5 points**: Protagonist lacks clear want/need or motivation
-- **-4 points**: Antagonist is one-dimensional or unclear
-- **-4 points**: Supporting characters serve only as "validators" without agency
-- **-3 points**: Character decisions don't follow established logic
+- **-5 points** (critical): Protagonist lacks clear want/need or motivation
+- **-4 points** (high): Antagonist is one-dimensional or unclear
+- **-4 points** (medium): Supporting characters serve only as "validators" without agency
+- **-3 points** (low): Character decisions don't follow established logic
 
 ### Pacing Issues
-- **-5 points**: Discovery/setup phase takes >40% of the script
-- **-4 points**: "Staccato" pacing - too many very short scenes (2-3 lines) without rhythm variation
-- **-3 points**: Transitions between scenes are jarring or unmotivated
-- **-3 points**: Choppy scene structure prevents emotional immersion
+- **-5 points** (high): Discovery/setup phase takes >40% of the script
+- **-4 points** (medium): "Staccato" pacing - too many very short scenes (2-3 lines) without rhythm variation
+- **-3 points** (low): Transitions between scenes are jarring or unmotivated
+- **-3 points** (low): Choppy scene structure prevents emotional immersion
 
 ### Visual Storytelling
-- **-4 points**: Reliance on dialogue to convey what should be visual
-- **-3 points**: Missed opportunities for "show don't tell" moments
-- **-3 points**: Lack of visual motifs or recurring imagery
+- **-4 points** (medium): Reliance on dialogue to convey what should be visual
+- **-3 points** (low): Missed opportunities for "show don't tell" moments
+- **-3 points** (low): Lack of visual motifs or recurring imagery
 
 ### Redundancy Issues
-- **-4 points per instance (max -12)**: Scenes that repeat the same argument/confrontation without escalation
-- **-3 points**: Characters have the same conversation multiple times with same outcome
-- **-5 points**: Conflict doesn't escalate between repeated confrontations
+- **-4 points per instance** (medium, max -12): Scenes that repeat the same argument/confrontation without escalation
+- **-3 points** (low): Characters have the same conversation multiple times with same outcome
+- **-5 points** (high): Conflict doesn't escalate between repeated confrontations
 
-IMPORTANT: Be selective and fair. Only deduct for CLEAR, SIGNIFICANT issues that genuinely impact the script. A typical first draft should have 15-35 total deduction points (scoring 65-85). If your deductions exceed 50 points, you are being too harsh - reconsider.
+IMPORTANT: Include the "importance" field in each deduction. Be selective - focus on critical and high importance issues. Low importance issues are polish items that shouldn't heavily impact the score.
 
-## EVALUATION DIMENSIONS (Score each 1-100 AFTER deductions)
+## EVALUATION DIMENSIONS (Score each 1-100)
 
 1. **Dialogue Subtext** (weight: 20) - Do characters speak around what they mean? Is there tension between text and subtext?
 2. **Structural Integrity** (weight: 20) - Does the three-act structure work? Are there clear turning points?
@@ -285,7 +291,7 @@ Return ONLY valid JSON:
   "overallScore": <calculated score after deductions, max ${autoScoreCap}>,
   "baseScore": 100,
   "deductions": [
-    {"reason": "<specific issue found>", "points": <points deducted>, "category": "<category>"},
+    {"reason": "<specific issue found>", "points": <points deducted>, "category": "<category>", "importance": "critical|high|medium|low"},
     ...
   ],
   "categories": [
