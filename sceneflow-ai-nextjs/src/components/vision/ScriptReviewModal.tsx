@@ -73,6 +73,19 @@ const getRecommendationText = (rec: RecommendationItem): string => {
   return typeof rec === 'string' ? rec : rec.text
 }
 
+// Helper to safely extract text from any item (string, object with text, or other)
+const safeGetText = (item: any): string => {
+  if (typeof item === 'string') return item
+  if (item && typeof item === 'object') {
+    if (typeof item.text === 'string') return item.text
+    if (typeof item.reason === 'string') return item.reason
+    if (typeof item.message === 'string') return item.message
+    // Fallback: stringify the object
+    return JSON.stringify(item)
+  }
+  return String(item ?? '')
+}
+
 // Helper to get priority color
 const getPriorityColor = (priority?: string): string => {
   switch (priority) {
@@ -726,14 +739,14 @@ export default function ScriptReviewModal({
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="text-lg">✨ Strengths</CardTitle>
-                    <AudioButton sectionId="strengths" text={`Strengths: ${review.strengths.join('. ')}`} />
+                    <AudioButton sectionId="strengths" text={`Strengths: ${review.strengths.map(s => safeGetText(s)).join('. ')}`} />
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-2">
                       {review.strengths.map((strength, index) => (
                         <li key={index} className="flex items-start gap-2 text-sm">
                           <span className="text-green-500 mt-1">•</span>
-                          <span>{strength}</span>
+                          <span>{safeGetText(strength)}</span>
                         </li>
                       ))}
                     </ul>
@@ -744,14 +757,14 @@ export default function ScriptReviewModal({
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="text-lg">⚠️ Areas for Improvement</CardTitle>
-                    <AudioButton sectionId="improvements" text={`Areas for improvement: ${review.improvements.join('. ')}`} />
+                    <AudioButton sectionId="improvements" text={`Areas for improvement: ${review.improvements.map(i => safeGetText(i)).join('. ')}`} />
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-2">
                       {review.improvements.map((improvement, index) => (
                         <li key={index} className="flex items-start gap-2 text-sm">
                           <span className="text-yellow-500 mt-1">•</span>
-                          <span>{improvement}</span>
+                          <span>{safeGetText(improvement)}</span>
                         </li>
                       ))}
                     </ul>
