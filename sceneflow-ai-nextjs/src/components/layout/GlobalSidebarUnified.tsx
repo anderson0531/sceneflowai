@@ -322,9 +322,9 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
           )}
 
           {/* Review Scores Section */}
-          {config.sectionVisibility.reviewScores && reviewScores && (
+          {config.sectionVisibility.reviewScores && (
             <ReviewScoresPanel
-              scores={reviewScores}
+              scores={reviewScores || { director: null, audience: null }}
               isOpen={sectionsOpen.reviewScores}
               onToggle={() => toggleSection('reviewScores')}
               isGenerating={isGeneratingReviews}
