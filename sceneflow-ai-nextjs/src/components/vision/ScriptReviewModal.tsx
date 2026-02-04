@@ -916,12 +916,12 @@ export default function ScriptReviewModal({
                         </button>
                         
                         {showDeductions && (
-                          <div className="mt-3 space-y-2 pl-6">
+                          <div className="mt-3 max-h-48 overflow-y-auto space-y-2 pl-6 pr-2">
                             {deductions.map((d, i) => (
                               <div key={i} className="flex items-start gap-2 text-sm">
-                                <span className="text-red-500 font-mono">-{d.points}</span>
-                                <span className="text-gray-600 dark:text-gray-400">{d.reason}</span>
-                                <Badge variant="outline" className="text-xs ml-auto">
+                                <span className="text-red-500 font-mono shrink-0">-{d.points}</span>
+                                <span className="text-gray-600 dark:text-gray-400 flex-1">{d.reason}</span>
+                                <Badge variant="outline" className="text-xs shrink-0">
                                   {d.category}
                                 </Badge>
                               </div>

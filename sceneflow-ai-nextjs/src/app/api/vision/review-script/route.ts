@@ -157,27 +157,27 @@ async function generateAudienceResonance(
     return `Scene ${idx + 1}: ${heading}\nAction: ${action}\n${narration ? `Narration: ${narration}\n` : ''}${dialogueLines ? `Dialogue:\n  ${dialogueLines}${hasMoreDialogue ? '\n  ...' : ''}\n` : ''}`
   }).join('\n---\n') || 'No scenes available'
 
-  // Determine automatic score cap based on narration ratio
+  // Determine automatic score guidance based on narration ratio (soft caps, not hard limits)
   let autoScoreCap = 100
   let autoCapReason = ''
-  if (showVsTellMetrics.ratio > 25) {
-    autoScoreCap = 65
-    autoCapReason = `Narration comprises ${showVsTellMetrics.ratio.toFixed(1)}% of content (>25%). Score capped at 65.`
-  } else if (showVsTellMetrics.ratio > 15) {
+  if (showVsTellMetrics.ratio > 40) {
     autoScoreCap = 75
-    autoCapReason = `Narration comprises ${showVsTellMetrics.ratio.toFixed(1)}% of content (>15%). Score capped at 75.`
-  } else if (showVsTellMetrics.ratio > 10) {
+    autoCapReason = `Narration comprises ${showVsTellMetrics.ratio.toFixed(1)}% of content (>40%). Consider reducing narration.`
+  } else if (showVsTellMetrics.ratio > 30) {
     autoScoreCap = 85
-    autoCapReason = `Narration comprises ${showVsTellMetrics.ratio.toFixed(1)}% of content (>10%). Score capped at 85.`
+    autoCapReason = `Narration comprises ${showVsTellMetrics.ratio.toFixed(1)}% of content (>30%). Some narration reduction recommended.`
+  } else if (showVsTellMetrics.ratio > 20) {
+    autoScoreCap = 90
+    autoCapReason = `Narration comprises ${showVsTellMetrics.ratio.toFixed(1)}% of content (>20%). Minor narration adjustment may help.`
   }
 
-  const prompt = `You are an expert screenplay analyst using a STRICT DEDUCTION-BASED RUBRIC system. You are a TOUGH CRITIC - your job is to find EVERY craft issue and apply point penalties ruthlessly.
+  const prompt = `You are an expert screenplay analyst using a DEDUCTION-BASED RUBRIC system. Your job is to provide fair, constructive feedback that helps writers improve their scripts.
 
-CRITICAL SCORING RULES:
-1. Start at 100 and DEDUCT points for every issue found
-2. First drafts ALWAYS have issues - a score above 75 for any first draft is WRONG
+SCORING RULES:
+1. Start at 100 and deduct points for genuine craft issues
+2. Be fair and balanced - acknowledge strengths while identifying areas for improvement
 3. Your final score MUST equal 100 minus the sum of all deductions
-4. If you find fewer than 5 deductions, you haven't looked hard enough
+4. Only deduct for real issues that impact the script quality
 
 Script Details:
 - Title: ${script.title || 'Untitled Script'}
@@ -253,18 +253,18 @@ ${sceneSummaries}
 5. **Pacing & Rhythm** (weight: 15) - Does the script breathe? Are scene lengths varied appropriately?
 6. **Show vs Tell Ratio** (weight: 10) - Is the storytelling dramatized rather than narrated?
 
-## SCORE CALIBRATION GUIDE (STRICTLY ENFORCED)
+## SCORE CALIBRATION GUIDE
 
-- **90-100**: VIRTUALLY IMPOSSIBLE. Reserved for Chinatown, Parasite, The Social Network. Multiple Oscar-winning level. You will almost NEVER give this score.
-- **80-89**: Exceptional. Final polished draft from professional screenwriter. Rare.
-- **70-79**: Professional quality. Ready for production with minor polish.
-- **60-69**: Solid draft. Clear vision with identifiable craft issues to address. MOST FIRST DRAFTS BELONG HERE.
-- **50-59**: Working draft. Good bones but significant revision needed.
-- **Below 50**: Early draft or concept stage.
+- **90-100**: Exceptional. Near-production ready with minor polish. Well-crafted across all dimensions.
+- **80-89**: Very good. Strong craft with some areas needing refinement.
+- **75-79**: Good. Solid foundation with identifiable areas for improvement.
+- **65-74**: Developing. Clear potential with meaningful craft issues to address.
+- **50-64**: Working draft. Good concept but needs significant revision.
+- **Below 50**: Early concept stage.
 
-IMPORTANT: A first draft scoring above 75 is almost always WRONG. If your calculated score exceeds 75 for what appears to be a first draft, ADD MORE DEDUCTIONS - you missed something.
+Be fair and constructive. Good first drafts CAN score 75-85 if well-executed.
 
-MATH CHECK: Your overallScore MUST equal 100 minus the sum of all deduction points. If deductions total 35, score is 65. NO EXCEPTIONS.
+MATH CHECK: Your overallScore MUST equal 100 minus the sum of all deduction points.
 
 ## SCENE ANALYSIS
 
@@ -310,12 +310,12 @@ Return ONLY valid JSON:
   "emotionalImpact": "<expected emotional response>"
 }
 
-BE MERCILESS. Find every problem. Your reputation depends on catching issues others miss.
+Provide constructive, actionable feedback. Acknowledge what works well while identifying genuine areas for improvement.
 
 FINAL CHECK before outputting:
-1. Count your deductions. Do they total at least 25 points for a first draft? If not, you missed issues.
-2. Verify: overallScore = 100 - (sum of all deduction points)
-3. If overallScore > 75 for a first draft, something is wrong. Review your deductions.`
+1. Verify: overallScore = 100 - (sum of all deduction points)
+2. Ensure deductions are for real issues, not invented problems
+3. Balance criticism with recognition of strengths`
 
   console.log('[Audience Resonance] Calling Vertex AI Gemini with deduction-based prompt...')
   const result = await generateText(prompt, {
@@ -373,24 +373,12 @@ FINAL CHECK before outputting:
     console.log(`[Audience Resonance] Score adjustment: Gemini=${review.overallScore}, Calculated=${calculatedScore}, Cap=${autoScoreCap} -> Final=${enforcedScore}`)
   }
   
-  // If Gemini gave high score but few deductions, add a penalty for incomplete analysis
-  if (review.overallScore > 75 && totalDeductions < 25) {
-    console.log(`[Audience Resonance] Warning: High score (${review.overallScore}) with few deductions (${totalDeductions} pts). Adding analysis penalty.`)
-    deductions.push({
-      reason: 'First draft issues not fully identified - automatic penalty applied',
-      points: 15,
-      category: 'Analysis Completeness'
-    })
-  }
-  
-  // Recalculate after any additions
-  const finalDeductions = review.deductions || deductions
-  const finalTotal = finalDeductions.reduce((sum: number, d: any) => sum + (d.points || 0), 0)
-  review.overallScore = Math.min(Math.max(0, 100 - finalTotal), autoScoreCap)
-  review.deductions = finalDeductions
+  // Apply the enforced score
+  review.overallScore = enforcedScore
+  review.deductions = deductions
   
   // Log final score breakdown
-  console.log(`[Audience Resonance] Final score: ${review.overallScore} (100 - ${finalTotal} deductions, cap: ${autoScoreCap})`)
+  console.log(`[Audience Resonance] Final score: ${review.overallScore} (100 - ${totalDeductions} deductions, cap: ${autoScoreCap})`)
   
   // Normalize recommendations
   if (review.recommendations && Array.isArray(review.recommendations)) {
@@ -413,7 +401,7 @@ FINAL CHECK before outputting:
   ]
 
   return {
-    overallScore: review.overallScore || 65,
+    overallScore: review.overallScore || 75,
     baseScore: 100,
     deductions: review.deductions || [],
     categories: review.categories || defaultCategories,
