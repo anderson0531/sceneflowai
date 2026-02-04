@@ -446,17 +446,23 @@ export default function ScriptReviewModal({
 
     setLoadingSection(sectionId)
     try {
-      // Validate voice is selected
-      if (!selectedVoiceId) {
-        console.error('No voice selected for TTS')
-        return
+      // Determine the voice to use
+      let voiceToUse = selectedVoiceId
+      
+      // If no voice selected, use default Roger
+      if (!voiceToUse) {
+        voiceToUse = 'CwhRBWXzGAHq8TQ4Fs17' // Roger - default
+        console.log('No voice in state, using default Roger')
       }
       
-      // Verify voice exists in list
-      const voiceExists = voices.some(v => v.voice_id === selectedVoiceId)
-      if (!voiceExists && voices.length > 0) {
-        console.warn('Selected voice not in list, using first available voice')
-        setSelectedVoiceId(voices[0].voice_id)
+      // Verify voice exists in list (if list is loaded)
+      if (voices.length > 0) {
+        const voiceExists = voices.some(v => v.voice_id === voiceToUse)
+        if (!voiceExists) {
+          console.warn('Selected voice not in list, using first available voice')
+          voiceToUse = voices[0].voice_id
+          setSelectedVoiceId(voiceToUse)
+        }
       }
       
       const response = await fetch('/api/tts/elevenlabs', {
@@ -464,7 +470,7 @@ export default function ScriptReviewModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text,
-          voiceId: selectedVoiceId,
+          voiceId: voiceToUse,
           parallel: true,
           stability: 0.5,
           similarityBoost: 0.75
