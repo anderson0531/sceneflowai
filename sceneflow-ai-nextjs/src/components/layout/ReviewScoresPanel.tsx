@@ -56,6 +56,7 @@ export function getScoreCardClasses(score: number): {
 /**
  * Review Scores Panel - Displays Director and Audience scores with stoplight color coding
  * Used in the global sidebar for Production and later workflow phases
+ * Shows "Generate Review" button when no scores exist yet
  */
 export function ReviewScoresPanel({
   scores,
@@ -66,10 +67,6 @@ export function ReviewScoresPanel({
 }: ReviewScoresPanelProps) {
   const hasScores = scores.director !== null || scores.audience !== null
 
-  if (!hasScores) {
-    return null
-  }
-
   const handleUpdateReviews = () => {
     window.dispatchEvent(new CustomEvent('production:update-reviews'))
   }
@@ -78,6 +75,7 @@ export function ReviewScoresPanel({
     window.dispatchEvent(new CustomEvent('production:review-analysis'))
   }
 
+  // Always show the panel, with different content based on whether scores exist
   return (
     <div className={cn('p-4 border-b border-gray-200 dark:border-gray-700', className)}>
       <button
@@ -86,12 +84,39 @@ export function ReviewScoresPanel({
       >
         <div className="flex items-center gap-2">
           <Sparkles className="w-3.5 h-3.5 text-purple-500" />
-          <span>Review Guide</span>
+          <span>Review Scores</span>
         </div>
         {isOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
       </button>
       {isOpen && (
         <div className="space-y-3">
+          {!hasScores ? (
+            /* No scores yet - show Generate Review button */
+            <div className="text-center py-3">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                No reviews generated yet
+              </p>
+              <button
+                onClick={handleUpdateReviews}
+                disabled={isGenerating}
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Generating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    <span>Generate Review</span>
+                  </>
+                )}
+              </button>
+            </div>
+          ) : (
+            /* Has scores - show score cards and action buttons */
+            <>
           {/* Score Cards */}
           <div className="grid grid-cols-2 gap-2">
           {/* Director Score Card */}
@@ -155,6 +180,8 @@ export function ReviewScoresPanel({
             <span>Analysis</span>
           </button>
         </div>
+            </>
+          )}
       </div>
       )}
     </div>
