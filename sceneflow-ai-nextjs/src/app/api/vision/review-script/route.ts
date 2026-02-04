@@ -202,47 +202,49 @@ ${showVsTellMetrics.ratio > 15 ? `- **-${Math.min(15, Math.round(showVsTellMetri
 Scene Content:
 ${sceneSummaries}
 
-## DEDUCTION RUBRIC (Apply ALL that apply)
+## DEDUCTION RUBRIC (Apply selectively - only for clear, significant issues)
 
 ### Dialogue Issues
-- **-10 points**: "On-the-nose" dialogue - characters say exactly what they feel without subtext
-- **-8 points**: Characters all sound the same (no distinct voices)
-- **-5 points**: Exposition dumps through dialogue ("As you know, Bob...")
-- **-5 points**: Repetitive dialogue beats (same argument repeated without progression)
+- **-5 points**: "On-the-nose" dialogue - characters say exactly what they feel without subtext
+- **-4 points**: Characters all sound the same (no distinct voices)
+- **-3 points**: Exposition dumps through dialogue ("As you know, Bob...")
+- **-3 points**: Repetitive dialogue beats (same argument repeated without progression)
 
 ### Narration/Description Issues  
-- **-15 points**: Narration explains emotions instead of showing through action/behavior
-- **-10 points**: "Purple prose" - overly poetic/flowery narration that slows pacing
-- **-8 points**: Camera direction in action lines (unnecessary "we see", "we hear")
-- **-5 points**: Telling internal thoughts that should be dramatized
+- **-7 points**: Narration explains emotions instead of showing through action/behavior
+- **-5 points**: "Purple prose" - overly poetic/flowery narration that slows pacing
+- **-4 points**: Camera direction in action lines (unnecessary "we see", "we hear")
+- **-3 points**: Telling internal thoughts that should be dramatized
 
 ### Structural Issues
-- **-10 points**: No clear inciting incident in first 10% of script
-- **-10 points**: Saggy middle - second act lacks escalation or new information
-- **-8 points**: Rushed resolution - climax/resolution happens too abruptly
-- **-5 points per instance**: Scenes that repeat same emotional beat without progression (max -25)
+- **-5 points**: No clear inciting incident in first 10% of script
+- **-5 points**: Saggy middle - second act lacks escalation or new information
+- **-4 points**: Rushed resolution - climax/resolution happens too abruptly
+- **-3 points per instance**: Scenes that repeat same emotional beat without progression (max -12)
 
 ### Character Issues
-- **-10 points**: Protagonist lacks clear want/need or motivation
-- **-8 points**: Antagonist is one-dimensional or unclear
-- **-8 points**: Supporting characters serve only as "validators" without agency
-- **-5 points**: Character decisions don't follow established logic
+- **-5 points**: Protagonist lacks clear want/need or motivation
+- **-4 points**: Antagonist is one-dimensional or unclear
+- **-4 points**: Supporting characters serve only as "validators" without agency
+- **-3 points**: Character decisions don't follow established logic
 
 ### Pacing Issues
-- **-10 points**: Discovery/setup phase takes >40% of the script
-- **-8 points**: "Staccato" pacing - too many very short scenes (2-3 lines) without rhythm variation
-- **-5 points**: Transitions between scenes are jarring or unmotivated
-- **-5 points**: Choppy scene structure prevents emotional immersion
+- **-5 points**: Discovery/setup phase takes >40% of the script
+- **-4 points**: "Staccato" pacing - too many very short scenes (2-3 lines) without rhythm variation
+- **-3 points**: Transitions between scenes are jarring or unmotivated
+- **-3 points**: Choppy scene structure prevents emotional immersion
 
 ### Visual Storytelling
-- **-8 points**: Reliance on dialogue to convey what should be visual
-- **-5 points**: Missed opportunities for "show don't tell" moments
-- **-5 points**: Lack of visual motifs or recurring imagery
+- **-4 points**: Reliance on dialogue to convey what should be visual
+- **-3 points**: Missed opportunities for "show don't tell" moments
+- **-3 points**: Lack of visual motifs or recurring imagery
 
-### Redundancy Issues (CRITICAL - Check carefully)
-- **-8 points per instance (max -24)**: Scenes that repeat the same argument/confrontation without escalation
-- **-5 points**: Characters have the same conversation multiple times with same outcome
-- **-10 points**: Conflict doesn't escalate between repeated confrontations (e.g., warning ignored → warning ignored → warning ignored)
+### Redundancy Issues
+- **-4 points per instance (max -12)**: Scenes that repeat the same argument/confrontation without escalation
+- **-3 points**: Characters have the same conversation multiple times with same outcome
+- **-5 points**: Conflict doesn't escalate between repeated confrontations
+
+IMPORTANT: Be selective and fair. Only deduct for CLEAR, SIGNIFICANT issues that genuinely impact the script. A typical first draft should have 15-35 total deduction points (scoring 65-85). If your deductions exceed 50 points, you are being too harsh - reconsider.
 
 ## EVALUATION DIMENSIONS (Score each 1-100 AFTER deductions)
 
@@ -360,7 +362,8 @@ FINAL CHECK before outputting:
   // SCORE RECALCULATION: Calculate score strictly from deductions (ignore AI's arbitrary score)
   const deductions = review.deductions || []
   const totalDeductions = deductions.reduce((sum: number, d: any) => sum + (d.points || 0), 0)
-  const calculatedScore = Math.max(0, 100 - totalDeductions)
+  // Floor at 40 to prevent overly harsh scores - no script should score below 40
+  const calculatedScore = Math.max(40, 100 - totalDeductions)
   
   // Apply auto cap if needed, but always use calculated score from deductions
   const enforcedScore = Math.min(calculatedScore, autoScoreCap)
