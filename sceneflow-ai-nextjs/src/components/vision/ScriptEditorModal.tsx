@@ -202,18 +202,30 @@ export function ScriptEditorModal({
     startMic()
   }
 
+  // Helper to safely extract text from recommendation items (string or object)
+  const getRecText = (rec: any): string => {
+    if (typeof rec === 'string') return rec
+    if (rec && typeof rec === 'object') {
+      if (typeof rec.text === 'string') return rec.text
+      if (typeof rec.reason === 'string') return rec.reason
+      if (typeof rec.message === 'string') return rec.message
+    }
+    return String(rec ?? '')
+  }
+
   // Transform review recommendations into selectable format
   const transformReviewRecommendations = () => {
     const recommendations: any[] = []
     
-    // Add Director recommendations
+    // Add Director recommendations (deprecated but kept for compatibility)
     if (directorReview?.recommendations) {
-      directorReview.recommendations.forEach((rec, idx) => {
+      directorReview.recommendations.forEach((rec: any, idx: number) => {
+        const text = getRecText(rec)
         recommendations.push({
           id: `director-${idx}`,
-          title: rec.length > 60 ? rec.substring(0, 60) + '...' : rec,
-          fullText: rec,
-          priority: 'high' as const,
+          title: text.length > 60 ? text.substring(0, 60) + '...' : text,
+          fullText: text,
+          priority: (typeof rec === 'object' && rec.priority) || 'high',
           category: 'director' as const,
           source: 'Director Review'
         })
@@ -222,12 +234,13 @@ export function ScriptEditorModal({
     
     // Add Audience recommendations
     if (audienceReview?.recommendations) {
-      audienceReview.recommendations.forEach((rec, idx) => {
+      audienceReview.recommendations.forEach((rec: any, idx: number) => {
+        const text = getRecText(rec)
         recommendations.push({
           id: `audience-${idx}`,
-          title: rec.length > 60 ? rec.substring(0, 60) + '...' : rec,
-          fullText: rec,
-          priority: 'medium' as const,
+          title: text.length > 60 ? text.substring(0, 60) + '...' : text,
+          fullText: text,
+          priority: (typeof rec === 'object' && rec.priority) || 'medium',
           category: 'audience' as const,
           source: 'Audience Review'
         })
