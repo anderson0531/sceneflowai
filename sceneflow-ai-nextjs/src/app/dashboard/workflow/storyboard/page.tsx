@@ -249,7 +249,7 @@ export default function StoryboardPage() {
         <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
           <Film className="w-10 h-10 text-white" />
         </div>
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">The Vision Board</h1>
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">Production</h1>
         <p className="text-xl text-gray-600">Step 2: Storyboard & Visual Planning</p>
         <p className="text-gray-500 mt-2">Transform your idea into a visual storyboard with AI-powered insights</p>
       </div>

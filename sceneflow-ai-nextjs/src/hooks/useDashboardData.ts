@@ -157,19 +157,20 @@ export function formatRelativeTime(dateString: string): string {
 }
 
 // Helper to map project step to phase name
+// Updated phase names: Blueprint → Production → Final Cut → Premiere
 export function getPhaseDisplayName(currentStep: string): string {
   const stepMap: Record<string, string> = {
-    'ideation': 'Ideation',
+    'ideation': 'Blueprint',
     'blueprint': 'Blueprint',
-    'vision': 'Vision Board',
-    'storyboard': 'Storyboard',
-    'scene-direction': "Director's Chair",
-    'direction': "Director's Chair",
-    'creation': 'Creation',
-    'video-generation': 'Video Generation',
-    'polish': 'Polish',
-    'export': 'Export',
-    'launch': 'Launch',
+    'vision': 'Production',
+    'storyboard': 'Production',
+    'scene-direction': 'Final Cut',
+    'direction': 'Final Cut',
+    'creation': 'Final Cut',
+    'video-generation': 'Final Cut',
+    'polish': 'Final Cut',
+    'export': 'Premiere',
+    'launch': 'Premiere',
     'completed': 'Complete'
   }
   return stepMap[currentStep] || currentStep

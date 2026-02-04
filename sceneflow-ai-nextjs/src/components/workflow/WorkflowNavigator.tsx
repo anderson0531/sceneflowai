@@ -8,7 +8,7 @@ import { Lightbulb, Layout, Video, Film, CheckCircle2, Lock, Wrench } from 'luci
 const workflowSteps = [
   {
     id: 'ideation' as WorkflowStep,
-    title: 'The Spark Studio',
+    title: 'Blueprint',
     description: 'Ideation & Brainstorming',
     icon: Lightbulb,
     color: 'from-blue-500 to-blue-600',
@@ -17,7 +17,7 @@ const workflowSteps = [
   },
   {
     id: 'storyboard' as WorkflowStep,
-    title: 'Vision Board',
+    title: 'Production',
     description: 'Storyboard & Planning',
     icon: Layout,
     color: 'from-purple-500 to-purple-600',
@@ -26,7 +26,7 @@ const workflowSteps = [
   },
   {
     id: 'scene-direction' as WorkflowStep,
-    title: 'The Director\'s Chair',
+    title: 'Final Cut',
     description: 'Scene Direction & Control',
     icon: Video,
     color: 'from-orange-500 to-orange-600',
@@ -35,7 +35,7 @@ const workflowSteps = [
   },
   {
     id: 'video-generation' as WorkflowStep,
-    title: 'The Screening Room',
+    title: 'Premiere',
     description: 'Video Generation',
     icon: Film,
     color: 'from-green-500 to-green-600',

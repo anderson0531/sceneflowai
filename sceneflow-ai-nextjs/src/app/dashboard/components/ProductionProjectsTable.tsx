@@ -14,7 +14,7 @@ export function ProductionProjectsTable() {
       lastActive: "1 hour ago", 
       phase: 1, 
       step: 2, 
-      stepName: "2. Vision Board", 
+      stepName: "2. Production", 
       projectedCredits: 1500,
       status: "In Progress",
       description: "Space exploration series pilot episode"

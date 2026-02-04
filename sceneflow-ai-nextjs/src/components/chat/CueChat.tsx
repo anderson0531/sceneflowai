@@ -1064,7 +1064,7 @@ Instead of asking you for each detail, I've built the foundation so we can focus
                 <h4 className="font-semibold text-green-800">Ready for Next Phase!</h4>
               </div>
               <p className="text-sm text-green-700 mb-3">
-                Your production guide is complete and ready for Step 2: Vision Board
+                Your production guide is complete and ready for Step 2: Production
               </p>
               <Button
                 onClick={exportProductionGuide}

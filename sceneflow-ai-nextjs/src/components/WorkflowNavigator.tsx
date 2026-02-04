@@ -1,10 +1,10 @@
 const WorkflowNavigator = ({ activeStepIndex = 0 }: { activeStepIndex?: number }) => {
-  // Using the creative names provided in the roadmap
+  // Updated phase names: Blueprint → Production → Final Cut → Premiere
   const steps = [
-    { name: "1. The Spark Studio" },
-    { name: "2. Vision Board" },
-    { name: "3. The Director's Chair" },
-    { name: "4. The Screening Room" }
+    { name: "1. Blueprint" },
+    { name: "2. Production" },
+    { name: "3. Final Cut" },
+    { name: "4. Premiere" }
   ];
 
   return (

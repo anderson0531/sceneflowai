@@ -320,11 +320,11 @@ export default function DirectionPage() {
           {!currentProject?.metadata?.storyboard && (
             <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-yellow-800 text-sm">
-                ⚠️ Please complete the Vision Board (Storyboard) step before generating scene directions.
+                ⚠️ Please complete the Production step before generating scene directions.
               </p>
               <Link href="/dashboard/workflow/storyboard">
                 <Button variant="outline" size="sm" className="mt-2 text-yellow-700 border-yellow-300 hover:bg-yellow-100">
-                  Go to Vision Board
+                  Go to Production
                 </Button>
               </Link>
             </div>
@@ -460,7 +460,7 @@ export default function DirectionPage() {
             <Link href="/dashboard/workflow/storyboard">
               <Button variant="outline">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Vision Board
+                Back to Production
               </Button>
             </Link>
             

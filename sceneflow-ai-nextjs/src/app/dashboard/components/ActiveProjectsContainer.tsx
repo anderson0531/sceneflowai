@@ -60,22 +60,22 @@ function transformProject(project: DashboardProject, index: number) {
   const getNextStep = () => {
     const stepConfig: Record<string, { name: string; description: string; url: string }> = {
       'blueprint': { 
-        name: 'Vision Board', 
+        name: 'Production', 
         description: 'Create visual storyboard for each scene',
         url: `/dashboard/workflow/vision/${project.id}`
       },
       'vision': { 
-        name: "Director's Chair", 
+        name: 'Final Cut', 
         description: 'Define camera angles, lighting & movement',
         url: `/dashboard/workflow/direction/${project.id}`
       },
       'creation': { 
-        name: 'Video Generation', 
+        name: 'Premiere', 
         description: 'Generate video from your scenes',
         url: `/dashboard/workflow/video-generation?project=${project.id}`
       },
       'polish': { 
-        name: 'Export', 
+        name: 'Premiere', 
         description: 'Export your finished video',
         url: `/dashboard/workflow/export/${project.id}`
       },
