@@ -8574,6 +8574,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         projectId={projectId}
         script={script?.script}
         characters={characters}
+        scoreOutdated={reviewsOutdated}
         onScriptOptimized={async (optimizedScript) => {
           // Apply the optimized script directly
           if (optimizedScript?.scenes) {
@@ -8585,6 +8586,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               }
             }
             setScript(updatedScript)
+            
+            // Mark score as outdated since script has changed
+            setReviewsOutdated(true)
             
             // Persist to database
             try {

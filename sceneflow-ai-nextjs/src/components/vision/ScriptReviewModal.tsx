@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, Settings2, Check, Square, CheckSquare } from 'lucide-react'
+import { X, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, Settings2, Check, Square, CheckSquare, BarChart3, MessageSquare, ListChecks, Film } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { VoiceSelectorDialog } from '@/components/tts/VoiceSelectorDialog'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { toast } from 'sonner'
@@ -265,7 +266,11 @@ interface ScriptReviewModalProps {
   script?: any
   characters?: any[]
   onScriptOptimized?: (optimizedScript: any) => void
+  // Score outdated indicator
+  scoreOutdated?: boolean
 }
+
+type ReviewTab = 'overview' | 'feedback' | 'recommendations' | 'scenes'
 
 export default function ScriptReviewModal({
   isOpen,
@@ -278,9 +283,11 @@ export default function ScriptReviewModal({
   projectId,
   script,
   characters,
-  onScriptOptimized
+  onScriptOptimized,
+  scoreOutdated
 }: ScriptReviewModalProps) {
   const [voices, setVoices] = useState<Voice[]>([])
+  const [activeTab, setActiveTab] = useState<ReviewTab>('overview')
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -787,17 +794,75 @@ export default function ScriptReviewModal({
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-160px)]">
+        <div className="flex-1 overflow-hidden flex flex-col">
           {!review ? (
-            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400 flex-1 flex flex-col items-center justify-center">
               <Target className="w-16 h-16 mx-auto mb-4 opacity-50" />
               <p className="text-lg">No audience resonance analysis available</p>
               <p className="text-sm mt-2">Click "Regenerate" to generate a new analysis</p>
             </div>
           ) : (
-            <div className="space-y-6">
-              {/* Score Overview with Radar Chart */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ReviewTab)} className="flex-1 flex flex-col overflow-hidden">
+              {/* Tab Navigation */}
+              <div className="px-6 pt-4 pb-2 border-b border-gray-200 dark:border-gray-700">
+                {/* Score Outdated Banner */}
+                {scoreOutdated && (
+                  <div className="mb-3 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 text-sm">
+                      <AlertTriangle className="w-4 h-4" />
+                      <span>Script has been revised. Score may be outdated.</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onRegenerate}
+                      disabled={isGenerating}
+                      className="h-7 text-xs border-amber-300 text-amber-700 hover:bg-amber-100"
+                    >
+                      {isGenerating ? <Loader className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3 mr-1" />}
+                      Re-analyze
+                    </Button>
+                  </div>
+                )}
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="overview" className="flex items-center gap-1.5 text-xs sm:text-sm">
+                    <BarChart3 className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Overview</span>
+                    <span className="sm:hidden">Score</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="feedback" className="flex items-center gap-1.5 text-xs sm:text-sm">
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    Feedback
+                  </TabsTrigger>
+                  <TabsTrigger value="recommendations" className="flex items-center gap-1.5 text-xs sm:text-sm">
+                    <ListChecks className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Recommendations</span>
+                    <span className="sm:hidden">Actions</span>
+                    {review.recommendations.length > 0 && (
+                      <Badge variant="secondary" className="ml-1 text-xs h-5 px-1.5">
+                        {review.recommendations.length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="scenes" className="flex items-center gap-1.5 text-xs sm:text-sm">
+                    <Film className="w-3.5 h-3.5" />
+                    Scenes
+                    {sceneAnalysis.length > 0 && (
+                      <Badge variant="secondary" className="ml-1 text-xs h-5 px-1.5">
+                        {sceneAnalysis.length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+
+              {/* Tab Content */}
+              <div className="flex-1 overflow-y-auto p-6">
+                {/* Overview Tab */}
+                {activeTab === 'overview' && (
+                  <div className="space-y-6">
+                    {/* Score Overview with Radar Chart */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Overall Score Card */}
                 <Card>
                   <CardHeader className="pb-2">
@@ -928,9 +993,14 @@ export default function ScriptReviewModal({
                   )}
                 </div>
               )}
+                  </div>
+                )}
 
-              {/* Analysis */}
-              <Card>
+                {/* Feedback Tab */}
+                {activeTab === 'feedback' && (
+                  <div className="space-y-6">
+                    {/* Analysis */}
+                    <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-lg">💡 Analysis</CardTitle>
                   <AudioButton sectionId="analysis" text={review.analysis} />
@@ -980,16 +1050,20 @@ export default function ScriptReviewModal({
                   </CardContent>
                 </Card>
               </div>
-
-              {/* Recommendations */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg">🎯 Recommendations</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <AudioButton sectionId="recommendations" text={`Recommendations: ${review.recommendations.map(r => getRecommendationText(r)).join('. ')}`} />
                   </div>
-                </CardHeader>
-                <CardContent>
+                )}
+
+                {/* Recommendations Tab */}
+                {activeTab === 'recommendations' && (
+                  <div className="space-y-6">
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle className="text-lg">🎯 Recommendations</CardTitle>
+                        <div className="flex items-center gap-2">
+                          <AudioButton sectionId="recommendations" text={`Recommendations: ${review.recommendations.map(r => getRecommendationText(r)).join('. ')}`} />
+                        </div>
+                      </CardHeader>
+                      <CardContent>
                   {/* Selection controls */}
                   <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -1094,33 +1168,26 @@ export default function ScriptReviewModal({
                     </Button>
                   </div>
                 </CardContent>
-              </Card>
+                    </Card>
+                  </div>
+                )}
 
-              {/* Scene Analysis (Collapsible) */}
-              {sceneAnalysis.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <button
-                      onClick={() => setShowSceneAnalysis(!showSceneAnalysis)}
-                      className="flex items-center justify-between w-full text-left"
-                    >
-                      <CardTitle className="text-lg">🎬 Scene-by-Scene Analysis</CardTitle>
-                      {showSceneAnalysis ? (
-                        <ChevronUp className="w-5 h-5" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5" />
-                      )}
-                    </button>
-                  </CardHeader>
-                  {showSceneAnalysis && (
-                    <CardContent>
-                      <div className="space-y-4">
-                        {sceneAnalysis.map((scene, index) => (
-                          <div 
-                            key={index} 
-                            className={`p-4 rounded-lg border ${
-                              scene.score >= 80 ? 'border-green-200 bg-green-50 dark:bg-green-900/10 dark:border-green-800' :
-                              scene.score >= 60 ? 'border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10 dark:border-yellow-800' :
+                {/* Scenes Tab */}
+                {activeTab === 'scenes' && (
+                  <div className="space-y-6">
+                    {sceneAnalysis.length > 0 ? (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg">🎬 Scene-by-Scene Analysis</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            {sceneAnalysis.map((scene, index) => (
+                              <div 
+                                key={index} 
+                                className={`p-4 rounded-lg border ${
+                                  scene.score >= 80 ? 'border-green-200 bg-green-50 dark:bg-green-900/10 dark:border-green-800' :
+                                  scene.score >= 60 ? 'border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10 dark:border-yellow-800' :
                               'border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-800'
                             }`}
                           >
@@ -1150,13 +1217,21 @@ export default function ScriptReviewModal({
                               {scene.notes}
                             </p>
                           </div>
-                        ))}
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                        <Film className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>No scene-by-scene analysis available</p>
+                        <p className="text-sm mt-1">This analysis is generated for detailed reviews</p>
                       </div>
-                    </CardContent>
-                  )}
-                </Card>
-              )}
-            </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </Tabs>
           )}
         </div>
 
