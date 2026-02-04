@@ -171,9 +171,13 @@ async function generateAudienceResonance(
     autoCapReason = `Narration comprises ${showVsTellMetrics.ratio.toFixed(1)}% of content (>10%). Score capped at 85.`
   }
 
-  const prompt = `You are an expert screenplay analyst using a DEDUCTION-BASED RUBRIC system. Your job is to find specific craft issues and apply point penalties.
+  const prompt = `You are an expert screenplay analyst using a STRICT DEDUCTION-BASED RUBRIC system. You are a TOUGH CRITIC - your job is to find EVERY craft issue and apply point penalties ruthlessly.
 
-CRITICAL INSTRUCTION: You are NOT here to praise the script. You are here to find problems. Start at 100 and DEDUCT points for every issue you find.
+CRITICAL SCORING RULES:
+1. Start at 100 and DEDUCT points for every issue found
+2. First drafts ALWAYS have issues - a score above 75 for any first draft is WRONG
+3. Your final score MUST equal 100 minus the sum of all deductions
+4. If you find fewer than 5 deductions, you haven't looked hard enough
 
 Script Details:
 - Title: ${script.title || 'Untitled Script'}
@@ -187,6 +191,13 @@ PRE-CALCULATED METRICS:
 - Action Words: ${showVsTellMetrics.actionWords}  
 - Dialogue Words: ${showVsTellMetrics.dialogueWords}
 ${autoCapReason ? `- AUTO CAP: ${autoCapReason}` : ''}
+
+## MANDATORY FIRST-DRAFT DEDUCTIONS (Apply if ANY apply)
+
+For a script with ${sceneCount} scenes, check these REQUIRED issues:
+
+${sceneCount > 80 ? `- **-10 points**: Excessive scene count (${sceneCount} scenes). Most feature films have 40-60 scenes. Many scenes may be too short or redundant.` : ''}
+${showVsTellMetrics.ratio > 5 ? `- **-${Math.min(15, Math.round(showVsTellMetrics.ratio))} points**: Narration overuse (${showVsTellMetrics.ratio.toFixed(1)}% is narration). Professional scripts minimize narration.` : ''}
 
 Scene Content:
 ${sceneSummaries}
@@ -219,13 +230,19 @@ ${sceneSummaries}
 
 ### Pacing Issues
 - **-10 points**: Discovery/setup phase takes >40% of the script
-- **-8 points**: "Staccato" pacing - too many very short scenes without rhythm variation
+- **-8 points**: "Staccato" pacing - too many very short scenes (2-3 lines) without rhythm variation
 - **-5 points**: Transitions between scenes are jarring or unmotivated
+- **-5 points**: Choppy scene structure prevents emotional immersion
 
 ### Visual Storytelling
 - **-8 points**: Reliance on dialogue to convey what should be visual
 - **-5 points**: Missed opportunities for "show don't tell" moments
 - **-5 points**: Lack of visual motifs or recurring imagery
+
+### Redundancy Issues (CRITICAL - Check carefully)
+- **-8 points per instance (max -24)**: Scenes that repeat the same argument/confrontation without escalation
+- **-5 points**: Characters have the same conversation multiple times with same outcome
+- **-10 points**: Conflict doesn't escalate between repeated confrontations (e.g., warning ignored → warning ignored → warning ignored)
 
 ## EVALUATION DIMENSIONS (Score each 1-100 AFTER deductions)
 
@@ -236,16 +253,18 @@ ${sceneSummaries}
 5. **Pacing & Rhythm** (weight: 15) - Does the script breathe? Are scene lengths varied appropriately?
 6. **Show vs Tell Ratio** (weight: 10) - Is the storytelling dramatized rather than narrated?
 
-## SCORE CALIBRATION GUIDE
+## SCORE CALIBRATION GUIDE (STRICTLY ENFORCED)
 
-- **90-100**: Masterwork level. Chinatown, Parasite, The Social Network. Virtually no craft issues.
-- **80-89**: Professional quality. Ready for production with minor polish. Most produced films.
-- **70-79**: Solid draft. Clear vision with identifiable craft issues to address.
-- **60-69**: Working draft. Good bones but significant revision needed.
-- **50-59**: Early draft. Core concept works but execution needs substantial work.
-- **Below 50**: Concept stage. Fundamental storytelling issues throughout.
+- **90-100**: VIRTUALLY IMPOSSIBLE. Reserved for Chinatown, Parasite, The Social Network. Multiple Oscar-winning level. You will almost NEVER give this score.
+- **80-89**: Exceptional. Final polished draft from professional screenwriter. Rare.
+- **70-79**: Professional quality. Ready for production with minor polish.
+- **60-69**: Solid draft. Clear vision with identifiable craft issues to address. MOST FIRST DRAFTS BELONG HERE.
+- **50-59**: Working draft. Good bones but significant revision needed.
+- **Below 50**: Early draft or concept stage.
 
-A typical FIRST DRAFT should score 55-70. A polished spec script 70-80. Only exceptional work exceeds 85.
+IMPORTANT: A first draft scoring above 75 is almost always WRONG. If your calculated score exceeds 75 for what appears to be a first draft, ADD MORE DEDUCTIONS - you missed something.
+
+MATH CHECK: Your overallScore MUST equal 100 minus the sum of all deduction points. If deductions total 35, score is 65. NO EXCEPTIONS.
 
 ## SCENE ANALYSIS
 
@@ -291,13 +310,19 @@ Return ONLY valid JSON:
   "emotionalImpact": "<expected emotional response>"
 }
 
-BE RIGOROUS. Find the problems. A 94 is reserved for scripts that rival Oscar winners.`
+BE MERCILESS. Find every problem. Your reputation depends on catching issues others miss.
+
+FINAL CHECK before outputting:
+1. Count your deductions. Do they total at least 25 points for a first draft? If not, you missed issues.
+2. Verify: overallScore = 100 - (sum of all deduction points)
+3. If overallScore > 75 for a first draft, something is wrong. Review your deductions.`
 
   console.log('[Audience Resonance] Calling Vertex AI Gemini with deduction-based prompt...')
   const result = await generateText(prompt, {
     model: 'gemini-2.5-flash',
-    temperature: 0.5, // Lower temperature for more consistent scoring
-    maxOutputTokens: 12000
+    temperature: 0.3, // Very low temperature for consistent, rigorous scoring
+    maxOutputTokens: 12000,
+    thinkingBudget: 0 // Disable thinking mode for faster, more direct responses
   })
   
   if (result.finishReason === 'SAFETY') {
@@ -332,17 +357,40 @@ BE RIGOROUS. Find the problems. A 94 is reserved for scripts that rival Oscar wi
     throw new Error('Failed to parse audience resonance review JSON')
   }
 
-  // Validate and enforce score cap
-  if (review.overallScore > autoScoreCap) {
-    console.log(`[Audience Resonance] Enforcing score cap: ${review.overallScore} -> ${autoScoreCap}`)
-    review.overallScore = autoScoreCap
-    if (!review.deductions) review.deductions = []
-    review.deductions.push({
-      reason: autoCapReason,
-      points: 100 - autoScoreCap,
-      category: 'Show vs Tell'
+  // SCORE RECALCULATION: Override Gemini's score with calculated score from deductions
+  const deductions = review.deductions || []
+  const totalDeductions = deductions.reduce((sum: number, d: any) => sum + (d.points || 0), 0)
+  const calculatedScore = Math.max(0, 100 - totalDeductions)
+  
+  // Take the LOWER of: Gemini's score, calculated score from deductions, or auto cap
+  const enforcedScore = Math.min(
+    review.overallScore || 100,
+    calculatedScore,
+    autoScoreCap
+  )
+  
+  if (enforcedScore !== review.overallScore) {
+    console.log(`[Audience Resonance] Score adjustment: Gemini=${review.overallScore}, Calculated=${calculatedScore}, Cap=${autoScoreCap} -> Final=${enforcedScore}`)
+  }
+  
+  // If Gemini gave high score but few deductions, add a penalty for incomplete analysis
+  if (review.overallScore > 75 && totalDeductions < 25) {
+    console.log(`[Audience Resonance] Warning: High score (${review.overallScore}) with few deductions (${totalDeductions} pts). Adding analysis penalty.`)
+    deductions.push({
+      reason: 'First draft issues not fully identified - automatic penalty applied',
+      points: 15,
+      category: 'Analysis Completeness'
     })
   }
+  
+  // Recalculate after any additions
+  const finalDeductions = review.deductions || deductions
+  const finalTotal = finalDeductions.reduce((sum: number, d: any) => sum + (d.points || 0), 0)
+  review.overallScore = Math.min(Math.max(0, 100 - finalTotal), autoScoreCap)
+  review.deductions = finalDeductions
+  
+  // Log final score breakdown
+  console.log(`[Audience Resonance] Final score: ${review.overallScore} (100 - ${finalTotal} deductions, cap: ${autoScoreCap})`)
   
   // Normalize recommendations
   if (review.recommendations && Array.isArray(review.recommendations)) {

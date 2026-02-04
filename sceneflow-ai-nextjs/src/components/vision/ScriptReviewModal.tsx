@@ -253,7 +253,7 @@ export default function ScriptReviewModal({
   onReviseScript
 }: ScriptReviewModalProps) {
   const [voices, setVoices] = useState<Voice[]>([])
-  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('pNInz6obpgDQGcFmaJgB')
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('') // Empty until voices load
   const [playingSection, setPlayingSection] = useState<string | null>(null)
   const [loadingSection, setLoadingSection] = useState<string | null>(null)
   const [showDeductions, setShowDeductions] = useState(false)
@@ -288,7 +288,14 @@ export default function ScriptReviewModal({
       const res = await fetch('/api/tts/elevenlabs/voices', { cache: 'no-store' })
       if (res.ok) {
         const data = await res.json()
-        setVoices(data.voices || [])
+        const voiceList = data.voices || []
+        setVoices(voiceList)
+        // Set default voice if not already set
+        if (!selectedVoiceId && voiceList.length > 0) {
+          // Try to find Adam voice, otherwise use first voice
+          const adamVoice = voiceList.find((v: Voice) => v.name === 'Adam' || v.voice_id === 'pNInz6obpgDQGcFmaJgB')
+          setSelectedVoiceId(adamVoice?.voice_id || voiceList[0].voice_id)
+        }
       }
     } catch (err) {
       console.error('Failed to fetch voices:', err)
@@ -344,6 +351,19 @@ export default function ScriptReviewModal({
 
     setLoadingSection(sectionId)
     try {
+      // Validate voice is selected
+      if (!selectedVoiceId) {
+        console.error('No voice selected for TTS')
+        return
+      }
+      
+      // Verify voice exists in list
+      const voiceExists = voices.some(v => v.voice_id === selectedVoiceId)
+      if (!voiceExists && voices.length > 0) {
+        console.warn('Selected voice not in list, using first available voice')
+        setSelectedVoiceId(voices[0].voice_id)
+      }
+      
       const response = await fetch('/api/tts/elevenlabs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -509,16 +529,25 @@ export default function ScriptReviewModal({
           <div className="flex items-center gap-3">
             <Volume2 className="w-4 h-4 text-gray-500" />
             <span className="text-sm text-gray-600 dark:text-gray-400">Playback Voice:</span>
-            <Select value={selectedVoiceId} onValueChange={setSelectedVoiceId}>
+            <Select 
+              value={selectedVoiceId || undefined} 
+              onValueChange={setSelectedVoiceId}
+            >
               <SelectTrigger className="w-[200px] h-8 text-sm">
-                <SelectValue placeholder="Select voice" />
+                <SelectValue placeholder={voices.length === 0 ? "Loading voices..." : "Select voice"}>
+                  {selectedVoiceId ? voices.find(v => v.voice_id === selectedVoiceId)?.name || 'Select voice' : undefined}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent className="max-h-[300px]">
-                {voices.map((voice) => (
-                  <SelectItem key={voice.voice_id} value={voice.voice_id}>
-                    {voice.name}
-                  </SelectItem>
-                ))}
+                {voices.length === 0 ? (
+                  <SelectItem value="loading" disabled>Loading voices...</SelectItem>
+                ) : (
+                  voices.map((voice) => (
+                    <SelectItem key={voice.voice_id} value={voice.voice_id}>
+                      {voice.name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
             {playingSection && (
