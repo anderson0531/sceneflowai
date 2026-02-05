@@ -216,11 +216,12 @@ export async function PUT(
           const existingCharacters = existingMetadata.visionPhase.characters || []
           const incomingCharacters = body.metadata.visionPhase.characters || []
           
-          // Create a map of existing characters by name for quick lookup
+          // Create maps for quick lookup
           const existingCharMap = new Map(existingCharacters.map((c: any) => [c.name?.toLowerCase(), c]))
+          const incomingCharMap = new Map(incomingCharacters.map((c: any) => [c.name?.toLowerCase(), c]))
           
           // Merge: incoming character data takes precedence, but preserve referenceImage, voiceConfig if not provided
-          mergedMetadata.visionPhase.characters = incomingCharacters.map((incomingChar: any) => {
+          const mergedCharacters = incomingCharacters.map((incomingChar: any) => {
             const existingChar = existingCharMap.get(incomingChar.name?.toLowerCase())
             if (existingChar) {
               // Preserve generated/uploaded data from existing character if not in incoming
@@ -240,9 +241,23 @@ export async function PUT(
             return incomingChar
           })
           
+          // CRITICAL FIX: Also preserve characters that exist in DB but NOT in incoming payload
+          // This prevents newly added characters from being deleted by stale client state
+          const preservedCharacters = existingCharacters.filter((existingChar: any) => 
+            !incomingCharMap.has(existingChar.name?.toLowerCase())
+          )
+          
+          if (preservedCharacters.length > 0) {
+            console.log('[Projects PUT] Preserving characters not in incoming payload:', 
+              preservedCharacters.map((c: any) => c.name))
+          }
+          
+          mergedMetadata.visionPhase.characters = [...mergedCharacters, ...preservedCharacters]
+          
           console.log('[Projects PUT] Deep merged characters:', {
             existingCount: existingCharacters.length,
             incomingCount: incomingCharacters.length,
+            preservedCount: preservedCharacters.length,
             mergedCount: mergedMetadata.visionPhase.characters.length,
             withReferenceImage: mergedMetadata.visionPhase.characters.filter((c: any) => !!c.referenceImage).length
           })
