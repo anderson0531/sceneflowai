@@ -192,12 +192,11 @@ function CompactRadarChart({ categories }: { categories: { name: string; score: 
 }
 
 /**
- * Get stoplight gradient colors for score cards based on score value
- * Calibrated for deduction-based scoring where 60-70 is a typical first draft
- * - Green: >= 80 (Professional quality)
- * - Blue: >= 70 (Solid draft)
- * - Yellow: >= 60 (Working draft)
- * - Red: < 60 (Needs significant work)
+ * Get stoplight colors for score cards based on score value
+ * Simple 3-tier stoplight system:
+ * - Green: >= 75 (Strong/Professional)
+ * - Yellow: 60-74 (Needs Work)
+ * - Red: < 60 (Needs Significant Work)
  */
 export function getScoreCardClasses(score: number): {
   gradient: string
@@ -206,21 +205,13 @@ export function getScoreCardClasses(score: number): {
   label: string
   qualityLabel: string
 } {
-  if (score >= 80) {
+  if (score >= 75) {
     return {
       gradient: 'bg-gradient-to-br from-green-500/10 to-green-600/5 dark:from-green-500/20 dark:to-green-600/10',
       border: 'border-green-200/50 dark:border-green-500/20',
       text: 'text-green-600 dark:text-green-400',
       label: 'text-green-500/70 dark:text-green-400/60',
-      qualityLabel: 'Professional'
-    }
-  } else if (score >= 70) {
-    return {
-      gradient: 'bg-gradient-to-br from-blue-500/10 to-blue-600/5 dark:from-blue-500/20 dark:to-blue-600/10',
-      border: 'border-blue-200/50 dark:border-blue-500/20',
-      text: 'text-blue-600 dark:text-blue-400',
-      label: 'text-blue-500/70 dark:text-blue-400/60',
-      qualityLabel: 'Solid Draft'
+      qualityLabel: 'Strong'
     }
   } else if (score >= 60) {
     return {
@@ -228,7 +219,8 @@ export function getScoreCardClasses(score: number): {
       border: 'border-yellow-200/50 dark:border-yellow-500/20',
       text: 'text-yellow-600 dark:text-yellow-400',
       label: 'text-yellow-500/70 dark:text-yellow-400/60',
-      qualityLabel: 'Working Draft'
+      qualityLabel: 'Needs Work',
+      qualityLabel: 'Needs Work'
     }
   } else {
     return {
@@ -236,7 +228,7 @@ export function getScoreCardClasses(score: number): {
       border: 'border-red-200/50 dark:border-red-500/20',
       text: 'text-red-600 dark:text-red-400',
       label: 'text-red-500/70 dark:text-red-400/60',
-      qualityLabel: 'Early Draft'
+      qualityLabel: 'Needs Significant Work'
     }
   }
 }
@@ -368,9 +360,9 @@ export function ReviewScoresPanel({
                   className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 >
                   {isGenerating ? (
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
-                    <BarChart3 className="w-5 h-5" />
+                    <BarChart3 className="w-6 h-6" />
                   )}
                   <span>Analyze</span>
                 </button>
