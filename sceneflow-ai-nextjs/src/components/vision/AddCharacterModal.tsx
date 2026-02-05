@@ -18,7 +18,7 @@ interface AddCharacterModalProps {
   onClose: () => void
   characters: any[]
   scenes: any[]
-  onAddCharacter: (characterData: any) => void
+  onAddCharacter: (characterData: any) => void | Promise<void>
 }
 
 /**
@@ -109,6 +109,7 @@ export function AddCharacterModal({
   const [customDescription, setCustomDescription] = useState('')
   const [showCustomForm, setShowCustomForm] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [isAdding, setIsAdding] = useState(false)
   
   // Get missing characters from script
   const missingCharacters = useMemo(() => {
@@ -129,30 +130,44 @@ export function AddCharacterModal({
     )
   }, [missingCharacters, searchQuery])
   
-  const handleAddSuggested = (char: SuggestedCharacter) => {
-    onAddCharacter({
-      name: char.name,
-      role: 'supporting',
-      appearanceDescription: '',
-      description: `Character from script with ${char.dialogueCount} dialogue line${char.dialogueCount > 1 ? 's' : ''}`
-    })
-    onClose()
+  const handleAddSuggested = async (char: SuggestedCharacter) => {
+    setIsAdding(true)
+    try {
+      await onAddCharacter({
+        name: char.name,
+        role: 'supporting',
+        appearanceDescription: '',
+        description: `Character from script with ${char.dialogueCount} dialogue line${char.dialogueCount > 1 ? 's' : ''}`
+      })
+      onClose()
+    } catch (error) {
+      console.error('[AddCharacterModal] Error adding character:', error)
+    } finally {
+      setIsAdding(false)
+    }
   }
   
-  const handleAddCustom = () => {
+  const handleAddCustom = async () => {
     if (!customName.trim()) return
     
-    onAddCharacter({
-      name: customName.trim(),
-      role: 'supporting',
-      appearanceDescription: customDescription.trim(),
-      description: customDescription.trim() || 'Custom character'
-    })
-    
-    setCustomName('')
-    setCustomDescription('')
-    setShowCustomForm(false)
-    onClose()
+    setIsAdding(true)
+    try {
+      await onAddCharacter({
+        name: customName.trim(),
+        role: 'supporting',
+        appearanceDescription: customDescription.trim(),
+        description: customDescription.trim() || 'Custom character'
+      })
+      
+      setCustomName('')
+      setCustomDescription('')
+      setShowCustomForm(false)
+      onClose()
+    } catch (error) {
+      console.error('[AddCharacterModal] Error adding custom character:', error)
+    } finally {
+      setIsAdding(false)
+    }
   }
   
   // Check if custom name matches any script character
@@ -242,9 +257,14 @@ export function AddCharacterModal({
                       size="sm"
                       variant="outline"
                       onClick={() => handleAddSuggested(char)}
+                      disabled={isAdding}
                       className="ml-3 shrink-0"
                     >
-                      <Plus className="w-4 h-4 mr-1" />
+                      {isAdding ? (
+                        <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mr-1" />
+                      ) : (
+                        <Plus className="w-4 h-4 mr-1" />
+                      )}
                       Add
                     </Button>
                   </div>
