@@ -13,7 +13,7 @@ import {
   SegmentKeyframeSettings,
   AudioTrackType,
 } from './types'
-import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Film, Clock, Sliders, MessageSquare, Settings2, Volume2, Users, ImageIcon, Layers, Mic2, Copy, ClipboardPaste } from 'lucide-react'
+import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Film, Clock, Sliders, MessageSquare, Settings2, Volume2, Users, ImageIcon, Layers, Mic2 } from 'lucide-react'
 import { AudioAssetsDialog, AudioTrackClip } from './AudioAssetsDialog'
 import { toast } from 'sonner'
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
@@ -294,12 +294,6 @@ export function SceneProductionManager({
     // Total is max of narration vs dialogue (they overlap), plus buffer for gaps
     return Math.max(narrationDuration, dialogueDuration) + 2
   }, [narrationDurationSeconds, scene?.narrationDuration, scene?.narrationAudio, scene?.descriptionAudio, scene?.dialogueAudio, scene?.dialogue])
-  
-  // NEW: Manual prompt/paste workflow state (workaround for Vertex AI billing)
-  const [showPasteDialog, setShowPasteDialog] = useState(false)
-  const [pastedJson, setPastedJson] = useState('')
-  const [isProcessingPaste, setIsProcessingPaste] = useState(false)
-  const [copiedPrompt, setCopiedPrompt] = useState(false)
   
   // Reference selection state for enhanced segmentation
   const [selectedCharacterRefs, setSelectedCharacterRefs] = useState<string[]>([])
@@ -916,219 +910,6 @@ export function SceneProductionManager({
     }
   }
 
-  // ==========================================
-  // Manual Prompt Copy/Paste Workflow
-  // (Workaround for Vertex AI billing issues)
-  // ==========================================
-  
-  const buildSegmentationPromptForCopy = (): string => {
-    const sceneNarration = scene?.narration || ''
-    const sceneDescription = scene?.description || ''
-    const dialogueList = scene?.dialogue || []
-    
-    // Calculate total audio duration from scene - use narration duration or estimate from dialogue
-    const estimatedNarrationDuration = sceneNarration ? Math.ceil(sceneNarration.split(' ').length / 2.5) : 0
-    const estimatedDialogueDuration = Array.isArray(dialogueList) 
-      ? dialogueList.reduce((acc: number, d: any) => acc + Math.ceil((d.line || d.text || '').split(' ').length / 2.5), 0)
-      : 0
-    const totalAudioDuration = Math.max(estimatedNarrationDuration + estimatedDialogueDuration, targetDuration)
-    const minimumSegments = Math.ceil(totalAudioDuration / 8)
-    const totalSegmentDuration = minimumSegments * 8
-    
-    const dialogueText = Array.isArray(dialogueList) 
-      ? dialogueList.map((d: any) => `${d.character || d.speaker}: "${d.line || d.text}"`).join('\n')
-      : ''
-    
-    return `You are an expert video segment planner for cinematic scene production. Analyze the following scene and create intelligent video segments.
-
-SCENE CONTEXT:
-- Narration: ${sceneNarration}
-- Description: ${sceneDescription}
-${dialogueText ? `- Dialogue:\n${dialogueText}` : ''}
-
-TOTAL AUDIO DURATION: ${totalAudioDuration} seconds (narration + dialogue)
-TARGET SEGMENT DURATION: ${targetDuration} seconds per segment (max 8s for Veo 3.1)
-MINIMUM SEGMENTS REQUIRED: ${minimumSegments} segments (to cover ${totalAudioDuration}s of audio within 8s limit)
-TOTAL VIDEO DURATION TARGET: ${totalSegmentDuration} seconds (${minimumSegments} segments × 8s)
-${customInstructions ? `CUSTOM INSTRUCTIONS: ${customInstructions}` : ''}
-
-REQUIREMENTS:
-1. Create EXACTLY ${minimumSegments} segments to cover the ${totalAudioDuration}s of audio
-2. Each segment must be ${Math.min(targetDuration, 8)} seconds (8 seconds absolute max for Veo 3.1)
-3. Total segment duration should be ${totalSegmentDuration} seconds
-4. Each segment needs a detailed visual prompt for AI video generation
-5. Include camera movements (pan, zoom, dolly, crane, tracking)
-6. Specify shot types (wide, medium, close-up, extreme close-up)
-7. Describe lighting, mood, and atmosphere
-8. Ensure visual continuity between segments
-
-RESPOND WITH VALID JSON ONLY (no markdown, no code blocks):
-{
-  "segments": [
-    {
-      "label": "Segment name",
-      "prompt": "Detailed visual prompt for video generation including camera movement, shot type, lighting, action, and mood",
-      "duration": ${Math.min(targetDuration, 8)},
-      "shotType": "wide|medium|closeup|extreme-closeup",
-      "cameraMovement": "static|pan|zoom|dolly|crane|tracking"
-    }
-  ],
-  "totalDuration": ${totalSegmentDuration}
-}
-
-Generate ${minimumSegments} segments now:`
-  }
-
-  const handleCopyPrompt = async () => {
-    const prompt = buildSegmentationPromptForCopy()
-    try {
-      await navigator.clipboard.writeText(prompt)
-      setCopiedPrompt(true)
-      toast.success('Prompt copied to clipboard', {
-        description: 'Paste this into Gemini chat and copy the JSON response'
-      })
-      setTimeout(() => setCopiedPrompt(false), 3000)
-    } catch (err) {
-      console.error('Failed to copy prompt:', err)
-      toast.error('Failed to copy prompt to clipboard')
-    }
-  }
-
-  const handleProcessPastedResults = async () => {
-    if (!pastedJson.trim()) {
-      toast.error('Please paste the JSON response from Gemini')
-      return
-    }
-
-    if (!projectId) {
-      toast.error('Project ID not available. Please refresh the page.')
-      return
-    }
-
-    setIsProcessingPaste(true)
-    
-    try {
-      // Clean up the pasted JSON (remove markdown code blocks if present)
-      let cleanJson = pastedJson.trim()
-      if (cleanJson.startsWith('```json')) {
-        cleanJson = cleanJson.slice(7)
-      } else if (cleanJson.startsWith('```')) {
-        cleanJson = cleanJson.slice(3)
-      }
-      if (cleanJson.endsWith('```')) {
-        cleanJson = cleanJson.slice(0, -3)
-      }
-      cleanJson = cleanJson.trim()
-      
-      const parsed = JSON.parse(cleanJson)
-      
-      if (!parsed.segments || !Array.isArray(parsed.segments)) {
-        throw new Error('Invalid response format: missing segments array')
-      }
-
-      // Transform to segment format expected by the system (matching SceneSegment type)
-      const transformedSegments = parsed.segments.map((seg: any, index: number) => {
-        // Calculate start and end times based on cumulative durations
-        const startTime = parsed.segments.slice(0, index).reduce((acc: number, s: any) => acc + (s.duration || 5), 0)
-        const endTime = startTime + (seg.duration || 5)
-
-        return {
-          segmentId: `segment-${Date.now()}-${index}`,
-          sequenceIndex: index,
-          startTime,
-          endTime,
-          status: 'READY' as const,
-          generatedPrompt: seg.prompt,
-          userEditedPrompt: null,
-          activeAssetUrl: null,
-          assetType: null,
-          references: {
-            startFrameUrl: null,
-            endFrameUrl: null,
-            characterIds: [],
-            sceneRefIds: [],
-            objectRefIds: [],
-          },
-          takes: [],
-          shotType: seg.shotType,
-          cameraMovement: seg.cameraMovement,
-          subject: seg.label,
-          shotNumber: index + 1,
-        }
-      })
-
-      // Calculate average duration
-      const totalDuration = transformedSegments.reduce((acc: number, seg: any) => acc + (seg.endTime - seg.startTime), 0)
-      const avgDuration = totalDuration / transformedSegments.length
-
-      // Build the production data
-      const newProductionData = {
-        isSegmented: true,
-        targetSegmentDuration: Math.round(avgDuration),
-        segments: transformedSegments,
-        lastGeneratedAt: new Date().toISOString(),
-      }
-
-      // Fetch current project to merge metadata
-      const projectResponse = await fetch(`/api/projects/${projectId}`)
-      if (!projectResponse.ok) {
-        throw new Error('Failed to fetch project data')
-      }
-      const projectData = await projectResponse.json()
-      const currentProject = projectData.project || projectData
-
-      const existingMetadata = currentProject.metadata || {}
-      const existingVisionPhase = existingMetadata.visionPhase || {}
-      const existingProduction = existingVisionPhase.production || {}
-      const existingProductionScenes = existingProduction.scenes || {}
-
-      // Build updated metadata with new segments
-      const updatedMetadata = {
-        ...existingMetadata,
-        visionPhase: {
-          ...existingVisionPhase,
-          production: {
-            ...existingProduction,
-            lastUpdated: new Date().toISOString(),
-            scenes: {
-              ...existingProductionScenes,
-              [sceneId]: newProductionData
-            }
-          }
-        }
-      }
-
-      // Save via project API
-      const saveResponse = await fetch(`/api/projects/${projectId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ metadata: updatedMetadata })
-      })
-
-      if (!saveResponse.ok) {
-        throw new Error('Failed to save segments to project')
-      }
-
-      toast.success(`Created ${transformedSegments.length} segments successfully`, {
-        description: 'Segments are ready for video generation'
-      })
-      
-      setShowPasteDialog(false)
-      setShowInitialDialog(false)
-      setShowConfirmDialog(false)
-      setPastedJson('')
-      
-      // Refresh the scene data
-      window.location.reload()
-      
-    } catch (err) {
-      console.error('Failed to process pasted results:', err)
-      toast.error(err instanceof Error ? err.message : 'Failed to parse JSON response')
-    } finally {
-      setIsProcessingPaste(false)
-    }
-  }
-
   const handlePromptChange = (prompt: string) => {
     if (!selectedSegment) return
     onPromptChange(sceneId, selectedSegment.segmentId, prompt)
@@ -1578,30 +1359,6 @@ Generate ${minimumSegments} segments now:`
       </Tabs>
       
       <DialogFooter className="mt-6 flex-col sm:flex-row gap-2">
-        {/* Manual Workaround Buttons */}
-        <div className="flex gap-2 mr-auto">
-          <Button 
-            type="button"
-            variant="outline" 
-            size="sm"
-            onClick={handleCopyPrompt}
-            className="text-xs"
-          >
-            <Copy className="w-3.5 h-3.5 mr-1.5" />
-            {copiedPrompt ? 'Copied!' : 'Copy Prompt'}
-          </Button>
-          <Button 
-            type="button"
-            variant="outline" 
-            size="sm"
-            onClick={() => setShowPasteDialog(true)}
-            className="text-xs"
-          >
-            <ClipboardPaste className="w-3.5 h-3.5 mr-1.5" />
-            Paste Results
-          </Button>
-        </div>
-        
         <Button 
           variant="outline" 
           onClick={() => isRegenerate ? setShowConfirmDialog(false) : setShowInitialDialog(false)}
@@ -1622,77 +1379,6 @@ Generate ${minimumSegments} segments now:`
         {/* Initial Dialog for Generation */}
         <Dialog open={showInitialDialog} onOpenChange={setShowInitialDialog}>
           <SegmentGenerationDialogContent isRegenerate={false} />
-        </Dialog>
-        
-        {/* Paste Results Dialog (Manual Workaround) */}
-        <Dialog open={showPasteDialog} onOpenChange={setShowPasteDialog}>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-                  <ClipboardPaste className="h-5 w-5 text-green-600 dark:text-green-400" />
-                </div>
-                <div>
-                  <DialogTitle className="text-left">Paste Gemini Results</DialogTitle>
-                  <DialogDescription className="text-left">
-                    Paste the JSON response from Gemini chat to create segments.
-                  </DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
-            
-            <div className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">JSON Response</Label>
-                <Textarea
-                  placeholder='Paste the JSON response here...
-
-Example format:
-{
-  "segments": [
-    {
-      "label": "Opening Shot",
-      "prompt": "Wide establishing shot...",
-      "duration": 5,
-      "shotType": "wide",
-      "cameraMovement": "slow pan"
-    }
-  ]
-}'
-                  value={pastedJson}
-                  onChange={(e) => setPastedJson(e.target.value)}
-                  className="min-h-[200px] font-mono text-xs"
-                />
-              </div>
-              
-              <p className="text-xs text-gray-500">
-                Copy the prompt using the "Copy Prompt" button, paste it into Gemini 2.5 Pro or Flash, 
-                then copy the JSON response and paste it here.
-              </p>
-            </div>
-            
-            <DialogFooter className="mt-4">
-              <Button variant="outline" onClick={() => setShowPasteDialog(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleProcessPastedResults} 
-                disabled={isProcessingPaste || !pastedJson.trim()}
-              >
-                {isProcessingPaste ? (
-                  <>
-                    <span className="animate-spin mr-2">⏳</span>
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Create Segments
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
         </Dialog>
         
         <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-900">
