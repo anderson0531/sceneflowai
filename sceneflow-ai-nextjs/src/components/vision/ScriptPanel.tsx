@@ -2793,7 +2793,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             // Clean up stale audio when script scenes are edited
             const originalScenes = script?.script?.scenes || script?.scenes || []
             const revisedScenes = revisedScript.scenes || []
-            const cleanedScenes = cleanupScriptAudio(originalScenes, revisedScenes)
+            const { cleanedScenes } = cleanupScriptAudio(originalScenes, revisedScenes)
             
             const updatedScript = {
               ...script,

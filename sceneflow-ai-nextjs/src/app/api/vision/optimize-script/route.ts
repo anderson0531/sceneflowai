@@ -88,7 +88,8 @@ async function optimizeScript(
   const sceneCount = script.scenes?.length || 0
   
   // BATCHED OPTIMIZATION: Process scenes in batches to avoid token limits
-  const SCENES_PER_BATCH = 6 // Smaller batches for optimization (more verbose output)
+  // Reduced from 6 to 4 scenes per batch to prevent MAX_TOKENS truncation
+  const SCENES_PER_BATCH = 4
   const batches = Math.ceil(sceneCount / SCENES_PER_BATCH)
   
   console.log(`[Script Optimization] Processing ${sceneCount} scenes in ${batches} batch(es) of ~${SCENES_PER_BATCH} scenes`)
@@ -288,12 +289,14 @@ CRITICAL RULES:
 - Never use raw line breaks inside strings (use \\n)
 - If narration should be removed, replace with a 1-sentence summary (never null/empty)`
 
-  const estimatedTokens = Math.min(32768, batchScenes.length * 1500 + 2000)
+  // Increased token budget: 2500 per scene + 3000 base (was 1500 + 2000)
+  const estimatedTokens = Math.min(32768, batchScenes.length * 2500 + 3000)
   const timeoutMs = Math.min(180000, 60000 + batchScenes.length * 15000)
   
   console.log(`[Script Optimization] Batch call: ${batchScenes.length} scenes, ${estimatedTokens} tokens, ${timeoutMs/1000}s timeout`)
   
-  const result = await generateText(prompt, {
+  // First attempt
+  let result = await generateText(prompt, {
     model: 'gemini-2.5-flash',
     temperature: 0.2,
     maxOutputTokens: estimatedTokens,
@@ -302,14 +305,37 @@ CRITICAL RULES:
     maxRetries: 1
   })
   
-  const analysisText = result.text
+  let analysisText = result.text
+  let wasTruncated = result.finishReason === 'MAX_TOKENS'
+  
+  // Check for truncation and retry with 1.5x tokens if needed
+  if (wasTruncated) {
+    const retryTokens = Math.min(65536, Math.floor(estimatedTokens * 1.5))
+    console.warn(`[Script Optimization] Response truncated (MAX_TOKENS). Retrying with ${retryTokens} tokens...`)
+    
+    result = await generateText(prompt, {
+      model: 'gemini-2.5-flash',
+      temperature: 0.2,
+      maxOutputTokens: retryTokens,
+      responseMimeType: 'application/json',
+      timeoutMs: Math.min(240000, timeoutMs * 1.5),
+      maxRetries: 1
+    })
+    
+    analysisText = result.text
+    wasTruncated = result.finishReason === 'MAX_TOKENS'
+    
+    if (wasTruncated) {
+      console.warn('[Script Optimization] Still truncated after retry, will attempt repair')
+    }
+  }
   
   if (!analysisText) {
     throw new Error('No optimization generated from Gemini')
   }
   
-  // Parse the response
-  const parsed = parseOptimizationResponse(analysisText)
+  // Parse the response (with truncation awareness)
+  const parsed = parseOptimizationResponse(analysisText, wasTruncated, batchScenes.length)
   
   // Merge with original scene metadata
   const mergedScenes = parsed.scenes.map((optimizedScene: any, idx: number) => {
@@ -336,7 +362,17 @@ CRITICAL RULES:
   }
 }
 
-function parseOptimizationResponse(text: string): { scenes: any[], changesSummary?: any[] } {
+function parseOptimizationResponse(
+  text: string, 
+  wasTruncated: boolean = false,
+  expectedSceneCount: number = 0
+): { scenes: any[], changesSummary?: any[] } {
+  // Log full response on truncation for debugging
+  if (wasTruncated) {
+    console.warn('[Script Optimization] Parsing truncated response, length:', text.length)
+    console.warn('[Script Optimization] Response tail:', text.slice(-300))
+  }
+  
   // Extract JSON from response
   let jsonCandidate = ''
   const fence = text.match(/```json\s*([\s\S]*?)\s*```/i)
@@ -358,12 +394,43 @@ function parseOptimizationResponse(text: string): { scenes: any[], changesSummar
     return JSON.parse(jsonCandidate)
   } catch (e) {
     console.warn('[Script Optimization] JSON parse error, applying repairs...')
-    const repaired = normalizeForJson(jsonCandidate)
+    
+    // Apply standard normalization first
+    let repaired = normalizeForJson(jsonCandidate)
+    
+    // If truncated, apply truncation-specific repair
+    if (wasTruncated) {
+      repaired = repairTruncatedJson(repaired)
+    }
+    
     try {
-      return JSON.parse(repaired)
+      const parsed = JSON.parse(repaired)
+      
+      // Validate we got scenes array
+      if (!parsed.scenes || !Array.isArray(parsed.scenes)) {
+        throw new Error('Missing scenes array in response')
+      }
+      
+      // If we got fewer scenes than expected due to truncation, try partial recovery
+      if (wasTruncated && parsed.scenes.length < expectedSceneCount) {
+        console.warn(`[Script Optimization] Truncation lost scenes: got ${parsed.scenes.length}/${expectedSceneCount}`)
+      }
+      
+      return parsed
     } catch (e2) {
+      // Last resort: try to extract any complete scenes from truncated response
+      if (wasTruncated) {
+        console.warn('[Script Optimization] Attempting partial scene recovery...')
+        const partialScenes = extractPartialScenes(repaired)
+        if (partialScenes.length > 0) {
+          console.log(`[Script Optimization] Recovered ${partialScenes.length} complete scenes from truncated response`)
+          return { scenes: partialScenes, changesSummary: [] }
+        }
+      }
+      
       console.error('[Script Optimization] JSON parse error (after repair):', e2)
       console.error('[Script Optimization] Text attempted (head):', jsonCandidate.substring(0, 500))
+      console.error('[Script Optimization] Text attempted (tail):', jsonCandidate.slice(-500))
       throw new Error('Failed to parse optimization response')
     }
   }
@@ -484,6 +551,78 @@ function extractBalancedJson(text: string): string | '' {
     return chars.slice(start).join('') + '}'.repeat(depth)
   }
   return ''
+}
+
+/**
+ * Repair truncated JSON by properly closing unclosed structures
+ * Handles mid-string truncation, unclosed arrays, and unclosed objects
+ */
+function repairTruncatedJson(text: string): string {
+  let s = text.trim()
+  
+  // Count structures
+  const openBraces = (s.match(/{/g) || []).length
+  const closeBraces = (s.match(/}/g) || []).length
+  const openBrackets = (s.match(/\[/g) || []).length
+  const closeBrackets = (s.match(/\]/g) || []).length
+  const quotes = (s.match(/"/g) || []).length
+  
+  // Close unclosed string
+  if (quotes % 2 !== 0) {
+    // Find last quote and check if we're in a truncated value
+    const lastQuoteIdx = s.lastIndexOf('"')
+    const afterQuote = s.slice(lastQuoteIdx + 1).trim()
+    
+    // If truncated mid-value, close the string
+    if (!afterQuote.match(/^[,}\]]/)) {
+      s += '"'
+    }
+  }
+  
+  // Remove trailing comma if present
+  s = s.replace(/,\s*$/, '')
+  
+  // Close arrays before objects (CRITICAL: order matters for nested structures)
+  const missingBrackets = openBrackets - closeBrackets
+  for (let i = 0; i < missingBrackets; i++) {
+    s += ']'
+  }
+  
+  const missingBraces = openBraces - closeBraces
+  for (let i = 0; i < missingBraces; i++) {
+    s += '}'
+  }
+  
+  return s
+}
+
+/**
+ * Extract any complete scene objects from a truncated JSON response
+ * This is a last-resort recovery when standard parsing fails
+ */
+function extractPartialScenes(text: string): any[] {
+  const scenes: any[] = []
+  
+  // Look for complete scene objects within the "scenes" array
+  // Pattern: { "heading": ..., "action": ..., ... } followed by comma or ]
+  const scenePattern = /\{\s*"heading"\s*:\s*"[^"]*"[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g
+  
+  let match
+  while ((match = scenePattern.exec(text)) !== null) {
+    try {
+      const sceneCandidate = match[0]
+      const parsed = JSON.parse(sceneCandidate)
+      
+      // Validate it looks like a scene
+      if (parsed.heading && (parsed.action || parsed.dialogue)) {
+        scenes.push(parsed)
+      }
+    } catch {
+      // Skip invalid matches
+    }
+  }
+  
+  return scenes
 }
 
 function effectSummary(original: any, revised: any): { summary: string; changed: boolean } {
