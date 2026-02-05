@@ -31,13 +31,20 @@ function CompactRadarChart({ categories }: { categories: { name: string; score: 
   const radius = 55
   const levels = 5
 
+  // Filter out any categories without valid scores
+  const validCategories = categories.filter(cat => typeof cat.score === 'number' && !isNaN(cat.score))
+  
+  if (validCategories.length === 0) {
+    return null
+  }
+
   // Calculate points for each category
-  const angleStep = (2 * Math.PI) / categories.length
+  const angleStep = (2 * Math.PI) / validCategories.length
   
   // Generate polygon points for each level (grid lines)
   const getLevelPoints = (level: number) => {
     const levelRadius = (radius * level) / levels
-    return categories.map((_, i) => {
+    return validCategories.map((_, i) => {
       const angle = i * angleStep - Math.PI / 2
       return {
         x: center + levelRadius * Math.cos(angle),
@@ -46,13 +53,15 @@ function CompactRadarChart({ categories }: { categories: { name: string; score: 
     })
   }
 
-  // Generate data polygon points
-  const dataPoints = categories.map((cat, i) => {
+  // Generate data polygon points - ensure score is treated as number
+  const dataPoints = validCategories.map((cat, i) => {
     const angle = i * angleStep - Math.PI / 2
-    const normalizedScore = (cat.score / 100) * radius
+    const score = Number(cat.score) || 0
+    const normalizedScore = (score / 100) * radius
     return {
       x: center + normalizedScore * Math.cos(angle),
-      y: center + normalizedScore * Math.sin(angle)
+      y: center + normalizedScore * Math.sin(angle),
+      score
     }
   })
 
@@ -66,7 +75,7 @@ function CompactRadarChart({ categories }: { categories: { name: string; score: 
     return '#ef4444' // red
   }
 
-  const avgScore = categories.reduce((sum, c) => sum + c.score, 0) / categories.length
+  const avgScore = validCategories.reduce((sum, c) => sum + (Number(c.score) || 0), 0) / validCategories.length
   const fillColor = getScoreColor(avgScore)
 
   // Truncate category names for compact display
@@ -95,7 +104,7 @@ function CompactRadarChart({ categories }: { categories: { name: string; score: 
         })}
 
         {/* Axis lines */}
-        {categories.map((_, i) => {
+        {validCategories.map((_, i) => {
           const angle = i * angleStep - Math.PI / 2
           const endX = center + radius * Math.cos(angle)
           const endY = center + radius * Math.sin(angle)
@@ -113,28 +122,31 @@ function CompactRadarChart({ categories }: { categories: { name: string; score: 
           )
         })}
 
-        {/* Data polygon */}
+        {/* Data polygon - with higher opacity for visibility */}
         <polygon
           points={dataPolygon}
           fill={fillColor}
-          fillOpacity={0.25}
+          fillOpacity={0.35}
           stroke={fillColor}
-          strokeWidth={2}
+          strokeWidth={2.5}
         />
 
-        {/* Data points */}
+        {/* Data points with score labels */}
         {dataPoints.map((point, i) => (
-          <circle
-            key={i}
-            cx={point.x}
-            cy={point.y}
-            r={3}
-            fill={fillColor}
-          />
+          <g key={i}>
+            <circle
+              cx={point.x}
+              cy={point.y}
+              r={4}
+              fill={fillColor}
+              stroke="white"
+              strokeWidth={1}
+            />
+          </g>
         ))}
 
         {/* Labels */}
-        {categories.map((cat, i) => {
+        {validCategories.map((cat, i) => {
           const angle = i * angleStep - Math.PI / 2
           const labelRadius = radius + 18
           const x = center + labelRadius * Math.cos(angle)
@@ -154,7 +166,7 @@ function CompactRadarChart({ categories }: { categories: { name: string; score: 
               dominantBaseline="middle"
               className="fill-current text-gray-500 dark:text-gray-400"
               style={{ fontSize: '8px' }}
-              title={cat.name}
+              title={`${cat.name}: ${cat.score}`}
             >
               {truncateName(cat.name)}
             </text>
@@ -334,27 +346,27 @@ export function ReviewScoresPanel({
                 </div>
               )}
 
-              {/* Action Buttons - Icon Only with Tooltips */}
-              <div className="flex justify-center gap-2 pt-1">
+              {/* Action Buttons - Full width side by side */}
+              <div className="grid grid-cols-2 gap-2 pt-1">
                 <button
                   onClick={handleUpdateReviews}
                   disabled={isGenerating}
-                  title="Re-analyze script resonance"
-                  className="flex items-center justify-center w-9 h-9 text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isGenerating ? (
-                    <div className="w-4 h-4 border-2 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+                    <div className="w-3.5 h-3.5 border-2 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
                   ) : (
-                    <BarChart3 className="w-4 h-4" />
+                    <BarChart3 className="w-3.5 h-3.5" />
                   )}
+                  <span>Analyze</span>
                 </button>
                 <button
                   onClick={handleReviewAnalysis}
                   disabled={isGenerating}
-                  title="View full analysis report"
-                  className="flex items-center justify-center w-9 h-9 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <FileText className="w-4 h-4" />
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>View</span>
                 </button>
               </div>
             </>
