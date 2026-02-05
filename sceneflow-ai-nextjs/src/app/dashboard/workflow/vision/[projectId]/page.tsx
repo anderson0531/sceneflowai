@@ -6364,20 +6364,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     }
                   } catch {}
                   
-                  // Retry logic for project reload after batch audio generation (skip auto-generation to prevent script regeneration bug)                        
+                  // Allow database writes to fully propagate before reloading
+                  await new Promise(resolve => setTimeout(resolve, 2000))
+                  
+                  // Retry logic for project reload after batch audio generation (skip auto-generation to prevent script regeneration bug)
                   let retries = 3
                   while (retries > 0) {
                     try {
-                      await loadProject(true) // Skip auto-generation to prevent accidental script regeneration                                                   
+                      await loadProject(true) // Skip auto-generation to prevent accidental script regeneration
+                      console.log('[Generate All Audio] Project reloaded successfully')
                       break // Success!
                     } catch (error) {
                       retries--
-                      console.warn(`[Generate All Audio] Project reload failed, ${retries} retries left`)                                                         
+                      console.warn(`[Generate All Audio] Project reload failed, ${retries} retries left`)
                       if (retries > 0) {
-                        await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1s before retry                                                           
+                        await new Promise(resolve => setTimeout(resolve, 1500)) // Wait 1.5s before retry
                       } else {
-                        console.error('[Generate All Audio] All retries exhausted')                                                                               
-                        try { const { toast } = require('sonner'); toast.warning('Audio generated but page reload failed. Please refresh manually.') } catch {}   
+                        console.error('[Generate All Audio] All retries exhausted')
+                        try { const { toast } = require('sonner'); toast.warning('Audio generated but page reload failed. Please refresh manually.') } catch {}
                       }
                     }
                   }

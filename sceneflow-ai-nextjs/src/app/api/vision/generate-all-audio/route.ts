@@ -313,37 +313,39 @@ export async function POST(req: NextRequest) {
               
               const musicUrl = await generateAndSaveMusicForScene(scene, projectId, i, baseUrl)
               if (musicUrl) {
-                // CRITICAL FIX: Reload fresh project data to avoid overwriting narration/dialogue audio
-                // that was saved by generate-scene-audio calls earlier in this loop
-                const freshProject = await Project.findByPk(projectId)
-                const freshMetadata = freshProject?.metadata || {}
-                const freshVisionPhase = freshMetadata.visionPhase || {}
-                const freshScenes = freshVisionPhase.script?.script?.scenes || []
-                
-                // Update only the music field on the fresh data
-                if (!freshScenes[i]?.musicAudio) {
-                  freshScenes[i].musicAudio = musicUrl
-                  musicCount++
-                  
-                  // Save to database with fresh data
-                  await Project.update(
-                    {
-                      metadata: {
-                        ...freshMetadata,
-                        visionPhase: {
-                          ...freshVisionPhase,
-                          script: {
-                            ...freshVisionPhase.script,
+                // ATOMIC UPDATE: Reload fresh data and update only musicAudio field
+                try {
+                  const freshProject = await Project.findByPk(projectId)
+                  if (freshProject) {
+                    const freshMetadata = freshProject.metadata || {}
+                    const freshVisionPhase = freshMetadata.visionPhase || {}
+                    // Clone array to avoid mutation issues
+                    const freshScenes = [...(freshVisionPhase.script?.script?.scenes || [])]
+                    
+                    // Always regenerate music (no skip check)
+                    if (freshScenes[i]) {
+                      freshScenes[i] = { ...freshScenes[i], musicAudio: musicUrl }
+                      musicCount++
+                      
+                      await freshProject.update({
+                        metadata: {
+                          ...freshMetadata,
+                          visionPhase: {
+                            ...freshVisionPhase,
                             script: {
-                              ...freshVisionPhase.script?.script,
-                              scenes: freshScenes
+                              ...freshVisionPhase.script,
+                              script: {
+                                ...freshVisionPhase.script?.script,
+                                scenes: freshScenes
+                              }
                             }
                           }
                         }
-                      }
-                    },
-                    { where: { id: projectId } }
-                  )
+                      })
+                    }
+                  }
+                } catch (saveError) {
+                  console.error(`[Batch Audio] Failed to save music for scene ${i + 1}:`, saveError)
                 }
               }
             }
@@ -368,36 +370,39 @@ export async function POST(req: NextRequest) {
               }
               
               if (sfxUrls.length > 0) {
-                // CRITICAL FIX: Reload fresh project data to avoid overwriting narration/dialogue/music audio
-                // that was saved earlier in this loop
-                const freshProject = await Project.findByPk(projectId)
-                const freshMetadata = freshProject?.metadata || {}
-                const freshVisionPhase = freshMetadata.visionPhase || {}
-                const freshScenes = freshVisionPhase.script?.script?.scenes || []
-                
-                // Update only the SFX field on the fresh data
-                freshScenes[i].sfxAudio = sfxUrls
-                sfxCount = sfxUrls.filter(Boolean).length
-                
-                // Save to database with fresh data
-                await Project.update(
-                  {
-                    metadata: {
-                      ...freshMetadata,
-                      visionPhase: {
-                        ...freshVisionPhase,
-                        script: {
-                          ...freshVisionPhase.script,
-                          script: {
-                            ...freshVisionPhase.script?.script,
-                            scenes: freshScenes
+                // ATOMIC UPDATE: Reload fresh data and update only sfxAudio field
+                try {
+                  const freshProject = await Project.findByPk(projectId)
+                  if (freshProject) {
+                    const freshMetadata = freshProject.metadata || {}
+                    const freshVisionPhase = freshMetadata.visionPhase || {}
+                    // Clone array to avoid mutation issues
+                    const freshScenes = [...(freshVisionPhase.script?.script?.scenes || [])]
+                    
+                    // Update only the SFX field on this scene
+                    if (freshScenes[i]) {
+                      freshScenes[i] = { ...freshScenes[i], sfxAudio: sfxUrls }
+                      
+                      await freshProject.update({
+                        metadata: {
+                          ...freshMetadata,
+                          visionPhase: {
+                            ...freshVisionPhase,
+                            script: {
+                              ...freshVisionPhase.script,
+                              script: {
+                                ...freshVisionPhase.script?.script,
+                                scenes: freshScenes
+                              }
+                            }
                           }
                         }
-                      }
+                      })
                     }
-                  },
-                  { where: { id: projectId } }
-                )
+                  }
+                } catch (saveError) {
+                  console.error(`[Batch Audio] Failed to save SFX for scene ${i + 1}:`, saveError)
+                }
               }
             }
           }
