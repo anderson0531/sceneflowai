@@ -318,13 +318,13 @@ CRITICAL:
 ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce size.\n' : ''}`
 
   // Calculate appropriate token limit based on scene count
-  // Each scene needs ~200-300 tokens in output, plus changesSummary
+  // Each scene needs ~600-800 tokens in output (full scene content is verbose), plus changesSummary
   const sceneCount = script.scenes?.length || 0
-  const estimatedTokens = Math.min(65536, Math.max(16384, sceneCount * 400 + 2000))
+  const estimatedTokens = Math.min(65536, Math.max(24000, sceneCount * 800 + 3000))
   
   // Calculate timeout based on scene count - large scripts need more time
-  // Base: 90s, +2s per scene, max 280s (leave buffer for Vercel's 300s limit)
-  const timeoutMs = Math.min(280000, Math.max(90000, 90000 + sceneCount * 2000))
+  // Base: 120s, +4s per scene, max 280s (leave buffer for Vercel's 300s limit)
+  const timeoutMs = Math.min(280000, Math.max(120000, 120000 + sceneCount * 4000))
   
   console.log('[Script Optimization] Calling Vertex AI Gemini...')
   console.log(`[Script Optimization] Timeout: ${timeoutMs / 1000}s, Max tokens: ${estimatedTokens}`)
