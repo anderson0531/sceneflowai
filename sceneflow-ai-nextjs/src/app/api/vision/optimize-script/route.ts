@@ -339,10 +339,28 @@ CRITICAL RULES:
   
   // Merge with original scene metadata
   const mergedScenes = parsed.scenes.map((optimizedScene: any, idx: number) => {
-    const originalScene = batchScenes[idx]
+    const originalScene = batchScenes[idx] || {}
     const narration = coerceNarration(optimizedScene?.narration, originalScene?.narration, optimizedScene?.action || originalScene?.action)
+    
+    // Ensure dialogue is always an array (prevent ".map is not a function" errors)
+    const dialogue = Array.isArray(optimizedScene?.dialogue) 
+      ? optimizedScene.dialogue 
+      : Array.isArray(originalScene?.dialogue) 
+        ? originalScene.dialogue 
+        : []
+    
+    // Ensure sfx is always an array
+    const sfx = Array.isArray(optimizedScene?.sfx) 
+      ? optimizedScene.sfx 
+      : Array.isArray(originalScene?.sfx) 
+        ? originalScene.sfx 
+        : []
+    
     const merged = {
       ...optimizedScene,
+      // Ensure array fields are arrays
+      dialogue,
+      sfx,
       // Preserve metadata from original
       imageUrl: originalScene?.imageUrl,
       narrationAudioUrl: originalScene?.narrationAudioUrl,
