@@ -1126,7 +1126,14 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             message: `Generating narration for scene ${sceneIdx + 1} of ${scenes.length}`,
           } : prev)
 
-          await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined, language)
+          try {
+            await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined, language)
+          } catch (error) {
+            console.error(`[Narration Generation] Error for scene ${sceneIdx}:`, error)
+          }
+          
+          // Small delay to allow state updates to propagate
+          await new Promise(resolve => setTimeout(resolve, 100))
 
           completedSteps += 1
           updateDialogProgress((prev) => prev ? {
@@ -1148,7 +1155,14 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               message: `Generating dialogue ${processedDialogue} of ${totalDialogueLines}${entry.character ? ` • ${entry.character}` : ''}`,
             } : prev)
 
-            await onGenerateSceneAudio(sceneIdx, 'dialogue', entry.character, entry.__index, language)
+            try {
+              await onGenerateSceneAudio(sceneIdx, 'dialogue', entry.character, entry.__index, language)
+            } catch (error) {
+              console.error(`[Dialogue Generation] Error for scene ${sceneIdx}, entry ${entry.__index}:`, error)
+            }
+            
+            // Small delay to allow state updates to propagate
+            await new Promise(resolve => setTimeout(resolve, 100))
 
             completedSteps += 1
             updateDialogProgress((prev) => prev ? {
@@ -1173,14 +1187,14 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       }
 
       // Generate music for scenes that have music descriptions
+      // Always regenerate regardless of existing audio
       if (audioTypes.music) {
         let processedMusic = 0
         for (let sceneIdx = 0; sceneIdx < scenes.length; sceneIdx++) {
           const scene = scenes[sceneIdx]
           const hasMusic = scene?.music || typeof scene?.music === 'string'
-          const hasMusicAudio = !!(scene.musicAudio || scene.music?.url)
           
-          if (hasMusic && !hasMusicAudio) {
+          if (hasMusic) {
             processedMusic += 1
             updateDialogProgress((prev) => prev ? {
               ...prev,
@@ -1217,34 +1231,28 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           if (!Array.isArray(scene.sfx)) continue
 
           for (let sfxIdx = 0; sfxIdx < scene.sfx.length; sfxIdx++) {
-            const sfxItem = scene.sfx[sfxIdx]
-            // Check if SFX already has audio
-            const hasSfxAudio = (scene.sfxAudio && scene.sfxAudio[sfxIdx]) || 
-                                (typeof sfxItem === 'object' && sfxItem.audioUrl)
-            
-            if (!hasSfxAudio) {
-              processedSfx += 1
-              updateDialogProgress((prev) => prev ? {
-                ...prev,
-                phase: 'sfx',
-                currentScene: sceneIdx + 1,
-                currentSfx: processedSfx,
-                message: `Generating sound effect ${processedSfx} of ${totalSfxItems} (Scene ${sceneIdx + 1})`,
-              } : prev)
+            // Always regenerate SFX regardless of existing audio
+            processedSfx += 1
+            updateDialogProgress((prev) => prev ? {
+              ...prev,
+              phase: 'sfx',
+              currentScene: sceneIdx + 1,
+              currentSfx: processedSfx,
+              message: `Generating sound effect ${processedSfx} of ${totalSfxItems} (Scene ${sceneIdx + 1})`,
+            } : prev)
 
-              try {
-                await generateSFX(sceneIdx, sfxIdx)
-              } catch (error) {
-                console.error(`[SFX Generation] Error for scene ${sceneIdx}, sfx ${sfxIdx}:`, error)
-              }
-
-              completedSteps += 1
-              updateDialogProgress((prev) => prev ? {
-                ...prev,
-                completedSteps,
-                currentSfx: processedSfx,
-              } : prev)
+            try {
+              await generateSFX(sceneIdx, sfxIdx)
+            } catch (error) {
+              console.error(`[SFX Generation] Error for scene ${sceneIdx}, sfx ${sfxIdx}:`, error)
             }
+
+            completedSteps += 1
+            updateDialogProgress((prev) => prev ? {
+              ...prev,
+              completedSteps,
+              currentSfx: processedSfx,
+            } : prev)
           }
         }
         if (processedSfx > 0) {
