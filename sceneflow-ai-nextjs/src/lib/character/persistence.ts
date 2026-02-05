@@ -73,18 +73,31 @@ export async function saveCharacterAttributes(
     })
   }
   
-  // Save to database
-  await project.update({
-    metadata: {
-      ...metadata,
-      visionPhase: {
-        ...visionPhase,
-        characters,
-      },
+  // Save to database - use set() and changed() to ensure Sequelize detects JSONB changes
+  const newMetadata = {
+    ...metadata,
+    visionPhase: {
+      ...visionPhase,
+      characters,
     },
-  })
+  }
   
-  console.log(`[Character Persistence] Saved character: ${characterName}`)
+  // Explicitly mark metadata as changed to ensure JSONB update is detected
+  project.set('metadata', newMetadata)
+  project.changed('metadata', true)
+  
+  await project.save()
+  
+  // Verify the save by reloading
+  await project.reload()
+  const savedCharacters = (project.metadata as any)?.visionPhase?.characters || []
+  const savedChar = savedCharacters.find((c: any) => c.name?.toLowerCase() === characterName.toLowerCase())
+  
+  console.log(`[Character Persistence] Saved character: ${characterName}`, {
+    totalCharactersNow: savedCharacters.length,
+    characterFound: !!savedChar,
+    allCharacterNames: savedCharacters.map((c: any) => c.name)
+  })
 }
 
 /**
