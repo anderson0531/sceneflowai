@@ -24,8 +24,15 @@ interface ProgressData {
   audioProgress?: number
 }
 
+interface AudienceReviewDetails {
+  categories: { name: string; score: number; weight?: number }[]
+  targetDemographic?: string
+  emotionalImpact?: string
+}
+
 interface UseSidebarDataOptions {
   reviewScores?: ReviewScores | null
+  audienceReviewDetails?: AudienceReviewDetails | null
   projectStats?: ProjectStats | null
   progressData?: ProgressData | null
 }
@@ -46,6 +53,7 @@ interface UseSidebarDataOptions {
  */
 export function useSidebarData(options: UseSidebarDataOptions) {
   const setSidebarReviewScores = useStore(s => s.setSidebarReviewScores)
+  const setSidebarAudienceReviewDetails = useStore(s => s.setSidebarAudienceReviewDetails)
   const setSidebarProjectStats = useStore(s => s.setSidebarProjectStats)
   const setSidebarProgressData = useStore(s => s.setSidebarProgressData)
   const clearSidebarData = useStore(s => s.clearSidebarData)
@@ -56,6 +64,13 @@ export function useSidebarData(options: UseSidebarDataOptions) {
       setSidebarReviewScores(options.reviewScores)
     }
   }, [options.reviewScores, setSidebarReviewScores])
+
+  // Update audience review details when they change
+  useEffect(() => {
+    if (options.audienceReviewDetails !== undefined) {
+      setSidebarAudienceReviewDetails(options.audienceReviewDetails)
+    }
+  }, [options.audienceReviewDetails, setSidebarAudienceReviewDetails])
 
   // Update project stats when they change
   useEffect(() => {

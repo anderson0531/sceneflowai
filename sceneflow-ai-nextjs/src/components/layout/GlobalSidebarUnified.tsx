@@ -46,7 +46,7 @@ import {
   Share2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { ReviewScoresPanel, type ReviewScores } from './ReviewScoresPanel'
+import { ReviewScoresPanel, type ReviewScores, type AudienceReviewDetails } from './ReviewScoresPanel'
 import { ProjectStatsPanel, type ProjectStats } from './ProjectStatsPanel'
 import { ProTipsChecklist } from '../pro-tips/ProTipsChecklist'
 import { WorkflowGuidePanel } from '../workflow/WorkflowGuidePanel'
@@ -88,7 +88,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
   
   // Read sidebar data from store (populated by workflow pages)
   const sidebarData = useStore(s => s.sidebarData)
-  const { reviewScores, projectStats, progressData, quickActionHandlers, isGeneratingReviews } = sidebarData
+  const { reviewScores, audienceReviewDetails, projectStats, progressData, quickActionHandlers, isGeneratingReviews } = sidebarData
   
   // Get sidebar config based on current path
   const config = useMemo(() => getSidebarConfigForPath(pathname), [pathname])
@@ -325,6 +325,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
           {config.sectionVisibility.reviewScores && (
             <ReviewScoresPanel
               scores={reviewScores || { director: null, audience: null }}
+              reviewDetails={audienceReviewDetails}
               isOpen={sectionsOpen.reviewScores}
               onToggle={() => toggleSection('reviewScores')}
               isGenerating={isGeneratingReviews}

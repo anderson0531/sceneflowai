@@ -207,6 +207,11 @@ interface AppState {
   // Sidebar data for unified GlobalSidebar
   sidebarData: {
     reviewScores: { director: number | null; audience: number | null } | null;
+    audienceReviewDetails: {
+      categories: { name: string; score: number; weight?: number }[];
+      targetDemographic?: string;
+      emotionalImpact?: string;
+    } | null;
     projectStats: { sceneCount: number; castCount: number; durationMinutes: number; estimatedCredits: number } | null;
     progressData: {
       hasFilmTreatment?: boolean;
@@ -222,6 +227,7 @@ interface AppState {
   
   // Sidebar actions
   setSidebarReviewScores: (scores: { director: number | null; audience: number | null } | null) => void;
+  setSidebarAudienceReviewDetails: (details: { categories: { name: string; score: number; weight?: number }[]; targetDemographic?: string; emotionalImpact?: string } | null) => void;
   setSidebarProjectStats: (stats: { sceneCount: number; castCount: number; durationMinutes: number; estimatedCredits: number } | null) => void;
   setSidebarProgressData: (data: { hasFilmTreatment?: boolean; hasScreenplay?: boolean; sceneCount?: number; refLibraryCount?: number; imageProgress?: number; audioProgress?: number } | null) => void;
   registerQuickActionHandler: (actionId: string, handler: () => void) => void;
@@ -316,6 +322,7 @@ export const useStore = create<AppState>((set, get) => ({
   cueAssistantOpen: true,
   sidebarData: {
     reviewScores: null,
+    audienceReviewDetails: null,
     projectStats: null,
     progressData: null,
     quickActionHandlers: {},
@@ -455,6 +462,9 @@ export const useStore = create<AppState>((set, get) => ({
   setSidebarReviewScores: (scores) => set((state) => ({
     sidebarData: { ...state.sidebarData, reviewScores: scores }
   })),
+  setSidebarAudienceReviewDetails: (details) => set((state) => ({
+    sidebarData: { ...state.sidebarData, audienceReviewDetails: details }
+  })),
   setSidebarProjectStats: (stats) => set((state) => ({
     sidebarData: { ...state.sidebarData, projectStats: stats }
   })),
@@ -479,6 +489,7 @@ export const useStore = create<AppState>((set, get) => ({
   clearSidebarData: () => set((state) => ({
     sidebarData: {
       reviewScores: null,
+      audienceReviewDetails: null,
       projectStats: null,
       progressData: null,
       quickActionHandlers: {},

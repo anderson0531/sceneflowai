@@ -4177,6 +4177,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }, [audienceReview?.overallScore])
   
+  // Compute audience review details for sidebar chart/demographic/emotional impact
+  const sidebarAudienceReviewDetails = useMemo(() => {
+    if (!audienceReview?.categories) return null
+    return {
+      categories: audienceReview.categories || [],
+      targetDemographic: audienceReview.targetDemographic,
+      emotionalImpact: audienceReview.emotionalImpact
+    }
+  }, [audienceReview?.categories, audienceReview?.targetDemographic, audienceReview?.emotionalImpact])
+  
   const sidebarProjectStats = useMemo(() => {
     const scriptScenes = normalizeScenes(script)
     const sceneCount = scriptScenes.length
@@ -4209,6 +4219,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Push data to global sidebar via store
   useSidebarData({
     reviewScores: sidebarReviewScores,
+    audienceReviewDetails: sidebarAudienceReviewDetails,
     projectStats: sidebarProjectStats,
     progressData: sidebarProgressData
   })

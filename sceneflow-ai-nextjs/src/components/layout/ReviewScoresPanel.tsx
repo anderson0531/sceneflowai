@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { ChevronUp, ChevronDown, BarChart3, FileText, Sparkles, Target } from 'lucide-react'
+import { ChevronUp, ChevronDown, BarChart3, FileText, Sparkles, Target, Users, Heart } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface ReviewScores {
@@ -9,12 +9,160 @@ export interface ReviewScores {
   audience: number | null // Audience Resonance score
 }
 
+export interface AudienceReviewDetails {
+  categories: { name: string; score: number; weight?: number }[]
+  targetDemographic?: string
+  emotionalImpact?: string
+}
+
 interface ReviewScoresPanelProps {
   scores: ReviewScores
+  reviewDetails?: AudienceReviewDetails | null
   isOpen: boolean
   onToggle: () => void
   isGenerating?: boolean
   className?: string
+}
+
+// Compact Radar Chart Component for dimensional scores
+function CompactRadarChart({ categories }: { categories: { name: string; score: number; weight?: number }[] }) {
+  const size = 160
+  const center = size / 2
+  const radius = 55
+  const levels = 5
+
+  // Calculate points for each category
+  const angleStep = (2 * Math.PI) / categories.length
+  
+  // Generate polygon points for each level (grid lines)
+  const getLevelPoints = (level: number) => {
+    const levelRadius = (radius * level) / levels
+    return categories.map((_, i) => {
+      const angle = i * angleStep - Math.PI / 2
+      return {
+        x: center + levelRadius * Math.cos(angle),
+        y: center + levelRadius * Math.sin(angle)
+      }
+    })
+  }
+
+  // Generate data polygon points
+  const dataPoints = categories.map((cat, i) => {
+    const angle = i * angleStep - Math.PI / 2
+    const normalizedScore = (cat.score / 100) * radius
+    return {
+      x: center + normalizedScore * Math.cos(angle),
+      y: center + normalizedScore * Math.sin(angle)
+    }
+  })
+
+  const dataPolygon = dataPoints.map(p => `${p.x},${p.y}`).join(' ')
+
+  // Get score color
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return '#22c55e' // green
+    if (score >= 70) return '#3b82f6' // blue  
+    if (score >= 60) return '#f59e0b' // amber
+    return '#ef4444' // red
+  }
+
+  const avgScore = categories.reduce((sum, c) => sum + c.score, 0) / categories.length
+  const fillColor = getScoreColor(avgScore)
+
+  // Truncate category names for compact display
+  const truncateName = (name: string) => {
+    if (name.length <= 8) return name
+    return name.slice(0, 6) + '…'
+  }
+
+  return (
+    <div className="flex flex-col items-center">
+      <svg width={size} height={size} className="overflow-visible">
+        {/* Background levels */}
+        {[1, 2, 3, 4, 5].map(level => {
+          const points = getLevelPoints(level)
+          const polygon = points.map(p => `${p.x},${p.y}`).join(' ')
+          return (
+            <polygon
+              key={level}
+              points={polygon}
+              fill="none"
+              stroke="currentColor"
+              strokeOpacity={0.15}
+              strokeWidth={1}
+            />
+          )
+        })}
+
+        {/* Axis lines */}
+        {categories.map((_, i) => {
+          const angle = i * angleStep - Math.PI / 2
+          const endX = center + radius * Math.cos(angle)
+          const endY = center + radius * Math.sin(angle)
+          return (
+            <line
+              key={i}
+              x1={center}
+              y1={center}
+              x2={endX}
+              y2={endY}
+              stroke="currentColor"
+              strokeOpacity={0.2}
+              strokeWidth={1}
+            />
+          )
+        })}
+
+        {/* Data polygon */}
+        <polygon
+          points={dataPolygon}
+          fill={fillColor}
+          fillOpacity={0.25}
+          stroke={fillColor}
+          strokeWidth={2}
+        />
+
+        {/* Data points */}
+        {dataPoints.map((point, i) => (
+          <circle
+            key={i}
+            cx={point.x}
+            cy={point.y}
+            r={3}
+            fill={fillColor}
+          />
+        ))}
+
+        {/* Labels */}
+        {categories.map((cat, i) => {
+          const angle = i * angleStep - Math.PI / 2
+          const labelRadius = radius + 18
+          const x = center + labelRadius * Math.cos(angle)
+          const y = center + labelRadius * Math.sin(angle)
+          
+          // Adjust text anchor based on position
+          let textAnchor: 'start' | 'middle' | 'end' = 'middle'
+          if (Math.cos(angle) > 0.3) textAnchor = 'start'
+          else if (Math.cos(angle) < -0.3) textAnchor = 'end'
+          
+          return (
+            <text
+              key={i}
+              x={x}
+              y={y}
+              textAnchor={textAnchor}
+              dominantBaseline="middle"
+              className="fill-current text-gray-500 dark:text-gray-400"
+              style={{ fontSize: '8px' }}
+              title={cat.name}
+            >
+              {truncateName(cat.name)}
+            </text>
+          )
+        })}
+      </svg>
+    </div>
+  )
 }
 
 /**
@@ -77,6 +225,7 @@ export function getScoreCardClasses(score: number): {
  */
 export function ReviewScoresPanel({
   scores,
+  reviewDetails,
   isOpen,
   onToggle,
   isGenerating = false,
@@ -133,7 +282,7 @@ export function ReviewScoresPanel({
               </button>
             </div>
           ) : (
-            /* Has scores - show single Audience Resonance card and action buttons */
+            /* Has scores - show Audience Resonance card, chart, details, and action buttons */
             <>
               {/* Single Audience Resonance Score Card */}
               {(() => {
@@ -156,27 +305,56 @@ export function ReviewScoresPanel({
                 )
               })()}
 
-              {/* Action Buttons */}
-              <div className="grid grid-cols-2 gap-2">
+              {/* Dimensional Analysis Chart */}
+              {reviewDetails?.categories && reviewDetails.categories.length > 0 && (
+                <div className="pt-2">
+                  <CompactRadarChart categories={reviewDetails.categories} />
+                </div>
+              )}
+
+              {/* Target Demographic */}
+              {reviewDetails?.targetDemographic && (
+                <div className="flex items-start gap-2 text-xs">
+                  <Users className="w-3.5 h-3.5 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <span className="font-medium text-gray-600 dark:text-gray-300">Target: </span>
+                    <span className="text-gray-500 dark:text-gray-400">{reviewDetails.targetDemographic}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Emotional Impact */}
+              {reviewDetails?.emotionalImpact && (
+                <div className="flex items-start gap-2 text-xs">
+                  <Heart className="w-3.5 h-3.5 text-rose-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <span className="font-medium text-gray-600 dark:text-gray-300">Emotional Impact: </span>
+                    <span className="text-gray-500 dark:text-gray-400">{reviewDetails.emotionalImpact}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons - Icon Only with Tooltips */}
+              <div className="flex justify-center gap-2 pt-1">
                 <button
                   onClick={handleUpdateReviews}
                   disabled={isGenerating}
-                  className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Re-analyze script resonance"
+                  className="flex items-center justify-center w-9 h-9 text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isGenerating ? (
-                    <div className="w-3.5 h-3.5 border-2 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
                   ) : (
-                    <BarChart3 className="w-3.5 h-3.5" />
+                    <BarChart3 className="w-4 h-4" />
                   )}
-                  <span>Re-analyze</span>
                 </button>
                 <button
                   onClick={handleReviewAnalysis}
                   disabled={isGenerating}
-                  className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="View full analysis report"
+                  className="flex items-center justify-center w-9 h-9 text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>Full Report</span>
+                  <FileText className="w-4 h-4" />
                 </button>
               </div>
             </>
