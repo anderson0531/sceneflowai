@@ -141,6 +141,16 @@ function CompactRadarChart({ categories }: { categories: { name: string; score: 
           
           return (
             <g key={i}>
+              {/* Larger invisible hit area for tooltip on data point */}
+              <circle
+                cx={point.x}
+                cy={point.y}
+                r={12}
+                fill="transparent"
+                style={{ cursor: 'help' }}
+              >
+                <title>{point.name}: {point.score}</title>
+              </circle>
               {/* Data point circle */}
               <circle
                 cx={point.x}
@@ -149,9 +159,19 @@ function CompactRadarChart({ categories }: { categories: { name: string; score: 
                 fill={point.color}
                 stroke="white"
                 strokeWidth={1.5}
+                style={{ pointerEvents: 'none' }}
+              />
+              {/* Larger invisible hit area for tooltip on score label */}
+              <rect
+                x={labelX - 15}
+                y={labelY - 10}
+                width={30}
+                height={20}
+                fill="transparent"
+                style={{ cursor: 'help' }}
               >
                 <title>{point.name}: {point.score}</title>
-              </circle>
+              </rect>
               {/* Score label with color */}
               <text
                 x={labelX}
@@ -159,9 +179,8 @@ function CompactRadarChart({ categories }: { categories: { name: string; score: 
                 textAnchor={textAnchor}
                 dominantBaseline="middle"
                 fill={point.color}
-                style={{ fontSize: '10px', fontWeight: 600 }}
+                style={{ fontSize: '10px', fontWeight: 600, pointerEvents: 'none' }}
               >
-                <title>{point.name}</title>
                 {point.score}
               </text>
             </g>
@@ -341,7 +360,7 @@ export function ReviewScoresPanel({
                 </div>
               )}
 
-              {/* Action Buttons - Consistent purple gradient style */}
+              {/* Action Buttons - Purple for Analyze, Blue for View */}
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <button
                   onClick={handleUpdateReviews}
@@ -351,16 +370,16 @@ export function ReviewScoresPanel({
                   {isGenerating ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
-                    <BarChart3 className="w-4 h-4" />
+                    <BarChart3 className="w-5 h-5" />
                   )}
                   <span>Analyze</span>
                 </button>
                 <button
                   onClick={handleReviewAnalysis}
                   disabled={isGenerating}
-                  className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                  className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 >
-                  <FileText className="w-4 h-4" />
+                  <FileText className="w-5 h-5" />
                   <span>View</span>
                 </button>
               </div>
