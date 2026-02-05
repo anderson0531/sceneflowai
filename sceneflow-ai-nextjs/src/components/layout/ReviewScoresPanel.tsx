@@ -26,9 +26,9 @@ interface ReviewScoresPanelProps {
 
 // Compact Radar Chart Component for dimensional scores
 function CompactRadarChart({ categories }: { categories: { name: string; score: number; weight?: number }[] }) {
-  const size = 160
+  const size = 180
   const center = size / 2
-  const radius = 55
+  const radius = 50
   const levels = 5
 
   // Filter out any categories without valid scores
@@ -53,6 +53,14 @@ function CompactRadarChart({ categories }: { categories: { name: string; score: 
     })
   }
 
+  // Get score color for individual scores
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return '#22c55e' // green
+    if (score >= 70) return '#3b82f6' // blue  
+    if (score >= 60) return '#f59e0b' // amber
+    return '#ef4444' // red
+  }
+
   // Generate data polygon points - ensure score is treated as number
   const dataPoints = validCategories.map((cat, i) => {
     const angle = i * angleStep - Math.PI / 2
@@ -61,28 +69,16 @@ function CompactRadarChart({ categories }: { categories: { name: string; score: 
     return {
       x: center + normalizedScore * Math.cos(angle),
       y: center + normalizedScore * Math.sin(angle),
-      score
+      score,
+      color: getScoreColor(score),
+      name: cat.name
     }
   })
 
   const dataPolygon = dataPoints.map(p => `${p.x},${p.y}`).join(' ')
 
-  // Get score color
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return '#22c55e' // green
-    if (score >= 70) return '#3b82f6' // blue  
-    if (score >= 60) return '#f59e0b' // amber
-    return '#ef4444' // red
-  }
-
   const avgScore = validCategories.reduce((sum, c) => sum + (Number(c.score) || 0), 0) / validCategories.length
   const fillColor = getScoreColor(avgScore)
-
-  // Truncate category names for compact display
-  const truncateName = (name: string) => {
-    if (name.length <= 8) return name
-    return name.slice(0, 6) + '…'
-  }
 
   return (
     <div className="flex flex-col items-center">
@@ -131,26 +127,12 @@ function CompactRadarChart({ categories }: { categories: { name: string; score: 
           strokeWidth={2.5}
         />
 
-        {/* Data points with score labels */}
-        {dataPoints.map((point, i) => (
-          <g key={i}>
-            <circle
-              cx={point.x}
-              cy={point.y}
-              r={4}
-              fill={fillColor}
-              stroke="white"
-              strokeWidth={1}
-            />
-          </g>
-        ))}
-
-        {/* Labels */}
-        {validCategories.map((cat, i) => {
+        {/* Data points with colored scores */}
+        {dataPoints.map((point, i) => {
           const angle = i * angleStep - Math.PI / 2
-          const labelRadius = radius + 18
-          const x = center + labelRadius * Math.cos(angle)
-          const y = center + labelRadius * Math.sin(angle)
+          const labelRadius = radius + 22
+          const labelX = center + labelRadius * Math.cos(angle)
+          const labelY = center + labelRadius * Math.sin(angle)
           
           // Adjust text anchor based on position
           let textAnchor: 'start' | 'middle' | 'end' = 'middle'
@@ -158,18 +140,31 @@ function CompactRadarChart({ categories }: { categories: { name: string; score: 
           else if (Math.cos(angle) < -0.3) textAnchor = 'end'
           
           return (
-            <text
-              key={i}
-              x={x}
-              y={y}
-              textAnchor={textAnchor}
-              dominantBaseline="middle"
-              className="fill-current text-gray-500 dark:text-gray-400"
-              style={{ fontSize: '8px' }}
-              title={`${cat.name}: ${cat.score}`}
-            >
-              {truncateName(cat.name)}
-            </text>
+            <g key={i}>
+              {/* Data point circle */}
+              <circle
+                cx={point.x}
+                cy={point.y}
+                r={4}
+                fill={point.color}
+                stroke="white"
+                strokeWidth={1.5}
+              >
+                <title>{point.name}: {point.score}</title>
+              </circle>
+              {/* Score label with color */}
+              <text
+                x={labelX}
+                y={labelY}
+                textAnchor={textAnchor}
+                dominantBaseline="middle"
+                fill={point.color}
+                style={{ fontSize: '10px', fontWeight: 600 }}
+              >
+                <title>{point.name}</title>
+                {point.score}
+              </text>
+            </g>
           )
         })}
       </svg>
@@ -346,26 +341,26 @@ export function ReviewScoresPanel({
                 </div>
               )}
 
-              {/* Action Buttons - Full width side by side */}
+              {/* Action Buttons - Consistent purple gradient style */}
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <button
                   onClick={handleUpdateReviews}
                   disabled={isGenerating}
-                  className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 >
                   {isGenerating ? (
-                    <div className="w-3.5 h-3.5 border-2 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
-                    <BarChart3 className="w-3.5 h-3.5" />
+                    <BarChart3 className="w-4 h-4" />
                   )}
                   <span>Analyze</span>
                 </button>
                 <button
                   onClick={handleReviewAnalysis}
                   disabled={isGenerating}
-                  className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 >
-                  <FileText className="w-3.5 h-3.5" />
+                  <FileText className="w-4 h-4" />
                   <span>View</span>
                 </button>
               </div>
