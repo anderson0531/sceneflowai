@@ -910,6 +910,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
           {activeReferenceTab === 'cast' && (
             <CharacterLibrary
               characters={characters}
+              scenes={scenes}
               onRegenerateCharacter={onRegenerateCharacter}
               onGenerateCharacter={onGenerateCharacter}
               onUploadCharacter={onUploadCharacter}

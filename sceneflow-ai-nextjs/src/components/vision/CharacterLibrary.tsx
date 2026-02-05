@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Users, Plus, Loader, Wand2, Upload, X, ChevronDown, Check, Sparkles, Lightbulb, Info, Volume2, ImageIcon, Edit, Trash2, Shirt, Mic, Play } from 'lucide-react'
+import { Users, Plus, Loader, Wand2, Upload, X, ChevronDown, Check, Sparkles, Lightbulb, Info, Volume2, ImageIcon, Edit, Trash2, Shirt, Mic, Play, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
@@ -11,10 +11,13 @@ import { upload } from '@vercel/blob/client'
 import { BrowseVoicesDialog } from '@/components/tts/BrowseVoicesDialog'
 import { CreateCustomVoiceDialog } from '@/components/tts/CreateCustomVoiceDialog'
 import { CharacterPromptBuilder } from '@/components/vision/CharacterPromptBuilder'
+import { AddCharacterModal, useOrphanCharacters } from '@/components/vision/AddCharacterModal'
 import type { CharacterContext, ScreenplayContext } from '@/lib/voiceRecommendation'
 
 export interface CharacterLibraryProps {
   characters: any[]
+  /** Script scenes for character detection */
+  scenes?: any[]
   onRegenerateCharacter: (characterId: string) => void
   onGenerateCharacter: (characterId: string, promptOrPayload: any) => Promise<void>
   onUploadCharacter: (characterId: string, file: File) => void
@@ -75,6 +78,8 @@ interface CharacterCardProps {
   prompt: string
   isGenerating: boolean
   isUploading?: boolean
+  /** Character has no dialogue in script */
+  isOrphan?: boolean
   expandedCharId?: string | null
   onToggleExpand?: (charId: string, section: 'coreIdentity' | 'appearance') => void                                                                             
   onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void
@@ -106,7 +111,7 @@ interface CharacterCardProps {
   }
 }
 
-export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateCharacterWardrobe, onAddCharacter, onRemoveCharacter, onEditCharacterImage, ttsProvider, compact = false, uploadingRef = {}, setUploadingRef, enableDrag = false, showProTips: showProTipsProp, screenplayContext }: CharacterLibraryProps) {                                
+export function CharacterLibrary({ characters, scenes = [], onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateCharacterWardrobe, onAddCharacter, onRemoveCharacter, onEditCharacterImage, ttsProvider, compact = false, uploadingRef = {}, setUploadingRef, enableDrag = false, showProTips: showProTipsProp, screenplayContext }: CharacterLibraryProps) {                                
   const [selectedChar, setSelectedChar] = useState<string | null>(null)
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(new Set())
   const [zoomedImage, setZoomedImage] = useState<{url: string; name: string} | null>(null)
@@ -116,6 +121,10 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
   const [voiceSectionExpanded, setVoiceSectionExpanded] = useState<Record<string, boolean>>({})
   const [promptBuilderOpenFor, setPromptBuilderOpenFor] = useState<string | null>(null)
   const [createVoiceDialogOpen, setCreateVoiceDialogOpen] = useState(false)
+  const [addCharacterModalOpen, setAddCharacterModalOpen] = useState(false)
+  
+  // Track orphan characters (not in script)
+  const orphanCharacters = useOrphanCharacters(scenes, characters)
   
   // Use prop if provided (for compact mode), otherwise use internal state
   const showProTips = showProTipsProp !== undefined ? showProTipsProp : showProTipsInternal
@@ -305,11 +314,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                 variant="outline" 
                 size="sm" 
                 className="flex items-center gap-2 bg-blue-50 dark:bg-blue-950 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900"
-                onClick={() => onAddCharacter({
-                  name: 'New Character',
-                  role: 'supporting',
-                  appearanceDescription: ''
-                })}
+                onClick={() => setAddCharacterModalOpen(true)}
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Character</span>
@@ -324,6 +329,17 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                 <span>Add Voice</span>
               </Button>
             </div>
+          )}
+          
+          {/* Add Character Modal */}
+          {onAddCharacter && (
+            <AddCharacterModal
+              open={addCharacterModalOpen}
+              onClose={() => setAddCharacterModalOpen(false)}
+              characters={characters}
+              scenes={scenes}
+              onAddCharacter={onAddCharacter}
+            />
           )}
           
           {/* Narrator Character Card - Always show first */}
@@ -346,6 +362,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                 character={char}
                 characterId={charId}
                 isSelected={selectedChar === charId}
+                isOrphan={orphanCharacters.has(charId) || orphanCharacters.has(char.name)}
                 onClick={() => setSelectedChar(charId)}
                 onRegenerate={() => onRegenerateCharacter(charId)}
                 onGenerate={async () => {
@@ -471,7 +488,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
   )
 }
 
-const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, isUploading = false, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateWardrobe, onRemove, onEditImage, ttsProvider, voiceSectionExpanded, onToggleVoiceSection, enableDrag = false, onOpenCharacterPrompt, screenplayContext }: CharacterCardProps) => {
+const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, isUploading = false, isOrphan = false, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateWardrobe, onRemove, onEditImage, ttsProvider, voiceSectionExpanded, onToggleVoiceSection, enableDrag = false, onOpenCharacterPrompt, screenplayContext }: CharacterCardProps) => {
   const hasImage = !!character.referenceImage
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
@@ -1100,22 +1117,34 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
             ) : (
               <>
                 <div className="flex-1 min-w-0">
-                  <span 
-                    className="font-bold text-base tracking-tight text-gray-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      if (onUpdateCharacterName) {
-                        setEditingName(true)
-                        setNameText(character.name || '')
-                      }
-                    }}
-                    title={onUpdateCharacterName ? "Click to edit name" : ""}
-                  >
-                    {character.name || 'Unnamed'}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span 
+                      className="font-bold text-base tracking-tight text-gray-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (onUpdateCharacterName) {
+                          setEditingName(true)
+                          setNameText(character.name || '')
+                        }
+                      }}
+                      title={onUpdateCharacterName ? "Click to edit name" : ""}
+                    >
+                      {character.name || 'Unnamed'}
+                    </span>
+                    {/* Orphan badge - character not in script */}
+                    {isOrphan && (
+                      <span 
+                        className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full"
+                        title="This character has no dialogue in the current script"
+                      >
+                        <AlertCircle className="w-2.5 h-2.5" />
+                        Not in script
+                      </span>
+                    )}
+                  </div>
                   {/* Inline voice info - shows voice name next to character name */}
                   {character.voiceConfig?.voiceName && (
-                    <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
                       ({character.voiceConfig.voiceName})
                     </span>
                   )}
