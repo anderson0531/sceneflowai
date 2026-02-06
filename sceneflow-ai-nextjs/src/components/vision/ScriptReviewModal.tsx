@@ -728,7 +728,7 @@ export default function ScriptReviewModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex flex-col gap-4 p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
@@ -801,7 +801,7 @@ export default function ScriptReviewModal({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
           {!review ? (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400 flex-1 flex flex-col items-center justify-center">
               <Target className="w-16 h-16 mx-auto mb-4 opacity-50" />
@@ -809,7 +809,7 @@ export default function ScriptReviewModal({
               <p className="text-sm mt-2">Click "Regenerate" to generate a new analysis</p>
             </div>
           ) : (
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ReviewTab)} className="flex-1 flex flex-col overflow-hidden">
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ReviewTab)} className="flex-1 flex flex-col overflow-hidden min-h-0">
               {/* Tab Navigation */}
               <div className="px-6 pt-4 pb-2 border-b border-gray-200 dark:border-gray-700">
                 {/* Score Outdated Banner */}
@@ -864,7 +864,7 @@ export default function ScriptReviewModal({
               </div>
 
               {/* Tab Content */}
-              <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex-1 overflow-y-auto p-6 min-h-0">
                 {/* Overview Tab */}
                 {activeTab === 'overview' && (
                   <div className="space-y-6">
