@@ -4044,6 +4044,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     useStore.getState().setIsGeneratingReviews(true)
     try {
       await execute(async () => {
+        // Compute script hash for change detection
+        const currentScriptHash = generateScriptHash(script)
+        const previousScriptHash = project?.metadata?.visionPhase?.reviews?.scriptHash
+        
+        // Build previous scores for hysteresis smoothing
+        const currentAudienceReview = audienceReview
+        const previousScoresPayload = currentAudienceReview?.overallScore ? {
+          overallScore: currentAudienceReview.overallScore,
+          categories: currentAudienceReview.categories || []
+        } : undefined
+        
         const response = await fetch('/api/vision/review-script', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -4054,7 +4065,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               logline: script.logline,
               scenes: script.script?.scenes || [],
               characters: characters
-            }
+            },
+            previousScores: previousScoresPayload,
+            scriptHash: currentScriptHash,
+            previousScriptHash: previousScriptHash
           })
         })
 

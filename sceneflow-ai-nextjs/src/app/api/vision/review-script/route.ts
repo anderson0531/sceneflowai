@@ -56,6 +56,15 @@ interface ScriptReviewRequest {
     scenes: any[]
     characters?: any[]
   }
+  /** Previous dimensional scores for hysteresis smoothing (prevents score volatility) */
+  previousScores?: {
+    overallScore: number
+    categories: { name: string; score: number; weight: number }[]
+  }
+  /** Hash of the script content — if unchanged from last analysis, stronger smoothing is applied */
+  scriptHash?: string
+  /** Hash from the previous analysis — compared to scriptHash to detect changes */
+  previousScriptHash?: string
 }
 
 // Calculate Show vs Tell ratio from script content
@@ -93,7 +102,7 @@ function calculateShowVsTellRatio(scenes: any[]): { ratio: number; narrationWord
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, script }: ScriptReviewRequest = await req.json()
+    const { projectId, script, previousScores, scriptHash, previousScriptHash }: ScriptReviewRequest = await req.json()
 
     if (!projectId || !script) {
       return NextResponse.json(
@@ -103,13 +112,28 @@ export async function POST(req: NextRequest) {
     }
 
     console.log('[Script Review] Generating Audience Resonance review for project:', projectId)
+    
+    // Detect if script has changed since last analysis
+    const scriptUnchanged = scriptHash && previousScriptHash && scriptHash === previousScriptHash
+    if (scriptUnchanged) {
+      console.log('[Script Review] Script unchanged since last analysis — applying strong score anchoring')
+    }
 
     // Pre-calculate Show vs Tell ratio
     const showVsTellMetrics = calculateShowVsTellRatio(script.scenes || [])
     console.log('[Script Review] Show vs Tell metrics:', showVsTellMetrics)
+    
+    // Generate deterministic seed from script content for reproducible scoring
+    const seedContent = JSON.stringify({ title: script.title, logline: script.logline, sceneCount: script.scenes?.length })
+    let contentSeed = 0
+    for (let i = 0; i < seedContent.length; i++) {
+      contentSeed = ((contentSeed << 5) - contentSeed) + seedContent.charCodeAt(i)
+      contentSeed = contentSeed & contentSeed
+    }
+    contentSeed = Math.abs(contentSeed)
 
     // Generate Audience Resonance review (replaces both director and audience)
-    const audienceResonance = await generateAudienceResonance(script, showVsTellMetrics)
+    const audienceResonance = await generateAudienceResonance(script, showVsTellMetrics, contentSeed, previousScores, scriptUnchanged)
 
     return NextResponse.json({
       success: true,
@@ -139,7 +163,10 @@ export async function POST(req: NextRequest) {
 
 async function generateAudienceResonance(
   script: any, 
-  showVsTellMetrics: { ratio: number; narrationWords: number; actionWords: number; dialogueWords: number }
+  showVsTellMetrics: { ratio: number; narrationWords: number; actionWords: number; dialogueWords: number },
+  contentSeed: number,
+  previousScores?: ScriptReviewRequest['previousScores'],
+  scriptUnchanged?: boolean
 ): Promise<AudienceResonanceReview> {
   const sceneCount = script.scenes?.length || 0
   const characterCount = script.characters?.length || 0
@@ -328,9 +355,10 @@ FINAL CHECK before outputting:
   console.log('[Audience Resonance] Calling Vertex AI Gemini with deduction-based prompt...')
   const result = await generateText(prompt, {
     model: 'gemini-2.5-flash',
-    temperature: 0.3, // Very low temperature for consistent, rigorous scoring
+    temperature: 0, // Deterministic scoring — same script should yield same scores
     maxOutputTokens: 12000,
-    thinkingBudget: 0 // Disable thinking mode for faster, more direct responses
+    thinkingBudget: 0, // Disable thinking mode for faster, more direct responses
+    seed: contentSeed // Content-derived seed for reproducible output
   })
   
   if (result.finishReason === 'SAFETY') {
@@ -383,7 +411,41 @@ FINAL CHECK before outputting:
     'Show vs Tell Ratio': 10
   }
   
-  // Calculate weighted average from dimensional scores
+  // =========================================================================
+  // HYSTERESIS SMOOTHING: Prevent score volatility on re-analysis
+  // When the script hasn't changed, anchor new scores toward previous scores.
+  // This eliminates the "slot machine" effect where repeated analysis of the
+  // same script produces swinging scores (e.g., 73 → 77 → 73).
+  //
+  // Strategy:
+  // - Script unchanged: 60% previous + 40% new (strong anchoring)
+  // - Script changed: Use raw new scores (allow genuine movement)
+  // =========================================================================
+  if (previousScores?.categories && categories.length > 0) {
+    const anchorStrength = scriptUnchanged ? 0.6 : 0 // Only smooth when script is unchanged
+    
+    if (anchorStrength > 0) {
+      // Build lookup of previous dimensional scores
+      const prevScoreLookup: Record<string, number> = {}
+      for (const prevCat of previousScores.categories) {
+        prevScoreLookup[prevCat.name] = prevCat.score
+      }
+      
+      // Apply hysteresis to each dimensional score
+      for (const cat of categories) {
+        const prevScore = prevScoreLookup[cat.name]
+        if (prevScore !== undefined) {
+          const rawScore = cat.score
+          cat.score = Math.round(prevScore * anchorStrength + rawScore * (1 - anchorStrength))
+          if (rawScore !== cat.score) {
+            console.log(`[Audience Resonance] Hysteresis: ${cat.name}: ${rawScore} → ${cat.score} (anchored to prev ${prevScore})`)
+          }
+        }
+      }
+    }
+  }
+  
+  // Calculate weighted average from (possibly smoothed) dimensional scores
   let weightedSum = 0
   let totalWeight = 0
   

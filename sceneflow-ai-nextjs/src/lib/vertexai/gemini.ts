@@ -60,6 +60,11 @@ export interface TextGenerationOptions {
    * Default: undefined (auto/dynamic thinking)
    */
   thinkingBudget?: number
+  /**
+   * Seed for deterministic output. Same seed + same input = same output.
+   * Useful for scoring consistency across repeated analysis runs.
+   */
+  seed?: number
 }
 
 export interface TextGenerationResult {
@@ -101,6 +106,11 @@ export async function generateText(
     }
   }
   
+  // Add seed for deterministic output
+  if (options.seed !== undefined) {
+    requestBody.generationConfig.seed = options.seed
+  }
+
   // Add response mime type if specified
   if (options.responseMimeType) {
     requestBody.generationConfig.responseMimeType = options.responseMimeType

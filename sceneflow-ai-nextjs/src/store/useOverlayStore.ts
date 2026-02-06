@@ -46,7 +46,7 @@ export interface OperationConfig {
  */
 export const OPERATION_CONFIGS: Record<OperationType, OperationConfig> = {
   'script-review': {
-    title: 'Analyzing Audience Resonance',
+    title: 'Analyzing Resonance',
     animationType: 'audience',
     phases: [
       { id: 'init', label: 'Initializing analysis...', progress: 5 },
