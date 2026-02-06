@@ -5,6 +5,10 @@ const withPWA = require('next-pwa')({
   disable: process.env.NODE_ENV === 'development',
   // Force service worker update on new deployments
   buildExcludes: [/middleware-manifest\.json$/],
+  // CRITICAL: Disable the built-in start_url caching that stores page HTML
+  // This prevents the "wrong page on hard refresh" bug where visiting /screening-room
+  // then refreshing / would serve cached screening-room content
+  dynamicStartUrl: false,
   // Custom runtime caching to prevent stale audio files
   runtimeCaching: [
     // CRITICAL: Root route must ALWAYS fetch from network to prevent wrong landing page
@@ -13,18 +17,10 @@ const withPWA = require('next-pwa')({
       urlPattern: /^\/$/,
       handler: 'NetworkOnly',
     },
-    // Landing/marketing pages should not be cached to ensure fresh content
+    // App pages should NEVER be cached to prevent stale content issues
     {
       urlPattern: /^\/(screening-room|dashboard|share|s|c)(\/|$)/,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'app-pages',
-        networkTimeoutSeconds: 5,
-        expiration: {
-          maxEntries: 16,
-          maxAgeSeconds: 300, // 5 minutes max - short TTL for app pages
-        },
-      },
+      handler: 'NetworkOnly',
     },
     // CRITICAL: Audio files use NetworkFirst to ensure fresh content after regeneration
     // GCS-hosted audio files should always fetch from network first
