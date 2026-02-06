@@ -6,29 +6,19 @@ import { useOverlayStore, OPERATION_CONFIGS } from '@/store/useOverlayStore'
 /**
  * AnimatedProcessingOverlay
  * 
- * A visually engaging processing overlay that:
+ * A visually engaging processing toast that:
+ * - Displays as a floating card in the bottom-right corner
  * - Shows themed animations based on operation type
  * - Displays phase-based progress messages
- * - Includes audience simulation for script reviews
- * - Blocks user interaction during processing
+ * - Maintains user context with transparent backdrop
+ * - Blocks interaction with a subtle overlay
  * 
  * @global This is the global reference for consistent processing overlays across SceneFlow
  * 
- * Usage:
- * - Include once in your app layout
- * - Use useProcessWithOverlay hook to trigger with operation type
- * 
- * Example:
- * ```tsx
- * const { execute } = useProcessWithOverlay()
- * await execute(async () => {
- *   // API call here
- * }, { 
- *   message: 'Analyzing script...', 
- *   estimatedDuration: 25, 
- *   operationType: 'script-review' 
- * })
- * ```
+ * Design Philosophy:
+ * - User stays "in context" - they can see their workflow behind the overlay
+ * - Toast-style presentation feels less disruptive than full-screen modals
+ * - Animations are contained within the card, not full-screen
  */
 const AnimatedProcessingOverlay = () => {
   const { 
@@ -42,8 +32,6 @@ const AnimatedProcessingOverlay = () => {
   const [progress, setProgress] = useState(0)
   const [currentPhaseLabel, setCurrentPhaseLabel] = useState('')
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
-  const animationFrameRef = useRef<number | null>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
   
   const config = useMemo(() => OPERATION_CONFIGS[operationType], [operationType])
   
@@ -56,7 +44,7 @@ const AnimatedProcessingOverlay = () => {
   // Initialize seats for audience animation
   useEffect(() => {
     if (isVisible && config.animationType === 'audience') {
-      setSeats(Array(60).fill('dim'))
+      setSeats(Array(40).fill('dim'))
     }
     if (isVisible && config.animationType === 'script') {
       setScriptLines([false, false, false, false, false, false])
@@ -78,7 +66,6 @@ const AnimatedProcessingOverlay = () => {
         const phases = config.phases
         const currentPhase = phases.find((phase, idx) => {
           const nextPhase = phases[idx + 1]
-          if (!nextPhase) return true
           return pct < nextPhase.progress
         })
         
@@ -98,26 +85,22 @@ const AnimatedProcessingOverlay = () => {
             const newSeats = [...prevSeats]
             
             if (pct < 30) {
-              // Drafting phase - random engagement
               if (Math.random() > 0.92) {
                 const idx = Math.floor(Math.random() * newSeats.length)
                 newSeats[idx] = newSeats[idx] === 'dim' ? 'engaged' : 'dim'
               }
             } else if (pct < 60) {
-              // Feedback phase - some critical
               if (Math.random() > 0.9) {
                 const idx = Math.floor(Math.random() * newSeats.length)
                 newSeats[idx] = 'critical'
               }
             } else if (pct < 85) {
-              // Optimization phase - critical seats recover
               newSeats.forEach((seat, idx) => {
                 if (seat === 'critical' && Math.random() > 0.95) {
                   newSeats[idx] = 'engaged'
                 }
               })
             } else {
-              // Resonance phase - standing ovation
               if (Math.random() > 0.85) {
                 const idx = Math.floor(Math.random() * newSeats.length)
                 newSeats[idx] = 'standing'
@@ -152,94 +135,6 @@ const AnimatedProcessingOverlay = () => {
     }
   }, [isVisible, startTime, estimatedDuration, config])
 
-  // Canvas animation for particles
-  useEffect(() => {
-    if (!isVisible || !canvasRef.current) return
-    
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    
-    // Set canvas size
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-    }
-    resizeCanvas()
-    window.addEventListener('resize', resizeCanvas)
-    
-    const particles: Array<{
-      x: number
-      y: number
-      vx: number
-      vy: number
-      life: number
-      color: string
-      size: number
-    }> = []
-    
-    const animate = () => {
-      if (!ctx || !canvas) return
-      
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      
-      // Add new particles occasionally
-      if (Math.random() > 0.85 && particles.length < 50) {
-        const colors = config.animationType === 'audience' 
-          ? ['#fbbf24', '#ef4444', '#3b82f6', '#a855f7']
-          : config.animationType === 'script'
-          ? ['#3b82f6', '#60a5fa', '#93c5fd']
-          : config.animationType === 'image'
-          ? ['#8b5cf6', '#a855f7', '#c084fc']
-          : config.animationType === 'video'
-          ? ['#ef4444', '#f87171', '#fca5a5']
-          : ['#3b82f6', '#8b5cf6', '#06b6d4']
-        
-        particles.push({
-          x: Math.random() * canvas.width,
-          y: canvas.height + 10,
-          vx: (Math.random() - 0.5) * 2,
-          vy: -Math.random() * 2 - 0.5,
-          life: 1,
-          color: colors[Math.floor(Math.random() * colors.length)],
-          size: Math.random() * 3 + 2
-        })
-      }
-      
-      // Update and draw particles
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i]
-        p.x += p.vx
-        p.y += p.vy
-        p.life -= 0.008
-        
-        if (p.life <= 0 || p.y < -10) {
-          particles.splice(i, 1)
-          continue
-        }
-        
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2)
-        ctx.fillStyle = p.color
-        ctx.globalAlpha = p.life * 0.6
-        ctx.fill()
-        ctx.globalAlpha = 1
-      }
-      
-      animationFrameRef.current = requestAnimationFrame(animate)
-    }
-    
-    animate()
-    
-    return () => {
-      window.removeEventListener('resize', resizeCanvas)
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current)
-      }
-    }
-  }, [isVisible, config.animationType])
-
-  if (!isVisible) return null
 
   const getProgressBarColor = () => {
     if (config.animationType === 'audience') {
@@ -254,238 +149,174 @@ const AnimatedProcessingOverlay = () => {
   const getSeatColor = (state: string) => {
     switch (state) {
       case 'engaged': return 'bg-slate-400'
-      case 'critical': return 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]'
-      case 'standing': return 'bg-amber-400 -translate-y-2 scale-125 shadow-[0_0_12px_rgba(251,191,36,0.8)]'
+      case 'critical': return 'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.8)]'
+      case 'standing': return 'bg-amber-400 -translate-y-1 scale-110 shadow-[0_0_8px_rgba(251,191,36,0.8)]'
       default: return 'bg-slate-700'
     }
   }
 
   const getScriptDocClass = () => {
     if (progress < 30) return 'animate-[bounce_0.3s_ease-in-out_infinite_alternate]'
-    if (progress >= 30 && progress < 85) return 'shadow-[0_0_20px_rgba(239,68,68,0.4)] animate-[shake_0.3s_ease-in-out_infinite]'
-    if (progress >= 85) return 'shadow-[0_0_30px_rgba(251,191,36,0.6)] scale-110 bg-amber-50'
+    if (progress >= 30 && progress < 85) return 'shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-[shake_0.3s_ease-in-out_infinite]'
+    if (progress >= 85) return 'shadow-[0_0_20px_rgba(251,191,36,0.5)] scale-105 bg-amber-50'
     return ''
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/95 backdrop-blur-md">
-      {/* Particle canvas background */}
-      <canvas 
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full pointer-events-none"
-      />
+    <div className="fixed inset-0 z-[100]">
+      {/* Semi-transparent backdrop - allows user to see their content */}
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" />
       
-      <div className="relative z-10 flex flex-col items-center max-w-2xl w-full px-6">
-        {/* Title */}
-        <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">
-          {config.title}
-        </h2>
-        
-        {/* Audience animation for script-review */}
-        {config.animationType === 'audience' && (
-          <div className="mb-8 mt-6">
-            {/* Script document */}
-            <div className={`
-              w-24 h-32 bg-white rounded-md mx-auto mb-8 p-3 
-              transition-all duration-300 relative
-              ${getScriptDocClass()}
-            `}>
-              <div className="h-1.5 bg-slate-300 rounded mb-2" />
-              <div className="h-1.5 bg-slate-300 rounded mb-2" />
-              <div className="h-1.5 bg-slate-300 rounded w-3/5 mb-2" />
-              <div className="h-1.5 bg-slate-300 rounded mb-2" />
-              <div className="h-1.5 bg-slate-300 rounded" />
-              
-              {/* Writing indicator */}
-              {progress < 30 && (
-                <div className="absolute -right-1 -bottom-1 w-4 h-4 bg-blue-500 rounded-full animate-pulse" />
-              )}
-            </div>
-            
-            {/* Audience seats grid */}
+      {/* Floating toast card - anchored bottom-right */}
+      <div className="absolute bottom-6 right-6 w-[380px] max-w-[calc(100vw-48px)]">
+        <div className="bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
+          {/* Progress indicator strip at top */}
+          <div className="h-1 bg-slate-800">
             <div 
-              className="grid gap-2 mx-auto"
-              style={{ 
-                gridTemplateColumns: 'repeat(15, 1fr)',
-                perspective: '600px',
-                transform: 'rotateX(15deg)',
-                width: '420px'
-              }}
-            >
-              {seats.map((state, idx) => (
-                <div
-                  key={idx}
-                  className={`
-                    w-3 h-3 rounded-full transition-all duration-500 ease-out
-                    ${getSeatColor(state)}
-                  `}
-                  style={{
-                    transitionDelay: state === 'standing' ? `${Math.random() * 200}ms` : '0ms'
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {/* Script animation */}
-        {config.animationType === 'script' && (
-          <div className="mb-8 mt-6 flex justify-center">
-            <div className={`
-              w-28 h-36 bg-white rounded-md p-4 shadow-xl
-              transition-all duration-500 relative
-              ${progress < 70 ? 'animate-pulse' : 'shadow-[0_0_25px_rgba(59,130,246,0.5)]'}
-            `}>
-              {scriptLines.map((filled, i) => (
-                <div 
-                  key={i}
-                  className={`
-                    h-2 rounded mb-2 transition-all duration-500
-                    ${filled ? 'bg-blue-500' : 'bg-slate-200'}
-                  `}
-                  style={{ 
-                    width: i === 2 || i === 5 ? '60%' : '100%',
-                    transitionDelay: `${i * 100}ms`
-                  }}
-                />
-              ))}
-              
-              {/* Cursor indicator */}
-              {progress < 85 && (
-                <div 
-                  className="absolute w-0.5 h-3 bg-blue-500 animate-[blink_1s_ease-in-out_infinite]"
-                  style={{
-                    top: `${16 + Math.floor(progress / 15) * 16}px`,
-                    left: '16px'
-                  }}
-                />
-              )}
-            </div>
-          </div>
-        )}
-        
-        {/* Image generation animation */}
-        {config.animationType === 'image' && (
-          <div className="mb-8 mt-6 flex justify-center">
-            <div className={`
-              w-36 h-28 bg-slate-800 rounded-lg border-2 
-              flex items-center justify-center overflow-hidden relative
-              transition-all duration-500
-              ${progress > 50 ? 'border-purple-500 shadow-[0_0_20px_rgba(139,92,246,0.4)]' : 'border-slate-600'}
-            `}>
-              {/* Reveal effect */}
-              <div 
-                className="absolute inset-0 bg-gradient-to-r from-purple-500/30 via-violet-500/30 to-purple-500/30"
-                style={{
-                  clipPath: `inset(0 ${100 - progress}% 0 0)`,
-                  transition: 'clip-path 0.3s ease-out'
-                }}
-              />
-              <span className="text-4xl z-10">🖼️</span>
-            </div>
-          </div>
-        )}
-        
-        {/* Video generation animation */}
-        {config.animationType === 'video' && (
-          <div className="mb-8 mt-6 flex justify-center">
-            <div className={`
-              w-40 h-24 bg-slate-800 rounded-lg border-2 
-              flex items-center justify-center overflow-hidden relative
-              transition-all duration-500
-              ${progress > 50 ? 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.4)]' : 'border-slate-600'}
-            `}>
-              {/* Film strip effect */}
-              <div className="absolute left-0 top-0 bottom-0 w-3 bg-slate-700 flex flex-col justify-around py-1">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="w-2 h-2 bg-slate-600 rounded-sm mx-auto" />
-                ))}
-              </div>
-              <div className="absolute right-0 top-0 bottom-0 w-3 bg-slate-700 flex flex-col justify-around py-1">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="w-2 h-2 bg-slate-600 rounded-sm mx-auto" />
-                ))}
-              </div>
-              
-              {/* Progress reveal */}
-              <div 
-                className="absolute inset-0 bg-gradient-to-r from-red-500/20 via-orange-500/20 to-red-500/20"
-                style={{
-                  clipPath: `inset(0 ${100 - progress}% 0 0)`,
-                  transition: 'clip-path 0.3s ease-out'
-                }}
-              />
-              <span className="text-4xl z-10">🎬</span>
-            </div>
-          </div>
-        )}
-        
-        {/* Audio generation animation */}
-        {config.animationType === 'audio' && (
-          <div className="mb-8 mt-6 flex justify-center items-end gap-1 h-20">
-            {[...Array(12)].map((_, i) => {
-              const height = 20 + Math.sin((progress / 10) + i * 0.5) * 30 + Math.random() * 10
-              return (
-                <div
-                  key={i}
-                  className="w-2 bg-gradient-to-t from-blue-500 to-cyan-400 rounded-t transition-all duration-150"
-                  style={{ 
-                    height: `${progress > 10 ? height : 5}px`,
-                  }}
-                />
-              )
-            })}
-          </div>
-        )}
-        
-        {/* Generic animation */}
-        {config.animationType === 'generic' && (
-          <div className="mb-8 mt-6 flex justify-center">
-            <div className="relative w-20 h-20">
-              <div className="absolute inset-0 border-4 border-blue-500/30 rounded-full" />
-              <div 
-                className="absolute inset-0 border-4 border-transparent border-t-blue-500 rounded-full animate-spin"
-                style={{ animationDuration: '1s' }}
-              />
-              <div className="absolute inset-2 flex items-center justify-center">
-                <span className="text-2xl">⚡</span>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Current phase label */}
-        <div className="text-center mb-6">
-          <p className="text-lg text-blue-400 font-medium min-h-[28px]">
-            {currentPhaseLabel || message}
-          </p>
-          <p className="text-sm text-slate-400 mt-2">
-            Please do not close this window
-          </p>
-        </div>
-        
-        {/* Progress bar */}
-        <div className="w-full max-w-md">
-          <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
-            <div 
-              className={`h-full rounded-full transition-all duration-300 ${getProgressBarColor()}`}
+              className={`h-full transition-all duration-300 ${getProgressBarColor()}`}
               style={{ width: `${progress}%` }}
             />
           </div>
-          <div className="flex justify-between mt-2 text-sm text-slate-400">
-            <span>{Math.round(progress)}%</span>
-            <span>~{Math.max(0, Math.round(estimatedDuration - (progress / 100) * estimatedDuration))}s remaining</span>
+          
+          <div className="p-5">
+            {/* Header with title */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">
+                {config.title}
+              </h3>
+              <span className="text-xs text-slate-400 tabular-nums">
+                {Math.round(progress)}%
+              </span>
+            </div>
+
+            {/* Audience animation for script-review */}
+            {config.animationType === 'audience' && (
+              <div className="mb-4">
+                <div className={`w-16 h-20 bg-white rounded mx-auto mb-4 p-2 transition-all duration-300 relative ${getScriptDocClass()}`}>
+                  <div className="h-1 bg-slate-300 rounded mb-1.5" />
+                  <div className="h-1 bg-slate-300 rounded mb-1.5" />
+                  <div className="h-1 bg-slate-300 rounded w-3/5 mb-1.5" />
+                  <div className="h-1 bg-slate-300 rounded mb-1.5" />
+                  <div className="h-1 bg-slate-300 rounded" />
+                  {progress < 30 && (
+                    <div className="absolute -right-0.5 -bottom-0.5 w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse" />
+                  )}
+                </div>
+                <div 
+                  className="grid gap-1 mx-auto"
+                  style={{ 
+                    gridTemplateColumns: 'repeat(10, 1fr)',
+                    perspective: '400px',
+                    transform: 'rotateX(10deg)',
+                    width: '240px'
+                  }}
+                >
+                  {seats.slice(0, 40).map((state, idx) => (
+                    <div
+                      key={idx}
+                      className={`w-2 h-2 rounded-full transition-all duration-500 ease-out ${getSeatColor(state)}`}
+                      style={{ transitionDelay: state === 'standing' ? `${Math.random() * 200}ms` : '0ms' }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Script animation */}
+            {config.animationType === 'script' && (
+              <div className="mb-4 flex justify-center">
+                <div className={`w-20 h-24 bg-white rounded p-3 shadow-lg transition-all duration-500 relative ${progress < 70 ? 'animate-pulse' : 'shadow-[0_0_20px_rgba(59,130,246,0.4)]'}`}>
+                  {scriptLines.map((filled, i) => (
+                    <div 
+                      key={i}
+                      className={`h-1.5 rounded mb-1.5 transition-all duration-500 ${filled ? 'bg-blue-500' : 'bg-slate-200'}`}
+                      style={{ width: i === 2 || i === 5 ? '60%' : '100%', transitionDelay: `${i * 100}ms` }}
+                    />
+                  ))}
+                  {progress < 85 && (
+                    <div 
+                      className="absolute w-0.5 h-2 bg-blue-500 animate-[blink_1s_ease-in-out_infinite]"
+                      style={{ top: `${12 + Math.floor(progress / 18) * 12}px`, left: '12px' }}
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Image generation animation */}
+            {config.animationType === 'image' && (
+              <div className="mb-4 flex justify-center">
+                <div className={`w-24 h-20 bg-slate-800 rounded-lg border-2 flex items-center justify-center overflow-hidden relative transition-all duration-500 ${progress > 50 ? 'border-purple-500 shadow-[0_0_15px_rgba(139,92,246,0.3)]' : 'border-slate-600'}`}>
+                  <div 
+                    className="absolute inset-0 bg-gradient-to-r from-purple-500/30 via-violet-500/30 to-purple-500/30"
+                    style={{ clipPath: `inset(0 ${100 - progress}% 0 0)`, transition: 'clip-path 0.3s ease-out' }}
+                  />
+                  <span className="text-3xl z-10">🖼️</span>
+                </div>
+              </div>
+            )}
+
+            {/* Video generation animation */}
+            {config.animationType === 'video' && (
+              <div className="mb-4 flex justify-center">
+                <div className={`w-28 h-18 bg-slate-800 rounded-lg border-2 flex items-center justify-center overflow-hidden relative transition-all duration-500 ${progress > 50 ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'border-slate-600'}`}>
+                  <div className="absolute left-0 top-0 bottom-0 w-2 bg-slate-700 flex flex-col justify-around py-1">
+                    {[...Array(3)].map((_, i) => <div key={i} className="w-1.5 h-1.5 bg-slate-600 rounded-sm mx-auto" />)}
+                  </div>
+                  <div className="absolute right-0 top-0 bottom-0 w-2 bg-slate-700 flex flex-col justify-around py-1">
+                    {[...Array(3)].map((_, i) => <div key={i} className="w-1.5 h-1.5 bg-slate-600 rounded-sm mx-auto" />)}
+                  </div>
+                  <div 
+                    className="absolute inset-0 bg-gradient-to-r from-red-500/20 via-orange-500/20 to-red-500/20"
+                    style={{ clipPath: `inset(0 ${100 - progress}% 0 0)`, transition: 'clip-path 0.3s ease-out' }}
+                  />
+                  <span className="text-3xl z-10">🎬</span>
+                </div>
+              </div>
+            )}
+
+            {/* Audio generation animation */}
+            {config.animationType === 'audio' && (
+              <div className="mb-4 flex justify-center items-end gap-0.5 h-14">
+                {[...Array(10)].map((_, i) => {
+                  const height = 15 + Math.sin((progress / 10) + i * 0.5) * 20 + Math.random() * 8
+                  return (
+                    <div
+                      key={i}
+                      className="w-1.5 bg-gradient-to-t from-blue-500 to-cyan-400 rounded-t transition-all duration-150"
+                      style={{ height: `${progress > 10 ? height : 4}px` }}
+                    />
+                  )
+                })}
+              </div>
+            )}
+            
+            {/* Generic animation */}
+            {config.animationType === 'generic' && (
+              <div className="mb-4 flex justify-center">
+                <div className="relative w-14 h-14">
+                  <div className="absolute inset-0 border-3 border-blue-500/30 rounded-full" />
+                  <div className="absolute inset-0 border-3 border-transparent border-t-blue-500 rounded-full animate-spin" style={{ animationDuration: '1s' }} />
+                  <div className="absolute inset-1 flex items-center justify-center">
+                    <span className="text-xl">⚡</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Current phase label */}
+            <div className="text-center">
+              <p className="text-sm text-blue-400 font-medium min-h-[20px]">
+                {currentPhaseLabel || message}
+              </p>
+              <p className="text-xs text-slate-500 mt-1">
+                ~{Math.max(0, Math.round(estimatedDuration - (progress / 100) * estimatedDuration))}s remaining
+              </p>
+            </div>
           </div>
         </div>
       </div>
       
-      {/* Bottom progress strip */}
-      <div 
-        className={`absolute bottom-0 left-0 h-1 transition-all duration-200 ${getProgressBarColor()}`}
-        style={{ width: `${progress}%` }}
-      />
-      
-      {/* CSS animations */}
       <style jsx>{`
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
