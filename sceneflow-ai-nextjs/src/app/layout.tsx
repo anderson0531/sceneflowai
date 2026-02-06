@@ -10,7 +10,7 @@ import { ConditionalLayout } from '@/components/layout/ConditionalLayout'
 import { GlobalHeader } from '@/components/layout/GlobalHeader'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { Toaster } from 'sonner'
-import ProcessingOverlay from '../components/ProcessingOverlay'
+import AnimatedProcessingOverlay from '../components/AnimatedProcessingOverlay'
 import { CreditsProvider } from '@/contexts/CreditsContext'
 import { CookieConsent } from '@/components/ui/CookieConsent'
 
@@ -167,7 +167,7 @@ export default function RootLayout({
                   className: 'bg-gray-800 text-gray-100 border-gray-700 shadow-lg !opacity-100 whitespace-pre-wrap',
                 }}
               />
-              <ProcessingOverlay />
+              <AnimatedProcessingOverlay />
               <CookieConsent />
             </CreditsProvider>
           </AuthSessionProvider>

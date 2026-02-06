@@ -627,10 +627,11 @@ export default function ScriptReviewModal({
 
     setIsRevising(true)
     try {
-      await execute(async () => {
-        let response = await fetch('/api/vision/optimize-script', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+      await execute(
+        async () => {
+          let response = await fetch('/api/vision/optimize-script', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             projectId,
             script,
@@ -676,7 +677,8 @@ export default function ScriptReviewModal({
       }, { 
         message: `Revising script with ${selectedRecs.length} recommendation${selectedRecs.length > 1 ? 's' : ''}...`, 
         // Large scripts take longer - estimate based on scene count
-        estimatedDuration: Math.min(180, Math.max(30, (script?.scenes?.length || 10) * 1.5))
+        estimatedDuration: Math.min(180, Math.max(30, (script?.scenes?.length || 10) * 1.5)),
+        operationType: 'script-optimization'
       })
     } catch (err: any) {
       console.error('[Script Revision] Error:', err)

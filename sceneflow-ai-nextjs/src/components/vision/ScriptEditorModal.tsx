@@ -236,7 +236,7 @@ export function ScriptEditorModal({
           setSelectedScenes(data.optimizedScript.scenes.map((_: any, idx: number) => idx))
         }
         toast.success('Preview generated successfully')
-      }, { message: 'Generating your preview with optimized scenes...', estimatedDuration: 25 })
+      }, { message: 'Generating your preview with optimized scenes...', estimatedDuration: 25, operationType: 'script-optimization' })
     } catch (error: any) {
       console.error('[Script Optimization] Error:', error)
       try {
@@ -287,7 +287,7 @@ export function ScriptEditorModal({
           }
         }
         if (!done) throw new Error('Batch optimization timed out')
-      }, { message: 'Batch optimizing your script scene by scene...', estimatedDuration: 120 })
+      }, { message: 'Batch optimizing your script scene by scene...', estimatedDuration: 120, operationType: 'script-optimization' })
     } catch (e: any) {
       console.error('[Batch Optimize] Error:', e)
       toast.error(e?.message || 'Batch optimization failed')

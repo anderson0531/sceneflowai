@@ -4150,7 +4150,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             toast.success('Script reviews generated and saved successfully!')
           } catch {}
         }
-      }, { message: 'Generating director and audience reviews...', estimatedDuration: 25 })
+      }, { message: 'Analyzing audience resonance...', estimatedDuration: 25, operationType: 'script-review' })
     } catch (error) {
       console.error('[Script Review] Error:', error)
       try {
