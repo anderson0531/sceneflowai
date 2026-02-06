@@ -676,8 +676,9 @@ export default function ScriptReviewModal({
         }
       }, { 
         message: `Revising script with ${selectedRecs.length} recommendation${selectedRecs.length > 1 ? 's' : ''}...`, 
-        // Large scripts take longer - estimate based on scene count
-        estimatedDuration: Math.min(180, Math.max(30, (script?.scenes?.length || 10) * 1.5)),
+        // Batched optimization: ~4 scenes/batch, ~15s/batch + overhead
+        // e.g. 17 scenes = 5 batches x 15s = 75s + 10s overhead = 85s
+        estimatedDuration: Math.min(180, Math.max(45, Math.ceil((script?.scenes?.length || 10) / 4) * 15 + 10)),
         operationType: 'script-optimization'
       })
     } catch (err: any) {

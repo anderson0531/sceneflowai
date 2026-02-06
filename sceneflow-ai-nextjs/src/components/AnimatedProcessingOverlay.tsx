@@ -71,7 +71,18 @@ const AnimatedProcessingOverlay = () => {
       intervalRef.current = setInterval(() => {
         const elapsed = Date.now() - startTime
         const estimatedMs = estimatedDuration * 1000
-        const pct = Math.min((elapsed / estimatedMs) * 100, 98)
+        // Asymptotic progress: linear to 90% during estimate, then
+        // smoothly approach 99% on overruns (never looks stuck).
+        // At 2x estimate: ~95.5%, 3x: ~97.8%, 4x: ~98.6%
+        let pct: number
+        const ratio = elapsed / estimatedMs
+        if (ratio <= 1) {
+          pct = ratio * 90
+        } else {
+          const overrun = ratio - 1
+          pct = 90 + 9 * (1 - Math.exp(-overrun * 1.5))
+        }
+        pct = Math.min(pct, 99)
         setProgress(pct)
         
         // Find current phase based on progress
