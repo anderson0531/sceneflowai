@@ -2786,8 +2786,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           script={script?.script || script}
           projectId={projectId || ''}
           characters={characters}
-          directorReview={directorReview}
-          audienceReview={audienceReview}
           initialInstruction={scriptEditorInitialInstruction || undefined}
           onApplyChanges={(revisedScript) => {
             // Clean up stale audio when script scenes are edited

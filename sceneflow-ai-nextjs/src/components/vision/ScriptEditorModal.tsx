@@ -4,28 +4,12 @@ import { useState, useEffect, useRef } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Loader, Edit, Wand2, Check, Eye, Sparkles, Clapperboard, Mic, Square, Star } from 'lucide-react'
-import ScriptRecommendationCard from './ScriptRecommendationCard'
-import { Select } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
+
+import { Loader, Edit, Wand2, Check, Eye, Mic, Square } from 'lucide-react'
 import { toast } from 'sonner'
 import { useProcessWithOverlay } from '../../hooks/useProcessWithOverlay'
 import { detectCharacterChanges } from '@/lib/character/detection'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
-
-interface Review {
-  overallScore: number
-  categories: {
-    name: string
-    score: number
-  }[]
-  analysis: string
-  strengths: string[]
-  improvements: string[]
-  recommendations: string[]
-  generatedAt: string
-}
 
 interface ScriptEditorModalProps {
   isOpen: boolean
@@ -34,8 +18,6 @@ interface ScriptEditorModalProps {
   projectId: string
   characters: any[]
   onApplyChanges: (revisedScript: any) => void
-  directorReview?: Review | null
-  audienceReview?: Review | null
   initialInstruction?: string
 }
 
@@ -89,11 +71,8 @@ export function ScriptEditorModal({
   projectId,
   characters,
   onApplyChanges,
-  directorReview,
-  audienceReview,
   initialInstruction
 }: ScriptEditorModalProps) {
-  const [tab, setTab] = useState<'instructions' | 'flow'>('instructions')
   const [customInstruction, setCustomInstruction] = useState(initialInstruction || '')
   const [isOptimizing, setIsOptimizing] = useState(false)
   const [optimizedScript, setOptimizedScript] = useState<any | null>(null)
@@ -109,12 +88,7 @@ export function ScriptEditorModal({
   
   // Multi-select state
   const [selectedOptimizations, setSelectedOptimizations] = useState<string[]>([])
-  const [recommendations, setRecommendations] = useState<any[]>([])
-  const [selectedRecommendations, setSelectedRecommendations] = useState<string[]>([])
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [selectedScenes, setSelectedScenes] = useState<number[]>([])
-  const [filterPriority, setFilterPriority] = useState<'all' | 'high' | 'medium' | 'low'>('all')
-  const [filterCategory, setFilterCategory] = useState<'all' | 'pacing' | 'dialogue' | 'visual' | 'character' | 'clarity' | 'emotion'>('all')
   const { execute } = useProcessWithOverlay()
   // Batch pass selector
   const [batchPriority, setBatchPriority] = useState<'high' | 'medium' | 'low'>('high')
@@ -134,15 +108,12 @@ export function ScriptEditorModal({
   // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
-      setTab('instructions')
       setCustomInstruction('')
       setIsOptimizing(false)
       setOptimizedScript(null)
       setChangesSummary([])
       setShowComparison(false)
       setSelectedOptimizations([])
-      setRecommendations([])
-      setSelectedRecommendations([])
       setSelectedScenes([])
     }
   }, [isOpen])
@@ -157,14 +128,6 @@ export function ScriptEditorModal({
       setCustomInstruction(selectedTexts.join('\n\n'))
     }
   }, [selectedOptimizations])
-
-  // Auto-load review insights when user opens Review Insights tab
-  useEffect(() => {
-    if (tab === 'flow' && (recommendations?.length || 0) === 0) {
-      handleLoadReviewInsights()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab])
 
   // Track the base instruction text (before voice input started)
   const baseInstructionRef = useRef<string>('')
@@ -202,62 +165,6 @@ export function ScriptEditorModal({
     startMic()
   }
 
-  // Helper to safely extract text from recommendation items (string or object)
-  const getRecText = (rec: any): string => {
-    if (typeof rec === 'string') return rec
-    if (rec && typeof rec === 'object') {
-      if (typeof rec.text === 'string') return rec.text
-      if (typeof rec.reason === 'string') return rec.reason
-      if (typeof rec.message === 'string') return rec.message
-    }
-    return String(rec ?? '')
-  }
-
-  // Transform review recommendations into selectable format
-  const transformReviewRecommendations = () => {
-    const recommendations: any[] = []
-    
-    // Add Director recommendations (deprecated but kept for compatibility)
-    if (directorReview?.recommendations) {
-      directorReview.recommendations.forEach((rec: any, idx: number) => {
-        const text = getRecText(rec)
-        recommendations.push({
-          id: `director-${idx}`,
-          title: text.length > 60 ? text.substring(0, 60) + '...' : text,
-          fullText: text,
-          priority: (typeof rec === 'object' && rec.priority) || 'high',
-          category: 'director' as const,
-          source: 'Director Review'
-        })
-      })
-    }
-    
-    // Add Audience recommendations
-    if (audienceReview?.recommendations) {
-      audienceReview.recommendations.forEach((rec: any, idx: number) => {
-        const text = getRecText(rec)
-        recommendations.push({
-          id: `audience-${idx}`,
-          title: text.length > 60 ? text.substring(0, 60) + '...' : text,
-          fullText: text,
-          priority: (typeof rec === 'object' && rec.priority) || 'medium',
-          category: 'audience' as const,
-          source: 'Audience Review'
-        })
-      })
-    }
-    
-    return recommendations
-  }
-
-  const handleLoadReviewInsights = () => {
-    const reviewRecs = transformReviewRecommendations()
-    setRecommendations(reviewRecs)
-    if (reviewRecs.length > 0) {
-      toast.success(`Loaded ${reviewRecs.length} recommendations from reviews`)
-    }
-  }
-
   const handleGeneratePreview = async () => {
     let instruction = customInstruction.trim()
     
@@ -276,9 +183,7 @@ export function ScriptEditorModal({
             projectId, 
             script, 
             instruction, 
-            characters,
-            directorReview: directorReview || null,
-            audienceReview: audienceReview || null
+            characters
           })
         })
         if (!response.ok) {
@@ -295,9 +200,7 @@ export function ScriptEditorModal({
                 script, 
                 instruction, 
                 characters, 
-                compact: true,
-                directorReview: directorReview || null,
-                audienceReview: audienceReview || null
+                compact: true
               })
             })
           }
@@ -346,32 +249,6 @@ export function ScriptEditorModal({
     } finally {
       setIsOptimizing(false)
     }
-  }
-
-  const handleGeneratePreviewFromRecommendations = async () => {
-    if (selectedRecommendations.length === 0) {
-      toast.error('Please select at least one recommendation')
-      return
-    }
-    
-    // Build instruction from selected recommendations
-    const instruction = recommendations
-      .filter(r => selectedRecommendations.includes(r.id))
-      .map((r: any) => {
-        const title = (r.title || '').trim()
-        const actions = Array.isArray(r.actions) ? r.actions.filter(Boolean).slice(0, 2) : []
-        const oneLiner = (r.rationaleOneLiner || r.problem || '').toString().trim()
-        const parts: string[] = []
-        if (title) parts.push(title)
-        if (oneLiner) parts.push(oneLiner)
-        if (actions.length) parts.push('Actions: ' + actions.join(' | '))
-        return parts.join(' — ')
-      })
-      .filter((s: string) => s && s.toLowerCase() !== 'undefined')
-      .join('\n\n')
-    
-    setCustomInstruction(instruction)
-    await handleGeneratePreview()
   }
 
   const handleBatchOptimize = async () => {
@@ -487,21 +364,9 @@ export function ScriptEditorModal({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="instructions" className="flex items-center">
-              <Edit className="w-4 h-4 mr-2" />
-              Your Direction
-            </TabsTrigger>
-            <TabsTrigger value="flow" className="flex items-center">
-              <Star className="w-4 h-4 mr-2" />
-              Review Insights
-            </TabsTrigger>
-          </TabsList>
-
+        <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto p-6">
-            {tab === 'instructions' && (
-              <div className="space-y-6">
+            <div className="space-y-6">
                 {showComparison && optimizedScript ? (
                   <div className="space-y-6">
                     {/* Summary */}
@@ -781,168 +646,7 @@ Examples:
                     </div>
                   </>
                 )}
-              </div>
-            )}
-
-            {tab === 'flow' && (
-              <div className="space-y-4">
-                <div className="p-4 rounded-lg bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20">
-                  <div className="flex items-start gap-3">
-                    <Star className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <h3 className="text-sm font-semibold text-white mb-1">Review-Powered Insights</h3>
-                      <p className="text-xs text-gray-300 leading-relaxed">
-                        High-quality recommendations from Director and Audience script reviews analyzed by Gemini 3 Pro.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Empty State: No reviews generated yet */}
-                {!directorReview && !audienceReview && (
-                  <div className="p-8 text-center border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
-                    <Star className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      No Reviews Available
-                    </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                      Generate Director and Audience reviews first to see AI-powered optimization recommendations here.
-                    </p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={onClose}
-                      className="mx-auto"
-                    >
-                      Close and Generate Reviews
-                    </Button>
-                  </div>
-                )}
-                
-                {/* Recommendations Controls + List */}
-                {recommendations.length > 0 && (
-                  <div className="space-y-3">
-                    {/* Explainer */}
-                    <div className="text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded p-3">
-                      These recommendations come from your Director and Audience script reviews. Director insights focus on craft and execution (High priority), while Audience feedback addresses viewer experience (Medium priority). Select the ones you want to apply, then Generate Preview.
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        {recommendations.length} Recommendation{recommendations.length !== 1 ? 's' : ''}
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-xs"
-                          onClick={() => {
-                            if (selectedRecommendations.length === recommendations.length) {
-                              setSelectedRecommendations([])
-                            } else {
-                              setSelectedRecommendations(recommendations.map((r: any) => r.id))
-                            }
-                          }}
-                        >
-                          {selectedRecommendations.length === recommendations.length ? 'Clear All' : 'Select All'}
-                        </Button>
-                        <select
-                          className="text-xs bg-transparent border rounded px-2 py-1"
-                          value={filterCategory}
-                          onChange={(e) => setFilterCategory(e.target.value as any)}
-                        >
-                          <option value="all">All Sources</option>
-                          <option value="director">Director Only</option>
-                          <option value="audience">Audience Only</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      {recommendations
-                        .filter((r: any) => filterCategory === 'all' || (r.category || '').toLowerCase() === filterCategory)
-                        .map((rec: any) => (
-                          <div
-                            key={rec.id}
-                            onClick={() => {
-                              if (selectedRecommendations.includes(rec.id)) {
-                                setSelectedRecommendations(prev => prev.filter(id => id !== rec.id))
-                              } else {
-                                setSelectedRecommendations(prev => [...prev, rec.id])
-                              }
-                            }}
-                            className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                              selectedRecommendations.includes(rec.id)
-                                ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-                                : 'border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-700'
-                            }`}
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
-                                selectedRecommendations.includes(rec.id)
-                                  ? 'border-amber-500 bg-amber-500'
-                                  : 'border-gray-300 dark:border-gray-600'
-                              }`}>
-                                {selectedRecommendations.includes(rec.id) && (
-                                  <Check className="w-3 h-3 text-white" />
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Badge
-                                    variant={rec.category === 'director' ? 'default' : 'secondary'}
-                                    className={`text-[10px] px-2 py-0.5 ${
-                                      rec.category === 'director'
-                                        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
-                                        : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                                    }`}
-                                  >
-                                    {rec.source}
-                                  </Badge>
-                                  <Badge
-                                    variant="outline"
-                                    className={`text-[10px] px-2 py-0.5 ${
-                                      rec.priority === 'high'
-                                        ? 'border-red-500 text-red-600 dark:text-red-400'
-                                        : 'border-yellow-500 text-yellow-600 dark:text-yellow-400'
-                                    }`}
-                                  >
-                                    {rec.priority === 'high' ? 'High Priority' : 'Medium Priority'}
-                                  </Badge>
-                                </div>
-                                <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed">
-                                  {rec.fullText}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {selectedRecommendations.length > 0 && (
-                  <div className="flex gap-3 justify-end pt-2">
-                    <Button
-                      onClick={handleGeneratePreviewFromRecommendations}
-                      disabled={isOptimizing}
-                      className="bg-purple-600 hover:bg-purple-500 text-white px-6"
-                    >
-                      {isOptimizing ? (
-                        <>
-                          <Loader className="w-4 h-4 mr-2 animate-spin" />
-                          Generating Preview...
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="w-4 h-4 mr-2" />
-                          Generate Preview
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
+            </div>
           </div>
 
           <DialogFooter>
@@ -960,7 +664,7 @@ Examples:
               </Button>
             )}
           </DialogFooter>
-        </Tabs>
+        </div>
       </DialogContent>
     </Dialog>
   )
