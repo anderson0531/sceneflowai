@@ -26,6 +26,7 @@ interface SceneAnalysis {
   characterDevelopment: 'minimal' | 'moderate' | 'strong'
   visualPotential: 'low' | 'medium' | 'high'
   notes: string
+  recommendations?: string[]  // 2-4 targeted fixes for this specific scene
 }
 
 interface AudienceResonanceReview {
@@ -305,7 +306,7 @@ MATH CHECK: Your overallScore MUST equal 100 minus the sum of all deduction poin
 ## SCENE ANALYSIS
 
 ${sceneCount <= 30
-  ? `Provide brief analysis for EVERY scene (1 through ${sceneCount}). This data drives targeted optimization, so completeness matters.`
+  ? `Provide brief analysis for EVERY scene (1 through ${sceneCount}). This data drives targeted per-scene optimization, so completeness matters.`
   : `For scenes 1, 15, 30, 45, 60, 75, 90 (or similar key moments spaced ~15 scenes apart), provide brief analysis:`
 }
 - Score (1-100)
@@ -314,6 +315,7 @@ ${sceneCount <= 30
 - Character Development: minimal/moderate/strong
 - Visual Potential: low/medium/high
 - Notes: One sentence identifying what works OR the single most impactful fix for this scene
+- Recommendations: 2-4 specific, actionable fixes for scenes scoring below 80. Each recommendation should be a concrete instruction that can be applied independently (e.g., "Add subtext to Alexander's dialogue — he agrees too quickly without internal conflict", "Replace the narration explaining Lena's feelings with a visual reaction shot"). For scenes scoring 80+, provide 1-2 polish suggestions. These recommendations will be sent directly to a scene revision AI, so make them precise and self-contained.
 
 ## OUTPUT FORMAT
 
@@ -342,7 +344,7 @@ Return ONLY valid JSON:
     ...
   ],
   "sceneAnalysis": [
-    {"sceneNumber": 1, "sceneHeading": "<heading>", "score": <1-100>, "pacing": "slow|moderate|fast", "tension": "low|medium|high", "characterDevelopment": "minimal|moderate|strong", "visualPotential": "low|medium|high", "notes": "<one sentence>"},
+    {"sceneNumber": 1, "sceneHeading": "<heading>", "score": <1-100>, "pacing": "slow|moderate|fast", "tension": "low|medium|high", "characterDevelopment": "minimal|moderate|strong", "visualPotential": "low|medium|high", "notes": "<one sentence>", "recommendations": ["<specific fix 1>", "<specific fix 2>"]},
     ...
   ],
   "targetDemographic": "<primary audience>",
@@ -357,8 +359,8 @@ FINAL CHECK before outputting:
 3. Balance criticism with recognition of strengths`
 
   console.log('[Audience Resonance] Calling Vertex AI Gemini with deduction-based prompt...')
-  // Token budget: 12k base + 200 per scene for full scene analysis (≤30 scenes)
-  const reviewTokenBudget = Math.min(20000, 12000 + (sceneCount <= 30 ? sceneCount * 200 : 0))
+  // Token budget: 12k base + 300 per scene for full scene analysis with recommendations (≤30 scenes)
+  const reviewTokenBudget = Math.min(22000, 12000 + (sceneCount <= 30 ? sceneCount * 300 : 0))
   const result = await generateText(prompt, {
     model: 'gemini-2.5-flash',
     temperature: 0, // Deterministic scoring — same script should yield same scores

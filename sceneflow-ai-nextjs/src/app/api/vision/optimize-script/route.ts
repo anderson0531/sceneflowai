@@ -25,6 +25,7 @@ interface SceneAnalysis {
   characterDevelopment: 'minimal' | 'moderate' | 'strong'
   visualPotential: 'low' | 'medium' | 'high'
   notes: string
+  recommendations?: string[]
 }
 
 interface Review {

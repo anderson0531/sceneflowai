@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Settings2, Check, Square, CheckSquare, BarChart3, MessageSquare, ListChecks, Film } from 'lucide-react'
+import { X, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Settings2, Check, Square, CheckSquare, BarChart3, MessageSquare, ListChecks, Film, Sparkles, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -39,6 +39,7 @@ interface SceneAnalysis {
   characterDevelopment: 'minimal' | 'moderate' | 'strong'
   visualPotential: 'low' | 'medium' | 'high'
   notes: string
+  recommendations?: string[]  // Per-scene targeted fixes
 }
 
 interface AudienceResonanceReview {
@@ -331,6 +332,11 @@ export default function ScriptReviewModal({
   const [selectedRecommendationIndices, setSelectedRecommendationIndices] = useState<Set<number>>(new Set())
   const [isRevising, setIsRevising] = useState(false)
   const { execute } = useProcessWithOverlay()
+
+  // Per-scene fix state
+  const [fixingScenes, setFixingScenes] = useState<Set<number>>(new Set()) // scene numbers currently being fixed
+  const [fixedScenes, setFixedScenes] = useState<Set<number>>(new Set())   // scene numbers successfully fixed
+  const [expandedScenes, setExpandedScenes] = useState<Set<number>>(new Set()) // scene numbers with expanded recommendations
 
   // Character context for Review Expert voice recommendations
   // Voices that match: authoritative, mature, professional narrators
@@ -703,6 +709,97 @@ export default function ScriptReviewModal({
     }
   }
 
+  // Per-scene fix handler — calls revise-scene API with scene-specific recommendations
+  const handleFixScene = async (sceneAnalysisItem: SceneAnalysis) => {
+    if (!projectId || !script || !onScriptOptimized) {
+      toast.error('Missing project context for scene fix')
+      return
+    }
+
+    const sceneIndex = sceneAnalysisItem.sceneNumber - 1 // Convert 1-indexed to 0-indexed
+    const currentScene = script.scenes?.[sceneIndex]
+    if (!currentScene) {
+      toast.error(`Scene ${sceneAnalysisItem.sceneNumber} not found in script`)
+      return
+    }
+
+    const recommendations = sceneAnalysisItem.recommendations || []
+    if (recommendations.length === 0) {
+      toast.error('No recommendations available for this scene')
+      return
+    }
+
+    // Mark scene as fixing
+    setFixingScenes(prev => new Set(prev).add(sceneAnalysisItem.sceneNumber))
+
+    try {
+      const previousScene = sceneIndex > 0 ? script.scenes[sceneIndex - 1] : undefined
+      const nextScene = sceneIndex < script.scenes.length - 1 ? script.scenes[sceneIndex + 1] : undefined
+
+      const response = await fetch('/api/vision/revise-scene', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex,
+          currentScene,
+          revisionMode: 'recommendations',
+          selectedRecommendations: recommendations,
+          context: {
+            characters: characters || [],
+            previousScene,
+            nextScene
+          }
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to revise scene')
+      }
+
+      const data = await response.json()
+
+      if (data.revisedScene) {
+        // Update the script in place — replace the scene at sceneIndex
+        const updatedScenes = [...script.scenes]
+        updatedScenes[sceneIndex] = data.revisedScene
+        const updatedScript = { ...script, scenes: updatedScenes }
+
+        // Notify parent of the updated script
+        onScriptOptimized(updatedScript)
+
+        // Mark scene as fixed
+        setFixedScenes(prev => new Set(prev).add(sceneAnalysisItem.sceneNumber))
+        toast.success(`Scene ${sceneAnalysisItem.sceneNumber} revised successfully`)
+      } else {
+        throw new Error('No revised scene returned')
+      }
+    } catch (err: any) {
+      console.error(`[Scene Fix] Error fixing scene ${sceneAnalysisItem.sceneNumber}:`, err)
+      toast.error(err.message || `Failed to fix scene ${sceneAnalysisItem.sceneNumber}`)
+    } finally {
+      setFixingScenes(prev => {
+        const next = new Set(prev)
+        next.delete(sceneAnalysisItem.sceneNumber)
+        return next
+      })
+    }
+  }
+
+  // Toggle expanded state for scene recommendations
+  const toggleSceneExpanded = (sceneNumber: number) => {
+    setExpandedScenes(prev => {
+      const next = new Set(prev)
+      if (next.has(sceneNumber)) {
+        next.delete(sceneNumber)
+      } else {
+        next.add(sceneNumber)
+      }
+      return next
+    })
+  }
+
   if (!isOpen) return null
 
   const getScoreColor = (score: number): string => {
@@ -868,11 +965,17 @@ export default function ScriptReviewModal({
                   <TabsTrigger value="scenes" className="flex items-center gap-1.5 text-xs sm:text-sm">
                     <Film className="w-3.5 h-3.5" />
                     Scenes
-                    {sceneAnalysis.length > 0 && (
-                      <Badge variant="secondary" className="ml-1 text-xs h-5 px-1.5">
-                        {sceneAnalysis.length}
-                      </Badge>
-                    )}
+                    {sceneAnalysis.length > 0 && (() => {
+                      const needsFix = sceneAnalysis.filter(s => s.score < 80).length
+                      return (
+                        <Badge 
+                          variant="secondary" 
+                          className={`ml-1 text-xs h-5 px-1.5 ${needsFix > 0 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}`}
+                        >
+                          {needsFix > 0 ? `${needsFix} to fix` : `${sceneAnalysis.length} ✓`}
+                        </Badge>
+                      )
+                    })()}
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -1234,51 +1337,212 @@ export default function ScriptReviewModal({
                 {activeTab === 'scenes' && (
                   <div className="space-y-6">
                     {sceneAnalysis.length > 0 ? (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-lg">🎬 Scene-by-Scene Analysis</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="max-h-[500px] overflow-y-auto space-y-4 pr-2">
-                            {sceneAnalysis.map((scene, index) => (
-                              <div 
-                                key={index} 
-                                className={`p-4 rounded-lg border ${
-                                  scene.score >= 80 ? 'border-green-200 bg-green-50 dark:bg-green-900/10 dark:border-green-800' :
-                                  scene.score >= 60 ? 'border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10 dark:border-yellow-800' :
-                              'border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-800'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="font-medium">
-                                Scene {scene.sceneNumber}: {scene.sceneHeading}
+                      <>
+                        {/* Summary bar */}
+                        {(() => {
+                          const belowThreshold = sceneAnalysis.filter(s => s.score < 80).length
+                          const alreadyFixed = fixedScenes.size
+                          const currentlyFixing = fixingScenes.size
+                          return (
+                            <div className="flex items-center justify-between px-1">
+                              <div className="text-sm text-gray-500 dark:text-gray-400">
+                                {belowThreshold > 0 ? (
+                                  <span>{belowThreshold} scene{belowThreshold !== 1 ? 's' : ''} below 80 — fix individually below</span>
+                                ) : (
+                                  <span className="text-green-600 dark:text-green-400">All scenes scoring 80+</span>
+                                )}
+                                {alreadyFixed > 0 && (
+                                  <span className="ml-2 text-green-600 dark:text-green-400">
+                                    · {alreadyFixed} fixed
+                                  </span>
+                                )}
+                                {currentlyFixing > 0 && (
+                                  <span className="ml-2 text-purple-600 dark:text-purple-400">
+                                    · {currentlyFixing} in progress
+                                  </span>
+                                )}
                               </div>
-                              <div className={`text-lg font-bold ${getScoreColor(scene.score)}`}>
-                                {scene.score}
+                              {fixedScenes.size > 0 && (
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() => {
+                                    setFixedScenes(new Set())
+                                    setExpandedScenes(new Set())
+                                    onRegenerate()
+                                  }}
+                                  disabled={isGenerating || fixingScenes.size > 0}
+                                  className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white"
+                                >
+                                  {isGenerating ? (
+                                    <>
+                                      <Loader className="w-3.5 h-3.5 animate-spin" />
+                                      Re-analyzing...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <RefreshCw className="w-3.5 h-3.5" />
+                                      Re-analyze Script
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                            </div>
+                          )
+                        })()}
+
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-lg">🎬 Scene-by-Scene Analysis</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="max-h-[500px] overflow-y-auto space-y-4 pr-2">
+                              {sceneAnalysis.map((scene, index) => {
+                                const isFixing = fixingScenes.has(scene.sceneNumber)
+                                const isFixed = fixedScenes.has(scene.sceneNumber)
+                                const isExpanded = expandedScenes.has(scene.sceneNumber)
+                                const hasRecs = (scene.recommendations?.length || 0) > 0
+                                const canFix = !!projectId && !!script && !!onScriptOptimized && hasRecs && !isFixed && !isFixing
+
+                                return (
+                                  <div 
+                                    key={index} 
+                                    className={`p-4 rounded-lg border transition-colors ${
+                                      isFixed ? 'border-green-300 bg-green-50/70 dark:bg-green-900/20 dark:border-green-700' :
+                                      isFixing ? 'border-purple-300 bg-purple-50/50 dark:bg-purple-900/15 dark:border-purple-700' :
+                                      scene.score >= 80 ? 'border-green-200 bg-green-50 dark:bg-green-900/10 dark:border-green-800' :
+                                      scene.score >= 60 ? 'border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10 dark:border-yellow-800' :
+                                      'border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-800'
+                                    }`}
+                                  >
+                                    {/* Header row: heading + score + fix button */}
+                                    <div className="flex items-center justify-between mb-2 gap-3">
+                                      <div className="font-medium flex-1 min-w-0">
+                                        <span className="truncate block">Scene {scene.sceneNumber}: {scene.sceneHeading}</span>
+                                      </div>
+                                      <div className="flex items-center gap-2 flex-shrink-0">
+                                        <div className={`text-lg font-bold ${getScoreColor(scene.score)}`}>
+                                          {scene.score}
+                                        </div>
+                                        {isFixed ? (
+                                          <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-xs font-medium px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30">
+                                            <CheckCircle2 className="w-3.5 h-3.5" />
+                                            Fixed
+                                          </div>
+                                        ) : isFixing ? (
+                                          <div className="flex items-center gap-1 text-purple-600 dark:text-purple-400 text-xs font-medium px-2 py-1 rounded-md bg-purple-100 dark:bg-purple-900/30">
+                                            <Loader className="w-3.5 h-3.5 animate-spin" />
+                                            Fixing...
+                                          </div>
+                                        ) : canFix ? (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleFixScene(scene)}
+                                            className="text-xs h-7 px-2.5 border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-600 dark:text-purple-300 dark:hover:bg-purple-900/20"
+                                          >
+                                            <Sparkles className="w-3 h-3 mr-1" />
+                                            Fix Scene
+                                          </Button>
+                                        ) : scene.score >= 80 ? (
+                                          <div className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                                            <CheckCircle2 className="w-3.5 h-3.5" />
+                                          </div>
+                                        ) : null}
+                                      </div>
+                                    </div>
+
+                                    {/* Badge row */}
+                                    <div className="flex gap-2 mb-2 flex-wrap">
+                                      <Badge variant="outline" className="text-xs">
+                                        Pacing: {scene.pacing}
+                                      </Badge>
+                                      <Badge variant="outline" className="text-xs">
+                                        Tension: {scene.tension}
+                                      </Badge>
+                                      <Badge variant="outline" className="text-xs">
+                                        Character: {scene.characterDevelopment}
+                                      </Badge>
+                                      <Badge variant="outline" className="text-xs">
+                                        Visual: {scene.visualPotential}
+                                      </Badge>
+                                    </div>
+
+                                    {/* Notes */}
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                      {scene.notes}
+                                    </p>
+
+                                    {/* Expandable per-scene recommendations */}
+                                    {hasRecs && !isFixed && (
+                                      <div className="mt-2">
+                                        <button
+                                          onClick={() => toggleSceneExpanded(scene.sceneNumber)}
+                                          className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+                                        >
+                                          {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                          {scene.recommendations!.length} recommendation{scene.recommendations!.length !== 1 ? 's' : ''}
+                                        </button>
+                                        {isExpanded && (
+                                          <ul className="mt-2 space-y-1.5 pl-1">
+                                            {scene.recommendations!.map((rec, rIdx) => (
+                                              <li key={rIdx} className="text-xs text-gray-600 dark:text-gray-400 flex gap-2">
+                                                <span className="text-purple-400 mt-0.5">•</span>
+                                                <span>{rec}</span>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Re-analyze CTA at bottom when scenes have been fixed */}
+                        {fixedScenes.size > 0 && (
+                          <Card className="border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-900/10">
+                            <CardContent className="py-4">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    {fixedScenes.size} scene{fixedScenes.size !== 1 ? 's' : ''} revised
+                                  </p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                    Re-analyze to see updated scores and find remaining improvements
+                                  </p>
+                                </div>
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() => {
+                                    setFixedScenes(new Set())
+                                    setExpandedScenes(new Set())
+                                    onRegenerate()
+                                  }}
+                                  disabled={isGenerating || fixingScenes.size > 0}
+                                  className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white"
+                                >
+                                  {isGenerating ? (
+                                    <>
+                                      <Loader className="w-3.5 h-3.5 animate-spin" />
+                                      Re-analyzing...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <RefreshCw className="w-3.5 h-3.5" />
+                                      Re-analyze Script
+                                    </>
+                                  )}
+                                </Button>
                               </div>
-                            </div>
-                            <div className="flex gap-2 mb-2 flex-wrap">
-                              <Badge variant="outline" className="text-xs">
-                                Pacing: {scene.pacing}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                Tension: {scene.tension}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                Character: {scene.characterDevelopment}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                Visual: {scene.visualPotential}
-                              </Badge>
-                            </div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              {scene.notes}
-                            </p>
-                          </div>
-                            ))}
-                          </div>
-                        </CardContent>
-                      </Card>
+                            </CardContent>
+                          </Card>
+                        )}
+                      </>
                     ) : (
                       <div className="text-center py-12 text-gray-500 dark:text-gray-400">
                         <Film className="w-12 h-12 mx-auto mb-3 opacity-50" />
