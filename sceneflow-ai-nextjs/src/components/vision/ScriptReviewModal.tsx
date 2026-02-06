@@ -707,12 +707,13 @@ export default function ScriptReviewModal({
   }
 
   const getScoreLabel = (score: number): string => {
-    if (score >= 90) return 'Masterwork'
-    if (score >= 80) return 'Professional Quality'
-    if (score >= 70) return 'Solid Draft'
-    if (score >= 60) return 'Working Draft'
-    if (score >= 50) return 'Early Draft'
-    return 'Concept Stage'
+    if (score >= 90) return 'Exceptional — Ready for Production'
+    if (score >= 80) return 'Strong — Ready for Production'
+    if (score >= 75) return 'Solid — Ready for Scene Editing'
+    if (score >= 70) return 'Good — Review Recommendations'
+    if (score >= 60) return 'Developing — Apply Recommendations'
+    if (score >= 50) return 'Early Draft — Revisions Needed'
+    return 'Concept Stage — Major Revisions Needed'
   }
 
   // Cast to AudienceResonanceReview for new features
@@ -758,7 +759,7 @@ export default function ScriptReviewModal({
                 ) : (
                   <RefreshCw className="w-4 h-4" />
                 )}
-                Regenerate
+                Re-analyze
               </Button>
               <Button
                 variant="ghost"
@@ -806,7 +807,7 @@ export default function ScriptReviewModal({
             <div className="text-center py-12 text-gray-500 dark:text-gray-400 flex-1 flex flex-col items-center justify-center">
               <Target className="w-16 h-16 mx-auto mb-4 opacity-50" />
               <p className="text-lg">No audience resonance analysis available</p>
-              <p className="text-sm mt-2">Click "Regenerate" to generate a new analysis</p>
+              <p className="text-sm mt-2">Click "Re-analyze" to generate a new analysis</p>
             </div>
           ) : (
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ReviewTab)} className="flex-1 flex flex-col overflow-hidden min-h-0">

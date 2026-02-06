@@ -206,13 +206,21 @@ export function getScoreCardClasses(score: number): {
   label: string
   qualityLabel: string
 } {
-  if (score >= 75) {
+  if (score >= 80) {
     return {
       gradient: 'bg-gradient-to-br from-green-500/10 to-green-600/5 dark:from-green-500/20 dark:to-green-600/10',
       border: 'border-green-200/50 dark:border-green-500/20',
       text: 'text-green-600 dark:text-green-400',
       label: 'text-green-500/70 dark:text-green-400/60',
-      qualityLabel: 'Strong'
+      qualityLabel: 'Ready for Production'
+    }
+  } else if (score >= 75) {
+    return {
+      gradient: 'bg-gradient-to-br from-green-500/10 to-green-600/5 dark:from-green-500/20 dark:to-green-600/10',
+      border: 'border-green-200/50 dark:border-green-500/20',
+      text: 'text-green-600 dark:text-green-400',
+      label: 'text-green-500/70 dark:text-green-400/60',
+      qualityLabel: 'Ready for Scenes'
     }
   } else if (score >= 60) {
     return {
@@ -220,8 +228,7 @@ export function getScoreCardClasses(score: number): {
       border: 'border-yellow-200/50 dark:border-yellow-500/20',
       text: 'text-yellow-600 dark:text-yellow-400',
       label: 'text-yellow-500/70 dark:text-yellow-400/60',
-      qualityLabel: 'Needs Work',
-      qualityLabel: 'Needs Work'
+      qualityLabel: 'Review Recommendations'
     }
   } else {
     return {
@@ -229,7 +236,7 @@ export function getScoreCardClasses(score: number): {
       border: 'border-red-200/50 dark:border-red-500/20',
       text: 'text-red-600 dark:text-red-400',
       label: 'text-red-500/70 dark:text-red-400/60',
-      qualityLabel: 'Needs Significant Work'
+      qualityLabel: 'Revisions Needed'
     }
   }
 }
@@ -421,7 +428,7 @@ export function ReviewScoresPanel({
                   className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 >
                   <FileText className="w-5 h-5" />
-                  <span>View</span>
+                  <span>Report</span>
                 </button>
               </div>
             </>

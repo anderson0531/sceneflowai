@@ -4261,7 +4261,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       jumpToBookmark: handleJumpToBookmark,
       generateReviews: handleGenerateReviews,
     }
-  }, [handleJumpToBookmark])
+  }, [handleJumpToBookmark, handleGenerateReviews])
   
   // Listen for custom events from header dropdowns (Guide and Actions)
   // These events are dispatched by ScriptPanel dropdown menus
