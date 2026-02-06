@@ -3,8 +3,29 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
+  // Force service worker update on new deployments
+  buildExcludes: [/middleware-manifest\.json$/],
   // Custom runtime caching to prevent stale audio files
   runtimeCaching: [
+    // CRITICAL: Root route must ALWAYS fetch from network to prevent wrong landing page
+    // This fixes issue where visiting /screening-room then refreshing shows screening-room as default
+    {
+      urlPattern: /^\/$/,
+      handler: 'NetworkOnly',
+    },
+    // Landing/marketing pages should not be cached to ensure fresh content
+    {
+      urlPattern: /^\/(screening-room|dashboard|share|s|c)(\/|$)/,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'app-pages',
+        networkTimeoutSeconds: 5,
+        expiration: {
+          maxEntries: 16,
+          maxAgeSeconds: 300, // 5 minutes max - short TTL for app pages
+        },
+      },
+    },
     // CRITICAL: Audio files use NetworkFirst to ensure fresh content after regeneration
     // GCS-hosted audio files should always fetch from network first
     {
@@ -172,7 +193,12 @@ const withPWA = require('next-pwa')({
       urlPattern: ({ url }) => {
         const isSameOrigin = self.origin === url.origin
         if (!isSameOrigin) return false
-        return !url.pathname.startsWith('/api/')
+        const pathname = url.pathname
+        // Exclude root path (handled by NetworkOnly rule) and API routes
+        if (pathname === '/' || pathname.startsWith('/api/')) return false
+        // Exclude app pages that have their own short-TTL rule
+        if (/^\/(screening-room|dashboard|share|s|c)(\/|$)/.test(pathname)) return false
+        return true
       },
       handler: 'NetworkFirst',
       options: {
@@ -203,6 +229,28 @@ const path = require('path')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Prevent caching of root page to ensure correct landing page on hard refresh
+  async headers() {
+    return [
+      {
+        source: '/',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          },
+          {
+            key: 'Expires',
+            value: '0',
+          },
+        ],
+      },
+    ]
+  },
   images: {
     domains: ['source.unsplash.com', 'localhost', 'storage.googleapis.com', 'storage.cloud.google.com'],
     remotePatterns: [
