@@ -123,14 +123,15 @@ export async function POST(req: NextRequest) {
     const showVsTellMetrics = calculateShowVsTellRatio(script.scenes || [])
     console.log('[Script Review] Show vs Tell metrics:', showVsTellMetrics)
     
-    // Generate deterministic seed from script content for reproducible scoring
-    const seedContent = JSON.stringify({ title: script.title, logline: script.logline, sceneCount: script.scenes?.length })
+    // Generate deterministic seed from scriptHash (covers scene content) for reproducible scoring
+    const seedContent = scriptHash || JSON.stringify({ title: script.title, logline: script.logline, sceneCount: script.scenes?.length })
     let contentSeed = 0
     for (let i = 0; i < seedContent.length; i++) {
       contentSeed = ((contentSeed << 5) - contentSeed) + seedContent.charCodeAt(i)
       contentSeed = contentSeed & contentSeed
     }
     contentSeed = Math.abs(contentSeed)
+    console.log('[Script Review] Content seed:', contentSeed, '| from scriptHash:', !!scriptHash, '| scriptUnchanged:', scriptUnchanged)
 
     // Generate Audience Resonance review (replaces both director and audience)
     const audienceResonance = await generateAudienceResonance(script, showVsTellMetrics, contentSeed, previousScores, scriptUnchanged)
