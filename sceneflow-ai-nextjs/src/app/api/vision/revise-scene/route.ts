@@ -293,13 +293,25 @@ Focus on making the scene more engaging, clear, and emotionally impactful while 
     return finalScene
 } catch (parseError) {
   console.error('[Scene Revision] JSON parse error:', parseError)
-  console.error('[Scene Revision] Failed to parse text:', jsonText)
+  console.error('[Scene Revision] Failed to parse text:', jsonText.substring(0, 500))
   
-  // Return current scene with a warning instead of failing completely
-  console.warn('[Scene Revision] Returning original scene due to parse error')
-  return {
-    ...currentScene,
-    _revisionError: 'Scene revision failed - returned original scene'
+  // Retry with a simpler extraction — find the outermost JSON object
+  console.log('[Scene Revision] Retrying with simplified extraction...')
+  try {
+    const jsonObjectMatch = jsonText.match(/\{[\s\S]*\}/)
+    if (jsonObjectMatch) {
+      const retryParsed = JSON.parse(jsonObjectMatch[0])
+      if (retryParsed.heading || retryParsed.dialogue || retryParsed.action) {
+        console.log('[Scene Revision] Retry parse succeeded')
+        const finalScene = { ...currentScene, ...retryParsed }
+        return finalScene
+      }
+    }
+  } catch (retryError) {
+    console.error('[Scene Revision] Retry parse also failed:', retryError)
   }
+  
+  // If all parsing fails, throw so the client sees the error
+  throw new Error('Failed to parse revised scene from AI response. The scene may be too complex for a single revision. Try again or edit the scene manually.')
 }
 }

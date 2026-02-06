@@ -575,6 +575,13 @@ export default function ScriptReviewModal({
     )
   }
 
+  // Reset per-scene fix state when review changes (new analysis) or modal opens/closes
+  useEffect(() => {
+    setFixedScenes(new Set())
+    setFixingScenes(new Set())
+    setExpandedScenes(new Set())
+  }, [audienceReview, isOpen])
+
   // Initialize all recommendations as selected when review loads
   useEffect(() => {
     if (audienceReview && 'recommendations' in audienceReview && audienceReview.recommendations.length > 0) {
@@ -761,6 +768,19 @@ export default function ScriptReviewModal({
       const data = await response.json()
 
       if (data.revisedScene) {
+        // Check for legacy silent failure flag
+        if (data.revisedScene._revisionError) {
+          throw new Error('Scene revision failed — AI response could not be parsed. Try again.')
+        }
+
+        // Verify the scene actually changed (compare key fields for debug logging)
+        const dialogueChanged = JSON.stringify(currentScene.dialogue || []) !== JSON.stringify(data.revisedScene.dialogue || [])
+        const actionChanged = (currentScene.action || '') !== (data.revisedScene.action || '')
+        const narrationChanged = (currentScene.narration || '') !== (data.revisedScene.narration || '')
+        const changed = dialogueChanged || actionChanged || narrationChanged
+        
+        console.log(`[Scene Fix] Scene ${sceneAnalysisItem.sceneNumber}: dialogue=${dialogueChanged}, action=${actionChanged}, narration=${narrationChanged}`)
+
         // Update the script in place — replace the scene at sceneIndex
         const updatedScenes = [...script.scenes]
         updatedScenes[sceneIndex] = data.revisedScene
@@ -771,7 +791,11 @@ export default function ScriptReviewModal({
 
         // Mark scene as fixed
         setFixedScenes(prev => new Set(prev).add(sceneAnalysisItem.sceneNumber))
-        toast.success(`Scene ${sceneAnalysisItem.sceneNumber} revised successfully`)
+        toast.success(
+          changed
+            ? `Scene ${sceneAnalysisItem.sceneNumber} revised successfully`
+            : `Scene ${sceneAnalysisItem.sceneNumber} processed — changes were minimal`
+        )
       } else {
         throw new Error('No revised scene returned')
       }
