@@ -3,6 +3,7 @@
 import React from 'react'
 import { ChevronUp, ChevronDown, BarChart3, FileText, Sparkles, Target, Users, Heart } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 export interface ReviewScores {
   director: number | null // Deprecated - user is the director
@@ -330,26 +331,74 @@ export function ReviewScoresPanel({
                 </div>
               )}
 
-              {/* Target Demographic */}
-              {reviewDetails?.targetDemographic && (
-                <div className="flex items-start gap-2 text-xs">
-                  <Users className="w-3.5 h-3.5 text-blue-500 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <span className="font-medium text-gray-600 dark:text-gray-300">Target: </span>
-                    <span className="text-gray-500 dark:text-gray-400">{reviewDetails.targetDemographic}</span>
-                  </div>
-                </div>
-              )}
+              {/* Quick Insights - Icon buttons with tooltips */}
+              {(reviewDetails?.targetDemographic || reviewDetails?.emotionalImpact) && (
+                <TooltipProvider delayDuration={200}>
+                  <div className="flex items-center gap-2 pt-1">
+                    {/* Target Demographic Tooltip */}
+                    {reviewDetails?.targetDemographic && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 dark:bg-blue-500/20 dark:hover:bg-blue-500/30 border border-blue-200/50 dark:border-blue-500/30 transition-colors group"
+                            aria-label="View target audience"
+                          >
+                            <Users className="w-4 h-4 text-blue-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent 
+                          side="top" 
+                          align="start"
+                          className="max-w-[280px] p-3"
+                        >
+                          <div className="space-y-1">
+                            <p className="font-semibold text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
+                              <Users className="w-3 h-3" />
+                              Target Audience
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                              {reviewDetails.targetDemographic}
+                            </p>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
 
-              {/* Emotional Impact */}
-              {reviewDetails?.emotionalImpact && (
-                <div className="flex items-start gap-2 text-xs">
-                  <Heart className="w-3.5 h-3.5 text-rose-500 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <span className="font-medium text-gray-600 dark:text-gray-300">Emotional Impact: </span>
-                    <span className="text-gray-500 dark:text-gray-400">{reviewDetails.emotionalImpact}</span>
+                    {/* Emotional Impact Tooltip */}
+                    {reviewDetails?.emotionalImpact && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="flex items-center justify-center w-9 h-9 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 border border-rose-200/50 dark:border-rose-500/30 transition-colors group"
+                            aria-label="View emotional impact"
+                          >
+                            <Heart className="w-4 h-4 text-rose-500 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent 
+                          side="top" 
+                          align="start"
+                          className="max-w-[280px] p-3"
+                        >
+                          <div className="space-y-1">
+                            <p className="font-semibold text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+                              <Heart className="w-3 h-3" />
+                              Emotional Impact
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                              {reviewDetails.emotionalImpact}
+                            </p>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+
+                    {/* Label hint */}
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-auto">Hover for insights</span>
                   </div>
-                </div>
+                </TooltipProvider>
               )}
 
               {/* Action Buttons - Purple for Analyze, Blue for View */}
