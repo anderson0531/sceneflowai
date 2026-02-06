@@ -48,6 +48,24 @@ interface OptimizeScriptRequest {
   audienceReview?: Review | null
 }
 
+// ============================================================
+// STRUCTURAL PRE-PASS TYPES
+// ============================================================
+
+interface StructuralAction {
+  action: 'merge' | 'cut' | 'rewrite'
+  sceneNumbers: number[]         // 1-indexed scene numbers involved
+  rationale: string
+  mergedHeading?: string         // new heading when merging
+  mergedContent?: string         // brief description of combined content
+  rewriteFocus?: string          // what to change when rewriting
+}
+
+interface StructuralPlan {
+  actions: StructuralAction[]
+  summary: string
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { projectId, script, instruction, characters, compact, directorReview, audienceReview }: OptimizeScriptRequest = await req.json()
@@ -104,8 +122,6 @@ async function optimizeScript(
   directorReview?: Review | null,
   audienceReview?: Review | null
 ) {
-  const sceneCount = script.scenes?.length || 0
-  
   // Global deadline: 540s hard limit (60s safety margin before Vercel's 600s kill)
   const globalStartTime = Date.now()
   const DEADLINE_MS = 540_000
@@ -113,9 +129,6 @@ async function optimizeScript(
   // BATCHED OPTIMIZATION: Process scenes in batches to avoid token limits
   const SCENES_PER_BATCH = 4
   const PARALLEL_CONCURRENCY = 2 // Process 2 batches at a time
-  const batches = Math.ceil(sceneCount / SCENES_PER_BATCH)
-  
-  console.log(`[Script Optimization] Processing ${sceneCount} scenes in ${batches} batch(es) of ~${SCENES_PER_BATCH} scenes (concurrency: ${PARALLEL_CONCURRENCY})`)
   
   // Build shared context once
   const sharedContext = buildSharedContext(script, instruction, characters, compact, directorReview, audienceReview)
@@ -126,11 +139,44 @@ async function optimizeScript(
     console.log(`[Script Optimization] Scene analysis available for ${sceneAnalysis.length} scenes — will inject per-batch`)
   }
   
+  // ================================================================
+  // PHASE 1: STRUCTURAL PRE-PASS (full-script, can change scene count)
+  // Analyzes redundancy, pacing, and structure across all scenes.
+  // Produces a restructuring plan (merge/cut/rewrite) that is executed
+  // before the batched polish pass.
+  // ================================================================
+  let workingScenes = [...(script.scenes || [])]
+  let structuralChanges: any[] = []
+  
+  if (needsStructuralPass(instruction, audienceReview)) {
+    const elapsedMs = Date.now() - globalStartTime
+    const remainingMs = DEADLINE_MS - elapsedMs
+    
+    const plan = await generateStructuralPlan(
+      script, instruction, characters, audienceReview, sceneAnalysis, remainingMs
+    )
+    
+    if (plan) {
+      const { scenes: restructuredScenes, changesSummary } = executeStructuralPlan(workingScenes, plan)
+      workingScenes = restructuredScenes
+      structuralChanges = changesSummary
+      console.log(`[Script Optimization] Structural pre-pass: ${script.scenes.length} → ${workingScenes.length} scenes`)
+    }
+  }
+  
+  // ================================================================
+  // PHASE 2: BATCHED POLISH PASS (within-scene optimization)
+  // ================================================================
+  const workingSceneCount = workingScenes.length
+  const batches = Math.ceil(workingSceneCount / SCENES_PER_BATCH)
+  
+  console.log(`[Script Optimization] Processing ${workingSceneCount} scenes in ${batches} batch(es) of ~${SCENES_PER_BATCH} scenes (concurrency: ${PARALLEL_CONCURRENCY})`)
+  
   // Prepare all batch descriptors
   const batchDescriptors = Array.from({ length: batches }, (_, batchIndex) => {
     const startIdx = batchIndex * SCENES_PER_BATCH
-    const endIdx = Math.min(startIdx + SCENES_PER_BATCH, sceneCount)
-    return { batchIndex, startIdx, endIdx, scenes: script.scenes.slice(startIdx, endIdx) }
+    const endIdx = Math.min(startIdx + SCENES_PER_BATCH, workingSceneCount)
+    return { batchIndex, startIdx, endIdx, scenes: workingScenes.slice(startIdx, endIdx) }
   })
   
   // Results array preserving batch order
@@ -162,7 +208,7 @@ async function optimizeScript(
           batchScenes,
           startIdx,
           sharedContext,
-          script.scenes,
+          workingScenes,
           [], // parallel batches don't see each other's results
           compact,
           remainingMs,
@@ -193,7 +239,7 @@ async function optimizeScript(
   }
   
   // Deduplicate and consolidate changes summaries
-  const consolidatedChanges = consolidateChangesSummaries(allChangesSummaries)
+  const consolidatedChanges = consolidateChangesSummaries([...structuralChanges, ...allChangesSummaries])
   
   return {
     optimizedScript: {
@@ -278,6 +324,332 @@ Every dialogue line needs emotional tags in square brackets:
   * {"character": "MARY", "line": "[sadly] I wish things were different..."}`
 }
 
+// ============================================================
+// STRUCTURAL PRE-PASS: Full-script analysis for merge/cut/rewrite
+// ============================================================
+
+const STRUCTURAL_CATEGORIES = new Set([
+  'Pacing Issues', 'Redundancy Issues', 'Structural Issues',
+  'pacing issues', 'redundancy issues', 'structural issues',
+  'Pacing', 'Redundancy', 'Structure',
+])
+
+function needsStructuralPass(instruction: string, audienceReview?: Review | null): boolean {
+  // Check if recommendations include structural categories
+  if (audienceReview?.recommendations) {
+    for (const rec of audienceReview.recommendations) {
+      if (typeof rec === 'object' && rec.category) {
+        if (STRUCTURAL_CATEGORIES.has(rec.category)) return true
+      }
+    }
+  }
+  // Also check instruction text for structural keywords
+  const lower = instruction.toLowerCase()
+  const structuralKeywords = ['condense', 'merge', 'combine', 'streamlin', 'redundan', 'repetit', 'pacing', 'consolidat', 'cut scene', 'remove scene', 'too many scene']
+  return structuralKeywords.some(kw => lower.includes(kw))
+}
+
+async function generateStructuralPlan(
+  script: any,
+  instruction: string,
+  characters: any[],
+  audienceReview: Review | null | undefined,
+  sceneAnalysis: SceneAnalysis[],
+  remainingMs: number
+): Promise<StructuralPlan | null> {
+  const sceneCount = script.scenes?.length || 0
+  
+  // Only run structural pass for scripts ≤30 scenes (token budget constraint)
+  if (sceneCount > 30 || sceneCount < 3) return null
+  
+  // Build compact scene summaries for full-script context
+  const sceneSummaries = script.scenes.map((scene: any, idx: number) => {
+    const num = idx + 1
+    const heading = scene.heading || 'Untitled'
+    const action = (scene.action || '').substring(0, 120)
+    const dialogueCount = (scene.dialogue || []).length
+    const characters = [...new Set((scene.dialogue || []).map((d: any) => d.character).filter(Boolean))]
+    const sa = sceneAnalysis.find(s => s.sceneNumber === num)
+    const scoreInfo = sa ? ` [Score: ${sa.score}, Pacing: ${sa.pacing}, Tension: ${sa.tension}]` : ''
+    return `Scene ${num}: ${heading} — ${action}... (${dialogueCount} lines, chars: ${characters.join(', ') || 'none'})${scoreInfo}`
+  }).join('\n')
+
+  // Build review context
+  let reviewNotes = ''
+  if (audienceReview) {
+    const structuralRecs = (audienceReview.recommendations || [])
+      .filter(r => {
+        if (typeof r === 'object') {
+          return STRUCTURAL_CATEGORIES.has(r.category || '') || 
+                 r.priority === 'critical' || r.priority === 'high'
+        }
+        return false
+      })
+      .map(r => typeof r === 'object' ? `[${r.priority?.toUpperCase()}] ${r.text}` : r)
+    
+    if (structuralRecs.length > 0) {
+      reviewNotes = `\nREVIEW RECOMMENDATIONS (structural/high-priority):\n${structuralRecs.join('\n')}\n`
+    }
+    
+    const improvements = (audienceReview.improvements || []).slice(0, 5)
+    if (improvements.length > 0) {
+      reviewNotes += `\nKEY ISSUES:\n${improvements.join('\n')}\n`
+    }
+  }
+
+  const prompt = `You are a script structure analyst. Analyze this ${sceneCount}-scene script and produce a restructuring plan.
+
+=== INSTRUCTION FROM USER ===
+${instruction}
+
+${reviewNotes}
+=== FULL SCRIPT OUTLINE ===
+${sceneSummaries}
+
+=== YOUR TASK ===
+Identify STRUCTURAL problems only (not dialogue polish):
+1. REDUNDANT scenes: Two or more scenes that repeat the same confrontation/argument/emotional beat without meaningful escalation. These should be MERGED into one stronger scene.
+2. SCENES TO CUT: Scenes that add no new information and can be removed entirely (their essential content absorbed by adjacent scenes).
+3. SCENES TO REWRITE: Scenes where the content needs fundamental restructuring (not just dialogue polish) — e.g., a discovery scene that should become a visual flashback.
+
+IMPORTANT CONSTRAINTS:
+- Be CONSERVATIVE. Only propose merges/cuts when clearly justified by redundancy.
+- Never merge scenes with different locations AND different character sets.
+- Never cut scenes that contain unique plot revelations.
+- Prefer merging 2 scenes over cutting one — merging preserves content.
+- Maximum: merge up to 4 pairs, cut up to 2 scenes, rewrite up to 3 scenes.
+- If the script has no structural problems, return an empty actions array.
+
+Return ONLY valid JSON:
+{
+  "actions": [
+    {
+      "action": "merge",
+      "sceneNumbers": [3, 4],
+      "rationale": "Both scenes show Ben confronting Alexander with the same emotional beat",
+      "mergedHeading": "INT. BLOOM HQ - ALEXANDER'S OFFICE - DAY",
+      "mergedContent": "Combine Ben's initial warning with his chip delivery into a single escalating confrontation"
+    },
+    {
+      "action": "cut",
+      "sceneNumbers": [14],
+      "rationale": "Brief data upload scene adds no new information — Ben's public exposure attempt can be referenced in scene 13's narration"
+    },
+    {
+      "action": "rewrite",
+      "sceneNumbers": [1],
+      "rewriteFocus": "Replace narration-heavy opening with a visceral visual flashback of Elara's re-patterning, then cut to present-day Ben at his screen",
+      "rationale": "Scene 1 tells the backstory through narration instead of showing it — a visual flashback establishes the stakes immediately"
+    }
+  ],
+  "summary": "Merged 2 redundant confrontation scenes, cut 1 narration-only scene, rewrote 1 scene as visual flashback"
+}`
+
+  const timeoutMs = Math.min(60000, remainingMs - 10_000)
+  if (timeoutMs < 15_000) {
+    console.warn('[Structural Pre-Pass] Not enough time remaining, skipping')
+    return null
+  }
+
+  console.log(`[Structural Pre-Pass] Analyzing ${sceneCount} scenes for structural issues...`)
+  
+  try {
+    const result = await generateText(prompt, {
+      model: 'gemini-2.5-flash',
+      temperature: 0.2,
+      maxOutputTokens: 4000,
+      responseMimeType: 'application/json',
+      timeoutMs,
+      maxRetries: 1
+    })
+    
+    if (!result.text) {
+      console.warn('[Structural Pre-Pass] Empty response')
+      return null
+    }
+    
+    const plan: StructuralPlan = JSON.parse(result.text)
+    
+    if (!plan.actions || !Array.isArray(plan.actions) || plan.actions.length === 0) {
+      console.log('[Structural Pre-Pass] No structural changes needed')
+      return null
+    }
+    
+    // Validate actions
+    const validActions = plan.actions.filter(a => {
+      if (!a.action || !a.sceneNumbers || !Array.isArray(a.sceneNumbers)) return false
+      if (!['merge', 'cut', 'rewrite'].includes(a.action)) return false
+      if (a.sceneNumbers.some((n: number) => n < 1 || n > sceneCount)) return false
+      if (a.action === 'merge' && a.sceneNumbers.length < 2) return false
+      return true
+    })
+    
+    if (validActions.length === 0) {
+      console.log('[Structural Pre-Pass] No valid structural actions after validation')
+      return null
+    }
+    
+    console.log(`[Structural Pre-Pass] Plan: ${validActions.length} actions — ${plan.summary || 'no summary'}`)
+    for (const action of validActions) {
+      console.log(`  ${action.action.toUpperCase()} scenes ${action.sceneNumbers.join(',')} — ${action.rationale}`)
+    }
+    
+    return { actions: validActions, summary: plan.summary || '' }
+  } catch (error) {
+    console.error('[Structural Pre-Pass] Error:', error)
+    return null // Graceful degradation — skip structural pass
+  }
+}
+
+function executeStructuralPlan(
+  scenes: any[],
+  plan: StructuralPlan
+): { scenes: any[], changesSummary: any[] } {
+  const changesSummary: any[] = []
+  let result = [...scenes] // Clone
+  
+  // Track which original scene indices are consumed by merges/cuts
+  // Process in reverse order to avoid index shifting problems
+  const sortedActions = [...plan.actions].sort((a, b) => {
+    // Process cuts first, then merges, to simplify index management
+    // Within each type, process from highest scene number to lowest
+    const typeOrder = { cut: 0, merge: 1, rewrite: 2 }
+    const typeA = typeOrder[a.action] ?? 99
+    const typeB = typeOrder[b.action] ?? 99
+    if (typeA !== typeB) return typeA - typeB
+    return Math.max(...b.sceneNumbers) - Math.max(...a.sceneNumbers)
+  })
+  
+  // First pass: collect all scene numbers being merged or cut
+  const mergedInto = new Map<number, number>() // source scene → target scene
+  const cutScenes = new Set<number>()
+  const rewriteScenes = new Map<number, string>() // scene number → rewrite focus
+  
+  for (const action of sortedActions) {
+    if (action.action === 'cut') {
+      for (const num of action.sceneNumbers) cutScenes.add(num)
+    } else if (action.action === 'merge') {
+      const target = action.sceneNumbers[0] // merge into first scene
+      for (let i = 1; i < action.sceneNumbers.length; i++) {
+        mergedInto.set(action.sceneNumbers[i], target)
+      }
+    } else if (action.action === 'rewrite') {
+      for (const num of action.sceneNumbers) {
+        rewriteScenes.set(num, action.rewriteFocus || action.rationale)
+      }
+    }
+  }
+  
+  // Execute merges: combine dialogue, action, narration from source into target
+  for (const action of sortedActions) {
+    if (action.action !== 'merge') continue
+    
+    const targetIdx = action.sceneNumbers[0] - 1 // 0-indexed
+    const targetScene = result[targetIdx]
+    if (!targetScene) continue
+    
+    const sourceIndices = action.sceneNumbers.slice(1).map(n => n - 1)
+    
+    // Combine content from source scenes into target
+    const allDialogue = [...(targetScene.dialogue || [])]
+    let combinedAction = targetScene.action || ''
+    let combinedNarration = action.mergedContent || targetScene.narration || ''
+    let combinedDuration = targetScene.duration || 0
+    
+    for (const srcIdx of sourceIndices) {
+      const src = result[srcIdx]
+      if (!src) continue
+      
+      // Merge dialogue (append source dialogue, removing exact duplicates)
+      const existingLines = new Set(allDialogue.map((d: any) => `${d.character}:${d.line}`))
+      for (const d of (src.dialogue || [])) {
+        const key = `${d.character}:${d.line}`
+        if (!existingLines.has(key)) {
+          allDialogue.push(d)
+          existingLines.add(key)
+        }
+      }
+      
+      // Append unique action content
+      if (src.action && !combinedAction.includes(src.action.substring(0, 50))) {
+        combinedAction += ' ' + src.action
+      }
+      
+      combinedDuration += (src.duration || 0)
+    }
+    
+    // Update target scene
+    result[targetIdx] = {
+      ...targetScene,
+      heading: action.mergedHeading || targetScene.heading,
+      action: combinedAction.trim(),
+      narration: combinedNarration,
+      dialogue: allDialogue,
+      duration: Math.min(combinedDuration, 60), // Cap merged scene duration
+      _merged: true, // Flag for the polish pass to know this needs deeper rewriting
+      _mergeNote: action.mergedContent || action.rationale,
+    }
+    
+    changesSummary.push({
+      category: 'Structure — Merge',
+      changes: `Merged scenes ${action.sceneNumbers.join(' + ')} into scene ${action.sceneNumbers[0]}`,
+      rationale: action.rationale
+    })
+  }
+  
+  // Execute rewrites: tag scenes for the polish pass
+  for (const action of sortedActions) {
+    if (action.action !== 'rewrite') continue
+    for (const num of action.sceneNumbers) {
+      const idx = num - 1
+      if (result[idx]) {
+        result[idx] = {
+          ...result[idx],
+          _rewrite: true,
+          _rewriteFocus: action.rewriteFocus || action.rationale,
+        }
+        changesSummary.push({
+          category: 'Structure — Rewrite',
+          changes: `Scene ${num} flagged for structural rewrite: ${action.rewriteFocus || action.rationale}`,
+          rationale: action.rationale
+        })
+      }
+    }
+  }
+  
+  // Remove merged-away and cut scenes (iterate backward to preserve indices)
+  const indicesToRemove = new Set<number>()
+  for (const [srcNum] of mergedInto) indicesToRemove.add(srcNum - 1)
+  for (const cutNum of cutScenes) indicesToRemove.add(cutNum - 1)
+  
+  // Add cut change summaries
+  for (const action of sortedActions) {
+    if (action.action === 'cut') {
+      changesSummary.push({
+        category: 'Structure — Cut',
+        changes: `Removed scene${action.sceneNumbers.length > 1 ? 's' : ''} ${action.sceneNumbers.join(', ')}`,
+        rationale: action.rationale
+      })
+    }
+  }
+  
+  // Filter out removed scenes and renumber
+  result = result.filter((_, idx) => !indicesToRemove.has(idx))
+  
+  // Renumber scenes
+  result = result.map((scene, idx) => ({
+    ...scene,
+    sceneNumber: idx + 1,
+  }))
+  
+  const removedCount = scenes.length - result.length
+  if (removedCount > 0) {
+    console.log(`[Structural Pre-Pass] Executed plan: ${scenes.length} → ${result.length} scenes (${removedCount} removed via merge/cut)`)
+  }
+  
+  return { scenes: result, changesSummary }
+}
+
 async function optimizeBatch(
   batchScenes: any[],
   startIdx: number,
@@ -329,10 +701,26 @@ Duration: ${scene.duration || 0}s`
     }
   }
 
+  // Add structural rewrite/merge instructions for scenes that were flagged
+  let structuralNotes = ''
+  const flaggedScenes = batchScenes.filter((s: any) => s._merged || s._rewrite)
+  if (flaggedScenes.length > 0) {
+    structuralNotes = `\n=== STRUCTURAL REWRITE REQUIRED ===\n`
+    for (const scene of batchScenes) {
+      const sceneNum = startIdx + batchScenes.indexOf(scene) + 1
+      if (scene._merged) {
+        structuralNotes += `Scene ${sceneNum} was MERGED from multiple scenes. DEEPLY REWRITE this scene:\n  - Eliminate redundant dialogue beats that repeat the same argument\n  - Ensure the scene escalates through distinct emotional phases\n  - Tighten dialogue — the combined content is too long, distill to the strongest lines\n  - Guidance: ${scene._mergeNote || 'Merge redundant content into a cohesive, escalating scene'}\n`
+      }
+      if (scene._rewrite) {
+        structuralNotes += `Scene ${sceneNum} needs STRUCTURAL REWRITE:\n  - ${scene._rewriteFocus}\n  - Transform the scene fundamentally, not just polish\n`
+      }
+    }
+  }
+
   const prompt = `You are an expert screenwriter optimizing a batch of scenes.
 
 ${sharedContext}
-${perSceneNotes}
+${perSceneNotes}${structuralNotes}
 === CONTINUITY CONTEXT ===
 ${prevSceneSummary}
 ${nextSceneSummary}
@@ -377,10 +765,14 @@ CRITICAL RULES:
   
   console.log(`[Script Optimization] Batch call: ${batchScenes.length} scenes, ${estimatedTokens} tokens, ${timeoutMs/1000}s timeout, ${Math.round(remainingMs/1000)}s remaining`)
   
+  // Determine temperature: 0.5 for merged/rewritten scenes that need creative restructuring, 0.4 for normal polish
+  const hasFlaggedScenes = batchScenes.some((s: any) => s._merged || s._rewrite)
+  const temperature = hasFlaggedScenes ? 0.5 : 0.4
+  
   // First attempt
   let result = await generateText(prompt, {
     model: 'gemini-2.5-flash',
-    temperature: 0.2,
+    temperature,
     maxOutputTokens: estimatedTokens,
     responseMimeType: 'application/json',
     timeoutMs,
@@ -403,7 +795,7 @@ CRITICAL RULES:
       
       result = await generateText(prompt, {
         model: 'gemini-2.5-flash',
-        temperature: 0.2,
+        temperature,
         maxOutputTokens: retryTokens,
         responseMimeType: 'application/json',
         timeoutMs: Math.min(retryTimeout, remainingMs - 10_000),
@@ -461,6 +853,11 @@ CRITICAL RULES:
       duration: optimizedScene.duration || originalScene?.duration,
       narration
     }
+    // Strip internal structural flags
+    delete merged._merged
+    delete merged._mergeNote
+    delete merged._rewrite
+    delete merged._rewriteFocus
     const { summary, changed } = effectSummary(originalScene, merged)
     return { ...merged, effectSummary: summary }
   })
