@@ -7,6 +7,24 @@ export const runtime = 'nodejs'
 interface ReviewCategory {
   name: string
   score: number
+  weight?: number
+}
+
+interface ReviewRecommendation {
+  text: string
+  priority: 'critical' | 'high' | 'medium' | 'optional'
+  category?: string
+}
+
+interface SceneAnalysis {
+  sceneNumber: number
+  sceneHeading: string
+  score: number
+  pacing: 'slow' | 'moderate' | 'fast'
+  tension: 'low' | 'medium' | 'high'
+  characterDevelopment: 'minimal' | 'moderate' | 'strong'
+  visualPotential: 'low' | 'medium' | 'high'
+  notes: string
 }
 
 interface Review {
@@ -15,7 +33,8 @@ interface Review {
   analysis: string
   strengths: string[]
   improvements: string[]
-  recommendations: string[]
+  recommendations: (string | ReviewRecommendation)[]
+  sceneAnalysis?: SceneAnalysis[]
   generatedAt: string
 }
 
@@ -101,6 +120,12 @@ async function optimizeScript(
   // Build shared context once
   const sharedContext = buildSharedContext(script, instruction, characters, compact, directorReview, audienceReview)
   
+  // Extract per-scene analysis data from audience review (if available)
+  const sceneAnalysis: SceneAnalysis[] = (audienceReview as any)?.sceneAnalysis || []
+  if (sceneAnalysis.length > 0) {
+    console.log(`[Script Optimization] Scene analysis available for ${sceneAnalysis.length} scenes — will inject per-batch`)
+  }
+  
   // Prepare all batch descriptors
   const batchDescriptors = Array.from({ length: batches }, (_, batchIndex) => {
     const startIdx = batchIndex * SCENES_PER_BATCH
@@ -140,7 +165,8 @@ async function optimizeScript(
           script.scenes,
           [], // parallel batches don't see each other's results
           compact,
-          remainingMs
+          remainingMs,
+          sceneAnalysis
         )
         batchResults[batchIndex] = { scenes: result.scenes, changesSummary: result.changesSummary || [] }
         console.log(`[Script Optimization] Batch ${batchIndex + 1} complete: ${result.scenes.length} scenes optimized`)
@@ -210,8 +236,16 @@ Key Issues: ${directorReview.improvements.slice(0, 3).join('; ')}
     }
     if (audienceReview) {
       reviewContext += `AUDIENCE REVIEW (Score: ${audienceReview.overallScore}/100):
-Key Issues: ${audienceReview.improvements.slice(0, 3).join('; ')}
+Key Issues: ${audienceReview.improvements.slice(0, 5).join('; ')}
 `
+      // Include dimensional scores so model understands weakest areas
+      const weakDimensions = (audienceReview.categories || [])
+        .filter(c => c.score < 80)
+        .sort((a, b) => a.score - b.score)
+        .map(c => `${c.name}: ${c.score}/100`)
+      if (weakDimensions.length > 0) {
+        reviewContext += `Weakest Dimensions: ${weakDimensions.join(', ')}\n`
+      }
     }
   }
 
@@ -232,7 +266,11 @@ ${characterProfiles}
 3. Show don't tell - use action over exposition
 4. Add emotional/vocal tags to ALL dialogue: [happy], [sad], [angry], etc.
 5. Keep continuity with other scenes
-${compact ? '6. Keep content concise to reduce output size' : ''}
+6. CRITICAL and HIGH priority recommendations MUST be applied where relevant
+7. MEDIUM recommendations should be applied if they naturally fit the scenes
+8. OPTIONAL recommendations are polish — apply only if they improve without disrupting
+9. Only apply recommendations that are relevant to the scenes in this batch
+${compact ? '10. Keep content concise to reduce output size' : ''}
 
 === DIALOGUE AUDIO TAGS (Required) ===
 Every dialogue line needs emotional tags in square brackets:
@@ -247,7 +285,8 @@ async function optimizeBatch(
   allOriginalScenes: any[],
   previousOptimizedScenes: any[],
   compact: boolean,
-  remainingMs: number = 540_000
+  remainingMs: number = 540_000,
+  sceneAnalysis: SceneAnalysis[] = []
 ): Promise<{ scenes: any[], changesSummary?: any[] }> {
   
   // Build context from adjacent scenes for continuity
@@ -277,10 +316,23 @@ SFX: ${Array.isArray(scene.sfx) ? scene.sfx.join(', ') : scene.sfx || 'None'}
 Duration: ${scene.duration || 0}s`
   }).join('\n')
   
+  // Build per-scene review notes for scenes in this batch
+  let perSceneNotes = ''
+  if (sceneAnalysis.length > 0) {
+    const batchNotes = sceneAnalysis
+      .filter(sa => sa.sceneNumber >= startIdx + 1 && sa.sceneNumber <= startIdx + batchScenes.length)
+    if (batchNotes.length > 0) {
+      perSceneNotes = `\n=== PER-SCENE REVIEW FEEDBACK (apply targeted fixes) ===\n` +
+        batchNotes.map(sa => 
+          `Scene ${sa.sceneNumber} (${sa.sceneHeading}): Score ${sa.score}/100 | Pacing: ${sa.pacing} | Tension: ${sa.tension} | Character Dev: ${sa.characterDevelopment} | Visual: ${sa.visualPotential}\n  \u2192 ${sa.notes}`
+        ).join('\n') + '\n'
+    }
+  }
+
   const prompt = `You are an expert screenwriter optimizing a batch of scenes.
 
 ${sharedContext}
-
+${perSceneNotes}
 === CONTINUITY CONTEXT ===
 ${prevSceneSummary}
 ${nextSceneSummary}
@@ -317,8 +369,8 @@ CRITICAL RULES:
 - Never use raw line breaks inside strings (use \\n)
 - If narration should be removed, replace with a 1-sentence summary (never null/empty)`
 
-  // Token budget: 3500 per scene + 4000 base (increased to prevent MAX_TOKENS truncation)
-  const estimatedTokens = Math.min(32768, batchScenes.length * 3500 + 4000)
+  // Token budget: 3500 per scene + 5000 base (increased for richer per-scene review context)
+  const estimatedTokens = Math.min(32768, batchScenes.length * 3500 + 5000)
   const baseTimeout = Math.min(180000, 60000 + batchScenes.length * 15000)
   // Cap per-batch timeout to remaining global deadline minus safety margin
   const timeoutMs = Math.min(baseTimeout, remainingMs - 10_000)

@@ -617,13 +617,26 @@ export default function ScriptReviewModal({
       return
     }
 
-    // Build instruction from selected recommendations
+    // Build instruction from selected recommendations, sorted by priority and enriched with metadata
     const review = audienceReview as AudienceResonanceReview
+    const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, optional: 3 }
     const selectedRecs = review.recommendations
-      .filter((_, i) => selectedRecommendationIndices.has(i))
-      .map(r => getRecommendationText(r))
+      .map((r, i) => ({ rec: r, originalIndex: i }))
+      .filter(({ originalIndex }) => selectedRecommendationIndices.has(originalIndex))
+      .sort((a, b) => {
+        const pa = typeof a.rec === 'object' ? (priorityOrder[a.rec.priority] ?? 3) : 3
+        const pb = typeof b.rec === 'object' ? (priorityOrder[b.rec.priority] ?? 3) : 3
+        return pa - pb
+      })
     
-    const instruction = selectedRecs.map((rec, i) => `${i + 1}. ${rec}`).join('\n\n')
+    const instruction = selectedRecs.map(({ rec }, i) => {
+      const text = getRecommendationText(rec)
+      if (typeof rec === 'object' && rec.priority) {
+        const tag = `[${rec.priority.toUpperCase()}${rec.category ? ` — ${rec.category}` : ''}]`
+        return `${i + 1}. ${tag} ${text}`
+      }
+      return `${i + 1}. ${text}`
+    }).join('\n\n')
 
     setIsRevising(true)
     try {

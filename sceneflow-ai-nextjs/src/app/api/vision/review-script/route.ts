@@ -304,13 +304,16 @@ MATH CHECK: Your overallScore MUST equal 100 minus the sum of all deduction poin
 
 ## SCENE ANALYSIS
 
-For scenes 1, 15, 30, 45, 60, 75, 90 (or similar key moments), provide brief analysis:
+${sceneCount <= 30
+  ? `Provide brief analysis for EVERY scene (1 through ${sceneCount}). This data drives targeted optimization, so completeness matters.`
+  : `For scenes 1, 15, 30, 45, 60, 75, 90 (or similar key moments spaced ~15 scenes apart), provide brief analysis:`
+}
 - Score (1-100)
 - Pacing: slow/moderate/fast
 - Tension: low/medium/high
 - Character Development: minimal/moderate/strong
 - Visual Potential: low/medium/high
-- Notes: One sentence on what works or doesn't
+- Notes: One sentence identifying what works OR the single most impactful fix for this scene
 
 ## OUTPUT FORMAT
 
@@ -354,10 +357,12 @@ FINAL CHECK before outputting:
 3. Balance criticism with recognition of strengths`
 
   console.log('[Audience Resonance] Calling Vertex AI Gemini with deduction-based prompt...')
+  // Token budget: 12k base + 200 per scene for full scene analysis (≤30 scenes)
+  const reviewTokenBudget = Math.min(20000, 12000 + (sceneCount <= 30 ? sceneCount * 200 : 0))
   const result = await generateText(prompt, {
     model: 'gemini-2.5-flash',
     temperature: 0, // Deterministic scoring — same script should yield same scores
-    maxOutputTokens: 12000,
+    maxOutputTokens: reviewTokenBudget,
     thinkingBudget: 0, // Disable thinking mode for faster, more direct responses
     seed: contentSeed // Content-derived seed for reproducible output
   })
