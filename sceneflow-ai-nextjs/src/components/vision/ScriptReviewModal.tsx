@@ -662,8 +662,7 @@ export default function ScriptReviewModal({
             projectId,
             script,
             instruction,
-            characters: characters || [],
-            audienceReview: review
+            characters: characters || []
           })
         })
 
@@ -679,8 +678,7 @@ export default function ScriptReviewModal({
                 script,
                 instruction,
                 characters: characters || [],
-                compact: true,
-                audienceReview: review
+                compact: true
               })
             })
           }
