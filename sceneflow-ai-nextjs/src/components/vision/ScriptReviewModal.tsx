@@ -676,9 +676,10 @@ export default function ScriptReviewModal({
         }
       }, { 
         message: `Revising script with ${selectedRecs.length} recommendation${selectedRecs.length > 1 ? 's' : ''}...`, 
-        // Batched optimization: ~4 scenes/batch, ~15s/batch + overhead
-        // e.g. 17 scenes = 5 batches x 15s = 75s + 10s overhead = 85s
-        estimatedDuration: Math.min(180, Math.max(45, Math.ceil((script?.scenes?.length || 10) / 4) * 15 + 10)),
+        // Batched optimization: ~4 scenes/batch, 2 parallel, ~25s/batch-pair + overhead
+        // e.g. 17 scenes = 5 batches → 3 waves × 25s = 75s + 15s overhead = 90s
+        // With MAX_TOKENS retries possible, allow up to 300s
+        estimatedDuration: Math.min(300, Math.max(60, Math.ceil(Math.ceil((script?.scenes?.length || 10) / 4) / 2) * 25 + 15)),
         operationType: 'script-optimization'
       })
     } catch (err: any) {

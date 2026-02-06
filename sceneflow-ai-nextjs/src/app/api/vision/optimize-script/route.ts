@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
 
-export const maxDuration = 300 // Increased timeout for large scripts
+export const maxDuration = 600 // 10min for large scripts with retries + parallel batches
 export const runtime = 'nodejs'
 
 interface ReviewCategory {
@@ -87,55 +87,82 @@ async function optimizeScript(
 ) {
   const sceneCount = script.scenes?.length || 0
   
+  // Global deadline: 540s hard limit (60s safety margin before Vercel's 600s kill)
+  const globalStartTime = Date.now()
+  const DEADLINE_MS = 540_000
+  
   // BATCHED OPTIMIZATION: Process scenes in batches to avoid token limits
-  // Reduced from 6 to 4 scenes per batch to prevent MAX_TOKENS truncation
   const SCENES_PER_BATCH = 4
+  const PARALLEL_CONCURRENCY = 2 // Process 2 batches at a time
   const batches = Math.ceil(sceneCount / SCENES_PER_BATCH)
   
-  console.log(`[Script Optimization] Processing ${sceneCount} scenes in ${batches} batch(es) of ~${SCENES_PER_BATCH} scenes`)
+  console.log(`[Script Optimization] Processing ${sceneCount} scenes in ${batches} batch(es) of ~${SCENES_PER_BATCH} scenes (concurrency: ${PARALLEL_CONCURRENCY})`)
   
   // Build shared context once
   const sharedContext = buildSharedContext(script, instruction, characters, compact, directorReview, audienceReview)
   
-  const allOptimizedScenes: any[] = []
-  const allChangesSummaries: any[] = []
-  
-  for (let batchIndex = 0; batchIndex < batches; batchIndex++) {
+  // Prepare all batch descriptors
+  const batchDescriptors = Array.from({ length: batches }, (_, batchIndex) => {
     const startIdx = batchIndex * SCENES_PER_BATCH
     const endIdx = Math.min(startIdx + SCENES_PER_BATCH, sceneCount)
-    const batchScenes = script.scenes.slice(startIdx, endIdx)
+    return { batchIndex, startIdx, endIdx, scenes: script.scenes.slice(startIdx, endIdx) }
+  })
+  
+  // Results array preserving batch order
+  const batchResults: { scenes: any[], changesSummary: any[] }[] = new Array(batches)
+  
+  // Process batches in parallel waves of PARALLEL_CONCURRENCY
+  for (let wave = 0; wave < batches; wave += PARALLEL_CONCURRENCY) {
+    const waveBatches = batchDescriptors.slice(wave, wave + PARALLEL_CONCURRENCY)
     
-    console.log(`[Script Optimization] Batch ${batchIndex + 1}/${batches}: Optimizing scenes ${startIdx + 1}-${endIdx}`)
-    
-    try {
-      const batchResult = await optimizeBatch(
-        batchScenes,
-        startIdx,
-        sharedContext,
-        script.scenes,
-        allOptimizedScenes,
-        compact
-      )
+    const wavePromises = waveBatches.map(async (desc) => {
+      const { batchIndex, startIdx, endIdx, scenes: batchScenes } = desc
+      const elapsedMs = Date.now() - globalStartTime
+      const remainingMs = DEADLINE_MS - elapsedMs
       
-      allOptimizedScenes.push(...batchResult.scenes)
-      if (batchResult.changesSummary) {
-        allChangesSummaries.push(...batchResult.changesSummary)
+      // Check global deadline before starting batch
+      if (remainingMs < 30_000) {
+        console.warn(`[Script Optimization] Deadline approaching (${Math.round(remainingMs/1000)}s left). Preserving scenes ${startIdx + 1}-${endIdx}`)
+        batchResults[batchIndex] = {
+          scenes: batchScenes.map((scene: any) => ({ ...scene, effectSummary: 'preserved (deadline)' })),
+          changesSummary: [{ category: 'Deadline', changes: `Scenes ${startIdx + 1}-${endIdx} preserved due to time constraints`, rationale: 'Ensuring response completes within server limits' }]
+        }
+        return
       }
       
-      console.log(`[Script Optimization] Batch ${batchIndex + 1} complete: ${batchResult.scenes.length} scenes optimized`)
-    } catch (error) {
-      console.error(`[Script Optimization] Batch ${batchIndex + 1} failed:`, error)
-      // On failure, preserve original scenes for this batch
-      const fallbackScenes = batchScenes.map((scene: any, idx: number) => ({
-        ...scene,
-        effectSummary: 'preserved (batch error)'
-      }))
-      allOptimizedScenes.push(...fallbackScenes)
-      allChangesSummaries.push({
-        category: 'Batch Error',
-        changes: `Scenes ${startIdx + 1}-${endIdx} preserved due to processing error`,
-        rationale: 'Original content maintained for stability'
-      })
+      console.log(`[Script Optimization] Batch ${batchIndex + 1}/${batches}: Optimizing scenes ${startIdx + 1}-${endIdx} (${Math.round(remainingMs/1000)}s remaining)`)
+      
+      try {
+        const result = await optimizeBatch(
+          batchScenes,
+          startIdx,
+          sharedContext,
+          script.scenes,
+          [], // parallel batches don't see each other's results
+          compact,
+          remainingMs
+        )
+        batchResults[batchIndex] = { scenes: result.scenes, changesSummary: result.changesSummary || [] }
+        console.log(`[Script Optimization] Batch ${batchIndex + 1} complete: ${result.scenes.length} scenes optimized`)
+      } catch (error) {
+        console.error(`[Script Optimization] Batch ${batchIndex + 1} failed:`, error)
+        batchResults[batchIndex] = {
+          scenes: batchScenes.map((scene: any) => ({ ...scene, effectSummary: 'preserved (batch error)' })),
+          changesSummary: [{ category: 'Batch Error', changes: `Scenes ${startIdx + 1}-${endIdx} preserved due to processing error`, rationale: 'Original content maintained for stability' }]
+        }
+      }
+    })
+    
+    await Promise.all(wavePromises)
+  }
+  
+  // Flatten results in order
+  const allOptimizedScenes: any[] = []
+  const allChangesSummaries: any[] = []
+  for (const result of batchResults) {
+    if (result) {
+      allOptimizedScenes.push(...result.scenes)
+      allChangesSummaries.push(...result.changesSummary)
     }
   }
   
@@ -219,7 +246,8 @@ async function optimizeBatch(
   sharedContext: string,
   allOriginalScenes: any[],
   previousOptimizedScenes: any[],
-  compact: boolean
+  compact: boolean,
+  remainingMs: number = 540_000
 ): Promise<{ scenes: any[], changesSummary?: any[] }> {
   
   // Build context from adjacent scenes for continuity
@@ -289,11 +317,13 @@ CRITICAL RULES:
 - Never use raw line breaks inside strings (use \\n)
 - If narration should be removed, replace with a 1-sentence summary (never null/empty)`
 
-  // Increased token budget: 2500 per scene + 3000 base (was 1500 + 2000)
-  const estimatedTokens = Math.min(32768, batchScenes.length * 2500 + 3000)
-  const timeoutMs = Math.min(180000, 60000 + batchScenes.length * 15000)
+  // Token budget: 3500 per scene + 4000 base (increased to prevent MAX_TOKENS truncation)
+  const estimatedTokens = Math.min(32768, batchScenes.length * 3500 + 4000)
+  const baseTimeout = Math.min(180000, 60000 + batchScenes.length * 15000)
+  // Cap per-batch timeout to remaining global deadline minus safety margin
+  const timeoutMs = Math.min(baseTimeout, remainingMs - 10_000)
   
-  console.log(`[Script Optimization] Batch call: ${batchScenes.length} scenes, ${estimatedTokens} tokens, ${timeoutMs/1000}s timeout`)
+  console.log(`[Script Optimization] Batch call: ${batchScenes.length} scenes, ${estimatedTokens} tokens, ${timeoutMs/1000}s timeout, ${Math.round(remainingMs/1000)}s remaining`)
   
   // First attempt
   let result = await generateText(prompt, {
@@ -308,25 +338,34 @@ CRITICAL RULES:
   let analysisText = result.text
   let wasTruncated = result.finishReason === 'MAX_TOKENS'
   
-  // Check for truncation and retry with 1.5x tokens if needed
+  // Check for truncation and retry with 2x tokens if deadline allows
   if (wasTruncated) {
-    const retryTokens = Math.min(65536, Math.floor(estimatedTokens * 1.5))
-    console.warn(`[Script Optimization] Response truncated (MAX_TOKENS). Retrying with ${retryTokens} tokens...`)
+    const elapsedSinceStart = Date.now() - (Date.now() - remainingMs) // approximate
+    const timeLeftMs = remainingMs - (Date.now() % 1) // will be recalculated below
+    const retryTokens = Math.min(65536, Math.floor(estimatedTokens * 2))
+    const retryTimeout = Math.min(240000, timeoutMs * 1.5)
     
-    result = await generateText(prompt, {
-      model: 'gemini-2.5-flash',
-      temperature: 0.2,
-      maxOutputTokens: retryTokens,
-      responseMimeType: 'application/json',
-      timeoutMs: Math.min(240000, timeoutMs * 1.5),
-      maxRetries: 1
-    })
-    
-    analysisText = result.text
-    wasTruncated = result.finishReason === 'MAX_TOKENS'
-    
-    if (wasTruncated) {
-      console.warn('[Script Optimization] Still truncated after retry, will attempt repair')
+    // Only retry if we have enough time remaining (at least 60s)
+    if (remainingMs > 90_000) {
+      console.warn(`[Script Optimization] Response truncated (MAX_TOKENS). Retrying with ${retryTokens} tokens (${Math.round(remainingMs/1000)}s remaining)...`)
+      
+      result = await generateText(prompt, {
+        model: 'gemini-2.5-flash',
+        temperature: 0.2,
+        maxOutputTokens: retryTokens,
+        responseMimeType: 'application/json',
+        timeoutMs: Math.min(retryTimeout, remainingMs - 10_000),
+        maxRetries: 1
+      })
+      
+      analysisText = result.text
+      wasTruncated = result.finishReason === 'MAX_TOKENS'
+      
+      if (wasTruncated) {
+        console.warn('[Script Optimization] Still truncated after retry, will attempt repair')
+      }
+    } else {
+      console.warn(`[Script Optimization] Response truncated but only ${Math.round(remainingMs/1000)}s remaining — skipping retry, will attempt repair of partial response`)
     }
   }
   

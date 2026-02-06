@@ -7,7 +7,7 @@
       "memory": 3008
     },
     "src/app/api/vision/optimize-script/route.ts": {
-      "maxDuration": 300,
+      "maxDuration": 600,
       "memory": 3008
     },
     "src/app/api/vision/optimize-script/batch/route.ts": {
