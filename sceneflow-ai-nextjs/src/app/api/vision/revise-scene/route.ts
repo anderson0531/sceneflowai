@@ -214,10 +214,10 @@ Focus on making the scene more engaging, clear, and emotionally impactful while 
   const result = await generateText(prompt, {
     model: 'gemini-2.5-flash',
     temperature: 0.7,
-    maxOutputTokens: 8192  // Doubled to accommodate longer responses
+    maxOutputTokens: 16384  // Large scenes with many dialogue lines need more tokens
   })
 
-  console.log('[Scene Revision] Response received, finishReason:', result.finishReason)
+  console.log('[Scene Revision] Response received, finishReason:', result.finishReason, 'length:', result.text?.length || 0)
 
   const revisedText = result.text
 
@@ -227,6 +227,7 @@ Focus on making the scene more engaging, clear, and emotionally impactful while 
 
   // Extract JSON from markdown code blocks if present
   console.log('[Scene Revision] Raw response text:', revisedText.substring(0, 200))
+  console.log('[Scene Revision] Raw response end:', revisedText.slice(-100))
   let jsonText = revisedText.trim()
 
   // Try multiple extraction methods
@@ -242,9 +243,11 @@ Focus on making the scene more engaging, clear, and emotionally impactful while 
 
   console.log('[Scene Revision] JSON to parse:', jsonText.substring(0, 200))
 
-  // Try to repair truncated JSON if needed
-  if (result.finishReason === 'MAX_TOKENS' && !jsonText.trim().endsWith('}')) {
-    console.log('[Scene Revision] Attempting to repair truncated JSON')
+  // Try to repair truncated JSON if needed — don't rely only on finishReason
+  // The model sometimes returns STOP even when output is incomplete
+  const jsonEndsClean = jsonText.trim().endsWith('}') || jsonText.trim().endsWith(']}')
+  if (!jsonEndsClean) {
+    console.log('[Scene Revision] Attempting to repair truncated JSON (endsClean:', jsonEndsClean, ', finishReason:', result.finishReason, ')' )
     // Count open braces/brackets and close them
     const openBraces = (jsonText.match(/{/g) || []).length
     const closeBraces = (jsonText.match(/}/g) || []).length
