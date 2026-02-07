@@ -10,6 +10,8 @@ import { VoiceSelectorDialog } from '@/components/tts/VoiceSelectorDialog'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { toast } from 'sonner'
 import type { CharacterContext } from '@/lib/voiceRecommendation'
+import { SUPPORTED_LANGUAGES } from '@/constants/languages'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface Voice {
   voice_id: string
@@ -321,6 +323,7 @@ export default function ScriptReviewModal({
     return 'Roger'
   })
   const [voiceSelectorOpen, setVoiceSelectorOpen] = useState(false)
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('en')
   const [playingSection, setPlayingSection] = useState<string | null>(null)
   const [loadingSection, setLoadingSection] = useState<string | null>(null)
   const [showDeductions, setShowDeductions] = useState(false)
@@ -497,11 +500,33 @@ export default function ScriptReviewModal({
         }
       }
       
+      // Translate text if non-English language is selected
+      let textToSpeak = text
+      if (selectedLanguage !== 'en') {
+        try {
+          const translateResponse = await fetch('/api/translate/google', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: text,
+              targetLanguage: selectedLanguage,
+              sourceLanguage: 'en'
+            })
+          })
+          if (translateResponse.ok) {
+            const translateData = await translateResponse.json()
+            textToSpeak = translateData.translatedText || text
+          }
+        } catch (translateErr) {
+          console.warn('Translation failed, using original text:', translateErr)
+        }
+      }
+      
       const response = await fetch('/api/tts/elevenlabs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text,
+          text: textToSpeak,
           voiceId: voiceToUse,
           parallel: true,
           stability: 0.5,
@@ -919,6 +944,21 @@ export default function ScriptReviewModal({
               <span className="truncate">{selectedVoiceName || 'Select voice...'}</span>
               <Settings2 className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
             </Button>
+            
+            {/* Language Selector */}
+            <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+              <SelectTrigger className="w-[130px] h-8 text-sm">
+                <SelectValue placeholder="Language" />
+              </SelectTrigger>
+              <SelectContent>
+                {SUPPORTED_LANGUAGES.map((lang) => (
+                  <SelectItem key={lang.code} value={lang.code}>
+                    {lang.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
             {playingSection && (
               <Button
                 variant="outline"
