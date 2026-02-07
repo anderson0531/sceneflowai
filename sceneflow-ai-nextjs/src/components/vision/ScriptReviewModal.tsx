@@ -1,17 +1,63 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Settings2, Check, Square, CheckSquare, BarChart3, MessageSquare, ListChecks, Film, Sparkles, CheckCircle2 } from 'lucide-react'
+import { X, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Settings2, Check, Square, CheckSquare, BarChart3, MessageSquare, ListChecks, Film, Sparkles, CheckCircle2, Edit, Mic, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Textarea } from '@/components/ui/textarea'
 import { VoiceSelectorDialog } from '@/components/tts/VoiceSelectorDialog'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
+import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { toast } from 'sonner'
 import type { CharacterContext } from '@/lib/voiceRecommendation'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
+// Common optimization templates for "You Direct" tab
+const SCRIPT_INSTRUCTION_TEMPLATES = [
+  {
+    id: 'improve-pacing',
+    label: 'Improve Overall Pacing',
+    text: 'Improve the pacing across all scenes. Tighten slow sections and expand rushed moments.'
+  },
+  {
+    id: 'strengthen-arc',
+    label: 'Strengthen Narrative Arc',
+    text: 'Strengthen the overall narrative arc. Ensure clear setup, conflict escalation, and satisfying resolution.'
+  },
+  {
+    id: 'character-consistency',
+    label: 'Character Consistency',
+    text: 'Ensure character voices and behaviors are consistent throughout the script.'
+  },
+  {
+    id: 'tone-coherence',
+    label: 'Unify Tone',
+    text: 'Unify the tone and mood across all scenes to create a cohesive viewing experience.'
+  },
+  {
+    id: 'visual-cohesion',
+    label: 'Visual Cohesion',
+    text: 'Improve visual storytelling consistency and create a unified visual style.'
+  },
+  {
+    id: 'dialogue-polish',
+    label: 'Polish All Dialogue',
+    text: 'Polish dialogue throughout the script for naturalness, subtext, and character voice.'
+  },
+  {
+    id: 'emotional-beats',
+    label: 'Emotional Beats',
+    text: 'Strengthen emotional beats and ensure proper build-up to key moments.'
+  },
+  {
+    id: 'scene-transitions',
+    label: 'Scene Transitions',
+    text: 'Improve transitions between scenes for better flow and continuity.'
+  }
+]
 
 interface Voice {
   voice_id: string
@@ -275,7 +321,7 @@ interface ScriptReviewModalProps {
   reviewHistory?: Array<{ score: number; generatedAt: string; dimensionalScores?: any[] }>
 }
 
-type ReviewTab = 'overview' | 'feedback' | 'recommendations' | 'scenes'
+type ReviewTab = 'overview' | 'feedback' | 'recommendations' | 'scenes' | 'you-direct'
 
 export default function ScriptReviewModal({
   isOpen,
@@ -340,6 +386,25 @@ export default function ScriptReviewModal({
   const [fixingScenes, setFixingScenes] = useState<Set<number>>(new Set()) // scene numbers currently being fixed
   const [fixedScenes, setFixedScenes] = useState<Set<number>>(new Set())   // scene numbers successfully fixed
   const [expandedScenes, setExpandedScenes] = useState<Set<number>>(new Set()) // scene numbers with expanded recommendations
+
+  // "You Direct" tab state
+  const [selectedOptimizations, setSelectedOptimizations] = useState<string[]>([])
+  const [customInstruction, setCustomInstruction] = useState('')
+  const [isOptimizingYouDirect, setIsOptimizingYouDirect] = useState(false)
+  const baseInstructionRef = useRef<string>('')
+  
+  // Speech recognition for voice input
+  const {
+    supported: sttSupported,
+    isSecure: sttSecure,
+    permission: micPermission,
+    isRecording: isMicRecording,
+    transcript: micTranscript,
+    error: micError,
+    start: startMic,
+    stop: stopMic,
+    setTranscript: setMicTranscript
+  } = useSpeechRecognition()
 
   // Character context for Review Expert voice recommendations
   // Voices that match: authoritative, mature, professional narrators
@@ -599,6 +664,10 @@ export default function ScriptReviewModal({
     setFixedScenes(new Set())
     setFixingScenes(new Set())
     setExpandedScenes(new Set())
+    // Also reset You Direct state
+    setSelectedOptimizations([])
+    setCustomInstruction('')
+    setIsOptimizingYouDirect(false)
   }, [audienceReview, isOpen])
 
   // Initialize all recommendations as selected when review loads
@@ -608,6 +677,116 @@ export default function ScriptReviewModal({
       setSelectedRecommendationIndices(allIndices)
     }
   }, [audienceReview])
+
+  // Auto-update custom instructions when optimization selections change
+  useEffect(() => {
+    const selectedTexts = SCRIPT_INSTRUCTION_TEMPLATES
+      .filter(t => selectedOptimizations.includes(t.id))
+      .map(t => t.text)
+    
+    if (selectedTexts.length > 0) {
+      setCustomInstruction(selectedTexts.join('\n\n'))
+    }
+  }, [selectedOptimizations])
+
+  // When recording starts, save the current instruction as base
+  useEffect(() => {
+    if (isMicRecording) {
+      baseInstructionRef.current = customInstruction
+    }
+  }, [isMicRecording, customInstruction])
+  
+  // Update instruction with voice transcript
+  useEffect(() => {
+    if (!isMicRecording) return
+    if (!micTranscript) return
+    
+    // Combine base instruction with current transcript
+    const base = baseInstructionRef.current.trim()
+    const newInstruction = base ? `${base} ${micTranscript}` : micTranscript
+    setCustomInstruction(newInstruction)
+  }, [isMicRecording, micTranscript])
+
+  // Voice input toggle handler
+  const handleVoiceToggle = () => {
+    if (!sttSupported || !sttSecure) return
+    if (isMicRecording) {
+      stopMic()
+      // Keep the final transcript in the instruction
+      baseInstructionRef.current = customInstruction
+      setMicTranscript('')
+      return
+    }
+    // Save current instruction as base before starting
+    baseInstructionRef.current = customInstruction
+    setMicTranscript('')
+    startMic()
+  }
+
+  // "You Direct" revision handler
+  const handleYouDirectRevise = async () => {
+    const instruction = customInstruction.trim()
+    
+    if (!instruction && selectedOptimizations.length === 0) {
+      toast.error('Please select optimizations or enter custom instructions')
+      return
+    }
+
+    if (!projectId || !script || !onScriptOptimized) {
+      toast.error('Script optimization not available')
+      return
+    }
+    
+    setIsOptimizingYouDirect(true)
+    try {
+      await execute(async () => {
+        let response = await fetch('/api/vision/optimize-script', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            projectId, 
+            script, 
+            instruction, 
+            characters: characters || []
+          })
+        })
+        if (!response.ok) {
+          if (response.status === 422) {
+            // Retry with compact response to avoid truncation/parse issues
+            toast.message('Preview was large; retrying compact version...')
+            response = await fetch('/api/vision/optimize-script', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                projectId, 
+                script, 
+                instruction, 
+                characters: characters || [], 
+                compact: true
+              })
+            })
+          }
+          if (!response.ok) throw new Error('Optimization failed')
+        }
+        const data = await response.json()
+        
+        if (data.optimizedScript) {
+          onScriptOptimized(data.optimizedScript)
+          toast.success('Script revised with your custom direction!')
+          // Reset You Direct state after success
+          setSelectedOptimizations([])
+          setCustomInstruction('')
+        } else {
+          toast.message('No changes returned for the current instruction.')
+        }
+      }, { message: 'Revising your script with custom direction...', estimatedDuration: 25, operationType: 'script-optimization' })
+    } catch (error: any) {
+      console.error('[You Direct] Error:', error)
+      toast.error(error.message || 'Failed to revise script')
+    } finally {
+      setIsOptimizingYouDirect(false)
+    }
+  }
 
   // Toggle recommendation selection
   const toggleRecommendation = (index: number) => {
@@ -998,40 +1177,42 @@ export default function ScriptReviewModal({
                     </Button>
                   </div>
                 )}
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                   <TabsTrigger value="overview" className="flex items-center gap-1.5 text-xs sm:text-sm">
                     <BarChart3 className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline">Overview</span>
-                    <span className="sm:hidden">Score</span>
                   </TabsTrigger>
                   <TabsTrigger value="feedback" className="flex items-center gap-1.5 text-xs sm:text-sm">
                     <MessageSquare className="w-3.5 h-3.5" />
-                    Feedback
+                    <span className="hidden sm:inline">Feedback</span>
                   </TabsTrigger>
                   <TabsTrigger value="recommendations" className="flex items-center gap-1.5 text-xs sm:text-sm">
                     <ListChecks className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Recommendations</span>
-                    <span className="sm:hidden">Actions</span>
+                    <span className="hidden sm:inline">AI Advice</span>
                     {review.recommendations.length > 0 && (
-                      <Badge variant="secondary" className="ml-1 text-xs h-5 px-1.5">
+                      <Badge variant="secondary" className="ml-1 text-xs h-5 px-1.5 hidden sm:flex">
                         {review.recommendations.length}
                       </Badge>
                     )}
                   </TabsTrigger>
                   <TabsTrigger value="scenes" className="flex items-center gap-1.5 text-xs sm:text-sm">
                     <Film className="w-3.5 h-3.5" />
-                    Scenes
+                    <span className="hidden sm:inline">Scenes</span>
                     {sceneAnalysis.length > 0 && (() => {
                       const needsFix = sceneAnalysis.filter(s => s.score < 80).length
-                      return (
+                      return needsFix > 0 ? (
                         <Badge 
                           variant="secondary" 
-                          className={`ml-1 text-xs h-5 px-1.5 ${needsFix > 0 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}`}
+                          className="ml-1 text-xs h-5 px-1.5 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 hidden sm:flex"
                         >
-                          {needsFix > 0 ? `${needsFix} to fix` : `${sceneAnalysis.length} ✓`}
+                          {needsFix}
                         </Badge>
-                      )
+                      ) : null
                     })()}
+                  </TabsTrigger>
+                  <TabsTrigger value="you-direct" className="flex items-center gap-1.5 text-xs sm:text-sm">
+                    <Wand2 className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">You Direct</span>
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -1606,6 +1787,136 @@ export default function ScriptReviewModal({
                         <p className="text-sm mt-1">This analysis is generated for detailed reviews</p>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* You Direct Tab */}
+                {activeTab === 'you-direct' && (
+                  <div className="space-y-6">
+                    {/* Common Optimizations */}
+                    <div>
+                      <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                        <Wand2 className="w-4 h-4 text-blue-600" />
+                        Common Optimizations
+                      </h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        {SCRIPT_INSTRUCTION_TEMPLATES.map(template => (
+                          <Button
+                            key={template.id}
+                            size="sm"
+                            variant={selectedOptimizations.includes(template.id) ? "default" : "outline"}
+                            onClick={() => {
+                              if (selectedOptimizations.includes(template.id)) {
+                                setSelectedOptimizations(prev => prev.filter(id => id !== template.id))
+                              } else {
+                                setSelectedOptimizations(prev => [...prev, template.id])
+                              }
+                            }}
+                            className={`justify-start text-left h-auto py-3 px-3 ${
+                              selectedOptimizations.includes(template.id) 
+                                ? 'bg-blue-600 text-white hover:bg-blue-500' 
+                                : 'hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                            }`}
+                          >
+                            <div className="flex items-start gap-2 w-full">
+                              {selectedOptimizations.includes(template.id) && (
+                                <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                              )}
+                              <Edit className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                              <div className="text-left">
+                                <div className="font-medium text-xs">{template.label}</div>
+                              </div>
+                            </div>
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Custom Instructions */}
+                    <div>
+                      <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                        <Edit className="w-4 h-4 text-green-600" />
+                        Custom Instructions
+                      </h3>
+                      <div className="space-y-2">
+                        <div className="flex flex-col gap-2">
+                          <Textarea
+                            value={customInstruction}
+                            onChange={(e) => setCustomInstruction(e.target.value)}
+                            placeholder="Describe how you want to optimize your script...
+Examples:
+• Make the pacing more dynamic and cut unnecessary scenes
+• Strengthen the emotional arc and character development
+• Unify the visual style across all scenes
+• Polish dialogue for more natural, subtext-rich conversations"
+                            className="min-h-[180px] text-sm"
+                          />
+                          <div className="flex items-center justify-between gap-3">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={handleVoiceToggle}
+                              disabled={!sttSupported || !sttSecure}
+                              className={`flex items-center gap-2 ${isMicRecording ? 'border-red-500 text-red-400' : ''}`}
+                              aria-label={isMicRecording ? 'Stop voice input' : 'Start voice input'}
+                            >
+                              {isMicRecording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                              <span>
+                                {isMicRecording ? 'Stop Recording' : 'Voice Input'}
+                              </span>
+                            </Button>
+                            {isMicRecording && (
+                              <span className="text-xs text-red-400 animate-pulse">Listening...</span>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          💡 Be specific about what to optimize. The more detailed your instructions, the better the results.
+                        </p>
+                        {!sttSupported && (
+                          <p className="text-xs text-amber-500">
+                            Voice input is unavailable in this browser. Try Chrome on HTTPS or localhost.
+                          </p>
+                        )}
+                        {sttSupported && !sttSecure && (
+                          <p className="text-xs text-amber-500">
+                            Voice input requires a secure context (HTTPS or localhost).
+                          </p>
+                        )}
+                        {micError && (
+                          <p className="text-xs text-red-500">
+                            Mic error: {micError}
+                          </p>
+                        )}
+                        {micPermission && micPermission !== 'granted' && (
+                          <p className="text-xs text-amber-400">
+                            Microphone permission: {micPermission}. Update browser settings to enable voice input.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Revise Button */}
+                    <div className="flex gap-3 justify-end pt-2 border-t border-gray-200 dark:border-gray-700">
+                      <Button
+                        onClick={handleYouDirectRevise}
+                        disabled={isOptimizingYouDirect || (!customInstruction.trim() && selectedOptimizations.length === 0)}
+                        className="bg-purple-600 hover:bg-purple-500 text-white px-6"
+                      >
+                        {isOptimizingYouDirect ? (
+                          <>
+                            <Loader className="w-4 h-4 mr-2 animate-spin" />
+                            Revising Script...
+                          </>
+                        ) : (
+                          <>
+                            <Wand2 className="w-4 h-4 mr-2" />
+                            Revise Script with Custom Direction
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>

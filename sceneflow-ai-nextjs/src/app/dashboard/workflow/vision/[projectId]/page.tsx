@@ -4274,7 +4274,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       'production:update-reviews': () => handlersRef.current.generateReviews(),
       'production:review-analysis': () => setShowReviewModal(true),
       'production:review-treatment': () => setShowTreatmentReview(true),
-      'production:edit-script': () => setReviseScriptInstruction(' '),
       // Guide dropdown events
       'vision:scenes': () => {
         // Scroll to first scene

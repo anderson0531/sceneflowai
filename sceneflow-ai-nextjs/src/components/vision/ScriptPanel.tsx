@@ -40,7 +40,6 @@ import ScenePromptDrawer from './ScenePromptDrawer'
 import { AudioMixer, type AudioTrack } from './AudioMixer'
 import ScriptReviewModal from './ScriptReviewModal'
 import SceneReviewModal from './SceneReviewModal'
-import { ScriptEditorModal } from './ScriptEditorModal'
 import { ImageEditModal } from './ImageEditModal'
 import { toast } from 'sonner'
 import { useOverlayStore } from '@/store/useOverlayStore'
@@ -523,8 +522,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const { credits: userCredits } = useCredits()
   
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
-  const [showScriptEditor, setShowScriptEditor] = useState(false)
-  const [scriptEditorInitialInstruction, setScriptEditorInitialInstruction] = useState<string | null>(null)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
   const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
   const [storyboardPreviewOpen, setStoryboardPreviewOpen] = useState(false)
@@ -869,16 +866,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   useEffect(() => {
     generationModeRef.current = dialogGenerationMode
   }, [dialogGenerationMode])
-
-  // Open script editor when instruction is provided from parent (e.g., Review Analysis modal)
-  useEffect(() => {
-    if (openScriptEditorWithInstruction) {
-      setScriptEditorInitialInstruction(openScriptEditorWithInstruction)
-      setShowScriptEditor(true)
-      // Clear the instruction in parent after opening
-      onClearScriptEditorInstruction?.()
-    }
-  }, [openScriptEditorWithInstruction, onClearScriptEditorInstruction])
 
   const toastVisualStyle = {
     background: '#111827',
@@ -2411,18 +2398,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               <Calculator className="w-4 h-4 text-cyan-400" />
               <span className="text-sm hidden sm:inline">Budget</span>
             </Button>
-            
-            {/* Edit Script Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.dispatchEvent(new CustomEvent('production:edit-script'))}
-              className="flex items-center gap-2 border-blue-500/30 hover:border-blue-500/50 hover:bg-blue-500/10"
-              title="Edit and iterate on the script"
-            >
-              <Edit className="w-4 h-4 text-blue-400" />
-              <span className="text-sm hidden sm:inline">Edit Script</span>
-            </Button>
 
             {/* Go to Bookmark Button */}
             {bookmarkedScene && onJumpToBookmark && (
@@ -2772,38 +2747,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             }
           }}
           isGenerating={generatingScoreFor === selectedSceneForReview}
-        />
-      )}
-
-      {/* Script Editor Modal */}
-      {showScriptEditor && (
-        <ScriptEditorModal
-          isOpen={showScriptEditor}
-          onClose={() => {
-            setShowScriptEditor(false)
-            setScriptEditorInitialInstruction(null) // Clear instruction when closing
-          }}
-          script={script?.script || script}
-          projectId={projectId || ''}
-          characters={characters}
-          initialInstruction={scriptEditorInitialInstruction || undefined}
-          onApplyChanges={(revisedScript) => {
-            // Clean up stale audio when script scenes are edited
-            const originalScenes = script?.script?.scenes || script?.scenes || []
-            const revisedScenes = revisedScript.scenes || []
-            const { cleanedScenes } = cleanupScriptAudio(originalScenes, revisedScenes)
-            
-            const updatedScript = {
-              ...script,
-              script: {
-                ...revisedScript,
-                scenes: cleanedScenes
-              }
-            }
-            onScriptChange(updatedScript)
-            setShowScriptEditor(false)
-            setScriptEditorInitialInstruction(null) // Clear instruction after applying
-          }}
         />
       )}
 

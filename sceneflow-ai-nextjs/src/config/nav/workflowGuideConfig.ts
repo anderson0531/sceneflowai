@@ -52,7 +52,7 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
     iconColor: 'text-blue-500',
     steps: [
       { id: 'update-review-score', label: 'Update Review Score', actionEventName: 'production:update-reviews' },
-      { id: 'edit-script-iterate', label: 'Edit Script (Iterate)', actionEventName: 'production:edit-script' },
+      { id: 'review-analysis', label: 'Review Analysis (Edit Script)', actionEventName: 'production:review-analysis' },
       { id: 'obtain-target-score', label: 'Obtain Target Score (85+)', description: 'Aim for green scores' },
     ],
   },
@@ -127,7 +127,7 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
     iconColor: 'text-amber-500',
     collapsed: true,
     steps: [
-      { id: 'revise-script', label: 'Revise Script as Needed', actionEventName: 'production:edit-script' },
+      { id: 'revise-script', label: 'Revise Script as Needed', actionEventName: 'production:review-analysis' },
       { id: 'revise-frames', label: 'Revise Frames', actionEventName: 'production:edit-frames' },
       { id: 'revise-audio', label: 'Revise Audio', actionEventName: 'production:audio-timeline' },
     ],
