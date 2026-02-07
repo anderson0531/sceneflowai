@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
+import { safeParseJsonFromText } from '@/lib/safeJson'
 
 export const maxDuration = 600 // 10min for large scripts with retries + parallel batches
 export const runtime = 'nodejs'
@@ -469,7 +470,15 @@ Return ONLY valid JSON:
       return null
     }
     
-    const plan: StructuralPlan = JSON.parse(result.text)
+    // Use safe JSON parser to handle malformed responses
+    let plan: StructuralPlan
+    try {
+      plan = safeParseJsonFromText(result.text)
+    } catch (parseError) {
+      console.error('[Structural Pre-Pass] JSON parse failed:', parseError)
+      console.log('[Structural Pre-Pass] Raw response (first 500 chars):', result.text.substring(0, 500))
+      return null
+    }
     
     if (!plan.actions || !Array.isArray(plan.actions) || plan.actions.length === 0) {
       console.log('[Structural Pre-Pass] No structural changes needed')
