@@ -359,8 +359,13 @@ FINAL CHECK before outputting:
 3. Balance criticism with recognition of strengths`
 
   console.log('[Audience Resonance] Calling Vertex AI Gemini with deduction-based prompt...')
-  // Token budget: 12k base + 300 per scene for full scene analysis with recommendations (≤30 scenes)
-  const reviewTokenBudget = Math.min(22000, 12000 + (sceneCount <= 30 ? sceneCount * 300 : 0))
+  // Token budget: 12k base + tokens for scene analysis
+  // For ≤30 scenes: 300 tokens per scene for full analysis
+  // For >30 scenes: 3000 tokens for sampled key scene analysis (~10 scenes)
+  const sceneAnalysisTokens = sceneCount <= 30 ? sceneCount * 300 : 3000
+  const reviewTokenBudget = Math.min(24000, 12000 + sceneAnalysisTokens)
+  console.log(`[Audience Resonance] Token budget: ${reviewTokenBudget} (${sceneCount} scenes, ${sceneAnalysisTokens} for scene analysis)`)
+  
   const result = await generateText(prompt, {
     model: 'gemini-2.5-flash',
     temperature: 0, // Deterministic scoring — same script should yield same scores
@@ -516,6 +521,13 @@ FINAL CHECK before outputting:
     { name: 'Pacing & Rhythm', score: 70, weight: 15 },
     { name: 'Show vs Tell Ratio', score: 70, weight: 10 }
   ]
+
+  // Log scene analysis results
+  const sceneAnalysisCount = review.sceneAnalysis?.length || 0
+  console.log(`[Audience Resonance] Scene analysis: ${sceneAnalysisCount} scenes analyzed (script has ${sceneCount} scenes)`)
+  if (sceneAnalysisCount === 0) {
+    console.warn('[Audience Resonance] WARNING: No scene analysis returned from AI. Response may have been truncated.')
+  }
 
   return {
     overallScore: review.overallScore || 75,
