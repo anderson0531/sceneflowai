@@ -14,6 +14,7 @@ import ProjectIdeaTab from "@/components/studio/ProjectIdeaTab";
 import dynamic from 'next/dynamic';
 import { cn } from "@/lib/utils";
 import { BlueprintReimaginDialog } from '@/components/blueprint/BlueprintReimaginDialog'
+import { ScriptImportResult } from '@/components/blueprint/BlueprintComposer'
 import { TreatmentHeroImage } from '@/components/treatment/TreatmentHeroImage'
 import { SidePanelTabs } from '@/components/blueprint/SidePanelTabs'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
@@ -159,6 +160,47 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     } catch (e) {
       console.error('Vision creation error:', e)
       try { const { toast } = require('sonner'); toast.error('Failed to create Vision') } catch {}
+    }
+  }
+
+  // Handle script import from BlueprintComposer
+  const handleScriptImport = async (result: ScriptImportResult) => {
+    try {
+      // Get or create user ID
+      let userId = localStorage.getItem('authUserId')
+      if (!userId) {
+        userId = crypto.randomUUID()
+        localStorage.setItem('authUserId', userId)
+      }
+      
+      const { toast } = await import('sonner')
+      toast.info('Importing script...')
+      
+      // Create project from imported script via API
+      const res = await fetch('/api/projects/from-script', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          parsedScript: result.parsedScript,
+          visionPhase: result.visionPhase,
+          treatmentVariant: result.treatmentVariant
+        })
+      })
+      
+      const data = await res.json()
+      
+      if (data.success && data.project) {
+        toast.success(`Script imported! ${data.project.metadata?.sceneCount || 0} scenes, ${data.project.metadata?.characterCount || 0} characters`)
+        // Navigate to Vision/Production page
+        router.push(`/dashboard/workflow/vision/${data.project.id}`)
+      } else {
+        toast.error(data.error || 'Failed to import script')
+      }
+    } catch (e: any) {
+      console.error('Script import error:', e)
+      const { toast } = await import('sonner')
+      toast.error('Failed to import script: ' + (e?.message || 'Unknown error'))
     }
   }
 
@@ -754,13 +796,79 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                     <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
                       Generate a professional film treatment with AI-powered story structure, characters, and visual direction.
                     </p>
-                    <Button
-                      onClick={() => setShowReimaginDialog(true)}
-                      className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white px-6 py-3 text-base font-medium"
-                    >
-                      <Sparkles className="w-5 h-5 mr-2" />
-                      Generate Blueprint
-                    </Button>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                      <Button
+                        onClick={() => setShowReimaginDialog(true)}
+                        className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white px-6 py-3 text-base font-medium"
+                      >
+                        <Sparkles className="w-5 h-5 mr-2" />
+                        Generate Blueprint
+                      </Button>
+                      <span className="text-gray-500 text-sm">or</span>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          // Trigger file input for script import
+                          const input = document.createElement('input')
+                          input.type = 'file'
+                          input.accept = '.txt,.md,.fountain,.fdx,.pdf,.docx'
+                          input.onchange = async (e) => {
+                            const file = (e.target as HTMLInputElement).files?.[0]
+                            if (!file) return
+                            
+                            const { toast } = await import('sonner')
+                            toast.info('Analyzing script...')
+                            
+                            try {
+                              let extractedText = ''
+                              
+                              if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+                                const { extractTextFromPdf } = await import('@/lib/upload/extractors')
+                                extractedText = await extractTextFromPdf(file)
+                              } else if (file.type.includes('wordprocessingml') || file.name.endsWith('.docx')) {
+                                const { extractTextFromDocx } = await import('@/lib/upload/extractors')
+                                extractedText = await extractTextFromDocx(file)
+                              } else {
+                                extractedText = await file.text()
+                              }
+                              
+                              if (!extractedText.trim()) {
+                                toast.error('Could not extract text from file')
+                                return
+                              }
+                              
+                              // Validate and parse
+                              const { validateScript } = await import('@/lib/script/scriptValidator')
+                              const { parseScript, toVisionPhaseFormat, toTreatmentVariant } = await import('@/lib/script/scriptParser')
+                              
+                              const validation = validateScript(extractedText)
+                              
+                              if (!validation.isValid) {
+                                toast.error(`Script format issues: ${validation.issues.map(i => i.message).join(', ')}`)
+                                return
+                              }
+                              
+                              const parsed = parseScript(extractedText, validation)
+                              const visionPhase = toVisionPhaseFormat(parsed)
+                              const treatmentVariant = toTreatmentVariant(parsed)
+                              
+                              // Proceed with import
+                              await handleScriptImport({ parsedScript: parsed, visionPhase, treatmentVariant })
+                            } catch (err: any) {
+                              toast.error('Failed to import script: ' + (err?.message || 'Unknown error'))
+                            }
+                          }
+                          input.click()
+                        }}
+                        className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white px-6 py-3 text-base"
+                      >
+                        <FileText className="w-5 h-5 mr-2" />
+                        Import Script
+                      </Button>
+                    </div>
+                    <p className="text-gray-500 text-xs mt-4">
+                      Supports .txt, .md, .fountain, .fdx, .pdf, .docx formats
+                    </p>
                   </div>
                 )}
 
