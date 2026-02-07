@@ -727,6 +727,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   useEffect(() => {
     if (searchParams.get('openPlayer') === 'true') {
       setIsPlayerOpen(true)
+      // Remove openPlayer param from URL to prevent re-opening on refresh
+      const newParams = new URLSearchParams(searchParams.toString())
+      newParams.delete('openPlayer')
+      const newUrl = newParams.toString() 
+        ? `${window.location.pathname}?${newParams}` 
+        : window.location.pathname
+      window.history.replaceState({}, '', newUrl)
     }
   }, [searchParams])
 
