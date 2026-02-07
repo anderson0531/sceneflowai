@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { ChevronUp, ChevronDown, BarChart3, FileText, Sparkles, Target, Users, Heart } from 'lucide-react'
+import { ChevronUp, ChevronDown, BarChart3, Wand2, Sparkles, Target, Users, Heart } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
@@ -408,27 +408,15 @@ export function ReviewScoresPanel({
                 </TooltipProvider>
               )}
 
-              {/* Action Buttons - Purple for Analyze, Blue for View */}
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <button
-                  onClick={handleUpdateReviews}
-                  disabled={isGenerating}
-                  className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                >
-                  {isGenerating ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <BarChart3 className="w-6 h-6" />
-                  )}
-                  <span>Analyze</span>
-                </button>
+              {/* Action Button - Opens script review modal */}
+              <div className="pt-1">
                 <button
                   onClick={handleReviewAnalysis}
                   disabled={isGenerating}
-                  className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 >
-                  <FileText className="w-5 h-5" />
-                  <span>Report</span>
+                  <Wand2 className="w-5 h-5" />
+                  <span>Optimize Script</span>
                 </button>
               </div>
             </>
