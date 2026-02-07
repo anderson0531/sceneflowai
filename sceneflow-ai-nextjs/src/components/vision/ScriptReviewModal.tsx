@@ -984,10 +984,30 @@ export default function ScriptReviewModal({
     
     setIsGeneratingSceneAnalysis(true)
     try {
+      // Build audienceReview context for calibrated scene analysis
+      const audienceReviewContext = audienceReview ? {
+        overallScore: audienceReview.overallScore,
+        categories: audienceReview.categories?.map(c => ({
+          name: c.name,
+          score: c.score,
+          weight: c.weight || 0
+        })),
+        recommendations: audienceReview.recommendations?.map(r => ({
+          text: typeof r === 'string' ? r : r.text,
+          priority: typeof r === 'string' ? 'medium' : (r.priority || 'medium'),
+          category: typeof r === 'string' ? undefined : r.category
+        })),
+        improvements: audienceReview.improvements
+      } : undefined
+
       const response = await fetch('/api/vision/analyze-scenes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId, script })
+        body: JSON.stringify({ 
+          projectId, 
+          script,
+          audienceReview: audienceReviewContext
+        })
       })
       
       const data = await response.json()

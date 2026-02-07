@@ -13,7 +13,20 @@ interface SceneAnalysis {
   characterDevelopment: 'minimal' | 'moderate' | 'strong'
   visualPotential: 'low' | 'medium' | 'high'
   notes: string
-  recommendations: string[]
+  recommendations: SceneRecommendation[]
+}
+
+interface SceneRecommendation {
+  text: string
+  category: string // Matches script-level categories: Dialogue Issues, Narration/Description Issues, etc.
+  targetElement?: string // The specific line, action, or element to change
+}
+
+interface AudienceReviewContext {
+  overallScore: number
+  categories?: { name: string; score: number; weight: number }[]
+  recommendations?: { text: string; priority: string; category?: string }[]
+  improvements?: string[]
 }
 
 interface AnalyzeScenesRequest {
@@ -24,6 +37,7 @@ interface AnalyzeScenesRequest {
     scenes: any[]
     characters?: any[]
   }
+  audienceReview?: AudienceReviewContext
 }
 
 export async function POST(req: NextRequest) {
@@ -40,7 +54,7 @@ export async function POST(req: NextRequest) {
     const sceneCount = script.scenes.length
     console.log(`[Scene Analysis] Analyzing ${sceneCount} scenes for project: ${projectId}`)
 
-    const sceneAnalysis = await generateSceneAnalysis(script)
+    const sceneAnalysis = await generateSceneAnalysis(script, body.audienceReview)
 
     console.log(`[Scene Analysis] Generated analysis for ${sceneAnalysis.length} scenes`)
 
@@ -59,7 +73,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function generateSceneAnalysis(script: any): Promise<SceneAnalysis[]> {
+async function generateSceneAnalysis(script: any, audienceReview?: AudienceReviewContext): Promise<SceneAnalysis[]> {
   const sceneCount = script.scenes?.length || 0
   
   if (sceneCount === 0) {
@@ -84,22 +98,58 @@ ${dialogueLines ? `Dialogue:\n${dialogueLines}` : 'No dialogue'}
 ---`
   }).join('\n\n')
 
-  const prompt = `You are an expert screenplay analyst. Analyze each scene in this script and provide detailed feedback.
+  // Build script-level context from audienceReview
+  let scriptContext = ''
+  if (audienceReview) {
+    scriptContext = `
+## SCRIPT-LEVEL ANALYSIS CONTEXT (from overall review)
+The script received an overall Audience Resonance score of ${audienceReview.overallScore}/100.
+
+${audienceReview.categories && audienceReview.categories.length > 0 ? `
+Category Scores:
+${audienceReview.categories.map(c => `- ${c.name}: ${c.score}/100 (weight: ${c.weight}%)`).join('\n')}
+` : ''}
+
+${audienceReview.recommendations && audienceReview.recommendations.length > 0 ? `
+Script-Level Issues Identified:
+${audienceReview.recommendations.map(r => `- [${r.priority}] ${r.category || 'General'}: ${r.text}`).join('\n')}
+
+IMPORTANT: Your scene-level analysis should identify WHERE these script-level issues occur. 
+For each script-level recommendation, identify which specific scenes exhibit this problem.
+` : ''}
+
+${audienceReview.improvements && audienceReview.improvements.length > 0 ? `
+Required Improvements:
+${audienceReview.improvements.map(i => `- ${i}`).join('\n')}
+` : ''}
+
+SCORE CALIBRATION:
+- The overall script score is ${audienceReview.overallScore}. Scene scores should be consistent with this.
+- If the script overall is ${audienceReview.overallScore}, individual scenes should average around that score.
+- Some scenes may score higher/lower, but avoid inflating all scenes to 85+ when overall is ${audienceReview.overallScore}.
+`
+  }
+
+  const prompt = `You are an expert screenplay analyst. Analyze each scene in this script and provide detailed, actionable feedback.
 
 Script: ${script.title || 'Untitled Script'}
 Logline: ${script.logline || 'No logline provided'}
 Total Scenes: ${sceneCount}
+${scriptContext}
 
 ${sceneDetails}
 
 For EACH scene (1 through ${sceneCount}), provide:
 
-1. **score** (1-100): Overall quality score
-   - 90-100: Exceptional scene, production ready
-   - 80-89: Strong scene with minor polish needed
-   - 70-79: Good foundation, needs refinement
-   - 60-69: Has potential but needs significant work
-   - Below 60: Needs major revision
+1. **score** (1-100): Overall quality score - USE THIS CALIBRATION:
+   - 90-100: Exceptional - production ready, masterful execution
+   - 80-89: Strong - minor polish needed, works well
+   - 75-79: Good - solid foundation, some refinement needed
+   - 65-74: Fair - has potential but needs noticeable work  
+   - 55-64: Needs Work - significant issues to address
+   - Below 55: Major Revision - fundamental problems
+   
+   Note: Be honest and calibrated. A scene that "works but has issues" is 70-79, not 85+.
 
 2. **pacing**: slow / moderate / fast
    - Consider dialogue density, action beats, tension buildup
@@ -113,15 +163,22 @@ For EACH scene (1 through ${sceneCount}), provide:
 5. **visualPotential**: low / medium / high
    - Consider cinematographic opportunities, memorable imagery
 
-6. **notes**: One sentence identifying what works well OR the most impactful improvement needed
+6. **notes**: One sentence identifying what works well AND/OR the most impactful improvement needed
 
-7. **recommendations**: Array of 2-4 specific, actionable fixes. Each should be:
-   - Concrete and self-contained
-   - Directly implementable by a revision AI
-   - Examples:
-     * "Add subtext to Sarah's dialogue — she agrees too quickly without showing internal conflict"
-     * "Replace the narration explaining the mood with a visual action beat"
-     * "Extend the beat before John's revelation to build more suspense"
+7. **recommendations**: Array of 2-4 specific, actionable fixes. CRITICAL REQUIREMENTS:
+   - Each must quote or reference SPECIFIC content from the scene
+   - Each must specify the category of issue (e.g., "Dialogue Issues", "Narration/Description Issues", "Pacing Issues")
+   - Each should include the targetElement (the specific line, action, or element to change)
+   
+   GOOD EXAMPLES:
+   - { "text": "Replace narration 'Sarah felt torn between duty and desire' with visual action showing her hesitation through body language", "category": "Narration/Description Issues", "targetElement": "Narration line about Sarah's feelings" }
+   - { "text": "Add subtext to SARAH's line 'I'll do it' — she agrees too quickly; add a beat of hesitation or a conflicted look", "category": "Dialogue Issues", "targetElement": "SARAH: I'll do it" }
+   - { "text": "The exposition about the corporation's history interrupts the tension — move to an earlier scene or show through environmental detail", "category": "Pacing Issues", "targetElement": "Action block explaining MegaCorp history" }
+   
+   BAD EXAMPLES (too vague):
+   - "Add more subtext" (which line? what subtext?)
+   - "Improve the dialogue" (how? which lines?)
+   - "Make it more visual" (what specifically?)
 
 OUTPUT FORMAT - Return ONLY valid JSON (no markdown, no code fences):
 {
@@ -135,15 +192,18 @@ OUTPUT FORMAT - Return ONLY valid JSON (no markdown, no code fences):
       "characterDevelopment": "moderate",
       "visualPotential": "high",
       "notes": "Strong visual opening but dialogue needs more subtext",
-      "recommendations": ["Add a beat of hesitation before...", "Replace exposition with action..."]
+      "recommendations": [
+        { "text": "Replace 'She was nervous' with visual cues - trembling hands, avoiding eye contact", "category": "Narration/Description Issues", "targetElement": "Narration: She was nervous" },
+        { "text": "Add a beat before JOHN's reveal to build suspense", "category": "Pacing Issues", "targetElement": "JOHN: I'm your father" }
+      ]
     }
   ]
 }
 
-IMPORTANT:
+CRITICAL REMINDERS:
 - Analyze ALL ${sceneCount} scenes
-- Be constructive but honest
-- Focus on actionable improvements
+- Be constructive but HONEST - calibrate scores realistically
+- Every recommendation must reference specific content from the scene
 - Ensure JSON is valid with proper escaping`
 
   // Token budget: 500 tokens per scene for detailed analysis
