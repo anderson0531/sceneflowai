@@ -51,6 +51,20 @@ interface OptimizeScriptRequest {
 }
 
 // ============================================================
+// CHARACTER VOICE PROFILE TYPES
+// ============================================================
+
+interface CharacterVoiceProfile {
+  name: string
+  speechStyle: string       // e.g., "terse, scientific jargon, incomplete sentences"
+  vocabularyLevel: string   // e.g., "technical", "academic", "colloquial"
+  emotionalExpression: string // e.g., "suppressed, manifests as sighs and pauses"
+  sentenceStructure: string // e.g., "short, fragmented" or "long, complex clauses"
+  verbalTics: string[]      // e.g., ["ellipses...", "self-interruptions"]
+  exampleLine: string       // A sample line demonstrating the voice
+}
+
+// ============================================================
 // STRUCTURAL PRE-PASS TYPES
 // ============================================================
 
@@ -132,8 +146,25 @@ async function optimizeScript(
   const SCENES_PER_BATCH = 4
   const PARALLEL_CONCURRENCY = 2 // Process 2 batches at a time
   
-  // Build shared context once
-  const sharedContext = buildSharedContext(script, instruction, characters, compact, directorReview, audienceReview)
+  // ================================================================
+  // PHASE 0: CHARACTER VOICE PROFILE GENERATION
+  // Generate distinct speech patterns for each character BEFORE batching
+  // This ensures consistent voice differentiation across all scenes
+  // ================================================================
+  let voiceProfiles: Record<string, CharacterVoiceProfile> = {}
+  const needsVoiceDifferentiation = checkNeedsVoiceDifferentiation(instruction, audienceReview)
+  
+  if (needsVoiceDifferentiation && characters.length > 0) {
+    const elapsedMs = Date.now() - globalStartTime
+    const remainingMs = DEADLINE_MS - elapsedMs
+    
+    console.log('[Script Optimization] Generating character voice profiles for dialogue differentiation...')
+    voiceProfiles = await generateCharacterVoiceProfiles(characters, script, remainingMs)
+    console.log(`[Script Optimization] Generated voice profiles for ${Object.keys(voiceProfiles).length} characters`)
+  }
+  
+  // Build shared context once (now includes voice profiles)
+  const sharedContext = buildSharedContext(script, instruction, characters, compact, directorReview, audienceReview, voiceProfiles)
   
   // Extract per-scene analysis data from audience review (if available)
   const sceneAnalysis: SceneAnalysis[] = (audienceReview as any)?.sceneAnalysis || []
@@ -240,6 +271,24 @@ async function optimizeScript(
     }
   }
   
+  // ================================================================
+  // PHASE 3: POST-OPTIMIZATION VERIFICATION
+  // Check if mandatory recommendations were actually implemented
+  // ================================================================
+  const verification = verifyOptimizationResults(script, allOptimizedScenes, audienceReview)
+  console.log(`[Script Optimization] ${verification.summary}`)
+  
+  // Add verification summary to changes if there are missing recommendations
+  if (verification.missingRecommendations.length > 0 && verification.totalMandatory > 0) {
+    allChangesSummaries.push({
+      category: 'Verification Notice',
+      changes: `${verification.implementedCount}/${verification.totalMandatory} mandatory recommendations verified as implemented`,
+      rationale: verification.missingRecommendations.length <= 3 
+        ? `May need manual review: ${verification.missingRecommendations.slice(0, 3).join('; ')}`
+        : `${verification.missingRecommendations.length} recommendations may need manual review`
+    })
+  }
+  
   // Deduplicate and consolidate changes summaries
   const consolidatedChanges = consolidateChangesSummaries([...structuralChanges, ...allChangesSummaries])
   
@@ -257,13 +306,25 @@ function buildSharedContext(
   characters: any[],
   compact: boolean,
   directorReview?: Review | null,
-  audienceReview?: Review | null
+  audienceReview?: Review | null,
+  voiceProfiles?: Record<string, CharacterVoiceProfile>
 ): string {
   const characterList = characters?.map((c: any) => c.name).join(', ') || 'No characters'
   
-  const characterProfiles = characters?.map((c: any) => 
-    `- ${c.name}: ${c.description || ''} ${c.demeanor ? `(Demeanor: ${c.demeanor})` : ''}`
-  ).join('\n') || 'No character profiles'
+  // Build enhanced character profiles with voice differentiation
+  let characterProfiles = 'No character profiles'
+  if (characters?.length > 0) {
+    characterProfiles = characters.map((c: any) => {
+      const baseLine = `- ${c.name}: ${c.description || ''} ${c.demeanor ? `(Demeanor: ${c.demeanor})` : ''}`
+      const vp = voiceProfiles?.[c.name]
+      if (vp) {
+        return `${baseLine}
+    VOICE PROFILE: ${vp.speechStyle}. Vocabulary: ${vp.vocabularyLevel}. Emotional style: ${vp.emotionalExpression}. Sentence structure: ${vp.sentenceStructure}.${vp.verbalTics?.length ? ` Verbal tics: ${vp.verbalTics.join(', ')}.` : ''}
+    EXAMPLE LINE: "${vp.exampleLine}"`
+      }
+      return baseLine
+    }).join('\n')
+  }
 
   const normalizedInstruction = String(instruction || '')
     .split(/\r?\n/)
@@ -294,6 +355,39 @@ Key Issues: ${audienceReview.improvements.slice(0, 5).join('; ')}
       if (weakDimensions.length > 0) {
         reviewContext += `Weakest Dimensions: ${weakDimensions.join(', ')}\n`
       }
+      
+      // RECOMMENDATION ENFORCEMENT: Include structured recommendations with priorities
+      if (audienceReview.recommendations && audienceReview.recommendations.length > 0) {
+        const criticalRecs = audienceReview.recommendations.filter((r: any) => r.priority === 'critical')
+        const highRecs = audienceReview.recommendations.filter((r: any) => r.priority === 'high')
+        const mediumRecs = audienceReview.recommendations.filter((r: any) => r.priority === 'medium')
+        
+        if (criticalRecs.length > 0 || highRecs.length > 0) {
+          reviewContext += `\n=== MANDATORY FIXES (MUST IMPLEMENT) ===\n`
+          for (const rec of criticalRecs) {
+            reviewContext += `🔴 CRITICAL: ${rec.text}\n`
+            if (rec.sceneNumbers?.length) {
+              reviewContext += `   → Apply to scenes: ${rec.sceneNumbers.join(', ')}\n`
+            }
+          }
+          for (const rec of highRecs) {
+            reviewContext += `🟠 HIGH: ${rec.text}\n`
+            if (rec.sceneNumbers?.length) {
+              reviewContext += `   → Apply to scenes: ${rec.sceneNumbers.join(', ')}\n`
+            }
+          }
+        }
+        
+        if (mediumRecs.length > 0) {
+          reviewContext += `\n=== RECOMMENDED IMPROVEMENTS ===\n`
+          for (const rec of mediumRecs.slice(0, 5)) {
+            reviewContext += `🟡 MEDIUM: ${rec.text}\n`
+            if (rec.sceneNumbers?.length) {
+              reviewContext += `   → Consider for scenes: ${rec.sceneNumbers.join(', ')}\n`
+            }
+          }
+        }
+      }
     }
   }
 
@@ -309,21 +403,185 @@ CHARACTER PROFILES:
 ${characterProfiles}
 
 === OPTIMIZATION GUIDELINES ===
-1. Preserve author's voice and style
-2. Maintain character consistency
-3. Show don't tell - use action over exposition
-4. Add emotional/vocal tags to ALL dialogue: [happy], [sad], [angry], etc.
-5. Keep continuity with other scenes
-6. CRITICAL and HIGH priority recommendations MUST be applied where relevant
-7. MEDIUM recommendations should be applied if they naturally fit the scenes
-8. OPTIONAL recommendations are polish — apply only if they improve without disrupting
-9. Only apply recommendations that are relevant to the scenes in this batch
-${compact ? '10. Keep content concise to reduce output size' : ''}
+1. IMPLEMENT MANDATORY FIXES: CRITICAL and HIGH priority recommendations MUST be applied - these are non-negotiable
+2. Preserve author's voice and style while implementing fixes
+3. Maintain character consistency - each character speaks DISTINCTLY
+4. Show don't tell - use action over exposition instead of dialogue explaining plot
+5. Add emotional/vocal tags to ALL dialogue: [happy], [sad], [angry], etc.
+6. Keep continuity with other scenes
+7. MEDIUM recommendations should be applied if they naturally fit
+8. Only apply recommendations relevant to the scenes in this batch
+9. DO NOT just shorten text - make SUBSTANTIVE changes that address the underlying issues
+10. When a recommendation says "add" or "show" something, ADD new content (action lines, visual details, dialogue beats)
+${compact ? '11. Balance conciseness with addressing all mandatory fixes' : ''}
 
 === DIALOGUE AUDIO TAGS (Required) ===
 Every dialogue line needs emotional tags in square brackets:
   * {"character": "JOHN", "line": "[excited] I can't believe it!"}
   * {"character": "MARY", "line": "[sadly] I wish things were different..."}`
+}
+
+// ============================================================
+// VOICE PROFILE GENERATION: Distinct character voice differentiation
+// ============================================================
+
+const VOICE_DIFFERENTIATION_KEYWORDS = [
+  'speech pattern', 'unique voice', 'dialogue differentiation', 'distinct voice',
+  'character voice', 'how they speak', 'speaking style', 'vocal identity',
+  'sounds the same', 'indistinguishable', 'generic dialogue', 'homogeneous',
+  'voice consistency', 'dialogue consistency'
+]
+
+function checkNeedsVoiceDifferentiation(instruction: string, audienceReview?: Review | null): boolean {
+  const lower = instruction.toLowerCase()
+  
+  // Check instruction for voice-related keywords
+  if (VOICE_DIFFERENTIATION_KEYWORDS.some(kw => lower.includes(kw))) {
+    return true
+  }
+  
+  // Check audience review recommendations
+  if (audienceReview?.recommendations) {
+    for (const rec of audienceReview.recommendations) {
+      if (typeof rec === 'object' && rec.text) {
+        const recLower = rec.text.toLowerCase()
+        if (VOICE_DIFFERENTIATION_KEYWORDS.some(kw => recLower.includes(kw))) {
+          return true
+        }
+        // Also check for dialogue-related high priority recommendations
+        if ((rec.priority === 'critical' || rec.priority === 'high') && 
+            (recLower.includes('dialogue') || recLower.includes('character'))) {
+          return true
+        }
+      }
+    }
+  }
+  
+  // Check if Character Authenticity dimension scored low
+  if (audienceReview?.categories) {
+    const authCategory = audienceReview.categories.find(
+      c => c.name.toLowerCase().includes('character') || c.name.toLowerCase().includes('authenticity')
+    )
+    if (authCategory && authCategory.score < 75) {
+      return true
+    }
+  }
+  
+  return false
+}
+
+async function generateCharacterVoiceProfiles(
+  characters: any[],
+  script: any,
+  remainingMs: number
+): Promise<Record<string, CharacterVoiceProfile>> {
+  const profiles: Record<string, CharacterVoiceProfile> = {}
+  
+  if (!characters || characters.length === 0) {
+    return profiles
+  }
+  
+  // Extract sample dialogue for each character from the script
+  const characterDialogue: Record<string, string[]> = {}
+  for (const scene of script.scenes || []) {
+    for (const d of scene.dialogue || []) {
+      if (d.character && d.line) {
+        if (!characterDialogue[d.character]) {
+          characterDialogue[d.character] = []
+        }
+        // Keep up to 5 sample lines per character
+        if (characterDialogue[d.character].length < 5) {
+          characterDialogue[d.character].push(d.line)
+        }
+      }
+    }
+  }
+  
+  // Build character context for the prompt
+  const charContext = characters.map(c => {
+    const samples = characterDialogue[c.name] || []
+    return `Character: ${c.name}
+Description: ${c.description || 'No description'}
+Demeanor: ${c.demeanor || 'No demeanor specified'}
+Age: ${c.age || 'Unknown'}
+Ethnicity: ${c.ethnicity || 'Not specified'}
+Sample dialogue: ${samples.length > 0 ? samples.map(s => `"${s}"`).join(' | ') : 'No dialogue yet'}`
+  }).join('\n\n')
+  
+  const prompt = `You are a dialogue coach creating DISTINCT voice profiles for screenplay characters.
+
+CHARACTERS TO DIFFERENTIATE:
+${charContext}
+
+TASK: Create a unique, instantly-recognizable voice profile for EACH character. Their speech patterns must be SIGNIFICANTLY DIFFERENT from each other.
+
+Consider:
+- Education/background (affects vocabulary complexity)
+- Emotional expressiveness (stoic vs. animated)
+- Speech rhythm (clipped sentences vs. flowing prose)
+- Regional/cultural influences
+- Personality quirks reflected in speech
+- Age-appropriate language
+
+For each character, provide:
+1. speechStyle: 2-3 sentence description of HOW they speak
+2. vocabularyLevel: simple/moderate/sophisticated/mixed
+3. emotionalExpression: how they show emotion in speech
+4. sentenceStructure: short-punchy/medium-balanced/long-complex/varied
+5. verbalTics: array of verbal habits (e.g., ["um", "you know", "actually", "frankly"])
+6. exampleLine: A sample line that captures their unique voice
+
+OUTPUT as valid JSON:
+{
+  "profiles": [
+    {
+      "name": "CHARACTER_NAME",
+      "speechStyle": "...",
+      "vocabularyLevel": "...",
+      "emotionalExpression": "...",
+      "sentenceStructure": "...",
+      "verbalTics": ["...", "..."],
+      "exampleLine": "..."
+    }
+  ]
+}`
+
+  try {
+    const model = getGeminiModel({
+      timeout: Math.min(remainingMs - 500, 30000),
+      temperature: 0.7, // Allow creativity for distinct voices
+      maxOutputTokens: 2048,
+    })
+    
+    const result = await model.generateContent(prompt)
+    const text = result.response?.text?.() || ''
+    
+    // Parse JSON response
+    const jsonMatch = text.match(/\{[\s\S]*"profiles"[\s\S]*\}/m)
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0])
+      for (const p of parsed.profiles || []) {
+        if (p.name) {
+          profiles[p.name] = {
+            name: p.name,
+            speechStyle: p.speechStyle || 'Natural conversational style',
+            vocabularyLevel: p.vocabularyLevel || 'moderate',
+            emotionalExpression: p.emotionalExpression || 'Balanced emotional expression',
+            sentenceStructure: p.sentenceStructure || 'medium-balanced',
+            verbalTics: p.verbalTics || [],
+            exampleLine: p.exampleLine || ''
+          }
+        }
+      }
+    }
+    
+    console.log(`[Voice Profiles] Generated ${Object.keys(profiles).length} character voice profiles`)
+  } catch (error) {
+    console.error('[Voice Profiles] Error generating profiles:', error)
+    // Return empty profiles on error - optimization will proceed without them
+  }
+  
+  return profiles
 }
 
 // ============================================================
@@ -766,7 +1024,16 @@ CRITICAL RULES:
 - All dialogue must have [emotion] tags
 - Escape quotes in JSON strings
 - Never use raw line breaks inside strings (use \\n)
-- If narration should be removed, replace with a 1-sentence summary (never null/empty)`
+- If narration should be removed, replace with a 1-sentence summary (never null/empty)
+
+=== DIALOGUE VOICE DIFFERENTIATION (MANDATORY) ===
+- Each character MUST speak with their UNIQUE voice as defined in CHARACTER PROFILES
+- NEVER write generic dialogue that could be spoken by anyone
+- If a character has verbal tics (e.g., "you know", "frankly"), include them naturally
+- Match vocabulary level to character (sophisticated vs simple words)
+- Match sentence structure (short-punchy vs long-complex)
+- Preserve parentheticals like (beat), (sotto voce) - NEVER strip them
+- DO NOT homogenize dialogue - character distinctiveness is MORE important than brevity`
 
   // Token budget: 3500 per scene + 5000 base (increased for richer per-scene review context)
   const estimatedTokens = Math.min(32768, batchScenes.length * 3500 + 5000)
@@ -951,6 +1218,153 @@ function parseOptimizationResponse(
       throw new Error('Failed to parse optimization response')
     }
   }
+}
+
+// ============================================================
+// POST-OPTIMIZATION VERIFICATION: Check if recommendations were implemented
+// ============================================================
+
+interface VerificationResult {
+  implementedCount: number
+  totalMandatory: number
+  missingRecommendations: string[]
+  summary: string
+}
+
+function verifyOptimizationResults(
+  originalScript: any,
+  optimizedScenes: any[],
+  audienceReview?: Review | null
+): VerificationResult {
+  const result: VerificationResult = {
+    implementedCount: 0,
+    totalMandatory: 0,
+    missingRecommendations: [],
+    summary: ''
+  }
+  
+  if (!audienceReview?.recommendations) {
+    result.summary = 'No recommendations to verify'
+    return result
+  }
+  
+  // Get critical and high priority recommendations
+  const mandatoryRecs = audienceReview.recommendations.filter(
+    (r: any) => r.priority === 'critical' || r.priority === 'high'
+  )
+  
+  result.totalMandatory = mandatoryRecs.length
+  
+  if (mandatoryRecs.length === 0) {
+    result.summary = 'No mandatory recommendations to verify'
+    return result
+  }
+  
+  // Build optimized script text for comparison
+  const optimizedText = optimizedScenes.map((scene: any, idx: number) => {
+    const dialogue = (scene.dialogue || []).map((d: any) => `${d.character}: ${d.line}`).join(' ')
+    return `Scene ${idx + 1}: ${scene.heading || ''} ${scene.action || ''} ${scene.narration || ''} ${dialogue}`
+  }).join('\n').toLowerCase()
+  
+  const originalText = (originalScript.scenes || []).map((scene: any, idx: number) => {
+    const dialogue = (scene.dialogue || []).map((d: any) => `${d.character}: ${d.line}`).join(' ')
+    return `Scene ${idx + 1}: ${scene.heading || ''} ${scene.action || ''} ${scene.narration || ''} ${dialogue}`
+  }).join('\n').toLowerCase()
+  
+  // Check each mandatory recommendation for evidence of implementation
+  for (const rec of mandatoryRecs) {
+    const recText = (rec.text || '').toLowerCase()
+    let implemented = false
+    
+    // Look for keywords from the recommendation in the optimized script
+    // that weren't in the original (indicates new content was added)
+    const keywords = extractKeywordsFromRecommendation(recText)
+    
+    for (const keyword of keywords) {
+      const inOriginal = originalText.includes(keyword)
+      const inOptimized = optimizedText.includes(keyword)
+      
+      // If keyword appears in optimized but not original, likely implemented
+      if (inOptimized && !inOriginal) {
+        implemented = true
+        break
+      }
+    }
+    
+    // Additional heuristics for specific recommendation types
+    if (!implemented) {
+      if (recText.includes('subtext') || recText.includes('indirect')) {
+        // Check for increased dialogue variation or parentheticals
+        const originalParenCount = (originalText.match(/\([^)]+\)/g) || []).length
+        const optimizedParenCount = (optimizedText.match(/\([^)]+\)/g) || []).length
+        if (optimizedParenCount > originalParenCount) {
+          implemented = true
+        }
+      }
+      
+      if (recText.includes('visual') || recText.includes('show')) {
+        // Check for increased action line content
+        const originalActionWords = originalScript.scenes?.reduce((sum: number, s: any) => 
+          sum + (s.action?.split(/\s+/).length || 0), 0) || 0
+        const optimizedActionWords = optimizedScenes.reduce((sum: number, s: any) => 
+          sum + (s.action?.split(/\s+/).length || 0), 0)
+        if (optimizedActionWords > originalActionWords * 1.1) { // 10% increase
+          implemented = true
+        }
+      }
+      
+      if (recText.includes('voice') || recText.includes('distinct') || recText.includes('differentiate')) {
+        // Check for verbal tics or unique speech patterns
+        const uniqueDialoguePatterns = new Set<string>()
+        for (const scene of optimizedScenes) {
+          for (const d of scene.dialogue || []) {
+            if (d.line) {
+              // Look for verbal tics, distinct phrases
+              const tics = d.line.match(/\b(you know|actually|frankly|indeed|surely|well|look|listen)\b/gi)
+              if (tics) {
+                tics.forEach((t: string) => uniqueDialoguePatterns.add(`${d.character}:${t.toLowerCase()}`))
+              }
+            }
+          }
+        }
+        if (uniqueDialoguePatterns.size >= 2) {
+          implemented = true
+        }
+      }
+    }
+    
+    if (implemented) {
+      result.implementedCount++
+    } else {
+      result.missingRecommendations.push(rec.text)
+    }
+  }
+  
+  const percentage = result.totalMandatory > 0 
+    ? Math.round((result.implementedCount / result.totalMandatory) * 100)
+    : 100
+  
+  result.summary = `Verification: ${result.implementedCount}/${result.totalMandatory} mandatory recommendations implemented (${percentage}%)`
+  
+  if (result.missingRecommendations.length > 0) {
+    console.warn(`[Script Optimization] Verification found ${result.missingRecommendations.length} potentially unimplemented recommendations:`)
+    result.missingRecommendations.forEach((r, i) => console.warn(`  ${i + 1}. ${r.substring(0, 80)}...`))
+  }
+  
+  return result
+}
+
+function extractKeywordsFromRecommendation(recText: string): string[] {
+  // Extract meaningful keywords from recommendation text
+  const stopWords = new Set(['the', 'a', 'an', 'to', 'for', 'in', 'on', 'at', 'by', 'with', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'shall', 'can', 'need', 'dare', 'ought', 'used', 'add', 'show', 'make', 'ensure', 'include', 'consider', 'try', 'use', 'create', 'this', 'that', 'these', 'those', 'it', 'its', 'of', 'and', 'or', 'but', 'not', 'no', 'yes', 'more', 'less', 'most', 'least', 'very', 'too', 'also', 'just', 'only', 'even', 'still', 'already', 'scene', 'scenes', 'dialogue', 'character', 'characters'])
+  
+  const words = recText
+    .replace(/[^\w\s]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 3 && !stopWords.has(w))
+  
+  // Return unique words, limited to most specific ones
+  return [...new Set(words)].slice(0, 5)
 }
 
 function consolidateChangesSummaries(summaries: any[]): any[] {

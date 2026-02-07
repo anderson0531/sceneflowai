@@ -427,27 +427,43 @@ FINAL CHECK before outputting:
   //
   // Strategy:
   // - Script unchanged: 60% previous + 40% new (strong anchoring)
-  // - Script changed: Use raw new scores (allow genuine movement)
+  // - Script changed: 30% previous + 70% new (moderate anchoring, max ±10 points)
+  //   This prevents score regression when optimizations are applied — the score
+  //   can improve but won't suddenly drop by 20 points due to evaluation variance.
   // =========================================================================
   if (previousScores?.categories && categories.length > 0) {
-    const anchorStrength = scriptUnchanged ? 0.6 : 0 // Only smooth when script is unchanged
+    // Strong anchoring for unchanged scripts, moderate for changed scripts
+    const anchorStrength = scriptUnchanged ? 0.6 : 0.3
+    const maxDelta = scriptUnchanged ? Infinity : 10 // Max ±10 points when script changed
     
-    if (anchorStrength > 0) {
-      // Build lookup of previous dimensional scores
-      const prevScoreLookup: Record<string, number> = {}
-      for (const prevCat of previousScores.categories) {
-        prevScoreLookup[prevCat.name] = prevCat.score
-      }
-      
-      // Apply hysteresis to each dimensional score
-      for (const cat of categories) {
-        const prevScore = prevScoreLookup[cat.name]
-        if (prevScore !== undefined) {
-          const rawScore = cat.score
-          cat.score = Math.round(prevScore * anchorStrength + rawScore * (1 - anchorStrength))
-          if (rawScore !== cat.score) {
-            console.log(`[Audience Resonance] Hysteresis: ${cat.name}: ${rawScore} → ${cat.score} (anchored to prev ${prevScore})`)
+    // Build lookup of previous dimensional scores
+    const prevScoreLookup: Record<string, number> = {}
+    for (const prevCat of previousScores.categories) {
+      prevScoreLookup[prevCat.name] = prevCat.score
+    }
+    
+    // Apply hysteresis to each dimensional score
+    for (const cat of categories) {
+      const prevScore = prevScoreLookup[cat.name]
+      if (prevScore !== undefined) {
+        const rawScore = cat.score
+        
+        // Calculate anchored score
+        let anchoredScore = Math.round(prevScore * anchorStrength + rawScore * (1 - anchorStrength))
+        
+        // For changed scripts, also enforce max delta cap to prevent regression
+        if (!scriptUnchanged && maxDelta < Infinity) {
+          const delta = anchoredScore - prevScore
+          if (Math.abs(delta) > maxDelta) {
+            // Clamp to max delta
+            anchoredScore = prevScore + (delta > 0 ? maxDelta : -maxDelta)
+            console.log(`[Audience Resonance] Delta clamped: ${cat.name}: raw ${rawScore} → anchored ${anchoredScore} (prev ${prevScore}, max delta ±${maxDelta})`)
           }
+        }
+        
+        cat.score = anchoredScore
+        if (rawScore !== cat.score) {
+          console.log(`[Audience Resonance] Hysteresis: ${cat.name}: ${rawScore} → ${cat.score} (anchored to prev ${prevScore}, scriptChanged: ${!scriptUnchanged})`)
         }
       }
     }
