@@ -493,10 +493,11 @@ export default function ScriptReviewModal({
       }
       
       // Translate text if non-English language is selected
+      // Uses Vertex AI Translation API (service account auth) to avoid API key rate limits
       let textToSpeak = text
       if (selectedLanguage !== 'en') {
         try {
-          const translateResponse = await fetch('/api/translate/google', {
+          const translateResponse = await fetch('/api/translate/vertex', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

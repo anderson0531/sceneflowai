@@ -81,6 +81,7 @@ export async function POST(req: NextRequest) {
     let textToGenerate = text
 
     // Translate text if non-English language is requested
+    // Uses Vertex AI Translation API (service account auth) to avoid API key rate limits
     if (language !== 'en') {
       try {
         console.log(`[Scene Audio] Translating text to ${language}...`)
@@ -88,7 +89,7 @@ export async function POST(req: NextRequest) {
         const baseUrl = process.env.VERCEL_URL 
           ? `https://${process.env.VERCEL_URL}` 
           : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
-        const translateResponse = await fetch(`${baseUrl}/api/translate/google`, {
+        const translateResponse = await fetch(`${baseUrl}/api/translate/vertex`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
