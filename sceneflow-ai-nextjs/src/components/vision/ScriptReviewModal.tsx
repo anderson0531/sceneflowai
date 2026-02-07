@@ -482,23 +482,14 @@ export default function ScriptReviewModal({
 
     setLoadingSection(sectionId)
     try {
-      // Determine the voice to use
-      let voiceToUse = selectedVoiceId
+      // Use the selected voice directly - trust the user's selection from VoiceSelectorDialog
+      // Only fall back to default if no voice is selected at all
+      const voiceToUse = selectedVoiceId || 'CwhRBWXzGAHq8TQ4Fs17' // Roger as ultimate fallback
       
-      // If no voice selected, use default Roger
-      if (!voiceToUse) {
-        voiceToUse = 'CwhRBWXzGAHq8TQ4Fs17' // Roger - default
+      if (!selectedVoiceId) {
         console.log('No voice in state, using default Roger')
-      }
-      
-      // Verify voice exists in list (if list is loaded)
-      if (voices.length > 0) {
-        const voiceExists = voices.some(v => v.voice_id === voiceToUse)
-        if (!voiceExists) {
-          console.warn('Selected voice not in list, using first available voice')
-          voiceToUse = voices[0].voice_id
-          setSelectedVoiceId(voiceToUse)
-        }
+      } else {
+        console.log('Using selected voice:', selectedVoiceId, selectedVoiceName)
       }
       
       // Translate text if non-English language is selected
