@@ -1885,8 +1885,27 @@ export default function ScriptReviewModal({
                         })()}
 
                         <Card>
-                          <CardHeader>
+                          <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle className="text-lg">🎬 Scene-by-Scene Analysis</CardTitle>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleGenerateSceneAnalysis}
+                              disabled={isGeneratingSceneAnalysis}
+                              className="text-xs"
+                            >
+                              {isGeneratingSceneAnalysis ? (
+                                <>
+                                  <Loader className="w-3 h-3 mr-1 animate-spin" />
+                                  Analyzing...
+                                </>
+                              ) : (
+                                <>
+                                  <RefreshCw className="w-3 h-3 mr-1" />
+                                  Re-Analyze
+                                </>
+                              )}
+                            </Button>
                           </CardHeader>
                           <CardContent>
                             <div className="max-h-[500px] overflow-y-auto space-y-4 pr-2">
