@@ -4715,13 +4715,15 @@ function SceneCard({
                     )
                   })()}
                   
-                  {/* Scene Description (read-only context for user) */}
+                  {/* Scene Direction (visual/camera/lighting/talent/audio directions) */}
                   {(() => {
                     const sceneDescription = scene.visualDescription || scene.action || scene.summary || scene.heading
-                    if (!sceneDescription) return null
+                    const sceneDir = scene.sceneDirection
+                    const hasDirection = !!sceneDir
+                    const isGeneratingDirection = generatingDirectionFor === sceneIdx
 
-                    const sceneContext = scene.sceneContext
-                    const isEnhancing = generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__context__'
+                    // Don't show if no description AND no direction
+                    if (!sceneDescription && !hasDirection) return null
 
                     return (
                       <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
@@ -4735,8 +4737,8 @@ function SceneCard({
                           >
                             <ChevronDown className={`w-4 h-4 text-blue-600 dark:text-blue-400 transition-transform ${descriptionCollapsed ? '-rotate-90' : ''}`} />
                             <Film className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                            <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Scene Description</span>
-                            {sceneContext && (
+                            <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Scene Direction</span>
+                            {hasDirection && (
                               <span className="text-xs px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded flex items-center gap-1">
                                 <Sparkles className="w-3 h-3" />
                                 Enhanced
@@ -4746,57 +4748,88 @@ function SceneCard({
                           <button
                             onClick={async (e) => {
                               e.stopPropagation()
-                              if (!onEnhanceSceneContext) return
-
-                              setGeneratingDialogue?.({ sceneIdx, character: '__context__' })
-                              overlayStore?.show(`Analyzing scene context for Scene ${sceneIdx + 1}...`, 15)
-                              try {
-                                await onEnhanceSceneContext?.(sceneIdx)
-                                overlayStore?.hide()
-                                toast.success('Scene context enhanced!')
-                              } catch (error) {
-                                console.error('[ScriptPanel] Context enhancement failed:', error)
-                                overlayStore?.hide()
-                                toast.error('Failed to enhance scene context')
-                              } finally {
-                                setGeneratingDialogue?.(null)
-                              }
+                              if (!onGenerateSceneDirection) return
+                              await onGenerateSceneDirection(sceneIdx)
                             }}
-                            disabled={isEnhancing}
+                            disabled={isGeneratingDirection}
                             className="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
-                            title="Generate beat, character arc, and thematic context for this scene"
+                            title="Generate detailed scene direction for camera, lighting, talent, and audio"
                           >
-                            {isEnhancing ? (
+                            {isGeneratingDirection ? (
                               <Loader2 className="w-3 h-3 animate-spin" />
                             ) : (
                               <Sparkles className="w-3 h-3" />
                             )}
-                            {sceneContext ? 'Refresh' : 'Enhance Details'}
+                            {hasDirection ? 'Refresh' : 'Generate'}
                           </button>
                         </div>
                         {!descriptionCollapsed && (
                           <div className="space-y-3">
-                            <div className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
-                              "{sceneDescription}"
-                            </div>
-                            {sceneContext && (
+                            {/* Show visual description as the base */}
+                            {sceneDescription && (
+                              <div className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
+                                "{sceneDescription}"
+                              </div>
+                            )}
+                            {/* Show detailed direction sections */}
+                            {hasDirection && (
                               <div className="pt-2 border-t border-blue-200 dark:border-blue-700 space-y-2">
-                                {sceneContext.beat && (
+                                {sceneDir.scene?.atmosphere && (
                                   <div className="text-xs">
-                                    <span className="font-semibold text-purple-600 dark:text-purple-400">Beat:</span>
-                                    <span className="ml-1 text-gray-600 dark:text-gray-400">{sceneContext.beat}</span>
+                                    <span className="font-semibold text-blue-600 dark:text-blue-400">Atmosphere:</span>
+                                    <span className="ml-1 text-gray-600 dark:text-gray-400">{sceneDir.scene.atmosphere}</span>
                                   </div>
                                 )}
-                                {sceneContext.characterArc && (
+                                {sceneDir.scene?.location && (
                                   <div className="text-xs">
-                                    <span className="font-semibold text-purple-600 dark:text-purple-400">Character Arc:</span>
-                                    <span className="ml-1 text-gray-600 dark:text-gray-400">{sceneContext.characterArc}</span>
+                                    <span className="font-semibold text-blue-600 dark:text-blue-400">Location:</span>
+                                    <span className="ml-1 text-gray-600 dark:text-gray-400">{sceneDir.scene.location}</span>
                                   </div>
                                 )}
-                                {sceneContext.thematicContext && (
+                                {sceneDir.scene?.keyProps && sceneDir.scene.keyProps.length > 0 && (
                                   <div className="text-xs">
-                                    <span className="font-semibold text-purple-600 dark:text-purple-400">Theme:</span>
-                                    <span className="ml-1 text-gray-600 dark:text-gray-400">{sceneContext.thematicContext}</span>
+                                    <span className="font-semibold text-blue-600 dark:text-blue-400">Key Props:</span>
+                                    <span className="ml-1 text-gray-600 dark:text-gray-400">{sceneDir.scene.keyProps.join(', ')}</span>
+                                  </div>
+                                )}
+                                {sceneDir.camera && (
+                                  <div className="text-xs">
+                                    <span className="font-semibold text-purple-600 dark:text-purple-400">Camera:</span>
+                                    <span className="ml-1 text-gray-600 dark:text-gray-400">
+                                      {[
+                                        sceneDir.camera.shots?.join(', '),
+                                        sceneDir.camera.angle,
+                                        sceneDir.camera.movement
+                                      ].filter(Boolean).join(' • ')}
+                                    </span>
+                                  </div>
+                                )}
+                                {sceneDir.lighting && (
+                                  <div className="text-xs">
+                                    <span className="font-semibold text-amber-600 dark:text-amber-400">Lighting:</span>
+                                    <span className="ml-1 text-gray-600 dark:text-gray-400">
+                                      {[
+                                        sceneDir.lighting.overallMood,
+                                        sceneDir.lighting.timeOfDay,
+                                        sceneDir.lighting.colorTemperature
+                                      ].filter(Boolean).join(' • ')}
+                                    </span>
+                                  </div>
+                                )}
+                                {sceneDir.talent && (
+                                  <div className="text-xs">
+                                    <span className="font-semibold text-green-600 dark:text-green-400">Talent:</span>
+                                    <span className="ml-1 text-gray-600 dark:text-gray-400">
+                                      {sceneDir.talent.emotionalBeat || sceneDir.talent.blocking}
+                                    </span>
+                                  </div>
+                                )}
+                                {sceneDir.audio && (
+                                  <div className="text-xs">
+                                    <span className="font-semibold text-pink-600 dark:text-pink-400">Audio:</span>
+                                    <span className="ml-1 text-gray-600 dark:text-gray-400">
+                                      {sceneDir.audio.priorities || sceneDir.audio.considerations}
+                                    </span>
                                   </div>
                                 )}
                               </div>
