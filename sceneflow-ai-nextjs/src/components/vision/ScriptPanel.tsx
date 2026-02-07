@@ -421,20 +421,8 @@ function formatTotalDuration(scenes: any[]): string {
 
 function normalizeScenes(source: any): any[] {
   if (!source) {
-    console.log('[ScriptPanel] normalizeScenes: source is null/undefined')
     return []
   }
-
-  // Debug: Log what we're receiving
-  console.log('[ScriptPanel] normalizeScenes input:', {
-    hasSource: !!source,
-    sourceType: typeof source,
-    hasScriptScenes: !!source?.script?.scenes,
-    scriptScenesLength: source?.script?.scenes?.length,
-    hasScenes: !!source?.scenes,
-    scenesLength: source?.scenes?.length,
-    keys: Object.keys(source || {}).slice(0, 10)
-  })
 
   const candidates = [
     source?.script?.scenes,
@@ -447,19 +435,16 @@ function normalizeScenes(source: any): any[] {
 
   for (const candidate of candidates) {
     if (Array.isArray(candidate) && candidate.length > 0) {
-      console.log('[ScriptPanel] normalizeScenes: found scenes, count:', candidate.length)
       return candidate
     }
   }
 
   for (const candidate of candidates) {
     if (Array.isArray(candidate)) {
-      console.log('[ScriptPanel] normalizeScenes: found empty scenes array')
       return candidate
     }
   }
 
-  console.log('[ScriptPanel] normalizeScenes: no scenes found in any location')
   return []
 }
 

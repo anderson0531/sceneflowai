@@ -392,6 +392,9 @@ export default function ScriptReviewModal({
   const [showSceneAnalysis, setShowSceneAnalysis] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const audioCacheRef = useRef<Map<string, { url: string; voiceId: string; textHash: string; language: string }>>(new Map())
+  
+  // Guard ref to prevent re-persisting the same analysis data (prevents infinite loops)
+  const lastPersistedAnalysisRef = useRef<string | null>(null)
 
   // State for inline revision with selectable recommendations
   const [selectedRecommendationIndices, setSelectedRecommendationIndices] = useState<Set<number>>(new Set())
@@ -713,6 +716,14 @@ export default function ScriptReviewModal({
         analyzedAt: review.generatedAt
       }
     }))
+    
+    // Guard: Skip if we already persisted this exact analysis data
+    // This prevents infinite loops when callback causes parent re-render
+    const analysisHash = JSON.stringify(analysesToPersist)
+    if (lastPersistedAnalysisRef.current === analysisHash) {
+      return
+    }
+    lastPersistedAnalysisRef.current = analysisHash
     
     // Call the callback to persist to project
     onSceneAnalysisComplete(analysesToPersist)

@@ -18,6 +18,7 @@ import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels'
 import { upload } from '@vercel/blob/client'
+import { debounce } from 'lodash'
 import { cleanupStaleAudio, clearAllSceneAudio } from '@/lib/audio/cleanupAudio'
 import { toast } from 'sonner'
 import { ScriptPanel } from '@/components/vision/ScriptPanel'
@@ -4196,6 +4197,87 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       useStore.getState().setIsGeneratingReviews(false)
     }
   }
+
+  // Debounced save function for scene analysis persistence
+  // Prevents rapid-fire API calls when multiple state updates occur
+  const debouncedSaveSceneAnalysis = useMemo(
+    () => debounce(async (scriptData: any, metadata: any, projId: string) => {
+      try {
+        await fetch(`/api/projects/${projId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: {
+              ...metadata,
+              visionPhase: {
+                ...metadata?.visionPhase,
+                script: scriptData
+              }
+            }
+          })
+        })
+      } catch (err) {
+        console.error('[SceneAnalysis] Failed to persist scene analysis:', err)
+      }
+    }, 1000), // 1 second debounce
+    []
+  )
+
+  // Memoized callback for persisting scene analysis from ScriptReviewModal
+  // CRITICAL: This must be memoized to prevent infinite re-render loops
+  // The callback is passed to ScriptReviewModal which has a useEffect dependency on it
+  const handleSceneAnalysisComplete = useCallback((sceneAnalyses: Array<{
+    sceneIndex: number
+    analysis: {
+      score: number
+      pacing: 'slow' | 'moderate' | 'fast'
+      tension: 'low' | 'medium' | 'high'
+      characterDevelopment: 'minimal' | 'moderate' | 'strong'
+      visualPotential: 'low' | 'medium' | 'high'
+      notes: string
+      recommendations: string[]
+      analyzedAt: string
+    }
+  }>) => {
+    // Persist scene-level analysis to each scene in the script
+    if (!script?.script?.scenes || sceneAnalyses.length === 0) return
+    
+    const updatedScenes = [...script.script.scenes]
+    let hasChanges = false
+    
+    for (const { sceneIndex, analysis } of sceneAnalyses) {
+      if (sceneIndex >= 0 && sceneIndex < updatedScenes.length) {
+        // Check if this is a score improvement (for delta display)
+        const existingAnalysis = updatedScenes[sceneIndex].audienceAnalysis
+        const previousScore = existingAnalysis?.score
+        
+        updatedScenes[sceneIndex] = {
+          ...updatedScenes[sceneIndex],
+          audienceAnalysis: {
+            ...analysis,
+            previousScore: previousScore !== undefined && previousScore !== analysis.score 
+              ? previousScore 
+              : undefined
+          }
+        }
+        hasChanges = true
+      }
+    }
+    
+    if (hasChanges) {
+      const updatedScript = {
+        ...script,
+        script: {
+          ...script.script,
+          scenes: updatedScenes
+        }
+      }
+      setScript(updatedScript)
+      
+      // Auto-save scene analysis to database with debounce (no toast - silent save)
+      debouncedSaveSceneAnalysis(updatedScript, project?.metadata, projectId)
+    }
+  }, [script, projectId, project?.metadata, debouncedSaveSceneAnalysis])
 
   // ============================================================================
   // UNIFIED SIDEBAR DATA - Populate global sidebar with Production phase data
@@ -8642,60 +8724,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         characters={characters}
         scoreOutdated={reviewsOutdated}
         reviewHistory={project?.metadata?.visionPhase?.reviewHistory || []}
-        onSceneAnalysisComplete={(sceneAnalyses) => {
-          // Persist scene-level analysis to each scene in the script
-          if (!script?.script?.scenes || sceneAnalyses.length === 0) return
-          
-          const updatedScenes = [...script.script.scenes]
-          let hasChanges = false
-          
-          for (const { sceneIndex, analysis } of sceneAnalyses) {
-            if (sceneIndex >= 0 && sceneIndex < updatedScenes.length) {
-              // Check if this is a score improvement (for delta display)
-              const existingAnalysis = updatedScenes[sceneIndex].audienceAnalysis
-              const previousScore = existingAnalysis?.score
-              
-              updatedScenes[sceneIndex] = {
-                ...updatedScenes[sceneIndex],
-                audienceAnalysis: {
-                  ...analysis,
-                  previousScore: previousScore !== undefined && previousScore !== analysis.score 
-                    ? previousScore 
-                    : undefined
-                }
-              }
-              hasChanges = true
-            }
-          }
-          
-          if (hasChanges) {
-            const updatedScript = {
-              ...script,
-              script: {
-                ...script.script,
-                scenes: updatedScenes
-              }
-            }
-            setScript(updatedScript)
-            
-            // Auto-save scene analysis to database (no toast - silent save)
-            fetch(`/api/projects/${projectId}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                metadata: {
-                  ...project?.metadata,
-                  visionPhase: {
-                    ...project?.metadata?.visionPhase,
-                    script: updatedScript
-                  }
-                }
-              })
-            }).catch(err => {
-              console.error('[SceneAnalysis] Failed to persist scene analysis:', err)
-            })
-          }
-        }}
+        onSceneAnalysisComplete={handleSceneAnalysisComplete}
         onScriptOptimized={async (optimizedScript) => {
           // Apply the optimized script directly
           if (optimizedScript?.scenes) {
