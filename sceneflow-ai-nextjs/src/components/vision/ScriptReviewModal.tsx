@@ -329,7 +329,7 @@ export default function ScriptReviewModal({
   const [showDeductions, setShowDeductions] = useState(false)
   const [showSceneAnalysis, setShowSceneAnalysis] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  const audioCacheRef = useRef<Map<string, { url: string; voiceId: string; textHash: string }>>(new Map())
+  const audioCacheRef = useRef<Map<string, { url: string; voiceId: string; textHash: string; language: string }>>(new Map())
 
   // State for inline revision with selectable recommendations
   const [selectedRecommendationIndices, setSelectedRecommendationIndices] = useState<Set<number>>(new Set())
@@ -436,7 +436,7 @@ export default function ScriptReviewModal({
     const cached = audioCacheRef.current.get(sectionId)
     if (!cached) return null
     const textHash = hashText(text)
-    if (cached.voiceId === selectedVoiceId && cached.textHash === textHash) {
+    if (cached.voiceId === selectedVoiceId && cached.textHash === textHash && cached.language === selectedLanguage) {
       return cached.url
     }
     return null
@@ -446,7 +446,8 @@ export default function ScriptReviewModal({
     audioCacheRef.current.set(sectionId, {
       url,
       voiceId: selectedVoiceId,
-      textHash: hashText(text)
+      textHash: hashText(text),
+      language: selectedLanguage
     })
   }
 
@@ -528,6 +529,7 @@ export default function ScriptReviewModal({
         body: JSON.stringify({
           text: textToSpeak,
           voiceId: voiceToUse,
+          language: selectedLanguage,
           parallel: true,
           stability: 0.5,
           similarityBoost: 0.75
