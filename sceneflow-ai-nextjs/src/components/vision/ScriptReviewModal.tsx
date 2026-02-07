@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Settings2, Check, Square, CheckSquare, BarChart3, MessageSquare, ListChecks, Film, Sparkles, CheckCircle2, Edit, Mic, Eye } from 'lucide-react'
+import { X, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Settings2, Check, Square, CheckSquare, BarChart3, MessageSquare, ListChecks, Film, Sparkles, CheckCircle2, Edit, Mic, Eye, FileText, Lightbulb } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -321,7 +321,7 @@ interface ScriptReviewModalProps {
   reviewHistory?: Array<{ score: number; generatedAt: string; dimensionalScores?: any[] }>
 }
 
-type ReviewTab = 'overview' | 'feedback' | 'recommendations' | 'scenes' | 'you-direct'
+type ReviewTab = 'overview' | 'analysis' | 'script' | 'scenes' | 'you-direct'
 
 export default function ScriptReviewModal({
   isOpen,
@@ -1178,24 +1178,40 @@ export default function ScriptReviewModal({
                   </div>
                 )}
                 <TabsList className="grid w-full grid-cols-5">
-                  <TabsTrigger value="overview" className="flex items-center gap-1.5 text-xs sm:text-sm">
+                  <TabsTrigger 
+                    value="overview" 
+                    className="flex items-center gap-1.5 text-xs sm:text-sm"
+                    title="Score overview and dimensional analysis"
+                  >
                     <BarChart3 className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline">Overview</span>
                   </TabsTrigger>
-                  <TabsTrigger value="feedback" className="flex items-center gap-1.5 text-xs sm:text-sm">
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Feedback</span>
+                  <TabsTrigger 
+                    value="analysis" 
+                    className="flex items-center gap-1.5 text-xs sm:text-sm"
+                    title="Strengths, improvements, and AI feedback"
+                  >
+                    <Lightbulb className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Analysis</span>
                   </TabsTrigger>
-                  <TabsTrigger value="recommendations" className="flex items-center gap-1.5 text-xs sm:text-sm">
-                    <ListChecks className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">AI Advice</span>
+                  <TabsTrigger 
+                    value="script" 
+                    className="flex items-center gap-1.5 text-xs sm:text-sm"
+                    title="AI recommendations to improve your script"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Script</span>
                     {review.recommendations.length > 0 && (
                       <Badge variant="secondary" className="ml-1 text-xs h-5 px-1.5 hidden sm:flex">
                         {review.recommendations.length}
                       </Badge>
                     )}
                   </TabsTrigger>
-                  <TabsTrigger value="scenes" className="flex items-center gap-1.5 text-xs sm:text-sm">
+                  <TabsTrigger 
+                    value="scenes" 
+                    className="flex items-center gap-1.5 text-xs sm:text-sm"
+                    title="Per-scene analysis and targeted fixes"
+                  >
                     <Film className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline">Scenes</span>
                     {sceneAnalysis.length > 0 && (() => {
@@ -1210,7 +1226,11 @@ export default function ScriptReviewModal({
                       ) : null
                     })()}
                   </TabsTrigger>
-                  <TabsTrigger value="you-direct" className="flex items-center gap-1.5 text-xs sm:text-sm">
+                  <TabsTrigger 
+                    value="you-direct" 
+                    className="flex items-center gap-1.5 text-xs sm:text-sm"
+                    title="Custom optimizations with your own direction"
+                  >
                     <Wand2 className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline">You Direct</span>
                   </TabsTrigger>
@@ -1394,8 +1414,8 @@ export default function ScriptReviewModal({
                   </div>
                 )}
 
-                {/* Feedback Tab */}
-                {activeTab === 'feedback' && (
+                {/* Analysis Tab */}
+                {activeTab === 'analysis' && (
                   <div className="space-y-6">
                     {/* Analysis */}
                     <Card>
@@ -1451,12 +1471,12 @@ export default function ScriptReviewModal({
                   </div>
                 )}
 
-                {/* Recommendations Tab */}
-                {activeTab === 'recommendations' && (
+                {/* Script Tab */}
+                {activeTab === 'script' && (
                   <div className="space-y-6">
                     <Card>
                       <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle className="text-lg">🎯 Recommendations</CardTitle>
+                        <CardTitle className="text-lg">🎯 Script Recommendations</CardTitle>
                         <div className="flex items-center gap-2">
                           <AudioButton sectionId="recommendations" text={`Recommendations: ${review.recommendations.map(r => getRecommendationText(r)).join('. ')}`} />
                         </div>
