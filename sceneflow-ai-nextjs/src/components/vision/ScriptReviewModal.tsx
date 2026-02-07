@@ -410,6 +410,10 @@ export default function ScriptReviewModal({
   const [optimizeDialogOpen, setOptimizeDialogOpen] = useState(false)
   const [optimizeDialogScene, setOptimizeDialogScene] = useState<SceneAnalysis | null>(null)
 
+  // Scene Analysis generation state (separate from main review)
+  const [isGeneratingSceneAnalysis, setIsGeneratingSceneAnalysis] = useState(false)
+  const [localSceneAnalysis, setLocalSceneAnalysis] = useState<SceneAnalysis[] | null>(null)
+
   // "You Direct" tab state
   const [selectedOptimizations, setSelectedOptimizations] = useState<string[]>([])
   const [customInstruction, setCustomInstruction] = useState('')
@@ -971,6 +975,53 @@ export default function ScriptReviewModal({
     }
   }
 
+  // Generate scene-by-scene analysis via dedicated API
+  const handleGenerateSceneAnalysis = async () => {
+    if (!projectId || !script?.scenes?.length) {
+      toast.error('Missing project or script data')
+      return
+    }
+    
+    setIsGeneratingSceneAnalysis(true)
+    try {
+      const response = await fetch('/api/vision/analyze-scenes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, script })
+      })
+      
+      const data = await response.json()
+      if (data.success && data.sceneAnalysis) {
+        setLocalSceneAnalysis(data.sceneAnalysis)
+        toast.success(`Analyzed ${data.sceneAnalysis.length} scenes`)
+        
+        // Persist to parent if callback provided
+        if (onSceneAnalysisComplete) {
+          onSceneAnalysisComplete(data.sceneAnalysis.map((sa: SceneAnalysis) => ({
+            sceneIndex: sa.sceneNumber - 1,
+            analysis: {
+              score: sa.score,
+              pacing: sa.pacing,
+              tension: sa.tension,
+              characterDevelopment: sa.characterDevelopment,
+              visualPotential: sa.visualPotential,
+              notes: sa.notes,
+              recommendations: sa.recommendations || [],
+              analyzedAt: new Date().toISOString()
+            }
+          })))
+        }
+      } else {
+        toast.error(data.error || 'Failed to analyze scenes')
+      }
+    } catch (error) {
+      console.error('[Scene Analysis] Error:', error)
+      toast.error('Failed to analyze scenes')
+    } finally {
+      setIsGeneratingSceneAnalysis(false)
+    }
+  }
+
   // Per-scene fix handler — calls revise-scene API with scene-specific recommendations
   const handleFixScene = async (sceneAnalysisItem: SceneAnalysis) => {
     if (!projectId || !script || !onScriptOptimized) {
@@ -1198,7 +1249,8 @@ export default function ScriptReviewModal({
   // Cast to AudienceResonanceReview for new features
   const review = audienceReview as AudienceResonanceReview | null
   const deductions = review?.deductions || []
-  const sceneAnalysis = review?.sceneAnalysis || []
+  // Use localSceneAnalysis if available (from dedicated API), otherwise fall back to review data
+  const sceneAnalysis = localSceneAnalysis || review?.sceneAnalysis || []
   const showVsTellRatio = review?.showVsTellRatio ?? 0
   const totalDeductions = deductions.reduce((sum, d) => sum + d.points, 0)
 
@@ -1969,7 +2021,24 @@ export default function ScriptReviewModal({
                       <div className="text-center py-12 text-gray-500 dark:text-gray-400">
                         <Film className="w-12 h-12 mx-auto mb-3 opacity-50" />
                         <p>No scene-by-scene analysis available</p>
-                        <p className="text-sm mt-1">This analysis is generated for detailed reviews</p>
+                        <p className="text-sm mt-1 mb-4">Generate detailed analysis for each scene</p>
+                        <Button
+                          onClick={handleGenerateSceneAnalysis}
+                          disabled={isGeneratingSceneAnalysis}
+                          className="bg-purple-600 hover:bg-purple-500"
+                        >
+                          {isGeneratingSceneAnalysis ? (
+                            <>
+                              <Loader className="w-4 h-4 mr-2 animate-spin" />
+                              Analyzing Scenes...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-4 h-4 mr-2" />
+                              Analyze All Scenes
+                            </>
+                          )}
+                        </Button>
                       </div>
                     )}
                   </div>
