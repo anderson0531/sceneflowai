@@ -462,7 +462,8 @@ Return ONLY valid JSON:
       maxOutputTokens: 4000,
       responseMimeType: 'application/json',
       timeoutMs,
-      maxRetries: 1
+      maxRetries: 1,
+      thinkingBudget: 0  // Disable thinking mode to prevent OOM crashes
     })
     
     if (!result.text) {
