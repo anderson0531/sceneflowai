@@ -142,6 +142,19 @@ interface Scene {
   appliedRecommendationIds?: string[]  // New field for score stabilization
   analysisIterationCount?: number  // Track iterations for score stabilization
   characterWardrobes?: SceneCharacterWardrobe[]  // Per-scene wardrobe overrides
+  // Audience Resonance scene-level analysis (persisted)
+  audienceAnalysis?: {
+    score: number
+    pacing: 'slow' | 'moderate' | 'fast'
+    tension: 'low' | 'medium' | 'high'
+    characterDevelopment: 'minimal' | 'moderate' | 'strong'
+    visualPotential: 'low' | 'medium' | 'high'
+    notes: string
+    recommendations: string[]
+    appliedRecommendationIds?: string[]
+    analyzedAt: string
+    previousScore?: number
+  }
   [key: string]: any
 }
 
@@ -8629,6 +8642,60 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         characters={characters}
         scoreOutdated={reviewsOutdated}
         reviewHistory={project?.metadata?.visionPhase?.reviewHistory || []}
+        onSceneAnalysisComplete={(sceneAnalyses) => {
+          // Persist scene-level analysis to each scene in the script
+          if (!script?.script?.scenes || sceneAnalyses.length === 0) return
+          
+          const updatedScenes = [...script.script.scenes]
+          let hasChanges = false
+          
+          for (const { sceneIndex, analysis } of sceneAnalyses) {
+            if (sceneIndex >= 0 && sceneIndex < updatedScenes.length) {
+              // Check if this is a score improvement (for delta display)
+              const existingAnalysis = updatedScenes[sceneIndex].audienceAnalysis
+              const previousScore = existingAnalysis?.score
+              
+              updatedScenes[sceneIndex] = {
+                ...updatedScenes[sceneIndex],
+                audienceAnalysis: {
+                  ...analysis,
+                  previousScore: previousScore !== undefined && previousScore !== analysis.score 
+                    ? previousScore 
+                    : undefined
+                }
+              }
+              hasChanges = true
+            }
+          }
+          
+          if (hasChanges) {
+            const updatedScript = {
+              ...script,
+              script: {
+                ...script.script,
+                scenes: updatedScenes
+              }
+            }
+            setScript(updatedScript)
+            
+            // Auto-save scene analysis to database (no toast - silent save)
+            fetch(`/api/projects/${projectId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                metadata: {
+                  ...project?.metadata,
+                  visionPhase: {
+                    ...project?.metadata?.visionPhase,
+                    script: updatedScript
+                  }
+                }
+              })
+            }).catch(err => {
+              console.error('[SceneAnalysis] Failed to persist scene analysis:', err)
+            })
+          }
+        }}
         onScriptOptimized={async (optimizedScript) => {
           // Apply the optimized script directly
           if (optimizedScript?.scenes) {

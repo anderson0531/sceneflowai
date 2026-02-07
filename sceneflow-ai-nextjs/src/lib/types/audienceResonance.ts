@@ -209,6 +209,110 @@ export interface CheckpointResults {
 }
 
 // =============================================================================
+// SCENE-LEVEL ANALYSIS (Persisted to project scenes)
+// =============================================================================
+
+/**
+ * Scene-level analysis result from Audience Resonance
+ * This is persisted to each scene in the project for tracking improvements
+ */
+export interface SceneAnalysisResult {
+  /** Scene score (0-100) - threshold is 80 for "good" */
+  score: number
+  /** Pacing assessment */
+  pacing: 'slow' | 'moderate' | 'fast'
+  /** Tension level */
+  tension: 'low' | 'medium' | 'high'
+  /** Character development quality */
+  characterDevelopment: 'minimal' | 'moderate' | 'strong'
+  /** Visual storytelling potential */
+  visualPotential: 'low' | 'medium' | 'high'
+  /** One-sentence analysis note */
+  notes: string
+  /** 2-4 targeted fix suggestions for this scene */
+  recommendations: string[]
+  /** IDs of recommendations that have been applied */
+  appliedRecommendationIds?: string[]
+  /** When this analysis was generated */
+  analyzedAt: string
+  /** Previous score before optimization (for delta display) */
+  previousScore?: number
+}
+
+/** 
+ * Scene analysis status for UI display
+ * Used to determine CTA text and styling
+ */
+export type SceneAnalysisStatus = 
+  | 'good'           // score >= 80, no action needed
+  | 'needs-review'   // score < 80, has recommendations
+  | 'optimizing'     // currently being optimized
+  | 'pending'        // not yet analyzed
+
+/**
+ * Get the analysis status for a scene based on its score
+ */
+export function getSceneAnalysisStatus(
+  analysis: SceneAnalysisResult | undefined,
+  isOptimizing: boolean
+): SceneAnalysisStatus {
+  if (isOptimizing) return 'optimizing'
+  if (!analysis) return 'pending'
+  return analysis.score >= 80 ? 'good' : 'needs-review'
+}
+
+/**
+ * Scene analysis CTA configuration
+ */
+export interface SceneAnalysisCTA {
+  status: SceneAnalysisStatus
+  label: string
+  description: string
+  actionLabel: string
+  color: 'green' | 'amber' | 'purple' | 'gray'
+}
+
+/**
+ * Get CTA configuration for a scene analysis status
+ */
+export function getSceneAnalysisCTA(status: SceneAnalysisStatus): SceneAnalysisCTA {
+  switch (status) {
+    case 'good':
+      return {
+        status: 'good',
+        label: 'Good',
+        description: 'No action required',
+        actionLabel: 'View Details',
+        color: 'green'
+      }
+    case 'needs-review':
+      return {
+        status: 'needs-review',
+        label: 'Review',
+        description: 'Recommendations available',
+        actionLabel: 'Optimize Scene',
+        color: 'amber'
+      }
+    case 'optimizing':
+      return {
+        status: 'optimizing',
+        label: 'Optimizing',
+        description: 'Applying improvements...',
+        actionLabel: 'In Progress',
+        color: 'purple'
+      }
+    case 'pending':
+      return {
+        status: 'pending',
+        label: 'Pending',
+        description: 'Run analysis to get score',
+        actionLabel: 'Analyze',
+        color: 'gray'
+      }
+  }
+}
+
+// =============================================================================
 // FULL ANALYSIS RESPONSE
 // =============================================================================
 

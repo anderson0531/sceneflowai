@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { VoiceSelectorDialog } from '@/components/tts/VoiceSelectorDialog'
+import { OptimizeSceneDialog } from '@/components/vision/OptimizeSceneDialog'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { toast } from 'sonner'
@@ -319,6 +320,20 @@ interface ScriptReviewModalProps {
   scoreOutdated?: boolean
   // Review history for score trend
   reviewHistory?: Array<{ score: number; generatedAt: string; dimensionalScores?: any[] }>
+  // Callback to persist scene analysis to project
+  onSceneAnalysisComplete?: (sceneAnalyses: Array<{
+    sceneIndex: number
+    analysis: {
+      score: number
+      pacing: 'slow' | 'moderate' | 'fast'
+      tension: 'low' | 'medium' | 'high'
+      characterDevelopment: 'minimal' | 'moderate' | 'strong'
+      visualPotential: 'low' | 'medium' | 'high'
+      notes: string
+      recommendations: string[]
+      analyzedAt: string
+    }
+  }>) => void
 }
 
 type ReviewTab = 'overview' | 'analysis' | 'script' | 'scenes' | 'you-direct'
@@ -336,7 +351,8 @@ export default function ScriptReviewModal({
   characters,
   onScriptOptimized,
   scoreOutdated,
-  reviewHistory = []
+  reviewHistory = [],
+  onSceneAnalysisComplete
 }: ScriptReviewModalProps) {
   const [voices, setVoices] = useState<Voice[]>([])
   const [activeTab, setActiveTab] = useState<ReviewTab>('overview')
@@ -386,6 +402,10 @@ export default function ScriptReviewModal({
   const [fixingScenes, setFixingScenes] = useState<Set<number>>(new Set()) // scene numbers currently being fixed
   const [fixedScenes, setFixedScenes] = useState<Set<number>>(new Set())   // scene numbers successfully fixed
   const [expandedScenes, setExpandedScenes] = useState<Set<number>>(new Set()) // scene numbers with expanded recommendations
+
+  // Optimize Scene Dialog state
+  const [optimizeDialogOpen, setOptimizeDialogOpen] = useState(false)
+  const [optimizeDialogScene, setOptimizeDialogScene] = useState<SceneAnalysis | null>(null)
 
   // "You Direct" tab state
   const [selectedOptimizations, setSelectedOptimizations] = useState<string[]>([])
@@ -669,6 +689,34 @@ export default function ScriptReviewModal({
     setCustomInstruction('')
     setIsOptimizingYouDirect(false)
   }, [audienceReview, isOpen])
+
+  // Persist scene analysis to project when analysis completes
+  useEffect(() => {
+    if (!audienceReview || !onSceneAnalysisComplete) return
+    
+    const review = audienceReview as AudienceResonanceReview
+    const sceneAnalysisList = review.sceneAnalysis
+    
+    if (!sceneAnalysisList || sceneAnalysisList.length === 0) return
+    
+    // Map scene analysis to the format expected by the callback
+    const analysesToPersist = sceneAnalysisList.map((sa) => ({
+      sceneIndex: sa.sceneNumber - 1, // Convert 1-indexed to 0-indexed
+      analysis: {
+        score: sa.score,
+        pacing: sa.pacing,
+        tension: sa.tension,
+        characterDevelopment: sa.characterDevelopment,
+        visualPotential: sa.visualPotential,
+        notes: sa.notes,
+        recommendations: sa.recommendations || [],
+        analyzedAt: review.generatedAt
+      }
+    }))
+    
+    // Call the callback to persist to project
+    onSceneAnalysisComplete(analysesToPersist)
+  }, [audienceReview, onSceneAnalysisComplete])
 
   // Initialize all recommendations as selected when review loads
   useEffect(() => {
@@ -1002,6 +1050,96 @@ export default function ScriptReviewModal({
       setFixingScenes(prev => {
         const next = new Set(prev)
         next.delete(sceneAnalysisItem.sceneNumber)
+        return next
+      })
+    }
+  }
+
+  // Open Optimize Scene Dialog for a specific scene
+  const handleOpenOptimizeDialog = (sceneAnalysisItem: SceneAnalysis) => {
+    setOptimizeDialogScene(sceneAnalysisItem)
+    setOptimizeDialogOpen(true)
+  }
+
+  // Handle scene optimization from the dialog
+  const handleOptimizeSceneFromDialog = async (instruction: string, selectedRecommendations: string[]) => {
+    if (!optimizeDialogScene || !projectId || !script || !onScriptOptimized) {
+      toast.error('Missing context for scene optimization')
+      return
+    }
+
+    const sceneIndex = optimizeDialogScene.sceneNumber - 1
+    const currentScene = script.scenes?.[sceneIndex]
+    if (!currentScene) {
+      toast.error(`Scene ${optimizeDialogScene.sceneNumber} not found`)
+      return
+    }
+
+    // Mark scene as being optimized
+    setFixingScenes(prev => new Set(prev).add(optimizeDialogScene.sceneNumber))
+
+    try {
+      const previousScene = sceneIndex > 0 ? script.scenes[sceneIndex - 1] : undefined
+      const nextScene = sceneIndex < script.scenes.length - 1 ? script.scenes[sceneIndex + 1] : undefined
+
+      // Combine recommendations and custom instruction
+      const allInstructions = [
+        ...selectedRecommendations,
+        instruction
+      ].filter(Boolean)
+
+      const response = await fetch('/api/vision/revise-scene', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex,
+          currentScene,
+          revisionMode: instruction ? 'custom' : 'recommendations',
+          customInstruction: instruction || undefined,
+          selectedRecommendations: selectedRecommendations.length > 0 ? selectedRecommendations : undefined,
+          context: {
+            characters: characters || [],
+            previousScene,
+            nextScene
+          }
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to optimize scene')
+      }
+
+      const data = await response.json()
+
+      if (data.revisedScene) {
+        if (data.revisedScene._revisionError) {
+          throw new Error('Scene optimization failed — AI response could not be parsed.')
+        }
+
+        // Update the script
+        const updatedScenes = [...script.scenes]
+        updatedScenes[sceneIndex] = data.revisedScene
+        const updatedScript = { ...script, scenes: updatedScenes }
+
+        onScriptOptimized(updatedScript)
+        setFixedScenes(prev => new Set(prev).add(optimizeDialogScene.sceneNumber))
+        setOptimizeDialogOpen(false)
+        setOptimizeDialogScene(null)
+        toast.success(`Scene ${optimizeDialogScene.sceneNumber} optimized successfully! Re-analyze to see updated score.`)
+      } else {
+        throw new Error('No optimized scene returned')
+      }
+    } catch (err: any) {
+      console.error(`[Scene Optimize] Error:`, err)
+      toast.error(err.message || 'Failed to optimize scene')
+    } finally {
+      setFixingScenes(prev => {
+        const next = new Set(prev)
+        if (optimizeDialogScene) {
+          next.delete(optimizeDialogScene.sceneNumber)
+        }
         return next
       })
     }
@@ -1598,52 +1736,67 @@ export default function ScriptReviewModal({
                         {/* Summary bar */}
                         {(() => {
                           const belowThreshold = sceneAnalysis.filter(s => s.score < 80).length
-                          const alreadyFixed = fixedScenes.size
-                          const currentlyFixing = fixingScenes.size
+                          const alreadyOptimized = fixedScenes.size
+                          const currentlyOptimizing = fixingScenes.size
+                          const allScenesGood = belowThreshold === 0 && alreadyOptimized === 0
+                          
                           return (
-                            <div className="flex items-center justify-between px-1">
-                              <div className="text-sm text-gray-500 dark:text-gray-400">
-                                {belowThreshold > 0 ? (
-                                  <span>{belowThreshold} scene{belowThreshold !== 1 ? 's' : ''} below 80 — fix individually below</span>
-                                ) : (
-                                  <span className="text-green-600 dark:text-green-400">All scenes scoring 80+</span>
-                                )}
-                                {alreadyFixed > 0 && (
-                                  <span className="ml-2 text-green-600 dark:text-green-400">
-                                    · {alreadyFixed} fixed
-                                  </span>
-                                )}
-                                {currentlyFixing > 0 && (
-                                  <span className="ml-2 text-purple-600 dark:text-purple-400">
-                                    · {currentlyFixing} in progress
-                                  </span>
+                            <div className="space-y-3">
+                              {/* All scenes good - workflow transition message */}
+                              {allScenesGood && (
+                                <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                                  <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                                    <CheckCircle2 className="w-5 h-5" />
+                                    <div>
+                                      <p className="font-medium">All scenes are ready! 🎬</p>
+                                      <p className="text-sm opacity-80">Your script is optimized. Close this panel and continue to the Script tab to proceed with production.</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Status summary */}
+                              <div className="flex items-center justify-between px-1">
+                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                                  {belowThreshold > 0 ? (
+                                    <span>{belowThreshold} scene{belowThreshold !== 1 ? 's' : ''} below 80 — optimize individually below</span>
+                                  ) : alreadyOptimized > 0 ? (
+                                    <span className="text-amber-600 dark:text-amber-400">{alreadyOptimized} scene{alreadyOptimized !== 1 ? 's' : ''} optimized — re-analyze to verify improvements</span>
+                                  ) : (
+                                    <span className="text-green-600 dark:text-green-400">All scenes scoring 80+ ✓</span>
+                                  )}
+                                  {currentlyOptimizing > 0 && (
+                                    <span className="ml-2 text-purple-600 dark:text-purple-400">
+                                      · {currentlyOptimizing} in progress
+                                    </span>
+                                  )}
+                                </div>
+                                {alreadyOptimized > 0 && (
+                                  <Button
+                                    variant="default"
+                                    size="sm"
+                                    onClick={() => {
+                                      setFixedScenes(new Set())
+                                      setExpandedScenes(new Set())
+                                      onRegenerate()
+                                    }}
+                                    disabled={isGenerating || currentlyOptimizing > 0}
+                                    className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white"
+                                  >
+                                    {isGenerating ? (
+                                      <>
+                                        <Loader className="w-3.5 h-3.5 animate-spin" />
+                                        Re-analyzing...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <RefreshCw className="w-3.5 h-3.5" />
+                                        Re-analyze Script
+                                      </>
+                                    )}
+                                  </Button>
                                 )}
                               </div>
-                              {fixedScenes.size > 0 && (
-                                <Button
-                                  variant="default"
-                                  size="sm"
-                                  onClick={() => {
-                                    setFixedScenes(new Set())
-                                    setExpandedScenes(new Set())
-                                    onRegenerate()
-                                  }}
-                                  disabled={isGenerating || fixingScenes.size > 0}
-                                  className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white"
-                                >
-                                  {isGenerating ? (
-                                    <>
-                                      <Loader className="w-3.5 h-3.5 animate-spin" />
-                                      Re-analyzing...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <RefreshCw className="w-3.5 h-3.5" />
-                                      Re-analyze Script
-                                    </>
-                                  )}
-                                </Button>
-                              )}
                             </div>
                           )
                         })()}
@@ -1659,7 +1812,8 @@ export default function ScriptReviewModal({
                                 const isFixed = fixedScenes.has(scene.sceneNumber)
                                 const isExpanded = expandedScenes.has(scene.sceneNumber)
                                 const hasRecs = (scene.recommendations?.length || 0) > 0
-                                const canFix = !!projectId && !!script && !!onScriptOptimized && hasRecs && !isFixed && !isFixing
+                                // Allow optimization for any scene below 80, or scenes with recommendations
+                                const canOptimize = !!projectId && !!script && !!onScriptOptimized && !isFixed && !isFixing && (scene.score < 80 || hasRecs)
 
                                 return (
                                   <div 
@@ -1672,7 +1826,7 @@ export default function ScriptReviewModal({
                                       'border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-800'
                                     }`}
                                   >
-                                    {/* Header row: heading + score + fix button */}
+                                    {/* Header row: heading + score + optimize button */}
                                     <div className="flex items-center justify-between mb-2 gap-3">
                                       <div className="font-medium flex-1 min-w-0">
                                         <span className="truncate block">Scene {scene.sceneNumber}: {scene.sceneHeading}</span>
@@ -1684,22 +1838,22 @@ export default function ScriptReviewModal({
                                         {isFixed ? (
                                           <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-xs font-medium px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30">
                                             <CheckCircle2 className="w-3.5 h-3.5" />
-                                            Fixed
+                                            Optimized
                                           </div>
                                         ) : isFixing ? (
                                           <div className="flex items-center gap-1 text-purple-600 dark:text-purple-400 text-xs font-medium px-2 py-1 rounded-md bg-purple-100 dark:bg-purple-900/30">
                                             <Loader className="w-3.5 h-3.5 animate-spin" />
-                                            Fixing...
+                                            Optimizing...
                                           </div>
-                                        ) : canFix ? (
+                                        ) : canOptimize ? (
                                           <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => handleFixScene(scene)}
+                                            onClick={() => handleOpenOptimizeDialog(scene)}
                                             className="text-xs h-7 px-2.5 border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-600 dark:text-purple-300 dark:hover:bg-purple-900/20"
                                           >
                                             <Sparkles className="w-3 h-3 mr-1" />
-                                            Fix Scene
+                                            Optimize Scene
                                           </Button>
                                         ) : scene.score >= 80 ? (
                                           <div className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
@@ -1952,6 +2106,28 @@ Examples:
           selectedVoiceId={selectedVoiceId}
           onSelectVoice={handleVoiceSelect}
           characterContext={reviewExpertContext}
+        />
+
+        {/* Optimize Scene Dialog */}
+        <OptimizeSceneDialog
+          isOpen={optimizeDialogOpen}
+          onClose={() => {
+            setOptimizeDialogOpen(false)
+            setOptimizeDialogScene(null)
+          }}
+          sceneNumber={optimizeDialogScene?.sceneNumber ?? 0}
+          sceneHeading={optimizeDialogScene?.sceneHeading ?? ''}
+          sceneAnalysis={optimizeDialogScene ? {
+            score: optimizeDialogScene.score,
+            pacing: optimizeDialogScene.pacing,
+            tension: optimizeDialogScene.tension,
+            characterDevelopment: optimizeDialogScene.characterDevelopment,
+            visualPotential: optimizeDialogScene.visualPotential,
+            notes: optimizeDialogScene.notes,
+            recommendations: optimizeDialogScene.recommendations || []
+          } : undefined}
+          onOptimize={handleOptimizeSceneFromDialog}
+          isOptimizing={optimizeDialogScene ? fixingScenes.has(optimizeDialogScene.sceneNumber) : false}
         />
       </div>
     </div>
