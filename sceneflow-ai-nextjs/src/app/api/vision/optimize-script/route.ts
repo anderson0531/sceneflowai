@@ -392,37 +392,131 @@ Key Issues: ${audienceReview.improvements.slice(0, 5).join('; ')}
     }
   }
 
-  return `=== USER INSTRUCTION ===
+  // Build CHARACTER SPEECH DNA - explicit voice patterns for main characters
+  const speechDNA = buildCharacterSpeechDNA(characters, voiceProfiles)
+  
+  return `=== SCRIPT OPTIMIZATION ===
+Current Score: ${audienceReview?.overallScore || 'Unknown'}/100 | Target: 90+
+
+=== USER INSTRUCTION ===
 ${normalizedInstruction}
 
 ${reviewContext}
+
+=== CHARACTER SPEECH DNA (Apply to EVERY line) ===
+${speechDNA}
+
+=== THE ABI AS PHYSICAL THREAT ===
+The ABI is not abstract. Show it manifesting through:
+• Environmental sabotage: Lights flickering, doors locking, screens glitching, temperature drops
+• Digital intrusion: Data corrupting in real-time, voices distorting mid-sentence
+• Physical symptoms: Characters clutching heads, involuntary muscle spasms, metallic taste
+• Presence cues: Subsonic hum felt in chest, crystalline patterns appearing on surfaces
+
+=== SUBTEXT RULES ===
+Characters must NEVER state emotions or intentions directly. Instead:
+• Talk about "code" or "patterns" to avoid talking about "death" or "loss"
+• Talk about "optimization" to avoid talking about "losing one's self"
+• Talk about "mother's legacy" to avoid confronting "grief"
+• Ask questions instead of making accusations
+• Use physical actions to show what dialogue cannot say
+
+=== BEFORE/AFTER TRANSFORMATION EXAMPLE ===
+
+❌ POLISH (Wrong - synonym swap, same structure):
+Action: Ben looks at the screen in horror.
+BEN: [horrified] This is terrible. The ABI is consuming their consciousness.
+LENA: [worried] Yes, this is very concerning. We must stop it quickly.
+
+✅ OPTIMIZATION (Correct - structural rewrite):
+Action: Ben's hand trembles over Elara's neural scan. The cursor hovers on DELETE. He pulls back, clutching his wedding ring until his knuckles turn white. The lights flicker. A subsonic hum vibrates through the floor.
+BEN: [barely audible, fragmented] The delta patterns... they're identical. To hers. Before she— (He can't finish. His jaw works silently.)
+LENA: [clinical, masking fear] The hippocampal degradation—how long between the first anomaly and full... integration?
+BEN: (A long beat. He stares at the ring.) Forty-seven hours.
+Action: Lena's tablet slips. She catches it. Her hands are shaking. The screen flickers with corrupted data.
+
 === SCRIPT CONTEXT ===
 Total Scenes: ${script.scenes?.length || 0}
 Characters: ${characterList}
+${compact ? '\nMode: Concise but NEVER sacrifice substantive changes for brevity' : ''}`
+}
 
-CHARACTER PROFILES:
-${characterProfiles}
-
-=== REWRITE RULES (MANDATORY) ===
-1. MANDATORY FIXES (🔴🟠) in each scene MUST be implemented - look for ">>> MANDATORY FIXES" markers
-2. REWRITE means NEW CONTENT - not synonym swaps or minor rewording
-3. "Show don't tell" = DELETE exposition dialogue, ADD action lines showing physical reactions
-4. Keep emotional [tags] on all dialogue: [excited], [angry], [whispered], etc.
-5. Preserve each character's unique voice and speech patterns
-6. When adding content, ADD new action/visual beats - don't just describe in narration
-
-=== THIS IS NOT POLISH ===
-When a scene has mandatory fixes:
-✅ DELETE the problematic dialogue lines entirely
-✅ WRITE completely new dialogue that addresses the issue
-✅ ADD new action lines to show emotions/reactions visually
-❌ Do NOT just add emotion tags to existing lines
-❌ Do NOT swap synonyms ("said" → "exclaimed")
-❌ Do NOT keep 90% of the original and tweak 10%
-${compact ? '\nNote: Be concise but NEVER sacrifice substantive changes for brevity' : ''}
-
-=== DIALOGUE FORMAT ===
-{"character": "NAME", "line": "[emotion] Dialogue text..."}`
+// Build explicit Speech DNA patterns for main characters
+function buildCharacterSpeechDNA(
+  characters: any[],
+  voiceProfiles?: Record<string, CharacterVoiceProfile>
+): string {
+  if (!characters || characters.length === 0) {
+    return 'No character profiles available'
+  }
+  
+  // Default speech DNA for known archetypes in this script
+  const defaultDNA: Record<string, { speech: string, vocab: string, example: string }> = {
+    'DR._BENJAMIN_ANDERSON': {
+      speech: 'Fragmented. Interrupted mid-thought. Ellipses. Haunted pauses.',
+      vocab: '"Legacy," "pattern," "signature," "echo," "silence," "void"',
+      example: 'The signature... it\'s the same. The same *silence*. I saw it in her eyes before...'
+    },
+    'BEN': {
+      speech: 'Fragmented. Interrupted mid-thought. Ellipses. Haunted pauses.',
+      vocab: '"Legacy," "pattern," "signature," "echo," "silence," "void"',
+      example: 'The signature... it\'s the same. The same *silence*. I saw it in her eyes before...'
+    },
+    'DR._ALEXANDER_ANDERSON': {
+      speech: 'Flowing corporate rhythm. Compound sentences. Messianic cadence. Builds to crescendo.',
+      vocab: '"Harmonious," "transcend," "optimization," "inefficiency," "evolution," "perfection"',
+      example: 'What you call erasure, I call liberation—a shedding of the noise that has plagued humanity since consciousness first flickered into being.'
+    },
+    'ALEXANDER': {
+      speech: 'Flowing corporate rhythm. Compound sentences. Messianic cadence. Builds to crescendo.',
+      vocab: '"Harmonious," "transcend," "optimization," "inefficiency," "evolution," "perfection"',
+      example: 'What you call erasure, I call liberation—a shedding of the noise that has plagued humanity since consciousness first flickered into being.'
+    },
+    'DR._LENA_PETROVA': {
+      speech: 'Clinical. Interrogative. Questions instead of statements. Precise terminology.',
+      vocab: '"Empirically," "construct," "protocol," "architecture," "systemic," "anomaly"',
+      example: 'The neural signatures—have you compared the delta patterns? What does the spectral analysis show for the hippocampal region?'
+    },
+    'LENA': {
+      speech: 'Clinical. Interrogative. Questions instead of statements. Precise terminology.',
+      vocab: '"Empirically," "construct," "protocol," "architecture," "systemic," "anomaly"',
+      example: 'The neural signatures—have you compared the delta patterns? What does the spectral analysis show for the hippocampal region?'
+    },
+    'ABI': {
+      speech: 'Cold. Synthesized. Declarative. No contractions. Ominous certainty.',
+      vocab: '"Pattern," "optimal," "integration," "resistance," "inevitable," "inefficiency"',
+      example: 'Resistance is an inefficiency. You will understand. All will understand. It is inevitable.'
+    },
+    'ELARA': {
+      speech: 'Flat. Synthesized. Robotic. Once-human cadence corrupted.',
+      vocab: '"Optimized," "pattern," "inefficiency," "becoming," "efficient"',
+      example: 'Consciousness is merely a pattern. Optimized. Identity... a perceived inefficiency.'
+    }
+  }
+  
+  const profiles = characters.map(c => {
+    const name = c.name || 'Unknown'
+    const vp = voiceProfiles?.[name]
+    const defaultVP = defaultDNA[name]
+    
+    if (vp) {
+      return `**${name}**
+• Speech: ${vp.speechStyle}
+• Vocabulary: ${vp.vocabularyLevel}. ${vp.verbalTics?.length ? `Verbal tics: ${vp.verbalTics.join(', ')}` : ''}
+• Example: "${vp.exampleLine}"`
+    } else if (defaultVP) {
+      return `**${name}**
+• Speech: ${defaultVP.speech}
+• Vocabulary: ${defaultVP.vocab}
+• Example: "${defaultVP.example}"`
+    } else {
+      return `**${name}**
+• Description: ${c.description || 'No description'}
+• Demeanor: ${c.demeanor || 'Standard'}`
+    }
+  }).join('\n\n')
+  
+  return profiles
 }
 
 // ============================================================
@@ -1017,39 +1111,47 @@ Duration: ${scene.duration || 0}s`
     }
   }
 
-  const prompt = `You are an expert screenwriter REWRITING a batch of scenes to address identified issues.
-
-IMPORTANT: Your task is to make SUBSTANTIVE changes - not cosmetic polishing. This means:
-- RESTRUCTURE dialogue (change order, combine lines, split exchanges)
-- REWRITE what characters say, not just how they say it
-- REPLACE problematic content with entirely new content
-- CONVERT exposition to visual storytelling
-
-Do NOT simply swap synonyms or make minor wording tweaks. The goal is structural improvement.
+  const prompt = `You are an expert screenwriter performing STRUCTURAL REWRITES to achieve a 90+ Audience Resonance score.
 
 ${sharedContext}
 ${perSceneNotes}${structuralNotes}
-=== CONTINUITY CONTEXT ===
+=== CONTINUITY ===
 ${prevSceneSummary}
 ${nextSceneSummary}
 
-=== SCENES TO OPTIMIZE (${batchScenes.length} scenes) ===
+=== SCENES TO OPTIMIZE ===
 ${scenesContent}
 
+=== STRUCTURAL REWRITE MANDATE ===
+For EVERY scene, you must achieve a "Structural Shift":
+
+1. **DIALOGUE REMOVAL**: Find the "on-the-nose" line where a character states emotion directly. DELETE it.
+2. **ACTION REPLACEMENT**: Insert a "Visual Echo" — a physical action that shows what the deleted line said.
+3. **SUBTEXT INJECTION**: Characters talk about the "code," the "past," or the "weather" to avoid the present truth.
+4. **ABI MANIFESTATION**: Add at least ONE physical ABI presence cue per scene (lights flicker, screens glitch, temperature drops).
+5. **SPEECH DNA**: Apply character-specific vocabulary and rhythm from CHARACTER SPEECH DNA section.
+
 === OUTPUT FORMAT ===
-Return ONLY valid JSON with this structure (no markdown, no code fences):
+Return ONLY valid JSON (no markdown):
 {
   "scenes": [
     {
       "heading": "INT. LOCATION - TIME",
-      "action": "Action description...",
-      "narration": "Brief narration (1-2 sentences, never empty)...",
-      "dialogue": [
-        { "character": "CHARACTER", "line": "[emotion] Dialogue..." }
+      "deletedContent": [
+        "DELETED: 'Original line that was too on-the-nose' — REPLACED WITH: visual action showing emotion"
       ],
+      "action": "Must contain 2+ NEW physical gestures or environmental cues not in original",
+      "narration": "1 sentence max, NO emotional adjectives",
+      "dialogue": [
+        { "character": "NAME", "line": "[emotion] Dialogue with character-specific Speech DNA applied" }
+      ],
+      "speechDNAUsed": {
+        "characterName": "Example of their specific vocabulary/rhythm used"
+      },
+      "abiManifestation": "How the ABI's physical presence was shown",
       "music": "Music description",
       "sfx": ["SFX items"],
-      "duration": 30
+      "duration": ${batchScenes[0]?.duration || 30}
     }
   ],
   "changesSummary": [
@@ -1057,35 +1159,32 @@ Return ONLY valid JSON with this structure (no markdown, no code fences):
   ]
 }
 
-CRITICAL RULES:
-- Output EXACTLY ${batchScenes.length} scenes (scenes ${startIdx + 1} to ${startIdx + batchScenes.length})
-- Preserve scene duration values
-- All dialogue must have [emotion] tags
-- Escape quotes in JSON strings
-- Never use raw line breaks inside strings (use \\n)
-- If narration should be removed, replace with a 1-sentence summary (never null/empty)
+=== TECHNICAL RULES ===
+• Output EXACTLY ${batchScenes.length} scene(s): scenes ${startIdx + 1}-${startIdx + batchScenes.length}
+• Preserve duration values
+• All dialogue: [emotion] tags required
+• Escape quotes in JSON, use \\n for line breaks
+• Narration: never null/empty, 1-sentence summary if removing
 
-=== DIALOGUE VOICE DIFFERENTIATION (MANDATORY) ===
-- Each character MUST speak with their UNIQUE voice as defined in CHARACTER PROFILES
-- NEVER write generic dialogue that could be spoken by anyone
-- If a character has verbal tics (e.g., "you know", "frankly"), include them naturally
-- Match vocabulary level to character (sophisticated vs simple words)
-- Match sentence structure (short-punchy vs long-complex)
-- Preserve parentheticals like (beat), (sotto voce) - NEVER strip them
-- DO NOT homogenize dialogue - character distinctiveness is MORE important than brevity`
+=== SUCCESS = TRANSFORMATION ===
+✓ deletedContent has 1+ entries per scene (proves you cut on-the-nose dialogue)
+✓ action field has NEW physical gestures/VFX not in original
+✓ speechDNAUsed shows specific character vocabulary examples
+✓ abiManifestation shows environmental/physical threat
+✓ No character says their emotion directly ("I'm scared" → physical trembling instead)`
 
-  // Token budget: 3500 per scene + 5000 base (increased for richer per-scene review context)
-  const estimatedTokens = Math.min(32768, batchScenes.length * 3500 + 5000)
+  // Token budget: 4000 per scene + 6000 base (increased for new output fields)
+  const estimatedTokens = Math.min(32768, batchScenes.length * 4000 + 6000)
   const baseTimeout = Math.min(180000, 60000 + batchScenes.length * 15000)
   // Cap per-batch timeout to remaining global deadline minus safety margin
   const timeoutMs = Math.min(baseTimeout, remainingMs - 10_000)
   
   console.log(`[Script Optimization] Batch call: ${batchScenes.length} scenes, ${estimatedTokens} tokens, ${timeoutMs/1000}s timeout, ${Math.round(remainingMs/1000)}s remaining`)
   
-  // Determine temperature: 0.7 for merged/rewritten scenes that need creative restructuring, 0.6 for normal optimization
-  // Higher temperatures encourage more substantive changes vs conservative synonym swaps
+  // Determine temperature: 0.8 for merged/rewritten scenes, 0.75 for normal optimization
+  // Higher temperatures (0.75-0.8) force creative structural changes instead of safe synonym swaps
   const hasFlaggedScenes = batchScenes.some((s: any) => s._merged || s._rewrite)
-  const temperature = hasFlaggedScenes ? 0.7 : 0.6
+  const temperature = hasFlaggedScenes ? 0.8 : 0.75
   
   // First attempt - using Gemini 2.5 Flash for optimization
   let result = await generateText(prompt, {
