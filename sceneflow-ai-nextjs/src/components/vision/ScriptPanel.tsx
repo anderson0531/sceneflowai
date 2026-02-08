@@ -41,6 +41,8 @@ import { AudioMixer, type AudioTrack } from './AudioMixer'
 import ScriptReviewModal from './ScriptReviewModal'
 import SceneReviewModal from './SceneReviewModal'
 import { ImageEditModal } from './ImageEditModal'
+import { OptimizeSceneDialog } from './OptimizeSceneDialog'
+import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { useOverlayStore } from '@/store/useOverlayStore'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
@@ -283,6 +285,11 @@ interface ScriptPanelProps {
   // Translation storage for multi-language support
   storedTranslations?: ProjectTranslations
   onSaveTranslations?: (langCode: string, translations: { [sceneIndex: number]: SceneTranslation }) => Promise<void>
+  // Per-scene audience analysis props (integrated from ScriptReviewModal)
+  onAnalyzeScene?: (sceneIndex: number) => Promise<void>
+  analyzingSceneIndex?: number | null
+  onOptimizeScene?: (sceneIndex: number, instruction: string, selectedRecommendations: string[]) => Promise<void>
+  optimizingSceneIndex?: number | null
 }
 
 // Transform score analysis data to review format
@@ -499,7 +506,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle, projectLogline, projectDuration, storedTranslations, onSaveTranslations }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle, projectLogline, projectDuration, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -589,6 +596,27 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   
   // Dialogue generation state
   const [generatingDialogue, setGeneratingDialogue] = useState<{sceneIdx: number, character: string, dialogueIndex?: number} | null>(null)
+  
+  // Scene optimization dialog state (for per-scene audience analysis)
+  const [optimizeDialogOpen, setOptimizeDialogOpen] = useState(false)
+  const [optimizeDialogScene, setOptimizeDialogScene] = useState<{
+    sceneIndex: number
+    sceneNumber: number
+    sceneHeading: string
+    audienceAnalysis?: {
+      score: number
+      pacing: 'slow' | 'moderate' | 'fast'
+      tension: 'low' | 'medium' | 'high'
+      characterDevelopment: 'minimal' | 'moderate' | 'strong'
+      visualPotential: 'low' | 'medium' | 'high'
+      notes: string
+      recommendations: string[]
+    }
+  } | null>(null)
+  const [isLocalOptimizing, setIsLocalOptimizing] = useState(false)
+  
+  // Expanded recommendations state per scene
+  const [expandedRecommendations, setExpandedRecommendations] = useState<Set<number>>(new Set())
   
   // Voice selection visibility state
   const [showVoiceSelection, setShowVoiceSelection] = useState(false)
@@ -2780,6 +2808,43 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         />
       )}
 
+      {/* Optimize Scene Dialog - For per-scene audience analysis optimization */}
+      {optimizeDialogScene && (
+        <OptimizeSceneDialog
+          isOpen={optimizeDialogOpen}
+          onClose={() => {
+            setOptimizeDialogOpen(false)
+            setOptimizeDialogScene(null)
+          }}
+          sceneNumber={optimizeDialogScene.sceneNumber}
+          sceneHeading={optimizeDialogScene.sceneHeading}
+          sceneAnalysis={optimizeDialogScene.audienceAnalysis}
+          isOptimizing={isLocalOptimizing || optimizingSceneIndex === optimizeDialogScene.sceneIndex}
+          onOptimize={async (instruction, selectedRecommendations) => {
+            if (!onOptimizeScene) return
+            setIsLocalOptimizing(true)
+            try {
+              await onOptimizeScene(optimizeDialogScene.sceneIndex, instruction, selectedRecommendations)
+              // Close dialog on success
+              setOptimizeDialogOpen(false)
+              setOptimizeDialogScene(null)
+              // Collapse recommendations panel
+              setExpandedRecommendations(prev => {
+                const newSet = new Set(prev)
+                newSet.delete(optimizeDialogScene.sceneIndex)
+                return newSet
+              })
+              toast.success(`Scene ${optimizeDialogScene.sceneNumber} optimized!`)
+            } catch (error) {
+              console.error('[OptimizeScene] Failed:', error)
+              toast.error('Failed to optimize scene')
+            } finally {
+              setIsLocalOptimizing(false)
+            }
+          }}
+        />
+      )}
+
       {/* Animatic Render Dialog - for exporting keyframe-based animatic as MP4 */}
       {animaticRenderSceneIdx !== null && (() => {
         const scene = scenes[animaticRenderSceneIdx]
@@ -4091,6 +4156,172 @@ function SceneCard({
                 )}
               </div>
             )}
+            
+            {/* Audience Resonance Analysis Badge - Integrated from ScriptReviewModal */}
+            {!isOutline && (
+              <div className="flex items-center gap-2">
+                {scene.audienceAnalysis?.score !== undefined ? (
+                  <>
+                    {/* Audience Analysis Score Badge */}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              // Toggle recommendations expansion
+                              setExpandedRecommendations(prev => {
+                                const newSet = new Set(prev)
+                                if (newSet.has(sceneIdx)) {
+                                  newSet.delete(sceneIdx)
+                                } else {
+                                  newSet.add(sceneIdx)
+                                }
+                                return newSet
+                              })
+                            }}
+                            className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-md font-semibold border transition-all cursor-pointer hover:scale-105 ${
+                              scene.audienceAnalysis.score >= 80 
+                                ? 'bg-green-500/20 text-green-300 border-green-500/40 hover:bg-green-500/30' 
+                                : scene.audienceAnalysis.score >= 60 
+                                  ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40 hover:bg-yellow-500/30' 
+                                  : 'bg-red-500/20 text-red-300 border-red-500/40 hover:bg-red-500/30'
+                            }`}
+                          >
+                            <Users className="w-3 h-3" />
+                            <span>{scene.audienceAnalysis.score}</span>
+                            {(scene.audienceAnalysis.recommendations?.length || 0) > 0 && (
+                              <Badge variant="secondary" className="ml-0.5 h-4 px-1 text-[10px] bg-purple-500/30 text-purple-200 border-none">
+                                {scene.audienceAnalysis.recommendations.length}
+                              </Badge>
+                            )}
+                            {expandedRecommendations.has(sceneIdx) ? (
+                              <ChevronUp className="w-3 h-3 ml-0.5" />
+                            ) : (
+                              <ChevronDown className="w-3 h-3 ml-0.5" />
+                            )}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-900 text-white border border-gray-700 max-w-xs">
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium">Audience Resonance: {scene.audienceAnalysis.score}/100</p>
+                            <div className="flex flex-wrap gap-1">
+                              <Badge variant="outline" className="text-[10px] h-4 border-gray-600">
+                                Pacing: {scene.audienceAnalysis.pacing}
+                              </Badge>
+                              <Badge variant="outline" className="text-[10px] h-4 border-gray-600">
+                                Tension: {scene.audienceAnalysis.tension}
+                              </Badge>
+                            </div>
+                            <p className="text-[10px] text-gray-400 mt-1">{scene.audienceAnalysis.notes}</p>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    
+                    {/* Optimize Scene Button - Only show if score < 80 or has recommendations */}
+                    {(scene.audienceAnalysis.score < 80 || (scene.audienceAnalysis.recommendations?.length || 0) > 0) && onOptimizeScene && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                const heading = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text || `Scene ${sceneNumber}`
+                                setOptimizeDialogScene({
+                                  sceneIndex: sceneIdx,
+                                  sceneNumber,
+                                  sceneHeading: heading,
+                                  audienceAnalysis: scene.audienceAnalysis
+                                })
+                                setOptimizeDialogOpen(true)
+                              }}
+                              disabled={optimizingSceneIndex === sceneIdx}
+                              className="flex items-center gap-1 text-xs px-2 py-1 rounded-md font-medium border transition-all bg-purple-500/20 text-purple-300 border-purple-500/40 hover:bg-purple-500/30 disabled:opacity-50"
+                            >
+                              {optimizingSceneIndex === sceneIdx ? (
+                                <>
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                  <span>Optimizing...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Sparkles className="w-3 h-3" />
+                                  <span>Optimize</span>
+                                </>
+                              )}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-900 text-white border border-gray-700">
+                            <p className="text-xs">Optimize scene based on analysis</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    
+                    {/* Re-analyze button */}
+                    {onAnalyzeScene && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onAnalyzeScene(sceneIdx)
+                              }}
+                              disabled={analyzingSceneIndex === sceneIdx}
+                              className="p-1 rounded-md bg-gray-500/20 text-gray-400 border border-gray-500/40 hover:bg-gray-500/30 disabled:opacity-50 transition"
+                            >
+                              {analyzingSceneIndex === sceneIdx ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <RefreshCw className="w-3 h-3" />
+                              )}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-900 text-white border border-gray-700">
+                            <p className="text-xs">Re-analyze scene</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </>
+                ) : (
+                  /* No analysis yet - show Analyze button */
+                  onAnalyzeScene && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onAnalyzeScene(sceneIdx)
+                            }}
+                            disabled={analyzingSceneIndex === sceneIdx}
+                            className="flex items-center gap-1 text-xs px-2 py-1 rounded-md font-medium border transition-all bg-blue-500/20 text-blue-300 border-blue-500/40 hover:bg-blue-500/30 disabled:opacity-50"
+                          >
+                            {analyzingSceneIndex === sceneIdx ? (
+                              <>
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                <span>Analyzing...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Users className="w-3 h-3" />
+                                <span>Analyze</span>
+                              </>
+                            )}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-900 text-white border border-gray-700">
+                          <p className="text-xs">Analyze scene for audience resonance</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )
+                )}
+              </div>
+            )}
           </div>
           
           {/* Mark Done and Help controls */}
@@ -4199,6 +4430,120 @@ function SceneCard({
             </div>
           )}
         </div>
+        
+        {/* Expandable Recommendations Panel - Shows when user clicks the score badge */}
+        <AnimatePresence>
+          {expandedRecommendations.has(sceneIdx) && scene.audienceAnalysis && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-2 p-3 bg-gray-800/60 border border-gray-700/50 rounded-lg">
+                {/* Analysis Summary Row */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
+                    Pacing: {scene.audienceAnalysis.pacing}
+                  </Badge>
+                  <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
+                    Tension: {scene.audienceAnalysis.tension}
+                  </Badge>
+                  <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
+                    Character: {scene.audienceAnalysis.characterDevelopment}
+                  </Badge>
+                  <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
+                    Visual: {scene.audienceAnalysis.visualPotential}
+                  </Badge>
+                </div>
+                
+                {/* Notes */}
+                {scene.audienceAnalysis.notes && (
+                  <p className="text-xs text-gray-400 mb-3 leading-relaxed">
+                    {scene.audienceAnalysis.notes}
+                  </p>
+                )}
+                
+                {/* Recommendations */}
+                {(scene.audienceAnalysis.recommendations?.length || 0) > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-purple-300 flex items-center gap-1">
+                      <Lightbulb className="w-3 h-3" />
+                      Recommendations
+                    </p>
+                    <ul className="space-y-1.5">
+                      {scene.audienceAnalysis.recommendations.map((rec: string, rIdx: number) => (
+                        <li key={rIdx} className="text-xs text-gray-300 flex gap-2 pl-1">
+                          <span className="text-purple-400 mt-0.5">•</span>
+                          <span>{rec}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-700/50">
+                  {onOptimizeScene && (scene.audienceAnalysis.score < 80 || (scene.audienceAnalysis.recommendations?.length || 0) > 0) && (
+                    <Button
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const heading = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text || `Scene ${sceneNumber}`
+                        setOptimizeDialogScene({
+                          sceneIndex: sceneIdx,
+                          sceneNumber,
+                          sceneHeading: heading,
+                          audienceAnalysis: scene.audienceAnalysis
+                        })
+                        setOptimizeDialogOpen(true)
+                      }}
+                      disabled={optimizingSceneIndex === sceneIdx}
+                      className="h-7 text-xs bg-purple-600 hover:bg-purple-500"
+                    >
+                      {optimizingSceneIndex === sceneIdx ? (
+                        <>
+                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                          Optimizing...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3 h-3 mr-1" />
+                          Optimize Scene
+                        </>
+                      )}
+                    </Button>
+                  )}
+                  {onAnalyzeScene && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onAnalyzeScene(sceneIdx)
+                      }}
+                      disabled={analyzingSceneIndex === sceneIdx}
+                      className="h-7 text-xs border-gray-600 text-gray-300 hover:bg-gray-700"
+                    >
+                      {analyzingSceneIndex === sceneIdx ? (
+                        <>
+                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                          Analyzing...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="w-3 h-3 mr-1" />
+                          Re-analyze
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Collapsible Content */}

@@ -1804,275 +1804,71 @@ export default function ScriptReviewModal({
                   </div>
                 )}
 
-                {/* Scenes Tab */}
+                {/* Scenes Tab - Now redirects to per-scene optimization in Script view */}
                 {activeTab === 'scenes' && (
                   <div className="space-y-6">
-                    {sceneAnalysis.length > 0 ? (
-                      <>
-                        {/* Summary bar */}
-                        {(() => {
-                          const belowThreshold = sceneAnalysis.filter(s => s.score < 80).length
-                          const alreadyOptimized = fixedScenes.size
-                          const currentlyOptimizing = fixingScenes.size
-                          const allScenesGood = belowThreshold === 0 && alreadyOptimized === 0
+                    {/* Clean workflow transition CTA */}
+                    <Card className="border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-900/20 dark:to-purple-900/20">
+                      <CardContent className="py-8">
+                        <div className="text-center space-y-4">
+                          <div className="w-16 h-16 mx-auto bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                            <Film className="w-8 h-8 text-white" />
+                          </div>
                           
-                          return (
-                            <div className="space-y-3">
-                              {/* All scenes good - workflow transition message */}
-                              {allScenesGood && (
-                                <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                                  <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
-                                    <CheckCircle2 className="w-5 h-5" />
-                                    <div>
-                                      <p className="font-medium">All scenes are ready! 🎬</p>
-                                      <p className="text-sm opacity-80">Your script is optimized. Close this panel and continue to the Script tab to proceed with production.</p>
-                                    </div>
-                                  </div>
+                          <div>
+                            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                              Continue to Scene Editing
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                              Per-scene analysis and optimization is now integrated directly into each scene header. 
+                              Close this panel and work on individual scenes with full context.
+                            </p>
+                          </div>
+
+                          {/* Quick stats if scene analysis exists */}
+                          {sceneAnalysis.length > 0 && (
+                            <div className="flex items-center justify-center gap-6 py-3 px-4 bg-white/50 dark:bg-gray-900/30 rounded-lg max-w-sm mx-auto">
+                              <div className="text-center">
+                                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                                  {sceneAnalysis.length}
                                 </div>
-                              )}
-                              
-                              {/* Status summary */}
-                              <div className="flex items-center justify-between px-1">
-                                <div className="text-sm text-gray-500 dark:text-gray-400">
-                                  {belowThreshold > 0 ? (
-                                    <span>{belowThreshold} scene{belowThreshold !== 1 ? 's' : ''} below 80 — optimize individually below</span>
-                                  ) : alreadyOptimized > 0 ? (
-                                    <span className="text-amber-600 dark:text-amber-400">{alreadyOptimized} scene{alreadyOptimized !== 1 ? 's' : ''} optimized — re-analyze to verify improvements</span>
-                                  ) : (
-                                    <span className="text-green-600 dark:text-green-400">All scenes scoring 80+ ✓</span>
-                                  )}
-                                  {currentlyOptimizing > 0 && (
-                                    <span className="ml-2 text-purple-600 dark:text-purple-400">
-                                      · {currentlyOptimizing} in progress
-                                    </span>
-                                  )}
+                                <div className="text-xs text-gray-500 dark:text-gray-400">Scenes</div>
+                              </div>
+                              <div className="w-px h-8 bg-gray-200 dark:bg-gray-700" />
+                              <div className="text-center">
+                                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                  {sceneAnalysis.filter(s => s.score >= 80).length}
                                 </div>
-                                {alreadyOptimized > 0 && (
-                                  <Button
-                                    variant="default"
-                                    size="sm"
-                                    onClick={() => {
-                                      setFixedScenes(new Set())
-                                      setExpandedScenes(new Set())
-                                      onRegenerate()
-                                    }}
-                                    disabled={isGenerating || currentlyOptimizing > 0}
-                                    className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white"
-                                  >
-                                    {isGenerating ? (
-                                      <>
-                                        <Loader className="w-3.5 h-3.5 animate-spin" />
-                                        Re-analyzing...
-                                      </>
-                                    ) : (
-                                      <>
-                                        <RefreshCw className="w-3.5 h-3.5" />
-                                        Re-analyze Script
-                                      </>
-                                    )}
-                                  </Button>
-                                )}
+                                <div className="text-xs text-gray-500 dark:text-gray-400">Ready (80+)</div>
+                              </div>
+                              <div className="w-px h-8 bg-gray-200 dark:bg-gray-700" />
+                              <div className="text-center">
+                                <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                                  {sceneAnalysis.filter(s => s.score < 80).length}
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">To Optimize</div>
                               </div>
                             </div>
-                          )
-                        })()}
-
-                        <Card>
-                          <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle className="text-lg">🎬 Scene-by-Scene Analysis</CardTitle>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleGenerateSceneAnalysis}
-                              disabled={isGeneratingSceneAnalysis}
-                              className="text-xs"
-                            >
-                              {isGeneratingSceneAnalysis ? (
-                                <>
-                                  <Loader className="w-3 h-3 mr-1 animate-spin" />
-                                  Analyzing...
-                                </>
-                              ) : (
-                                <>
-                                  <RefreshCw className="w-3 h-3 mr-1" />
-                                  Re-Analyze
-                                </>
-                              )}
-                            </Button>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="max-h-[500px] overflow-y-auto space-y-4 pr-2">
-                              {sceneAnalysis.map((scene, index) => {
-                                const isFixing = fixingScenes.has(scene.sceneNumber)
-                                const isFixed = fixedScenes.has(scene.sceneNumber)
-                                const isExpanded = expandedScenes.has(scene.sceneNumber)
-                                const hasRecs = (scene.recommendations?.length || 0) > 0
-                                // Allow optimization for any scene below 80, or scenes with recommendations
-                                const canOptimize = !!projectId && !!script && !!onScriptOptimized && !isFixed && !isFixing && (scene.score < 80 || hasRecs)
-
-                                return (
-                                  <div 
-                                    key={index} 
-                                    className={`p-4 rounded-lg border transition-colors ${
-                                      isFixed ? 'border-green-300 bg-green-50/70 dark:bg-green-900/20 dark:border-green-700' :
-                                      isFixing ? 'border-purple-300 bg-purple-50/50 dark:bg-purple-900/15 dark:border-purple-700' :
-                                      scene.score >= 80 ? 'border-green-200 bg-green-50 dark:bg-green-900/10 dark:border-green-800' :
-                                      scene.score >= 60 ? 'border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10 dark:border-yellow-800' :
-                                      'border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-800'
-                                    }`}
-                                  >
-                                    {/* Header row: heading + score + optimize button */}
-                                    <div className="flex items-center justify-between mb-2 gap-3">
-                                      <div className="font-medium flex-1 min-w-0">
-                                        <span className="truncate block">Scene {scene.sceneNumber}: {scene.sceneHeading}</span>
-                                      </div>
-                                      <div className="flex items-center gap-2 flex-shrink-0">
-                                        <div className={`text-lg font-bold ${getScoreColor(scene.score)}`}>
-                                          {scene.score}
-                                        </div>
-                                        {isFixed ? (
-                                          <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-xs font-medium px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30">
-                                            <CheckCircle2 className="w-3.5 h-3.5" />
-                                            Optimized
-                                          </div>
-                                        ) : isFixing ? (
-                                          <div className="flex items-center gap-1 text-purple-600 dark:text-purple-400 text-xs font-medium px-2 py-1 rounded-md bg-purple-100 dark:bg-purple-900/30">
-                                            <Loader className="w-3.5 h-3.5 animate-spin" />
-                                            Optimizing...
-                                          </div>
-                                        ) : canOptimize ? (
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => handleOpenOptimizeDialog(scene)}
-                                            className="text-xs h-7 px-2.5 border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-600 dark:text-purple-300 dark:hover:bg-purple-900/20"
-                                          >
-                                            <Sparkles className="w-3 h-3 mr-1" />
-                                            Optimize Scene
-                                          </Button>
-                                        ) : scene.score >= 80 ? (
-                                          <div className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                                            <CheckCircle2 className="w-3.5 h-3.5" />
-                                          </div>
-                                        ) : null}
-                                      </div>
-                                    </div>
-
-                                    {/* Badge row */}
-                                    <div className="flex gap-2 mb-2 flex-wrap">
-                                      <Badge variant="outline" className="text-xs">
-                                        Pacing: {scene.pacing}
-                                      </Badge>
-                                      <Badge variant="outline" className="text-xs">
-                                        Tension: {scene.tension}
-                                      </Badge>
-                                      <Badge variant="outline" className="text-xs">
-                                        Character: {scene.characterDevelopment}
-                                      </Badge>
-                                      <Badge variant="outline" className="text-xs">
-                                        Visual: {scene.visualPotential}
-                                      </Badge>
-                                    </div>
-
-                                    {/* Notes */}
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                                      {scene.notes}
-                                    </p>
-
-                                    {/* Expandable per-scene recommendations */}
-                                    {hasRecs && !isFixed && (
-                                      <div className="mt-2">
-                                        <button
-                                          onClick={() => toggleSceneExpanded(scene.sceneNumber)}
-                                          className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
-                                        >
-                                          {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                                          {scene.recommendations!.length} recommendation{scene.recommendations!.length !== 1 ? 's' : ''}
-                                        </button>
-                                        {isExpanded && (
-                                          <ul className="mt-2 space-y-1.5 pl-1">
-                                            {scene.recommendations!.map((rec, rIdx) => (
-                                              <li key={rIdx} className="text-xs text-gray-600 dark:text-gray-400 flex gap-2">
-                                                <span className="text-purple-400 mt-0.5">•</span>
-                                                <span>{rec}</span>
-                                              </li>
-                                            ))}
-                                          </ul>
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          </CardContent>
-                        </Card>
-
-                        {/* Re-analyze CTA at bottom when scenes have been fixed */}
-                        {fixedScenes.size > 0 && (
-                          <Card className="border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-900/10">
-                            <CardContent className="py-4">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                    {fixedScenes.size} scene{fixedScenes.size !== 1 ? 's' : ''} revised
-                                  </p>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                    Re-analyze to see updated scores and find remaining improvements
-                                  </p>
-                                </div>
-                                <Button
-                                  variant="default"
-                                  size="sm"
-                                  onClick={() => {
-                                    setFixedScenes(new Set())
-                                    setExpandedScenes(new Set())
-                                    onRegenerate()
-                                  }}
-                                  disabled={isGenerating || fixingScenes.size > 0}
-                                  className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white"
-                                >
-                                  {isGenerating ? (
-                                    <>
-                                      <Loader className="w-3.5 h-3.5 animate-spin" />
-                                      Re-analyzing...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <RefreshCw className="w-3.5 h-3.5" />
-                                      Re-analyze Script
-                                    </>
-                                  )}
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        )}
-                      </>
-                    ) : (
-                      <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                        <Film className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                        <p>No scene-by-scene analysis available</p>
-                        <p className="text-sm mt-1 mb-4">Generate detailed analysis for each scene</p>
-                        <Button
-                          onClick={handleGenerateSceneAnalysis}
-                          disabled={isGeneratingSceneAnalysis}
-                          className="bg-purple-600 hover:bg-purple-500"
-                        >
-                          {isGeneratingSceneAnalysis ? (
-                            <>
-                              <Loader className="w-4 h-4 mr-2 animate-spin" />
-                              Analyzing Scenes...
-                            </>
-                          ) : (
-                            <>
-                              <Sparkles className="w-4 h-4 mr-2" />
-                              Analyze All Scenes
-                            </>
                           )}
-                        </Button>
-                      </div>
-                    )}
+
+                          <div className="pt-2">
+                            <Button
+                              variant="default"
+                              onClick={onClose}
+                              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8"
+                            >
+                              <Film className="w-4 h-4 mr-2" />
+                              Go to Scenes
+                            </Button>
+                          </div>
+
+                          {/* Tip */}
+                          <p className="text-xs text-gray-500 dark:text-gray-400 pt-2">
+                            💡 Each scene now shows its own score, analysis, and Optimize button in the scene header
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 )}
 

@@ -3411,6 +3411,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Scene score generation state
   const [generatingScoreFor, setGeneratingScoreFor] = useState<number | null>(null)
   
+  // Per-scene audience analysis state (integrated from ScriptReviewModal)
+  const [analyzingSceneIndex, setAnalyzingSceneIndex] = useState<number | null>(null)
+  const [optimizingSceneIndex, setOptimizingSceneIndex] = useState<number | null>(null)
+  
   // Scene direction generation state
   const [generatingDirectionFor, setGeneratingDirectionFor] = useState<number | null>(null)
   const [generationProgress, setGenerationProgress] = useState({
@@ -4278,6 +4282,129 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       debouncedSaveSceneAnalysis(updatedScript, project?.metadata, projectId)
     }
   }, [script, projectId, project?.metadata, debouncedSaveSceneAnalysis])
+
+  // Handler for analyzing a single scene (called from ScriptPanel)
+  const handleAnalyzeScene = useCallback(async (sceneIndex: number) => {
+    if (!projectId || !script?.script?.scenes?.[sceneIndex]) return
+    
+    setAnalyzingSceneIndex(sceneIndex)
+    
+    try {
+      const scene = script.script.scenes[sceneIndex]
+      
+      // Call the existing analyze-scenes API with just this one scene
+      const response = await fetch('/api/vision/analyze-scenes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          scenes: [scene],
+          sceneIndices: [sceneIndex]
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to analyze scene')
+      }
+      
+      const data = await response.json()
+      
+      if (data.sceneAnalysis?.[0]) {
+        // Update the scene with analysis
+        handleSceneAnalysisComplete([{
+          sceneIndex,
+          analysis: data.sceneAnalysis[0]
+        }])
+        toast.success(`Scene ${sceneIndex + 1} analyzed`)
+      }
+    } catch (error) {
+      console.error('[handleAnalyzeScene] Error:', error)
+      toast.error('Failed to analyze scene')
+    } finally {
+      setAnalyzingSceneIndex(null)
+    }
+  }, [projectId, script, handleSceneAnalysisComplete])
+
+  // Handler for optimizing a single scene (called from ScriptPanel)
+  const handleOptimizeScene = useCallback(async (
+    sceneIndex: number, 
+    instruction: string, 
+    selectedRecommendations: string[]
+  ) => {
+    if (!projectId || !script?.script?.scenes?.[sceneIndex]) return
+    
+    setOptimizingSceneIndex(sceneIndex)
+    
+    try {
+      const scene = script.script.scenes[sceneIndex]
+      
+      // Build instruction from selected recommendations and custom instruction
+      const fullInstruction = [
+        instruction,
+        ...(selectedRecommendations.length > 0 
+          ? ['Apply these specific recommendations:', ...selectedRecommendations.map(r => `- ${r}`)]
+          : [])
+      ].filter(Boolean).join('\n')
+      
+      // Call the optimize-script API for a single scene
+      const response = await fetch('/api/vision/optimize-script', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          script: script.script,
+          instruction: fullInstruction,
+          selectedSceneIndices: [sceneIndex],
+          characters
+        })
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to optimize scene')
+      }
+      
+      const data = await response.json()
+      
+      if (data.script?.scenes) {
+        // Update script with optimized scene
+        const updatedScript = {
+          ...script,
+          script: {
+            ...script.script,
+            scenes: script.script.scenes.map((s: any, idx: number) =>
+              idx === sceneIndex ? data.script.scenes[0] : s
+            )
+          }
+        }
+        setScript(updatedScript)
+        
+        // Save to database
+        try {
+          await fetch(`/api/projects/${projectId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              metadata: {
+                ...project?.metadata,
+                visionPhase: {
+                  ...project?.metadata?.visionPhase,
+                  script: updatedScript
+                }
+              }
+            })
+          })
+        } catch (saveError) {
+          console.error('[handleOptimizeScene] Failed to save:', saveError)
+        }
+      }
+    } catch (error) {
+      console.error('[handleOptimizeScene] Error:', error)
+      throw error // Re-throw so the dialog can show error
+    } finally {
+      setOptimizingSceneIndex(null)
+    }
+  }, [projectId, script, project?.metadata, characters])
 
   // ============================================================================
   // UNIFIED SIDEBAR DATA - Populate global sidebar with Production phase data
@@ -8512,6 +8639,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onClearScriptEditorInstruction={() => setReviseScriptInstruction('')}
                 storedTranslations={storedTranslations}
                 onSaveTranslations={handleSaveTranslations}
+                onAnalyzeScene={handleAnalyzeScene}
+                analyzingSceneIndex={analyzingSceneIndex}
+                onOptimizeScene={handleOptimizeScene}
+                optimizingSceneIndex={optimizingSceneIndex}
               belowDashboardSlot={({ openGenerateAudio, openPromptBuilder }) => (
                 <div className="rounded-2xl border border-white/10 bg-slate950/40 shadow-inner">
                   <div className="px-5 py-5">
