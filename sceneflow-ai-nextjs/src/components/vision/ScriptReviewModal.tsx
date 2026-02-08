@@ -1157,74 +1157,67 @@ export default function ScriptReviewModal({
       return
     }
 
-    // Mark scene as being optimized
-    setFixingScenes(prev => new Set(prev).add(optimizeDialogScene.sceneNumber))
+    // Capture scene number before closing dialog (dialog state will be cleared)
+    const sceneNumber = optimizeDialogScene.sceneNumber
+    
+    // Close dialog immediately and show global animated processing toast
+    setOptimizeDialogOpen(false)
+    
+    await execute(
+      async () => {
+        const previousScene = sceneIndex > 0 ? script.scenes[sceneIndex - 1] : undefined
+        const nextScene = sceneIndex < script.scenes.length - 1 ? script.scenes[sceneIndex + 1] : undefined
 
-    try {
-      const previousScene = sceneIndex > 0 ? script.scenes[sceneIndex - 1] : undefined
-      const nextScene = sceneIndex < script.scenes.length - 1 ? script.scenes[sceneIndex + 1] : undefined
-
-      // Combine recommendations and custom instruction
-      const allInstructions = [
-        ...selectedRecommendations,
-        instruction
-      ].filter(Boolean)
-
-      const response = await fetch('/api/vision/revise-scene', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          sceneIndex,
-          currentScene,
-          revisionMode: instruction ? 'custom' : 'recommendations',
-          customInstruction: instruction || undefined,
-          selectedRecommendations: selectedRecommendations.length > 0 ? selectedRecommendations : undefined,
-          context: {
-            characters: characters || [],
-            previousScene,
-            nextScene
-          }
+        const response = await fetch('/api/vision/revise-scene', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId,
+            sceneIndex,
+            currentScene,
+            revisionMode: instruction ? 'custom' : 'recommendations',
+            customInstruction: instruction || undefined,
+            selectedRecommendations: selectedRecommendations.length > 0 ? selectedRecommendations : undefined,
+            revisionDepth: 'moderate', // Use moderate depth for substantive rewrites
+            context: {
+              characters: characters || [],
+              previousScene,
+              nextScene
+            }
+          })
         })
-      })
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || 'Failed to optimize scene')
-      }
-
-      const data = await response.json()
-
-      if (data.revisedScene) {
-        if (data.revisedScene._revisionError) {
-          throw new Error('Scene optimization failed — AI response could not be parsed.')
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.error || 'Failed to optimize scene')
         }
 
-        // Update the script
-        const updatedScenes = [...script.scenes]
-        updatedScenes[sceneIndex] = data.revisedScene
-        const updatedScript = { ...script, scenes: updatedScenes }
+        const data = await response.json()
 
-        onScriptOptimized(updatedScript)
-        setFixedScenes(prev => new Set(prev).add(optimizeDialogScene.sceneNumber))
-        setOptimizeDialogOpen(false)
-        setOptimizeDialogScene(null)
-        toast.success(`Scene ${optimizeDialogScene.sceneNumber} optimized successfully! Re-analyze to see updated score.`)
-      } else {
-        throw new Error('No optimized scene returned')
-      }
-    } catch (err: any) {
-      console.error(`[Scene Optimize] Error:`, err)
-      toast.error(err.message || 'Failed to optimize scene')
-    } finally {
-      setFixingScenes(prev => {
-        const next = new Set(prev)
-        if (optimizeDialogScene) {
-          next.delete(optimizeDialogScene.sceneNumber)
+        if (data.revisedScene) {
+          if (data.revisedScene._revisionError) {
+            throw new Error('Scene optimization failed — AI response could not be parsed.')
+          }
+
+          // Update the script
+          const updatedScenes = [...script.scenes]
+          updatedScenes[sceneIndex] = data.revisedScene
+          const updatedScript = { ...script, scenes: updatedScenes }
+
+          onScriptOptimized(updatedScript)
+          setFixedScenes(prev => new Set(prev).add(sceneNumber))
+          setOptimizeDialogScene(null)
+          return `Scene ${sceneNumber} rewritten! Re-analyze to see updated score.`
+        } else {
+          throw new Error('No optimized scene returned')
         }
-        return next
-      })
-    }
+      },
+      {
+        title: `Rewriting Scene ${sceneNumber}`,
+        successTitle: 'Scene Rewritten',
+        errorTitle: 'Scene Rewrite Failed'
+      }
+    )
   }
 
   // Toggle expanded state for scene recommendations

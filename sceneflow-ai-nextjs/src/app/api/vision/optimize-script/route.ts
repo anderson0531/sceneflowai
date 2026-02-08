@@ -402,18 +402,28 @@ Characters: ${characterList}
 CHARACTER PROFILES:
 ${characterProfiles}
 
-=== OPTIMIZATION GUIDELINES ===
+=== REWRITE GUIDELINES (NOT POLISH) ===
 1. IMPLEMENT MANDATORY FIXES: CRITICAL and HIGH priority recommendations MUST be applied - these are non-negotiable
-2. Preserve author's voice and style while implementing fixes
-3. Maintain character consistency - each character speaks DISTINCTLY
-4. Show don't tell - use action over exposition instead of dialogue explaining plot
-5. Add emotional/vocal tags to ALL dialogue: [happy], [sad], [angry], etc.
-6. Keep continuity with other scenes
-7. MEDIUM recommendations should be applied if they naturally fit
-8. Only apply recommendations relevant to the scenes in this batch
-9. DO NOT just shorten text - make SUBSTANTIVE changes that address the underlying issues
-10. When a recommendation says "add" or "show" something, ADD new content (action lines, visual details, dialogue beats)
-${compact ? '11. Balance conciseness with addressing all mandatory fixes' : ''}
+2. REWRITE content to address issues - do NOT just polish wording or swap synonyms
+3. Make STRUCTURAL changes: restructure dialogue order, combine/split lines, change what is said (not just how)
+4. Maintain character consistency - each character speaks DISTINCTLY with their unique voice
+5. Show don't tell - REPLACE exposition dialogue with action/visual storytelling
+6. Add emotional/vocal tags to ALL dialogue: [happy], [sad], [angry], etc.
+7. Keep continuity with other scenes
+8. MEDIUM recommendations should be applied if they naturally fit
+9. Only apply recommendations relevant to the scenes in this batch
+10. DO NOT just shorten text - make SUBSTANTIVE changes that address the underlying issues
+11. When a recommendation says "add" or "show" something, ADD new content (action lines, visual details, dialogue beats)
+12. REPLACE problematic dialogue with COMPLETELY NEW lines that serve the same story purpose better
+${compact ? '13. Balance conciseness with addressing all mandatory fixes - but NEVER sacrifice substance for brevity' : ''}
+
+=== SUCCESS vs FAILURE CRITERIA ===
+✅ SUCCESS: Dialogue is restructured with different content, new lines, changed order
+✅ SUCCESS: Exposition converted to visual action beats
+✅ SUCCESS: Generic dialogue replaced with character-specific voice
+❌ FAILURE: Same dialogue with synonym substitutions (e.g., "angry" → "furious")
+❌ FAILURE: Minor word changes that don't address the underlying issue
+❌ FAILURE: Shortening without structural improvement
 
 === DIALOGUE AUDIO TAGS (Required) ===
 Every dialogue line needs emotional tags in square brackets:
@@ -986,7 +996,15 @@ Duration: ${scene.duration || 0}s`
     }
   }
 
-  const prompt = `You are an expert screenwriter optimizing a batch of scenes.
+  const prompt = `You are an expert screenwriter REWRITING a batch of scenes to address identified issues.
+
+IMPORTANT: Your task is to make SUBSTANTIVE changes - not cosmetic polishing. This means:
+- RESTRUCTURE dialogue (change order, combine lines, split exchanges)
+- REWRITE what characters say, not just how they say it
+- REPLACE problematic content with entirely new content
+- CONVERT exposition to visual storytelling
+
+Do NOT simply swap synonyms or make minor wording tweaks. The goal is structural improvement.
 
 ${sharedContext}
 ${perSceneNotes}${structuralNotes}
