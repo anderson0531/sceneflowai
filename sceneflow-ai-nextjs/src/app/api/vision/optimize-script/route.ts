@@ -719,7 +719,7 @@ Return ONLY valid JSON:
   
   try {
     const result = await generateText(prompt, {
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.5-flash',
       temperature: 0.2,
       maxOutputTokens: 4000,
       responseMimeType: 'application/json',
@@ -1087,9 +1087,9 @@ CRITICAL RULES:
   const hasFlaggedScenes = batchScenes.some((s: any) => s._merged || s._rewrite)
   const temperature = hasFlaggedScenes ? 0.7 : 0.6
   
-  // First attempt - using Gemini 3.0 Flash for better instruction following
+  // First attempt - using Gemini 2.5 Flash for optimization
   let result = await generateText(prompt, {
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-2.5-flash',
     temperature,
     maxOutputTokens: estimatedTokens,
     responseMimeType: 'application/json',
@@ -1112,7 +1112,7 @@ CRITICAL RULES:
       console.warn(`[Script Optimization] Response truncated (MAX_TOKENS). Retrying with ${retryTokens} tokens (${Math.round(remainingMs/1000)}s remaining)...`)
       
       result = await generateText(prompt, {
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-2.5-flash',
         temperature,
         maxOutputTokens: retryTokens,
         responseMimeType: 'application/json',
