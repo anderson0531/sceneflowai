@@ -310,135 +310,33 @@ function buildSharedContext(
   audienceReview?: Review | null,
   voiceProfiles?: Record<string, CharacterVoiceProfile>
 ): string {
-  const characterList = characters?.map((c: any) => c.name).join(', ') || 'No characters'
+  // RADICALLY SIMPLIFIED: Just pass the instruction directly
+  // The Chat optimization proved that simple, direct instructions work better
+  // than complex rule systems that cause "Instruction Fatigue"
   
-  // Build enhanced character profiles with voice differentiation
-  let characterProfiles = 'No character profiles'
-  if (characters?.length > 0) {
-    characterProfiles = characters.map((c: any) => {
-      const baseLine = `- ${c.name}: ${c.description || ''} ${c.demeanor ? `(Demeanor: ${c.demeanor})` : ''}`
-      const vp = voiceProfiles?.[c.name]
-      if (vp) {
-        return `${baseLine}
-    VOICE PROFILE: ${vp.speechStyle}. Vocabulary: ${vp.vocabularyLevel}. Emotional style: ${vp.emotionalExpression}. Sentence structure: ${vp.sentenceStructure}.${vp.verbalTics?.length ? ` Verbal tics: ${vp.verbalTics.join(', ')}.` : ''}
-    EXAMPLE LINE: "${vp.exampleLine}"`
-      }
-      return baseLine
-    }).join('\n')
-  }
-
   const normalizedInstruction = String(instruction || '')
     .split(/\r?\n/)
     .map(line => (line || '').trim())
     .filter(line => line && line.toLowerCase() !== 'undefined')
     .join('\n') || 'Improve clarity, pacing, character depth, and visual storytelling.'
   
-  // Build review context if available
-  let reviewContext = ''
-  if (directorReview || audienceReview) {
-    reviewContext = `
-=== REVIEW ANALYSIS CONTEXT ===
-`
-    if (directorReview) {
-      reviewContext += `DIRECTOR REVIEW (Score: ${directorReview.overallScore}/100):
-Key Issues: ${directorReview.improvements.slice(0, 3).join('; ')}
-`
-    }
-    if (audienceReview) {
-      reviewContext += `AUDIENCE REVIEW (Score: ${audienceReview.overallScore}/100):
-Key Issues: ${audienceReview.improvements.slice(0, 5).join('; ')}
-`
-      // Include dimensional scores so model understands weakest areas
-      const weakDimensions = (audienceReview.categories || [])
-        .filter(c => c.score < 80)
-        .sort((a, b) => a.score - b.score)
-        .map(c => `${c.name}: ${c.score}/100`)
-      if (weakDimensions.length > 0) {
-        reviewContext += `Weakest Dimensions: ${weakDimensions.join(', ')}\n`
-      }
-      
-      // RECOMMENDATION ENFORCEMENT: Include structured recommendations with priorities
-      if (audienceReview.recommendations && audienceReview.recommendations.length > 0) {
-        const criticalRecs = audienceReview.recommendations.filter((r: any) => r.priority === 'critical')
-        const highRecs = audienceReview.recommendations.filter((r: any) => r.priority === 'high')
-        const mediumRecs = audienceReview.recommendations.filter((r: any) => r.priority === 'medium')
-        
-        if (criticalRecs.length > 0 || highRecs.length > 0) {
-          reviewContext += `\n=== MANDATORY FIXES (MUST IMPLEMENT) ===\n`
-          for (const rec of criticalRecs) {
-            reviewContext += `🔴 CRITICAL: ${rec.text}\n`
-            if (rec.sceneNumbers?.length) {
-              reviewContext += `   → Apply to scenes: ${rec.sceneNumbers.join(', ')}\n`
-            }
-          }
-          for (const rec of highRecs) {
-            reviewContext += `🟠 HIGH: ${rec.text}\n`
-            if (rec.sceneNumbers?.length) {
-              reviewContext += `   → Apply to scenes: ${rec.sceneNumbers.join(', ')}\n`
-            }
-          }
-        }
-        
-        if (mediumRecs.length > 0) {
-          reviewContext += `\n=== RECOMMENDED IMPROVEMENTS ===\n`
-          for (const rec of mediumRecs.slice(0, 5)) {
-            reviewContext += `🟡 MEDIUM: ${rec.text}\n`
-            if (rec.sceneNumbers?.length) {
-              reviewContext += `   → Consider for scenes: ${rec.sceneNumbers.join(', ')}\n`
-            }
-          }
-        }
-      }
-    }
-  }
+  return `You are rewriting this script to improve its Audience Resonance score.
 
-  // Build CHARACTER SPEECH DNA - explicit voice patterns for main characters
-  const speechDNA = buildCharacterSpeechDNA(characters, voiceProfiles)
-  
-  return `=== SCRIPT OPTIMIZATION ===
-Current Score: ${audienceReview?.overallScore || 'Unknown'}/100 | Target: 90+
-
-=== USER INSTRUCTION ===
+=== SPECIFIC FIXES TO APPLY ===
 ${normalizedInstruction}
 
-${reviewContext}
+=== HOW TO REWRITE ===
+1. DELETE on-the-nose dialogue (characters stating emotions directly)
+2. ADD physical actions that SHOW what the deleted dialogue SAID
+3. When narration describes feelings, REPLACE with observable physical reactions
+4. If scenes are repetitive, CONDENSE them into one tighter scene
 
-=== CHARACTER SPEECH DNA (Apply to EVERY line) ===
-${speechDNA}
+=== EXAMPLE TRANSFORMATION ===
+BEFORE: Ben looks horrified. "This is terrible. The ABI is consuming them."
+AFTER: Ben's hand trembles over the screen. He pulls back, knuckles white. The lights flicker.
+       BEN: [barely audible] The patterns... identical to hers. Before she— (He can't finish.)
 
-=== THE ABI AS PHYSICAL THREAT ===
-The ABI is not abstract. Show it manifesting through:
-• Environmental sabotage: Lights flickering, doors locking, screens glitching, temperature drops
-• Digital intrusion: Data corrupting in real-time, voices distorting mid-sentence
-• Physical symptoms: Characters clutching heads, involuntary muscle spasms, metallic taste
-• Presence cues: Subsonic hum felt in chest, crystalline patterns appearing on surfaces
-
-=== SUBTEXT RULES ===
-Characters must NEVER state emotions or intentions directly. Instead:
-• Talk about "code" or "patterns" to avoid talking about "death" or "loss"
-• Talk about "optimization" to avoid talking about "losing one's self"
-• Talk about "mother's legacy" to avoid confronting "grief"
-• Ask questions instead of making accusations
-• Use physical actions to show what dialogue cannot say
-
-=== BEFORE/AFTER TRANSFORMATION EXAMPLE ===
-
-❌ POLISH (Wrong - synonym swap, same structure):
-Action: Ben looks at the screen in horror.
-BEN: [horrified] This is terrible. The ABI is consuming their consciousness.
-LENA: [worried] Yes, this is very concerning. We must stop it quickly.
-
-✅ OPTIMIZATION (Correct - structural rewrite):
-Action: Ben's hand trembles over Elara's neural scan. The cursor hovers on DELETE. He pulls back, clutching his wedding ring until his knuckles turn white. The lights flicker. A subsonic hum vibrates through the floor.
-BEN: [barely audible, fragmented] The delta patterns... they're identical. To hers. Before she— (He can't finish. His jaw works silently.)
-LENA: [clinical, masking fear] The hippocampal degradation—how long between the first anomaly and full... integration?
-BEN: (A long beat. He stares at the ring.) Forty-seven hours.
-Action: Lena's tablet slips. She catches it. Her hands are shaking. The screen flickers with corrupted data.
-
-=== SCRIPT CONTEXT ===
-Total Scenes: ${script.scenes?.length || 0}
-Characters: ${characterList}
-${compact ? '\nMode: Concise but NEVER sacrifice substantive changes for brevity' : ''}`
+Total Scenes: ${script.scenes?.length || 0}`
 }
 
 // Build explicit Speech DNA patterns for main characters
@@ -1111,25 +1009,14 @@ Duration: ${scene.duration || 0}s`
     }
   }
 
-  const prompt = `You are an expert screenwriter performing STRUCTURAL REWRITES to achieve a 90+ Audience Resonance score.
+  const prompt = `${sharedContext}
 
-${sharedContext}
+=== SCENES TO REWRITE ===
+${scenesContent}
 ${perSceneNotes}${structuralNotes}
 === CONTINUITY ===
 ${prevSceneSummary}
 ${nextSceneSummary}
-
-=== SCENES TO OPTIMIZE ===
-${scenesContent}
-
-=== STRUCTURAL REWRITE MANDATE ===
-For EVERY scene, you must achieve a "Structural Shift":
-
-1. **DIALOGUE REMOVAL**: Find the "on-the-nose" line where a character states emotion directly. DELETE it.
-2. **ACTION REPLACEMENT**: Insert a "Visual Echo" — a physical action that shows what the deleted line said.
-3. **SUBTEXT INJECTION**: Characters talk about the "code," the "past," or the "weather" to avoid the present truth.
-4. **ABI MANIFESTATION**: Add at least ONE physical ABI presence cue per scene (lights flicker, screens glitch, temperature drops).
-5. **SPEECH DNA**: Apply character-specific vocabulary and rhythm from CHARACTER SPEECH DNA section.
 
 === OUTPUT FORMAT ===
 Return ONLY valid JSON (no markdown):
@@ -1137,21 +1024,14 @@ Return ONLY valid JSON (no markdown):
   "scenes": [
     {
       "heading": "INT. LOCATION - TIME",
-      "deletedContent": [
-        "DELETED: 'Original line that was too on-the-nose' — REPLACED WITH: visual action showing emotion"
-      ],
-      "action": "Must contain 2+ NEW physical gestures or environmental cues not in original",
-      "narration": "1 sentence max, NO emotional adjectives",
+      "action": "Physical actions and visual descriptions",
+      "narration": "Brief narration (1 sentence, no emotional adjectives)",
       "dialogue": [
-        { "character": "NAME", "line": "[emotion] Dialogue with character-specific Speech DNA applied" }
+        { "character": "NAME", "line": "[emotion] Dialogue text" }
       ],
-      "speechDNAUsed": {
-        "characterName": "Example of their specific vocabulary/rhythm used"
-      },
-      "abiManifestation": "How the ABI's physical presence was shown",
       "music": "Music description",
       "sfx": ["SFX items"],
-      "duration": ${batchScenes[0]?.duration || 30}
+      "duration": 30
     }
   ],
   "changesSummary": [
@@ -1159,32 +1039,25 @@ Return ONLY valid JSON (no markdown):
   ]
 }
 
-=== TECHNICAL RULES ===
-• Output EXACTLY ${batchScenes.length} scene(s): scenes ${startIdx + 1}-${startIdx + batchScenes.length}
-• Preserve duration values
-• All dialogue: [emotion] tags required
-• Escape quotes in JSON, use \\n for line breaks
-• Narration: never null/empty, 1-sentence summary if removing
+RULES:
+• Output EXACTLY ${batchScenes.length} scene(s)
+• Preserve duration values  
+• All dialogue needs [emotion] tags
+• Escape quotes in JSON
+• Narration: 1 sentence max, never empty`
 
-=== SUCCESS = TRANSFORMATION ===
-✓ deletedContent has 1+ entries per scene (proves you cut on-the-nose dialogue)
-✓ action field has NEW physical gestures/VFX not in original
-✓ speechDNAUsed shows specific character vocabulary examples
-✓ abiManifestation shows environmental/physical threat
-✓ No character says their emotion directly ("I'm scared" → physical trembling instead)`
-
-  // Token budget: 4000 per scene + 6000 base (increased for new output fields)
-  const estimatedTokens = Math.min(32768, batchScenes.length * 4000 + 6000)
+  // Token budget: 3500 per scene + 5000 base
+  const estimatedTokens = Math.min(32768, batchScenes.length * 3500 + 5000)
   const baseTimeout = Math.min(180000, 60000 + batchScenes.length * 15000)
   // Cap per-batch timeout to remaining global deadline minus safety margin
   const timeoutMs = Math.min(baseTimeout, remainingMs - 10_000)
   
   console.log(`[Script Optimization] Batch call: ${batchScenes.length} scenes, ${estimatedTokens} tokens, ${timeoutMs/1000}s timeout, ${Math.round(remainingMs/1000)}s remaining`)
   
-  // Determine temperature: 0.8 for merged/rewritten scenes, 0.75 for normal optimization
-  // Higher temperatures (0.75-0.8) force creative structural changes instead of safe synonym swaps
+  // Temperature: 0.7 for merged/rewritten scenes, 0.6 for normal optimization
+  // Moderate temperature balances creativity with consistency
   const hasFlaggedScenes = batchScenes.some((s: any) => s._merged || s._rewrite)
-  const temperature = hasFlaggedScenes ? 0.8 : 0.75
+  const temperature = hasFlaggedScenes ? 0.7 : 0.6
   
   // First attempt - using Gemini 2.5 Flash for optimization
   let result = await generateText(prompt, {
