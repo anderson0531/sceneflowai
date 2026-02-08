@@ -245,7 +245,8 @@ async function optimizeScript(
           [], // parallel batches don't see each other's results
           compact,
           remainingMs,
-          sceneAnalysis
+          sceneAnalysis,
+          audienceReview  // Pass audienceReview for inline recommendation binding
         )
         batchResults[batchIndex] = { scenes: result.scenes, changesSummary: result.changesSummary || [] }
         console.log(`[Script Optimization] Batch ${batchIndex + 1} complete: ${result.scenes.length} scenes optimized`)
@@ -402,33 +403,26 @@ Characters: ${characterList}
 CHARACTER PROFILES:
 ${characterProfiles}
 
-=== REWRITE GUIDELINES (NOT POLISH) ===
-1. IMPLEMENT MANDATORY FIXES: CRITICAL and HIGH priority recommendations MUST be applied - these are non-negotiable
-2. REWRITE content to address issues - do NOT just polish wording or swap synonyms
-3. Make STRUCTURAL changes: restructure dialogue order, combine/split lines, change what is said (not just how)
-4. Maintain character consistency - each character speaks DISTINCTLY with their unique voice
-5. Show don't tell - REPLACE exposition dialogue with action/visual storytelling
-6. Add emotional/vocal tags to ALL dialogue: [happy], [sad], [angry], etc.
-7. Keep continuity with other scenes
-8. MEDIUM recommendations should be applied if they naturally fit
-9. Only apply recommendations relevant to the scenes in this batch
-10. DO NOT just shorten text - make SUBSTANTIVE changes that address the underlying issues
-11. When a recommendation says "add" or "show" something, ADD new content (action lines, visual details, dialogue beats)
-12. REPLACE problematic dialogue with COMPLETELY NEW lines that serve the same story purpose better
-${compact ? '13. Balance conciseness with addressing all mandatory fixes - but NEVER sacrifice substance for brevity' : ''}
+=== REWRITE RULES (MANDATORY) ===
+1. MANDATORY FIXES (🔴🟠) in each scene MUST be implemented - look for ">>> MANDATORY FIXES" markers
+2. REWRITE means NEW CONTENT - not synonym swaps or minor rewording
+3. "Show don't tell" = DELETE exposition dialogue, ADD action lines showing physical reactions
+4. Keep emotional [tags] on all dialogue: [excited], [angry], [whispered], etc.
+5. Preserve each character's unique voice and speech patterns
+6. When adding content, ADD new action/visual beats - don't just describe in narration
 
-=== SUCCESS vs FAILURE CRITERIA ===
-✅ SUCCESS: Dialogue is restructured with different content, new lines, changed order
-✅ SUCCESS: Exposition converted to visual action beats
-✅ SUCCESS: Generic dialogue replaced with character-specific voice
-❌ FAILURE: Same dialogue with synonym substitutions (e.g., "angry" → "furious")
-❌ FAILURE: Minor word changes that don't address the underlying issue
-❌ FAILURE: Shortening without structural improvement
+=== THIS IS NOT POLISH ===
+When a scene has mandatory fixes:
+✅ DELETE the problematic dialogue lines entirely
+✅ WRITE completely new dialogue that addresses the issue
+✅ ADD new action lines to show emotions/reactions visually
+❌ Do NOT just add emotion tags to existing lines
+❌ Do NOT swap synonyms ("said" → "exclaimed")
+❌ Do NOT keep 90% of the original and tweak 10%
+${compact ? '\nNote: Be concise but NEVER sacrifice substantive changes for brevity' : ''}
 
-=== DIALOGUE AUDIO TAGS (Required) ===
-Every dialogue line needs emotional tags in square brackets:
-  * {"character": "JOHN", "line": "[excited] I can't believe it!"}
-  * {"character": "MARY", "line": "[sadly] I wish things were different..."}`
+=== DIALOGUE FORMAT ===
+{"character": "NAME", "line": "[emotion] Dialogue text..."}`
 }
 
 // ============================================================
@@ -725,7 +719,7 @@ Return ONLY valid JSON:
   
   try {
     const result = await generateText(prompt, {
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.0-flash',
       temperature: 0.2,
       maxOutputTokens: 4000,
       responseMimeType: 'application/json',
@@ -937,7 +931,8 @@ async function optimizeBatch(
   previousOptimizedScenes: any[],
   compact: boolean,
   remainingMs: number = 540_000,
-  sceneAnalysis: SceneAnalysis[] = []
+  sceneAnalysis: SceneAnalysis[] = [],
+  audienceReview?: Review | null  // Add audienceReview for inline recommendation binding
 ): Promise<{ scenes: any[], changesSummary?: any[] }> {
   
   // Build context from adjacent scenes for continuity
@@ -950,14 +945,40 @@ async function optimizeBatch(
     ? `Next scene: ${allOriginalScenes[nextSceneIdx]?.heading || 'Unknown'} - ${(allOriginalScenes[nextSceneIdx]?.action || '').substring(0, 100)}...`
     : 'This is the end of the script.'
   
-  // Build the batch-specific content
+  // Build the batch-specific content WITH INLINE RECOMMENDATIONS
+  // This is the key improvement: bind recommendations directly to each scene so the model
+  // can't miss them or get confused about which scene they apply to
   const scenesContent = batchScenes.map((scene: any, idx: number) => {
     const sceneNum = startIdx + idx + 1
     const dialogueLines = (scene.dialogue || []).map((d: any) => 
       `  ${d.character}: "${d.line}"`
     ).join('\n')
+    
+    // Find recommendations that specifically target THIS scene
+    let inlineFixes = ''
+    if (audienceReview?.recommendations) {
+      const sceneRecs = audienceReview.recommendations.filter((r: any) => {
+        if (typeof r === 'string') return false
+        return r.sceneNumbers?.includes(sceneNum)
+      })
+      
+      const criticalRecs = sceneRecs.filter((r: any) => r.priority === 'critical')
+      const highRecs = sceneRecs.filter((r: any) => r.priority === 'high')
+      
+      if (criticalRecs.length > 0 || highRecs.length > 0) {
+        inlineFixes = `\n\n>>> MANDATORY FIXES FOR THIS SCENE <<<`
+        for (const rec of criticalRecs) {
+          inlineFixes += `\n🔴 CRITICAL: ${rec.text}`
+        }
+        for (const rec of highRecs) {
+          inlineFixes += `\n🟠 HIGH: ${rec.text}`
+        }
+        inlineFixes += `\n>>> YOU MUST REWRITE THIS SCENE TO ADDRESS THE ABOVE <<<\n`
+      }
+    }
+    
     return `
---- SCENE ${sceneNum}: ${scene.heading || 'Untitled'} ---
+--- SCENE ${sceneNum}: ${scene.heading || 'Untitled'} ---${inlineFixes}
 Action: ${scene.action || 'None'}
 Narration: ${scene.narration || 'None'}
 Dialogue:
@@ -1061,13 +1082,14 @@ CRITICAL RULES:
   
   console.log(`[Script Optimization] Batch call: ${batchScenes.length} scenes, ${estimatedTokens} tokens, ${timeoutMs/1000}s timeout, ${Math.round(remainingMs/1000)}s remaining`)
   
-  // Determine temperature: 0.5 for merged/rewritten scenes that need creative restructuring, 0.4 for normal polish
+  // Determine temperature: 0.7 for merged/rewritten scenes that need creative restructuring, 0.6 for normal optimization
+  // Higher temperatures encourage more substantive changes vs conservative synonym swaps
   const hasFlaggedScenes = batchScenes.some((s: any) => s._merged || s._rewrite)
-  const temperature = hasFlaggedScenes ? 0.5 : 0.4
+  const temperature = hasFlaggedScenes ? 0.7 : 0.6
   
-  // First attempt
+  // First attempt - using Gemini 3.0 Flash for better instruction following
   let result = await generateText(prompt, {
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3.0-flash',
     temperature,
     maxOutputTokens: estimatedTokens,
     responseMimeType: 'application/json',
@@ -1090,7 +1112,7 @@ CRITICAL RULES:
       console.warn(`[Script Optimization] Response truncated (MAX_TOKENS). Retrying with ${retryTokens} tokens (${Math.round(remainingMs/1000)}s remaining)...`)
       
       result = await generateText(prompt, {
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.0-flash',
         temperature,
         maxOutputTokens: retryTokens,
         responseMimeType: 'application/json',
