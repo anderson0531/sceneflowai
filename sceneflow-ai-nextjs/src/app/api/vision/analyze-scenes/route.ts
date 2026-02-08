@@ -20,6 +20,7 @@ interface SceneRecommendation {
   text: string
   category: string // Matches script-level categories: Dialogue Issues, Narration/Description Issues, etc.
   targetElement?: string // The specific line, action, or element to change
+  impact: 'structural' | 'polish' // structural = requires rewrite, polish = minor adjustment
 }
 
 interface AudienceReviewContext {
@@ -169,16 +170,18 @@ For EACH scene (1 through ${sceneCount}), provide:
    - Each must quote or reference SPECIFIC content from the scene
    - Each must specify the category of issue (e.g., "Dialogue Issues", "Narration/Description Issues", "Pacing Issues")
    - Each should include the targetElement (the specific line, action, or element to change)
+   - Each MUST specify impact level:
+     * "structural" = requires rewriting/restructuring (e.g., condense dialogue, reorder beats, convert narration to action)
+     * "polish" = minor adjustment to existing content (e.g., add emotional tag, tweak word choice)
    
-   GOOD EXAMPLES:
-   - { "text": "Replace narration 'Sarah felt torn between duty and desire' with visual action showing her hesitation through body language", "category": "Narration/Description Issues", "targetElement": "Narration line about Sarah's feelings" }
-   - { "text": "Add subtext to SARAH's line 'I'll do it' — she agrees too quickly; add a beat of hesitation or a conflicted look", "category": "Dialogue Issues", "targetElement": "SARAH: I'll do it" }
-   - { "text": "The exposition about the corporation's history interrupts the tension — move to an earlier scene or show through environmental detail", "category": "Pacing Issues", "targetElement": "Action block explaining MegaCorp history" }
+   STRUCTURAL EXAMPLES (impact: "structural"):
+   - { "text": "Condense the initial confrontation - combine Ben's first two speeches into one", "category": "Pacing Issues", "targetElement": "Lines 13-15", "impact": "structural" }
+   - { "text": "Replace narration 'Sarah felt torn' with visual action showing hesitation through body language", "category": "Narration/Description Issues", "targetElement": "Narration about Sarah's feelings", "impact": "structural" }
+   - { "text": "Rewrite Alexander's dialogue to be subtly manipulative instead of directly dismissive", "category": "Dialogue Issues", "targetElement": "ALEXANDER: I understand your concern", "impact": "structural" }
    
-   BAD EXAMPLES (too vague):
-   - "Add more subtext" (which line? what subtext?)
-   - "Improve the dialogue" (how? which lines?)
-   - "Make it more visual" (what specifically?)
+   POLISH EXAMPLES (impact: "polish"):
+   - { "text": "Add [hesitantly] tag to SARAH's line to convey internal conflict", "category": "Dialogue Issues", "targetElement": "SARAH: I'll do it", "impact": "polish" }
+   - { "text": "Strengthen the visual description of the security guards' synchronized movements", "category": "Narration/Description Issues", "targetElement": "Action describing guards", "impact": "polish" }
 
 OUTPUT FORMAT - Return ONLY valid JSON (no markdown, no code fences):
 {
@@ -193,8 +196,8 @@ OUTPUT FORMAT - Return ONLY valid JSON (no markdown, no code fences):
       "visualPotential": "high",
       "notes": "Strong visual opening but dialogue needs more subtext",
       "recommendations": [
-        { "text": "Replace 'She was nervous' with visual cues - trembling hands, avoiding eye contact", "category": "Narration/Description Issues", "targetElement": "Narration: She was nervous" },
-        { "text": "Add a beat before JOHN's reveal to build suspense", "category": "Pacing Issues", "targetElement": "JOHN: I'm your father" }
+        { "text": "Replace 'She was nervous' with visual cues - trembling hands, avoiding eye contact", "category": "Narration/Description Issues", "targetElement": "Narration: She was nervous", "impact": "structural" },
+        { "text": "Add a beat before JOHN's reveal to build suspense", "category": "Pacing Issues", "targetElement": "JOHN: I'm your father", "impact": "structural" }
       ]
     }
   ]
@@ -204,6 +207,7 @@ CRITICAL REMINDERS:
 - Analyze ALL ${sceneCount} scenes
 - Be constructive but HONEST - calibrate scores realistically
 - Every recommendation must reference specific content from the scene
+- Mark issues that require REWRITING as "structural", minor tweaks as "polish"
 - Ensure JSON is valid with proper escaping`
 
   // Token budget: 500 tokens per scene for detailed analysis
@@ -248,7 +252,18 @@ CRITICAL REMINDERS:
       characterDevelopment: ['minimal', 'moderate', 'strong'].includes(sa.characterDevelopment) ? sa.characterDevelopment : 'moderate',
       visualPotential: ['low', 'medium', 'high'].includes(sa.visualPotential) ? sa.visualPotential : 'medium',
       notes: sa.notes || 'No specific notes',
-      recommendations: Array.isArray(sa.recommendations) ? sa.recommendations : []
+      recommendations: Array.isArray(sa.recommendations) ? sa.recommendations.map((rec: any) => {
+        // Normalize recommendations to include impact field
+        if (typeof rec === 'string') {
+          return { text: rec, category: 'General', impact: 'structural' as const }
+        }
+        return {
+          text: rec.text || rec,
+          category: rec.category || 'General',
+          targetElement: rec.targetElement,
+          impact: rec.impact === 'polish' ? 'polish' as const : 'structural' as const // Default to structural
+        }
+      }) : []
     }))
   } catch (parseError) {
     console.error('[Scene Analysis] JSON parse error:', parseError)

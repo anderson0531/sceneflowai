@@ -87,9 +87,9 @@ async function tryOptimizeWithModel(
   previousSceneText: string,
   nextSceneText: string
 ) {
-  const prompt = `You are an expert film director and screenwriting consultant. Optimize this scene holistically for both director and audience perspectives.
+  const prompt = `You are an expert film director and screenwriting consultant. REWRITE this scene with SUBSTANTIVE improvements—not cosmetic polishing.
 
-SCENE TO OPTIMIZE:
+SCENE TO REWRITE:
 Heading: ${scene.heading || 'Untitled Scene'}
 Scene Description: ${scene.visualDescription || 'No dedicated scene description'}
 Action: ${scene.action || 'No action description'}
@@ -105,22 +105,47 @@ ${nextSceneText}
 
 Characters: ${context.characters?.map((c: any) => c.name).join(', ') || 'No characters'}
 
-OPTIMIZATION TASK:
-Optimize this scene for:
+REWRITE MANDATE:
+This is NOT a polish pass. You must make STRUCTURAL and CONTENT changes, including:
 
-1. DIRECTOR PERSPECTIVE:
+1. DIALOGUE RESTRUCTURING:
+   - Reorder dialogue exchanges for better flow
+   - Combine redundant lines or split overlong speeches
+   - ADD or REMOVE beats as needed for pacing
+   - REPLACE on-the-nose dialogue with subtext-rich alternatives
+   - Change WHAT characters say, not just HOW they say it
+
+2. SHOW DON'T TELL:
+   - Convert narration that EXPLAINS emotions into action that SHOWS them
+   - Replace "He felt nervous" with visible behaviors
+   - Transform internal states into external manifestations
+
+3. PACING OPTIMIZATION:
+   - Condense slow sections by cutting unnecessary exchanges
+   - Expand rushed moments by adding tension-building beats
+   - Restructure the scene arc for maximum impact
+
+4. DIRECTOR PERSPECTIVE:
    - Visual clarity and staging opportunities
-   - Pacing and dramatic beats
-   - Technical feasibility
-   - Strong visual imagery
-   - Clear character actions
+   - Technical feasibility with strong visual imagery
+   - Clear character actions and blocking
 
-2. AUDIENCE PERSPECTIVE:
+5. AUDIENCE PERSPECTIVE:
    - Emotional impact and resonance
    - Character connection and relatability
-   - Entertainment value and engagement
-   - Clear storytelling beats
    - Satisfying scene arc
+
+WHAT SUCCESSFUL OPTIMIZATION LOOKS LIKE:
+✓ The dialogue has DIFFERENT content, not just different wording
+✓ Lines may be reordered, combined, or split
+✓ Narration explaining feelings is converted to visual action
+✓ The scene may be shorter OR longer if that serves the story
+✓ Subtext replaces explicit statements
+
+WHAT UNSUCCESSFUL OPTIMIZATION LOOKS LIKE (AVOID):
+✗ Same dialogue with synonym substitutions
+✗ Same structure with minor adjective changes
+✗ Keeping problematic narration with slightly different words
 
 DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
 EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
@@ -153,8 +178,8 @@ DIALOGUE NEGATIVE CONSTRAINTS (DO NOT DO THESE):
 If a character performs an action without speaking, put it in the "action" field, NOT as a dialogue entry.
 
 PROVIDE:
-1. A COMPLETE rewritten version of the scene (all elements: heading, action, narration, dialogue, etc.)
-2. A detailed "Changes Summary" explaining what you changed and WHY
+1. A COMPLETELY REWRITTEN version of the scene (all elements: heading, action, narration, dialogue, etc.)
+2. A detailed "Changes Summary" explaining STRUCTURAL changes you made and WHY
 3. Rationale for each change from both director and audience perspectives
 
 Return JSON with this exact structure:
@@ -162,18 +187,18 @@ Return JSON with this exact structure:
   "optimizedScene": {
     "heading": "INT. LOCATION - TIME",
     "visualDescription": "Scene description / director notes that reinforce the cinematic look",
-    "action": "Complete rewritten action...",
-    "narration": "Complete rewritten narration...",
+    "action": "REWRITTEN action with show-don't-tell visual storytelling...",
+    "narration": "REWRITTEN narration (or removed if converted to action)...",
     "dialogue": [
-      { "character": "CHARACTER NAME", "line": "[emotion tag] Optimized dialogue with emotional cues..." }
+      { "character": "CHARACTER NAME", "line": "[emotion tag] REWRITTEN dialogue with subtext..." }
     ],
     "music": "Music description",
     "sfx": ["SFX description"]
   },
   "changesSummary": [
     {
-      "category": "Scene Description and Visual Clarity",
-      "changes": "What specifically was changed in the scene...",
+      "category": "Dialogue Restructuring",
+      "changes": "STRUCTURAL changes made: lines reordered/combined/split, content changed...",
       "rationaleDirector": "Why this helps the director (staging, clarity, visuals)...",
       "rationaleAudience": "Why this helps the audience (engagement, emotional impact)..."
     }
@@ -182,8 +207,11 @@ Return JSON with this exact structure:
 
 REMEMBER: ALL dialogue must include [emotional tags] at the beginning.
 
-Focus on holistic improvement that works together, not piecemeal fixes.
-Make every change count toward making the scene more effective overall.`
+CRITICAL SUCCESS CRITERIA:
+- The rewritten dialogue must have DIFFERENT CONTENT, not just different wording
+- The changesSummary must describe STRUCTURAL changes (reordering, combining, adding/removing)
+- If the original had narration explaining emotions, convert it to visual action
+- Do NOT return a scene that could be described as "polished" - return one that is "restructured"`
 
   console.log('[Scene Optimization] Calling Vertex AI Gemini...')
   const result = await generateText(prompt, {

@@ -9,9 +9,10 @@ interface SceneRevisionRequest {
   sceneIndex: number
   currentScene: any
   revisionMode: 'recommendations' | 'instruction' | 'hybrid'
-  selectedRecommendations?: string[]
+  selectedRecommendations?: (string | { text: string; category?: string; impact?: 'structural' | 'polish' })[]
   customInstruction?: string
   preserveElements?: ('narration' | 'dialogue' | 'music' | 'sfx')[]
+  revisionDepth?: 'light' | 'moderate' | 'deep' // light=polish, moderate=rewrite, deep=restructure
   context: {
     characters: any[]
     previousScene?: any
@@ -29,6 +30,7 @@ export async function POST(req: NextRequest) {
       selectedRecommendations = [],
       customInstruction = '',
       preserveElements = [],
+      revisionDepth = 'moderate', // Default to moderate (substantive rewrite)
       context
     }: SceneRevisionRequest = await req.json()
 
@@ -48,6 +50,7 @@ export async function POST(req: NextRequest) {
       selectedRecommendations,
       customInstruction,
       preserveElements,
+      revisionDepth,
       context
     })
 
@@ -71,26 +74,60 @@ async function generateRevisedScene({
   selectedRecommendations,
   customInstruction,
   preserveElements,
+  revisionDepth,
   context
 }: {
   currentScene: any
   revisionMode: string
-  selectedRecommendations: string[]
+  selectedRecommendations: (string | { text: string; category?: string; impact?: 'structural' | 'polish' })[]
   customInstruction: string
   preserveElements: string[]
+  revisionDepth: 'light' | 'moderate' | 'deep'
   context: any
 }): Promise<any> {
-  // Build the revision instruction based on mode
+  // Normalize recommendations to extract text and categorize by impact
+  const structuralRecs: string[] = []
+  const polishRecs: string[] = []
+  
+  selectedRecommendations.forEach(rec => {
+    if (typeof rec === 'string') {
+      // Legacy string format - assume moderate impact
+      structuralRecs.push(rec)
+    } else {
+      const text = rec.text
+      if (rec.impact === 'structural') {
+        structuralRecs.push(text)
+      } else {
+        polishRecs.push(text)
+      }
+    }
+  })
+
+  // Build the revision instruction based on mode and depth
   let revisionInstruction = ''
   
+  const depthGuidance = {
+    light: 'Make targeted polish edits. Keep the core structure and flow intact. Focus on wording refinements.',
+    moderate: 'REWRITE the scene to fully address each issue. Make substantive changes to dialogue, action, and flow—not just surface-level rewording. Restructure dialogue order, combine/split lines, and add/remove beats as needed.',
+    deep: 'COMPLETELY RESTRUCTURE this scene. Rewrite from scratch if necessary to achieve the goals. Transform the dialogue, pacing, and visual storytelling. Do not be constrained by the original structure—reimagine how this scene should unfold.'
+  }[revisionDepth]
+  
   if (revisionMode === 'recommendations' && selectedRecommendations.length > 0) {
-    revisionInstruction = `Apply these specific recommendations: ${selectedRecommendations.join(', ')}`
+    const allRecs = [...structuralRecs, ...polishRecs]
+    revisionInstruction = `REWRITE this scene to address these specific issues:
+
+${allRecs.map((r, i) => `${i + 1}. ${r}`).join('\n')}
+
+${depthGuidance}
+
+For each recommendation, make the necessary STRUCTURAL or CONTENT changes. Do NOT make superficial rewording that leaves the underlying problem intact.`
   } else if (revisionMode === 'instruction' && customInstruction) {
-    revisionInstruction = customInstruction
+    revisionInstruction = `${customInstruction}\n\n${depthGuidance}`
   } else if (revisionMode === 'hybrid') {
-    revisionInstruction = `Apply recommendations: ${selectedRecommendations.join(', ')}. Additional instruction: ${customInstruction}`
+    const allRecs = [...structuralRecs, ...polishRecs]
+    revisionInstruction = `REWRITE this scene to address these issues:\n\n${allRecs.map((r, i) => `${i + 1}. ${r}`).join('\n')}\n\nAdditional instruction: ${customInstruction}\n\n${depthGuidance}`
   } else {
-    revisionInstruction = 'Improve the scene for better storytelling and audience engagement.'
+    revisionInstruction = `Rewrite the scene for better storytelling and audience engagement.\n\n${depthGuidance}`
   }
 
   // Add preservation instructions
@@ -107,7 +144,7 @@ async function generateRevisedScene({
   const dialogueText = currentScene.dialogue?.map((d: any) => `${d.character}: ${d.line || d.text || ''}`).join('\n') || 'No dialogue'
   const characterNames = context.characters?.map((c: any) => c.name).join(', ') || 'No characters'
 
-  const prompt = `You are a professional screenwriter revising a scene. Revise the scene according to the instructions while maintaining continuity and character consistency.
+  const prompt = `You are a professional screenwriter REWRITING a scene. Your task is to make SUBSTANTIVE changes—not cosmetic polishing. When recommendations call for change, CHANGE THE ACTUAL CONTENT, not just the wording.
 
 CURRENT SCENE:
 Heading: ${currentScene.heading || 'Untitled Scene'}
@@ -126,20 +163,28 @@ Next Scene: ${context.nextScene?.heading || 'None'}
 
 CRITICAL: Maintain EXACT character names from the character list. Do not abbreviate or modify names.
 
-REVISION INSTRUCTIONS:
+REWRITE INSTRUCTIONS:
 ${revisionInstruction}
 
 ${preserveInstructions ? `PRESERVATION REQUIREMENTS: ${preserveInstructions}` : ''}
 
-SCOPE GUARDRAILS - WHAT YOU CAN CHANGE:
-✓ Scene-level improvements: dialogue delivery, action descriptions, visual details, pacing
-✓ Enhance emotional impact, clarity, and cinematography within the scene
-✓ Improve character-appropriate dialogue while keeping the same characters present
-✓ Refine blocking, camera work, sound design for THIS scene only
+WHAT SUBSTANTIVE REWRITING MEANS:
+✓ RESTRUCTURE dialogue: reorder lines, combine redundant exchanges, split long speeches, add/remove beats
+✓ REWRITE dialogue content: change what characters actually SAY, not just how they say it
+✓ ADD subtext: replace on-the-nose dialogue with indirect, layered communication
+✓ SHOW don't tell: replace narration explaining emotions with visual action beats
+✓ CONDENSE or EXPAND: adjust scene pacing by adding or removing content
+✓ TRANSFORM delivery: change a character's approach entirely (e.g., dismissive → subtly manipulative)
+
+WHAT COSMETIC POLISHING IS (AVOID THIS):
+✗ Keeping the same dialogue with slightly different words ("I understand" → "I appreciate")
+✗ Keeping the same structure with minor adjective swaps
+✗ Adding flourishes without changing substance
+✗ Rewording narration that explains emotions instead of removing it
 
 SCOPE GUARDRAILS - WHAT YOU CANNOT CHANGE:
 ✗ Do NOT introduce new characters or remove existing characters
-✗ Do NOT change major plot points, story beats, or character motivations
+✗ Do NOT change the fundamental plot outcome of the scene
 ✗ Do NOT alter the scene's role in the overall narrative arc
 ✗ Do NOT modify what happens before or after this scene
 
@@ -182,33 +227,37 @@ DIALOGUE NEGATIVE CONSTRAINTS (DO NOT DO THESE):
 
 If a character performs an action without speaking, put it in the "action" field, NOT as a dialogue entry.
 
-REQUIREMENTS:
-1. Maintain the same scene structure and format
+REWRITE REQUIREMENTS:
+1. Make SUBSTANTIVE changes that address the recommendations—not surface-level rewording
 2. Use EXACT character names as provided - no abbreviations or variations
-3. Keep basic plot points and character arcs consistent with the overall script
-4. Improve the specified elements while preserving others
-5. Ensure smooth transitions from previous scene and to next scene
-6. Make dialogue natural and character-appropriate with EMOTIONAL TAGS
-7. Enhance visual storytelling and emotional impact
-8. Keep the scene length appropriate (not too short, not too long)
-9. Stay within scene-level scope - direct users to edit the script for broader changes
+3. Keep the scene's role in the plot consistent with the overall script
+4. RESTRUCTURE dialogue order, beats, and flow when needed to fix pacing issues
+5. REPLACE on-the-nose dialogue with subtext-rich alternatives
+6. CONVERT "telling" narration to "showing" through visual action beats
+7. Make dialogue natural and character-appropriate with EMOTIONAL TAGS
+8. The rewritten scene may be shorter OR longer than the original if that serves the story
 
-Output the revised scene as JSON with this exact structure:
+Output the REWRITTEN scene as JSON with this exact structure:
 {
-  "heading": "Revised scene heading",
+  "heading": "Scene heading",
   "visualDescription": "Scene description / director notes that set the look and feel",
-  "action": "Revised action description with improved visual storytelling",
-  "narration": "Revised narration (if not preserved)",
+  "action": "Rewritten action description with improved visual storytelling",
+  "narration": "Rewritten narration (or removed if converted to action)",
   "dialogue": [
-    {"character": "Character Name", "line": "[emotion tag] Revised dialogue text with emotional cues"}
+    {"character": "Character Name", "line": "[emotion tag] Rewritten dialogue text with emotional cues"}
   ],
-  "music": "Revised music specification (if not preserved)",
-  "sfx": ["Revised sound effect 1", "Revised sound effect 2"]
+  "music": "Music specification",
+  "sfx": ["Sound effect 1", "Sound effect 2"]
 }
 
 REMEMBER: ALL dialogue must include [emotional tags] at the beginning.
 
-Focus on making the scene more engaging, clear, and emotionally impactful while following the revision instructions.`
+CRITICAL SUCCESS CRITERIA:
+- A successful rewrite will have DIFFERENT dialogue content, not just different wording
+- A successful rewrite will have STRUCTURAL changes (line order, beat placement, etc.)
+- If the recommendation says "condense" the result should have FEWER lines
+- If the recommendation says "add subtext" the result should have INDIRECT dialogue
+- Do NOT return a scene that could be described as "the same with minor polish"`
 
   console.log('[Scene Revision] Calling Vertex AI Gemini...')
   const result = await generateText(prompt, {
