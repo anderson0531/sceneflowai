@@ -65,6 +65,11 @@ export interface TextGenerationOptions {
    * Useful for scoring consistency across repeated analysis runs.
    */
   seed?: number
+  /**
+   * Vertex AI location/region. Gemini 3 models automatically use 'global'.
+   * Default: VERTEX_LOCATION env var or 'us-central1'
+   */
+  location?: string
 }
 
 export interface TextGenerationResult {
@@ -81,8 +86,12 @@ export async function generateText(
   prompt: string,
   options: TextGenerationOptions = {}
 ): Promise<TextGenerationResult> {
-  const { projectId, location } = getConfig()
+  const { projectId, location: defaultLocation } = getConfig()
   const model = options.model || 'gemini-2.5-flash'
+  
+  // Gemini 3 models require the global endpoint
+  const isGemini3Model = model.startsWith('gemini-3')
+  const location = options.location || (isGemini3Model ? 'global' : defaultLocation)
   
   // Vertex AI endpoint for Gemini models
   // Format: https://{location}-aiplatform.googleapis.com/v1/projects/{project}/locations/{location}/publishers/google/models/{model}:generateContent

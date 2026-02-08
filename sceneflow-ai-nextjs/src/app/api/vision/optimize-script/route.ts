@@ -719,7 +719,7 @@ Return ONLY valid JSON:
   
   try {
     const result = await generateText(prompt, {
-      model: 'gemini-3.0-flash',
+      model: 'gemini-3-flash-preview',
       temperature: 0.2,
       maxOutputTokens: 4000,
       responseMimeType: 'application/json',
@@ -1089,7 +1089,7 @@ CRITICAL RULES:
   
   // First attempt - using Gemini 3.0 Flash for better instruction following
   let result = await generateText(prompt, {
-    model: 'gemini-3.0-flash',
+    model: 'gemini-3-flash-preview',
     temperature,
     maxOutputTokens: estimatedTokens,
     responseMimeType: 'application/json',
@@ -1112,7 +1112,7 @@ CRITICAL RULES:
       console.warn(`[Script Optimization] Response truncated (MAX_TOKENS). Retrying with ${retryTokens} tokens (${Math.round(remainingMs/1000)}s remaining)...`)
       
       result = await generateText(prompt, {
-        model: 'gemini-3.0-flash',
+        model: 'gemini-3-flash-preview',
         temperature,
         maxOutputTokens: retryTokens,
         responseMimeType: 'application/json',
