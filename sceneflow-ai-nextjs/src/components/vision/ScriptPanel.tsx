@@ -462,7 +462,7 @@ const getSceneDomId = (scene: any, index: number) => {
 }
 
 // Sortable Scene Card Wrapper for drag-and-drop
-function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onEditImage, totalScenes, onNavigateScene, scenes, script, onScriptChange, setEditingImageData, setImageEditModalOpen, getPlaybackOffsetForScene, handlePlaybackOffsetChange, getSuggestedOffsetForScene, ...props }: any) {
+function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onEditImage, totalScenes, onNavigateScene, scenes, script, onScriptChange, setEditingImageData, setImageEditModalOpen, getPlaybackOffsetForScene, handlePlaybackOffsetChange, getSuggestedOffsetForScene, expandedRecommendations, setExpandedRecommendations, onAnalyzeScene, analyzingSceneIndex, onOptimizeScene, optimizingSceneIndex, setOptimizeDialogScene, setOptimizeDialogOpen, ...props }: any) {
   const {
     attributes,
     listeners,
@@ -501,6 +501,14 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
         getPlaybackOffsetForScene={getPlaybackOffsetForScene}
         handlePlaybackOffsetChange={handlePlaybackOffsetChange}
         getSuggestedOffsetForScene={getSuggestedOffsetForScene}
+        expandedRecommendations={expandedRecommendations}
+        setExpandedRecommendations={setExpandedRecommendations}
+        onAnalyzeScene={onAnalyzeScene}
+        analyzingSceneIndex={analyzingSceneIndex}
+        onOptimizeScene={onOptimizeScene}
+        optimizingSceneIndex={optimizingSceneIndex}
+        setOptimizeDialogScene={setOptimizeDialogScene}
+        setOptimizeDialogOpen={setOptimizeDialogOpen}
       />
     </div>
   )
@@ -2734,6 +2742,14 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                           getPlaybackOffsetForScene={getPlaybackOffsetForScene}
                           handlePlaybackOffsetChange={handlePlaybackOffsetChange}
                           getSuggestedOffsetForScene={getSuggestedOffsetForScene}
+                          expandedRecommendations={expandedRecommendations}
+                          setExpandedRecommendations={setExpandedRecommendations}
+                          onAnalyzeScene={onAnalyzeScene}
+                          analyzingSceneIndex={analyzingSceneIndex}
+                          onOptimizeScene={onOptimizeScene}
+                          optimizingSceneIndex={optimizingSceneIndex}
+                          setOptimizeDialogScene={setOptimizeDialogScene}
+                          setOptimizeDialogOpen={setOptimizeDialogOpen}
                 />
                     )
                   })}
@@ -3343,6 +3359,15 @@ interface SceneCardProps {
   getPlaybackOffsetForScene?: (sceneId: string, language: string) => number
   handlePlaybackOffsetChange?: (sceneId: string, sceneIdx: number, language: string, offset: number) => void
   getSuggestedOffsetForScene?: (scene: any) => number | undefined
+  // Per-scene audience analysis props
+  expandedRecommendations?: Set<number>
+  setExpandedRecommendations?: React.Dispatch<React.SetStateAction<Set<number>>>
+  onAnalyzeScene?: (sceneIndex: number) => Promise<void>
+  analyzingSceneIndex?: number | null
+  onOptimizeScene?: (sceneIndex: number, instruction: string, selectedRecommendations: string[]) => Promise<void>
+  optimizingSceneIndex?: number | null
+  setOptimizeDialogScene?: (scene: any) => void
+  setOptimizeDialogOpen?: (open: boolean) => void
 }
 
 function SceneCard({
@@ -3464,6 +3489,14 @@ function SceneCard({
   getPlaybackOffsetForScene,
   handlePlaybackOffsetChange,
   getSuggestedOffsetForScene,
+  expandedRecommendations,
+  setExpandedRecommendations,
+  onAnalyzeScene,
+  analyzingSceneIndex,
+  onOptimizeScene,
+  optimizingSceneIndex,
+  setOptimizeDialogScene,
+  setOptimizeDialogOpen,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(null)
