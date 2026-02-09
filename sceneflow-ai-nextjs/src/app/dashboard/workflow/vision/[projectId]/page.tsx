@@ -61,6 +61,7 @@ import { findSceneCharacters, findSceneObjects } from '../../../../../lib/charac
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 import { v4 as uuidv4 } from 'uuid'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
+import { useOverlayStore } from '@/store/useOverlayStore'
 import { useSidebarData, useSidebarQuickActions } from '@/hooks/useSidebarData'
 import { DetailedSceneDirection } from '@/types/scene-direction'
 import { cn } from '@/lib/utils'
@@ -582,6 +583,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const { projectId } = use(params)
   const router = useRouter()
   const { execute } = useProcessWithOverlay()
+  const overlayStore = useOverlayStore()
   const [mounted, setMounted] = useState(false)
   const [project, setProject] = useState<Project | null>(null)
   const [script, setScript] = useState<any>(null)
@@ -4989,7 +4991,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           },
           { 
             message: 'Generating script... This may take 5-8 minutes for longer films.',
-            estimatedDuration: 420  // 7 minutes conservative estimate (actual: 5-7 min for ~90 scenes)
+            estimatedDuration: 420,  // 7 minutes conservative estimate (actual: 5-7 min for ~90 scenes)
+            operationType: 'script-generation'
           }
         )
         
@@ -5067,6 +5070,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     estimatedRemainingSeconds: data.estimatedRemainingSeconds || 0
                   }
                 }))
+                
+                // Update overlay with detailed progress
+                const statusText = data.scenesGenerated > 0 
+                  ? `Building scenes ${data.scenesGenerated} of ${data.totalScenes}...`
+                  : data.status || 'Analyzing story structure...'
+                overlayStore.setProgress(progress)
+                overlayStore.setStatus(statusText, data.estimatedRemainingSeconds || 0)
+                
                 console.log(`[Vision] ${data.status} (${data.scenesGenerated}/${data.totalScenes})${data.estimatedRemainingSeconds ? ` ~${data.estimatedRemainingSeconds}s remaining` : ''}`)
               } else if (data.type === 'warning') {
                 console.warn(`[Vision] Warning: ${data.message}`)

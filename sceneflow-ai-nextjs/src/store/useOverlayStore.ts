@@ -169,6 +169,8 @@ interface OverlayState {
   operationType: OperationType
   currentPhaseIndex: number
   actualProgress: number // For tracking real API progress if available
+  customStatus: string | null // For dynamic status from SSE
+  estimatedRemainingSeconds: number | null // For dynamic time estimate from SSE
   
   // Enhanced show with operation type
   show: (message: string, estimatedDuration: number, operationType?: OperationType) => void
@@ -177,6 +179,7 @@ interface OverlayState {
   // Update progress directly (for real progress tracking)
   setProgress: (progress: number) => void
   setPhase: (phaseIndex: number) => void
+  setStatus: (status: string, remainingSeconds?: number) => void
 }
 
 export const useOverlayStore = create<OverlayState>((set) => ({
@@ -187,6 +190,8 @@ export const useOverlayStore = create<OverlayState>((set) => ({
   operationType: 'default',
   currentPhaseIndex: 0,
   actualProgress: 0,
+  customStatus: null,
+  estimatedRemainingSeconds: null,
   
   show: (message: string, estimatedDuration: number, operationType: OperationType = 'default') =>
     set({ 
@@ -196,7 +201,9 @@ export const useOverlayStore = create<OverlayState>((set) => ({
       startTime: Date.now(),
       operationType,
       currentPhaseIndex: 0,
-      actualProgress: 0
+      actualProgress: 0,
+      customStatus: null,
+      estimatedRemainingSeconds: null
     }),
     
   hide: () =>
@@ -207,11 +214,17 @@ export const useOverlayStore = create<OverlayState>((set) => ({
       startTime: null,
       operationType: 'default',
       currentPhaseIndex: 0,
-      actualProgress: 0
+      actualProgress: 0,
+      customStatus: null,
+      estimatedRemainingSeconds: null
     }),
     
   setProgress: (progress: number) => set({ actualProgress: progress }),
-  setPhase: (phaseIndex: number) => set({ currentPhaseIndex: phaseIndex })
+  setPhase: (phaseIndex: number) => set({ currentPhaseIndex: phaseIndex }),
+  setStatus: (status: string, remainingSeconds?: number) => set({ 
+    customStatus: status, 
+    estimatedRemainingSeconds: remainingSeconds ?? null 
+  })
 }))
 
 

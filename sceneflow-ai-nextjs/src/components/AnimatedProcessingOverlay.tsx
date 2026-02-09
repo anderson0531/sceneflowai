@@ -30,13 +30,30 @@ import { useOverlayStore, OPERATION_CONFIGS } from '@/store/useOverlayStore'
  * })
  * ```
  */
+
+// Helper function to format time - shows minutes when > 60s
+function formatTime(seconds: number): string {
+  if (seconds < 60) return `~${seconds}s`
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  if (mins >= 60) {
+    const hours = Math.floor(mins / 60)
+    const remainingMins = mins % 60
+    return remainingMins > 0 ? `~${hours}h ${remainingMins}m` : `~${hours}h`
+  }
+  return secs > 0 ? `~${mins}m ${secs}s` : `~${mins}m`
+}
+
 const AnimatedProcessingOverlay = () => {
   const { 
     isVisible, 
     message, 
     estimatedDuration, 
     startTime, 
-    operationType 
+    operationType,
+    customStatus,
+    estimatedRemainingSeconds,
+    actualProgress
   } = useOverlayStore()
   
   const [progress, setProgress] = useState(0)
@@ -465,27 +482,32 @@ const AnimatedProcessingOverlay = () => {
           </div>
         )}
         
-        {/* Current phase label */}
+        {/* Current phase label - prefer custom status from SSE */}
         <div className="text-center mb-6">
           <p className="text-lg text-blue-400 font-medium min-h-[28px]">
-            {currentPhaseLabel || message}
+            {customStatus || currentPhaseLabel || message}
           </p>
           <p className="text-sm text-slate-400 mt-2">
             Please do not close this window
           </p>
         </div>
         
-        {/* Progress bar */}
+        {/* Progress bar - use actual progress if available */}
         <div className="w-full max-w-md">
           <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
             <div 
               className={`h-full rounded-full transition-all duration-300 ${getProgressBarColor()}`}
-              style={{ width: `${progress}%` }}
+              style={{ width: `${actualProgress > 0 ? actualProgress : progress}%` }}
             />
           </div>
           <div className="flex justify-between mt-2 text-sm text-slate-400">
-            <span>{Math.round(progress)}%</span>
-            <span>~{Math.max(0, Math.round(estimatedDuration - (progress / 100) * estimatedDuration))}s remaining</span>
+            <span>{Math.round(actualProgress > 0 ? actualProgress : progress)}%</span>
+            <span>
+              {estimatedRemainingSeconds !== null && estimatedRemainingSeconds > 0
+                ? `${formatTime(estimatedRemainingSeconds)} remaining`
+                : `${formatTime(Math.max(0, Math.round(estimatedDuration - (progress / 100) * estimatedDuration)))} remaining`
+              }
+            </span>
           </div>
         </div>
       </div>
@@ -493,7 +515,7 @@ const AnimatedProcessingOverlay = () => {
       {/* Bottom progress strip */}
       <div 
         className={`absolute bottom-0 left-0 h-1 transition-all duration-200 ${getProgressBarColor()}`}
-        style={{ width: `${progress}%` }}
+        style={{ width: `${actualProgress > 0 ? actualProgress : progress}%` }}
       />
       
       {/* CSS animations */}
