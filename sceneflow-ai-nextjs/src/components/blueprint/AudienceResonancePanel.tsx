@@ -347,7 +347,13 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
           iteration: nextIteration,
           previousAnalysis: previousAnalysisContext,
           // Target profile for stable scoring path
-          targetProfile: targetProfile || getTargetProfileForIntent(intent)
+          targetProfile: targetProfile || getTargetProfileForIntent(intent),
+          // Content baseline for intent changes - prevents wild score swings when only audience changes
+          // This anchors the AI to the content quality, not just demographic fit
+          contentBaseline: !isReanalysis && previousScore ? {
+            score: previousScore,
+            note: 'Previous score before audience/intent change. Content quality remains same - only evaluate demographic fit changes.'
+          } : undefined
         })
       })
       
@@ -521,10 +527,14 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     )
   }
   
-  // Intent change handler - reset iterations for fresh scoring with new intent
+  // Intent change handler - reset iterations but preserve content-based scoring context
   const handleIntentChange = (key: keyof AudienceIntent, value: string) => {
+    // Capture previous analysis for content-based anchoring
+    // This prevents wild score swings when only the target audience changes
+    const previousScore = analysis?.greenlightScore?.score
+    
     setIntent(prev => ({ ...prev, [key]: value }))
-    // Clear analysis and reset iterations when intent changes
+    // Clear analysis but preserve content-based baseline for scoring stability
     setAnalysisLocal(null)
     setIterationCountLocal(0)
     setIsReadyForProductionLocal(false)
@@ -532,7 +542,8 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     setAppliedFixDetailsLocal([])
     setPendingFixesCountLocal(0)
     setScoreDelta(null)
-    setPreviousScoreLocal(null)
+    // Preserve previous score for content anchoring (prevents wild swings on audience change)
+    setPreviousScoreLocal(previousScore || null)
     // Reset local scoring state
     setServerCheckpointResultsLocal(null)
     setCheckpointOverridesLocal([])
@@ -540,7 +551,7 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     // Reset intent lock and target profile - allows new target for new intent
     setHasIntentLockLocal(false)
     setTargetProfileLocal(null)
-    // Clear store for this treatment
+    // Clear store for this treatment but note: previousScoreLocal preserved for content anchoring
     clearStoreAnalysis(treatmentId)
   }
   

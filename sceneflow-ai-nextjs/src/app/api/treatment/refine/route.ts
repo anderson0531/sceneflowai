@@ -111,8 +111,14 @@ export async function POST(request: NextRequest) {
 
     const prompt = `${SECTION_CONTEXT[section]}
 
-You are an expert film treatment editor. Refine the provided section according to the user's instructions.
-Keep structure and factual content unless explicitly asked to change. Improve clarity, tone, and concision.
+You are an expert film treatment editor. REWRITE the specified fields according to the user's instructions.
+
+CRITICAL: You are REPLACING content, NOT appending to it.
+- Return a COMPLETE replacement for each field you modify
+- Do NOT concatenate new text with existing content
+- Do NOT preserve the original text unless explicitly asked to keep specific parts
+- If a synopsis needs improvement, return a new synopsis of similar length, not a longer one
+- The output should be a refined VERSION, not an extended version
 
 CURRENT SECTION DATA:
 ${JSON.stringify(sectionData, null, 2)}
@@ -130,6 +136,7 @@ IMPORTANT:
 - Return ONLY the modified fields as a JSON object
 - Maintain consistency with the overall treatment
 - If a field doesn't need changes, you may omit it from the response
+- REPLACE field content entirely - do not append or concatenate
 
 ${strictJsonPromptSuffix}`
 

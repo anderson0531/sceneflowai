@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
   
   try {
     const body: AnalyzeResonanceRequest = await request.json()
-    const { treatment, intent, quickAnalysis = false, iteration = 1, previousAnalysis, targetProfile } = body
+    const { treatment, intent, quickAnalysis = false, iteration = 1, previousAnalysis, targetProfile, contentBaseline } = body
     
     if (!treatment) {
       return NextResponse.json({
@@ -94,8 +94,11 @@ export async function POST(request: NextRequest) {
     if (targetProfile) {
       console.log(`[Resonance] Using locked target profile with axis weights:`, targetProfile.axisWeightModifiers)
     }
+    if (contentBaseline) {
+      console.log(`[Resonance] Intent changed - using content baseline score: ${contentBaseline.score} for scoring stability`)
+    }
     
-    const analysis = await analyzeWithGemini(treatment, intent, reqId, effectiveIteration, previousAnalysis, targetProfile)
+    const analysis = await analyzeWithGemini(treatment, intent, reqId, effectiveIteration, previousAnalysis, targetProfile, contentBaseline)
     
     const isReadyForProduction = analysis.greenlightScore.score >= READY_FOR_PRODUCTION_THRESHOLD
     
@@ -279,10 +282,11 @@ async function analyzeWithGemini(
   reqId: string,
   iteration: number = 1,
   previousAnalysis?: PreviousAnalysisContext,
-  targetProfile?: AnalyzeResonanceRequest['targetProfile']
+  targetProfile?: AnalyzeResonanceRequest['targetProfile'],
+  contentBaseline?: { score: number; note: string }
 ): Promise<AudienceResonanceAnalysis> {
   
-  const prompt = buildAnalysisPrompt(treatment, intent, iteration, previousAnalysis, targetProfile)
+  const prompt = buildAnalysisPrompt(treatment, intent, iteration, previousAnalysis, targetProfile, contentBaseline)
   
   console.log(`[Resonance] Calling Vertex AI Gemini for analysis (iteration ${iteration})...`)
   
@@ -473,7 +477,8 @@ function buildAnalysisPrompt(
   intent: AudienceIntent,
   iteration: number = 1,
   previousAnalysis?: PreviousAnalysisContext,
-  targetProfile?: AnalyzeResonanceRequest['targetProfile']
+  targetProfile?: AnalyzeResonanceRequest['targetProfile'],
+  contentBaseline?: { score: number; note: string }
 ): string {
   const genreLabel = intent.primaryGenre.replace('-', ' ')
   const demoLabel = intent.targetDemographic.replace(/-/g, ' ')
@@ -537,11 +542,27 @@ VERIFICATION SCORING RULES:
 6. INCREMENTAL IMPROVEMENT: Each fix applied should contribute +2-10 points to relevant axis
 ` : ''
 
+  // Build content baseline context for intent changes (prevents wild score swings)
+  // When user changes audience/genre/tone, the content quality hasn't changed - only demographic fit should be re-evaluated
+  const contentBaselineContext = contentBaseline ? `
+CONTENT QUALITY BASELINE (intent changed, not content):
+The user only changed their target audience/genre/tone settings. The actual treatment content is UNCHANGED.
+Previous score for this exact content: ${contentBaseline.score}/100
+
+INTENT CHANGE SCORING RULES:
+1. CONTENT QUALITY PRESERVED: Core narrative quality (originality, character depth, pacing) should remain similar
+2. ONLY RE-EVALUATE DEMOGRAPHIC FIT: protagonist-demographic-match, demographic-themes, marketable-logline may change
+3. MAXIMUM SWING: Score change should be proportional to how well content fits NEW demographic (±15 points typical, ±25 max)
+4. NEVER PENALIZE CONTENT: Do not lower originality/character/pacing scores because demographic changed
+5. ${contentBaseline.note}
+` : ''
+
   return `You are a Creative Executive. Analyze this treatment for market viability.
 
 INTENT: ${genreLabel} | ${demoLabel} | ${toneLabel}
 ${targetContext}
 ${baselineContext}
+${contentBaselineContext}
 TREATMENT:
 Title: ${treatment.title || 'Untitled'}
 Logline: ${truncateText(treatment.logline, 300) || 'Not provided'}
