@@ -3892,10 +3892,10 @@ function SceneCard({
                     Jump to Scene
                   </div>
                   <div 
-                    className="space-y-0.5 max-h-64 overflow-y-auto pr-1"
+                    className="space-y-0.5 max-h-52 overflow-y-scroll pr-1 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-track]:rounded [&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:hover:bg-gray-500"
                     style={{
                       scrollbarWidth: 'thin',
-                      scrollbarColor: '#4b5563 transparent'
+                      scrollbarColor: '#4b5563 #1f2937'
                     }}
                   >
                     {Array.from({ length: totalScenes }, (_, i) => {
