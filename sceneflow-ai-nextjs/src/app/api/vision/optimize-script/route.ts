@@ -310,9 +310,8 @@ function buildSharedContext(
   audienceReview?: Review | null,
   voiceProfiles?: Record<string, CharacterVoiceProfile>
 ): string {
-  // RADICALLY SIMPLIFIED: Just pass the instruction directly
-  // The Chat optimization proved that simple, direct instructions work better
-  // than complex rule systems that cause "Instruction Fatigue"
+  // CREATIVE REWRITE MODE: Give the model permission to make substantial changes
+  // The previous approach was too conservative, resulting in minimal dialogue changes
   
   const normalizedInstruction = String(instruction || '')
     .split(/\r?\n/)
@@ -320,21 +319,36 @@ function buildSharedContext(
     .filter(line => line && line.toLowerCase() !== 'undefined')
     .join('\n') || 'Improve clarity, pacing, character depth, and visual storytelling.'
   
-  return `You are rewriting this script to improve its Audience Resonance score.
+  return `You are a SCREENPLAY DOCTOR performing substantive rewrites to improve this script's Audience Resonance score.
 
-=== SPECIFIC FIXES TO APPLY ===
+=== RECOMMENDATIONS TO IMPLEMENT ===
 ${normalizedInstruction}
 
-=== HOW TO REWRITE ===
-1. DELETE on-the-nose dialogue (characters stating emotions directly)
-2. ADD physical actions that SHOW what the deleted dialogue SAID
-3. When narration describes feelings, REPLACE with observable physical reactions
-4. If scenes are repetitive, CONDENSE them into one tighter scene
+=== REWRITE AUTHORITY ===
+You have FULL CREATIVE LICENSE to:
+• REWRITE dialogue completely — change the actual words characters say
+• ADD new dialogue lines or physical beats within scenes
+• EXPAND scenes that need more breathing room (adjust duration accordingly)
+• REMOVE redundant or on-the-nose dialogue
+• TRANSFORM how information is conveyed (telling → showing)
 
-=== EXAMPLE TRANSFORMATION ===
-BEFORE: Ben looks horrified. "This is terrible. The ABI is consuming them."
-AFTER: Ben's hand trembles over the screen. He pulls back, knuckles white. The lights flicker.
-       BEN: [barely audible] The patterns... identical to hers. Before she— (He can't finish.)
+=== WHAT "REWRITE" MEANS ===
+WRONG (cosmetic edit): Ben: [horrified] "The ABI is consuming them!"
+                       ↓
+                       Ben: [horrified] "The ABI is consuming them!"
+
+RIGHT (substantive rewrite): Ben: [horrified] "The ABI is consuming them!"
+                             ↓
+                             Ben's hand trembles. He steadies himself on the desk.
+                             BEN: [barely audible] The patterns... they're the same. Before she— 
+                             He can't finish. His jaw clenches. A monitor flickers behind him.
+
+=== REWRITE TECHNIQUES ===
+1. SUBTEXT over exposition: Characters hint, imply, trail off — they don't explain
+2. PHYSICAL REACTIONS show emotion: trembling hands, averted eyes, clenched jaw
+3. ENVIRONMENTAL STORYTELLING: lights flicker, screens glitch, silence falls
+4. INCOMPLETE SENTENCES: "Before she—" "I almost—" "It's the same as when—"
+5. CONTRADICTION: Say one thing, body language says another
 
 Total Scenes: ${script.scenes?.length || 0}`
 }
@@ -1040,11 +1054,12 @@ Return ONLY valid JSON (no markdown):
 }
 
 RULES:
-• Output EXACTLY ${batchScenes.length} scene(s)
-• Preserve duration values  
+• Output ${batchScenes.length} scene(s) — you MAY add new dialogue lines or action beats WITHIN scenes
+• Duration may INCREASE for expanded scenes (add 5-15s per added beat)
 • All dialogue needs [emotion] tags
 • Escape quotes in JSON
-• Narration: 1 sentence max, never empty`
+• Narration: 1 sentence max, never empty
+• REWRITE dialogue substantially — don't just change emotion tags`
 
   // Token budget: 3500 per scene + 5000 base
   const estimatedTokens = Math.min(32768, batchScenes.length * 3500 + 5000)
