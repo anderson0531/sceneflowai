@@ -1,20 +1,19 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Settings2, Check, Square, CheckSquare, BarChart3, MessageSquare, ListChecks, Film, Sparkles, CheckCircle2, Edit, Mic, Eye, FileText, Lightbulb } from 'lucide-react'
+import { X, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Settings2, Check, Square, CheckSquare, BarChart3, MessageSquare, ListChecks, Film, Sparkles, CheckCircle2, Edit, Mic, Eye, FileText, Lightbulb, Info } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { VoiceSelectorDialog } from '@/components/tts/VoiceSelectorDialog'
 import { OptimizeSceneDialog } from '@/components/vision/OptimizeSceneDialog'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { toast } from 'sonner'
 import type { CharacterContext } from '@/lib/voiceRecommendation'
-import { SUPPORTED_LANGUAGES } from '@/constants/languages'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 // Common optimization templates for "You Direct" tab
 const SCRIPT_INSTRUCTION_TEMPLATES = [
@@ -336,7 +335,7 @@ interface ScriptReviewModalProps {
   }>) => void
 }
 
-type ReviewTab = 'overview' | 'analysis' | 'script' | 'scenes' | 'you-direct'
+type ReviewTab = 'overview' | 'analysis' | 'recommendations' | 'you-direct'
 
 export default function ScriptReviewModal({
   isOpen,
@@ -385,7 +384,7 @@ export default function ScriptReviewModal({
     return 'Roger'
   })
   const [voiceSelectorOpen, setVoiceSelectorOpen] = useState(false)
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('en')
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('en') // Keep for TTS playback
   const [playingSection, setPlayingSection] = useState<string | null>(null)
   const [loadingSection, setLoadingSection] = useState<string | null>(null)
   const [showDeductions, setShowDeductions] = useState(false)
@@ -835,13 +834,12 @@ export default function ScriptReviewModal({
         
         if (data.optimizedScript) {
           onScriptOptimized(data.optimizedScript)
-          toast.success('Script revised with your custom direction!')
+          toast.success('Script revised with your custom direction! Click Re-analyze to see your new score.')
           // Reset You Direct state after success
           setSelectedOptimizations([])
           setCustomInstruction('')
-          // Auto re-analyze and show Overview tab to display impact
+          // Stay on Overview tab to prompt re-analyze
           setActiveTab('overview')
-          setTimeout(() => onRegenerate(), 100)
         } else {
           toast.message('No changes returned for the current instruction.')
         }
@@ -957,11 +955,10 @@ export default function ScriptReviewModal({
         if (data.optimizedScript) {
           // Apply the optimized script
           onScriptOptimized(data.optimizedScript)
-          toast.success(`Script revised with ${selectedRecs.length} recommendation${selectedRecs.length > 1 ? 's' : ''} applied!`)
-          // Auto re-analyze and show Overview tab to display impact (instead of closing)
+          toast.success(`Script revised with ${selectedRecs.length} recommendation${selectedRecs.length > 1 ? 's' : ''}! Click Re-analyze to see your new score.`)
+          // Clear selections and switch to Overview to prompt re-analyze
+          setSelectedRecommendationIndices(new Set())
           setActiveTab('overview')
-          setSelectedRecommendationIndices(new Set()) // Clear selections
-          setTimeout(() => onRegenerate(), 100)
         } else {
           throw new Error('No optimized script returned')
         }
@@ -1311,6 +1308,40 @@ export default function ScriptReviewModal({
                 )}
                 Re-analyze
               </Button>
+              {/* Go to Scenes with tooltip showing scene stats */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => {
+                        stopPlayback()
+                        onClose()
+                      }}
+                      className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                    >
+                      <Film className="w-4 h-4" />
+                      Go to Scenes
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs bg-gray-900 text-white p-3">
+                    <div className="space-y-2">
+                      <p className="font-medium">Scene Editing</p>
+                      <p className="text-xs text-gray-300">
+                        Per-scene analysis and optimization is integrated into each scene header.
+                      </p>
+                      {sceneAnalysis.length > 0 && (
+                        <div className="flex items-center gap-3 text-xs pt-1 border-t border-gray-700">
+                          <span>{sceneAnalysis.length} scenes</span>
+                          <span className="text-green-400">{sceneAnalysis.filter(s => s.score >= 80).length} ready</span>
+                          <span className="text-amber-400">{sceneAnalysis.filter(s => s.score < 80).length} to optimize</span>
+                        </div>
+                      )}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <Button
                 variant="ghost"
                 size="sm"
@@ -1337,20 +1368,6 @@ export default function ScriptReviewModal({
               <span className="truncate">{selectedVoiceName || 'Select voice...'}</span>
               <Settings2 className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
             </Button>
-            
-            {/* Language Selector */}
-            <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-              <SelectTrigger className="w-[130px] h-8 text-sm">
-                <SelectValue placeholder="Language" />
-              </SelectTrigger>
-              <SelectContent>
-                {SUPPORTED_LANGUAGES.map((lang) => (
-                  <SelectItem key={lang.code} value={lang.code}>
-                    {lang.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
             
             {playingSection && (
               <Button
@@ -1397,7 +1414,7 @@ export default function ScriptReviewModal({
                     </Button>
                   </div>
                 )}
-                <TabsList className="grid w-full grid-cols-5">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger 
                     value="overview" 
                     className="flex items-center gap-1.5 text-xs sm:text-sm"
@@ -1415,36 +1432,17 @@ export default function ScriptReviewModal({
                     <span className="hidden sm:inline">Analysis</span>
                   </TabsTrigger>
                   <TabsTrigger 
-                    value="script" 
+                    value="recommendations" 
                     className="flex items-center gap-1.5 text-xs sm:text-sm"
                     title="AI recommendations to improve your script"
                   >
                     <FileText className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Script</span>
+                    <span className="hidden sm:inline">Recommendations</span>
                     {review.recommendations.length > 0 && (
                       <Badge variant="secondary" className="ml-1 text-xs h-5 px-1.5 hidden sm:flex">
                         {review.recommendations.length}
                       </Badge>
                     )}
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="scenes" 
-                    className="flex items-center gap-1.5 text-xs sm:text-sm"
-                    title="Per-scene analysis and targeted fixes"
-                  >
-                    <Film className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Scenes</span>
-                    {sceneAnalysis.length > 0 && (() => {
-                      const needsFix = sceneAnalysis.filter(s => s.score < 80).length
-                      return needsFix > 0 ? (
-                        <Badge 
-                          variant="secondary" 
-                          className="ml-1 text-xs h-5 px-1.5 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 hidden sm:flex"
-                        >
-                          {needsFix}
-                        </Badge>
-                      ) : null
-                    })()}
                   </TabsTrigger>
                   <TabsTrigger 
                     value="you-direct" 
@@ -1691,8 +1689,8 @@ export default function ScriptReviewModal({
                   </div>
                 )}
 
-                {/* Script Tab */}
-                {activeTab === 'script' && (
+                {/* Recommendations Tab */}
+                {activeTab === 'recommendations' && (
                   <div className="space-y-6">
                     <Card>
                       <CardHeader className="flex flex-row items-center justify-between">
@@ -1806,74 +1804,6 @@ export default function ScriptReviewModal({
                     </Button>
                   </div>
                 </CardContent>
-                    </Card>
-                  </div>
-                )}
-
-                {/* Scenes Tab - Now redirects to per-scene optimization in Script view */}
-                {activeTab === 'scenes' && (
-                  <div className="space-y-6">
-                    {/* Clean workflow transition CTA */}
-                    <Card className="border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-900/20 dark:to-purple-900/20">
-                      <CardContent className="py-8">
-                        <div className="text-center space-y-4">
-                          <div className="w-16 h-16 mx-auto bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                            <Film className="w-8 h-8 text-white" />
-                          </div>
-                          
-                          <div>
-                            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                              Continue to Scene Editing
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                              Per-scene analysis and optimization is now integrated directly into each scene header. 
-                              Close this panel and work on individual scenes with full context.
-                            </p>
-                          </div>
-
-                          {/* Quick stats if scene analysis exists */}
-                          {sceneAnalysis.length > 0 && (
-                            <div className="flex items-center justify-center gap-6 py-3 px-4 bg-white/50 dark:bg-gray-900/30 rounded-lg max-w-sm mx-auto">
-                              <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                                  {sceneAnalysis.length}
-                                </div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400">Scenes</div>
-                              </div>
-                              <div className="w-px h-8 bg-gray-200 dark:bg-gray-700" />
-                              <div className="text-center">
-                                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                                  {sceneAnalysis.filter(s => s.score >= 80).length}
-                                </div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400">Ready (80+)</div>
-                              </div>
-                              <div className="w-px h-8 bg-gray-200 dark:bg-gray-700" />
-                              <div className="text-center">
-                                <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                                  {sceneAnalysis.filter(s => s.score < 80).length}
-                                </div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400">To Optimize</div>
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="pt-2">
-                            <Button
-                              variant="default"
-                              onClick={onClose}
-                              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8"
-                            >
-                              <Film className="w-4 h-4 mr-2" />
-                              Go to Scenes
-                            </Button>
-                          </div>
-
-                          {/* Tip */}
-                          <p className="text-xs text-gray-500 dark:text-gray-400 pt-2">
-                            💡 Each scene now shows its own score, analysis, and Optimize button in the scene header
-                          </p>
-                        </div>
-                      </CardContent>
                     </Card>
                   </div>
                 )}
