@@ -3883,7 +3883,7 @@ function SceneCard({
                   </button>
                 </PopoverTrigger>
                 <PopoverContent 
-                  className="w-64 max-h-80 overflow-y-auto p-2 bg-slate-900 border-slate-700"
+                  className="w-64 max-h-80 p-2 bg-slate-900 border-slate-700"
                   align="start"
                   sideOffset={8}
                   onWheel={(e) => e.stopPropagation()}
@@ -3891,7 +3891,13 @@ function SceneCard({
                   <div className="text-xs text-gray-400 px-2 py-1.5 mb-1 border-b border-gray-700">
                     Jump to Scene
                   </div>
-                  <div className="space-y-0.5">
+                  <div 
+                    className="space-y-0.5 max-h-64 overflow-y-auto pr-1"
+                    style={{
+                      scrollbarWidth: 'thin',
+                      scrollbarColor: '#4b5563 transparent'
+                    }}
+                  >
                     {Array.from({ length: totalScenes }, (_, i) => {
                       const isCurrentScene = i === sceneIdx
                       const isBookmarked = i === bookmarkedSceneIndex
