@@ -632,8 +632,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // Script overview visibility state
   const [showScriptOverview, setShowScriptOverview] = useState(false)
   
-  // Scene timeline visibility state - always visible by default (primary navigation)
-  const [showTimeline, setShowTimeline] = useState(true)
+  // Scene timeline visibility state - hidden (scene card navigation is primary)
+  const [showTimeline, setShowTimeline] = useState(false)
   
   // Scene review modal state
   const [showSceneReviewModal, setShowSceneReviewModal] = useState(false)
@@ -3886,6 +3886,7 @@ function SceneCard({
                   className="w-64 max-h-80 overflow-y-auto p-2 bg-slate-900 border-slate-700"
                   align="start"
                   sideOffset={8}
+                  onWheel={(e) => e.stopPropagation()}
                 >
                   <div className="text-xs text-gray-400 px-2 py-1.5 mb-1 border-b border-gray-700">
                     Jump to Scene
