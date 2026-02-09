@@ -3511,6 +3511,9 @@ function SceneCard({
   const [editSegmentDialogOpen, setEditSegmentDialogOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   
+  // Generate All Audio confirmation dialog
+  const [generateAllAudioConfirmOpen, setGenerateAllAudioConfirmOpen] = useState(false)
+  
   // Add Segment dialog state
   const [addSegmentDialogOpen, setAddSegmentDialogOpen] = useState(false)
   
@@ -4728,65 +4731,114 @@ function SceneCard({
                     </div>
                     <div className="flex items-center gap-2 mr-2">
                       <button
-                        onClick={async (e) => {
+                        onClick={(e) => {
                           e.stopPropagation()
-                          // Generate all missing audio for this scene (narration, dialogue, music, SFX)
-                          // Note: Description audio has been deprecated
-                          const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
-                          const hasMusicAudio = !!(scene.musicAudio || scene.music?.url)
-                          
-                          overlayStore?.show(`Generating all audio for Scene ${sceneIdx + 1}...`, 60)
-                          try {
-                            // Generate narration if missing
-                            if (scene.narration && !narrationUrl && onGenerateSceneAudio) {
-                              await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined)
-                            }
-                            // Generate missing dialogues
-                            if (scene.dialogue && onGenerateSceneAudio) {
-                              // Get dialogue audio array for current language
-                              let genDialogueAudioArray: any[] = []
-                              if (Array.isArray(scene.dialogueAudio)) {
-                                genDialogueAudioArray = scene.dialogueAudio
-                              } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
-                                genDialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
-                              }
-                              for (let i = 0; i < scene.dialogue.length; i++) {
-                                const d = scene.dialogue[i]
-                                const audioEntry = genDialogueAudioArray.find((a: any) => 
-                                  a.character === d.character && a.dialogueIndex === i
-                                )
-                                if (!audioEntry?.audioUrl) {
-                                  await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i)
-                                }
-                              }
-                            }
-                            // Generate music if missing
-                            if (scene.music && !hasMusicAudio) {
-                              await generateMusic(sceneIdx)
-                            }
-                            // Generate missing SFX
-                            if (Array.isArray(scene.sfx)) {
-                              for (let sfxIdx = 0; sfxIdx < scene.sfx.length; sfxIdx++) {
-                                const hasSfxAudio = (scene.sfxAudio && scene.sfxAudio[sfxIdx]) || 
-                                                    (typeof scene.sfx[sfxIdx] === 'object' && scene.sfx[sfxIdx].audioUrl)
-                                if (!hasSfxAudio) {
-                                  await generateSFX(sceneIdx, sfxIdx)
-                                }
-                              }
-                            }
-                            overlayStore?.hide()
-                            toast.success('All audio generated!')
-                          } catch (error) {
-                            console.error('[ScriptPanel] Generate all failed:', error)
-                            overlayStore?.hide()
-                            toast.error('Failed to generate some audio')
-                          }
+                          setGenerateAllAudioConfirmOpen(true)
                         }}
-                        className="px-3 py-1.5 text-xs font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-md flex items-center gap-1.5 transition-all"
+                        className="px-3 py-1.5 text-xs font-medium bg-purple-600 hover:bg-purple-500 text-white rounded-md flex items-center gap-1.5 transition-all shadow-sm"
                       >
                         <Sparkles className="w-3 h-3" />
                         Generate All Audio
                       </button>
+                      
+                      {/* Generate All Audio Confirmation Dialog */}
+                      <Dialog open={generateAllAudioConfirmOpen} onOpenChange={setGenerateAllAudioConfirmOpen}>
+                        <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-md">
+                          <DialogHeader>
+                            <DialogTitle className="text-white flex items-center gap-2">
+                              <RefreshCw className="w-5 h-5 text-purple-400" />
+                              Regenerate All Audio
+                            </DialogTitle>
+                            <DialogDescription className="text-gray-400">
+                              This will delete all existing audio for Scene {sceneIdx + 1} and regenerate fresh audio for narration, dialogue, music, and sound effects.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mt-2">
+                            <p className="text-amber-200 text-sm flex items-start gap-2">
+                              <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                              <span>Existing audio will be permanently deleted. Use this to update audio after script changes.</span>
+                            </p>
+                          </div>
+                          <div className="flex justify-end gap-3 mt-4">
+                            <button
+                              onClick={() => setGenerateAllAudioConfirmOpen(false)}
+                              className="px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-gray-800 rounded-md transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={async () => {
+                                setGenerateAllAudioConfirmOpen(false)
+                                
+                                overlayStore?.show(`Regenerating all audio for Scene ${sceneIdx + 1}...`, 60)
+                                try {
+                                  // First, delete ALL existing audio for this scene
+                                  // This ensures fresh generation even for script updates
+                                  if (onDeleteSceneAudio) {
+                                    // Delete narration audio
+                                    if (scene.narrationAudio || scene.narrationAudioUrl) {
+                                      await onDeleteSceneAudio(sceneIdx, 'narration')
+                                    }
+                                    // Delete all dialogue audio
+                                    if (scene.dialogue && scene.dialogue.length > 0) {
+                                      for (let i = 0; i < scene.dialogue.length; i++) {
+                                        await onDeleteSceneAudio(sceneIdx, 'dialogue', i)
+                                      }
+                                    }
+                                    // Delete music audio
+                                    if (scene.musicAudio || scene.music?.url) {
+                                      await onDeleteSceneAudio(sceneIdx, 'music')
+                                    }
+                                    // Delete all SFX audio
+                                    if (Array.isArray(scene.sfx)) {
+                                      for (let sfxIdx = 0; sfxIdx < scene.sfx.length; sfxIdx++) {
+                                        await onDeleteSceneAudio(sceneIdx, 'sfx', undefined, sfxIdx)
+                                      }
+                                    }
+                                  }
+                                  
+                                  // Small delay to ensure deletions are processed
+                                  await new Promise(resolve => setTimeout(resolve, 500))
+                                  
+                                  // Now generate all audio fresh
+                                  // Generate narration
+                                  if (scene.narration && onGenerateSceneAudio) {
+                                    await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined)
+                                  }
+                                  // Generate all dialogues
+                                  if (scene.dialogue && onGenerateSceneAudio) {
+                                    for (let i = 0; i < scene.dialogue.length; i++) {
+                                      const d = scene.dialogue[i]
+                                      if (d.line && d.character) {
+                                        await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i)
+                                      }
+                                    }
+                                  }
+                                  // Generate music
+                                  if (scene.music) {
+                                    await generateMusic(sceneIdx)
+                                  }
+                                  // Generate all SFX
+                                  if (Array.isArray(scene.sfx)) {
+                                    for (let sfxIdx = 0; sfxIdx < scene.sfx.length; sfxIdx++) {
+                                      await generateSFX(sceneIdx, sfxIdx)
+                                    }
+                                  }
+                                  overlayStore?.hide()
+                                  toast.success('All audio regenerated!')
+                                } catch (error) {
+                                  console.error('[ScriptPanel] Generate all failed:', error)
+                                  overlayStore?.hide()
+                                  toast.error('Failed to generate some audio')
+                                }
+                              }}
+                              className="px-4 py-2 text-sm font-medium bg-purple-600 hover:bg-purple-500 text-white rounded-md transition-colors"
+                            >
+                              Regenerate All
+                            </button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                       <button
                         onClick={(e) => {
                           e.stopPropagation()

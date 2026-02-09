@@ -6606,10 +6606,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     }
                   } catch {}
                   
-                  // Allow database writes to fully propagate before reloading
-                  await new Promise(resolve => setTimeout(resolve, 2000))
+                  // NOTE: Removed loadProject() to fix race condition where
+                  // state would be overwritten with stale data before all DB writes completed.
+                  // The audio is saved in the database by the API - the UI will update on next page load.
+                  // For immediate UI update, we need to manually refresh the scenes from database.
                   
-                  // Retry logic for project reload after batch audio generation (skip auto-generation to prevent script regeneration bug)
+                  // Longer delay to ensure all database writes are fully committed
+                  await new Promise(resolve => setTimeout(resolve, 3000))
+                  
+                  // Reload project with extra retry logic and longer delays
                   let retries = 3
                   while (retries > 0) {
                     try {
@@ -6620,10 +6625,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       retries--
                       console.warn(`[Generate All Audio] Project reload failed, ${retries} retries left`)
                       if (retries > 0) {
-                        await new Promise(resolve => setTimeout(resolve, 1500)) // Wait 1.5s before retry
+                        await new Promise(resolve => setTimeout(resolve, 2500)) // Wait 2.5s before retry
                       } else {
                         console.error('[Generate All Audio] All retries exhausted')
-                        try { const { toast } = require('sonner'); toast.warning('Audio generated but page reload failed. Please refresh manually.') } catch {}
+                        try { const { toast } = require('sonner'); toast.info('Audio generated! Refresh page if audio is not visible.', { duration: 8000 }) } catch {}
                       }
                     }
                   }
