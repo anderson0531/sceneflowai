@@ -839,6 +839,9 @@ export default function ScriptReviewModal({
           // Reset You Direct state after success
           setSelectedOptimizations([])
           setCustomInstruction('')
+          // Auto re-analyze and show Overview tab to display impact
+          setActiveTab('overview')
+          setTimeout(() => onRegenerate(), 100)
         } else {
           toast.message('No changes returned for the current instruction.')
         }
@@ -955,7 +958,10 @@ export default function ScriptReviewModal({
           // Apply the optimized script
           onScriptOptimized(data.optimizedScript)
           toast.success(`Script revised with ${selectedRecs.length} recommendation${selectedRecs.length > 1 ? 's' : ''} applied!`)
-          onClose()
+          // Auto re-analyze and show Overview tab to display impact (instead of closing)
+          setActiveTab('overview')
+          setSelectedRecommendationIndices(new Set()) // Clear selections
+          setTimeout(() => onRegenerate(), 100)
         } else {
           throw new Error('No optimized script returned')
         }
