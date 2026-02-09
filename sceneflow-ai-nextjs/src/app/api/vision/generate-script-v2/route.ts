@@ -6,6 +6,7 @@ import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 import { SubscriptionService } from '../../../../services/SubscriptionService'
 import { runScriptQA, autoFixScript } from '@/lib/script/qualityAssurance'
 import { generateText } from '@/lib/vertexai/gemini'
+import { getSettingsForFormat, SCRIPT_SETTINGS_BY_FORMAT } from '@/lib/script/scriptGenerationRules'
 
 export const runtime = 'nodejs'
 export const maxDuration = 600  // 10 minutes for large script generation (requires Vercel Pro)
@@ -49,11 +50,34 @@ export async function POST(request: NextRequest) {
           return
         }
 
-        // Calculate scene targets
+        // Get format-based settings for scene generation
+        const projectFormat = treatment.format || 'short-film' // Default to short-film
+        const formatSettings = getSettingsForFormat(projectFormat)
+        
+        // Calculate scene targets based on story beats and duration
         const duration = project.duration || 300
-        const minScenes = Math.floor(duration / 90)
-        const maxScenes = Math.floor(duration / 20)
-        let suggestedScenes = Math.ceil(duration / 53)
+        
+        // Use story beats to drive scene count (1-2 scenes per beat is natural)
+        const storyBeats = treatment.story_beats || treatment.storyBeats || []
+        const beatCount = storyBeats.length || 7 // Default 7 beats if not specified
+        
+        // Scene count based on beats and format settings
+        // formatSettings.beatToSceneRatio defines how many beats map to one scene
+        // A ratio of 3 means 3 beats → 1 scene, ratio of 5 means 5 beats → 1 scene
+        const scenesFromBeats = Math.ceil(beatCount / Math.max(1, formatSettings.beatToSceneRatio / 3))
+        
+        // Duration-based guardrails: scenes should average 60-120 seconds
+        const minScenes = Math.max(3, Math.floor(duration / 120)) // At least 3, max 2 min/scene
+        const maxScenes = Math.min(
+          formatSettings.targetSceneCount || 50,
+          Math.ceil(duration / 45)  // Minimum 45s per scene
+        )
+        
+        // Use beat-based count, clamped by format's maxScenesPerAct and duration guardrails
+        let suggestedScenes = Math.max(minScenes, Math.min(maxScenes, scenesFromBeats))
+        
+        console.log(`[Script Gen V2] Format: ${projectFormat}, Beat ratio: ${formatSettings.beatToSceneRatio}`)
+        console.log(`[Script Gen V2] Beat-based calculation: ${beatCount} beats → ${scenesFromBeats} scenes (clamped to ${suggestedScenes})`)
         
         // Check scene limits for user's subscription tier
         try {
@@ -629,44 +653,37 @@ IMPORTANT - DIALOGUE VS STAGE DIRECTION:
 - CORRECT: {"character": "ALEX", "line": "[shaky breath, defeated] I found it... the cufflink."}
 - If a character performs an action without speaking, put it in the "action" field, NOT as a dialogue line
 
-SCENE PLANNING:
-- Total target: ${targetDuration}s (±10% is fine)
-- REQUIRED total scenes: ${suggested} scenes (you MUST use ${suggested}, can adjust ±2 if absolutely necessary for story flow)
+SCENE PLANNING (CRITICAL - READ CAREFULLY):
+- Total runtime: ${targetDuration}s (~${Math.floor(targetDuration / 60)} minutes)
+- Target scene count: ${suggested} scenes (this is OPTIMAL based on your story beats)
 - Generate first ${end} scenes now
-- Average scene: ~${Math.ceil(targetDuration / suggested)}s
+- Average scene duration: ~${Math.ceil(targetDuration / suggested)}s (60-120s is ideal)
 
-DURATION GUIDELINES:
-- Short scene (24s): ~15-20 words narration + 30-40 words dialogue
-- Medium scene (40s): ~30-40 words narration + 60-80 words dialogue  
-- Long scene (56s): ~50-60 words narration + 100-120 words dialogue
+IMPORTANT SCENE STRUCTURE GUIDANCE:
+- Each scene should cover a COMPLETE dramatic beat - don't fragment action into multiple tiny scenes
+- A scene should have a clear beginning, middle, and end (mini arc)
+- Combine related moments that happen in the same location/time into ONE scene
+- Think like a film director: when would you naturally call "CUT"?
 
-Target average: ~${Math.ceil(targetDuration / suggested)}s = ~${Math.ceil((targetDuration / suggested) * 150 / 60)} total words per scene
+WHAT MAKES A GOOD SCENE:
+- Substantial dialogue exchanges (4-8 lines minimum for dialogue-heavy scenes)
+- Complete character interactions, not fragments
+- Natural scene breaks at location changes, time jumps, or POV shifts
+- Each scene advances the plot OR reveals character - preferably both
 
-DURATION ESTIMATION (CRITICAL):
-Calculate REALISTIC duration using this verified formula:
+DURATION ESTIMATION:
+- Estimate based on content density: dialogue, action, emotional beats
+- A scene with 4-6 dialogue exchanges + narration typically runs 60-90s
+- A scene with 8+ dialogue exchanges can run 90-120s
+- Brief transitional scenes can be 30-45s
+- Round to nearest 8s for video clip alignment
 
-1. Count TOTAL words (narration + all dialogue combined)
-2. Speech time: (total_words / 150) * 60 seconds (150 WPM for all speech)
-3. Buffer time based on scene complexity:
-   - Simple scenes (action < 100 chars): +2s
-   - Medium scenes (action 100-200 chars): +3s
-   - Complex scenes (action 200-300 chars): +4s
-   - Very complex (action > 300 chars): +5s
-4. Video clip overhead: Math.ceil((speech_time + buffer) / 8) * 0.5s
-5. Round up to nearest multiple of 8 (for 8-second video clips)
-
-Formula:
-  speech_duration = (total_words / 150) * 60
-  required_duration = speech_duration + buffer
-  video_clips = Math.ceil(required_duration / 8)
-  scene_duration = Math.ceil((speech_duration + buffer + (video_clips * 0.5)) / 8) * 8
-
-Examples (showing total word count):
-- 75 words, simple: (75/150*60) + 2 + (7*0.5) = 30 + 2 + 3.5 = 40s (rounded to 40s)
-- 150 words, medium: (150/150*60) + 3 + (8*0.5) = 60 + 3 + 4 = 72s (rounded to 72s)
-- 300 words, complex: (300/150*60) + 4 + (16*0.5) = 120 + 4 + 8 = 136s (rounded to 136s)
-
-CRITICAL: Use TOTAL word count from narration + dialogue. Base buffer on action description length.
+AVOID THESE COMMON MISTAKES:
+❌ Creating separate scenes for each line of dialogue
+❌ Splitting a single conversation across multiple scenes
+❌ Scenes under 30s (too fragmented)
+❌ Ending scenes mid-conversation
+❌ Creating "reaction" scenes that should be part of the previous scene
 
 Return JSON:
 {
@@ -688,11 +705,14 @@ Return JSON:
   ]
 }
 
-CRITICAL DURATION REQUIREMENTS:
-- Each scene must have sufficient narration + dialogue to meet duration targets
-- DO NOT write short, sparse scenes - be descriptive and engaging
-- Aim for ~${Math.ceil((targetDuration / suggested) * 150 / 60)} words per scene average
-- Longer scenes (with more dialogue) are better than many short scenes
+CRITICAL SCENE REQUIREMENTS:
+- Write COMPLETE, SUBSTANTIVE scenes - not fragments
+- Each scene should feel like a mini-movie with its own arc
+- Include 4-8 dialogue exchanges per scene minimum (for dialogue scenes)
+- A conversation between two characters should be ONE scene, not split into many
+- Target ${suggested} total scenes for this ${Math.floor(targetDuration / 60)}-minute film
+- If a story beat naturally spans multiple locations, that's multiple scenes
+- If characters are in the same place having one conversation, that's ONE scene
 
 NARRATION REQUIREMENTS (CRITICAL):
 - Each scene MUST include a "narration" field with captivating voiceover narration (1-2 sentences)
@@ -799,51 +819,34 @@ EXAMPLES:
 
 CRITICAL: Every single dialogue line must start with at least one emotion/style tag in [brackets].
 
-PREVIOUS SCENES (${prevScenes.length} so far, ${prevDuration}s total):
-${prevScenes.slice(-3).map((s: any) => `${s.sceneNumber}. ${s.heading} (${s.duration}s): ${s.action.substring(0, 80)}...`).join('\n')}
+PREVIOUS SCENES (${totalPrevScenes} scenes generated so far, ${prevDuration}s total):
+${prevScenes.slice(-3).map((s: any) => `Scene ${s.sceneNumber}. ${s.heading} (${s.duration}s): ${s.action.substring(0, 100)}...`).join('\n')}
 
-DURATION TARGET:
-- Remaining in script: ~${remainingDuration}s for ${total - totalPrevScenes} scenes
-- Average needed: ~${avgNeeded}s per scene (flexible guidance)
-- Estimate realistically based on actual content
-- Total target: ${targetDuration}s (±10%)
+CONTINUATION GUIDANCE:
+- Remaining scenes: ${total - totalPrevScenes} more scenes needed (scenes ${start}-${total})
+- Remaining duration: ~${remainingDuration}s
+- Average per remaining scene: ~${avgNeeded}s (60-120s is ideal)
+- Total target: ${targetDuration}s
 
-DURATION ESTIMATION FORMULA (FOLLOW EXACTLY):
+IMPORTANT - SCENE STRUCTURE:
+- Each scene should be a COMPLETE dramatic beat
+- Don't fragment conversations across multiple scenes
+- A scene with dialogue should have 4-8+ exchanges minimum
+- Include beginning, middle, end within each scene
+- Natural scene breaks: location change, time jump, POV shift
 
-Step 1: Count total words
-- Count ALL words in narration text
-- Count ALL words in all dialogue lines
-- total_words = narration_words + dialogue_words
+DURATION ESTIMATION:
+- Based on content density: dialogue exchanges, action, emotional beats
+- 4-6 dialogue exchanges + narration → typically 60-90s
+- 8+ dialogue exchanges → 90-120s  
+- Brief transitional scenes → 30-45s
+- Round to nearest 8s for video alignment
 
-Step 2: Calculate audio duration
-- audio_duration = (total_words / 150) * 60 seconds
-- (150 words per minute speech rate)
-
-Step 3: Add buffer for actions
-- If action description < 100 chars: buffer = 2s
-- If action description 100-200 chars: buffer = 3s
-- If action description 200-300 chars: buffer = 4s
-- If action description > 300 chars: buffer = 5s
-
-Step 4: Calculate video clips needed
-- required_duration = audio_duration + buffer
-- video_count = Math.ceil(required_duration / 8)
-
-Step 5: Calculate final scene duration
-- scene_duration = audio_duration + buffer + (video_count * 0.5)
-- ROUND UP to nearest multiple of 8
-
-Example:
-- Narration: 30 words, Dialogue: 45 words = 75 total
-- Audio: (75 / 150) * 60 = 30s
-- Buffer: 3s (medium action)
-- Required: 30 + 3 = 33s
-- Videos: Math.ceil(33 / 8) = 5 clips
-- Scene: 30 + 3 + (5 * 0.5) = 35.5s
-- FINAL: Math.ceil(35.5 / 8) * 8 = 40s
-
-CRITICAL: Write MORE dialogue and narration to reach target durations.
-Average ${avgNeeded}s per scene requires ~${Math.ceil(avgNeeded * 150 / 60)} words per scene.
+AVOID FRAGMENTATION:
+❌ Don't split one conversation into multiple scenes
+❌ Don't create scenes under 30s
+❌ Don't end scenes mid-interaction
+✓ Combine related moments in same location/time
 
 Return JSON array:
 [
