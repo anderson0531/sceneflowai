@@ -961,17 +961,30 @@ async function optimizeBatch(
     ).join('\n')
     
     // Find recommendations that specifically target THIS scene
+    // Recommendations may have sceneNumbers array OR scene references in text like "Scene 5" or "Scenes 2, 5, 7"
     let inlineFixes = ''
     if (audienceReview?.recommendations) {
       const sceneRecs = audienceReview.recommendations.filter((r: any) => {
         if (typeof r === 'string') return false
-        return r.sceneNumbers?.includes(sceneNum)
+        // Check explicit sceneNumbers array first
+        if (r.sceneNumbers?.includes(sceneNum)) return true
+        // Parse scene references from text: "Scene 5", "Scene 2 and 3", "Scenes 2, 5, 7"
+        const text = r.text || ''
+        const sceneMatches = text.match(/[Ss]cenes?\s*([\d,\s]+(?:and\s*\d+)?)/g)
+        if (sceneMatches) {
+          for (const match of sceneMatches) {
+            const numbers = match.match(/\d+/g)
+            if (numbers && numbers.map(Number).includes(sceneNum)) return true
+          }
+        }
+        return false
       })
       
       const criticalRecs = sceneRecs.filter((r: any) => r.priority === 'critical')
       const highRecs = sceneRecs.filter((r: any) => r.priority === 'high')
+      const mediumRecs = sceneRecs.filter((r: any) => r.priority === 'medium')
       
-      if (criticalRecs.length > 0 || highRecs.length > 0) {
+      if (criticalRecs.length > 0 || highRecs.length > 0 || mediumRecs.length > 0) {
         inlineFixes = `\n\n>>> MANDATORY FIXES FOR THIS SCENE <<<`
         for (const rec of criticalRecs) {
           inlineFixes += `\n🔴 CRITICAL: ${rec.text}`
@@ -979,7 +992,10 @@ async function optimizeBatch(
         for (const rec of highRecs) {
           inlineFixes += `\n🟠 HIGH: ${rec.text}`
         }
-        inlineFixes += `\n>>> YOU MUST REWRITE THIS SCENE TO ADDRESS THE ABOVE <<<\n`
+        for (const rec of mediumRecs) {
+          inlineFixes += `\n🟡 MEDIUM: ${rec.text}`
+        }
+        inlineFixes += `\n>>> REWRITE THIS SCENE TO ADDRESS ALL FIXES ABOVE <<<\n`
       }
     }
     
