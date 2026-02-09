@@ -50,64 +50,41 @@ export async function POST(request: NextRequest) {
           return
         }
 
-        // Get format-based settings for scene generation
-        const projectFormat = treatment.format || 'short-film' // Default to short-film
-        const formatSettings = getSettingsForFormat(projectFormat)
-        
-        // Calculate scene targets based on story beats and duration
+        // Simple duration-based safety cap (no scene-count prescriptions)
         const duration = project.duration || 300
+        const projectFormat = treatment.format || 'short-film'
         
-        // Use story beats to drive scene count (1-2 scenes per beat is natural)
+        // Extract story beats for context (NOT for scene-count calculation)
         const storyBeats = treatment.story_beats || treatment.storyBeats || []
-        const beatCount = storyBeats.length || 7 // Default 7 beats if not specified
+        const beatCount = storyBeats.length || 7
         
-        // Scene count based on beats and format settings
-        // formatSettings.beatToSceneRatio defines how many beats map to one scene
-        // A ratio of 3 means 3 beats → 1 scene, ratio of 5 means 5 beats → 1 scene
-        const scenesFromBeats = Math.ceil(beatCount / Math.max(1, formatSettings.beatToSceneRatio / 3))
+        // Safety cap only - prevent runaway generation (max ~25 scenes for shorts)
+        // Let the AI determine natural scene count based on story structure
+        const maxSafetyScenes = Math.min(30, Math.ceil(duration / 30))  // Absolute max: 30s/scene
         
-        // Duration-based guardrails: scenes should average 60-120 seconds
-        const minScenes = Math.max(3, Math.floor(duration / 120)) // At least 3, max 2 min/scene
-        const maxScenes = Math.min(
-          formatSettings.targetSceneCount || 50,
-          Math.ceil(duration / 45)  // Minimum 45s per scene
-        )
+        // Validate: beat count should not exceed reasonable scene count to prevent fragmentation
+        if (beatCount > 15) {
+          console.warn(`[Script Gen V2] Warning: ${beatCount} beats may lead to fragmentation. Consider condensing story beats.`)
+        }
         
-        // Use beat-based count, clamped by format's maxScenesPerAct and duration guardrails
-        let suggestedScenes = Math.max(minScenes, Math.min(maxScenes, scenesFromBeats))
-        
-        console.log(`[Script Gen V2] Format: ${projectFormat}, Beat ratio: ${formatSettings.beatToSceneRatio}`)
-        console.log(`[Script Gen V2] Beat-based calculation: ${beatCount} beats → ${scenesFromBeats} scenes (clamped to ${suggestedScenes})`)
+        console.log(`[Script Gen V2] Format: ${projectFormat}, Duration: ${duration}s, Story beats: ${beatCount}`)
+        console.log(`[Script Gen V2] Single-pass generation with safety cap of ${maxSafetyScenes} scenes`)
         
         // Check scene limits for user's subscription tier
+        let subscriptionMaxScenes: number | null = null
         try {
           const userId = (project as any).user_id
           if (userId) {
             const sceneLimits = await SubscriptionService.checkSceneLimits(userId, projectId)
             if (sceneLimits.maxScenes !== null) {
-              // User has a scene limit (Coffee Break tier)
-              if (suggestedScenes > sceneLimits.maxScenes) {
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-                  type: 'error', 
-                  error: 'Scene limit exceeded',
-                  message: `Your plan allows max ${sceneLimits.maxScenes} scenes per project. Suggested scenes: ${suggestedScenes}. Please reduce project duration or upgrade your plan.`,
-                  currentScenes: sceneLimits.currentScenes,
-                  maxScenes: sceneLimits.maxScenes,
-                  suggestedScenes
-                })}\n\n`))
-                controller.close()
-                return
-              }
-              // Clamp suggested scenes to max
-              suggestedScenes = Math.min(suggestedScenes, sceneLimits.maxScenes)
+              subscriptionMaxScenes = sceneLimits.maxScenes
+              console.log(`[Script Gen V2] User subscription scene limit: ${sceneLimits.maxScenes}`)
             }
           }
         } catch (error) {
           // If limit check fails, log but don't block generation (fail open)
           console.warn('[Script Gen V2] Scene limit check failed:', error)
         }
-        
-        console.log(`[Script Gen V2] Target: ${duration}s - Scene range: ${minScenes}-${maxScenes} (suggested: ${suggestedScenes})`)
 
         // Load existing characters - defer alias generation for memory optimization
         let existingCharacters = (project.metadata?.visionPhase?.characters || []).map((c: any) => ({
@@ -140,232 +117,100 @@ export async function POST(request: NextRequest) {
           console.log(`[Script Gen V2] Auto-synced ${existingCharacters.length} characters from Film Treatment`)
         }
 
-        // Calculate dynamic batch size based on remaining scenes
-        // Restored to 10 for faster generation (was reduced to 5)
-        const calculateBatchSize = (remaining: number): number => {
-          if (remaining <= 10) return remaining
-          return Math.min(10, remaining) // Max 10 scenes per batch for optimal speed
-        }
-        
-        const INITIAL_BATCH_SIZE = Math.min(10, suggestedScenes)
-        const MAX_BATCH_RETRIES = 3
-        let actualTotalScenes = suggestedScenes
+        // ============================================================
+        // SINGLE-PASS GENERATION: Let the AI follow the Film Treatment
+        // ============================================================
+        const MAX_RETRIES = 3
         let allScenes: any[] = []
         
         // Time-based progress tracking
         const generationStartTime = Date.now()
-        let lastBatchHit429 = false  // Track rate limit for cooldown
 
-        // BATCH 1: Generate first batch
+        // Send initial progress
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({
           type: 'progress',
-          status: 'Generating first batch of scenes...',
+          status: 'Analyzing story structure...',
           batch: 1,
           scenesGenerated: 0,
-          totalScenes: suggestedScenes,
+          totalScenes: beatCount, // Use beats as rough estimate
           elapsedSeconds: 0,
-          estimatedRemainingSeconds: suggestedScenes * 5  // ~5s per scene conservative estimate
+          estimatedRemainingSeconds: 60  // Conservative initial estimate
         })}\n\n`))
 
-        console.log(`[Script Gen V2] Batch 1: Generating first ${INITIAL_BATCH_SIZE} scenes...`)
+        console.log(`[Script Gen V2] Starting single-pass generation for ${duration}s film with ${beatCount} story beats...`)
         
-        const batch1Prompt = buildBatch1Prompt(treatment, 1, INITIAL_BATCH_SIZE, minScenes, maxScenes, suggestedScenes, duration, [], existingCharacters)
-        let batch1Response = await callGemini(batch1Prompt)
-        let batch1Data = parseBatch1(batch1Response, 1, INITIAL_BATCH_SIZE)
+        // Build the single-pass prompt
+        const singlePassPrompt = buildSinglePassPrompt(treatment, duration, existingCharacters, storyBeats, maxSafetyScenes, subscriptionMaxScenes)
         
-        // Release memory immediately after parsing
-        batch1Response = ''
+        let retryCount = 0
+        let generationSuccessful = false
         
-        if (batch1Data.totalScenes && batch1Data.totalScenes >= minScenes && batch1Data.totalScenes <= maxScenes) {
-          actualTotalScenes = batch1Data.totalScenes
-          console.log(`[Script Gen V2] AI determined ${actualTotalScenes} total scenes`)
-          
-          const deviation = Math.abs(actualTotalScenes - suggestedScenes)
-          if (deviation > suggestedScenes * 0.3) {
-            console.warn(`[Script Gen V2] AI chose ${actualTotalScenes}, but suggested is ${suggestedScenes}. Overriding.`)
-            actualTotalScenes = suggestedScenes
-          }
-        }
-        
-        allScenes.push(...batch1Data.scenes)
-        console.log(`[Script Gen V2] Batch 1 complete: ${batch1Data.scenes.length} scenes`)
-        
-        // Release batch1Data reference
-        batch1Data = null
-        
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-          type: 'progress',
-          status: `Generated ${allScenes.length} scenes...`,
-          batch: 1,
-          scenesGenerated: allScenes.length,
-          totalScenes: actualTotalScenes
-        })}\n\n`))
-    
-        // MULTI-BATCH: Generate remaining scenes with retry logic
-        let remainingScenes = actualTotalScenes - allScenes.length
-        let batchNumber = 2
-        let batchRetries = 0
-        let totalPrevDuration = allScenes.reduce((sum, s) => sum + (s.duration || 0), 0)
-        
-        while (remainingScenes > 0) {
-          // Rate limit cooldown - if previous batch hit 429, wait 5 seconds before next batch
-          if (lastBatchHit429) {
-            console.log('[Script Gen V2] Applying 5-second cooldown after rate limit...')
-            await new Promise(resolve => setTimeout(resolve, 5000))
-            lastBatchHit429 = false  // Reset flag after cooldown
-          }
-          
-          const batchSize = calculateBatchSize(remainingScenes)
-          const startScene = allScenes.length + 1
-          const endScene = startScene + batchSize - 1
-          
-          // Calculate time-based progress for this batch start
-          const elapsedSeconds = Math.floor((Date.now() - generationStartTime) / 1000)
-          const avgSecondsPerScene = allScenes.length > 0 ? elapsedSeconds / allScenes.length : 5
-          // 1.3x buffer for conservative estimate - better to finish early than late
-          const estimatedRemainingSeconds = Math.ceil(remainingScenes * avgSecondsPerScene * 1.3)
-          
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-            type: 'progress',
-            status: `Generating scenes ${startScene}-${endScene}...`,
-            batch: batchNumber,
-            scenesGenerated: allScenes.length,
-            totalScenes: actualTotalScenes,
-            elapsedSeconds,
-            estimatedRemainingSeconds
-          })}\n\n`))
-          
-          console.log(`[Script Gen V2] Batch ${batchNumber}: Generating scenes ${startScene}-${endScene}...`)
-          
-          // Memory pressure check - always log in production to help diagnose OOM
-          const memUsage = process.memoryUsage()
-          const heapUsedMB = Math.round(memUsage.heapUsed / 1024 / 1024)
-          console.log(`[Memory] Batch ${batchNumber}: ${heapUsedMB}MB heap used`)
-          
-          // Warn if memory is getting high (over 1.5GB)
-          if (heapUsedMB > 1500) {
-            console.warn(`[Memory] High memory pressure detected (${heapUsedMB}MB), forcing GC pause`)
-            // Allow event loop to process and GC to potentially run
-            await new Promise(resolve => setTimeout(resolve, 100)) // Reduced from 200ms
-          }
-          
+        while (!generationSuccessful && retryCount < MAX_RETRIES) {
           try {
-            // Create lightweight scene summary for prompt (keep last 3 only)
-            const prevScenesForPrompt = allScenes.slice(-3)
-            const batchPrompt = buildBatch2Prompt(treatment, startScene, endScene, actualTotalScenes, duration, prevScenesForPrompt, allScenes.length, totalPrevDuration, existingCharacters)
-            let batchResponse = await callGemini(batchPrompt)
-            let batchData = parseScenes(batchResponse, startScene, endScene)
-            
-            // Release memory immediately after parsing - explicit null assignment
-            batchResponse = ''
-            
-            // Check if batch actually generated scenes
-            if (batchData.scenes.length === 0) {
-              batchRetries++
-              console.warn(`[Script Gen V2] Batch ${batchNumber} generated 0 scenes (retry ${batchRetries}/${MAX_BATCH_RETRIES})`)
-              
-              if (batchRetries >= MAX_BATCH_RETRIES) {
-                // NEW: Try single-scene fallback before giving up
-                console.log(`[Script Gen V2] Attempting single-scene fallback for batch ${batchNumber}...`)
-                
-                try {
-                  const singleScenePrompt = buildBatch2Prompt(treatment, startScene, startScene, actualTotalScenes, duration, prevScenesForPrompt, allScenes.length, totalPrevDuration, existingCharacters)
-                    .replace(`Generate scenes ${startScene}-${startScene} (batch of 1 scenes)`, `Generate ONLY scene ${startScene}`)
-                  
-                  let singleResponse = await callGemini(singleScenePrompt)
-                  let singleData = parseScenes(singleResponse, startScene, startScene)
-                  singleResponse = ''
-                  
-                  if (singleData.scenes.length > 0) {
-                    console.log(`[Script Gen V2] Single-scene fallback succeeded: 1 scene`)
-                    batchData = singleData
-                    batchRetries = 0  // Reset retries for next batch
-                  } else {
-                    throw new Error('Single-scene fallback failed')
-                  }
-                } catch (fallbackError: any) {
-                  console.error(`[Script Gen V2] Single-scene fallback failed:`, fallbackError.message)
-                console.error(`[Script Gen V2] Max retries reached for batch ${batchNumber}, stopping generation`)
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                  type: 'warning',
-                  message: `Failed to generate remaining scenes after ${MAX_BATCH_RETRIES} attempts. Generated ${allScenes.length} of ${actualTotalScenes} scenes.`
-                })}\n\n`))
-                break
-              }
-              }
-              continue // Retry same batch or continue with fallback result
-            }
-            
-            // Success - reset retry counter and add scenes
-            batchRetries = 0
-            lastBatchHit429 = false  // Clear rate limit flag on success
-            allScenes.push(...batchData.scenes)
-            
-            // Update total duration
-            totalPrevDuration += batchData.scenes.reduce((sum: number, s: any) => sum + (s.duration || 0), 0)
-            
-            // Monitor dialogue verbosity
-            const avgDialogueLength = batchData.scenes.reduce((sum: number, s: any) => {
-              const dialogueChars = s.dialogue?.reduce((dSum: number, d: any) => 
-                dSum + (d.line?.length || 0), 0) || 0
-              return sum + dialogueChars
-            }, 0) / batchData.scenes.length
-            
-            console.log(`[Script Gen V2] Batch ${batchNumber} complete: ${batchData.scenes.length} scenes (total: ${allScenes.length}), avg dialogue: ${Math.round(avgDialogueLength)} chars`)
-            
-            // Calculate time-based progress estimation
-            const elapsedSeconds = Math.floor((Date.now() - generationStartTime) / 1000)
-            const avgSecondsPerScene = allScenes.length > 0 ? elapsedSeconds / allScenes.length : 3
-            const remainingScenesAfterBatch = actualTotalScenes - allScenes.length
-            const estimatedRemainingSeconds = Math.ceil(remainingScenesAfterBatch * avgSecondsPerScene)
-            
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
               type: 'progress',
-              status: `Generated ${allScenes.length} of ${actualTotalScenes} scenes...`,
-              batch: batchNumber,
-              scenesGenerated: allScenes.length,
-              totalScenes: actualTotalScenes,
-              elapsedSeconds,
-              estimatedRemainingSeconds
+              status: retryCount > 0 ? `Regenerating script (attempt ${retryCount + 1})...` : 'Writing complete script...',
+              batch: 1,
+              scenesGenerated: 0,
+              totalScenes: beatCount,
+              elapsedSeconds: Math.floor((Date.now() - generationStartTime) / 1000),
+              estimatedRemainingSeconds: 45
             })}\n\n`))
             
-            // Release batch data to free memory
-            batchData = null
+            let response = await callGemini(singlePassPrompt)
+            let parsedData = parseSinglePassResponse(response)
             
-            // Force garbage collection if available and allow GC to run
-            if (global.gc) {
-              global.gc()
-            }
-            await new Promise(resolve => setTimeout(resolve, 50))  // Reduced from 100ms
+            // Release memory immediately
+            response = ''
             
-            remainingScenes = actualTotalScenes - allScenes.length
-            batchNumber++
-            
-          } catch (error: any) {
-            batchRetries++
-            console.error(`[Script Gen V2] Batch ${batchNumber} error (retry ${batchRetries}/${MAX_BATCH_RETRIES}):`, error.message)
-            
-            // Check if this was a rate limit error (429)
-            const is429 = error.message?.includes('429') || error.message?.includes('RESOURCE_EXHAUSTED') || error.message?.includes('rate limit')
-            if (is429) {
-              lastBatchHit429 = true
-              console.log('[Script Gen V2] Rate limit detected, will apply cooldown before next batch')
-            }
-            
-            if (batchRetries >= MAX_BATCH_RETRIES) {
-              console.error(`[Script Gen V2] Max retries reached, stopping generation`)
+            if (parsedData.scenes && parsedData.scenes.length > 0) {
+              allScenes = parsedData.scenes
+              
+              // Post-process: consolidate any fragmented scenes
+              allScenes = consolidateFragmentedScenes(allScenes)
+              
+              // Validate against subscription limit
+              if (subscriptionMaxScenes && allScenes.length > subscriptionMaxScenes) {
+                console.warn(`[Script Gen V2] Generated ${allScenes.length} scenes, but user limit is ${subscriptionMaxScenes}. Truncating.`)
+                allScenes = allScenes.slice(0, subscriptionMaxScenes)
+              }
+              
+              // Validate against safety cap
+              if (allScenes.length > maxSafetyScenes) {
+                console.warn(`[Script Gen V2] Generated ${allScenes.length} scenes exceeds safety cap of ${maxSafetyScenes}. Consolidating.`)
+                allScenes = consolidateToTargetCount(allScenes, maxSafetyScenes)
+              }
+              
+              console.log(`[Script Gen V2] Single-pass generation complete: ${allScenes.length} scenes`)
+              generationSuccessful = true
+              
               controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                type: 'warning',
-                message: `Failed to generate remaining scenes. Generated ${allScenes.length} of ${actualTotalScenes} scenes.`
+                type: 'progress',
+                status: `Generated ${allScenes.length} complete scenes`,
+                batch: 1,
+                scenesGenerated: allScenes.length,
+                totalScenes: allScenes.length,
+                elapsedSeconds: Math.floor((Date.now() - generationStartTime) / 1000),
+                estimatedRemainingSeconds: 5
               })}\n\n`))
-              break
+            } else {
+              throw new Error('No scenes generated')
             }
-          }
-          
-          // Safety: Prevent infinite loop (allow up to 100 batches for very large projects)
-          if (batchNumber > 100) {
-            console.error(`[Script Gen V2] Excessive batches (${batchNumber}), stopping generation. This indicates a logic error.`)
-            break
+          } catch (error: any) {
+            retryCount++
+            console.error(`[Script Gen V2] Generation attempt ${retryCount} failed:`, error.message)
+            
+            if (retryCount >= MAX_RETRIES) {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                type: 'error',
+                error: `Script generation failed after ${MAX_RETRIES} attempts: ${error.message}`
+              })}\n\n`))
+              controller.close()
+              return
+            }
+            
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 2000))
           }
         }
     
@@ -543,14 +388,13 @@ export async function POST(request: NextRequest) {
           }
         })
 
-        // Send completion with partial status
-        const isPartial = allScenes.length < actualTotalScenes
+        // Send completion (single-pass is always complete, not partial)
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({
           type: 'complete',
           totalScenes: allScenes.length,
           totalDuration: totalEstimatedDuration,
-          partial: isPartial,
-          expectedScenes: actualTotalScenes,
+          partial: false,
+          expectedScenes: allScenes.length,
           projectId: projectId
         })}\n\n`))
         
@@ -891,6 +735,315 @@ FOCUS ON:
 5. MUST include "characters" array in EVERY scene - list all characters who appear
 
 Complete the script with accurate duration estimates.`
+}
+
+/**
+ * SINGLE-PASS PROMPT: Generates complete script following Film Treatment naturally
+ * Key changes from batch approach:
+ * - NO scene count targets or constraints
+ * - Focus on entertainment value and engagement
+ * - Let story structure drive scene breaks
+ * - Minimum 60s per scene to prevent fragmentation
+ */
+function buildSinglePassPrompt(
+  treatment: any,
+  targetDuration: number,
+  characters: any[],
+  storyBeats: any[],
+  maxSafetyScenes: number,
+  subscriptionMaxScenes: number | null
+): string {
+  // Build character list
+  const characterList = characters.length > 0
+    ? `\n\nCHARACTERS (USE EXACT NAMES):\n${characters.map((c: any) => 
+        `• ${c.name}${c.role ? ` (${c.role})` : ''}: ${c.description || 'No description'}
+        ${c.appearance ? `  Appearance: ${c.appearance}` : ''}
+        ${c.demeanor ? `  Demeanor: ${c.demeanor}` : ''}`
+      ).join('\n')}`
+    : ''
+
+  // Format story beats if available
+  const storyBeatsText = storyBeats.length > 0
+    ? `\n\nSTORY BEATS TO FOLLOW:\n${storyBeats.map((beat: any, idx: number) => 
+        `${idx + 1}. ${typeof beat === 'string' ? beat : beat.description || beat.title || JSON.stringify(beat)}`
+      ).join('\n')}`
+    : ''
+
+  const sceneLimit = subscriptionMaxScenes 
+    ? Math.min(maxSafetyScenes, subscriptionMaxScenes)
+    : maxSafetyScenes
+
+  return `You are a master screenwriter. Write a complete, production-ready script for the following film.
+
+FILM TREATMENT:
+Title: ${treatment.title}
+Logline: ${treatment.logline}
+Genre: ${treatment.genre || 'Drama'}
+Tone: ${treatment.tone || 'Engaging'}
+Target Duration: ~${Math.floor(targetDuration / 60)} minutes (${targetDuration} seconds)
+
+Synopsis:
+${treatment.synopsis || treatment.content}
+${characterList}
+${storyBeatsText}
+
+=== SCRIPT GENERATION PHILOSOPHY ===
+
+Your goal is to write an ENGAGING, ENTERTAINING script optimized for audience connection.
+Do NOT fragment the story into tiny scenes. Each scene should be a COMPLETE dramatic unit.
+
+SCENE STRUCTURE PRINCIPLES:
+• Each scene = ONE complete dramatic beat with beginning, middle, end
+• Natural scene breaks occur at: location changes, time jumps, POV shifts
+• A conversation between characters = ONE scene (not multiple)
+• Minimum 4-8 dialogue exchanges per dialogue-heavy scene
+• Target 60-120 seconds per scene (based on content density)
+
+WHAT TO AVOID:
+❌ Splitting conversations across multiple scenes
+❌ Creating scenes under 45 seconds
+❌ One scene per line of dialogue (this is a script, not a shot list)
+❌ Fragmented "reaction" scenes that belong in the previous scene
+❌ Arbitrary scene breaks that disrupt narrative flow
+
+WHAT TO CREATE:
+✓ Rich, substantive scenes with complete dramatic arcs
+✓ Natural dialogue that sounds like real conversation
+✓ Scenes that advance BOTH plot AND character
+✓ Emotional beats that resonate with the audience
+✓ A cohesive narrative following the story beats
+
+DIALOGUE REQUIREMENTS:
+• Every dialogue line MUST start with emotion tags: [emotion, delivery]
+• Examples: [sadly, slowly], [excited, quickly], [whispering nervously]
+• Use ellipses (...) for pauses, dashes (—) for interruptions
+• Use CAPS for EMPHASIS on specific words
+
+TECHNICAL REQUIREMENTS:
+• Use character names EXACTLY as listed (Title Case)
+• Include "narration" field with captivating voiceover (1-2 sentences)
+• Include "sfx" and "music" for atmosphere
+• Estimate realistic durations based on content
+
+OUTPUT FORMAT (JSON):
+{
+  "scenes": [
+    {
+      "sceneNumber": 1,
+      "heading": "INT. LOCATION - TIME",
+      "characters": ["Character Name 1", "Character Name 2"],
+      "action": "Detailed scene action with atmosphere...\\n\\nSFX: Sound description\\n\\nMusic: Music description",
+      "narration": "Captivating voiceover narration...",
+      "dialogue": [
+        {"character": "Character Name", "line": "[emotion] Dialogue text..."}
+      ],
+      "visualDescription": "Camera and lighting notes",
+      "duration": 75,
+      "sfx": [{"time": 0, "description": "Sound effect"}],
+      "music": {"description": "Background music mood"}
+    }
+  ]
+}
+
+IMPORTANT CONSTRAINTS:
+• Maximum ${sceneLimit} scenes total (consolidate if needed)
+• Each scene MINIMUM 45 seconds
+• Write the COMPLETE story from beginning to end
+• Return ONLY valid JSON - no markdown, no explanations
+
+Now write the complete script, following the Film Treatment's story beats naturally. Focus on entertainment value and audience engagement over hitting any specific scene count.`
+}
+
+/**
+ * Parse single-pass response into scenes array
+ */
+function parseSinglePassResponse(response: string): { scenes: any[] } {
+  let parsedScenes: any[] = []
+  
+  try {
+    const cleaned = sanitizeJsonString(response)
+    const parsed = JSON.parse(cleaned)
+    parsedScenes = parsed.scenes || []
+  } catch (parseError: any) {
+    console.warn('[Parse Single-Pass] Full parse failed, attempting extraction...', parseError.message.substring(0, 100))
+    
+    // Try to extract scenes using brace-counting
+    try {
+      const extractedScenes: any[] = []
+      const sceneStartPattern = /"sceneNumber"\s*:\s*(\d+)/g
+      let match: RegExpExecArray | null
+      
+      while ((match = sceneStartPattern.exec(response)) !== null) {
+        const sceneNumber = parseInt(match[1])
+        const startPos = match.index
+        
+        // Find the opening brace before "sceneNumber"
+        let openBracePos = startPos
+        while (openBracePos > 0 && response[openBracePos] !== '{') {
+          openBracePos--
+        }
+        
+        if (response[openBracePos] !== '{') continue
+        
+        // Count braces to find matching close
+        let braceCount = 0
+        let inString = false
+        let escaped = false
+        let endPos = openBracePos
+        
+        for (let i = openBracePos; i < response.length; i++) {
+          const char = response[i]
+          
+          if (escaped) { escaped = false; continue }
+          if (char === '\\') { escaped = true; continue }
+          if (char === '"') { inString = !inString; continue }
+          
+          if (!inString) {
+            if (char === '{') braceCount++
+            else if (char === '}') {
+              braceCount--
+              if (braceCount === 0) { endPos = i + 1; break }
+            }
+          }
+        }
+        
+        if (braceCount === 0 && endPos > openBracePos) {
+          const sceneText = response.substring(openBracePos, endPos)
+          try {
+            const scene = JSON.parse(sceneText)
+            if (scene.sceneNumber) {
+              extractedScenes.push(scene)
+            }
+          } catch {
+            // Try sanitizing
+            try {
+              const sanitized = sanitizeJsonString(sceneText)
+              const scene = JSON.parse(sanitized)
+              if (scene.sceneNumber) extractedScenes.push(scene)
+            } catch { /* skip */ }
+          }
+        }
+      }
+      
+      if (extractedScenes.length > 0) {
+        parsedScenes = extractedScenes.sort((a, b) => a.sceneNumber - b.sceneNumber)
+        console.log(`[Parse Single-Pass] Recovered ${parsedScenes.length} scenes via extraction`)
+      }
+    } catch (extractError) {
+      console.error('[Parse Single-Pass] Extraction failed:', extractError)
+    }
+  }
+  
+  // Process and normalize scenes
+  return {
+    scenes: parsedScenes.map((s: any, idx: number) => ({
+      sceneNumber: s.sceneNumber || idx + 1,
+      heading: s.heading || `SCENE ${idx + 1}`,
+      characters: s.characters || [],
+      action: s.action || '',
+      narration: s.narration || '',
+      dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
+      visualDescription: s.visualDescription || s.action || '',
+      duration: Math.max(45, s.duration || 60), // Enforce minimum 45s
+      sfx: Array.isArray(s.sfx) ? s.sfx : [],
+      music: s.music || undefined,
+      isExpanded: true
+    }))
+  }
+}
+
+/**
+ * Consolidate fragmented scenes (under 45s) by merging with adjacent scenes
+ */
+function consolidateFragmentedScenes(scenes: any[]): any[] {
+  if (scenes.length <= 1) return scenes
+  
+  const consolidated: any[] = []
+  let currentScene: any = null
+  
+  for (const scene of scenes) {
+    if (!currentScene) {
+      currentScene = { ...scene }
+      continue
+    }
+    
+    // If current scene is too short (<45s), merge with next
+    if (currentScene.duration < 45) {
+      console.log(`[Consolidate] Merging short scene ${currentScene.sceneNumber} (${currentScene.duration}s) with scene ${scene.sceneNumber}`)
+      currentScene = mergeScenes(currentScene, scene)
+    } else {
+      consolidated.push(currentScene)
+      currentScene = { ...scene }
+    }
+  }
+  
+  // Don't forget the last scene
+  if (currentScene) {
+    consolidated.push(currentScene)
+  }
+  
+  // Renumber scenes
+  return consolidated.map((s, idx) => ({
+    ...s,
+    sceneNumber: idx + 1
+  }))
+}
+
+/**
+ * Force consolidation to target count by merging adjacent scenes
+ */
+function consolidateToTargetCount(scenes: any[], targetCount: number): any[] {
+  if (scenes.length <= targetCount) return scenes
+  
+  let result = [...scenes]
+  
+  while (result.length > targetCount) {
+    // Find the shortest scene to merge
+    let shortestIdx = 0
+    let shortestDuration = Infinity
+    
+    for (let i = 0; i < result.length - 1; i++) {
+      if (result[i].duration < shortestDuration) {
+        shortestDuration = result[i].duration
+        shortestIdx = i
+      }
+    }
+    
+    // Merge with next scene
+    const merged = mergeScenes(result[shortestIdx], result[shortestIdx + 1])
+    result = [
+      ...result.slice(0, shortestIdx),
+      merged,
+      ...result.slice(shortestIdx + 2)
+    ]
+    
+    console.log(`[Consolidate] Merged scenes ${shortestIdx + 1} and ${shortestIdx + 2}, now have ${result.length} scenes`)
+  }
+  
+  // Renumber
+  return result.map((s, idx) => ({
+    ...s,
+    sceneNumber: idx + 1
+  }))
+}
+
+/**
+ * Merge two scenes into one
+ */
+function mergeScenes(scene1: any, scene2: any): any {
+  return {
+    sceneNumber: scene1.sceneNumber,
+    heading: scene1.heading, // Keep first scene's heading
+    characters: [...new Set([...(scene1.characters || []), ...(scene2.characters || [])])],
+    action: `${scene1.action}\\n\\n${scene2.action}`.trim(),
+    narration: scene1.narration || scene2.narration, // Keep first non-empty
+    dialogue: [...(scene1.dialogue || []), ...(scene2.dialogue || [])],
+    visualDescription: `${scene1.visualDescription} ${scene2.visualDescription}`.trim(),
+    duration: (scene1.duration || 0) + (scene2.duration || 0),
+    sfx: [...(scene1.sfx || []), ...(scene2.sfx || [])],
+    music: scene1.music || scene2.music,
+    isExpanded: true
+  }
 }
 
 async function callGemini(prompt: string): Promise<string> {
