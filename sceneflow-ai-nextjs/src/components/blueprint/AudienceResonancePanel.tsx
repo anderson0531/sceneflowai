@@ -327,12 +327,20 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
           treatmentId: treatment.id || 'current',
           treatment: {
             title: treatment.label || treatment.title,
-            // NOTE: content field removed - unused by API, reduces payload size
+            logline: treatment.logline || '',
             synopsis: treatment.synopsis,
             visual_style: treatment.visual_style,
             tone_description: treatment.tone_description || treatment.tone,
             target_audience: treatment.target_audience,
-            genre: treatment.genre
+            genre: treatment.genre,
+            // Include structured narrative data for consistent AI analysis
+            protagonist: treatment.protagonist || '',
+            antagonist: treatment.antagonist || '',
+            setting: treatment.setting || '',
+            themes: treatment.themes || [],
+            beats: treatment.beats || [],
+            character_descriptions: treatment.character_descriptions || [],
+            act_breakdown: treatment.act_breakdown || {}
           },
           intent,
           quickAnalysis: quickMode,
@@ -712,12 +720,13 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
             </button>
           )}
           
-          {/* Max Iterations Reached Notice */}
-          {iterationCount >= MAX_ITERATIONS && !isReadyForProduction && (
+          {/* Start Production Anyway - show when analysis complete but score below threshold */}
+          {analysis && !isReadyForProduction && (
             <div className="mt-3 p-2 bg-amber-500/10 rounded-lg border border-amber-500/20">
               <p className="text-xs text-amber-400">
-                Maximum refinements reached. Consider starting production - 
-                detailed improvements can be made during the scripting phase.
+                {iterationCount >= MAX_ITERATIONS 
+                  ? 'Maximum refinements reached. Consider starting production - detailed improvements can be made during the scripting phase.'
+                  : 'Score below threshold. You can continue refining or start production - detailed improvements can be made during the scripting phase.'}
               </p>
               <button
                 onClick={onProceedToScripting}
