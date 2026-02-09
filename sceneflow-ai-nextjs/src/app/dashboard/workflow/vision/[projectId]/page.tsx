@@ -154,6 +154,7 @@ interface Scene {
     recommendations: string[]
     appliedRecommendationIds?: string[]
     analyzedAt: string
+    optimizedAt?: string  // Track when scene was last optimized for sync CTA
     previousScore?: number
   }
   [key: string]: any
@@ -4367,13 +4368,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const data = await response.json()
       
       if (data.script?.scenes) {
-        // Update script with optimized scene
+        // Update script with optimized scene and set optimizedAt timestamp
+        const optimizedScene = {
+          ...data.script.scenes[0],
+          audienceAnalysis: {
+            ...script.script.scenes[sceneIndex]?.audienceAnalysis,
+            optimizedAt: new Date().toISOString()  // Track optimization time for sync CTA
+          }
+        }
         const updatedScript = {
           ...script,
           script: {
             ...script.script,
             scenes: script.script.scenes.map((s: any, idx: number) =>
-              idx === sceneIndex ? data.script.scenes[0] : s
+              idx === sceneIndex ? optimizedScene : s
             )
           }
         }

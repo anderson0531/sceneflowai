@@ -43,7 +43,7 @@ interface AnalyzeScenesRequest {
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, script }: AnalyzeScenesRequest = await req.json()
+    const { projectId, script, audienceReview }: AnalyzeScenesRequest = await req.json()
 
     if (!projectId || !script?.scenes?.length) {
       return NextResponse.json(
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     const sceneCount = script.scenes.length
     console.log(`[Scene Analysis] Analyzing ${sceneCount} scenes for project: ${projectId}`)
 
-    const sceneAnalysis = await generateSceneAnalysis(script, body.audienceReview)
+    const sceneAnalysis = await generateSceneAnalysis(script, audienceReview)
 
     console.log(`[Scene Analysis] Generated analysis for ${sceneAnalysis.length} scenes`)
 

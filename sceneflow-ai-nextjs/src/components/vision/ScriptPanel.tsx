@@ -4255,72 +4255,7 @@ function SceneCard({
                       </Tooltip>
                     </TooltipProvider>
                     
-                    {/* Optimize Scene Button - Only show if score < 80 or has recommendations */}
-                    {(scene.audienceAnalysis.score < 80 || (scene.audienceAnalysis.recommendations?.length || 0) > 0) && onOptimizeScene && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                const heading = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text || `Scene ${sceneNumber}`
-                                setOptimizeDialogScene({
-                                  sceneIndex: sceneIdx,
-                                  sceneNumber,
-                                  sceneHeading: heading,
-                                  audienceAnalysis: scene.audienceAnalysis
-                                })
-                                setOptimizeDialogOpen(true)
-                              }}
-                              disabled={optimizingSceneIndex === sceneIdx}
-                              className="flex items-center gap-1 text-xs px-2 py-1 rounded-md font-medium border transition-all bg-purple-500/20 text-purple-300 border-purple-500/40 hover:bg-purple-500/30 disabled:opacity-50"
-                            >
-                              {optimizingSceneIndex === sceneIdx ? (
-                                <>
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                  <span>Optimizing...</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Sparkles className="w-3 h-3" />
-                                  <span>Optimize</span>
-                                </>
-                              )}
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-gray-900 text-white border border-gray-700">
-                            <p className="text-xs">Optimize scene based on analysis</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
-                    
-                    {/* Re-analyze button */}
-                    {onAnalyzeScene && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onAnalyzeScene(sceneIdx)
-                              }}
-                              disabled={analyzingSceneIndex === sceneIdx}
-                              className="p-1 rounded-md bg-gray-500/20 text-gray-400 border border-gray-500/40 hover:bg-gray-500/30 disabled:opacity-50 transition"
-                            >
-                              {analyzingSceneIndex === sceneIdx ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : (
-                                <RefreshCw className="w-3 h-3" />
-                              )}
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-gray-900 text-white border border-gray-700">
-                            <p className="text-xs">Re-analyze scene</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
+                    {/* Optimize and Re-analyze buttons moved to expandable recommendations panel for cleaner header */}
                   </>
                 ) : (
                   /* No analysis yet - show Analyze button */
@@ -4501,6 +4436,33 @@ function SceneCard({
                   </p>
                 )}
                 
+                {/* Sync CTA - Show when scene was optimized after last analysis */}
+                {scene.audienceAnalysis.optimizedAt && 
+                 scene.audienceAnalysis.analyzedAt &&
+                 new Date(scene.audienceAnalysis.optimizedAt) > new Date(scene.audienceAnalysis.analyzedAt) && (
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5 mb-3 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                    <span className="text-xs text-amber-200 flex-1">Scene optimized since last analysis - score may have changed</span>
+                    {onAnalyzeScene && (
+                      <Button
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onAnalyzeScene(sceneIdx)
+                        }}
+                        disabled={analyzingSceneIndex === sceneIdx}
+                        className="h-6 text-xs bg-amber-600 hover:bg-amber-500 text-white"
+                      >
+                        {analyzingSceneIndex === sceneIdx ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          'Re-analyze'
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                )}
+                
                 {/* Recommendations */}
                 {(scene.audienceAnalysis.recommendations?.length || 0) > 0 && (
                   <div className="space-y-2">
@@ -4546,7 +4508,7 @@ function SceneCard({
                       ) : (
                         <>
                           <Sparkles className="w-3 h-3 mr-1" />
-                          Optimize Scene
+                          Optimize
                         </>
                       )}
                     </Button>
@@ -4560,7 +4522,7 @@ function SceneCard({
                         onAnalyzeScene(sceneIdx)
                       }}
                       disabled={analyzingSceneIndex === sceneIdx}
-                      className="h-7 text-xs border-gray-600 text-gray-300 hover:bg-gray-700"
+                      className="h-7 text-xs border-blue-500/50 text-blue-300 hover:bg-blue-500/20 hover:border-blue-400"
                     >
                       {analyzingSceneIndex === sceneIdx ? (
                         <>
@@ -4570,7 +4532,7 @@ function SceneCard({
                       ) : (
                         <>
                           <RefreshCw className="w-3 h-3 mr-1" />
-                          Re-analyze
+                          Analyze
                         </>
                       )}
                     </Button>
