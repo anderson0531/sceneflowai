@@ -154,10 +154,65 @@ export async function POST(request: NextRequest) {
               scenesGenerated: 0,
               totalScenes: beatCount,
               elapsedSeconds: Math.floor((Date.now() - generationStartTime) / 1000),
-              estimatedRemainingSeconds: 45
+              estimatedRemainingSeconds: 45,
+              progress: 10  // Starting progress
             })}\n\n`))
             
-            let response = await callGemini(singlePassPrompt)
+            // Start a progress ticker to show activity during Gemini call
+            const estimatedDuration = 45 // seconds
+            let progressInterval: NodeJS.Timeout | null = null
+            const progressStatuses = [
+              'Analyzing narrative structure...',
+              'Developing character arcs...',
+              'Writing dialogue exchanges...',
+              'Crafting scene transitions...',
+              'Building dramatic tension...',
+              'Polishing narrative flow...',
+              'Finalizing script details...'
+            ]
+            let statusIndex = 0
+            
+            progressInterval = setInterval(() => {
+              const elapsed = Math.floor((Date.now() - generationStartTime) / 1000)
+              const estimatedProgress = Math.min(85, Math.floor((elapsed / estimatedDuration) * 100))
+              const remaining = Math.max(5, estimatedDuration - elapsed)
+              
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                type: 'progress',
+                status: progressStatuses[statusIndex % progressStatuses.length],
+                batch: 1,
+                scenesGenerated: 0,
+                totalScenes: beatCount,
+                elapsedSeconds: elapsed,
+                estimatedRemainingSeconds: remaining,
+                progress: estimatedProgress
+              })}\n\n`))
+              
+              statusIndex++
+            }, 5000) // Update every 5 seconds
+            
+            let response: string
+            try {
+              response = await callGemini(singlePassPrompt)
+            } finally {
+              // Always clear the interval
+              if (progressInterval) {
+                clearInterval(progressInterval)
+              }
+            }
+            
+            // Send parsing progress
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'progress',
+              status: 'Parsing generated script...',
+              batch: 1,
+              scenesGenerated: 0,
+              totalScenes: beatCount,
+              elapsedSeconds: Math.floor((Date.now() - generationStartTime) / 1000),
+              estimatedRemainingSeconds: 5,
+              progress: 90
+            })}\n\n`))
+            
             let parsedData = parseSinglePassResponse(response)
             
             // Release memory immediately
@@ -191,7 +246,8 @@ export async function POST(request: NextRequest) {
                 scenesGenerated: allScenes.length,
                 totalScenes: allScenes.length,
                 elapsedSeconds: Math.floor((Date.now() - generationStartTime) / 1000),
-                estimatedRemainingSeconds: 5
+                estimatedRemainingSeconds: 3,
+                progress: 95  // Almost done, just processing characters
               })}\n\n`))
             } else {
               throw new Error('No scenes generated')
