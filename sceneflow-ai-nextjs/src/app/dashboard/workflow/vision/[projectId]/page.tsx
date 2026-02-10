@@ -4076,8 +4076,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const currentScriptHash = generateScriptHash(script)
         const previousScriptHash = project?.metadata?.visionPhase?.reviews?.scriptHash
         
-        // Build previous scores for hysteresis smoothing
+        // CLIENT-SIDE CACHING: If script unchanged and we have previous analysis, skip API call entirely
+        // This eliminates score variance and saves API costs
+        const scriptUnchanged = currentScriptHash && previousScriptHash && currentScriptHash === previousScriptHash
         const currentAudienceReview = audienceReview
+        
+        if (scriptUnchanged && currentAudienceReview?.overallScore) {
+          console.log('[Script Review] Script unchanged (client-side check) — using cached analysis, score:', currentAudienceReview.overallScore)
+          // Clear score outdated flag since we're confirming the score is still valid
+          setScoreOutdated(false)
+          toast.info('Script unchanged — showing previous analysis', {
+            description: `Score: ${currentAudienceReview.overallScore}`,
+            duration: 3000
+          })
+          return 'Script unchanged - using cached analysis'
+        }
+        
+        console.log('[Script Review] Hash comparison:', {
+          currentHash: currentScriptHash?.substring(0, 8),
+          previousHash: previousScriptHash?.substring(0, 8),
+          unchanged: scriptUnchanged,
+          hasPreviousAnalysis: !!currentAudienceReview
+        })
+        
+        // Build previous scores for hysteresis smoothing
         const previousScoresPayload = currentAudienceReview?.overallScore ? {
           overallScore: currentAudienceReview.overallScore,
           categories: currentAudienceReview.categories || []
@@ -4140,6 +4162,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             setAudienceReview(audienceData)
             // Clear score outdated flag since we're showing a valid cached score
             setScoreOutdated(false)
+            toast.info('Script unchanged — returning cached analysis', {
+              description: `Score: ${audienceData?.overallScore}`,
+              duration: 3000
+            })
             return 'Script unchanged - showing previous analysis'
           }
           

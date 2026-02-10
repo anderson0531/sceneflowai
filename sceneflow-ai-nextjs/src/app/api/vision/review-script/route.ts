@@ -119,6 +119,15 @@ export async function POST(req: NextRequest) {
     // Detect if script has changed since last analysis
     const scriptUnchanged = scriptHash && previousScriptHash && scriptHash === previousScriptHash
     
+    // Log hash comparison for debugging
+    console.log('[Script Review] Hash comparison:', {
+      currentHash: scriptHash?.substring(0, 8) || 'none',
+      previousHash: previousScriptHash?.substring(0, 8) || 'none',
+      unchanged: scriptUnchanged,
+      hasPreviousAnalysis: !!previousAnalysis,
+      previousScore: previousAnalysis?.overallScore
+    })
+    
     // =========================================================================
     // CACHING: Return cached analysis when script is unchanged
     // This eliminates score variance entirely for repeated analysis of same script.
