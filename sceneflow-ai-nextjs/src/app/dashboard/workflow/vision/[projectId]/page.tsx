@@ -4232,6 +4232,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             const saveData = await saveResponse.json()
             console.log('[Script Review] Reviews saved successfully to database')
             
+            // CRITICAL: Update project state with the new reviews
+            // This prevents race conditions where other components save stale project state
+            setProject(prev => {
+              if (!prev) return prev
+              return {
+                ...prev,
+                metadata: updatedMetadata
+              }
+            })
+            
             // Update local state only after successful save
             // Director review is deprecated - user is the director
             setDirectorReview(null)
@@ -4241,8 +4251,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             console.log('[Script Review] State updated with Audience Resonance:', {
               audienceScore: (data.audienceResonance || data.audience)?.overallScore
             })
-            
-            // No need to reload project - reviews are already in state and saved to DB
           } else {
             // If no project in state, still update local state
             setDirectorReview(null)
