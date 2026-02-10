@@ -311,6 +311,124 @@ export async function PUT(
   }
 }
 
+// PATCH handler for atomic audio updates
+// This prevents stale client state from overwriting server-saved audio
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const body = await request.json()
+    
+    // Validate UUID format
+    if (!id || !UUID_REGEX.test(id)) {
+      return NextResponse.json(
+        { error: 'Invalid project ID format' },
+        { status: 400 }
+      )
+    }
+    
+    await sequelize.authenticate()
+    
+    const project = await Project.findByPk(id)
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    }
+    
+    // Handle atomic audio update
+    if (body.atomicAudioUpdate) {
+      const { sceneIndex, audioType, audioUrl, sfxIndex } = body.atomicAudioUpdate
+      
+      console.log('[Projects PATCH] Atomic audio update:', {
+        projectId: id,
+        sceneIndex,
+        audioType,
+        audioUrl: audioUrl?.substring(0, 60) + '...',
+        sfxIndex
+      })
+      
+      // Get fresh metadata from database
+      const metadata = project.metadata || {}
+      
+      // Find scenes - check both possible locations
+      let scenes = metadata?.visionPhase?.script?.script?.scenes
+      let scenePath = 'nested' // script.script.scenes
+      
+      if (!scenes || !Array.isArray(scenes)) {
+        scenes = metadata?.visionPhase?.script?.scenes
+        scenePath = 'flat' // script.scenes
+      }
+      
+      if (!scenes || !Array.isArray(scenes) || sceneIndex >= scenes.length) {
+        return NextResponse.json({ 
+          error: 'Invalid scene index or scenes not found' 
+        }, { status: 400 })
+      }
+      
+      // Update the specific audio field atomically
+      const scene = scenes[sceneIndex]
+      
+      if (audioType === 'music') {
+        scene.musicAudio = audioUrl
+        console.log(`[Projects PATCH] Updated musicAudio for scene ${sceneIndex}`)
+      } else if (audioType === 'sfx' && sfxIndex !== undefined) {
+        // Ensure sfxAudio array exists
+        if (!scene.sfxAudio) {
+          scene.sfxAudio = []
+        }
+        scene.sfxAudio[sfxIndex] = audioUrl
+        
+        // Also update the sfx item if it exists
+        if (scene.sfx && scene.sfx[sfxIndex]) {
+          if (typeof scene.sfx[sfxIndex] === 'string') {
+            scene.sfx[sfxIndex] = {
+              description: scene.sfx[sfxIndex],
+              audioUrl
+            }
+          } else {
+            scene.sfx[sfxIndex].audioUrl = audioUrl
+          }
+        }
+        console.log(`[Projects PATCH] Updated sfxAudio[${sfxIndex}] for scene ${sceneIndex}`)
+      }
+      
+      // Update the scenes back to the correct location
+      if (scenePath === 'nested') {
+        metadata.visionPhase.script.script.scenes = scenes
+      } else {
+        metadata.visionPhase.script.scenes = scenes
+      }
+      
+      // Save atomically
+      project.set('metadata', metadata)
+      project.changed('metadata', true)
+      await project.save()
+      
+      console.log('[Projects PATCH] Atomic audio update saved successfully')
+      
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Audio updated atomically',
+        sceneIndex,
+        audioType,
+        sfxIndex
+      })
+    }
+    
+    return NextResponse.json({ 
+      error: 'No valid operation specified. Use atomicAudioUpdate.' 
+    }, { status: 400 })
+    
+  } catch (error: any) {
+    console.error('[Projects PATCH] Error:', error)
+    return NextResponse.json({ 
+      error: 'Failed to update project',
+      details: process.env.NODE_ENV === 'development' ? error?.message : undefined
+    }, { status: 500 })
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

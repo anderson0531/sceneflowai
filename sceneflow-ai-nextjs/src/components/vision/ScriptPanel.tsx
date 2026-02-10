@@ -1935,50 +1935,61 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   }
 
   const saveSceneAudio = async (sceneIdx: number, audioType: 'sfx' | 'music', audioUrl: string, sfxIdx?: number) => {
-    const updatedScenes = [...scenes]
+    // CRITICAL FIX: Use atomic server update instead of stale client state
+    // The old approach used local `scenes` state which was stale and overwrote server-saved dialogue audio
     
-    if (audioType === 'sfx' && sfxIdx !== undefined) {
-      // Ensure sfx array exists
-      if (!updatedScenes[sceneIdx].sfx) updatedScenes[sceneIdx].sfx = []
-      
-      // Update sfx item with audioUrl
-      if (typeof updatedScenes[sceneIdx].sfx[sfxIdx] === 'string') {
-        updatedScenes[sceneIdx].sfx[sfxIdx] = {
-          description: updatedScenes[sceneIdx].sfx[sfxIdx],
-          audioUrl
-        }
-      } else {
-        updatedScenes[sceneIdx].sfx[sfxIdx] = {
-          ...updatedScenes[sceneIdx].sfx[sfxIdx],
-          audioUrl
-        }
-      }
-      
-      // ALSO set sfxAudio array for UI display (parallel structure to dialogueAudio)
-      if (!updatedScenes[sceneIdx].sfxAudio) {
-        updatedScenes[sceneIdx].sfxAudio = []
-      }
-      updatedScenes[sceneIdx].sfxAudio[sfxIdx] = audioUrl
-    } else if (audioType === 'music') {
-      // Set musicAudio property (not music.audioUrl)
-      updatedScenes[sceneIdx].musicAudio = audioUrl
-    }
-
-    // Update local state - onScriptChange will also persist to database
-    const updatedScript = {
-      ...script,
-      script: {
-        ...script.script,
-        scenes: updatedScenes
-      }
-    }
-    onScriptChange(updatedScript)
-    
-    console.log('[Save Audio] State updated with new audio URL:', {
+    console.log('[Save Audio] Using atomic server update:', {
       sceneIdx,
       audioType,
-      audioUrl: audioUrl.substring(0, 60) + '...'
+      audioUrl: audioUrl.substring(0, 60) + '...',
+      sfxIdx,
+      projectId
     })
+    
+    try {
+      // Make atomic update to database via PATCH endpoint
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          atomicAudioUpdate: {
+            sceneIndex: sceneIdx,
+            audioType,
+            audioUrl,
+            sfxIndex: sfxIdx
+          }
+        })
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to save audio atomically')
+      }
+      
+      console.log('[Save Audio] Atomic update successful, now fetching fresh state from server')
+      
+      // Fetch fresh project data from server to get updated scenes with all audio
+      const projectResponse = await fetch(`/api/projects/${projectId}`)
+      if (projectResponse.ok) {
+        const projectData = await projectResponse.json()
+        const freshScript = projectData.project?.metadata?.visionPhase?.script
+        
+        if (freshScript) {
+          console.log('[Save Audio] Got fresh script from server, updating local state')
+          // Update parent state with fresh data from server (includes all saved audio)
+          onScriptChange(freshScript)
+        }
+      }
+      
+      console.log('[Save Audio] State synced with server:', {
+        sceneIdx,
+        audioType,
+        audioUrl: audioUrl.substring(0, 60) + '...'
+      })
+    } catch (error: any) {
+      console.error('[Save Audio] Atomic update failed:', error)
+      toast.error(`Failed to save audio: ${error.message}`)
+    }
   }
 
   const playAllScenes = async () => {
