@@ -130,15 +130,22 @@ export async function POST(req: NextRequest) {
       const cleanedScenes = scenes.map((scene: any) => {
         const cleanedScene = { ...scene }
         
-        // Clear narration audio
+        // Clear narration audio (multi-language object structure)
         delete cleanedScene.narrationAudio
         delete cleanedScene.narrationAudioUrl
+        delete cleanedScene.narrationAudioGeneratedAt
         
-        // Clear description audio
+        // Clear description audio (multi-language object structure)
         delete cleanedScene.descriptionAudio
         delete cleanedScene.descriptionAudioUrl
+        delete cleanedScene.descriptionAudioGeneratedAt
         
-        // Clear dialogue audio from each dialogue line
+        // Clear dialogue audio - CRITICAL: Must clear dialogueAudio object (where updateSceneAudio saves)
+        // NOT just scene.dialogue[].audioUrl (which is legacy/unused)
+        delete cleanedScene.dialogueAudio
+        delete cleanedScene.dialogueAudioGeneratedAt
+        
+        // Also clear any legacy dialogue audioUrl fields for completeness
         if (cleanedScene.dialogue && Array.isArray(cleanedScene.dialogue)) {
           cleanedScene.dialogue = cleanedScene.dialogue.map((d: any) => {
             const cleanedDialogue = { ...d }
