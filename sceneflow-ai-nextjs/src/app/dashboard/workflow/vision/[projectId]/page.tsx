@@ -1823,6 +1823,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       negativePrompt?: string
       usePreviousEndFrame?: boolean
       previousEndFrameUrl?: string
+      /** Selected characters with reference images for identity lock */
+      selectedCharacters?: Array<{
+        name: string
+        referenceImageUrl?: string
+      }>
+      /** Visual setup options (from guided mode) */
+      visualSetup?: {
+        location: string
+        timeOfDay: string
+        weather: string
+        atmosphere: string
+        shotType: string
+        cameraAngle: string
+        lighting: string
+      }
     }) => {
       const scene = script?.script?.scenes?.find((s: any) => 
         (s.id || s.sceneId || `scene-${script?.script?.scenes?.indexOf(s)}`) === sceneId
@@ -1879,23 +1894,40 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             customPrompt: options?.customPrompt,
             negativePrompt: options?.negativePrompt,
             usePreviousEndFrame: options?.usePreviousEndFrame,
+            // NEW: Visual setup for prompt construction (from guided mode)
+            visualSetup: options?.visualSetup,
             // Enhanced character data with all fields for identity lock
-            // Priority: protagonist > main > supporting (sorted before API handles slicing)
-            characters: [...characters]
-              .filter(c => c.type === 'character' || !c.type) // Exclude narrator/description
-              .sort((a, b) => {
-                const roleOrder: Record<string, number> = { protagonist: 0, main: 1, supporting: 2 }
-                return (roleOrder[a.role || 'supporting'] || 2) - (roleOrder[b.role || 'supporting'] || 2)
-              })
-              .map(c => ({
-                name: c.name,
-                appearance: c.appearanceDescription || c.description,
-                referenceUrl: c.referenceImage,
-                // Additional fields for enhanced identity lock
-                ethnicity: (c as any).ethnicity,
-                age: (c as any).age,
-                wardrobe: (c as any).defaultWardrobe || (c as any).wardrobe,
-              })),
+            // When user has explicitly selected characters in the dialog, prioritize those
+            // Otherwise, use priority: protagonist > main > supporting (sorted before API handles slicing)
+            characters: options?.selectedCharacters?.length 
+              // User selected specific characters - map to full character data with priority
+              ? options.selectedCharacters.map(selected => {
+                  const fullChar = characters.find(c => c.name === selected.name)
+                  return {
+                    name: selected.name,
+                    appearance: fullChar?.appearanceDescription || fullChar?.description,
+                    referenceUrl: selected.referenceImageUrl || fullChar?.referenceImage,
+                    ethnicity: (fullChar as any)?.ethnicity,
+                    age: (fullChar as any)?.age,
+                    wardrobe: (fullChar as any)?.defaultWardrobe || (fullChar as any)?.wardrobe,
+                  }
+                })
+              // No user selection - fall back to all characters sorted by role
+              : [...characters]
+                .filter(c => c.type === 'character' || !c.type) // Exclude narrator/description
+                .sort((a, b) => {
+                  const roleOrder: Record<string, number> = { protagonist: 0, main: 1, supporting: 2 }
+                  return (roleOrder[a.role || 'supporting'] || 2) - (roleOrder[b.role || 'supporting'] || 2)
+                })
+                .map(c => ({
+                  name: c.name,
+                  appearance: c.appearanceDescription || c.description,
+                  referenceUrl: c.referenceImage,
+                  // Additional fields for enhanced identity lock
+                  ethnicity: (c as any).ethnicity,
+                  age: (c as any).age,
+                  wardrobe: (c as any).defaultWardrobe || (c as any).wardrobe,
+                })),
             sceneContext: {
               heading: typeof scene?.heading === 'string' ? scene.heading : scene?.heading?.text,
               location: typeof scene?.heading === 'string' ? scene.heading : scene?.heading?.text,

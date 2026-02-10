@@ -43,6 +43,21 @@ export interface SegmentFrameTimelineProps {
     negativePrompt?: string
     usePreviousEndFrame?: boolean
     previousEndFrameUrl?: string
+    /** Selected characters with reference images for identity lock */
+    selectedCharacters?: Array<{
+      name: string
+      referenceImageUrl?: string
+    }>
+    /** Visual setup options (from guided mode) */
+    visualSetup?: {
+      location: string
+      timeOfDay: string
+      weather: string
+      atmosphere: string
+      shotType: string
+      cameraAngle: string
+      lighting: string
+    }
   }) => Promise<void>
   onGenerateAllFrames: () => Promise<void>
   onGenerateVideo: (segmentId: string) => void
@@ -169,6 +184,13 @@ export function SegmentFrameTimeline({
       negativePrompt: options.negativePrompt,
       usePreviousEndFrame: options.usePreviousEndFrame,
       previousEndFrameUrl: options.previousEndFrameUrl || undefined,
+      // NEW: Pass selected characters with reference images for identity lock
+      selectedCharacters: options.selectedCharacters?.map(c => ({
+        name: c.name,
+        referenceImageUrl: c.referenceImageUrl,
+      })),
+      // NEW: Pass visual setup for prompt construction
+      visualSetup: options.visualSetup,
     })
   }, [onGenerateFrames])
 
@@ -360,6 +382,8 @@ export function SegmentFrameTimeline({
         characters={characters?.map(c => ({
           name: c.name,
           appearance: c.appearance,
+          // NEW: Pass reference image for character selection UI
+          referenceImage: c.referenceUrl,
         }))}
       />
     </div>

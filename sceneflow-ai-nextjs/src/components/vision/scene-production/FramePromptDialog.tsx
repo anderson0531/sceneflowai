@@ -37,8 +37,9 @@ import {
   Sparkles,
   CheckCircle2,
   Copy,
+  Info,
 } from 'lucide-react'
-import type { SceneSegment, TransitionType } from './types'
+import type { SceneSegment, TransitionType, CharacterReference } from './types'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
 import { useSceneDirectionOptional } from '@/contexts/SceneDirectionContext'
 import { 
@@ -46,6 +47,8 @@ import {
   validateDirectionAdherence,
   type KeyframeContext 
 } from '@/lib/intelligence/keyframe-prompt-builder'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { prioritizeCharacterReferences } from './types'
 
 // ============================================================================
 // Types
@@ -63,14 +66,17 @@ export interface FramePromptDialogProps {
   isGenerating?: boolean
   /** Scene direction for intelligent prompt building */
   sceneDirection?: DetailedSceneDirection | null
-  /** Characters for identity context */
+  /** Characters for identity context - ENHANCED: now includes referenceImage */
   characters?: Array<{
     name: string
+    referenceImage?: string
     appearance?: string
     ethnicity?: string
     age?: string
     wardrobe?: string
   }>
+  /** Scene heading for location parsing */
+  sceneHeading?: string
 }
 
 export interface FrameGenerationOptions {
@@ -80,6 +86,18 @@ export interface FrameGenerationOptions {
   negativePrompt: string
   usePreviousEndFrame: boolean
   previousEndFrameUrl?: string | null
+  /** NEW: Selected characters with reference images for generation */
+  selectedCharacters?: CharacterReference[]
+  /** NEW: Visual setup data */
+  visualSetup?: {
+    location: string
+    timeOfDay: string
+    weather: string
+    atmosphere: string
+    shotType: string
+    cameraAngle: string
+    lighting: string
+  }
 }
 
 // ============================================================================
@@ -137,10 +155,28 @@ export function FramePromptDialog({
   isGenerating = false,
   sceneDirection: propSceneDirection,
   characters = [],
+  sceneHeading,
 }: FramePromptDialogProps) {
   // Try to get scene direction from context if not passed as prop
   const contextDirection = useSceneDirectionOptional()
   const sceneDirection = propSceneDirection || contextDirection?.direction || null
+  
+  // Mode: Visual Setup (guided) or Custom Prompt (advanced)
+  const [mode, setMode] = useState<'guided' | 'advanced'>('guided')
+  
+  // Visual Setup state
+  const [visualSetup, setVisualSetup] = useState({
+    location: '',
+    timeOfDay: 'day',
+    weather: 'clear',
+    atmosphere: 'neutral',
+    shotType: 'medium-close-up',
+    cameraAngle: 'eye-level',
+    lighting: 'natural',
+  })
+  
+  // Character selection state
+  const [selectedCharacterNames, setSelectedCharacterNames] = useState<string[]>([])
   
   // State
   const [customPrompt, setCustomPrompt] = useState('')
@@ -153,6 +189,23 @@ export function FramePromptDialog({
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [showDirectionPanel, setShowDirectionPanel] = useState(false)
   const [useIntelligentPrompt, setUseIntelligentPrompt] = useState(true)
+  
+  // Get selected characters with their reference images
+  const selectedCharacters = useMemo(() => {
+    return characters
+      .filter(c => selectedCharacterNames.includes(c.name))
+      .map(c => ({
+        name: c.name,
+        referenceImageUrl: c.referenceImage,
+        appearance: c.appearance,
+        ethnicity: c.ethnicity,
+        age: c.age,
+        wardrobe: c.wardrobe,
+      }))
+  }, [characters, selectedCharacterNames])
+  
+  // Check if any selected characters have reference images
+  const hasCharacterReferences = selectedCharacters.some(c => c.referenceImageUrl)
 
   // Initialize prompt from segment when dialog opens
   useEffect(() => {
@@ -182,8 +235,91 @@ export function FramePromptDialog({
       } else {
         setUsePreviousEndFrame(false)
       }
+      
+      // Initialize visual setup from scene direction
+      if (sceneDirection) {
+        const setup = { ...visualSetup }
+        
+        // Location from scene direction
+        if (sceneDirection.scene?.location) {
+          setup.location = sceneDirection.scene.location
+        } else if (sceneHeading) {
+          // Parse from heading: "INT./EXT. LOCATION - TIME"
+          const match = sceneHeading.match(/(INT|EXT)\.\s+(.+?)\s+-\s+(.+)/i)
+          if (match) setup.location = match[2].trim()
+        }
+        
+        // Time of day
+        if (sceneDirection.lighting?.timeOfDay) {
+          const tod = sceneDirection.lighting.timeOfDay.toLowerCase()
+          if (tod.includes('night')) setup.timeOfDay = 'night'
+          else if (tod.includes('golden') || tod.includes('sunset')) setup.timeOfDay = 'golden-hour'
+          else if (tod.includes('dawn') || tod.includes('morning')) setup.timeOfDay = 'dawn'
+          else if (tod.includes('dusk')) setup.timeOfDay = 'dusk'
+          else setup.timeOfDay = 'day'
+        }
+        
+        // Atmosphere
+        if (sceneDirection.scene?.atmosphere) {
+          const atmo = sceneDirection.scene.atmosphere.toLowerCase()
+          if (atmo.includes('tense')) setup.atmosphere = 'tense'
+          else if (atmo.includes('energetic')) setup.atmosphere = 'energetic'
+          else if (atmo.includes('serene')) setup.atmosphere = 'serene'
+          else if (atmo.includes('melancholic')) setup.atmosphere = 'melancholic'
+          else if (atmo.includes('hopeful')) setup.atmosphere = 'hopeful'
+          else if (atmo.includes('mysterious')) setup.atmosphere = 'mysterious'
+        }
+        
+        // Shot type from segment or scene direction
+        if (segment.shotType) {
+          setup.shotType = segment.shotType
+        } else if (sceneDirection.camera?.shots?.[0]) {
+          const shot = sceneDirection.camera.shots[0].toLowerCase()
+          if (shot.includes('extreme close')) setup.shotType = 'extreme-close-up'
+          else if (shot.includes('close-up') || shot.includes('close up')) setup.shotType = 'close-up'
+          else if (shot.includes('medium close')) setup.shotType = 'medium-close-up'
+          else if (shot.includes('medium')) setup.shotType = 'medium-shot'
+          else if (shot.includes('wide')) setup.shotType = 'wide-shot'
+        }
+        
+        // Camera angle
+        if (sceneDirection.camera?.angle) {
+          const angle = sceneDirection.camera.angle.toLowerCase()
+          if (angle.includes('low')) setup.cameraAngle = 'low-angle'
+          else if (angle.includes('high')) setup.cameraAngle = 'high-angle'
+          else if (angle.includes('dutch')) setup.cameraAngle = 'dutch-angle'
+          else setup.cameraAngle = 'eye-level'
+        }
+        
+        // Lighting
+        if (sceneDirection.lighting?.overallMood) {
+          const mood = sceneDirection.lighting.overallMood.toLowerCase()
+          if (mood.includes('dramatic') || mood.includes('noir')) setup.lighting = 'dramatic'
+          else if (mood.includes('soft') || mood.includes('high-key')) setup.lighting = 'soft'
+          else if (mood.includes('harsh')) setup.lighting = 'harsh'
+          else setup.lighting = 'natural'
+        }
+        
+        setVisualSetup(setup)
+      }
+      
+      // Auto-detect characters from segment action text
+      if (characters.length > 0) {
+        const segmentText = (segment.action || segment.subject || segment.actionPrompt || '').toLowerCase()
+        const detectedNames = characters
+          .filter(c => segmentText.includes(c.name.toLowerCase()))
+          .map(c => c.name)
+        
+        if (detectedNames.length > 0) {
+          setSelectedCharacterNames(detectedNames)
+        } else {
+          // Default: select all characters with reference images
+          const withRefs = characters.filter(c => c.referenceImage).map(c => c.name)
+          setSelectedCharacterNames(withRefs.slice(0, 3)) // Max 3 for image generation
+        }
+      }
     }
-  }, [segment, open, previousEndFrameUrl, frameType])
+  }, [segment, open, previousEndFrameUrl, frameType, sceneDirection, sceneHeading, characters])
 
   // Build intelligent prompt using keyframe prompt builder
   // If pasted prompts exist (startFramePrompt/endFramePrompt), return those directly
@@ -283,10 +419,14 @@ export function FramePromptDialog({
       negativePrompt: buildNegativePrompt(),
       usePreviousEndFrame,
       previousEndFrameUrl: usePreviousEndFrame ? previousEndFrameUrl : undefined,
+      // NEW: Pass selected characters with reference images
+      selectedCharacters: selectedCharacters.length > 0 ? selectedCharacters : undefined,
+      // NEW: Pass visual setup for prompt construction
+      visualSetup: mode === 'guided' ? visualSetup : undefined,
     }
 
     onGenerate(options)
-  }, [segment, frameType, customPrompt, buildNegativePrompt, usePreviousEndFrame, previousEndFrameUrl, onGenerate])
+  }, [segment, frameType, customPrompt, buildNegativePrompt, usePreviousEndFrame, previousEndFrameUrl, onGenerate, selectedCharacters, mode, visualSetup])
 
   if (!segment) return null
 
@@ -315,295 +455,586 @@ export function FramePromptDialog({
               {frameType === 'both' ? 'Start + End' : `${frameType} Frame`}
             </Badge>
           </DialogTitle>
-          <DialogDescription>
-            Customize the generation prompt and settings for the keyframe image.
-          </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4">
-          <div className="space-y-6 py-4">
-            {/* Use Previous End Frame Option */}
-            {canUsePreviousFrame && (
-              <div className={cn(
-                "p-4 rounded-lg border",
-                usePreviousEndFrame 
-                  ? "border-blue-500/50 bg-blue-500/10" 
-                  : "border-slate-700 bg-slate-800/50"
-              )}>
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    id="use-prev-frame"
-                    checked={usePreviousEndFrame}
-                    onCheckedChange={(checked) => setUsePreviousEndFrame(checked === true)}
-                    className="mt-0.5"
-                  />
-                  <div className="flex-1">
-                    <Label 
-                      htmlFor="use-prev-frame" 
-                      className="text-sm font-medium text-slate-200 cursor-pointer flex items-center gap-2"
-                    >
-                      <Link2 className="w-4 h-4 text-blue-400" />
-                      Use Previous Segment's End Frame
-                    </Label>
-                    <p className="text-xs text-slate-400 mt-1">
-                      Copy the end frame from Segment {segmentIndex} as this segment's start frame for seamless visual continuity.
-                    </p>
-                    
-                    {previousEndFrameUrl && (
-                      <div className="mt-3 flex items-center gap-3">
-                        <img 
-                          src={previousEndFrameUrl} 
-                          alt="Previous end frame"
-                          className="w-20 h-12 object-cover rounded border border-slate-600"
-                        />
-                        <span className="text-xs text-slate-500">
-                          Previous segment's end frame
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                {transitionType === 'CONTINUE' && (
-                  <div className="mt-3 px-6 py-2 bg-blue-500/10 rounded text-xs text-blue-300 flex items-center gap-2">
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    This segment uses CONTINUE transition – recommended for visual continuity
-                  </div>
-                )}
-              </div>
-            )}
+        <Tabs value={mode} onValueChange={(v) => setMode(v as 'guided' | 'advanced')} className="flex-1 flex flex-col overflow-hidden">
+          <TabsList className="w-full flex-shrink-0">
+            <TabsTrigger value="guided" className="flex-1">
+              Visual Setup
+            </TabsTrigger>
+            <TabsTrigger value="advanced" className="flex-1">
+              Custom Prompt
+            </TabsTrigger>
+          </TabsList>
 
-            {/* Scene Direction Reference Panel */}
-            {sceneDirection && (
-              <div className="space-y-2">
-                <button
-                  type="button"
-                  onClick={() => setShowDirectionPanel(!showDirectionPanel)}
-                  className="flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white transition-colors w-full"
-                >
-                  {showDirectionPanel ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  <Camera className="w-4 h-4 text-amber-400" />
-                  Scene Direction Reference
-                  {directionAdherence.score < 0.75 && (
-                    <Badge variant="secondary" className="ml-auto text-[10px] bg-amber-500/20 text-amber-300">
-                      {directionAdherence.missingElements.length} missing
-                    </Badge>
-                  )}
-                  {directionAdherence.score >= 0.75 && (
-                    <CheckCircle2 className="w-3.5 h-3.5 ml-auto text-emerald-400" />
-                  )}
-                </button>
-                
-                {showDirectionPanel && (
-                  <div className="grid grid-cols-2 gap-3 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                    {/* Camera */}
-                    {sceneDirection.camera && (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
-                          <Camera className="w-3 h-3" />
-                          Camera
-                        </div>
-                        <p className="text-xs text-slate-300">
-                          {sceneDirection.camera.shots?.[0] || 'Medium Shot'}
-                          {sceneDirection.camera.movement && sceneDirection.camera.movement !== 'Static' && 
-                            ` • ${sceneDirection.camera.movement}`}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {/* Lighting */}
-                    {sceneDirection.lighting && (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
-                          <Sun className="w-3 h-3" />
-                          Lighting
-                        </div>
-                        <p className="text-xs text-slate-300">
-                          {sceneDirection.lighting.overallMood || 'Natural'}
-                          {sceneDirection.lighting.timeOfDay && ` • ${sceneDirection.lighting.timeOfDay}`}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {/* Emotional Beat */}
-                    {sceneDirection.talent?.emotionalBeat && (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
-                          <Users className="w-3 h-3" />
-                          Emotion
-                        </div>
-                        <p className="text-xs text-slate-300">
-                          {sceneDirection.talent.emotionalBeat}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {/* Atmosphere */}
-                    {sceneDirection.scene?.atmosphere && (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
-                          <Wind className="w-3 h-3" />
-                          Atmosphere
-                        </div>
-                        <p className="text-xs text-slate-300">
-                          {sceneDirection.scene.atmosphere}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {/* Direction Adherence Warning */}
-                {directionAdherence.score < 0.75 && directionAdherence.suggestions.length > 0 && (
-                  <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                    <p className="text-xs font-medium text-amber-300 mb-2">
-                      Missing scene direction elements:
-                    </p>
-                    <ul className="space-y-1">
-                      {directionAdherence.suggestions.slice(0, 3).map((suggestion, i) => (
-                        <li key={i} className="text-xs text-amber-200/80 flex items-center gap-2">
-                          <span className="w-1 h-1 rounded-full bg-amber-400" />
-                          {suggestion}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Intelligent Prompt Builder */}
-            {intelligentPrompt && (
-              <div className="p-4 rounded-lg border border-cyan-500/30 bg-cyan-500/5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-cyan-400" />
-                    <span className="text-sm font-medium text-cyan-300">AI-Enhanced Prompt</span>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={applyIntelligentPrompt}
-                    className="h-7 text-xs text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/20"
-                  >
-                    Apply Suggestion
-                  </Button>
-                </div>
-                <p className="text-xs text-slate-400 mb-2">
-                  Prompt enhanced with scene direction (camera, lighting, emotion):
-                </p>
-                <p className="text-xs text-slate-300 bg-slate-900/50 p-2 rounded font-mono leading-relaxed max-h-24 overflow-auto">
-                  {intelligentPrompt.prompt}
-                </p>
-                {intelligentPrompt.injectedDirection.emotion && (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {intelligentPrompt.injectedDirection.camera && (
-                      <Badge variant="secondary" className="text-[10px] bg-slate-700">
-                        📷 {intelligentPrompt.injectedDirection.camera}
-                      </Badge>
-                    )}
-                    {intelligentPrompt.injectedDirection.lighting && (
-                      <Badge variant="secondary" className="text-[10px] bg-slate-700">
-                        💡 {intelligentPrompt.injectedDirection.lighting}
-                      </Badge>
-                    )}
-                    {intelligentPrompt.injectedDirection.emotion && (
-                      <Badge variant="secondary" className="text-[10px] bg-slate-700">
-                        ❤️ {intelligentPrompt.injectedDirection.emotion}
-                      </Badge>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Prompt Editor */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium flex items-center gap-2">
-                  <ImageIcon className="w-4 h-4 text-cyan-400" />
-                  Generation Prompt
-                </Label>
-                <span className="text-xs text-slate-500">
-                  {customPrompt.length} characters
-                </span>
-              </div>
-              <Textarea
-                value={customPrompt}
-                onChange={(e) => setCustomPrompt(e.target.value)}
-                placeholder="Describe what should appear in the frame..."
-                className="min-h-[120px] font-mono text-sm"
-                disabled={usePreviousEndFrame && frameType === 'start'}
-              />
-              {usePreviousEndFrame && frameType === 'start' && (
-                <p className="text-xs text-amber-400">
-                  Prompt is ignored when using previous end frame directly
-                </p>
-              )}
-            </div>
-
-            {/* Negative Prompt Presets */}
-            <div className="space-y-3">
-              <button
-                type="button"
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                className="flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white transition-colors"
-              >
-                {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                Negative Prompts
-                <Badge variant="secondary" className="text-[10px]">
-                  {selectedNegativePresets.size} selected
-                </Badge>
-              </button>
-              
-              {showAdvanced && (
-                <div className="space-y-4 pl-6 border-l-2 border-slate-700">
-                  <p className="text-xs text-slate-400">
-                    Select elements to avoid in the generated image:
+          {/* Character Reference Guidance Banner */}
+          {hasCharacterReferences && (
+            <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg flex-shrink-0">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                <div className="text-xs text-blue-300">
+                  <p className="font-medium mb-1">Character References Active</p>
+                  <p className="text-blue-400/80">
+                    For best results with character references, use <span className="font-medium">Close-Up</span> or{' '}
+                    <span className="font-medium">Medium Shot</span> framing. Wide shots make characters too small 
+                    for facial recognition.
                   </p>
-                  
-                  <div className="grid grid-cols-2 gap-2">
-                    {NEGATIVE_PROMPT_PRESETS.map(preset => (
-                      <button
-                        key={preset.id}
-                        type="button"
-                        onClick={() => togglePreset(preset.id)}
-                        className={cn(
-                          "px-3 py-2 rounded-lg border text-left text-xs transition-colors",
-                          selectedNegativePresets.has(preset.id)
-                            ? "border-red-500/50 bg-red-500/10 text-red-300"
-                            : "border-slate-700 bg-slate-800/50 text-slate-400 hover:border-slate-600"
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Visual Setup Tab */}
+          <TabsContent value="guided" className="flex-1 overflow-auto">
+            <ScrollArea className="h-full pr-4">
+              <div className="space-y-6 py-4">
+                {/* Use Previous End Frame Option */}
+                {canUsePreviousFrame && (
+                  <div className={cn(
+                    "p-4 rounded-lg border",
+                    usePreviousEndFrame 
+                      ? "border-blue-500/50 bg-blue-500/10" 
+                      : "border-slate-700 bg-slate-800/50"
+                  )}>
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id="use-prev-frame-guided"
+                        checked={usePreviousEndFrame}
+                        onCheckedChange={(checked) => setUsePreviousEndFrame(checked === true)}
+                        className="mt-0.5"
+                      />
+                      <div className="flex-1">
+                        <Label 
+                          htmlFor="use-prev-frame-guided" 
+                          className="text-sm font-medium text-slate-200 cursor-pointer flex items-center gap-2"
+                        >
+                          <Link2 className="w-4 h-4 text-blue-400" />
+                          Use Previous Segment's End Frame
+                        </Label>
+                        <p className="text-xs text-slate-400 mt-1">
+                          Copy the end frame from Segment {segmentIndex} as this segment's start frame for seamless visual continuity.
+                        </p>
+                        
+                        {previousEndFrameUrl && (
+                          <div className="mt-3 flex items-center gap-3">
+                            <img 
+                              src={previousEndFrameUrl} 
+                              alt="Previous end frame"
+                              className="w-20 h-12 object-cover rounded border border-slate-600"
+                            />
+                            <span className="text-xs text-slate-500">
+                              Previous segment's end frame
+                            </span>
+                          </div>
                         )}
-                      >
-                        <span className="font-medium">{preset.label}</span>
-                      </button>
-                    ))}
+                      </div>
+                    </div>
+                    
+                    {transitionType === 'CONTINUE' && (
+                      <div className="mt-3 px-6 py-2 bg-blue-500/10 rounded text-xs text-blue-300 flex items-center gap-2">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        This segment uses CONTINUE transition – recommended for visual continuity
+                      </div>
+                    )}
                   </div>
-                  
+                )}
+
+                {/* Location & Setting */}
+                <div className="space-y-3 p-3 rounded border border-slate-700 bg-slate-800/50">
+                  <h4 className="text-sm font-medium text-slate-200">Location & Setting</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-xs text-slate-400">Location/Setting</Label>
+                      <input
+                        type="text"
+                        value={visualSetup.location}
+                        onChange={(e) => setVisualSetup(prev => ({ ...prev, location: e.target.value }))}
+                        placeholder="e.g., Modern apartment living room"
+                        className="w-full mt-1 px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-md text-white placeholder:text-slate-500"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs text-slate-400">Time of Day</Label>
+                        <Select value={visualSetup.timeOfDay} onValueChange={(v) => setVisualSetup(prev => ({ ...prev, timeOfDay: v }))}>
+                          <SelectTrigger className="mt-1 bg-slate-900 border-slate-700">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="day">Day</SelectItem>
+                            <SelectItem value="night">Night</SelectItem>
+                            <SelectItem value="dawn">Dawn</SelectItem>
+                            <SelectItem value="dusk">Dusk</SelectItem>
+                            <SelectItem value="golden-hour">Golden Hour</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-slate-400">Weather</Label>
+                        <Select value={visualSetup.weather} onValueChange={(v) => setVisualSetup(prev => ({ ...prev, weather: v }))}>
+                          <SelectTrigger className="mt-1 bg-slate-900 border-slate-700">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="clear">Clear</SelectItem>
+                            <SelectItem value="cloudy">Cloudy</SelectItem>
+                            <SelectItem value="rainy">Rainy</SelectItem>
+                            <SelectItem value="stormy">Stormy</SelectItem>
+                            <SelectItem value="foggy">Foggy</SelectItem>
+                            <SelectItem value="snowy">Snowy</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-slate-400">Atmosphere/Mood</Label>
+                      <Select value={visualSetup.atmosphere} onValueChange={(v) => setVisualSetup(prev => ({ ...prev, atmosphere: v }))}>
+                        <SelectTrigger className="mt-1 bg-slate-900 border-slate-700">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="neutral">Neutral</SelectItem>
+                          <SelectItem value="tense">Tense</SelectItem>
+                          <SelectItem value="mysterious">Mysterious</SelectItem>
+                          <SelectItem value="energetic">Energetic</SelectItem>
+                          <SelectItem value="serene">Serene</SelectItem>
+                          <SelectItem value="melancholic">Melancholic</SelectItem>
+                          <SelectItem value="hopeful">Hopeful</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Characters in Scene */}
+                {characters.length > 0 && (
+                  <div className="space-y-3 p-3 rounded border border-slate-700 bg-slate-800/50">
+                    <h4 className="text-sm font-medium text-slate-200 flex items-center gap-2">
+                      <Users className="w-4 h-4 text-cyan-400" />
+                      Characters in Scene
+                    </h4>
+                    <p className="text-xs text-slate-400">Select Characters</p>
+                    <div className="space-y-2">
+                      {characters.map((char) => (
+                        <div
+                          key={char.name}
+                          className={cn(
+                            "flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-colors",
+                            selectedCharacterNames.includes(char.name)
+                              ? "border-cyan-500/50 bg-cyan-500/10"
+                              : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
+                          )}
+                          onClick={() => {
+                            setSelectedCharacterNames(prev => 
+                              prev.includes(char.name)
+                                ? prev.filter(n => n !== char.name)
+                                : [...prev, char.name]
+                            )
+                          }}
+                        >
+                          <Checkbox
+                            checked={selectedCharacterNames.includes(char.name)}
+                            onCheckedChange={(checked) => {
+                              setSelectedCharacterNames(prev =>
+                                checked
+                                  ? [...prev, char.name]
+                                  : prev.filter(n => n !== char.name)
+                              )
+                            }}
+                          />
+                          {char.referenceImage ? (
+                            <img
+                              src={char.referenceImage}
+                              alt={char.name}
+                              className="w-10 h-10 rounded-full object-cover border-2 border-slate-600"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
+                              <Users className="w-5 h-5 text-slate-500" />
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-slate-200">{char.name}</p>
+                            {char.referenceImage && (
+                              <p className="text-xs text-emerald-400 flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" />
+                                Has reference image
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Camera & Lighting */}
+                <div className="space-y-3 p-3 rounded border border-slate-700 bg-slate-800/50">
+                  <h4 className="text-sm font-medium text-slate-200 flex items-center gap-2">
+                    <Camera className="w-4 h-4 text-cyan-400" />
+                    Camera & Lighting
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs text-slate-400">Shot Type</Label>
+                      <Select value={visualSetup.shotType} onValueChange={(v) => setVisualSetup(prev => ({ ...prev, shotType: v }))}>
+                        <SelectTrigger className="mt-1 bg-slate-900 border-slate-700">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="extreme-close-up">Extreme Close-Up</SelectItem>
+                          <SelectItem value="close-up">Close-Up</SelectItem>
+                          <SelectItem value="medium-close-up">Medium Close-Up</SelectItem>
+                          <SelectItem value="medium-shot">Medium Shot</SelectItem>
+                          <SelectItem value="wide-shot">Wide Shot</SelectItem>
+                          <SelectItem value="extreme-wide">Extreme Wide</SelectItem>
+                          <SelectItem value="over-shoulder">Over the Shoulder</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-slate-400">Camera Angle</Label>
+                      <Select value={visualSetup.cameraAngle} onValueChange={(v) => setVisualSetup(prev => ({ ...prev, cameraAngle: v }))}>
+                        <SelectTrigger className="mt-1 bg-slate-900 border-slate-700">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="eye-level">Eye Level</SelectItem>
+                          <SelectItem value="low-angle">Low Angle</SelectItem>
+                          <SelectItem value="high-angle">High Angle</SelectItem>
+                          <SelectItem value="dutch-angle">Dutch Angle</SelectItem>
+                          <SelectItem value="birds-eye">Bird's Eye</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-slate-400">Lighting</Label>
+                    <Select value={visualSetup.lighting} onValueChange={(v) => setVisualSetup(prev => ({ ...prev, lighting: v }))}>
+                      <SelectTrigger className="mt-1 bg-slate-900 border-slate-700">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="natural">Natural</SelectItem>
+                        <SelectItem value="soft">Soft / High-Key</SelectItem>
+                        <SelectItem value="dramatic">Dramatic / Low-Key</SelectItem>
+                        <SelectItem value="harsh">Harsh</SelectItem>
+                        <SelectItem value="silhouette">Silhouette</SelectItem>
+                        <SelectItem value="neon">Neon / Stylized</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Prompt Preview */}
+                <div className="space-y-2 p-3 rounded border border-slate-700 bg-slate-800/50">
+                  <h4 className="text-sm font-medium text-slate-200">Prompt Preview</h4>
+                  <div className="p-3 bg-slate-900 rounded text-xs text-slate-300 font-mono leading-relaxed">
+                    {(() => {
+                      const parts: string[] = []
+                      if (visualSetup.shotType) parts.push(visualSetup.shotType.replace(/-/g, ' '))
+                      if (visualSetup.location) parts.push(`of ${visualSetup.location}`)
+                      if (visualSetup.timeOfDay && visualSetup.timeOfDay !== 'day') parts.push(`at ${visualSetup.timeOfDay.replace('-', ' ')}`)
+                      if (selectedCharacterNames.length > 0) parts.push(`featuring ${selectedCharacterNames.join(', ')}`)
+                      if (segment?.action) parts.push(segment.action)
+                      if (visualSetup.atmosphere && visualSetup.atmosphere !== 'neutral') parts.push(`${visualSetup.atmosphere} atmosphere`)
+                      if (visualSetup.lighting && visualSetup.lighting !== 'natural') parts.push(`${visualSetup.lighting} lighting`)
+                      return parts.join(', ') || 'Configure settings above to preview prompt...'
+                    })()}
+                  </div>
+                </div>
+              </div>
+            </ScrollArea>
+          </TabsContent>
+
+          {/* Custom Prompt Tab */}
+          <TabsContent value="advanced" className="flex-1 overflow-auto">
+            <ScrollArea className="h-full pr-4">
+              <div className="space-y-6 py-4">
+                {/* Use Previous End Frame Option */}
+                {canUsePreviousFrame && (
+                  <div className={cn(
+                    "p-4 rounded-lg border",
+                    usePreviousEndFrame 
+                      ? "border-blue-500/50 bg-blue-500/10" 
+                      : "border-slate-700 bg-slate-800/50"
+                  )}>
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id="use-prev-frame"
+                        checked={usePreviousEndFrame}
+                        onCheckedChange={(checked) => setUsePreviousEndFrame(checked === true)}
+                        className="mt-0.5"
+                      />
+                      <div className="flex-1">
+                        <Label 
+                          htmlFor="use-prev-frame" 
+                          className="text-sm font-medium text-slate-200 cursor-pointer flex items-center gap-2"
+                        >
+                          <Link2 className="w-4 h-4 text-blue-400" />
+                          Use Previous Segment's End Frame
+                        </Label>
+                        <p className="text-xs text-slate-400 mt-1">
+                          Copy the end frame from Segment {segmentIndex} as this segment's start frame for seamless visual continuity.
+                        </p>
+                        
+                        {previousEndFrameUrl && (
+                          <div className="mt-3 flex items-center gap-3">
+                            <img 
+                              src={previousEndFrameUrl} 
+                              alt="Previous end frame"
+                              className="w-20 h-12 object-cover rounded border border-slate-600"
+                            />
+                            <span className="text-xs text-slate-500">
+                              Previous segment's end frame
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {transitionType === 'CONTINUE' && (
+                      <div className="mt-3 px-6 py-2 bg-blue-500/10 rounded text-xs text-blue-300 flex items-center gap-2">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        This segment uses CONTINUE transition – recommended for visual continuity
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Scene Direction Reference Panel */}
+                {sceneDirection && (
                   <div className="space-y-2">
-                    <Label className="text-xs text-slate-400">Custom negative prompt:</Label>
-                    <Textarea
-                      value={customNegativePrompt}
-                      onChange={(e) => setCustomNegativePrompt(e.target.value)}
-                      placeholder="Add custom terms to avoid..."
-                      className="min-h-[60px] text-sm"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowDirectionPanel(!showDirectionPanel)}
+                      className="flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white transition-colors w-full"
+                    >
+                      {showDirectionPanel ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      <Camera className="w-4 h-4 text-amber-400" />
+                      Scene Direction Reference
+                      {directionAdherence.score < 0.75 && (
+                        <Badge variant="secondary" className="ml-auto text-[10px] bg-amber-500/20 text-amber-300">
+                          {directionAdherence.missingElements.length} missing
+                        </Badge>
+                      )}
+                      {directionAdherence.score >= 0.75 && (
+                        <CheckCircle2 className="w-3.5 h-3.5 ml-auto text-emerald-400" />
+                      )}
+                    </button>
+                    
+                    {showDirectionPanel && (
+                      <div className="grid grid-cols-2 gap-3 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                        {/* Camera */}
+                        {sceneDirection.camera && (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                              <Camera className="w-3 h-3" />
+                              Camera
+                            </div>
+                            <p className="text-xs text-slate-300">
+                              {sceneDirection.camera.shots?.[0] || 'Medium Shot'}
+                              {sceneDirection.camera.movement && sceneDirection.camera.movement !== 'Static' && 
+                                ` • ${sceneDirection.camera.movement}`}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {/* Lighting */}
+                        {sceneDirection.lighting && (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                              <Sun className="w-3 h-3" />
+                              Lighting
+                            </div>
+                            <p className="text-xs text-slate-300">
+                              {sceneDirection.lighting.overallMood || 'Natural'}
+                              {sceneDirection.lighting.timeOfDay && ` • ${sceneDirection.lighting.timeOfDay}`}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {/* Emotional Beat */}
+                        {sceneDirection.talent?.emotionalBeat && (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                              <Users className="w-3 h-3" />
+                              Emotion
+                            </div>
+                            <p className="text-xs text-slate-300">
+                              {sceneDirection.talent.emotionalBeat}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {/* Atmosphere */}
+                        {sceneDirection.scene?.atmosphere && (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                              <Wind className="w-3 h-3" />
+                              Atmosphere
+                            </div>
+                            <p className="text-xs text-slate-300">
+                              {sceneDirection.scene.atmosphere}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Direction Adherence Warning */}
+                    {directionAdherence.score < 0.75 && directionAdherence.suggestions.length > 0 && (
+                      <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                        <p className="text-xs font-medium text-amber-300 mb-2">
+                          Missing scene direction elements:
+                        </p>
+                        <ul className="space-y-1">
+                          {directionAdherence.suggestions.slice(0, 3).map((suggestion, i) => (
+                            <li key={i} className="text-xs text-amber-200/80 flex items-center gap-2">
+                              <span className="w-1 h-1 rounded-full bg-amber-400" />
+                              {suggestion}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
+                )}
+
+                {/* Intelligent Prompt Builder */}
+                {intelligentPrompt && (
+                  <div className="p-4 rounded-lg border border-cyan-500/30 bg-cyan-500/5">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-cyan-400" />
+                        <span className="text-sm font-medium text-cyan-300">AI-Enhanced Prompt</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={applyIntelligentPrompt}
+                        className="h-7 text-xs text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/20"
+                      >
+                        Apply Suggestion
+                      </Button>
+                    </div>
+                    <p className="text-xs text-slate-400 mb-2">
+                      Prompt enhanced with scene direction (camera, lighting, emotion):
+                    </p>
+                    <p className="text-xs text-slate-300 bg-slate-900/50 p-2 rounded font-mono leading-relaxed max-h-24 overflow-auto">
+                      {intelligentPrompt.prompt}
+                    </p>
+                    {intelligentPrompt.injectedDirection.emotion && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {intelligentPrompt.injectedDirection.camera && (
+                          <Badge variant="secondary" className="text-[10px] bg-slate-700">
+                            📷 {intelligentPrompt.injectedDirection.camera}
+                          </Badge>
+                        )}
+                        {intelligentPrompt.injectedDirection.lighting && (
+                          <Badge variant="secondary" className="text-[10px] bg-slate-700">
+                            💡 {intelligentPrompt.injectedDirection.lighting}
+                          </Badge>
+                        )}
+                        {intelligentPrompt.injectedDirection.emotion && (
+                          <Badge variant="secondary" className="text-[10px] bg-slate-700">
+                            ❤️ {intelligentPrompt.injectedDirection.emotion}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Prompt Editor */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4 text-cyan-400" />
+                      Generation Prompt
+                    </Label>
+                    <span className="text-xs text-slate-500">
+                      {customPrompt.length} characters
+                    </span>
+                  </div>
+                  <Textarea
+                    value={customPrompt}
+                    onChange={(e) => setCustomPrompt(e.target.value)}
+                    placeholder="Describe what should appear in the frame..."
+                    className="min-h-[120px] font-mono text-sm"
+                    disabled={usePreviousEndFrame && frameType === 'start'}
+                  />
+                  {usePreviousEndFrame && frameType === 'start' && (
+                    <p className="text-xs text-amber-400">
+                      Prompt is ignored when using previous end frame directly
+                    </p>
+                  )}
+                </div>
+
+                {/* Negative Prompt Presets */}
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvanced(!showAdvanced)}
+                    className="flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white transition-colors"
+                  >
+                    {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    Negative Prompts
+                    <Badge variant="secondary" className="text-[10px]">
+                      {selectedNegativePresets.size} selected
+                    </Badge>
+                  </button>
                   
-                  {/* Preview combined negative prompt */}
-                  {(selectedNegativePresets.size > 0 || customNegativePrompt) && (
-                    <div className="p-3 bg-slate-900 rounded-lg">
-                      <Label className="text-xs text-slate-500 mb-1 block">Combined negative prompt:</Label>
-                      <p className="text-xs text-red-400/70 font-mono break-words">
-                        {buildNegativePrompt() || '(none)'}
+                  {showAdvanced && (
+                    <div className="space-y-4 pl-6 border-l-2 border-slate-700">
+                      <p className="text-xs text-slate-400">
+                        Select elements to avoid in the generated image:
                       </p>
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        {NEGATIVE_PROMPT_PRESETS.map(preset => (
+                          <button
+                            key={preset.id}
+                            type="button"
+                            onClick={() => togglePreset(preset.id)}
+                            className={cn(
+                              "px-3 py-2 rounded-lg border text-left text-xs transition-colors",
+                              selectedNegativePresets.has(preset.id)
+                                ? "border-red-500/50 bg-red-500/10 text-red-300"
+                                : "border-slate-700 bg-slate-800/50 text-slate-400 hover:border-slate-600"
+                            )}
+                          >
+                            <span className="font-medium">{preset.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label className="text-xs text-slate-400">Custom negative prompt:</Label>
+                        <Textarea
+                          value={customNegativePrompt}
+                          onChange={(e) => setCustomNegativePrompt(e.target.value)}
+                          placeholder="Add custom terms to avoid..."
+                          className="min-h-[60px] text-sm"
+                        />
+                      </div>
+                      
+                      {/* Preview combined negative prompt */}
+                      {(selectedNegativePresets.size > 0 || customNegativePrompt) && (
+                        <div className="p-3 bg-slate-900 rounded-lg">
+                          <Label className="text-xs text-slate-500 mb-1 block">Combined negative prompt:</Label>
+                          <p className="text-xs text-red-400/70 font-mono break-words">
+                            {buildNegativePrompt() || '(none)'}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-          </div>
-        </ScrollArea>
+              </div>
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
 
         <DialogFooter className="mt-4 pt-4 border-t border-slate-700">
           {/* Copy Prompt for external generation */}

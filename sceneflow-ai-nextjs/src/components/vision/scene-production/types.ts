@@ -107,6 +107,186 @@ export type GenerationType = 'T2V' | 'I2V' | 'T2I' | 'UPLOAD'
 export type VideoGenerationMethod = 'T2V' | 'I2V' | 'EXT' | 'FTV' | 'REF'
 
 // ============================================================================
+// Unified Generation Config Types
+// Shared across all generation dialogs (scene images, keyframes, video clips)
+// ============================================================================
+
+/**
+ * Type of generation being performed
+ */
+export type GenerationMode = 'scene-image' | 'keyframe' | 'video-clip' | 'backdrop'
+
+/**
+ * Character reference with all data needed for generation
+ */
+export interface CharacterReference {
+  name: string
+  referenceImageUrl?: string
+  appearance?: string
+  ethnicity?: string
+  age?: string
+  wardrobe?: string
+  /** Priority in scene - used when API has reference limits */
+  priority?: 'protagonist' | 'speaking' | 'supporting' | 'background'
+  /** Whether this character is speaking in the current segment */
+  speakingInSegment?: boolean
+  /** Dialogue lines for this segment (for voice-sync generation) */
+  dialogueLines?: string[]
+}
+
+/**
+ * Visual reference (scene backdrop or prop/object)
+ */
+export interface VisualReferenceConfig {
+  id: string
+  type: 'scene' | 'object'
+  name: string
+  imageUrl: string
+  description?: string
+  /** How this reference connects to the prompt */
+  promptConnection?: string
+}
+
+/**
+ * Unified generation configuration used by all dialogs
+ * Ensures consistent character reference handling across scene images, keyframes, and video clips
+ */
+export interface UnifiedGenerationConfig {
+  // Generation type
+  mode: GenerationMode
+  
+  // Prompts
+  prompt: string
+  negativePrompt: string
+  
+  // Character References (max 5 for images, max 3 for video REF mode)
+  characters: CharacterReference[]
+  /** Auto-switch to REF mode when character references are critical and I2V would lose them */
+  autoSwitchToRefMode?: boolean
+  
+  // Visual References (scene backdrops, props)
+  visualReferences: VisualReferenceConfig[]
+  
+  // Scene/Visual Setup
+  location?: string
+  timeOfDay?: string
+  weather?: string
+  atmosphere?: string
+  
+  // Camera & Composition
+  shotType?: string
+  cameraAngle?: string
+  cameraMovement?: string
+  lensChoice?: string
+  
+  // Lighting
+  lighting?: string
+  lightingMood?: string
+  
+  // Action & Blocking
+  characterActions?: string
+  talentBlocking?: string
+  emotionalBeat?: string
+  keyProps?: string
+  
+  // Style
+  artStyle?: string
+  
+  // Video-specific settings (for video-clip mode)
+  videoSettings?: {
+    method: VideoGenerationMethod
+    duration: 4 | 6 | 8
+    aspectRatio: '16:9' | '9:16'
+    resolution: '720p' | '1080p'
+    startFrameUrl?: string | null
+    endFrameUrl?: string | null
+    /** For EXT mode - reference to previous Veo video */
+    sourceVideoUrl?: string | null
+  }
+  
+  // Keyframe-specific settings
+  keyframeSettings?: {
+    frameType: 'start' | 'end' | 'both'
+    usePreviousEndFrame?: boolean
+    previousEndFrameUrl?: string | null
+    transitionType?: TransitionType
+  }
+}
+
+/**
+ * Result from character reference prioritization
+ * When API limits require selecting subset of characters
+ */
+export interface CharacterReferencePrioritization {
+  /** Characters to include as references (within API limits) */
+  included: CharacterReference[]
+  /** Characters excluded due to limits */
+  excluded: CharacterReference[]
+  /** Reason for prioritization choices */
+  reason: string
+}
+
+/**
+ * Prioritize characters for reference images based on context
+ * @param characters All characters in scene
+ * @param maxRefs Maximum references allowed (e.g., 3 for Veo, 5 for Imagen)
+ * @param segmentDialogue Dialogue in current segment (to prioritize speaking characters)
+ */
+export function prioritizeCharacterReferences(
+  characters: CharacterReference[],
+  maxRefs: number,
+  segmentDialogue?: string[]
+): CharacterReferencePrioritization {
+  // Filter to characters with reference images
+  const withRefs = characters.filter(c => c.referenceImageUrl)
+  
+  if (withRefs.length <= maxRefs) {
+    return {
+      included: withRefs,
+      excluded: [],
+      reason: 'All characters with references included'
+    }
+  }
+  
+  // Prioritize by: speaking in segment > protagonist > main > supporting > background
+  const priorityOrder = ['protagonist', 'speaking', 'supporting', 'background']
+  
+  // Mark characters speaking in this segment
+  if (segmentDialogue && segmentDialogue.length > 0) {
+    const dialogueText = segmentDialogue.join(' ').toLowerCase()
+    withRefs.forEach(c => {
+      if (dialogueText.includes(c.name.toLowerCase())) {
+        c.speakingInSegment = true
+        c.priority = 'speaking'
+      }
+    })
+  }
+  
+  // Sort by priority
+  const sorted = [...withRefs].sort((a, b) => {
+    // Speaking characters first
+    if (a.speakingInSegment && !b.speakingInSegment) return -1
+    if (!a.speakingInSegment && b.speakingInSegment) return 1
+    
+    // Then by priority
+    const aIdx = priorityOrder.indexOf(a.priority || 'background')
+    const bIdx = priorityOrder.indexOf(b.priority || 'background')
+    return aIdx - bIdx
+  })
+  
+  const included = sorted.slice(0, maxRefs)
+  const excluded = sorted.slice(maxRefs)
+  
+  return {
+    included,
+    excluded,
+    reason: excluded.length > 0 
+      ? `Prioritized ${included.map(c => c.name).join(', ')} (speaking/protagonist). Excluded: ${excluded.map(c => c.name).join(', ')}`
+      : 'Selected by priority'
+  }
+}
+
+// ============================================================================
 // Director's Console Types - Pre-Flight Workflow
 // ============================================================================
 

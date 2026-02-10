@@ -69,6 +69,17 @@ interface FrameGenerationRequest {
   negativePrompt?: string        // Elements to avoid in generation
   usePreviousEndFrame?: boolean  // Copy previous end frame as start frame (skip generation)
   
+  // NEW: Visual setup from guided mode (for prompt construction)
+  visualSetup?: {
+    location: string
+    timeOfDay: string
+    weather: string
+    atmosphere: string
+    shotType: string
+    cameraAngle: string
+    lighting: string
+  }
+  
   // NEW: Scene direction for intelligent prompt building
   sceneDirection?: DetailedSceneDirection | null
   
@@ -143,6 +154,8 @@ export async function POST(req: NextRequest) {
       customPrompt,
       negativePrompt,
       usePreviousEndFrame = false,
+      // NEW: Visual setup from guided mode
+      visualSetup,
       // NEW: Scene direction for intelligent prompts
       sceneDirection,
       previousShotType,
@@ -274,11 +287,16 @@ export async function POST(req: NextRequest) {
                 age: c.age,
                 wardrobe: c.wardrobe
               })),
+              // Merge visualSetup (from guided mode) with sceneContext
               sceneContext: {
-                location: sceneContext.location || sceneContext.heading,
-                timeOfDay: sceneContext.timeOfDay,
-                atmosphere: sceneContext.atmosphere,
-                lighting: sceneContext.lighting
+                location: visualSetup?.location || sceneContext.location || sceneContext.heading,
+                timeOfDay: visualSetup?.timeOfDay || sceneContext.timeOfDay,
+                atmosphere: visualSetup?.atmosphere || sceneContext.atmosphere,
+                lighting: visualSetup?.lighting || sceneContext.lighting,
+                // New from visualSetup
+                shotType: visualSetup?.shotType,
+                cameraAngle: visualSetup?.cameraAngle,
+                weather: visualSetup?.weather,
               },
               actionDescription: effectivePrompt
             }
@@ -448,11 +466,16 @@ export async function POST(req: NextRequest) {
               age: c.age,
               wardrobe: c.wardrobe
             })),
+            // Merge visualSetup (from guided mode) with sceneContext
             sceneContext: {
-              location: sceneContext.location || sceneContext.heading,
-              timeOfDay: sceneContext.timeOfDay,
-              atmosphere: sceneContext.atmosphere,
-              lighting: sceneContext.lighting
+              location: visualSetup?.location || sceneContext.location || sceneContext.heading,
+              timeOfDay: visualSetup?.timeOfDay || sceneContext.timeOfDay,
+              atmosphere: visualSetup?.atmosphere || sceneContext.atmosphere,
+              lighting: visualSetup?.lighting || sceneContext.lighting,
+              // New from visualSetup
+              shotType: visualSetup?.shotType,
+              cameraAngle: visualSetup?.cameraAngle,
+              weather: visualSetup?.weather,
             }
           }
         )
