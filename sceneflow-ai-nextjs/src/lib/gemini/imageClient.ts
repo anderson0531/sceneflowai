@@ -29,6 +29,7 @@ interface ImageGenerationOptions {
   referenceImages?: ReferenceImage[]
   negativePrompt?: string  // Terms to avoid in generation (e.g., "casual clothes, jeans")
   quality?: ModelQuality  // Image quality tier: fast or standard
+  skipFaceMesh?: boolean  // Skip face mesh control for more transformation freedom (enhancement use case)
 }
 
 /**
@@ -168,21 +169,25 @@ export async function generateImageWithGemini(
       // ALSO add FACE_MESH control reference using the SAME image
       // Per Google docs, adding CONTROL_TYPE_FACE_MESH alongside subject reference
       // helps preserve facial features more accurately (pose, expression, structure)
-      // We use a new referenceId (original + 100) to avoid collision
-      const faceMeshRefId = ref.referenceId + 100
-      referenceImagesArray.push({
-        referenceType: 'REFERENCE_TYPE_CONTROL',
-        referenceId: faceMeshRefId,
-        referenceImage: {
-          bytesBase64Encoded: base64Data  // Same image as subject
-        },
-        controlImageConfig: {
-          controlType: 'CONTROL_TYPE_FACE_MESH',
-          enableControlImageComputation: true  // Let API compute face mesh from image
-        }
-      })
-      
-      console.log(`[Vertex Imagen] Added FACE_MESH control reference ${faceMeshRefId} for better facial preservation`)
+      // SKIP for enhancement use case where we want more transformation freedom (e.g., lighting changes)
+      if (!options.skipFaceMesh) {
+        const faceMeshRefId = ref.referenceId + 100
+        referenceImagesArray.push({
+          referenceType: 'REFERENCE_TYPE_CONTROL',
+          referenceId: faceMeshRefId,
+          referenceImage: {
+            bytesBase64Encoded: base64Data  // Same image as subject
+          },
+          controlImageConfig: {
+            controlType: 'CONTROL_TYPE_FACE_MESH',
+            enableControlImageComputation: true  // Let API compute face mesh from image
+          }
+        })
+        
+        console.log(`[Vertex Imagen] Added FACE_MESH control reference ${faceMeshRefId} for better facial preservation`)
+      } else {
+        console.log(`[Vertex Imagen] Skipping FACE_MESH control (skipFaceMesh=true) for more transformation freedom`)
+      }
     }
     
     if (referenceImagesArray.length > 0) {

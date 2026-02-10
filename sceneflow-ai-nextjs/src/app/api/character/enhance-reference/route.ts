@@ -132,12 +132,14 @@ export async function POST(req: NextRequest) {
     )
     console.log(`[Enhance Reference] Subject description: ${subjectDescription}`)
 
-    // STAGE 4: Generate enhanced image using source as reference with face mesh control
+    // STAGE 4: Generate enhanced image using source as reference
+    // NOTE: Skip face mesh control to allow more freedom for lighting/pose transformation
     console.log(`[Enhance Reference] Stage 3: Generating enhanced headshot...`)
     const base64Image = await generateImageWithGemini(enhancementPrompt, {
       aspectRatio: '1:1', // Square for consistent reference format
       numberOfImages: 1,
       personGeneration: 'allow_adult',
+      skipFaceMesh: true, // Allow lighting/pose transformation without face mesh constraints
       referenceImages: [{
         referenceId: 1,
         imageUrl: sourceImageUrl,
@@ -311,17 +313,20 @@ function buildProfessionalHeadshotPrompt(
     : ''
   
   // Natural prompt style - proven to work better than technical specifications
-  const prompt = `Create a high-quality, professional actor profile photo of ${demographic}, optimizing the lighting, pose, and expression while keeping their features exactly the same.
+  // IMPORTANT: Explicitly mention transforming dark/poor lighting to bright studio lighting
+  const prompt = `Create a high-quality, professional actor profile photo of ${demographic}, TRANSFORMING the lighting to bright, professional studio quality while keeping their facial features exactly the same.
 
 Subject: ${characterName}, maintaining their exact facial structure${physicalDesc ? ` including ${physicalDesc}` : ''}.
 
-Lighting: Use professional, soft studio lighting to highlight their face, create definition, and add a warm catchlight to their eyes, eliminating harsh shadows.
+Lighting: TRANSFORM to bright, professional soft studio lighting. Eliminate all harsh shadows and dark areas. Add warm catchlights to the eyes. The final image should be well-lit and bright, not dark.
 
-Pose & Expression: Angle their body slightly to the camera. Have them look directly into the lens with a confident, warm expression that shows personality.
+Pose & Expression: Angle their body slightly to the camera. Have them look directly into the lens with a confident, warm smile that shows personality.
+
+Wardrobe: Dress them in a dark navy tailored blazer over a crisp white t-shirt.
 
 Background: A subtly blurred, neutral grey studio background to keep the focus on them.
 
-Photography Style: A high-resolution, professional headshot captured with a medium telephoto lens.`
+Photography Style: A high-resolution, professional headshot captured with a medium telephoto lens. Well-lit, bright, professional quality.`
 
   return prompt
 }
