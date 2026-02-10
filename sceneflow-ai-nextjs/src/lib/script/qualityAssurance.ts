@@ -229,27 +229,53 @@ function hasEmotionTag(text: string): boolean {
 
 /**
  * Find a close match for a character name
+ * Enhanced to detect common AI generation variations:
+ * - ALL CAPS versions ("BEN" → "Ben")
+ * - Title variations ("Doctor" → "Dr.")
+ * - Partial names ("Ben" → "Dr. Ben Anderson")
+ * - Case mismatches
  */
 function findCloseMatch(name: string, characters: Character[]): Character | null {
-  const normalizedInput = name.toLowerCase().trim()
+  const normalizedInput = toCanonicalName(name).toLowerCase().trim()
+  const inputUpper = name.toUpperCase().trim()
   
   for (const char of characters) {
-    const canonicalName = toCanonicalName(char.name).toLowerCase()
+    const canonicalName = toCanonicalName(char.name)
+    const canonicalLower = canonicalName.toLowerCase()
+    const canonicalUpper = canonicalName.toUpperCase()
+    
+    // Direct match after normalization
+    if (canonicalLower === normalizedInput) {
+      return char
+    }
+    
+    // ALL CAPS match (common AI error: "BEN" should match "Ben")
+    if (canonicalUpper === inputUpper) {
+      return char
+    }
     
     // Check if input is a partial match (first name, last name, etc.)
-    const nameParts = canonicalName.split(/\s+/)
+    const nameParts = canonicalLower.split(/\s+/)
     if (nameParts.some(part => part === normalizedInput)) {
       return char
     }
     
-    // Check if input is contained in the full name or vice versa
-    if (canonicalName.includes(normalizedInput) || normalizedInput.includes(canonicalName)) {
+    // Check if input matches any part in uppercase
+    if (nameParts.some(part => part.toUpperCase() === inputUpper)) {
       return char
     }
     
-    // Check aliases
+    // Check if input is contained in the full name or vice versa
+    if (canonicalLower.includes(normalizedInput) || normalizedInput.includes(canonicalLower)) {
+      return char
+    }
+    
+    // Check aliases (now includes ALL CAPS variants)
     const aliases = char.aliases || generateAliases(char.name)
-    if (aliases.some(alias => alias.toLowerCase() === normalizedInput)) {
+    if (aliases.some(alias => 
+      alias.toLowerCase() === normalizedInput || 
+      alias.toUpperCase() === inputUpper
+    )) {
       return char
     }
   }

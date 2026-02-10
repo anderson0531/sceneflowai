@@ -297,34 +297,58 @@ export async function POST(request: NextRequest) {
 
         // Embed characterId in dialogue using canonical matching (with memory optimization)
         // Cache aliases per character to avoid regenerating repeatedly
+        // Enhanced alias cache includes original name for comprehensive matching
         const aliasCache = new Map<string, string[]>()
-        const getCachedAliases = (canonicalName: string): string[] => {
-          if (!aliasCache.has(canonicalName)) {
-            aliasCache.set(canonicalName, generateAliases(canonicalName))
+        const getCachedAliases = (char: any): string[] => {
+          const cacheKey = char.id || char.name
+          if (!aliasCache.has(cacheKey)) {
+            const aliases = generateAliases(toCanonicalName(char.name), char.name)
+            aliasCache.set(cacheKey, aliases)
           }
-          return aliasCache.get(canonicalName)!
+          return aliasCache.get(cacheKey)!
         }
+        
+        // Track name normalizations for logging
+        let normalizedCount = 0
         
         const scenesWithCharacterIds = allScenes.map((scene: any) => ({
           ...scene,
           dialogue: scene.dialogue?.map((d: any) => {
             if (!d.character) return d
             
+            const originalDialogueName = d.character
             const normalizedDialogueName = toCanonicalName(d.character)
+            const dialogueNameUpper = d.character.toUpperCase().trim()
             
-            // Try exact match first
+            // Try exact match first (case-insensitive after normalization)
             let character = allCharacters.find((c: any) => 
               toCanonicalName(c.name) === normalizedDialogueName
             )
             
-            // Fallback: Use cached aliases for matching
+            // Fallback 1: ALL CAPS match (common AI error: "BEN" should match "Ben")
+            if (!character) {
+              character = allCharacters.find((c: any) => 
+                c.name.toUpperCase() === dialogueNameUpper
+              )
+            }
+            
+            // Fallback 2: Use cached aliases for matching (now includes ALL CAPS variants)
             if (!character) {
               character = allCharacters.find((c: any) => {
-                const aliases = getCachedAliases(toCanonicalName(c.name))
+                const aliases = getCachedAliases(c)
                 return aliases.some(alias => 
-                  toCanonicalName(alias) === normalizedDialogueName
+                  toCanonicalName(alias) === normalizedDialogueName ||
+                  alias.toUpperCase() === dialogueNameUpper
                 )
               })
+            }
+            
+            // Log when we normalize a name
+            if (character && character.name !== originalDialogueName) {
+              normalizedCount++
+              if (normalizedCount <= 5) { // Limit logging
+                console.log(`[Script Gen V2] Character name normalized: "${originalDialogueName}" → "${character.name}"`)
+              }
             }
             
             return {
@@ -334,6 +358,10 @@ export async function POST(request: NextRequest) {
             }
           })
         }))
+        
+        if (normalizedCount > 0) {
+          console.log(`[Script Gen V2] Total character names normalized: ${normalizedCount}`)
+        }
         
         // Clear cache to free memory
         aliasCache.clear()
@@ -809,9 +837,20 @@ function buildSinglePassPrompt(
   maxSafetyScenes: number,
   subscriptionMaxScenes: number | null
 ): string {
-  // Build character list
+  // Build character list with strict name enforcement
+  const characterNames = characters.map((c: any) => c.name)
   const characterList = characters.length > 0
-    ? `\n\nCHARACTERS (USE EXACT NAMES):\n${characters.map((c: any) => 
+    ? `\n\n=== CHARACTER NAME WHITELIST (MANDATORY) ===
+You MUST use ONLY these EXACT character names in all dialogue attribution:
+${characterNames.map(name => `• "${name}"`).join('\n')}
+
+⚠️ CRITICAL: Do NOT modify these names in ANY way:
+- Do NOT use ALL CAPS (wrong: "BEN", "DR. BEN ANDERSON")
+- Do NOT abbreviate (wrong: "Ben" when full name is "Dr. Ben Anderson")
+- Do NOT expand titles (wrong: "Doctor" when name uses "Dr.")
+- Do NOT use first name only unless that IS the full character name
+
+CHARACTER DETAILS:\n${characters.map((c: any) => 
         `• ${c.name}${c.role ? ` (${c.role})` : ''}: ${c.description || 'No description'}
         ${c.appearance ? `  Appearance: ${c.appearance}` : ''}
         ${c.demeanor ? `  Demeanor: ${c.demeanor}` : ''}`
@@ -876,7 +915,9 @@ DIALOGUE REQUIREMENTS:
 • Use CAPS for EMPHASIS on specific words
 
 TECHNICAL REQUIREMENTS:
-• Use character names EXACTLY as listed (Title Case)
+• CHARACTER NAMES: Copy-paste EXACTLY from the whitelist above - no variations!
+  ✓ Correct: "Dr. Ben Anderson" (if that's the listed name)
+  ✗ Wrong: "BEN", "Ben", "DR. BEN ANDERSON", "Doctor Ben Anderson"
 • Include "narration" field with captivating voiceover (1-2 sentences)
 • Include "sfx" and "music" for atmosphere
 • Estimate realistic durations based on content

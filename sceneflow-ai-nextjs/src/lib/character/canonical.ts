@@ -52,34 +52,112 @@ export function toCanonicalName(input: string): string {
   return clean
 }
 
+// Common titles to handle in name normalization
+const COMMON_TITLES = ['dr', 'dr.', 'doctor', 'prof', 'prof.', 'professor', 'mr', 'mr.', 'mrs', 'mrs.', 'ms', 'ms.', 'miss', 'sir', 'rev', 'rev.', 'reverend', 'capt', 'capt.', 'captain', 'sgt', 'sgt.', 'sergeant', 'lt', 'lt.', 'lieutenant', 'col', 'col.', 'colonel', 'gen', 'gen.', 'general', 'judge', 'sen', 'sen.', 'senator', 'rep', 'rep.', 'representative']
+
 /**
- * Generate common aliases for a character name
- * Used for fuzzy matching during dialogue
+ * Generate comprehensive aliases for a character name
+ * Used for fuzzy matching during dialogue - handles common AI generation variations
  * 
  * Examples:
- * - "Brian Anderson Sr" → ["Brian Anderson Sr", "Brian", "Anderson", "Brian Anderson"]
- * - "John Doe" → ["John Doe", "John", "Doe"]
- * - "Alice" → ["Alice"]
- * - "Dr. Benjamin 'ben' Anderson" → ["Dr. Benjamin Anderson", "Benjamin", "Anderson", "Ben"]
+ * - "Dr. Ben Anderson" → ["Dr. Ben Anderson", "DR. BEN ANDERSON", "Ben Anderson", "BEN ANDERSON", "Dr. Ben", "Dr. Anderson", "Ben", "BEN", "Anderson", "ANDERSON", "Doctor Ben Anderson"]
+ * - "John Doe" → ["John Doe", "JOHN DOE", "John", "JOHN", "Doe", "DOE"]
+ * - "Alice" → ["Alice", "ALICE"]
  */
 export function generateAliases(canonicalName: string, originalName?: string): string[] {
-  const aliases = [canonicalName]  // Include canonical name
+  const aliases = new Set<string>()
+  
+  // Add canonical name and ALL CAPS variant
+  aliases.add(canonicalName)
+  aliases.add(canonicalName.toUpperCase())
   
   const parts = canonicalName.split(' ')
   
-  // First name only
-  if (parts.length > 1) {
-    aliases.push(parts[0])
-  }
+  // Check if first part is a title
+  const firstPartLower = parts[0]?.toLowerCase().replace('.', '')
+  const hasTitle = COMMON_TITLES.includes(firstPartLower) || COMMON_TITLES.includes(firstPartLower + '.')
   
-  // Last name only (if 2+ parts)
-  if (parts.length >= 2) {
-    aliases.push(parts[parts.length - 1])
-  }
-  
-  // First + Last (if middle name/suffix exists)
-  if (parts.length > 2) {
-    aliases.push(`${parts[0]} ${parts[parts.length - 1]}`)
+  if (hasTitle && parts.length > 1) {
+    // Name without title (e.g., "Dr. Ben Anderson" → "Ben Anderson")
+    const nameWithoutTitle = parts.slice(1).join(' ')
+    aliases.add(nameWithoutTitle)
+    aliases.add(nameWithoutTitle.toUpperCase())
+    
+    // Title + first name only (e.g., "Dr. Ben")
+    if (parts.length > 2) {
+      aliases.add(`${parts[0]} ${parts[1]}`)
+      aliases.add(`${parts[0]} ${parts[1]}`.toUpperCase())
+    }
+    
+    // Title + last name only (e.g., "Dr. Anderson")
+    if (parts.length > 2) {
+      aliases.add(`${parts[0]} ${parts[parts.length - 1]}`)
+      aliases.add(`${parts[0]} ${parts[parts.length - 1]}`.toUpperCase())
+    }
+    
+    // First name without title (e.g., "Ben")
+    aliases.add(parts[1])
+    aliases.add(parts[1].toUpperCase())
+    
+    // Last name without title (e.g., "Anderson")
+    if (parts.length > 2) {
+      aliases.add(parts[parts.length - 1])
+      aliases.add(parts[parts.length - 1].toUpperCase())
+    }
+    
+    // Expanded title variations (e.g., "Dr." → "Doctor")
+    const titleExpansions: Record<string, string[]> = {
+      'dr': ['Doctor', 'Dr'],
+      'dr.': ['Doctor', 'Dr'],
+      'prof': ['Professor', 'Prof'],
+      'prof.': ['Professor', 'Prof'],
+      'capt': ['Captain', 'Capt'],
+      'capt.': ['Captain', 'Capt'],
+      'sgt': ['Sergeant', 'Sgt'],
+      'sgt.': ['Sergeant', 'Sgt'],
+      'lt': ['Lieutenant', 'Lt'],
+      'lt.': ['Lieutenant', 'Lt'],
+      'col': ['Colonel', 'Col'],
+      'col.': ['Colonel', 'Col'],
+      'gen': ['General', 'Gen'],
+      'gen.': ['General', 'Gen'],
+      'rev': ['Reverend', 'Rev'],
+      'rev.': ['Reverend', 'Rev'],
+      'sen': ['Senator', 'Sen'],
+      'sen.': ['Senator', 'Sen'],
+      'rep': ['Representative', 'Rep'],
+      'rep.': ['Representative', 'Rep'],
+    }
+    
+    const expansions = titleExpansions[firstPartLower]
+    if (expansions) {
+      for (const expanded of expansions) {
+        const fullExpanded = [expanded, ...parts.slice(1)].join(' ')
+        aliases.add(fullExpanded)
+        aliases.add(fullExpanded.toUpperCase())
+      }
+    }
+  } else {
+    // No title - standard name handling
+    
+    // First name only
+    if (parts.length > 1) {
+      aliases.add(parts[0])
+      aliases.add(parts[0].toUpperCase())
+    }
+    
+    // Last name only (if 2+ parts)
+    if (parts.length >= 2) {
+      aliases.add(parts[parts.length - 1])
+      aliases.add(parts[parts.length - 1].toUpperCase())
+    }
+    
+    // First + Last (if middle name/suffix exists)
+    if (parts.length > 2) {
+      const firstLast = `${parts[0]} ${parts[parts.length - 1]}`
+      aliases.add(firstLast)
+      aliases.add(firstLast.toUpperCase())
+    }
   }
   
   // Extract nicknames from original name (if provided)
@@ -92,13 +170,14 @@ export function generateAliases(canonicalName: string, originalName?: string): s
         const nickname = match.replace(/['"]/g, '').trim()
         if (nickname) {
           const normalizedNickname = nickname.charAt(0).toUpperCase() + nickname.slice(1).toLowerCase()
-          aliases.push(normalizedNickname)
+          aliases.add(normalizedNickname)
+          aliases.add(normalizedNickname.toUpperCase())
         }
       }
     }
   }
   
-  return [...new Set(aliases)]  // Remove duplicates
+  return [...aliases]  // Convert Set to array
 }
 
 /**
