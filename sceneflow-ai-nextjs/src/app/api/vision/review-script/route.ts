@@ -62,7 +62,9 @@ interface ScriptReviewRequest {
     overallScore: number
     categories: { name: string; score: number; weight: number }[]
   }
-  /** Hash of the script content — if unchanged from last analysis, stronger smoothing is applied */
+  /** Full previous analysis for caching and context injection */
+  previousAnalysis?: AudienceResonanceReview
+  /** Hash of the script content — if unchanged from last analysis, return cached result */
   scriptHash?: string
   /** Hash from the previous analysis — compared to scriptHash to detect changes */
   previousScriptHash?: string
@@ -103,7 +105,7 @@ function calculateShowVsTellRatio(scenes: any[]): { ratio: number; narrationWord
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, script, previousScores, scriptHash, previousScriptHash }: ScriptReviewRequest = await req.json()
+    const { projectId, script, previousScores, previousAnalysis, scriptHash, previousScriptHash }: ScriptReviewRequest = await req.json()
 
     if (!projectId || !script) {
       return NextResponse.json(
@@ -116,8 +118,39 @@ export async function POST(req: NextRequest) {
     
     // Detect if script has changed since last analysis
     const scriptUnchanged = scriptHash && previousScriptHash && scriptHash === previousScriptHash
+    
+    // =========================================================================
+    // CACHING: Return cached analysis when script is unchanged
+    // This eliminates score variance entirely for repeated analysis of same script.
+    // Users see consistent scores, building confidence in the analysis system.
+    // =========================================================================
+    if (scriptUnchanged && previousAnalysis) {
+      console.log('[Script Review] Script unchanged — returning cached analysis (score:', previousAnalysis.overallScore, ')')
+      return NextResponse.json({
+        success: true,
+        audienceResonance: {
+          ...previousAnalysis,
+          // Update timestamp to show it was retrieved, but mark as cached
+          generatedAt: previousAnalysis.generatedAt, // Keep original timestamp
+          cachedAt: new Date().toISOString()
+        },
+        audience: {
+          overallScore: previousAnalysis.overallScore,
+          categories: previousAnalysis.categories,
+          analysis: previousAnalysis.analysis,
+          strengths: previousAnalysis.strengths,
+          improvements: previousAnalysis.improvements,
+          recommendations: previousAnalysis.recommendations,
+          generatedAt: previousAnalysis.generatedAt
+        },
+        director: null,
+        generatedAt: previousAnalysis.generatedAt,
+        cached: true // Flag for frontend to indicate cached result
+      })
+    }
+    
     if (scriptUnchanged) {
-      console.log('[Script Review] Script unchanged since last analysis — applying strong score anchoring')
+      console.log('[Script Review] Script unchanged but no cached analysis available — will generate with strong anchoring')
     }
 
     // Pre-calculate Show vs Tell ratio
@@ -135,7 +168,7 @@ export async function POST(req: NextRequest) {
     console.log('[Script Review] Content seed:', contentSeed, '| from scriptHash:', !!scriptHash, '| scriptUnchanged:', scriptUnchanged)
 
     // Generate Audience Resonance review (replaces both director and audience)
-    const audienceResonance = await generateAudienceResonance(script, showVsTellMetrics, contentSeed, previousScores, scriptUnchanged)
+    const audienceResonance = await generateAudienceResonance(script, showVsTellMetrics, contentSeed, previousScores, scriptUnchanged, previousAnalysis)
 
     return NextResponse.json({
       success: true,
@@ -168,7 +201,8 @@ async function generateAudienceResonance(
   showVsTellMetrics: { ratio: number; narrationWords: number; actionWords: number; dialogueWords: number },
   contentSeed: number,
   previousScores?: ScriptReviewRequest['previousScores'],
-  scriptUnchanged?: boolean
+  scriptUnchanged?: boolean,
+  previousAnalysis?: AudienceResonanceReview
 ): Promise<AudienceResonanceReview> {
   const sceneCount = script.scenes?.length || 0
   const characterCount = script.characters?.length || 0
@@ -220,6 +254,29 @@ PRE-CALCULATED METRICS:
 - Action Words: ${showVsTellMetrics.actionWords}  
 - Dialogue Words: ${showVsTellMetrics.dialogueWords}
 ${autoCapReason ? `- AUTO CAP: ${autoCapReason}` : ''}
+
+${previousAnalysis ? `
+## PREVIOUS ANALYSIS CONTEXT (Script has been revised)
+
+The writer has revised their script since the last analysis. Use this context to provide progression-aware feedback.
+
+**Previous Overall Score**: ${previousAnalysis.overallScore}
+**Previous Dimensional Scores**:
+${previousAnalysis.categories?.map((c: any) => `- ${c.name}: ${c.score}`).join('\n') || 'N/A'}
+
+**Previous Key Issues Identified**:
+${previousAnalysis.deductions?.slice(0, 5).map((d: any) => `- [${d.category}] ${d.reason} (-${d.points} pts)`).join('\n') || 'N/A'}
+
+**Previous Recommendations**:
+${previousAnalysis.recommendations?.slice(0, 5).map((r: any) => `- ${typeof r === 'string' ? r : r.text}`).join('\n') || 'N/A'}
+
+IMPORTANT GUIDANCE FOR RE-ANALYSIS:
+1. Compare the current script against these previous issues - note which have been addressed
+2. If an issue from the previous analysis has been fixed, do NOT deduct for it again
+3. If new issues have been introduced, identify them clearly as "New issue:"
+4. Score should reflect actual improvement - if the script is better, the score should be higher
+5. Be specific about what changed: "Previously X, now Y - improved/regression"
+` : ''}
 
 ## CONDITIONAL DEDUCTIONS (Apply only if metrics warrant)
 

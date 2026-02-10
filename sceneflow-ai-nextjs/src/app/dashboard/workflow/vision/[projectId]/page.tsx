@@ -4083,6 +4083,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           categories: currentAudienceReview.categories || []
         } : undefined
         
+        // Pass full previous analysis for caching (when unchanged) and context (when changed)
+        const previousAnalysisPayload = currentAudienceReview ? {
+          overallScore: currentAudienceReview.overallScore,
+          categories: currentAudienceReview.categories || [],
+          deductions: currentAudienceReview.deductions || [],
+          recommendations: currentAudienceReview.recommendations || [],
+          analysis: currentAudienceReview.analysis,
+          strengths: currentAudienceReview.strengths || [],
+          improvements: currentAudienceReview.improvements || [],
+          sceneAnalysis: currentAudienceReview.sceneAnalysis || [],
+          showVsTellRatio: currentAudienceReview.showVsTellRatio,
+          targetDemographic: currentAudienceReview.targetDemographic,
+          emotionalImpact: currentAudienceReview.emotionalImpact,
+          generatedAt: currentAudienceReview.generatedAt,
+          baseScore: currentAudienceReview.baseScore || 100
+        } : undefined
+        
         const response = await fetch('/api/vision/review-script', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -4095,6 +4112,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               characters: characters
             },
             previousScores: previousScoresPayload,
+            previousAnalysis: previousAnalysisPayload,
             scriptHash: currentScriptHash,
             previousScriptHash: previousScriptHash
           })
@@ -4107,11 +4125,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (data.success) {
           // New API returns audienceResonance as primary review, director is deprecated (null)
           const audienceData = data.audienceResonance || data.audience
-          console.log('[Script Review] Audience Resonance generated successfully:', {
+          const isCached = data.cached === true
+          
+          console.log('[Script Review] Audience Resonance', isCached ? 'retrieved from cache' : 'generated successfully:', {
             audienceScore: audienceData?.overallScore,
             showVsTellRatio: audienceData?.showVsTellRatio,
-            deductionsCount: audienceData?.deductions?.length || 0
+            deductionsCount: audienceData?.deductions?.length || 0,
+            cached: isCached
           })
+          
+          // If cached, skip saving to database (already saved) and just update local state
+          if (isCached) {
+            console.log('[Script Review] Using cached analysis - script unchanged')
+            setAudienceReview(audienceData)
+            // Clear score outdated flag since we're showing a valid cached score
+            setScoreOutdated(false)
+            return 'Script unchanged - showing previous analysis'
+          }
           
           // Save reviews to project metadata BEFORE updating local state
           if (project) {
