@@ -1,17 +1,18 @@
 /**
  * Image Editing Client for SceneFlow AI
  * 
- * All editing modes use Vertex AI Gemini for multimodal image editing:
- * 1. Instruction-Based Editing - Natural language editing without masks
- * 2. Mask-Based Editing (Inpainting) - Precise pixel control with masks
+ * All editing modes use Vertex AI Imagen 3 Capability Model for image editing:
+ * 1. Instruction-Based Editing - Natural language editing with automatic mask detection
+ * 2. Mask-Based Editing (Inpainting) - Precise pixel control with user-provided masks
  * 3. Outpainting - Expand image to new aspect ratios
  * 
- * MIGRATED: From consumer Gemini API (generativelanguage.googleapis.com) to
- * Vertex AI (aiplatform.googleapis.com) for pay-as-you-go billing and no 429 errors.
+ * MIGRATED: From Gemini (doesn't support multi-modal output on Vertex AI) to
+ * Imagen 3 Capability Model (imagen-3.0-capability-001) which supports editing.
  * 
  * SERVER-SIDE ONLY - Do not import this file in client components
  * 
  * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
+ * @see https://docs.cloud.google.com/vertex-ai/generative-ai/docs/image/edit-images-overview
  */
 
 import { EditMode, AspectRatioPreset } from '@/types/imageEdit'
@@ -28,6 +29,9 @@ function getVertexConfig() {
   
   return { projectId, location }
 }
+
+// Imagen 3 Capability Model for editing operations
+const IMAGEN_EDIT_MODEL = 'imagen-3.0-capability-001'
 
 // Re-export types for API route usage
 export type { EditMode, AspectRatioPreset }
@@ -120,18 +124,17 @@ function detectMimeType(imageSource: string): string {
 }
 
 // ============================================================================
-// Instruction-Based Editing (Gemini 3 Pro Image Preview)
+// Instruction-Based Editing (Imagen 3 with Automatic Mask Detection)
 // ============================================================================
 
 /**
- * Edit image using natural language instruction (Vertex AI Gemini)
- * No mask required - AI understands context from the instruction
- * Uses Vertex AI for pay-as-you-go billing (no 429 quota errors)
+ * Edit image using natural language instruction (Vertex AI Imagen 3)
+ * Uses automatic foreground mask detection - no mask required from user
  * 
  * @example
  * await editImageWithInstruction({
  *   sourceImage: 'https://example.com/man-in-suit.jpg',
- *   instruction: 'Change the suit to a tuxedo'
+ *   instruction: 'Remove the glasses'
  * })
  */
 export async function editImageWithInstruction(
@@ -139,7 +142,7 @@ export async function editImageWithInstruction(
 ): Promise<EditResult> {
   const { sourceImage, instruction, subjectReference } = options
   
-  console.log('[Image Edit] Starting instruction-based edit with Vertex AI Gemini...')
+  console.log('[Image Edit] Starting instruction-based edit with Imagen 3 Capability...')
   console.log('[Image Edit] Instruction:', instruction.substring(0, 100))
   
   try {
@@ -147,55 +150,67 @@ export async function editImageWithInstruction(
     
     // Convert source image to base64
     const sourceBase64 = await imageToBase64(sourceImage)
-    const sourceMimeType = detectMimeType(sourceImage)
     
-    // Build contents array: source image first, then instruction
-    const contents: any[] = []
-    
-    // Add source image to edit
-    contents.push({
-      inline_data: {
-        mime_type: sourceMimeType,
-        data: sourceBase64
+    // Build reference images array for Imagen 3 editing
+    const referenceImages: any[] = [
+      {
+        referenceType: 'REFERENCE_TYPE_RAW',
+        referenceId: 1,
+        referenceImage: {
+          bytesBase64Encoded: sourceBase64
+        }
+      },
+      {
+        referenceType: 'REFERENCE_TYPE_MASK',
+        referenceId: 2,
+        maskImageConfig: {
+          // Use foreground segmentation for automatic mask detection
+          // Works well for character edits like "remove glasses", "change expression"
+          maskMode: 'MASK_MODE_FOREGROUND',
+          dilation: 0.03  // Small dilation for better edge handling
+        }
       }
-    })
+    ]
     
     // Add subject reference if provided (for identity consistency)
     if (subjectReference) {
       console.log('[Image Edit] Adding subject reference for identity consistency')
       const refBase64 = await imageToBase64(subjectReference.imageUrl)
-      contents.push({
-        inline_data: {
-          mime_type: 'image/jpeg',
-          data: refBase64
+      referenceImages.push({
+        referenceType: 'REFERENCE_TYPE_SUBJECT',
+        referenceId: 3,
+        referenceImage: {
+          bytesBase64Encoded: refBase64
+        },
+        subjectImageConfig: {
+          subjectType: 'SUBJECT_TYPE_PERSON',
+          subjectDescription: subjectReference.description
         }
       })
     }
     
-    // Build the edit instruction prompt
-    let editPrompt = `Edit this image: ${instruction}`
-    if (subjectReference) {
-      editPrompt += `\n\nMaintain the identity of the person shown in the reference image. Subject: ${subjectReference.description}`
-    }
-    editPrompt += '\n\nKeep the same overall composition, lighting, and style. Generate the edited image.'
-    
-    contents.push({ text: editPrompt })
-    
-    // Use Vertex AI Gemini endpoint for image editing
-    // Note: gemini-2.5-flash supports image generation on Vertex AI
-    const model = 'gemini-2.5-flash'
-    const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
+    // Use Imagen 3 Capability endpoint for editing
+    const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${IMAGEN_EDIT_MODEL}:predict`
     
     const accessToken = await getVertexAIAuthToken()
     
     const requestBody = {
-      contents: [{ role: 'user', parts: contents }],
-      generationConfig: {
-        responseModalities: ['IMAGE', 'TEXT']
+      instances: [{
+        prompt: instruction,
+        referenceImages: referenceImages
+      }],
+      parameters: {
+        editMode: 'EDIT_MODE_INPAINT_INSERTION',
+        editConfig: {
+          baseSteps: 50  // Balance between quality and speed
+        },
+        sampleCount: 1,
+        safetySetting: 'block_some',
+        personGeneration: 'allow_adult'
       }
     }
     
-    console.log('[Image Edit] Calling Vertex AI Gemini...')
+    console.log('[Image Edit] Calling Imagen 3 Capability for instruction-based edit...')
     
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -208,44 +223,33 @@ export async function editImageWithInstruction(
     
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`Vertex AI Gemini error: ${response.status} - ${errorText}`)
+      console.error('[Image Edit] Imagen 3 error response:', errorText)
+      throw new Error(`Imagen 3 error: ${response.status} - ${errorText}`)
     }
     
     const data = await response.json()
     
     // Check for API errors
     if (data.error) {
-      throw new Error(`Vertex AI Gemini error: ${data.error.message || 'Unknown error'}`)
+      throw new Error(`Imagen 3 error: ${data.error.message || 'Unknown error'}`)
     }
     
-    // Extract image from Gemini response
-    const candidates = data?.candidates
-    if (!candidates || candidates.length === 0) {
+    // Extract image from Imagen 3 response
+    const predictions = data?.predictions
+    if (!predictions || predictions.length === 0) {
+      console.error('[Image Edit] No predictions - likely filtered by safety settings')
       throw new Error('Image editing was filtered due to content policies. Try adjusting the instruction.')
     }
     
-    const parts = candidates[0]?.content?.parts
-    if (!parts || parts.length === 0) {
-      throw new Error('Unexpected response format from Vertex AI Gemini')
+    const imageBytes = predictions[0]?.bytesBase64Encoded
+    if (!imageBytes) {
+      console.error('[Image Edit] Unexpected response structure:', JSON.stringify(data).slice(0, 500))
+      throw new Error('Unexpected response format from Imagen 3')
     }
     
-    // Find the image part
-    let imageData: string | null = null
-    for (const part of parts) {
-      const inlineData = part.inline_data || part.inlineData
-      if (inlineData && (inlineData.mime_type || inlineData.mimeType)?.startsWith?.('image/') && !part.thought) {
-        imageData = inlineData.data
-        break
-      }
-    }
+    const editedImageDataUrl = `data:image/png;base64,${imageBytes}`
     
-    if (!imageData) {
-      throw new Error('No image generated by Vertex AI Gemini')
-    }
-    
-    const editedImageDataUrl = `data:image/png;base64,${imageData}`
-    
-    console.log('[Image Edit] Instruction-based edit completed successfully via Vertex AI')
+    console.log('[Image Edit] Instruction-based edit completed successfully via Imagen 3')
     
     return {
       imageDataUrl: editedImageDataUrl,
@@ -266,13 +270,12 @@ export async function editImageWithInstruction(
 }
 
 // ============================================================================
-// Mask-Based Editing (Vertex AI Gemini with Mask)
+// Mask-Based Editing (Imagen 3 with User-Provided Mask)
 // ============================================================================
 
 /**
- * Edit image using a binary mask (Vertex AI Gemini Inpainting)
+ * Edit image using a binary mask (Vertex AI Imagen 3 Inpainting)
  * White areas in mask will be regenerated based on prompt
- * Uses Vertex AI for pay-as-you-go billing (no 429 quota errors)
  * 
  * @example
  * await inpaintImage({
@@ -286,7 +289,7 @@ export async function inpaintImage(
 ): Promise<EditResult> {
   const { sourceImage, maskImage, prompt, negativePrompt } = options
   
-  console.log('[Image Edit] Starting mask-based inpainting with Vertex AI Gemini...')
+  console.log('[Image Edit] Starting mask-based inpainting with Imagen 3 Capability...')
   console.log('[Image Edit] Prompt:', prompt.substring(0, 100))
   
   try {
@@ -295,54 +298,57 @@ export async function inpaintImage(
     // Convert images to base64
     const sourceBase64 = await imageToBase64(sourceImage)
     const maskBase64 = await imageToBase64(maskImage)
-    const sourceMimeType = detectMimeType(sourceImage)
     
-    // Build contents array: source image, mask, then instruction
-    const contents: any[] = []
-    
-    // Add source image
-    contents.push({
-      inline_data: {
-        mime_type: sourceMimeType,
-        data: sourceBase64
+    // Build reference images array for Imagen 3 editing
+    const referenceImages: any[] = [
+      {
+        referenceType: 'REFERENCE_TYPE_RAW',
+        referenceId: 1,
+        referenceImage: {
+          bytesBase64Encoded: sourceBase64
+        }
+      },
+      {
+        referenceType: 'REFERENCE_TYPE_MASK',
+        referenceId: 2,
+        referenceImage: {
+          bytesBase64Encoded: maskBase64
+        },
+        maskImageConfig: {
+          maskMode: 'MASK_MODE_USER_PROVIDED',
+          dilation: 0.01  // Small dilation for edge smoothing
+        }
       }
-    })
+    ]
     
-    // Add mask image
-    contents.push({
-      inline_data: {
-        mime_type: 'image/png',
-        data: maskBase64
-      }
-    })
-    
-    // Build the inpainting prompt
-    let editPrompt = `Edit this image. The second image is a mask where WHITE areas should be replaced/edited and BLACK areas should remain unchanged.
-
-In the WHITE masked areas, generate: ${prompt}`
-    
-    if (negativePrompt) {
-      editPrompt += `\n\nAvoid: ${negativePrompt}`
-    }
-    
-    editPrompt += '\n\nKeep the BLACK masked areas exactly as they are in the original. Generate the edited image.'
-    
-    contents.push({ text: editPrompt })
-    
-    // Use Vertex AI Gemini endpoint
-    const model = 'gemini-2.5-flash'
-    const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
+    // Use Imagen 3 Capability endpoint for editing
+    const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${IMAGEN_EDIT_MODEL}:predict`
     
     const accessToken = await getVertexAIAuthToken()
     
+    // Build prompt with optional negative
+    let fullPrompt = prompt
+    if (negativePrompt) {
+      fullPrompt += `. Avoid: ${negativePrompt}`
+    }
+    
     const requestBody = {
-      contents: [{ role: 'user', parts: contents }],
-      generationConfig: {
-        responseModalities: ['IMAGE', 'TEXT']
+      instances: [{
+        prompt: fullPrompt,
+        referenceImages: referenceImages
+      }],
+      parameters: {
+        editMode: 'EDIT_MODE_INPAINT_INSERTION',
+        editConfig: {
+          baseSteps: 50
+        },
+        sampleCount: 1,
+        safetySetting: 'block_some',
+        personGeneration: 'allow_adult'
       }
     }
     
-    console.log('[Image Edit] Calling Vertex AI Gemini for inpainting...')
+    console.log('[Image Edit] Calling Imagen 3 Capability for inpainting...')
     
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -355,44 +361,33 @@ In the WHITE masked areas, generate: ${prompt}`
     
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`Vertex AI Gemini error: ${response.status} - ${errorText}`)
+      console.error('[Image Edit] Imagen 3 error response:', errorText)
+      throw new Error(`Imagen 3 error: ${response.status} - ${errorText}`)
     }
     
     const data = await response.json()
     
     // Check for API errors
     if (data.error) {
-      throw new Error(`Vertex AI Gemini error: ${data.error.message || 'Unknown error'}`)
+      throw new Error(`Imagen 3 error: ${data.error.message || 'Unknown error'}`)
     }
     
-    // Extract image from response
-    const candidates = data?.candidates
-    if (!candidates || candidates.length === 0) {
+    // Extract image from Imagen 3 response
+    const predictions = data?.predictions
+    if (!predictions || predictions.length === 0) {
+      console.error('[Image Edit] No predictions - likely filtered by safety settings')
       throw new Error('Image editing was filtered due to content policies. Try adjusting the prompt.')
     }
     
-    const parts = candidates[0]?.content?.parts
-    if (!parts || parts.length === 0) {
-      throw new Error('Unexpected response format from Vertex AI Gemini')
+    const imageBytes = predictions[0]?.bytesBase64Encoded
+    if (!imageBytes) {
+      console.error('[Image Edit] Unexpected response structure:', JSON.stringify(data).slice(0, 500))
+      throw new Error('Unexpected response format from Imagen 3')
     }
     
-    // Find the image part
-    let imageData: string | null = null
-    for (const part of parts) {
-      const inlineData = part.inline_data || part.inlineData
-      if (inlineData && (inlineData.mime_type || inlineData.mimeType)?.startsWith?.('image/') && !part.thought) {
-        imageData = inlineData.data
-        break
-      }
-    }
+    const editedImageDataUrl = `data:image/png;base64,${imageBytes}`
     
-    if (!imageData) {
-      throw new Error('No image generated by Vertex AI Gemini')
-    }
-    
-    const editedImageDataUrl = `data:image/png;base64,${imageData}`
-    
-    console.log('[Image Edit] Inpainting completed successfully via Vertex AI')
+    console.log('[Image Edit] Inpainting completed successfully via Imagen 3')
     
     return {
       imageDataUrl: editedImageDataUrl,
@@ -413,13 +408,12 @@ In the WHITE masked areas, generate: ${prompt}`
 }
 
 // ============================================================================
-// Outpainting (Aspect Ratio Expansion with Vertex AI Gemini)
+// Outpainting (Aspect Ratio Expansion with Imagen 3)
 // ============================================================================
 
 /**
- * Expand image to a new aspect ratio (Vertex AI Gemini Outpainting)
+ * Expand image to a new aspect ratio (Vertex AI Imagen 3 Outpainting)
  * AI fills in the new areas based on the prompt
- * Uses Vertex AI for pay-as-you-go billing (no 429 quota errors)
  * 
  * @example
  * await outpaintImage({
@@ -433,7 +427,7 @@ export async function outpaintImage(
 ): Promise<EditResult> {
   const { sourceImage, targetAspectRatio, prompt, negativePrompt } = options
   
-  console.log('[Image Edit] Starting outpainting with Vertex AI Gemini...')
+  console.log('[Image Edit] Starting outpainting with Imagen 3 Capability...')
   console.log('[Image Edit] Target aspect ratio:', targetAspectRatio)
   console.log('[Image Edit] Prompt:', prompt.substring(0, 100))
   
@@ -442,48 +436,50 @@ export async function outpaintImage(
     
     // Convert source image to base64
     const sourceBase64 = await imageToBase64(sourceImage)
-    const sourceMimeType = detectMimeType(sourceImage)
     
-    // Build contents array
-    const contents: any[] = []
-    
-    // Add source image
-    contents.push({
-      inline_data: {
-        mime_type: sourceMimeType,
-        data: sourceBase64
+    // Build reference images array for Imagen 3 outpainting
+    const referenceImages: any[] = [
+      {
+        referenceType: 'REFERENCE_TYPE_RAW',
+        referenceId: 1,
+        referenceImage: {
+          bytesBase64Encoded: sourceBase64
+        }
       }
-    })
+    ]
     
-    // Build the outpainting prompt
-    let editPrompt = `Expand this image to a ${targetAspectRatio} aspect ratio. 
-
-The original image should remain in the center, and you should extend/expand the canvas outward to fill the new aspect ratio.
-
-For the newly expanded areas, generate: ${prompt}
-
-Make sure the expanded areas blend seamlessly with the original image, matching the lighting, style, and perspective.`
-    
-    if (negativePrompt) {
-      editPrompt += `\n\nAvoid: ${negativePrompt}`
-    }
-    
-    contents.push({ text: editPrompt })
-    
-    // Use Vertex AI Gemini endpoint
-    const model = 'gemini-2.5-flash'
-    const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
+    // Use Imagen 3 Capability endpoint for outpainting
+    const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${IMAGEN_EDIT_MODEL}:predict`
     
     const accessToken = await getVertexAIAuthToken()
     
-    const requestBody: any = {
-      contents: [{ role: 'user', parts: contents }],
-      generationConfig: {
-        responseModalities: ['IMAGE', 'TEXT']
+    // Build prompt with context for expanded areas
+    let fullPrompt = `${prompt}. Seamlessly expand the image to fill a ${targetAspectRatio} aspect ratio.`
+    if (negativePrompt) {
+      fullPrompt += ` Avoid: ${negativePrompt}`
+    }
+    
+    const requestBody = {
+      instances: [{
+        prompt: fullPrompt,
+        referenceImages: referenceImages
+      }],
+      parameters: {
+        editMode: 'EDIT_MODE_OUTPAINT',
+        outputOptions: {
+          // Map aspect ratio string to Imagen 3 format
+          aspectRatio: targetAspectRatio.replace(':', ':')
+        },
+        editConfig: {
+          baseSteps: 50
+        },
+        sampleCount: 1,
+        safetySetting: 'block_some',
+        personGeneration: 'allow_adult'
       }
     }
     
-    console.log('[Image Edit] Calling Vertex AI Gemini for outpainting...')
+    console.log('[Image Edit] Calling Imagen 3 Capability for outpainting...')
     
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -496,44 +492,33 @@ Make sure the expanded areas blend seamlessly with the original image, matching 
     
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`Vertex AI Gemini error: ${response.status} - ${errorText}`)
+      console.error('[Image Edit] Imagen 3 error response:', errorText)
+      throw new Error(`Imagen 3 error: ${response.status} - ${errorText}`)
     }
     
     const data = await response.json()
     
     // Check for API errors
     if (data.error) {
-      throw new Error(`Vertex AI Gemini error: ${data.error.message || 'Unknown error'}`)
+      throw new Error(`Imagen 3 error: ${data.error.message || 'Unknown error'}`)
     }
     
-    // Extract image from response
-    const candidates = data?.candidates
-    if (!candidates || candidates.length === 0) {
+    // Extract image from Imagen 3 response
+    const predictions = data?.predictions
+    if (!predictions || predictions.length === 0) {
+      console.error('[Image Edit] No predictions - likely filtered by safety settings')
       throw new Error('Image outpainting was filtered due to content policies. Try adjusting the prompt.')
     }
     
-    const parts = candidates[0]?.content?.parts
-    if (!parts || parts.length === 0) {
-      throw new Error('Unexpected response format from Vertex AI Gemini')
+    const imageBytes = predictions[0]?.bytesBase64Encoded
+    if (!imageBytes) {
+      console.error('[Image Edit] Unexpected response structure:', JSON.stringify(data).slice(0, 500))
+      throw new Error('Unexpected response format from Imagen 3')
     }
     
-    // Find the image part
-    let imageData: string | null = null
-    for (const part of parts) {
-      const inlineData = part.inline_data || part.inlineData
-      if (inlineData && (inlineData.mime_type || inlineData.mimeType)?.startsWith?.('image/') && !part.thought) {
-        imageData = inlineData.data
-        break
-      }
-    }
+    const editedImageDataUrl = `data:image/png;base64,${imageBytes}`
     
-    if (!imageData) {
-      throw new Error('No image generated by Vertex AI Gemini')
-    }
-    
-    const editedImageDataUrl = `data:image/png;base64,${imageData}`
-    
-    console.log('[Image Edit] Outpainting completed successfully via Vertex AI')
+    console.log('[Image Edit] Outpainting completed successfully via Imagen 3')
     
     return {
       imageDataUrl: editedImageDataUrl,
