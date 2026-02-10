@@ -1064,6 +1064,14 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
           imageType={editingImageData.type === 'character' ? 'character' : editingImageData.type}
           onSave={handleSaveEditedImage}
           title={`Edit ${editingImageData.type.charAt(0).toUpperCase() + editingImageData.type.slice(1)} Image`}
+          // For character edits, pass the character's image as subject reference for identity preservation
+          subjectReference={editingImageData.type === 'character' && editingImageData.characterId ? (() => {
+            const character = characters.find(c => c.id === editingImageData.characterId)
+            return character?.referenceImage ? {
+              imageUrl: character.referenceImage,
+              description: character.name || 'character'
+            } : undefined
+          })() : undefined}
         />
       )}
     </DndContext>

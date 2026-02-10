@@ -60,7 +60,7 @@ export async function generateImageWithGeminiStudio(
   const model = useFlashFallback ? 'gemini-2.5-flash-image' : 'gemini-3-pro-image-preview'
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
   
-  if (useFlashFallback) {
+  if (useFlashFallback && proModelRateLimitedUntil) {
     console.log(`[Gemini Studio Image] Using flash fallback (rate limited until ${new Date(proModelRateLimitedUntil).toISOString()})`)
   }
   
@@ -238,11 +238,11 @@ export async function generateImageWithGeminiStudio(
       // Handle both camelCase (mimeType) and snake_case (mime_type) response formats
       imageBase64 = inlineData.data
       imageMimeType = inlineData.mimeType || inlineData.mime_type || 'image/png'
-      console.log(`[Gemini Studio Image] Found image: ${imageMimeType}, ${imageBase64.length} chars`)
+      console.log(`[Gemini Studio Image] Found image: ${imageMimeType}, ${(imageBase64 as string).length} chars`)
     } else if (part.text && !part.thought && !part.thoughtSignature) {
       // Capture non-thought text (skip thought and thoughtSignature parts)
       responseText = part.text
-      console.log(`[Gemini Studio Image] Found text: ${responseText.substring(0, 100)}...`)
+      console.log(`[Gemini Studio Image] Found text: ${(responseText as string).substring(0, 100)}...`)
     }
   }
   
@@ -254,10 +254,105 @@ export async function generateImageWithGeminiStudio(
   console.log('[Gemini Studio Image] ✓ Image generated successfully')
   
   return {
-    imageBase64,
+    imageBase64: imageBase64!,
     mimeType: imageMimeType,
     text: responseText
   }
+}
+
+/**
+ * Edit an image using Gemini Studio with character identity preservation
+ * 
+ * This is the preferred method for character image editing because it:
+ * 1. Understands the source image context
+ * 2. Preserves character identity from reference images
+ * 3. Applies natural language edit instructions accurately
+ * 
+ * Unlike Imagen 3's mask-based editing which regenerates entire regions,
+ * Gemini understands the semantic content and makes targeted edits.
+ */
+export interface GeminiStudioEditOptions {
+  /** The source image to edit (URL or base64 data URL) */
+  sourceImage: string
+  /** Natural language description of the edit to apply */
+  instruction: string
+  /** Optional character reference image for identity preservation */
+  referenceImage?: string
+  /** Aspect ratio for the output (defaults to source aspect) */
+  aspectRatio?: '1:1' | '2:3' | '3:2' | '3:4' | '4:3' | '4:5' | '5:4' | '9:16' | '16:9'
+  /** Output image size */
+  imageSize?: '1K' | '2K'
+}
+
+export async function editImageWithGeminiStudio(
+  options: GeminiStudioEditOptions
+): Promise<GeminiStudioImageResult> {
+  console.log(`[Gemini Studio Edit] Starting edit: "${options.instruction.substring(0, 50)}..."`)
+  
+  // Build the edit prompt with identity preservation instructions
+  const editPrompt = `Edit this image according to the following instruction: ${options.instruction}
+
+CRITICAL REQUIREMENTS:
+1. Preserve the EXACT same person's identity - same face, ethnicity, age, and facial features
+2. Only apply the specific edit requested - do not change anything else
+3. Maintain the same pose, angle, lighting style, and background where possible
+4. The edited image should look like the same person, just with the requested modification
+
+If a reference image of the person is provided, use it to ensure identity consistency.`
+
+  // Prepare reference images - source is primary, character reference is for identity
+  const referenceImages: Array<{
+    imageUrl?: string
+    base64Image?: string
+    mimeType?: string
+    name?: string
+  }> = []
+
+  // Add source image (the one being edited)
+  if (options.sourceImage.startsWith('data:')) {
+    // Extract base64 from data URL
+    const matches = options.sourceImage.match(/^data:([^;]+);base64,(.+)$/)
+    if (matches) {
+      referenceImages.push({
+        base64Image: matches[2],
+        mimeType: matches[1],
+        name: 'source-to-edit'
+      })
+    }
+  } else {
+    referenceImages.push({
+      imageUrl: options.sourceImage,
+      name: 'source-to-edit'
+    })
+  }
+
+  // Add character reference image for identity preservation (if provided)
+  if (options.referenceImage) {
+    if (options.referenceImage.startsWith('data:')) {
+      const matches = options.referenceImage.match(/^data:([^;]+);base64,(.+)$/)
+      if (matches) {
+        referenceImages.push({
+          base64Image: matches[2],
+          mimeType: matches[1],
+          name: 'identity-reference'
+        })
+      }
+    } else {
+      referenceImages.push({
+        imageUrl: options.referenceImage,
+        name: 'identity-reference'
+      })
+    }
+    console.log(`[Gemini Studio Edit] Added identity reference image for preservation`)
+  }
+
+  // Generate edited image using the standard function
+  return generateImageWithGeminiStudio({
+    prompt: editPrompt,
+    aspectRatio: options.aspectRatio || '1:1',
+    imageSize: options.imageSize || '1K',
+    referenceImages
+  })
 }
 
 /**

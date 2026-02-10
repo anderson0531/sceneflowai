@@ -1,10 +1,11 @@
 /**
  * Image Edit API Route
  * 
- * Provides image editing capabilities for SceneFlow AI:
- * - Instruction-based editing (Gemini) - Quick conversational edits
- * - Mask-based inpainting (Imagen 3) - Precise pixel control
- * - Outpainting (Imagen 3) - Expand to cinematic aspect ratios
+ * Provides AI-powered image editing for SceneFlow AI using Gemini Studio.
+ * 
+ * Primary Mode:
+ * - Instruction-based editing (Gemini Studio) - Natural language edits with
+ *   character identity preservation via reference images
  * 
  * Content Moderation:
  * - All prompts are pre-screened via Hive AI
@@ -15,31 +16,17 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import {
-  editImageWithInstruction,
-  inpaintImage,
-  outpaintImage,
-  EditMode,
-  AspectRatioPreset
-} from '@/lib/imagen/editClient'
+import { editImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { moderatePrompt, createBlockedResponse, getUserModerationContext } from '@/lib/moderation'
 
 interface EditRequestBody {
-  /** Edit mode: 'instruction' | 'inpaint' | 'outpaint' */
-  mode: EditMode
+  /** Edit mode: 'instruction' (only mode supported now) */
+  mode: 'instruction'
   /** Source image URL or base64 data URL */
   sourceImage: string
-  /** For instruction mode: natural language edit instruction */
-  instruction?: string
-  /** For mask modes: the edit/generation prompt */
-  prompt?: string
-  /** For inpaint mode: binary mask image (white = edit area) */
-  maskImage?: string
-  /** For outpaint mode: target aspect ratio */
-  targetAspectRatio?: AspectRatioPreset
-  /** Optional negative prompt */
-  negativePrompt?: string
+  /** Natural language edit instruction */
+  instruction: string
   /** Optional subject reference for identity consistency */
   subjectReference?: {
     imageUrl: string
@@ -63,10 +50,6 @@ export async function POST(request: NextRequest) {
       mode,
       sourceImage,
       instruction,
-      prompt,
-      maskImage,
-      targetAspectRatio,
-      negativePrompt,
       subjectReference,
       saveToBlob = true,
       blobPrefix = 'edited',
@@ -75,9 +58,9 @@ export async function POST(request: NextRequest) {
     } = body
     
     // Validate required fields
-    if (!mode) {
+    if (!mode || mode !== 'instruction') {
       return NextResponse.json(
-        { error: 'Missing required field: mode' },
+        { error: 'Invalid mode. Only "instruction" mode is supported.' },
         { status: 400 }
       )
     }
@@ -89,106 +72,48 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    console.log(`[Image Edit API] Processing ${mode} edit request...`)
-    
-    // Content moderation: Pre-screen prompts before generation
-    // This catches violations BEFORE we spend credits on expensive image operations
-    const textToModerate = instruction || prompt || ''
-    if (textToModerate) {
-      const moderationContext = await getUserModerationContext(userId, projectId)
-      const moderationResult = await moderatePrompt(textToModerate, moderationContext)
-      
-      if (!moderationResult.allowed) {
-        console.log(`[Image Edit API] Prompt blocked by moderation: ${moderationResult.reason}`)
-        return createBlockedResponse(
-          moderationResult.result!,
-          'Your edit request contains content that violates our content policy. Please revise and try again.'
-        )
-      }
-    }
-    
-    let result
-    
-    switch (mode) {
-      case 'instruction':
-        if (!instruction) {
-          return NextResponse.json(
-            { error: 'Missing required field for instruction mode: instruction' },
-            { status: 400 }
-          )
-        }
-        result = await editImageWithInstruction({
-          sourceImage,
-          instruction,
-          subjectReference
-        })
-        break
-        
-      case 'inpaint':
-        if (!maskImage) {
-          return NextResponse.json(
-            { error: 'Missing required field for inpaint mode: maskImage' },
-            { status: 400 }
-          )
-        }
-        if (!prompt) {
-          return NextResponse.json(
-            { error: 'Missing required field for inpaint mode: prompt' },
-            { status: 400 }
-          )
-        }
-        result = await inpaintImage({
-          sourceImage,
-          maskImage,
-          prompt,
-          negativePrompt
-        })
-        break
-        
-      case 'outpaint':
-        if (!targetAspectRatio) {
-          return NextResponse.json(
-            { error: 'Missing required field for outpaint mode: targetAspectRatio' },
-            { status: 400 }
-          )
-        }
-        if (!prompt) {
-          return NextResponse.json(
-            { error: 'Missing required field for outpaint mode: prompt' },
-            { status: 400 }
-          )
-        }
-        result = await outpaintImage({
-          sourceImage,
-          targetAspectRatio,
-          prompt,
-          negativePrompt
-        })
-        break
-        
-      default:
-        return NextResponse.json(
-          { error: `Invalid mode: ${mode}. Must be 'instruction', 'inpaint', or 'outpaint'` },
-          { status: 400 }
-        )
-    }
-    
-    if (!result.success) {
-      console.error(`[Image Edit API] ${mode} edit failed:`, result.error)
+    if (!instruction) {
       return NextResponse.json(
-        { error: result.error || 'Image editing failed' },
-        { status: 500 }
+        { error: 'Missing required field: instruction' },
+        { status: 400 }
       )
     }
     
+    console.log(`[Image Edit API] Processing instruction edit: "${instruction.substring(0, 50)}..."`)
+    if (subjectReference) {
+      console.log(`[Image Edit API] Using subject reference for identity preservation`)
+    }
+    
+    // Content moderation: Pre-screen prompts before generation
+    const moderationContext = await getUserModerationContext(userId, projectId)
+    const moderationResult = await moderatePrompt(instruction, moderationContext)
+    
+    if (!moderationResult.allowed) {
+      console.log(`[Image Edit API] Prompt blocked by moderation: ${moderationResult.reason}`)
+      return createBlockedResponse(
+        moderationResult.result!,
+        'Your edit request contains content that violates our content policy. Please revise and try again.'
+      )
+    }
+    
+    // Use Gemini Studio for character-aware image editing
+    const result = await editImageWithGeminiStudio({
+      sourceImage,
+      instruction,
+      referenceImage: subjectReference?.imageUrl,
+      aspectRatio: '1:1',
+      imageSize: '1K'
+    })
+    
+    // Convert result to data URL
+    const imageDataUrl = `data:${result.mimeType};base64,${result.imageBase64}`
+    
     // Optionally save to blob storage for persistence
-    let permanentUrl = result.imageDataUrl
-    if (saveToBlob && result.imageDataUrl) {
+    let permanentUrl = imageDataUrl
+    if (saveToBlob) {
       try {
         const filename = `${blobPrefix}-${Date.now()}.png`
-        // Extract base64 data from data URL
-        const base64Data = result.imageDataUrl.split(',')[1]
-        permanentUrl = await uploadImageToBlob(base64Data, filename)
+        permanentUrl = await uploadImageToBlob(result.imageBase64, filename)
         console.log(`[Image Edit API] Saved to blob: ${permanentUrl}`)
       } catch (blobError: any) {
         console.warn('[Image Edit API] Failed to save to blob, returning data URL:', blobError.message)
@@ -196,13 +121,13 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    console.log(`[Image Edit API] ${mode} edit completed successfully`)
+    console.log(`[Image Edit API] Edit completed successfully`)
     
     return NextResponse.json({
       success: true,
-      mode: result.mode,
+      mode: 'instruction',
       imageUrl: permanentUrl,
-      originalImageUrl: result.originalImageUrl
+      originalImageUrl: sourceImage
     })
     
   } catch (error: any) {
@@ -218,27 +143,20 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     service: 'Image Edit API',
-    version: '1.0.0',
+    version: '2.0.0',
+    description: 'AI-powered image editing using Gemini Studio with character identity preservation',
     modes: [
       {
         mode: 'instruction',
-        description: 'Edit image using natural language instruction (Gemini)',
+        description: 'Edit image using natural language instruction with character identity preservation (Gemini Studio)',
         requiredFields: ['sourceImage', 'instruction'],
-        optionalFields: ['subjectReference', 'saveToBlob', 'blobPrefix']
-      },
-      {
-        mode: 'inpaint',
-        description: 'Edit specific regions using a mask (Imagen 3)',
-        requiredFields: ['sourceImage', 'maskImage', 'prompt'],
-        optionalFields: ['negativePrompt', 'saveToBlob', 'blobPrefix']
-      },
-      {
-        mode: 'outpaint',
-        description: 'Expand image to new aspect ratio (Imagen 3)',
-        requiredFields: ['sourceImage', 'targetAspectRatio', 'prompt'],
-        optionalFields: ['negativePrompt', 'saveToBlob', 'blobPrefix'],
-        aspectRatios: ['16:9', '21:9', '1:1', '9:16', '4:3', '3:4']
+        optionalFields: ['subjectReference', 'saveToBlob', 'blobPrefix'],
+        note: 'When subjectReference is provided, the character identity will be preserved during edits'
       }
+    ],
+    deprecatedModes: [
+      'inpaint (mask-based editing) - Removed: Imagen 3 did not preserve character identity',
+      'outpaint (aspect ratio expansion) - Removed: Imagen 3 did not preserve character identity'
     ]
   })
 }
