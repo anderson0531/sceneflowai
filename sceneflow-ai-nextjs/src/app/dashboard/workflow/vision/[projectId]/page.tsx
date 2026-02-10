@@ -4188,13 +4188,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               ].slice(0, 5) // Keep only last 5 reviews
             }
             
+            // Save full audienceResonance data (not the simplified 'audience' for backwards compat)
+            // This ensures all fields including deductions, scriptHash, etc are persisted
+            const fullAudienceData = data.audienceResonance || data.audience
+            
             const updatedMetadata = {
               ...project.metadata,
               visionPhase: {
                 ...project.metadata?.visionPhase,
                 reviews: {
                   director: data.director,
-                  audience: data.audience,
+                  audience: fullAudienceData,  // Save full audienceResonance data
                   lastUpdated: data.generatedAt,
                   scriptHash: generateScriptHash(script)
                 },
@@ -4206,7 +4210,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               }
             }
             
-            console.log('[Script Review] Saving reviews to database...')
+            console.log('[Script Review] Saving reviews to database...', {
+              audienceScore: fullAudienceData?.overallScore,
+              scriptHash: generateScriptHash(script)?.substring(0, 8)
+            })
             
             const saveResponse = await fetch(`/api/projects/${projectId}`, {
               method: 'PUT',
