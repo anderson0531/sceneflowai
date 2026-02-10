@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateImageWithGemini } from '@/lib/gemini/imageClient'
+import { generateImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { analyzeCharacterImage } from '@/lib/imagen/visionAnalyzer'
 import { getServerSession } from 'next-auth'
@@ -132,20 +132,18 @@ export async function POST(req: NextRequest) {
     )
     console.log(`[Enhance Reference] Subject description: ${subjectDescription}`)
 
-    // STAGE 4: Generate enhanced image using source as reference
-    // NOTE: Skip face mesh control to allow more freedom for lighting/pose transformation
-    console.log(`[Enhance Reference] Stage 3: Generating enhanced headshot...`)
-    const base64Image = await generateImageWithGemini(enhancementPrompt, {
+    // STAGE 4: Generate enhanced image using Gemini Studio (not Imagen)
+    // Gemini 3 Pro Image Preview produces better enhancement results with native reference handling
+    console.log(`[Enhance Reference] Stage 3: Generating enhanced headshot with Gemini Studio...`)
+    const result = await generateImageWithGeminiStudio({
+      prompt: enhancementPrompt,
       aspectRatio: '1:1', // Square for consistent reference format
-      numberOfImages: 1,
-      personGeneration: 'allow_adult',
-      skipFaceMesh: true, // Allow lighting/pose transformation without face mesh constraints
       referenceImages: [{
-        referenceId: 1,
         imageUrl: sourceImageUrl,
-        subjectDescription: subjectDescription
+        name: characterName
       }]
     })
+    const base64Image = `data:${result.mimeType};base64,${result.imageBase64}`
     
     // Upload enhanced image to Vercel Blob
     const enhancedImageUrl = await uploadImageToBlob(
@@ -171,7 +169,7 @@ export async function POST(req: NextRequest) {
         CREDIT_COST,
         'ai_usage',
         projectId || null,
-        { operation: 'enhance_character_reference', characterId, model: 'imagen-3-capability' }
+        { operation: 'enhance_character_reference', characterId, model: 'gemini-3-pro-image-preview' }
       )
       console.log(`[Enhance Reference] Charged ${CREDIT_COST} credits to user ${userId}`)
       const breakdown = await CreditService.getCreditBreakdown(userId)
