@@ -91,7 +91,7 @@ async function generateAndSaveSFXForScene(scene: any, projectId: string, sceneId
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, includeMusic = false, includeSFX = false } = await req.json()
+    const { projectId, includeMusic = false, includeSFX = false, deleteAllAudioFirst = false } = await req.json()
 
     if (!projectId) {
       return NextResponse.json({ error: 'Project ID is required' }, { status: 400 })                                                                            
@@ -113,10 +113,90 @@ export async function POST(req: NextRequest) {
     const visionPhase = metadata.visionPhase || {}
     const narrationVoice = visionPhase.narrationVoice
     const characters = visionPhase.characters || []
-    const scenes = visionPhase.script?.script?.scenes || []
+    
+    // Get scenes - check both possible locations
+    const hasNestedStructure = !!visionPhase.script?.script?.scenes?.length
+    let scenes = visionPhase.script?.script?.scenes || visionPhase.script?.scenes || []
 
     if (!narrationVoice) {
       return NextResponse.json({ error: 'Narration voice not configured' }, { status: 400 })                                                                    
+    }
+
+    // DELETE ALL EXISTING AUDIO FIRST if requested
+    // This ensures fresh generation by clearing audio URLs from all scenes BEFORE any generation
+    if (deleteAllAudioFirst && scenes.length > 0) {
+      console.log(`[Batch Audio] Deleting all existing audio before generation...`)
+      
+      const cleanedScenes = scenes.map((scene: any) => {
+        const cleanedScene = { ...scene }
+        
+        // Clear narration audio
+        delete cleanedScene.narrationAudio
+        delete cleanedScene.narrationAudioUrl
+        
+        // Clear description audio
+        delete cleanedScene.descriptionAudio
+        delete cleanedScene.descriptionAudioUrl
+        
+        // Clear dialogue audio from each dialogue line
+        if (cleanedScene.dialogue && Array.isArray(cleanedScene.dialogue)) {
+          cleanedScene.dialogue = cleanedScene.dialogue.map((d: any) => {
+            const cleanedDialogue = { ...d }
+            delete cleanedDialogue.audioUrl
+            return cleanedDialogue
+          })
+        }
+        
+        // Clear music audio
+        delete cleanedScene.musicAudio
+        if (cleanedScene.music && typeof cleanedScene.music === 'object') {
+          const cleanedMusic = { ...cleanedScene.music }
+          delete cleanedMusic.url
+          cleanedScene.music = cleanedMusic
+        }
+        
+        // Clear SFX audio
+        delete cleanedScene.sfxAudio
+        if (cleanedScene.sfx && Array.isArray(cleanedScene.sfx)) {
+          cleanedScene.sfx = cleanedScene.sfx.map((s: any) => {
+            if (typeof s === 'object') {
+              const cleanedSfx = { ...s }
+              delete cleanedSfx.url
+              return cleanedSfx
+            }
+            return s
+          })
+        }
+        
+        return cleanedScene
+      })
+      
+      // Save cleaned scenes to database BEFORE any generation
+      await project.update({
+        metadata: {
+          ...metadata,
+          visionPhase: {
+            ...visionPhase,
+            script: hasNestedStructure
+              ? {
+                  ...visionPhase.script,
+                  script: {
+                    ...visionPhase.script?.script,
+                    scenes: cleanedScenes
+                  }
+                }
+              : {
+                  ...visionPhase.script,
+                  scenes: cleanedScenes
+                }
+          }
+        }
+      })
+      
+      console.log(`[Batch Audio] Deleted all existing audio from ${scenes.length} scenes`)
+      
+      // Update scenes reference to use cleaned version
+      scenes = cleanedScenes
     }
 
     // ADD DETAILED LOGGING
@@ -319,26 +399,34 @@ export async function POST(req: NextRequest) {
                   if (freshProject) {
                     const freshMetadata = freshProject.metadata || {}
                     const freshVisionPhase = freshMetadata.visionPhase || {}
-                    // Clone array to avoid mutation issues
-                    const freshScenes = [...(freshVisionPhase.script?.script?.scenes || [])]
+                    // FIX: Check both possible scene locations (script.script.scenes OR script.scenes)
+                    // This handles both nested and flat script structures that updateSceneAudio may create
+                    const hasNestedStructure = !!freshVisionPhase.script?.script?.scenes?.length
+                    const freshScenes = [...(freshVisionPhase.script?.script?.scenes || freshVisionPhase.script?.scenes || [])]
                     
                     // Always regenerate music (no skip check)
                     if (freshScenes[i]) {
                       freshScenes[i] = { ...freshScenes[i], musicAudio: musicUrl }
                       musicCount++
                       
+                      // Save back to the SAME structure we read from to maintain consistency
                       await freshProject.update({
                         metadata: {
                           ...freshMetadata,
                           visionPhase: {
                             ...freshVisionPhase,
-                            script: {
-                              ...freshVisionPhase.script,
-                              script: {
-                                ...freshVisionPhase.script?.script,
-                                scenes: freshScenes
-                              }
-                            }
+                            script: hasNestedStructure
+                              ? {
+                                  ...freshVisionPhase.script,
+                                  script: {
+                                    ...freshVisionPhase.script?.script,
+                                    scenes: freshScenes
+                                  }
+                                }
+                              : {
+                                  ...freshVisionPhase.script,
+                                  scenes: freshScenes
+                                }
                           }
                         }
                       })
@@ -376,25 +464,33 @@ export async function POST(req: NextRequest) {
                   if (freshProject) {
                     const freshMetadata = freshProject.metadata || {}
                     const freshVisionPhase = freshMetadata.visionPhase || {}
-                    // Clone array to avoid mutation issues
-                    const freshScenes = [...(freshVisionPhase.script?.script?.scenes || [])]
+                    // FIX: Check both possible scene locations (script.script.scenes OR script.scenes)
+                    // This handles both nested and flat script structures that updateSceneAudio may create
+                    const hasNestedStructure = !!freshVisionPhase.script?.script?.scenes?.length
+                    const freshScenes = [...(freshVisionPhase.script?.script?.scenes || freshVisionPhase.script?.scenes || [])]
                     
                     // Update only the SFX field on this scene
                     if (freshScenes[i]) {
                       freshScenes[i] = { ...freshScenes[i], sfxAudio: sfxUrls }
                       
+                      // Save back to the SAME structure we read from to maintain consistency
                       await freshProject.update({
                         metadata: {
                           ...freshMetadata,
                           visionPhase: {
                             ...freshVisionPhase,
-                            script: {
-                              ...freshVisionPhase.script,
-                              script: {
-                                ...freshVisionPhase.script?.script,
-                                scenes: freshScenes
-                              }
-                            }
+                            script: hasNestedStructure
+                              ? {
+                                  ...freshVisionPhase.script,
+                                  script: {
+                                    ...freshVisionPhase.script?.script,
+                                    scenes: freshScenes
+                                  }
+                                }
+                              : {
+                                  ...freshVisionPhase.script,
+                                  scenes: freshScenes
+                                }
                           }
                         }
                       })

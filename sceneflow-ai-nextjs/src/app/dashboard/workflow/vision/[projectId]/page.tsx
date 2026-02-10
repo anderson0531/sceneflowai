@@ -6617,7 +6617,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const estimatedDuration = Math.max(60, sceneCount * 30) // Minimum 60 seconds
 
     setIsGeneratingAudio(true)
-    setAudioProgress({ current: 0, total: 0, status: 'Starting...' })
+    setAudioProgress({ current: 0, total: 0, status: 'Deleting existing audio...' })
     
     await execute(
       async () => {
@@ -6628,6 +6628,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             projectId,
             includeMusic: true,
             includeSFX: true,
+            deleteAllAudioFirst: true, // Delete all existing audio before generating new
           }),
         })
 
