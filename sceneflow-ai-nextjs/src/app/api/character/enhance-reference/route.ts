@@ -293,59 +293,37 @@ Respond ONLY with valid JSON, no other text.`
 
 /**
  * Build a professional headshot prompt optimized for film industry reference standards
+ * 
+ * KEY INSIGHT: Less prescriptive = better results. Focus on OPTIMIZING what's there,
+ * not dictating every detail. The model works best with natural language guidance.
  */
 function buildProfessionalHeadshotPrompt(
   characterName: string,
   analysis: ImageAnalysis,
   existingDescription?: string
 ): string {
-  // Start with demographic anchor for strong identity preservation
-  const demographic = analysis.demographicAnchor || `${characterName}`
+  // Build a natural, conversational prompt that guides optimization
+  // rather than prescribing exact specifications
   
-  // Build targeted prompt based on analysis
-  const promptParts: string[] = [
-    // Core identity and framing
-    `Professional film industry casting headshot of ${demographic}`,
-    `${characterName} facing directly toward camera`,
-    
-    // Professional headshot standards
-    'Head and shoulders framing, centered composition',
-    'Solid neutral gray background (#808080)',
-    'Even, soft studio lighting with subtle rim light',
-    'Catchlights in eyes',
-    
-    // Expression and pose
-    'Neutral, calm expression',
-    'Direct eye contact with camera',
-    'Relaxed shoulders, professional posture',
-    
-    // Technical quality
-    'Sharp focus on eyes',
-    'Professional photography, 8K resolution',
-    'Clean, high-quality portrait',
-    'Film production reference standard'
-  ]
+  const demographic = analysis.demographicAnchor || 'the person'
+  const physicalDesc = analysis.physicalTraits?.length > 0 
+    ? analysis.physicalTraits.slice(0, 3).join(' and ')
+    : ''
   
-  // Add key physical traits for preservation
-  if (analysis.physicalTraits && analysis.physicalTraits.length > 0) {
-    const traits = analysis.physicalTraits.slice(0, 4).join(', ')
-    promptParts.push(`Preserving: ${traits}`)
-  }
-  
-  // Add existing description for additional context
-  if (existingDescription) {
-    const cleanedDescription = existingDescription
-      .replace(/^(A|An)\s+/i, '')
-      .replace(/\.$/, '')
-      .split('.')[0]
-      .trim()
-    
-    if (cleanedDescription.length > 10 && cleanedDescription.length < 200) {
-      promptParts.push(cleanedDescription)
-    }
-  }
-  
-  return promptParts.join('. ') + '.'
+  // Natural prompt style - proven to work better than technical specifications
+  const prompt = `Create a high-quality, professional actor profile photo of ${demographic}, optimizing the lighting, pose, and expression while keeping their features exactly the same.
+
+Subject: ${characterName}, maintaining their exact facial structure${physicalDesc ? ` including ${physicalDesc}` : ''}.
+
+Lighting: Use professional, soft studio lighting to highlight their face, create definition, and add a warm catchlight to their eyes, eliminating harsh shadows.
+
+Pose & Expression: Angle their body slightly to the camera. Have them look directly into the lens with a confident, warm expression that shows personality.
+
+Background: A subtly blurred, neutral grey studio background to keep the focus on them.
+
+Photography Style: A high-resolution, professional headshot captured with a medium telephoto lens.`
+
+  return prompt
 }
 
 /**
