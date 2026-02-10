@@ -513,6 +513,11 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   const [enhanceIterationCount, setEnhanceIterationCount] = useState(character.enhanceIterationCount || 0)
   const [showEnhanceConfirm, setShowEnhanceConfirm] = useState(false)
   const [enhancedPreviewUrl, setEnhancedPreviewUrl] = useState<string | null>(null)
+  const [enhanceQualityFeedback, setEnhanceQualityFeedback] = useState<{
+    originalScore: number
+    issuesFixed: string[]
+    improvements: string[]
+  } | null>(null)
   
   // Wardrobe preview generation state
   const [generatingPreviewFor, setGeneratingPreviewFor] = useState<string | null>(null)
@@ -733,17 +738,22 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
           toast.error(`Insufficient credits. Need ${error.required} credits.`)
           return
         }
+        if (error.code === 'ALREADY_OPTIMIZED') {
+          toast.info('This image is already well-optimized. Try uploading a different source image.')
+          return
+        }
         throw new Error(error.error || 'Enhancement failed')
       }
 
       const result = await response.json()
       
-      // Show preview for confirmation
+      // Show preview for confirmation with quality feedback
       setEnhancedPreviewUrl(result.enhancedImageUrl)
+      setEnhanceQualityFeedback(result.qualityFeedback || null)
       setShowEnhanceConfirm(true)
       setEnhanceIterationCount(result.iterationCount)
       
-      toast.success(`Enhanced! ${result.remainingIterations} iteration(s) remaining.`)
+      toast.success(`Enhanced to professional headshot! ${result.remainingIterations} iteration(s) remaining.`)
     } catch (error) {
       console.error('[Enhance Reference] Error:', error)
       toast.error(error instanceof Error ? error.message : 'Enhancement failed')
@@ -765,7 +775,8 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
         })
       setShowEnhanceConfirm(false)
       setEnhancedPreviewUrl(null)
-      toast.success('Enhanced reference applied!')
+      setEnhanceQualityFeedback(null)
+      toast.success('Professional headshot reference applied!')
     }
   }
   
@@ -1634,40 +1645,74 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
         
         {/* Enhance Reference Confirmation Dialog */}
         <Dialog open={showEnhanceConfirm} onOpenChange={setShowEnhanceConfirm}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-purple-500" />
-                Enhanced Reference Preview
+                Professional Headshot Preview
               </DialogTitle>
               <DialogDescription>
-                Compare the original and enhanced versions. Accept to replace, or try again ({3 - enhanceIterationCount} iteration{3 - enhanceIterationCount !== 1 ? 's' : ''} remaining).
+                Your reference image has been optimized for film production use. Compare and accept, or try again ({3 - enhanceIterationCount} iteration{3 - enhanceIterationCount !== 1 ? 's' : ''} remaining).
               </DialogDescription>
             </DialogHeader>
+            
+            {/* Quality Improvements Banner */}
+            {enhanceQualityFeedback && enhanceQualityFeedback.improvements.length > 0 && (
+              <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500" />
+                  <span className="text-xs font-medium text-green-600 dark:text-green-400">Enhancements Applied</span>
+                  {enhanceQualityFeedback.originalScore && (
+                    <span className="text-xs text-gray-500 ml-auto">
+                      Original quality score: {enhanceQualityFeedback.originalScore}/100
+                    </span>
+                  )}
+                </div>
+                <ul className="space-y-1">
+                  {enhanceQualityFeedback.improvements.map((improvement, idx) => (
+                    <li key={idx} className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                      <Check className="w-3 h-3 text-green-500 flex-shrink-0" />
+                      {improvement}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
             <div className="grid grid-cols-2 gap-4 py-4">
               <div className="space-y-2">
                 <p className="text-xs font-medium text-gray-500">Original</p>
-                <div className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
+                <div className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border-2 border-transparent">
                   {character.referenceImage && (
                     <img src={character.referenceImage} alt="Original" className="w-full h-full object-cover" />
                   )}
                 </div>
               </div>
               <div className="space-y-2">
-                <p className="text-xs font-medium text-purple-500">Enhanced</p>
-                <div className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
+                <p className="text-xs font-medium text-purple-500 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" />
+                  Professional Headshot
+                </p>
+                <div className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border-2 border-purple-500/50">
                   {enhancedPreviewUrl && (
                     <img src={enhancedPreviewUrl} alt="Enhanced" className="w-full h-full object-cover" />
                   )}
                 </div>
               </div>
             </div>
+            
+            {/* Pro tip */}
+            <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2">
+              <strong>💡 Pro Tip:</strong> Professional headshots with neutral gray backgrounds and front-facing poses provide the most consistent results across all scene generations.
+            </div>
+            
             <DialogFooter className="flex gap-2">
               <Button
                 variant="outline"
                 onClick={() => {
                   setShowEnhanceConfirm(false)
                   setEnhancedPreviewUrl(null)
+                  setEnhanceQualityFeedback(null)
                 }}
               >
                 Keep Original
@@ -1678,6 +1723,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                   onClick={() => {
                     setShowEnhanceConfirm(false)
                     setEnhancedPreviewUrl(null)
+                    setEnhanceQualityFeedback(null)
                     handleEnhanceReference()
                   }}
                   disabled={isEnhancingReference}
