@@ -12,6 +12,7 @@ import { BrowseVoicesDialog } from '@/components/tts/BrowseVoicesDialog'
 import { CreateCustomVoiceDialog } from '@/components/tts/CreateCustomVoiceDialog'
 import { CharacterPromptBuilder } from '@/components/vision/CharacterPromptBuilder'
 import { AddCharacterModal, useOrphanCharacters } from '@/components/vision/AddCharacterModal'
+import { EnhanceProgressToast } from '@/components/vision/EnhanceProgressToast'
 import type { CharacterContext, ScreenplayContext } from '@/lib/voiceRecommendation'
 
 export interface CharacterLibraryProps {
@@ -1741,6 +1742,9 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        
+        {/* Animated progress toast during enhancement */}
+        <EnhanceProgressToast isVisible={isEnhancingReference} />
       </div>
     </div>
   )
