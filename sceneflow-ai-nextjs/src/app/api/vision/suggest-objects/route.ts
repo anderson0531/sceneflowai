@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
     const analysisPrompt = `You are a production designer analyzing a film script to identify significant props, vehicles, set pieces, costumes, and technology items that need consistent visual reference images for production.
 
