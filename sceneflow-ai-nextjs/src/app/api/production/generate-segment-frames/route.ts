@@ -14,6 +14,7 @@ import {
   buildKeyframePrompt,
   type KeyframeContext
 } from '@/lib/intelligence'
+import { artStylePresets } from '@/constants/artStylePresets'
 import type { TransitionType, ActionType, AnchorStatus } from '@/components/vision/scene-production/types'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
 
@@ -307,6 +308,13 @@ export async function POST(req: NextRequest) {
               actionDescription: effectivePrompt
             }
           )
+          
+          // Apply art style to fallback prompt (replace generic quality suffix with selected style)
+          const selectedStyleForStart = artStylePresets.find(s => s.id === artStyle) || artStylePresets.find(s => s.id === 'photorealistic')!
+          startFramePrompt = startFramePrompt.replace(
+            /professional cinematography, 8K quality, film grain/i,
+            `Cinematic quality, 8K, ${selectedStyleForStart.promptSuffix}`
+          )
         }
         
         // Append negative prompt to main prompt (Gemini doesn't have native negative prompt support)
@@ -485,6 +493,13 @@ export async function POST(req: NextRequest) {
               weather: visualSetup?.weather,
             }
           }
+        )
+        
+        // Apply art style to fallback end frame prompt (replace generic quality suffix with selected style)
+        const selectedStyleForEnd = artStylePresets.find(s => s.id === artStyle) || artStylePresets.find(s => s.id === 'photorealistic')!
+        endFramePrompt = endFramePrompt.replace(
+          /professional cinematography, 8K quality, film grain/i,
+          `Cinematic quality, 8K, ${selectedStyleForEnd.promptSuffix}`
         )
       }
       

@@ -771,6 +771,9 @@ export function FramePromptDialog({
                       if (segment?.action) parts.push(segment.action)
                       if (visualSetup.atmosphere && visualSetup.atmosphere !== 'neutral') parts.push(`${visualSetup.atmosphere} atmosphere`)
                       if (visualSetup.lighting && visualSetup.lighting !== 'natural') parts.push(`${visualSetup.lighting} lighting`)
+                      // Add art style to preview
+                      const selectedStylePreset = artStylePresets.find(s => s.id === artStyle)
+                      if (selectedStylePreset) parts.push(`[Style: ${selectedStylePreset.name}]`)
                       return parts.join(', ') || 'Configure settings above to preview prompt...'
                     })()}
                   </div>
