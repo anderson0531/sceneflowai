@@ -5686,13 +5686,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (!script?.script?.scenes) return
     
     try {
-      const scriptScenes = script.script.scenes
-      const scene = scriptScenes[sceneIndex]
-      const sceneContext = {
-        visualStyle: project?.metadata?.filmTreatmentVariant?.visual_style || project?.metadata?.filmTreatmentVariant?.style,
-        tone: project?.metadata?.filmTreatmentVariant?.tone_description || project?.metadata?.filmTreatmentVariant?.tone
-      }
-      
       const res = await fetch('/api/scene/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -5706,49 +5699,59 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const json = await res.json()
       
       if (json?.imageUrl) {
-        // Update scene with generated image and prompt
-        const updatedScenes = scriptScenes.map((s: any, idx: number) => 
-          idx === sceneIndex 
-            ? { ...s, imageUrl: json.imageUrl, imagePrompt: prompt } 
-            : s
-        )
+        // Use functional update to merge with CURRENT state (not stale closure)
+        // This ensures concurrent scene generations don't overwrite each other
+        let updatedScriptForSave: any = null
         
-        // Update script state (which is the source of truth)
-        setScript((prev: any) => ({
-          ...prev,
-          script: {
-            ...prev?.script,
-            scenes: updatedScenes
+        setScript((prev: any) => {
+          if (!prev?.script?.scenes) return prev
+          
+          // Merge the new image into the CURRENT scenes array
+          const currentScenes = prev.script.scenes
+          const mergedScenes = currentScenes.map((s: any, idx: number) => 
+            idx === sceneIndex 
+              ? { ...s, imageUrl: json.imageUrl, imagePrompt: prompt } 
+              : s
+          )
+          
+          // Capture the updated script for persistence
+          updatedScriptForSave = {
+            ...prev,
+            script: {
+              ...prev.script,
+              scenes: mergedScenes
+            }
           }
-        }))
+          
+          return updatedScriptForSave
+        })
         
-        // Persist to project metadata
+        // Persist to project metadata with a slight delay to ensure state is updated
+        // and use the captured script from the functional update
+        await new Promise(resolve => setTimeout(resolve, 50))
+        
         try {
           const existingMetadata = project?.metadata || {}
           const existingVisionPhase = existingMetadata.visionPhase || {}
           
-          await fetch(`/api/projects/${projectId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              metadata: {
-                ...existingMetadata,
-                visionPhase: {
-                  ...existingVisionPhase,
-                  script: {
-                    ...script,
-                    script: {
-                      ...script.script,
-                      scenes: updatedScenes
-                    }
-                  },
-                  characters: characters,
-                  narrationVoice: narrationVoice,
-                  descriptionVoice: descriptionVoice
+          if (updatedScriptForSave) {
+            await fetch(`/api/projects/${projectId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                metadata: {
+                  ...existingMetadata,
+                  visionPhase: {
+                    ...existingVisionPhase,
+                    script: updatedScriptForSave,
+                    characters: characters,
+                    narrationVoice: narrationVoice,
+                    descriptionVoice: descriptionVoice
+                  }
                 }
-              }
+              })
             })
-          })
+          }
         } catch (saveError) {
           console.error('Failed to save scene to project:', saveError)
         }
