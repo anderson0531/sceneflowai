@@ -14,6 +14,7 @@ import {
   BarChart2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useStore } from '@/store/useStore'
 
 /**
  * ProductSwitcher - 4-Product Navigation Bar
@@ -102,11 +103,20 @@ export function ProductSwitcher({
   className 
 }: ProductSwitcherProps) {
   const pathname = usePathname()
+  const currentProject = useStore(s => s.currentProject)
   
   // Determine which product is active based on current path
   const activeProductId = products.find(product => 
     product.matchPaths.some(path => pathname?.startsWith(path))
   )?.id || null
+  
+  // Build dynamic href for products that need project context
+  const getProductHref = (product: Product): string => {
+    if (product.id === 'screening-room' && currentProject?.id) {
+      return `/screening-room?projectId=${currentProject.id}&returnTo=${encodeURIComponent(pathname || '/')}`
+    }
+    return product.href
+  }
 
   return (
     <nav 
@@ -119,11 +129,12 @@ export function ProductSwitcher({
     >
       {products.map((product, index) => {
         const isActive = product.id === activeProductId
+        const href = getProductHref(product)
         
         return (
           <Link
             key={product.id}
-            href={product.href}
+            href={href}
             className="group relative"
           >
             <motion.div

@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   BarChart3,
   Film,
@@ -23,6 +23,7 @@ import {
   Smile,
   Sparkles,
   ArrowRight,
+  ArrowLeft,
   Loader2,
   Plus,
   Share2,
@@ -529,14 +530,28 @@ interface DashboardAnalyticsResponse {
 // ============================================================================
 
 export default function ScreeningRoomDashboardPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  // Read project context from URL params (passed when coming from an active project)
+  const projectIdFromUrl = searchParams.get('projectId')
+  const returnToUrl = searchParams.get('returnTo')
+  
   const [activeTab, setActiveTab] = useState<string>('all')
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
+  // Initialize selectedProjectId from URL param if present
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(projectIdFromUrl)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [analyticsData, setAnalyticsData] = useState<DashboardAnalyticsResponse | null>(null)
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false)
   
   // Fetch real projects from the API
   const { projects: dashboardProjects, isLoading, refresh } = useDashboardData()
+  
+  // Get the selected project's name for display
+  const selectedProjectName = useMemo(() => {
+    if (!selectedProjectId) return null
+    return dashboardProjects.find(p => p.id === selectedProjectId)?.title || 'Project'
+  }, [selectedProjectId, dashboardProjects])
 
   // Fetch analytics data when projects load
   useEffect(() => {
@@ -659,6 +674,24 @@ export default function ScreeningRoomDashboardPage() {
   return (
     <div className="min-h-screen bg-gray-950 p-6">
       <div className="max-w-7xl mx-auto">
+        {/* Back to Project Button - shown when coming from an active project */}
+        {returnToUrl && (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="mb-4"
+          >
+            <Button
+              variant="ghost"
+              onClick={() => router.push(decodeURIComponent(returnToUrl))}
+              className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to {selectedProjectName || 'Project'}
+            </Button>
+          </motion.div>
+        )}
+        
         {/* Page Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
