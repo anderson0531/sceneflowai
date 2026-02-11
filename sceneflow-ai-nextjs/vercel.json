@@ -6,6 +6,10 @@
       "maxDuration": 600,
       "memory": 3008
     },
+    "src/app/api/vision/generate-script/route.ts": {
+      "maxDuration": 300,
+      "memory": 3008
+    },
     "src/app/api/vision/optimize-script/route.ts": {
       "maxDuration": 600,
       "memory": 3008
@@ -22,12 +26,20 @@
       "maxDuration": 180,
       "memory": 3008
     },
+    "src/app/api/treatment/refine/route.ts": {
+      "maxDuration": 120,
+      "memory": 2048
+    },
     "src/app/api/v2/blueprint/analyze/route.ts": {
       "maxDuration": 300,
       "memory": 2048
     },
     "src/app/api/v3/blueprint/analyze/route.ts": {
       "maxDuration": 300,
+      "memory": 2048
+    },
+    "src/app/api/character/process-upload/route.ts": {
+      "maxDuration": 120,
       "memory": 2048
     },
     "src/app/api/character/upload-reference/route.ts": {

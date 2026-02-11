@@ -410,7 +410,17 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
   
   // Apply fix suggestion
   const applyFix = useCallback(async (insight: ResonanceInsight) => {
-    if (!insight.fixSuggestion || !insight.fixSection) return
+    // Validate that we have the required fix data
+    if (!insight.fixSuggestion) {
+      console.warn('[ApplyFix] No fix suggestion available for insight:', insight.id)
+      setError('No fix suggestion available for this insight.')
+      return
+    }
+    if (!insight.fixSection) {
+      console.warn('[ApplyFix] No fix section specified for insight:', insight.id, 'Title:', insight.title)
+      setError('This insight is best addressed in the Script phase. Update the treatment manually or proceed to script generation.')
+      return
+    }
     
     // Check if we've reached max iterations
     if (iterationCount >= MAX_ITERATIONS) {
