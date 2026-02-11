@@ -5029,26 +5029,6 @@ function SceneCard({
                                           </button>
                                         </>
                                       )}
-                                      {/* Copy Image Prompt Button */}
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          const promptParts = []
-                                          if (scene.visualDescription) promptParts.push(scene.visualDescription)
-                                          else if (scene.action) promptParts.push(scene.action)
-                                          if (scene.heading) promptParts.push(`Setting: ${scene.heading}`)
-                                          if (scenePrompt) promptParts.push(scenePrompt)
-                                          const prompt = promptParts.join('\n\n') || scene.summary || 'No prompt available'
-                                          navigator.clipboard.writeText(prompt)
-                                          toast.success('Image prompt copied to clipboard!', {
-                                            description: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
-                                          })
-                                        }}
-                                        className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors"
-                                        title="Copy Image Prompt for External Generation"
-                                      >
-                                        <Copy className="w-5 h-5 text-white" />
-                                      </button>
                                     </div>
                                     <p className="text-[10px] text-gray-500 mt-2 text-center">
                                       This image anchors your scene vision for Screening Room and Frame generation
@@ -5108,27 +5088,6 @@ function SceneCard({
                                           </button>
                                         </>
                                       )}
-                                      {/* Copy Image Prompt Button */}
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          const promptParts: string[] = []
-                                          if (scene.visualDescription) promptParts.push(scene.visualDescription)
-                                          else if (scene.action) promptParts.push(scene.action)
-                                          if (scene.heading) promptParts.push(`Setting: ${scene.heading}`)
-                                          if (scenePrompt) promptParts.push(scenePrompt)
-                                          const prompt = promptParts.join('\n\n') || scene.summary || 'No prompt available'
-                                          navigator.clipboard.writeText(prompt)
-                                          toast.success('Image prompt copied to clipboard!', {
-                                            description: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
-                                          })
-                                        }}
-                                        className="text-xs px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg flex items-center gap-2 transition-colors"
-                                        title="Copy Image Prompt for External Generation"
-                                      >
-                                        <Copy className="w-4 h-4" />
-                                        Copy Prompt
-                                      </button>
                                     </div>
                                   </div>
                                 )}

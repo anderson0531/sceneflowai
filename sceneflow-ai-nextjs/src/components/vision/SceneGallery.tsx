@@ -533,7 +533,8 @@ function SceneCard({
           </div>
         </div>
       ) : (
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+        /* Hover overlay with controls - matching Scene Image controls */
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-t-lg flex items-center justify-center gap-3">
           {/* Hidden file input for upload */}
           <input
             ref={fileInputRef}
@@ -546,7 +547,7 @@ function SceneCard({
             }}
           />
           
-          {/* Edit Prompt / Regenerate */}
+          {/* Generate new image (Sparkles - indigo) */}
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -555,76 +556,62 @@ function SceneCard({
                   if (onOpenPromptBuilder) {
                     onOpenPromptBuilder();
                   } else {
-                    onRegenerate();
+                    onGenerate(prompt);
                   }
                 }}
-                className="p-1.5 rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+                disabled={isGenerating}
+                className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
               >
-                {onOpenPromptBuilder ? (
-                  <PenSquare className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                {isGenerating ? (
+                  <Loader className="w-5 h-5 text-white animate-spin" />
                 ) : (
-                  <RefreshCw className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                  <Sparkles className="w-5 h-5 text-white" />
                 )}
               </button>
             </TooltipTrigger>
-            <TooltipContent>{onOpenPromptBuilder ? 'Edit Prompt' : 'Regenerate'}</TooltipContent>
+            <TooltipContent>Generate New Image</TooltipContent>
           </Tooltip>
           
-          {/* Upload */}
+          {/* Edit image (Wand2 - purple) */}
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
-                className="p-1.5 rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+                onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
+                className="p-3 bg-purple-600/80 hover:bg-purple-600 rounded-full transition-colors"
               >
-                <Upload className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                <Wand2 className="w-5 h-5 text-white" />
               </button>
             </TooltipTrigger>
-            <TooltipContent>Upload Image</TooltipContent>
+            <TooltipContent>Edit Image</TooltipContent>
           </Tooltip>
           
-          {/* Download */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={(e) => { e.stopPropagation(); onDownload ? onDownload() : handleDownload(); }}
-                className="p-1.5 rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                <Download className="w-4 h-4 text-gray-700 dark:text-gray-300" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Download</TooltipContent>
-          </Tooltip>
-          
-          {/* Add to Scene Reference Library */}
+          {/* Save to Reference Library (FolderPlus - cyan) */}
           {onAddToSceneLibrary && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   onClick={(e) => { e.stopPropagation(); onAddToSceneLibrary(); }}
-                  className="p-1.5 rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="p-3 bg-cyan-600/80 hover:bg-cyan-600 rounded-full transition-colors"
                 >
-                  <ImagePlus className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                  <FolderPlus className="w-5 h-5 text-white" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Add to Scene Library</TooltipContent>
+              <TooltipContent>Save to Reference Library</TooltipContent>
             </Tooltip>
           )}
           
-          {/* Add to Character Library */}
-          {onAddToLibrary && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onAddToLibrary(); }}
-                  className="p-1.5 rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  <FolderPlus className="w-4 h-4 text-gray-700 dark:text-gray-300" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Add to Character Library</TooltipContent>
-            </Tooltip>
-          )}
+          {/* Upload Scene Image (Upload - emerald) */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors"
+              >
+                <Upload className="w-5 h-5 text-white" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Upload Scene Image</TooltipContent>
+          </Tooltip>
         </div>
       )}
       
