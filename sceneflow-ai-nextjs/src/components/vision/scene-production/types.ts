@@ -909,6 +909,12 @@ export interface TimelineAudioState {
  * Props for SceneTimelineV2 component
  */
 export interface SceneTimelineV2Props {
+  /**
+   * Mode determines player behavior:
+   * - 'storyboard': Only shows keyframes (start/end frames), never video. Includes Ken Burns animation.
+   * - 'video': Shows video if available, falls back to keyframes. Default mode.
+   */
+  mode?: 'storyboard' | 'video'
   segments: SceneSegment[]
   scene: any  // Scene object from script.script.scenes[idx]
   selectedSegmentId?: string

@@ -40,6 +40,10 @@ import {
   hasAudioForLanguage,
 } from './audioTrackBuilder'
 import {
+  getAlternatingDirection,
+  KenBurnsDirection,
+} from '@/lib/animation/kenBurns'
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -156,6 +160,7 @@ function SortableClipWrapper({ id, children, disabled }: { id: string; children:
 // ============================================================================
 
 export function SceneTimelineV2({
+  mode = 'video',
   segments,
   scene,
   selectedSegmentId,
@@ -317,8 +322,10 @@ export function SceneTimelineV2({
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [isPlayerExpanded, setIsPlayerExpanded] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false)
   const [isTimelineWide, setIsTimelineWide] = useState(false)
+  const playerContainerRef = useRef<HTMLDivElement>(null)
   
   // Audio Snap feature - snap segment edges to audio clip boundaries
   const [enableAudioSnap, setEnableAudioSnap] = useState(() => {
@@ -369,6 +376,31 @@ export function SceneTimelineV2({
       localStorage.setItem('sceneflow-track-enabled-v4', JSON.stringify(trackEnabled))
     }
   }, [trackEnabled])
+  
+  // Fullscreen toggle function
+  const toggleFullscreen = useCallback(async () => {
+    if (!playerContainerRef.current) return
+    
+    try {
+      if (!document.fullscreenElement) {
+        await playerContainerRef.current.requestFullscreen()
+      } else {
+        await document.exitFullscreen()
+      }
+    } catch (err) {
+      console.error('Fullscreen error:', err)
+    }
+  }, [])
+  
+  // Listen for fullscreen change events
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+    
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
   
   // Auto-apply intelligent alignment when audio tracks first become available
   useEffect(() => {
@@ -1066,6 +1098,45 @@ export function SceneTimelineV2({
   const currentVisualClip = getCurrentVisualClip(currentTime)
   const hasAudio = hasAudioForLanguage(filteredAudioTracks)
   
+  // Get current clip index for Ken Burns direction cycling
+  const currentClipIndex = useMemo(() => {
+    if (!currentVisualClip) return 0
+    return visualClips.findIndex(c => c.id === currentVisualClip.id)
+  }, [currentVisualClip, visualClips])
+  
+  // Get Ken Burns direction for current clip
+  const kenBurnsDirection = useMemo((): KenBurnsDirection => {
+    return getAlternatingDirection(currentClipIndex)
+  }, [currentClipIndex])
+  
+  // Ken Burns animation style for storyboard mode
+  const kenBurnsStyle = useMemo((): React.CSSProperties => {
+    if (mode !== 'storyboard' || !isPlaying) return {}
+    
+    // Subtle intensity with smooth easing for cinematic feel
+    const scale = 1.05 // subtle scale
+    const translate = 2 // subtle translate percentage
+    
+    // Map direction to transform
+    const transformMap: Record<KenBurnsDirection, string> = {
+      'left': `translateX(-${translate}%)`,
+      'right': `translateX(${translate}%)`,
+      'up': `translateY(-${translate}%)`,
+      'down': `translateY(${translate}%)`,
+      'up-left': `translate(-${translate * 0.7}%, -${translate * 0.7}%)`,
+      'up-right': `translate(${translate * 0.7}%, -${translate * 0.7}%)`,
+      'down-left': `translate(-${translate * 0.7}%, ${translate * 0.7}%)`,
+      'down-right': `translate(${translate * 0.7}%, ${translate * 0.7}%)`,
+      'zoom-in': 'scale(1.12)',
+      'zoom-out': 'scale(1.0)',
+    }
+    
+    return {
+      transform: `scale(${scale}) ${transformMap[kenBurnsDirection]}`,
+      transition: 'transform 8s cubic-bezier(0.4, 0.0, 0.2, 1)',
+    }
+  }, [mode, isPlaying, kenBurnsDirection])
+  
   // Always display both frames - start frame for first half of duration, end frame for second half
   const getDisplayFrameUrl = useCallback((): string | undefined => {
     if (!currentVisualClip) return undefined
@@ -1085,22 +1156,41 @@ export function SceneTimelineV2({
   
   const displayFrameUrl = getDisplayFrameUrl()
   
+  // Determine what to show: video mode shows video if available, storyboard mode always shows keyframes
+  const shouldShowVideo = mode === 'video' && currentVisualClip?.url
+  
   return (
     <div className="space-y-4">
       {/* Scene Video Player - Above Timeline */}
-      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-black overflow-hidden">
+      <div 
+        ref={playerContainerRef}
+        className={cn(
+          "rounded-lg border border-gray-200 dark:border-gray-800 bg-black overflow-hidden",
+          isFullscreen && "fixed inset-0 z-50 border-0 rounded-none"
+        )}
+      >
         <div className={cn(
-          "relative mx-auto aspect-video bg-black transition-all duration-200",
-          isPlayerExpanded ? "w-full max-w-3xl" : "w-full max-w-sm"
+          "relative mx-auto aspect-video bg-black transition-all duration-200 overflow-hidden",
+          isFullscreen 
+            ? "w-full h-full max-w-none" 
+            : isPlayerExpanded 
+              ? "w-full max-w-3xl" 
+              : "w-full max-w-sm"
         )}>
-          {currentVisualClip?.url ? (
+          {shouldShowVideo ? (
             <video 
               ref={videoRef} 
               className="w-full h-full object-contain" 
               src={currentVisualClip.url}
             />
           ) : displayFrameUrl ? (
-            <img src={displayFrameUrl} alt="Preview" className="w-full h-full object-contain" />
+            <img 
+              key={`${currentClipIndex}-${kenBurnsDirection}`}
+              src={displayFrameUrl} 
+              alt="Preview" 
+              className="w-full h-full object-cover"
+              style={kenBurnsStyle}
+            />
           ) : sceneFrameUrl ? (
             <img src={sceneFrameUrl} alt="Scene Frame" className="w-full h-full object-contain" />
           ) : (
@@ -1108,15 +1198,27 @@ export function SceneTimelineV2({
               <Film className="w-12 h-12 text-gray-600" />
             </div>
           )}
-          {/* Expand/Collapse Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsPlayerExpanded(!isPlayerExpanded)}
-            className="absolute top-2 right-2 h-7 w-7 p-0 bg-black/50 hover:bg-black/70 text-white"
-          >
-            {isPlayerExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          </Button>
+          {/* Player Controls - Top Right */}
+          <div className="absolute top-2 right-2 flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsPlayerExpanded(!isPlayerExpanded)}
+              className="h-7 w-7 p-0 bg-black/50 hover:bg-black/70 text-white"
+              title={isPlayerExpanded ? "Collapse player" : "Expand player"}
+            >
+              {isPlayerExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleFullscreen}
+              className="h-7 w-7 p-0 bg-black/50 hover:bg-black/70 text-white"
+              title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            >
+              {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            </Button>
+          </div>
         </div>
         
         {/* Transport Controls Bar */}

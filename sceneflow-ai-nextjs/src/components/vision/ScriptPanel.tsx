@@ -6666,6 +6666,7 @@ function SceneCard({
                                 className="mt-3"
                               >
                                 <SceneTimelineV2
+                                  mode="storyboard"
                                   segments={sceneProductionData?.segments || []}
                                   scene={scene}
                                   selectedSegmentId={selectedSegmentId}
@@ -6845,6 +6846,7 @@ function SceneCard({
                               ) : (
                               <div className="pt-4">
                                 <SceneTimelineV2
+                                  mode="video"
                                   segments={sceneProductionData?.segments || []}
                                   scene={scene}
                                   selectedSegmentId={selectedSegmentId}
