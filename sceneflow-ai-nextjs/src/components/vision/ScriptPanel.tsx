@@ -568,13 +568,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     }
   }, [audioTimelineCollapsed])
   
-  // Persist videoEditorCollapsed to localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('videoEditorCollapsed', JSON.stringify(videoEditorCollapsed))
-    }
-  }, [videoEditorCollapsed])
-  
   // Image Edit Modal state
   const [imageEditModalOpen, setImageEditModalOpen] = useState(false)
   const [editingImageData, setEditingImageData] = useState<{ 
@@ -3555,6 +3548,13 @@ function SceneCard({
     }
     return false
   })
+  
+  // Persist videoEditorCollapsed to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('videoEditorCollapsed', JSON.stringify(videoEditorCollapsed))
+    }
+  }, [videoEditorCollapsed])
   
   // Determine active step for Co-Pilot
   const activeStep: WorkflowStep | null = activeWorkflowTab
