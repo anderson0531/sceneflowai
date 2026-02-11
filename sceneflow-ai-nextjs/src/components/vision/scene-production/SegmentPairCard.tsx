@@ -504,7 +504,7 @@ export function SegmentPairCard({
                 title="Regenerate end frame"
               >
                 <RefreshCw className="w-3 h-3 mr-1" />
-                Finish
+                End
               </Button>
             )}
             

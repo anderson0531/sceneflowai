@@ -133,6 +133,10 @@ function getDynamicActionIntensity(actionType: ActionType): keyof typeof DYNAMIC
 
 /**
  * Build character description block for prompt
+ * 
+ * IMPORTANT: The appearance field often contains ethnicity, age, and other details.
+ * To avoid conflicting descriptions (e.g., ethnicity="Caucasian" but appearance="Black man"),
+ * we prioritize the appearance field when it's detailed, as it's the human-readable description.
  */
 function buildCharacterBlock(characters: PromptEnhancementConfig['characters']): string {
   if (!characters || characters.length === 0) {
@@ -140,6 +144,16 @@ function buildCharacterBlock(characters: PromptEnhancementConfig['characters']):
   }
   
   const descriptions = characters.map(char => {
+    // If we have a rich appearance description (>20 chars typically contains ethnicity/age),
+    // use it as the primary source to prevent conflicts like "Caucasian" + "Black man"
+    if (char.appearance && char.appearance.length > 20) {
+      const parts: string[] = [char.name]
+      parts.push(char.appearance)
+      if (char.wardrobe) parts.push(`wearing ${char.wardrobe}`)
+      return parts.join(', ')
+    }
+    
+    // No detailed appearance - build from individual fields
     const parts: string[] = [char.name]
     if (char.ethnicity) parts.push(char.ethnicity)
     if (char.age) parts.push(char.age)

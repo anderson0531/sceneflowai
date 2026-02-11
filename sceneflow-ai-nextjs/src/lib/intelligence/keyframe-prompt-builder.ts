@@ -314,6 +314,10 @@ function buildAtmosphereBlock(scene: DetailedSceneDirection['scene'] | undefined
 
 /**
  * Build character identity block
+ * 
+ * IMPORTANT: When appearance field is detailed (>20 chars), it already contains
+ * ethnicity/age/physical description. Only add separate ethnicity/age fields when
+ * appearance is NOT detailed, to avoid conflicts like "Caucasian, Black man".
  */
 function buildCharacterBlock(
   characters: FramePromptRequest['characters']
@@ -325,8 +329,21 @@ function buildCharacterBlock(
     .slice(0, 2) // Limit to primary characters
     .map(c => {
       const parts: string[] = [c.name]
-      if (c.ethnicity) parts.push(c.ethnicity)
-      if (c.age) parts.push(`${c.age} years old`)
+      
+      // Check if appearance is detailed (contains physical description)
+      const hasDetailedAppearance = c.appearance && c.appearance.length > 20
+      
+      if (hasDetailedAppearance) {
+        // Appearance is detailed - use it as the source of truth
+        // Don't add separate ethnicity/age to avoid conflicts
+        parts.push(c.appearance)
+      } else {
+        // Appearance is minimal or missing - build from individual fields
+        if (c.ethnicity) parts.push(c.ethnicity)
+        if (c.age) parts.push(`${c.age} years old`)
+        if (c.appearance) parts.push(c.appearance)
+      }
+      
       if (c.wardrobe) parts.push(`wearing ${c.wardrobe}`)
       return parts.join(', ')
     })
@@ -411,8 +428,16 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
       promptParts.push(buildCutFrameIntro(shotType))
     }
   } else {
-    // End frame
-    promptParts.push(`End of ${duration}s segment. `)
+    // End frame - CRITICAL: Describe the RESULT of the action to show progression
+    const temporalContext = duration <= 3 
+      ? 'Moments later' 
+      : duration <= 5 
+      ? 'Shortly after' 
+      : 'After the action'
+    
+    // Build a prompt that clearly shows something CHANGED
+    promptParts.push(`${temporalContext}: The result of "${actionPrompt.substring(0, 100)}" is now visible. `)
+    promptParts.push('Show the END STATE of this action - positions, expressions, and environment should reflect the completed action. ')
   }
   
   // 2. Pan transition handling

@@ -495,15 +495,27 @@ export async function POST(req: NextRequest) {
       const endReferenceImages: Array<{ imageUrl: string; name: string }> = [
         {
           imageUrl: startFrameReference,
-          name: 'Start Frame - maintain character appearance and environment'
+          name: 'Start Frame - EXACT character appearance must be preserved'
         }
       ]
       
       // DON'T add separate character refs - start frame already has them in context
       console.log('[Generate Frames] End frame using Gemini Studio with start frame as reference')
       
-      // Build enhanced prompt for end frame
-      const geminiEndPrompt = `Generate the ending frame for this scene segment. The starting frame is provided as reference - maintain EXACT character appearance, costumes, and environment continuity.\n\n${endFramePrompt}\n\nCRITICAL: This is the END of the action. Show the final state after the action completes.`
+      // Build enhanced prompt for end frame with STRONG reference enforcement
+      const geminiEndPrompt = `Generate the ending frame for this scene segment.
+
+CRITICAL REFERENCE REQUIREMENTS:
+- The character(s) in the provided reference image MUST appear with IDENTICAL appearance
+- Preserve EXACT: face structure, skin tone, hair color/style, eye color, facial hair, clothing
+- The person in the end frame must be RECOGNIZABLY THE SAME PERSON as in the start frame
+- Do NOT change the character's ethnicity, age, or physical features
+
+SCENE PROGRESSION:
+${endFramePrompt}
+
+This is the END of the action - show the final state after the action completes.
+The reference image shows the START of this segment - maintain perfect character continuity.`
       
       // Generate end frame using Gemini Studio
       const endResult = await generateImageWithGeminiStudio({
