@@ -28,9 +28,9 @@ interface SceneGalleryProps {
   scenes: any[]
   characters: any[]
   projectTitle?: string
-  onRegenerateScene: (sceneIndex: number) => void
+  onRegenerateScene: (sceneIndex: number) => void | Promise<void>
   onOpenPromptBuilder?: (sceneIndex: number) => void
-  onGenerateScene: (sceneIndex: number, prompt: string) => void
+  onGenerateScene: (sceneIndex: number, prompt: string) => void | Promise<void>
   onUploadScene: (sceneIndex: number, file: File) => void
   onDownloadScene?: (sceneIndex: number) => void
   onAddToLibrary?: (sceneIndex: number) => void
@@ -294,7 +294,24 @@ export function SceneGallery({
                     setSelectedScene(idx)
                     setOpenProductionScene(isProductionOpen ? null : sceneKey)
                   }}
-                  onRegenerate={() => onRegenerateScene(idx)}
+                  onRegenerate={async () => {
+                    setGeneratingScenes((prev) => new Set(prev).add(idx))
+                    try {
+                      await execute(async () => {
+                        await onRegenerateScene(idx)
+                      }, {
+                        message: `Editing Scene ${idx + 1}...`,
+                        estimatedDuration: 15,
+                        operationType: 'image-generation'
+                      })
+                    } finally {
+                      setGeneratingScenes((prev) => {
+                        const newSet = new Set(prev)
+                        newSet.delete(idx)
+                        return newSet
+                      })
+                    }
+                  }}
                   onOpenPromptBuilder={onOpenPromptBuilder ? () => onOpenPromptBuilder(idx) : undefined}
                   onGenerate={async (prompt) => {
                     setGeneratingScenes((prev) => new Set(prev).add(idx))
@@ -373,9 +390,9 @@ interface SceneCardProps {
   isSelected: boolean
   isProductionOpen: boolean
   onClick: () => void
-  onRegenerate: () => void
+  onRegenerate: () => Promise<void>
   onOpenPromptBuilder?: () => void
-  onGenerate: (prompt: string) => void
+  onGenerate: (prompt: string) => Promise<void>
   onUpload: (file: File) => void
   onDownload?: () => void
   onAddToLibrary?: () => void
