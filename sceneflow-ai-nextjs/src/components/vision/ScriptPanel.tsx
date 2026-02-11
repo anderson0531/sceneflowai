@@ -6182,11 +6182,25 @@ function SceneCard({
                           description: obj.description,
                         })) || []}
                         sceneDirection={scene.detailedDirection || scene.sceneDirection}
-                        // Regenerate segments via API
-                        onResegment={onInitializeSceneProduction ? () => {
-                          onInitializeSceneProduction(
+                        // Regenerate segments via API with audio duration for proper segment count
+                        onResegment={onInitializeSceneProduction ? async () => {
+                          // Calculate total audio duration for proper segment count
+                          const narrationDuration = scene.narrationAudio?.en?.duration || scene.narrationDuration || 0
+                          const dialogueArray = scene.dialogueAudio?.en || scene.dialogueAudio || []
+                          const dialogueDuration = Array.isArray(dialogueArray) 
+                            ? dialogueArray.reduce((acc: number, d: any) => acc + (d.duration || 3), 0)
+                            : 0
+                          const totalAudioDuration = Math.max(narrationDuration, dialogueDuration) + 2
+                          
+                          await onInitializeSceneProduction(
                             scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                            { targetDuration: scene.duration || 8 }
+                            { 
+                              targetDuration: Math.max(scene.duration || 8, totalAudioDuration),
+                              generationOptions: {
+                                totalAudioDurationSeconds: totalAudioDuration,
+                                narrationDriven: narrationDuration > 0
+                              }
+                            }
                           )
                         } : undefined}
                       />
@@ -6493,11 +6507,25 @@ function SceneCard({
                             description: obj.description,
                           })) || []}
                           sceneDirection={scene.detailedDirection || scene.sceneDirection}
-                          // Regenerate segments via API
-                          onResegment={onInitializeSceneProduction ? () => {
-                            onInitializeSceneProduction(
+                          // Regenerate segments via API with audio duration for proper segment count
+                          onResegment={onInitializeSceneProduction ? async () => {
+                            // Calculate total audio duration for proper segment count
+                            const narrationDuration = scene.narrationAudio?.en?.duration || scene.narrationDuration || 0
+                            const dialogueArray = scene.dialogueAudio?.en || scene.dialogueAudio || []
+                            const dialogueDuration = Array.isArray(dialogueArray) 
+                              ? dialogueArray.reduce((acc: number, d: any) => acc + (d.duration || 3), 0)
+                              : 0
+                            const totalAudioDuration = Math.max(narrationDuration, dialogueDuration) + 2
+                            
+                            await onInitializeSceneProduction(
                               scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                              { targetDuration: scene.duration || 8 }
+                              { 
+                                targetDuration: Math.max(scene.duration || 8, totalAudioDuration),
+                                generationOptions: {
+                                  totalAudioDurationSeconds: totalAudioDuration,
+                                  narrationDriven: narrationDuration > 0
+                                }
+                              }
                             )
                           } : undefined}
                         />

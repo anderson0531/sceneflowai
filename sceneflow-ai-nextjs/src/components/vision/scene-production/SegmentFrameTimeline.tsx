@@ -87,8 +87,10 @@ export interface SegmentFrameTimelineProps {
   }>
   /** Scene direction for intelligent prompt building */
   sceneDirection?: DetailedSceneDirection | null
-  /** Callback to trigger segment regeneration */
-  onResegment?: () => void
+  /** Callback to trigger segment regeneration (returns Promise for overlay) */
+  onResegment?: () => Promise<void>
+  /** Total audio duration in seconds (narration + dialogue) for proper segment count estimation */
+  totalAudioDurationSeconds?: number
 }
 
 // ============================================================================
@@ -152,6 +154,7 @@ export function SegmentFrameTimeline({
   objectReferences,
   sceneDirection,
   onResegment,
+  totalAudioDurationSeconds,
 }: SegmentFrameTimelineProps) {
   // Calculate stats first to determine initial expanded state
   const stats = useMemo(() => calculateTimelineStats(segments), [segments])
@@ -279,16 +282,28 @@ export function SegmentFrameTimeline({
               </Badge>
             ) : null}
             
-            {/* Regenerate Segments button - calls API directly */}
+            {/* Regenerate Segments button - more prominent styling */}
             {stats.total > 0 && onResegment && (
               <Button
                 size="sm"
-                variant="ghost"
-                onClick={() => onResegment()}
-                className="h-6 text-[10px] text-amber-400 hover:text-amber-300 hover:bg-amber-500/20 border border-amber-500/30"
-                title="Regenerate segments via AI"
+                variant="secondary"
+                onClick={async () => {
+                  await executeWithOverlay(
+                    async () => {
+                      await onResegment()
+                    },
+                    {
+                      message: 'Re-analyzing scene and generating segments...',
+                      estimatedDuration: 15,
+                      operationType: 'scene-analysis'
+                    }
+                  )
+                }}
+                disabled={isGenerating}
+                className="h-7 text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/50 font-medium"
+                title="Regenerate segments with improved audio alignment"
               >
-                <RefreshCw className="w-3 h-3 mr-1" />
+                <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
                 Regenerate
               </Button>
             )}
