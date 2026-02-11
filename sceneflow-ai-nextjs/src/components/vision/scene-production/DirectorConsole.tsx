@@ -17,11 +17,12 @@
 
 'use client'
 
-import React, { useState, useCallback, useRef } from 'react'
+import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { AnimatePresence, motion } from 'framer-motion'
 import { 
   Play, 
   CheckCircle,
@@ -208,6 +209,15 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   // Collapsible state - default closed when segments are generated
   const [isExpanded, setIsExpanded] = useState(false)
   
+  // Scene Production Mixer collapsed state with localStorage persistence (default: collapsed)
+  const [mixerCollapsed, setMixerCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('mixerCollapsed')
+      return saved ? JSON.parse(saved) : true // Default collapsed
+    }
+    return true
+  })
+  
   // Scene render dialog state
   const [isRenderDialogOpen, setIsRenderDialogOpen] = useState(false)
   
@@ -240,6 +250,13 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     music: { ...DEFAULT_TIMING },
     sfx: { ...DEFAULT_TIMING },
   })
+  
+  // Persist mixerCollapsed to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mixerCollapsed', JSON.stringify(mixerCollapsed))
+    }
+  }, [mixerCollapsed])
   
   // Update track timing
   const updateTrackTiming = useCallback((track: keyof AudioTrackTimingState, field: 'startTime' | 'duration', value: number) => {
@@ -862,8 +879,30 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
       )}
 
       
-      {/* Scene Production Mixer - Unified render workflow */}
+      {/* Scene Production Mixer - Unified render workflow (Collapsible) */}
       {statusCounts.rendered > 0 && sceneId && (
+        <div className="mt-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg overflow-hidden">
+          {/* Mixer Header - Collapsible */}
+          <button
+            onClick={() => setMixerCollapsed(!mixerCollapsed)}
+            className="w-full p-4 hover:bg-purple-500/5 transition-colors flex items-center gap-3"
+          >
+            {mixerCollapsed ? <ChevronRight className="w-4 h-4 text-purple-400 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-purple-400 flex-shrink-0" />}
+            <Clapperboard className="w-4 h-4 text-purple-400 flex-shrink-0" />
+            <span className="text-purple-300 font-medium">Scene Production Mixer</span>
+            <span className="text-purple-400/70 text-sm ml-auto">Render final scene with audio</span>
+          </button>
+          
+          {/* Collapsible Content */}
+          <AnimatePresence>
+            {!mixerCollapsed && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="border-t border-purple-500/20"
+              >
         <SceneProductionMixer
           sceneId={sceneId}
           sceneNumber={sceneNumber}
@@ -931,6 +970,10 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           }}
           isGeneratingSegments={isRendering}
         />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       )}
       
       {/* Legacy Production Streams Panel - for viewing existing streams */}

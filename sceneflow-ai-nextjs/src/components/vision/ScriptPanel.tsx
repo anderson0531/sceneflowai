@@ -568,6 +568,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     }
   }, [audioTimelineCollapsed])
   
+  // Persist videoEditorCollapsed to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('videoEditorCollapsed', JSON.stringify(videoEditorCollapsed))
+    }
+  }, [videoEditorCollapsed])
+  
   // Image Edit Modal state
   const [imageEditModalOpen, setImageEditModalOpen] = useState(false)
   const [editingImageData, setEditingImageData] = useState<{ 
@@ -3540,6 +3547,14 @@ function SceneCard({
   // Production workflow container collapse states
   const [storyboardBuilderCollapsed, setStoryboardBuilderCollapsed] = useState(false)
   const [videoProductionCollapsed, setVideoProductionCollapsed] = useState(false)
+  // Video Editor collapsed state with localStorage persistence (default: expanded)
+  const [videoEditorCollapsed, setVideoEditorCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('videoEditorCollapsed')
+      return saved ? JSON.parse(saved) : false // Default expanded
+    }
+    return false
+  })
   
   // Determine active step for Co-Pilot
   const activeStep: WorkflowStep | null = activeWorkflowTab
@@ -6413,11 +6428,11 @@ function SceneCard({
                     {/* ==================== STORYBOARD BUILDER CONTAINER ==================== */}
                     {/* Groups: Keyframe Generation + Storyboard Editor - simplified to 2-step workflow */}
                     {sceneProductionData?.isSegmented && sceneProductionData.segments?.length > 0 && (
-                      <div className="space-y-4">
-                        {/* Storyboard Builder Header - FTV Mode Ready style */}
+                      <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-lg overflow-hidden">
+                        {/* Storyboard Builder Header */}
                         <button 
                           onClick={() => setStoryboardBuilderCollapsed(!storyboardBuilderCollapsed)}
-                          className="w-full p-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-lg hover:from-cyan-500/15 hover:to-blue-500/15 transition-colors"
+                          className="w-full p-4 hover:bg-cyan-500/5 transition-colors"
                         >
                           <div className="flex items-center gap-3">
                             {storyboardBuilderCollapsed ? <ChevronRight className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />}
@@ -6430,7 +6445,7 @@ function SceneCard({
                           </div>
                         </button>
                         
-                        {/* Collapsible Content */}
+                        {/* Collapsible Content - contained within the card */}
                         <AnimatePresence>
                           {!storyboardBuilderCollapsed && (
                             <motion.div
@@ -6438,7 +6453,7 @@ function SceneCard({
                               animate={{ opacity: 1, height: 'auto' }}
                               exit={{ opacity: 0, height: 0 }}
                               transition={{ duration: 0.2 }}
-                              className="space-y-4"
+                              className="px-4 pb-4 space-y-4 border-t border-cyan-500/20"
                             >
                         
                         {/* Keyframe Generation */}
@@ -6729,11 +6744,11 @@ function SceneCard({
                     {/* ==================== VIDEO PRODUCTION CONTAINER ==================== */}
                     {/* Groups: Video Generation (DirectorConsole) + Video Editor */}
                     {sceneProductionData?.segments && sceneProductionData.segments.length > 0 && (
-                      <div className="space-y-4">
-                        {/* Video Production Header - FTV Mode Ready style */}
+                      <div className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-lg overflow-hidden">
+                        {/* Video Production Header */}
                         <button 
                           onClick={() => setVideoProductionCollapsed(!videoProductionCollapsed)}
-                          className="w-full p-4 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-lg hover:from-indigo-500/15 hover:to-purple-500/15 transition-colors"
+                          className="w-full p-4 hover:bg-indigo-500/5 transition-colors"
                         >
                           <div className="flex items-center gap-3">
                             {videoProductionCollapsed ? <ChevronRight className="w-4 h-4 text-indigo-400 mt-0.5 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-indigo-400 mt-0.5 flex-shrink-0" />}
@@ -6746,7 +6761,7 @@ function SceneCard({
                           </div>
                         </button>
                         
-                        {/* Collapsible Content */}
+                        {/* Collapsible Content - contained within the card */}
                         <AnimatePresence>
                           {!videoProductionCollapsed && (
                             <motion.div
@@ -6754,11 +6769,11 @@ function SceneCard({
                               animate={{ opacity: 1, height: 'auto' }}
                               exit={{ opacity: 0, height: 0 }}
                               transition={{ duration: 0.2 }}
-                              className="space-y-4"
+                              className="px-4 pb-4 space-y-4 border-t border-indigo-500/20"
                             >
                         
                         {/* Video Generation */}
-                        <div id={`director-console-${scene.sceneId || scene.id || `scene-${sceneIdx}`}`} className="scroll-mt-4">
+                        <div id={`director-console-${scene.sceneId || scene.id || `scene-${sceneIdx}`}`} className="scroll-mt-4 pt-4">
                           <DirectorConsole
                             sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
                             sceneNumber={sceneNumber}
@@ -6794,14 +6809,33 @@ function SceneCard({
                           const totalCount = sceneProductionData?.segments?.length || 0
                           
                           return (
-                            <div className="p-4 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-lg">
-                              <div className="flex items-center gap-3 mb-3">
+                            <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-lg overflow-hidden">
+                              {/* Video Editor Header - Collapsible */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setVideoEditorCollapsed(!videoEditorCollapsed)
+                                }}
+                                className="w-full p-4 hover:bg-emerald-500/5 transition-colors flex items-center gap-3"
+                              >
+                                {videoEditorCollapsed ? <ChevronRight className="w-4 h-4 text-emerald-400 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-emerald-400 flex-shrink-0" />}
                                 <Film className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                                 <span className="text-emerald-300 font-medium">Video Editor</span>
                                 <span className="text-emerald-400/70 text-sm ml-auto">
                                   {completedCount}/{totalCount} videos ready
                                 </span>
-                              </div>
+                              </button>
+                              
+                              {/* Collapsible Content */}
+                              <AnimatePresence>
+                                {!videoEditorCollapsed && (
+                                  <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="px-4 pb-4 border-t border-emerald-500/20"
+                                  >
                               {!hasRenderedVideos ? (
                                 <div className="flex flex-col items-center justify-center py-8 text-center">
                                   <Film className="w-8 h-8 text-emerald-400/30 mb-3" />
@@ -6809,7 +6843,7 @@ function SceneCard({
                                   <p className="text-emerald-400/50 text-sm mt-1">Generate video clips above to start editing your final cut</p>
                                 </div>
                               ) : (
-                              <div>
+                              <div className="pt-4">
                                 <SceneTimelineV2
                                   segments={sceneProductionData?.segments || []}
                                   scene={scene}
@@ -6847,6 +6881,9 @@ function SceneCard({
                                 />
                               </div>
                               )}
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </div>
                           )
                         })()}
