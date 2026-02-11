@@ -77,6 +77,14 @@ export interface SegmentFrameTimelineProps {
     appearance?: string
     referenceUrl?: string
   }>
+  /** Object/prop references from the reference library for consistent image generation */
+  objectReferences?: Array<{
+    id: string
+    name: string
+    imageUrl: string
+    description?: string
+    importance?: 'critical' | 'secondary'
+  }>
   /** Scene direction for intelligent prompt building */
   sceneDirection?: DetailedSceneDirection | null
   /** Callback to trigger segment regeneration */
@@ -140,7 +148,8 @@ export function SegmentFrameTimeline({
   isGenerating,
   generatingSegmentId,
   generatingPhase,
-  characters = [],
+  characters,
+  objectReferences,
   sceneDirection,
   onResegment,
 }: SegmentFrameTimelineProps) {
@@ -403,6 +412,7 @@ export function SegmentFrameTimeline({
           // NEW: Pass reference image for character selection UI
           referenceImage: c.referenceUrl,
         }))}
+        objectReferences={objectReferences}
       />
     </div>
   )

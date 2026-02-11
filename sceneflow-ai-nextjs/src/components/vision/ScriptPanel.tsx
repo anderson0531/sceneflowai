@@ -6175,6 +6175,12 @@ function SceneCard({
                           appearance: c.appearance || c.description,
                           referenceUrl: (c as any).referenceImage
                         }))}
+                        objectReferences={objectReferences?.map(obj => ({
+                          id: obj.id,
+                          name: obj.name,
+                          imageUrl: obj.imageUrl || '',
+                          description: obj.description,
+                        })) || []}
                         sceneDirection={scene.detailedDirection || scene.sceneDirection}
                         // Regenerate segments via API
                         onResegment={onInitializeSceneProduction ? () => {
@@ -6480,6 +6486,12 @@ function SceneCard({
                             appearance: c.appearance || c.description,
                             referenceUrl: (c as any).referenceImage
                           }))}
+                          objectReferences={objectReferences?.map(obj => ({
+                            id: obj.id,
+                            name: obj.name,
+                            imageUrl: obj.imageUrl || '',
+                            description: obj.description,
+                          })) || []}
                           sceneDirection={scene.detailedDirection || scene.sceneDirection}
                           // Regenerate segments via API
                           onResegment={onInitializeSceneProduction ? () => {

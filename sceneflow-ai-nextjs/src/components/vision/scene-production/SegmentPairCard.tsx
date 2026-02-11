@@ -140,9 +140,7 @@ export function SegmentPairCard({
   
   // Determine if we can generate frames
   const canGenerateStart = !startFrameUrl && !isGenerating
-  const canGenerateEnd = startFrameUrl && !endFrameUrl && !isGenerating
-  const canGenerateBoth = !startFrameUrl && !endFrameUrl && !isGenerating
-  const canGenerateVideo = anchorStatus === 'fully-anchored' && !isGenerating
+  const canGenerateEnd = !endFrameUrl && !isGenerating
   
   // Determine if we can REGENERATE frames (frames already exist)
   const canRegenerateStart = !!startFrameUrl && !isGenerating
@@ -443,28 +441,16 @@ export function SegmentPairCard({
           
           <div className="flex items-center gap-2 flex-wrap">
             {/* Generation buttons - show when frames don't exist */}
-            {canGenerateBoth && (
-              <Button 
-                size="sm" 
-                variant="secondary"
-                onClick={(e) => { e.stopPropagation(); onGenerateBothFrames(); }}
-                disabled={isGenerating}
-                className="h-7 text-xs"
-              >
-                <Wand2 className="w-3 h-3 mr-1" />
-                Generate Both
-              </Button>
-            )}
-            {canGenerateStart && !canGenerateBoth && (
+            {canGenerateStart && (
               <Button 
                 size="sm" 
                 variant="secondary"
                 onClick={(e) => { e.stopPropagation(); onGenerateStartFrame(); }}
                 disabled={isGenerating}
-                className="h-7 text-xs"
+                className="h-7 text-xs bg-blue-600/20 hover:bg-blue-600/30 border-blue-500/50 text-blue-300"
               >
                 <Wand2 className="w-3 h-3 mr-1" />
-                Gen Start
+                Start
               </Button>
             )}
             {canGenerateEnd && (
@@ -473,10 +459,10 @@ export function SegmentPairCard({
                 variant="secondary"
                 onClick={(e) => { e.stopPropagation(); onGenerateEndFrame(); }}
                 disabled={isGenerating}
-                className="h-7 text-xs"
+                className="h-7 text-xs bg-blue-600/20 hover:bg-blue-600/30 border-blue-500/50 text-blue-300"
               >
                 <Wand2 className="w-3 h-3 mr-1" />
-                Gen End
+                End
               </Button>
             )}
             
@@ -544,19 +530,6 @@ export function SegmentPairCard({
               </>
             )}
           </div>
-          
-          {canGenerateVideo && (
-            <Button 
-              size="sm" 
-              variant="default"
-              onClick={(e) => { e.stopPropagation(); onOpenDirectorConsole ? onOpenDirectorConsole() : onGenerateVideo(); }}
-              disabled={isGenerating}
-              className="h-7 text-xs bg-green-600 hover:bg-green-700"
-            >
-              <Video className="w-3 h-3 mr-1" />
-              Generate Video (FTV)
-            </Button>
-          )}
         </div>
       )}
       

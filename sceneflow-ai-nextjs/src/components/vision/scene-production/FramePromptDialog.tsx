@@ -38,6 +38,8 @@ import {
   CheckCircle2,
   Info,
   Palette,
+  Check,
+  Box,
 } from 'lucide-react'
 import type { SceneSegment, TransitionType, CharacterReference } from './types'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
@@ -76,6 +78,14 @@ export interface FramePromptDialogProps {
     age?: string
     wardrobe?: string
   }>
+  /** Object/prop references from the reference library for consistent image generation */
+  objectReferences?: Array<{
+    id: string
+    name: string
+    imageUrl: string
+    description?: string
+    importance?: 'critical' | 'secondary'
+  }>
   /** Scene heading for location parsing */
   sceneHeading?: string
 }
@@ -89,6 +99,13 @@ export interface FrameGenerationOptions {
   previousEndFrameUrl?: string | null
   /** NEW: Selected characters with reference images for generation */
   selectedCharacters?: CharacterReference[]
+  /** NEW: Selected object/prop references for consistent generation */
+  selectedObjectReferences?: Array<{
+    id: string
+    name: string
+    imageUrl: string
+    description?: string
+  }>
   /** NEW: Visual setup data */
   visualSetup?: {
     location: string
@@ -158,6 +175,7 @@ export function FramePromptDialog({
   isGenerating = false,
   sceneDirection: propSceneDirection,
   characters = [],
+  objectReferences = [],
   sceneHeading,
 }: FramePromptDialogProps) {
   // Try to get scene direction from context if not passed as prop
@@ -180,6 +198,9 @@ export function FramePromptDialog({
   
   // Character selection state
   const [selectedCharacterNames, setSelectedCharacterNames] = useState<string[]>([])
+  
+  // Object reference selection state
+  const [selectedObjectRefIds, setSelectedObjectRefIds] = useState<string[]>([])
   
   // Art style state (default to photorealistic for backward compatibility)
   const [artStyle, setArtStyle] = useState<string>('photorealistic')
@@ -417,6 +438,9 @@ export function FramePromptDialog({
   const handleGenerate = useCallback(() => {
     if (!segment) return
 
+    // Get selected object references
+    const selectedObjectRefs = objectReferences.filter(obj => selectedObjectRefIds.includes(obj.id))
+
     const options: FrameGenerationOptions = {
       segmentId: segment.segmentId,
       frameType,
@@ -426,6 +450,13 @@ export function FramePromptDialog({
       previousEndFrameUrl: usePreviousEndFrame ? previousEndFrameUrl : undefined,
       // NEW: Pass selected characters with reference images
       selectedCharacters: selectedCharacters.length > 0 ? selectedCharacters : undefined,
+      // NEW: Pass selected object references
+      selectedObjectReferences: selectedObjectRefs.length > 0 ? selectedObjectRefs.map(obj => ({
+        id: obj.id,
+        name: obj.name,
+        imageUrl: obj.imageUrl,
+        description: obj.description,
+      })) : undefined,
       // NEW: Pass visual setup for prompt construction
       visualSetup: mode === 'guided' ? visualSetup : undefined,
       // NEW: Pass art style for generation
@@ -433,7 +464,7 @@ export function FramePromptDialog({
     }
 
     onGenerate(options)
-  }, [segment, frameType, customPrompt, buildNegativePrompt, usePreviousEndFrame, previousEndFrameUrl, onGenerate, selectedCharacters, mode, visualSetup, artStyle])
+  }, [segment, frameType, customPrompt, buildNegativePrompt, usePreviousEndFrame, previousEndFrameUrl, onGenerate, selectedCharacters, objectReferences, selectedObjectRefIds, mode, visualSetup, artStyle])
 
   if (!segment) return null
 
@@ -672,6 +703,77 @@ export function FramePromptDialog({
                         </div>
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {/* Props & Objects */}
+                {objectReferences.length > 0 && (
+                  <div className="space-y-3 p-3 rounded border border-slate-700 bg-slate-800/50">
+                    <h4 className="text-sm font-medium text-slate-200 flex items-center gap-2">
+                      <Box className="w-4 h-4 text-cyan-400" />
+                      Props & Objects
+                    </h4>
+                    <p className="text-xs text-slate-400">Select objects to include for visual consistency</p>
+                    {selectedObjectRefIds.length > 5 && (
+                      <div className="flex items-start gap-2 p-2 rounded bg-amber-500/10 border border-amber-500/30">
+                        <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-amber-300">
+                          You've selected {selectedObjectRefIds.length} objects. For best results, limit to 5 or fewer key props.
+                        </p>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-3 gap-2">
+                      {objectReferences.map((obj) => {
+                        const isSelected = selectedObjectRefIds.includes(obj.id)
+                        return (
+                          <button
+                            key={obj.id}
+                            onClick={() => {
+                              setSelectedObjectRefIds(prev =>
+                                prev.includes(obj.id)
+                                  ? prev.filter(id => id !== obj.id)
+                                  : [...prev, obj.id]
+                              )
+                            }}
+                            className={cn(
+                              "relative aspect-square rounded-lg border cursor-pointer transition-all overflow-hidden",
+                              isSelected
+                                ? "border-purple-500 ring-2 ring-purple-500/50"
+                                : "border-slate-700 hover:border-slate-600"
+                            )}
+                            title={obj.description || obj.name}
+                          >
+                            {obj.imageUrl ? (
+                              <img
+                                src={obj.imageUrl}
+                                alt={obj.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-slate-700 flex items-center justify-center">
+                                <Box className="w-6 h-6 text-slate-500" />
+                              </div>
+                            )}
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5">
+                              <div className="text-[10px] text-white truncate font-medium">{obj.name}</div>
+                            </div>
+                            {isSelected && (
+                              <div className="absolute top-1 right-1 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
+                                <Check className="w-3 h-3 text-white" />
+                              </div>
+                            )}
+                            {obj.importance === 'critical' && (
+                              <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-red-500/90 rounded text-[9px] text-white font-medium">
+                                Critical
+                              </div>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <p className="text-[10px] text-slate-500">
+                      Selected objects will be included for visual consistency in the generated frame.
+                    </p>
                   </div>
                 )}
 
