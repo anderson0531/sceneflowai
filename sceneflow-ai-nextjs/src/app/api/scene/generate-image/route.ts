@@ -410,6 +410,54 @@ export async function POST(req: NextRequest) {
       }
     }
     
+    // AUTO-DETECT: If no objectReferences provided, try to match from project's reference library
+    // This ensures objects mentioned in scene text (like "Sarah's Digital Image") are included
+    let detectedObjectReferences = objectReferences
+    if (project && detectedObjectReferences.length === 0) {
+      const projectObjectRefs = project.metadata?.visionPhase?.references?.objectReferences || []
+      
+      if (projectObjectRefs.length > 0 && fullSceneContext) {
+        // Build scene text for matching (including the prompt)
+        const sceneText = `${fullSceneContext} ${scenePrompt || ''} ${customPrompt || ''}`.toLowerCase()
+        
+        // Match object names from scene text using fuzzy matching
+        const matchedObjects = projectObjectRefs.filter((obj: any) => {
+          if (!obj.name || !obj.imageUrl) return false
+          const objNameLower = obj.name.toLowerCase()
+          
+          // Check for exact name match
+          if (sceneText.includes(objNameLower)) return true
+          
+          // Check for partial matches (e.g., "Sarah's Digital Image" matches "wife's image", "Sarah", "digital image")
+          const nameParts = objNameLower.split(/[\s']+/).filter((p: string) => p.length > 2)
+          const significantMatches = nameParts.filter((part: string) => sceneText.includes(part))
+          
+          // If 2+ significant parts match, include the object (e.g., "digital" and "image" both match)
+          if (significantMatches.length >= 2) return true
+          
+          // Check description for key terms if available
+          if (obj.description) {
+            const descLower = obj.description.toLowerCase()
+            // Look for terms like "wife", "Sarah" in both scene and description
+            const descKeywords = descLower.match(/\b[a-z]{4,}\b/g) || []
+            const sceneKeywords = sceneText.match(/\b[a-z]{4,}\b/g) || []
+            const commonKeywords = descKeywords.filter((k: string) => sceneKeywords.includes(k))
+            if (commonKeywords.length >= 2) return true
+          }
+          
+          return false
+        })
+        
+        if (matchedObjects.length > 0) {
+          detectedObjectReferences = matchedObjects
+          console.log(`[Scene Image] Auto-detected ${matchedObjects.length} object reference(s) from scene:`,
+            matchedObjects.map((o: any) => o.name))
+        } else {
+          console.log('[Scene Image] No object references matched from', projectObjectRefs.length, 'available objects')
+        }
+      }
+    }
+    
     // Build character references using visionDescription (preferred) or fallback descriptions
     // IMPORTANT: referenceId is ONLY assigned to characters with GCS images
     // This ensures the [1], [2] markers in the prompt match the API's referenceImages array
@@ -590,7 +638,7 @@ export async function POST(req: NextRequest) {
           visualDescription: customPrompt,
           characterReferences: characterReferences,
           artStyle: artStyle || 'photorealistic',
-          objectReferences: objectReferences  // Include object references from Reference Library
+          objectReferences: detectedObjectReferences  // Include auto-detected object references
         })
         console.log('[Scene Image] Added character references to user-edited prompt (re-optimized)')
       }
@@ -601,11 +649,11 @@ export async function POST(req: NextRequest) {
         visualDescription: fullSceneContext,
         characterReferences: characterReferences,
         artStyle: artStyle || 'photorealistic',
-        objectReferences: objectReferences  // Include object references from Reference Library
+        objectReferences: detectedObjectReferences  // Include auto-detected object references
       })
       console.log('[Scene Image] Optimized scene description prompt')
-      if (objectReferences.length > 0) {
-        console.log('[Scene Image] Included', objectReferences.length, 'object reference(s) in prompt optimization')
+      if (detectedObjectReferences.length > 0) {
+        console.log('[Scene Image] Included', detectedObjectReferences.length, 'object reference(s) in prompt optimization')
       }
     }
 
@@ -701,13 +749,27 @@ export async function POST(req: NextRequest) {
     
     console.log(`[Scene Image] Negative prompt includes ${characterSpecificNegatives.length} character-specific exclusions (facial features only)`)
 
+    // Build object reference images for inclusion in generation
+    const objectImageReferences = detectedObjectReferences
+      .filter((obj: any) => obj.imageUrl)
+      .map((obj: any) => ({
+        imageUrl: obj.imageUrl,
+        name: obj.name || 'prop'
+      }))
+    
+    if (objectImageReferences.length > 0) {
+      console.log(`[Scene Image] Including ${objectImageReferences.length} object reference image(s):`,
+        objectImageReferences.map((o: any) => o.name))
+    }
+
     // Generate with Gemini
     // Use Gemini Studio (gemini-3-pro-image-preview) for reference images - better character consistency
     // Fall back to Vertex AI Imagen for non-reference image generation
     let base64Image: string | null = null
     let generationAttempt = 0
     const maxGenerationAttempts = 2
-    const useGeminiStudio = imageReferences.length > 0  // Use Gemini Studio when we have reference images
+    // Use Gemini Studio when we have ANY reference images (characters OR objects)
+    const useGeminiStudio = imageReferences.length > 0 || objectImageReferences.length > 0
     
     while (generationAttempt < maxGenerationAttempts) {
       try {
@@ -719,17 +781,42 @@ export async function POST(req: NextRequest) {
           // This passes reference images directly in the prompt for better character consistency
           console.log('[Scene Image] Using Gemini Studio (gemini-3-pro-image-preview) for character reference images')
           
-          // Build multimodal prompt with character instructions
-          const geminiPrompt = `Generate a cinematic scene image based on this description. The scene should feature the person(s) shown in the reference image(s) provided.\n\n${optimizedPrompt}\n\nIMPORTANT: The character(s) in the generated image MUST match the person(s) in the reference image(s) exactly - same ethnicity, facial features, hair color/style, and facial hair. Preserve their identity.`
+          // Combine character and object reference images
+          const allReferenceImages = [
+            ...imageReferences.map(ref => ({
+              imageUrl: ref.imageUrl,
+              name: ref.subjectDescription || 'character'
+            })),
+            ...objectImageReferences
+          ]
+          
+          // Build multimodal prompt with character and object instructions
+          let geminiPrompt = `Generate a cinematic scene image based on this description. `
+          
+          if (imageReferences.length > 0) {
+            geminiPrompt += `The scene should feature the person(s) shown in the reference image(s) provided. `
+          }
+          
+          if (objectImageReferences.length > 0) {
+            const objectNames = objectImageReferences.map((o: any) => o.name).join(', ')
+            geminiPrompt += `Include these specific props/objects shown in reference images: ${objectNames}. `
+          }
+          
+          geminiPrompt += `\n\n${optimizedPrompt}\n\n`
+          
+          if (imageReferences.length > 0) {
+            geminiPrompt += `IMPORTANT: The character(s) in the generated image MUST match the person(s) in the reference image(s) exactly - same ethnicity, facial features, hair color/style, and facial hair. Preserve their identity. `
+          }
+          
+          if (objectImageReferences.length > 0) {
+            geminiPrompt += `The props/objects referenced should closely match their reference images.`
+          }
           
           const result = await generateImageWithGeminiStudio({
             prompt: geminiPrompt,
             aspectRatio: '16:9',
             imageSize: quality === 'max' ? '2K' : '1K',
-            referenceImages: imageReferences.map(ref => ({
-              imageUrl: ref.imageUrl,
-              name: ref.subjectDescription || 'character'
-            }))
+            referenceImages: allReferenceImages
           })
           
           base64Image = result.imageBase64
