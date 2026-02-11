@@ -208,6 +208,13 @@ export async function POST(req: NextRequest) {
     
     console.log('[Generate Frames] Transition type:', transitionType)
 
+    // Get art style info for explicit style injection in prompts
+    // This is defined at the top level so both start and end frame generation can use it
+    const selectedStyle = artStylePresets.find(s => s.id === artStyle) || artStylePresets.find(s => s.id === 'photorealistic')!
+    const isPhotorealistic = artStyle === 'photorealistic' || !artStyle
+    
+    console.log(`[Generate Frames] Art style: ${selectedStyle.name} (photorealistic: ${isPhotorealistic})`)
+
     let generatedStartFrameUrl: string | undefined
     let startFramePrompt: string | undefined
     let generatedEndFrameUrl: string | undefined
@@ -387,11 +394,49 @@ export async function POST(req: NextRequest) {
       console.log(`[Generate Frames] References: ${allReferenceImages.map(r => r.name).join(', ') || 'none'}`)
       
       // Build enhanced prompt for Gemini
+      // CRITICAL: For non-photorealistic styles, we MUST make the style directive prominent
+      // because reference images are photorealistic and would otherwise dominate the output
       let geminiPrompt = startFramePrompt
-      if (charRefs.length > 0) {
-        geminiPrompt = `Generate a cinematic frame based on this description. The character(s) shown in the reference image(s) must appear in this scene with their exact appearance preserved.\n\n${startFramePrompt}\n\nIMPORTANT: Match the character's ethnicity, facial features, hair color/style, and facial hair exactly from the reference images.`
-      } else if (referenceImageUrl) {
-        geminiPrompt = `Generate a cinematic frame based on this description. Use the provided reference image for visual style and scene continuity.\n\n${startFramePrompt}`
+      
+      if (!isPhotorealistic) {
+        // Non-photorealistic: Style transformation is MANDATORY
+        if (charRefs.length > 0) {
+          geminiPrompt = `MANDATORY ART STYLE: ${selectedStyle.name.toUpperCase()}
+Style specification: ${selectedStyle.promptSuffix}
+
+Generate a frame in ${selectedStyle.name} style. The reference images show character IDENTITY only (facial structure, ethnicity, distinguishing features). You MUST render them in ${selectedStyle.name} style - do NOT output photorealistic images.
+
+${startFramePrompt}
+
+CRITICAL REQUIREMENTS:
+- Render in ${selectedStyle.name} style: ${selectedStyle.promptSuffix}
+- Transform the photorealistic references INTO ${selectedStyle.name} aesthetic
+- Preserve character IDENTITY (face shape, ethnicity, age, distinguishing features)
+- The output MUST look like ${selectedStyle.name}, NOT photorealistic photography`
+        } else if (referenceImageUrl) {
+          geminiPrompt = `MANDATORY ART STYLE: ${selectedStyle.name.toUpperCase()}
+Style specification: ${selectedStyle.promptSuffix}
+
+Generate a frame in ${selectedStyle.name} style. Use the reference for scene composition but render in ${selectedStyle.name} style.
+
+${startFramePrompt}
+
+CRITICAL: Output must be ${selectedStyle.name} style, not photorealistic.`
+        } else {
+          geminiPrompt = `MANDATORY ART STYLE: ${selectedStyle.name.toUpperCase()}
+Style specification: ${selectedStyle.promptSuffix}
+
+${startFramePrompt}
+
+Render this scene in ${selectedStyle.name} style.`
+        }
+      } else {
+        // Photorealistic: Exact appearance matching is the priority
+        if (charRefs.length > 0) {
+          geminiPrompt = `Generate a cinematic frame based on this description. The character(s) shown in the reference image(s) must appear in this scene with their exact appearance preserved.\n\n${startFramePrompt}\n\nIMPORTANT: Match the character's ethnicity, facial features, hair color/style, and facial hair exactly from the reference images.`
+        } else if (referenceImageUrl) {
+          geminiPrompt = `Generate a cinematic frame based on this description. Use the provided reference image for visual style and scene continuity.\n\n${startFramePrompt}`
+        }
       }
       
       const result = await generateImageWithGeminiStudio({
@@ -524,8 +569,35 @@ export async function POST(req: NextRequest) {
       // DON'T add separate character refs - start frame already has them in context
       console.log('[Generate Frames] End frame using Gemini Studio with start frame as reference')
       
-      // Build enhanced prompt for end frame with STRONG reference enforcement
-      const geminiEndPrompt = `Generate the ending frame for this scene segment.
+      // Build enhanced prompt for end frame
+      // CRITICAL: For non-photorealistic styles, we must enforce style transformation
+      let geminiEndPrompt: string
+      
+      if (!isPhotorealistic) {
+        // Non-photorealistic: Style transformation is MANDATORY
+        geminiEndPrompt = `MANDATORY ART STYLE: ${selectedStyle.name.toUpperCase()}
+Style specification: ${selectedStyle.promptSuffix}
+
+Generate the ENDING frame for this scene segment in ${selectedStyle.name} style.
+
+CHARACTER CONTINUITY:
+- The character(s) in the start frame reference must appear in this end frame
+- Preserve character IDENTITY: face shape, ethnicity, age, distinguishing features
+- Maintain the SAME ${selectedStyle.name} artistic rendering as the start frame
+
+SCENE PROGRESSION:
+${endFramePrompt}
+
+This is the END of the action - show the final state after the action completes.
+
+CRITICAL REQUIREMENTS:
+- Output MUST be ${selectedStyle.name} style: ${selectedStyle.promptSuffix}
+- Match the artistic style of the start frame reference
+- Preserve character identity while maintaining ${selectedStyle.name} aesthetic
+- Do NOT output photorealistic images`
+      } else {
+        // Photorealistic: Exact appearance matching is the priority
+        geminiEndPrompt = `Generate the ending frame for this scene segment.
 
 CRITICAL REFERENCE REQUIREMENTS:
 - The character(s) in the provided reference image MUST appear with IDENTICAL appearance
@@ -538,6 +610,7 @@ ${endFramePrompt}
 
 This is the END of the action - show the final state after the action completes.
 The reference image shows the START of this segment - maintain perfect character continuity.`
+      }
       
       // Generate end frame using Gemini Studio
       const endResult = await generateImageWithGeminiStudio({
