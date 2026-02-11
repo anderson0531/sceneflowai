@@ -70,14 +70,22 @@ export async function GET(
     response.headers.set('X-Content-Type-Options', 'nosniff')
     
     // Log direction data for debugging intermittent issues
-    const scenes = project.metadata?.visionPhase?.script?.script?.scenes || []
+    const visionPhase = project.metadata?.visionPhase || {}
+    const scenes = visionPhase?.script?.script?.scenes || []
     const scenesWithDirection = scenes.filter((s: any) => !!s.sceneDirection)
-    const characters = project.metadata?.visionPhase?.characters || []
+    const characters = visionPhase?.characters || []
     
     console.log('[Projects GET] Loaded project:', {
       id: project.id,
+      title: project.title,
+      // Script status
+      scriptGenerated: !!visionPhase.scriptGenerated,
+      hasScript: !!visionPhase?.script,
+      hasScriptScript: !!visionPhase?.script?.script,
       totalScenes: scenes.length,
       scenesWithDirection: scenesWithDirection.length,
+      // Character status
+      charactersGenerated: !!visionPhase.charactersGenerated,
       charactersCount: characters.length,
       charactersWithRefImage: characters.filter((c: any) => !!c.referenceImage).length,
       characterDetails: characters.map((c: any) => ({
@@ -165,6 +173,32 @@ export async function PUT(
         mergedMetadata.visionPhase = {
           ...existingMetadata.visionPhase,
           ...body.metadata.visionPhase
+        }
+        
+        // CRITICAL SAFEGUARD: Prevent accidental script deletion
+        // If existing has script with scenes but incoming has fewer/no scenes, preserve existing
+        const existingScript = existingMetadata.visionPhase?.script
+        const incomingScript = body.metadata.visionPhase?.script
+        const existingSceneCount = existingScript?.script?.scenes?.length || 0
+        const incomingSceneCount = incomingScript?.script?.scenes?.length || 0
+        
+        // Case 1: Incoming has no script at all - preserve existing
+        if (existingSceneCount > 0 && !incomingScript) {
+          console.warn('[Projects PUT] PREVENTED SCRIPT DELETION (no incoming script):', {
+            existingSceneCount,
+            preservingExistingScript: true
+          })
+          mergedMetadata.visionPhase.script = existingScript
+        }
+        // Case 2: Incoming has script but with 0 scenes when existing has scenes
+        // This could be a stale client state - preserve existing
+        else if (existingSceneCount > 0 && incomingSceneCount === 0) {
+          console.warn('[Projects PUT] PREVENTED SCRIPT DELETION (incoming has 0 scenes):', {
+            existingSceneCount,
+            incomingSceneCount,
+            preservingExistingScript: true
+          })
+          mergedMetadata.visionPhase.script = existingScript
         }
         
         // Deep merge script if it exists in both

@@ -4316,6 +4316,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Prevents rapid-fire API calls when multiple state updates occur
   const debouncedSaveSceneAnalysis = useMemo(
     () => debounce(async (scriptData: any, metadata: any, projId: string) => {
+      // Guard: Don't save if script has no scenes (prevents accidental data loss)
+      const sceneCount = scriptData?.script?.scenes?.length || 0
+      if (sceneCount === 0) {
+        console.warn('[SceneAnalysis] Skipping save - no scenes in script data')
+        return
+      }
+      
       try {
         await fetch(`/api/projects/${projId}`, {
           method: 'PUT',
@@ -4336,6 +4343,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }, 1000), // 1 second debounce
     []
   )
+  
+  // Cleanup debounced saves on unmount to prevent race conditions
+  useEffect(() => {
+    return () => {
+      debouncedSaveSceneAnalysis.cancel()
+      if (audioClipPersistDebounceRef.current) {
+        clearTimeout(audioClipPersistDebounceRef.current)
+      }
+    }
+  }, [debouncedSaveSceneAnalysis])
 
   // Memoized callback for persisting scene analysis from ScriptReviewModal
   // CRITICAL: This must be memoized to prevent infinite re-render loops
@@ -4827,6 +4844,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           )
 
           if (needsSaving) {
+            console.log('[Load Project] Saving voice config fix, preserving script:', {
+              hasScript: !!visionPhase.script,
+              sceneCount: visionPhase.script?.script?.scenes?.length || 0
+            })
             try {
               await fetch(`/api/projects/${projectId}`, {
                 method: 'PUT',
@@ -4837,6 +4858,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     visionPhase: {
                       ...visionPhase,
                       characters: charactersWithRole
+                      // Note: script is preserved via ...visionPhase spread
                     }
                   }
                 })
@@ -4858,6 +4880,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           )
           
           if (needsIdMigration) {
+            console.log('[Load Project] Saving character ID migration, preserving script:', {
+              hasScript: !!visionPhase.script,
+              sceneCount: visionPhase.script?.script?.scenes?.length || 0
+            })
             try {
               await fetch(`/api/projects/${projectId}`, {
                 method: 'PUT',
@@ -4868,6 +4894,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     visionPhase: {
                       ...visionPhase,
                       characters: charactersWithIds
+                      // Note: script is preserved via ...visionPhase spread
                     }
                   }
                 })
