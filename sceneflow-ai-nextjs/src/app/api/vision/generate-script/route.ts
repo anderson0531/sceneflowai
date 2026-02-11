@@ -337,7 +337,8 @@ SCREENPLAY FORMAT - Return ONLY valid JSON:
 Generate COMPLETE scenes with full dialogue and action.`
 
     // BATCHED GENERATION: Split into batches to avoid MAX_TOKENS
-    const SCENES_PER_BATCH = 12
+    // Reduced from 12 to 8 scenes per batch to prevent timeout on large scripts
+    const SCENES_PER_BATCH = 8
     const batches = Math.ceil(sceneCount / SCENES_PER_BATCH)
     
     console.log(`[Script Gen] Generating ${sceneCount} scenes in ${batches} batch(es) of ~${SCENES_PER_BATCH} scenes`)
@@ -703,7 +704,8 @@ async function callGemini(apiKey: string, prompt: string, maxTokens: number): Pr
     temperature: 0.5, // Reduced from 0.7 to 0.5 for more deterministic JSON
     topP: 0.9,
     maxOutputTokens: maxTokens,
-    responseMimeType: 'application/json'
+    responseMimeType: 'application/json',
+    timeoutMs: 180000, // 180s timeout for script generation (increased from 90s default)
   })
   
   if (!result.text) {
