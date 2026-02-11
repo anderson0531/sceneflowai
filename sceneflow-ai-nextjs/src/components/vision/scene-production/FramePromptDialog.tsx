@@ -36,8 +36,8 @@ import {
   Wind,
   Sparkles,
   CheckCircle2,
-  Copy,
   Info,
+  Palette,
 } from 'lucide-react'
 import type { SceneSegment, TransitionType, CharacterReference } from './types'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
@@ -49,6 +49,7 @@ import {
 } from '@/lib/intelligence/keyframe-prompt-builder'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { prioritizeCharacterReferences } from './types'
+import { artStylePresets } from '@/constants/artStylePresets'
 
 // ============================================================================
 // Types
@@ -98,6 +99,8 @@ export interface FrameGenerationOptions {
     cameraAngle: string
     lighting: string
   }
+  /** Art style for frame generation (default: photorealistic) */
+  artStyle?: string
 }
 
 // ============================================================================
@@ -178,9 +181,11 @@ export function FramePromptDialog({
   // Character selection state
   const [selectedCharacterNames, setSelectedCharacterNames] = useState<string[]>([])
   
+  // Art style state (default to photorealistic for backward compatibility)
+  const [artStyle, setArtStyle] = useState<string>('photorealistic')
+  
   // State
   const [customPrompt, setCustomPrompt] = useState('')
-  const [copiedPrompt, setCopiedPrompt] = useState(false)
   const [selectedNegativePresets, setSelectedNegativePresets] = useState<Set<string>>(
     new Set(DEFAULT_NEGATIVE_PRESETS)
   )
@@ -423,10 +428,12 @@ export function FramePromptDialog({
       selectedCharacters: selectedCharacters.length > 0 ? selectedCharacters : undefined,
       // NEW: Pass visual setup for prompt construction
       visualSetup: mode === 'guided' ? visualSetup : undefined,
+      // NEW: Pass art style for generation
+      artStyle,
     }
 
     onGenerate(options)
-  }, [segment, frameType, customPrompt, buildNegativePrompt, usePreviousEndFrame, previousEndFrameUrl, onGenerate, selectedCharacters, mode, visualSetup])
+  }, [segment, frameType, customPrompt, buildNegativePrompt, usePreviousEndFrame, previousEndFrameUrl, onGenerate, selectedCharacters, mode, visualSetup, artStyle])
 
   if (!segment) return null
 
@@ -723,6 +730,31 @@ export function FramePromptDialog({
                         <SelectItem value="neon">Neon / Stylized</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                </div>
+
+                {/* Art Style Selection */}
+                <div className="space-y-3 p-3 rounded border border-slate-700 bg-slate-800/50">
+                  <h4 className="text-sm font-medium text-slate-200 flex items-center gap-2">
+                    <Palette className="w-4 h-4 text-cyan-400" />
+                    Art Style
+                  </h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {artStylePresets.map((style) => (
+                      <div
+                        key={style.id}
+                        onClick={() => setArtStyle(style.id)}
+                        className={cn(
+                          "p-3 rounded-lg border cursor-pointer transition-all",
+                          artStyle === style.id
+                            ? "border-cyan-500 bg-cyan-500/10"
+                            : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
+                        )}
+                      >
+                        <div className="text-sm font-medium text-slate-200">{style.name}</div>
+                        <div className="text-xs text-slate-400 mt-0.5">{style.description}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
@@ -1037,27 +1069,6 @@ export function FramePromptDialog({
         </Tabs>
 
         <DialogFooter className="mt-4 pt-4 border-t border-slate-700">
-          {/* Copy Prompt for external generation */}
-          <Button
-            variant="outline"
-            onClick={async () => {
-              const promptToCopy = customPrompt.trim() || intelligentPrompt?.prompt || ''
-              if (promptToCopy) {
-                try {
-                  await navigator.clipboard.writeText(promptToCopy)
-                  setCopiedPrompt(true)
-                  setTimeout(() => setCopiedPrompt(false), 2000)
-                } catch (err) {
-                  console.error('Failed to copy prompt:', err)
-                }
-              }
-            }}
-            disabled={!customPrompt.trim() && !intelligentPrompt?.prompt}
-            className="mr-auto gap-2 text-cyan-400 border-cyan-500/30 hover:bg-cyan-500/10"
-          >
-            <Copy className="w-4 h-4" />
-            {copiedPrompt ? 'Copied!' : 'Copy Prompt'}
-          </Button>
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}

@@ -1838,6 +1838,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         cameraAngle: string
         lighting: string
       }
+      /** Art style for frame generation */
+      artStyle?: string
     }) => {
       const scene = script?.script?.scenes?.find((s: any) => 
         (s.id || s.sceneId || `scene-${script?.script?.scenes?.indexOf(s)}`) === sceneId
@@ -1896,6 +1898,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             usePreviousEndFrame: options?.usePreviousEndFrame,
             // NEW: Visual setup for prompt construction (from guided mode)
             visualSetup: options?.visualSetup,
+            // NEW: Art style for frame generation
+            artStyle: options?.artStyle,
             // Enhanced character data with all fields for identity lock
             // When user has explicitly selected characters in the dialog, prioritize those
             // Otherwise, use priority: protagonist > main > supporting (sorted before API handles slicing)

@@ -95,6 +95,9 @@ interface FrameGenerationRequest {
     importance?: 'critical' | 'important' | 'background'
     imageUrl?: string
   }>
+  
+  // Art style for frame generation (default: photorealistic)
+  artStyle?: string
 }
 
 interface FrameGenerationResponse {
@@ -161,7 +164,9 @@ export async function POST(req: NextRequest) {
       previousShotType,
       isPanTransition = false,
       // NEW: Object references for prop consistency
-      objectReferences = []
+      objectReferences = [],
+      // NEW: Art style for frame generation
+      artStyle = 'photorealistic'
     } = body
     
     // Use custom prompt if provided, otherwise fall back to action prompt
@@ -268,6 +273,7 @@ export async function POST(req: NextRequest) {
               importance: obj.importance,
               imageUrl: obj.imageUrl
             })),
+            artStyle,
           })
           
           startFramePrompt = enhancedFrame.prompt
@@ -446,6 +452,7 @@ export async function POST(req: NextRequest) {
             imageUrl: obj.imageUrl
           })),
           previousFrameDescription: `Opening frame showing: ${actionPrompt}`,
+          artStyle,
         })
         
         endFramePrompt = enhancedFrame.prompt

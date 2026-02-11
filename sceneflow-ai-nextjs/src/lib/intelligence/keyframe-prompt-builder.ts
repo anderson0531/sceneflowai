@@ -14,6 +14,7 @@
 import type { DetailedSceneDirection } from '@/types/scene-direction'
 import type { TransitionType, ActionType } from './FrameGenerator'
 import { inferActionType, getActionWeights } from './ActionWeights'
+import { artStylePresets } from '@/constants/artStylePresets'
 
 // ============================================================================
 // Types
@@ -75,6 +76,9 @@ export interface FramePromptRequest {
   
   /** Optional: Previous end frame description for continuity */
   previousFrameDescription?: string
+  
+  /** Art style for generation (default: photorealistic) */
+  artStyle?: string
 }
 
 export interface EnhancedFramePrompt {
@@ -408,7 +412,8 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
     keyframeContext,
     characters,
     objectReferences,
-    previousFrameDescription
+    previousFrameDescription,
+    artStyle = 'photorealistic' // Default to photorealistic for backward compatibility
   } = request
   
   const actionType = inferActionType(actionPrompt)
@@ -488,8 +493,10 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
     promptParts.push(atmosphereBlock)
   }
   
-  // 11. Quality suffix
-  promptParts.push('Cinematic quality, 8K, photorealistic.')
+  // 11. Quality suffix with dynamic art style
+  const selectedStyle = artStylePresets.find(s => s.id === artStyle) || 
+    artStylePresets.find(s => s.id === 'photorealistic')!
+  promptParts.push(`Cinematic quality, 8K, ${selectedStyle.promptSuffix}.`)
   
   // Determine reference image usage
   const useReferenceImage = 

@@ -26,6 +26,7 @@ import type {
   AnchorStatus 
 } from './types'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
+import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 
 // ============================================================================
 // Types
@@ -58,6 +59,8 @@ export interface SegmentFrameTimelineProps {
       cameraAngle: string
       lighting: string
     }
+    /** Art style for frame generation */
+    artStyle?: string
   }) => Promise<void>
   onGenerateAllFrames: () => Promise<void>
   onGenerateVideo: (segmentId: string) => void
@@ -176,23 +179,38 @@ export function SegmentFrameTimeline({
   }, [getPreviousEndFrame])
   
   // Handle generation from dialog
+  const { execute: executeWithOverlay } = useProcessWithOverlay()
+  
   const handleDialogGenerate = useCallback(async (options: FrameGenerationOptions) => {
     setFramePromptDialogOpen(false)
     
-    await onGenerateFrames(options.segmentId, options.frameType, {
-      customPrompt: options.customPrompt,
-      negativePrompt: options.negativePrompt,
-      usePreviousEndFrame: options.usePreviousEndFrame,
-      previousEndFrameUrl: options.previousEndFrameUrl || undefined,
-      // NEW: Pass selected characters with reference images for identity lock
-      selectedCharacters: options.selectedCharacters?.map(c => ({
-        name: c.name,
-        referenceImageUrl: c.referenceImageUrl,
-      })),
-      // NEW: Pass visual setup for prompt construction
-      visualSetup: options.visualSetup,
-    })
-  }, [onGenerateFrames])
+    const frameLabel = options.frameType === 'both' ? 'start + end frames' : `${options.frameType} frame`
+    
+    await executeWithOverlay(
+      async () => {
+        await onGenerateFrames(options.segmentId, options.frameType, {
+          customPrompt: options.customPrompt,
+          negativePrompt: options.negativePrompt,
+          usePreviousEndFrame: options.usePreviousEndFrame,
+          previousEndFrameUrl: options.previousEndFrameUrl || undefined,
+          // NEW: Pass selected characters with reference images for identity lock
+          selectedCharacters: options.selectedCharacters?.map(c => ({
+            name: c.name,
+            referenceImageUrl: c.referenceImageUrl,
+          })),
+          // NEW: Pass visual setup for prompt construction
+          visualSetup: options.visualSetup,
+          // NEW: Pass art style for generation
+          artStyle: options.artStyle,
+        })
+      },
+      {
+        message: `Generating ${frameLabel}...`,
+        estimatedDuration: options.frameType === 'both' ? 45 : 25,
+        operationType: 'keyframe-generation'
+      }
+    )
+  }, [onGenerateFrames, executeWithOverlay])
 
   if (segments.length === 0) {
     return (

@@ -14,6 +14,7 @@ export type OperationType =
   | 'video-generation'     // Generating video
   | 'audio-generation'     // Generating audio/TTS
   | 'character-generation' // Creating characters
+  | 'keyframe-generation'  // Movie production keyframe generation
   | 'analysis'             // General analysis
   | 'export'               // Exporting content
   | 'default'              // Generic processing
@@ -128,6 +129,19 @@ export const OPERATION_CONFIGS: Record<OperationType, OperationConfig> = {
       { id: 'render', label: 'Rendering character images...', progress: 70 },
       { id: 'variations', label: 'Creating variations...', progress: 90 },
       { id: 'finalize', label: 'Finalizing characters...', progress: 98 },
+    ]
+  },
+  'keyframe-generation': {
+    title: 'Generating Keyframe',
+    animationType: 'video',
+    phases: [
+      { id: 'setup', label: 'Setting up the shot...', progress: 10 },
+      { id: 'compose', label: 'Composing the frame...', progress: 25 },
+      { id: 'direct', label: 'Directing the scene...', progress: 45 },
+      { id: 'capture', label: 'Capturing the moment...', progress: 65 },
+      { id: 'grade', label: 'Color grading...', progress: 80 },
+      { id: 'polish', label: 'Final polish...', progress: 92 },
+      { id: 'finalize', label: 'Locking keyframe...', progress: 98 },
     ]
   },
   'analysis': {
