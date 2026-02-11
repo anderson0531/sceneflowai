@@ -12,10 +12,11 @@
  */
 'use client'
 
-import React, { useState } from 'react'
-import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, X, Upload, Download, FolderPlus, ImagePlus, PenSquare } from 'lucide-react'
+import React, { useState, useCallback } from 'react'
+import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData } from '@/lib/types/reports'
 import { SceneProductionManager } from './scene-production'
@@ -43,6 +44,8 @@ interface SceneGalleryProps {
   onSegmentUpload: (sceneId: string, segmentId: string, file: File) => Promise<void>
   onOpenAssets?: () => void
   onOpenPreview?: () => void
+  /** Object/prop references from the reference library for consistent image generation */
+  objectReferences?: Array<{ id: string; name: string; imageUrl: string; description?: string }>
 }
 
 const buildSceneKey = (scene: any, index: number) => scene.sceneId || scene.id || `scene-${index}`
@@ -67,6 +70,7 @@ export function SceneGallery({
   onSegmentUpload,
   onOpenAssets,
   onOpenPreview,
+  objectReferences,
 }: SceneGalleryProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'timeline'>('grid')
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -74,9 +78,16 @@ export function SceneGallery({
   const [generatingScenes, setGeneratingScenes] = useState<Set<number>>(new Set())
   const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
   const [openProductionScene, setOpenProductionScene] = useState<string | null>(null)
+  const [isGeneratingAll, setIsGeneratingAll] = useState(false)
   
-  // Build smart prompt that includes character references
-  const buildScenePrompt = (scene: any, sceneIdx: number): string => {
+  // Processing overlay hook for animated feedback
+  const { execute } = useProcessWithOverlay()
+  
+  // Count scenes without images for Generate All button
+  const scenesWithoutImages = scenes.filter(scene => !scene.imageUrl).length
+  
+  // Build smart prompt that includes character AND object references for consistency
+  const buildScenePrompt = useCallback((scene: any, sceneIdx: number): string => {
     const savedPrompt = scene.imagePrompt
     if (savedPrompt) return savedPrompt
     
@@ -96,15 +107,71 @@ export function SceneGallery({
       if (sceneChars.length > 0) {
         const charDescriptions = sceneChars.map(char => {
           const desc = char.imagePrompt || char.description || ''
-          return `${char.name}: ${desc}`
+          const refNote = char.referenceImageUrl ? ' [use reference image for consistency]' : ''
+          return `${char.name}: ${desc}${refNote}`
         }).join('; ')
         
         baseParts.push(`Characters: ${charDescriptions}`)
       }
     }
     
+    // Add object/prop references if they're mentioned in the scene text
+    if (objectReferences && objectReferences.length > 0) {
+      const sceneText = `${scene.heading || ''} ${scene.visualDescription || ''} ${scene.action || ''} ${scene.summary || ''}`.toLowerCase()
+      const matchedObjects = objectReferences.filter(obj => 
+        sceneText.includes(obj.name.toLowerCase())
+      )
+      
+      if (matchedObjects.length > 0) {
+        const objDescriptions = matchedObjects.map(obj => {
+          const desc = obj.description || obj.name
+          return `${obj.name}: ${desc} [use reference image for consistency]`
+        }).join('; ')
+        
+        baseParts.push(`Props/Objects: ${objDescriptions}`)
+      }
+    }
+    
     return baseParts.join('. ')
-  }
+  }, [characters, objectReferences])
+  
+  // Generate all scenes that don't have images - with processing overlay
+  const handleGenerateAll = useCallback(async () => {
+    if (scenesWithoutImages === 0) return
+    
+    setIsGeneratingAll(true)
+    
+    try {
+      await execute(async () => {
+        // Generate each scene sequentially
+        for (let idx = 0; idx < scenes.length; idx++) {
+          const scene = scenes[idx]
+          if (scene.imageUrl) continue // Skip scenes with images
+          
+          const prompt = buildScenePrompt(scene, idx)
+          setGeneratingScenes(prev => new Set(prev).add(idx))
+          
+          try {
+            await onGenerateScene(idx, prompt)
+          } catch (err) {
+            console.error(`[SceneGallery] Failed to generate scene ${idx + 1}:`, err)
+          } finally {
+            setGeneratingScenes(prev => {
+              const newSet = new Set(prev)
+              newSet.delete(idx)
+              return newSet
+            })
+          }
+        }
+      }, {
+        message: `Generating ${scenesWithoutImages} scene images...`,
+        estimatedDuration: scenesWithoutImages * 15, // ~15s per image
+        operationType: 'image-generation'
+      })
+    } finally {
+      setIsGeneratingAll(false)
+    }
+  }, [scenes, scenesWithoutImages, buildScenePrompt, onGenerateScene, execute])
 
   return (
     <TooltipProvider>
@@ -119,6 +186,28 @@ export function SceneGallery({
         </div>
         
         <div className="flex gap-2 items-center">
+          {/* Generate All button - only show if scenes without images exist */}
+          {scenesWithoutImages > 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateAll}
+                  disabled={isGeneratingAll || generatingScenes.size > 0}
+                  className="flex items-center gap-2 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border-indigo-500/30 hover:border-indigo-500/50 hover:from-indigo-500/20 hover:to-purple-500/20"
+                >
+                  {isGeneratingAll ? (
+                    <Loader className="w-4 h-4 animate-spin text-indigo-400" />
+                  ) : (
+                    <Wand2 className="w-4 h-4 text-indigo-400" />
+                  )}
+                  <span>Generate All ({scenesWithoutImages})</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Generate images for all scenes without images</TooltipContent>
+            </Tooltip>
+          )}
           {onOpenPreview && (
             <Button
               variant="outline"
@@ -210,7 +299,13 @@ export function SceneGallery({
                   onGenerate={async (prompt) => {
                     setGeneratingScenes((prev) => new Set(prev).add(idx))
                     try {
-                      await onGenerateScene(idx, prompt)
+                      await execute(async () => {
+                        await onGenerateScene(idx, prompt)
+                      }, {
+                        message: `Generating image for Scene ${idx + 1}...`,
+                        estimatedDuration: 15,
+                        operationType: 'image-generation'
+                      })
                     } finally {
                       setGeneratingScenes((prev) => {
                         const newSet = new Set(prev)
