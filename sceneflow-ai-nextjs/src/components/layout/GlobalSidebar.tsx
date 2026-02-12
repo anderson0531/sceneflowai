@@ -25,9 +25,20 @@ import {
   Save,
   Download,
   CreditCard,
-  Lightbulb
+  Lightbulb,
+  Home,
+  FolderOpen,
+  Library
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+
+// Icon mapping for main nav items
+const navIcons: Record<string, { icon: React.ElementType; color: string }> = {
+  dashboard: { icon: Home, color: 'text-amber-500' },
+  projects: { icon: FolderOpen, color: 'text-yellow-500' },
+  series: { icon: Library, color: 'text-cyan-500' },
+  start: { icon: Sparkles, color: 'text-purple-500' },
+}
 
 type StepStatus = 'completed' | 'current' | 'upcoming'
 
@@ -148,9 +159,16 @@ export function GlobalSidebar({ children }: { children?: React.ReactNode }) {
         <div className="p-4 space-y-6">
           <section>
             <div className="space-y-1">
-              {mainNav.map(i => (
-                <Link key={i.key} href={i.href} className={`block px-3 py-2 rounded text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 ${pathname===i.href?'bg-sf-primary/15 text-gray-900 dark:text-white':'text-gray-700 dark:text-gray-300'}`}>{i.label}</Link>
-              ))}
+              {mainNav.map(i => {
+                const navIcon = navIcons[i.key]
+                const IconComponent = navIcon?.icon
+                return (
+                  <Link key={i.key} href={i.href} className={`flex items-center gap-3 px-3 py-2 rounded text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 ${pathname===i.href?'bg-sf-primary/15 text-gray-900 dark:text-white':'text-gray-700 dark:text-gray-300'}`}>
+                    {IconComponent && <IconComponent className={`h-5 w-5 ${navIcon.color}`} />}
+                    {i.label}
+                  </Link>
+                )
+              })}
             </div>
           </section>
 
