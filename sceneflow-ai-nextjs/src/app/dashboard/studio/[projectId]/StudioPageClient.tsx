@@ -16,6 +16,8 @@ import { cn } from "@/lib/utils";
 import { BlueprintReimaginDialog } from '@/components/blueprint/BlueprintReimaginDialog'
 import { ScriptImportResult } from '@/components/blueprint/BlueprintComposer'
 import { TreatmentHeroImage } from '@/components/treatment/TreatmentHeroImage'
+import { HeroImagePromptBuilder } from '@/components/treatment/HeroImagePromptBuilder'
+import { ImageEditModal } from '@/components/vision/ImageEditModal'
 import { SidePanelTabs } from '@/components/blueprint/SidePanelTabs'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
@@ -60,7 +62,13 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   // Hero image error state
   const [heroImageError, setHeroImageError] = useState<string | null>(null)
   
-  // Prompt drawer state for editing hero image prompt
+  // Hero image prompt builder dialog state
+  const [showHeroPromptBuilder, setShowHeroPromptBuilder] = useState(false)
+  
+  // Hero image edit modal state
+  const [showHeroEditModal, setShowHeroEditModal] = useState(false)
+  
+  // Prompt drawer state for editing hero image prompt (legacy - keeping for compatibility)
   const [showPromptDrawer, setShowPromptDrawer] = useState(false)
   
   // Processing overlay hook for film production animation
@@ -800,8 +808,15 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                       genre={guide.treatmentVariants[0]?.genre}
                       aspectRatio="2.39:1"
                       className="mb-6"
-                      onRegenerate={() => generateHeroImage(guide.treatmentVariants[0], true)}
-                      onEditPrompt={() => setShowPromptDrawer(true)}
+                      onRegenerate={() => setShowHeroPromptBuilder(true)}
+                      onEditPrompt={() => {
+                        // Open edit modal if hero image exists, otherwise open prompt builder
+                        if (guide.treatmentVariants[0]?.heroImage?.url) {
+                          setShowHeroEditModal(true)
+                        } else {
+                          setShowHeroPromptBuilder(true)
+                        }
+                      }}
                       onUpload={async (file) => {
                         // Upload hero image
                         try {
@@ -1010,7 +1025,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         }}
       />
       
-      {/* Hero Image Prompt Drawer */}
+      {/* Hero Image Prompt Drawer (legacy) */}
       {guide.treatmentVariants && guide.treatmentVariants[0] && (
         <ThumbnailPromptDrawer
           open={showPromptDrawer}
@@ -1019,6 +1034,60 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           onThumbnailGenerated={async (customPrompt) => {
             setShowPromptDrawer(false)
             await generateHeroImage(guide.treatmentVariants[0], true, customPrompt)
+          }}
+        />
+      )}
+      
+      {/* Hero Image Prompt Builder Dialog - with production bible integration */}
+      {guide.treatmentVariants && guide.treatmentVariants[0] && (
+        <HeroImagePromptBuilder
+          open={showHeroPromptBuilder}
+          onClose={() => setShowHeroPromptBuilder(false)}
+          treatment={{
+            title: guide.treatmentVariants[0]?.title || guide.title || 'Untitled',
+            logline: guide.treatmentVariants[0]?.logline,
+            synopsis: guide.treatmentVariants[0]?.synopsis || guide.treatmentVariants[0]?.content,
+            genre: guide.treatmentVariants[0]?.genre,
+            setting: guide.treatmentVariants[0]?.setting,
+            tone: guide.treatmentVariants[0]?.tone,
+            themes: guide.treatmentVariants[0]?.themes,
+            visual_style: guide.treatmentVariants[0]?.visual_style || guide.treatmentVariants[0]?.visualStyle
+          }}
+          availableCharacters={((guide as any).characters || guide.treatmentVariants[0]?.character_descriptions || []).map((c: any) => ({
+            name: c.name,
+            description: c.description,
+            referenceImage: c.referenceImage,
+            appearanceDescription: c.appearanceDescription,
+            ethnicity: c.ethnicity,
+            role: c.role
+          }))}
+          sceneReferences={(guide as any).sceneReferences || []}
+          objectReferences={(guide as any).objectReferences || []}
+          onGenerateImage={async (promptData) => {
+            setShowHeroPromptBuilder(false)
+            // Generate hero image with the structured prompt data
+            await generateHeroImage(guide.treatmentVariants[0], true, promptData.prompt)
+          }}
+          isGenerating={isGeneratingHeroImage}
+        />
+      )}
+      
+      {/* Hero Image Edit Modal - AI-powered editing with identity preservation */}
+      {guide.treatmentVariants && guide.treatmentVariants[0]?.heroImage?.url && (
+        <ImageEditModal
+          open={showHeroEditModal}
+          onOpenChange={setShowHeroEditModal}
+          imageUrl={guide.treatmentVariants[0].heroImage.url}
+          imageType="scene"
+          title={`Edit Hero Image — ${guide.treatmentVariants[0]?.title || 'Untitled'}`}
+          onSave={(newImageUrl) => {
+            // Update the hero image with the edited version
+            const currentVariants = useGuideStore.getState().guide.treatmentVariants || []
+            const updatedVariants = currentVariants.map((v: any, idx: number) => 
+              idx === 0 ? { ...v, heroImage: { ...v.heroImage, url: newImageUrl, status: 'ready' } } : v
+            )
+            setTreatmentVariants(updatedVariants)
+            setShowHeroEditModal(false)
           }}
         />
       )}
