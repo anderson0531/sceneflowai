@@ -13,8 +13,8 @@ import { sequelize } from '@/config/database'
 import { callLLM } from '@/services/llmGateway'
 import { SeriesEpisodeBlueprint } from '@/types/series'
 
-// Maximum episodes to generate in a single batch
-const BATCH_SIZE = 10
+// Maximum episodes to generate in a single batch (5 for reliable JSON parsing)
+const BATCH_SIZE = 5
 const ABSOLUTE_MAX_EPISODES = 40
 
 interface RouteParams {
@@ -22,72 +22,75 @@ interface RouteParams {
 }
 
 /**
- * Safe JSON parser that handles LLM response quirks
+ * Safely parse JSON from LLM responses
+ * Handles markdown code blocks, trailing text, and malformed JSON
  */
 function safeParseJSON(text: string): any {
-  // Remove markdown code blocks if present
-  let json = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
+  let cleaned = text.trim()
   
-  // Find the JSON object boundaries
-  const startBrace = json.indexOf('{')
-  const startBracket = json.indexOf('[')
-  const start = startBrace >= 0 && (startBracket < 0 || startBrace < startBracket) ? startBrace : startBracket
-  
-  if (start > 0) {
-    json = json.slice(start)
-  }
-  
-  // Find matching end
-  let depth = 0
-  let inString = false
-  let escapeNext = false
-  let endIndex = -1
-  const openChar = json[0]
-  const closeChar = openChar === '{' ? '}' : ']'
-  
-  for (let i = 0; i < json.length; i++) {
-    const char = json[i]
-    
-    if (escapeNext) {
-      escapeNext = false
-      continue
-    }
-    
-    if (char === '\\') {
-      escapeNext = true
-      continue
-    }
-    
-    if (char === '"') {
-      inString = !inString
-      continue
-    }
-    
-    if (inString) continue
-    
-    if (char === openChar || char === '{' || char === '[') {
-      depth++
-    } else if (char === closeChar || char === '}' || char === ']') {
-      depth--
-      if (depth === 0) {
-        endIndex = i
-        break
-      }
-    }
-  }
-  
-  if (endIndex > 0) {
-    json = json.slice(0, endIndex + 1)
-  }
-  
-  // Remove trailing commas
-  json = json.replace(/,(\s*[}\]])/g, '$1')
+  // Remove markdown code blocks
+  if (cleaned.startsWith('```json')) cleaned = cleaned.slice(7)
+  else if (cleaned.startsWith('```')) cleaned = cleaned.slice(3)
+  if (cleaned.endsWith('```')) cleaned = cleaned.slice(0, -3)
+  cleaned = cleaned.trim()
   
   try {
-    return JSON.parse(json)
+    return JSON.parse(cleaned)
   } catch (e) {
-    console.error('[safeParseJSON] Failed to parse:', (e as Error).message)
-    throw new Error(`Invalid JSON from LLM: ${(e as Error).message}`)
+    console.log('[safeParseJSON] Direct parse failed, attempting repair...')
+    
+    // Find JSON boundaries - prefer arrays for episode lists
+    const firstBracket = cleaned.indexOf('[')
+    const firstBrace = cleaned.indexOf('{')
+    const isArray = firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)
+    
+    const startIndex = isArray ? firstBracket : firstBrace
+    const endIndex = isArray ? cleaned.lastIndexOf(']') : cleaned.lastIndexOf('}')
+    
+    if (startIndex !== -1 && endIndex > startIndex) {
+      let json = cleaned.slice(startIndex, endIndex + 1)
+      
+      // Fix 1: Remove trailing commas before ] or }
+      json = json.replace(/,(\s*[\]\}])/g, '$1')
+      
+      // Fix 2: Try to balance brackets if truncated
+      const openBrackets = (json.match(/\[/g) || []).length
+      const closeBrackets = (json.match(/\]/g) || []).length
+      const openBraces = (json.match(/\{/g) || []).length
+      const closeBraces = (json.match(/\}/g) || []).length
+      
+      // If arrays are unbalanced, try to close them
+      if (openBrackets > closeBrackets || openBraces > closeBraces) {
+        console.log(`[safeParseJSON] Unbalanced: arrays [${openBrackets}/${closeBrackets}], braces {${openBraces}/${closeBraces}}`)
+        // Find the last complete episode object and truncate there
+        const lastCompleteStatus = json.lastIndexOf('"status"')
+        if (lastCompleteStatus !== -1) {
+          // Find the closing brace after this
+          const closeAfterStatus = json.indexOf('}', lastCompleteStatus)
+          if (closeAfterStatus !== -1) {
+            json = json.slice(0, closeAfterStatus + 1)
+            // Add missing closing bracket for array
+            if (isArray && openBrackets > closeBrackets) {
+              json += ']'
+            }
+            console.log('[safeParseJSON] Truncated to last complete episode')
+          }
+        }
+      }
+      
+      // Fix 3: Remove any incomplete object at the end
+      json = json.replace(/,\s*\{[^}]*$/g, '')
+      
+      try {
+        return JSON.parse(json)
+      } catch (e2) {
+        console.error('[safeParseJSON] Failed after repairs:', (e2 as Error).message)
+        console.error('[safeParseJSON] Text length:', text.length, 'JSON length:', json.length)
+        console.error('[safeParseJSON] Last 200 chars:', json.slice(-200))
+        throw new Error(`Invalid JSON from LLM: ${(e2 as Error).message}`)
+      }
+    }
+    throw new Error('No valid JSON found in LLM response')
   }
 }
 

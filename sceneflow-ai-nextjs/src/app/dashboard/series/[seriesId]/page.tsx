@@ -147,8 +147,8 @@ export default function SeriesStudioPage() {
     
     setIsAddingEpisodes(true)
     try {
-      await addMoreEpisodes(10)
-      toast.success('Added 10 more episodes!')
+      await addMoreEpisodes(5)
+      toast.success('Added 5 more episodes!')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to add episodes')
     } finally {
@@ -619,7 +619,7 @@ function EpisodesPanel({
               {isAddingEpisodes ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</>
               ) : (
-                <><Plus className="w-4 h-4 mr-2" /> Add 10 More Episodes</>
+                <><Plus className="w-4 h-4 mr-2" /> Add 5 More Episodes</>
               )}
             </Button>
           )}
