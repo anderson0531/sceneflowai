@@ -80,8 +80,8 @@ export default function SeriesStudioPage() {
   const [activeTab, setActiveTab] = useState('overview')
   const [ideaTopic, setIdeaTopic] = useState('')
   const [episodeCount, setEpisodeCount] = useState(DEFAULT_MAX_EPISODES)
-  const [genre, setGenre] = useState('')
-  const [tone, setTone] = useState('')
+  const [genre, setGenre] = useState('any')
+  const [tone, setTone] = useState('any')
   const [isIdeateDialogOpen, setIsIdeateDialogOpen] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
@@ -102,8 +102,8 @@ export default function SeriesStudioPage() {
       const result = await generateStoryline({
         topic: ideaTopic,
         episodeCount,
-        genre: genre || undefined,
-        tone: tone || undefined
+        genre: genre === 'any' ? undefined : genre,
+        tone: tone === 'any' ? undefined : tone
       })
 
       toast.success(`Generated ${result.generated.episodeCount} episodes!`)
@@ -335,7 +335,7 @@ export default function SeriesStudioPage() {
                     <SelectValue placeholder="Select genre" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-gray-700">
-                    <SelectItem value="">Any</SelectItem>
+                    <SelectItem value="any">Any</SelectItem>
                     <SelectItem value="comedy">Comedy</SelectItem>
                     <SelectItem value="drama">Drama</SelectItem>
                     <SelectItem value="thriller">Thriller</SelectItem>
@@ -358,7 +358,7 @@ export default function SeriesStudioPage() {
                   <SelectValue placeholder="Select tone" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700">
-                  <SelectItem value="">Any</SelectItem>
+                  <SelectItem value="any">Any</SelectItem>
                   <SelectItem value="lighthearted">Lighthearted</SelectItem>
                   <SelectItem value="dramatic">Dramatic</SelectItem>
                   <SelectItem value="dark">Dark</SelectItem>
