@@ -66,6 +66,7 @@ import { useSidebarData, useSidebarQuickActions } from '@/hooks/useSidebarData'
 import { DetailedSceneDirection } from '@/types/scene-direction'
 import { cn } from '@/lib/utils'
 import { VisionReferencesSidebar } from '@/components/vision/VisionReferencesSidebar'
+import { ProductionBiblePanel } from '@/components/series/ProductionBiblePanel'
 import { VisualReference, VisualReferenceType, VisionReferencesPayload } from '@/types/visionReferences'
 import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production'
 import { applyIntelligentDefaults } from '@/lib/audio/anchoredTiming'
@@ -285,6 +286,8 @@ interface Project {
   duration?: number
   genre?: string
   tone?: string
+  series_id?: string | null  // Series integration
+  episode_number?: number | null  // Episode number within series
   metadata?: {
     blueprintVariant?: string
     filmTreatmentVariant?: any
@@ -8923,6 +8926,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               )}
               
               {/* Narration Voice Selector */}
+              
+              {/* Production Bible Panel - only shown for series episodes */}
+              {project?.series_id && (
+                <ProductionBiblePanel 
+                  projectId={projectId}
+                  seriesId={project.series_id}
+                  characters={characters}
+                  onCharactersUpdated={(updatedChars) => setCharacters(updatedChars)}
+                />
+              )}
               
               <VisionReferencesSidebar
                 projectId={projectId}

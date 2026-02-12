@@ -4,6 +4,8 @@ import { sequelize } from '../config/database'
 export interface ProjectAttributes {
   id: string
   user_id: string
+  series_id?: string | null  // Optional: links project to a series as an episode
+  episode_number?: number | null  // Episode number within the series
   title: string
   description?: string
   genre?: string
@@ -26,6 +28,8 @@ export interface ProjectCreationAttributes extends Optional<ProjectAttributes, '
 export class Project extends Model<ProjectAttributes, ProjectCreationAttributes> implements ProjectAttributes {
   public id!: string
   public user_id!: string
+  public series_id?: string | null
+  public episode_number?: number | null
   public title!: string
   public description?: string
   public genre?: string
@@ -45,6 +49,11 @@ export class Project extends Model<ProjectAttributes, ProjectCreationAttributes>
   // Timestamps
   public readonly createdAt!: Date
   public readonly updatedAt!: Date
+
+  // Helper methods
+  public isEpisode(): boolean {
+    return !!this.series_id
+  }
 }
 
 Project.init(
@@ -61,6 +70,20 @@ Project.init(
         model: 'users',
         key: 'id',
       },
+    },
+    series_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'series',
+        key: 'id',
+      },
+      comment: 'Links project to a series as an episode (null for standalone projects)',
+    },
+    episode_number: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: 'Episode number within the series',
     },
     title: {
       type: DataTypes.STRING(255),
@@ -142,6 +165,10 @@ Project.init(
       {
         fields: ['user_id'],
         name: 'idx_user_id',
+      },
+      {
+        fields: ['series_id'],
+        name: 'idx_series_id',
       },
       {
         fields: ['status'],

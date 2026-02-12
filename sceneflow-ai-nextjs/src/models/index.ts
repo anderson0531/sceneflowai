@@ -4,6 +4,7 @@ import AIPricing from './AIPricing'
 import CreditLedger from './CreditLedger'
 import AIUsage from './AIUsage'
 import Project from './Project'
+import Series from './Series'
 import UserProviderConfig from './UserProviderConfig'
 import APIUsageLog from './APIUsageLog'
 import PlatformModel from './PlatformModel'
@@ -32,6 +33,29 @@ User.hasMany(Project, {
 Project.belongsTo(User, {
   foreignKey: 'user_id',
   as: 'user',
+})
+
+// Series model associations
+User.hasMany(Series, {
+  foreignKey: 'user_id',
+  as: 'series',
+  onDelete: 'CASCADE',
+})
+
+Series.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user',
+})
+
+Series.hasMany(Project, {
+  foreignKey: 'series_id',
+  as: 'episodes',
+  onDelete: 'SET NULL',
+})
+
+Project.belongsTo(Series, {
+  foreignKey: 'series_id',
+  as: 'series',
 })
 
 User.hasMany(UserProviderConfig, {
@@ -130,6 +154,7 @@ export {
   sequelize,
   User,
   Project,
+  Series,
   UserProviderConfig,
   PlatformModel,
   PromptTemplate,
@@ -157,6 +182,7 @@ export default {
   sequelize,
   User,
   Project,
+  Series,
   UserProviderConfig,
   PlatformModel,
   PromptTemplate,

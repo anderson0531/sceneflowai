@@ -18,7 +18,8 @@ import {
   X,
   BookOpen,
   CheckCircle,
-  Wrench
+  Wrench,
+  Library
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -46,6 +47,7 @@ const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement> & { size?: numbe
 const mainNav = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Projects', href: '/dashboard/projects', icon: FolderOpen },
+  { name: 'Series', href: '/dashboard/series', icon: Library },
   { name: 'Start Project', href: '/dashboard/studio/new-project', icon: Sparkles },
 ]
 
