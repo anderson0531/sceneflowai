@@ -35,28 +35,33 @@ Project.belongsTo(User, {
   as: 'user',
 })
 
-// Series model associations
-User.hasMany(Series, {
-  foreignKey: 'user_id',
-  as: 'series',
-  onDelete: 'CASCADE',
-})
+// Series model associations - wrapped in try/catch to prevent app crash
+// if Series table doesn't exist yet (pre-migration state)
+try {
+  User.hasMany(Series, {
+    foreignKey: 'user_id',
+    as: 'series',
+    onDelete: 'CASCADE',
+  })
 
-Series.belongsTo(User, {
-  foreignKey: 'user_id',
-  as: 'user',
-})
+  Series.belongsTo(User, {
+    foreignKey: 'user_id',
+    as: 'user',
+  })
 
-Series.hasMany(Project, {
-  foreignKey: 'series_id',
-  as: 'episodes',
-  onDelete: 'SET NULL',
-})
+  Series.hasMany(Project, {
+    foreignKey: 'series_id',
+    as: 'episodes',
+    onDelete: 'SET NULL',
+  })
 
-Project.belongsTo(Series, {
-  foreignKey: 'series_id',
-  as: 'series',
-})
+  Project.belongsTo(Series, {
+    foreignKey: 'series_id',
+    as: 'series',
+  })
+} catch (error) {
+  console.warn('[Models] Series associations not set up - run migration to enable Series feature:', error)
+}
 
 User.hasMany(UserProviderConfig, {
   foreignKey: 'user_id',

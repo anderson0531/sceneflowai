@@ -74,10 +74,8 @@ Project.init(
     series_id: {
       type: DataTypes.UUID,
       allowNull: true,
-      references: {
-        model: 'series',
-        key: 'id',
-      },
+      // Note: Foreign key constraint is managed by migration, not model definition
+      // This prevents app crashes when series table doesn't exist yet
       comment: 'Links project to a series as an episode (null for standalone projects)',
     },
     episode_number: {
