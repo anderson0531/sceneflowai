@@ -3,6 +3,7 @@ export type GlobalNavItem = { key: string; label: string; href: string }
 export const mainNav: GlobalNavItem[] = [
   { key: 'dashboard', label: 'Dashboard', href: '/dashboard' },
   { key: 'projects', label: 'Projects', href: '/dashboard/projects' },
+  { key: 'series', label: 'Series', href: '/dashboard/series' },
   { key: 'start', label: 'Start Project', href: '/dashboard/studio/new-project' },
 ]
 
