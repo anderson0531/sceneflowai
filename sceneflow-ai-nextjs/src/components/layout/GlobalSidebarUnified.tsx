@@ -24,6 +24,7 @@ import {
   Sparkles,
   CreditCard,
   Coins,
+  Library,
   // Icons for sections
   GitBranch,
   TrendingUp,
@@ -219,8 +220,9 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
                       : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                   )}
                 >
-                  {item.key === 'dashboard' && <Home className="w-4 h-4 text-blue-500" />}
-                  {item.key === 'projects' && <FolderOpen className="w-4 h-4 text-amber-500" />}
+                  {item.key === 'dashboard' && <Home className="w-4 h-4 text-amber-500" />}
+                  {item.key === 'projects' && <FolderOpen className="w-4 h-4 text-yellow-500" />}
+                  {item.key === 'series' && <Library className="w-4 h-4 text-cyan-500" />}
                   {item.key === 'start' && <Sparkles className="w-4 h-4 text-purple-500" />}
                   <span>{item.label}</span>
                 </Link>

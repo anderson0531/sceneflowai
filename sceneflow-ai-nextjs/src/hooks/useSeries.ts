@@ -450,6 +450,7 @@ export function useSeriesStudio(seriesId: string | null, userId: string | null) 
     // Series actions
     updateSeries: seriesHook.updateSeries,
     generateStoryline: seriesHook.generateStoryline,
+    addMoreEpisodes: seriesHook.addMoreEpisodes,
     refreshSeries: seriesHook.fetchSeries,
     
     // Episode state

@@ -14,8 +14,8 @@ import { callLLM } from '@/services/llmGateway'
 import { SeriesEpisodeBlueprint } from '@/types/series'
 
 // Maximum episodes to generate in a single batch
-const BATCH_SIZE = 5
-const ABSOLUTE_MAX_EPISODES = 30
+const BATCH_SIZE = 10
+const ABSOLUTE_MAX_EPISODES = 40
 
 interface RouteParams {
   params: Promise<{ seriesId: string }>
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
     
     const body = await request.json()
-    const requestedCount = Math.min(body.count || BATCH_SIZE, 10) // Max 10 per request
+    const requestedCount = Math.min(body.count || BATCH_SIZE, 20) // Max 20 per request (will batch internally)
     
     const currentEpisodes = series.episode_blueprints || []
     const currentCount = currentEpisodes.length

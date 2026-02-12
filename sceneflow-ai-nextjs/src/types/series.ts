@@ -9,8 +9,8 @@
  */
 
 // Episode limits - soft limit allows flexibility, hard limit enforces UI constraints
-export const DEFAULT_MAX_EPISODES = 20
-export const ABSOLUTE_MAX_EPISODES = 30
+export const DEFAULT_MAX_EPISODES = 40
+export const ABSOLUTE_MAX_EPISODES = 40
 
 // Series status type
 export type SeriesStatus = 'draft' | 'active' | 'completed' | 'archived'

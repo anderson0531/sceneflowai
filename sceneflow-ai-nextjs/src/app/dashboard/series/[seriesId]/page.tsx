@@ -67,6 +67,7 @@ export default function SeriesStudioPage() {
     error,
     updateSeries,
     generateStoryline,
+    addMoreEpisodes,
     refreshSeries,
     selectedEpisodeId,
     selectedEpisode,
@@ -78,6 +79,7 @@ export default function SeriesStudioPage() {
   } = useSeriesStudio(seriesId, userId)
 
   const [activeTab, setActiveTab] = useState('overview')
+  const [isAddingEpisodes, setIsAddingEpisodes] = useState(false)
   const [ideaTopic, setIdeaTopic] = useState('')
   const [episodeCount, setEpisodeCount] = useState(DEFAULT_MAX_EPISODES)
   const [genre, setGenre] = useState('any')
@@ -137,6 +139,20 @@ export default function SeriesStudioPage() {
       toast.success(`Regenerated ${field}`)
     } catch (err) {
       toast.error(`Failed to regenerate ${field}`)
+    }
+  }
+
+  const handleAddMoreEpisodes = async () => {
+    if (!series) return
+    
+    setIsAddingEpisodes(true)
+    try {
+      await addMoreEpisodes(10)
+      toast.success('Added 10 more episodes!')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to add episodes')
+    } finally {
+      setIsAddingEpisodes(false)
     }
   }
 
@@ -251,6 +267,9 @@ export default function SeriesStudioPage() {
               onSelectEpisode={setSelectedEpisodeId}
               selectedEpisodeId={selectedEpisodeId}
               isStarting={isStartingEpisode}
+              maxEpisodes={series.maxEpisodes}
+              onAddMoreEpisodes={handleAddMoreEpisodes}
+              isAddingEpisodes={isAddingEpisodes}
             />
           </TabsContent>
 
@@ -557,29 +576,53 @@ function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProp
 interface EpisodesPanelProps {
   episodes: EpisodeBlueprintResponse[]
   seriesId: string
+  maxEpisodes: number
   onStartEpisode: (episodeId: string) => void
   onSelectEpisode: (episodeId: string | null) => void
+  onAddMoreEpisodes: () => void
   selectedEpisodeId: string | null
   isStarting: boolean
+  isAddingEpisodes: boolean
 }
 
 function EpisodesPanel({
   episodes,
   seriesId,
+  maxEpisodes,
   onStartEpisode,
   onSelectEpisode,
+  onAddMoreEpisodes,
   selectedEpisodeId,
-  isStarting
+  isStarting,
+  isAddingEpisodes
 }: EpisodesPanelProps) {
   const selectedEpisode = episodes.find(ep => ep.id === selectedEpisodeId)
+  const canAddMore = episodes.length < maxEpisodes
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Episode List */}
       <div className="lg:col-span-1 bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
         <div className="p-4 border-b border-gray-700">
-          <h3 className="font-semibold">Episode Blueprints</h3>
-          <p className="text-xs text-gray-500 mt-1">Click an episode to view details</p>
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="font-semibold">Episode Blueprints</h3>
+            <span className="text-xs text-gray-500">{episodes.length}/{maxEpisodes}</span>
+          </div>
+          <p className="text-xs text-gray-500">Click an episode to view details</p>
+          {canAddMore && (
+            <Button
+              onClick={onAddMoreEpisodes}
+              disabled={isAddingEpisodes}
+              size="sm"
+              className="w-full mt-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700"
+            >
+              {isAddingEpisodes ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</>
+              ) : (
+                <><Plus className="w-4 h-4 mr-2" /> Add 10 More Episodes</>
+              )}
+            </Button>
+          )}
         </div>
         <div className="max-h-[600px] overflow-y-auto">
           {episodes.map((ep) => (
