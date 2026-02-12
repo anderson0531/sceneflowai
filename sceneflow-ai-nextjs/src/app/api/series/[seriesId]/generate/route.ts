@@ -234,7 +234,7 @@ Return ONLY valid JSON matching this exact schema:
 }`
 
   const response = await callLLM(
-    { provider: 'gemini', model: 'gemini-2.5-flash-preview-05-20' },
+    { provider: 'gemini', model: 'gemini-2.5-flash' },
     prompt
   )
   
@@ -305,7 +305,7 @@ ${options.tone ? `Tone: ${options.tone}` : ''}
 Return ONLY valid JSON.`
 
   const response = await callLLM(
-    { provider: 'gemini', model: 'gemini-2.5-flash-preview-05-20' },
+    { provider: 'gemini', model: 'gemini-2.5-flash' },
     fullPrompt
   )
   
