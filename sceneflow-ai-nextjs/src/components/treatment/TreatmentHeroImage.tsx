@@ -14,7 +14,7 @@ import {
   Loader
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { type GeneratedImage, type AspectRatio } from '@/types/treatment-visuals'
 
 interface TreatmentHeroImageProps {
@@ -257,6 +257,7 @@ export function TreatmentHeroImage({
               isHovered ? 'opacity-100' : 'opacity-0'
             )}
           >
+            <TooltipProvider>
             {/* Regenerate (Sparkles - indigo) */}
             {onRegenerate && (
               <Tooltip>
@@ -321,6 +322,7 @@ export function TreatmentHeroImage({
                 <TooltipContent>Download Image</TooltipContent>
               </Tooltip>
             )}
+            </TooltipProvider>
           </div>
         )}
       </div>
