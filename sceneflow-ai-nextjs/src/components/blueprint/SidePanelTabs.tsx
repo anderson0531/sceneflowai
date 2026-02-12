@@ -6,6 +6,7 @@ import { AudienceResonancePanel } from './AudienceResonancePanel'
 import { cn } from '@/lib/utils'
 import { useGuideStore } from '@/store/useGuideStore'
 import ChatWindow from '../collab/ChatWindow'
+import type { PersistedAudienceResonance } from '@/lib/types/audienceResonance'
 
 interface SidePanelTabsProps {
   onClose?: () => void
@@ -14,9 +15,20 @@ interface SidePanelTabsProps {
   onShare: () => void
   isSharing: boolean
   onProceedToScripting?: () => void
+  onAnalysisComplete?: (persistedAR: PersistedAudienceResonance) => void // For database persistence
+  savedAnalysis?: PersistedAudienceResonance | null // Pre-loaded from database
 }
 
-export function SidePanelTabs({ onClose, sessionId, shareUrl, onShare, isSharing, onProceedToScripting }: SidePanelTabsProps) {
+export function SidePanelTabs({ 
+  onClose, 
+  sessionId, 
+  shareUrl, 
+  onShare, 
+  isSharing, 
+  onProceedToScripting,
+  onAnalysisComplete,
+  savedAnalysis
+}: SidePanelTabsProps) {
   const [activeTab, setActiveTab] = useState<'resonance' | 'collaboration'>('resonance')
   const { guide } = useGuideStore()
   const { updateTreatmentVariant } = useGuideStore() as any
@@ -84,6 +96,8 @@ export function SidePanelTabs({ onClose, sessionId, shareUrl, onShare, isSharing
             treatment={currentTreatment} 
             onTreatmentUpdate={handleTreatmentUpdate}
             onProceedToScripting={onProceedToScripting}
+            onAnalysisComplete={onAnalysisComplete}
+            savedAnalysis={savedAnalysis}
           />
         ) : (
           <CollaborationContent 

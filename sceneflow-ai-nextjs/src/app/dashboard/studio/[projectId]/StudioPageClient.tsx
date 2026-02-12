@@ -19,6 +19,7 @@ import { TreatmentHeroImage } from '@/components/treatment/TreatmentHeroImage'
 import { HeroImagePromptBuilder } from '@/components/treatment/HeroImagePromptBuilder'
 import { ImageEditModal } from '@/components/vision/ImageEditModal'
 import { SidePanelTabs } from '@/components/blueprint/SidePanelTabs'
+import type { PersistedAudienceResonance } from '@/lib/types/audienceResonance'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import ThumbnailPromptDrawer from '@/components/project/ThumbnailPromptDrawer'
@@ -93,6 +94,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isSharing, setIsSharing] = useState(false)
+  
+  // Audience Resonance persistence state
+  const [savedAudienceResonance, setSavedAudienceResonance] = useState<PersistedAudienceResonance | null>(null)
   
   // Handle share/collaborate
   const handleShare = async () => {
@@ -176,6 +180,56 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     } catch (e) {
       console.error('Vision creation error:', e)
       try { const { toast } = require('sonner'); toast.error('Failed to create Vision') } catch {}
+    }
+  }
+
+  // Handle saving Audience Resonance analysis to project metadata
+  const handleAnalysisComplete = async (persistedAR: PersistedAudienceResonance) => {
+    // Skip if no valid project
+    if (!projectId || projectId.startsWith('new-project')) {
+      console.log('[StudioPage] No project to save AR to, skipping persistence')
+      return
+    }
+    
+    try {
+      // Update local state immediately for UI responsiveness
+      setSavedAudienceResonance(persistedAR)
+      
+      // Save to database via PUT
+      const userId = typeof window !== 'undefined' ? localStorage.getItem('authUserId') || 'anonymous' : 'anonymous'
+      
+      const blueprintData = {
+        id: projectId,
+        title: guide.title || 'Untitled Project',
+        description: '',
+        metadata: {
+          blueprintInput: lastInput,
+          filmTreatment: guide.filmTreatment,
+          treatmentVariants: (guide as any).treatmentVariants || [],
+          beats: beatsView,
+          estimatedRuntime: estimatedRuntime,
+          // Add AR analysis to metadata
+          audienceResonance: persistedAR
+        }
+      }
+      
+      const res = await fetch(`/api/projects`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(blueprintData)
+      })
+      
+      if (res.ok) {
+        console.log('[StudioPage] Saved AR analysis to project metadata', {
+          greenlightScore: persistedAR.greenlightScore,
+          iterationCount: persistedAR.iterationCount,
+          isReady: persistedAR.isReadyForProduction
+        })
+      } else {
+        console.error('[StudioPage] Failed to save AR analysis:', await res.text())
+      }
+    } catch (error) {
+      console.error('[StudioPage] Error saving AR analysis:', error)
     }
   }
 
@@ -617,6 +671,16 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             setEstimatedRuntime(metadata.estimatedRuntime)
           }
           
+          // Load saved Audience Resonance analysis if exists
+          if (metadata.audienceResonance) {
+            console.log('[StudioPage] Loading saved Audience Resonance from project:', {
+              greenlightScore: metadata.audienceResonance.greenlightScore,
+              iterationCount: metadata.audienceResonance.iterationCount,
+              isReady: metadata.audienceResonance.isReadyForProduction
+            })
+            setSavedAudienceResonance(metadata.audienceResonance)
+          }
+          
           console.log('[StudioPage] Project data loaded:', projectData.id)
           
           // Auto-generate hero image if treatment exists but hero image doesn't
@@ -960,6 +1024,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 onShare={handleShare}
                 isSharing={isSharing}
                 onProceedToScripting={handleProceedToScripting}
+                onAnalysisComplete={handleAnalysisComplete}
+                savedAnalysis={savedAudienceResonance}
               />
             </Panel>
           </>

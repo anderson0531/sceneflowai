@@ -342,6 +342,65 @@ export interface AudienceResonanceAnalysis {
 }
 
 // =============================================================================
+// PERSISTED AR STATE (for database storage)
+// =============================================================================
+
+/**
+ * Minimal AR state to persist to project metadata database
+ * This is a subset of ResonanceCacheEntry optimized for database storage
+ */
+export interface PersistedAudienceResonance {
+  // Core analysis data
+  analysis: AudienceResonanceAnalysis | null
+  intent: AudienceIntent
+  
+  // Progress tracking
+  iterationCount: number
+  isReadyForProduction: boolean
+  greenlightScore: number | null
+  
+  // Applied fixes for context
+  appliedFixes: string[]           // Insight IDs that were applied
+  appliedFixDetails: AppliedFix[]  // Full fix objects for prompt injection
+  
+  // Scoring state
+  checkpointResults?: CheckpointResults | null
+  targetProfile?: TargetScoreProfile | null
+  
+  // Metadata
+  lastAnalyzedAt: string | null    // ISO timestamp
+  lastSavedAt: string             // ISO timestamp
+}
+
+/**
+ * Create a minimal persisted AR object from cache entry
+ */
+export function createPersistedAR(
+  analysis: AudienceResonanceAnalysis | null,
+  intent: AudienceIntent,
+  iterationCount: number,
+  isReadyForProduction: boolean,
+  appliedFixes: string[],
+  appliedFixDetails: AppliedFix[],
+  checkpointResults?: CheckpointResults | null,
+  targetProfile?: TargetScoreProfile | null
+): PersistedAudienceResonance {
+  return {
+    analysis,
+    intent,
+    iterationCount,
+    isReadyForProduction,
+    greenlightScore: analysis?.greenlightScore?.score ?? null,
+    appliedFixes,
+    appliedFixDetails,
+    checkpointResults: checkpointResults ?? null,
+    targetProfile: targetProfile ?? null,
+    lastAnalyzedAt: analysis?.generatedAt ?? null,
+    lastSavedAt: new Date().toISOString()
+  }
+}
+
+// =============================================================================
 // API REQUEST/RESPONSE
 // =============================================================================
 

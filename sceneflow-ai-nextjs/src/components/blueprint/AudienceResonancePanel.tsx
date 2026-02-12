@@ -17,7 +17,9 @@ import {
   Users,
   Film,
   Palette,
-  ShieldCheck
+  ShieldCheck,
+  Wand2,
+  X
 } from 'lucide-react'
 import { GreenlightScore } from './GreenlightScore'
 import { ResonanceRadarChart, ResonanceRadarLegend } from '@/components/charts/ResonanceRadarChart'
@@ -52,12 +54,16 @@ import {
   createEmptyCheckpointResults,
   type CheckpointOverride 
 } from '@/lib/treatment/localScoring'
+import type { PersistedAudienceResonance } from '@/lib/types/audienceResonance'
+import { createPersistedAR } from '@/lib/types/audienceResonance'
 
 interface AudienceResonancePanelProps {
   treatment?: any
   onFixApplied?: (insightId: string, section: string, updatedTreatment?: any) => void
   onTreatmentUpdate?: (updatedTreatment: any) => void
   onProceedToScripting?: () => void // Called when user clicks "Proceed to Scripting"
+  onAnalysisComplete?: (persistedAR: PersistedAudienceResonance) => void // Called when analysis completes, for database persistence
+  savedAnalysis?: PersistedAudienceResonance | null // Pre-loaded analysis from database
 }
 
 /**
@@ -66,7 +72,14 @@ interface AudienceResonancePanelProps {
  * Strategic advisor that analyzes film treatments against target market,
  * genre conventions, and commercial viability.
  */
-export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied, onTreatmentUpdate, onProceedToScripting }: AudienceResonancePanelProps) {
+export function AudienceResonancePanel({ 
+  treatment: treatmentProp, 
+  onFixApplied, 
+  onTreatmentUpdate, 
+  onProceedToScripting,
+  onAnalysisComplete,
+  savedAnalysis
+}: AudienceResonancePanelProps) {
   // Local treatment state - allows updates from fixes
   const [localTreatment, setLocalTreatment] = useState<any>(treatmentProp)
   const treatment = localTreatment || treatmentProp
@@ -256,6 +269,48 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     }
   }, [treatment])
   
+  // Restore saved analysis from database when provided (only if no cached state)
+  useEffect(() => {
+    // Only restore if:
+    // 1. We have saved analysis from database
+    // 2. We don't have cached state already (localStorage takes priority for fresh session data)
+    // 3. The saved analysis has actual data
+    if (savedAnalysis?.analysis && !cachedState?.analysis) {
+      console.log('[AudienceResonancePanel] Restoring saved analysis from database')
+      
+      // Restore all state from saved analysis
+      setAnalysisLocal(savedAnalysis.analysis)
+      setIntentLocal(savedAnalysis.intent)
+      setIterationCountLocal(savedAnalysis.iterationCount)
+      setIsReadyForProductionLocal(savedAnalysis.isReadyForProduction)
+      setPreviousScoreLocal(savedAnalysis.greenlightScore)
+      setAppliedFixesLocal(savedAnalysis.appliedFixes || [])
+      setAppliedFixDetailsLocal(savedAnalysis.appliedFixDetails || [])
+      
+      if (savedAnalysis.checkpointResults) {
+        setServerCheckpointResultsLocal(savedAnalysis.checkpointResults)
+      }
+      if (savedAnalysis.targetProfile) {
+        setTargetProfileLocal(savedAnalysis.targetProfile)
+        setHasIntentLockLocal(true) // If we have a target profile, lock intent
+      }
+      
+      // Also update the store so it's persisted to localStorage
+      setStoreAnalysis(treatmentId, {
+        analysis: savedAnalysis.analysis,
+        intent: savedAnalysis.intent,
+        iterationCount: savedAnalysis.iterationCount,
+        isReadyForProduction: savedAnalysis.isReadyForProduction,
+        previousScore: savedAnalysis.greenlightScore,
+        appliedFixes: savedAnalysis.appliedFixes || [],
+        appliedFixDetails: savedAnalysis.appliedFixDetails || [],
+        serverCheckpointResults: savedAnalysis.checkpointResults || null,
+        targetProfile: savedAnalysis.targetProfile || null,
+        hasIntentLock: !!savedAnalysis.targetProfile
+      })
+    }
+  }, [savedAnalysis, treatmentId, cachedState?.analysis, setStoreAnalysis])
+  
   // Analyze treatment
   const runAnalysis = useCallback(async (quickMode = false, isReanalysis = false) => {
     if (!treatment) {
@@ -389,6 +444,22 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
         setIsReadyForProduction(ready)
         
         setAnalysis(data.analysis)
+        
+        // Persist to database via callback - NEW
+        if (onAnalysisComplete) {
+          const persistedAR = createPersistedAR(
+            data.analysis,
+            intent,
+            isReanalysis ? nextIteration : (iterationCount === 0 ? 1 : iterationCount),
+            ready,
+            appliedFixes,
+            appliedFixDetails,
+            data.analysis.checkpointResults,
+            targetProfile || getTargetProfileForIntent(intent)
+          )
+          onAnalysisComplete(persistedAR)
+        }
+        
         // Auto-expand first weakness that hasn't been fixed yet (only if not ready)
         if (!ready) {
           const firstUnfixedWeakness = data.analysis.insights.find(
@@ -406,7 +477,7 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
     } finally {
       setIsAnalyzing(false)
     }
-  }, [treatment, intent, previousScore, appliedFixes, appliedFixDetails, iterationCount, serverCheckpointResults, checkpointOverrides, hasIntentLock, targetProfile, setHasIntentLock, setTargetProfile])
+  }, [treatment, intent, previousScore, appliedFixes, appliedFixDetails, iterationCount, serverCheckpointResults, checkpointOverrides, hasIntentLock, targetProfile, setHasIntentLock, setTargetProfile, onAnalysisComplete])
   
   // Apply fix suggestion
   const applyFix = useCallback(async (insight: ResonanceInsight) => {
@@ -529,6 +600,246 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
       setApplyingFix(null)
     }
   }, [treatment, onFixApplied, onTreatmentUpdate, runAnalysis, serverCheckpointResults, checkpointOverrides, analysis, previousScore, setAnalysis, setIsScoreEstimated, setCheckpointOverrides, setPreviousScore, setIsReadyForProduction, setAppliedFixes, setAppliedFixDetails, setPendingFixesCount, iterationCount])
+  
+  // State for batch fix application
+  const [isApplyingAllFixes, setIsApplyingAllFixes] = useState(false)
+  
+  // Apply all pending fixes at once
+  const applyAllFixes = useCallback(async () => {
+    if (!analysis?.insights) {
+      setError('No analysis available')
+      return
+    }
+    
+    // Get all unapplied weaknesses with fix suggestions
+    const pendingFixes = analysis.insights.filter(
+      (i) => i.status === 'weakness' && 
+             !appliedFixes.includes(i.id) && 
+             i.fixSuggestion && 
+             i.fixSection
+    )
+    
+    if (pendingFixes.length === 0) {
+      setError('No fixes available to apply')
+      return
+    }
+    
+    // Check iteration limit
+    if (iterationCount >= MAX_ITERATIONS) {
+      setError('Maximum refinement iterations reached.')
+      return
+    }
+    
+    setIsApplyingAllFixes(true)
+    setError(null)
+    
+    let currentTreatment = { ...treatment }
+    const successfullyApplied: string[] = []
+    const appliedDetails: AppliedFix[] = []
+    const newOverrides: CheckpointOverride[] = []
+    
+    try {
+      // Apply fixes sequentially to accumulate changes
+      for (const insight of pendingFixes) {
+        try {
+          const response = await fetch('/api/treatment/refine', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              variant: currentTreatment,
+              section: insight.fixSection,
+              instructions: insight.fixSuggestion
+            })
+          })
+          
+          const data = await response.json()
+          
+          if (data.success && data.draft) {
+            // Merge the draft into current treatment
+            currentTreatment = { ...currentTreatment, ...data.draft, updatedAt: Date.now() }
+            successfullyApplied.push(insight.id)
+            
+            // Track fix detail
+            appliedDetails.push({
+              id: insight.id,
+              checkpointId: insight.checkpointId || '',
+              axisId: insight.axisId || '',
+              fixText: insight.fixSuggestion || '',
+              appliedAt: new Date().toISOString()
+            })
+            
+            // Track checkpoint override for local scoring
+            if (insight.checkpointId && insight.axisId) {
+              newOverrides.push({
+                checkpointId: insight.checkpointId,
+                axisId: insight.axisId,
+                overridePassed: true,
+                overrideScore: 8
+              })
+            }
+          }
+        } catch (err) {
+          console.error('Failed to apply fix:', insight.id, err)
+          // Continue with other fixes
+        }
+      }
+      
+      if (successfullyApplied.length > 0) {
+        // Update local treatment state
+        setLocalTreatment(currentTreatment)
+        
+        // Track all applied fixes
+        setAppliedFixes(prev => [...prev, ...successfullyApplied])
+        setAppliedFixDetails(prev => [...prev, ...appliedDetails])
+        setPendingFixesCount(prev => prev + successfullyApplied.length)
+        
+        // Add checkpoint overrides
+        if (newOverrides.length > 0 && serverCheckpointResults) {
+          const updatedOverrides = [...checkpointOverrides]
+          for (const override of newOverrides) {
+            const existing = updatedOverrides.find(
+              o => o.checkpointId === override.checkpointId && o.axisId === override.axisId
+            )
+            if (!existing) {
+              updatedOverrides.push(override)
+            }
+          }
+          setCheckpointOverrides(updatedOverrides)
+          
+          // Recalculate local score
+          const localResult = calculateLocalScore(serverCheckpointResults, updatedOverrides)
+          
+          if (analysis) {
+            const updatedAnalysis: AudienceResonanceAnalysis = {
+              ...analysis,
+              greenlightScore: localResult.greenlightScore,
+              axes: localResult.axes
+            }
+            setAnalysis(updatedAnalysis)
+            setIsScoreEstimated(true)
+            
+            // Show score delta
+            const newScore = localResult.overallScore
+            if (previousScore !== null && newScore !== previousScore) {
+              setScoreDelta(newScore - previousScore)
+              setTimeout(() => setScoreDelta(null), 5000)
+            }
+            setPreviousScore(newScore)
+            
+            // Check production readiness
+            setIsReadyForProduction(newScore >= READY_FOR_PRODUCTION_THRESHOLD)
+          }
+        }
+        
+        // Notify parent components
+        onTreatmentUpdate?.(currentTreatment)
+        
+        console.log(`[ApplyAllFixes] Successfully applied ${successfullyApplied.length}/${pendingFixes.length} fixes`)
+      } else {
+        setError('Failed to apply any fixes')
+      }
+    } catch (err) {
+      console.error('Failed to apply all fixes:', err)
+      setError('Failed to apply fixes. Please try again.')
+    } finally {
+      setIsApplyingAllFixes(false)
+    }
+  }, [analysis, appliedFixes, treatment, iterationCount, serverCheckpointResults, checkpointOverrides, previousScore, onTreatmentUpdate, setAnalysis, setIsScoreEstimated, setCheckpointOverrides, setPreviousScore, setIsReadyForProduction, setAppliedFixes, setAppliedFixDetails, setPendingFixesCount])
+  
+  // State for Optimize Blueprint
+  const [isOptimizing, setIsOptimizing] = useState(false)
+  const [showOptimizePreview, setShowOptimizePreview] = useState(false)
+  const [optimizedDraft, setOptimizedDraft] = useState<Record<string, unknown> | null>(null)
+  
+  // Optimize entire blueprint based on AR analysis
+  const optimizeBlueprint = useCallback(async () => {
+    if (!treatment) {
+      setError('No treatment to optimize')
+      return
+    }
+    
+    setIsOptimizing(true)
+    setError(null)
+    
+    try {
+      // Determine focus areas based on lowest scoring axes
+      const focusAreas: ('clarity' | 'pacing' | 'character' | 'tone' | 'commercial')[] = ['clarity']
+      
+      if (analysis?.axes) {
+        const sortedAxes = [...analysis.axes].sort((a, b) => a.score - b.score)
+        // Add focus areas for lowest scoring axes
+        for (const axis of sortedAxes.slice(0, 2)) {
+          switch (axis.id) {
+            case 'originality':
+              focusAreas.push('clarity')
+              break
+            case 'character-depth':
+              focusAreas.push('character')
+              break
+            case 'pacing':
+              focusAreas.push('pacing')
+              break
+            case 'genre-fidelity':
+              focusAreas.push('tone')
+              break
+            case 'commercial-viability':
+              focusAreas.push('commercial')
+              break
+          }
+        }
+      }
+      
+      const response = await fetch('/api/treatment/optimize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          variant: treatment,
+          previousAnalysis: analysis,
+          focusAreas: [...new Set(focusAreas)] // Dedupe
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success && data.optimizedDraft) {
+        setOptimizedDraft(data.optimizedDraft)
+        setShowOptimizePreview(true)
+      } else {
+        setError(data.message || 'Failed to optimize blueprint')
+      }
+    } catch (err) {
+      console.error('Failed to optimize blueprint:', err)
+      setError('Failed to optimize blueprint. Please try again.')
+    } finally {
+      setIsOptimizing(false)
+    }
+  }, [treatment, analysis])
+  
+  // Apply the optimized draft to the treatment
+  const applyOptimizedDraft = useCallback(() => {
+    if (!optimizedDraft) return
+    
+    const updatedTreatment = { ...treatment, ...optimizedDraft, updatedAt: Date.now() }
+    setLocalTreatment(updatedTreatment)
+    onTreatmentUpdate?.(updatedTreatment)
+    
+    // Reset analysis state since treatment changed significantly
+    setAnalysisLocal(null)
+    setIterationCountLocal(0)
+    setAppliedFixesLocal([])
+    setAppliedFixDetailsLocal([])
+    setPendingFixesCountLocal(0)
+    setServerCheckpointResultsLocal(null)
+    setCheckpointOverridesLocal([])
+    setIsScoreEstimatedLocal(false)
+    
+    // Close preview and clear draft
+    setShowOptimizePreview(false)
+    setOptimizedDraft(null)
+    
+    // Show success message
+    try { const { toast } = require('sonner'); toast.success('Blueprint optimized! Run analysis to see your new score.') } catch {}
+  }, [optimizedDraft, treatment, onTreatmentUpdate])
   
   // Toggle insight expansion
   const toggleInsight = (id: string) => {
@@ -864,11 +1175,75 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
                 />
               </div>
               
+              {/* Optimize Blueprint Button - Full Rewrite */}
+              {!isReadyForProduction && analysis.greenlightScore.score < 80 && (
+                <div className="bg-gradient-to-r from-purple-500/10 to-cyan-500/10 rounded-xl p-4 border border-purple-500/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Wand2 className="w-4 h-4 text-purple-400" />
+                    <span className="text-sm font-medium text-white">AI Blueprint Optimizer</span>
+                  </div>
+                  <p className="text-xs text-gray-400 mb-3">
+                    Rewrite your entire blueprint for maximum clarity, effectiveness, and marketability based on the analysis.
+                  </p>
+                  <button
+                    onClick={optimizeBlueprint}
+                    disabled={isOptimizing}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-500 to-cyan-500 text-white font-medium rounded-lg hover:from-purple-600 hover:to-cyan-600 transition-all disabled:opacity-50"
+                  >
+                    {isOptimizing ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        Optimizing Blueprint...
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="w-4 h-4" />
+                        Optimize Blueprint
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+              
               {/* Insights Accordion */}
               <div className="space-y-2">
-                <h4 className="text-xs text-gray-500 uppercase tracking-wide">
-                  Insights & Recommendations
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs text-gray-500 uppercase tracking-wide">
+                    Insights & Recommendations
+                  </h4>
+                  
+                  {/* Apply All Fixes Button */}
+                  {(() => {
+                    const pendingWeaknesses = analysis.insights.filter(
+                      (i) => i.status === 'weakness' && 
+                             !appliedFixes.includes(i.id) && 
+                             i.fixSuggestion && 
+                             i.fixSection
+                    )
+                    if (pendingWeaknesses.length > 1 && iterationCount < MAX_ITERATIONS) {
+                      return (
+                        <button
+                          onClick={applyAllFixes}
+                          disabled={isApplyingAllFixes}
+                          className="flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-purple-500/20 to-cyan-500/20 text-cyan-300 text-xs font-medium rounded-lg hover:from-purple-500/30 hover:to-cyan-500/30 border border-cyan-500/30 transition-all disabled:opacity-50"
+                        >
+                          {isApplyingAllFixes ? (
+                            <>
+                              <RefreshCw className="w-3 h-3 animate-spin" />
+                              Applying...
+                            </>
+                          ) : (
+                            <>
+                              <Zap className="w-3 h-3" />
+                              Apply All ({pendingWeaknesses.length})
+                            </>
+                          )}
+                        </button>
+                      )
+                    }
+                    return null
+                  })()}
+                </div>
                 
                 {analysis.insights.map((insight) => (
                   <InsightCard
@@ -899,6 +1274,147 @@ export function AudienceResonancePanel({ treatment: treatmentProp, onFixApplied,
           </div>
         )}
       </div>
+      
+      {/* Optimize Blueprint Preview Modal */}
+      <AnimatePresence>
+        {showOptimizePreview && optimizedDraft && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            onClick={() => setShowOptimizePreview(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-gray-900 border border-gray-700 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-cyan-500/20 flex items-center justify-center">
+                    <Wand2 className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">Optimized Blueprint</h3>
+                    <p className="text-xs text-gray-500">Review changes before applying</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowOptimizePreview(false)}
+                  className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              {/* Modal Content - Scrollable */}
+              <div className="p-6 overflow-y-auto max-h-[calc(80vh-140px)] space-y-4">
+                {/* Title & Logline */}
+                {(optimizedDraft.title || optimizedDraft.logline) && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs text-purple-400 uppercase tracking-wide font-medium">Core</h4>
+                    {optimizedDraft.title && (
+                      <div>
+                        <span className="text-xs text-gray-500">Title:</span>
+                        <p className="text-sm text-white">{optimizedDraft.title as string}</p>
+                      </div>
+                    )}
+                    {optimizedDraft.logline && (
+                      <div>
+                        <span className="text-xs text-gray-500">Logline:</span>
+                        <p className="text-sm text-gray-300">{optimizedDraft.logline as string}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Synopsis */}
+                {optimizedDraft.synopsis && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs text-purple-400 uppercase tracking-wide font-medium">Synopsis</h4>
+                    <p className="text-sm text-gray-300 whitespace-pre-line">{optimizedDraft.synopsis as string}</p>
+                  </div>
+                )}
+                
+                {/* Characters */}
+                {(optimizedDraft.protagonist || optimizedDraft.antagonist) && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs text-purple-400 uppercase tracking-wide font-medium">Characters</h4>
+                    {optimizedDraft.protagonist && (
+                      <div>
+                        <span className="text-xs text-gray-500">Protagonist:</span>
+                        <p className="text-sm text-gray-300">{optimizedDraft.protagonist as string}</p>
+                      </div>
+                    )}
+                    {optimizedDraft.antagonist && (
+                      <div>
+                        <span className="text-xs text-gray-500">Antagonist:</span>
+                        <p className="text-sm text-gray-300">{optimizedDraft.antagonist as string}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Tone & Style */}
+                {(optimizedDraft.tone_description || optimizedDraft.visual_style) && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs text-purple-400 uppercase tracking-wide font-medium">Tone & Style</h4>
+                    {optimizedDraft.tone_description && (
+                      <p className="text-sm text-gray-300">{optimizedDraft.tone_description as string}</p>
+                    )}
+                    {optimizedDraft.visual_style && (
+                      <p className="text-sm text-gray-400 italic">{optimizedDraft.visual_style as string}</p>
+                    )}
+                  </div>
+                )}
+                
+                {/* Beats */}
+                {Array.isArray(optimizedDraft.beats) && optimizedDraft.beats.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs text-purple-400 uppercase tracking-wide font-medium">Story Beats</h4>
+                    <div className="space-y-2">
+                      {(optimizedDraft.beats as Array<{title: string; synopsis?: string; intent?: string}>).map((beat, i) => (
+                        <div key={i} className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/30">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-medium text-white">{beat.title}</span>
+                            {beat.intent && (
+                              <span className="text-[10px] text-gray-500 uppercase">{beat.intent}</span>
+                            )}
+                          </div>
+                          {beat.synopsis && (
+                            <p className="text-xs text-gray-400">{beat.synopsis}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Modal Footer */}
+              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-700/50 bg-gray-900/50">
+                <button
+                  onClick={() => setShowOptimizePreview(false)}
+                  className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={applyOptimizedDraft}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-cyan-500 text-white text-sm font-medium rounded-lg hover:from-purple-600 hover:to-cyan-600 transition-all"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  Apply Changes
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
