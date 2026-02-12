@@ -21,7 +21,15 @@ import {
   MessageSquare,
   ArrowLeft,
   Plus,
-  GripVertical
+  GripVertical,
+  LayoutGrid,
+  Download,
+  Share2,
+  Clapperboard,
+  Trophy,
+  TrendingUp,
+  Clock,
+  Star
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/input'
@@ -179,72 +187,250 @@ export default function SeriesStudioPage() {
   }
 
   const bible = series.productionBible
+  
+  // Calculate progress percentage
+  const blueprintCount = (series.episodeBlueprints || []).filter((ep: any) => ep.status === 'blueprint').length
+  const inProgressCount = series.startedCount || 0
+  const completedCount = series.completedCount || 0
+  const totalEpisodes = series.episodeCount || 0
+  const progressPercent = totalEpisodes > 0 ? Math.round((completedCount / totalEpisodes) * 100) : 0
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      {/* Header */}
-      <div className="border-b border-gray-800 bg-gray-900/50 sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/dashboard/series">
-                <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
-                  <ArrowLeft className="w-4 h-4 mr-1" />
-                  Back
-                </Button>
-              </Link>
-              <div className="h-6 w-px bg-gray-700" />
+      {/* Hero Header with Gradient */}
+      <div className="relative overflow-hidden">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-900/30 via-orange-900/20 to-gray-950" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
+        
+        {/* Top navigation bar */}
+        <div className="relative border-b border-amber-800/30 bg-gray-900/50 backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto px-4 py-3">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-amber-500/30 to-orange-600/30 rounded-lg flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-amber-400" />
+                <Link href="/dashboard/series">
+                  <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white hover:bg-white/10">
+                    <ArrowLeft className="w-4 h-4 mr-1" />
+                    All Series
+                  </Button>
+                </Link>
+                <div className="h-5 w-px bg-gray-700" />
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 border border-amber-500/30">
+                    <Clapperboard className="w-3 h-3 inline mr-1" />
+                    SERIES STUDIO
+                  </span>
                 </div>
-                <div>
-                  <h1 className="text-xl font-bold">{series.title}</h1>
-                  <p className="text-xs text-gray-500">
-                    {series.episodeCount} episodes • Bible v{bible?.version || '1.0.0'}
-                  </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-400 hover:text-white hover:bg-white/10"
+                  title="Export Bible"
+                >
+                  <Download className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-400 hover:text-white hover:bg-white/10"
+                  title="Share"
+                >
+                  <Share2 className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-400 hover:text-white hover:bg-white/10"
+                  title="Settings"
+                >
+                  <Settings className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main hero content */}
+        <div className="relative max-w-7xl mx-auto px-4 py-8">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+            {/* Left: Title and info */}
+            <div className="flex items-start gap-5">
+              {/* Series icon */}
+              <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/25 flex-shrink-0">
+                <BookOpen className="w-8 h-8 text-white" />
+              </div>
+              
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  {series.genre && (
+                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-800 text-gray-300 border border-gray-700">
+                      {series.genre}
+                    </span>
+                  )}
+                  <span className="text-xs text-gray-500">
+                    Bible v{bible?.version || '1.0.0'}
+                  </span>
                 </div>
+                <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
+                  {series.title}
+                </h1>
+                <p className="text-gray-400 text-sm max-w-xl line-clamp-2">
+                  {bible?.logline || series.logline || 'Generate a storyline to get started with your series.'}
+                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={() => setIsIdeateDialogOpen(true)}
-                variant="outline"
-                size="sm"
-                className="border-amber-600/50 text-amber-400 hover:bg-amber-600/20"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                {bible?.synopsis ? 'Regenerate' : 'Generate Storyline'}
-              </Button>
+            {/* Right: CTA buttons */}
+            <div className="flex items-center gap-3 flex-shrink-0">
               {hasUnsavedChanges && (
                 <Button size="sm" className="bg-green-600 hover:bg-green-700">
                   <Save className="w-4 h-4 mr-2" />
-                  Save Changes
+                  Save
                 </Button>
               )}
+              <Button
+                onClick={() => setIsIdeateDialogOpen(true)}
+                className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg shadow-amber-500/25"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {bible?.synopsis ? 'Regenerate Storyline' : 'Generate Storyline'}
+              </Button>
             </div>
           </div>
+
+          {/* Stats row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center">
+                  <Film className="w-5 h-5 text-cyan-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white">{series.episodeCount}</p>
+                  <p className="text-xs text-gray-500">Episodes</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                  <Users className="w-5 h-5 text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white">{bible?.characters?.length || 0}</p>
+                  <p className="text-xs text-gray-500">Characters</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-green-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white">{bible?.locations?.length || 0}</p>
+                  <p className="text-xs text-gray-500">Locations</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center">
+                  <Trophy className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white">{progressPercent}%</p>
+                  <p className="text-xs text-gray-500">Complete</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          {totalEpisodes > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
+                <span>Series Progress</span>
+                <span>{completedCount} of {totalEpisodes} episodes completed</span>
+              </div>
+              <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                <div className="h-full flex">
+                  <div 
+                    className="bg-green-500 transition-all duration-500"
+                    style={{ width: `${(completedCount / totalEpisodes) * 100}%` }}
+                  />
+                  <div 
+                    className="bg-blue-500 transition-all duration-500"
+                    style={{ width: `${(inProgressCount / totalEpisodes) * 100}%` }}
+                  />
+                  <div 
+                    className="bg-amber-500/50 transition-all duration-500"
+                    style={{ width: `${(blueprintCount / totalEpisodes) * 100}%` }}
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-4 mt-2 text-xs">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-green-500" />
+                  <span className="text-gray-500">Completed ({completedCount})</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-blue-500" />
+                  <span className="text-gray-500">In Progress ({inProgressCount})</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-500/50" />
+                  <span className="text-gray-500">Blueprint ({blueprintCount})</span>
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-gray-800 border-gray-700 mb-6">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-gray-700">
+          <TabsList className="bg-gray-800/50 border border-gray-700/50 mb-6 p-1">
+            <TabsTrigger 
+              value="overview" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/20 data-[state=active]:to-orange-500/20 data-[state=active]:text-amber-400 data-[state=active]:border-amber-500/30 gap-2"
+            >
+              <LayoutGrid className="w-4 h-4" />
               Overview
             </TabsTrigger>
-            <TabsTrigger value="episodes" className="data-[state=active]:bg-gray-700">
-              Episodes ({series.episodeCount})
+            <TabsTrigger 
+              value="episodes" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border-cyan-500/30 gap-2"
+            >
+              <Film className="w-4 h-4" />
+              Episodes
+              <span className="text-xs bg-gray-700 px-1.5 py-0.5 rounded-full">{series.episodeCount}</span>
             </TabsTrigger>
-            <TabsTrigger value="characters" className="data-[state=active]:bg-gray-700">
-              Characters ({bible?.characters?.length || 0})
+            <TabsTrigger 
+              value="characters" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500/20 data-[state=active]:to-pink-500/20 data-[state=active]:text-purple-400 data-[state=active]:border-purple-500/30 gap-2"
+            >
+              <Users className="w-4 h-4" />
+              Characters
+              <span className="text-xs bg-gray-700 px-1.5 py-0.5 rounded-full">{bible?.characters?.length || 0}</span>
             </TabsTrigger>
-            <TabsTrigger value="locations" className="data-[state=active]:bg-gray-700">
-              Locations ({bible?.locations?.length || 0})
+            <TabsTrigger 
+              value="locations" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500/20 data-[state=active]:to-teal-500/20 data-[state=active]:text-green-400 data-[state=active]:border-green-500/30 gap-2"
+            >
+              <MapPin className="w-4 h-4" />
+              Locations
+              <span className="text-xs bg-gray-700 px-1.5 py-0.5 rounded-full">{bible?.locations?.length || 0}</span>
             </TabsTrigger>
-            <TabsTrigger value="style" className="data-[state=active]:bg-gray-700">
+            <TabsTrigger 
+              value="style" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500/20 data-[state=active]:to-rose-500/20 data-[state=active]:text-pink-400 data-[state=active]:border-pink-500/30 gap-2"
+            >
+              <Palette className="w-4 h-4" />
               Visual Style
             </TabsTrigger>
           </TabsList>
@@ -437,27 +623,32 @@ function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProp
       {/* Main Overview */}
       <div className="lg:col-span-2 space-y-6">
         {/* Title & Logline */}
-        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+        <div className="bg-gradient-to-br from-gray-800 to-gray-800/50 rounded-xl p-6 border border-gray-700/50 shadow-lg">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-lg">Series Overview</h3>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center">
+                <Star className="w-5 h-5 text-amber-400" />
+              </div>
+              <h3 className="font-semibold text-lg">Series Overview</h3>
+            </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onRegenerate('title')}
               disabled={isGenerating}
-              className="text-gray-400 hover:text-amber-400"
+              className="text-gray-400 hover:text-amber-400 hover:bg-amber-500/10"
             >
               <RefreshCw className={`w-4 h-4 ${isGenerating ? 'animate-spin' : ''}`} />
             </Button>
           </div>
           <div className="space-y-4">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">LOGLINE</label>
-              <p className="text-gray-200">{bible?.logline || series.logline || 'No logline yet'}</p>
+              <label className="block text-xs font-medium text-amber-400/80 mb-1.5 uppercase tracking-wide">Logline</label>
+              <p className="text-gray-200 text-lg leading-relaxed">{bible?.logline || series.logline || 'No logline yet'}</p>
             </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">SYNOPSIS</label>
-              <p className="text-gray-300 text-sm whitespace-pre-wrap">
+            <div className="pt-2 border-t border-gray-700/50">
+              <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">Synopsis</label>
+              <p className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed">
                 {bible?.synopsis || 'No synopsis yet. Generate a storyline to get started.'}
               </p>
             </div>
@@ -465,24 +656,32 @@ function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProp
         </div>
 
         {/* Setting */}
-        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+        <div className="bg-gradient-to-br from-gray-800 to-gray-800/50 rounded-xl p-6 border border-gray-700/50">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-lg">Setting</h3>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                <MapPin className="w-5 h-5 text-green-400" />
+              </div>
+              <h3 className="font-semibold text-lg">Setting</h3>
+            </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onRegenerate('setting')}
               disabled={isGenerating}
-              className="text-gray-400 hover:text-amber-400"
+              className="text-gray-400 hover:text-green-400 hover:bg-green-500/10"
             >
               <RefreshCw className={`w-4 h-4 ${isGenerating ? 'animate-spin' : ''}`} />
             </Button>
           </div>
-          <p className="text-gray-300 text-sm">
+          <p className="text-gray-300 text-sm leading-relaxed">
             {bible?.setting || 'No setting defined yet.'}
           </p>
           {bible?.timeframe && (
-            <p className="text-gray-500 text-xs mt-2">Timeframe: {bible.timeframe}</p>
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-700/50">
+              <Clock className="w-4 h-4 text-gray-500" />
+              <span className="text-gray-500 text-sm">Timeframe: {bible.timeframe}</span>
+            </div>
           )}
         </div>
       </div>
@@ -490,25 +689,30 @@ function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProp
       {/* Sidebar */}
       <div className="space-y-6">
         {/* Protagonist */}
-        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+        <div className="bg-gradient-to-br from-gray-800 to-gray-800/50 rounded-xl p-6 border border-gray-700/50">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold">Protagonist</h3>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                <Users className="w-4 h-4 text-emerald-400" />
+              </div>
+              <h3 className="font-semibold">Protagonist</h3>
+            </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onRegenerate('protagonist')}
               disabled={isGenerating}
-              className="text-gray-400 hover:text-amber-400"
+              className="text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/10"
             >
               <RefreshCw className={`w-4 h-4 ${isGenerating ? 'animate-spin' : ''}`} />
             </Button>
           </div>
           {bible?.protagonist?.name ? (
             <div className="space-y-2">
-              <p className="text-white font-medium">{bible.protagonist.name}</p>
+              <p className="text-white font-medium text-lg">{bible.protagonist.name}</p>
               <p className="text-gray-400 text-sm">{bible.protagonist.goal}</p>
               {bible.protagonist.flaw && (
-                <p className="text-gray-500 text-xs">Flaw: {bible.protagonist.flaw}</p>
+                <p className="text-gray-500 text-xs bg-gray-700/50 rounded-lg px-3 py-2">💔 Flaw: {bible.protagonist.flaw}</p>
               )}
             </div>
           ) : (
@@ -517,25 +721,30 @@ function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProp
         </div>
 
         {/* Antagonist / Conflict */}
-        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+        <div className="bg-gradient-to-br from-gray-800 to-gray-800/50 rounded-xl p-6 border border-gray-700/50">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold">Antagonist / Conflict</h3>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 text-red-400" />
+              </div>
+              <h3 className="font-semibold">Antagonist / Conflict</h3>
+            </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onRegenerate('antagonist')}
               disabled={isGenerating}
-              className="text-gray-400 hover:text-amber-400"
+              className="text-gray-400 hover:text-red-400 hover:bg-red-500/10"
             >
               <RefreshCw className={`w-4 h-4 ${isGenerating ? 'animate-spin' : ''}`} />
             </Button>
           </div>
           {bible?.antagonistConflict?.description ? (
-            <div className="space-y-2">
-              <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400">
+            <div className="space-y-3">
+              <span className="text-xs px-2.5 py-1 rounded-full bg-red-500/20 text-red-400 font-medium">
                 {bible.antagonistConflict.type}
               </span>
-              <p className="text-gray-300 text-sm">{bible.antagonistConflict.description}</p>
+              <p className="text-gray-300 text-sm leading-relaxed">{bible.antagonistConflict.description}</p>
             </div>
           ) : (
             <p className="text-gray-500 text-sm">No antagonist/conflict defined yet.</p>
@@ -543,8 +752,13 @@ function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProp
         </div>
 
         {/* Quick Stats */}
-        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-          <h3 className="font-semibold mb-4">Quick Stats</h3>
+        <div className="bg-gradient-to-br from-amber-900/20 to-orange-900/10 rounded-xl p-6 border border-amber-700/30">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 bg-amber-500/20 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-amber-400" />
+            </div>
+            <h3 className="font-semibold">Quick Stats</h3>
+          </div>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-400">Episodes</span>
@@ -766,16 +980,21 @@ function CharactersPanel({ characters, onRegenerate, isGenerating }: CharactersP
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="text-lg font-semibold">Series Characters</h3>
-          <p className="text-sm text-gray-500">Characters shared across all episodes in the Production Bible</p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/25">
+            <Users className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold">Series Characters</h3>
+            <p className="text-sm text-gray-500">Characters shared across all episodes in the Production Bible</p>
+          </div>
         </div>
         <Button
           variant="outline"
           size="sm"
           onClick={onRegenerate}
           disabled={isGenerating}
-          className="border-gray-600"
+          className="border-purple-600/50 text-purple-400 hover:bg-purple-600/20"
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
           Regenerate
@@ -836,16 +1055,21 @@ function LocationsPanel({ locations, onRegenerate, isGenerating }: LocationsPane
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="text-lg font-semibold">Series Locations</h3>
-          <p className="text-sm text-gray-500">Recurring locations in the Production Bible</p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/25">
+            <MapPin className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold">Series Locations</h3>
+            <p className="text-sm text-gray-500">Recurring locations in the Production Bible</p>
+          </div>
         </div>
         <Button
           variant="outline"
           size="sm"
           onClick={onRegenerate}
           disabled={isGenerating}
-          className="border-gray-600"
+          className="border-green-600/50 text-green-400 hover:bg-green-600/20"
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
           Regenerate
