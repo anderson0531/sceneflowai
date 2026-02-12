@@ -214,6 +214,41 @@ export function useSeries(seriesId: string | null) {
     }
   }, [seriesId])
 
+  const addMoreEpisodes = useCallback(async (count: number = 5) => {
+    if (!seriesId) throw new Error('No series selected')
+    
+    setIsGenerating(true)
+    setError(null)
+    
+    try {
+      const response = await fetch(`${API_BASE}/${seriesId}/episodes/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ count })
+      })
+      const data = await response.json()
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to add episodes')
+      }
+      
+      // Refresh the series to get updated episodes
+      await fetchSeries()
+      
+      return {
+        added: data.added,
+        totalEpisodes: data.totalEpisodes,
+        newEpisodes: data.newEpisodes,
+        canAddMore: data.canAddMore
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+      throw err
+    } finally {
+      setIsGenerating(false)
+    }
+  }, [seriesId, fetchSeries])
+
   return {
     series,
     isLoading,
@@ -222,6 +257,7 @@ export function useSeries(seriesId: string | null) {
     fetchSeries,
     updateSeries,
     generateStoryline,
+    addMoreEpisodes,
     setSeries
   }
 }

@@ -25,19 +25,50 @@ function safeParseJSON(text: string): any {
   try {
     return JSON.parse(cleaned)
   } catch (e) {
+    console.log('[safeParseJSON] Direct parse failed, attempting repair...')
+    
     // Find JSON boundaries
     const firstBrace = cleaned.indexOf('{')
-    const lastBrace = cleaned.lastIndexOf('}')
+    let lastBrace = cleaned.lastIndexOf('}')
     
     if (firstBrace !== -1 && lastBrace > firstBrace) {
       let json = cleaned.slice(firstBrace, lastBrace + 1)
-      // Remove trailing commas before ] or }
+      
+      // Fix 1: Remove trailing commas before ] or }
       json = json.replace(/,(\s*[\]\}])/g, '$1')
+      
+      // Fix 2: Try to balance brackets if truncated
+      const openBrackets = (json.match(/\[/g) || []).length
+      const closeBrackets = (json.match(/\]/g) || []).length
+      const openBraces = (json.match(/\{/g) || []).length
+      const closeBraces = (json.match(/\}/g) || []).length
+      
+      // If arrays are unbalanced, try to close them
+      if (openBrackets > closeBrackets) {
+        console.log(`[safeParseJSON] Unbalanced arrays: ${openBrackets} open, ${closeBrackets} closed`)
+        // Find the last complete array element and truncate there
+        const lastCompleteStatus = json.lastIndexOf('"status": "blueprint"')
+        if (lastCompleteStatus !== -1) {
+          // Find the closing brace after this
+          const closeAfterStatus = json.indexOf('}', lastCompleteStatus)
+          if (closeAfterStatus !== -1) {
+            json = json.slice(0, closeAfterStatus + 1)
+            // Add missing closing brackets
+            json += ']}'
+            console.log('[safeParseJSON] Truncated to last complete episode')
+          }
+        }
+      }
+      
+      // Fix 3: Remove any incomplete object at the end
+      json = json.replace(/,\s*\{[^}]*$/g, '')
+      
       try {
         return JSON.parse(json)
       } catch (e2) {
-        console.error('[safeParseJSON] Failed after fixes:', (e2 as Error).message)
-        console.error('[safeParseJSON] Text length:', text.length)
+        console.error('[safeParseJSON] Failed after repairs:', (e2 as Error).message)
+        console.error('[safeParseJSON] Text length:', text.length, 'JSON length:', json.length)
+        console.error('[safeParseJSON] Last 200 chars:', json.slice(-200))
         throw new Error(`Invalid JSON from LLM: ${(e2 as Error).message}`)
       }
     }
@@ -166,7 +197,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       series: formatSeriesResponse(series),
       generated: {
         fields: Object.keys(generatedData),
-        episodeCount: generatedData.episodeBlueprints?.length || 0
+        episodeCount: generatedData.episodeBlueprints?.length || 0,
+        // Inform if more episodes were requested than generated
+        note: targetEpisodeCount > 10 && generatedData.episodeBlueprints?.length <= 10
+          ? `Generated ${generatedData.episodeBlueprints?.length || 0} episodes initially. Use regenerateField='episodes' to add more.`
+          : undefined
       }
     })
     
@@ -181,89 +216,66 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
 /**
  * Generate full series storyline from topic
+ * Note: For >10 episodes, we generate in phases to avoid LLM token limits
  */
 async function generateFullSeriesStoryline(
   topic: string,
   episodeCount: number,
   options: { genre?: string; tone?: string }
 ): Promise<any> {
-  const prompt = `You are a professional TV series writer and showrunner. Create a complete series bible for a video series.
+  // Limit first generation to 10 episodes max to avoid token limits
+  // Additional episodes can be generated later
+  const initialEpisodeCount = Math.min(episodeCount, 10)
+  
+  const prompt = `You are a professional TV series writer. Create a series bible.
 
-TOPIC/CONCEPT: ${topic}
+TOPIC: ${topic}
 ${options.genre ? `GENRE: ${options.genre}` : ''}
 ${options.tone ? `TONE: ${options.tone}` : ''}
-NUMBER OF EPISODES: ${episodeCount}
+EPISODES TO GENERATE: ${initialEpisodeCount}
 
-Generate a complete series storyline including:
-1. Series title (creative, memorable)
-2. Logline (1-2 sentences that hook the audience)
-3. Setting (time, place, world)
-4. Protagonist (name, goal, flaw, description, appearance)
-5. Antagonist/Conflict (type, description, and if character-based: name and appearance)
-6. Synopsis (2-3 paragraphs overview of the series arc)
-7. For each episode (${episodeCount} total):
-   - Episode title
-   - Episode logline
-   - Episode synopsis (1 paragraph)
-   - 3-5 story beats with act numbers
-   - Characters featured (referencing the protagonist/antagonist by ID)
+Generate:
+1. Series title
+2. Logline (1-2 sentences)
+3. Setting, Protagonist (name, goal, flaw), Antagonist/Conflict
+4. Synopsis (2 paragraphs)
+5. ${initialEpisodeCount} episodes with: title, logline, synopsis, 3 beats
 
-Return ONLY valid JSON matching this exact schema:
+IMPORTANT: Return ONLY valid JSON. No markdown, no extra text.
+
 {
   "title": "Series Title",
-  "logline": "Compelling one-line hook",
+  "logline": "Hook",
   "genre": "Genre",
   "productionBible": {
-    "logline": "Same as above",
-    "synopsis": "Full series synopsis...",
-    "setting": "Detailed setting description",
-    "timeframe": "When the story takes place",
-    "protagonist": {
-      "characterId": "char_protagonist",
-      "name": "Protagonist Name",
-      "goal": "What they want",
-      "flaw": "Their main flaw"
-    },
-    "antagonistConflict": {
-      "type": "character|nature|society|self|technology",
-      "description": "The main conflict",
-      "characterId": "char_antagonist (if type is character)"
-    },
+    "logline": "Hook",
+    "synopsis": "Synopsis...",
+    "setting": "Setting",
+    "timeframe": "When",
+    "protagonist": {"characterId": "char_1", "name": "Name", "goal": "Goal", "flaw": "Flaw"},
+    "antagonistConflict": {"type": "character", "description": "Conflict", "characterId": "char_2"},
     "characters": [
-      {
-        "id": "char_protagonist",
-        "name": "Name",
-        "role": "protagonist",
-        "description": "Detailed character description",
-        "appearance": "Physical appearance for visual consistency",
-        "backstory": "Brief backstory",
-        "personality": "Key personality traits"
-      }
+      {"id": "char_1", "name": "Name", "role": "protagonist", "description": "Desc", "appearance": "Look"}
     ],
     "locations": [
-      {
-        "id": "loc_1",
-        "name": "Location Name",
-        "description": "Location description",
-        "visualDescription": "Visual details for image generation"
-      }
+      {"id": "loc_1", "name": "Name", "description": "Desc", "visualDescription": "Visual"}
     ],
-    "toneGuidelines": "Tone and mood guidelines",
-    "visualGuidelines": "Visual style guidelines"
+    "toneGuidelines": "Tone",
+    "visualGuidelines": "Visual style"
   },
   "episodeBlueprints": [
     {
       "id": "ep_1",
       "episodeNumber": 1,
-      "title": "Episode Title",
-      "logline": "Episode hook",
-      "synopsis": "Episode synopsis",
+      "title": "Title",
+      "logline": "Hook",
+      "synopsis": "Synopsis",
       "beats": [
-        {"beatNumber": 1, "title": "Beat Title", "description": "Beat description", "act": 1}
+        {"beatNumber": 1, "title": "Opening", "description": "Desc", "act": 1},
+        {"beatNumber": 2, "title": "Conflict", "description": "Desc", "act": 2},
+        {"beatNumber": 3, "title": "Resolution", "description": "Desc", "act": 3}
       ],
-      "characters": [
-        {"characterId": "char_protagonist", "role": "protagonist", "episodeArc": "Character's journey this episode"}
-      ],
+      "characters": [{"characterId": "char_1", "role": "protagonist"}],
       "status": "blueprint"
     }
   ]
@@ -318,6 +330,9 @@ async function regenerateSpecificField(
 ): Promise<any> {
   const currentBible = series.production_bible || {}
   
+  // Limit episode generation to batches of 5 to avoid token limits
+  const episodeBatchSize = Math.min(options.targetEpisodeCount, 5)
+  
   const fieldPrompts: Record<string, string> = {
     title: `Generate a new series title for: ${context}\nCurrent title: ${series.title}\nReturn JSON: {"title": "New Title"}`,
     logline: `Generate a new logline for: ${context}\nReturn JSON: {"logline": "New logline"}`,
@@ -325,7 +340,7 @@ async function regenerateSpecificField(
     protagonist: `Generate a new protagonist for: ${context}\nReturn JSON matching the protagonist schema`,
     antagonist: `Generate a new antagonist/conflict for: ${context}\nReturn JSON matching the antagonistConflict schema`,
     setting: `Generate a new setting for: ${context}\nReturn JSON: {"productionBible": {"setting": "New setting", "timeframe": "Timeframe"}}`,
-    episodes: `Generate ${options.targetEpisodeCount} episode blueprints for: ${context}\nSynopsis: ${currentBible.synopsis}\nReturn JSON with episodeBlueprints array`,
+    episodes: `Generate ${episodeBatchSize} episode blueprints (simple: title, logline, synopsis, 3 beats each) for: ${context}\nSynopsis: ${currentBible.synopsis}\nReturn JSON: {"episodeBlueprints": [...]}`,
     characters: `Generate supporting characters for: ${context}\nExisting: ${JSON.stringify(currentBible.characters || [])}\nReturn JSON: {"productionBible": {"characters": [...]}}`
   }
   
