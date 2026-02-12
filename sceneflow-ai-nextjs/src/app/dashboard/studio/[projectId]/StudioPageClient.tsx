@@ -18,6 +18,8 @@ import { ScriptImportResult } from '@/components/blueprint/BlueprintComposer'
 import { TreatmentHeroImage } from '@/components/treatment/TreatmentHeroImage'
 import { SidePanelTabs } from '@/components/blueprint/SidePanelTabs'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
+import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
+import ThumbnailPromptDrawer from '@/components/project/ThumbnailPromptDrawer'
 const TreatmentCard = dynamic(() => import('@/components/blueprint/TreatmentCard').then(mod => mod.TreatmentCard), { ssr: false })
 import TopProgressBar from '@/components/ui/TopProgressBar'
 import GeneratingOverlay from '@/components/ui/GeneratingOverlay'
@@ -57,6 +59,12 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   
   // Hero image error state
   const [heroImageError, setHeroImageError] = useState<string | null>(null)
+  
+  // Prompt drawer state for editing hero image prompt
+  const [showPromptDrawer, setShowPromptDrawer] = useState(false)
+  
+  // Processing overlay hook for film production animation
+  const { execute: executeWithOverlay } = useProcessWithOverlay()
   
   // Clear stale hero-gen flags on mount (in case previous generation failed without cleanup)
   useEffect(() => {
@@ -206,7 +214,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
 
   // Auto-generate hero image for treatment variant
   // Uses sessionStorage to prevent duplicate generation across navigation
-  const generateHeroImage = async (variant: any, force: boolean = false) => {
+  const generateHeroImage = async (variant: any, force: boolean = false, customPrompt?: string) => {
     if (!variant?.title) return
     
     // Check if hero image already exists on the variant
@@ -235,76 +243,89 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     
     setIsGeneratingHeroImage(true)
     setHeroImageError(null) // Clear previous error
-    try {
-      console.log('[StudioPage] Auto-generating hero image for:', variant.title)
-      
-      const response = await fetch('/api/treatment/generate-visual', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId: projectId,
-          treatment: {
-            // Core narrative fields
-            title: variant.title,
-            logline: variant.logline || '',
-            synopsis: variant.synopsis || variant.content || '',
-            genre: variant.genre || '',
-            // Character data - CRITICAL for accurate hero image
-            character_descriptions: variant.character_descriptions || [],
-            protagonist: variant.protagonist || '',
-            antagonist: variant.antagonist || '',
-            // Setting and atmosphere
-            setting: variant.setting || '',
-            tone: variant.tone || '',
-            themes: variant.themes || [],
-            // Visual styling
-            visual_style: variant.visual_style || variant.visualStyle || '',
-            visualStyle: variant.visualStyle || variant.visual_style || ''
-          },
-          visualType: 'hero',
-          mood: 'balanced'
+    
+    // Wrap in processing overlay for film production animation
+    await executeWithOverlay(async () => {
+      try {
+        console.log('[StudioPage] Auto-generating hero image for:', variant.title)
+        
+        const response = await fetch('/api/treatment/generate-visual', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId: projectId,
+            treatment: {
+              // Core narrative fields
+              title: variant.title,
+              logline: variant.logline || '',
+              synopsis: variant.synopsis || variant.content || '',
+              genre: variant.genre || '',
+              // Character data - CRITICAL for accurate hero image
+              character_descriptions: variant.character_descriptions || [],
+              protagonist: variant.protagonist || '',
+              antagonist: variant.antagonist || '',
+              // Setting and atmosphere
+              setting: variant.setting || '',
+              tone: variant.tone || '',
+              themes: variant.themes || [],
+              // Visual styling
+              visual_style: variant.visual_style || variant.visualStyle || '',
+              visualStyle: variant.visualStyle || variant.visual_style || ''
+            },
+            visualType: 'hero',
+            mood: 'balanced',
+            customPrompt: customPrompt // Pass custom prompt if provided
+          })
         })
-      })
-      
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => 'Unknown error')
-        throw new Error(`Hero image generation failed: ${response.status} - ${errorText}`)
-      }
-      
-      const data = await response.json()
-      
-      // API returns visuals.heroImage as an object with { id, url, prompt, status, ... }
-      if (data.success && data.visuals?.heroImage?.url) {
-        // Get CURRENT variants from the store using getState() to avoid stale closure
-        const currentVariants = useGuideStore.getState().guide.treatmentVariants || []
-        console.log('[StudioPage] Current variants from store:', currentVariants.length)
         
-        const updatedVariants = currentVariants.map((v: any, idx: number) => 
-          idx === 0 ? { ...v, heroImage: data.visuals.heroImage } : v
-        )
-        setTreatmentVariants(updatedVariants)
-        console.log('[StudioPage] Hero image generated successfully:', data.visuals.heroImage.url)
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => 'Unknown error')
+          throw new Error(`Hero image generation failed: ${response.status} - ${errorText}`)
+        }
         
-        // Clear the generation flag on success
+        const data = await response.json()
+        
+        // API returns visuals.heroImage as an object with { id, url, prompt, status, ... }
+        if (data.success && data.visuals?.heroImage?.url) {
+          // Get CURRENT variants from the store using getState() to avoid stale closure
+          const currentVariants = useGuideStore.getState().guide.treatmentVariants || []
+          console.log('[StudioPage] Current variants from store:', currentVariants.length)
+          
+          const updatedVariants = currentVariants.map((v: any, idx: number) => 
+            idx === 0 ? { ...v, heroImage: data.visuals.heroImage } : v
+          )
+          setTreatmentVariants(updatedVariants)
+          console.log('[StudioPage] Hero image generated successfully:', data.visuals.heroImage.url)
+          
+          // Clear the generation flag on success
+          if (typeof window !== 'undefined') {
+            sessionStorage.removeItem(`hero-gen-${variant.id || variant.title}`)
+          }
+        } else if (data.error) {
+          const details = data.details ? `: ${data.details}` : ''
+          throw new Error(`${data.error}${details}`)
+        }
+      } catch (error: any) {
+        console.error('[StudioPage] Hero image generation error:', error)
+        const errorMessage = error?.message || 'Failed to generate hero image'
+        setHeroImageError(errorMessage)
+        try { const { toast } = require('sonner'); toast.error('Hero image generation failed. Click the image to retry.') } catch {}
+        // Clear the generation flag on error so user can retry
         if (typeof window !== 'undefined') {
           sessionStorage.removeItem(`hero-gen-${variant.id || variant.title}`)
         }
-      } else if (data.error) {
-        const details = data.details ? `: ${data.details}` : ''
-        throw new Error(`${data.error}${details}`)
+        throw error // Re-throw to let executeWithOverlay handle it
+      } finally {
+        setIsGeneratingHeroImage(false)
       }
-    } catch (error: any) {
-      console.error('[StudioPage] Hero image generation error:', error)
-      const errorMessage = error?.message || 'Failed to generate hero image'
-      setHeroImageError(errorMessage)
-      try { const { toast } = require('sonner'); toast.error('Hero image generation failed. Click the image to retry.') } catch {}
-      // Clear the generation flag on error so user can retry
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem(`hero-gen-${variant.id || variant.title}`)
-      }
-    } finally {
+    }, {
+      message: 'Creating cinematic poster image...',
+      estimatedDuration: 25,
+      operationType: 'image-generation'
+    }).catch(() => {
+      // Error already handled above
       setIsGeneratingHeroImage(false)
-    }
+    })
   }
 
   // Generate film treatment handler
@@ -780,6 +801,37 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                       aspectRatio="2.39:1"
                       className="mb-6"
                       onRegenerate={() => generateHeroImage(guide.treatmentVariants[0], true)}
+                      onEditPrompt={() => setShowPromptDrawer(true)}
+                      onUpload={async (file) => {
+                        // Upload hero image
+                        try {
+                          const formData = new FormData()
+                          formData.append('file', file)
+                          formData.append('projectId', projectId)
+                          
+                          const response = await fetch('/api/upload/image', {
+                            method: 'POST',
+                            body: formData
+                          })
+                          
+                          if (!response.ok) throw new Error('Upload failed')
+                          
+                          const data = await response.json()
+                          if (data.imageUrl) {
+                            const currentVariants = useGuideStore.getState().guide.treatmentVariants || []
+                            const updatedVariants = currentVariants.map((v: any, idx: number) => 
+                              idx === 0 ? { ...v, heroImage: { url: data.imageUrl, status: 'ready' } } : v
+                            )
+                            setTreatmentVariants(updatedVariants)
+                            const { toast } = await import('sonner')
+                            toast.success('Hero image uploaded successfully')
+                          }
+                        } catch (error) {
+                          console.error('Upload error:', error)
+                          const { toast } = await import('sonner')
+                          toast.error('Failed to upload image')
+                        }
+                      }}
                       isGenerating={isGeneratingHeroImage}
                       error={heroImageError}
                     />
@@ -957,6 +1009,19 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           })
         }}
       />
+      
+      {/* Hero Image Prompt Drawer */}
+      {guide.treatmentVariants && guide.treatmentVariants[0] && (
+        <ThumbnailPromptDrawer
+          open={showPromptDrawer}
+          onClose={() => setShowPromptDrawer(false)}
+          treatmentVariant={guide.treatmentVariants[0]}
+          onThumbnailGenerated={async (customPrompt) => {
+            setShowPromptDrawer(false)
+            await generateHeroImage(guide.treatmentVariants[0], true, customPrompt)
+          }}
+        />
+      )}
     </div>
   );
 }

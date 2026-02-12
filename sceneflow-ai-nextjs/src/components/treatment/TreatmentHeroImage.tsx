@@ -1,15 +1,20 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { 
   RefreshCw, 
   Pencil, 
   ImageOff, 
   Sparkles,
-  Film
+  Film,
+  Wand2,
+  Upload,
+  Download,
+  Loader
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { type GeneratedImage, type AspectRatio } from '@/types/treatment-visuals'
 
 interface TreatmentHeroImageProps {
@@ -20,6 +25,8 @@ interface TreatmentHeroImageProps {
   aspectRatio?: AspectRatio
   onRegenerate?: () => void
   onEditPrompt?: () => void
+  onUpload?: (file: File) => void
+  onDownload?: () => void
   isGenerating?: boolean
   error?: string | null // External error message from parent
   className?: string
@@ -37,12 +44,42 @@ export function TreatmentHeroImage({
   aspectRatio = '16:9',
   onRegenerate,
   onEditPrompt,
+  onUpload,
+  onDownload,
   isGenerating = false,
   error: externalError,
   className
 }: TreatmentHeroImageProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [imageError, setImageError] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // Handle file upload
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && onUpload) {
+      onUpload(file)
+    }
+    // Reset input so same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+  
+  // Handle download
+  const handleDownload = () => {
+    if (onDownload) {
+      onDownload()
+    } else if (image?.url) {
+      // Default download behavior
+      const link = document.createElement('a')
+      link.href = image.url
+      link.download = `${title.replace(/[^a-z0-9]/gi, '_')}_poster.png`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    }
+  }
   
   // Debug: Log what we receive
   console.log('[TreatmentHeroImage] Render:', {
@@ -203,36 +240,86 @@ export function TreatmentHeroImage({
           </div>
         </div>
         
-        {/* Hover controls */}
-        {hasImage && (onRegenerate || onEditPrompt) && (
+        {/* Hidden file input for upload */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+        
+        {/* Hover controls - unified icon buttons matching SceneGallery */}
+        {hasImage && (
           <div 
             className={cn(
               'absolute top-4 right-4 flex gap-2 transition-opacity duration-200',
               isHovered ? 'opacity-100' : 'opacity-0'
             )}
           >
-            {onEditPrompt && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={onEditPrompt}
-                className="bg-black/50 hover:bg-black/70 backdrop-blur-sm"
-              >
-                <Pencil className="w-3.5 h-3.5 mr-1.5" />
-                Edit
-              </Button>
-            )}
+            {/* Regenerate (Sparkles - indigo) */}
             {onRegenerate && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={onRegenerate}
-                disabled={isGenerating}
-                className="bg-black/50 hover:bg-black/70 backdrop-blur-sm"
-              >
-                <RefreshCw className={cn('w-3.5 h-3.5 mr-1.5', isGenerating && 'animate-spin')} />
-                Regenerate
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
+                    disabled={isGenerating}
+                    className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
+                  >
+                    {isGenerating ? (
+                      <Loader className="w-5 h-5 text-white animate-spin" />
+                    ) : (
+                      <Sparkles className="w-5 h-5 text-white" />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Regenerate Image</TooltipContent>
+              </Tooltip>
+            )}
+            
+            {/* Edit Prompt (Wand2 - purple) */}
+            {onEditPrompt && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onEditPrompt(); }}
+                    className="p-3 bg-purple-600/80 hover:bg-purple-600 rounded-full transition-colors"
+                  >
+                    <Wand2 className="w-5 h-5 text-white" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Edit Prompt</TooltipContent>
+              </Tooltip>
+            )}
+            
+            {/* Upload (Upload - emerald) */}
+            {onUpload && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                    className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors"
+                  >
+                    <Upload className="w-5 h-5 text-white" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Upload Image</TooltipContent>
+              </Tooltip>
+            )}
+            
+            {/* Download (Download - cyan) */}
+            {image?.url && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDownload(); }}
+                    className="p-3 bg-cyan-600/80 hover:bg-cyan-600 rounded-full transition-colors"
+                  >
+                    <Download className="w-5 h-5 text-white" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Download Image</TooltipContent>
+              </Tooltip>
             )}
           </div>
         )}
