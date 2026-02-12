@@ -9,6 +9,42 @@ import { v4 as uuidv4 } from 'uuid'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60 // Allow longer runtime for AI generation
 
+/**
+ * Safely parse JSON from LLM responses
+ * Handles markdown code blocks, trailing text, and malformed JSON
+ */
+function safeParseJSON(text: string): any {
+  let cleaned = text.trim()
+  
+  // Remove markdown code blocks
+  if (cleaned.startsWith('```json')) cleaned = cleaned.slice(7)
+  else if (cleaned.startsWith('```')) cleaned = cleaned.slice(3)
+  if (cleaned.endsWith('```')) cleaned = cleaned.slice(0, -3)
+  cleaned = cleaned.trim()
+  
+  try {
+    return JSON.parse(cleaned)
+  } catch (e) {
+    // Find JSON boundaries
+    const firstBrace = cleaned.indexOf('{')
+    const lastBrace = cleaned.lastIndexOf('}')
+    
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      let json = cleaned.slice(firstBrace, lastBrace + 1)
+      // Remove trailing commas before ] or }
+      json = json.replace(/,(\s*[\]\}])/g, '$1')
+      try {
+        return JSON.parse(json)
+      } catch (e2) {
+        console.error('[safeParseJSON] Failed after fixes:', (e2 as Error).message)
+        console.error('[safeParseJSON] Text length:', text.length)
+        throw new Error(`Invalid JSON from LLM: ${(e2 as Error).message}`)
+      }
+    }
+    throw new Error('No valid JSON object found in LLM response')
+  }
+}
+
 interface RouteParams {
   params: Promise<{ seriesId: string }>
 }
@@ -238,7 +274,7 @@ Return ONLY valid JSON matching this exact schema:
     prompt
   )
   
-  const parsed = JSON.parse(response)
+  const parsed = safeParseJSON(response)
   
   // Ensure IDs are properly set
   if (parsed.productionBible?.characters) {
@@ -309,7 +345,7 @@ Return ONLY valid JSON.`
     fullPrompt
   )
   
-  return JSON.parse(response)
+  return safeParseJSON(response)
 }
 
 /**
