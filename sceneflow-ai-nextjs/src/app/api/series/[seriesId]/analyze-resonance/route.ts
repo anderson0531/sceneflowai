@@ -483,20 +483,29 @@ function buildAnalysisResult(
     }
   })
   
-  // Build insights with proper IDs
-  const insights: SeriesResonanceInsight[] = (raw.insights || []).map((ins: any, i: number) => ({
-    id: `insight_${i}_${uuidv4().slice(0, 8)}`,
-    category: ins.category || 'concept',
-    status: ins.status || 'neutral',
-    title: ins.title || 'Insight',
-    insight: ins.insight || '',
-    targetSection: ins.targetSection,
-    targetId: ins.targetId,
-    actionable: ins.actionable || false,
-    fixSuggestion: ins.fixSuggestion,
-    axisId: ins.axisId,
-    estimatedImpact: ins.estimatedImpact
-  }))
+  // Build insights with deterministic IDs based on content
+  // This ensures IDs stay the same across re-analysis so appliedFixes tracking works
+  const insights: SeriesResonanceInsight[] = (raw.insights || []).map((ins: any, i: number) => {
+    const category = ins.category || 'concept'
+    const title = ins.title || 'Insight'
+    const targetSection = ins.targetSection || ''
+    const targetId = ins.targetId || ''
+    // Create a deterministic hash from the insight's identifying characteristics
+    const stableIdBase = `${category}-${title}-${targetSection}-${targetId}`.toLowerCase().replace(/[^a-z0-9-]/g, '_')
+    return {
+      id: `insight_${stableIdBase}`,
+      category,
+      status: ins.status || 'neutral',
+      title,
+      insight: ins.insight || '',
+      targetSection,
+      targetId,
+      actionable: ins.actionable || false,
+      fixSuggestion: ins.fixSuggestion,
+      axisId: ins.axisId,
+      estimatedImpact: ins.estimatedImpact
+    }
+  })
   
   return {
     seriesId,

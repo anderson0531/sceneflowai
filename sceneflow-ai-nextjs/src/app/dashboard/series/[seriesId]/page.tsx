@@ -202,7 +202,7 @@ export default function SeriesStudioPage() {
     }, {
       message: `Analyzing ${episodeCount} episodes for audience resonance...`,
       estimatedDuration: Math.max(30, episodeCount * 2),
-      operationType: 'script-review'
+      operationType: 'series-analysis'
     })
     
     setResonanceAnalysis(result)
@@ -237,7 +237,7 @@ export default function SeriesStudioPage() {
     }, {
       message: `Applying fix to ${targetLabel}...`,
       estimatedDuration: 20,
-      operationType: 'script-optimization'
+      operationType: 'series-fix'
     })
     
     // Refresh series data after fix

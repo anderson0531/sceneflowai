@@ -10,6 +10,8 @@ export type OperationType =
   | 'script-review'        // Audience resonance analysis
   | 'script-generation'    // Writing/generating script
   | 'script-optimization'  // Optimizing/revising script
+  | 'series-analysis'      // Series resonance analysis
+  | 'series-fix'           // Applying fix to series
   | 'image-generation'     // Generating images
   | 'video-generation'     // Generating video
   | 'audio-generation'     // Generating audio/TTS
@@ -34,7 +36,7 @@ export interface ProgressPhase {
 export interface OperationConfig {
   title: string
   phases: ProgressPhase[]
-  animationType: 'audience' | 'script' | 'image' | 'video' | 'audio' | 'generic'
+  animationType: 'audience' | 'script' | 'image' | 'video' | 'audio' | 'series' | 'repair' | 'generic'
 }
 
 /**
@@ -84,6 +86,32 @@ export const OPERATION_CONFIGS: Record<OperationType, OperationConfig> = {
       { id: 'revise-3', label: 'Revising remaining scenes...', progress: 75 },
       { id: 'polish', label: 'Polishing narrative flow...', progress: 90 },
       { id: 'finalize', label: 'Finalizing optimizations...', progress: 98 },
+    ]
+  },
+  'series-analysis': {
+    title: 'Analyzing Series',
+    animationType: 'series',
+    phases: [
+      { id: 'init', label: 'Initializing series analysis...', progress: 5 },
+      { id: 'parse', label: 'Parsing episode structure...', progress: 15 },
+      { id: 'analyze-episodes', label: 'Analyzing episode arcs...', progress: 30 },
+      { id: 'analyze-characters', label: 'Evaluating character development...', progress: 45 },
+      { id: 'audience-feedback', label: 'Simulating audience reactions...', progress: 60 },
+      { id: 'continuity', label: 'Checking story continuity...', progress: 75 },
+      { id: 'resonance', label: 'Calculating resonance scores...', progress: 90 },
+      { id: 'finalize', label: 'Finalizing analysis...', progress: 98 },
+    ]
+  },
+  'series-fix': {
+    title: 'Fixing Series',
+    animationType: 'repair',
+    phases: [
+      { id: 'init', label: 'Analyzing issue...', progress: 10 },
+      { id: 'identify', label: 'Identifying affected content...', progress: 25 },
+      { id: 'generate', label: 'Generating improvements...', progress: 50 },
+      { id: 'apply', label: 'Applying fixes...', progress: 75 },
+      { id: 'verify', label: 'Verifying changes...', progress: 90 },
+      { id: 'finalize', label: 'Finalizing fix...', progress: 98 },
     ]
   },
   'image-generation': {

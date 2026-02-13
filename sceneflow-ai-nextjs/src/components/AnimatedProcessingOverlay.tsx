@@ -78,6 +78,9 @@ const AnimatedProcessingOverlay = () => {
     if (isVisible && config.animationType === 'script') {
       setScriptLines([false, false, false, false, false, false])
     }
+    if (isVisible && config.animationType === 'series') {
+      setSeats(Array(60).fill('dim')) // Reuse seats for episode indicators
+    }
   }, [isVisible, config.animationType])
 
   // Main progress and phase update logic
@@ -463,6 +466,108 @@ const AnimatedProcessingOverlay = () => {
                 />
               )
             })}
+          </div>
+        )}
+        
+        {/* Series analysis animation - stacked episodes like a film library */}
+        {config.animationType === 'series' && (
+          <div className="mb-8 mt-6 flex justify-center">
+            <div className="relative">
+              {/* Film reel / library shelf */}
+              <div className="flex items-end gap-1.5 px-4 py-3 bg-slate-800/50 rounded-xl border border-slate-700">
+                {[...Array(8)].map((_, i) => {
+                  const isAnalyzed = progress > (i + 1) * 10
+                  const isCurrent = progress > i * 10 && progress <= (i + 1) * 10
+                  return (
+                    <div
+                      key={i}
+                      className={`
+                        w-8 rounded-sm transition-all duration-500
+                        ${isAnalyzed 
+                          ? 'bg-gradient-to-t from-cyan-600 to-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.5)]' 
+                          : isCurrent 
+                            ? 'bg-gradient-to-t from-amber-600 to-amber-400 animate-pulse shadow-[0_0_12px_rgba(251,191,36,0.5)]'
+                            : 'bg-slate-600'}
+                      `}
+                      style={{ 
+                        height: `${40 + (i % 3) * 10}px`,
+                        transitionDelay: `${i * 50}ms`
+                      }}
+                    >
+                      <div className="h-full w-full flex flex-col justify-end p-0.5">
+                        <div className="h-0.5 bg-white/30 rounded" />
+                        <div className="h-0.5 bg-white/30 rounded mt-0.5" />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              
+              {/* Scanning line effect */}
+              <div 
+                className="absolute top-0 w-1 h-full bg-gradient-to-b from-transparent via-cyan-400 to-transparent opacity-80"
+                style={{ 
+                  left: `${16 + (progress / 100) * (8 * 38)}px`,
+                  transition: 'left 0.3s ease-out'
+                }}
+              />
+              
+              {/* Episode counter */}
+              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-slate-400">
+                Analyzing episodes...
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Repair animation - wrench/gear fixing */}
+        {config.animationType === 'repair' && (
+          <div className="mb-8 mt-6 flex justify-center">
+            <div className="relative w-32 h-32">
+              {/* Main gear */}
+              <div 
+                className={`
+                  absolute inset-4 border-4 rounded-full transition-all duration-300
+                  ${progress > 50 
+                    ? 'border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.4)]' 
+                    : 'border-amber-500 shadow-[0_0_20px_rgba(251,191,36,0.4)]'}
+                `}
+                style={{ 
+                  transform: `rotate(${progress * 3.6}deg)`,
+                  transition: 'transform 0.1s linear'
+                }}
+              >
+                {/* Gear teeth */}
+                {[...Array(8)].map((_, i) => (
+                  <div
+                    key={i}
+                    className={`
+                      absolute w-3 h-2 -top-1 left-1/2 -translate-x-1/2 rounded-t
+                      ${progress > 50 ? 'bg-emerald-500' : 'bg-amber-500'}
+                    `}
+                    style={{ transform: `rotate(${i * 45}deg) translateY(-24px)` }}
+                  />
+                ))}
+              </div>
+              
+              {/* Wrench icon */}
+              <div 
+                className="absolute inset-0 flex items-center justify-center"
+                style={{ 
+                  transform: progress < 75 ? `rotate(${Math.sin(progress / 5) * 15}deg)` : 'rotate(0deg)',
+                  transition: 'transform 0.2s ease-out'
+                }}
+              >
+                <span className="text-4xl">🔧</span>
+              </div>
+              
+              {/* Checkmark when complete */}
+              {progress >= 90 && (
+                <div className="absolute -right-2 -bottom-2 w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg animate-[bounce_0.5s_ease-out]">
+                  <span className="text-white text-lg">✓</span>
+                </div>
+              )}
+            </div>
           </div>
         )}
         
