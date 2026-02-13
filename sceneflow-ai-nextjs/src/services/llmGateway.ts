@@ -8,12 +8,18 @@ export interface LLMConfig {
   model: string
   apiKey?: string
   organization?: string
+  /** Maximum output tokens for generation (default: 8192) */
+  maxOutputTokens?: number
+  /** Temperature for generation (default: 0.2) */
+  temperature?: number
+  /** Timeout in ms (default: 90000) */
+  timeoutMs?: number
 }
 
 export const JsonResponseSchema = z.string().min(2)
 
 export async function callLLM(config: LLMConfig, prompt: string): Promise<string> {
-  const { provider, model } = config
+  const { provider, model, maxOutputTokens = 8192, temperature = 0.2, timeoutMs } = config
 
   if (provider === 'openai') {
     const apiKey = config.apiKey || process.env.OPENAI_API_KEY
@@ -44,8 +50,10 @@ export async function callLLM(config: LLMConfig, prompt: string): Promise<string
   // Use Vertex AI for Gemini (pay-as-you-go, no free tier limits)
   const result = await generateText(prompt, {
     model,
-    temperature: 0.2,
+    temperature,
     topP: 0.9,
+    maxOutputTokens,
+    timeoutMs,
     responseMimeType: 'application/json',
     systemInstruction: 'Return ONLY valid JSON that matches the requested schema. No prose.'
   })

@@ -35,6 +35,17 @@ export interface SeriesEpisodeCharacter {
 }
 
 /**
+ * Story Arc/Thread for tracking narrative continuity
+ */
+export interface StoryThread {
+  id: string
+  name: string
+  type: 'main' | 'subplot' | 'character' | 'mystery' | 'romance'
+  status: 'introduced' | 'developing' | 'climax' | 'resolved'
+  description?: string
+}
+
+/**
  * Series Episode Blueprint
  */
 export interface SeriesEpisodeBlueprint {
@@ -45,6 +56,12 @@ export interface SeriesEpisodeBlueprint {
   synopsis: string
   beats: SeriesEpisodeBeat[]
   characters: SeriesEpisodeCharacter[]
+  /** Story threads/arcs active in this episode for continuity tracking */
+  storyThreads?: StoryThread[]
+  /** Key plot developments that affect future episodes */
+  plotDevelopments?: string[]
+  /** Cliffhanger or setup for next episode */
+  episodeHook?: string
   projectId?: string
   status: 'blueprint' | 'in_progress' | 'completed'
 }

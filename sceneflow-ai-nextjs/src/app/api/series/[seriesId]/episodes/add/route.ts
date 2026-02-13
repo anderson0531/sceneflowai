@@ -95,7 +95,7 @@ function safeParseJSON(text: string): any {
 }
 
 /**
- * Generate a batch of new episodes
+ * Generate a batch of new episodes with enhanced continuity tracking
  */
 async function generateEpisodeBatch(
   series: Series,
@@ -104,28 +104,67 @@ async function generateEpisodeBatch(
 ): Promise<SeriesEpisodeBlueprint[]> {
   const bible = series.production_bible || {}
   const existingEpisodes = series.episode_blueprints || []
+  const totalPlannedEpisodes = series.max_episodes || 40
   
-  // Build context from existing episodes
-  const episodeSummaries = existingEpisodes
-    .slice(-3) // Last 3 episodes for context
-    .map(ep => `Ep ${ep.episodeNumber}: "${ep.title}" - ${ep.logline}`)
+  // Build context from existing episodes (last 5 for better continuity)
+  const recentEpisodes = existingEpisodes.slice(-5)
+  const episodeSummaries = recentEpisodes
+    .map(ep => {
+      const hook = (ep as any).episodeHook ? ` [Hook: ${(ep as any).episodeHook}]` : ''
+      return `Ep ${ep.episodeNumber}: "${ep.title}" - ${ep.logline}${hook}`
+    })
     .join('\n')
   
-  const prompt = `You are a TV series writer continuing an existing series.
+  // Gather active story threads from existing episodes
+  const activeThreads: Array<{id: string, name: string, type: string, status: string, description?: string}> = []
+  for (const ep of existingEpisodes) {
+    const threads = (ep as any).storyThreads || []
+    for (const thread of threads) {
+      const existing = activeThreads.find(t => t.id === thread.id || t.name === thread.name)
+      if (existing) {
+        existing.status = thread.status
+      } else if (thread.status !== 'resolved') {
+        activeThreads.push(thread)
+      }
+    }
+  }
+  
+  // Build character roster
+  const characterList = bible.characters?.map((c: any) => 
+    `- ${c.name} (${c.role}): ${c.description}`
+  ).join('\n') || 'Not specified'
+  
+  const prompt = `You are continuing an existing TV series with consistent story arcs.
 
 SERIES: ${series.title}
 LOGLINE: ${series.logline || bible.logline}
 SYNOPSIS: ${bible.synopsis || 'Not specified'}
 GENRE: ${series.genre || 'Drama'}
+TONE: ${bible.toneGuidelines || 'Not specified'}
 
-EXISTING EPISODES (last 3 for context):
+CHARACTERS:
+${characterList}
+
+PROTAGONIST: ${bible.protagonist?.name || 'Not specified'} - Goal: ${bible.protagonist?.goal || ''}, Flaw: ${bible.protagonist?.flaw || ''}
+
+ANTAGONIST/CONFLICT: ${bible.antagonistConflict?.description || 'Not specified'}
+
+EXISTING EPISODES (last 5 for context):
 ${episodeSummaries || 'None yet'}
 
-PROTAGONIST: ${bible.protagonist?.name || 'Not specified'} - ${bible.protagonist?.goal || ''}
+ACTIVE STORY THREADS:
+${activeThreads.map(t => `- ${t.name} (${t.type}): ${t.status} - ${t.description || ''}`).join('\n') || 'None tracked'}
+
+SERIES LENGTH: ${totalPlannedEpisodes} total episodes
+CURRENT POSITION: Episodes ${startEpisodeNumber} to ${startEpisodeNumber + count - 1} of ${totalPlannedEpisodes}
 
 Generate ${count} NEW episodes starting from Episode ${startEpisodeNumber}.
-Each episode needs: title, logline (1 sentence), synopsis (1 paragraph), and 3 story beats.
-Continue the narrative arc naturally from existing episodes.
+Each episode must:
+1. Continue naturally from the last episode's hook
+2. Advance or resolve active story threads
+3. Introduce new threads if appropriate for pacing
+4. End with a hook for the next episode (except if this is the finale)
+5. Consider series position (early=setup, middle=complications, late=resolution)
 
 Return ONLY valid JSON array:
 [
@@ -133,19 +172,27 @@ Return ONLY valid JSON array:
     "episodeNumber": ${startEpisodeNumber},
     "title": "Episode Title",
     "logline": "One sentence hook",
-    "synopsis": "One paragraph summary",
+    "synopsis": "Full episode summary continuing the narrative",
     "beats": [
-      {"beatNumber": 1, "title": "Opening", "description": "Setup", "act": 1},
+      {"beatNumber": 1, "title": "Opening", "description": "Pickup from previous", "act": 1},
       {"beatNumber": 2, "title": "Conflict", "description": "Rising action", "act": 2},
       {"beatNumber": 3, "title": "Resolution", "description": "Climax/cliffhanger", "act": 3}
     ],
     "characters": [{"characterId": "${bible.protagonist?.characterId || 'char_1'}", "role": "protagonist"}],
+    "storyThreads": [{"id": "thread_1", "name": "Thread Name", "type": "main|subplot|character|mystery|romance", "status": "developing|climax|resolved", "description": "Progress in this episode"}],
+    "plotDevelopments": ["Key event in this episode"],
+    "episodeHook": "Setup for next episode",
     "status": "blueprint"
   }
 ]`
 
   const response = await callLLM(
-    { provider: 'gemini', model: 'gemini-2.5-flash' },
+    { 
+      provider: 'gemini', 
+      model: 'gemini-2.5-pro',  // Use Pro for better narrative coherence
+      maxOutputTokens: 16384,
+      timeoutMs: 120000
+    },
     prompt
   )
   
@@ -154,14 +201,17 @@ Return ONLY valid JSON array:
   // Handle both array and object with array property
   const episodes = Array.isArray(parsed) ? parsed : (parsed.episodes || parsed.episodeBlueprints || [])
   
-  // Ensure proper IDs and episode numbers
+  // Ensure proper IDs and episode numbers with continuity fields
   return episodes.map((ep: any, i: number) => ({
     ...ep,
     id: `ep_${startEpisodeNumber + i}_${uuidv4().slice(0, 8)}`,
     episodeNumber: startEpisodeNumber + i,
     status: 'blueprint',
     beats: ep.beats || [],
-    characters: ep.characters || []
+    characters: ep.characters || [],
+    storyThreads: ep.storyThreads || [],
+    plotDevelopments: ep.plotDevelopments || [],
+    episodeHook: ep.episodeHook || ''
   }))
 }
 

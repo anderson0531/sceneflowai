@@ -50,6 +50,7 @@ import {
   DialogDescription
 } from '@/components/ui/dialog'
 import { useSeriesStudio } from '@/hooks/useSeries'
+import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { toast } from 'sonner'
@@ -94,6 +95,9 @@ export default function SeriesStudioPage() {
   const [tone, setTone] = useState('any')
   const [isIdeateDialogOpen, setIsIdeateDialogOpen] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  
+  // Processing overlay for generation
+  const { execute: executeWithOverlay } = useProcessWithOverlay()
 
   // Show ideate dialog for new series without production bible
   useEffect(() => {
@@ -108,19 +112,28 @@ export default function SeriesStudioPage() {
       return
     }
 
+    // Close dialog immediately for better UX
+    setIsIdeateDialogOpen(false)
+    
     try {
-      const result = await generateStoryline({
-        topic: ideaTopic,
-        episodeCount,
-        genre: genre === 'any' ? undefined : genre,
-        tone: tone === 'any' ? undefined : tone
+      const result = await executeWithOverlay(async () => {
+        return await generateStoryline({
+          topic: ideaTopic,
+          episodeCount,
+          genre: genre === 'any' ? undefined : genre,
+          tone: tone === 'any' ? undefined : tone
+        })
+      }, {
+        message: `Generating ${episodeCount} episode storyline...`,
+        estimatedDuration: episodeCount * 3 + 15,
+        operationType: 'script-generation'
       })
 
       toast.success(`Generated ${result.generated.episodeCount} episodes!`)
-      setIsIdeateDialogOpen(false)
       setIdeaTopic('')
     } catch (err) {
       toast.error('Failed to generate storyline')
+      setIsIdeateDialogOpen(true)
     }
   }
 
@@ -491,12 +504,15 @@ export default function SeriesStudioPage() {
       {/* Ideate Dialog */}
       <Dialog open={isIdeateDialogOpen} onOpenChange={setIsIdeateDialogOpen}>
         <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-xl flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-amber-400" />
-              Generate Series Storyline
+          <DialogHeader className="pb-4 border-b border-gray-700/50">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-purple-600/20 flex items-center justify-center border border-cyan-500/30">
+                <Sparkles className="w-4 h-4 text-cyan-400" />
+              </div>
+              <span>Generate</span>
+              <span className="text-gray-500 font-normal">· Series Storyline</span>
             </DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogDescription className="text-gray-400 text-sm mt-2">
               Describe your series concept and AI will generate the complete storyline with episodes.
             </DialogDescription>
           </DialogHeader>
@@ -504,13 +520,13 @@ export default function SeriesStudioPage() {
           <div className="space-y-4 pt-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Topic / Concept *
+                Topic / Concept <span className="text-cyan-400">*</span>
               </label>
               <Textarea
                 placeholder="e.g., A comedy about a group of friends who start a haunted house business but discover their house is actually haunted..."
                 value={ideaTopic}
                 onChange={(e) => setIdeaTopic(e.target.value)}
-                className="bg-gray-800 border-gray-700 text-white min-h-24"
+                className="bg-gray-800 border-gray-700 text-white min-h-24 focus:border-cyan-500/50 focus:ring-cyan-500/20"
                 autoFocus
               />
             </div>
@@ -521,7 +537,7 @@ export default function SeriesStudioPage() {
                   Number of Episodes
                 </label>
                 <Select value={String(episodeCount)} onValueChange={(v) => setEpisodeCount(Number(v))}>
-                  <SelectTrigger className="bg-gray-800 border-gray-700">
+                  <SelectTrigger className="bg-gray-800 border-gray-700 focus:border-cyan-500/50">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-gray-700">
@@ -533,10 +549,10 @@ export default function SeriesStudioPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Genre (optional)
+                  Genre <span className="text-gray-500 text-xs">(optional)</span>
                 </label>
                 <Select value={genre} onValueChange={setGenre}>
-                  <SelectTrigger className="bg-gray-800 border-gray-700">
+                  <SelectTrigger className="bg-gray-800 border-gray-700 focus:border-cyan-500/50">
                     <SelectValue placeholder="Select genre" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-gray-700">
@@ -556,10 +572,10 @@ export default function SeriesStudioPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Tone (optional)
+                Tone <span className="text-gray-500 text-xs">(optional)</span>
               </label>
               <Select value={tone} onValueChange={setTone}>
-                <SelectTrigger className="bg-gray-800 border-gray-700">
+                <SelectTrigger className="bg-gray-800 border-gray-700 focus:border-cyan-500/50">
                   <SelectValue placeholder="Select tone" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700">
@@ -574,18 +590,18 @@ export default function SeriesStudioPage() {
               </Select>
             </div>
 
-            <div className="flex items-center gap-3 pt-2">
+            <div className="flex items-center gap-3 pt-3">
               <Button
                 variant="outline"
                 onClick={() => setIsIdeateDialogOpen(false)}
-                className="flex-1 border-gray-600"
+                className="flex-1 border-gray-600 hover:bg-gray-800"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleGenerate}
                 disabled={!ideaTopic.trim() || isGenerating}
-                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 shadow-lg shadow-cyan-500/25"
               >
                 {isGenerating ? (
                   <>

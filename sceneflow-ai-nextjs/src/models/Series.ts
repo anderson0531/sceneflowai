@@ -18,6 +18,17 @@ export const ABSOLUTE_MAX_EPISODES = 30
 
 export type SeriesStatus = 'draft' | 'active' | 'completed' | 'archived'
 
+/**
+ * Story Thread for tracking narrative continuity across episodes
+ */
+export interface StoryThread {
+  id: string
+  name: string
+  type: 'main' | 'subplot' | 'character' | 'mystery' | 'romance'
+  status: 'introduced' | 'developing' | 'climax' | 'resolved'
+  description?: string
+}
+
 export interface SeriesEpisodeBlueprint {
   id: string
   episodeNumber: number
@@ -26,6 +37,12 @@ export interface SeriesEpisodeBlueprint {
   synopsis: string
   beats: SeriesEpisodeBeat[]
   characters: SeriesEpisodeCharacter[]
+  /** Story threads/arcs active in this episode for continuity tracking */
+  storyThreads?: StoryThread[]
+  /** Key plot developments that affect future episodes */
+  plotDevelopments?: string[]
+  /** Cliffhanger or setup for next episode */
+  episodeHook?: string
   projectId?: string // Linked when episode is started
   status: 'blueprint' | 'in_progress' | 'completed'
 }
