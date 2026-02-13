@@ -55,6 +55,14 @@
     "src/app/api/segments/[segmentId]/upload-video/route.ts": {
       "maxDuration": 60,
       "memory": 1024
+    },
+    "src/app/api/series/[seriesId]/generate/route.ts": {
+      "maxDuration": 600,
+      "memory": 3008
+    },
+    "src/app/api/series/[seriesId]/episodes/add/route.ts": {
+      "maxDuration": 300,
+      "memory": 2048
     }
   },
   "crons": [

@@ -189,9 +189,9 @@ Return ONLY valid JSON array:
   const response = await callLLM(
     { 
       provider: 'gemini', 
-      model: 'gemini-2.5-pro',  // Use Pro for better narrative coherence
+      model: 'gemini-2.5-flash',  // Use Flash for speed
       maxOutputTokens: 16384,
-      timeoutMs: 120000
+      timeoutMs: 90000
     },
     prompt
   )

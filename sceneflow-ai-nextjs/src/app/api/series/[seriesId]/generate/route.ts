@@ -8,12 +8,12 @@ import { v4 as uuidv4 } from 'uuid'
 import { StoryThread } from '@/types/series'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 120 // Allow longer runtime for AI generation (batched)
+export const maxDuration = 600 // Allow 10 minutes for full series generation
 
 // Generation configuration
 const EPISODE_BATCH_SIZE = 5 // Generate in batches of 5 for reliable JSON parsing
-const MAX_OUTPUT_TOKENS = 32768 // High token limit for series generation
-const GENERATION_TIMEOUT_MS = 180000 // 3 minute timeout for complex generation
+const MAX_OUTPUT_TOKENS = 16384 // Token limit for series generation
+const GENERATION_TIMEOUT_MS = 90000 // 90 second timeout per batch
 
 /**
  * Safely parse JSON from LLM responses
@@ -356,7 +356,7 @@ Return ONLY valid JSON:
   const bibleResponse = await callLLM(
     { 
       provider: 'gemini', 
-      model: 'gemini-2.5-pro',
+      model: 'gemini-2.5-flash',  // Use Flash for speed, Pro too slow for Vercel
       maxOutputTokens: MAX_OUTPUT_TOKENS,
       timeoutMs: GENERATION_TIMEOUT_MS
     },
@@ -482,7 +482,7 @@ Return ONLY valid JSON array:
     const batchResponse = await callLLM(
       { 
         provider: 'gemini', 
-        model: 'gemini-2.5-pro',
+        model: 'gemini-2.5-flash',  // Use Flash for speed
         maxOutputTokens: MAX_OUTPUT_TOKENS,
         timeoutMs: GENERATION_TIMEOUT_MS
       },
