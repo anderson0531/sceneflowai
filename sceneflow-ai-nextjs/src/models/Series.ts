@@ -151,6 +151,7 @@ export interface SeriesAttributes {
   max_episodes: number
   production_bible: SeriesProductionBible
   episode_blueprints: SeriesEpisodeBlueprint[]
+  resonance_analysis?: Record<string, any> // Cached resonance analysis results
   metadata: Record<string, any>
   created_at: Date
   updated_at: Date
@@ -158,7 +159,7 @@ export interface SeriesAttributes {
 
 export interface SeriesCreationAttributes extends Optional<
   SeriesAttributes,
-  'id' | 'created_at' | 'updated_at' | 'status' | 'max_episodes' | 'metadata' | 'episode_blueprints'
+  'id' | 'created_at' | 'updated_at' | 'status' | 'max_episodes' | 'metadata' | 'episode_blueprints' | 'resonance_analysis'
 > {}
 
 export class Series extends Model<SeriesAttributes, SeriesCreationAttributes> implements SeriesAttributes {
@@ -172,6 +173,7 @@ export class Series extends Model<SeriesAttributes, SeriesCreationAttributes> im
   public max_episodes!: number
   public production_bible!: SeriesProductionBible
   public episode_blueprints!: SeriesEpisodeBlueprint[]
+  public resonance_analysis?: Record<string, any>
   public metadata!: Record<string, any>
   public created_at!: Date
   public updated_at!: Date
@@ -271,6 +273,12 @@ Series.init(
       allowNull: false,
       defaultValue: [],
       comment: 'Array of episode blueprints with beats and characters',
+    },
+    resonance_analysis: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: null,
+      comment: 'Cached resonance analysis with scores and insights',
     },
     metadata: {
       type: DataTypes.JSONB,

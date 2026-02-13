@@ -58,6 +58,57 @@ function safeParseJSON(text: string): any {
 }
 
 /**
+ * GET /api/series/[seriesId]/analyze-resonance
+ * 
+ * Retrieve cached resonance analysis without re-running analysis
+ */
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  const timestamp = new Date().toISOString()
+  const { seriesId } = await params
+  
+  try {
+    await sequelize.authenticate()
+    
+    const series = await Series.findByPk(seriesId)
+    if (!series) {
+      return NextResponse.json({ success: false, error: 'Series not found' }, { status: 404 })
+    }
+    
+    const cachedAnalysis = series.resonance_analysis
+    
+    if (!cachedAnalysis) {
+      return NextResponse.json({
+        success: true,
+        analysis: null,
+        message: 'No cached analysis available. Run POST to analyze.'
+      })
+    }
+    
+    // Check if analysis is stale (episode count changed)
+    const currentEpisodeCount = series.episode_blueprints?.length || 0
+    const analyzedEpisodeCount = cachedAnalysis.episodeCount || 0
+    const isStale = currentEpisodeCount !== analyzedEpisodeCount
+    
+    return NextResponse.json({
+      success: true,
+      analysis: cachedAnalysis,
+      isStale,
+      analyzedAt: cachedAnalysis.analyzedAt,
+      currentEpisodeCount,
+      analyzedEpisodeCount,
+      isReadyForProduction: cachedAnalysis.greenlightScore?.score >= 90
+    })
+    
+  } catch (error) {
+    console.error(`[${timestamp}] [GET /api/series/${seriesId}/analyze-resonance] Error:`, error)
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to retrieve analysis'
+    }, { status: 500 })
+  }
+}
+
+/**
  * POST /api/series/[seriesId]/analyze-resonance
  * 
  * Analyze series for audience resonance
@@ -106,12 +157,23 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Build final analysis with proper structure
     const analysis = buildAnalysisResult(seriesId, rawAnalysis, episodes, characters, locations)
     
-    console.log(`[${timestamp}] [POST /api/series/${seriesId}/analyze-resonance] Analysis complete. Score: ${analysis.greenlightScore.score}`)
+    // Persist analysis to database for future reference
+    await series.update({
+      resonance_analysis: {
+        ...analysis,
+        analyzedAt: timestamp,
+        episodeCount: episodes.length,
+        version: '1.0'
+      }
+    })
+    
+    console.log(`[${timestamp}] [POST /api/series/${seriesId}/analyze-resonance] Analysis complete and saved. Score: ${analysis.greenlightScore.score}`)
     
     return NextResponse.json({
       success: true,
       analysis,
-      isReadyForProduction: analysis.greenlightScore.score >= 90
+      isReadyForProduction: analysis.greenlightScore.score >= 90,
+      savedToDatabase: true
     })
     
   } catch (error) {

@@ -45,9 +45,17 @@ function normalizeTargetSection(section: string): string {
 
 /**
  * Parse episode ID which may be a range like "ep_11-14" or single "ep_5"
- * Returns array of episode numbers to update
+ * Also handles special cases like "all" for all episodes
+ * Returns array of episode numbers to update, or 'all' string for all episodes
  */
-function parseEpisodeRange(episodeId: string): number[] {
+function parseEpisodeRange(episodeId: string): number[] | 'all' {
+  const normalized = episodeId.toLowerCase().trim()
+  
+  // Handle "all" - means apply to all episodes
+  if (normalized === 'all' || normalized === 'all_episodes' || normalized === 'all-episodes') {
+    return 'all'
+  }
+  
   // Handle range format: ep_11-14, episodes_11-14, 11-14
   const rangeMatch = episodeId.match(/(\d+)-(\d+)/)
   if (rangeMatch) {
@@ -221,6 +229,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 /**
  * Apply fix to an episode or range of episodes
  * Handles ranges like "ep_11-14" which should update episodes 11, 12, 13, 14
+ * Also handles "all" to apply fix across all episodes with batch processing
  */
 async function applyEpisodeFix(
   series: Series,
@@ -229,23 +238,34 @@ async function applyEpisodeFix(
 ): Promise<{ updatedEpisodes: any[]; summary: string }> {
   const episodes = [...(series.episode_blueprints || [])]
   
-  // Parse episode range - could be single (ep_5) or range (ep_11-14)
+  // Parse episode range - could be single (ep_5), range (ep_11-14), or 'all'
   const episodeNumbers = parseEpisodeRange(episodeId)
   
-  if (episodeNumbers.length === 0) {
-    throw new Error(`Invalid episode ID format: ${episodeId}`)
+  // Handle 'all' - get all episode indices
+  let targetIndices: number[]
+  if (episodeNumbers === 'all') {
+    targetIndices = episodes.map((_, idx) => idx)
+  } else {
+    if (episodeNumbers.length === 0) {
+      throw new Error(`Invalid episode ID format: ${episodeId}`)
+    }
+    
+    // Find all target episodes
+    targetIndices = episodeNumbers
+      .map(num => episodes.findIndex(ep => ep.episodeNumber === num))
+      .filter(idx => idx !== -1)
   }
-  
-  // Find all target episodes
-  const targetIndices = episodeNumbers
-    .map(num => episodes.findIndex(ep => ep.episodeNumber === num))
-    .filter(idx => idx !== -1)
   
   if (targetIndices.length === 0) {
     throw new Error(`No episodes found for: ${episodeId}`)
   }
   
-  // If it's a range, batch update all episodes with the same fix applied contextually
+  // For "all" episodes or large batches, use efficient batch processing
+  if (targetIndices.length > 5) {
+    return applyBatchEpisodeFix(series, episodes, targetIndices, fixSuggestion)
+  }
+  
+  // For smaller sets, do individual updates
   const updatedSummaries: string[] = []
   
   for (const targetIndex of targetIndices) {
@@ -298,11 +318,87 @@ Return ONLY valid JSON:
     updatedSummaries.push(`Ep ${episode.episodeNumber}: ${updated.changesSummary || 'Updated'}`)
   }
   
+  const episodeLabel = episodeNumbers === 'all' 
+    ? 'all episodes' 
+    : Array.isArray(episodeNumbers) && episodeNumbers.length > 1
+      ? `episodes ${episodeNumbers.join(', ')}`
+      : `episode ${episodeNumbers}`
+  
   return {
     updatedEpisodes: episodes,
     summary: targetIndices.length > 1 
-      ? `Updated ${targetIndices.length} episodes (${episodeNumbers.join(', ')}): ${updatedSummaries[0]}`
-      : updatedSummaries[0] || `Updated Episode ${episodeNumbers[0]}`
+      ? `Updated ${targetIndices.length} episodes: ${updatedSummaries[0]}`
+      : updatedSummaries[0] || `Updated ${episodeLabel}`
+  }
+}
+
+/**
+ * Batch process multiple episodes efficiently with a single LLM call
+ * Used when applying fixes to 'all' episodes or large ranges to avoid timeout
+ */
+async function applyBatchEpisodeFix(
+  series: Series,
+  episodes: any[],
+  targetIndices: number[],
+  fixSuggestion: string
+): Promise<{ updatedEpisodes: any[]; summary: string }> {
+  // Build episode summaries for context
+  const episodeSummaries = targetIndices.map(idx => {
+    const ep = episodes[idx]
+    return `Episode ${ep.episodeNumber}: "${ep.title}" - ${ep.logline}`
+  }).join('\n')
+  
+  const prompt = `You are improving a TV series based on feedback. Apply the improvement across ALL episodes while maintaining narrative continuity.
+
+SERIES: ${series.title}
+TOTAL EPISODES: ${episodes.length}
+GENRE: ${series.genre || 'Drama'}
+
+EPISODES TO IMPROVE:
+${episodeSummaries}
+
+IMPROVEMENT REQUIRED FOR ALL EPISODES:
+${fixSuggestion}
+
+For each episode, provide targeted improvements that address the feedback while maintaining story continuity.
+Focus on the most impactful changes - primarily loglines and episode hooks.
+
+Return ONLY valid JSON array with one entry per episode:
+[
+  {
+    "episodeNumber": 1,
+    "improvedLogline": "Enhanced logline addressing feedback",
+    "improvedHook": "Stronger cliffhanger/hook for next episode",
+    "keyChange": "Brief 5-10 word description of main improvement"
+  }
+]
+
+IMPORTANT: Return exactly ${targetIndices.length} entries, one for each episode.`
+
+  const response = await callLLM(
+    { provider: 'gemini', model: 'gemini-2.5-flash', maxOutputTokens: 16384 },
+    prompt
+  )
+  
+  const improvements = safeParseJSON(response)
+  const updatedSummaries: string[] = []
+  
+  // Apply improvements to each episode
+  for (const improvement of improvements) {
+    const idx = episodes.findIndex(ep => ep.episodeNumber === improvement.episodeNumber)
+    if (idx !== -1) {
+      episodes[idx] = {
+        ...episodes[idx],
+        logline: improvement.improvedLogline || episodes[idx].logline,
+        episodeHook: improvement.improvedHook || episodes[idx].episodeHook
+      }
+      updatedSummaries.push(`Ep ${improvement.episodeNumber}: ${improvement.keyChange || 'Updated'}`)
+    }
+  }
+  
+  return {
+    updatedEpisodes: episodes,
+    summary: `Batch updated ${improvements.length} episodes with improvements`
   }
 }
 
