@@ -242,8 +242,18 @@ export default function SeriesStudioPage() {
     
     // Refresh series data after fix
     await refreshSeries()
-    toast.success('Fix applied successfully')
-  }, [series, refreshSeries, executeWithOverlay])
+    toast.success('Fix applied! Re-analyzing to update score...')
+    
+    // Re-run analysis to get updated score
+    try {
+      const newAnalysis = await handleAnalyzeResonance()
+      setResonanceAnalysis(newAnalysis)
+      toast.success(`Analysis complete! New score: ${newAnalysis.greenlightScore.score}`)
+    } catch (err) {
+      console.error('Re-analysis failed:', err)
+      // Don't show error - fix was still applied successfully
+    }
+  }, [series, refreshSeries, executeWithOverlay, handleAnalyzeResonance])
 
   if (isLoading) {
     return (

@@ -507,6 +507,8 @@ export interface SeriesResonanceAnalysis {
   generatedAt: string
   /** Credits used for this analysis */
   creditsUsed: number
+  /** IDs of insights that have had fixes applied */
+  appliedFixes?: string[]
 }
 
 /**

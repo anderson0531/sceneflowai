@@ -157,21 +157,32 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Build final analysis with proper structure
     const analysis = buildAnalysisResult(seriesId, rawAnalysis, episodes, characters, locations)
     
+    // Preserve appliedFixes from previous analysis when re-analyzing
+    const existingAnalysis = series.resonance_analysis || {}
+    const existingAppliedFixes = existingAnalysis.appliedFixes || []
+    
     // Persist analysis to database for future reference
     await series.update({
       resonance_analysis: {
         ...analysis,
+        appliedFixes: existingAppliedFixes, // Preserve applied fixes across re-analysis
         analyzedAt: timestamp,
         episodeCount: episodes.length,
         version: '1.0'
       }
     })
     
+    // Include appliedFixes in the returned analysis
+    const analysisWithAppliedFixes = {
+      ...analysis,
+      appliedFixes: existingAppliedFixes
+    }
+    
     console.log(`[${timestamp}] [POST /api/series/${seriesId}/analyze-resonance] Analysis complete and saved. Score: ${analysis.greenlightScore.score}`)
     
     return NextResponse.json({
       success: true,
-      analysis,
+      analysis: analysisWithAppliedFixes,
       isReadyForProduction: analysis.greenlightScore.score >= 90,
       savedToDatabase: true
     })

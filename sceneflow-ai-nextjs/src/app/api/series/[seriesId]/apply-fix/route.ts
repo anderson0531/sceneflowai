@@ -200,6 +200,21 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         }, { status: 400 })
     }
     
+    // Update resonance_analysis with the applied fix
+    const existingAnalysis = series.resonance_analysis || {}
+    const existingAppliedFixes = existingAnalysis.appliedFixes || []
+    
+    // Add this insight ID to appliedFixes if not already present
+    if (!existingAppliedFixes.includes(insightId)) {
+      await series.update({
+        resonance_analysis: {
+          ...existingAnalysis,
+          appliedFixes: [...existingAppliedFixes, insightId],
+          lastFixAppliedAt: timestamp
+        }
+      })
+    }
+    
     await series.reload()
     
     const response: ApplySeriesFixResponse = {

@@ -62,7 +62,8 @@ export function SeriesResonancePanel({
   const [error, setError] = useState<string | null>(null)
   const [expandedInsights, setExpandedInsights] = useState<string[]>([])
   const [applyingFix, setApplyingFix] = useState<string | null>(null)
-  const [appliedFixes, setAppliedFixes] = useState<string[]>([])
+  // Initialize appliedFixes from saved analysis to persist across page reloads
+  const [appliedFixes, setAppliedFixes] = useState<string[]>(savedAnalysis?.appliedFixes || [])
   const [showEpisodeDetails, setShowEpisodeDetails] = useState(false)
   const [selectedEpisode, setSelectedEpisode] = useState<number | null>(null)
   
@@ -74,6 +75,10 @@ export function SeriesResonancePanel({
     try {
       const result = await onAnalyze()
       setAnalysis(result)
+      // Preserve appliedFixes from the new analysis result
+      if (result.appliedFixes) {
+        setAppliedFixes(result.appliedFixes)
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analysis failed')
     } finally {
