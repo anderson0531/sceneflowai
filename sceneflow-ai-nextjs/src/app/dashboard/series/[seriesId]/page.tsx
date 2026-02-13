@@ -99,6 +99,12 @@ export default function SeriesStudioPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [resonanceAnalysis, setResonanceAnalysis] = useState<SeriesResonanceAnalysis | null>(null)
   
+  // Edit Storyline dialog state
+  const [isEditStorylineOpen, setIsEditStorylineOpen] = useState(false)
+  const [editInstruction, setEditInstruction] = useState('')
+  const [editTargetAspect, setEditTargetAspect] = useState<'all' | 'plot' | 'characters' | 'episodes' | 'tone' | 'setting'>('all')
+  const [isEditingStoryline, setIsEditingStoryline] = useState(false)
+  
   // Processing overlay for generation
   const { execute: executeWithOverlay } = useProcessWithOverlay()
 
@@ -255,6 +261,50 @@ export default function SeriesStudioPage() {
     }
   }, [series, refreshSeries, executeWithOverlay, handleAnalyzeResonance])
 
+  // Edit Storyline handler - for directed changes without full regeneration
+  const handleEditStoryline = useCallback(async () => {
+    if (!series || !editInstruction.trim()) {
+      toast.error('Please enter an instruction')
+      return
+    }
+    
+    setIsEditingStoryline(true)
+    
+    try {
+      const result = await executeWithOverlay(async () => {
+        const response = await fetch(`/api/series/${series.id}/edit-storyline`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            instruction: editInstruction,
+            targetAspect: editTargetAspect
+          })
+        })
+        
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || 'Failed to edit storyline')
+        }
+        
+        return response.json()
+      }, {
+        message: `Applying "${editInstruction.slice(0, 50)}${editInstruction.length > 50 ? '...' : ''}" to storyline...`,
+        estimatedDuration: 30,
+        operationType: 'series-edit'
+      })
+      
+      setIsEditStorylineOpen(false)
+      setEditInstruction('')
+      await refreshSeries()
+      
+      toast.success(`Applied ${result.changesApplied?.length || 0} changes to storyline`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to edit storyline')
+    } finally {
+      setIsEditingStoryline(false)
+    }
+  }, [series, editInstruction, editTargetAspect, executeWithOverlay, refreshSeries])
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
@@ -380,6 +430,16 @@ export default function SeriesStudioPage() {
                 <Button size="sm" className="bg-green-600 hover:bg-green-700">
                   <Save className="w-4 h-4 mr-2" />
                   Save
+                </Button>
+              )}
+              {bible?.synopsis && (
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditStorylineOpen(true)}
+                  className="border-amber-500/50 text-amber-400 hover:bg-amber-500/10"
+                >
+                  <Edit2 className="w-4 h-4 mr-2" />
+                  Edit Storyline
                 </Button>
               )}
               <Button
@@ -708,6 +768,88 @@ export default function SeriesStudioPage() {
                   <>
                     <Sparkles className="w-4 h-4 mr-2" />
                     Generate Storyline
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Storyline Dialog */}
+      <Dialog open={isEditStorylineOpen} onOpenChange={setIsEditStorylineOpen}>
+        <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-lg">
+          <DialogHeader className="pb-4 border-b border-gray-700/50">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-600/20 flex items-center justify-center border border-amber-500/30">
+                <Edit2 className="w-4 h-4 text-amber-400" />
+              </div>
+              <span>Edit</span>
+              <span className="text-gray-500 font-normal">· Storyline</span>
+            </DialogTitle>
+            <DialogDescription className="text-gray-400 text-sm mt-2">
+              Describe specific changes to make to your storyline. This makes targeted edits without regenerating everything.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                What would you like to change? <span className="text-amber-400">*</span>
+              </label>
+              <Textarea
+                placeholder="e.g., Make the antagonist more sympathetic, Add a romantic subplot between Maya and Daniel, Change episode 5 to focus on the team's first major failure..."
+                value={editInstruction}
+                onChange={(e) => setEditInstruction(e.target.value)}
+                className="bg-gray-800 border-gray-700 text-white min-h-24 focus:border-amber-500/50 focus:ring-amber-500/20"
+                autoFocus
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Focus Area <span className="text-gray-500 text-xs">(optional)</span>
+              </label>
+              <Select value={editTargetAspect} onValueChange={(v: any) => setEditTargetAspect(v)}>
+                <SelectTrigger className="bg-gray-800 border-gray-700 focus:border-amber-500/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700">
+                  <SelectItem value="all">All aspects (auto-detect)</SelectItem>
+                  <SelectItem value="plot">Plot & Story Arcs</SelectItem>
+                  <SelectItem value="characters">Characters & Relationships</SelectItem>
+                  <SelectItem value="episodes">Episode Content</SelectItem>
+                  <SelectItem value="tone">Tone & Style</SelectItem>
+                  <SelectItem value="setting">Setting & World</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500 mt-1">
+                Selecting a focus area helps preserve unrelated content.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 pt-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsEditStorylineOpen(false)}
+                className="flex-1 border-gray-600 hover:bg-gray-800"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleEditStoryline}
+                disabled={!editInstruction.trim() || isEditingStoryline}
+                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg shadow-amber-500/25"
+              >
+                {isEditingStoryline ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Applying...
+                  </>
+                ) : (
+                  <>
+                    <Edit2 className="w-4 h-4 mr-2" />
+                    Apply Changes
                   </>
                 )}
               </Button>

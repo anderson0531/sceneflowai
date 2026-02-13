@@ -139,8 +139,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     
     console.log(`[${timestamp}] [POST /api/series/${seriesId}/analyze-resonance] Analyzing series with ${episodes.length} episodes`)
     
-    // Build comprehensive prompt for analysis
-    const analysisPrompt = buildAnalysisPrompt(series, bible, episodes, characters, locations)
+    // Get previous analysis for iteration tracking and score stabilization
+    const existingAnalysis = series.resonance_analysis || {}
+    const previousScore = existingAnalysis.greenlightScore?.score || null
+    const existingAppliedFixes = existingAnalysis.appliedFixes || []
+    const previousIterationCount = existingAnalysis.iterationCount || 0
+    const currentIteration = previousIterationCount + 1
+    
+    // Build comprehensive prompt for analysis with context about previous analysis
+    const analysisPrompt = buildAnalysisPrompt(
+      series, bible, episodes, characters, locations,
+      { previousScore, iterationCount: currentIteration, appliedFixes: existingAppliedFixes }
+    )
     
     const response = await callLLM(
       { 
@@ -154,36 +164,68 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     
     const rawAnalysis = safeParseJSON(response)
     
-    // Build final analysis with proper structure
-    const analysis = buildAnalysisResult(seriesId, rawAnalysis, episodes, characters, locations)
+    // Build final analysis with normalized scores
+    const analysis = buildAnalysisResult(seriesId, rawAnalysis, episodes, characters, locations, previousScore, currentIteration)
     
-    // Preserve appliedFixes from previous analysis when re-analyzing
-    const existingAnalysis = series.resonance_analysis || {}
-    const existingAppliedFixes = existingAnalysis.appliedFixes || []
+    // Determine score trend
+    let scoreTrend: 'improving' | 'stable' | 'declining' = 'stable'
+    if (previousScore !== null) {
+      const scoreDiff = analysis.greenlightScore.score - previousScore
+      if (scoreDiff > 2) scoreTrend = 'improving'
+      else if (scoreDiff < -2) scoreTrend = 'declining'
+    }
+    
+    // Determine if production ready (score >= 85 AND at least 2 iterations)
+    const isProductionReady = analysis.greenlightScore.score >= 85 && currentIteration >= 2
+    
+    // Determine suggested action
+    let suggestedAction: 'proceed-to-production' | 'apply-fixes' | 'major-rework' | 'continue-iterating'
+    if (isProductionReady) {
+      suggestedAction = 'proceed-to-production'
+    } else if (analysis.greenlightScore.score < 60) {
+      suggestedAction = 'major-rework'
+    } else if (analysis.insights.filter(i => i.actionable && !existingAppliedFixes.includes(i.id)).length > 0) {
+      suggestedAction = 'apply-fixes'
+    } else {
+      suggestedAction = 'continue-iterating'
+    }
     
     // Persist analysis to database for future reference
     await series.update({
       resonance_analysis: {
         ...analysis,
-        appliedFixes: existingAppliedFixes, // Preserve applied fixes across re-analysis
+        appliedFixes: existingAppliedFixes,
+        iterationCount: currentIteration,
+        previousScore,
+        isProductionReady,
+        suggestedAction,
+        scoreTrend,
         analyzedAt: timestamp,
         episodeCount: episodes.length,
-        version: '1.0'
+        version: '1.1'
       }
     })
     
-    // Include appliedFixes in the returned analysis
-    const analysisWithAppliedFixes = {
+    // Include all metadata in the returned analysis
+    const analysisWithMetadata = {
       ...analysis,
-      appliedFixes: existingAppliedFixes
+      appliedFixes: existingAppliedFixes,
+      iterationCount: currentIteration,
+      previousScore,
+      isProductionReady,
+      suggestedAction,
+      scoreTrend
     }
     
-    console.log(`[${timestamp}] [POST /api/series/${seriesId}/analyze-resonance] Analysis complete and saved. Score: ${analysis.greenlightScore.score}`)
+    console.log(`[${timestamp}] [POST /api/series/${seriesId}/analyze-resonance] Analysis complete. Score: ${analysis.greenlightScore.score} (iteration ${currentIteration}, trend: ${scoreTrend})`)
     
     return NextResponse.json({
       success: true,
-      analysis: analysisWithAppliedFixes,
-      isReadyForProduction: analysis.greenlightScore.score >= 90,
+      analysis: analysisWithMetadata,
+      isReadyForProduction: isProductionReady,
+      suggestedAction,
+      iterationCount: currentIteration,
+      scoreTrend,
       savedToDatabase: true
     })
     
@@ -204,7 +246,8 @@ function buildAnalysisPrompt(
   bible: any,
   episodes: any[],
   characters: any[],
-  locations: any[]
+  locations: any[],
+  context?: { previousScore: number | null; iterationCount: number; appliedFixes: string[] }
 ): string {
   // Episode summaries with story threads
   const episodeSummaries = episodes.map(ep => {
@@ -226,8 +269,27 @@ function buildAnalysisPrompt(
     `- ${l.name}: ${l.description?.slice(0, 100)}...`
   ).join('\n')
   
-  return `You are an expert TV series analyst evaluating a production series for audience engagement and commercial viability.
+  // Build context section for iterative analysis
+  let contextSection = ''
+  if (context && context.previousScore !== null) {
+    contextSection = `
+ANALYSIS CONTEXT:
+- This is iteration #${context.iterationCount} of the analysis
+- Previous overall score: ${context.previousScore}
+- ${context.appliedFixes.length} fixes have been applied since the last analysis
 
+IMPORTANT SCORING GUIDELINES:
+1. Be consistent with previous scores unless the content has materially changed
+2. If fixes were applied, acknowledge improvements but don't inflate scores
+3. Score fluctuations should be minimal (±3 points) unless there are significant changes
+4. Don't re-flag issues that have already been addressed by applied fixes
+5. Episode-level scores (hookStrength, cliffhangerScore, etc. on 1-10 scale) should align with the overall Episode Engagement axis score
+
+`
+  }
+  
+  return `You are an expert TV series analyst evaluating a production series for audience engagement and commercial viability.
+${contextSection}
 SERIES: ${series.title}
 GENRE: ${series.genre || 'Drama'}
 TARGET AUDIENCE: ${series.target_audience || 'General'}
@@ -370,73 +432,31 @@ Return ONLY valid JSON:
 }
 
 /**
- * Build the final analysis result with proper typing
+ * Build the final analysis result with proper typing and normalized scores
  */
 function buildAnalysisResult(
   seriesId: string,
   raw: any,
   episodes: any[],
   characters: any[],
-  locations: any[]
+  locations: any[],
+  previousScore: number | null = null,
+  iterationCount: number = 1
 ): SeriesResonanceAnalysis {
-  // Build axes from raw scores
-  const axes: SeriesResonanceAxis[] = [
-    {
-      id: 'concept-originality',
-      label: 'Concept Originality',
-      score: raw.axes?.conceptOriginality?.score || 70,
-      weight: SERIES_RESONANCE_WEIGHTS['concept-originality'],
-      description: raw.axes?.conceptOriginality?.reasoning || 'Uniqueness of series premise'
-    },
-    {
-      id: 'character-depth',
-      label: 'Character Depth',
-      score: raw.axes?.characterDepth?.score || 70,
-      weight: SERIES_RESONANCE_WEIGHTS['character-depth'],
-      description: raw.axes?.characterDepth?.reasoning || 'Complexity and relatability of characters'
-    },
-    {
-      id: 'episode-engagement',
-      label: 'Episode Engagement',
-      score: raw.axes?.episodeEngagement?.score || 70,
-      weight: SERIES_RESONANCE_WEIGHTS['episode-engagement'],
-      description: raw.axes?.episodeEngagement?.reasoning || 'How well episodes hook and retain viewers'
-    },
-    {
-      id: 'story-arc-coherence',
-      label: 'Story Arc Coherence',
-      score: raw.axes?.storyArcCoherence?.score || 70,
-      weight: SERIES_RESONANCE_WEIGHTS['story-arc-coherence'],
-      description: raw.axes?.storyArcCoherence?.reasoning || 'Narrative continuity across episodes'
-    },
-    {
-      id: 'commercial-viability',
-      label: 'Commercial Viability',
-      score: raw.axes?.commercialViability?.score || 70,
-      weight: SERIES_RESONANCE_WEIGHTS['commercial-viability'],
-      description: raw.axes?.commercialViability?.reasoning || 'Market potential and audience appeal'
-    }
-  ]
-  
-  // Calculate weighted overall score
-  const totalWeight = axes.reduce((sum, axis) => sum + axis.weight, 0)
-  const weightedScore = axes.reduce((sum, axis) => sum + (axis.score * axis.weight), 0) / totalWeight
-  const overallScore = Math.round(weightedScore)
-  
-  // Build episode engagement scores
+  // First, build episode engagement scores to calculate normalized axis score
   const episodeEngagement: EpisodeEngagementScore[] = (raw.episodeScores || []).map((es: any, i: number) => {
     const ep = episodes.find(e => e.episodeNumber === es.episodeNumber) || episodes[i]
     return {
       episodeId: ep?.id || `ep_${es.episodeNumber}`,
       episodeNumber: es.episodeNumber,
       title: ep?.title || `Episode ${es.episodeNumber}`,
-      hookStrength: es.hookStrength || 5,
-      cliffhangerScore: es.cliffhangerScore || 5,
-      continuityScore: es.continuityScore || 5,
-      characterMoments: es.characterMoments || 5,
+      hookStrength: Math.min(10, Math.max(1, es.hookStrength || 5)),
+      cliffhangerScore: Math.min(10, Math.max(1, es.cliffhangerScore || 5)),
+      continuityScore: Math.min(10, Math.max(1, es.continuityScore || 5)),
+      characterMoments: Math.min(10, Math.max(1, es.characterMoments || 5)),
       tensionLevel: es.tensionLevel || 'medium',
       pacing: es.pacing || 'moderate',
-      overallScore: es.overallScore || 70,
+      overallScore: Math.min(100, Math.max(0, es.overallScore || 70)),
       notes: es.notes || '',
       improvements: es.improvements || []
     }
@@ -464,6 +484,73 @@ function buildAnalysisResult(
   
   // Sort by episode number
   episodeEngagement.sort((a, b) => a.episodeNumber - b.episodeNumber)
+  
+  // Calculate normalized Episode Engagement axis score from actual episode metrics
+  // This ensures consistency between episode-level scores and the axis score
+  const avgEpisodeMetrics = episodeEngagement.length > 0
+    ? episodeEngagement.reduce((sum, ep) => {
+        // Average of the 4 core metrics (1-10 scale), then multiply by 10 to get 0-100
+        const epAvg = (ep.hookStrength + ep.cliffhangerScore + ep.continuityScore + ep.characterMoments) / 4
+        return sum + (epAvg * 10)
+      }, 0) / episodeEngagement.length
+    : 70
+  
+  // Blend LLM's assessment (30%) with calculated average (70%) for Episode Engagement
+  const llmEpisodeEngagement = raw.axes?.episodeEngagement?.score || 70
+  const normalizedEpisodeEngagement = Math.round(avgEpisodeMetrics * 0.7 + llmEpisodeEngagement * 0.3)
+  
+  // Build axes from raw scores with normalized Episode Engagement
+  const axes: SeriesResonanceAxis[] = [
+    {
+      id: 'concept-originality',
+      label: 'Concept Originality',
+      score: Math.min(100, Math.max(0, raw.axes?.conceptOriginality?.score || 70)),
+      weight: SERIES_RESONANCE_WEIGHTS['concept-originality'],
+      description: raw.axes?.conceptOriginality?.reasoning || 'Uniqueness of series premise'
+    },
+    {
+      id: 'character-depth',
+      label: 'Character Depth',
+      score: Math.min(100, Math.max(0, raw.axes?.characterDepth?.score || 70)),
+      weight: SERIES_RESONANCE_WEIGHTS['character-depth'],
+      description: raw.axes?.characterDepth?.reasoning || 'Complexity and relatability of characters'
+    },
+    {
+      id: 'episode-engagement',
+      label: 'Episode Engagement',
+      score: normalizedEpisodeEngagement, // Use normalized score
+      weight: SERIES_RESONANCE_WEIGHTS['episode-engagement'],
+      description: `${raw.axes?.episodeEngagement?.reasoning || 'How well episodes hook and retain viewers'} (Normalized from episode metrics: avg ${Math.round(avgEpisodeMetrics)})`
+    },
+    {
+      id: 'story-arc-coherence',
+      label: 'Story Arc Coherence',
+      score: Math.min(100, Math.max(0, raw.axes?.storyArcCoherence?.score || 70)),
+      weight: SERIES_RESONANCE_WEIGHTS['story-arc-coherence'],
+      description: raw.axes?.storyArcCoherence?.reasoning || 'Narrative continuity across episodes'
+    },
+    {
+      id: 'commercial-viability',
+      label: 'Commercial Viability',
+      score: Math.min(100, Math.max(0, raw.axes?.commercialViability?.score || 70)),
+      weight: SERIES_RESONANCE_WEIGHTS['commercial-viability'],
+      description: raw.axes?.commercialViability?.reasoning || 'Market potential and audience appeal'
+    }
+  ]
+  
+  // Calculate weighted overall score
+  const totalWeight = axes.reduce((sum, axis) => sum + axis.weight, 0)
+  const weightedScore = axes.reduce((sum, axis) => sum + (axis.score * axis.weight), 0) / totalWeight
+  let overallScore = Math.round(weightedScore)
+  
+  // Apply score stabilization after iteration 3+ to prevent endless fluctuation
+  // New score can't drop more than 2 points below previous score
+  if (previousScore !== null && iterationCount >= 3) {
+    const minAllowedScore = previousScore - 2
+    if (overallScore < minAllowedScore) {
+      overallScore = minAllowedScore
+    }
+  }
   
   // Build character analysis
   const characterAnalysis: CharacterAnalysis[] = (raw.characterScores || []).map((cs: any) => {

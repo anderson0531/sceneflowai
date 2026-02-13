@@ -198,11 +198,56 @@ export function SeriesResonancePanel({
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
               <div className="flex flex-col items-center">
                 <GreenlightScoreDisplay score={analysis.greenlightScore.score} />
-                <div className="mt-4 text-center">
-                  <p className="text-sm text-gray-400">
-                    {analysis.summary.bingeWorthiness}
+                
+                {/* Production Ready Indicator */}
+                {analysis.isProductionReady ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="mt-4 px-4 py-2 bg-green-500/20 border border-green-500/40 rounded-full flex items-center gap-2"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-green-400" />
+                    <span className="text-sm font-medium text-green-400">Production Ready!</span>
+                  </motion.div>
+                ) : (
+                  <div className="mt-4 text-center">
+                    <p className="text-sm text-gray-400">
+                      {analysis.summary.bingeWorthiness}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Iteration & Trend Info */}
+                {(analysis.iterationCount !== undefined || analysis.scoreTrend) && (
+                  <div className="mt-3 flex items-center gap-3 text-xs">
+                    {analysis.iterationCount !== undefined && (
+                      <span className="px-2 py-1 bg-slate-700/50 rounded text-gray-400">
+                        Analysis #{analysis.iterationCount}
+                      </span>
+                    )}
+                    {analysis.scoreTrend && (
+                      <span className={`px-2 py-1 rounded flex items-center gap-1 ${
+                        analysis.scoreTrend === 'up' ? 'bg-green-500/20 text-green-400' :
+                        analysis.scoreTrend === 'down' ? 'bg-red-500/20 text-red-400' :
+                        'bg-slate-700/50 text-gray-400'
+                      }`}>
+                        {analysis.scoreTrend === 'up' ? <ArrowUp className="w-3 h-3" /> :
+                         analysis.scoreTrend === 'down' ? <ArrowDown className="w-3 h-3" /> : null}
+                        {analysis.previousScore !== undefined && analysis.scoreTrend !== 'stable' && (
+                          <span>from {analysis.previousScore}</span>
+                        )}
+                        {analysis.scoreTrend === 'stable' && <span>Stable</span>}
+                      </span>
+                    )}
+                  </div>
+                )}
+                
+                {/* Suggested Action */}
+                {analysis.suggestedAction && !analysis.isProductionReady && (
+                  <p className="mt-3 text-xs text-gray-500 text-center max-w-[200px]">
+                    {analysis.suggestedAction}
                   </p>
-                </div>
+                )}
               </div>
             </div>
             

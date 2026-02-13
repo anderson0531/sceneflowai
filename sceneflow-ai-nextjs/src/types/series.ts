@@ -509,6 +509,16 @@ export interface SeriesResonanceAnalysis {
   creditsUsed: number
   /** IDs of insights that have had fixes applied */
   appliedFixes?: string[]
+  /** Number of analysis iterations performed */
+  iterationCount?: number
+  /** Previous score before this analysis */
+  previousScore?: number
+  /** Whether the series is ready for production */
+  isProductionReady?: boolean
+  /** Suggested next action based on score and iterations */
+  suggestedAction?: 'proceed-to-production' | 'apply-fixes' | 'major-rework' | 'continue-iterating'
+  /** Score trend direction */
+  scoreTrend?: 'improving' | 'stable' | 'declining'
 }
 
 /**
