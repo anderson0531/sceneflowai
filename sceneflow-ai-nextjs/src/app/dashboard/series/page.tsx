@@ -133,7 +133,7 @@ export default function SeriesPage() {
       }
       
       toast.success(`Started Episode ${data.episode.episodeNumber}: ${data.episode.title}`)
-      router.push(`/dashboard/workflow/vision/${data.project.id}`)
+      router.push(`/dashboard/studio/${data.project.id}?primeBlueprint=true`)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to start episode')
     }

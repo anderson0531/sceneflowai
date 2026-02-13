@@ -128,7 +128,7 @@ export default function SeriesStudioPage() {
     try {
       const result = await startEpisode(episodeId)
       toast.success(`Started Episode ${result.episode.episodeNumber}`)
-      router.push(`/dashboard/workflow/vision/${result.project.id}`)
+      router.push(`/dashboard/studio/${result.project.id}?primeBlueprint=true`)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to start episode')
     }

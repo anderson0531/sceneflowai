@@ -74,6 +74,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const treatmentFromEpisode = buildTreatmentFromEpisode(episode, bible, series)
     const visionPhaseCharacters = buildVisionPhaseCharacters(episode, bible)
     
+    // Build Blueprint prime input from series data for auto-generation
+    const blueprintPrimeInput = buildBlueprintPrimeInput(episode, bible, series)
+    
     // Create the project
     const project = await Project.create({
       user_id: resolvedUserId,
@@ -92,7 +95,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         episodeId,
         episodeNumber: episode.episodeNumber,
         
-        // Pre-populated from series bible
+        // Blueprint prime input for auto-generation in Studio
+        blueprintPrimeInput,
+        
+        // Pre-populated from series bible (legacy - kept for compatibility)
         approvedTreatment: treatmentFromEpisode,
         
         // Vision phase with inherited characters
@@ -225,4 +231,123 @@ function buildVisionPhaseCharacters(episode: any, bible: any) {
         episodeArc: episodeChar?.episodeArc
       }
     })
+}
+
+/**
+ * Build Blueprint prime input from series data for auto-generation in Studio
+ * Combines: Series overview, episode details, characters, locations, and visual style
+ */
+function buildBlueprintPrimeInput(episode: any, bible: any, series: any): string {
+  const lines: string[] = []
+  
+  // Series and Episode header
+  lines.push(`Series: ${series.title}`)
+  lines.push(`Episode ${episode.episodeNumber}: ${episode.title}`)
+  lines.push('')
+  
+  // Episode logline and synopsis
+  if (episode.logline) {
+    lines.push(`Logline: ${episode.logline}`)
+  }
+  if (episode.synopsis) {
+    lines.push('')
+    lines.push(`Synopsis: ${episode.synopsis}`)
+  }
+  lines.push('')
+  
+  // Setting from production bible
+  if (bible.setting?.description || bible.setting?.timePeriod) {
+    lines.push('Setting:')
+    if (bible.setting.description) {
+      lines.push(bible.setting.description)
+    }
+    if (bible.setting.timePeriod) {
+      lines.push(`Time Period: ${bible.setting.timePeriod}`)
+    }
+    if (bible.setting.location) {
+      lines.push(`Location: ${bible.setting.location}`)
+    }
+    lines.push('')
+  }
+  
+  // Protagonist from production bible
+  if (bible.protagonist?.name || bible.protagonist?.goal) {
+    lines.push('Protagonist:')
+    if (bible.protagonist.name) {
+      lines.push(`${bible.protagonist.name}`)
+    }
+    if (bible.protagonist.goal) {
+      lines.push(`Goal: ${bible.protagonist.goal}`)
+    }
+    lines.push('')
+  }
+  
+  // Antagonist/Conflict from production bible
+  if (bible.antagonistConflict?.description) {
+    lines.push('Antagonist/Conflict:')
+    lines.push(bible.antagonistConflict.description)
+    if (bible.antagonistConflict.type) {
+      lines.push(`Type: ${bible.antagonistConflict.type}`)
+    }
+    lines.push('')
+  }
+  
+  // Characters from production bible (those appearing in this episode)
+  const episodeCharacterIds = (episode.characters || []).map((ec: any) => ec.characterId)
+  const episodeCharacters = (bible.characters || []).filter((char: any) => 
+    episodeCharacterIds.includes(char.id)
+  )
+  
+  if (episodeCharacters.length > 0) {
+    lines.push('Characters in this episode:')
+    episodeCharacters.forEach((char: any) => {
+      const episodeChar = episode.characters?.find((ec: any) => ec.characterId === char.id)
+      const role = episodeChar?.role || char.role || 'supporting'
+      lines.push(`- ${char.name} (${role}): ${char.description || 'No description'}`)
+      if (episodeChar?.episodeArc) {
+        lines.push(`  Episode arc: ${episodeChar.episodeArc}`)
+      }
+    })
+    lines.push('')
+  }
+  
+  // Locations from production bible
+  if (bible.locations?.length > 0) {
+    lines.push('Locations:')
+    bible.locations.forEach((loc: any) => {
+      lines.push(`- ${loc.name}: ${loc.description || 'No description'}`)
+    })
+    lines.push('')
+  }
+  
+  // Visual style from production bible aesthetic
+  if (bible.aesthetic) {
+    lines.push('Visual Style:')
+    if (bible.aesthetic.visualStyle) {
+      lines.push(`Style: ${bible.aesthetic.visualStyle}`)
+    }
+    if (bible.aesthetic.mood) {
+      lines.push(`Mood: ${bible.aesthetic.mood}`)
+    }
+    if (bible.aesthetic.colorPalette) {
+      lines.push(`Color Palette: ${bible.aesthetic.colorPalette}`)
+    }
+    if (bible.aesthetic.lightingStyle) {
+      lines.push(`Lighting: ${bible.aesthetic.lightingStyle}`)
+    }
+    lines.push('')
+  }
+  
+  // Episode beats if available (gives structure hints)
+  if (episode.beats?.length > 0) {
+    lines.push('Story Beats:')
+    episode.beats.forEach((beat: any) => {
+      lines.push(`Act ${beat.act}, Beat ${beat.beatNumber}: ${beat.title}`)
+      if (beat.description) {
+        lines.push(`  ${beat.description}`)
+      }
+    })
+  }
+  
+  return lines.join('\n').trim()
 }

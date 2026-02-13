@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import { Button } from "@/components/ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/Input";
-import { DownloadIcon, Edit, Settings, FileText, BarChart3, ChevronRight, Check, HelpCircle, Sparkles, PanelRight, PanelRightClose, RefreshCw, Wand2 } from "lucide-react";
+import { DownloadIcon, Edit, Settings, FileText, BarChart3, ChevronRight, Check, HelpCircle, Sparkles, PanelRight, PanelRightClose, RefreshCw, Wand2, Clapperboard } from "lucide-react";
 import { useGuideStore } from "@/store/useGuideStore";
 import { useStore } from '@/store/useStore'
 import { useCue } from "@/store/useCueStore";
@@ -42,6 +42,13 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const [isInitializing, setIsInitializing] = useState(false);
   const [showStructureHelp, setShowStructureHelp] = useState(false);
   const loadedProjectRef = useRef<string | null>(null);
+  
+  // Series episode state
+  const [seriesContext, setSeriesContext] = useState<{
+    seriesId: string
+    seriesTitle: string
+    episodeNumber: number
+  } | null>(null)
   
   // Side panel visibility state
   const [showSidePanel, setShowSidePanel] = useState(true)
@@ -624,6 +631,16 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           const hasTreatmentVariants = Array.isArray(metadata.treatmentVariants) && metadata.treatmentVariants.length > 0
           const hasFilmTreatment = metadata.filmTreatment
           
+          // Check if this is a series episode and set context for badge
+          if (metadata.seriesId && metadata.seriesTitle && metadata.episodeNumber) {
+            setSeriesContext({
+              seriesId: metadata.seriesId,
+              seriesTitle: metadata.seriesTitle,
+              episodeNumber: metadata.episodeNumber
+            })
+            console.log('[StudioPage] Series episode detected:', metadata.seriesTitle, 'Ep', metadata.episodeNumber)
+          }
+          
           if (hasFilmTreatmentVariant) {
             const approvedVariant = metadata.filmTreatmentVariant
             if (approvedVariant.content || approvedVariant.synopsis) {
@@ -689,6 +706,24 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             console.log('[StudioPage] Treatment loaded without hero image, auto-generating...')
             // Use setTimeout to allow state to settle before generating
             setTimeout(() => generateHeroImage(loadedVariant), 500)
+          }
+          
+          // Check for primeBlueprint query param - auto-generate Blueprint from series data
+          const primeBlueprint = searchParams.get('primeBlueprint')
+          const hasBlueprintPrimeInput = metadata.blueprintPrimeInput && !hasFilmTreatmentVariant && !hasTreatmentVariants && !hasFilmTreatment
+          
+          if (primeBlueprint === 'true' && hasBlueprintPrimeInput) {
+            console.log('[StudioPage] Series episode detected - auto-generating Blueprint from series data...')
+            // Use setTimeout to allow state to settle before generating
+            setTimeout(() => {
+              handleGenerateBlueprint(metadata.blueprintPrimeInput, {
+                genre: projectData.genre || undefined,
+                variantCount: 1, // Single variant for series episodes - they have specific requirements
+                hasStoryDirections: true // Series data acts as story directions
+              })
+              // Clear the query param to prevent re-generation on refresh
+              router.replace(`/dashboard/studio/${projectId}`, { scroll: false })
+            }, 500)
           }
         }
       } catch (err) {
@@ -821,6 +856,17 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <h3 className="text-xl font-bold text-white">Blueprint</h3>
+                    {/* Series Episode Badge */}
+                    {seriesContext && (
+                      <a 
+                        href={`/dashboard/series/${seriesContext.seriesId}`}
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-500/30 text-xs font-medium text-cyan-400 hover:bg-cyan-500/30 transition-colors"
+                        title={`Part of ${seriesContext.seriesTitle}`}
+                      >
+                        <Clapperboard className="w-3 h-3" />
+                        <span>Episode {seriesContext.episodeNumber}</span>
+                      </a>
+                    )}
                     {!isSaved && !saveError && (
                       <span className="text-xs text-gray-500 flex items-center gap-1">
                         <RefreshCw className="w-3 h-3 animate-spin" />
