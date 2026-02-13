@@ -184,20 +184,30 @@ export default function SeriesStudioPage() {
   const handleAnalyzeResonance = useCallback(async (): Promise<SeriesResonanceAnalysis> => {
     if (!series) throw new Error('No series loaded')
     
-    const response = await fetch(`/api/series/${series.id}/analyze-resonance`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
+    const episodeCount = series.episodeCount || 10
+    
+    const result = await executeWithOverlay(async () => {
+      const response = await fetch(`/api/series/${series.id}/analyze-resonance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to analyze series')
+      }
+      
+      const data = await response.json()
+      return data.analysis
+    }, {
+      message: `Analyzing ${episodeCount} episodes for audience resonance...`,
+      estimatedDuration: Math.max(30, episodeCount * 2),
+      operationType: 'script-review'
     })
     
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to analyze series')
-    }
-    
-    const data = await response.json()
-    setResonanceAnalysis(data.analysis)
-    return data.analysis
-  }, [series])
+    setResonanceAnalysis(result)
+    return result
+  }, [series, executeWithOverlay])
 
   const handleApplyResonanceFix = useCallback(async (
     insightId: string,
@@ -207,21 +217,33 @@ export default function SeriesStudioPage() {
   ) => {
     if (!series) throw new Error('No series loaded')
     
-    const response = await fetch(`/api/series/${series.id}/apply-fix`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ insightId, fixSuggestion, targetSection, targetId })
-    })
+    const targetLabel = targetId 
+      ? `${targetSection} (${targetId})` 
+      : targetSection
     
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to apply fix')
-    }
+    await executeWithOverlay(async () => {
+      const response = await fetch(`/api/series/${series.id}/apply-fix`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ insightId, fixSuggestion, targetSection, targetId })
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to apply fix')
+      }
+      
+      return response.json()
+    }, {
+      message: `Applying fix to ${targetLabel}...`,
+      estimatedDuration: 20,
+      operationType: 'script-optimization'
+    })
     
     // Refresh series data after fix
     await refreshSeries()
     toast.success('Fix applied successfully')
-  }, [series, refreshSeries])
+  }, [series, refreshSeries, executeWithOverlay])
 
   if (isLoading) {
     return (
