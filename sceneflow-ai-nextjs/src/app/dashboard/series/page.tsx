@@ -15,7 +15,9 @@ import {
   Film,
   Sparkles,
   ArrowRight,
-  X
+  X,
+  Clapperboard,
+  Rocket
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -148,11 +150,16 @@ export default function SeriesPage() {
         >
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-amber-500/30 to-orange-600/30 rounded-xl flex items-center justify-center border border-amber-500/20">
-                <Library className="w-6 h-6 text-amber-400" />
+              <div className="w-12 h-12 bg-gradient-to-br from-cyan-500/30 to-purple-600/30 rounded-xl flex items-center justify-center border border-cyan-500/20">
+                <Clapperboard className="w-6 h-6 text-cyan-400" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold">Series</h1>
+                <div className="flex items-center gap-3 mb-1">
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-cyan-400 border border-cyan-500/30">
+                    PRODUCTION HUB
+                  </span>
+                </div>
+                <h1 className="text-3xl font-bold">Production Series Dashboard</h1>
                 <p className="text-gray-400 mt-1">
                   Create multi-episode video series with consistent characters and storylines
                 </p>
@@ -160,7 +167,7 @@ export default function SeriesPage() {
             </div>
             <Button
               onClick={() => setIsCreateDialogOpen(true)}
-              className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+              className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white shadow-lg shadow-cyan-500/25"
             >
               <Plus className="w-4 h-4 mr-2" />
               New Series
@@ -173,14 +180,14 @@ export default function SeriesPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-gradient-to-r from-amber-900/20 to-orange-900/20 border border-amber-700/30 rounded-xl p-6 mb-8"
+          className="bg-gradient-to-r from-cyan-900/20 via-purple-900/20 to-pink-900/20 border border-cyan-700/30 rounded-xl p-6 mb-8"
         >
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-5 h-5 text-amber-400" />
+            <div className="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Rocket className="w-5 h-5 text-cyan-400" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-amber-300 mb-2">AI-Powered Series Creation</h2>
+              <h2 className="text-lg font-semibold text-cyan-300 mb-2">Start Your Next Production</h2>
               <p className="text-gray-300 text-sm mb-4">
                 Ideate a topic and let AI generate your complete series storyline — title, logline, 
                 setting, protagonist, antagonist, and up to {DEFAULT_MAX_EPISODES} episodes with beats and characters.
@@ -188,11 +195,11 @@ export default function SeriesPage() {
               </p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="flex items-center gap-2 text-sm text-gray-400">
-                  <BookOpen className="w-4 h-4 text-amber-400" />
+                  <BookOpen className="w-4 h-4 text-cyan-400" />
                   <span>Production Bible</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-400">
-                  <Users className="w-4 h-4 text-blue-400" />
+                  <Users className="w-4 h-4 text-purple-400" />
                   <span>Shared Characters</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-400">
@@ -200,7 +207,7 @@ export default function SeriesPage() {
                   <span>Consistent Locations</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-400">
-                  <Film className="w-4 h-4 text-purple-400" />
+                  <Film className="w-4 h-4 text-pink-400" />
                   <span>Episode Blueprints</span>
                 </div>
               </div>
@@ -318,7 +325,7 @@ export default function SeriesPage() {
             {!searchQuery && statusFilter === 'all' && (
               <Button
                 onClick={() => setIsCreateDialogOpen(true)}
-                className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+                className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white shadow-lg shadow-cyan-500/25"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create Your First Series
@@ -402,7 +409,7 @@ export default function SeriesPage() {
               <Button
                 onClick={handleCreateSeries}
                 disabled={!newSeriesTitle.trim() || isCreating}
-                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700"
               >
                 {isCreating ? 'Creating...' : 'Create & Open Studio'}
                 <ArrowRight className="w-4 h-4 ml-2" />

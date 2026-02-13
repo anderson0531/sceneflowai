@@ -44,8 +44,8 @@ const STATUS_STYLES = {
 }
 
 const EPISODE_STATUS_STYLES = {
-  blueprint: { icon: Sparkles, color: 'text-amber-400', bg: 'bg-amber-500/20' },
-  in_progress: { icon: Clock, color: 'text-blue-400', bg: 'bg-blue-500/20' },
+  blueprint: { icon: Sparkles, color: 'text-cyan-400', bg: 'bg-cyan-500/20' },
+  in_progress: { icon: Clock, color: 'text-purple-400', bg: 'bg-purple-500/20' },
   completed: { icon: CheckCircle, color: 'text-green-400', bg: 'bg-green-500/20' }
 }
 
@@ -70,18 +70,18 @@ export function SeriesCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden hover:border-amber-600/50 transition-all group"
+      className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden hover:border-cyan-500/50 transition-all group"
     >
       {/* Main Card Header */}
       <div className="p-5">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-gradient-to-br from-amber-500/30 to-orange-600/30 rounded-xl flex items-center justify-center border border-amber-500/20">
-              <BookOpen className="w-5 h-5 text-amber-400" />
+            <div className="w-10 h-10 bg-gradient-to-br from-cyan-500/30 to-purple-600/30 rounded-lg flex items-center justify-center border border-cyan-500/20">
+              <BookOpen className="w-5 h-5 text-cyan-400" />
             </div>
             <div>
               <Link href={`/dashboard/series/${series.id}`}>
-                <h3 className="text-lg font-semibold text-white group-hover:text-amber-300 transition-colors cursor-pointer">
+                <h3 className="text-base font-medium text-white group-hover:text-cyan-300 transition-colors cursor-pointer line-clamp-1">
                   {series.title}
                 </h3>
               </Link>
@@ -145,7 +145,7 @@ export function SeriesCard({
           </div>
           <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all"
+              className="h-full bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full transition-all"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -157,7 +157,7 @@ export function SeriesCard({
             <Button
               variant="outline"
               size="sm"
-              className="w-full border-gray-600 text-gray-300 hover:text-amber-300 hover:border-amber-600/50"
+              className="w-full border-gray-600 text-gray-300 hover:text-cyan-300 hover:border-cyan-500/50"
             >
               Open Studio
             </Button>
@@ -240,7 +240,7 @@ function EpisodeRow({ episode, onStart }: EpisodeRowProps) {
             variant="ghost"
             size="sm"
             onClick={onStart}
-            className="text-amber-400 hover:text-amber-300 text-xs"
+            className="text-cyan-400 hover:text-cyan-300 text-xs"
           >
             <Play className="w-3 h-3 mr-1" />
             Start
