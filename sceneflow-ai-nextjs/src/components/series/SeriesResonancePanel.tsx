@@ -206,8 +206,13 @@ export function SeriesResonancePanel({
               <h4 className="text-sm font-medium text-gray-400 mb-4">Score Breakdown</h4>
               <div className="space-y-3">
                 {analysis.axes.map(axis => (
-                  <div key={axis.id} className="flex items-center gap-3">
-                    <div className="w-32 text-sm text-gray-400 truncate">{axis.label}</div>
+                  <div key={axis.id} className="flex items-center gap-3 group">
+                    <div 
+                      className="w-40 text-sm text-gray-400 truncate cursor-help" 
+                      title={`${axis.label}: ${axis.description || 'Score metric'}`}
+                    >
+                      <span className="group-hover:text-gray-300 transition-colors">{axis.label}</span>
+                    </div>
                     <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
@@ -240,11 +245,11 @@ export function SeriesResonancePanel({
                 Episode Engagement Timeline
               </h4>
               <button
-                onClick={() => setShowEpisodeDetails(!showEpisodeDetails)}
-                className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+                onClick={() => setShowEpisodeDetails(prev => !prev)}
+                className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 px-2 py-1 rounded bg-cyan-500/10 hover:bg-cyan-500/20 transition-colors"
               >
                 {showEpisodeDetails ? 'Hide Details' : 'Show Details'}
-                <ChevronDown className={`w-3 h-3 transition-transform ${showEpisodeDetails ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showEpisodeDetails ? 'rotate-180' : ''}`} />
               </button>
             </div>
             
@@ -255,6 +260,7 @@ export function SeriesResonancePanel({
                   key={ep.episodeNumber}
                   className="flex-1 flex flex-col items-center cursor-pointer group"
                   onClick={() => setSelectedEpisode(selectedEpisode === ep.episodeNumber ? null : ep.episodeNumber)}
+                  title={`Episode ${ep.episodeNumber}: ${ep.title}\nScore: ${ep.overallScore}\nHook: ${ep.hookStrength}/10`}
                 >
                   <div className="relative w-full">
                     {/* Hook strength indicator */}
@@ -264,7 +270,6 @@ export function SeriesResonancePanel({
                         backgroundColor: ep.hookStrength >= 8 ? '#22c55e' : 
                                         ep.hookStrength >= 6 ? '#f59e0b' : '#ef4444'
                       }}
-                      title={`Hook: ${ep.hookStrength}/10`}
                     />
                     {/* Score bar */}
                     <motion.div
@@ -283,6 +288,64 @@ export function SeriesResonancePanel({
                 </div>
               ))}
             </div>
+            
+            {/* Episode Details Grid - controlled by showEpisodeDetails */}
+            <AnimatePresence>
+              {showEpisodeDetails && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden"
+                >
+                  <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700/50 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                      {analysis.episodeEngagement.map(ep => (
+                        <div 
+                          key={ep.episodeNumber}
+                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                            selectedEpisode === ep.episodeNumber 
+                              ? 'bg-cyan-500/10 border-cyan-500/50' 
+                              : 'bg-slate-800/50 border-slate-700/50 hover:border-slate-600'
+                          }`}
+                          onClick={() => setSelectedEpisode(selectedEpisode === ep.episodeNumber ? null : ep.episodeNumber)}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-medium text-gray-400">Ep {ep.episodeNumber}</span>
+                            <span className="text-sm font-bold" style={{
+                              color: ep.overallScore >= 80 ? '#22c55e' : 
+                                     ep.overallScore >= 65 ? '#f59e0b' : '#ef4444'
+                            }}>
+                              {ep.overallScore}
+                            </span>
+                          </div>
+                          <p className="text-xs text-white truncate mb-2" title={ep.title}>{ep.title}</p>
+                          <div className="grid grid-cols-2 gap-1 text-[10px]">
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Hook</span>
+                              <span className="text-gray-400">{ep.hookStrength}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Cliff</span>
+                              <span className="text-gray-400">{ep.cliffhangerScore}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Cont</span>
+                              <span className="text-gray-400">{ep.continuityScore}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Char</span>
+                              <span className="text-gray-400">{ep.characterMoments}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
             
             {/* Selected Episode Details */}
             <AnimatePresence>
@@ -411,6 +474,59 @@ export function SeriesResonancePanel({
                 <p className="text-xs text-gray-500">
                   Comparable Series: {analysis.summary.comparableSeries.join(', ')}
                 </p>
+              </div>
+            )}
+            
+            {/* Audience Engagement Drivers */}
+            {analysis.summary.audienceEngagementDrivers && analysis.summary.audienceEngagementDrivers.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-slate-700/50">
+                <h5 className="text-xs font-medium text-cyan-400 mb-3 flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" />
+                  Audience Engagement Drivers
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {analysis.summary.audienceEngagementDrivers.map((driver, i) => (
+                    <div 
+                      key={i} 
+                      className="bg-slate-900/50 rounded-lg p-3 border border-slate-700/50"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-white">{driver.driver}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                          driver.impactLevel === 'high' ? 'bg-emerald-500/20 text-emerald-400' :
+                          driver.impactLevel === 'medium' ? 'bg-amber-500/20 text-amber-400' :
+                          'bg-gray-500/20 text-gray-400'
+                        }`}>
+                          {driver.impactLevel}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400 mb-2">{driver.description}</p>
+                      {driver.episodeExamples.length > 0 && (
+                        <p className="text-[10px] text-gray-500">
+                          Episodes: {driver.episodeExamples.join(', ')}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Market Positioning & Renewal Potential */}
+            {(analysis.summary.marketPositioning || analysis.summary.renewalPotential) && (
+              <div className="mt-4 pt-4 border-t border-slate-700/50 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {analysis.summary.marketPositioning && (
+                  <div>
+                    <h5 className="text-xs font-medium text-purple-400 mb-1">Market Positioning</h5>
+                    <p className="text-sm text-gray-400">{analysis.summary.marketPositioning}</p>
+                  </div>
+                )}
+                {analysis.summary.renewalPotential && (
+                  <div>
+                    <h5 className="text-xs font-medium text-blue-400 mb-1">Renewal Potential</h5>
+                    <p className="text-sm text-gray-400">{analysis.summary.renewalPotential}</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

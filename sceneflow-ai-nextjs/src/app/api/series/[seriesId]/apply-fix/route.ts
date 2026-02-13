@@ -18,6 +18,57 @@ import { ApplySeriesFixRequest, ApplySeriesFixResponse } from '@/types/series'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120 // 2 minutes for fix generation
 
+/**
+ * Normalize targetSection to handle plural and variant forms
+ */
+function normalizeTargetSection(section: string): string {
+  const normalized = section.toLowerCase().trim()
+  
+  // Map plural and variant forms to canonical names
+  const sectionMap: Record<string, string> = {
+    'episodes': 'episode',
+    'episode': 'episode',
+    'characters': 'character',
+    'character': 'character',
+    'locations': 'location',
+    'location': 'location',
+    'bible': 'bible',
+    'story': 'bible',
+    'visual-style': 'visual-style',
+    'visual_style': 'visual-style',
+    'visualstyle': 'visual-style',
+    'style': 'visual-style'
+  }
+  
+  return sectionMap[normalized] || normalized
+}
+
+/**
+ * Parse episode ID which may be a range like "ep_11-14" or single "ep_5"
+ * Returns array of episode numbers to update
+ */
+function parseEpisodeRange(episodeId: string): number[] {
+  // Handle range format: ep_11-14, episodes_11-14, 11-14
+  const rangeMatch = episodeId.match(/(\d+)-(\d+)/)
+  if (rangeMatch) {
+    const start = parseInt(rangeMatch[1], 10)
+    const end = parseInt(rangeMatch[2], 10)
+    const episodes: number[] = []
+    for (let i = start; i <= end; i++) {
+      episodes.push(i)
+    }
+    return episodes
+  }
+  
+  // Handle single episode: ep_5, episode_5, 5
+  const singleMatch = episodeId.match(/(\d+)/)
+  if (singleMatch) {
+    return [parseInt(singleMatch[1], 10)]
+  }
+  
+  return []
+}
+
 interface RouteParams {
   params: Promise<{ seriesId: string }>
 }
@@ -80,7 +131,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     let updatedContent: any
     let changesSummary: string
     
-    switch (targetSection) {
+    // Normalize targetSection to handle plural forms
+    const normalizedSection = normalizeTargetSection(targetSection)
+    
+    switch (normalizedSection) {
       case 'episode':
         const result = await applyEpisodeFix(series, targetId!, fixSuggestion)
         updatedContent = result.updatedEpisodes
@@ -165,7 +219,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 }
 
 /**
- * Apply fix to an episode
+ * Apply fix to an episode or range of episodes
+ * Handles ranges like "ep_11-14" which should update episodes 11, 12, 13, 14
  */
 async function applyEpisodeFix(
   series: Series,
@@ -173,23 +228,30 @@ async function applyEpisodeFix(
   fixSuggestion: string
 ): Promise<{ updatedEpisodes: any[]; summary: string }> {
   const episodes = [...(series.episode_blueprints || [])]
-  const episodeIndex = episodes.findIndex(ep => ep.id === episodeId)
   
-  if (episodeIndex === -1) {
-    // Try by episode number
-    const epNum = parseInt(episodeId.replace(/\D/g, ''))
-    const byNumIndex = episodes.findIndex(ep => ep.episodeNumber === epNum)
-    if (byNumIndex === -1) {
-      throw new Error(`Episode not found: ${episodeId}`)
-    }
+  // Parse episode range - could be single (ep_5) or range (ep_11-14)
+  const episodeNumbers = parseEpisodeRange(episodeId)
+  
+  if (episodeNumbers.length === 0) {
+    throw new Error(`Invalid episode ID format: ${episodeId}`)
   }
   
-  const targetIndex = episodeIndex !== -1 ? episodeIndex : episodes.findIndex(ep => 
-    ep.episodeNumber === parseInt(episodeId.replace(/\D/g, ''))
-  )
-  const episode = episodes[targetIndex]
+  // Find all target episodes
+  const targetIndices = episodeNumbers
+    .map(num => episodes.findIndex(ep => ep.episodeNumber === num))
+    .filter(idx => idx !== -1)
   
-  const prompt = `You are improving a TV series episode based on feedback.
+  if (targetIndices.length === 0) {
+    throw new Error(`No episodes found for: ${episodeId}`)
+  }
+  
+  // If it's a range, batch update all episodes with the same fix applied contextually
+  const updatedSummaries: string[] = []
+  
+  for (const targetIndex of targetIndices) {
+    const episode = episodes[targetIndex]
+    
+    const prompt = `You are improving a TV series episode based on feedback.
 
 CURRENT EPISODE ${episode.episodeNumber}: "${episode.title}"
 Logline: ${episode.logline}
@@ -217,25 +279,30 @@ Return ONLY valid JSON:
   "changesSummary": "Brief description of what changed"
 }`
 
-  const response = await callLLM(
-    { provider: 'gemini', model: 'gemini-2.5-flash', maxOutputTokens: 8192 },
-    prompt
-  )
-  
-  const updated = safeParseJSON(response)
-  
-  episodes[targetIndex] = {
-    ...episode,
-    title: updated.title || episode.title,
-    logline: updated.logline || episode.logline,
-    synopsis: updated.synopsis || episode.synopsis,
-    beats: updated.beats || episode.beats,
-    episodeHook: updated.episodeHook || episode.episodeHook
+    const response = await callLLM(
+      { provider: 'gemini', model: 'gemini-2.5-flash', maxOutputTokens: 8192 },
+      prompt
+    )
+    
+    const updated = safeParseJSON(response)
+    
+    episodes[targetIndex] = {
+      ...episode,
+      title: updated.title || episode.title,
+      logline: updated.logline || episode.logline,
+      synopsis: updated.synopsis || episode.synopsis,
+      beats: updated.beats || episode.beats,
+      episodeHook: updated.episodeHook || episode.episodeHook
+    }
+    
+    updatedSummaries.push(`Ep ${episode.episodeNumber}: ${updated.changesSummary || 'Updated'}`)
   }
   
   return {
     updatedEpisodes: episodes,
-    summary: updated.changesSummary || `Updated Episode ${episode.episodeNumber}`
+    summary: targetIndices.length > 1 
+      ? `Updated ${targetIndices.length} episodes (${episodeNumbers.join(', ')}): ${updatedSummaries[0]}`
+      : updatedSummaries[0] || `Updated Episode ${episodeNumbers[0]}`
   }
 }
 

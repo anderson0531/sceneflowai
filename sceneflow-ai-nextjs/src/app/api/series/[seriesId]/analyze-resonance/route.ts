@@ -256,7 +256,7 @@ Return ONLY valid JSON:
       "title": "Weak episode 5 cliffhanger",
       "insight": "Episode 5 ends without tension, breaking binge momentum",
       "targetSection": "episode",
-      "targetId": "ep_5",
+      "targetId": "5",
       "actionable": true,
       "fixSuggestion": "End episode 5 with the revelation that...",
       "axisId": "episode-engagement",
@@ -264,12 +264,34 @@ Return ONLY valid JSON:
     }
   ],
   "summary": {
-    "overallAssessment": "2-3 sentence overall assessment",
-    "bingeWorthiness": "High - compelling cliffhangers maintain momentum",
-    "targetAudience": "Adults 25-45 interested in tech thrillers",
-    "comparableSeries": ["Black Mirror", "Mr. Robot"],
-    "keyStrengths": ["Strong concept", "Compelling protagonist"],
-    "criticalWeaknesses": ["Pacing issues in middle episodes"]
+    "overallAssessment": "Detailed 3-4 sentence overall assessment of the series quality, production readiness, and audience appeal",
+    "bingeWorthiness": "High/Medium/Low - Detailed explanation of what drives binge-watching behavior",
+    "targetAudience": "Specific demographic with psychographic details",
+    "comparableSeries": ["Similar Series 1", "Similar Series 2"],
+    "keyStrengths": ["Strength 1 with detail", "Strength 2 with detail"],
+    "criticalWeaknesses": ["Weakness 1 with detail", "Weakness 2 with detail"],
+    "audienceEngagementDrivers": [
+      {
+        "driver": "Mystery Hooks",
+        "description": "Unexplained phenomena create compelling questions",
+        "episodeExamples": [1, 3, 7],
+        "impactLevel": "high"
+      },
+      {
+        "driver": "Character Reveals",
+        "description": "Backstory revelations add depth",
+        "episodeExamples": [4, 8],
+        "impactLevel": "medium"
+      },
+      {
+        "driver": "Emotional Peaks",
+        "description": "Key dramatic moments that resonate",
+        "episodeExamples": [5, 10],
+        "impactLevel": "high"
+      }
+    ],
+    "marketPositioning": "Where this series fits in the current market landscape",
+    "renewalPotential": "High/Medium/Low with reasoning for continued seasons"
   }
 }`
 }
@@ -428,7 +450,10 @@ function buildAnalysisResult(
       targetAudience: raw.summary?.targetAudience || 'General audience',
       comparableSeries: raw.summary?.comparableSeries || [],
       keyStrengths: raw.summary?.keyStrengths || [],
-      criticalWeaknesses: raw.summary?.criticalWeaknesses || []
+      criticalWeaknesses: raw.summary?.criticalWeaknesses || [],
+      audienceEngagementDrivers: raw.summary?.audienceEngagementDrivers || [],
+      marketPositioning: raw.summary?.marketPositioning || '',
+      renewalPotential: raw.summary?.renewalPotential || ''
     },
     analysisVersion: '1.0.0',
     generatedAt: new Date().toISOString(),

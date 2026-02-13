@@ -461,6 +461,16 @@ export interface LocationAnalysis {
 }
 
 /**
+ * Audience Engagement Driver - key factor that drives viewer engagement
+ */
+export interface AudienceEngagementDriver {
+  driver: string
+  description: string
+  episodeExamples: number[]
+  impactLevel: 'high' | 'medium' | 'low'
+}
+
+/**
  * Full Series Resonance Analysis result
  */
 export interface SeriesResonanceAnalysis {
@@ -485,6 +495,12 @@ export interface SeriesResonanceAnalysis {
     comparableSeries: string[] // Similar successful series
     keyStrengths: string[]
     criticalWeaknesses: string[]
+    /** Key factors driving audience engagement */
+    audienceEngagementDrivers?: AudienceEngagementDriver[]
+    /** Market positioning analysis */
+    marketPositioning?: string
+    /** Potential for renewal/additional seasons */
+    renewalPotential?: string
   }
   /** Analysis metadata */
   analysisVersion: string
