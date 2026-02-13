@@ -332,3 +332,251 @@ export interface ProductionBiblePanelProps {
   onPullFromBible?: () => Promise<void>
   readOnly?: boolean
 }
+
+// =============================================================================
+// Series Resonance Analysis Types
+// =============================================================================
+
+/**
+ * Resonance scoring axis for radar chart
+ */
+export interface SeriesResonanceAxis {
+  id: 'concept-originality' | 'character-depth' | 'episode-engagement' | 'story-arc-coherence' | 'commercial-viability'
+  label: string
+  score: number // 0-100
+  weight: number // Weight for overall score calculation
+  description: string
+}
+
+/**
+ * Per-episode engagement metrics
+ */
+export interface EpisodeEngagementScore {
+  episodeId: string
+  episodeNumber: number
+  title: string
+  /** Hook strength - how compelling is the episode's premise (1-10) */
+  hookStrength: number
+  /** Cliffhanger effectiveness - does it make you want more? (1-10) */
+  cliffhangerScore: number
+  /** Story thread continuity - how well it connects to overall arc (1-10) */
+  continuityScore: number
+  /** Character development moments in this episode (1-10) */
+  characterMoments: number
+  /** Tension level throughout episode: low/medium/high */
+  tensionLevel: 'low' | 'medium' | 'high'
+  /** Pacing assessment */
+  pacing: 'slow' | 'moderate' | 'fast'
+  /** Overall episode score (weighted average) */
+  overallScore: number
+  /** Specific notes about this episode */
+  notes: string
+  /** Recommended improvements */
+  improvements: string[]
+}
+
+/**
+ * Greenlight score tier (matching Blueprint pattern)
+ */
+export type SeriesGreenlightTier = 'market-ready' | 'strong-potential' | 'needs-refinement'
+
+/**
+ * Greenlight score for series
+ */
+export interface SeriesGreenlightScore {
+  score: number // 0-100
+  tier: SeriesGreenlightTier
+  label: string // "Market Ready", "Strong Potential", "Needs Refinement"
+  color: string // Hex color for UI
+  confidence: number // 0-1 confidence in analysis
+}
+
+/**
+ * Insight category for series analysis
+ */
+export type SeriesInsightCategory = 
+  | 'concept' 
+  | 'characters' 
+  | 'episodes' 
+  | 'story-arc' 
+  | 'pacing' 
+  | 'engagement' 
+  | 'commercial'
+
+/**
+ * Individual insight with fix suggestion
+ */
+export interface SeriesResonanceInsight {
+  id: string
+  category: SeriesInsightCategory
+  status: 'strength' | 'weakness' | 'neutral'
+  title: string
+  insight: string
+  /** Target section for fix: which part of series to update */
+  targetSection?: 'bible' | 'episode' | 'character' | 'location' | 'visual-style'
+  /** Specific target ID (episode ID, character ID, etc.) */
+  targetId?: string
+  /** Can this be auto-fixed? */
+  actionable: boolean
+  /** AI-generated fix suggestion */
+  fixSuggestion?: string
+  /** Which axis this affects */
+  axisId?: SeriesResonanceAxis['id']
+  /** Estimated score improvement if fixed */
+  estimatedImpact?: number
+}
+
+/**
+ * Character analysis for resonance
+ */
+export interface CharacterAnalysis {
+  characterId: string
+  name: string
+  role: string
+  /** Character arc clarity (1-10) */
+  arcClarity: number
+  /** Character distinctiveness (1-10) */
+  distinctiveness: number
+  /** Audience connection potential (1-10) */
+  relatability: number
+  /** Visual description quality (1-10) */
+  visualClarity: number
+  strengths: string[]
+  weaknesses: string[]
+}
+
+/**
+ * Location analysis for resonance
+ */
+export interface LocationAnalysis {
+  locationId: string
+  name: string
+  /** Visual distinctiveness (1-10) */
+  visualImpact: number
+  /** Narrative importance (1-10) */
+  narrativeRole: number
+  /** World-building contribution (1-10) */
+  worldBuilding: number
+  notes: string
+}
+
+/**
+ * Full Series Resonance Analysis result
+ */
+export interface SeriesResonanceAnalysis {
+  seriesId: string
+  /** Overall greenlight score */
+  greenlightScore: SeriesGreenlightScore
+  /** 5-axis radar chart scores */
+  axes: SeriesResonanceAxis[]
+  /** Per-episode engagement analysis */
+  episodeEngagement: EpisodeEngagementScore[]
+  /** Character-level analysis */
+  characterAnalysis: CharacterAnalysis[]
+  /** Location-level analysis */
+  locationAnalysis: LocationAnalysis[]
+  /** Strengths and weaknesses with fixes */
+  insights: SeriesResonanceInsight[]
+  /** Summary narrative */
+  summary: {
+    overallAssessment: string
+    bingeWorthiness: string // "High", "Medium", "Low" with explanation
+    targetAudience: string
+    comparableSeries: string[] // Similar successful series
+    keyStrengths: string[]
+    criticalWeaknesses: string[]
+  }
+  /** Analysis metadata */
+  analysisVersion: string
+  generatedAt: string
+  /** Credits used for this analysis */
+  creditsUsed: number
+}
+
+/**
+ * Persisted resonance state for caching
+ */
+export interface PersistedSeriesResonance {
+  seriesId: string
+  analysis: SeriesResonanceAnalysis | null
+  iterationCount: number
+  appliedFixes: string[]
+  appliedFixDetails: Array<{
+    insightId: string
+    fixSuggestion: string
+    targetSection: string
+    targetId?: string
+    appliedAt: string
+  }>
+  isReadyForProduction: boolean
+  lastAnalyzedAt: string | null
+  lastSavedAt: string
+}
+
+/**
+ * Apply fix request
+ */
+export interface ApplySeriesFixRequest {
+  insightId: string
+  fixSuggestion: string
+  targetSection: 'bible' | 'episode' | 'character' | 'location' | 'visual-style'
+  targetId?: string
+}
+
+/**
+ * Apply fix response
+ */
+export interface ApplySeriesFixResponse {
+  success: boolean
+  updatedSeries: SeriesResponse
+  fixApplied: {
+    insightId: string
+    targetSection: string
+    targetId?: string
+    changesSummary: string
+  }
+  /** Estimated new score (before re-analysis) */
+  estimatedScore?: number
+}
+
+/**
+ * Helper to get greenlight tier from score
+ */
+export function getSeriesGreenlightTier(score: number): SeriesGreenlightScore {
+  if (score >= 90) {
+    return {
+      score,
+      tier: 'market-ready',
+      label: 'Market Ready',
+      color: '#22c55e',
+      confidence: 0.85
+    }
+  } else if (score >= 70) {
+    return {
+      score,
+      tier: 'strong-potential',
+      label: 'Strong Potential',
+      color: '#f59e0b',
+      confidence: 0.80
+    }
+  } else {
+    return {
+      score,
+      tier: 'needs-refinement',
+      label: 'Needs Refinement',
+      color: '#ef4444',
+      confidence: 0.75
+    }
+  }
+}
+
+/**
+ * Default scoring weights for series resonance
+ */
+export const SERIES_RESONANCE_WEIGHTS = {
+  'concept-originality': 20,
+  'character-depth': 25,
+  'episode-engagement': 25,
+  'story-arc-coherence': 15,
+  'commercial-viability': 15
+} as const

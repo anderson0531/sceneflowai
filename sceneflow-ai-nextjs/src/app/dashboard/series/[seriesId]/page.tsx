@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   BookOpen,
@@ -29,7 +29,8 @@ import {
   Trophy,
   TrendingUp,
   Clock,
-  Star
+  Star,
+  Target
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/input'
@@ -55,7 +56,8 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { DEFAULT_MAX_EPISODES, ABSOLUTE_MAX_EPISODES } from '@/types/series'
+import { DEFAULT_MAX_EPISODES, ABSOLUTE_MAX_EPISODES, SeriesResonanceAnalysis } from '@/types/series'
+import { SeriesResonancePanel } from '@/components/series/SeriesResonancePanel'
 import type {
   SeriesCharacterResponse,
   SeriesLocationResponse,
@@ -95,6 +97,7 @@ export default function SeriesStudioPage() {
   const [tone, setTone] = useState('any')
   const [isIdeateDialogOpen, setIsIdeateDialogOpen] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [resonanceAnalysis, setResonanceAnalysis] = useState<SeriesResonanceAnalysis | null>(null)
   
   // Processing overlay for generation
   const { execute: executeWithOverlay } = useProcessWithOverlay()
@@ -176,6 +179,49 @@ export default function SeriesStudioPage() {
       setIsAddingEpisodes(false)
     }
   }
+
+  // Resonance analysis handlers
+  const handleAnalyzeResonance = useCallback(async (): Promise<SeriesResonanceAnalysis> => {
+    if (!series) throw new Error('No series loaded')
+    
+    const response = await fetch(`/api/series/${series.id}/analyze-resonance`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+    
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to analyze series')
+    }
+    
+    const data = await response.json()
+    setResonanceAnalysis(data.analysis)
+    return data.analysis
+  }, [series])
+
+  const handleApplyResonanceFix = useCallback(async (
+    insightId: string,
+    fixSuggestion: string,
+    targetSection: string,
+    targetId?: string
+  ) => {
+    if (!series) throw new Error('No series loaded')
+    
+    const response = await fetch(`/api/series/${series.id}/apply-fix`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ insightId, fixSuggestion, targetSection, targetId })
+    })
+    
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to apply fix')
+    }
+    
+    // Refresh series data after fix
+    await refreshSeries()
+    toast.success('Fix applied successfully')
+  }, [series, refreshSeries])
 
   if (isLoading) {
     return (
@@ -446,6 +492,13 @@ export default function SeriesStudioPage() {
               <Palette className="w-4 h-4" />
               Visual Style
             </TabsTrigger>
+            <TabsTrigger 
+              value="resonance" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border-cyan-500/30 gap-2"
+            >
+              <Target className="w-4 h-4" />
+              Resonance
+            </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -496,6 +549,17 @@ export default function SeriesStudioPage() {
               aesthetic={bible?.aesthetic}
               toneGuidelines={bible?.toneGuidelines}
               visualGuidelines={bible?.visualGuidelines}
+            />
+          </TabsContent>
+
+          {/* Resonance Analysis Tab */}
+          <TabsContent value="resonance">
+            <SeriesResonancePanel
+              series={series}
+              onAnalyze={handleAnalyzeResonance}
+              onApplyFix={handleApplyResonanceFix}
+              savedAnalysis={resonanceAnalysis}
+              onSeriesUpdated={refreshSeries}
             />
           </TabsContent>
         </Tabs>
