@@ -129,7 +129,7 @@ export default function SeriesStudioPage() {
       }, {
         message: `Generating ${episodeCount} episode storyline...`,
         estimatedDuration: episodeCount * 3 + 15,
-        operationType: 'script-generation'
+        operationType: 'series-generation'
       })
 
       toast.success(`Generated ${result.generated.episodeCount} episodes!`)

@@ -520,6 +520,89 @@ const AnimatedProcessingOverlay = () => {
           </div>
         )}
         
+        {/* Series Craft animation - episodes being created one by one */}
+        {config.animationType === 'series-craft' && (
+          <div className="mb-8 mt-6 flex justify-center">
+            <div className="relative">
+              {/* Clapperboard base */}
+              <div className="relative mb-4">
+                <div className="w-24 h-6 bg-gradient-to-r from-slate-800 to-slate-700 rounded-t-lg border-2 border-slate-600 flex overflow-hidden">
+                  {[...Array(6)].map((_, i) => (
+                    <div 
+                      key={i} 
+                      className={`flex-1 ${i % 2 === 0 ? 'bg-slate-900' : 'bg-amber-500'}`}
+                      style={{
+                        transform: progress > 10 ? 'skewX(-10deg)' : 'skewX(0deg)',
+                        transition: 'transform 0.3s ease-out'
+                      }}
+                    />
+                  ))}
+                </div>
+                <div className="w-24 h-4 bg-slate-700 rounded-b border-2 border-t-0 border-slate-600 flex items-center justify-center">
+                  <span className="text-[8px] text-slate-400 font-mono">EPISODE</span>
+                </div>
+              </div>
+              
+              {/* Episode cards being created */}
+              <div className="flex items-end gap-2 px-3 py-4 bg-slate-800/50 rounded-xl border border-slate-700 min-h-[100px]">
+                {[...Array(6)].map((_, i) => {
+                  const episodeProgress = (i + 1) * 15 // Each episode appears at 15%, 30%, 45%, etc.
+                  const isCreated = progress >= episodeProgress
+                  const isCreating = progress >= episodeProgress - 10 && progress < episodeProgress
+                  
+                  return (
+                    <div
+                      key={i}
+                      className={`
+                        relative w-10 rounded transition-all duration-500 overflow-hidden
+                        ${isCreated 
+                          ? 'bg-gradient-to-b from-cyan-500 to-cyan-700 shadow-[0_0_15px_rgba(34,211,238,0.5)]' 
+                          : isCreating 
+                            ? 'bg-gradient-to-b from-amber-500 to-amber-700 animate-pulse shadow-[0_0_15px_rgba(251,191,36,0.5)]'
+                            : 'bg-slate-700/50 border border-dashed border-slate-600'}
+                      `}
+                      style={{ 
+                        height: isCreated ? '70px' : isCreating ? '50px' : '40px',
+                        transitionDelay: `${i * 80}ms`,
+                        transform: isCreating ? 'scale(1.05)' : 'scale(1)'
+                      }}
+                    >
+                      {(isCreated || isCreating) && (
+                        <>
+                          {/* Episode number */}
+                          <div className="absolute top-1 left-1/2 -translate-x-1/2 text-[10px] font-bold text-white/90">
+                            {i + 1}
+                          </div>
+                          {/* Content lines */}
+                          <div className="absolute bottom-2 left-1 right-1 space-y-1">
+                            <div className="h-0.5 bg-white/40 rounded" />
+                            <div className="h-0.5 bg-white/30 rounded w-3/4" />
+                            <div className="h-0.5 bg-white/20 rounded w-1/2" />
+                          </div>
+                          {/* Creating sparkle */}
+                          {isCreating && (
+                            <div className="absolute -top-1 -right-1 w-3 h-3">
+                              <div className="absolute inset-0 bg-amber-400 rounded-full animate-ping" />
+                              <div className="absolute inset-0.5 bg-amber-300 rounded-full" />
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              
+              {/* Progress text */}
+              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-slate-400 whitespace-nowrap">
+                {progress < 15 ? 'Setting up series...' : 
+                 progress < 90 ? `Creating episode ${Math.min(6, Math.ceil(progress / 15))} of 6...` :
+                 'Finalizing series...'}
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Repair animation - wrench/gear fixing */}
         {config.animationType === 'repair' && (
           <div className="mb-8 mt-6 flex justify-center">

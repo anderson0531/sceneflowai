@@ -12,6 +12,7 @@ export type OperationType =
   | 'script-optimization'  // Optimizing/revising script
   | 'series-analysis'      // Series resonance analysis
   | 'series-fix'           // Applying fix to series
+  | 'series-generation'    // Generating series episodes
   | 'image-generation'     // Generating images
   | 'video-generation'     // Generating video
   | 'audio-generation'     // Generating audio/TTS
@@ -36,7 +37,7 @@ export interface ProgressPhase {
 export interface OperationConfig {
   title: string
   phases: ProgressPhase[]
-  animationType: 'audience' | 'script' | 'image' | 'video' | 'audio' | 'series' | 'repair' | 'generic'
+  animationType: 'audience' | 'script' | 'image' | 'video' | 'audio' | 'series' | 'repair' | 'series-craft' | 'generic'
 }
 
 /**
@@ -112,6 +113,20 @@ export const OPERATION_CONFIGS: Record<OperationType, OperationConfig> = {
       { id: 'apply', label: 'Applying fixes...', progress: 75 },
       { id: 'verify', label: 'Verifying changes...', progress: 90 },
       { id: 'finalize', label: 'Finalizing fix...', progress: 98 },
+    ]
+  },
+  'series-generation': {
+    title: 'Crafting Series Episodes',
+    animationType: 'series-craft',
+    phases: [
+      { id: 'init', label: 'Preparing creative workspace...', progress: 5 },
+      { id: 'concept', label: 'Developing series concept...', progress: 15 },
+      { id: 'characters', label: 'Creating cast of characters...', progress: 30 },
+      { id: 'arcs', label: 'Crafting story arcs...', progress: 45 },
+      { id: 'episodes', label: 'Writing episode outlines...', progress: 65 },
+      { id: 'details', label: 'Adding episode details...', progress: 80 },
+      { id: 'polish', label: 'Polishing storylines...', progress: 92 },
+      { id: 'finalize', label: 'Finalizing series...', progress: 98 },
     ]
   },
   'image-generation': {
