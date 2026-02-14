@@ -370,6 +370,7 @@ export function CharacterLibrary({ characters, scenes = [], onRegenerateCharacte
               characters={characters}
               scenes={scenes}
               onAddCharacter={onAddCharacter}
+              projectGenre={screenplayContext?.genre}
             />
           )}
           

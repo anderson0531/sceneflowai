@@ -5,6 +5,8 @@ import { Users, Plus, AlertTriangle, Search, UserPlus, Sparkles } from 'lucide-r
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { detectCharacterChanges, normalizeCharacterName } from '@/lib/character/detection'
+import { useOverlayStore } from '@/store/useOverlayStore'
+import { toast } from 'sonner'
 
 interface SuggestedCharacter {
   name: string
@@ -19,6 +21,8 @@ interface AddCharacterModalProps {
   characters: any[]
   scenes: any[]
   onAddCharacter: (characterData: any) => void | Promise<void>
+  projectTitle?: string
+  projectGenre?: string
 }
 
 /**
@@ -103,8 +107,11 @@ export function AddCharacterModal({
   onClose, 
   characters, 
   scenes, 
-  onAddCharacter 
+  onAddCharacter,
+  projectTitle,
+  projectGenre
 }: AddCharacterModalProps) {
+  const overlayStore = useOverlayStore()
   const [customName, setCustomName] = useState('')
   const [customDescription, setCustomDescription] = useState('')
   const [showCustomForm, setShowCustomForm] = useState(false)
@@ -130,19 +137,115 @@ export function AddCharacterModal({
     )
   }, [missingCharacters, searchQuery])
   
+  // Collect all dialogue lines for a character from scenes
+  const getCharacterDialogue = (charName: string): { lines: string[], sceneContext: any[] } => {
+    const normalizedName = normalizeCharacterName(charName)
+    const lines: string[] = []
+    const sceneContext: any[] = []
+    
+    scenes.forEach((scene, idx) => {
+      let hasDialogue = false
+      scene.dialogue?.forEach((d: any) => {
+        if (normalizeCharacterName(d.character || '') === normalizedName && d.line) {
+          lines.push(d.line)
+          hasDialogue = true
+        }
+      })
+      if (hasDialogue) {
+        sceneContext.push({
+          sceneNumber: idx + 1,
+          heading: scene.heading || scene.location,
+          action: scene.action || scene.description
+        })
+      }
+    })
+    
+    return { lines, sceneContext }
+  }
+  
   const handleAddSuggested = async (char: SuggestedCharacter) => {
     setIsAdding(true)
+    
+    // Show casting overlay
+    overlayStore.show(`Casting ${char.name}...`, 15, 'character-generation')
+    
     try {
+      // Collect all dialogue and scene context for this character
+      const { lines, sceneContext } = getCharacterDialogue(char.name)
+      
+      overlayStore.setProgress(20)
+      overlayStore.setStatus('Analyzing character dialogue...')
+      
+      // Call the AI to generate character description
+      const response = await fetch('/api/character/generate-description', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          characterName: char.name,
+          dialogueLines: lines,
+          scenes: sceneContext,
+          sampleLine: char.sampleLine,
+          projectTitle,
+          projectGenre
+        })
+      })
+      
+      overlayStore.setProgress(60)
+      overlayStore.setStatus('Designing character appearance...')
+      
+      if (!response.ok) {
+        const error = await response.json()
+        if (error.code === 'INSUFFICIENT_CREDITS') {
+          toast.error(`Insufficient credits. Need ${error.required} credits.`)
+          // Fall back to basic add without AI
+          await onAddCharacter({
+            name: char.name,
+            role: 'supporting',
+            appearanceDescription: '',
+            description: `Character from script with ${char.dialogueCount} dialogue line${char.dialogueCount > 1 ? 's' : ''}`
+          })
+          onClose()
+          return
+        }
+        throw new Error(error.error || 'Failed to generate character profile')
+      }
+      
+      const result = await response.json()
+      const profile = result.profile
+      
+      overlayStore.setProgress(90)
+      overlayStore.setStatus('Finalizing character profile...')
+      
+      // Add character with AI-generated profile
       await onAddCharacter({
         name: char.name,
-        role: 'supporting',
-        appearanceDescription: '',
-        description: `Character from script with ${char.dialogueCount} dialogue line${char.dialogueCount > 1 ? 's' : ''}`
+        role: profile.gender === 'male' || profile.gender === 'female' ? 'supporting' : 'supporting',
+        description: profile.description || `Character from script with ${char.dialogueCount} dialogue line${char.dialogueCount > 1 ? 's' : ''}`,
+        personality: profile.personality,
+        appearanceDescription: profile.appearanceDescription || '',
+        ethnicity: profile.ethnicity,
+        gender: profile.gender,
+        ageRange: profile.ageRange,
+        build: profile.build,
+        hairStyle: profile.hairStyle,
+        hairColor: profile.hairColor,
+        eyeColor: profile.eyeColor,
+        keyFeature: profile.keyFeature,
+        expression: profile.expression,
+        style: profile.style,
+        voiceDescription: profile.voiceDescription
       })
+      
+      overlayStore.setProgress(100)
+      overlayStore.setStatus('Character cast!')
+      
+      toast.success(`${char.name} has been cast with AI-generated profile!`)
       onClose()
     } catch (error) {
       console.error('[AddCharacterModal] Error adding character:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to add character')
     } finally {
+      overlayStore.hide()
       setIsAdding(false)
     }
   }
