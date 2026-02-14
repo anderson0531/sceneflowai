@@ -42,27 +42,26 @@ export async function POST(req: NextRequest) {
     // Check/consume credits (2 credits for character description generation)
     const creditCost = 2
     
-    // Check if user has enough credits and charge them
-    const hasEnoughCredits = await CreditService.ensureCredits(userId, creditCost)
-    if (!hasEnoughCredits) {
-      return NextResponse.json({ 
-        error: 'Insufficient credits',
-        code: 'INSUFFICIENT_CREDITS',
-        required: creditCost
-      }, { status: 402 })
-    }
-    
-    // Charge credits
+    // Charge credits (will throw INSUFFICIENT_CREDITS if not enough)
     try {
       await CreditService.charge(userId, creditCost, 'ai', null, {
         type: 'character-description',
         characterName,
         dialogueCount: dialogueLines?.length || 0
       })
-    } catch (chargeError) {
+    } catch (chargeError: any) {
+      if (chargeError.message === 'INSUFFICIENT_CREDITS') {
+        return NextResponse.json({ 
+          error: 'Insufficient credits',
+          code: 'INSUFFICIENT_CREDITS',
+          required: creditCost
+        }, { status: 402 })
+      }
+      console.error('[Generate Description] Credit charge error:', chargeError)
       return NextResponse.json({ 
         error: 'Failed to charge credits',
-        code: 'CREDIT_CHARGE_FAILED'
+        code: 'CREDIT_CHARGE_FAILED',
+        details: chargeError.message
       }, { status: 402 })
     }
 
