@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     
     // Charge credits (will throw INSUFFICIENT_CREDITS if not enough)
     try {
-      await CreditService.charge(userId, creditCost, 'ai', null, {
+      await CreditService.charge(userId, creditCost, 'ai_usage', null, {
         type: 'character-description',
         characterName,
         dialogueCount: dialogueLines?.length || 0
