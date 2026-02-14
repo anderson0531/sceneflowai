@@ -708,6 +708,9 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
 
   // Overlay store for enhance progress
   const overlayStore = useOverlayStore()
+  
+  // Derived state: check if character enhancement is in progress
+  const isEnhancingReference = overlayStore.isVisible && overlayStore.operationType === 'character-enhance'
 
   // Handle enhancing the character reference image
   const handleEnhanceReference = async () => {
