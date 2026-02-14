@@ -42,14 +42,13 @@ export async function POST(req: NextRequest) {
     // Check/consume credits (2 credits for character description generation)
     const creditCost = 2
     
-    // Check if user has enough credits
-    const currentCredits = await CreditService.getCredits(userId)
-    if (currentCredits < creditCost) {
+    // Check if user has enough credits and charge them
+    const hasEnoughCredits = await CreditService.ensureCredits(userId, creditCost)
+    if (!hasEnoughCredits) {
       return NextResponse.json({ 
         error: 'Insufficient credits',
         code: 'INSUFFICIENT_CREDITS',
-        required: creditCost,
-        available: currentCredits
+        required: creditCost
       }, { status: 402 })
     }
     
