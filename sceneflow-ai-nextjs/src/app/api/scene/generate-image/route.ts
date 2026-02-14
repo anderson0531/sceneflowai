@@ -229,11 +229,13 @@ export async function POST(req: NextRequest) {
       personGeneration,       // NEW: Optional personGeneration setting (default: 'allow_adult')
       characterWardrobes = [], // NEW: Scene-level wardrobe overrides - array of { characterId, wardrobeId }
       sceneReferences = [],   // NEW: Scene backdrop references from Reference Library
-      objectReferences = []   // NEW: Prop/object references from Reference Library
+      objectReferences = [],  // NEW: Prop/object references from Reference Library
+      excludeCharacters = false,  // NEW: Generate scene reference only (no people) for production bible
     } = body
     
     // Handle both legacy (selectedCharacters) and new (characters) formats
-    const characterArray = characters || selectedCharacters || []
+    // If excludeCharacters is true, ignore all character references for scene environment-only image
+    const characterArray = excludeCharacters ? [] : (characters || selectedCharacters || [])
 
     console.log('[Scene Image] Generating scene image')
     console.log('[Scene Image] Selected characters:', characterArray.length)
@@ -642,6 +644,21 @@ export async function POST(req: NextRequest) {
         })
         console.log('[Scene Image] Added character references to user-edited prompt (re-optimized)')
       }
+    } else if (excludeCharacters) {
+      // Scene reference mode: Focus on environment, props, lighting - no people
+      // Build an environment-focused prompt for scene consistency
+      const sceneReferencePrefix = `Cinematic establishing shot, empty scene composition. Focus on environment details, lighting, atmosphere, and props. NO PEOPLE in the frame. `
+      const sceneReferenceSuffix = ` The image should serve as a reference for scene consistency - capturing the location, time of day, lighting mood, and key props without any characters.`
+      
+      optimizedPrompt = optimizePromptForImagen({
+        sceneAction: sceneReferencePrefix + fullSceneContext + sceneReferenceSuffix,
+        visualDescription: fullSceneContext,
+        characterReferences: [],  // No characters
+        artStyle: artStyle || 'photorealistic',
+        objectReferences: detectedObjectReferences
+      })
+      
+      console.log('[Scene Image] Building scene reference prompt (excludeCharacters=true)')
     } else {
       // Use scene description and optimize
       optimizedPrompt = optimizePromptForImagen({
@@ -823,11 +840,13 @@ export async function POST(req: NextRequest) {
         } else {
           // Use Vertex AI Imagen for non-reference generation (faster, cheaper)
           console.log('[Scene Image] Using Vertex AI Imagen (no reference images)')
+          // When excludeCharacters is true, force personGeneration to 'dont_allow' for scene reference images
+          const effectivePersonGeneration = excludeCharacters ? 'dont_allow' : (personGeneration || 'allow_adult')
           base64Image = await generateImageWithGemini(optimizedPrompt, {
             aspectRatio: '16:9',
             numberOfImages: 1,
             imageSize: quality === 'max' ? '2K' : '1K',
-            personGeneration: personGeneration || 'allow_adult',
+            personGeneration: effectivePersonGeneration,
             negativePrompt: finalNegativePrompt
           })
         }

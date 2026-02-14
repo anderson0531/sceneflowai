@@ -6283,9 +6283,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     console.log('Regenerate scene:', sceneIndex)
   }
 
-  const handleGenerateSceneImage = async (sceneIdx: number, selectedCharacters?: any[] | any) => {
+  const handleGenerateSceneImage = async (sceneIdx: number, selectedCharacters?: any[] | any, options?: { excludeCharacters?: boolean }) => {
     console.log('[handleGenerateSceneImage] Called with sceneIdx:', sceneIdx)
     console.log('[handleGenerateSceneImage] selectedCharacters:', selectedCharacters)
+    console.log('[handleGenerateSceneImage] options:', options)
     
     const scene = script?.script?.scenes?.[sceneIdx]
     console.log('[handleGenerateSceneImage] Scene found:', !!scene)
@@ -6375,8 +6376,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // Reference library data
         sceneReferences: promptData.sceneReferences,
         objectReferences: promptData.objectReferences,
-        characters: sceneCharacters,  // Characters array
-        quality: imageQuality
+        characters: options?.excludeCharacters ? [] : sceneCharacters,  // Skip characters if excludeCharacters
+        quality: imageQuality,
+        // Scene reference mode: no people, focus on environment
+        excludeCharacters: options?.excludeCharacters || false
       }
       console.log('[handleGenerateSceneImage] Request body:', JSON.stringify(requestBody).substring(0, 500))
       
@@ -9005,6 +9008,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   logline: script?.logline || project?.description,
                   visualStyle: project?.metadata?.filmTreatmentVariant?.visual_style || project?.metadata?.filmTreatmentVariant?.style,
                 }}
+                // Scene image management props for Storyboard tab
+                onGenerateSceneImage={(sceneIdx) => handleGenerateSceneImage(sceneIdx, undefined, { excludeCharacters: true })}
+                onUploadSceneImage={handleUploadScene}
+                generatingImageForScene={generatingKeyframeSceneNumber !== null ? generatingKeyframeSceneNumber - 1 : null}
+                onGenerateAllSceneImages={handleGenerateAllImages}
+                isGeneratingAllSceneImages={isGeneratingAllImages}
+                onAddToReferenceLibrary={handleAddToReferenceLibrary}
               />
             </div>
           </Panel>

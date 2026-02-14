@@ -4,13 +4,14 @@ import React, { useState, useMemo } from 'react'
 import { DndContext } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, BookOpen, Wand2, Loader2, Upload, Copy, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, BookOpen, Wand2, Loader2, Upload, Copy, CheckCircle2, AlertCircle, LayoutGrid } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/textarea'
 import { CharacterLibrary, CharacterLibraryProps } from './CharacterLibrary'
+import { SceneImageFrame } from './SceneImageFrame'
 import { VisualReference, VisualReferenceType, ObjectCategory } from '@/types/visionReferences'
 import { BackdropGeneratorModal, SceneForBackdrop, CharacterForBackdrop } from './BackdropGeneratorModal'
 import { BackdropMode } from '@/lib/vision/backdropGenerator'
@@ -51,6 +52,20 @@ interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'comp
   showProductionReadiness?: boolean
   /** All scenes data for readiness calculation */
   allScenes?: Array<{ sceneDirection?: any; imageUrl?: string; narrationAudioUrl?: string; dialogue?: Array<{ audioUrl?: string }> }>
+  /** Callback to generate a scene reference image */
+  onGenerateSceneImage?: (sceneIdx: number) => void
+  /** Callback to upload a scene reference image */
+  onUploadSceneImage?: (sceneIdx: number, file: File) => void
+  /** Callback to edit a scene reference image */
+  onEditSceneImage?: (sceneIdx: number, imageUrl: string) => void
+  /** Callback to add scene image to reference library */
+  onAddToReferenceLibrary?: (imageUrl: string, name: string, sceneNumber: number) => void
+  /** Index of scene currently generating image */
+  generatingImageForScene?: number | null
+  /** Callback for generate all scene images */
+  onGenerateAllSceneImages?: () => void
+  /** Whether currently generating all scene images */
+  isGeneratingAllSceneImages?: boolean
 }
 
 interface ReferenceSectionProps {
@@ -793,6 +808,14 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onEditCharacterImage,
     showProductionReadiness = true,
     allScenes = [],
+    // Scene image management props
+    onGenerateSceneImage,
+    onUploadSceneImage,
+    onEditSceneImage,
+    onAddToReferenceLibrary,
+    generatingImageForScene,
+    onGenerateAllSceneImages,
+    isGeneratingAllSceneImages = false,
   } = props
 
   // Calculate production readiness
@@ -942,15 +965,22 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     description: s.description
   }))
 
+  // Calculate scenes with/without images for storyboard tab
+  const scenesWithImages = useMemo(() => {
+    return allScenes.filter(s => !!s.imageUrl).length
+  }, [allScenes])
+  const scenesWithoutImages = allScenes.length - scenesWithImages
+
   const [castOpen, setCastOpen] = useState(false)
   const [showProTips, setShowProTips] = useState(false)
-  const [activeReferenceTab, setActiveReferenceTab] = useState<'cast' | 'scene' | 'object'>('cast')
+  const [activeReferenceTab, setActiveReferenceTab] = useState<'cast' | 'storyboard' | 'scene' | 'object'>('cast')
 
   // Reference tabs matching ScriptPanel folder tab style
   const referenceTabs = [
     { key: 'cast' as const, label: 'Cast', icon: <Users className="w-3.5 h-3.5" />, count: characters.length },
-    { key: 'scene' as const, label: 'Scene', icon: <Images className="w-3.5 h-3.5" />, count: sceneReferences.length },
-    { key: 'object' as const, label: 'Object', icon: <Package className="w-3.5 h-3.5" />, count: objectReferences.length },
+    { key: 'storyboard' as const, label: 'Storyboard', icon: <LayoutGrid className="w-3.5 h-3.5" />, count: allScenes.length, ready: scenesWithImages },
+    { key: 'scene' as const, label: 'Backdrops', icon: <Images className="w-3.5 h-3.5" />, count: sceneReferences.length },
+    { key: 'object' as const, label: 'Objects', icon: <Package className="w-3.5 h-3.5" />, count: objectReferences.length },
   ]
 
   return (
@@ -1055,6 +1085,86 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               showProTips={showProTips}
               screenplayContext={screenplayContext}
             />
+          )}
+          
+          {/* Storyboard Tab Content - Scene Reference Images */}
+          {activeReferenceTab === 'storyboard' && (
+            <div className="space-y-3">
+              {/* Generate All Button */}
+              {onGenerateAllSceneImages && scenesWithoutImages > 0 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={onGenerateAllSceneImages}
+                    disabled={isGeneratingAllSceneImages}
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                    size="sm"
+                  >
+                    {isGeneratingAllSceneImages ? (
+                      <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4 mr-1.5" />
+                    )}
+                    Generate All ({scenesWithoutImages})
+                  </Button>
+                  {scenesWithImages > 0 && (
+                    <span className="text-xs text-emerald-400 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      {scenesWithImages} ready
+                    </span>
+                  )}
+                </div>
+              )}
+              
+              {/* All scenes ready */}
+              {scenesWithoutImages === 0 && allScenes.length > 0 && (
+                <div className="text-xs text-emerald-400 flex items-center gap-1 p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  All {allScenes.length} scene references ready
+                </div>
+              )}
+              
+              {/* Scene List */}
+              {allScenes.length === 0 ? (
+                <div className="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg py-6 text-center">
+                  No scenes yet. Generate a script first.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {allScenes.map((scene, idx) => {
+                    const sceneNumber = idx + 1
+                    const sceneData = scenes[idx]
+                    const heading = sceneData?.heading 
+                      ? (typeof sceneData.heading === 'string' ? sceneData.heading : sceneData.heading?.text)
+                      : `Scene ${sceneNumber}`
+                    
+                    return (
+                      <div key={idx} className="space-y-1">
+                        {/* Scene Header */}
+                        <div className="flex items-center gap-2 px-1">
+                          <span className="text-xs font-medium text-slate-400">
+                            {sceneNumber}. {heading ? heading.substring(0, 30) + (heading.length > 30 ? '...' : '') : `Scene ${sceneNumber}`}
+                          </span>
+                        </div>
+                        
+                        {/* Scene Image Frame */}
+                        <SceneImageFrame
+                          sceneIdx={idx}
+                          sceneNumber={sceneNumber}
+                          imageUrl={scene.imageUrl}
+                          isGenerating={generatingImageForScene === idx}
+                          onGenerate={() => onGenerateSceneImage?.(idx)}
+                          onUpload={(file) => onUploadSceneImage?.(idx, file)}
+                          onEdit={onEditSceneImage ? (url) => onEditSceneImage(idx, url) : undefined}
+                          onAddToReferenceLibrary={onAddToReferenceLibrary}
+                          compact
+                          showBorder={false}
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           )}
           
           {/* Scene Tab Content */}
