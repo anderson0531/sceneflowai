@@ -12,7 +12,7 @@ import { BrowseVoicesDialog } from '@/components/tts/BrowseVoicesDialog'
 import { CreateCustomVoiceDialog } from '@/components/tts/CreateCustomVoiceDialog'
 import { CharacterPromptBuilder } from '@/components/vision/CharacterPromptBuilder'
 import { AddCharacterModal, useOrphanCharacters } from '@/components/vision/AddCharacterModal'
-import { EnhanceProgressToast } from '@/components/vision/EnhanceProgressToast'
+import { useOverlayStore } from '@/store/useOverlayStore'
 import type { CharacterContext, ScreenplayContext } from '@/lib/voiceRecommendation'
 
 export interface CharacterLibraryProps {
@@ -510,7 +510,6 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   const [showAddWardrobeForm, setShowAddWardrobeForm] = useState(false) // Toggle for add new wardrobe form
   
   // Enhance reference state
-  const [isEnhancingReference, setIsEnhancingReference] = useState(false)
   const [enhanceIterationCount, setEnhanceIterationCount] = useState(character.enhanceIterationCount || 0)
   const [showEnhanceConfirm, setShowEnhanceConfirm] = useState(false)
   const [enhancedPreviewUrl, setEnhancedPreviewUrl] = useState<string | null>(null)
@@ -707,6 +706,9 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
     toast.success('Default wardrobe updated')
   }
 
+  // Overlay store for enhance progress
+  const overlayStore = useOverlayStore()
+
   // Handle enhancing the character reference image
   const handleEnhanceReference = async () => {
     if (!character.referenceImage) {
@@ -719,8 +721,9 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
       return
     }
 
-    setIsEnhancingReference(true)
+    overlayStore.show('Analyzing portrait quality...', 10, 'character-enhance')
     try {
+      overlayStore.updateProgress(25, 'Setting up studio lighting...')
       const response = await fetch('/api/character/enhance-reference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -732,6 +735,8 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
           iterationCount: enhanceIterationCount,
         }),
       })
+
+      overlayStore.updateProgress(70, 'Generating enhanced portrait...')
 
       if (!response.ok) {
         const error = await response.json()
@@ -746,6 +751,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
         throw new Error(error.error || 'Enhancement failed')
       }
 
+      overlayStore.updateProgress(90, 'Applying final retouching...')
       const result = await response.json()
       
       // Show preview for confirmation with quality feedback
@@ -754,12 +760,13 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
       setShowEnhanceConfirm(true)
       setEnhanceIterationCount(result.iterationCount)
       
+      overlayStore.updateProgress(100, 'Portrait enhanced!')
       toast.success(`Enhanced to professional headshot! ${result.remainingIterations} iteration(s) remaining.`)
     } catch (error) {
       console.error('[Enhance Reference] Error:', error)
       toast.error(error instanceof Error ? error.message : 'Enhancement failed')
     } finally {
-      setIsEnhancingReference(false)
+      overlayStore.hide()
     }
   }
   
@@ -1764,9 +1771,6 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        
-        {/* Animated progress toast during enhancement */}
-        <EnhanceProgressToast isVisible={isEnhancingReference} />
       </div>
     </div>
   )

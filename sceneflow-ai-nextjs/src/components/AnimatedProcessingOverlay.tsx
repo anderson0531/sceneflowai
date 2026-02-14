@@ -654,6 +654,133 @@ const AnimatedProcessingOverlay = () => {
           </div>
         )}
         
+        {/* Photographer animation - camera and studio lighting */}
+        {config.animationType === 'photographer' && (
+          <div className="mb-8 mt-6 flex justify-center">
+            <div className="relative">
+              {/* Studio setup */}
+              <div className="flex items-center gap-6">
+                {/* Left softbox light */}
+                <div className={`
+                  w-8 h-20 bg-gradient-to-b from-slate-700 to-slate-800 rounded-lg relative
+                  transition-all duration-500
+                  ${progress > 20 ? 'shadow-[0_0_30px_rgba(255,255,255,0.3)]' : ''}
+                `}>
+                  <div className={`
+                    absolute inset-1 rounded bg-gradient-to-b transition-all duration-500
+                    ${progress > 20 ? 'from-amber-100 to-amber-200' : 'from-slate-600 to-slate-700'}
+                  `} />
+                  {/* Light stand */}
+                  <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-1 h-4 bg-slate-600" />
+                </div>
+                
+                {/* Central portrait frame with camera */}
+                <div className="relative">
+                  {/* Portrait frame */}
+                  <div className={`
+                    w-28 h-36 bg-slate-800 rounded-lg border-4 overflow-hidden relative
+                    transition-all duration-500
+                    ${progress > 60 
+                      ? 'border-cyan-400 shadow-[0_0_25px_rgba(34,211,238,0.5)]' 
+                      : progress > 30 
+                        ? 'border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.4)]'
+                        : 'border-slate-600'}
+                  `}>
+                    {/* Silhouette / Portrait being revealed */}
+                    <div 
+                      className="absolute inset-0 bg-gradient-to-b from-slate-700 via-slate-600 to-slate-700"
+                    >
+                      {/* Head silhouette */}
+                      <div className={`
+                        absolute top-4 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full
+                        transition-all duration-700
+                        ${progress > 50 
+                          ? 'bg-gradient-to-br from-amber-200 to-amber-300' 
+                          : 'bg-slate-500'}
+                      `} />
+                      {/* Shoulders silhouette */}
+                      <div className={`
+                        absolute bottom-0 left-1/2 -translate-x-1/2 w-20 h-12 rounded-t-full
+                        transition-all duration-700
+                        ${progress > 50 
+                          ? 'bg-gradient-to-b from-slate-400 to-slate-500' 
+                          : 'bg-slate-500'}
+                      `} />
+                    </div>
+                    
+                    {/* Enhancement reveal effect */}
+                    <div 
+                      className="absolute inset-0 bg-gradient-to-t from-cyan-500/30 via-transparent to-cyan-500/30"
+                      style={{
+                        clipPath: `inset(${100 - Math.min(progress * 1.2, 100)}% 0 0 0)`,
+                        transition: 'clip-path 0.5s ease-out'
+                      }}
+                    />
+                    
+                    {/* Flash effect */}
+                    {progress > 35 && progress < 45 && (
+                      <div className="absolute inset-0 bg-white animate-[flash_0.3s_ease-out]" />
+                    )}
+                  </div>
+                  
+                  {/* Camera below */}
+                  <div className={`
+                    absolute -bottom-8 left-1/2 -translate-x-1/2 w-16 h-10 
+                    bg-gradient-to-b from-slate-700 to-slate-800 rounded-lg
+                    flex items-center justify-center transition-all duration-300
+                    ${progress > 30 && progress < 50 ? 'scale-110' : 'scale-100'}
+                  `}>
+                    {/* Camera lens */}
+                    <div className={`
+                      w-6 h-6 rounded-full bg-slate-900 border-2 transition-all duration-300
+                      ${progress > 30 && progress < 50 
+                        ? 'border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.6)]' 
+                        : 'border-slate-600'}
+                    `}>
+                      <div className="w-full h-full rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
+                        <div className={`
+                          w-2 h-2 rounded-full transition-all duration-300
+                          ${progress > 30 && progress < 50 ? 'bg-red-500 animate-pulse' : 'bg-slate-600'}
+                        `} />
+                      </div>
+                    </div>
+                    {/* Camera flash */}
+                    <div className={`
+                      absolute -top-1 right-2 w-3 h-2 rounded-sm transition-all duration-300
+                      ${progress > 35 && progress < 45 
+                        ? 'bg-amber-300 shadow-[0_0_15px_rgba(252,211,77,0.8)]' 
+                        : 'bg-slate-600'}
+                    `} />
+                  </div>
+                </div>
+                
+                {/* Right softbox light */}
+                <div className={`
+                  w-8 h-20 bg-gradient-to-b from-slate-700 to-slate-800 rounded-lg relative
+                  transition-all duration-500
+                  ${progress > 20 ? 'shadow-[0_0_30px_rgba(255,255,255,0.3)]' : ''}
+                `}>
+                  <div className={`
+                    absolute inset-1 rounded bg-gradient-to-b transition-all duration-500
+                    ${progress > 20 ? 'from-amber-100 to-amber-200' : 'from-slate-600 to-slate-700'}
+                  `} />
+                  {/* Light stand */}
+                  <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-1 h-4 bg-slate-600" />
+                </div>
+              </div>
+              
+              {/* Status text */}
+              <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 text-xs text-slate-400 whitespace-nowrap">
+                {progress < 20 ? '📷 Setting up studio...' : 
+                 progress < 40 ? '💡 Adjusting lighting...' :
+                 progress < 60 ? '📸 Capturing portrait...' :
+                 progress < 85 ? '✨ Professional retouching...' :
+                 '✓ Finalizing headshot...'}
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Generic animation */}
         {config.animationType === 'generic' && (
           <div className="mb-8 mt-6 flex justify-center">

@@ -17,6 +17,7 @@ export type OperationType =
   | 'video-generation'     // Generating video
   | 'audio-generation'     // Generating audio/TTS
   | 'character-generation' // Creating characters
+  | 'character-enhance'    // Enhancing character reference image
   | 'keyframe-generation'  // Movie production keyframe generation
   | 'analysis'             // General analysis
   | 'export'               // Exporting content
@@ -37,7 +38,7 @@ export interface ProgressPhase {
 export interface OperationConfig {
   title: string
   phases: ProgressPhase[]
-  animationType: 'audience' | 'script' | 'image' | 'video' | 'audio' | 'series' | 'repair' | 'series-craft' | 'generic'
+  animationType: 'audience' | 'script' | 'image' | 'video' | 'audio' | 'series' | 'repair' | 'series-craft' | 'photographer' | 'generic'
 }
 
 /**
@@ -185,6 +186,18 @@ export const OPERATION_CONFIGS: Record<OperationType, OperationConfig> = {
       { id: 'grade', label: 'Color grading...', progress: 80 },
       { id: 'polish', label: 'Final polish...', progress: 92 },
       { id: 'finalize', label: 'Locking keyframe...', progress: 98 },
+    ]
+  },
+  'character-enhance': {
+    title: 'Enhancing Portrait',
+    animationType: 'photographer',
+    phases: [
+      { id: 'analyze', label: 'Analyzing source image...', progress: 10 },
+      { id: 'lighting', label: 'Setting up studio lighting...', progress: 25 },
+      { id: 'prompt', label: 'Building headshot prompt...', progress: 40 },
+      { id: 'generate', label: 'Generating professional headshot...', progress: 70 },
+      { id: 'retouch', label: 'Professional retouching...', progress: 85 },
+      { id: 'finalize', label: 'Finalizing enhancement...', progress: 98 },
     ]
   },
   'analysis': {
