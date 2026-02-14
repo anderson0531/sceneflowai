@@ -4774,31 +4774,33 @@ function SceneCard({
                         
                         if (isDisabled) {
                           return (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                {button}
-                              </TooltipTrigger>
-                              <TooltipContent side="bottom" className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-xs">
-                                <div className="space-y-1">
-                                  <p className="font-medium text-amber-400 flex items-center gap-1.5">
-                                    <AlertTriangle className="w-3.5 h-3.5" />
-                                    Voice Setup Required
-                                  </p>
-                                  {!hasNarrationVoice && (
-                                    <p className="text-xs text-gray-300">• Assign a narrator voice</p>
-                                  )}
-                                  {missingVoices.length > 0 && (
-                                    <p className="text-xs text-gray-300">
-                                      • Assign voices to: {missingVoices.slice(0, 3).join(', ')}
-                                      {missingVoices.length > 3 && ` +${missingVoices.length - 3} more`}
+                            <TooltipProvider delayDuration={200}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  {button}
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-xs">
+                                  <div className="space-y-1">
+                                    <p className="font-medium text-amber-400 flex items-center gap-1.5">
+                                      <AlertTriangle className="w-3.5 h-3.5" />
+                                      Voice Setup Required
                                     </p>
-                                  )}
-                                  <p className="text-[10px] text-gray-500 pt-1">
-                                    Set up voices in the Production Bible sidebar
-                                  </p>
-                                </div>
-                              </TooltipContent>
-                            </Tooltip>
+                                    {!hasNarrationVoice && (
+                                      <p className="text-xs text-gray-300">• Assign a narrator voice</p>
+                                    )}
+                                    {missingVoices.length > 0 && (
+                                      <p className="text-xs text-gray-300">
+                                        • Assign voices to: {missingVoices.slice(0, 3).join(', ')}
+                                        {missingVoices.length > 3 && ` +${missingVoices.length - 3} more`}
+                                      </p>
+                                    )}
+                                    <p className="text-[10px] text-gray-500 pt-1">
+                                      Set up voices in the Production Bible sidebar
+                                    </p>
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )
                         }
                         
