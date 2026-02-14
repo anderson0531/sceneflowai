@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Users, Plus, Loader, Wand2, Upload, X, ChevronDown, Check, Sparkles, Lightbulb, Info, Volume2, ImageIcon, Edit, Trash2, Shirt, Mic, Play, AlertCircle } from 'lucide-react'
+import { Users, Plus, Loader, Wand2, Upload, X, ChevronDown, ChevronUp, Check, Sparkles, Lightbulb, Info, Volume2, ImageIcon, Edit, Trash2, Shirt, Mic, Play, AlertCircle, Maximize2, User, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
@@ -34,8 +34,20 @@ export interface CharacterLibraryProps {
     wardrobeId?: string;
     wardrobeName?: string;
     previewImageUrl?: string;
+    headshotUrl?: string;
+    fullBodyUrl?: string;
+    sceneNumbers?: number[];
+    reason?: string;
     action?: 'add' | 'update' | 'delete' | 'setDefault';
   }) => void
+  /** Callback to batch update wardrobes from script analysis */
+  onBatchUpdateWardrobes?: (characterId: string, wardrobes: Array<{
+    name: string;
+    description: string;
+    accessories?: string;
+    sceneNumbers: number[];
+    reason: string;
+  }>) => void
   onAddCharacter?: (characterData: any) => void
   onRemoveCharacter?: (characterName: string) => void
   /** Callback to edit a character's reference image */
@@ -56,7 +68,7 @@ export interface CharacterLibraryProps {
   }
 }
 
-// Wardrobe item in collection
+// Wardrobe item in collection with scene-aware tracking
 interface CharacterWardrobe {
   id: string
   name: string
@@ -64,7 +76,11 @@ interface CharacterWardrobe {
   accessories?: string
   isDefault: boolean
   createdAt: string
-  previewImageUrl?: string  // AI-generated preview of character in this outfit
+  previewImageUrl?: string  // Legacy: AI-generated preview of character in this outfit
+  headshotUrl?: string      // Portrait headshot (1:1) showing character face with outfit context
+  fullBodyUrl?: string      // Full body shot (3:4) showing complete outfit head to toe
+  sceneNumbers?: number[]   // Scenes where this outfit is used (from script analysis)
+  reason?: string           // AI explanation for why this outfit is needed
 }
 
 interface CharacterCardProps {
@@ -92,8 +108,22 @@ interface CharacterCardProps {
     wardrobeAccessories?: string;
     wardrobeId?: string;
     wardrobeName?: string;
+    headshotUrl?: string;
+    fullBodyUrl?: string;
+    sceneNumbers?: number[];
+    reason?: string;
     action?: 'add' | 'update' | 'delete' | 'setDefault';
   }) => void
+  /** Batch update wardrobes from script analysis */
+  onBatchUpdateWardrobes?: (characterId: string, wardrobes: Array<{
+    name: string;
+    description: string;
+    accessories?: string;
+    sceneNumbers: number[];
+    reason: string;
+  }>) => void
+  /** Script scenes for wardrobe analysis */
+  scenes?: any[]
   onRemove?: () => void
   /** Callback to edit the character's reference image */
   onEditImage?: () => void
@@ -112,7 +142,7 @@ interface CharacterCardProps {
   }
 }
 
-export function CharacterLibrary({ characters, scenes = [], onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateCharacterWardrobe, onAddCharacter, onRemoveCharacter, onEditCharacterImage, ttsProvider, compact = false, uploadingRef = {}, setUploadingRef, enableDrag = false, showProTips: showProTipsProp, screenplayContext }: CharacterLibraryProps) {                                
+export function CharacterLibrary({ characters, scenes = [], onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateCharacterWardrobe, onBatchUpdateWardrobes, onAddCharacter, onRemoveCharacter, onEditCharacterImage, ttsProvider, compact = false, uploadingRef = {}, setUploadingRef, enableDrag = false, showProTips: showProTipsProp, screenplayContext }: CharacterLibraryProps) {                                
   const [selectedChar, setSelectedChar] = useState<string | null>(null)
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(new Set())
   const [zoomedImage, setZoomedImage] = useState<{url: string; name: string} | null>(null)
@@ -393,6 +423,8 @@ export function CharacterLibrary({ characters, scenes = [], onRegenerateCharacte
                 onUpdateCharacterName={onUpdateCharacterName}
                 onUpdateCharacterRole={onUpdateCharacterRole}
                 onUpdateWardrobe={onUpdateCharacterWardrobe}
+                onBatchUpdateWardrobes={onBatchUpdateWardrobes}
+                scenes={scenes}
                 onRemove={() => onRemoveCharacter?.(char.name)}
                 onEditImage={char.referenceImage && onEditCharacterImage ? () => onEditCharacterImage(charId, char.referenceImage) : undefined}
                 ttsProvider={ttsProvider}
@@ -489,7 +521,7 @@ export function CharacterLibrary({ characters, scenes = [], onRegenerateCharacte
   )
 }
 
-const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, isUploading = false, isOrphan = false, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateWardrobe, onRemove, onEditImage, ttsProvider, voiceSectionExpanded, onToggleVoiceSection, enableDrag = false, onOpenCharacterPrompt, screenplayContext }: CharacterCardProps) => {
+const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, isUploading = false, isOrphan = false, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateWardrobe, onBatchUpdateWardrobes, scenes = [], onRemove, onEditImage, ttsProvider, voiceSectionExpanded, onToggleVoiceSection, enableDrag = false, onOpenCharacterPrompt, screenplayContext }: CharacterCardProps) => {
   const hasImage = !!character.referenceImage
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
@@ -498,6 +530,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   const [nameText, setNameText] = useState('')
   const [editingRole, setEditingRole] = useState(false)
   const [wardrobeSectionExpanded, setWardrobeSectionExpanded] = useState(false)
+  const [voiceSectionExpandedLocal, setVoiceSectionExpandedLocal] = useState(false)
   const [editingWardrobe, setEditingWardrobe] = useState(false)
   const [editingWardrobeId, setEditingWardrobeId] = useState<string | null>(null) // Which wardrobe is being edited
   const [wardrobeText, setWardrobeText] = useState('')
@@ -508,6 +541,20 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   const [isGeneratingWardrobe, setIsGeneratingWardrobe] = useState(false)
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false)
   const [showAddWardrobeForm, setShowAddWardrobeForm] = useState(false) // Toggle for add new wardrobe form
+  
+  // Script analysis for wardrobes state
+  const [isAnalyzingScript, setIsAnalyzingScript] = useState(false)
+  const [wardrobeSuggestions, setWardrobeSuggestions] = useState<Array<{
+    name: string
+    description: string
+    accessories?: string
+    sceneNumbers: number[]
+    reason: string
+    confidence: number
+  }>>([])
+  
+  // Wardrobe expansion modal state
+  const [expandedWardrobe, setExpandedWardrobe] = useState<CharacterWardrobe | null>(null)
   
   // Enhance reference state
   const [enhanceIterationCount, setEnhanceIterationCount] = useState(character.enhanceIterationCount || 0)
@@ -582,6 +629,98 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
     if (onUpdateCharacterRole) {
       await onUpdateCharacterRole(characterId, (document.getElementById(`role-select-${characterId}`) as HTMLSelectElement)?.value || 'supporting')
       setEditingRole(false)
+    }
+  }
+
+  // Analyze script to suggest wardrobes for this character
+  const handleAnalyzeScriptForWardrobes = async () => {
+    if (!scenes || scenes.length === 0) {
+      toast.error('No scenes available for analysis')
+      return
+    }
+
+    setIsAnalyzingScript(true)
+    setWardrobeSuggestions([])
+    
+    try {
+      const response = await fetch('/api/character/suggest-wardrobes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          character: {
+            id: characterId,
+            name: character.name,
+            role: character.role,
+            appearanceDescription: character.appearanceDescription,
+            existingWardrobes: wardrobes.map(w => ({ name: w.name, sceneNumbers: w.sceneNumbers }))
+          },
+          scenes: scenes.map((s: any, idx: number) => ({
+            sceneNumber: idx + 1,
+            heading: typeof s.heading === 'string' ? s.heading : s.heading?.text,
+            action: s.action,
+            visualDescription: s.visualDescription,
+            dialogue: s.dialogue?.filter((d: any) => 
+              d.character?.toLowerCase() === character.name?.toLowerCase()
+            ).map((d: any) => d.line).join(' ')
+          })),
+          screenplayContext: {
+            genre: screenplayContext?.genre,
+            tone: screenplayContext?.tone,
+            setting: screenplayContext?.setting,
+            logline: screenplayContext?.logline
+          }
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to analyze script')
+      }
+
+      const { suggestions } = await response.json()
+      setWardrobeSuggestions(suggestions || [])
+      
+      if (suggestions?.length > 0) {
+        toast.success(`Found ${suggestions.length} wardrobe suggestion(s) for ${character.name}`)
+      } else {
+        toast.info('No additional wardrobes needed based on script analysis')
+      }
+    } catch (error) {
+      console.error('[Script Analysis] Error:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to analyze script')
+    } finally {
+      setIsAnalyzingScript(false)
+    }
+  }
+  
+  // Accept a wardrobe suggestion and add it to the collection
+  const handleAcceptSuggestion = (suggestion: typeof wardrobeSuggestions[0]) => {
+    onUpdateWardrobe?.(characterId, {
+      defaultWardrobe: suggestion.description,
+      wardrobeAccessories: suggestion.accessories,
+      wardrobeName: suggestion.name,
+      sceneNumbers: suggestion.sceneNumbers,
+      reason: suggestion.reason,
+      action: 'add'
+    })
+    
+    // Remove from suggestions
+    setWardrobeSuggestions(prev => prev.filter(s => s.name !== suggestion.name))
+    toast.success(`Added "${suggestion.name}" to wardrobe collection`)
+  }
+  
+  // Accept all suggestions at once
+  const handleAcceptAllSuggestions = () => {
+    if (onBatchUpdateWardrobes && wardrobeSuggestions.length > 0) {
+      onBatchUpdateWardrobes(characterId, wardrobeSuggestions.map(s => ({
+        name: s.name,
+        description: s.description,
+        accessories: s.accessories,
+        sceneNumbers: s.sceneNumbers,
+        reason: s.reason
+      })))
+      setWardrobeSuggestions([])
+      toast.success(`Added ${wardrobeSuggestions.length} wardrobe(s) to collection`)
     }
   }
 
@@ -791,7 +930,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
     }
   }
   
-  // Generate wardrobe preview image
+  // Generate wardrobe preview images (headshot + full body)
   const handleGenerateWardrobePreview = async (wardrobeId: string) => {
     const wardrobe = wardrobes.find(w => w.id === wardrobeId)
     if (!wardrobe || !character.referenceImage) {
@@ -818,7 +957,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
       if (!response.ok) {
         const error = await response.json()
         if (error.code === 'INSUFFICIENT_CREDITS') {
-          toast.error(`Insufficient credits. Need ${error.required} credits.`)
+          toast.error(`Insufficient credits. Need ${error.required} credits for headshot + full body.`)
           return
         }
         throw new Error(error.error || 'Preview generation failed')
@@ -826,16 +965,19 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
 
       const result = await response.json()
       
-      // Update wardrobe with preview URL
+      // Update wardrobe with headshot and full body URLs
       onUpdateWardrobe?.(characterId, {
         wardrobeId,
         action: 'update',
         defaultWardrobe: wardrobe.description,
         wardrobeAccessories: wardrobe.accessories,
-        previewImageUrl: result.previewImageUrl
+        headshotUrl: result.headshotUrl,
+        fullBodyUrl: result.fullBodyUrl,
+        // Legacy compatibility
+        previewImageUrl: result.previewImageUrl || result.fullBodyUrl
       })
       
-      toast.success('Wardrobe preview generated!')
+      toast.success('Wardrobe preview generated (headshot + full body)!')
     } catch (error) {
       console.error('[Wardrobe Preview] Error:', error)
       toast.error(error instanceof Error ? error.message : 'Preview generation failed')
@@ -846,7 +988,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   
   // Generate all wardrobe previews
   const handleGenerateAllPreviews = async () => {
-    const wardrobesWithoutPreviews = wardrobes.filter(w => !w.previewImageUrl)
+    const wardrobesWithoutPreviews = wardrobes.filter(w => !w.fullBodyUrl && !w.previewImageUrl)
     if (wardrobesWithoutPreviews.length === 0) {
       toast.info('All wardrobes already have previews')
       return
@@ -879,7 +1021,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
       if (!response.ok) {
         const error = await response.json()
         if (error.code === 'INSUFFICIENT_CREDITS') {
-          toast.error(`Insufficient credits. Need ${error.required} credits for ${error.wardrobeCount} previews.`)
+          toast.error(`Insufficient credits. Need ${error.required} credits for ${error.wardrobeCount} wardrobes (headshot + full body each).`)
           return
         }
         throw new Error(error.error || 'Batch preview generation failed')
@@ -887,7 +1029,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
 
       const result = await response.json()
       
-      // Update each wardrobe with its preview URL
+      // Update each wardrobe with its headshot and full body URLs
       for (const item of result.results) {
         if (item.success) {
           const wardrobe = wardrobes.find(w => w.id === item.wardrobeId)
@@ -897,13 +1039,15 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
               action: 'update',
               defaultWardrobe: wardrobe.description,
               wardrobeAccessories: wardrobe.accessories,
-              previewImageUrl: item.previewImageUrl
+              headshotUrl: item.headshotUrl,
+              fullBodyUrl: item.fullBodyUrl,
+              previewImageUrl: item.previewImageUrl || item.fullBodyUrl
             })
           }
         }
       }
       
-      toast.success(`Generated ${result.successCount} preview(s)!`)
+      toast.success(`Generated ${result.successCount} wardrobe preview set(s) (headshot + full body)!`)
     } catch (error) {
       console.error('[Wardrobe Preview Batch] Error:', error)
       toast.error(error instanceof Error ? error.message : 'Batch preview generation failed')
@@ -1427,7 +1571,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {/* Action Buttons */}
+                  {/* Action Buttons - Row 1 */}
                   <div className="flex gap-2">
                     {/* Add New Wardrobe Button */}
                     <button
@@ -1463,11 +1607,118 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                     </button>
                   </div>
                   
+                  {/* Analyze Script Button - Full Width */}
+                  {scenes && scenes.length > 0 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleAnalyzeScriptForWardrobes()
+                      }}
+                      disabled={isAnalyzingScript}
+                      className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                      title="Analyze script to determine wardrobes needed for each scene range"
+                    >
+                      {isAnalyzingScript ? (
+                        <>
+                          <Loader className="w-4 h-4 animate-spin" />
+                          Analyzing Script...
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="w-4 h-4" />
+                          <span>Analyze Script for Wardrobes</span>
+                          <span className="text-[10px] opacity-75">({scenes.length} scenes)</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                  
+                  {/* Wardrobe Suggestions from Script Analysis */}
+                  {wardrobeSuggestions.length > 0 && (
+                    <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-amber-500" />
+                          <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                            Script Analysis Suggestions
+                          </span>
+                          <span className="text-[10px] px-1.5 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded">
+                            {wardrobeSuggestions.length}
+                          </span>
+                        </div>
+                        {wardrobeSuggestions.length > 1 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleAcceptAllSuggestions()
+                            }}
+                            className="text-[10px] px-2 py-1 bg-amber-500 text-white rounded hover:bg-amber-600"
+                          >
+                            Accept All
+                          </button>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-2">
+                        {wardrobeSuggestions.map((suggestion, idx) => (
+                          <div 
+                            key={idx}
+                            className="p-2 bg-white dark:bg-gray-800 rounded border border-amber-200 dark:border-amber-700"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                    {suggestion.name}
+                                  </span>
+                                  <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded">
+                                    Scenes {suggestion.sceneNumbers.length === 1 
+                                      ? suggestion.sceneNumbers[0]
+                                      : `${Math.min(...suggestion.sceneNumbers)}-${Math.max(...suggestion.sceneNumbers)}`
+                                    }
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-gray-600 dark:text-gray-400 line-clamp-2">
+                                  {suggestion.description}
+                                </p>
+                                <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1 italic">
+                                  {suggestion.reason}
+                                </p>
+                              </div>
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleAcceptSuggestion(suggestion)
+                                  }}
+                                  className="p-1.5 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded transition-colors"
+                                  title="Accept suggestion"
+                                >
+                                  <Check className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setWardrobeSuggestions(prev => prev.filter((_, i) => i !== idx))
+                                  }}
+                                  className="p-1.5 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+                                  title="Dismiss suggestion"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
                   {/* Wardrobe Collection List */}
                   {wardrobes.length > 0 ? (
                     <div className="space-y-2">
                       {/* Generate All Previews Button */}
-                      {wardrobes.some(w => !w.previewImageUrl) && (
+                      {wardrobes.some(w => !w.previewImageUrl && !w.fullBodyUrl) && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
@@ -1484,7 +1735,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                           ) : (
                             <>
                               <ImageIcon className="w-3.5 h-3.5" />
-                              Generate All Previews ({wardrobes.filter(w => !w.previewImageUrl).length} × 5 credits)
+                              Generate All Previews ({wardrobes.filter(w => !w.previewImageUrl && !w.fullBodyUrl).length} × 10 credits)
                             </>
                           )}
                         </button>
@@ -1493,18 +1744,22 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                       {wardrobes.map((w) => (
                         <div 
                           key={w.id}
-                          className={`p-2 rounded-lg border transition-colors ${
+                          className={`p-2 rounded-lg border transition-colors cursor-pointer ${
                             w.isDefault 
                               ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700' 
                               : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                           }`}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setExpandedWardrobe(w)
+                          }}
                         >
                           <div className="flex items-start justify-between gap-2">
                             {/* Wardrobe Preview Thumbnail */}
                             <div className="flex-shrink-0 w-14 h-14 rounded overflow-hidden bg-gray-200 dark:bg-gray-700">
-                              {w.previewImageUrl ? (
+                              {(w.fullBodyUrl || w.previewImageUrl) ? (
                                 <img 
-                                  src={w.previewImageUrl} 
+                                  src={w.fullBodyUrl || w.previewImageUrl} 
                                   alt={`${w.name} preview`}
                                   className="w-full h-full object-cover"
                                 />
@@ -1531,13 +1786,21 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                             </div>
                             
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
                                   {w.name}
                                 </span>
                                 {w.isDefault && (
                                   <span className="text-[10px] px-1 py-0.5 bg-green-500/20 text-green-600 dark:text-green-400 rounded">
                                     Default
+                                  </span>
+                                )}
+                                {w.sceneNumbers && w.sceneNumbers.length > 0 && (
+                                  <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded">
+                                    {w.sceneNumbers.length === 1 
+                                      ? `Scene ${w.sceneNumbers[0]}`
+                                      : `Scenes ${Math.min(...w.sceneNumbers)}-${Math.max(...w.sceneNumbers)}`
+                                    }
                                   </span>
                                 )}
                               </div>
@@ -1550,7 +1813,18 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                                 </p>
                               )}
                             </div>
-                            <div className="flex items-center gap-1 flex-shrink-0">
+                            <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                              {/* Expand button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setExpandedWardrobe(w)
+                                }}
+                                className="p-1 text-gray-400 hover:text-purple-500 transition-colors"
+                                title="View full details"
+                              >
+                                <Maximize2 className="w-3.5 h-3.5" />
+                              </button>
                               {!w.isDefault && (
                                 <button
                                   onClick={(e) => {
@@ -1770,6 +2044,189 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                 className="bg-gradient-to-r from-purple-600 to-blue-600 text-white"
               >
                 Accept Enhanced
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        {/* Wardrobe Expansion Modal */}
+        <Dialog open={!!expandedWardrobe} onOpenChange={(open) => !open && setExpandedWardrobe(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Shirt className="w-5 h-5 text-purple-500" />
+                {expandedWardrobe?.name || 'Wardrobe Details'}
+                {expandedWardrobe?.isDefault && (
+                  <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-600 dark:text-green-400 rounded">
+                    Default
+                  </span>
+                )}
+                {expandedWardrobe?.sceneNumbers && expandedWardrobe.sceneNumbers.length > 0 && (
+                  <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded">
+                    {expandedWardrobe.sceneNumbers.length === 1 
+                      ? `Scene ${expandedWardrobe.sceneNumbers[0]}`
+                      : `Scenes ${Math.min(...expandedWardrobe.sceneNumbers)}-${Math.max(...expandedWardrobe.sceneNumbers)}`
+                    }
+                  </span>
+                )}
+              </DialogTitle>
+              <DialogDescription>
+                {character.name}'s wardrobe for film production
+              </DialogDescription>
+            </DialogHeader>
+            
+            {expandedWardrobe && (
+              <div className="space-y-6 py-4">
+                {/* Image Preview Section - Headshot & Full Body */}
+                <div className="grid grid-cols-2 gap-6">
+                  {/* Headshot */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400">
+                      <User className="w-4 h-4" />
+                      Headshot
+                    </div>
+                    <div className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                      {expandedWardrobe.headshotUrl ? (
+                        <img 
+                          src={expandedWardrobe.headshotUrl} 
+                          alt={`${expandedWardrobe.name} headshot`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : expandedWardrobe.previewImageUrl ? (
+                        <img 
+                          src={expandedWardrobe.previewImageUrl} 
+                          alt={`${expandedWardrobe.name} preview`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-400">
+                          <User className="w-12 h-12" />
+                          <span className="text-sm">No headshot</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleGenerateWardrobePreview(expandedWardrobe.id)
+                            }}
+                            disabled={generatingPreviewFor !== null}
+                            className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
+                          >
+                            {generatingPreviewFor === expandedWardrobe.id ? 'Generating...' : 'Generate Preview'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Full Body */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400">
+                      <Shirt className="w-4 h-4" />
+                      Full Body
+                    </div>
+                    <div className="aspect-[3/4] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                      {expandedWardrobe.fullBodyUrl ? (
+                        <img 
+                          src={expandedWardrobe.fullBodyUrl} 
+                          alt={`${expandedWardrobe.name} full body`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-400">
+                          <Shirt className="w-12 h-12" />
+                          <span className="text-sm">No full body shot</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleGenerateWardrobePreview(expandedWardrobe.id)
+                            }}
+                            disabled={generatingPreviewFor !== null}
+                            className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
+                          >
+                            {generatingPreviewFor === expandedWardrobe.id ? 'Generating...' : 'Generate Preview'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Description */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Outfit Description
+                  </h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                    {expandedWardrobe.description}
+                  </p>
+                </div>
+                
+                {/* Accessories */}
+                {expandedWardrobe.accessories && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Accessories
+                    </h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                      {expandedWardrobe.accessories}
+                    </p>
+                  </div>
+                )}
+                
+                {/* AI Reason (if from script analysis) */}
+                {expandedWardrobe.reason && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4" />
+                      AI Analysis
+                    </h4>
+                    <p className="text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 italic">
+                      {expandedWardrobe.reason}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Scene Numbers */}
+                {expandedWardrobe.sceneNumbers && expandedWardrobe.sceneNumbers.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Used in Scenes
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {expandedWardrobe.sceneNumbers.map(num => (
+                        <span 
+                          key={num}
+                          className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded"
+                        >
+                          Scene {num}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            <DialogFooter className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (expandedWardrobe) {
+                    setEditingWardrobe(true)
+                    setEditingWardrobeId(expandedWardrobe.id)
+                    setWardrobeText(expandedWardrobe.description)
+                    setAccessoriesText(expandedWardrobe.accessories || '')
+                    setExpandedWardrobe(null)
+                  }
+                }}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit
+              </Button>
+              <Button
+                onClick={() => setExpandedWardrobe(null)}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white"
+              >
+                Close
               </Button>
             </DialogFooter>
           </DialogContent>

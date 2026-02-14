@@ -115,7 +115,10 @@ interface CharacterWardrobe {
   name: string  // e.g., "Office Attire", "Casual", "Formal Event"
   description: string  // Detailed wardrobe description for image prompts
   accessories?: string  // Optional accessories
-  previewImageUrl?: string  // Generated preview image of character in this wardrobe
+  previewImageUrl?: string  // Generated preview image of character in this wardrobe (legacy)
+  headshotUrl?: string  // Headshot preview (shoulders-up)
+  fullBodyUrl?: string  // Full body preview (head-to-toe)
+  sceneNumbers?: number[]  // Which scenes this wardrobe applies to
   isDefault: boolean
   createdAt: string
 }
@@ -3880,6 +3883,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     wardrobeId?: string;
     wardrobeName?: string;
     previewImageUrl?: string;
+    headshotUrl?: string;
+    fullBodyUrl?: string;
+    sceneNumbers?: number[];
+    reason?: string;
     action?: 'add' | 'update' | 'delete' | 'setDefault';
   }) => {
     try {
@@ -3914,6 +3921,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             name: wardrobe.wardrobeName,
             description: wardrobe.defaultWardrobe,
             accessories: wardrobe.wardrobeAccessories,
+            sceneNumbers: wardrobe.sceneNumbers,
+            reason: wardrobe.reason,
             isDefault: wardrobes.length === 0, // First wardrobe is default
             createdAt: new Date().toISOString()
           }
@@ -3926,7 +3935,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   ...w, 
                   description: wardrobe.defaultWardrobe || w.description, 
                   accessories: wardrobe.wardrobeAccessories || w.accessories,
-                  ...(wardrobe.previewImageUrl ? { previewImageUrl: wardrobe.previewImageUrl } : {})
+                  ...(wardrobe.previewImageUrl ? { previewImageUrl: wardrobe.previewImageUrl } : {}),
+                  ...(wardrobe.headshotUrl ? { headshotUrl: wardrobe.headshotUrl } : {}),
+                  ...(wardrobe.fullBodyUrl ? { fullBodyUrl: wardrobe.fullBodyUrl } : {}),
+                  ...(wardrobe.sceneNumbers ? { sceneNumbers: wardrobe.sceneNumbers } : {}),
+                  ...(wardrobe.reason ? { reason: wardrobe.reason } : {})
                 }
               : w
           )
@@ -4021,6 +4034,88 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const { toast } = require('sonner')
         toast.error('Failed to update character wardrobe')
       } catch {}
+    }
+  }
+  
+  // Handle batch wardrobe updates from script analysis - replaces character wardrobes with AI suggestions
+  const handleBatchUpdateWardrobes = async (characterId: string, wardrobes: Array<{
+    name: string;
+    description: string;
+    accessories?: string;
+    sceneNumbers: number[];
+    reason: string;
+  }>) => {
+    try {
+      const updatedCharacters = characters.map(char => {
+        const charId = char.id || characters.indexOf(char).toString()
+        if (charId !== characterId) return char
+        
+        // Create wardrobe collection from AI suggestions
+        const newWardrobes: CharacterWardrobe[] = wardrobes.map((w, idx) => ({
+          id: `wardrobe-${Date.now()}-${idx}`,
+          name: w.name,
+          description: w.description,
+          accessories: w.accessories,
+          sceneNumbers: w.sceneNumbers,
+          reason: w.reason,
+          isDefault: idx === 0, // First wardrobe is default
+          createdAt: new Date().toISOString()
+        }))
+        
+        // Get default wardrobe for legacy fields
+        const defaultWdrb = newWardrobes.find(w => w.isDefault)
+        
+        return { 
+          ...char, 
+          wardrobes: newWardrobes,
+          // Keep legacy fields in sync for backwards compatibility
+          defaultWardrobe: defaultWdrb?.description,
+          wardrobeAccessories: defaultWdrb?.accessories
+        }
+      })
+      
+      setCharacters(updatedCharacters)
+      
+      // Save to database
+      if (project) {
+        const updatedVisionPhase = {
+          ...project.metadata?.visionPhase,
+          characters: updatedCharacters,
+          script: script,
+          scenes: scenes,
+          narrationVoice: narrationVoice,
+          descriptionVoice: descriptionVoice
+        }
+        
+        const updatedMetadata = {
+          ...project.metadata,
+          visionPhase: updatedVisionPhase
+        }
+        
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: updatedMetadata
+          })
+        })
+        
+        if (!response.ok) throw new Error('Failed to batch update wardrobes')
+        
+        setProject({
+          ...project,
+          metadata: updatedMetadata
+        })
+        
+        const charName = updatedCharacters.find(c => (c.id || characters.indexOf(c).toString()) === characterId)?.name || characterId
+        console.log('[Vision] Character wardrobes batch updated:', charName, wardrobes.length, 'outfits')
+        toast.success(`Updated ${charName}'s wardrobes`, {
+          description: `${wardrobes.length} outfit${wardrobes.length > 1 ? 's' : ''} assigned to scenes`
+        })
+      }
+    } catch (error) {
+      console.error('[Batch Update Wardrobes] Error:', error)
+      toast.error('Failed to update character wardrobes')
     }
   }
   
@@ -8985,6 +9080,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onUpdateCharacterName={handleUpdateCharacterName}
                 onUpdateCharacterRole={handleUpdateCharacterRole}
                 onUpdateCharacterWardrobe={handleUpdateCharacterWardrobe}
+                onBatchUpdateWardrobes={handleBatchUpdateWardrobes}
                 onAddCharacter={handleAddCharacter}
                 onRemoveCharacter={handleRemoveCharacter}
                 ttsProvider={ttsProvider}

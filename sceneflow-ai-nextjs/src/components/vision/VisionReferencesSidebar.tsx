@@ -788,6 +788,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onUpdateCharacterName,
     onUpdateCharacterRole,
     onUpdateCharacterWardrobe,
+    onBatchUpdateWardrobes,
     onAddCharacter,
     onRemoveCharacter,
     ttsProvider,
@@ -1074,6 +1075,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               onUpdateCharacterName={onUpdateCharacterName}
               onUpdateCharacterRole={onUpdateCharacterRole}
               onUpdateCharacterWardrobe={onUpdateCharacterWardrobe}
+              onBatchUpdateWardrobes={onBatchUpdateWardrobes}
               onAddCharacter={onAddCharacter}
               onRemoveCharacter={onRemoveCharacter}
               onEditCharacterImage={handleEditCharacterImage}

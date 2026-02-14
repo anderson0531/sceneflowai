@@ -97,6 +97,13 @@ interface OptimizePromptParams {
   visualDescription: string
   artStyle?: string          // User's art style selection
   customPrompt?: string      // User-crafted prompt
+  /** Current scene number (1-based) for scene-specific wardrobe selection */
+  sceneNumber?: number
+  /** Scene-specific wardrobe overrides by character ID */
+  sceneWardrobeOverrides?: Record<string, {
+    wardrobeDescription: string
+    accessories?: string
+  }>
   characterReferences?: Array<{
     referenceId?: number     // Only set for characters with GCS images
     name: string
@@ -109,6 +116,15 @@ interface OptimizePromptParams {
     defaultWardrobe?: string    // Character's standard outfit (e.g., "tailored navy suit")
     wardrobeAccessories?: string // Character's accessories (e.g., "gold watch, leather briefcase")
     appearanceDescription?: string // AI-generated physical appearance (race, age, hair, skin tone)
+    /** Wardrobe collection for scene-specific selection */
+    wardrobes?: Array<{
+      id: string
+      name: string
+      description: string
+      accessories?: string
+      isDefault: boolean
+      sceneNumbers?: number[]  // Which scenes use this wardrobe
+    }>
   }>
   /** Object/prop references from the Reference Library */
   objectReferences?: Array<{
@@ -197,6 +213,89 @@ export function generateLinkingDescription(description: string): string {
       return `a ${gender} with ${featureText}`
     }
   }
+}
+
+/**
+ * Find the appropriate wardrobe for a character in a specific scene.
+ * 
+ * Priority order:
+ * 1. Scene-specific override (from sceneWardrobeOverrides)
+ * 2. Wardrobe with matching sceneNumbers
+ * 3. Default wardrobe (isDefault: true)
+ * 4. First wardrobe in collection
+ * 5. Legacy defaultWardrobe field
+ * 
+ * @param characterRef - Character reference with wardrobes
+ * @param sceneNumber - Current scene number (1-based)
+ * @param sceneOverrides - Optional scene-specific overrides
+ * @returns {description: string, accessories?: string} or null
+ */
+export function findWardrobeForScene(
+  characterRef: {
+    name: string
+    defaultWardrobe?: string
+    wardrobeAccessories?: string
+    wardrobes?: Array<{
+      id: string
+      name: string
+      description: string
+      accessories?: string
+      isDefault: boolean
+      sceneNumbers?: number[]
+    }>
+  },
+  sceneNumber?: number,
+  sceneOverrides?: Record<string, { wardrobeDescription: string; accessories?: string }>
+): { description: string; accessories?: string } | null {
+  // Priority 1: Scene-specific override
+  const characterId = (characterRef as any).id || characterRef.name
+  if (sceneOverrides?.[characterId]) {
+    return {
+      description: sceneOverrides[characterId].wardrobeDescription,
+      accessories: sceneOverrides[characterId].accessories
+    }
+  }
+  
+  // Priority 2-4: Check wardrobes collection
+  if (characterRef.wardrobes && characterRef.wardrobes.length > 0) {
+    // Priority 2: Find wardrobe with matching sceneNumber
+    if (sceneNumber) {
+      const sceneWardrobe = characterRef.wardrobes.find(w => 
+        w.sceneNumbers && w.sceneNumbers.includes(sceneNumber)
+      )
+      if (sceneWardrobe) {
+        return {
+          description: sceneWardrobe.description,
+          accessories: sceneWardrobe.accessories
+        }
+      }
+    }
+    
+    // Priority 3: Default wardrobe
+    const defaultWardrobe = characterRef.wardrobes.find(w => w.isDefault)
+    if (defaultWardrobe) {
+      return {
+        description: defaultWardrobe.description,
+        accessories: defaultWardrobe.accessories
+      }
+    }
+    
+    // Priority 4: First wardrobe
+    return {
+      description: characterRef.wardrobes[0].description,
+      accessories: characterRef.wardrobes[0].accessories
+    }
+  }
+  
+  // Priority 5: Legacy defaultWardrobe field
+  if (characterRef.defaultWardrobe) {
+    return {
+      description: characterRef.defaultWardrobe,
+      accessories: characterRef.wardrobeAccessories
+    }
+  }
+  
+  return null
 }
 
 /**
@@ -490,14 +589,22 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
         // Get wardrobe from the full character reference
         const fullRef = params.characterReferences!.find(r => r.name === ref.name)
         
+        // Find scene-specific wardrobe (if sceneNumber provided)
+        const sceneWardrobe = fullRef ? findWardrobeForScene(
+          fullRef,
+          params.sceneNumber,
+          params.sceneWardrobeOverrides
+        ) : null
+        
         return {
           name: ref.name,
           firstName: ref.name.split(' ')[0],
           refId: ref.referenceId!,
           isFemale,
           linkingDescription, // e.g., "person [1]" or "a young man with curly hair"
-          defaultWardrobe: fullRef?.defaultWardrobe,
-          wardrobeAccessories: fullRef?.wardrobeAccessories,
+          // Use scene-specific wardrobe if found, otherwise fall back to legacy fields
+          defaultWardrobe: sceneWardrobe?.description || fullRef?.defaultWardrobe,
+          wardrobeAccessories: sceneWardrobe?.accessories || fullRef?.wardrobeAccessories,
           appearanceDescription: fullRef?.appearanceDescription
         }
       })
@@ -614,9 +721,10 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
     prompt += ' No dialogue captions, no subtitles, no watermarks.'
     
     console.log('[Prompt Optimizer] Using TEXT-MATCHING LINK MODE with', characterRefs.length, 'reference(s)')
+    console.log(`[Prompt Optimizer] Scene: ${params.sceneNumber || 'unknown'}`)
     console.log('[Prompt Optimizer] Linking descriptions (must match subjectDescription):')
     characterRefs.forEach(r => {
-      console.log(`  - ${r.name} -> "${r.linkingDescription}" | Wardrobe: ${r.defaultWardrobe || 'none'}`)
+      console.log(`  - ${r.name} -> "${r.linkingDescription}" | Wardrobe: ${r.defaultWardrobe || 'none'} (scene ${params.sceneNumber || 'N/A'})`)
     })
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
     console.log(prompt)
