@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { DndContext } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, BookOpen, Wand2, Loader2, Upload, Copy } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, BookOpen, Wand2, Loader2, Upload, Copy, CheckCircle2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -16,6 +16,7 @@ import { BackdropGeneratorModal, SceneForBackdrop, CharacterForBackdrop } from '
 import { BackdropMode } from '@/lib/vision/backdropGenerator'
 import { ObjectSuggestionPanel } from './ObjectSuggestionPanel'
 import { ImageEditModal } from './ImageEditModal'
+import { ReadinessProgress, calculateProductionReadiness, ProductionReadinessState } from '@/components/ui/StatusBadge'
 
 interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'compact'> {
   /** Project ID for uploads */
@@ -46,6 +47,10 @@ interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'comp
   onUpdateReferenceImage?: (type: 'scene' | 'object', referenceId: string, newImageUrl: string) => void
   /** Callback to edit a character's reference image */
   onEditCharacterImage?: (characterId: string, imageUrl: string) => void
+  /** Show production readiness progress section */
+  showProductionReadiness?: boolean
+  /** All scenes data for readiness calculation */
+  allScenes?: Array<{ sceneDirection?: any; imageUrl?: string; narrationAudioUrl?: string; dialogue?: Array<{ audioUrl?: string }> }>
 }
 
 interface ReferenceSectionProps {
@@ -677,6 +682,83 @@ function AddReferenceDialog({ open, onClose, onSubmit, onGenerateObject, type, i
   )
 }
 
+/**
+ * Production Readiness Section
+ * Shows progress indicators for voice assignment, scene images, and audio generation
+ */
+function ProductionReadinessSection({ readiness }: { readiness: ProductionReadinessState }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  
+  // Only show if there are items to track
+  const hasData = readiness.totalCharacters > 0 || readiness.totalScenes > 0
+  if (!hasData) return null
+  
+  return (
+    <div className="mb-3 bg-slate-800/30 border border-slate-700/50 rounded-lg overflow-hidden">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full px-3 py-2 flex items-center justify-between text-left hover:bg-slate-800/50 transition-colors"
+      >
+        <span className="text-xs font-medium text-gray-400 flex items-center gap-2">
+          <Film className="w-3.5 h-3.5 text-purple-400" />
+          Production Readiness
+        </span>
+        {isExpanded ? (
+          <ChevronUp className="w-4 h-4 text-gray-500" />
+        ) : (
+          <ChevronDown className="w-4 h-4 text-gray-500" />
+        )}
+      </button>
+      
+      {isExpanded && (
+        <div className="px-3 pb-3 space-y-3">
+          {/* Voice Assignment Progress */}
+          {readiness.totalCharacters > 0 && (
+            <ReadinessProgress
+              label="Character voices"
+              current={readiness.voicesAssigned}
+              total={readiness.totalCharacters}
+              hint={readiness.charactersMissingVoices.length > 0 
+                ? `Missing: ${readiness.charactersMissingVoices.slice(0, 2).join(', ')}${readiness.charactersMissingVoices.length > 2 ? '...' : ''}`
+                : undefined
+              }
+            />
+          )}
+          
+          {/* Scene Direction Progress */}
+          {readiness.totalScenes > 0 && (
+            <ReadinessProgress
+              label="Scene direction"
+              current={readiness.scenesWithDirection}
+              total={readiness.totalScenes}
+              hint={readiness.scenesWithDirection === 0 ? 'Generate scene directions first' : undefined}
+            />
+          )}
+          
+          {/* Scene Images Progress */}
+          {readiness.totalScenes > 0 && (
+            <ReadinessProgress
+              label="Scene images"
+              current={readiness.scenesWithImages}
+              total={readiness.totalScenes}
+            />
+          )}
+          
+          {/* Audio Generation Progress */}
+          {readiness.totalScenes > 0 && (
+            <ReadinessProgress
+              label="Audio generated"
+              current={readiness.scenesWithAudio}
+              total={readiness.totalScenes}
+              hint={!readiness.isAudioReady ? 'Assign all voices first' : undefined}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   const {
     projectId,
@@ -709,7 +791,23 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onObjectGenerated,
     onUpdateReferenceImage,
     onEditCharacterImage,
+    showProductionReadiness = true,
+    allScenes = [],
   } = props
+
+  // Calculate production readiness
+  const productionReadiness = useMemo(() => {
+    if (!showProductionReadiness) return null
+    return calculateProductionReadiness(
+      characters.map(c => ({
+        name: c.name || '',
+        type: c.type,
+        voiceConfig: c.voiceConfig,
+        referenceImageUrl: c.referenceImage
+      })),
+      allScenes
+    )
+  }, [characters, allScenes, showProductionReadiness])
 
   const [dialogType, setDialogType] = useState<VisualReferenceType | null>(null)
   const [isDialogOpen, setDialogOpen] = useState(false)
@@ -862,7 +960,32 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
         <div className="flex items-center gap-2 py-3 mb-2">
           <BookOpen className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
           <h4 className="font-bold text-base tracking-tight text-gray-900 dark:text-white leading-none">Production Bible</h4>
+          {/* Overall readiness indicator */}
+          {productionReadiness && (
+            <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
+              productionReadiness.isAudioReady 
+                ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+            }`}>
+              {productionReadiness.isAudioReady ? (
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Ready
+                </span>
+              ) : (
+                <span className="flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {productionReadiness.totalCharacters - productionReadiness.voicesAssigned} voices needed
+                </span>
+              )}
+            </span>
+          )}
         </div>
+        
+        {/* Production Readiness Section - Collapsible */}
+        {showProductionReadiness && productionReadiness && productionReadiness.totalScenes > 0 && (
+          <ProductionReadinessSection readiness={productionReadiness} />
+        )}
         
         {/* Tab Navigation - matching ScriptPanel folder tab style */}
         <div className="flex items-center border-b border-gray-700/50 mb-3 overflow-x-auto">

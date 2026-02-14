@@ -1065,13 +1065,35 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
           </div>
         )}
         
-        {/* Status Badge - Top Right */}
-        {character.voiceConfig && (
-          <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-            <Check className="w-3 h-3" />
-            Ready
-          </div>
-        )}
+        {/* Status Badges - Top Right */}
+        <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+          {/* Voice Status */}
+          {character.voiceConfig ? (
+            <div className="bg-green-500/90 text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+              <Mic className="w-3 h-3" />
+              <span>Voice</span>
+            </div>
+          ) : (
+            <div className="bg-amber-500/90 text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm" title="Assign voice for audio generation">
+              <AlertCircle className="w-3 h-3" />
+              <span>No Voice</span>
+            </div>
+          )}
+          {/* Image Status */}
+          {character.referenceImage && (
+            <div className="bg-green-500/90 text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+              <ImageIcon className="w-3 h-3" />
+              <span>Image</span>
+            </div>
+          )}
+          {/* Wardrobe Status */}
+          {wardrobes.length > 0 && (
+            <div className="bg-purple-500/90 text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+              <Shirt className="w-3 h-3" />
+              <span>{wardrobes.length}</span>
+            </div>
+          )}
+        </div>
         
                 {/* Loading overlay */}
         {(isGenerating || isUploading) && (

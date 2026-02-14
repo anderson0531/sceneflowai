@@ -123,6 +123,19 @@ const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 const SCENE_IMAGE_DELAY_MS = 5000
 
+// Production readiness state for workflow guards
+interface ProductionReadiness {
+  voicesAssigned: number
+  totalCharacters: number
+  charactersMissingVoices: string[]
+  scenesWithDirection: number
+  totalScenes: number
+  scenesWithImages: number
+  scenesWithAudio: number
+  isAudioReady: boolean
+  hasNarrationVoice: boolean
+}
+
 interface ScriptPanelProps {
   script: any
   onScriptChange: (script: any) => void
@@ -155,6 +168,8 @@ interface ScriptPanelProps {
   // NEW: Props for Production Script Header
   onGenerateAllAudio?: () => void
   isGeneratingAudio?: boolean
+  // NEW: Production readiness for workflow guards (disable actions until prerequisites met)
+  productionReadiness?: ProductionReadiness
   onPlayScript?: () => void
   // NEW: Scene management callbacks
   onAddScene?: (afterIndex?: number) => void
@@ -514,7 +529,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle, projectLogline, projectDuration, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle, projectLogline, projectDuration, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -4725,16 +4740,66 @@ function SceneCard({
                       <span className="text-xs font-medium text-gray-400 ml-2">Quick Actions</span>
                     </div>
                     <div className="flex items-center gap-2 mr-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setGenerateAllAudioConfirmOpen(true)
-                        }}
-                        className="px-3 py-1.5 text-xs font-medium bg-purple-600 hover:bg-purple-500 text-white rounded-md flex items-center gap-1.5 transition-all shadow-sm"
-                      >
-                        <Sparkles className="w-3 h-3" />
-                        Generate All Audio
-                      </button>
+                      {/* Generate All Audio button with workflow guard */}
+                      {(() => {
+                        const voicesReady = productionReadiness?.isAudioReady ?? true
+                        const missingVoices = productionReadiness?.charactersMissingVoices || []
+                        const hasNarrationVoice = productionReadiness?.hasNarrationVoice ?? true
+                        const isDisabled = !voicesReady || !hasNarrationVoice
+                        
+                        const button = (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (!isDisabled) {
+                                setGenerateAllAudioConfirmOpen(true)
+                              }
+                            }}
+                            disabled={isDisabled}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md flex items-center gap-1.5 transition-all shadow-sm ${
+                              isDisabled 
+                                ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
+                                : 'bg-purple-600 hover:bg-purple-500 text-white'
+                            }`}
+                          >
+                            <Sparkles className="w-3 h-3" />
+                            Generate All Audio
+                            {isDisabled && <span className="ml-1 text-amber-400">⚠</span>}
+                          </button>
+                        )
+                        
+                        if (isDisabled) {
+                          return (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                {button}
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom" className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-xs">
+                                <div className="space-y-1">
+                                  <p className="font-medium text-amber-400 flex items-center gap-1.5">
+                                    <AlertTriangle className="w-3.5 h-3.5" />
+                                    Voice Setup Required
+                                  </p>
+                                  {!hasNarrationVoice && (
+                                    <p className="text-xs text-gray-300">• Assign a narrator voice</p>
+                                  )}
+                                  {missingVoices.length > 0 && (
+                                    <p className="text-xs text-gray-300">
+                                      • Assign voices to: {missingVoices.slice(0, 3).join(', ')}
+                                      {missingVoices.length > 3 && ` +${missingVoices.length - 3} more`}
+                                    </p>
+                                  )}
+                                  <p className="text-[10px] text-gray-500 pt-1">
+                                    Set up voices in the Production Bible sidebar
+                                  </p>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          )
+                        }
+                        
+                        return button
+                      })()}
                       
                       {/* Generate All Audio Confirmation Dialog */}
                       <Dialog open={generateAllAudioConfirmOpen} onOpenChange={setGenerateAllAudioConfirmOpen}>

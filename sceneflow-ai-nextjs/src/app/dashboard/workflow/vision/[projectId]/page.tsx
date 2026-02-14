@@ -648,6 +648,35 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Track if we've done initial production state load to avoid resetting during active generation
   const hasInitializedProductionState = useRef(false)
   
+  // Calculate production readiness for workflow guards
+  const productionReadiness = useMemo(() => {
+    const speakingCharacters = characters.filter(c => c.type !== 'narrator')
+    const voicesAssigned = speakingCharacters.filter(c => c.voiceConfig).length
+    const charactersMissingVoices = speakingCharacters
+      .filter(c => !c.voiceConfig)
+      .map(c => c.name)
+    
+    const allScenes = script?.script?.scenes || []
+    const scenesWithDirection = allScenes.filter((s: any) => s.sceneDirection).length
+    const scenesWithImages = allScenes.filter((s: any) => s.imageUrl).length
+    const scenesWithAudio = allScenes.filter((s: any) => 
+      s.narrationAudioUrl || 
+      (s.dialogue?.some((d: any) => d.audioUrl))
+    ).length
+    
+    return {
+      voicesAssigned,
+      totalCharacters: speakingCharacters.length,
+      charactersMissingVoices,
+      scenesWithDirection,
+      totalScenes: allScenes.length,
+      scenesWithImages,
+      scenesWithAudio,
+      isAudioReady: voicesAssigned === speakingCharacters.length && speakingCharacters.length >= 0,
+      hasNarrationVoice: !!characters.find(c => c.type === 'narrator')?.voiceConfig
+    }
+  }, [characters, script])
+
   useEffect(() => {
     // Only run sanitization on initial load, not on subsequent project changes
     // This prevents resetting GENERATING status during active video generation
@@ -8556,6 +8585,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onGenerateSceneAudio={handleGenerateSceneAudio}
                 onGenerateAllAudio={handleGenerateAllAudio}
                 isGeneratingAudio={isGeneratingAudio}
+                productionReadiness={productionReadiness}
                 projectTitle={projectTitle}
                 projectLogline={projectLogline}
                 projectDuration={projectDuration || undefined}
@@ -8962,6 +8992,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onUpdateReferenceImage={handleUpdateReferenceImage}
                 onEditCharacterImage={handleEditCharacterImage}
                 scenes={script?.script?.scenes || []}
+                allScenes={script?.script?.scenes || []}
+                showProductionReadiness={true}
                 backdropCharacters={characters.map(c => ({ id: c.id, name: c.name, description: c.description, appearance: c.appearance }))}
                 onBackdropGenerated={handleBackdropGenerated}
                 onInsertBackdropSegment={handleInsertBackdropSegment}
