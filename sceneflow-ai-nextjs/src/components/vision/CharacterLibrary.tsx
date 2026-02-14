@@ -865,7 +865,8 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
 
     overlayStore.show('Analyzing portrait quality...', 10, 'character-enhance')
     try {
-      overlayStore.updateProgress(25, 'Setting up studio lighting...')
+      overlayStore.setProgress(25)
+      overlayStore.setStatus('Setting up studio lighting...')
       const response = await fetch('/api/character/enhance-reference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -878,7 +879,8 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
         }),
       })
 
-      overlayStore.updateProgress(70, 'Generating enhanced portrait...')
+      overlayStore.setProgress(70)
+      overlayStore.setStatus('Generating enhanced portrait...')
 
       if (!response.ok) {
         const error = await response.json()
@@ -893,7 +895,8 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
         throw new Error(error.error || 'Enhancement failed')
       }
 
-      overlayStore.updateProgress(90, 'Applying final retouching...')
+      overlayStore.setProgress(90)
+      overlayStore.setStatus('Applying final retouching...')
       const result = await response.json()
       
       // Show preview for confirmation with quality feedback
@@ -902,7 +905,8 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
       setShowEnhanceConfirm(true)
       setEnhanceIterationCount(result.iterationCount)
       
-      overlayStore.updateProgress(100, 'Portrait enhanced!')
+      overlayStore.setProgress(100)
+      overlayStore.setStatus('Portrait enhanced!')
       toast.success(`Enhanced to professional headshot! ${result.remainingIterations} iteration(s) remaining.`)
     } catch (error) {
       console.error('[Enhance Reference] Error:', error)

@@ -93,12 +93,13 @@ export function CharacterPromptBuilder({
     if (!hasUserEditedAdvanced) setAdvancedPrompt(constructed)
   }, [open, character, hasUserEditedAdvanced])
 
-  // Cleanup on close
+  // Cleanup on close - reset all state including hasUserEditedAdvanced to ensure fresh prompts
   useEffect(() => {
     if (!open) {
       setAssistInstruction('')
       setCopied(false)
       setIsOptimizing(false)
+      setHasUserEditedAdvanced(false) // Reset so new character gets fresh prompt
     }
   }, [open])
 
