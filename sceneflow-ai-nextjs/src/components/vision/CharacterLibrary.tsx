@@ -1415,6 +1415,24 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
           {character.description}
         </p>
         
+        {/* Voice Button - Above Wardrobes */}
+        <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setVoiceDialogOpen(true)
+            }}
+            className={`w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs rounded-lg transition-colors ${
+              character.voiceConfig
+                ? 'bg-green-500/10 border border-green-500/30 text-green-400 hover:bg-green-500/20'
+                : 'bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
+            }`}
+          >
+            <Volume2 className="w-3.5 h-3.5" />
+            {character.voiceConfig ? 'Voice' : 'Add Voice'}
+          </button>
+        </div>
+        
         {/* Wardrobe Section - Collapsible with Collection Management */}
         <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
           <button
@@ -1571,41 +1589,20 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {/* Action Buttons - Row 1 */}
-                  <div className="flex gap-2">
-                    {/* Add New Wardrobe Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setShowAddWardrobeForm(true)
-                        setWardrobeText('')
-                        setAccessoriesText('')
-                        setWardrobeName('')
-                      }}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded border border-blue-200 dark:border-blue-700 hover:bg-blue-200 dark:hover:bg-blue-800/40"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      Add Outfit
-                    </button>
-                    
-                    {/* AI Recommend Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleGenerateWardrobe(true, true) // Recommend and add as new
-                      }}
-                      disabled={isGeneratingWardrobe}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="AI recommends wardrobe based on character profile and screenplay context"
-                    >
-                      {isGeneratingWardrobe ? (
-                        <Loader className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <Wand2 className="w-3.5 h-3.5" />
-                      )}
-                      {isGeneratingWardrobe ? 'Generating...' : 'AI Recommend'}
-                    </button>
-                  </div>
+                  {/* Add New Wardrobe Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowAddWardrobeForm(true)
+                      setWardrobeText('')
+                      setAccessoriesText('')
+                      setWardrobeName('')
+                    }}
+                    className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded border border-blue-200 dark:border-blue-700 hover:bg-blue-200 dark:hover:bg-blue-800/40"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add Outfit
+                  </button>
                   
                   {/* Analyze Script Button - Full Width */}
                   {scenes && scenes.length > 0 && (
@@ -1626,7 +1623,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                       ) : (
                         <>
                           <FileText className="w-4 h-4" />
-                          <span>Analyze Script for Wardrobes</span>
+                          <span>Generate Wardrobe</span>
                           <span className="text-[10px] opacity-75">({scenes.length} scenes)</span>
                         </>
                       )}
@@ -1790,11 +1787,6 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                                 <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
                                   {w.name}
                                 </span>
-                                {w.isDefault && (
-                                  <span className="text-[10px] px-1 py-0.5 bg-green-500/20 text-green-600 dark:text-green-400 rounded">
-                                    Default
-                                  </span>
-                                )}
                                 {w.sceneNumbers && w.sceneNumbers.length > 0 && (
                                   <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded">
                                     {w.sceneNumbers.length === 1 
@@ -1870,7 +1862,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                     </div>
                   ) : (
                     <p className="text-xs text-gray-400 italic text-center py-2">
-                      No wardrobes defined. Add an outfit or let AI recommend one.
+                      No wardrobes defined. Add an outfit or use Generate Wardrobe to analyze your script.
                     </p>
                   )}
                   
@@ -1883,40 +1875,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
           )}
         </div>
         
-        {/* Voice & Wardrobe Action Buttons - Simplified Row */}
-        <div className="pt-2 border-t border-gray-200 dark:border-gray-700 flex gap-2">
-          {/* Voice Button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setVoiceDialogOpen(true)
-            }}
-            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs rounded-lg transition-colors ${
-              character.voiceConfig
-                ? 'bg-green-500/10 border border-green-500/30 text-green-400 hover:bg-green-500/20'
-                : 'bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
-            }`}
-          >
-            <Volume2 className="w-3.5 h-3.5" />
-            {character.voiceConfig ? 'Voice' : 'Add Voice'}
-          </button>
-          
-          {/* Wardrobe Button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setWardrobeSectionExpanded(!wardrobeSectionExpanded)
-            }}
-            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs rounded-lg transition-colors ${
-              wardrobes.length > 0
-                ? 'bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500/20'
-                : 'bg-gray-500/10 border border-gray-500/30 text-gray-400 hover:bg-gray-500/20'
-            }`}
-          >
-            <Shirt className="w-3.5 h-3.5" />
-            {wardrobes.length > 0 ? `${wardrobes.length} Outfit${wardrobes.length > 1 ? 's' : ''}` : 'Wardrobe'}
-          </button>
-        </div>
+
         
         {/* Browse Voices Dialog */}
         <BrowseVoicesDialog
@@ -2056,11 +2015,6 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
               <DialogTitle className="flex items-center gap-2">
                 <Shirt className="w-5 h-5 text-purple-500" />
                 {expandedWardrobe?.name || 'Wardrobe Details'}
-                {expandedWardrobe?.isDefault && (
-                  <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-600 dark:text-green-400 rounded">
-                    Default
-                  </span>
-                )}
                 {expandedWardrobe?.sceneNumbers && expandedWardrobe.sceneNumbers.length > 0 && (
                   <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded">
                     {expandedWardrobe.sceneNumbers.length === 1 

@@ -134,7 +134,8 @@ export async function POST(req: NextRequest) {
         
         console.log(`[Wardrobe Preview] Headshot generated: ${wardrobe.wardrobeId}`)
         
-        // 2. Generate FULL BODY (3:4 portrait)
+        // 2. Generate FULL BODY (9:16 portrait for better full-body framing)
+        // Use the HEADSHOT as reference to ensure facial consistency
         const fullBodyPrompt = buildFullBodyPrompt(
           characterName,
           appearanceDescription,
@@ -145,13 +146,13 @@ export async function POST(req: NextRequest) {
         console.log(`[Wardrobe Preview] Full body prompt: ${fullBodyPrompt.substring(0, 100)}...`)
 
         const fullBodyBase64 = await generateImageWithGemini(fullBodyPrompt, {
-          aspectRatio: '3:4', // Portrait showing full body
+          aspectRatio: '9:16', // Tall portrait for full-body head-to-toe framing
           numberOfImages: 1,
           personGeneration: 'allow_adult',
           referenceImages: [{
             referenceId: 1,
-            imageUrl: characterReferenceImageUrl,
-            subjectDescription: `${characterName}, the person in this reference photo`
+            imageUrl: headshotUrl,  // Use the generated headshot for facial consistency
+            subjectDescription: `${characterName}, the person shown in this headshot photo - match their face exactly`
           }]
         })
         
@@ -304,8 +305,8 @@ function buildHeadshotPrompt(
 }
 
 /**
- * Build a prompt for generating a FULL BODY shot (3:4)
- * Shows complete outfit from head to toe
+ * Build a prompt for generating a FULL BODY shot (9:16)
+ * Shows complete outfit from head to toe with explicit outfit parsing
  */
 function buildFullBodyPrompt(
   characterName: string,
@@ -315,8 +316,9 @@ function buildFullBodyPrompt(
 ): string {
   const parts: string[] = []
   
-  // Subject identification
-  parts.push(`Full body fashion photograph of ${characterName}`)
+  // Strong framing directive FIRST to prevent headshot generation
+  parts.push('Full-length fashion photograph showing entire body from head to feet')
+  parts.push(`Subject: ${characterName} standing in frame`)
   
   // Include brief appearance hint
   if (appearanceDescription) {
@@ -326,26 +328,103 @@ function buildFullBodyPrompt(
     }
   }
   
-  // FULL wardrobe description is the star here
+  // Parse and structure the wardrobe description for better generation
   if (wardrobeDescription) {
-    parts.push(`wearing complete outfit: ${wardrobeDescription}`)
+    const outfitParts = parseOutfitDescription(wardrobeDescription)
+    
+    // Build structured outfit description
+    parts.push('Complete outfit visible head to toe:')
+    if (outfitParts.top) parts.push(`Upper body: ${outfitParts.top}`)
+    if (outfitParts.bottom) parts.push(`Lower body: ${outfitParts.bottom}`)
+    if (outfitParts.footwear) parts.push(`Footwear: ${outfitParts.footwear}`)
+    if (outfitParts.outerwear) parts.push(`Outerwear: ${outfitParts.outerwear}`)
+    if (outfitParts.other) parts.push(outfitParts.other)
+    
+    // Also include full description for context
+    parts.push(`Full outfit: ${wardrobeDescription}`)
   }
   
   // ALL accessories
   if (accessories) {
-    parts.push(`accessories: ${accessories}`)
+    parts.push(`Accessories visible: ${accessories}`)
   }
   
+  // CRITICAL: Anti-headshot directives
+  parts.push('IMPORTANT: This is NOT a headshot or portrait')
+  parts.push('Camera position: Medium-wide shot, 6-8 feet from subject')
+  parts.push('Framing: Full figure visible including feet and floor')
+  parts.push('Standing pose showing complete outfit')
+  
   // Photo style directives for full body
-  parts.push('Professional fashion photography')
-  parts.push('Full body shot from head to feet')
-  parts.push('Standing pose, natural posture')
-  parts.push('Soft studio lighting')
-  parts.push('Clean neutral gray backdrop')
-  parts.push('Sharp focus throughout')
-  parts.push('Complete outfit clearly visible')
-  parts.push('Shoes and accessories visible')
-  parts.push('High-end fashion catalog quality')
+  parts.push('Professional fashion catalog photography')
+  parts.push('Clean neutral gray studio backdrop')
+  parts.push('Even soft studio lighting on entire figure')
+  parts.push('Sharp focus on both face and outfit details')
+  parts.push('Feet and shoes clearly visible at bottom of frame')
+  parts.push('Natural confident standing pose')
+  parts.push('High-end fashion editorial quality')
   
   return parts.join('. ') + '.'
+}
+
+/**
+ * Parse outfit description to extract specific clothing items
+ * Helps structure the prompt for better full-body generation
+ */
+function parseOutfitDescription(description: string): {
+  top?: string
+  bottom?: string
+  footwear?: string
+  outerwear?: string
+  other?: string
+} {
+  const result: {
+    top?: string
+    bottom?: string
+    footwear?: string
+    outerwear?: string
+    other?: string
+  } = {}
+  
+  const lower = description.toLowerCase()
+  const parts = description.split(/[,;.]/).map(s => s.trim()).filter(Boolean)
+  
+  // Keywords for categorization
+  const topKeywords = /shirt|blouse|top|tee|t-shirt|sweater|pullover|polo|tank|camisole|vest|cardigan/i
+  const bottomKeywords = /pants|trousers|jeans|skirt|shorts|slacks|leggings|chinos|khakis/i
+  const footwearKeywords = /shoes|boots|sneakers|heels|loafers|sandals|oxfords|flats|pumps|trainers|footwear/i
+  const outerwearKeywords = /jacket|coat|blazer|overcoat|parka|windbreaker|hoodie|raincoat|cardigan|cape/i
+  
+  const topParts: string[] = []
+  const bottomParts: string[] = []
+  const footwearParts: string[] = []
+  const outerwearParts: string[] = []
+  const otherParts: string[] = []
+  
+  for (const part of parts) {
+    if (footwearKeywords.test(part)) {
+      footwearParts.push(part)
+    } else if (outerwearKeywords.test(part)) {
+      outerwearParts.push(part)
+    } else if (bottomKeywords.test(part)) {
+      bottomParts.push(part)
+    } else if (topKeywords.test(part)) {
+      topParts.push(part)
+    } else {
+      otherParts.push(part)
+    }
+  }
+  
+  if (topParts.length > 0) result.top = topParts.join(', ')
+  if (bottomParts.length > 0) result.bottom = bottomParts.join(', ')
+  if (footwearParts.length > 0) result.footwear = footwearParts.join(', ')
+  if (outerwearParts.length > 0) result.outerwear = outerwearParts.join(', ')
+  if (otherParts.length > 0) result.other = otherParts.join(', ')
+  
+  // If no footwear was explicitly mentioned, add a hint
+  if (!result.footwear && !lower.includes('shoe') && !lower.includes('boot') && !lower.includes('foot')) {
+    result.footwear = 'appropriate footwear matching the outfit'
+  }
+  
+  return result
 }
