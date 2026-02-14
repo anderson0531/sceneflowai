@@ -306,7 +306,8 @@ function buildHeadshotPrompt(
 
 /**
  * Build a prompt for generating a FULL BODY shot (9:16)
- * Shows complete outfit from head to toe with explicit outfit parsing
+ * Uses a flowing natural language prompt structure proven to generate full-body images
+ * Example: "A full body studio portrait of a middle-aged Black man with short salt-and-pepper hair..."
  */
 function buildFullBodyPrompt(
   characterName: string,
@@ -314,57 +315,58 @@ function buildFullBodyPrompt(
   wardrobeDescription?: string,
   accessories?: string
 ): string {
-  const parts: string[] = []
+  // Build a single flowing prompt - this structure is proven to generate actual full-body shots
+  const promptParts: string[] = []
   
-  // Strong framing directive FIRST to prevent headshot generation
-  parts.push('Full-length fashion photograph showing entire body from head to feet')
-  parts.push(`Subject: ${characterName} standing in frame`)
+  // Start with the critical framing - "A full body studio portrait"
+  promptParts.push('A full body studio portrait')
   
-  // Include brief appearance hint
+  // Add character appearance description
   if (appearanceDescription) {
-    const brief = appearanceDescription.split('.')[0].slice(0, 60)
-    if (brief) {
-      parts.push(brief)
+    // Extract key physical descriptors (first 1-2 sentences)
+    const appearanceBrief = appearanceDescription.split('.').slice(0, 2).join('.').trim()
+    if (appearanceBrief) {
+      promptParts.push(`of ${characterName}, ${appearanceBrief}`)
+    } else {
+      promptParts.push(`of ${characterName}`)
+    }
+  } else {
+    promptParts.push(`of ${characterName}`)
+  }
+  
+  // Parse wardrobe into structured outfit description
+  if (wardrobeDescription) {
+    const outfit = parseOutfitDescription(wardrobeDescription)
+    
+    // Build outfit description in natural language order (top to bottom)
+    const outfitItems: string[] = []
+    
+    if (outfit.outerwear) outfitItems.push(outfit.outerwear)
+    if (outfit.top) outfitItems.push(outfit.top)
+    if (outfit.bottom) outfitItems.push(outfit.bottom)
+    if (outfit.footwear) outfitItems.push(outfit.footwear)
+    if (outfit.other) outfitItems.push(outfit.other)
+    
+    if (outfitItems.length > 0) {
+      promptParts.push(`He is wearing ${outfitItems.join(', ')}`)
+    } else {
+      // Fallback to original description if parsing didn't extract items
+      promptParts.push(`He is wearing ${wardrobeDescription}`)
     }
   }
   
-  // Parse and structure the wardrobe description for better generation
-  if (wardrobeDescription) {
-    const outfitParts = parseOutfitDescription(wardrobeDescription)
-    
-    // Build structured outfit description
-    parts.push('Complete outfit visible head to toe:')
-    if (outfitParts.top) parts.push(`Upper body: ${outfitParts.top}`)
-    if (outfitParts.bottom) parts.push(`Lower body: ${outfitParts.bottom}`)
-    if (outfitParts.footwear) parts.push(`Footwear: ${outfitParts.footwear}`)
-    if (outfitParts.outerwear) parts.push(`Outerwear: ${outfitParts.outerwear}`)
-    if (outfitParts.other) parts.push(outfitParts.other)
-    
-    // Also include full description for context
-    parts.push(`Full outfit: ${wardrobeDescription}`)
-  }
-  
-  // ALL accessories
+  // Add accessories in natural language
   if (accessories) {
-    parts.push(`Accessories visible: ${accessories}`)
+    promptParts.push(`with ${accessories}`)
   }
   
-  // CRITICAL: Anti-headshot directives
-  parts.push('IMPORTANT: This is NOT a headshot or portrait')
-  parts.push('Camera position: Medium-wide shot, 6-8 feet from subject')
-  parts.push('Framing: Full figure visible including feet and floor')
-  parts.push('Standing pose showing complete outfit')
+  // Add pose and setting - crucial for full body framing
+  promptParts.push('He is standing with a relaxed posture against a textured gray studio backdrop')
   
-  // Photo style directives for full body
-  parts.push('Professional fashion catalog photography')
-  parts.push('Clean neutral gray studio backdrop')
-  parts.push('Even soft studio lighting on entire figure')
-  parts.push('Sharp focus on both face and outfit details')
-  parts.push('Feet and shoes clearly visible at bottom of frame')
-  parts.push('Natural confident standing pose')
-  parts.push('High-end fashion editorial quality')
+  // Technical photography directives - the "wide-angle lens showing head to toe" is critical
+  promptParts.push('Sharp focus, high-resolution photography, wide-angle lens showing the subject from head to toe, cinematically lit')
   
-  return parts.join('. ') + '.'
+  return promptParts.join('. ') + '.'
 }
 
 /**
