@@ -5889,6 +5889,48 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  const handleAddToReferenceLibrary = async (imageUrl: string, name: string, sceneNumber: number) => {
+    // Add the scene frame to the scene references library
+    const newReference: VisualReference = {
+      id: crypto.randomUUID(),
+      type: 'scene',
+      name,
+      description: `Scene ${sceneNumber} keyframe`,
+      imageUrl,
+      createdAt: new Date().toISOString(),
+    }
+    const updatedSceneRefs = [...sceneReferences, newReference]
+    setSceneReferences(updatedSceneRefs)
+    
+    // Save to database
+    try {
+      const existingMetadata = project?.metadata || {}
+      const existingVisionPhase = existingMetadata.visionPhase || {}
+      
+      await fetch(`/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          metadata: {
+            ...existingMetadata,
+            visionPhase: {
+              ...existingVisionPhase,
+              references: {
+                sceneReferences: updatedSceneRefs,
+                objectReferences
+              }
+            }
+          }
+        })
+      })
+    } catch (error) {
+      console.error('[handleAddToReferenceLibrary] Error saving:', error)
+    }
+    
+    // Show success toast
+    try { const { toast } = require('sonner'); toast.success(`Added "${name}" to Reference Library`) } catch {}
+  }
+
   const handleUpdateCharacterAttributes = async (characterId: string, attributes: any) => {
     try {
       console.log('[Vision] Updating character attributes:', characterId, attributes)
@@ -8792,47 +8834,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 generatingKeyframeSceneNumber={generatingKeyframeSceneNumber}
                 selectedSceneIndex={selectedSceneIndex}
                 onSelectSceneIndex={setSelectedSceneIndex}
-                onAddToReferenceLibrary={async (imageUrl: string, name: string, sceneNumber: number) => {
-                  // Add the scene frame to the scene references library
-                  const newReference: VisualReference = {
-                    id: crypto.randomUUID(),
-                    type: 'scene',
-                    name,
-                    description: `Scene ${sceneNumber} keyframe`,
-                    imageUrl,
-                    createdAt: new Date().toISOString(),
-                  }
-                  const updatedSceneRefs = [...sceneReferences, newReference]
-                  setSceneReferences(updatedSceneRefs)
-                  
-                  // Save to database
-                  try {
-                    const existingMetadata = project?.metadata || {}
-                    const existingVisionPhase = existingMetadata.visionPhase || {}
-                    
-                    await fetch(`/api/projects/${projectId}`, {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        metadata: {
-                          ...existingMetadata,
-                          visionPhase: {
-                            ...existingVisionPhase,
-                            references: {
-                              sceneReferences: updatedSceneRefs,
-                              objectReferences
-                            }
-                          }
-                        }
-                      })
-                    })
-                  } catch (error) {
-                    console.error('[onAddToReferenceLibrary] Error saving:', error)
-                  }
-                  
-                  // Show success toast
-                  toast.success(`Added "${name}" to Reference Library`)
-                }}
+                onAddToReferenceLibrary={handleAddToReferenceLibrary}
                 openScriptEditorWithInstruction={reviseScriptInstruction || null}
                 onClearScriptEditorInstruction={() => setReviseScriptInstruction('')}
                 storedTranslations={storedTranslations}
