@@ -12,18 +12,14 @@ export const maxDuration = 180
 /**
  * Generate Wardrobe Preview API
  * 
- * Generates TWO preview images of a character wearing a specific wardrobe:
- * 1. Headshot (1:1) - Portrait showing face with outfit context
- * 2. Full Body (3:4) - Full body shot showing complete outfit head to toe
+ * Generates a single full-body studio portrait of a character in a specific wardrobe.
+ * Uses the character's reference image for facial consistency.
+ * Based on script context, puts the character in role (expression, demeanor).
  * 
- * Uses the character's reference image as a subject reference and applies
- * the wardrobe description to create consistent previews.
- * 
- * Credit cost: 10 credits per wardrobe (2 images × 5 credits each)
+ * Credit cost: 5 credits per wardrobe (1 full-body image)
  */
 
-const CREDIT_COST_PER_IMAGE = IMAGE_CREDITS.GEMINI_EDIT // 5 credits per image
-const CREDIT_COST_PER_WARDROBE = CREDIT_COST_PER_IMAGE * 2 // 10 credits for headshot + full body
+const CREDIT_COST_PER_WARDROBE = IMAGE_CREDITS.GEMINI_EDIT // 5 credits for full body image
 
 export async function POST(req: NextRequest) {
   try {
@@ -48,9 +44,11 @@ export async function POST(req: NextRequest) {
       appearanceDescription,
       wardrobeDescription,
       wardrobeAccessories,
+      wardrobeReason, // AI analysis/reason for character state context
+      sceneNumbers,   // Scene numbers for context
       // For batch generation
       batch = false,
-      wardrobes = [] // Array of { wardrobeId, description, accessories }
+      wardrobes = [] // Array of { wardrobeId, description, accessories, reason, sceneNumbers }
     } = body
 
     // Validate required fields
@@ -66,14 +64,14 @@ export async function POST(req: NextRequest) {
     const wardrobesToGenerate = batch && wardrobes.length > 0
       ? wardrobes
       : wardrobeId && wardrobeDescription
-        ? [{ wardrobeId, description: wardrobeDescription, accessories: wardrobeAccessories }]
+        ? [{ wardrobeId, description: wardrobeDescription, accessories: wardrobeAccessories, reason: wardrobeReason, sceneNumbers }]
         : []
 
     if (wardrobesToGenerate.length === 0) {
       return NextResponse.json({ error: 'At least one wardrobe is required' }, { status: 400 })
     }
 
-    // Calculate total credit cost (2 images per wardrobe: headshot + full body)
+    // Calculate total credit cost (1 full-body image per wardrobe)
     const totalCreditCost = CREDIT_COST_PER_WARDROBE * wardrobesToGenerate.length
 
     // 2. Pre-check credit balance
@@ -90,12 +88,11 @@ export async function POST(req: NextRequest) {
       }, { status: 402 })
     }
 
-    console.log(`[Wardrobe Preview] Generating ${wardrobesToGenerate.length} preview set(s) for ${characterName} (headshot + full body each)`)
+    console.log(`[Wardrobe Preview] Generating ${wardrobesToGenerate.length} full-body portrait(s) for ${characterName}`)
 
     // Generate previews for each wardrobe
     const results: Array<{
       wardrobeId: string
-      headshotUrl: string
       fullBodyUrl: string
       previewImageUrl: string // Legacy fallback
       success: boolean
@@ -104,46 +101,18 @@ export async function POST(req: NextRequest) {
 
     for (const wardrobe of wardrobesToGenerate) {
       try {
-        console.log(`[Wardrobe Preview] Generating headshot + full body for: ${wardrobe.wardrobeId}`)
+        console.log(`[Wardrobe Preview] Generating full-body portrait for: ${wardrobe.wardrobeId}`)
         
-        // 1. Generate HEADSHOT (1:1 square)
-        const headshotPrompt = buildHeadshotPrompt(
-          characterName,
-          appearanceDescription,
-          wardrobe.description,
-          wardrobe.accessories
-        )
-        
-        console.log(`[Wardrobe Preview] Headshot prompt: ${headshotPrompt.substring(0, 100)}...`)
-
-        const headshotBase64 = await generateImageWithGemini(headshotPrompt, {
-          aspectRatio: '1:1', // Square portrait
-          numberOfImages: 1,
-          personGeneration: 'allow_adult',
-          referenceImages: [{
-            referenceId: 1,
-            imageUrl: characterReferenceImageUrl,
-            subjectDescription: `${characterName}, the person in this reference photo`
-          }]
-        })
-        
-        const headshotUrl = await uploadImageToBlob(
-          headshotBase64,
-          `wardrobes/${characterId || 'char'}-${wardrobe.wardrobeId}-headshot-${Date.now()}.png`
-        )
-        
-        console.log(`[Wardrobe Preview] Headshot generated: ${wardrobe.wardrobeId}`)
-        
-        // 2. Generate FULL BODY (9:16 portrait for better full-body framing)
-        // Use the HEADSHOT as reference to ensure facial consistency
+        // Generate FULL BODY studio portrait using character reference
         const fullBodyPrompt = buildFullBodyPrompt(
           characterName,
           appearanceDescription,
           wardrobe.description,
-          wardrobe.accessories
+          wardrobe.accessories,
+          wardrobe.reason // Pass reason for character state/expression context
         )
         
-        console.log(`[Wardrobe Preview] Full body prompt: ${fullBodyPrompt.substring(0, 100)}...`)
+        console.log(`[Wardrobe Preview] Full body prompt: ${fullBodyPrompt.substring(0, 150)}...`)
 
         const fullBodyBase64 = await generateImageWithGemini(fullBodyPrompt, {
           aspectRatio: '9:16', // Tall portrait for full-body head-to-toe framing
@@ -151,8 +120,8 @@ export async function POST(req: NextRequest) {
           personGeneration: 'allow_adult',
           referenceImages: [{
             referenceId: 1,
-            imageUrl: headshotUrl,  // Use the generated headshot for facial consistency
-            subjectDescription: `${characterName}, the person shown in this headshot photo - match their face exactly`
+            imageUrl: characterReferenceImageUrl, // Use character reference for facial consistency
+            subjectDescription: `${characterName}, the person in this reference photo - match their face exactly`
           }]
         })
         
@@ -165,19 +134,15 @@ export async function POST(req: NextRequest) {
         
         results.push({
           wardrobeId: wardrobe.wardrobeId,
-          headshotUrl,
           fullBodyUrl,
           previewImageUrl: fullBodyUrl, // Legacy compatibility
           success: true
         })
         
-        console.log(`[Wardrobe Preview] Complete set generated: ${wardrobe.wardrobeId}`)
-        
       } catch (error: any) {
         console.error(`[Wardrobe Preview] Failed for ${wardrobe.wardrobeId}:`, error)
         results.push({
           wardrobeId: wardrobe.wardrobeId,
-          headshotUrl: '',
           fullBodyUrl: '',
           previewImageUrl: '',
           success: false,
@@ -203,11 +168,11 @@ export async function POST(req: NextRequest) {
             operation: 'generate_wardrobe_preview', 
             characterId, 
             wardrobeCount: successfulCount,
-            imagesGenerated: successfulCount * 2, // headshot + full body
+            imagesGenerated: successfulCount, // 1 full-body image per wardrobe
             model: 'imagen-3-capability' 
           }
         )
-        console.log(`[Wardrobe Preview] Charged ${chargedCredits} credits for ${successfulCount} wardrobes (${successfulCount * 2} images)`)
+        console.log(`[Wardrobe Preview] Charged ${chargedCredits} credits for ${successfulCount} wardrobe(s)`)
         const breakdown = await CreditService.getCreditBreakdown(userId)
         newBalance = breakdown.total_credits
       } catch (chargeError: any) {
@@ -231,7 +196,6 @@ export async function POST(req: NextRequest) {
       if (result?.success) {
         return NextResponse.json({ 
           success: true, 
-          headshotUrl: result.headshotUrl,
           fullBodyUrl: result.fullBodyUrl,
           previewImageUrl: result.previewImageUrl, // Legacy compatibility
           wardrobeId: result.wardrobeId,
@@ -254,66 +218,16 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * Build a prompt for generating a HEADSHOT preview (1:1)
- * Focus on face and upper body, showing outfit context
- */
-function buildHeadshotPrompt(
-  characterName: string,
-  appearanceDescription?: string,
-  wardrobeDescription?: string,
-  accessories?: string
-): string {
-  const parts: string[] = []
-  
-  // Subject identification
-  parts.push(`Professional portrait photograph of ${characterName}`)
-  
-  // Include appearance hints (brief, focus on face/identity)
-  if (appearanceDescription) {
-    const brief = appearanceDescription.split('.')[0].slice(0, 80)
-    if (brief) {
-      parts.push(brief)
-    }
-  }
-  
-  // Wardrobe context (upper portion visible)
-  if (wardrobeDescription) {
-    parts.push(`wearing ${wardrobeDescription}`)
-  }
-  
-  // Key accessories (especially ones visible in headshot)
-  if (accessories) {
-    // Filter to accessories visible in headshot
-    const headshotAccessories = accessories.split(',')
-      .filter(a => /glasses|earring|necklace|tie|collar|watch|scarf|hat|hair/i.test(a))
-      .join(', ')
-    if (headshotAccessories) {
-      parts.push(`with ${headshotAccessories}`)
-    }
-  }
-  
-  // Photo style directives for headshot
-  parts.push('Professional headshot photography')
-  parts.push('Head and shoulders framing')
-  parts.push('Soft studio lighting with subtle fill')
-  parts.push('Clean neutral gray background')
-  parts.push('Sharp focus on face')
-  parts.push('Natural confident expression')
-  parts.push('High-end fashion editorial quality')
-  
-  return parts.join('. ') + '.'
-}
-
-/**
  * Build a prompt for generating a FULL BODY shot (9:16)
  * Uses a flowing natural language prompt structure proven to generate full-body images
- * Example: "A full body studio portrait of a middle-aged Black man with short salt-and-pepper hair..."
+ * Includes character state/expression based on script context (reason)
  */
 function buildFullBodyPrompt(
   characterName: string,
   appearanceDescription?: string,
   wardrobeDescription?: string,
-  accessories?: string
+  accessories?: string,
+  reason?: string // AI analysis for character state/expression context
 ): string {
   // Build a single flowing prompt - this structure is proven to generate actual full-body shots
   const promptParts: string[] = []
@@ -358,6 +272,27 @@ function buildFullBodyPrompt(
   // Add accessories in natural language
   if (accessories) {
     promptParts.push(`with ${accessories}`)
+  }
+  
+  // Extract character state/expression from reason (AI analysis)
+  if (reason) {
+    // Look for emotional/physical state descriptors in the analysis
+    const statePatterns = [
+      /emphasiz(?:ing|es?)\s+(?:his\s+)?([\w\s]+?)(?:\.|,|$)/i,
+      /convey(?:ing|s?)\s+(?:his\s+)?([\w\s]+?)(?:\.|,|$)/i,
+      /reflect(?:ing|s?)\s+(?:his\s+)?([\w\s]+?)(?:\.|,|$)/i,
+      /show(?:ing|s?)\s+(?:his\s+)?([\w\s]+?)(?:\.|,|$)/i,
+      /(exhaustion|weariness|determination|focus|desperation|confidence|anxiety)/i
+    ]
+    
+    for (const pattern of statePatterns) {
+      const match = reason.match(pattern)
+      if (match && match[1]) {
+        const state = match[1].trim().slice(0, 40) // Limit length
+        promptParts.push(`His expression and demeanor convey ${state}`)
+        break
+      }
+    }
   }
   
   // Add pose and setting - crucial for full body framing

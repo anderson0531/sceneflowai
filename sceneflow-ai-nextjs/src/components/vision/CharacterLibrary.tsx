@@ -2031,63 +2031,24 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
             
             {expandedWardrobe && (
               <div className="space-y-6 py-4">
-                {/* Image Preview Section - Headshot & Full Body */}
-                <div className="grid grid-cols-2 gap-6">
-                  {/* Headshot */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-                      <User className="w-4 h-4" />
-                      Headshot
-                    </div>
-                    <div className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-                      {expandedWardrobe.headshotUrl ? (
-                        <img 
-                          src={expandedWardrobe.headshotUrl} 
-                          alt={`${expandedWardrobe.name} headshot`}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : expandedWardrobe.previewImageUrl ? (
-                        <img 
-                          src={expandedWardrobe.previewImageUrl} 
-                          alt={`${expandedWardrobe.name} preview`}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-400">
-                          <User className="w-12 h-12" />
-                          <span className="text-sm">No headshot</span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleGenerateWardrobePreview(expandedWardrobe.id)
-                            }}
-                            disabled={generatingPreviewFor !== null}
-                            className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
-                          >
-                            {generatingPreviewFor === expandedWardrobe.id ? 'Generating...' : 'Generate Preview'}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Full Body */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400">
+                {/* Full Body Studio Portrait */}
+                <div className="flex justify-center">
+                  <div className="w-full max-w-sm space-y-2">
+                    <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400">
                       <Shirt className="w-4 h-4" />
-                      Full Body
+                      Full Body Portrait
                     </div>
-                    <div className="aspect-[3/4] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-                      {expandedWardrobe.fullBodyUrl ? (
+                    <div className="aspect-[9/16] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                      {(expandedWardrobe.fullBodyUrl || expandedWardrobe.previewImageUrl) ? (
                         <img 
-                          src={expandedWardrobe.fullBodyUrl} 
+                          src={expandedWardrobe.fullBodyUrl || expandedWardrobe.previewImageUrl} 
                           alt={`${expandedWardrobe.name} full body`}
                           className="w-full h-full object-cover"
                         />
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-400">
                           <Shirt className="w-12 h-12" />
-                          <span className="text-sm">No full body shot</span>
+                          <span className="text-sm">No preview</span>
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
@@ -2126,12 +2087,12 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                   </div>
                 )}
                 
-                {/* AI Reason (if from script analysis) */}
+                {/* Reason (if from script analysis) */}
                 {expandedWardrobe.reason && (
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-amber-600 dark:text-amber-400 flex items-center gap-2">
                       <Sparkles className="w-4 h-4" />
-                      AI Analysis
+                      Analysis
                     </h4>
                     <p className="text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 italic">
                       {expandedWardrobe.reason}
