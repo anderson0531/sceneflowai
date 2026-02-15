@@ -102,10 +102,10 @@ export async function POST(req: NextRequest) {
 
     for (const wardrobe of wardrobesToGenerate) {
       try {
-        console.log(`[Wardrobe Preview] Generating full-body portrait for: ${wardrobe.wardrobeId}`)
+        console.log(`[Wardrobe Preview] Generating medium shot for: ${wardrobe.wardrobeId}`)
         
-        // Generate FULL BODY studio portrait using character reference
-        const fullBodyPrompt = buildFullBodyPrompt(
+        // Generate MEDIUM CLOSE-UP studio portrait using character reference with FACE_MESH
+        const mediumShotPrompt = buildMediumShotPrompt(
           characterName,
           appearanceDescription,
           wardrobe.description,
@@ -114,13 +114,13 @@ export async function POST(req: NextRequest) {
           gender // Pass gender for pronoun usage
         )
         
-        console.log(`[Wardrobe Preview] Full body prompt: ${fullBodyPrompt.substring(0, 150)}...`)
+        console.log(`[Wardrobe Preview] Medium shot prompt: ${mediumShotPrompt.substring(0, 150)}...`)
 
-        const fullBodyBase64 = await generateImageWithGemini(fullBodyPrompt, {
-          aspectRatio: '9:16', // Tall portrait for full-body head-to-toe framing
+        const fullBodyBase64 = await generateImageWithGemini(mediumShotPrompt, {
+          aspectRatio: '3:4', // Portrait ratio for medium close-up framing
           numberOfImages: 1,
           personGeneration: 'allow_adult',
-          skipFaceMesh: true, // Skip FACE_MESH control to allow full-body composition (face mesh causes zoom-in bias)
+          // FACE_MESH enabled (default) for accurate facial consistency - medium shot works well with face mesh
           referenceImages: [{
             referenceId: 1,
             imageUrl: characterReferenceImageUrl, // Use character reference for facial consistency
@@ -221,11 +221,12 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * Build a prompt for generating a FULL BODY shot (9:16)
- * Uses a flowing natural language prompt structure proven to generate full-body images
- * Includes character state/expression based on script context (reason)
+ * Build a prompt for generating a MEDIUM CLOSE-UP shot (3:4)
+ * Shows subject from waist up - optimized for wardrobe reference with facial accuracy
+ * FACE_MESH works best with this framing since face is prominent in frame
+ * Lower body (pants, shoes) maintained through wardrobe description for scene generation
  */
-function buildFullBodyPrompt(
+function buildMediumShotPrompt(
   characterName: string,
   appearanceDescription?: string,
   wardrobeDescription?: string,
@@ -238,11 +239,11 @@ function buildFullBodyPrompt(
   const pronoun = isFemale ? 'She' : 'He'
   const possessive = isFemale ? 'Her' : 'His'
   
-  // Build a single flowing prompt - this structure is proven to generate actual full-body shots
+  // Build a single flowing prompt - medium close-up for wardrobe reference with facial accuracy
   const promptParts: string[] = []
   
-  // Start with explicit full-body framing directive
-  promptParts.push('A full body studio portrait showing the complete figure from head to toe')
+  // Start with explicit medium close-up framing directive
+  promptParts.push('A medium close-up studio portrait showing the subject from the waist up')
   
   // Add character appearance description
   if (appearanceDescription) {
@@ -307,8 +308,8 @@ function buildFullBodyPrompt(
   // Add pose and setting - crucial for full body framing
   promptParts.push(`${pronoun} is standing with a relaxed posture against a textured gray studio backdrop`)
   
-  // Technical photography directives - explicit full-length framing is critical
-  promptParts.push('Sharp focus, high-resolution photography, wide-angle lens showing the subject from head to toe, full length portrait, cinematically lit')
+  // Technical photography directives for medium close-up
+  promptParts.push('Sharp focus, high-resolution photography, medium close-up framing showing face and upper body, portrait lens, cinematically lit')
   
   return promptParts.join('. ') + '.'
 }
