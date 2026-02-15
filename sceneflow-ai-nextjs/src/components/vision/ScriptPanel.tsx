@@ -5398,12 +5398,12 @@ function SceneCard({
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      onResyncAudioTiming(idx, selectedLanguage)
+                                      onResyncAudioTiming(sceneIdx, selectedLanguage)
                                     }}
-                                    disabled={resyncingAudioSceneIndex === idx}
+                                    disabled={resyncingAudioSceneIndex === sceneIdx}
                                     className="ml-2 p-1 rounded hover:bg-emerald-800/50 text-emerald-400 hover:text-emerald-300 transition-colors disabled:opacity-50"
                                   >
-                                    {resyncingAudioSceneIndex === idx ? (
+                                    {resyncingAudioSceneIndex === sceneIdx ? (
                                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                     ) : (
                                       <RefreshCw className="w-3.5 h-3.5" />
