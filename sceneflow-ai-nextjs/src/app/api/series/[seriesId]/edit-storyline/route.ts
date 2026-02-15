@@ -2,26 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import '@/models'
 import { Series } from '@/models/Series'
 import { sequelize } from '@/config/database'
-import { resolveUser } from '@/lib/userHelper'
 import { callLLM } from '@/services/llmGateway'
 import { v4 as uuidv4 } from 'uuid'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 120 // 2 minutes for targeted edits
+export const maxDuration = 300 // 5 minutes for comprehensive storyline refactor
 
-/**
- * Target aspects for storyline edits
- */
 type EditTargetAspect = 'plot' | 'characters' | 'episodes' | 'tone' | 'setting' | 'all'
 
 interface EditStorylineRequest {
-  /** Natural language instruction describing the change */
   instruction: string
-  /** Target aspect to focus the edit on */
   targetAspect?: EditTargetAspect
-  /** Specific episode numbers to edit (optional, for episode-targeted changes) */
   targetEpisodes?: number[]
-  /** Whether to preview changes without applying them */
   previewOnly?: boolean
 }
 
@@ -29,312 +21,225 @@ interface RouteParams {
   params: Promise<{ seriesId: string }>
 }
 
-/**
- * Attempt to repair common JSON errors from LLM responses
- */
-function repairJSON(text: string): string {
-  let repaired = text
-  
-  // Fix trailing commas before closing brackets
-  repaired = repaired.replace(/,(\s*[}\]])/g, '$1')
-  
-  // Fix missing commas between properties (look for "property": value "nextProperty":)
-  repaired = repaired.replace(/(["\d\]}])\s*\n\s*"/g, '$1,\n"')
-  
-  // Fix unescaped newlines in strings - replace actual newlines between quotes with \n
-  repaired = repaired.replace(/"([^"]*)\n([^"]*)"/g, (match, before, after) => {
-    return `"${before}\\n${after}"`
-  })
-  
-  // Fix unescaped quotes in strings (basic heuristic)
-  repaired = repaired.replace(/: "([^"]*)"([^,}\]:\n]*)"([^"]*)",/g, ': "$1\\"$2\\"$3",')
-  
-  // Fix missing quotes around property values that look like strings
-  repaired = repaired.replace(/: ([a-zA-Z][a-zA-Z0-9_\s]*[a-zA-Z0-9])([,}\]])/g, ': "$1"$2')
-  
-  // Fix truncated arrays - if array doesn't close, close it
-  const openBrackets = (repaired.match(/\[/g) || []).length
-  const closeBrackets = (repaired.match(/\]/g) || []).length
-  if (openBrackets > closeBrackets) {
-    repaired = repaired + ']'.repeat(openBrackets - closeBrackets)
-  }
-  
-  // Fix truncated objects - if object doesn't close, close it
-  const openBraces = (repaired.match(/{/g) || []).length
-  const closeBraces = (repaired.match(/}/g) || []).length
-  if (openBraces > closeBraces) {
-    repaired = repaired + '}'.repeat(openBraces - closeBraces)
-  }
-  
-  return repaired
-}
+const EPISODE_BATCH_SIZE = 3
 
 /**
- * Safely parse JSON from LLM responses with aggressive repair
+ * Safe JSON parse with repair
  */
 function safeParseJSON(text: string): any {
   let cleaned = text.trim()
-  
-  // Remove markdown code blocks
   if (cleaned.startsWith('```json')) cleaned = cleaned.slice(7)
   else if (cleaned.startsWith('```')) cleaned = cleaned.slice(3)
   if (cleaned.endsWith('```')) cleaned = cleaned.slice(0, -3)
   cleaned = cleaned.trim()
   
-  // First attempt: direct parse
+  // Try direct parse first
   try {
     return JSON.parse(cleaned)
   } catch (e) {
-    console.log('[Edit Storyline] Initial JSON parse failed:', (e as Error).message)
+    // Find JSON boundaries
+    const firstBracket = cleaned.indexOf('[')
+    const firstBrace = cleaned.indexOf('{')
+    const isArray = firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)
+    const startChar = isArray ? '[' : '{'
+    const endChar = isArray ? ']' : '}'
+    
+    const start = cleaned.indexOf(startChar)
+    const end = cleaned.lastIndexOf(endChar)
+    
+    if (start !== -1 && end > start) {
+      let json = cleaned.slice(start, end + 1)
+      // Fix trailing commas
+      json = json.replace(/,(\s*[}\]])/g, '$1')
+      
+      try {
+        return JSON.parse(json)
+      } catch (e2) {
+        console.error('[Edit Storyline] JSON parse failed:', (e2 as Error).message)
+      }
+    }
+    console.error('[Edit Storyline] Could not parse JSON from response')
+    return null
   }
-  
-  // Second attempt: find JSON boundaries
-  const firstBrace = cleaned.indexOf('{')
-  const lastBrace = cleaned.lastIndexOf('}')
-  
-  if (firstBrace !== -1 && lastBrace > firstBrace) {
-    const jsonCandidate = cleaned.slice(firstBrace, lastBrace + 1)
-    
-    try {
-      return JSON.parse(jsonCandidate)
-    } catch (e) {
-      console.log('[Edit Storyline] Bounded JSON parse failed:', (e as Error).message)
-    }
-    
-    // Third attempt: repair common issues
-    try {
-      const repaired = repairJSON(jsonCandidate)
-      return JSON.parse(repaired)
-    } catch (e) {
-      console.log('[Edit Storyline] Repaired JSON parse failed:', (e as Error).message)
-      // Log portion around error position for debugging
-      const errMsg = (e as Error).message
-      const posMatch = errMsg.match(/position (\d+)/)
-      if (posMatch) {
-        const pos = parseInt(posMatch[1])
-        console.log('[Edit Storyline] JSON near error:', jsonCandidate.slice(Math.max(0, pos - 100), pos + 100))
-      }
-    }
-    
-    // Fourth attempt: progressively truncate until valid
-    try {
-      let truncated = jsonCandidate
-      for (let i = 0; i < 10; i++) {
-        // Find the last complete array or object
-        const lastCompleteArray = truncated.lastIndexOf(']')
-        const lastCompleteObj = truncated.lastIndexOf('}')
-        const cutPoint = Math.max(lastCompleteArray, lastCompleteObj)
-        
-        if (cutPoint > 100) {
-          truncated = truncated.slice(0, cutPoint + 1)
-          const repaired = repairJSON(truncated)
-          try {
-            const result = JSON.parse(repaired)
-            console.log('[Edit Storyline] Parsed truncated JSON successfully')
-            return result
-          } catch {
-            // Continue truncating
-          }
-        }
-      }
-    } catch (e) {
-      console.log('[Edit Storyline] Truncation attempts failed')
-    }
-    
-    // Fifth attempt: extract key fields with regex
-    try {
-      console.log('[Edit Storyline] Attempting regex extraction...')
-      
-      // Build a minimal valid response
-      const minimalJSON: any = {
-        changesApplied: [],
-        fieldsModified: [],
-        productionBible: {},
-        episodeBlueprints: []
-      }
-      
-      // Try to extract changesApplied array
-      const changesMatch = jsonCandidate.match(/"changesApplied"\s*:\s*\[([\s\S]*?)\]/)
-      if (changesMatch) {
-        try {
-          const arr = JSON.parse(`{"changesApplied": [${changesMatch[1]}]}`)
-          minimalJSON.changesApplied = arr.changesApplied || []
-        } catch {
-          // Try individual items
-          const items = changesMatch[1].match(/"[^"]+"/g) || []
-          minimalJSON.changesApplied = items.map(s => s.replace(/^"|"$/g, ''))
-        }
-      }
-      
-      // Try to extract fieldsModified array  
-      const fieldsMatch = jsonCandidate.match(/"fieldsModified"\s*:\s*\[([\s\S]*?)\]/)
-      if (fieldsMatch) {
-        try {
-          const arr = JSON.parse(`{"fieldsModified": [${fieldsMatch[1]}]}`)
-          minimalJSON.fieldsModified = arr.fieldsModified || []
-        } catch {
-          const items = fieldsMatch[1].match(/"[^"]+"/g) || []
-          minimalJSON.fieldsModified = items.map(s => s.replace(/^"|"$/g, ''))
-        }
-      }
-      
-      // Try to extract productionBible (look for characters array specifically)
-      const charactersMatch = jsonCandidate.match(/"characters"\s*:\s*\[[\s\S]*?\}\s*\]/)
-      if (charactersMatch) {
-        try {
-          const parsed = JSON.parse(`{${charactersMatch[0]}}`)
-          minimalJSON.productionBible = { characters: parsed.characters }
-        } catch {}
-      }
-      
-      console.log('[Edit Storyline] Extracted minimal response:', {
-        changesCount: minimalJSON.changesApplied.length,
-        fieldsCount: minimalJSON.fieldsModified.length,
-        hasCharacters: !!minimalJSON.productionBible?.characters
-      })
-      
-      return minimalJSON
-    } catch (e5) {
-      console.error('[Edit Storyline] All parsing attempts failed')
-      throw new Error(`Invalid JSON from LLM - could not repair or extract`)
-    }
-  }
-  
-  throw new Error('No valid JSON object found in LLM response')
 }
 
 /**
- * Build the edit prompt based on target aspect
- * Uses focused, minimal context to prevent JSON parsing errors from large responses
+ * Phase 1: Update production bible (logline, synopsis, characters)
+ * This is the core refactor that establishes the new storyline foundation
  */
-function buildEditPrompt(
+async function refactorProductionBible(
   instruction: string,
-  targetAspect: EditTargetAspect,
-  currentStoryline: any,
-  targetEpisodes?: number[]
-): string {
-  // For character edits, use a focused simple prompt - DON'T send full series data
-  if (targetAspect === 'characters') {
-    const currentCharacters = currentStoryline.productionBible?.characters || []
-    const protagonist = currentStoryline.productionBible?.protagonist || {}
+  series: any
+): Promise<any> {
+  const currentBible = series.production_bible || {}
+  
+  const prompt = `You are a TV series showrunner refactoring a storyline based on user instruction.
+
+INSTRUCTION: "${instruction}"
+
+CURRENT SERIES:
+Title: ${series.title}
+Logline: ${series.logline}
+Synopsis: ${currentBible.synopsis || 'Not set'}
+Protagonist: ${JSON.stringify(currentBible.protagonist || {})}
+Characters: ${JSON.stringify((currentBible.characters || []).slice(0, 6))}
+
+TASK: Apply the instruction COMPREHENSIVELY. Update ALL relevant fields to reflect this change consistently.
+
+Return ONLY valid JSON (no markdown, no explanation):
+{
+  "logline": "Updated logline that reflects the change",
+  "synopsis": "Updated 2-3 paragraph synopsis reflecting the change throughout",
+  "protagonist": {
+    "characterId": "char_1",
+    "name": "Character Name",
+    "goal": "What they want to achieve",
+    "flaw": "Their fatal flaw"
+  },
+  "characters": [
+    {
+      "id": "char_1",
+      "name": "Character Name",
+      "role": "protagonist",
+      "description": "Background, motivation, arc",
+      "appearance": "Physical description",
+      "personality": "Key personality traits"
+    }
+  ],
+  "changesApplied": ["Specific change 1", "Specific change 2"]
+}`
+
+  console.log('[Edit Storyline] Phase 1: Calling LLM for production bible refactor...')
+  
+  const response = await callLLM({
+    provider: 'gemini',
+    model: 'gemini-2.5-flash',
+    maxOutputTokens: 4096,
+    timeoutMs: 60000
+  }, prompt)
+  
+  return safeParseJSON(response)
+}
+
+/**
+ * Phase 2: Update episodes in batches to reflect the storyline change
+ * Each episode is updated to use the new character/plot elements
+ */
+async function refactorEpisodes(
+  instruction: string,
+  series: any,
+  updatedBible: any
+): Promise<any[]> {
+  const episodes = series.episode_blueprints || []
+  if (episodes.length === 0) {
+    console.log('[Edit Storyline] No episodes to refactor')
+    return []
+  }
+  
+  const updatedEpisodes: any[] = []
+  const protagonistName = updatedBible?.protagonist?.name || 'the protagonist'
+  const protagonistDesc = updatedBible?.protagonist?.goal || ''
+  
+  // Process episodes in batches to avoid token limits
+  for (let i = 0; i < episodes.length; i += EPISODE_BATCH_SIZE) {
+    const batch = episodes.slice(i, i + EPISODE_BATCH_SIZE)
+    const batchNum = Math.floor(i / EPISODE_BATCH_SIZE) + 1
     
-    return `You are a TV showrunner making a character change.
+    console.log(`[Edit Storyline] Phase 2: Processing episode batch ${batchNum}...`)
+    
+    const prompt = `You are updating TV series episodes to reflect a storyline change.
 
-INSTRUCTION: "${instruction}"
+CHANGE INSTRUCTION: "${instruction}"
 
-CURRENT PROTAGONIST: ${JSON.stringify(protagonist)}
-CURRENT CHARACTERS (first 5): ${JSON.stringify(currentCharacters.slice(0, 5))}
+NEW PROTAGONIST: ${protagonistName}
+${protagonistDesc ? `Goal: ${protagonistDesc}` : ''}
 
-SERIES: ${currentStoryline.title} - ${currentStoryline.logline}
+NEW SYNOPSIS CONTEXT: ${updatedBible?.synopsis?.slice(0, 500) || 'Not available'}
 
-Apply the instruction to create/modify characters. Return ONLY valid JSON:
-{
-  "changesApplied": ["Description of each change made"],
-  "fieldsModified": ["protagonist", "characters"],
-  "productionBible": {
-    "protagonist": {"characterId": "char_1", "name": "Full Name", "goal": "Their main goal", "flaw": "Fatal flaw"},
-    "characters": [
-      {"id": "char_1", "name": "Full Name", "role": "protagonist", "description": "Background and arc", "appearance": "Physical description", "personality": "Key traits"}
-    ]
-  },
-  "episodeBlueprints": []
-}`
+EPISODES TO UPDATE:
+${batch.map((ep: any) => `
+Episode ${ep.episodeNumber}: "${ep.title}"
+Logline: ${ep.logline}
+Synopsis: ${ep.synopsis?.slice(0, 300) || 'Not set'}
+`).join('\n---\n')}
+
+TASK: Update EACH episode to reflect the storyline change. Replace old character references with new ones. Adjust plot points to fit the new storyline.
+
+Return ONLY a valid JSON array (no markdown):
+[
+  {
+    "episodeNumber": ${batch[0]?.episodeNumber || 1},
+    "title": "Updated episode title",
+    "logline": "Updated logline reflecting the change",
+    "synopsis": "Updated synopsis with new character/plot"
   }
+]`
 
-  // For plot edits
-  if (targetAspect === 'plot') {
-    return `You are a TV showrunner making a plot change.
-
-INSTRUCTION: "${instruction}"
-
-SERIES: ${currentStoryline.title}
-CURRENT SYNOPSIS: ${currentStoryline.productionBible?.synopsis || currentStoryline.logline}
-
-Apply the instruction. Return ONLY valid JSON:
-{
-  "changesApplied": ["Description of plot changes"],
-  "fieldsModified": ["synopsis", "seriesArcs"],
-  "productionBible": {
-    "synopsis": "Updated series synopsis",
-    "seriesArcs": ["Arc 1 description", "Arc 2 description"]
-  },
-  "episodeBlueprints": []
-}`
+    try {
+      const response = await callLLM({
+        provider: 'gemini',
+        model: 'gemini-2.5-flash',
+        maxOutputTokens: 4096,
+        timeoutMs: 60000
+      }, prompt)
+      
+      const parsed = safeParseJSON(response)
+      
+      if (Array.isArray(parsed)) {
+        // Merge updates with original episode data
+        for (const update of parsed) {
+          const original = batch.find((ep: any) => ep.episodeNumber === update.episodeNumber)
+          if (original) {
+            updatedEpisodes.push({
+              ...original,
+              title: update.title || original.title,
+              logline: update.logline || original.logline,
+              synopsis: update.synopsis || original.synopsis,
+              id: original.id // Preserve original ID
+            })
+          }
+        }
+      } else if (parsed && typeof parsed === 'object') {
+        // Single episode object returned
+        const epNum = parsed.episodeNumber || batch[0]?.episodeNumber
+        const original = batch.find((ep: any) => ep.episodeNumber === epNum)
+        if (original) {
+          updatedEpisodes.push({
+            ...original,
+            title: parsed.title || original.title,
+            logline: parsed.logline || original.logline,
+            synopsis: parsed.synopsis || original.synopsis,
+            id: original.id
+          })
+        }
+      }
+    } catch (err) {
+      console.error(`[Edit Storyline] Error processing batch ${batchNum}:`, err)
+      // Keep original episodes on error
+      updatedEpisodes.push(...batch)
+    }
   }
-
-  // For tone edits
-  if (targetAspect === 'tone') {
-    return `You are a TV showrunner adjusting tone/style.
-
-INSTRUCTION: "${instruction}"
-
-SERIES: ${currentStoryline.title} - ${currentStoryline.logline}
-
-Apply the instruction. Return ONLY valid JSON:
-{
-  "changesApplied": ["Description of tone changes"],
-  "fieldsModified": ["toneGuidelines", "visualGuidelines"],
-  "productionBible": {
-    "toneGuidelines": "Updated tone description",
-    "visualGuidelines": "Updated visual style"
-  },
-  "episodeBlueprints": []
-}`
+  
+  // Add any episodes that weren't in batches (shouldn't happen but safety check)
+  for (const ep of episodes) {
+    if (!updatedEpisodes.find(u => u.episodeNumber === ep.episodeNumber)) {
+      updatedEpisodes.push(ep)
+    }
   }
-
-  // For setting edits
-  if (targetAspect === 'setting') {
-    const currentLocations = currentStoryline.productionBible?.locations || []
-    return `You are a TV showrunner changing the setting.
-
-INSTRUCTION: "${instruction}"
-
-SERIES: ${currentStoryline.title}
-CURRENT SETTING: ${currentStoryline.productionBible?.setting || 'Not specified'}
-CURRENT LOCATIONS: ${JSON.stringify(currentLocations.slice(0, 3))}
-
-Apply the instruction. Return ONLY valid JSON:
-{
-  "changesApplied": ["Description of setting changes"],
-  "fieldsModified": ["setting", "timeframe", "locations"],
-  "productionBible": {
-    "setting": "Updated setting description",
-    "timeframe": "Time period",
-    "locations": [{"id": "loc_1", "name": "Location Name", "description": "Description", "visualDescription": "Visual style"}]
-  },
-  "episodeBlueprints": []
-}`
-  }
-
-  // For episode or general edits - keep it simple
-  return `You are a TV showrunner making a targeted edit.
-
-INSTRUCTION: "${instruction}"
-TARGET: ${targetAspect}
-${targetEpisodes?.length ? `EPISODES TO MODIFY: ${targetEpisodes.join(', ')}` : ''}
-
-SERIES: ${currentStoryline.title}
-LOGLINE: ${currentStoryline.logline}
-
-Apply the instruction with minimal changes. Return ONLY valid JSON:
-{
-  "changesApplied": ["Description of changes"],
-  "fieldsModified": ["list of modified fields"],
-  "productionBible": {},
-  "episodeBlueprints": []
-}`
+  
+  // Sort by episode number
+  return updatedEpisodes.sort((a, b) => a.episodeNumber - b.episodeNumber)
 }
 
 /**
  * POST /api/series/[seriesId]/edit-storyline
  * 
- * Apply directed edits to series storyline without full regeneration
- * 
- * Body:
- * - instruction: Required. Natural language description of the change
- * - targetAspect: Optional. Focus area ('plot', 'characters', 'episodes', 'tone', 'setting', 'all')
- * - targetEpisodes: Optional. Specific episode numbers to edit
- * - previewOnly: Optional. If true, return proposed changes without applying
+ * Comprehensive storyline refactor - propagates changes across:
+ * - Logline
+ * - Synopsis  
+ * - Protagonist
+ * - Characters
+ * - All episodes
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   const timestamp = new Date().toISOString()
@@ -349,179 +254,92 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
     
     const body: EditStorylineRequest = await request.json()
-    const {
-      instruction,
-      targetAspect = 'all',
-      targetEpisodes,
-      previewOnly = false
-    } = body
+    const { instruction, previewOnly = false } = body
     
-    if (!instruction || instruction.trim().length === 0) {
-      return NextResponse.json({
-        success: false,
-        error: 'instruction is required'
-      }, { status: 400 })
+    if (!instruction?.trim()) {
+      return NextResponse.json({ success: false, error: 'instruction is required' }, { status: 400 })
     }
     
-    console.log(`[${timestamp}] [POST /api/series/${seriesId}/edit-storyline] Editing storyline:`, {
-      instruction: instruction.slice(0, 100),
-      targetAspect,
-      targetEpisodes,
-      previewOnly
-    })
+    console.log(`[${timestamp}] [POST /api/series/${seriesId}/edit-storyline] Starting comprehensive refactor`)
+    console.log(`[${timestamp}] Instruction: "${instruction.slice(0, 100)}"`)
     
-    // Build current storyline data for context
-    const currentStoryline = {
-      title: series.title,
-      logline: series.logline,
-      genre: series.genre,
-      productionBible: series.production_bible || {},
-      episodeBlueprints: series.episode_blueprints || []
+    // ========== PHASE 1: Refactor Production Bible ==========
+    console.log(`[${timestamp}] Phase 1: Refactoring production bible...`)
+    const bibleUpdates = await refactorProductionBible(instruction, series)
+    
+    if (!bibleUpdates) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Failed to process storyline changes - LLM returned invalid response' 
+      }, { status: 500 })
     }
     
-    // Generate edit prompt
-    const editPrompt = buildEditPrompt(instruction, targetAspect, currentStoryline, targetEpisodes)
+    console.log(`[${timestamp}] Phase 1 complete. Changes: ${bibleUpdates.changesApplied?.join(', ') || 'none listed'}`)
     
-    // Call LLM for directed edits
-    const editResponse = await callLLM(
-      {
-        provider: 'gemini',
-        model: 'gemini-2.5-flash',
-        maxOutputTokens: 8192,
-        timeoutMs: 60000
-      },
-      editPrompt
-    )
+    // ========== PHASE 2: Refactor All Episodes ==========
+    console.log(`[${timestamp}] Phase 2: Refactoring ${series.episode_blueprints?.length || 0} episodes...`)
+    const updatedEpisodes = await refactorEpisodes(instruction, series, bibleUpdates)
+    console.log(`[${timestamp}] Phase 2 complete. Updated ${updatedEpisodes.length} episodes`)
     
-    const parsedEdits = safeParseJSON(editResponse)
-    
-    // If preview only, return the proposed changes
+    // Preview mode - return proposed changes without saving
     if (previewOnly) {
       return NextResponse.json({
         success: true,
         preview: true,
         proposedChanges: {
-          changesApplied: parsedEdits.changesApplied || [],
-          fieldsModified: parsedEdits.fieldsModified || [],
-          productionBible: parsedEdits.productionBible,
-          episodeBlueprints: parsedEdits.episodeBlueprints
+          logline: bibleUpdates.logline,
+          synopsis: bibleUpdates.synopsis,
+          protagonist: bibleUpdates.protagonist,
+          characters: bibleUpdates.characters,
+          episodesUpdated: updatedEpisodes.length,
+          changesApplied: bibleUpdates.changesApplied || []
         }
       })
     }
     
-    // Apply the edits
+    // ========== PHASE 3: Apply Updates to Database ==========
     const currentBible = series.production_bible || {}
-    const currentEpisodes = series.episode_blueprints || []
-    
-    // Merge production bible changes
-    let updatedBible = { ...currentBible }
-    if (parsedEdits.productionBible) {
-      // Deep merge for nested objects
-      for (const key of Object.keys(parsedEdits.productionBible)) {
-        if (Array.isArray(parsedEdits.productionBible[key])) {
-          // For arrays like characters, locations - merge by ID
-          if (key === 'characters' || key === 'locations') {
-            const existingItems = updatedBible[key] || []
-            const newItems = parsedEdits.productionBible[key]
-            
-            // Update existing items, add new ones
-            updatedBible[key] = existingItems.map((item: any) => {
-              const updated = newItems.find((n: any) => n.id === item.id)
-              return updated ? { ...item, ...updated, updatedAt: new Date().toISOString() } : item
-            })
-            
-            // Add any new items not in existing
-            const existingIds = new Set(existingItems.map((i: any) => i.id))
-            const newOnes = newItems.filter((n: any) => !existingIds.has(n.id))
-            if (newOnes.length > 0) {
-              updatedBible[key] = [
-                ...updatedBible[key],
-                ...newOnes.map((item: any) => ({
-                  ...item,
-                  id: item.id || `${key.slice(0, 4)}_${uuidv4().slice(0, 8)}`,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString()
-                }))
-              ]
-            }
-          } else {
-            updatedBible[key] = parsedEdits.productionBible[key]
-          }
-        } else if (typeof parsedEdits.productionBible[key] === 'object' && parsedEdits.productionBible[key] !== null) {
-          updatedBible[key] = { ...updatedBible[key], ...parsedEdits.productionBible[key] }
-        } else {
-          updatedBible[key] = parsedEdits.productionBible[key]
-        }
-      }
+    const updatedBible = {
+      ...currentBible,
+      synopsis: bibleUpdates.synopsis || currentBible.synopsis,
+      protagonist: bibleUpdates.protagonist || currentBible.protagonist,
+      characters: bibleUpdates.characters || currentBible.characters,
+      version: incrementVersion(currentBible.version || '1.0.0'),
+      lastUpdated: new Date().toISOString()
     }
     
-    // Update version
-    updatedBible.version = incrementVersion(currentBible.version || '1.0.0')
-    updatedBible.lastUpdated = new Date().toISOString()
-    
-    // Merge episode blueprint changes
-    let updatedEpisodes = [...currentEpisodes]
-    if (parsedEdits.episodeBlueprints && parsedEdits.episodeBlueprints.length > 0) {
-      for (const editedEp of parsedEdits.episodeBlueprints) {
-        const idx = updatedEpisodes.findIndex(ep => 
-          ep.id === editedEp.id || ep.episodeNumber === editedEp.episodeNumber
-        )
-        
-        if (idx >= 0) {
-          // Update existing episode, preserve ID
-          updatedEpisodes[idx] = {
-            ...updatedEpisodes[idx],
-            ...editedEp,
-            id: updatedEpisodes[idx].id // Preserve original ID
-          }
-        } else if (editedEp.episodeNumber) {
-          // New episode
-          updatedEpisodes.push({
-            ...editedEp,
-            id: editedEp.id || `ep_${editedEp.episodeNumber}_${uuidv4().slice(0, 8)}`,
-            status: 'blueprint'
-          })
-        }
-      }
-      
-      // Sort by episode number
-      updatedEpisodes.sort((a, b) => a.episodeNumber - b.episodeNumber)
-    }
-    
-    // Update series
-    const updates: any = {
+    await series.update({
+      logline: bibleUpdates.logline || series.logline,
       production_bible: updatedBible,
-      episode_blueprints: updatedEpisodes,
+      episode_blueprints: updatedEpisodes.length > 0 ? updatedEpisodes : series.episode_blueprints,
       metadata: {
         ...series.metadata,
         lastEdit: {
           timestamp: new Date().toISOString(),
           instruction: instruction.slice(0, 200),
-          targetAspect,
-          changesApplied: parsedEdits.changesApplied || []
+          changesApplied: bibleUpdates.changesApplied || [],
+          episodesUpdated: updatedEpisodes.length
         }
       }
-    }
+    })
     
-    // Update top-level fields if changed
-    if (parsedEdits.productionBible?.logline && !currentBible.logline) {
-      updates.logline = parsedEdits.productionBible.logline
-    }
-    
-    await series.update(updates)
     await series.reload()
     
-    console.log(`[${timestamp}] [POST /api/series/${seriesId}/edit-storyline] Edit complete:`, {
-      fieldsModified: parsedEdits.fieldsModified,
-      episodesModified: parsedEdits.episodeBlueprints?.length || 0
-    })
+    console.log(`[${timestamp}] [POST /api/series/${seriesId}/edit-storyline] Refactor complete!`)
     
     return NextResponse.json({
       success: true,
-      changesApplied: parsedEdits.changesApplied || [],
-      fieldsModified: parsedEdits.fieldsModified || [],
-      episodesModified: parsedEdits.episodeBlueprints?.length || 0,
-      series: formatSeriesResponse(series)
+      changesApplied: bibleUpdates.changesApplied || [],
+      fieldsModified: ['logline', 'synopsis', 'protagonist', 'characters', 'episodes'],
+      episodesModified: updatedEpisodes.length,
+      series: {
+        id: series.id,
+        title: series.title,
+        logline: series.logline,
+        synopsis: series.production_bible?.synopsis,
+        protagonist: series.production_bible?.protagonist,
+        episodeCount: series.episode_blueprints?.length || 0
+      }
     })
     
   } catch (error) {
@@ -533,9 +351,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-/**
- * Increment semantic version
- */
 function incrementVersion(version: string): string {
   const parts = version.split('.')
   if (parts.length === 3) {
@@ -543,28 +358,4 @@ function incrementVersion(version: string): string {
     return parts.join('.')
   }
   return '1.0.1'
-}
-
-/**
- * Format series for API response
- */
-function formatSeriesResponse(series: Series) {
-  return {
-    id: series.id,
-    userId: series.user_id,
-    title: series.title,
-    logline: series.logline,
-    genre: series.genre,
-    targetAudience: series.target_audience,
-    status: series.status,
-    maxEpisodes: series.max_episodes,
-    episodeCount: series.episode_blueprints?.length || 0,
-    startedCount: series.started_count || 0,
-    completedCount: series.completed_count || 0,
-    productionBible: series.production_bible,
-    episodeBlueprints: series.episode_blueprints || [],
-    metadata: series.metadata || {},
-    createdAt: series.created_at?.toISOString(),
-    updatedAt: series.updated_at?.toISOString()
-  }
 }
