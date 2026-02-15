@@ -296,6 +296,70 @@ export async function PUT(
             withReferenceImage: mergedMetadata.visionPhase.characters.filter((c: any) => !!c.referenceImage).length
           })
         }
+        
+        // CRITICAL: Deep merge references (sceneReferences/backdrops and objectReferences/props)
+        // This prevents accidental overwrite when other parts of the app save with stale reference data
+        const existingReferences = existingMetadata.visionPhase?.references || {}
+        const incomingReferences = body.metadata.visionPhase?.references
+        
+        if (incomingReferences || existingReferences.sceneReferences || existingReferences.objectReferences) {
+          const existingSceneRefs = existingReferences.sceneReferences || []
+          const existingObjectRefs = existingReferences.objectReferences || []
+          const incomingSceneRefs = incomingReferences?.sceneReferences || []
+          const incomingObjectRefs = incomingReferences?.objectReferences || []
+          
+          // Create maps for quick lookup by ID
+          const existingSceneRefMap = new Map(existingSceneRefs.map((r: any) => [r.id, r]))
+          const existingObjectRefMap = new Map(existingObjectRefs.map((r: any) => [r.id, r]))
+          
+          // Merge scene references (backdrops): incoming takes precedence, preserve existing not in incoming
+          let mergedSceneRefs = incomingSceneRefs.map((incomingRef: any) => {
+            const existingRef = existingSceneRefMap.get(incomingRef.id)
+            if (existingRef) {
+              return { ...existingRef, ...incomingRef }
+            }
+            return incomingRef
+          })
+          
+          // Preserve existing scene refs not in incoming (prevents deletion by stale state)
+          const incomingSceneRefIds = new Set(incomingSceneRefs.map((r: any) => r.id))
+          const preservedSceneRefs = existingSceneRefs.filter((r: any) => !incomingSceneRefIds.has(r.id))
+          if (preservedSceneRefs.length > 0) {
+            console.log('[Projects PUT] Preserving scene references not in incoming:', preservedSceneRefs.length)
+            mergedSceneRefs = [...mergedSceneRefs, ...preservedSceneRefs]
+          }
+          
+          // Merge object references (props): same logic
+          let mergedObjectRefs = incomingObjectRefs.map((incomingRef: any) => {
+            const existingRef = existingObjectRefMap.get(incomingRef.id)
+            if (existingRef) {
+              return { ...existingRef, ...incomingRef }
+            }
+            return incomingRef
+          })
+          
+          // Preserve existing object refs not in incoming
+          const incomingObjectRefIds = new Set(incomingObjectRefs.map((r: any) => r.id))
+          const preservedObjectRefs = existingObjectRefs.filter((r: any) => !incomingObjectRefIds.has(r.id))
+          if (preservedObjectRefs.length > 0) {
+            console.log('[Projects PUT] Preserving object references not in incoming:', preservedObjectRefs.length)
+            mergedObjectRefs = [...mergedObjectRefs, ...preservedObjectRefs]
+          }
+          
+          mergedMetadata.visionPhase.references = {
+            sceneReferences: mergedSceneRefs,
+            objectReferences: mergedObjectRefs
+          }
+          
+          console.log('[Projects PUT] Deep merged references:', {
+            existingSceneRefs: existingSceneRefs.length,
+            incomingSceneRefs: incomingSceneRefs.length,
+            mergedSceneRefs: mergedSceneRefs.length,
+            existingObjectRefs: existingObjectRefs.length,
+            incomingObjectRefs: incomingObjectRefs.length,
+            mergedObjectRefs: mergedObjectRefs.length
+          })
+        }
       }
     }
     
