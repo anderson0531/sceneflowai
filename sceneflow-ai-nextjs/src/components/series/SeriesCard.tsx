@@ -113,15 +113,10 @@ export function SeriesCard({
   const handleGenerateThumbnail = useCallback(async () => {
     setIsGeneratingThumbnail(true)
     try {
-      const response = await fetch('/api/projects/generate-thumbnail', {
+      const response = await fetch(`/api/series/${series.id}/generate-thumbnail`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId: series.id,
-          description: series.logline || series.title,
-          title: series.title,
-          genre: series.genre
-        })
+        body: JSON.stringify({})
       })
       
       if (!response.ok) {
