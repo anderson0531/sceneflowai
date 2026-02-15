@@ -397,7 +397,7 @@ export function AudioGalleryPlayer({
           <div className={cn(
             "relative rounded-lg overflow-hidden bg-black flex-shrink-0",
             isFullscreen 
-              ? "w-full max-w-5xl aspect-video" 
+              ? "w-[75vw] max-w-6xl aspect-video" 
               : "w-64 aspect-video"
           )}>
             {currentScene?.imageUrl ? (
@@ -424,24 +424,22 @@ export function AudioGalleryPlayer({
                 <span className={cn("text-white", isFullscreen ? "text-base" : "text-xs")}>{currentClip.label}</span>
               </div>
             )}
-            
-            {/* Scene heading overlay in fullscreen */}
-            {isFullscreen && (
-              <div className="absolute top-4 left-4 right-4">
-                <div className="bg-black/60 rounded-lg px-4 py-2">
-                  <span className="text-white/70 text-sm">SCENE {currentSceneIndex + 1}</span>
-                  <h2 className="text-white text-lg font-semibold truncate">{formattedHeading}</h2>
-                </div>
-              </div>
-            )}
           </div>
+          
+          {/* Scene title below video in fullscreen */}
+          {isFullscreen && (
+            <div className="w-[75vw] max-w-6xl mt-3 text-center">
+              <span className="text-white/60 text-sm">SCENE {currentSceneIndex + 1}</span>
+              <h2 className="text-white text-xl font-semibold truncate">{formattedHeading}</h2>
+            </div>
+          )}
           
           {/* Playback controls and info */}
           <div className={cn(
             "flex flex-col justify-between min-w-0",
-            isFullscreen ? "w-full max-w-5xl mt-4" : "flex-1"
+            isFullscreen ? "w-[75vw] max-w-6xl mt-4" : "flex-1"
           )}>
-            {/* Scene info - hide in fullscreen (shown in overlay) */}
+            {/* Scene info - hide in fullscreen (shown below video) */}
             {!isFullscreen && (
               <div>
                 <h4 className="text-sm font-semibold text-white mb-1">
