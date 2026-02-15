@@ -535,6 +535,8 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   const [editingWardrobe, setEditingWardrobe] = useState(false)
   const [editingWardrobeId, setEditingWardrobeId] = useState<string | null>(null) // Which wardrobe is being edited
   const [wardrobeText, setWardrobeText] = useState('')
+  const [editingBodyDescription, setEditingBodyDescription] = useState(false)
+  const [bodyDescriptionText, setBodyDescriptionText] = useState('')
   const [accessoriesText, setAccessoriesText] = useState('')
   const [wardrobeName, setWardrobeName] = useState('') // Name for new/edited wardrobe
   const [showAiAssist, setShowAiAssist] = useState(false)
@@ -1419,6 +1421,66 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
         <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
           {character.description}
         </p>
+        
+        {/* Body Description - Editable for image generation prompts */}
+        <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-1">
+            <span className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+              <User className="w-3.5 h-3.5" />
+              Body Description
+            </span>
+            {!editingBodyDescription && onUpdateAppearance && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setBodyDescriptionText(character.appearanceDescription || '')
+                  setEditingBodyDescription(true)
+                }}
+                className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                title="Edit body description for image generation"
+              >
+                <Edit className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+          
+          {editingBodyDescription ? (
+            <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+              <textarea
+                value={bodyDescriptionText}
+                onChange={(e) => setBodyDescriptionText(e.target.value)}
+                placeholder="e.g., Athletic build, tall, muscular, slim figure"
+                className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                rows={2}
+                autoFocus
+              />
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setEditingBodyDescription(false)}
+                  className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (onUpdateAppearance) {
+                      onUpdateAppearance(characterId, bodyDescriptionText)
+                      setEditingBodyDescription(false)
+                    }
+                  }}
+                  className="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded flex items-center gap-1"
+                >
+                  <Check className="w-3 h-3" />
+                  Save
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-gray-500 dark:text-gray-500 italic">
+              {character.appearanceDescription || 'Click edit to add body description'}
+            </p>
+          )}
+        </div>
         
         {/* Voice Button - Above Wardrobes */}
         <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
