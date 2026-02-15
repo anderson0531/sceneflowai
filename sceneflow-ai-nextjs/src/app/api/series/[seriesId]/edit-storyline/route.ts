@@ -30,6 +30,28 @@ interface RouteParams {
 }
 
 /**
+ * Attempt to repair common JSON errors from LLM responses
+ */
+function repairJSON(text: string): string {
+  let repaired = text
+  
+  // Fix trailing commas before closing brackets
+  repaired = repaired.replace(/,(\s*[}\]])/g, '$1')
+  
+  // Fix missing commas between properties (look for "property": value "nextProperty":)
+  repaired = repaired.replace(/(["\d\]}])\s*\n\s*"/g, '$1,\n"')
+  
+  // Fix unescaped quotes in strings (basic heuristic)
+  // Look for patterns like "value with "nested" quotes" and escape inner quotes
+  repaired = repaired.replace(/: "([^"]*)"([^,}\]]*)"([^"]*)",/g, ': "$1\\"$2\\"$3",')
+  
+  // Fix missing quotes around property values that look like strings
+  repaired = repaired.replace(/: ([a-zA-Z][a-zA-Z0-9_\s]*[a-zA-Z0-9])([,}\]])/g, ': "$1"$2')
+  
+  return repaired
+}
+
+/**
  * Safely parse JSON from LLM responses
  */
 function safeParseJSON(text: string): any {
@@ -41,22 +63,70 @@ function safeParseJSON(text: string): any {
   if (cleaned.endsWith('```')) cleaned = cleaned.slice(0, -3)
   cleaned = cleaned.trim()
   
+  // First attempt: direct parse
   try {
     return JSON.parse(cleaned)
   } catch (e) {
-    // Try to find JSON boundaries
-    const firstBrace = cleaned.indexOf('{')
-    const lastBrace = cleaned.lastIndexOf('}')
-    
-    if (firstBrace !== -1 && lastBrace > firstBrace) {
-      try {
-        return JSON.parse(cleaned.slice(firstBrace, lastBrace + 1))
-      } catch (e2) {
-        throw new Error(`Invalid JSON from LLM: ${(e2 as Error).message}`)
-      }
-    }
-    throw new Error('No valid JSON object found in LLM response')
+    console.log('[Edit Storyline] Initial JSON parse failed, attempting repair...')
   }
+  
+  // Second attempt: find JSON boundaries
+  const firstBrace = cleaned.indexOf('{')
+  const lastBrace = cleaned.lastIndexOf('}')
+  
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    const jsonCandidate = cleaned.slice(firstBrace, lastBrace + 1)
+    
+    try {
+      return JSON.parse(jsonCandidate)
+    } catch (e) {
+      console.log('[Edit Storyline] Bounded JSON parse failed, attempting repair...')
+    }
+    
+    // Third attempt: repair common issues
+    try {
+      const repaired = repairJSON(jsonCandidate)
+      return JSON.parse(repaired)
+    } catch (e) {
+      console.log('[Edit Storyline] Repaired JSON parse failed:', (e as Error).message)
+    }
+    
+    // Fourth attempt: use regex to extract key fields
+    try {
+      const changesMatch = jsonCandidate.match(/"changesApplied"\s*:\s*\[([\s\S]*?)\]/)?.[0]
+      const fieldsMatch = jsonCandidate.match(/"fieldsModified"\s*:\s*\[([\s\S]*?)\]/)?.[0]
+      
+      // Build a minimal valid response
+      const minimalJSON: any = {
+        changesApplied: [],
+        fieldsModified: [],
+        productionBible: {},
+        episodeBlueprints: []
+      }
+      
+      // Try to extract arrays
+      if (changesMatch) {
+        try {
+          const arr = JSON.parse(`{${changesMatch}}`)
+          minimalJSON.changesApplied = arr.changesApplied || []
+        } catch {}
+      }
+      
+      if (fieldsMatch) {
+        try {
+          const arr = JSON.parse(`{${fieldsMatch}}`)
+          minimalJSON.fieldsModified = arr.fieldsModified || []
+        } catch {}
+      }
+      
+      console.log('[Edit Storyline] Extracted minimal response from malformed JSON')
+      return minimalJSON
+    } catch (e4) {
+      throw new Error(`Invalid JSON from LLM - could not repair: ${(e4 as Error).message}`)
+    }
+  }
+  
+  throw new Error('No valid JSON object found in LLM response')
 }
 
 /**
@@ -117,7 +187,13 @@ CRITICAL RULES:
 5. Update storyThreads status if plot changes affect them
 6. Only return fields that have changed
 
-Return ONLY valid JSON with the structure:
+IMPORTANT: Return ONLY valid, parseable JSON. No markdown, no code blocks, no explanation text.
+- Use proper JSON escaping for quotes within strings (use \\")
+- Ensure all strings are properly quoted
+- No trailing commas
+- All property names must be quoted
+
+Return this exact JSON structure:
 {
   "changesApplied": ["List of specific changes made"],
   "fieldsModified": ["List of field names that were modified"],
