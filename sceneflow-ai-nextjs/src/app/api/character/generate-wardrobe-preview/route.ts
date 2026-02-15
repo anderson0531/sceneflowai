@@ -117,14 +117,15 @@ export async function POST(req: NextRequest) {
         console.log(`[Wardrobe Preview] Medium shot prompt: ${mediumShotPrompt.substring(0, 150)}...`)
 
         const fullBodyBase64 = await generateImageWithGemini(mediumShotPrompt, {
-          aspectRatio: '3:4', // Portrait ratio for medium close-up framing
+          aspectRatio: '9:16', // Tall portrait to match frame
           numberOfImages: 1,
           personGeneration: 'allow_adult',
-          // FACE_MESH enabled (default) for accurate facial consistency - medium shot works well with face mesh
+          // FACE_MESH enabled (default) for accurate facial consistency
           referenceImages: [{
             referenceId: 1,
-            imageUrl: characterReferenceImageUrl, // Use character reference for facial consistency
-            subjectDescription: `${characterName}, the person in this reference photo - match their face exactly`
+            imageUrl: characterReferenceImageUrl,
+            // Use [img-1] token per Google Imagen 3 docs for stronger identity binding
+            subjectDescription: `[img-1] is ${characterName}. Generate an image of [img-1] wearing the described outfit. The face must match [img-1] exactly.`
           }]
         })
         

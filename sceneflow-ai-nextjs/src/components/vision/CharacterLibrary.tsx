@@ -2106,7 +2106,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                       <Shirt className="w-4 h-4" />
                       Wardrobe Preview
                     </div>
-                    <div className="aspect-[3/4] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                    <div className="aspect-[9/16] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                       {(expandedWardrobe.fullBodyUrl || expandedWardrobe.previewImageUrl) ? (
                         <img 
                           src={expandedWardrobe.fullBodyUrl || expandedWardrobe.previewImageUrl} 
