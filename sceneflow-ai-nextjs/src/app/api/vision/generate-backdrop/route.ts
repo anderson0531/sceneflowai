@@ -76,14 +76,50 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Backdrop Generation] personGeneration: ${personGeneration}`)
 
-    // Generate image using Gemini 3.0
-    const base64Image = await generateImageWithGemini(prompt, {
-      aspectRatio,
-      numberOfImages: 1,
-      imageSize: '2K',
-      personGeneration,
-      negativePrompt: negativePrompt || undefined,
-    })
+    // Helper function to sanitize prompt for retry
+    const sanitizePromptForRetry = (originalPrompt: string): string => {
+      // Remove potentially problematic words/phrases that might trigger filters
+      let cleaned = originalPrompt
+        .replace(/cramped/gi, 'cozy')
+        .replace(/worn/gi, 'weathered')
+        .replace(/seedy/gi, 'modest')
+        .replace(/dirty/gi, 'dusty')
+        .replace(/grungy/gi, 'textured')
+        .replace(/sleazy/gi, 'simple')
+        .replace(/intimate/gi, 'close')
+        .replace(/sensual/gi, 'warm')
+      // Add professional framing
+      return `Professional cinematic photograph. ${cleaned}. Award-winning cinematography, high production value.`
+    }
+
+    let base64Image: string
+    try {
+      // First attempt with original prompt
+      base64Image = await generateImageWithGemini(prompt, {
+        aspectRatio,
+        numberOfImages: 1,
+        imageSize: '2K',
+        personGeneration,
+        negativePrompt: negativePrompt || undefined,
+      })
+    } catch (firstError: any) {
+      // If filtered by content policy, retry with sanitized prompt
+      if (firstError.message?.includes('content policies') || firstError.message?.includes('filtered')) {
+        console.log('[Backdrop Generation] First attempt filtered, retrying with sanitized prompt...')
+        const sanitizedPrompt = sanitizePromptForRetry(prompt)
+        console.log(`[Backdrop Generation] Sanitized prompt: ${sanitizedPrompt.substring(0, 200)}...`)
+        
+        base64Image = await generateImageWithGemini(sanitizedPrompt, {
+          aspectRatio,
+          numberOfImages: 1,
+          imageSize: '2K',
+          personGeneration,
+          negativePrompt: negativePrompt || undefined,
+        })
+      } else {
+        throw firstError
+      }
+    }
 
     console.log('[Backdrop Generation] Image generated, uploading to storage...')
 
