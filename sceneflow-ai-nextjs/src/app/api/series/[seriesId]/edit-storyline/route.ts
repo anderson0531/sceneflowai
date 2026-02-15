@@ -41,18 +41,36 @@ function repairJSON(text: string): string {
   // Fix missing commas between properties (look for "property": value "nextProperty":)
   repaired = repaired.replace(/(["\d\]}])\s*\n\s*"/g, '$1,\n"')
   
+  // Fix unescaped newlines in strings - replace actual newlines between quotes with \n
+  repaired = repaired.replace(/"([^"]*)\n([^"]*)"/g, (match, before, after) => {
+    return `"${before}\\n${after}"`
+  })
+  
   // Fix unescaped quotes in strings (basic heuristic)
-  // Look for patterns like "value with "nested" quotes" and escape inner quotes
-  repaired = repaired.replace(/: "([^"]*)"([^,}\]]*)"([^"]*)",/g, ': "$1\\"$2\\"$3",')
+  repaired = repaired.replace(/: "([^"]*)"([^,}\]:\n]*)"([^"]*)",/g, ': "$1\\"$2\\"$3",')
   
   // Fix missing quotes around property values that look like strings
   repaired = repaired.replace(/: ([a-zA-Z][a-zA-Z0-9_\s]*[a-zA-Z0-9])([,}\]])/g, ': "$1"$2')
+  
+  // Fix truncated arrays - if array doesn't close, close it
+  const openBrackets = (repaired.match(/\[/g) || []).length
+  const closeBrackets = (repaired.match(/\]/g) || []).length
+  if (openBrackets > closeBrackets) {
+    repaired = repaired + ']'.repeat(openBrackets - closeBrackets)
+  }
+  
+  // Fix truncated objects - if object doesn't close, close it
+  const openBraces = (repaired.match(/{/g) || []).length
+  const closeBraces = (repaired.match(/}/g) || []).length
+  if (openBraces > closeBraces) {
+    repaired = repaired + '}'.repeat(openBraces - closeBraces)
+  }
   
   return repaired
 }
 
 /**
- * Safely parse JSON from LLM responses
+ * Safely parse JSON from LLM responses with aggressive repair
  */
 function safeParseJSON(text: string): any {
   let cleaned = text.trim()
@@ -67,7 +85,7 @@ function safeParseJSON(text: string): any {
   try {
     return JSON.parse(cleaned)
   } catch (e) {
-    console.log('[Edit Storyline] Initial JSON parse failed, attempting repair...')
+    console.log('[Edit Storyline] Initial JSON parse failed:', (e as Error).message)
   }
   
   // Second attempt: find JSON boundaries
@@ -80,7 +98,7 @@ function safeParseJSON(text: string): any {
     try {
       return JSON.parse(jsonCandidate)
     } catch (e) {
-      console.log('[Edit Storyline] Bounded JSON parse failed, attempting repair...')
+      console.log('[Edit Storyline] Bounded JSON parse failed:', (e as Error).message)
     }
     
     // Third attempt: repair common issues
@@ -89,12 +107,43 @@ function safeParseJSON(text: string): any {
       return JSON.parse(repaired)
     } catch (e) {
       console.log('[Edit Storyline] Repaired JSON parse failed:', (e as Error).message)
+      // Log portion around error position for debugging
+      const errMsg = (e as Error).message
+      const posMatch = errMsg.match(/position (\d+)/)
+      if (posMatch) {
+        const pos = parseInt(posMatch[1])
+        console.log('[Edit Storyline] JSON near error:', jsonCandidate.slice(Math.max(0, pos - 100), pos + 100))
+      }
     }
     
-    // Fourth attempt: use regex to extract key fields
+    // Fourth attempt: progressively truncate until valid
     try {
-      const changesMatch = jsonCandidate.match(/"changesApplied"\s*:\s*\[([\s\S]*?)\]/)?.[0]
-      const fieldsMatch = jsonCandidate.match(/"fieldsModified"\s*:\s*\[([\s\S]*?)\]/)?.[0]
+      let truncated = jsonCandidate
+      for (let i = 0; i < 10; i++) {
+        // Find the last complete array or object
+        const lastCompleteArray = truncated.lastIndexOf(']')
+        const lastCompleteObj = truncated.lastIndexOf('}')
+        const cutPoint = Math.max(lastCompleteArray, lastCompleteObj)
+        
+        if (cutPoint > 100) {
+          truncated = truncated.slice(0, cutPoint + 1)
+          const repaired = repairJSON(truncated)
+          try {
+            const result = JSON.parse(repaired)
+            console.log('[Edit Storyline] Parsed truncated JSON successfully')
+            return result
+          } catch {
+            // Continue truncating
+          }
+        }
+      }
+    } catch (e) {
+      console.log('[Edit Storyline] Truncation attempts failed')
+    }
+    
+    // Fifth attempt: extract key fields with regex
+    try {
+      console.log('[Edit Storyline] Attempting regex extraction...')
       
       // Build a minimal valid response
       const minimalJSON: any = {
@@ -104,25 +153,50 @@ function safeParseJSON(text: string): any {
         episodeBlueprints: []
       }
       
-      // Try to extract arrays
+      // Try to extract changesApplied array
+      const changesMatch = jsonCandidate.match(/"changesApplied"\s*:\s*\[([\s\S]*?)\]/)
       if (changesMatch) {
         try {
-          const arr = JSON.parse(`{${changesMatch}}`)
+          const arr = JSON.parse(`{"changesApplied": [${changesMatch[1]}]}`)
           minimalJSON.changesApplied = arr.changesApplied || []
-        } catch {}
+        } catch {
+          // Try individual items
+          const items = changesMatch[1].match(/"[^"]+"/g) || []
+          minimalJSON.changesApplied = items.map(s => s.replace(/^"|"$/g, ''))
+        }
       }
       
+      // Try to extract fieldsModified array  
+      const fieldsMatch = jsonCandidate.match(/"fieldsModified"\s*:\s*\[([\s\S]*?)\]/)
       if (fieldsMatch) {
         try {
-          const arr = JSON.parse(`{${fieldsMatch}}`)
+          const arr = JSON.parse(`{"fieldsModified": [${fieldsMatch[1]}]}`)
           minimalJSON.fieldsModified = arr.fieldsModified || []
+        } catch {
+          const items = fieldsMatch[1].match(/"[^"]+"/g) || []
+          minimalJSON.fieldsModified = items.map(s => s.replace(/^"|"$/g, ''))
+        }
+      }
+      
+      // Try to extract productionBible (look for characters array specifically)
+      const charactersMatch = jsonCandidate.match(/"characters"\s*:\s*\[[\s\S]*?\}\s*\]/)
+      if (charactersMatch) {
+        try {
+          const parsed = JSON.parse(`{${charactersMatch[0]}}`)
+          minimalJSON.productionBible = { characters: parsed.characters }
         } catch {}
       }
       
-      console.log('[Edit Storyline] Extracted minimal response from malformed JSON')
+      console.log('[Edit Storyline] Extracted minimal response:', {
+        changesCount: minimalJSON.changesApplied.length,
+        fieldsCount: minimalJSON.fieldsModified.length,
+        hasCharacters: !!minimalJSON.productionBible?.characters
+      })
+      
       return minimalJSON
-    } catch (e4) {
-      throw new Error(`Invalid JSON from LLM - could not repair: ${(e4 as Error).message}`)
+    } catch (e5) {
+      console.error('[Edit Storyline] All parsing attempts failed')
+      throw new Error(`Invalid JSON from LLM - could not repair or extract`)
     }
   }
   
