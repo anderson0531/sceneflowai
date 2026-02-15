@@ -297,17 +297,6 @@ export function SceneGallery({
               <TooltipContent>{showAudioPlayer ? 'Hide audio player' : 'Show audio player to preview scene audio'}</TooltipContent>
             </Tooltip>
           )}
-          {onOpenPreview && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onOpenPreview}
-              className="flex items-center gap-2"
-            >
-              <Eye className="w-4 h-4 text-purple-300" />
-              <span>Screening Room</span>
-            </Button>
-          )}
           {scenes.length > 0 && (
             <Tooltip>
               <TooltipTrigger asChild>

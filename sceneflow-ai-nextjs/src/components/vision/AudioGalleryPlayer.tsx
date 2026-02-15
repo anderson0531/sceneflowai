@@ -9,7 +9,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Globe, X, ChevronDown } from 'lucide-react'
+import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Globe, X, Maximize, Minimize } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -17,6 +17,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { cn } from '@/lib/utils'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
+
+// Ken Burns animation configurations - different pan directions
+const KEN_BURNS_CONFIGS = [
+  { scale: 1.15, x: -5, y: -3 },   // Zoom in, pan left-up
+  { scale: 1.12, x: 5, y: -2 },    // Zoom in, pan right-up
+  { scale: 1.18, x: -3, y: 4 },    // Zoom in, pan left-down
+  { scale: 1.14, x: 4, y: 3 },     // Zoom in, pan right-down
+  { scale: 1.1, x: 0, y: -5 },     // Zoom in, pan up
+  { scale: 1.16, x: 0, y: 4 },     // Zoom in, pan down
+]
 
 interface AudioGalleryPlayerProps {
   scenes: any[]
@@ -49,6 +59,12 @@ export function AudioGalleryPlayer({
   const [volume, setVolume] = useState(0.8)
   const [isMuted, setIsMuted] = useState(false)
   const [autoAdvance, setAutoAdvance] = useState(true)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  
+  // Ken Burns effect - pick a config per scene for variety
+  const kenBurnsConfig = useMemo(() => {
+    return KEN_BURNS_CONFIGS[currentSceneIndex % KEN_BURNS_CONFIGS.length]
+  }, [currentSceneIndex])
   
   // Refs
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -57,6 +73,31 @@ export function AudioGalleryPlayer({
   
   // Get current scene
   const currentScene = scenes[currentSceneIndex]
+  
+  // Fullscreen toggle
+  const toggleFullscreen = useCallback(() => {
+    if (!containerRef.current) return
+    
+    if (!isFullscreen) {
+      if (containerRef.current.requestFullscreen) {
+        containerRef.current.requestFullscreen()
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen()
+      }
+    }
+  }, [isFullscreen])
+  
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+    
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
   
   // Build audio clips for current scene
   const audioClips = useMemo((): AudioClip[] => {
@@ -260,11 +301,17 @@ export function AudioGalleryPlayer({
     return lang?.name || code.toUpperCase()
   }
   
+  // Calculate Ken Burns progress (0 to 1)
+  const kenBurnsProgress = sceneDuration > 0 ? currentTime / sceneDuration : 0
+  
   return (
     <TooltipProvider>
       <div 
         ref={containerRef}
-        className="rounded-xl border border-emerald-500/30 bg-gradient-to-br from-gray-900 via-gray-900 to-emerald-950/20 overflow-hidden"
+        className={cn(
+          "rounded-xl border border-emerald-500/30 bg-gradient-to-br from-gray-900 via-gray-900 to-emerald-950/20 overflow-hidden",
+          isFullscreen && "fixed inset-0 z-50 rounded-none border-none flex flex-col"
+        )}
       >
         {/* Header with language selector */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
@@ -316,8 +363,21 @@ export function AudioGalleryPlayer({
               </TooltipContent>
             </Tooltip>
             
+            {/* Fullscreen toggle */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={toggleFullscreen}
+                  className="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+                >
+                  {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}</TooltipContent>
+            </Tooltip>
+            
             {/* Close button */}
-            {onClose && (
+            {onClose && !isFullscreen && (
               <button
                 onClick={onClose}
                 className="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
@@ -329,19 +389,27 @@ export function AudioGalleryPlayer({
         </div>
         
         {/* Main content area */}
-        <div className="flex gap-4 p-4">
+        <div className={cn(
+          "flex gap-4 p-4",
+          isFullscreen && "flex-1 flex-col items-center justify-center"
+        )}>
           {/* Scene image with Ken Burns effect */}
-          <div className="relative w-64 aspect-video rounded-lg overflow-hidden bg-gray-800 flex-shrink-0">
+          <div className={cn(
+            "relative rounded-lg overflow-hidden bg-black flex-shrink-0",
+            isFullscreen 
+              ? "w-full max-w-5xl aspect-video" 
+              : "w-64 aspect-video"
+          )}>
             {currentScene?.imageUrl ? (
               <img
                 src={currentScene.imageUrl}
                 alt={`Scene ${currentSceneIndex + 1}`}
-                className={cn(
-                  "w-full h-full object-cover transition-transform duration-[15000ms] ease-linear",
-                  isPlaying && "scale-110"
-                )}
+                className="w-full h-full object-cover"
                 style={{
-                  transformOrigin: isPlaying ? 'center center' : 'center center',
+                  transform: isPlaying 
+                    ? `scale(${1 + (kenBurnsConfig.scale - 1) * kenBurnsProgress}) translate(${kenBurnsConfig.x * kenBurnsProgress}%, ${kenBurnsConfig.y * kenBurnsProgress}%)`
+                    : 'scale(1) translate(0%, 0%)',
+                  transition: isPlaying ? 'none' : 'transform 0.3s ease-out',
                 }}
               />
             ) : (
@@ -353,26 +421,41 @@ export function AudioGalleryPlayer({
             {/* Current clip label overlay */}
             {currentClip && (
               <div className="absolute bottom-2 left-2 right-2 bg-black/70 rounded px-2 py-1">
-                <span className="text-xs text-white">{currentClip.label}</span>
+                <span className={cn("text-white", isFullscreen ? "text-base" : "text-xs")}>{currentClip.label}</span>
+              </div>
+            )}
+            
+            {/* Scene heading overlay in fullscreen */}
+            {isFullscreen && (
+              <div className="absolute top-4 left-4 right-4">
+                <div className="bg-black/60 rounded-lg px-4 py-2">
+                  <span className="text-white/70 text-sm">SCENE {currentSceneIndex + 1}</span>
+                  <h2 className="text-white text-lg font-semibold truncate">{formattedHeading}</h2>
+                </div>
               </div>
             )}
           </div>
           
           {/* Playback controls and info */}
-          <div className="flex-1 flex flex-col justify-between min-w-0">
-            {/* Scene info */}
-            <div>
-              <h4 className="text-sm font-semibold text-white mb-1">
-                SCENE {currentSceneIndex + 1}
-              </h4>
-              <p className="text-sm text-gray-300 truncate">{formattedHeading}</p>
-              {!hasAudio && (
-                <p className="text-xs text-amber-400 mt-2">No audio generated for this scene</p>
-              )}
-            </div>
+          <div className={cn(
+            "flex flex-col justify-between min-w-0",
+            isFullscreen ? "w-full max-w-5xl mt-4" : "flex-1"
+          )}>
+            {/* Scene info - hide in fullscreen (shown in overlay) */}
+            {!isFullscreen && (
+              <div>
+                <h4 className="text-sm font-semibold text-white mb-1">
+                  SCENE {currentSceneIndex + 1}
+                </h4>
+                <p className="text-sm text-gray-300 truncate">{formattedHeading}</p>
+                {!hasAudio && (
+                  <p className="text-xs text-amber-400 mt-2">No audio generated for this scene</p>
+                )}
+              </div>
+            )}
             
             {/* Progress bar */}
-            <div className="mt-3">
+            <div className={cn("mt-3", isFullscreen && "mt-0")}>
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-xs text-gray-400 w-10">{formatTime(currentTime)}</span>
                 <div 
@@ -401,9 +484,12 @@ export function AudioGalleryPlayer({
                       <button
                         onClick={goToPrevScene}
                         disabled={currentSceneIndex === 0}
-                        className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        className={cn(
+                          "rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors",
+                          isFullscreen ? "p-3" : "p-2"
+                        )}
                       >
-                        <SkipBack className="w-4 h-4 text-white" />
+                        <SkipBack className={cn("text-white", isFullscreen ? "w-5 h-5" : "w-4 h-4")} />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>Previous scene</TooltipContent>
@@ -412,12 +498,15 @@ export function AudioGalleryPlayer({
                   {/* Play/Pause */}
                   <button
                     onClick={() => setIsPlaying(!isPlaying)}
-                    className="p-3 rounded-full bg-emerald-600 hover:bg-emerald-500 transition-colors"
+                    className={cn(
+                      "rounded-full bg-emerald-600 hover:bg-emerald-500 transition-colors",
+                      isFullscreen ? "p-4" : "p-3"
+                    )}
                   >
                     {isPlaying ? (
-                      <Pause className="w-5 h-5 text-white" />
+                      <Pause className={cn("text-white", isFullscreen ? "w-6 h-6" : "w-5 h-5")} />
                     ) : (
-                      <Play className="w-5 h-5 text-white ml-0.5" />
+                      <Play className={cn("text-white ml-0.5", isFullscreen ? "w-6 h-6" : "w-5 h-5")} />
                     )}
                   </button>
                   
@@ -427,9 +516,12 @@ export function AudioGalleryPlayer({
                       <button
                         onClick={goToNextScene}
                         disabled={currentSceneIndex === scenes.length - 1}
-                        className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        className={cn(
+                          "rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors",
+                          isFullscreen ? "p-3" : "p-2"
+                        )}
                       >
-                        <SkipForward className="w-4 h-4 text-white" />
+                        <SkipForward className={cn("text-white", isFullscreen ? "w-5 h-5" : "w-4 h-4")} />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>Next scene</TooltipContent>
@@ -467,8 +559,11 @@ export function AudioGalleryPlayer({
         </div>
         
         {/* Scene thumbnails row */}
-        <div className="px-4 pb-4">
-          <div className="flex gap-2 overflow-x-auto pb-2">
+        <div className={cn(
+          "px-4 pb-4",
+          isFullscreen && "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-8"
+        )}>
+          <div className="flex gap-2 overflow-x-auto pb-2 justify-center">
             {scenes.map((scene, idx) => {
               const hasSceneAudio = scene.narrationAudio?.en?.url || scene.narrationAudioUrl || 
                 (scene.dialogueAudio?.en && scene.dialogueAudio.en.length > 0)
@@ -478,7 +573,8 @@ export function AudioGalleryPlayer({
                   key={idx}
                   onClick={() => goToScene(idx)}
                   className={cn(
-                    "flex-shrink-0 w-16 h-10 rounded overflow-hidden border-2 transition-all relative",
+                    "flex-shrink-0 rounded overflow-hidden border-2 transition-all relative",
+                    isFullscreen ? "w-24 h-14" : "w-16 h-10",
                     idx === currentSceneIndex
                       ? "border-emerald-500 ring-2 ring-emerald-500/30"
                       : "border-transparent hover:border-gray-500"
