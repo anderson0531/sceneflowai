@@ -9018,6 +9018,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             }
                             onOpenAssets={openGenerateAudio}
                             onOpenPreview={() => setIsPlayerOpen(true)}
+                            onOpenGenerateAudio={openGenerateAudio}
+                            isGeneratingAudio={isGeneratingAudio}
                           />
                         </div>
                       )}

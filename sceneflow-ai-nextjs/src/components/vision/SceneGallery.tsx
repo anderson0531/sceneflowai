@@ -12,8 +12,10 @@
  */
 'use client'
 
-import React, { useState, useCallback } from 'react'
-import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2 } from 'lucide-react'
+import React, { useState, useCallback, useMemo } from 'react'
+import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2, Volume2, VolumeX, Play, Pause, SkipForward, SkipBack, Check, Globe } from 'lucide-react'
+import { AudioGalleryPlayer } from './AudioGalleryPlayer'
+import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
@@ -46,6 +48,10 @@ interface SceneGalleryProps {
   onOpenPreview?: () => void
   /** Object/prop references from the reference library for consistent image generation */
   objectReferences?: Array<{ id: string; name: string; imageUrl: string; description?: string }>
+  /** Callback to open Generate Audio dialog */
+  onOpenGenerateAudio?: () => void
+  /** Whether audio generation is currently in progress */
+  isGeneratingAudio?: boolean
 }
 
 const buildSceneKey = (scene: any, index: number) => scene.sceneId || scene.id || `scene-${index}`
@@ -71,6 +77,8 @@ export function SceneGallery({
   onOpenAssets,
   onOpenPreview,
   objectReferences,
+  onOpenGenerateAudio,
+  isGeneratingAudio = false,
 }: SceneGalleryProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'timeline'>('grid')
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -79,6 +87,38 @@ export function SceneGallery({
   const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
   const [openProductionScene, setOpenProductionScene] = useState<string | null>(null)
   const [isGeneratingAll, setIsGeneratingAll] = useState(false)
+  const [showAudioPlayer, setShowAudioPlayer] = useState(false)
+  const [selectedLanguage, setSelectedLanguage] = useState('en')
+  
+  // Count scenes with audio for Generate All Audio button display
+  const scenesWithAudio = useMemo(() => {
+    return scenes.filter(scene => 
+      scene.narrationAudio?.en?.url || 
+      scene.narrationAudioUrl || 
+      (scene.dialogueAudio?.en && scene.dialogueAudio.en.length > 0)
+    ).length
+  }, [scenes])
+  
+  const scenesWithoutAudio = scenes.length - scenesWithAudio
+  
+  // Detect available languages across all scenes
+  const availableLanguages = useMemo(() => {
+    const langs = new Set<string>()
+    scenes.forEach(scene => {
+      if (scene.narrationAudio) {
+        Object.keys(scene.narrationAudio).forEach(lang => {
+          if (scene.narrationAudio[lang]?.url) langs.add(lang)
+        })
+      }
+      if (scene.dialogueAudio) {
+        Object.keys(scene.dialogueAudio).forEach(lang => {
+          if (Array.isArray(scene.dialogueAudio[lang]) && scene.dialogueAudio[lang].length > 0) langs.add(lang)
+        })
+      }
+    })
+    if (langs.size === 0) langs.add('en')
+    return Array.from(langs).sort()
+  }, [scenes])
   
   // Processing overlay hook for animated feedback
   const { execute } = useProcessWithOverlay()
@@ -179,10 +219,17 @@ export function SceneGallery({
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <Clapperboard className="w-5 h-5 text-sf-primary" />
-          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">Scene Gallery and Production</h3>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">Scene Gallery and Storyboard</h3>
           <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
             {scenes.length} {scenes.length === 1 ? 'scene' : 'scenes'}
           </span>
+          {/* Audio status indicator */}
+          {scenesWithAudio > 0 && (
+            <span className="text-xs text-emerald-500 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded flex items-center gap-1">
+              <Volume2 className="w-3 h-3" />
+              {scenesWithAudio}/{scenes.length} audio
+            </span>
+          )}
         </div>
         
         <div className="flex gap-2 items-center">
@@ -206,6 +253,48 @@ export function SceneGallery({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Generate images for all scenes without images</TooltipContent>
+            </Tooltip>
+          )}
+          {/* Generate All Audio button */}
+          {onOpenGenerateAudio && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onOpenGenerateAudio}
+                  disabled={isGeneratingAudio}
+                  className="flex items-center gap-2 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-emerald-500/30 hover:border-emerald-500/50 hover:from-emerald-500/20 hover:to-teal-500/20"
+                >
+                  {isGeneratingAudio ? (
+                    <Loader className="w-4 h-4 animate-spin text-emerald-400" />
+                  ) : (
+                    <Volume2 className="w-4 h-4 text-emerald-400" />
+                  )}
+                  <span>Generate Audio</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Generate narration and dialogue audio for all scenes</TooltipContent>
+            </Tooltip>
+          )}
+          {/* Audio Player toggle - only show if scenes have audio */}
+          {scenesWithAudio > 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={showAudioPlayer ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowAudioPlayer(!showAudioPlayer)}
+                  className={showAudioPlayer 
+                    ? "flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white" 
+                    : "flex items-center gap-2"
+                  }
+                >
+                  {showAudioPlayer ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  <span>Audio Player</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{showAudioPlayer ? 'Hide audio player' : 'Show audio player to preview scene audio'}</TooltipContent>
             </Tooltip>
           )}
           {onOpenPreview && (
@@ -263,6 +352,19 @@ export function SceneGallery({
           )}
         </div>
       </div>
+      
+      {/* Audio Gallery Player - collapsible section */}
+      {showAudioPlayer && scenesWithAudio > 0 && (
+        <div className="mb-6">
+          <AudioGalleryPlayer
+            scenes={scenes}
+            selectedLanguage={selectedLanguage}
+            onLanguageChange={setSelectedLanguage}
+            availableLanguages={availableLanguages}
+            onClose={() => setShowAudioPlayer(false)}
+          />
+        </div>
+      )}
       
       {scenes.length === 0 ? (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
@@ -648,6 +750,31 @@ function SceneCard({
           ))}
         </div>
       )}
+      
+      {/* Audio Status Indicator */}
+      {(() => {
+        const hasNarration = scene.narrationAudio?.en?.url || scene.narrationAudioUrl
+        const hasDialogue = scene.dialogueAudio?.en && scene.dialogueAudio.en.length > 0
+        const hasMusic = scene.musicAudio || scene.music?.url
+        const hasSfx = scene.sfxAudio && scene.sfxAudio.length > 0
+        const hasAnyAudio = hasNarration || hasDialogue || hasMusic || hasSfx
+        
+        if (!hasAnyAudio) return null
+        
+        return (
+          <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/60 rounded-full px-2 py-1">
+            <Volume2 className="w-3 h-3 text-emerald-400" />
+            <span className="text-[10px] text-white font-medium">
+              {[
+                hasNarration && 'VO',
+                hasDialogue && 'DLG',
+                hasMusic && '♪',
+                hasSfx && 'SFX'
+              ].filter(Boolean).join(' · ')}
+            </span>
+          </div>
+        )
+      })()}
 
       <div
         data-scene-production
