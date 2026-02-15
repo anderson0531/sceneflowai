@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
 import { ObjectSuggestion, ObjectCategory, ObjectImportance, VisualReference } from '@/types/visionReferences'
 import { cn } from '@/lib/utils'
+import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
 
 interface ObjectSuggestionPanelProps {
   /** Script scenes for analysis */
@@ -45,7 +46,7 @@ interface ObjectSuggestionPanelProps {
 }
 
 const CATEGORY_COLORS: Record<ObjectCategory, string> = {
-  'prop': 'bg-amber-500/20 text-amber-400 border-amber-500/40',
+  'prop': 'bg-indigo-500/20 text-indigo-400 border-indigo-500/40',
   'vehicle': 'bg-blue-500/20 text-blue-400 border-blue-500/40',
   'set-piece': 'bg-purple-500/20 text-purple-400 border-purple-500/40',
   'costume': 'bg-pink-500/20 text-pink-400 border-pink-500/40',
@@ -190,6 +191,11 @@ export function ObjectSuggestionPanel({
   const [error, setError] = useState<string | null>(null)
   const [hasAnalyzed, setHasAnalyzed] = useState(false)
   const [expanded, setExpanded] = useState(true)
+  
+  // Batch generation state
+  const [isBatchGenerating, setIsBatchGenerating] = useState(false)
+  const [batchProgress, setBatchProgress] = useState(0)
+  const [currentBatchItem, setCurrentBatchItem] = useState<string>('')
 
   const analyzeScenesForObjects = useCallback(async () => {
     if (scenes.length === 0) return
@@ -278,27 +284,107 @@ export function ObjectSuggestionPanel({
     setSuggestions(prev => prev.filter(s => s.id !== id))
   }, [])
 
+  // Batch generate all suggestions (skips already generated)
+  const handleGenerateAll = useCallback(async () => {
+    const suggestionsToGenerate = suggestions.filter(s => !generatingIds.has(s.id))
+    if (suggestionsToGenerate.length === 0) return
+    
+    setIsBatchGenerating(true)
+    setBatchProgress(0)
+    setError(null)
+    
+    let completedCount = 0
+    const totalCount = suggestionsToGenerate.length
+    
+    for (const suggestion of suggestionsToGenerate) {
+      setCurrentBatchItem(suggestion.name)
+      
+      try {
+        setGeneratingIds(prev => new Set(prev).add(suggestion.id))
+        
+        const response = await fetch('/api/vision/generate-object', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: suggestion.name,
+            description: suggestion.description,
+            prompt: suggestion.suggestedPrompt,
+            category: suggestion.category
+          })
+        })
+
+        if (!response.ok) {
+          const data = await response.json()
+          console.error(`Failed to generate ${suggestion.name}:`, data.error)
+          // Continue with next item instead of stopping
+        } else {
+          const data = await response.json()
+          
+          onObjectGenerated({
+            name: suggestion.name,
+            description: suggestion.description,
+            imageUrl: data.imageUrl,
+            category: suggestion.category,
+            importance: suggestion.importance,
+            generationPrompt: suggestion.suggestedPrompt,
+            aiGenerated: true
+          })
+
+          setSuggestions(prev => prev.filter(s => s.id !== suggestion.id))
+        }
+      } catch (err: any) {
+        console.error(`Error generating ${suggestion.name}:`, err)
+      } finally {
+        setGeneratingIds(prev => {
+          const next = new Set(prev)
+          next.delete(suggestion.id)
+          return next
+        })
+        completedCount++
+        setBatchProgress(Math.round((completedCount / totalCount) * 100))
+      }
+    }
+    
+    setIsBatchGenerating(false)
+    setCurrentBatchItem('')
+  }, [suggestions, generatingIds, onObjectGenerated])
+
   // Don't show if no scenes
   if (scenes.length === 0) return null
 
   return (
-    <div className="border border-amber-500/30 bg-amber-500/5 rounded-lg overflow-hidden">
-      {/* Header */}
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between px-3 py-2 hover:bg-amber-500/10 transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-amber-400" />
-          <span className="text-sm font-medium text-amber-300">AI Object Suggestions</span>
-          {suggestions.length > 0 && (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">
-              {suggestions.length}
-            </span>
-          )}
-        </div>
-        {expanded ? <ChevronUp className="w-4 h-4 text-amber-400" /> : <ChevronDown className="w-4 h-4 text-amber-400" />}
-      </button>
+    <>
+      {/* Processing Overlay for Props Generation */}
+      <GeneratingOverlay
+        visible={isBatchGenerating || generatingIds.size > 0}
+        title={isBatchGenerating ? 'Generating Props References' : 'Generating Reference Image'}
+        progress={isBatchGenerating ? batchProgress : 50}
+        subtext={
+          isBatchGenerating 
+            ? `Processing "${currentBatchItem}"... ${batchProgress}% complete`
+            : generatingIds.size > 0 
+              ? 'Creating visual reference...'
+              : undefined
+        }
+      />
+      
+      <div className="border border-indigo-500/30 bg-indigo-500/5 rounded-lg overflow-hidden">
+        {/* Header */}
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="w-full flex items-center justify-between px-3 py-2 hover:bg-indigo-500/10 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-indigo-400" />
+            <span className="text-sm font-medium text-indigo-300">Object Suggestions</span>
+            {suggestions.length > 0 && (
+              <span className="text-xs px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400">
+                {suggestions.length}
+              </span>
+            )}
+          </div>
+          {expanded ? <ChevronUp className="w-4 h-4 text-indigo-400" /> : <ChevronDown className="w-4 h-4 text-indigo-400" />}
+        </button>
 
       {expanded && (
         <div className="px-3 pb-3 space-y-3">
@@ -311,7 +397,7 @@ export function ObjectSuggestionPanel({
               <Button
                 onClick={analyzeScenesForObjects}
                 disabled={isAnalyzing}
-                className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white border-0"
               >
                 {isAnalyzing ? (
                   <>
@@ -344,6 +430,28 @@ export function ObjectSuggestionPanel({
             </div>
           ) : (
             <>
+              {/* Generate All Button */}
+              {suggestions.length > 1 && (
+                <Button
+                  onClick={handleGenerateAll}
+                  disabled={isBatchGenerating || generatingIds.size > 0}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white mb-2"
+                  size="sm"
+                >
+                  {isBatchGenerating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                      Generating All...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-1.5" />
+                      Generate All ({suggestions.length})
+                    </>
+                  )}
+                </Button>
+              )}
+              
               {/* Suggestion Cards */}
               <div className="space-y-2 max-h-[400px] overflow-y-auto">
                 {suggestions.map(suggestion => (
@@ -382,6 +490,7 @@ export function ObjectSuggestionPanel({
           )}
         </div>
       )}
-    </div>
+      </div>
+    </>
   )
 }
