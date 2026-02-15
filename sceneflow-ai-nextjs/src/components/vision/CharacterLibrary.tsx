@@ -527,6 +527,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
   const isAppearanceExpanded = expandedCharId === `${characterId}-appear`
+  const [isCollapsed, setIsCollapsed] = useState(false) // Hide/show card content
   const [editingName, setEditingName] = useState(false)
   const [nameText, setNameText] = useState('')
   const [editingRole, setEditingRole] = useState(false)
@@ -1082,12 +1083,72 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
       }
     : undefined
   
+  // Collapsed view - shows just character name with expand button
+  if (isCollapsed) {
+    return (
+      <div
+        ref={setNodeRef}
+        style={draggableStyle}
+        className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all overflow-hidden"
+      >
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Small avatar thumbnail */}
+            <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0">
+              {character.referenceImage ? (
+                <img 
+                  src={character.referenceImage} 
+                  alt={character.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-gray-400" />
+                </div>
+              )}
+            </div>
+            <div className="min-w-0">
+              <span className="font-semibold text-sm text-gray-900 dark:text-white truncate block">
+                {character.name || 'Unnamed'}
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">
+                {character.role || 'Character'}
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setIsCollapsed(false)
+            }}
+            className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors"
+            title="Show character details"
+          >
+            <ChevronDown className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    )
+  }
+  
   return (
     <div
       ref={setNodeRef}
       style={draggableStyle}
-      className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all overflow-hidden"
+      className="relative bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all overflow-hidden"
     >
+      {/* Collapse/Hide button at top left of card */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          setIsCollapsed(true)
+        }}
+        className="absolute top-2 left-2 z-20 p-1 rounded-md bg-black/50 hover:bg-black/70 text-white/80 hover:text-white transition-colors"
+        title="Hide character card"
+      >
+        <ChevronUp className="w-3.5 h-3.5" />
+      </button>
+      
       {/* Image Section */}
       <div className="relative aspect-square bg-gray-100 dark:bg-gray-800">
         {character.referenceImage ? (
