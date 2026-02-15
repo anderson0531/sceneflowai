@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Users, Plus, Loader, Wand2, Upload, X, ChevronDown, ChevronUp, Check, Sparkles, Lightbulb, Info, Volume2, ImageIcon, Edit, Trash2, Shirt, Mic, Play, AlertCircle, Maximize2, User, FileText } from 'lucide-react'
+import { Users, Plus, Loader, Wand2, Upload, X, ChevronDown, ChevronUp, Check, Sparkles, Lightbulb, Info, Volume2, ImageIcon, Edit, Trash2, Shirt, Mic, Play, AlertCircle, Maximize2, User, FileText, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
@@ -958,6 +958,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
           appearanceDescription: character.appearanceDescription || generateFallbackDescription(character),
           wardrobeDescription: wardrobe.description,
           wardrobeAccessories: wardrobe.accessories,
+          gender: character.gender, // Pass gender for pronoun usage in prompts
         }),
       })
 
@@ -2203,6 +2204,28 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
               >
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (expandedWardrobe) {
+                    handleGenerateWardrobePreview(expandedWardrobe.id)
+                  }
+                }}
+                disabled={generatingPreviewFor !== null}
+                className="border-purple-500/50 text-purple-600 dark:text-purple-400 hover:bg-purple-500/10"
+              >
+                {generatingPreviewFor === expandedWardrobe?.id ? (
+                  <>
+                    <Loader className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Regenerate (5 credits)
+                  </>
+                )}
               </Button>
               <Button
                 onClick={() => setExpandedWardrobe(null)}

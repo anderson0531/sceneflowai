@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
       wardrobeAccessories,
       wardrobeReason, // AI analysis/reason for character state context
       sceneNumbers,   // Scene numbers for context
+      gender,         // Character gender for pronoun usage in prompts
       // For batch generation
       batch = false,
       wardrobes = [] // Array of { wardrobeId, description, accessories, reason, sceneNumbers }
@@ -109,7 +110,8 @@ export async function POST(req: NextRequest) {
           appearanceDescription,
           wardrobe.description,
           wardrobe.accessories,
-          wardrobe.reason // Pass reason for character state/expression context
+          wardrobe.reason, // Pass reason for character state/expression context
+          gender // Pass gender for pronoun usage
         )
         
         console.log(`[Wardrobe Preview] Full body prompt: ${fullBodyPrompt.substring(0, 150)}...`)
@@ -227,13 +229,19 @@ function buildFullBodyPrompt(
   appearanceDescription?: string,
   wardrobeDescription?: string,
   accessories?: string,
-  reason?: string // AI analysis for character state/expression context
+  reason?: string, // AI analysis for character state/expression context
+  gender?: string // Character's gender for pronoun usage
 ): string {
+  // Determine pronouns based on gender
+  const isFemale = gender?.toLowerCase() === 'female' || gender?.toLowerCase() === 'woman'
+  const pronoun = isFemale ? 'She' : 'He'
+  const possessive = isFemale ? 'Her' : 'His'
+  
   // Build a single flowing prompt - this structure is proven to generate actual full-body shots
   const promptParts: string[] = []
   
-  // Start with the critical framing - "A full body studio portrait"
-  promptParts.push('A full body studio portrait')
+  // Start with explicit full-body framing directive
+  promptParts.push('A full body studio portrait showing the complete figure from head to toe')
   
   // Add character appearance description
   if (appearanceDescription) {
@@ -262,10 +270,10 @@ function buildFullBodyPrompt(
     if (outfit.other) outfitItems.push(outfit.other)
     
     if (outfitItems.length > 0) {
-      promptParts.push(`He is wearing ${outfitItems.join(', ')}`)
+      promptParts.push(`${pronoun} is wearing ${outfitItems.join(', ')}`)
     } else {
       // Fallback to original description if parsing didn't extract items
-      promptParts.push(`He is wearing ${wardrobeDescription}`)
+      promptParts.push(`${pronoun} is wearing ${wardrobeDescription}`)
     }
   }
   
@@ -278,10 +286,10 @@ function buildFullBodyPrompt(
   if (reason) {
     // Look for emotional/physical state descriptors in the analysis
     const statePatterns = [
-      /emphasiz(?:ing|es?)\s+(?:his\s+)?([\w\s]+?)(?:\.|,|$)/i,
-      /convey(?:ing|s?)\s+(?:his\s+)?([\w\s]+?)(?:\.|,|$)/i,
-      /reflect(?:ing|s?)\s+(?:his\s+)?([\w\s]+?)(?:\.|,|$)/i,
-      /show(?:ing|s?)\s+(?:his\s+)?([\w\s]+?)(?:\.|,|$)/i,
+      /emphasiz(?:ing|es?)\s+(?:his|her|their\s+)?([\w\s]+?)(?:\.|,|$)/i,
+      /convey(?:ing|s?)\s+(?:his|her|their\s+)?([\w\s]+?)(?:\.|,|$)/i,
+      /reflect(?:ing|s?)\s+(?:his|her|their\s+)?([\w\s]+?)(?:\.|,|$)/i,
+      /show(?:ing|s?)\s+(?:his|her|their\s+)?([\w\s]+?)(?:\.|,|$)/i,
       /(exhaustion|weariness|determination|focus|desperation|confidence|anxiety)/i
     ]
     
@@ -289,17 +297,17 @@ function buildFullBodyPrompt(
       const match = reason.match(pattern)
       if (match && match[1]) {
         const state = match[1].trim().slice(0, 40) // Limit length
-        promptParts.push(`His expression and demeanor convey ${state}`)
+        promptParts.push(`${possessive} expression and demeanor convey ${state}`)
         break
       }
     }
   }
   
   // Add pose and setting - crucial for full body framing
-  promptParts.push('He is standing with a relaxed posture against a textured gray studio backdrop')
+  promptParts.push(`${pronoun} is standing with a relaxed posture against a textured gray studio backdrop`)
   
-  // Technical photography directives - the "wide-angle lens showing head to toe" is critical
-  promptParts.push('Sharp focus, high-resolution photography, wide-angle lens showing the subject from head to toe, cinematically lit')
+  // Technical photography directives - explicit full-length framing is critical
+  promptParts.push('Sharp focus, high-resolution photography, wide-angle lens showing the subject from head to toe, full length portrait, cinematically lit')
   
   return promptParts.join('. ') + '.'
 }
