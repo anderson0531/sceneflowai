@@ -143,14 +143,18 @@ export async function generateSFXAudio(params: GenerateSFXParams): Promise<{ mp3
 
 /**
  * Generate background music using ElevenLabs
+ * Uses saveToBlob to have server upload directly - avoids 4.5MB client payload limit
  */
-export async function generateMusicAudio(description: string, duration: number): Promise<{ mp3Url: string; duration: number }> {
+export async function generateMusicAudio(description: string, duration: number, projectId?: string, sceneId?: string): Promise<{ mp3Url: string; duration: number }> {
   const response = await fetch('/api/tts/elevenlabs/music', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       text: description,
-      duration
+      duration,
+      saveToBlob: true,  // Server-side upload bypasses client payload limits
+      projectId: projectId || 'default',
+      sceneId: sceneId || `music-${Date.now()}`
     })
   })
 
@@ -159,27 +163,11 @@ export async function generateMusicAudio(description: string, duration: number):
     throw new Error(error.error || 'Music generation failed')
   }
 
-  const blob = await response.blob()
-
-  // Upload to Vercel Blob
-  const formData = new FormData()
-  const timestamp = Date.now()
-  const filename = `audio/music-${timestamp}.mp3`
-  formData.append('file', blob, filename)
-
-  const uploadRes = await fetch('/api/upload/audio', {
-    method: 'POST',
-    body: formData
-  })
-
-  if (!uploadRes.ok) {
-    throw new Error('Failed to upload music file')
-  }
-
-  const { url } = await uploadRes.json()
+  // Server returns the blob URL directly when saveToBlob=true
+  const data = await response.json()
 
   return {
-    mp3Url: url,
+    mp3Url: data.url,
     duration
   }
 }

@@ -1818,10 +1818,17 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     overlayStore?.show(`Generating music for Scene ${sceneIdx + 1}...`, 45)
     try {
       const duration = scene.duration || 30
+      // Use saveToBlob to have the server upload directly - avoids 4.5MB payload limit
       const response = await fetch('/api/tts/elevenlabs/music', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: typeof music === 'string' ? music : music.description, duration })
+        body: JSON.stringify({ 
+          text: typeof music === 'string' ? music : music.description, 
+          duration,
+          saveToBlob: true,  // Server-side upload bypasses client payload limits
+          projectId: projectId || 'temp',
+          sceneId: `scene-${sceneIdx}`
+        })
       })
 
       if (!response.ok) {
@@ -1829,25 +1836,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         throw new Error(error.details || 'Music generation failed')
       }
 
-      const blob = await response.blob()
-      
-      // Upload to blob storage for persistence
-      const formData = new FormData()
-      const fileName = `music-${projectId || 'temp'}-scene-${sceneIdx}-${Date.now()}.mp3`
-      formData.append('file', blob, fileName)
-      
-      const uploadResponse = await fetch('/api/audio/upload', {
-        method: 'POST',
-        body: formData
-      })
-      
-      if (!uploadResponse.ok) {
-        const error = await uploadResponse.json()
-        throw new Error(error.details || 'Failed to save music audio')
-      }
-      
-      const uploadData = await uploadResponse.json()
-      const audioUrl = uploadData.audioUrl
+      // Server returns the blob URL directly when saveToBlob=true
+      const data = await response.json()
+      const audioUrl = data.url
       
       // Update scene with persistent audio URL
       await saveSceneAudio(sceneIdx, 'music', audioUrl)

@@ -7892,10 +7892,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     
     console.log(`[Update Scene Audio] Generating music for Scene ${sceneIndex + 1}...`)
     
+    // Use saveToBlob to have the server upload directly - avoids 4.5MB payload limit
     const response = await fetch('/api/tts/elevenlabs/music', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: description, duration })
+      body: JSON.stringify({ 
+        text: description, 
+        duration,
+        saveToBlob: true,  // Server-side upload bypasses client payload limits
+        projectId,
+        sceneId: `scene-${sceneIndex}`
+      })
     })
     
     if (!response.ok) {
@@ -7903,24 +7910,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       throw new Error(error.details || 'Music generation failed')
     }
     
-    const blob = await response.blob()
-    
-    // Upload to blob storage
-    const formData = new FormData()
-    const fileName = `music-${projectId}-scene-${sceneIndex}-${Date.now()}.mp3`
-    formData.append('file', blob, fileName)
-    
-    const uploadResponse = await fetch('/api/audio/upload', {
-      method: 'POST',
-      body: formData
-    })
-    
-    if (!uploadResponse.ok) {
-      throw new Error('Failed to upload music audio')
-    }
-    
-    const uploadData = await uploadResponse.json()
-    const audioUrl = uploadData.audioUrl
+    // Server returns the blob URL directly when saveToBlob=true
+    const data = await response.json()
+    const audioUrl = data.url
     
     // Update state with music URL
     setScript((prevScript: any) => {
