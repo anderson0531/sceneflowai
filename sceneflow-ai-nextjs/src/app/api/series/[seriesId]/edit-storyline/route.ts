@@ -205,6 +205,7 @@ function safeParseJSON(text: string): any {
 
 /**
  * Build the edit prompt based on target aspect
+ * Uses focused, minimal context to prevent JSON parsing errors from large responses
  */
 function buildEditPrompt(
   instruction: string,
@@ -212,73 +213,115 @@ function buildEditPrompt(
   currentStoryline: any,
   targetEpisodes?: number[]
 ): string {
-  const aspectInstructions: Record<EditTargetAspect, string> = {
-    plot: `Focus on plot changes: story arcs, conflicts, major events, narrative structure.
-Preserve: Character descriptions, settings, tone.
-Return updated: synopsis, episodeBlueprints (with updated storyThreads, plotDevelopments, episodeHook).`,
+  // For character edits, use a focused simple prompt - DON'T send full series data
+  if (targetAspect === 'characters') {
+    const currentCharacters = currentStoryline.productionBible?.characters || []
+    const protagonist = currentStoryline.productionBible?.protagonist || {}
     
-    characters: `Focus on character changes: personalities, relationships, arcs, motivations.
-Preserve: Plot events, settings, episode structure.
-Return updated: protagonist, antagonistConflict, characters array.`,
-    
-    episodes: `Focus on episode-specific changes: episode content, beats, hooks.
-Preserve: Series-level bible, character definitions, overall arc.
-Return updated: Only the episodeBlueprints that changed.`,
-    
-    tone: `Focus on tone/style changes: emotional register, genre elements, visual style.
-Preserve: Plot events, characters, episode structure.
-Return updated: toneGuidelines, visualGuidelines, aesthetic elements.`,
-    
-    setting: `Focus on setting changes: locations, time period, world-building.
-Preserve: Characters, plot events, episode beats.
-Return updated: setting, timeframe, locations array.`,
-    
-    all: `Apply changes across all aspects as appropriate to the instruction.
-Minimize disruption: Change only what's necessary to implement the instruction.
-Return updated: All modified fields.`
+    return `You are a TV showrunner making a character change.
+
+INSTRUCTION: "${instruction}"
+
+CURRENT PROTAGONIST: ${JSON.stringify(protagonist)}
+CURRENT CHARACTERS (first 5): ${JSON.stringify(currentCharacters.slice(0, 5))}
+
+SERIES: ${currentStoryline.title} - ${currentStoryline.logline}
+
+Apply the instruction to create/modify characters. Return ONLY valid JSON:
+{
+  "changesApplied": ["Description of each change made"],
+  "fieldsModified": ["protagonist", "characters"],
+  "productionBible": {
+    "protagonist": {"characterId": "char_1", "name": "Full Name", "goal": "Their main goal", "flaw": "Fatal flaw"},
+    "characters": [
+      {"id": "char_1", "name": "Full Name", "role": "protagonist", "description": "Background and arc", "appearance": "Physical description", "personality": "Key traits"}
+    ]
+  },
+  "episodeBlueprints": []
+}`
   }
 
-  const episodeFilter = targetEpisodes?.length 
-    ? `\nFOCUS ON EPISODES: ${targetEpisodes.join(', ')}\nOnly modify these specific episodes, preserve all others exactly as-is.`
-    : ''
+  // For plot edits
+  if (targetAspect === 'plot') {
+    return `You are a TV showrunner making a plot change.
 
-  return `You are an expert TV series showrunner making directed edits to an existing series bible.
+INSTRUCTION: "${instruction}"
 
-EDIT INSTRUCTION: "${instruction}"
+SERIES: ${currentStoryline.title}
+CURRENT SYNOPSIS: ${currentStoryline.productionBible?.synopsis || currentStoryline.logline}
 
-TARGET ASPECT: ${targetAspect}
-${aspectInstructions[targetAspect]}
-${episodeFilter}
-
-CURRENT SERIES DATA:
-${JSON.stringify(currentStoryline, null, 2)}
-
-CRITICAL RULES:
-1. Make MINIMAL changes to implement the instruction
-2. Preserve narrative consistency and story threads
-3. Keep existing IDs for characters, locations, episodes
-4. Maintain proper story continuity across episodes
-5. Update storyThreads status if plot changes affect them
-6. Only return fields that have changed
-
-IMPORTANT: Return ONLY valid, parseable JSON. No markdown, no code blocks, no explanation text.
-- Use proper JSON escaping for quotes within strings (use \\")
-- Ensure all strings are properly quoted
-- No trailing commas
-- All property names must be quoted
-
-Return this exact JSON structure:
+Apply the instruction. Return ONLY valid JSON:
 {
-  "changesApplied": ["List of specific changes made"],
-  "fieldsModified": ["List of field names that were modified"],
+  "changesApplied": ["Description of plot changes"],
+  "fieldsModified": ["synopsis", "seriesArcs"],
   "productionBible": {
-    // Only include fields that changed
-    // For nested objects, include the full updated object
+    "synopsis": "Updated series synopsis",
+    "seriesArcs": ["Arc 1 description", "Arc 2 description"]
   },
-  "episodeBlueprints": [
-    // Only include episodes that changed
-    // Include full episode object for each changed episode
-  ]
+  "episodeBlueprints": []
+}`
+  }
+
+  // For tone edits
+  if (targetAspect === 'tone') {
+    return `You are a TV showrunner adjusting tone/style.
+
+INSTRUCTION: "${instruction}"
+
+SERIES: ${currentStoryline.title} - ${currentStoryline.logline}
+
+Apply the instruction. Return ONLY valid JSON:
+{
+  "changesApplied": ["Description of tone changes"],
+  "fieldsModified": ["toneGuidelines", "visualGuidelines"],
+  "productionBible": {
+    "toneGuidelines": "Updated tone description",
+    "visualGuidelines": "Updated visual style"
+  },
+  "episodeBlueprints": []
+}`
+  }
+
+  // For setting edits
+  if (targetAspect === 'setting') {
+    const currentLocations = currentStoryline.productionBible?.locations || []
+    return `You are a TV showrunner changing the setting.
+
+INSTRUCTION: "${instruction}"
+
+SERIES: ${currentStoryline.title}
+CURRENT SETTING: ${currentStoryline.productionBible?.setting || 'Not specified'}
+CURRENT LOCATIONS: ${JSON.stringify(currentLocations.slice(0, 3))}
+
+Apply the instruction. Return ONLY valid JSON:
+{
+  "changesApplied": ["Description of setting changes"],
+  "fieldsModified": ["setting", "timeframe", "locations"],
+  "productionBible": {
+    "setting": "Updated setting description",
+    "timeframe": "Time period",
+    "locations": [{"id": "loc_1", "name": "Location Name", "description": "Description", "visualDescription": "Visual style"}]
+  },
+  "episodeBlueprints": []
+}`
+  }
+
+  // For episode or general edits - keep it simple
+  return `You are a TV showrunner making a targeted edit.
+
+INSTRUCTION: "${instruction}"
+TARGET: ${targetAspect}
+${targetEpisodes?.length ? `EPISODES TO MODIFY: ${targetEpisodes.join(', ')}` : ''}
+
+SERIES: ${currentStoryline.title}
+LOGLINE: ${currentStoryline.logline}
+
+Apply the instruction with minimal changes. Return ONLY valid JSON:
+{
+  "changesApplied": ["Description of changes"],
+  "fieldsModified": ["list of modified fields"],
+  "productionBible": {},
+  "episodeBlueprints": []
 }`
 }
 
