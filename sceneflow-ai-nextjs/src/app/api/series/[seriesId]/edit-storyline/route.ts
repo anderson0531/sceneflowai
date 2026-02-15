@@ -24,10 +24,17 @@ interface RouteParams {
 const EPISODE_BATCH_SIZE = 3
 
 /**
- * Safe JSON parse with repair
+ * Safe JSON parse with repair - handles truncated responses, markdown wrapping, and common LLM issues
  */
 function safeParseJSON(text: string): any {
+  if (!text || typeof text !== 'string') {
+    console.error('[Edit Storyline] No text to parse')
+    return null
+  }
+  
   let cleaned = text.trim()
+  
+  // Remove markdown code blocks
   if (cleaned.startsWith('```json')) cleaned = cleaned.slice(7)
   else if (cleaned.startsWith('```')) cleaned = cleaned.slice(3)
   if (cleaned.endsWith('```')) cleaned = cleaned.slice(0, -3)
@@ -37,28 +44,117 @@ function safeParseJSON(text: string): any {
   try {
     return JSON.parse(cleaned)
   } catch (e) {
-    // Find JSON boundaries
-    const firstBracket = cleaned.indexOf('[')
-    const firstBrace = cleaned.indexOf('{')
-    const isArray = firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)
-    const startChar = isArray ? '[' : '{'
-    const endChar = isArray ? ']' : '}'
+    console.log('[Edit Storyline] Direct parse failed, attempting repair...')
+  }
+  
+  // Find JSON boundaries using regex for more robust extraction
+  const jsonMatch = cleaned.match(/(\{[\s\S]*\}|\[[\s\S]*\])/)
+  if (jsonMatch) {
+    cleaned = jsonMatch[0]
+  }
+  
+  // Find JSON boundaries
+  const firstBracket = cleaned.indexOf('[')
+  const firstBrace = cleaned.indexOf('{')
+  const isArray = firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)
+  const startChar = isArray ? '[' : '{'
+  const endChar = isArray ? ']' : '}'
+  
+  const start = cleaned.indexOf(startChar)
+  let end = cleaned.lastIndexOf(endChar)
+  
+  if (start === -1) {
+    console.error('[Edit Storyline] No JSON structure found in response')
+    return null
+  }
+  
+  // If no proper ending, try to repair truncated JSON
+  if (end === -1 || end <= start) {
+    console.log('[Edit Storyline] JSON appears truncated, attempting to close brackets...')
+    cleaned = cleaned.slice(start)
     
-    const start = cleaned.indexOf(startChar)
-    const end = cleaned.lastIndexOf(endChar)
+    // Count open/close brackets to determine what's missing
+    let braceCount = 0
+    let bracketCount = 0
+    let inString = false
+    let escapeNext = false
     
-    if (start !== -1 && end > start) {
-      let json = cleaned.slice(start, end + 1)
-      // Fix trailing commas
-      json = json.replace(/,(\s*[}\]])/g, '$1')
-      
-      try {
-        return JSON.parse(json)
-      } catch (e2) {
-        console.error('[Edit Storyline] JSON parse failed:', (e2 as Error).message)
+    for (const char of cleaned) {
+      if (escapeNext) {
+        escapeNext = false
+        continue
       }
+      if (char === '\\') {
+        escapeNext = true
+        continue
+      }
+      if (char === '"') {
+        inString = !inString
+        continue
+      }
+      if (inString) continue
+      
+      if (char === '{') braceCount++
+      else if (char === '}') braceCount--
+      else if (char === '[') bracketCount++
+      else if (char === ']') bracketCount--
     }
-    console.error('[Edit Storyline] Could not parse JSON from response')
+    
+    // Close any unclosed structures
+    if (inString) {
+      cleaned += '"'
+    }
+    
+    // Remove trailing comma if present
+    cleaned = cleaned.replace(/,\s*$/, '')
+    
+    // Close missing brackets/braces
+    while (bracketCount > 0) {
+      cleaned += ']'
+      bracketCount--
+    }
+    while (braceCount > 0) {
+      cleaned += '}'
+      braceCount--
+    }
+    
+    end = cleaned.length
+  } else {
+    cleaned = cleaned.slice(start, end + 1)
+  }
+  
+  // Fix common JSON issues
+  cleaned = cleaned
+    // Fix trailing commas before closing brackets
+    .replace(/,(\s*[}\]])/g, '$1')
+    // Remove control characters except allowed ones
+    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '')
+  
+  try {
+    const result = JSON.parse(cleaned)
+    console.log('[Edit Storyline] JSON repair successful')
+    return result
+  } catch (e2) {
+    console.error('[Edit Storyline] JSON repair failed:', (e2 as Error).message)
+    console.error('[Edit Storyline] Attempted to parse:', cleaned.slice(0, 500) + '...')
+    
+    // Last resort: try to extract just the essential fields manually
+    try {
+      const loglineMatch = cleaned.match(/"logline"\s*:\s*"([^"]+)"/i)
+      const synopsisMatch = cleaned.match(/"synopsis"\s*:\s*"([^"]+)"/i)
+      
+      if (loglineMatch || synopsisMatch) {
+        console.log('[Edit Storyline] Extracted partial data from malformed JSON')
+        return {
+          logline: loglineMatch?.[1] || '',
+          synopsis: synopsisMatch?.[1] || '',
+          changesApplied: ['Partial extraction due to malformed response']
+        }
+      }
+    } catch (e3) {
+      // Give up
+    }
+    
     return null
   }
 }
@@ -114,8 +210,8 @@ Return ONLY valid JSON (no markdown, no explanation):
   const response = await callLLM({
     provider: 'gemini',
     model: 'gemini-2.5-flash',
-    maxOutputTokens: 4096,
-    timeoutMs: 60000
+    maxOutputTokens: 8192, // Increased to prevent truncation on large character lists
+    timeoutMs: 90000
   }, prompt)
   
   return safeParseJSON(response)
@@ -179,8 +275,8 @@ Return ONLY a valid JSON array (no markdown):
       const response = await callLLM({
         provider: 'gemini',
         model: 'gemini-2.5-flash',
-        maxOutputTokens: 4096,
-        timeoutMs: 60000
+        maxOutputTokens: 8192, // Increased to prevent truncation
+        timeoutMs: 90000
       }, prompt)
       
       const parsed = safeParseJSON(response)
