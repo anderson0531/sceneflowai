@@ -12,6 +12,7 @@ export type OperationType =
   | 'script-optimization'  // Optimizing/revising script
   | 'series-analysis'      // Series resonance analysis
   | 'series-fix'           // Applying fix to series
+  | 'series-edit'          // Editing series storyline
   | 'series-generation'    // Generating series episodes
   | 'image-generation'     // Generating images
   | 'video-generation'     // Generating video
@@ -114,6 +115,18 @@ export const OPERATION_CONFIGS: Record<OperationType, OperationConfig> = {
       { id: 'apply', label: 'Applying fixes...', progress: 75 },
       { id: 'verify', label: 'Verifying changes...', progress: 90 },
       { id: 'finalize', label: 'Finalizing fix...', progress: 98 },
+    ]
+  },
+  'series-edit': {
+    title: 'Editing Storyline',
+    animationType: 'script',
+    phases: [
+      { id: 'init', label: 'Analyzing current storyline...', progress: 10 },
+      { id: 'identify', label: 'Identifying target elements...', progress: 25 },
+      { id: 'generate', label: 'Generating changes...', progress: 50 },
+      { id: 'apply', label: 'Applying edits...', progress: 75 },
+      { id: 'verify', label: 'Verifying continuity...', progress: 90 },
+      { id: 'finalize', label: 'Finalizing storyline...', progress: 98 },
     ]
   },
   'series-generation': {

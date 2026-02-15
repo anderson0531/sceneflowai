@@ -62,7 +62,7 @@ const AnimatedProcessingOverlay = () => {
   const animationFrameRef = useRef<number | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   
-  const config = useMemo(() => OPERATION_CONFIGS[operationType], [operationType])
+  const config = useMemo(() => OPERATION_CONFIGS[operationType] || OPERATION_CONFIGS['default'], [operationType])
   
   // Audience seats state for script-review animation
   const [seats, setSeats] = useState<Array<'dim' | 'engaged' | 'critical' | 'standing'>>([])
