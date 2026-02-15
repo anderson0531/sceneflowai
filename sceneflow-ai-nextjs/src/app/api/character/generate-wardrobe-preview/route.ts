@@ -120,6 +120,7 @@ export async function POST(req: NextRequest) {
           aspectRatio: '9:16', // Tall portrait for full-body head-to-toe framing
           numberOfImages: 1,
           personGeneration: 'allow_adult',
+          skipFaceMesh: true, // Skip FACE_MESH control to allow full-body composition (face mesh causes zoom-in bias)
           referenceImages: [{
             referenceId: 1,
             imageUrl: characterReferenceImageUrl, // Use character reference for facial consistency
