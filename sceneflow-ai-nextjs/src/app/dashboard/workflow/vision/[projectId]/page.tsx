@@ -625,6 +625,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [sceneProductionState, setSceneProductionState] = useState<Record<string, SceneProductionData>>({})
   const [sceneBookmark, setSceneBookmark] = useState<SceneBookmark | null>(null)
   
+  // Refs to track latest state for async operations (avoids stale closure in batch operations)
+  const sceneReferencesRef = useRef<VisualReference[]>([])
+  const objectReferencesRef = useRef<VisualReference[]>([])
+  
+  // Keep refs in sync with state
+  useEffect(() => { sceneReferencesRef.current = sceneReferences }, [sceneReferences])
+  useEffect(() => { objectReferencesRef.current = objectReferences }, [objectReferences])
+  
   // Script Review state - for Director and Audience review scoring
   const [directorReview, setDirectorReview] = useState<any>(null)
   const [audienceReview, setAudienceReview] = useState<any>(null)
@@ -1475,6 +1483,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   // Handler for when a backdrop is generated via AI
+  // Uses refs to avoid stale closure issues during batch generation
   const handleBackdropGenerated = useCallback(
     async (reference: { name: string; description?: string; imageUrl: string; sourceSceneNumber?: number; backdropMode?: string }) => {
       const newReference: VisualReference = {
@@ -1486,11 +1495,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         createdAt: new Date().toISOString(),
       }
 
-      // Update local state
-      const updatedSceneRefs = [...sceneReferences, newReference]
-      setSceneReferences(updatedSceneRefs)
+      // Use functional update to get CURRENT state (not stale closure)
+      setSceneReferences(prev => {
+        const updatedSceneRefs = [...prev, newReference]
+        // Update ref immediately for database save
+        sceneReferencesRef.current = updatedSceneRefs
+        return updatedSceneRefs
+      })
 
-      // Save to database
+      // Save to database using refs for current state
       try {
         const existingMetadata = project?.metadata || {}
         const existingVisionPhase = existingMetadata.visionPhase || {}
@@ -1501,8 +1514,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             visionPhase: {
               ...existingVisionPhase,
               references: {
-                sceneReferences: updatedSceneRefs,
-                objectReferences
+                sceneReferences: sceneReferencesRef.current,  // Use ref for current state
+                objectReferences: objectReferencesRef.current  // Use ref for current state
               }
             }
           }
@@ -1521,10 +1534,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         console.error('[handleBackdropGenerated] Error saving reference:', error)
       }
     },
-    [project, projectId, sceneReferences, objectReferences]
+    [project, projectId]  // Removed sceneReferences, objectReferences - using refs instead
   )
 
   // Handler for when an object reference is generated via AI
+  // Uses refs to avoid stale closure issues during batch generation
   const handleObjectGenerated = useCallback(
     async (object: { 
       name: string; 
@@ -1548,11 +1562,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         aiGenerated: object.aiGenerated,
       }
 
-      // Update local state
-      const updatedObjectRefs = [...objectReferences, newReference]
-      setObjectReferences(updatedObjectRefs)
+      // Use functional update to get CURRENT state (not stale closure)
+      // This fixes the batch generation issue where images were being overwritten
+      setObjectReferences(prev => {
+        const updatedObjectRefs = [...prev, newReference]
+        // Update ref immediately for database save
+        objectReferencesRef.current = updatedObjectRefs
+        return updatedObjectRefs
+      })
 
-      // Save to database
+      // Save to database using refs for current state
       try {
         const existingMetadata = project?.metadata || {}
         const existingVisionPhase = existingMetadata.visionPhase || {}
@@ -1563,8 +1582,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             visionPhase: {
               ...existingVisionPhase,
               references: {
-                sceneReferences,
-                objectReferences: updatedObjectRefs
+                sceneReferences: sceneReferencesRef.current,  // Use ref for current state
+                objectReferences: objectReferencesRef.current  // Use ref for current state
               }
             }
           }
@@ -1583,7 +1602,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         console.error('[handleObjectGenerated] Error saving reference:', error)
       }
     },
-    [project, projectId, sceneReferences, objectReferences]
+    [project, projectId]  // Removed sceneReferences, objectReferences - using refs instead
   )
 
   // Handler for inserting a backdrop segment at the beginning of a scene
