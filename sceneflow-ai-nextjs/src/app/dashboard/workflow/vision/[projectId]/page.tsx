@@ -70,7 +70,7 @@ import { ProductionBiblePanel } from '@/components/series/ProductionBiblePanel'
 import { VisualReference, VisualReferenceType, VisionReferencesPayload } from '@/types/visionReferences'
 import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production'
 import { applyIntelligentDefaults } from '@/lib/audio/anchoredTiming'
-import { buildAudioTracksForLanguage, buildAudioTracksWithBaselineTiming, determineBaselineLanguage } from '@/components/vision/scene-production/audioTrackBuilder'
+import { buildAudioTracksForLanguage, buildAudioTracksWithBaselineTiming, determineBaselineLanguage, applySequentialAlignmentToScene } from '@/components/vision/scene-production/audioTrackBuilder'
 
 /**
  * Client-side upload helper that uses the API endpoint
@@ -3507,6 +3507,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Per-scene audience analysis state (integrated from ScriptReviewModal)
   const [analyzingSceneIndex, setAnalyzingSceneIndex] = useState<number | null>(null)
   const [optimizingSceneIndex, setOptimizingSceneIndex] = useState<number | null>(null)
+  
+  // Audio timing resync state
+  const [resyncingAudioSceneIndex, setResyncingAudioSceneIndex] = useState<number | null>(null)
   
   // Scene direction generation state
   const [generatingDirectionFor, setGeneratingDirectionFor] = useState<number | null>(null)
@@ -8468,6 +8471,119 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  // Resync audio timing - recalculates startTime for all audio clips based on sequential alignment
+  // Use this after editing dialogue/narration durations to fix overlapping audio
+  const handleResyncAudioTiming = async (sceneIndex: number, language: string = 'en') => {
+    if (!script?.script?.scenes?.[sceneIndex]) {
+      console.error('[Resync Audio Timing] Scene not found')
+      return
+    }
+
+    setResyncingAudioSceneIndex(sceneIndex)
+    
+    try {
+      const currentScene = script.script.scenes[sceneIndex]
+      
+      // Calculate proper sequential timing using the audio track builder
+      const alignment = applySequentialAlignmentToScene(currentScene, language, new Set())
+      
+      console.log('[Resync Audio Timing] Calculated alignment:', {
+        sceneIndex,
+        language,
+        narrationStartTime: alignment.narrationStartTime,
+        dialogueTimings: alignment.dialogueTimings,
+        sfxTimings: alignment.sfxTimings,
+        totalDuration: alignment.totalDuration
+      })
+      
+      // Build updated scene with new timing values
+      const updatedScene = { ...currentScene }
+      
+      // Update narration timing
+      if (updatedScene.narrationAudio?.[language]) {
+        updatedScene.narrationAudio = {
+          ...updatedScene.narrationAudio,
+          [language]: {
+            ...updatedScene.narrationAudio[language],
+            startTime: alignment.narrationStartTime
+          }
+        }
+      }
+      
+      // Update dialogue timing
+      if (updatedScene.dialogueAudio) {
+        let dialogueAudioArray: any[] = []
+        if (Array.isArray(updatedScene.dialogueAudio)) {
+          dialogueAudioArray = [...updatedScene.dialogueAudio]
+        } else if (typeof updatedScene.dialogueAudio === 'object') {
+          dialogueAudioArray = [...(updatedScene.dialogueAudio[language] || [])]
+        }
+        
+        // Apply new start times from alignment
+        for (const timing of alignment.dialogueTimings) {
+          const audioIdx = dialogueAudioArray.findIndex((a: any) => 
+            a.dialogueIndex === timing.index
+          )
+          if (audioIdx !== -1) {
+            dialogueAudioArray[audioIdx] = {
+              ...dialogueAudioArray[audioIdx],
+              startTime: timing.startTime
+            }
+          }
+        }
+        
+        // Update the scene with new dialogue audio
+        if (Array.isArray(updatedScene.dialogueAudio)) {
+          updatedScene.dialogueAudio = dialogueAudioArray
+        } else {
+          updatedScene.dialogueAudio = { ...updatedScene.dialogueAudio, [language]: dialogueAudioArray }
+        }
+      }
+      
+      // Update SFX timing
+      if (updatedScene.sfxAudio && Array.isArray(updatedScene.sfxAudio)) {
+        const sfxArray = [...updatedScene.sfxAudio]
+        for (const timing of alignment.sfxTimings) {
+          // SFX timing uses index directly into the array
+          if (sfxArray[timing.index]) {
+            // sfxAudio entries are typically just URLs, but if we store timing info:
+            // For now, log the timing - may need to add startTime field to sfx data structure
+            console.log(`[Resync Audio Timing] SFX ${timing.index} should start at ${timing.startTime}s`)
+          }
+        }
+      }
+      
+      // Update scene duration
+      if (alignment.totalDuration > 0) {
+        updatedScene.duration = alignment.totalDuration
+      }
+      
+      // Update state
+      const updatedScenes = [...script.script.scenes]
+      updatedScenes[sceneIndex] = updatedScene
+      
+      setScript({
+        ...script,
+        script: {
+          ...script.script,
+          scenes: updatedScenes
+        }
+      })
+      
+      // Save to database
+      await saveScenesToDatabase(updatedScenes)
+      
+      console.log(`[Resync Audio Timing] Successfully resynced audio timing for Scene ${sceneIndex + 1}`)
+      toast.success(`Audio timing resynced for Scene ${sceneIndex + 1}`)
+      
+    } catch (error) {
+      console.error('[Resync Audio Timing] Failed:', error)
+      toast.error('Failed to resync audio timing')
+    } finally {
+      setResyncingAudioSceneIndex(null)
+    }
+  }
+
   // Scene score generation handler
   const handleGenerateSceneScore = async (sceneIndex: number) => {
     if (!script || !script.script?.scenes) return
@@ -8949,6 +9065,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 analyzingSceneIndex={analyzingSceneIndex}
                 onOptimizeScene={handleOptimizeScene}
                 optimizingSceneIndex={optimizingSceneIndex}
+                onResyncAudioTiming={handleResyncAudioTiming}
+                resyncingAudioSceneIndex={resyncingAudioSceneIndex}
               belowDashboardSlot={({ openGenerateAudio, openPromptBuilder }) => (
                 <div className="rounded-2xl border border-white/10 bg-slate950/40 shadow-inner">
                   <div className="px-5 py-5">

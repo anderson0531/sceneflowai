@@ -305,6 +305,9 @@ interface ScriptPanelProps {
   analyzingSceneIndex?: number | null
   onOptimizeScene?: (sceneIndex: number, instruction: string, selectedRecommendations: string[]) => Promise<void>
   optimizingSceneIndex?: number | null
+  // Audio timing resync - recalculates startTime for all audio clips after edits
+  onResyncAudioTiming?: (sceneIndex: number, language: string) => Promise<void>
+  resyncingAudioSceneIndex?: number | null
 }
 
 // Transform score analysis data to review format
@@ -477,7 +480,7 @@ const getSceneDomId = (scene: any, index: number) => {
 }
 
 // Sortable Scene Card Wrapper for drag-and-drop
-function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onEditImage, totalScenes, onNavigateScene, scenes, script, onScriptChange, setEditingImageData, setImageEditModalOpen, getPlaybackOffsetForScene, handlePlaybackOffsetChange, getSuggestedOffsetForScene, expandedRecommendations, setExpandedRecommendations, onAnalyzeScene, analyzingSceneIndex, onOptimizeScene, optimizingSceneIndex, setOptimizeDialogScene, setOptimizeDialogOpen, ...props }: any) {
+function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onEditImage, totalScenes, onNavigateScene, scenes, script, onScriptChange, setEditingImageData, setImageEditModalOpen, getPlaybackOffsetForScene, handlePlaybackOffsetChange, getSuggestedOffsetForScene, expandedRecommendations, setExpandedRecommendations, onAnalyzeScene, analyzingSceneIndex, onOptimizeScene, optimizingSceneIndex, setOptimizeDialogScene, setOptimizeDialogOpen, onResyncAudioTiming, resyncingAudioSceneIndex, ...props }: any) {
   const {
     attributes,
     listeners,
@@ -524,12 +527,14 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
         optimizingSceneIndex={optimizingSceneIndex}
         setOptimizeDialogScene={setOptimizeDialogScene}
         setOptimizeDialogOpen={setOptimizeDialogOpen}
+        onResyncAudioTiming={onResyncAudioTiming}
+        resyncingAudioSceneIndex={resyncingAudioSceneIndex}
       />
     </div>
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle, projectLogline, projectDuration, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle, projectLogline, projectDuration, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -2768,6 +2773,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                           setOptimizeDialogScene={setOptimizeDialogScene}
                           setOptimizeDialogOpen={setOptimizeDialogOpen}
                           productionReadiness={productionReadiness}
+                          onResyncAudioTiming={onResyncAudioTiming}
+                          resyncingAudioSceneIndex={resyncingAudioSceneIndex}
                 />
                     )
                   })}
@@ -3386,6 +3393,9 @@ interface SceneCardProps {
   optimizingSceneIndex?: number | null
   setOptimizeDialogScene?: (scene: any) => void
   setOptimizeDialogOpen?: (open: boolean) => void
+  // Audio timing resync - recalculates startTime for all audio clips after edits
+  onResyncAudioTiming?: (sceneIndex: number, language: string) => Promise<void>
+  resyncingAudioSceneIndex?: number | null
   // Production readiness for workflow guards (voices assigned, etc.)
   productionReadiness?: ProductionReadiness
 }
@@ -3518,6 +3528,8 @@ function SceneCard({
   optimizingSceneIndex,
   setOptimizeDialogScene,
   setOptimizeDialogOpen,
+  onResyncAudioTiming,
+  resyncingAudioSceneIndex,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(null)
@@ -5377,6 +5389,33 @@ function SceneCard({
                           })()}
                           {Array.from(new Set(scene.dialogue.map((d: any) => d.character))).length > 4 && (
                             <span className="text-[10px] text-gray-500">+{Array.from(new Set(scene.dialogue.map((d: any) => d.character))).length - 4}</span>
+                          )}
+                          {/* Resync Audio Timing Button */}
+                          {onResyncAudioTiming && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      onResyncAudioTiming(idx, selectedLanguage)
+                                    }}
+                                    disabled={resyncingAudioSceneIndex === idx}
+                                    className="ml-2 p-1 rounded hover:bg-emerald-800/50 text-emerald-400 hover:text-emerald-300 transition-colors disabled:opacity-50"
+                                  >
+                                    {resyncingAudioSceneIndex === idx ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                      <RefreshCw className="w-3.5 h-3.5" />
+                                    )}
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent className="bg-gray-900 text-white border border-gray-700">
+                                  <p className="text-xs">Resync audio timing</p>
+                                  <p className="text-[10px] text-gray-400">Recalculate start times after edits</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
                         </div>
                       </div>
