@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Layers,
   RefreshCw,
+  Settings2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
@@ -21,6 +22,7 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { SegmentPairCard } from './SegmentPairCard'
 import { FramePromptDialog, type FrameGenerationOptions } from './FramePromptDialog'
+import { KeyframeRegenerationDialog, type KeyframeGenerationConfig } from './KeyframeRegenerationDialog'
 import type { 
   SceneSegment, 
   AnchorStatus 
@@ -89,8 +91,23 @@ export interface SegmentFrameTimelineProps {
   sceneDirection?: DetailedSceneDirection | null
   /** Callback to trigger segment regeneration (returns Promise for overlay) */
   onResegment?: () => Promise<void>
+  /** Callback to trigger intelligent segment regeneration with config */
+  onResegmentWithConfig?: (config: KeyframeGenerationConfig) => Promise<void>
   /** Total audio duration in seconds (narration + dialogue) for proper segment count estimation */
   totalAudioDurationSeconds?: number
+  /** Scene data for the regeneration dialog */
+  sceneData?: {
+    id?: string
+    sceneId?: string
+    heading?: string
+    action?: string
+    narration?: string
+    dialogue?: Array<{ character: string; line: string }>
+    duration?: number
+    narrationAudio?: { en?: { duration?: number } }
+    dialogueAudio?: any[] | { en?: any[] }
+    sceneDirection?: any
+  }
 }
 
 // ============================================================================
@@ -154,7 +171,9 @@ export function SegmentFrameTimeline({
   objectReferences,
   sceneDirection,
   onResegment,
+  onResegmentWithConfig,
   totalAudioDurationSeconds,
+  sceneData,
 }: SegmentFrameTimelineProps) {
   // Calculate stats first to determine initial expanded state
   const stats = useMemo(() => calculateTimelineStats(segments), [segments])
@@ -169,6 +188,10 @@ export function SegmentFrameTimeline({
   const [dialogSegmentIndex, setDialogSegmentIndex] = useState(0)
   const [dialogFrameType, setDialogFrameType] = useState<'start' | 'end' | 'both'>('both')
   const [dialogPreviousEndFrame, setDialogPreviousEndFrame] = useState<string | null>(null)
+  
+  // Keyframe regeneration dialog state
+  const [keyframeRegenDialogOpen, setKeyframeRegenDialogOpen] = useState(false)
+  const [isRegeneratingKeyframes, setIsRegeneratingKeyframes] = useState(false)
   
   // Get previous segment's end frame for each segment (for CONTINUE transitions)
   const getPreviousEndFrame = useCallback((index: number): string | null => {
@@ -270,41 +293,47 @@ export function SegmentFrameTimeline({
                 variant="secondary"
                 onClick={onGenerateAllFrames}
                 disabled={isGenerating}
-                className="h-6 text-[10px] bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/30"
+                className="h-8 px-4 text-xs font-medium bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white border-0 shadow-md shadow-cyan-500/20"
               >
-                <Wand2 className="w-3 h-3 mr-1" />
+                <Wand2 className="w-4 h-4 mr-1.5" />
                 Generate All
               </Button>
             ) : stats.fullyAnchored === stats.total && stats.total > 0 ? (
-              <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 h-6 px-2 text-[10px]">
-                <CheckCircle2 className="w-3 h-3 mr-1" />
-                All Ready
+              <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 h-7 px-3 text-xs font-medium">
+                <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+                FTV Ready
               </Badge>
             ) : null}
             
-            {/* Regenerate Segments button - more prominent styling */}
-            {stats.total > 0 && onResegment && (
+            {/* Keyframes button - opens intelligent regeneration dialog */}
+            {stats.total > 0 && (onResegment || onResegmentWithConfig) && (
               <Button
                 size="sm"
-                variant="secondary"
-                onClick={async () => {
-                  await executeWithOverlay(
-                    async () => {
-                      await onResegment()
-                    },
-                    {
-                      message: 'Re-analyzing scene and generating segments...',
-                      estimatedDuration: 15,
-                      operationType: 'scene-analysis'
-                    }
-                  )
+                variant="outline"
+                onClick={() => {
+                  // If we have scene data and the config handler, use the dialog
+                  if (sceneData && onResegmentWithConfig) {
+                    setKeyframeRegenDialogOpen(true)
+                  } else if (onResegment) {
+                    // Fallback to simple resegment
+                    executeWithOverlay(
+                      async () => {
+                        await onResegment()
+                      },
+                      {
+                        message: 'Re-analyzing scene and generating segments...',
+                        estimatedDuration: 15,
+                        operationType: 'scene-analysis'
+                      }
+                    )
+                  }
                 }}
-                disabled={isGenerating}
-                className="h-7 text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/50 font-medium"
-                title="Regenerate segments with improved audio alignment"
+                disabled={isGenerating || isRegeneratingKeyframes}
+                className="h-8 px-4 text-xs font-medium border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 hover:border-cyan-400"
+                title="Open keyframe generation settings"
               >
-                <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-                Regenerate
+                <Settings2 className="w-4 h-4 mr-1.5" />
+                Keyframes
               </Button>
             )}
           </div>
@@ -429,6 +458,48 @@ export function SegmentFrameTimeline({
         }))}
         objectReferences={objectReferences}
       />
+      
+      {/* Keyframe Regeneration Dialog */}
+      {sceneData && (
+        <KeyframeRegenerationDialog
+          open={keyframeRegenDialogOpen}
+          onOpenChange={setKeyframeRegenDialogOpen}
+          scene={sceneData}
+          existingSegments={segments}
+          characters={characters}
+          onGenerate={async (config) => {
+            setIsRegeneratingKeyframes(true)
+            try {
+              if (onResegmentWithConfig) {
+                await executeWithOverlay(
+                  async () => {
+                    await onResegmentWithConfig(config)
+                  },
+                  {
+                    message: 'Regenerating keyframe segments with your settings...',
+                    estimatedDuration: 20,
+                    operationType: 'scene-analysis'
+                  }
+                )
+              } else if (onResegment) {
+                await executeWithOverlay(
+                  async () => {
+                    await onResegment()
+                  },
+                  {
+                    message: 'Re-analyzing scene and generating segments...',
+                    estimatedDuration: 15,
+                    operationType: 'scene-analysis'
+                  }
+                )
+              }
+            } finally {
+              setIsRegeneratingKeyframes(false)
+            }
+          }}
+          isGenerating={isRegeneratingKeyframes}
+        />
+      )}
     </div>
   )
 }

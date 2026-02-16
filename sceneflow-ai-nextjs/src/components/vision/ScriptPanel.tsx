@@ -2715,67 +2715,67 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       onSelectTake={onSelectTake}
                       onDeleteTake={onDeleteTake}
                       sceneAudioTracks={sceneAudioTracks[scene.sceneId || scene.id || `scene-${idx}`]}
-                          domId={domId}
-                          isBookmarked={bookmarkedSceneIndex === idx}
-                          onBookmarkToggle={() => handleBookmarkToggle(idx)}
-                          bookmarkSaving={bookmarkSavingSceneIdx === idx}
-                          overlayStore={overlayStore}
-                          projectId={projectId}
-                          onUploadKeyframe={handleUploadKeyframe}
-                          onAddToReferenceLibrary={onAddToReferenceLibrary}
-                          onEditImage={(url: string, sceneIdx: number) => {
-                            setEditingImageData({ url, sceneIdx });
-                            setImageEditModalOpen(true);
-                          }}
-                          onOpenFrameEditModal={(sceneIdx: number, sceneId: string, segmentId: string, frameType: 'start' | 'end', frameUrl: string) => {
-                            setEditingImageData({ url: frameUrl, sceneIdx, sceneId, segmentId, frameType });
-                            setImageEditModalOpen(true);
-                          }}
-                          onUploadFrame={handleUploadFrame}
-                          isWorkflowOpen={true}
-                          onWorkflowOpenChange={() => {
-                            // Single scene view - workflow always open, navigation via timeline
-                          }}
-                          totalScenes={scenes.length}
-                          onNavigateScene={(newIdx: number) => {
-                            // Navigate to scene via parent handler
-                            if (onSelectSceneIndex) {
-                              onSelectSceneIndex(newIdx)
-                            }
-                          }}
-                          onMarkWorkflowComplete={onMarkWorkflowComplete}
-                          onDismissStaleWarning={onDismissStaleWarning}
-                          onGenerateSegmentFrames={onGenerateSegmentFrames}
-                          onGenerateAllSegmentFrames={onGenerateAllSegmentFrames}
-                          generatingFrameForSegment={generatingFrameForSegment}
-                          generatingFramePhase={generatingFramePhase}
-                          bookmarkedSceneIndex={bookmarkedSceneIndex}
-                          sceneNavigationCollapsed={sceneNavigationCollapsed}
-                          setSceneNavigationCollapsed={setSceneNavigationCollapsed}
-                          audioTimelineCollapsed={audioTimelineCollapsed}
-                          setAudioTimelineCollapsed={setAudioTimelineCollapsed}
-                          scenes={scenes}
-                          script={script}
-                          onScriptChange={onScriptChange}
-                          setEditingImageData={setEditingImageData}
-                          setImageEditModalOpen={setImageEditModalOpen}
-                          sceneReferences={sceneReferences}
-                          objectReferences={objectReferences}
-                          getPlaybackOffsetForScene={getPlaybackOffsetForScene}
-                          handlePlaybackOffsetChange={handlePlaybackOffsetChange}
-                          getSuggestedOffsetForScene={getSuggestedOffsetForScene}
-                          expandedRecommendations={expandedRecommendations}
-                          setExpandedRecommendations={setExpandedRecommendations}
-                          onAnalyzeScene={onAnalyzeScene}
-                          analyzingSceneIndex={analyzingSceneIndex}
-                          onOptimizeScene={onOptimizeScene}
-                          optimizingSceneIndex={optimizingSceneIndex}
-                          setOptimizeDialogScene={setOptimizeDialogScene}
-                          setOptimizeDialogOpen={setOptimizeDialogOpen}
-                          productionReadiness={productionReadiness}
-                          onResyncAudioTiming={onResyncAudioTiming}
-                          resyncingAudioSceneIndex={resyncingAudioSceneIndex}
-                />
+                      domId={domId}
+                      isBookmarked={bookmarkedSceneIndex === idx}
+                      onBookmarkToggle={() => handleBookmarkToggle(idx)}
+                      bookmarkSaving={bookmarkSavingSceneIdx === idx}
+                      overlayStore={overlayStore}
+                      projectId={projectId}
+                      onUploadKeyframe={handleUploadKeyframe}
+                      onAddToReferenceLibrary={onAddToReferenceLibrary}
+                      onEditImage={(url: string, sceneIdx: number) => {
+                        setEditingImageData({ url, sceneIdx });
+                        setImageEditModalOpen(true);
+                      }}
+                      onOpenFrameEditModal={(sceneIdx: number, sceneId: string, segmentId: string, frameType: 'start' | 'end', frameUrl: string) => {
+                        setEditingImageData({ url: frameUrl, sceneIdx, sceneId, segmentId, frameType });
+                        setImageEditModalOpen(true);
+                      }}
+                      onUploadFrame={handleUploadFrame}
+                      isWorkflowOpen={true}
+                      onWorkflowOpenChange={() => {
+                        // Single scene view - workflow always open, navigation via timeline
+                      }}
+                      totalScenes={scenes.length}
+                      onNavigateScene={(newIdx: number) => {
+                        // Navigate to scene via parent handler
+                        if (onSelectSceneIndex) {
+                          onSelectSceneIndex(newIdx)
+                        }
+                      }}
+                      onMarkWorkflowComplete={onMarkWorkflowComplete}
+                      onDismissStaleWarning={onDismissStaleWarning}
+                      onGenerateSegmentFrames={onGenerateSegmentFrames}
+                      onGenerateAllSegmentFrames={onGenerateAllSegmentFrames}
+                      generatingFrameForSegment={generatingFrameForSegment}
+                      generatingFramePhase={generatingFramePhase}
+                      bookmarkedSceneIndex={bookmarkedSceneIndex}
+                      sceneNavigationCollapsed={sceneNavigationCollapsed}
+                      setSceneNavigationCollapsed={setSceneNavigationCollapsed}
+                      audioTimelineCollapsed={audioTimelineCollapsed}
+                      setAudioTimelineCollapsed={setAudioTimelineCollapsed}
+                      scenes={scenes}
+                      script={script}
+                      onScriptChange={onScriptChange}
+                      setEditingImageData={setEditingImageData}
+                      setImageEditModalOpen={setImageEditModalOpen}
+                      sceneReferences={sceneReferences}
+                      objectReferences={objectReferences}
+                      getPlaybackOffsetForScene={getPlaybackOffsetForScene}
+                      handlePlaybackOffsetChange={handlePlaybackOffsetChange}
+                      getSuggestedOffsetForScene={getSuggestedOffsetForScene}
+                      expandedRecommendations={expandedRecommendations}
+                      setExpandedRecommendations={setExpandedRecommendations}
+                      onAnalyzeScene={onAnalyzeScene}
+                      analyzingSceneIndex={analyzingSceneIndex}
+                      onOptimizeScene={onOptimizeScene}
+                      optimizingSceneIndex={optimizingSceneIndex}
+                      setOptimizeDialogScene={setOptimizeDialogScene}
+                      setOptimizeDialogOpen={setOptimizeDialogOpen}
+                      productionReadiness={productionReadiness}
+                      onResyncAudioTiming={onResyncAudioTiming}
+                      resyncingAudioSceneIndex={resyncingAudioSceneIndex}
+                    />
                     )
                   })}
                 </SortableContext>
