@@ -440,62 +440,17 @@ export function ScenePromptBuilder({
     const visualDescription = scene?.visualDescription || ''
     
     // If we have a good visualDescription (first paragraph of Scene Direction), use it as baseline
-    // This avoids over-building the prompt from parsed fields which creates "keyword soup"
+    // MINIMAL: Only include the Scene Direction paragraph + art style suffix
+    // Character and prop references are passed separately to the API (not embedded in prompt text)
     if (hasSceneDirection && visualDescription && visualDescription.length > 100) {
       const parts: string[] = []
       
-      // 1. Shot type prefix (concise)
-      const shotTypes: Record<string, string> = {
-        'wide-shot': 'Wide shot',
-        'medium-shot': 'Medium shot',
-        'medium-close-up': 'Medium close-up',
-        'close-up': 'Close-up',
-        'extreme-close-up': 'Extreme close-up',
-        'extreme-wide': 'Extreme wide shot',
-        'over-shoulder': 'Over-shoulder shot'
-      }
-      if (structure.shotType) {
-        parts.push(shotTypes[structure.shotType] || structure.shotType)
-      }
-      
-      // 2. The visualDescription IS the main prompt (first paragraph of Scene Direction)
+      // 1. The visualDescription IS the prompt (first paragraph of Scene Direction)
+      // It already contains shot descriptions like "CLOSE ON", "PULL BACK", "WIDE SHOT", etc.
+      // Do NOT add redundant shot type prefix - it's already in the prose
       parts.push(visualDescription)
       
-      // 3. Character names (essential for reference image matching)
-      if (structure.characters.length > 0) {
-        parts.push(`Featuring ${structure.characters.join(' and ')}`)
-      }
-      
-      // 4. Object/prop references (essential for visual consistency)
-      const selectedObjectRefs = objectReferences.filter(r => selectedObjectRefIds.includes(r.id))
-      if (selectedObjectRefs.length > 0) {
-        // Sort by importance: critical first, then important, then background
-        const sortedObjects = [...selectedObjectRefs].sort((a, b) => {
-          const order: Record<string, number> = { critical: 0, important: 1, background: 2 }
-          return (order[a.importance || 'background'] ?? 3) - (order[b.importance || 'background'] ?? 3)
-        })
-        
-        // Build object descriptions - include description for critical/important objects
-        const objectDescriptions = sortedObjects.map(obj => {
-          if ((obj.importance === 'critical' || obj.importance === 'important') && obj.description) {
-            return `${obj.name} (${obj.description})`
-          }
-          return obj.name
-        })
-        
-        parts.push(`Props: ${objectDescriptions.join(', ')}`)
-      }
-      
-      // 5. Scene backdrop references (from Reference Library)
-      const selectedSceneRefs = sceneReferences.filter(r => selectedSceneRefIds.includes(r.id))
-      if (selectedSceneRefs.length > 0) {
-        const backdropDescriptions = selectedSceneRefs
-          .map(r => r.description || r.name)
-          .join(', ')
-        parts.push(`Visual style reference: ${backdropDescriptions}`)
-      }
-      
-      // 6. Art style suffix
+      // 2. Art style suffix (from dialog controls - the only UI setting that modifies the prompt)
       const stylePreset = artStylePresets.find(s => s.id === structure.artStyle)
       if (stylePreset) parts.push(stylePreset.promptSuffix)
       
