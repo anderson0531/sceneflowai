@@ -91,7 +91,10 @@ Return ONLY the optimized prompt, no explanations or markdown headers.`
       systemInstruction: OPTIMIZATION_SYSTEM_PROMPT
     })
 
-    if (!result || !result.trim()) {
+    // generateText returns { text, finishReason, safetyRatings }
+    const responseText = result?.text
+    
+    if (!responseText || !responseText.trim()) {
       return NextResponse.json({
         success: false,
         error: 'Gemini returned empty response'
@@ -99,7 +102,7 @@ Return ONLY the optimized prompt, no explanations or markdown headers.`
     }
 
     // Clean up the result - remove any markdown formatting that might have slipped through
-    let optimizedPrompt = result.trim()
+    let optimizedPrompt = responseText.trim()
     
     // Remove markdown headers if present
     optimizedPrompt = optimizedPrompt.replace(/^#+\s*\[?[^\]]*\]?\s*/gm, '')
