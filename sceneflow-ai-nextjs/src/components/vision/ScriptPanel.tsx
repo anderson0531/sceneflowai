@@ -2787,6 +2787,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       generateSFX={generateSFX}
                       onGenerateSceneDirection={onGenerateSceneDirection}
                       generatingDirectionFor={generatingDirectionFor}
+                      isOptimizingDirection={isOptimizingDirection}
+                      onOpenDirectionOptimize={(sceneIdx) => {
+                        setDirectionOptimizeSceneIdx(sceneIdx)
+                        setDirectionOptimizeDialogOpen(true)
+                      }}
                       sceneProductionData={sceneProductionData[scene.sceneId || scene.id || `scene-${idx}`] || undefined}
                       sceneProductionReferences={sceneProductionReferences[scene.sceneId || scene.id || `scene-${idx}`] || undefined}
                       onInitializeSceneProduction={onInitializeSceneProduction}
@@ -3384,6 +3389,8 @@ interface SceneCardProps {
   // NEW: Scene direction generation props
   onGenerateSceneDirection?: (sceneIdx: number) => Promise<void>
   generatingDirectionFor?: number | null
+  isOptimizingDirection?: boolean
+  onOpenDirectionOptimize?: (sceneIdx: number) => void
   // NEW: Scene production props
   sceneProductionData?: SceneProductionData | null
   sceneProductionReferences?: SceneProductionReferences
@@ -3566,6 +3573,8 @@ function SceneCard({
   generateSFX,
   onGenerateSceneDirection,
   generatingDirectionFor,
+  isOptimizingDirection,
+  onOpenDirectionOptimize,
   sceneProductionData,
   sceneProductionReferences,
   onInitializeSceneProduction,
@@ -5106,12 +5115,11 @@ function SceneCard({
                           </button>
                           <div className="flex items-center gap-1">
                             {/* Optimize Direction Button - shows when direction exists */}
-                            {hasDirection && (
+                            {hasDirection && onOpenDirectionOptimize && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  setDirectionOptimizeSceneIdx(sceneIdx)
-                                  setDirectionOptimizeDialogOpen(true)
+                                  onOpenDirectionOptimize(sceneIdx)
                                 }}
                                 disabled={isGeneratingDirection || isOptimizingDirection}
                                 className="text-xs px-2 py-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
