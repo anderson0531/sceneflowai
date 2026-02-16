@@ -309,6 +309,9 @@ interface ScriptPanelProps {
   // Audio timing resync - recalculates startTime for all audio clips after edits
   onResyncAudioTiming?: (sceneIndex: number, language: string) => Promise<void>
   resyncingAudioSceneIndex?: number | null
+  // Script regeneration - for recovering from empty scenes state
+  onRegenerateScript?: () => Promise<void>
+  isRegeneratingScript?: boolean
 }
 
 // Transform score analysis data to review format
@@ -535,7 +538,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle, projectLogline, projectDuration, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle, projectLogline, projectDuration, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -2691,9 +2694,28 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 <p className="text-gray-500 dark:text-gray-400 text-lg mb-2">
                   No script scenes available
                 </p>
-                <p className="text-gray-400 dark:text-gray-500 text-sm">
-                  Try regenerating the script
+                <p className="text-gray-400 dark:text-gray-500 text-sm mb-4">
+                  The script may need to be regenerated
                 </p>
+                {onRegenerateScript && (
+                  <Button
+                    onClick={onRegenerateScript}
+                    disabled={isRegeneratingScript || isGenerating}
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                  >
+                    {isRegeneratingScript ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Regenerating Script...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Regenerate Script
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             ) : (
               <DndContext

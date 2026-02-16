@@ -599,6 +599,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [scenes, setScenes] = useState<Scene[]>([])
   const [selectedSceneIndex, setSelectedSceneIndex] = useState<number | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isRegeneratingScript, setIsRegeneratingScript] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [uploadingRef, setUploadingRef] = useState<Record<string, boolean>>({})
   const [validationWarnings, setValidationWarnings] = useState<Record<number, string>>({})
@@ -5259,6 +5260,66 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  // Handler to regenerate script when scenes are empty (data recovery)
+  const handleRegenerateScript = async () => {
+    if (!project) return
+    
+    setIsRegeneratingScript(true)
+    
+    try {
+      // First, clear the scriptGenerated flag in the database so generation will proceed
+      const metadata = project.metadata || {}
+      const visionPhase = metadata.visionPhase || {}
+      
+      // Clear scriptGenerated flag to allow regeneration
+      await fetch(`/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          metadata: {
+            ...metadata,
+            visionPhase: {
+              ...visionPhase,
+              scriptGenerated: false,
+              // Clear stale script data
+              script: undefined
+            }
+          }
+        })
+      })
+      
+      // Reload project to get fresh state
+      await loadProject(true) // skip auto-generation
+      
+      // Create updated project reference with cleared flag
+      const updatedProj = {
+        ...project,
+        metadata: {
+          ...metadata,
+          visionPhase: {
+            ...visionPhase,
+            scriptGenerated: false
+          }
+        }
+      }
+      
+      // Now call generation with updated project
+      await initiateGeneration(updatedProj as Project)
+      
+      // Reload to get the newly generated script
+      await loadProject(true)
+      
+      const { toast } = await import('sonner')
+      toast.success('Script regenerated successfully')
+    } catch (error) {
+      console.error('[Regenerate Script] Error:', error)
+      const { toast } = await import('sonner')
+      toast.error('Failed to regenerate script: ' + (error as Error).message)
+    } finally {
+      setIsRegeneratingScript(false)
+    }
+  }
+
   const initiateGeneration = async (proj: Project) => {
     setIsGenerating(true)
     
@@ -9067,6 +9128,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 optimizingSceneIndex={optimizingSceneIndex}
                 onResyncAudioTiming={handleResyncAudioTiming}
                 resyncingAudioSceneIndex={resyncingAudioSceneIndex}
+                onRegenerateScript={handleRegenerateScript}
+                isRegeneratingScript={isRegeneratingScript}
               belowDashboardSlot={({ openGenerateAudio, openPromptBuilder }) => (
                 <div className="rounded-2xl border border-white/10 bg-slate950/40 shadow-inner">
                   <div className="px-5 py-5">
