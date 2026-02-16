@@ -87,17 +87,20 @@ SCRIPT SCENES:
 ${sceneContext}
 ${existingObjectsList}
 
+CRITICAL: Focus on RECURRING PROPS that appear in MULTIPLE scenes. Single-scene background items should NOT be included unless they are critical plot devices.
+
 Identify 3-8 significant objects that:
-1. Appear in multiple scenes OR are central to the plot
-2. Need visual consistency across production
+1. MUST appear in 2+ scenes OR be critical to the plot (mark as "critical" importance)
+2. Need visual consistency across production  
 3. Would benefit from a clean reference image for the art department
 4. Are specific enough to generate (not generic items like "chair" unless it's a distinctive hero prop)
+5. Track EXACTLY which scene numbers each object appears in
 
 For each object, provide:
 - name: Short, specific name (e.g., "Marcus's Vintage Pocket Watch", "The Genesis Device")
 - description: Detailed visual description for image generation (materials, colors, style, era, condition)
 - category: One of: prop, vehicle, set-piece, costume, technology, other
-- importance: One of: critical (plot device), important (recurring), background (atmosphere)
+- importance: One of: critical (plot device that drives the story), important (recurring in 2+ scenes), background (atmosphere only - AVOID these unless essential)
 - sceneNumbers: Array of scene numbers where it appears
 - confidence: 0-1 how confident you are this needs a reference image
 
@@ -141,19 +144,27 @@ Respond with valid JSON only:
       console.error('[Object Suggestion] Raw response:', responseText)
     }
 
+    // Filter: Only show props that recur across 2+ scenes OR are critical importance
+    // This prevents single-scene background props from cluttering the library
+    const filteredSuggestions = suggestions.filter(s => 
+      s.sceneNumbers.length >= 2 || s.importance === 'critical'
+    )
+
     // Sort by importance and confidence
-    suggestions.sort((a, b) => {
+    filteredSuggestions.sort((a, b) => {
       const importanceOrder = { critical: 3, important: 2, background: 1 }
       const aScore = (importanceOrder[a.importance] || 0) + a.confidence
       const bScore = (importanceOrder[b.importance] || 0) + b.confidence
       return bScore - aScore
     })
 
-    console.log(`[Object Suggestion] Found ${suggestions.length} suggested objects`)
+    console.log(`[Object Suggestion] Found ${suggestions.length} total, ${filteredSuggestions.length} recurring/critical props`)
 
     return NextResponse.json({
-      suggestions,
-      analyzedScenes: scenes.length
+      suggestions: filteredSuggestions,
+      analyzedScenes: scenes.length,
+      totalSuggested: suggestions.length,
+      filteredCount: filteredSuggestions.length
     })
 
   } catch (error: any) {

@@ -145,14 +145,29 @@ function buildAtmosphericPrompt(
 
   // Atmosphere and mood
   if (sd.scene?.atmosphere) {
-    parts.push(`${sd.scene.atmosphere} atmosphere`)
+    parts.push(`${sd.scene.atmosphere}`)
     usedFields.push('scene.atmosphere')
   }
 
-  // Lighting
-  if (sd.lighting?.overallMood) {
+  // Lighting - use narrative lighting if available
+  if (sd.narrativeLighting?.colorTemperatureStory) {
+    parts.push(sd.narrativeLighting.colorTemperatureStory)
+    usedFields.push('narrativeLighting.colorTemperatureStory')
+  } else if (sd.lighting?.overallMood) {
     parts.push(`${sd.lighting.overallMood} lighting`)
     usedFields.push('lighting.overallMood')
+  }
+
+  // Shadow narrative for atmospheric depth
+  if (sd.narrativeLighting?.shadowNarrative) {
+    parts.push(sd.narrativeLighting.shadowNarrative)
+    usedFields.push('narrativeLighting.shadowNarrative')
+  }
+
+  // Atmospheric elements (dust, haze, etc.)
+  if (sd.narrativeLighting?.atmosphericElements && sd.narrativeLighting.atmosphericElements.length > 0) {
+    parts.push(sd.narrativeLighting.atmosphericElements.slice(0, 2).join(', '))
+    usedFields.push('narrativeLighting.atmosphericElements')
   }
 
   // Color temperature
@@ -165,6 +180,12 @@ function buildAtmosphericPrompt(
   if (sd.lighting?.practicals) {
     parts.push(`In the background, out of focus, ${sd.lighting.practicals} glows`)
     usedFields.push('lighting.practicals')
+  }
+
+  // Veo optimization texture hints for realism
+  if (sd.veoOptimization?.textureHints && sd.veoOptimization.textureHints.length > 0) {
+    parts.push(`Material detail: ${sd.veoOptimization.textureHints.slice(0, 2).join(', ')}`)
+    usedFields.push('veoOptimization.textureHints')
   }
 
   // Style modifiers
@@ -216,10 +237,34 @@ function buildPortraitPrompt(
     usedFields.push('lighting.keyLight')
   }
 
+  // Performance direction - micro expressions (NEW)
+  if (sd.performanceDirection?.microExpressions && sd.performanceDirection.microExpressions.length > 0) {
+    parts.push(`Facial detail: ${sd.performanceDirection.microExpressions.slice(0, 2).join(', ')}`)
+    usedFields.push('performanceDirection.microExpressions')
+  }
+
   // Emotional beat - the key for portrait mode
   if (sd.talent?.emotionalBeat) {
     parts.push(`Expressing ${sd.talent.emotionalBeat}`)
     usedFields.push('talent.emotionalBeat')
+  }
+
+  // Emotional transitions (NEW)
+  if (sd.performanceDirection?.emotionalTransitions && sd.performanceDirection.emotionalTransitions.length > 0) {
+    parts.push(`Emotional arc: ${sd.performanceDirection.emotionalTransitions[0]}`)
+    usedFields.push('performanceDirection.emotionalTransitions')
+  }
+
+  // Subtext motivation (NEW)
+  if (sd.performanceDirection?.subtextMotivation) {
+    parts.push(`Inner state: ${sd.performanceDirection.subtextMotivation}`)
+    usedFields.push('performanceDirection.subtextMotivation')
+  }
+
+  // Physiological cues (NEW)
+  if (sd.performanceDirection?.physiologicalCues) {
+    parts.push(sd.performanceDirection.physiologicalCues)
+    usedFields.push('performanceDirection.physiologicalCues')
   }
 
   // Non-verbal key actions
@@ -233,6 +278,12 @@ function buildPortraitPrompt(
       parts.push(nonVerbalActions.slice(0, 2).join(', '))
       usedFields.push('talent.keyActions')
     }
+  }
+
+  // Subsurface scattering for realistic skin (NEW)
+  if (sd.veoOptimization?.subsurfaceScattering) {
+    parts.push('Subsurface scattering for realistic skin')
+    usedFields.push('veoOptimization.subsurfaceScattering')
   }
 
   // Style modifiers
@@ -280,22 +331,34 @@ function buildMasterPrompt(
     usedFields.push('scene.keyProps')
   }
 
-  // Lighting description
-  if (sd.lighting?.colorTemperature) {
-    parts.push(`${sd.lighting.colorTemperature} lighting`)
-    usedFields.push('lighting.colorTemperature')
-  }
-
-  // Practical lights
-  if (sd.lighting?.practicals) {
+  // Narrative lighting - key practicals (NEW)
+  if (sd.narrativeLighting?.keyPracticals && sd.narrativeLighting.keyPracticals.length > 0) {
+    parts.push(`Practical lights: ${sd.narrativeLighting.keyPracticals.slice(0, 2).join(', ')}`)
+    usedFields.push('narrativeLighting.keyPracticals')
+  } else if (sd.lighting?.practicals) {
     parts.push(`Visible lights: ${sd.lighting.practicals}`)
     usedFields.push('lighting.practicals')
   }
 
+  // Color temperature story (NEW)
+  if (sd.narrativeLighting?.colorTemperatureStory) {
+    parts.push(sd.narrativeLighting.colorTemperatureStory)
+    usedFields.push('narrativeLighting.colorTemperatureStory')
+  } else if (sd.lighting?.colorTemperature) {
+    parts.push(`${sd.lighting.colorTemperature} lighting`)
+    usedFields.push('lighting.colorTemperature')
+  }
+
   // Atmosphere
   if (sd.scene?.atmosphere) {
-    parts.push(`${sd.scene.atmosphere} atmosphere`)
+    parts.push(`${sd.scene.atmosphere}`)
     usedFields.push('scene.atmosphere')
+  }
+
+  // Atmospheric elements (NEW)
+  if (sd.narrativeLighting?.atmosphericElements && sd.narrativeLighting.atmosphericElements.length > 0) {
+    parts.push(sd.narrativeLighting.atmosphericElements.slice(0, 2).join(', '))
+    usedFields.push('narrativeLighting.atmosphericElements')
   }
 
   // Style
@@ -334,16 +397,34 @@ function buildAnimaticPrompt(
     usedFields.push('camera.angle')
   }
 
+  // Camera shots - use specific shot type (NEW)
+  if (sd.camera?.shots && sd.camera.shots.length > 0) {
+    parts.push(`${sd.camera.shots[0]} composition`)
+    usedFields.push('camera.shots')
+  }
+
   // Camera movement indication
   if (sd.camera?.movement) {
     parts.push(`Arrows indicating ${sd.camera.movement}`)
     usedFields.push('camera.movement')
   }
 
+  // Lens choice for framing reference (NEW)
+  if (sd.camera?.lensChoice) {
+    parts.push(`${sd.camera.lensChoice} framing`)
+    usedFields.push('camera.lensChoice')
+  }
+
   // Blocking as rough shapes
   if (sd.talent?.blocking) {
     parts.push('Figure silhouettes showing positions')
     usedFields.push('talent.blocking')
+  }
+
+  // Key actions as motion lines (NEW)
+  if (sd.talent?.keyActions && sd.talent.keyActions.length > 0) {
+    parts.push(`Motion annotations: ${sd.talent.keyActions[0]}`)
+    usedFields.push('talent.keyActions')
   }
 
   // Style modifiers

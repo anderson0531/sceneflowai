@@ -660,12 +660,12 @@ export function HeroImagePromptBuilder({
                   
                   {referenceLibraryOpen && (
                     <div className="space-y-4 pt-2">
-                      {/* Scene Backdrops */}
+                      {/* Scenes */}
                       {sceneReferences.length > 0 && (
                         <div>
                           <label className="text-xs text-gray-400 flex items-center gap-1 mb-2">
                             <ImageIcon className="w-3 h-3" />
-                            Scene Backdrops
+                            Scenes
                           </label>
                           <div className="grid grid-cols-4 gap-2">
                             {sceneReferences.map(ref => (
@@ -706,12 +706,12 @@ export function HeroImagePromptBuilder({
                         </div>
                       )}
 
-                      {/* Props & Objects */}
+                      {/* Props */}
                       {objectReferences.length > 0 && (
                         <div>
                           <label className="text-xs text-gray-400 flex items-center gap-1 mb-2">
                             <Box className="w-3 h-3" />
-                            Props & Objects
+                            Props
                           </label>
                           <div className="grid grid-cols-4 gap-2">
                             {objectReferences.map(ref => (

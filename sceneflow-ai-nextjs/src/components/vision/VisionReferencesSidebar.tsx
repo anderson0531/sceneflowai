@@ -980,8 +980,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   const referenceTabs = [
     { key: 'cast' as const, label: 'Cast', icon: <Users className="w-3.5 h-3.5" />, count: characters.length },
     { key: 'storyboard' as const, label: 'Storyboard', icon: <LayoutGrid className="w-3.5 h-3.5" />, count: allScenes.length, ready: scenesWithImages },
-    { key: 'scene' as const, label: 'Backdrops', icon: <Images className="w-3.5 h-3.5" />, count: sceneReferences.length },
-    { key: 'object' as const, label: 'Objects', icon: <Package className="w-3.5 h-3.5" />, count: objectReferences.length },
+    { key: 'scene' as const, label: 'Scene', icon: <Images className="w-3.5 h-3.5" />, count: sceneReferences.length },
+    { key: 'object' as const, label: 'Props', icon: <Package className="w-3.5 h-3.5" />, count: objectReferences.length },
   ]
 
   return (
@@ -1196,7 +1196,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               </div>
               {sceneReferences.length === 0 ? (
                 <div className="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg py-6 text-center">
-                  No scene backdrops yet. Generate or add scene imagery.
+                  No scene references yet. Generate or add scene imagery.
                 </div>
               ) : (
                 sceneReferences.map((reference) => (
