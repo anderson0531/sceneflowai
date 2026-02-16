@@ -29,7 +29,8 @@ import {
   Check,
   RotateCcw,
   Download,
-  Save
+  Save,
+  Package
 } from 'lucide-react'
 
 interface ImageEditModalProps {
@@ -46,6 +47,8 @@ interface ImageEditModalProps {
     imageUrl: string
     description: string
   }
+  /** Object/prop references for visual consistency */
+  objectReferences?: Array<{ id: string; name: string; imageUrl: string; description?: string }>
   /** Called when edit is saved with new image URL */
   onSave: (newImageUrl: string) => void
   /** Optional custom title */
@@ -58,6 +61,7 @@ export function ImageEditModal({
   imageUrl,
   imageType,
   subjectReference,
+  objectReferences,
   onSave,
   title
 }: ImageEditModalProps) {
@@ -69,6 +73,9 @@ export function ImageEditModal({
   // Edit instruction state
   const [instruction, setInstruction] = useState('')
   
+  // Prop selection state
+  const [selectedPropIds, setSelectedPropIds] = useState<string[]>([])
+  
   // Reset state when modal opens/closes
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -76,6 +83,7 @@ export function ImageEditModal({
       setEditedImageUrl(null)
       setShowComparison(false)
       setInstruction('')
+      setSelectedPropIds([])
     }
     onOpenChange(open)
   }
@@ -89,6 +97,9 @@ export function ImageEditModal({
     
     setIsProcessing(true)
     try {
+      // Get selected prop references
+      const selectedProps = objectReferences?.filter(ref => selectedPropIds.includes(ref.id)) || []
+      
       const response = await fetch('/api/image/edit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -97,6 +108,7 @@ export function ImageEditModal({
           sourceImage: imageUrl,
           instruction: instruction.trim(),
           subjectReference,
+          objectReferences: selectedProps.length > 0 ? selectedProps : undefined,
           saveToBlob: true,
           blobPrefix: `edited-${imageType}`
         })
@@ -276,6 +288,44 @@ export function ImageEditModal({
                   <div className="flex items-center gap-2 p-2 bg-slate-800 rounded text-xs text-slate-400">
                     <Check className="w-3 h-3 text-green-400" />
                     Character identity will be preserved
+                  </div>
+                )}
+                
+                {/* Prop Reference Selection */}
+                {objectReferences && objectReferences.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    <Label className="text-slate-300 flex items-center gap-2">
+                      <Package className="w-3 h-3" />
+                      Include Props for Consistency
+                    </Label>
+                    <div className="grid grid-cols-4 gap-2 max-h-28 overflow-y-auto p-2 bg-slate-800 rounded border border-slate-700">
+                      {objectReferences.map(ref => (
+                        <button
+                          key={ref.id}
+                          type="button"
+                          onClick={() => setSelectedPropIds(prev => 
+                            prev.includes(ref.id) ? prev.filter(id => id !== ref.id) : [...prev, ref.id]
+                          )}
+                          className={`relative aspect-square rounded overflow-hidden border-2 transition-all ${
+                            selectedPropIds.includes(ref.id)
+                              ? 'border-purple-500 ring-1 ring-purple-500/50'
+                              : 'border-slate-600 hover:border-slate-500'
+                          }`}
+                          title={ref.name}
+                        >
+                          <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
+                          <div className="absolute inset-x-0 bottom-0 bg-black/60 px-1 py-0.5">
+                            <div className="text-[8px] text-white truncate">{ref.name}</div>
+                          </div>
+                          {selectedPropIds.includes(ref.id) && (
+                            <div className="absolute top-0.5 right-0.5 w-3 h-3 bg-purple-500 rounded-full flex items-center justify-center">
+                              <Check className="w-2 h-2 text-white" />
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-slate-500">Select props to maintain visual consistency in the edit</p>
                   </div>
                 )}
                 

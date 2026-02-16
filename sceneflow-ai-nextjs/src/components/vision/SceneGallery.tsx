@@ -25,6 +25,7 @@ import { SceneProductionManager } from './scene-production'
 import { SceneProductionData, SceneProductionReferences } from './scene-production/types'
 import { cn } from '@/lib/utils'
 import { formatSceneHeading, extractLocation } from '@/lib/script/formatSceneHeading'
+import { ImageEditModal } from './ImageEditModal'
 
 interface SceneGalleryProps {
   scenes: any[]
@@ -56,6 +57,8 @@ interface SceneGalleryProps {
   onPinAsLocationReference?: (sceneIndex: number, imageUrl: string, sceneHeading: string) => void
   /** Set of location names that are already pinned */
   pinnedLocations?: Set<string>
+  /** Callback when an edited image is saved */
+  onSaveEditedScene?: (sceneIndex: number, newImageUrl: string) => void
 }
 
 const buildSceneKey = (scene: any, index: number) => scene.sceneId || scene.id || `scene-${index}`
@@ -85,6 +88,7 @@ export function SceneGallery({
   isGeneratingAudio = false,
   onPinAsLocationReference,
   pinnedLocations,
+  onSaveEditedScene,
 }: SceneGalleryProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'timeline'>('grid')
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -95,6 +99,11 @@ export function SceneGallery({
   const [isGeneratingAll, setIsGeneratingAll] = useState(false)
   const [showAudioPlayer, setShowAudioPlayer] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState('en')
+  
+  // Edit modal state
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [editingSceneIndex, setEditingSceneIndex] = useState<number | null>(null)
+  const [editingSceneImageUrl, setEditingSceneImageUrl] = useState<string>('')
   
   // Count scenes with audio for Generate All Audio button display
   const scenesWithAudio = useMemo(() => {
@@ -397,7 +406,7 @@ export function SceneGallery({
                       await execute(async () => {
                         await onRegenerateScene(idx)
                       }, {
-                        message: `Editing Scene ${idx + 1}...`,
+                        message: `Generating new image for Scene ${idx + 1}...`,
                         estimatedDuration: 15,
                         operationType: 'image-generation'
                       })
@@ -407,6 +416,13 @@ export function SceneGallery({
                         newSet.delete(idx)
                         return newSet
                       })
+                    }
+                  }}
+                  onEdit={() => {
+                    if (scene.imageUrl) {
+                      setEditingSceneIndex(idx)
+                      setEditingSceneImageUrl(scene.imageUrl)
+                      setEditModalOpen(true)
                     }
                   }}
                   onOpenPromptBuilder={onOpenPromptBuilder ? () => onOpenPromptBuilder(idx) : undefined}
@@ -487,6 +503,23 @@ export function SceneGallery({
           onOpenChange={setReportPreviewOpen}
         />
       )}
+      
+      {/* Image Edit Modal */}
+      <ImageEditModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        imageUrl={editingSceneImageUrl}
+        imageType="scene"
+        objectReferences={objectReferences}
+        onSave={(newImageUrl) => {
+          if (editingSceneIndex !== null && onSaveEditedScene) {
+            onSaveEditedScene(editingSceneIndex, newImageUrl)
+          }
+          setEditModalOpen(false)
+          setEditingSceneIndex(null)
+        }}
+        title={editingSceneIndex !== null ? `Edit Scene ${editingSceneIndex + 1}` : 'Edit Scene'}
+      />
     </div>
     </TooltipProvider>
   )
@@ -500,6 +533,7 @@ interface SceneCardProps {
   isProductionOpen: boolean
   onClick: () => void
   onRegenerate: () => Promise<void>
+  onEdit?: () => void
   onOpenPromptBuilder?: () => void
   onGenerate: (prompt: string) => Promise<void>
   onUpload: (file: File) => void
@@ -534,6 +568,7 @@ function SceneCard({
   isProductionOpen,
   onClick,
   onRegenerate,
+  onEdit,
   onOpenPromptBuilder,
   onGenerate,
   onUpload,
@@ -686,11 +721,11 @@ function SceneCard({
         </Tooltip>
         
         {/* Edit image (Wand2 - purple) - only show if has image */}
-        {hasImage && (
+        {hasImage && onEdit && (
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
+                onClick={(e) => { e.stopPropagation(); onEdit(); }}
                 className="p-3 bg-purple-600/80 hover:bg-purple-600 rounded-full transition-colors"
               >
                 <Wand2 className="w-5 h-5 text-white" />
