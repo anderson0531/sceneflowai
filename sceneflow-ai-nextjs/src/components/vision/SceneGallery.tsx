@@ -13,7 +13,7 @@
 'use client'
 
 import React, { useState, useCallback, useMemo } from 'react'
-import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2, Volume2, VolumeX, Play, Pause, SkipForward, SkipBack, Check, Globe } from 'lucide-react'
+import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2, Volume2, VolumeX, Play, Pause, SkipForward, SkipBack, Check, Globe, Users, Package, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { AudioGalleryPlayer } from './AudioGalleryPlayer'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { Button } from '@/components/ui/Button'
@@ -219,7 +219,7 @@ export function SceneGallery({
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <Clapperboard className="w-5 h-5 text-sf-primary" />
-          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">Scene Gallery and Storyboard</h3>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">Storyboard Gallery</h3>
           <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
             {scenes.length} {scenes.length === 1 ? 'scene' : 'scenes'}
           </span>
@@ -435,6 +435,8 @@ export function SceneGallery({
                   onSegmentPromptChange={onSegmentPromptChange}
                   onSegmentGenerate={onSegmentGenerate}
                   onSegmentUpload={onSegmentUpload}
+                  characters={characters}
+                  objectReferences={objectReferences}
                 />
               </div>
             )
@@ -498,6 +500,10 @@ interface SceneCardProps {
   onSegmentPromptChange: (sceneId: string, segmentId: string, prompt: string) => void
   onSegmentGenerate: (sceneId: string, segmentId: string, mode: 'video' | 'image') => Promise<void>
   onSegmentUpload: (sceneId: string, segmentId: string, file: File) => Promise<void>
+  /** All project characters for reference status checking */
+  characters?: any[]
+  /** Object/prop references from reference library */
+  objectReferences?: Array<{ id: string; name: string; imageUrl: string; description?: string }>
 }
 
 function SceneCard({
@@ -524,9 +530,39 @@ function SceneCard({
   onSegmentPromptChange,
   onSegmentGenerate,
   onSegmentUpload,
+  characters = [],
+  objectReferences = [],
 }: SceneCardProps) {
   const hasImage = !!scene.imageUrl
   const fileInputRef = React.useRef<HTMLInputElement>(null)
+  
+  // Compute reference status for this scene
+  const referenceStatus = useMemo(() => {
+    const sceneCharacterNames: string[] = scene.characters || []
+    const sceneCharacters = sceneCharacterNames
+      .map(name => characters.find(c => c.name === name))
+      .filter(Boolean)
+    
+    const charsWithRef = sceneCharacters.filter(c => c?.referenceImage)
+    const charsWithoutRef = sceneCharacters.filter(c => !c?.referenceImage)
+    
+    // Check for props mentioned in scene that have references
+    const sceneText = `${scene.action || ''} ${scene.visualDescription || ''} ${scene.narration || ''}`.toLowerCase()
+    const matchingProps = objectReferences.filter(obj => 
+      sceneText.includes(obj.name.toLowerCase())
+    )
+    
+    return {
+      totalChars: sceneCharacters.length,
+      charsWithRef: charsWithRef.length,
+      charsWithoutRef: charsWithoutRef.length,
+      charsMissingRef: charsWithoutRef.map(c => c?.name).filter(Boolean),
+      hasAllCharRefs: sceneCharacters.length === 0 || charsWithRef.length === sceneCharacters.length,
+      propsAvailable: matchingProps.length,
+      isReady: sceneCharacters.length === 0 || charsWithRef.length === sceneCharacters.length,
+    }
+  }, [scene, characters, objectReferences])
+  
   const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement
     if (target.closest('[data-scene-production]')) {
@@ -588,99 +624,47 @@ function SceneCard({
         </div>
       </div>
       
-      {/* Generation Controls */}
-      {!hasImage ? (
-        <div className="absolute inset-x-2 bottom-14 p-2 bg-gradient-to-t from-black/90 to-transparent" onClick={(e) => e.stopPropagation()}>
-          <div className="space-y-1">
-            <textarea 
-              value={prompt}
-              onChange={(e) => {
-                onPromptChange(e.target.value)
-                e.target.style.height = 'auto'
-                e.target.style.height = e.target.scrollHeight + 'px'
+      {/* Unified Hover Controls - same for both empty and populated states */}
+      <div className={`absolute inset-0 bg-black/40 transition-opacity rounded-t-lg flex items-center justify-center gap-3 ${hasImage ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'}`}>
+        {/* Hidden file input for upload */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) onUpload(file)
+          }}
+        />
+        
+        {/* Generate image (Sparkles - indigo) */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                if (onOpenPromptBuilder) {
+                  onOpenPromptBuilder();
+                } else {
+                  onGenerate(prompt);
+                }
               }}
               disabled={isGenerating}
-              placeholder="Scene image prompt..."
-              className="w-full text-xs px-2 py-1 rounded bg-gray-900/80 border border-gray-600 text-white placeholder-gray-400 focus:border-gray-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ resize: 'vertical', minHeight: '2.5rem', maxHeight: '8rem' }}
-              rows={2}
-            />
-            <div className="flex gap-1">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onGenerate(prompt); }}
-                    disabled={isGenerating || !prompt.trim()}
-                    className="flex-1 p-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>Generate Scene Image</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <label className={`flex-1 p-2 rounded bg-gray-700 text-white text-center transition-colors flex items-center justify-center ${isGenerating ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-600 cursor-pointer'}`}>
-                    <Upload className="w-4 h-4" />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      disabled={isGenerating}
-                      onChange={(e) => {
-                        e.stopPropagation()
-                        const file = e.target.files?.[0]
-                        if (file) onUpload(file)
-                      }}
-                    />
-                  </label>
-                </TooltipTrigger>
-                <TooltipContent>Upload Image</TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
-        </div>
-      ) : (
-        /* Hover overlay with controls - matching Scene Image controls */
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-t-lg flex items-center justify-center gap-3">
-          {/* Hidden file input for upload */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file) onUpload(file)
-            }}
-          />
-          
-          {/* Generate new image (Sparkles - indigo) */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={(e) => { 
-                  e.stopPropagation(); 
-                  if (onOpenPromptBuilder) {
-                    onOpenPromptBuilder();
-                  } else {
-                    onGenerate(prompt);
-                  }
-                }}
-                disabled={isGenerating}
-                className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
-              >
-                {isGenerating ? (
-                  <Loader className="w-5 h-5 text-white animate-spin" />
-                ) : (
-                  <Sparkles className="w-5 h-5 text-white" />
-                )}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Generate New Image</TooltipContent>
-          </Tooltip>
-          
-          {/* Edit image (Wand2 - purple) */}
+              className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
+            >
+              {isGenerating ? (
+                <Loader className="w-5 h-5 text-white animate-spin" />
+              ) : (
+                <Sparkles className="w-5 h-5 text-white" />
+              )}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>{hasImage ? 'Generate New Image' : 'Generate Scene Image'}</TooltipContent>
+        </Tooltip>
+        
+        {/* Edit image (Wand2 - purple) - only show if has image */}
+        {hasImage && (
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -692,51 +676,87 @@ function SceneCard({
             </TooltipTrigger>
             <TooltipContent>Edit Image</TooltipContent>
           </Tooltip>
-          
-          {/* Save to Reference Library (FolderPlus - cyan) */}
-          {onAddToSceneLibrary && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onAddToSceneLibrary(); }}
-                  className="p-3 bg-cyan-600/80 hover:bg-cyan-600 rounded-full transition-colors"
-                >
-                  <FolderPlus className="w-5 h-5 text-white" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Save to Reference Library</TooltipContent>
-            </Tooltip>
-          )}
-          
-          {/* Upload Scene Image (Upload - emerald) */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
-                className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors"
-              >
-                <Upload className="w-5 h-5 text-white" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Upload Scene Image</TooltipContent>
-          </Tooltip>
-        </div>
+        )}
+        
+        {/* Upload Scene Image (Upload - emerald) */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+              className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors"
+            >
+              <Upload className="w-5 h-5 text-white" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>Upload Image</TooltipContent>
+        </Tooltip>
+      </div>
+      
+      {/* Reference Status Indicator - Top Right */}
+      {referenceStatus.totalChars > 0 && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className={`absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium ${
+              referenceStatus.hasAllCharRefs 
+                ? 'bg-emerald-500/90 text-white' 
+                : 'bg-amber-500/90 text-white'
+            }`}>
+              <Users className="w-3 h-3" />
+              <span>{referenceStatus.charsWithRef}/{referenceStatus.totalChars}</span>
+              {referenceStatus.hasAllCharRefs ? (
+                <CheckCircle2 className="w-3 h-3" />
+              ) : (
+                <AlertCircle className="w-3 h-3" />
+              )}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="left" className="max-w-[200px]">
+            {referenceStatus.hasAllCharRefs ? (
+              <span>All {referenceStatus.totalChars} character reference{referenceStatus.totalChars > 1 ? 's' : ''} ready</span>
+            ) : (
+              <div>
+                <div className="font-medium text-amber-400">Missing references:</div>
+                <div className="text-xs">{referenceStatus.charsMissingRef.join(', ')}</div>
+              </div>
+            )}
+          </TooltipContent>
+        </Tooltip>
       )}
       
-      {/* Character Indicators */}
+      {/* Character Avatars - Top Left */}
       {scene.characters && scene.characters.length > 0 && (
         <div className="absolute top-2 left-2 flex gap-1">
-          {scene.characters.slice(0, 3).map((charName: string, i: number) => (
-            <div 
-              key={i}
-              className="w-6 h-6 rounded-full bg-white border-2 border-white overflow-hidden shadow-sm"
-              title={charName}
-            >
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-600">
-                {charName[0]}
-              </div>
+          {scene.characters.slice(0, 3).map((charName: string, i: number) => {
+            const char = characters.find(c => c.name === charName)
+            const hasRef = char?.referenceImage
+            return (
+              <Tooltip key={i}>
+                <TooltipTrigger asChild>
+                  <div 
+                    className={`w-6 h-6 rounded-full overflow-hidden shadow-sm border-2 ${
+                      hasRef ? 'border-emerald-400' : 'border-amber-400'
+                    }`}
+                  >
+                    {hasRef ? (
+                      <img src={char.referenceImage} alt={charName} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gray-700 flex items-center justify-center text-xs text-gray-300">
+                        {charName[0]}
+                      </div>
+                    )}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {charName}{hasRef ? '' : ' (no reference)'}
+                </TooltipContent>
+              </Tooltip>
+            )
+          })}
+          {scene.characters.length > 3 && (
+            <div className="w-6 h-6 rounded-full bg-gray-700 border-2 border-gray-500 flex items-center justify-center text-[10px] text-gray-300">
+              +{scene.characters.length - 3}
             </div>
-          ))}
+          )}
         </div>
       )}
       

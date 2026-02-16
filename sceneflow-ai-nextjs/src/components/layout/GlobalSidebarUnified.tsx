@@ -334,7 +334,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
             />
           )}
 
-          {/* Scene Gallery Section */}
+          {/* Storyboard Gallery Section */}
           {config.sectionVisibility.screeningRoom && (
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
               <button
@@ -345,7 +345,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
               >
                 <div className="flex items-center gap-2">
                   <ImageIcon className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Scene Gallery</span>
+                  <span>Storyboard Gallery</span>
                 </div>
                 <div className="flex items-center gap-1 text-[10px] font-normal text-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity">
                   <span>Open</span>
@@ -353,7 +353,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
                 </div>
               </button>
               <p className="text-[10px] text-slate-500 mt-1.5 pl-5">
-                Browse and manage scene frames
+                Visual storyboard with AI generation
               </p>
             </div>
           )}
