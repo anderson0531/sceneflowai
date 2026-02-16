@@ -9495,6 +9495,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onAddSceneReferenceToLibrary={handleAddSceneReferenceToLibrary}
                 generatingReferenceForScene={generatingSceneReferenceIndex}
                 generatingDirectionForScene={generatingSceneDirectionIndex}
+                onGenerateSceneDirection={handleGenerateSceneDirection}
                 onGenerateAllSceneReferences={handleGenerateAllSceneReferences}
                 isGeneratingAllSceneReferences={isGeneratingAllSceneReferences}
                 // Legacy props for backward compatibility
