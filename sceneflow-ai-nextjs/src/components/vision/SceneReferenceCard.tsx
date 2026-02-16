@@ -80,9 +80,10 @@ export function SceneReferenceCard({
 }: SceneReferenceCardProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   
-  // Get the scene reference image (dedicated) or fall back to storyboard image
-  const imageUrl = scene.sceneReferenceImageUrl || scene.imageUrl
-  const hasImage = !!imageUrl
+  // Scene reference image only - NO fallback to storyboard image (imageUrl)
+  // Scene references are environment-only shots without actors for production consistency
+  const sceneRefImageUrl = scene.sceneReferenceImageUrl
+  const hasImage = !!sceneRefImageUrl
   const hasSceneDirection = !!scene.sceneDirection
   
   // Extract key info from scene direction for display
@@ -115,11 +116,11 @@ export function SceneReferenceCard({
           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
       } ${onClick ? 'cursor-pointer' : ''}`}
     >
-      {/* Scene Reference Image */}
+      {/* Scene Reference Image (environment-only, no actors) */}
       <div className="aspect-video bg-gray-100 dark:bg-gray-800 relative">
         {hasImage ? (
           <img 
-            src={imageUrl} 
+            src={sceneRefImageUrl} 
             alt={`Scene ${sceneNumber} Reference`}
             className="w-full h-full object-cover"
           />

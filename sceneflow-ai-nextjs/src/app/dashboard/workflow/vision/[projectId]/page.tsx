@@ -6563,13 +6563,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       
       // Update scene with the generated reference image
+      // NOTE: Only set sceneReferenceImageUrl - NOT imageUrl (storyboard image)
+      // Scene references are environment-only shots without actors
       if (data.imageUrl) {
         const updatedScenes = [...(script?.script?.scenes || [])]
         updatedScenes[sceneIdx] = {
           ...updatedScenes[sceneIdx],
-          sceneReferenceImageUrl: data.imageUrl,
-          // Also set imageUrl if not already set (backward compatibility)
-          imageUrl: updatedScenes[sceneIdx].imageUrl || data.imageUrl
+          sceneReferenceImageUrl: data.imageUrl
         }
         
         setScript({
@@ -6594,15 +6594,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   /**
    * Upload a scene reference image
    */
+  /**
+   * Upload a scene reference image (environment-only, no actors)
+   * NOTE: Only updates sceneReferenceImageUrl - NOT imageUrl (storyboard image)
+   */
   const handleUploadSceneReferenceImage = async (sceneIdx: number, file: File) => {
     try {
-      const imageUrl = await uploadAssetViaAPI(file, projectId)
+      const uploadedUrl = await uploadAssetViaAPI(file, projectId)
       
       const updatedScenes = [...(script?.script?.scenes || [])]
       updatedScenes[sceneIdx] = {
         ...updatedScenes[sceneIdx],
-        sceneReferenceImageUrl: imageUrl,
-        imageUrl: updatedScenes[sceneIdx].imageUrl || imageUrl
+        sceneReferenceImageUrl: uploadedUrl
       }
       
       setScript({

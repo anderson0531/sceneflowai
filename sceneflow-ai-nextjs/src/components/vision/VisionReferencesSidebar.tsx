@@ -873,9 +873,11 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   const isGeneratingAll = isGeneratingAllSceneReferences || isGeneratingAllSceneImages
 
   // Count scenes with/without scene direction and references
+  // NOTE: Only count actual sceneReferenceImageUrl - NOT storyboard images (imageUrl)
+  // Scene references are environment-only shots without actors for production consistency
   const sceneReferenceStats = useMemo(() => {
     const withDirection = allScenes.filter(s => !!s.sceneDirection).length
-    const withRefImage = allScenes.filter(s => !!(s.sceneReferenceImageUrl || s.imageUrl)).length
+    const withRefImage = allScenes.filter(s => !!s.sceneReferenceImageUrl).length
     return {
       total: allScenes.length,
       withDirection,
@@ -1211,16 +1213,16 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                         isGenerating={currentGeneratingScene === idx}
                         isGeneratingDirection={generatingDirectionForScene === idx}
                         onGenerate={() => handleGenerateSceneRef?.(idx)}
-                        onEdit={scene.sceneReferenceImageUrl || scene.imageUrl 
-                          ? () => handleEditSceneRef?.(idx, scene.sceneReferenceImageUrl || scene.imageUrl || '')
+                        onEdit={scene.sceneReferenceImageUrl
+                          ? () => handleEditSceneRef?.(idx, scene.sceneReferenceImageUrl || '')
                           : undefined
                         }
                         onUpload={(file) => handleUploadSceneRef?.(idx, file)}
                         onSaveToLibrary={
-                          (scene.sceneReferenceImageUrl || scene.imageUrl) && onAddSceneReferenceToLibrary
-                            ? () => onAddSceneReferenceToLibrary(idx, scene.sceneReferenceImageUrl || scene.imageUrl || '', sceneHeading)
-                            : (scene.sceneReferenceImageUrl || scene.imageUrl) && onAddToReferenceLibrary
-                              ? () => onAddToReferenceLibrary(scene.sceneReferenceImageUrl || scene.imageUrl || '', sceneHeading, idx + 1)
+                          scene.sceneReferenceImageUrl && onAddSceneReferenceToLibrary
+                            ? () => onAddSceneReferenceToLibrary(idx, scene.sceneReferenceImageUrl || '', sceneHeading)
+                            : scene.sceneReferenceImageUrl && onAddToReferenceLibrary
+                              ? () => onAddToReferenceLibrary(scene.sceneReferenceImageUrl || '', sceneHeading, idx + 1)
                               : undefined
                         }
                         onGenerateDirection={onGenerateSceneDirection ? () => onGenerateSceneDirection(idx) : undefined}
