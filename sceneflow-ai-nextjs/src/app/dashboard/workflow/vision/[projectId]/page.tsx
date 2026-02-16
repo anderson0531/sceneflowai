@@ -4575,7 +4575,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId,
-          scenes: [scene],
+          script: {
+            title: script.script.title,
+            logline: script.script.logline,
+            scenes: [scene],
+            characters: script.script.characters
+          },
           sceneIndices: [sceneIndex]
         })
       })
