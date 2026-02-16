@@ -18,6 +18,22 @@ import { BackdropMode } from '@/lib/vision/backdropGenerator'
 import { ObjectSuggestionPanel } from './ObjectSuggestionPanel'
 import { ImageEditModal } from './ImageEditModal'
 import { ReadinessProgress, calculateProductionReadiness, ProductionReadinessState } from '@/components/ui/StatusBadge'
+import { SceneReferenceCard } from './SceneReferenceCard'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { DetailedSceneDirection } from '@/types/scene-direction'
+
+// Extended scene type for Scene tab that includes sceneDirection
+interface SceneWithDirection {
+  id?: string
+  sceneId?: string
+  heading?: string | { text?: string }
+  visualDescription?: string
+  action?: string
+  summary?: string
+  sceneDirection?: DetailedSceneDirection
+  sceneReferenceImageUrl?: string
+  imageUrl?: string
+}
 
 interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'compact'> {
   /** Project ID for uploads */
@@ -50,21 +66,40 @@ interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'comp
   onEditCharacterImage?: (characterId: string, imageUrl: string) => void
   /** Show production readiness progress section */
   showProductionReadiness?: boolean
-  /** All scenes data for readiness calculation */
-  allScenes?: Array<{ sceneDirection?: any; imageUrl?: string; narrationAudioUrl?: string; dialogue?: Array<{ audioUrl?: string }> }>
+  /** All scenes data for readiness calculation (now with full sceneDirection) */
+  allScenes?: SceneWithDirection[]
   /** Callback to generate a scene reference image */
-  onGenerateSceneImage?: (sceneIdx: number) => void
+  onGenerateSceneReferenceImage?: (sceneIdx: number) => void
   /** Callback to upload a scene reference image */
-  onUploadSceneImage?: (sceneIdx: number, file: File) => void
+  onUploadSceneReferenceImage?: (sceneIdx: number, file: File) => void
   /** Callback to edit a scene reference image */
+  onEditSceneReferenceImage?: (sceneIdx: number, imageUrl: string) => void
+  /** Callback to add scene reference image to library */
+  onAddSceneReferenceToLibrary?: (sceneIdx: number, imageUrl: string, name: string) => void
+  /** Callback to generate scene direction (when missing) */
+  onGenerateSceneDirection?: (sceneIdx: number) => void
+  /** Index of scene currently generating reference image */
+  generatingReferenceForScene?: number | null
+  /** Index of scene currently generating direction */
+  generatingDirectionForScene?: number | null
+  /** Callback for generate all scene reference images */
+  onGenerateAllSceneReferences?: () => void
+  /** Whether currently generating all scene references */
+  isGeneratingAllSceneReferences?: boolean
+  // Legacy props (deprecated - keep for backward compatibility)
+  /** @deprecated Use onGenerateSceneReferenceImage */
+  onGenerateSceneImage?: (sceneIdx: number) => void
+  /** @deprecated Use onUploadSceneReferenceImage */
+  onUploadSceneImage?: (sceneIdx: number, file: File) => void
+  /** @deprecated Use onEditSceneReferenceImage */
   onEditSceneImage?: (sceneIdx: number, imageUrl: string) => void
-  /** Callback to add scene image to reference library */
+  /** @deprecated Use onAddSceneReferenceToLibrary */
   onAddToReferenceLibrary?: (imageUrl: string, name: string, sceneNumber: number) => void
-  /** Index of scene currently generating image */
+  /** @deprecated Use generatingReferenceForScene */
   generatingImageForScene?: number | null
-  /** Callback for generate all scene images */
+  /** @deprecated Use onGenerateAllSceneReferences */
   onGenerateAllSceneImages?: () => void
-  /** Whether currently generating all scene images */
+  /** @deprecated Use isGeneratingAllSceneReferences */
   isGeneratingAllSceneImages?: boolean
 }
 
@@ -809,7 +844,17 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onEditCharacterImage,
     showProductionReadiness = true,
     allScenes = [],
-    // Scene image management props
+    // Scene reference image management props (new unified system)
+    onGenerateSceneReferenceImage,
+    onUploadSceneReferenceImage,
+    onEditSceneReferenceImage,
+    onAddSceneReferenceToLibrary,
+    onGenerateSceneDirection,
+    generatingReferenceForScene,
+    generatingDirectionForScene,
+    onGenerateAllSceneReferences,
+    isGeneratingAllSceneReferences = false,
+    // Legacy props (backward compatibility)
     onGenerateSceneImage,
     onUploadSceneImage,
     onEditSceneImage,
@@ -818,6 +863,28 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onGenerateAllSceneImages,
     isGeneratingAllSceneImages = false,
   } = props
+
+  // Use new props if available, fall back to legacy props
+  const handleGenerateSceneRef = onGenerateSceneReferenceImage || onGenerateSceneImage
+  const handleUploadSceneRef = onUploadSceneReferenceImage || onUploadSceneImage
+  const handleEditSceneRef = onEditSceneReferenceImage || onEditSceneImage
+  const currentGeneratingScene = generatingReferenceForScene ?? generatingImageForScene
+  const handleGenerateAllRefs = onGenerateAllSceneReferences || onGenerateAllSceneImages
+  const isGeneratingAll = isGeneratingAllSceneReferences || isGeneratingAllSceneImages
+
+  // Count scenes with/without scene direction and references
+  const sceneReferenceStats = useMemo(() => {
+    const withDirection = allScenes.filter(s => !!s.sceneDirection).length
+    const withRefImage = allScenes.filter(s => !!(s.sceneReferenceImageUrl || s.imageUrl)).length
+    return {
+      total: allScenes.length,
+      withDirection,
+      withoutDirection: allScenes.length - withDirection,
+      withRefImage,
+      withoutRefImage: allScenes.length - withRefImage,
+      allHaveDirection: withDirection === allScenes.length,
+    }
+  }, [allScenes])
 
   // Calculate production readiness
   const productionReadiness = useMemo(() => {
@@ -977,9 +1044,10 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   const [activeReferenceTab, setActiveReferenceTab] = useState<'cast' | 'scene' | 'object'>('cast')
 
   // Reference tabs matching ScriptPanel folder tab style (Storyboard removed - handled in main panel)
+  // Scene tab now shows allScenes count (per-scene references) instead of just manual sceneReferences
   const referenceTabs = [
     { key: 'cast' as const, label: 'Cast', icon: <Users className="w-3.5 h-3.5" />, count: characters.length },
-    { key: 'scene' as const, label: 'Scene', icon: <Images className="w-3.5 h-3.5" />, count: sceneReferences.length },
+    { key: 'scene' as const, label: 'Scene', icon: <Images className="w-3.5 h-3.5" />, count: allScenes.length },
     { key: 'object' as const, label: 'Props', icon: <Package className="w-3.5 h-3.5" />, count: objectReferences.length },
   ]
 
@@ -1088,55 +1156,120 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
             />
           )}
           
-          {/* Scene Tab Content */}
+          {/* Scene Tab Content - Per-Scene Reference Cards */}
           {activeReferenceTab === 'scene' && (
+            <TooltipProvider>
             <div className="space-y-3">
-              {/* Action buttons for Scene tab */}
-              <div className="flex items-center gap-2">
-                {scenes.length > 0 && (
+              {/* Header with stats and Generate All button */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                  <span>{sceneReferenceStats.withDirection}/{sceneReferenceStats.total} with direction</span>
+                  <span className="text-gray-300 dark:text-gray-600">•</span>
+                  <span>{sceneReferenceStats.withRefImage}/{sceneReferenceStats.total} with image</span>
+                </div>
+                {handleGenerateAllRefs && allScenes.length > 0 && (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setGeneratorModalOpen(true)}
-                    className="text-sf-primary border-sf-primary/30 hover:bg-sf-primary/10 flex-1"
+                    onClick={handleGenerateAllRefs}
+                    disabled={isGeneratingAll || !sceneReferenceStats.allHaveDirection}
+                    className="text-cyan-600 border-cyan-600/30 hover:bg-cyan-600/10 text-xs"
+                    title={!sceneReferenceStats.allHaveDirection ? 'Generate scene direction for all scenes first' : 'Generate all scene references'}
                   >
-                    <Sparkles className="w-4 h-4 mr-1" />
-                    Generate Scene
+                    {isGeneratingAll ? (
+                      <>
+                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3 h-3 mr-1" />
+                        Generate All ({sceneReferenceStats.withoutRefImage})
+                      </>
+                    )}
                   </Button>
                 )}
+              </div>
+              
+              {/* Scene Reference Cards Grid */}
+              {allScenes.length === 0 ? (
+                <div className="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg py-6 text-center">
+                  No scenes yet. Create a script to generate scene references.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3">
+                  {allScenes.map((scene, idx) => {
+                    const sceneHeading = typeof scene.heading === 'string' 
+                      ? scene.heading 
+                      : scene.heading?.text || `Scene ${idx + 1}`
+                    
+                    return (
+                      <SceneReferenceCard
+                        key={scene.id || scene.sceneId || `scene-ref-${idx}`}
+                        scene={scene}
+                        sceneNumber={idx + 1}
+                        isGenerating={currentGeneratingScene === idx}
+                        isGeneratingDirection={generatingDirectionForScene === idx}
+                        onGenerate={() => handleGenerateSceneRef?.(idx)}
+                        onEdit={scene.sceneReferenceImageUrl || scene.imageUrl 
+                          ? () => handleEditSceneRef?.(idx, scene.sceneReferenceImageUrl || scene.imageUrl || '')
+                          : undefined
+                        }
+                        onUpload={(file) => handleUploadSceneRef?.(idx, file)}
+                        onSaveToLibrary={
+                          (scene.sceneReferenceImageUrl || scene.imageUrl) && onAddSceneReferenceToLibrary
+                            ? () => onAddSceneReferenceToLibrary(idx, scene.sceneReferenceImageUrl || scene.imageUrl || '', sceneHeading)
+                            : (scene.sceneReferenceImageUrl || scene.imageUrl) && onAddToReferenceLibrary
+                              ? () => onAddToReferenceLibrary(scene.sceneReferenceImageUrl || scene.imageUrl || '', sceneHeading, idx + 1)
+                              : undefined
+                        }
+                        onGenerateDirection={onGenerateSceneDirection ? () => onGenerateSceneDirection(idx) : undefined}
+                      />
+                    )
+                  })}
+                </div>
+              )}
+              
+              {/* Legacy: Manual Add Reference button */}
+              <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleOpenDialog('scene')}
+                  className="w-full text-xs"
                 >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add
+                  <Plus className="w-3 h-3 mr-1" />
+                  Add Custom Reference
                 </Button>
               </div>
-              {sceneReferences.length === 0 ? (
-                <div className="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg py-6 text-center">
-                  No scene references yet. Generate or add scene imagery.
+              
+              {/* Legacy scene references (manual additions) */}
+              {sceneReferences.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Custom References
+                  </div>
+                  {sceneReferences.map((reference) => (
+                    <DraggableReferenceCard
+                      key={reference.id}
+                      reference={reference}
+                      onRemove={() => onRemoveReference('scene', reference.id)}
+                      scenes={scenes}
+                      onInsertBackdropSegment={onInsertBackdropSegment}
+                      onEditImage={handleEditReferenceImage}
+                      referenceType="scene"
+                      projectId={projectId}
+                      onImageUploaded={(refId, refType, imageUrl) => {
+                        if (onUpdateReferenceImage) {
+                          onUpdateReferenceImage(refType, refId, imageUrl)
+                        }
+                      }}
+                    />
+                  ))}
                 </div>
-              ) : (
-                sceneReferences.map((reference) => (
-                  <DraggableReferenceCard
-                    key={reference.id}
-                    reference={reference}
-                    onRemove={() => onRemoveReference('scene', reference.id)}
-                    scenes={scenes}
-                    onInsertBackdropSegment={onInsertBackdropSegment}
-                    onEditImage={handleEditReferenceImage}
-                    referenceType="scene"
-                    projectId={projectId}
-                    onImageUploaded={(refId, refType, imageUrl) => {
-                      if (onUpdateReferenceImage) {
-                        onUpdateReferenceImage(refType, refId, imageUrl)
-                      }
-                    }}
-                  />
-                ))
               )}
             </div>
+            </TooltipProvider>
           )}
           
           {/* Object Tab Content */}

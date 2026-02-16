@@ -71,6 +71,7 @@ import { VisualReference, VisualReferenceType, VisionReferencesPayload } from '@
 import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production'
 import { applyIntelligentDefaults } from '@/lib/audio/anchoredTiming'
 import { buildAudioTracksForLanguage, buildAudioTracksWithBaselineTiming, determineBaselineLanguage, applySequentialAlignmentToScene } from '@/components/vision/scene-production/audioTrackBuilder'
+import { buildSceneReferencePrompt } from '@/lib/vision/sceneReferencePromptBuilder'
 
 /**
  * Client-side upload helper that uses the API endpoint
@@ -3576,6 +3577,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [isGeneratingKeyframe, setIsGeneratingKeyframe] = useState(false)
   const [generatingKeyframeSceneNumber, setGeneratingKeyframeSceneNumber] = useState<number | null>(null)
   
+  // Scene reference generation state (for Production Bible Scene tab)
+  const [generatingSceneReferenceIndex, setGeneratingSceneReferenceIndex] = useState<number | null>(null)
+  const [generatingSceneDirectionIndex, setGeneratingSceneDirectionIndex] = useState<number | null>(null)
+  const [isGeneratingAllSceneReferences, setIsGeneratingAllSceneReferences] = useState(false)
+  
   // Keyframe State Machine - Frame step generation state
   const [generatingFrameForSegment, setGeneratingFrameForSegment] = useState<string | null>(null)
   const [generatingFramePhase, setGeneratingFramePhase] = useState<'start' | 'end' | 'video' | null>(null)
@@ -6503,6 +6509,181 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  /**
+   * Generate a scene reference image (environment-only, no characters)
+   * Uses intelligent prompt builder based on scene direction data
+   */
+  const handleGenerateSceneReferenceImage = async (sceneIdx: number) => {
+    const scene = script?.script?.scenes?.[sceneIdx]
+    if (!scene) {
+      try { const { toast } = require('sonner'); toast.error('Scene not found') } catch {}
+      return
+    }
+    
+    // Require scene direction for intelligent generation
+    if (!scene.sceneDirection) {
+      try { 
+        const { toast } = require('sonner')
+        toast.error('Generate scene direction first', {
+          description: 'Scene direction provides the location, atmosphere, and lighting details needed for reference generation.'
+        })
+      } catch {}
+      return
+    }
+    
+    setGeneratingSceneReferenceIndex(sceneIdx)
+    overlayStore.show(`Scene Reference - Scene ${sceneIdx + 1}`, 20, 'storyboard-production')
+    
+    try {
+      // Build intelligent prompt using scene direction
+      const promptResult = buildSceneReferencePrompt(scene, objectReferences)
+      console.log('[handleGenerateSceneReferenceImage] Built prompt:', promptResult)
+      
+      // Make API call with the intelligent prompt
+      const response = await fetch('/api/scene/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: projectId,
+          sceneIndex: sceneIdx,
+          customPrompt: promptResult.prompt,
+          // Pass matched prop references for style consistency
+          objectReferences: promptResult.matchedPropRefs,
+          // CRITICAL: Exclude characters for scene references
+          excludeCharacters: true,
+          characters: [],
+          quality: imageQuality,
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate scene reference')
+      }
+      
+      // Update scene with the generated reference image
+      if (data.imageUrl) {
+        const updatedScenes = [...(script?.script?.scenes || [])]
+        updatedScenes[sceneIdx] = {
+          ...updatedScenes[sceneIdx],
+          sceneReferenceImageUrl: data.imageUrl,
+          // Also set imageUrl if not already set (backward compatibility)
+          imageUrl: updatedScenes[sceneIdx].imageUrl || data.imageUrl
+        }
+        
+        setScript({
+          ...script,
+          script: {
+            ...script?.script,
+            scenes: updatedScenes
+          }
+        })
+        
+        try { const { toast } = require('sonner'); toast.success('Scene reference generated!') } catch {}
+      }
+    } catch (error: any) {
+      console.error('[handleGenerateSceneReferenceImage] Error:', error)
+      try { const { toast } = require('sonner'); toast.error(error.message || 'Failed to generate scene reference') } catch {}
+    } finally {
+      setGeneratingSceneReferenceIndex(null)
+      overlayStore.hide()
+    }
+  }
+
+  /**
+   * Upload a scene reference image
+   */
+  const handleUploadSceneReferenceImage = async (sceneIdx: number, file: File) => {
+    try {
+      const imageUrl = await uploadAssetViaAPI(file, projectId)
+      
+      const updatedScenes = [...(script?.script?.scenes || [])]
+      updatedScenes[sceneIdx] = {
+        ...updatedScenes[sceneIdx],
+        sceneReferenceImageUrl: imageUrl,
+        imageUrl: updatedScenes[sceneIdx].imageUrl || imageUrl
+      }
+      
+      setScript({
+        ...script,
+        script: {
+          ...script?.script,
+          scenes: updatedScenes
+        }
+      })
+      
+      try { const { toast } = require('sonner'); toast.success('Scene reference uploaded!') } catch {}
+    } catch (error: any) {
+      console.error('[handleUploadSceneReferenceImage] Error:', error)
+      try { const { toast } = require('sonner'); toast.error('Failed to upload image') } catch {}
+    }
+  }
+
+  /**
+   * Add scene reference to the Reference Library
+   */
+  const handleAddSceneReferenceToLibrary = (sceneIdx: number, imageUrl: string, name: string) => {
+    handleCreateReference('scene', {
+      name: `Scene ${sceneIdx + 1}: ${name}`,
+      description: `Scene reference from Scene ${sceneIdx + 1}`,
+      file: null
+    }).then(() => {
+      // After creating the reference entry, update it with the imageUrl
+      const newRef: VisualReference = {
+        id: uuidv4(),
+        type: 'scene',
+        name: `Scene ${sceneIdx + 1}: ${name}`,
+        description: `Scene reference from Scene ${sceneIdx + 1}`,
+        imageUrl: imageUrl
+      }
+      setSceneReferences(prev => [...prev, newRef])
+      try { const { toast } = require('sonner'); toast.success('Added to Reference Library') } catch {}
+    })
+  }
+
+  /**
+   * Generate all scene references sequentially
+   */
+  const handleGenerateAllSceneReferences = async () => {
+    const scenes = script?.script?.scenes || []
+    const scenesNeedingRefs = scenes
+      .map((s: any, idx: number) => ({ scene: s, idx }))
+      .filter(({ scene }: any) => scene.sceneDirection && !scene.sceneReferenceImageUrl)
+    
+    if (scenesNeedingRefs.length === 0) {
+      try { 
+        const { toast } = require('sonner')
+        toast.info('All scenes with direction already have references')
+      } catch {}
+      return
+    }
+    
+    setIsGeneratingAllSceneReferences(true)
+    overlayStore.show(`Generating ${scenesNeedingRefs.length} Scene References`, scenesNeedingRefs.length * 15, 'storyboard-production')
+    
+    try {
+      for (let i = 0; i < scenesNeedingRefs.length; i++) {
+        const { idx } = scenesNeedingRefs[i]
+        overlayStore.setStatus(`Generating Scene ${idx + 1}... (${i + 1}/${scenesNeedingRefs.length})`)
+        
+        await handleGenerateSceneReferenceImage(idx)
+        
+        // Small delay between generations to avoid rate limiting
+        if (i < scenesNeedingRefs.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000))
+        }
+      }
+      
+      try { const { toast } = require('sonner'); toast.success(`Generated ${scenesNeedingRefs.length} scene references!`) } catch {}
+    } catch (error) {
+      console.error('[handleGenerateAllSceneReferences] Error:', error)
+    } finally {
+      setIsGeneratingAllSceneReferences(false)
+      overlayStore.hide()
+    }
+  }
+
   const handleRegenerateScene = async (sceneIndex: number) => {
     // Implement scene regeneration
     console.log('Regenerate scene:', sceneIndex)
@@ -9305,7 +9486,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   logline: script?.logline || project?.description,
                   visualStyle: project?.metadata?.filmTreatmentVariant?.visual_style || project?.metadata?.filmTreatmentVariant?.style,
                 }}
-                // Scene image management props for Storyboard tab
+                // New scene reference management props (intelligent prompt builder)
+                onGenerateSceneReferenceImage={handleGenerateSceneReferenceImage}
+                onUploadSceneReferenceImage={handleUploadSceneReferenceImage}
+                onAddSceneReferenceToLibrary={handleAddSceneReferenceToLibrary}
+                generatingReferenceForScene={generatingSceneReferenceIndex}
+                generatingDirectionForScene={generatingSceneDirectionIndex}
+                onGenerateAllSceneReferences={handleGenerateAllSceneReferences}
+                isGeneratingAllSceneReferences={isGeneratingAllSceneReferences}
+                // Legacy props for backward compatibility
                 onGenerateSceneImage={(sceneIdx) => handleGenerateSceneImage(sceneIdx, undefined, { excludeCharacters: true })}
                 onUploadSceneImage={handleUploadScene}
                 generatingImageForScene={generatingKeyframeSceneNumber !== null ? generatingKeyframeSceneNumber - 1 : null}
