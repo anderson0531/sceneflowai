@@ -10,6 +10,7 @@ export type OperationType =
   | 'script-review'        // Audience resonance analysis
   | 'script-generation'    // Writing/generating script
   | 'script-optimization'  // Optimizing/revising script
+  | 'scene-revision'       // Revising individual scene
   | 'series-analysis'      // Series resonance analysis
   | 'series-fix'           // Applying fix to series
   | 'series-edit'          // Editing series storyline
@@ -89,6 +90,18 @@ export const OPERATION_CONFIGS: Record<OperationType, OperationConfig> = {
       { id: 'revise-3', label: 'Revising remaining scenes...', progress: 75 },
       { id: 'polish', label: 'Polishing narrative flow...', progress: 90 },
       { id: 'finalize', label: 'Finalizing optimizations...', progress: 98 },
+    ]
+  },
+  'scene-revision': {
+    title: 'Revising Scene',
+    animationType: 'script',
+    phases: [
+      { id: 'init', label: 'Analyzing instructions...', progress: 10 },
+      { id: 'understand', label: 'Understanding context...', progress: 25 },
+      { id: 'revise', label: 'Revising scene content...', progress: 50 },
+      { id: 'dialogue', label: 'Refining dialogue...', progress: 70 },
+      { id: 'polish', label: 'Polishing details...', progress: 88 },
+      { id: 'finalize', label: 'Finalizing revision...', progress: 98 },
     ]
   },
   'series-analysis': {

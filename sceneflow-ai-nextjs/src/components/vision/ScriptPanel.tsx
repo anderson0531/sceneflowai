@@ -4173,27 +4173,6 @@ function SceneCard({
           
           {/* Right Side: Scene Actions */}
           <div className="flex items-center gap-2">
-            
-            {/* Edit Scene Button */}
-            {!isOutline && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        if (onEditScene) onEditScene(sceneIdx)
-                      }}
-                      className="flex items-center gap-1 px-2 py-1 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded transition-colors"
-                    >
-                      <Edit className="w-4 h-4" />
-                      <span className="text-xs">Edit Scene</span>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Edit scene details</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
 
             {/* Bookmark toggle button */}
             {onBookmarkToggle && (
@@ -4869,6 +4848,26 @@ function SceneCard({
                       <span className="text-xs font-medium text-gray-400 ml-2">Quick Actions</span>
                     </div>
                     <div className="flex items-center gap-2 mr-2">
+                      {/* Edit Script Button */}
+                      {!isOutline && onEditScene && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onEditScene(sceneIdx)
+                                }}
+                                className="px-3 py-1.5 text-xs font-medium rounded-md flex items-center gap-1.5 transition-all shadow-sm bg-blue-600 hover:bg-blue-500 text-white"
+                              >
+                                <Edit className="w-3 h-3" />
+                                Edit Script
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Edit and revise scene script</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                       {/* Generate All Audio button with workflow guard */}
                       {(() => {
                         const voicesReady = productionReadiness?.isAudioReady ?? true

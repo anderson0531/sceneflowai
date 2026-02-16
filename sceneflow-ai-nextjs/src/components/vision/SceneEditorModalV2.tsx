@@ -13,6 +13,7 @@ import { CurrentScenePanel } from './CurrentScenePanel'
 import { SceneComparisonPanel } from './SceneComparisonPanel'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { RecommendationPriority } from '@/types/story'
+import { useOverlayStore } from '@/store/useOverlayStore'
 
 // Priority badge colors for recommendations
 const PRIORITY_BADGES: Record<RecommendationPriority, { emoji: string; color: string; label: string }> = {
@@ -318,14 +319,23 @@ export function SceneEditorModal({
       return
     }
 
+    const overlayStore = useOverlayStore.getState()
+    
     setIsGenerating(true)
     setIsGeneratingPreview(true)
+    
+    // Show animated processing overlay
+    overlayStore.show(`Revising Scene ${sceneIndex + 1}...`, 20, 'scene-revision')
+    
     try {
       const preserveElements = []
       if (preserveNarration) preserveElements.push('narration')
       if (preserveDialogue) preserveElements.push('dialogue')
       if (preserveMusic) preserveElements.push('music')
       if (preserveSfx) preserveElements.push('sfx')
+
+      overlayStore.setProgress(15)
+      overlayStore.setStatus('Analyzing instructions...')
 
       const response = await fetch('/api/vision/revise-scene', {
         method: 'POST',
@@ -346,9 +356,15 @@ export function SceneEditorModal({
         })
       })
 
+      overlayStore.setProgress(60)
+      overlayStore.setStatus('Revising scene content...')
+
       if (!response.ok) {
         throw new Error('Failed to revise scene')
       }
+
+      overlayStore.setProgress(85)
+      overlayStore.setStatus('Polishing details...')
 
       const data = await response.json()
       setPreviewScene(data.revisedScene)
@@ -359,12 +375,16 @@ export function SceneEditorModal({
       setRevisionHistory(newHistory)
       setCurrentHistoryIndex(newHistory.length - 1)
       
+      overlayStore.setProgress(100)
+      overlayStore.setStatus('Revision complete!')
+      
       setShowPreview(true)
     } catch (error) {
       console.error('[Scene Editor] Failed to generate preview:', error)
     } finally {
       setIsGenerating(false)
       setIsGeneratingPreview(false)
+      overlayStore.hide()
     }
   }
 
@@ -1018,40 +1038,6 @@ export function SceneEditorModal({
             </div>
           </div>
         </DialogFooter>
-        
-        {/* Loading Overlay */}
-        {showLoadingOverlay && (
-          <div className="absolute inset-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm z-50 flex items-center justify-center">
-            <div className="text-center max-w-md px-6">
-              <div className="relative mb-6">
-                <Loader className="w-16 h-16 animate-spin mx-auto text-blue-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                Analyzing Scene
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Please wait...
-              </p>
-            </div>
-          </div>
-        )}
-        
-        {/* Preview Loading Overlay */}
-        {isGeneratingPreview && (
-          <div className="absolute inset-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm z-50 flex items-center justify-center">
-            <div className="text-center max-w-md px-6">
-              <div className="relative mb-6">
-                <Loader className="w-16 h-16 animate-spin mx-auto text-blue-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                Generating Preview
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Your Flow Assistant is revising the scene...
-              </p>
-            </div>
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   )
