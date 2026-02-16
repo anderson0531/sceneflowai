@@ -200,6 +200,8 @@ export function ScenePromptBuilder({
     }
     
     // AUTO-DETECT AND PRE-SELECT OBJECTS using smart matching
+    // NOTE: We only TRACK which objects are auto-detected (for UI hints),
+    // but do NOT pre-select them. Server-side intelligent selection handles actual filtering.
     if (objectReferences && objectReferences.length > 0) {
       const sceneText = [
         scene.heading || '',
@@ -216,9 +218,10 @@ export function ScenePromptBuilder({
       
       if (detectedObjects.length > 0) {
         const detectedIds = detectedObjects.map((obj: any) => obj.id)
-        setSelectedObjectRefIds(detectedIds)
-        setAutoDetectedObjectIds(detectedIds)  // Track which were auto-detected
-        console.log('[ScenePromptBuilder] Auto-detected objects:', detectedObjects.map((o: any) => o.name))
+        // Only track auto-detected objects for UI hints, do NOT pre-select
+        setSelectedObjectRefIds([])  // Start with none selected
+        setAutoDetectedObjectIds(detectedIds)  // Track which were auto-detected for hints
+        console.log('[ScenePromptBuilder] Auto-detected objects (suggestions only):', detectedObjects.map((o: any) => o.name))
       }
     }
     
@@ -899,15 +902,34 @@ export function ScenePromptBuilder({
                     {/* Props */}
                     {objectReferences.length > 0 && (
                       <div>
-                        <label className="text-xs text-gray-400 flex items-center gap-1 mb-2">
-                          <Box className="w-3 h-3" />
-                          Props
-                          {autoDetectedObjectIds.length > 0 && (
-                            <span className="text-green-400 ml-2">
-                              ({autoDetectedObjectIds.length} auto-detected)
-                            </span>
-                          )}
-                        </label>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-xs text-gray-400 flex items-center gap-1">
+                            <Box className="w-3 h-3" />
+                            Props
+                            {autoDetectedObjectIds.length > 0 && (
+                              <span className="text-green-400 ml-2">
+                                ({autoDetectedObjectIds.length} suggested)
+                              </span>
+                            )}
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setSelectedObjectRefIds(autoDetectedObjectIds)}
+                              className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors"
+                              title="Select suggested props"
+                            >
+                              Select Suggested
+                            </button>
+                            <span className="text-gray-600">|</span>
+                            <button
+                              onClick={() => setSelectedObjectRefIds([])}
+                              className="text-[10px] text-gray-400 hover:text-gray-300 transition-colors"
+                              title="Unselect all props"
+                            >
+                              Unselect All
+                            </button>
+                          </div>
+                        </div>
                         <div className="grid grid-cols-4 gap-2">
                           {objectReferences.map(ref => {
                             const isSelected = selectedObjectRefIds.includes(ref.id)
@@ -942,8 +964,8 @@ export function ScenePromptBuilder({
                                 )}
                                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1">
                                   <div className="text-[9px] text-white truncate">{ref.name}</div>
-                                  {isAutoDetected && isSelected && (
-                                    <div className="text-[8px] text-green-400">✓ Auto-detected</div>
+                                  {isAutoDetected && (
+                                    <div className="text-[8px] text-green-400">✓ Suggested</div>
                                   )}
                                 </div>
                                 {isSelected && (
