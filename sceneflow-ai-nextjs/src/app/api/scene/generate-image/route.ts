@@ -12,6 +12,7 @@ import { CreditService } from '@/services/CreditService'
 import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
+import { extractLocation } from '@/lib/script/formatSceneHeading'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120  // Increased for new AI image models
@@ -231,6 +232,7 @@ export async function POST(req: NextRequest) {
       sceneReferences = [],   // NEW: Scene backdrop references from Reference Library
       objectReferences = [],  // NEW: Prop/object references from Reference Library
       excludeCharacters = false,  // NEW: Generate scene reference only (no people) for production bible
+      locationReferences = [],  // NEW: Location references for environment consistency
     } = body
     
     // Handle both legacy (selectedCharacters) and new (characters) formats
@@ -414,13 +416,26 @@ export async function POST(req: NextRequest) {
     
     // AUTO-DETECT: If no objectReferences provided, try to match from project's reference library
     // This ensures objects mentioned in scene text (like "Sarah's Digital Image") are included
+    // INTELLIGENT SELECTION: Prioritizes set-pieces/locations, respects importance levels,
+    // and enforces budget constraints to avoid overwhelming the model
     let detectedObjectReferences = objectReferences
+    
+    // Reference slot budget: Total 5 slots, reserve 3 for characters, 2 for objects
+    // alwaysInclude props bypass the budget (they're critical to the scene)
+    const MAX_OBJECT_REFERENCES = 2
+    const MAX_ALWAYS_INCLUDE = 3  // Safety cap for alwaysInclude to prevent abuse
+    
     if (project && detectedObjectReferences.length === 0) {
       const projectObjectRefs = project.metadata?.visionPhase?.references?.objectReferences || []
       
       if (projectObjectRefs.length > 0 && fullSceneContext) {
         // Build scene text for matching (including the prompt)
         const sceneText = `${fullSceneContext} ${scenePrompt || ''} ${customPrompt || ''}`.toLowerCase()
+        
+        // Location keywords that boost priority for set-piece detection
+        const locationKeywords = ['apartment', 'office', 'room', 'house', 'building', 'exterior', 'interior',
+          'set-piece', 'setpiece', 'location', 'studio', 'stage', 'warehouse', 'garage', 'kitchen',
+          'bedroom', 'bathroom', 'living', 'dining', 'hallway', 'corridor', 'lobby', 'entrance']
         
         // Match object names from scene text using fuzzy matching
         const matchedObjects = projectObjectRefs.filter((obj: any) => {
@@ -451,11 +466,111 @@ export async function POST(req: NextRequest) {
         })
         
         if (matchedObjects.length > 0) {
-          detectedObjectReferences = matchedObjects
-          console.log(`[Scene Image] Auto-detected ${matchedObjects.length} object reference(s) from scene:`,
-            matchedObjects.map((o: any) => o.name))
+          // Calculate priority score for each matched object
+          // Higher score = more important
+          const scoredObjects = matchedObjects.map((obj: any) => {
+            let score = 0
+            const objNameLower = obj.name.toLowerCase()
+            
+            // alwaysInclude: Highest priority (bypass budget)
+            if (obj.alwaysInclude) score += 1000
+            
+            // Category-based scoring (set-piece and vehicle are environment-defining)
+            if (obj.category === 'set-piece') score += 50
+            else if (obj.category === 'vehicle') score += 40
+            else if (obj.category === 'technology') score += 20
+            else if (obj.category === 'costume') score += 15
+            else if (obj.category === 'prop') score += 10
+            // 'other' gets base score of 0
+            
+            // Importance-based scoring
+            if (obj.importance === 'critical') score += 30
+            else if (obj.importance === 'important') score += 20
+            else if (obj.importance === 'background') score += 5
+            
+            // Location keyword boost (detect set-pieces by name even if not categorized)
+            const hasLocationKeyword = locationKeywords.some(kw => objNameLower.includes(kw))
+            if (hasLocationKeyword) score += 25
+            
+            // Exact name match in scene text is more relevant than fuzzy match
+            if (sceneText.includes(objNameLower)) score += 15
+            
+            // Longer, more specific names suggest more relevant props
+            if (obj.name.length > 20) score += 5
+            
+            return { ...obj, _priorityScore: score }
+          })
+          
+          // Sort by priority score (highest first)
+          scoredObjects.sort((a: any, b: any) => b._priorityScore - a._priorityScore)
+          
+          // Separate alwaysInclude objects from regular budget
+          const alwaysIncludeObjects = scoredObjects.filter((o: any) => o.alwaysInclude).slice(0, MAX_ALWAYS_INCLUDE)
+          const budgetedObjects = scoredObjects.filter((o: any) => !o.alwaysInclude).slice(0, MAX_OBJECT_REFERENCES)
+          
+          // Combine: alwaysInclude first, then budgeted objects
+          const selectedObjects = [...alwaysIncludeObjects, ...budgetedObjects]
+          
+          // Remove internal scoring field before using
+          detectedObjectReferences = selectedObjects.map((o: any) => {
+            const { _priorityScore, ...objWithoutScore } = o
+            return objWithoutScore
+          })
+          
+          // Enhanced logging for transparency
+          console.log(`[Scene Image] Intelligent prop selection:`, {
+            totalMatched: matchedObjects.length,
+            selected: detectedObjectReferences.length,
+            alwaysIncludeCount: alwaysIncludeObjects.length,
+            budgetedCount: budgetedObjects.length,
+            maxBudget: MAX_OBJECT_REFERENCES,
+            selectedProps: detectedObjectReferences.map((o: any) => ({
+              name: o.name,
+              category: o.category || 'uncategorized',
+              importance: o.importance || 'unset',
+              alwaysInclude: o.alwaysInclude || false
+            })),
+            filteredOut: matchedObjects.length > selectedObjects.length 
+              ? matchedObjects.slice(selectedObjects.length).map((o: any) => o.name)
+              : []
+          })
         } else {
           console.log('[Scene Image] No object references matched from', projectObjectRefs.length, 'available objects')
+        }
+      }
+    }
+    
+    // AUTO-DETECT: Location reference for environment consistency
+    // If no location references provided, try to match from project's reference library
+    let matchedLocationReference: any = null
+    if (project && locationReferences.length === 0) {
+      const projectLocationRefs = project.metadata?.visionPhase?.references?.locationReferences || []
+      
+      if (projectLocationRefs.length > 0 && sceneData) {
+        // Extract location from current scene heading
+        const sceneHeading = typeof sceneData.heading === 'string' ? sceneData.heading : sceneData.heading?.text
+        const currentLocation = extractLocation(sceneHeading)
+        
+        if (currentLocation) {
+          // Find matching location reference
+          matchedLocationReference = projectLocationRefs.find((locRef: any) => locRef.location === currentLocation)
+          
+          if (matchedLocationReference) {
+            console.log(`[Scene Image] Auto-detected location reference for "${currentLocation}":`, matchedLocationReference.imageUrl?.substring(0, 40))
+          } else {
+            console.log(`[Scene Image] No location reference found for "${currentLocation}" (${projectLocationRefs.length} available)`)
+          }
+        }
+      }
+    } else if (locationReferences.length > 0 && sceneData) {
+      // Location references were provided, find matching one
+      const sceneHeading = typeof sceneData.heading === 'string' ? sceneData.heading : sceneData.heading?.text
+      const currentLocation = extractLocation(sceneHeading)
+      
+      if (currentLocation) {
+        matchedLocationReference = locationReferences.find((locRef: any) => locRef.location === currentLocation)
+        if (matchedLocationReference) {
+          console.log(`[Scene Image] Using provided location reference for "${currentLocation}"`)
         }
       }
     }
@@ -798,16 +913,21 @@ export async function POST(req: NextRequest) {
           // This passes reference images directly in the prompt for better character consistency
           console.log('[Scene Image] Using Gemini Studio (gemini-3-pro-image-preview) for character reference images')
           
-          // Combine character and object reference images
+          // Combine character, object, and location reference images
           const allReferenceImages = [
             ...imageReferences.map(ref => ({
               imageUrl: ref.imageUrl,
               name: ref.subjectDescription || 'character'
             })),
-            ...objectImageReferences
+            ...objectImageReferences,
+            // Add location reference if available
+            ...(matchedLocationReference && matchedLocationReference.imageUrl ? [{
+              imageUrl: matchedLocationReference.imageUrl,
+              name: `location: ${matchedLocationReference.location}`
+            }] : [])
           ]
           
-          // Build multimodal prompt with character and object instructions
+          // Build multimodal prompt with character, object, and location instructions
           let geminiPrompt = `Generate a cinematic scene image based on this description. `
           
           if (imageReferences.length > 0) {
@@ -819,6 +939,11 @@ export async function POST(req: NextRequest) {
             geminiPrompt += `Include these specific props/objects shown in reference images: ${objectNames}. `
           }
           
+          // Add location reference instruction
+          if (matchedLocationReference && matchedLocationReference.imageUrl) {
+            geminiPrompt += `IMPORTANT: The environment/setting should match the location reference image provided. Use the same architectural style, color palette, lighting conditions, and spatial layout as shown in the "${matchedLocationReference.location}" reference. `
+          }
+          
           geminiPrompt += `\n\n${optimizedPrompt}\n\n`
           
           if (imageReferences.length > 0) {
@@ -826,7 +951,11 @@ export async function POST(req: NextRequest) {
           }
           
           if (objectImageReferences.length > 0) {
-            geminiPrompt += `The props/objects referenced should closely match their reference images.`
+            geminiPrompt += `The props/objects referenced should closely match their reference images. `
+          }
+          
+          if (matchedLocationReference && matchedLocationReference.imageUrl) {
+            geminiPrompt += `The environment should maintain visual consistency with the location reference.`
           }
           
           const result = await generateImageWithGeminiStudio({

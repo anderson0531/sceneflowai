@@ -13,7 +13,7 @@
 'use client'
 
 import React, { useState, useCallback, useMemo } from 'react'
-import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2, Volume2, VolumeX, Play, Pause, SkipForward, SkipBack, Check, Globe, Users, Package, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2, Volume2, VolumeX, Play, Pause, SkipForward, SkipBack, Check, Globe, Users, Package, AlertCircle, CheckCircle2, MapPin } from 'lucide-react'
 import { AudioGalleryPlayer } from './AudioGalleryPlayer'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { Button } from '@/components/ui/Button'
@@ -24,7 +24,7 @@ import { ReportType, StoryboardData } from '@/lib/types/reports'
 import { SceneProductionManager } from './scene-production'
 import { SceneProductionData, SceneProductionReferences } from './scene-production/types'
 import { cn } from '@/lib/utils'
-import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
+import { formatSceneHeading, extractLocation } from '@/lib/script/formatSceneHeading'
 
 interface SceneGalleryProps {
   scenes: any[]
@@ -52,6 +52,10 @@ interface SceneGalleryProps {
   onOpenGenerateAudio?: () => void
   /** Whether audio generation is currently in progress */
   isGeneratingAudio?: boolean
+  /** Callback to pin a storyboard image as a location reference */
+  onPinAsLocationReference?: (sceneIndex: number, imageUrl: string, sceneHeading: string) => void
+  /** Set of location names that are already pinned */
+  pinnedLocations?: Set<string>
 }
 
 const buildSceneKey = (scene: any, index: number) => scene.sceneId || scene.id || `scene-${index}`
@@ -79,6 +83,8 @@ export function SceneGallery({
   objectReferences,
   onOpenGenerateAudio,
   isGeneratingAudio = false,
+  onPinAsLocationReference,
+  pinnedLocations,
 }: SceneGalleryProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'timeline'>('grid')
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -437,6 +443,16 @@ export function SceneGallery({
                   onSegmentUpload={onSegmentUpload}
                   characters={characters}
                   objectReferences={objectReferences}
+                  onPinAsLocationReference={onPinAsLocationReference && scene.imageUrl ? () => {
+                    const sceneHeading = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text
+                    onPinAsLocationReference(idx, scene.imageUrl, sceneHeading || '')
+                  } : undefined}
+                  isLocationPinned={(() => {
+                    if (!pinnedLocations) return false
+                    const sceneHeading = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text
+                    const location = extractLocation(sceneHeading)
+                    return location ? pinnedLocations.has(location) : false
+                  })()}
                 />
               </div>
             )
@@ -504,6 +520,10 @@ interface SceneCardProps {
   characters?: any[]
   /** Object/prop references from reference library */
   objectReferences?: Array<{ id: string; name: string; imageUrl: string; description?: string }>
+  /** Callback to pin the storyboard image as a location reference */
+  onPinAsLocationReference?: () => void
+  /** Whether this location is already pinned */
+  isLocationPinned?: boolean
 }
 
 function SceneCard({
@@ -532,6 +552,8 @@ function SceneCard({
   onSegmentUpload,
   characters = [],
   objectReferences = [],
+  onPinAsLocationReference,
+  isLocationPinned = false,
 }: SceneCardProps) {
   const hasImage = !!scene.imageUrl
   const fileInputRef = React.useRef<HTMLInputElement>(null)
@@ -690,6 +712,27 @@ function SceneCard({
           </TooltipTrigger>
           <TooltipContent>Upload Image</TooltipContent>
         </Tooltip>
+        
+        {/* Pin as Location Reference (MapPin - cyan) - only show if has image */}
+        {hasImage && onPinAsLocationReference && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={(e) => { e.stopPropagation(); onPinAsLocationReference(); }}
+                className={`p-3 rounded-full transition-colors ${
+                  isLocationPinned 
+                    ? 'bg-cyan-500 ring-2 ring-cyan-300' 
+                    : 'bg-cyan-600/80 hover:bg-cyan-600'
+                }`}
+              >
+                <MapPin className="w-5 h-5 text-white" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {isLocationPinned ? 'Location Already Pinned' : 'Pin as Location Reference'}
+            </TooltipContent>
+          </Tooltip>
+        )}
       </div>
       
       {/* Reference Status Indicator - Top Right */}

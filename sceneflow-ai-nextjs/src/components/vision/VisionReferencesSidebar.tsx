@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react'
 import { DndContext } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, BookOpen, Wand2, Loader2, Upload, Copy, CheckCircle2, AlertCircle, LayoutGrid } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, BookOpen, Wand2, Loader2, Upload, Copy, CheckCircle2, AlertCircle, LayoutGrid, MapPin } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/textarea'
 import { CharacterLibrary, CharacterLibraryProps } from './CharacterLibrary'
 import { SceneImageFrame } from './SceneImageFrame'
-import { VisualReference, VisualReferenceType, ObjectCategory } from '@/types/visionReferences'
+import { VisualReference, VisualReferenceType, ObjectCategory, LocationReference } from '@/types/visionReferences'
 import { BackdropGeneratorModal, SceneForBackdrop, CharacterForBackdrop } from './BackdropGeneratorModal'
 import { BackdropMode } from '@/lib/vision/backdropGenerator'
 import { ObjectSuggestionPanel } from './ObjectSuggestionPanel'
@@ -101,6 +101,10 @@ interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'comp
   onGenerateAllSceneImages?: () => void
   /** @deprecated Use isGeneratingAllSceneReferences */
   isGeneratingAllSceneImages?: boolean
+  /** Location references for environment consistency */
+  locationReferences?: LocationReference[]
+  /** Callback to remove a location reference */
+  onRemoveLocationReference?: (locationId: string) => void
 }
 
 interface ReferenceSectionProps {
@@ -862,6 +866,9 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     generatingImageForScene,
     onGenerateAllSceneImages,
     isGeneratingAllSceneImages = false,
+    // Location references
+    locationReferences = [],
+    onRemoveLocationReference,
   } = props
 
   // Use new props if available, fall back to legacy props
@@ -1043,13 +1050,14 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
 
   const [castOpen, setCastOpen] = useState(false)
   const [showProTips, setShowProTips] = useState(false)
-  const [activeReferenceTab, setActiveReferenceTab] = useState<'cast' | 'scene' | 'object'>('cast')
+  const [activeReferenceTab, setActiveReferenceTab] = useState<'cast' | 'scene' | 'object' | 'locations'>('cast')
 
   // Reference tabs matching ScriptPanel folder tab style (Storyboard removed - handled in main panel)
   // Scene tab now shows allScenes count (per-scene references) instead of just manual sceneReferences
   const referenceTabs = [
     { key: 'cast' as const, label: 'Cast', icon: <Users className="w-3.5 h-3.5" />, count: characters.length },
     { key: 'scene' as const, label: 'Scene', icon: <Images className="w-3.5 h-3.5" />, count: allScenes.length },
+    { key: 'locations' as const, label: 'Locations', icon: <MapPin className="w-3.5 h-3.5" />, count: locationReferences.length },
     { key: 'object' as const, label: 'Props', icon: <Package className="w-3.5 h-3.5" />, count: objectReferences.length },
   ]
 
@@ -1272,6 +1280,58 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               )}
             </div>
             </TooltipProvider>
+          )}
+          
+          {/* Locations Tab Content */}
+          {activeReferenceTab === 'locations' && (
+            <div className="space-y-3">
+              {locationReferences.length === 0 ? (
+                <div className="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg py-6 text-center">
+                  <MapPin className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                  <p className="font-medium">No location references yet</p>
+                  <p className="text-xs mt-1">Pin storyboard images using the <MapPin className="w-3 h-3 inline" /> button</p>
+                  <p className="text-xs text-gray-400 mt-2">Location references ensure visual consistency<br />across scenes at the same location</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {locationReferences.map((locRef) => (
+                    <div 
+                      key={locRef.id}
+                      className="relative group rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 overflow-hidden"
+                    >
+                      {/* Location Image */}
+                      <div className="aspect-video relative">
+                        <img 
+                          src={locRef.imageUrl} 
+                          alt={locRef.location}
+                          className="w-full h-full object-cover"
+                        />
+                        {/* Remove button overlay */}
+                        {onRemoveLocationReference && (
+                          <button
+                            onClick={() => onRemoveLocationReference(locRef.id)}
+                            className="absolute top-2 right-2 p-1.5 bg-red-500/80 hover:bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Remove location reference"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-white" />
+                          </button>
+                        )}
+                      </div>
+                      {/* Location Info */}
+                      <div className="p-2">
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+                          <span className="font-medium text-sm text-white truncate">{locRef.location}</span>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1 truncate" title={locRef.sourceSceneHeading}>
+                          From Scene {locRef.sourceSceneIndex + 1}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
           
           {/* Object Tab Content */}

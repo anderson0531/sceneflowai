@@ -67,11 +67,12 @@ import { DetailedSceneDirection } from '@/types/scene-direction'
 import { cn } from '@/lib/utils'
 import { VisionReferencesSidebar } from '@/components/vision/VisionReferencesSidebar'
 import { ProductionBiblePanel } from '@/components/series/ProductionBiblePanel'
-import { VisualReference, VisualReferenceType, VisionReferencesPayload } from '@/types/visionReferences'
+import { VisualReference, VisualReferenceType, VisionReferencesPayload, LocationReference } from '@/types/visionReferences'
 import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production'
 import { applyIntelligentDefaults } from '@/lib/audio/anchoredTiming'
 import { buildAudioTracksForLanguage, buildAudioTracksWithBaselineTiming, determineBaselineLanguage, applySequentialAlignmentToScene } from '@/components/vision/scene-production/audioTrackBuilder'
 import { buildSceneReferencePrompt } from '@/lib/vision/sceneReferencePromptBuilder'
+import { extractLocation } from '@/lib/script/formatSceneHeading'
 
 /**
  * Client-side upload helper that uses the API endpoint
@@ -624,16 +625,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [voiceAssignments, setVoiceAssignments] = useState<Record<string, any>>({})
   const [sceneReferences, setSceneReferences] = useState<VisualReference[]>([])
   const [objectReferences, setObjectReferences] = useState<VisualReference[]>([])
+  const [locationReferences, setLocationReferences] = useState<LocationReference[]>([])
   const [sceneProductionState, setSceneProductionState] = useState<Record<string, SceneProductionData>>({})
   const [sceneBookmark, setSceneBookmark] = useState<SceneBookmark | null>(null)
   
   // Refs to track latest state for async operations (avoids stale closure in batch operations)
   const sceneReferencesRef = useRef<VisualReference[]>([])
   const objectReferencesRef = useRef<VisualReference[]>([])
+  const locationReferencesRef = useRef<LocationReference[]>([])
   
   // Keep refs in sync with state
   useEffect(() => { sceneReferencesRef.current = sceneReferences }, [sceneReferences])
   useEffect(() => { objectReferencesRef.current = objectReferences }, [objectReferences])
+  useEffect(() => { locationReferencesRef.current = locationReferences }, [locationReferences])
   
   // Script Review state - for Director and Audience review scoring
   const [directorReview, setDirectorReview] = useState<any>(null)
@@ -804,9 +808,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (references) {
       setSceneReferences(references.sceneReferences ?? [])
       setObjectReferences(references.objectReferences ?? [])
+      setLocationReferences(references.locationReferences ?? [])
     } else if (project) {
       setSceneReferences([])
       setObjectReferences([])
+      setLocationReferences([])
     }
   }, [project])
 
@@ -902,6 +908,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       setSelectedSceneIndex(0)
     }
   }, [script?.script?.scenes, selectedSceneIndex])
+
+  // Compute set of pinned location names for quick lookup in SceneGallery
+  const pinnedLocations = useMemo(() => {
+    return new Set(locationReferences.map(ref => ref.location))
+  }, [locationReferences])
 
   // Compute bookmark index for quick actions
   const bookmarkedSceneIndex = useMemo(() => {
@@ -6624,6 +6635,91 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   /**
+   * Pin a storyboard image as a location reference for visual consistency
+   * across scenes at the same location.
+   */
+  const handlePinAsLocationReference = async (sceneIndex: number, imageUrl: string, sceneHeading: string) => {
+    const location = extractLocation(sceneHeading)
+    if (!location) {
+      try { const { toast } = require('sonner'); toast.error('Could not determine location from scene heading') } catch {}
+      return
+    }
+    
+    // Check if this location is already pinned
+    const existingRef = locationReferences.find(ref => ref.location === location)
+    if (existingRef) {
+      try { const { toast } = require('sonner'); toast.info(`${location} already has a location reference`) } catch {}
+      return
+    }
+    
+    const newLocationRef: LocationReference = {
+      id: uuidv4(),
+      location,
+      locationDisplay: sceneHeading,
+      imageUrl,
+      sourceSceneIndex: sceneIndex,
+      sourceSceneHeading: sceneHeading,
+      pinnedAt: new Date().toISOString()
+    }
+    
+    const updatedLocationRefs = [...locationReferences, newLocationRef]
+    setLocationReferences(updatedLocationRefs)
+    
+    // Persist to project metadata
+    try {
+      const updatedMetadata = {
+        ...project?.metadata,
+        visionPhase: {
+          ...project?.metadata?.visionPhase,
+          references: {
+            sceneReferences: sceneReferencesRef.current,
+            objectReferences: objectReferencesRef.current,
+            locationReferences: updatedLocationRefs
+          }
+        }
+      }
+      await updateProject(project!.id, { metadata: updatedMetadata })
+      try { const { toast } = require('sonner'); toast.success(`📍 Pinned ${location} as location reference`) } catch {}
+    } catch (error) {
+      console.error('[handlePinAsLocationReference] Failed to save:', error)
+      // Revert on error
+      setLocationReferences(locationReferences)
+      try { const { toast } = require('sonner'); toast.error('Failed to save location reference') } catch {}
+    }
+  }
+
+  /**
+   * Remove a location reference
+   */
+  const handleRemoveLocationReference = async (locationId: string) => {
+    const refToRemove = locationReferences.find(ref => ref.id === locationId)
+    const updatedLocationRefs = locationReferences.filter(ref => ref.id !== locationId)
+    setLocationReferences(updatedLocationRefs)
+    
+    // Persist to project metadata
+    try {
+      const updatedMetadata = {
+        ...project?.metadata,
+        visionPhase: {
+          ...project?.metadata?.visionPhase,
+          references: {
+            sceneReferences: sceneReferencesRef.current,
+            objectReferences: objectReferencesRef.current,
+            locationReferences: updatedLocationRefs
+          }
+        }
+      }
+      await updateProject(project!.id, { metadata: updatedMetadata })
+      try { const { toast } = require('sonner'); toast.success(`Removed location reference for ${refToRemove?.location || 'location'}`) } catch {}
+    } catch (error) {
+      console.error('[handleRemoveLocationReference] Failed to save:', error)
+      // Revert on error
+      setLocationReferences(locationReferences)
+      try { const { toast } = require('sonner'); toast.error('Failed to remove location reference') } catch {}
+    }
+  }
+
+  /**
    * Add scene reference to the Reference Library
    */
   const handleAddSceneReferenceToLibrary = (sceneIdx: number, imageUrl: string, name: string) => {
@@ -9401,6 +9497,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onOpenPreview={() => setIsPlayerOpen(true)}
                             onOpenGenerateAudio={openGenerateAudio}
                             isGeneratingAudio={isGeneratingAudio}
+                            onPinAsLocationReference={handlePinAsLocationReference}
+                            pinnedLocations={pinnedLocations}
                           />
                         </div>
                       )}
@@ -9505,6 +9603,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onGenerateAllSceneImages={handleGenerateAllImages}
                 isGeneratingAllSceneImages={isGeneratingAllImages}
                 onAddToReferenceLibrary={handleAddToReferenceLibrary}
+                // Location references for visual consistency
+                locationReferences={locationReferences}
+                onRemoveLocationReference={handleRemoveLocationReference}
               />
             </div>
           </Panel>

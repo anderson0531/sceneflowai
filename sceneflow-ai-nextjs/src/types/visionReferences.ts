@@ -29,6 +29,12 @@ export interface VisualReference {
   sourceReferenceUrl?: string
   /** Whether the image was AI-generated vs uploaded */
   aiGenerated?: boolean
+  /** 
+   * When true, this prop is ALWAYS included in scene generation if mentioned,
+   * regardless of budget constraints. Use for signature items like hero vehicles,
+   * iconic props, or brand-critical objects.
+   */
+  alwaysInclude?: boolean
 }
 
 /** Suggested object from script analysis */
@@ -45,8 +51,32 @@ export interface ObjectSuggestion {
   confidence: number
 }
 
+/**
+ * Location reference for maintaining visual consistency across scenes at the same location.
+ * Users can "pin" a storyboard image as the reference for a specific location,
+ * and it will automatically be used when generating new images at that location.
+ */
+export interface LocationReference {
+  /** Unique identifier */
+  id: string
+  /** Normalized location name (e.g., "LIVING ROOM", "BEACH") */
+  location: string
+  /** Original location display from scene heading (e.g., "INT. LIVING ROOM - DAY") */
+  locationDisplay: string
+  /** URL of the pinned storyboard image */
+  imageUrl: string
+  /** Scene index where the image was pinned from */
+  sourceSceneIndex: number
+  /** Full scene heading for reference */
+  sourceSceneHeading: string
+  /** ISO timestamp when this was pinned */
+  pinnedAt: string
+}
+
 export interface VisionReferencesPayload {
   sceneReferences: VisualReference[]
   objectReferences: VisualReference[]
+  /** Location references for environment/setting consistency */
+  locationReferences?: LocationReference[]
 }
 
