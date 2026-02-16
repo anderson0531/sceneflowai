@@ -3235,41 +3235,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         className="hidden"
       />
 
-      {/* Global Keyframe Generation Overlay */}
-      {isGeneratingKeyframe && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-900 border border-purple-500 rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl">
-            <div className="flex flex-col items-center">
-              <div className="relative mb-4">
-                <Clapperboard className="w-16 h-16 text-purple-500 animate-pulse" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-20 h-20 rounded-full border-4 border-purple-300/30 animate-ping"></div>
-                </div>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-200 mb-2">
-                Storyboard Production
-              </h3>
-              {generatingKeyframeSceneNumber !== null && (
-                <p className="text-sm text-gray-400 mb-3">
-                  Scene {generatingKeyframeSceneNumber}
-                </p>
-              )}
-              <p className="text-sm text-gray-400 text-center">
-                Creating your scene visualization with character references...
-              </p>
-              <p className="text-xs text-gray-500 mt-2">
-                This may take 15-30 seconds with character matching
-              </p>
-              <div className="mt-4 flex items-center gap-2">
-                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Budget Calculator Modal */}
       <Dialog open={costCalculatorOpen} onOpenChange={setCostCalculatorOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-900 border-gray-700">

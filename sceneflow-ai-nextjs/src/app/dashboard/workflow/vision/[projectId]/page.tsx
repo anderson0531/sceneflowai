@@ -6532,8 +6532,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     
     console.log('[handleGenerateSceneImage] Scene description found, proceeding with generation...')
     
-    // Set global keyframe generation state for screen freeze
-    setIsGeneratingKeyframe(true)
+    // Show global processing overlay for storyboard production
+    overlayStore.show(`Storyboard Production - Scene ${sceneIdx + 1}`, 25, 'storyboard-production')
     setGeneratingKeyframeSceneNumber(sceneIdx + 1)
     
     try {
@@ -6739,8 +6739,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         try { const { toast } = require('sonner'); toast.error(`Failed to generate scene image: ${error.message}`, { duration: Infinity }) } catch {}
       }
     } finally {
-      // Clear global keyframe generation state
-      setIsGeneratingKeyframe(false)
+      // Hide global processing overlay
+      overlayStore.hide()
       setGeneratingKeyframeSceneNumber(null)
     }
   }

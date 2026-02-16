@@ -21,6 +21,7 @@ export type OperationType =
   | 'character-generation' // Creating characters
   | 'character-enhance'    // Enhancing character reference image
   | 'keyframe-generation'  // Movie production keyframe generation
+  | 'storyboard-production' // Storyboard scene image generation
   | 'analysis'             // General analysis
   | 'export'               // Exporting content
   | 'default'              // Generic processing
@@ -212,6 +213,19 @@ export const OPERATION_CONFIGS: Record<OperationType, OperationConfig> = {
       { id: 'grade', label: 'Color grading...', progress: 80 },
       { id: 'polish', label: 'Final polish...', progress: 92 },
       { id: 'finalize', label: 'Locking keyframe...', progress: 98 },
+    ]
+  },
+  'storyboard-production': {
+    title: 'Storyboard Production',
+    animationType: 'photographer',
+    phases: [
+      { id: 'analyze', label: 'Analyzing scene description...', progress: 10 },
+      { id: 'lighting', label: 'Setting up studio lighting...', progress: 25 },
+      { id: 'compose', label: 'Composing the shot...', progress: 40 },
+      { id: 'characters', label: 'Matching character references...', progress: 55 },
+      { id: 'generate', label: 'Generating scene visualization...', progress: 75 },
+      { id: 'retouch', label: 'Professional retouching...', progress: 90 },
+      { id: 'finalize', label: 'Finalizing storyboard frame...', progress: 98 },
     ]
   },
   'character-enhance': {
