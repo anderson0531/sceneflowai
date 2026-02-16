@@ -42,6 +42,7 @@ import ScriptReviewModal from './ScriptReviewModal'
 import SceneReviewModal from './SceneReviewModal'
 import { ImageEditModal } from './ImageEditModal'
 import { OptimizeSceneDialog } from './OptimizeSceneDialog'
+import { SceneDirectionOptimizeDialog, type DirectionOptimizationConfig } from './scene-production/SceneDirectionOptimizeDialog'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { useOverlayStore } from '@/store/useOverlayStore'
@@ -758,6 +759,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [isPlayingAll, setIsPlayingAll] = useState(false)
   const playbackAbortRef = useRef(false)
   const [bookmarkSavingSceneIdx, setBookmarkSavingSceneIdx] = useState<number | null>(null)
+  
+  // Scene Direction Optimization Dialog state
+  const [directionOptimizeDialogOpen, setDirectionOptimizeDialogOpen] = useState(false)
+  const [directionOptimizeSceneIdx, setDirectionOptimizeSceneIdx] = useState<number | null>(null)
+  const [isOptimizingDirection, setIsOptimizingDirection] = useState(false)
 
   // Handler for opening frame edit modal (used by SceneCard/SegmentFrameTimeline)
   const handleOpenFrameEditModal = useCallback((
@@ -2154,6 +2160,76 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     }
   }
 
+  // Scene Direction Optimization handler
+  const handleOptimizeDirection = useCallback(async (config: DirectionOptimizationConfig) => {
+    if (directionOptimizeSceneIdx === null || !projectId) return null
+    
+    const scene = scenes[directionOptimizeSceneIdx]
+    if (!scene) return null
+    
+    setIsOptimizingDirection(true)
+    
+    try {
+      const response = await fetch('/api/scene/optimize-direction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex: directionOptimizeSceneIdx,
+          scene: {
+            heading: scene.heading,
+            action: scene.action,
+            visualDescription: scene.visualDescription,
+            narration: scene.narration,
+            dialogue: scene.dialogue,
+            characters: scene.characters,
+            sceneDirection: scene.sceneDirection
+          },
+          config
+        })
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to optimize direction')
+      }
+      
+      const result = await response.json()
+      
+      if (result.success && result.sceneDirection) {
+        // Update the scene with the optimized direction
+        const updatedScenes = scenes.map((s, idx) => 
+          idx === directionOptimizeSceneIdx 
+            ? { ...s, sceneDirection: result.sceneDirection }
+            : s
+        )
+        
+        // Propagate update to parent
+        if (onScriptChange) {
+          const updatedScript = script?.script 
+            ? { ...script, script: { ...script.script, scenes: updatedScenes } }
+            : { ...script, scenes: updatedScenes }
+          await onScriptChange(updatedScript)
+        }
+        
+        toast.success('Scene direction optimized for professional production', {
+          description: `${config.selectedTemplates.length} optimizations applied`
+        })
+        
+        setDirectionOptimizeDialogOpen(false)
+        return result.sceneDirection
+      }
+      
+      return null
+    } catch (error) {
+      console.error('[ScriptPanel] Direction optimization failed:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to optimize direction')
+      return null
+    } finally {
+      setIsOptimizingDirection(false)
+    }
+  }, [directionOptimizeSceneIdx, projectId, scenes, script, onScriptChange])
+
   // NOTE: Mute functionality removed due to minification TDZ bug
   // TODO: Re-add after refactoring ScriptPanel into smaller sub-components
 
@@ -2883,6 +2959,21 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               setIsLocalOptimizing(false)
             }
           }}
+        />
+      )}
+
+      {/* Scene Direction Optimize Dialog - For Veo-3 and professional video production */}
+      {directionOptimizeSceneIdx !== null && (
+        <SceneDirectionOptimizeDialog
+          isOpen={directionOptimizeDialogOpen}
+          onClose={() => {
+            setDirectionOptimizeDialogOpen(false)
+            setDirectionOptimizeSceneIdx(null)
+          }}
+          sceneNumber={directionOptimizeSceneIdx + 1}
+          scene={scenes[directionOptimizeSceneIdx] || {}}
+          onOptimize={handleOptimizeDirection}
+          isOptimizing={isOptimizingDirection}
         />
       )}
 
@@ -4991,23 +5082,41 @@ function SceneCard({
                               </span>
                             )}
                           </button>
-                          <button
-                            onClick={async (e) => {
-                              e.stopPropagation()
-                              if (!onGenerateSceneDirection) return
-                              await onGenerateSceneDirection(sceneIdx)
-                            }}
-                            disabled={isGeneratingDirection}
-                            className="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
-                            title="Generate detailed scene direction for camera, lighting, talent, and audio"
-                          >
-                            {isGeneratingDirection ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <Sparkles className="w-3 h-3" />
+                          <div className="flex items-center gap-1">
+                            {/* Optimize Direction Button - shows when direction exists */}
+                            {hasDirection && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setDirectionOptimizeSceneIdx(sceneIdx)
+                                  setDirectionOptimizeDialogOpen(true)
+                                }}
+                                disabled={isGeneratingDirection || isOptimizingDirection}
+                                className="text-xs px-2 py-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
+                                title="Optimize scene direction for professional video production"
+                              >
+                                <Wand2 className="w-3 h-3" />
+                                Optimize
+                              </button>
                             )}
-                            {hasDirection ? 'Refresh' : 'Generate'}
-                          </button>
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation()
+                                if (!onGenerateSceneDirection) return
+                                await onGenerateSceneDirection(sceneIdx)
+                              }}
+                              disabled={isGeneratingDirection}
+                              className="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
+                              title="Generate detailed scene direction for camera, lighting, talent, and audio"
+                            >
+                              {isGeneratingDirection ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Sparkles className="w-3 h-3" />
+                              )}
+                              {hasDirection ? 'Refresh' : 'Generate'}
+                            </button>
+                          </div>
                         </div>
                         {!descriptionCollapsed && (
                           <div className="space-y-3">

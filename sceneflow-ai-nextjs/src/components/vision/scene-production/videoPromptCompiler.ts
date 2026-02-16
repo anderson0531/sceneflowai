@@ -19,6 +19,8 @@ import {
   SceneSegment,
 } from './types'
 
+import type { DetailedSceneDirection } from '@/types/scene-direction'
+
 // ============================================================================
 // Prompt Fragment Mappings
 // ============================================================================
@@ -124,6 +126,21 @@ const COMMON_NEGATIVE_PROMPTS = [
   'face distortion',
   'extra limbs',
   'unnatural movement',
+]
+
+/**
+ * Default Veo-3 anti-mannequin negative prompts
+ * Used when scene direction doesn't have custom negatives
+ */
+const VEO3_ANTI_MANNEQUIN_PROMPTS = [
+  'stiff posture',
+  'frozen expression', 
+  'robotic movement',
+  'mannequin-like',
+  'digital mask',
+  'dead eyes',
+  'mechanical motion',
+  'unnatural pose',
 ]
 
 /**
@@ -379,6 +396,93 @@ export interface CompileOptions {
   preserveCharacters?: string[]
   /** Previous segment URL for continuity */
   previousSegmentUrl?: string
+  /** Scene direction for professional video optimization */
+  sceneDirection?: DetailedSceneDirection | null
+}
+
+/**
+ * Compile scene direction into video-optimized prompt fragment
+ * NEW: Includes performance direction for Veo-3 cinematic quality
+ */
+function compileSceneDirectionPrompt(sceneDirection: DetailedSceneDirection | null | undefined): string {
+  if (!sceneDirection) return ''
+  
+  const fragments: string[] = []
+  
+  // Performance direction (NEW - critical for Veo-3 quality)
+  if (sceneDirection.performanceDirection) {
+    const perf = sceneDirection.performanceDirection
+    
+    // Micro-expressions
+    if (perf.microExpressions?.length) {
+      fragments.push(`subtle facial details: ${perf.microExpressions.slice(0, 2).join(', ')}`)
+    }
+    
+    // Physical weight
+    if (perf.physicalWeight) {
+      fragments.push(perf.physicalWeight)
+    }
+    
+    // Emotional transitions
+    if (perf.emotionalTransitions?.length) {
+      fragments.push(`emotional arc: ${perf.emotionalTransitions[0]}`)
+    }
+    
+    // Subtext
+    if (perf.subtextMotivation) {
+      fragments.push(`inner state: ${perf.subtextMotivation}`)
+    }
+    
+    // Physiological cues
+    if (perf.physiologicalCues) {
+      fragments.push(perf.physiologicalCues)
+    }
+  }
+  
+  // Veo optimization keywords (NEW)
+  if (sceneDirection.veoOptimization) {
+    const veo = sceneDirection.veoOptimization
+    
+    if (veo.subsurfaceScattering) {
+      fragments.push('subsurface scattering for realistic skin')
+    }
+    
+    if (veo.motionQuality) {
+      fragments.push(`${veo.motionQuality} movement`)
+    }
+    
+    if (veo.objectInteraction) {
+      fragments.push(veo.objectInteraction)
+    }
+    
+    if (veo.textureHints?.length) {
+      fragments.push(`material detail: ${veo.textureHints.slice(0, 2).join(', ')}`)
+    }
+  }
+  
+  // Narrative lighting (NEW)
+  if (sceneDirection.narrativeLighting) {
+    const light = sceneDirection.narrativeLighting
+    
+    if (light.atmosphericElements?.length) {
+      fragments.push(light.atmosphericElements.slice(0, 2).join(', '))
+    }
+    
+    if (light.colorTemperatureStory) {
+      fragments.push(light.colorTemperatureStory)
+    }
+    
+    if (light.shadowNarrative) {
+      fragments.push(light.shadowNarrative)
+    }
+  }
+  
+  // Traditional talent direction
+  if (sceneDirection.talent?.emotionalBeat) {
+    fragments.push(`expression: ${sceneDirection.talent.emotionalBeat}`)
+  }
+  
+  return fragments.filter(Boolean).join('. ')
 }
 
 /**
@@ -401,6 +505,7 @@ export function compileVideoPrompt(options: CompileOptions): VideoPromptPayload 
     audioUrl,
     preserveCharacters = [],
     previousSegmentUrl,
+    sceneDirection,
   } = options
 
   // Compile individual sections
@@ -408,19 +513,32 @@ export function compileVideoPrompt(options: CompileOptions): VideoPromptPayload 
   const performancePrompt = compilePerformancePrompt(settings.performance)
   const visualPrompt = compileVisualStylePrompt(settings.visualStyle)
   const magicEditPrompt = compileMagicEditPrompt(settings.magicEdit)
+  
+  // NEW: Compile scene direction for professional video production
+  const sceneDirectionPrompt = compileSceneDirectionPrompt(sceneDirection)
 
-  // Assemble the full prompt
+  // Assemble the full prompt (include scene direction for Veo-3 optimization)
   const promptParts = [
     basePrompt,
     cameraPrompt,
     performancePrompt,
     visualPrompt,
+    sceneDirectionPrompt, // NEW: Add scene direction
   ].filter(Boolean)
 
   const fullPrompt = promptParts.join('. ')
 
-  // Build negative prompt
-  const negativePrompt = buildNegativePrompt(settings)
+  // Build negative prompt (include Veo-3 anti-mannequin prompts from scene direction)
+  let negativePrompt = buildNegativePrompt(settings)
+  
+  // Append Veo-3 specific negative prompts if scene direction has them
+  if (sceneDirection?.veoOptimization?.negativePrompts?.length) {
+    const veoNegatives = sceneDirection.veoOptimization.negativePrompts.join(', ')
+    negativePrompt = `${negativePrompt}, ${veoNegatives}`
+  } else {
+    // Add default anti-mannequin prompts if no custom ones provided
+    negativePrompt = `${negativePrompt}, ${VEO3_ANTI_MANNEQUIN_PROMPTS.join(', ')}`
+  }
 
   // Build the payload
   const payload: VideoPromptPayload = {

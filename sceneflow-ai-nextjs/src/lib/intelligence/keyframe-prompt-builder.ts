@@ -297,6 +297,112 @@ function buildTalentBlock(
 }
 
 /**
+ * Build performance direction block for cinematic acting
+ * NEW: Enhanced for Veo-3 video generation with micro-expressions and emotional transitions
+ */
+function buildPerformanceBlock(
+  performanceDirection: DetailedSceneDirection['performanceDirection'] | undefined
+): string {
+  if (!performanceDirection) return ''
+  
+  const parts: string[] = []
+  
+  // Micro-expressions are critical for realistic performance
+  if (performanceDirection.microExpressions?.length) {
+    const microExpr = performanceDirection.microExpressions.slice(0, 2).join(', ')
+    parts.push(`Subtle facial details: ${microExpr}`)
+  }
+  
+  // Physical weight and physics
+  if (performanceDirection.physicalWeight) {
+    parts.push(performanceDirection.physicalWeight)
+  }
+  
+  // Emotional transition (not just state)
+  if (performanceDirection.emotionalTransitions?.length) {
+    const transitions = performanceDirection.emotionalTransitions[0]
+    parts.push(`Emotional arc: ${transitions}`)
+  }
+  
+  // Subtext motivation
+  if (performanceDirection.subtextMotivation) {
+    parts.push(`Inner state: ${performanceDirection.subtextMotivation}`)
+  }
+  
+  // Physiological cues
+  if (performanceDirection.physiologicalCues) {
+    parts.push(performanceDirection.physiologicalCues)
+  }
+  
+  return parts.length > 0 ? parts.join('. ') + '. ' : ''
+}
+
+/**
+ * Build Veo-3 optimization block for video generation
+ * NEW: Adds keywords proven to improve video generation quality
+ */
+function buildVeoOptimizationBlock(
+  veoOptimization: DetailedSceneDirection['veoOptimization'] | undefined
+): string {
+  if (!veoOptimization) return ''
+  
+  const parts: string[] = []
+  
+  // Subsurface scattering for realistic skin
+  if (veoOptimization.subsurfaceScattering) {
+    parts.push('Subsurface scattering for realistic skin')
+  }
+  
+  // Motion quality
+  if (veoOptimization.motionQuality) {
+    parts.push(`${veoOptimization.motionQuality} movement`)
+  }
+  
+  // Object interaction
+  if (veoOptimization.objectInteraction) {
+    parts.push(veoOptimization.objectInteraction)
+  }
+  
+  // Texture hints
+  if (veoOptimization.textureHints?.length) {
+    const textures = veoOptimization.textureHints.slice(0, 2).join(', ')
+    parts.push(`Material detail: ${textures}`)
+  }
+  
+  return parts.length > 0 ? parts.join('. ') + '. ' : ''
+}
+
+/**
+ * Build narrative lighting block for story-driven lighting
+ * NEW: Goes beyond technical lighting to emotional/narrative lighting
+ */
+function buildNarrativeLightingBlock(
+  narrativeLighting: DetailedSceneDirection['narrativeLighting'] | undefined
+): string {
+  if (!narrativeLighting) return ''
+  
+  const parts: string[] = []
+  
+  // Atmospheric elements visible in light
+  if (narrativeLighting.atmosphericElements?.length) {
+    const atmos = narrativeLighting.atmosphericElements.slice(0, 2).join(', ')
+    parts.push(atmos)
+  }
+  
+  // Color temperature story
+  if (narrativeLighting.colorTemperatureStory) {
+    parts.push(narrativeLighting.colorTemperatureStory)
+  }
+  
+  // Shadow narrative
+  if (narrativeLighting.shadowNarrative) {
+    parts.push(narrativeLighting.shadowNarrative)
+  }
+  
+  return parts.length > 0 ? parts.join('. ') + '. ' : ''
+}
+
+/**
  * Build atmosphere/scene block for prompt
  */
 function buildAtmosphereBlock(scene: DetailedSceneDirection['scene'] | undefined): string {
@@ -487,13 +593,31 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
     promptParts.push(' ' + talentBlock)
   }
   
-  // 10. Atmosphere
+  // 10. Performance direction (NEW: cinematic acting with micro-expressions)
+  const performanceBlock = buildPerformanceBlock(sceneDirection?.performanceDirection)
+  if (performanceBlock) {
+    promptParts.push(performanceBlock)
+  }
+  
+  // 11. Veo-3 optimization (NEW: video generation quality keywords)
+  const veoBlock = buildVeoOptimizationBlock(sceneDirection?.veoOptimization)
+  if (veoBlock) {
+    promptParts.push(veoBlock)
+  }
+  
+  // 12. Narrative lighting (NEW: story-driven lighting)
+  const narrativeLightingBlock = buildNarrativeLightingBlock(sceneDirection?.narrativeLighting)
+  if (narrativeLightingBlock) {
+    promptParts.push(narrativeLightingBlock)
+  }
+  
+  // 13. Atmosphere
   const atmosphereBlock = buildAtmosphereBlock(sceneDirection?.scene)
   if (atmosphereBlock) {
     promptParts.push(atmosphereBlock)
   }
   
-  // 11. Quality suffix with dynamic art style
+  // 14. Quality suffix with dynamic art style
   const selectedStyle = artStylePresets.find(s => s.id === artStyle) || 
     artStylePresets.find(s => s.id === 'photorealistic')!
   promptParts.push(`Cinematic quality, 8K, ${selectedStyle.promptSuffix}.`)
@@ -514,8 +638,8 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
     imageStrength = Math.min(0.90, imageStrength + 0.15)
   }
   
-  // Build negative prompt
-  const negativePrompt = buildNegativePrompt(actionType)
+  // Build negative prompt (include Veo optimization if available)
+  const negativePrompt = buildNegativePrompt(actionType, sceneDirection?.veoOptimization?.negativePrompts)
   
   return {
     prompt: promptParts.join('').replace(/\s+/g, ' ').trim(),
@@ -536,8 +660,9 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
 
 /**
  * Build negative prompt based on action type
+ * NEW: Includes Veo-3 anti-mannequin prompts when available
  */
-function buildNegativePrompt(actionType: ActionType): string {
+function buildNegativePrompt(actionType: ActionType, veoNegativePrompts?: string[]): string {
   const baseNegatives = [
     'blurry', 'low quality', 'pixelated', 'noisy', 'grainy',
     'jpeg artifacts', 'compression artifacts', 'bad anatomy',
@@ -561,7 +686,21 @@ function buildNegativePrompt(actionType: ActionType): string {
     baseNegatives.push('closed mouth when speaking', 'frozen expression')
   }
   
-  return baseNegatives.join(', ')
+  // Add Veo-3 anti-mannequin prompts (NEW)
+  if (veoNegativePrompts?.length) {
+    baseNegatives.push(...veoNegativePrompts)
+  } else {
+    // Default anti-mannequin prompts for video generation quality
+    baseNegatives.push(
+      'stiff posture', 'frozen expression', 'robotic movement',
+      'mannequin-like', 'digital mask', 'dead eyes'
+    )
+  }
+  
+  // Remove duplicates
+  const uniqueNegatives = [...new Set(baseNegatives)]
+  
+  return uniqueNegatives.join(', ')
 }
 
 /**

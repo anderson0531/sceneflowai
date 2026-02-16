@@ -37,6 +37,55 @@ export interface AudioDirection {
   considerations: string // e.g., "Be aware of HVAC noise", "Room tone needed for this location"
 }
 
+/**
+ * Performance direction for cinematic acting - optimized for Veo-3 video generation
+ * Focuses on the "how" and "why" of performance rather than just "what"
+ */
+export interface PerformanceDirection {
+  /** Micro-expressions and facial transitions (e.g., "lower lip trembles imperceptibly", "eyes widen with recognition") */
+  microExpressions: string[]
+  /** Physical weight and physics-based movement (e.g., "fingers dig into cardboard", "knees buckle under weight") */
+  physicalWeight: string
+  /** Emotional transition sequence (e.g., "Recognition → Grief → Comfort") */
+  emotionalTransitions: string[]
+  /** Character's inner motivation/subtext (e.g., "desperately clinging to hope while accepting defeat") */
+  subtextMotivation: string
+  /** Breathing and physiological cues (e.g., "breathing becomes shallow and heavy") */
+  physiologicalCues: string
+}
+
+/**
+ * Veo-3 specific optimization settings for video generation
+ * Based on empirical testing of what produces the most realistic results
+ */
+export interface VeoOptimization {
+  /** Enable subsurface scattering for realistic skin rendering during facial acting */
+  subsurfaceScattering: boolean
+  /** Negative prompts to prevent stiff/mannequin-like renders */
+  negativePrompts: string[]
+  /** Motion quality hints (e.g., "fluid", "weighted", "deliberate") */
+  motionQuality: 'fluid' | 'weighted' | 'deliberate' | 'dynamic'
+  /** Interaction style with objects (e.g., "acts WITH objects not just NEAR them") */
+  objectInteraction: string
+  /** Texture and materiality hints for the scene */
+  textureHints: string[]
+}
+
+/**
+ * Narrative lighting that defines mood through light
+ * Goes beyond technical settings to story-driven lighting choices
+ */
+export interface NarrativeLighting {
+  /** Key practical light sources that tell the story (e.g., "single warm lamp creating isolation") */
+  keyPracticals: string[]
+  /** Atmospheric elements visible in light (e.g., "dust motes visible in light beam", "steam rising") */
+  atmosphericElements: string[]
+  /** Color temperature story (e.g., "cool screens dominating with contrasting warm desk lamp spot") */
+  colorTemperatureStory: string
+  /** Shadow narrative (e.g., "heavy shadows emphasizing psychological depth") */
+  shadowNarrative: string
+}
+
 export interface DetailedSceneDirection {
   camera: CameraDirection
   lighting: LightingDirection
@@ -46,5 +95,18 @@ export interface DetailedSceneDirection {
   generatedAt?: string
   /** Content hash of the scene when this direction was generated (for workflow sync tracking) */
   basedOnContentHash?: string
+  
+  // === Production Optimization Extensions ===
+  
+  /** Cinematic performance direction for talent - optimized for Veo-3 */
+  performanceDirection?: PerformanceDirection
+  /** Veo-3 specific optimization settings */
+  veoOptimization?: VeoOptimization
+  /** Story-driven narrative lighting */
+  narrativeLighting?: NarrativeLighting
+  /** Whether this direction has been optimized for video production */
+  productionOptimized?: boolean
+  /** Optimization timestamp */
+  optimizedAt?: string
 }
 
