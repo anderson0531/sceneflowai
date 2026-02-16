@@ -3247,7 +3247,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 </div>
               </div>
               <h3 className="text-lg font-semibold text-gray-200 mb-2">
-                Creating Storyboard
+                Storyboard Production
               </h3>
               {generatingKeyframeSceneNumber !== null && (
                 <p className="text-sm text-gray-400 mb-3">

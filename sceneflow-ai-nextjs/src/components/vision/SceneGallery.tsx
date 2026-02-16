@@ -219,7 +219,7 @@ export function SceneGallery({
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <Clapperboard className="w-5 h-5 text-sf-primary" />
-          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">Storyboard Gallery</h3>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">Storyboard</h3>
           <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
             {scenes.length} {scenes.length === 1 ? 'scene' : 'scenes'}
           </span>
