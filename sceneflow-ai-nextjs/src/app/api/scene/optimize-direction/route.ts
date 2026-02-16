@@ -5,7 +5,8 @@ import {
   DetailedSceneDirection, 
   PerformanceDirection, 
   VeoOptimization, 
-  NarrativeLighting 
+  NarrativeLighting,
+  DialogueTalentDirection 
 } from '../../../../types/scene-direction'
 import { generateSceneContentHash } from '../../../../lib/utils/contentHash'
 import { generateText } from '@/lib/vertexai/gemini'
@@ -37,6 +38,9 @@ interface OptimizeDirectionRequest {
     includeNegativePrompts: boolean
     negativePrompts: string[]
     targetGeneration: 'keyframe' | 'video' | 'both'
+    // Dialogue-specific optimization
+    dialogueTemplates: string[]
+    dialogueLineSelections: Record<number, string[]> // Map dialogue index to template IDs
   }
 }
 
@@ -111,6 +115,44 @@ const TEMPLATE_INSTRUCTIONS: Record<string, string> = {
 }
 
 // ============================================================================
+// Dialogue Performance Template Instructions
+// ============================================================================
+
+const DIALOGUE_TEMPLATE_INSTRUCTIONS: Record<string, string> = {
+  'subtle-reveal': `Transform this dialogue delivery into a cinematic subtle reveal:
+- Add specific micro-expressions (eyes widening with recognition, jaw tension, lip trembling)
+- Describe the exact moment of realization through facial transitions
+- Include physiological responses (breath catching, swallowing hard, pulse visible in neck)
+- Build the emotional arc through subtle physical cues
+- Make the camera feel intimate with the character's inner experience
+Example: "As she pulls the faded photograph into the light, her eyes widen with recognition. A shiver of grief passes through her jawline; her lower lip trembles almost imperceptibly before she closes her eyes and presses the photo against her chest, breathing becoming shallow and heavy."`,
+
+  'physical-burden': `Transform this dialogue delivery to emphasize physical weight and realism:
+- Add muscle tension descriptions (strain in neck tendons, fingers digging into material)
+- Include implied weight and gravity (knees buckling, doubled over)
+- Describe physical texture interactions (sweat glistening, dust disturbed, fabric pulling)
+- Add physiological responses to effort (grunting, heavy breathing, veins visible)
+- Make objects feel real (thudding impact, material resistance, weight transfer)
+Example: "He staggers across the room, doubled over, fingers digging into the cardboard. You can see the strain in his neck tendons and the sweat glistening on his forehead. His knees buckle slightly as he heaves the box downward, letting it hit the concrete with a visible thud and a puff of dust."`,
+
+  'emotional-transition': `Transform this dialogue into a clear emotional transition arc:
+- Define the starting emotional state before the line
+- Map the progression through the dialogue (Recognition → Denial → Acceptance)
+- Include physical manifestations of each emotional beat
+- Layer contradictory emotions where appropriate
+- Show emotion through body language, not just facial expression
+Example: "Hope rises in her eyes as she begins to speak, but mid-sentence doubt creeps into her voice—her shoulders tense, hands grip the table edge—before resignation settles in her final words, head bowing slightly."`,
+
+  'subtext-revelation': `Enhance this dialogue with subtext revelation—what the character is really saying:
+- Identify the gap between words spoken and meaning intended
+- Add physical tells that reveal the true emotion beneath the words
+- Include micro-pauses or breath catches that betray inner conflict
+- Layer the performance with what they're hiding
+- Show the mask and what's beneath it
+Example: "She says 'I'm fine' but her voice catches on the word, fingers unconsciously touching the locket. Her smile doesn't reach her eyes, which dart briefly to the empty chair before she forces her gaze back, the practiced composure betrayed by a slight tremor in her hands."`
+}
+
+// ============================================================================
 // AI Generation
 // ============================================================================
 
@@ -139,7 +181,7 @@ function buildOptimizationPrompt(
   const narration = scene.narration || ''
   const dialogue = scene.dialogue || []
   
-  const dialogueText = dialogue.map(d => `${d.character}: ${d.line || d.text || ''}`).join('\n')
+  const dialogueText = dialogue.map((d, i) => `[Line ${i + 1}] ${d.character}: ${d.line || d.text || ''}`).join('\n')
   
   // Build optimization instructions from templates
   const templateInstructions = selectedTemplates
@@ -147,13 +189,52 @@ function buildOptimizationPrompt(
     .filter(Boolean)
     .join('\n\n')
   
-  const allInstructions = [templateInstructions, customInstruction].filter(Boolean).join('\n\n')
+  // Build dialogue-specific instructions
+  const dialogueTemplateInstructions = (config.dialogueTemplates || [])
+    .map(id => DIALOGUE_TEMPLATE_INSTRUCTIONS[id])
+    .filter(Boolean)
+    .join('\n\n')
+  
+  // Build per-line dialogue instructions
+  let perLineInstructions = ''
+  if (config.dialogueLineSelections && Object.keys(config.dialogueLineSelections).length > 0) {
+    const lineInstructions: string[] = []
+    Object.entries(config.dialogueLineSelections).forEach(([indexStr, templateIds]) => {
+      const lineIndex = parseInt(indexStr)
+      const line = dialogue[lineIndex]
+      if (line && templateIds.length > 0) {
+        const lineText = line.text || line.line || ''
+        const templates = templateIds
+          .map(id => DIALOGUE_TEMPLATE_INSTRUCTIONS[id])
+          .filter(Boolean)
+        if (templates.length > 0) {
+          lineInstructions.push(`
+FOR DIALOGUE LINE ${lineIndex + 1} ("${line.character}: ${lineText.slice(0, 50)}..."):
+${templates.join('\n')}`)
+        }
+      }
+    })
+    if (lineInstructions.length > 0) {
+      perLineInstructions = `
+
+=== PER-LINE DIALOGUE DIRECTION ===
+The following specific instructions should be applied to individual dialogue lines:
+${lineInstructions.join('\n')}`
+    }
+  }
+  
+  const allInstructions = [templateInstructions, dialogueTemplateInstructions, customInstruction].filter(Boolean).join('\n\n')
   
   // Build existing direction context
   const existingContext = existingDirection ? `
 EXISTING SCENE DIRECTION (enhance and expand, don't replace unless improving):
 ${JSON.stringify(existingDirection, null, 2)}
 ` : ''
+
+  // Determine if we need to generate dialogue talent directions
+  const generateDialogueTalentDirections = dialogue.length > 0 && 
+    ((config.dialogueTemplates && config.dialogueTemplates.length > 0) || 
+     (config.dialogueLineSelections && Object.keys(config.dialogueLineSelections).length > 0))
 
   return `You are a world-class film director and cinematographer specializing in optimizing scene direction for AI video generation (Veo-3).
 
@@ -167,6 +248,7 @@ OPTIMIZATION FOCUS: ${config.targetGeneration === 'keyframe' ? 'Keyframe/Image G
 
 OPTIMIZATION INSTRUCTIONS:
 ${allInstructions}
+${perLineInstructions}
 
 CRITICAL QUALITY GUIDELINES:
 1. Replace generic emotions (sad, happy) with transitional sequences showing the journey
@@ -177,6 +259,7 @@ CRITICAL QUALITY GUIDELINES:
 6. Include subtext and motivation for all talent direction
 ${config.enableSubsurfaceScattering ? '7. Add "subsurface scattering" keyword for realistic skin rendering' : ''}
 ${config.includeNegativePrompts ? `8. Include these negative prompts to prevent stiff renders: ${config.negativePrompts.slice(0, 5).join(', ')}` : ''}
+${generateDialogueTalentDirections ? `9. Generate detailed per-dialogue-line talent directions in the dialogueTalentDirections array` : ''}
 
 Return ONLY valid JSON with this enhanced structure:
 
@@ -230,7 +313,20 @@ Return ONLY valid JSON with this enhanced structure:
     "atmosphericElements": ["visible atmospheric effects in light"],
     "colorTemperatureStory": "how color temperature tells the emotion",
     "shadowNarrative": "what the shadows reveal"
-  },
+  },${generateDialogueTalentDirections ? `
+  "dialogueTalentDirections": [
+    // One entry for each dialogue line in the scene
+    {
+      "character": "Character name speaking this line",
+      "lineText": "The actual dialogue text",
+      "cinematicSetup": "Camera/framing setup for this specific line delivery",
+      "microExpression": "Specific facial micro-expression during the line",
+      "physicalAction": "Physical action/gesture accompanying the dialogue",
+      "emotionalTransition": "Emotional arc/transition during the line (e.g., 'Doubt → Hope')",
+      "subtextMotivation": "What the character is really feeling beneath the words",
+      "physiologicalCues": "Physical tells: breathing, pulse, tension"
+    }
+  ],` : ''}
   "productionOptimized": true
 }
 
@@ -239,6 +335,8 @@ IMPORTANT:
 - Every direction should serve the emotional story
 - Include physical details that make performances feel human
 - Think like a director coaching actors for their best take
+${generateDialogueTalentDirections ? `- For dialogueTalentDirections, create ONE entry for EACH dialogue line in the scene
+- Make each entry specific to that character and that moment in the scene` : ''}
 - Return ONLY valid JSON, no markdown, no explanations`
 }
 
@@ -257,7 +355,12 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (config.selectedTemplates.length === 0 && !config.customInstruction) {
+    const hasSceneTemplates = config.selectedTemplates.length > 0
+    const hasDialogueTemplates = (config.dialogueTemplates && config.dialogueTemplates.length > 0) ||
+      (config.dialogueLineSelections && Object.keys(config.dialogueLineSelections).length > 0)
+    const hasCustomInstruction = !!config.customInstruction
+
+    if (!hasSceneTemplates && !hasDialogueTemplates && !hasCustomInstruction) {
       return NextResponse.json(
         { success: false, error: 'No optimization templates or custom instructions provided' },
         { status: 400 }

@@ -32,6 +32,31 @@ export interface TalentDirection {
   emotionalBeat: string // e.g., "Convey anxiety", "A moment of realization", "Suppressed anger"
 }
 
+/**
+ * Per-dialogue-line talent direction for granular performance control
+ * Enables cinematic precision per spoken line for Veo-3 video generation
+ */
+export interface DialogueTalentDirection {
+  /** ID of the dialogue line this direction applies to */
+  dialogueId?: string
+  /** Character name for reference */
+  character: string
+  /** The dialogue line text for reference */
+  lineText: string
+  /** Cinematic setup description (e.g., "Cinematic Close-up: She sits at a mahogany desk under a single warm lamp") */
+  cinematicSetup: string
+  /** Micro-expression or subtle facial transition (e.g., "eyes widen with recognition, a shiver of grief passes through her jawline") */
+  microExpression: string
+  /** Physical action with weight and texture (e.g., "pulls the faded photograph into the light, fingers trembling") */
+  physicalAction: string
+  /** Emotional transition arc for this line (e.g., "Recognition → Grief → Comfort") */
+  emotionalTransition: string
+  /** Character's inner motivation/subtext (e.g., "desperately trying to hold onto fading memories") */
+  subtextMotivation: string
+  /** Breathing and physiological cues (e.g., "breathing becomes shallow and heavy") */
+  physiologicalCues: string
+}
+
 export interface AudioDirection {
   priorities: string // e.g., "Capture clean dialogue", "Prioritize environmental sounds", "Silence on set"
   considerations: string // e.g., "Be aware of HVAC noise", "Room tone needed for this location"
@@ -108,5 +133,10 @@ export interface DetailedSceneDirection {
   productionOptimized?: boolean
   /** Optimization timestamp */
   optimizedAt?: string
+  
+  // === Per-Dialogue-Line Direction ===
+  
+  /** Per-dialogue-line talent direction for granular performance control */
+  dialogueTalentDirections?: DialogueTalentDirection[]
 }
 

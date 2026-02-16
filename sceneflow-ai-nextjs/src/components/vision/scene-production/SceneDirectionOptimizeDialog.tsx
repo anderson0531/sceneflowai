@@ -12,7 +12,7 @@ import {
   Loader2, Sparkles, Wand2, Film, Camera, Lightbulb, Users, 
   Volume2, VolumeX, Play, Square, ChevronDown, ChevronUp,
   CheckCircle2, Mic, MicOff, RefreshCw, Settings2, Zap,
-  Eye, Heart, Target, Layers, Palette, Wind
+  Eye, Heart, Target, Layers, Palette, Wind, MessageSquare
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
@@ -129,6 +129,62 @@ const DIRECTION_OPTIMIZATION_TEMPLATES = [
   }
 ]
 
+// Dialogue-specific performance templates for per-line talent direction
+const DIALOGUE_PERFORMANCE_TEMPLATES = [
+  {
+    id: 'subtle-reveal',
+    icon: <Eye className="w-4 h-4" />,
+    label: 'The Subtle Reveal',
+    description: 'Micro-expressions and facial transitions for emotional moments',
+    instruction: `Transform this dialogue delivery into a cinematic subtle reveal:
+- Add specific micro-expressions (eyes widening with recognition, jaw tension, lip trembling)
+- Describe the exact moment of realization through facial transitions
+- Include physiological responses (breath catching, swallowing hard)
+- Build the emotional arc through subtle physical cues
+- Make the camera feel intimate with the character's inner experience
+Example: "As she pulls the faded photograph into the light, her eyes widen with recognition. A shiver of grief passes through her jawline; her lower lip trembles almost imperceptibly before she closes her eyes and presses the photo against her chest, breathing becoming shallow and heavy."`
+  },
+  {
+    id: 'physical-burden',
+    icon: <Zap className="w-4 h-4" />,
+    label: 'The Physical Burden',
+    description: 'Weight, physics, and realistic physical interaction',
+    instruction: `Transform this dialogue delivery to emphasize physical weight and realism:
+- Add muscle tension descriptions (strain in neck tendons, fingers digging in)
+- Include implied weight and gravity (knees buckling, doubled over)
+- Describe physical texture interactions (sweat glistening, dust disturbed)
+- Add physiological responses to effort (grunting, heavy breathing)
+- Make objects feel real (thudding impact, material resistance)
+Example: "He staggers across the room, doubled over, fingers digging into the cardboard. You can see the strain in his neck tendons and the sweat glistening on his forehead. His knees buckle slightly as he heaves the box downward, letting it hit the concrete with a visible thud and a puff of dust."`
+  },
+  {
+    id: 'emotional-transition',
+    icon: <Heart className="w-4 h-4" />,
+    label: 'Emotional Transition Arc',
+    description: 'Map the emotional journey through this line',
+    instruction: `Transform this dialogue into a clear emotional transition arc:
+- Define the starting emotional state before the line
+- Map the progression through the dialogue (Recognition → Denial → Acceptance)
+- Include physical manifestations of each emotional beat
+- Layer contradictory emotions where appropriate
+- Show emotion through body language, not just facial expression
+Example: "Hope rises in her eyes as she begins to speak, but mid-sentence doubt creeps into her voice—her shoulders tense, hands grip the table edge—before resignation settles in her final words, head bowing slightly."`
+  },
+  {
+    id: 'subtext-revelation',
+    icon: <Target className="w-4 h-4" />,
+    label: 'Subtext Revelation',
+    description: 'What the character really means beneath the words',
+    instruction: `Enhance this dialogue with subtext revelation—what the character is really saying:
+- Identify the gap between words spoken and meaning intended
+- Add physical tells that reveal the true emotion
+- Include micro-pauses or breath catches that betray inner conflict
+- Layer the performance with what they're hiding
+- Show the mask and what's beneath it
+Example: "She says 'I'm fine' but her voice catches on the word, fingers unconsciously touching the locket. Her smile doesn't reach her eyes, which dart briefly to the empty chair before she forces her gaze back, the practiced composure betrayed by a slight tremor in her hands."`
+  }
+]
+
 // Default Veo-3 negative prompts to prevent stiff renders
 const DEFAULT_NEGATIVE_PROMPTS = [
   'stiff posture',
@@ -167,6 +223,9 @@ export interface DirectionOptimizationConfig {
   includeNegativePrompts: boolean
   negativePrompts: string[]
   targetGeneration: 'keyframe' | 'video' | 'both'
+  // Dialogue-specific optimization
+  dialogueTemplates: string[]
+  dialogueLineSelections: Record<number, string[]> // Map dialogue index to template IDs
 }
 
 interface SceneDirectionOptimizeDialogProps {
@@ -201,6 +260,11 @@ export function SceneDirectionOptimizeDialog({
   const [activeTab, setActiveTab] = useState('quick')
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['performance', 'visual', 'technical']))
   
+  // Dialogue-specific state
+  const [selectedDialogueTemplates, setSelectedDialogueTemplates] = useState<Set<string>>(new Set())
+  const [dialogueLineSelections, setDialogueLineSelections] = useState<Record<number, Set<string>>>({})
+  const [expandedDialogueLine, setExpandedDialogueLine] = useState<number | null>(null)
+  
   // Audio playback state
   const [isPlayingAudio, setIsPlayingAudio] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -227,6 +291,10 @@ export function SceneDirectionOptimizeDialog({
       setNegativePrompts(DEFAULT_NEGATIVE_PROMPTS)
       setTargetGeneration('both')
       setActiveTab('quick')
+      // Reset dialogue state
+      setSelectedDialogueTemplates(new Set())
+      setDialogueLineSelections({})
+      setExpandedDialogueLine(null)
     }
     return () => {
       // Cleanup audio on close
@@ -341,8 +409,60 @@ export function SceneDirectionOptimizeDialog({
     }
   }
   
+  // Dialogue template toggle (apply to all lines)
+  const toggleDialogueTemplate = (templateId: string) => {
+    setSelectedDialogueTemplates(prev => {
+      const next = new Set(prev)
+      if (next.has(templateId)) {
+        next.delete(templateId)
+      } else {
+        next.add(templateId)
+      }
+      return next
+    })
+  }
+  
+  // Toggle dialogue line expansion
+  const toggleDialogueLine = (lineIndex: number) => {
+    setExpandedDialogueLine(prev => prev === lineIndex ? null : lineIndex)
+  }
+  
+  // Toggle template for specific dialogue line
+  const toggleLineTemplate = (lineIndex: number, templateId: string) => {
+    setDialogueLineSelections(prev => {
+      const lineSet = prev[lineIndex] ? new Set(prev[lineIndex]) : new Set<string>()
+      if (lineSet.has(templateId)) {
+        lineSet.delete(templateId)
+      } else {
+        lineSet.add(templateId)
+      }
+      return { ...prev, [lineIndex]: lineSet }
+    })
+  }
+  
+  // Apply template to all dialogue lines
+  const applyTemplateToAllLines = (templateId: string) => {
+    const dialogueLines = scene.dialogue || []
+    setDialogueLineSelections(prev => {
+      const newSelections: Record<number, Set<string>> = { ...prev }
+      dialogueLines.forEach((_, index) => {
+        const lineSet = newSelections[index] ? new Set(newSelections[index]) : new Set<string>()
+        lineSet.add(templateId)
+        newSelections[index] = lineSet
+      })
+      return newSelections
+    })
+    toast.success(`Applied "${templateId}" to all ${dialogueLines.length} dialogue lines`)
+  }
+  
   // Handle optimize
   const handleOptimize = async () => {
+    // Convert line selections from Set to array
+    const lineSelectionsArray: Record<number, string[]> = {}
+    Object.entries(dialogueLineSelections).forEach(([key, set]) => {
+      lineSelectionsArray[parseInt(key)] = Array.from(set)
+    })
+    
     const config: DirectionOptimizationConfig = {
       selectedTemplates: Array.from(selectedTemplates),
       customInstruction: customInstruction.trim(),
@@ -350,10 +470,14 @@ export function SceneDirectionOptimizeDialog({
       enableSubsurfaceScattering,
       includeNegativePrompts,
       negativePrompts,
-      targetGeneration
+      targetGeneration,
+      dialogueTemplates: Array.from(selectedDialogueTemplates),
+      dialogueLineSelections: lineSelectionsArray
     }
     
-    if (config.selectedTemplates.length === 0 && !config.customInstruction) {
+    const hasDialogueSelections = config.dialogueTemplates.length > 0 || Object.keys(config.dialogueLineSelections).length > 0
+    
+    if (config.selectedTemplates.length === 0 && !config.customInstruction && !hasDialogueSelections) {
       toast.error('Please select optimization options or provide custom instructions')
       return
     }
@@ -361,12 +485,16 @@ export function SceneDirectionOptimizeDialog({
     await onOptimize(config)
   }
   
-  const hasSelections = selectedTemplates.size > 0 || customInstruction.trim().length > 0
+  const hasDialogueSelections = selectedDialogueTemplates.size > 0 || Object.values(dialogueLineSelections).some(set => set.size > 0)
+  const hasSelections = selectedTemplates.size > 0 || customInstruction.trim().length > 0 || hasDialogueSelections
   
   // Group templates by category
   const performanceTemplates = DIRECTION_OPTIMIZATION_TEMPLATES.filter(t => t.category === 'performance')
   const visualTemplates = DIRECTION_OPTIMIZATION_TEMPLATES.filter(t => t.category === 'visual')
   const technicalTemplates = DIRECTION_OPTIMIZATION_TEMPLATES.filter(t => t.category === 'technical')
+  
+  // Dialogue lines from scene
+  const dialogueLines = scene.dialogue || []
   
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -415,14 +543,23 @@ export function SceneDirectionOptimizeDialog({
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="grid grid-cols-2 mb-2">
+          <TabsList className="grid grid-cols-3 mb-2">
             <TabsTrigger value="quick" className="flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5" />
               Quick Optimize
             </TabsTrigger>
+            <TabsTrigger value="dialogue" className="flex items-center gap-1.5">
+              <MessageSquare className="w-3.5 h-3.5" />
+              Dialogue
+              {dialogueLines.length > 0 && (
+                <Badge variant="secondary" className="ml-1 text-[10px] px-1">
+                  {dialogueLines.length}
+                </Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="custom" className="flex items-center gap-1.5">
               <Settings2 className="w-3.5 h-3.5" />
-              Custom Direction
+              Custom
             </TabsTrigger>
           </TabsList>
           
@@ -521,6 +658,123 @@ export function SceneDirectionOptimizeDialog({
                   </div>
                 )}
               </div>
+            </TabsContent>
+            
+            {/* Dialogue Direction Tab */}
+            <TabsContent value="dialogue" className="mt-0 space-y-4">
+              {/* Dialogue Performance Templates - Apply to All */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
+                    <Users className="w-4 h-4 text-purple-500" />
+                    Performance Templates
+                  </span>
+                  <span className="text-xs text-gray-500">Apply to all dialogue</span>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-2">
+                  {DIALOGUE_PERFORMANCE_TEMPLATES.map(template => (
+                    <DialogueTemplateCard
+                      key={template.id}
+                      template={template}
+                      isSelected={selectedDialogueTemplates.has(template.id)}
+                      onToggle={() => toggleDialogueTemplate(template.id)}
+                      onApplyToAll={() => applyTemplateToAllLines(template.id)}
+                      showApplyAll={dialogueLines.length > 1}
+                    />
+                  ))}
+                </div>
+              </div>
+              
+              {/* Per-Line Dialogue Direction */}
+              {dialogueLines.length > 0 ? (
+                <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4 text-blue-500" />
+                      Per-Line Direction
+                    </span>
+                    <span className="text-xs text-gray-500">{dialogueLines.length} line{dialogueLines.length > 1 ? 's' : ''}</span>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {dialogueLines.map((line, index) => {
+                      const lineText = line.text || line.line || ''
+                      const lineTemplates = dialogueLineSelections[index] || new Set<string>()
+                      const isExpanded = expandedDialogueLine === index
+                      
+                      return (
+                        <div 
+                          key={index}
+                          className={`border rounded-lg transition-all ${
+                            isExpanded 
+                              ? 'border-purple-500 bg-purple-50/50 dark:bg-purple-900/10' 
+                              : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                          }`}
+                        >
+                          <button
+                            onClick={() => toggleDialogueLine(index)}
+                            className="w-full p-3 text-left"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-xs font-semibold text-purple-600 dark:text-purple-400">
+                                    {line.character}
+                                  </span>
+                                  {lineTemplates.size > 0 && (
+                                    <Badge variant="secondary" className="text-[10px]">
+                                      {lineTemplates.size} template{lineTemplates.size > 1 ? 's' : ''}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
+                                  "{lineText}"
+                                </p>
+                              </div>
+                              {isExpanded ? (
+                                <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                              ) : (
+                                <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                              )}
+                            </div>
+                          </button>
+                          
+                          {isExpanded && (
+                            <div className="px-3 pb-3 space-y-2">
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                Select performance templates for this line:
+                              </div>
+                              <div className="grid grid-cols-2 gap-1.5">
+                                {DIALOGUE_PERFORMANCE_TEMPLATES.map(template => (
+                                  <button
+                                    key={template.id}
+                                    onClick={() => toggleLineTemplate(index, template.id)}
+                                    className={`flex items-center gap-2 p-2 rounded-md text-left transition-all text-xs ${
+                                      lineTemplates.has(template.id)
+                                        ? 'bg-purple-500 text-white'
+                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                    }`}
+                                  >
+                                    {template.icon}
+                                    <span className="truncate">{template.label}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                  <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No dialogue in this scene</p>
+                  <p className="text-xs">Dialogue direction templates will appear when the scene has dialogue</p>
+                </div>
+              )}
             </TabsContent>
             
             {/* Custom Direction Tab */}
@@ -746,5 +1000,75 @@ function TemplateCard({ template, isSelected, onToggle }: TemplateCardProps) {
   )
 }
 
+// ============================================================================
+// Dialogue Template Card Sub-component
+// ============================================================================
+
+interface DialogueTemplateCardProps {
+  template: typeof DIALOGUE_PERFORMANCE_TEMPLATES[0]
+  isSelected: boolean
+  onToggle: () => void
+  onApplyToAll?: () => void
+  showApplyAll?: boolean
+}
+
+function DialogueTemplateCard({ 
+  template, 
+  isSelected, 
+  onToggle, 
+  onApplyToAll,
+  showApplyAll = false 
+}: DialogueTemplateCardProps) {
+  return (
+    <div
+      className={`
+        flex items-start gap-3 p-3 rounded-lg border text-left transition-all
+        ${isSelected 
+          ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' 
+          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+        }
+      `}
+    >
+      <button
+        onClick={onToggle}
+        className={`
+          p-2 rounded-md flex-shrink-0
+          ${isSelected 
+            ? 'bg-purple-500 text-white' 
+            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+          }
+        `}
+      >
+        {template.icon}
+      </button>
+      <div className="flex-1 min-w-0">
+        <button onClick={onToggle} className="w-full text-left">
+          <div className="flex items-center gap-2">
+            <span className={`text-sm font-medium ${isSelected ? 'text-purple-700 dark:text-purple-300' : 'text-gray-900 dark:text-gray-100'}`}>
+              {template.label}
+            </span>
+            {isSelected && <CheckCircle2 className="w-4 h-4 text-purple-500" />}
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            {template.description}
+          </p>
+        </button>
+        {showApplyAll && onApplyToAll && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onApplyToAll()
+            }}
+            className="mt-2 text-[10px] text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+          >
+            <Layers className="w-3 h-3" />
+            Apply to all lines
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // Export types and constants
-export { DIRECTION_OPTIMIZATION_TEMPLATES, DEFAULT_NEGATIVE_PROMPTS }
+export { DIRECTION_OPTIMIZATION_TEMPLATES, DIALOGUE_PERFORMANCE_TEMPLATES, DEFAULT_NEGATIVE_PROMPTS }

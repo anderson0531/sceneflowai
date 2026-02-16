@@ -19,7 +19,7 @@ import {
   SceneSegment,
 } from './types'
 
-import type { DetailedSceneDirection } from '@/types/scene-direction'
+import type { DetailedSceneDirection, DialogueTalentDirection } from '@/types/scene-direction'
 
 // ============================================================================
 // Prompt Fragment Mappings
@@ -403,14 +403,49 @@ export interface CompileOptions {
 /**
  * Compile scene direction into video-optimized prompt fragment
  * NEW: Includes performance direction for Veo-3 cinematic quality
+ * ENHANCED: Now supports per-dialogue-line talent directions
  */
-function compileSceneDirectionPrompt(sceneDirection: DetailedSceneDirection | null | undefined): string {
+function compileSceneDirectionPrompt(
+  sceneDirection: DetailedSceneDirection | null | undefined,
+  segmentDialogue?: { character: string; text: string }
+): string {
   if (!sceneDirection) return ''
   
   const fragments: string[] = []
   
-  // Performance direction (NEW - critical for Veo-3 quality)
-  if (sceneDirection.performanceDirection) {
+  // Check for per-dialogue talent direction that matches this segment
+  if (segmentDialogue && sceneDirection.dialogueTalentDirections?.length) {
+    const matchingDirection = sceneDirection.dialogueTalentDirections.find(dtd => 
+      dtd.character?.toLowerCase() === segmentDialogue.character?.toLowerCase() &&
+      (dtd.lineText?.includes(segmentDialogue.text?.slice(0, 30)) || 
+       segmentDialogue.text?.includes(dtd.lineText?.slice(0, 30)))
+    )
+    
+    if (matchingDirection) {
+      // Use specific dialogue talent direction
+      if (matchingDirection.cinematicSetup) {
+        fragments.push(matchingDirection.cinematicSetup)
+      }
+      if (matchingDirection.microExpression) {
+        fragments.push(`facial detail: ${matchingDirection.microExpression}`)
+      }
+      if (matchingDirection.physicalAction) {
+        fragments.push(matchingDirection.physicalAction)
+      }
+      if (matchingDirection.emotionalTransition) {
+        fragments.push(`emotional arc: ${matchingDirection.emotionalTransition}`)
+      }
+      if (matchingDirection.subtextMotivation) {
+        fragments.push(`inner state: ${matchingDirection.subtextMotivation}`)
+      }
+      if (matchingDirection.physiologicalCues) {
+        fragments.push(matchingDirection.physiologicalCues)
+      }
+    }
+  }
+  
+  // Fallback to scene-level performance direction if no dialogue match
+  if (fragments.length === 0 && sceneDirection.performanceDirection) {
     const perf = sceneDirection.performanceDirection
     
     // Micro-expressions
@@ -477,8 +512,8 @@ function compileSceneDirectionPrompt(sceneDirection: DetailedSceneDirection | nu
     }
   }
   
-  // Traditional talent direction
-  if (sceneDirection.talent?.emotionalBeat) {
+  // Traditional talent direction (additional fallback)
+  if (sceneDirection.talent?.emotionalBeat && fragments.length < 3) {
     fragments.push(`expression: ${sceneDirection.talent.emotionalBeat}`)
   }
   

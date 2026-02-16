@@ -39,6 +39,7 @@ async function callGemini(prompt: string): Promise<string> {
 
 /**
  * Build prompt for scene direction generation
+ * Now includes per-dialogue-line talent direction for cinematic precision
  */
 function buildSceneDirectionPrompt(scene: GenerateDirectionRequest['scene']): string {
   const heading = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text || ''
@@ -49,10 +50,17 @@ function buildSceneDirectionPrompt(scene: GenerateDirectionRequest['scene']): st
   const characters = scene.characters || []
   
   // Support both 'line' (from script generation) and 'text' (legacy) field names
-  const dialogueText = dialogue.map(d => `${d.character}: ${d.line || d.text || ''}`).join('\n')
+  const dialogueText = dialogue.map((d, idx) => `[${idx}] ${d.character}: ${d.line || d.text || ''}`).join('\n')
   const charactersList = characters.length > 0 
     ? `\nCharacters in scene: ${characters.join(', ')}\n`
     : ''
+  
+  // Build dialogue lines array for the JSON structure
+  const dialogueLinesList = dialogue.map((d, idx) => ({
+    index: idx,
+    character: d.character,
+    line: d.line || d.text || ''
+  }))
   
   return `You are a world-class film director and cinematographer. Your task is to generate detailed, professional-grade technical instructions for a live-action film crew based on the following scene information.
 
@@ -62,6 +70,15 @@ CRITICAL TALENT RULE:
 - The talent blocking MUST reference ONLY the characters listed above
 - DO NOT invent new characters or add characters not in this scene
 - Reference characters by name exactly as listed
+
+CINEMATIC PERFORMANCE DIRECTION:
+For each dialogue line, provide specific, actionable performance direction that elevates the acting to cinematic quality. Follow these principles:
+1. CINEMATIC SETUP: Describe the shot composition and physical context (e.g., "Cinematic Close-up: She sits at a mahogany desk under a single warm lamp")
+2. MICRO-EXPRESSIONS: Add subtle facial transitions (e.g., "eyes widen with recognition, lower lip trembles imperceptibly")
+3. PHYSICAL ACTION: Describe movements with weight and texture (e.g., "pulls the faded photograph into the light, fingers trembling")
+4. EMOTIONAL TRANSITION: Map the emotional arc (e.g., "Recognition → Grief → Comfort")
+5. SUBTEXT: The character's inner motivation beneath the words
+6. PHYSIOLOGICAL: Breathing patterns, swallowing, tension (e.g., "breathing becomes shallow and heavy")
 
 Generate comprehensive technical direction suitable for professional film production crews. Return ONLY valid JSON with this exact structure:
 
@@ -95,7 +112,19 @@ Generate comprehensive technical direction suitable for professional film produc
   "audio": {
     "priorities": "audio priorities, e.g., 'Capture clean dialogue', 'Prioritize environmental sounds', 'Silence on set'",
     "considerations": "audio considerations, e.g., 'Be aware of HVAC noise', 'Room tone needed for this location'"
-  }
+  },
+  "dialogueTalentDirections": [
+    ${dialogueLinesList.length > 0 ? dialogueLinesList.map(d => `{
+      "character": "${d.character}",
+      "lineText": "${d.line.replace(/"/g, '\\"').substring(0, 100)}${d.line.length > 100 ? '...' : ''}",
+      "cinematicSetup": "Describe the shot composition and physical context for this line",
+      "microExpression": "Subtle facial transitions during this line",
+      "physicalAction": "Physical movement with weight and texture",
+      "emotionalTransition": "Emotional arc during this line, e.g., 'Hope → Doubt → Resignation'",
+      "subtextMotivation": "What the character is really feeling beneath the words",
+      "physiologicalCues": "Breathing, tension, and physical responses"
+    }`).join(',\n    ') : ''}
+  ]
 }
 
 IMPORTANT:
@@ -103,6 +132,8 @@ IMPORTANT:
 - Be specific and actionable for crew members
 - Consider the emotional tone and narrative context
 - Ensure all arrays contain at least one item
+- For dialogueTalentDirections, provide SPECIFIC direction for each line - avoid generic descriptions
+- Make each dialogue direction cinematic and evocative, not just descriptive
 - Return ONLY valid JSON, no markdown formatting, no explanations`
 }
 
