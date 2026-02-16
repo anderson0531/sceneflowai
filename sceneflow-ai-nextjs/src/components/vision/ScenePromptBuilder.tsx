@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Copy, Check, Sparkles, Info, Loader2, ChevronDown, ChevronUp, Image as ImageIcon, Box } from 'lucide-react'
+import { Copy, Check, Sparkles, Info, Loader2, ChevronDown, ChevronUp, Image as ImageIcon, Box, Wand2 } from 'lucide-react'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { findSceneCharacters, findSceneObjects } from '../../lib/character/matching'
 import { DetailedSceneDirection } from '@/types/scene-direction'
@@ -174,6 +174,7 @@ export function ScenePromptBuilder({
   
   // State for advanced mode edits only
   const [isPromptEdited, setIsPromptEdited] = useState(false)
+  const [isOptimizing, setIsOptimizing] = useState(false)
 
   // Parse scene description to auto-populate fields
   // PRIORITY: Use Scene Direction data (camera, lighting, scene, talent) if available
@@ -656,6 +657,42 @@ export function ScenePromptBuilder({
       setAdvancedPrompt(currentPrompt)
     }
     setMode(mode)
+  }
+
+  // Optimize prompt with AI - restructures verbose prompts into hierarchical format
+  const handleOptimizePrompt = async () => {
+    if (!advancedPrompt.trim() || isOptimizing) return
+    
+    setIsOptimizing(true)
+    try {
+      const sceneHeading = typeof scene?.heading === 'string' 
+        ? scene.heading 
+        : scene?.heading?.text || ''
+      
+      const response = await fetch('/api/prompt/optimize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: advancedPrompt,
+          sceneHeading,
+          preserveCharacterNames: true
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success && data.optimizedPrompt) {
+        setAdvancedPrompt(data.optimizedPrompt)
+        setIsPromptEdited(true)
+        console.log('[ScenePromptBuilder] Prompt optimized successfully')
+      } else {
+        console.error('[ScenePromptBuilder] Optimization failed:', data.error)
+      }
+    } catch (error) {
+      console.error('[ScenePromptBuilder] Failed to optimize prompt:', error)
+    } finally {
+      setIsOptimizing(false)
+    }
   }
 
   return (
@@ -1185,6 +1222,25 @@ export function ScenePromptBuilder({
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs text-gray-400">Custom Scene Prompt</label>
+                <Button
+                  onClick={handleOptimizePrompt}
+                  disabled={isOptimizing || !advancedPrompt.trim()}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-7 px-2 border-purple-500/50 hover:bg-purple-500/20 hover:border-purple-500"
+                >
+                  {isOptimizing ? (
+                    <>
+                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                      Optimizing...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-3 h-3 mr-1" />
+                      Optimize Prompt
+                    </>
+                  )}
+                </Button>
               </div>
               <Textarea
                 value={advancedPrompt}
@@ -1197,7 +1253,7 @@ export function ScenePromptBuilder({
                 className="resize-vertical"
               />
               <p className="text-xs text-gray-500 mt-1">
-                💡 Tip: Write your scene description here. The API will automatically optimize it with character references, safety filters, and art style settings when you generate.
+                💡 Tip: Use &quot;Optimize Prompt&quot; to restructure verbose prompts into a hierarchical format that AI models follow more effectively.
               </p>
             </div>
 
