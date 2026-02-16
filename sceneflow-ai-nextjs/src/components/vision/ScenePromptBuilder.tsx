@@ -184,45 +184,43 @@ export function ScenePromptBuilder({
     const updates: Partial<ScenePromptStructure> = {}
     const sceneDirection: DetailedSceneDirection | undefined = scene.sceneDirection
     
-    // AUTO-DETECT AND PRE-SELECT CHARACTERS using smart matching
+    // Use ONLY visualDescription (the first paragraph of Scene Direction) for detection
+    // This ensures characters/props detected match exactly what's in the visual prompt baseline
+    const visualDescriptionText = scene.visualDescription || ''
+    
+    // AUTO-DETECT AND PRE-SELECT CHARACTERS from visualDescription
     if (availableCharacters && availableCharacters.length > 0) {
-      const sceneText = [
-        scene.heading || '',
-        scene.action || '',
-        scene.visualDescription || '',
-        ...(scene.dialogue || []).map((d: any) => d.character || '')
-      ].join(' ')
-      
-      const detectedChars = findSceneCharacters(sceneText, availableCharacters)
+      const detectedChars = findSceneCharacters(visualDescriptionText, availableCharacters)
       
       if (detectedChars.length > 0) {
         updates.characters = detectedChars.map((c: any) => c.name)
+        console.log('[ScenePromptBuilder] Auto-selected characters from visualDescription:', detectedChars.map((c: any) => c.name))
       }
     }
     
-    // AUTO-DETECT AND PRE-SELECT OBJECTS using smart matching
-    // NOTE: We only TRACK which objects are auto-detected (for UI hints),
-    // but do NOT pre-select them. Server-side intelligent selection handles actual filtering.
+    // AUTO-DETECT AND PRE-SELECT OBJECTS from visualDescription
+    // Pre-select detected objects (limited to top 5 by importance: critical > important > background)
     if (objectReferences && objectReferences.length > 0) {
-      const sceneText = [
-        scene.heading || '',
-        scene.action || '',
-        scene.visualDescription || '',
-        scene.sceneDirection?.scene?.keyProps?.join(' ') || ''
-      ].join(' ')
-      
       const detectedObjects = findSceneObjects(
-        sceneText, 
+        visualDescriptionText, 
         objectReferences as any[], 
         scene.sceneNumber
       )
       
       if (detectedObjects.length > 0) {
-        const detectedIds = detectedObjects.map((obj: any) => obj.id)
-        // Only track auto-detected objects for UI hints, do NOT pre-select
-        setSelectedObjectRefIds([])  // Start with none selected
-        setAutoDetectedObjectIds(detectedIds)  // Track which were auto-detected for hints
-        console.log('[ScenePromptBuilder] Auto-detected objects (suggestions only):', detectedObjects.map((o: any) => o.name))
+        // Limit to top 5 objects by importance (already sorted by findSceneObjects)
+        const topObjects = detectedObjects.slice(0, 5)
+        const selectedIds = topObjects.map((obj: any) => obj.id)
+        const allDetectedIds = detectedObjects.map((obj: any) => obj.id)
+        
+        // Pre-select top 5 objects and track all detected for UI hints
+        setSelectedObjectRefIds(selectedIds)
+        setAutoDetectedObjectIds(allDetectedIds)
+        console.log('[ScenePromptBuilder] Auto-selected objects (top 5):', topObjects.map((o: any) => o.name))
+        if (detectedObjects.length > 5) {
+          console.log('[ScenePromptBuilder] Additional detected objects (not pre-selected):', 
+            detectedObjects.slice(5).map((o: any) => o.name))
+        }
       }
     }
     
@@ -432,8 +430,81 @@ export function ScenePromptBuilder({
     }
   }, [open])
 
-  // Construct prompt from structure (using Scene Direction data when available)
+  // Construct prompt from structure
+  // STRATEGY: If scene has visualDescription (from Scene Direction), use that as the baseline
+  // and only add minimal framing (shot type, characters, props, art style).
+  // Otherwise, fall back to building from individual fields.
   const constructPrompt = (): string => {
+    // Check if we have a high-quality visualDescription from Scene Direction
+    const hasSceneDirection = !!scene?.sceneDirection
+    const visualDescription = scene?.visualDescription || ''
+    
+    // If we have a good visualDescription (first paragraph of Scene Direction), use it as baseline
+    // This avoids over-building the prompt from parsed fields which creates "keyword soup"
+    if (hasSceneDirection && visualDescription && visualDescription.length > 100) {
+      const parts: string[] = []
+      
+      // 1. Shot type prefix (concise)
+      const shotTypes: Record<string, string> = {
+        'wide-shot': 'Wide shot',
+        'medium-shot': 'Medium shot',
+        'medium-close-up': 'Medium close-up',
+        'close-up': 'Close-up',
+        'extreme-close-up': 'Extreme close-up',
+        'extreme-wide': 'Extreme wide shot',
+        'over-shoulder': 'Over-shoulder shot'
+      }
+      if (structure.shotType) {
+        parts.push(shotTypes[structure.shotType] || structure.shotType)
+      }
+      
+      // 2. The visualDescription IS the main prompt (first paragraph of Scene Direction)
+      parts.push(visualDescription)
+      
+      // 3. Character names (essential for reference image matching)
+      if (structure.characters.length > 0) {
+        parts.push(`Featuring ${structure.characters.join(' and ')}`)
+      }
+      
+      // 4. Object/prop references (essential for visual consistency)
+      const selectedObjectRefs = objectReferences.filter(r => selectedObjectRefIds.includes(r.id))
+      if (selectedObjectRefs.length > 0) {
+        // Sort by importance: critical first, then important, then background
+        const sortedObjects = [...selectedObjectRefs].sort((a, b) => {
+          const order: Record<string, number> = { critical: 0, important: 1, background: 2 }
+          return (order[a.importance || 'background'] ?? 3) - (order[b.importance || 'background'] ?? 3)
+        })
+        
+        // Build object descriptions - include description for critical/important objects
+        const objectDescriptions = sortedObjects.map(obj => {
+          if ((obj.importance === 'critical' || obj.importance === 'important') && obj.description) {
+            return `${obj.name} (${obj.description})`
+          }
+          return obj.name
+        })
+        
+        parts.push(`Props: ${objectDescriptions.join(', ')}`)
+      }
+      
+      // 5. Scene backdrop references (from Reference Library)
+      const selectedSceneRefs = sceneReferences.filter(r => selectedSceneRefIds.includes(r.id))
+      if (selectedSceneRefs.length > 0) {
+        const backdropDescriptions = selectedSceneRefs
+          .map(r => r.description || r.name)
+          .join(', ')
+        parts.push(`Visual style reference: ${backdropDescriptions}`)
+      }
+      
+      // 6. Art style suffix
+      const stylePreset = artStylePresets.find(s => s.id === structure.artStyle)
+      if (stylePreset) parts.push(stylePreset.promptSuffix)
+      
+      return parts.filter(Boolean).join('. ')
+    }
+    
+    // ============================================
+    // FALLBACK: No Scene Direction - build from individual fields
+    // ============================================
     const parts: string[] = []
     
     // Shot type
