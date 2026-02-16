@@ -3241,13 +3241,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           <div className="bg-gray-900 border border-purple-500 rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl">
             <div className="flex flex-col items-center">
               <div className="relative mb-4">
-                <Loader className="w-16 h-16 animate-spin text-purple-500" />
+                <Clapperboard className="w-16 h-16 text-purple-500 animate-pulse" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-12 h-12 rounded-full border-4 border-purple-300 animate-pulse"></div>
+                  <div className="w-20 h-20 rounded-full border-4 border-purple-300/30 animate-ping"></div>
                 </div>
               </div>
               <h3 className="text-lg font-semibold text-gray-200 mb-2">
-                Generating Scene Frame
+                Creating Storyboard
               </h3>
               {generatingKeyframeSceneNumber !== null && (
                 <p className="text-sm text-gray-400 mb-3">
