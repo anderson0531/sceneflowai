@@ -4253,69 +4253,6 @@ function SceneCard({
             <p className="text-xl font-semibold text-white leading-tight">
               SCENE {sceneNumber}: {formattedHeading}
             </p>
-            {/* Score badges in header */}
-            {!isOutline && scene.scoreAnalysis && (
-              <div className="flex items-center gap-2">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className={`text-sm px-2.5 py-1 rounded-md font-bold shadow-lg border-2 ${
-                        (scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore) >= 85 ? 'bg-green-500/30 text-green-300 border-green-400/60' :
-                        (scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore) >= 75 ? 'bg-yellow-500/30 text-yellow-300 border-yellow-400/60' :
-                        'bg-red-500/30 text-red-300 border-red-400/60'
-                      }`}>
-                        🎬 {scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-gray-900 text-white border border-gray-700">
-                      <p className="text-xs">Director Score: {scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore}/100</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className={`text-sm px-2.5 py-1 rounded-md font-bold shadow-lg border-2 ${
-                        (scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore) >= 85 ? 'bg-green-500/30 text-green-300 border-green-400/60' :
-                        (scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore) >= 75 ? 'bg-yellow-500/30 text-yellow-300 border-yellow-400/60' :
-                        'bg-red-500/30 text-red-300 border-red-400/60'
-                      }`}>
-                        👥 {scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-gray-900 text-white border border-gray-700">
-                      <p className="text-xs">Audience Score: {scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore}/100</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                {/* Update Scores button */}
-                {onGenerateSceneScore && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onGenerateSceneScore(sceneIdx)
-                          }}
-                          disabled={generatingScoreFor === sceneIdx}
-                          className="p-1.5 rounded-md bg-sf-primary/20 text-sf-primary border border-sf-primary/40 hover:bg-sf-primary/30 disabled:opacity-50 transition"
-                        >
-                          {generatingScoreFor === sceneIdx ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <RefreshCw className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-gray-900 text-white border border-gray-700">
-                        <p className="text-xs">Update review scores</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-              </div>
-            )}
             
             {/* Audience Resonance Analysis Badge - Integrated from ScriptReviewModal */}
             {!isOutline && (

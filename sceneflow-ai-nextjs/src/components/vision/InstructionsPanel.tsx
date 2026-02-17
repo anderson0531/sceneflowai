@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Wand2, Edit, Zap, Heart, Eye, Target, Lightbulb, Trash2 } from 'lucide-react'
+import { Wand2, Edit, Zap, Heart, Eye, Target, Lightbulb, Trash2, Sparkles, Check } from 'lucide-react'
 import { 
   SCENE_OPTIMIZATION_TEMPLATES, 
   countInstructions,
@@ -14,6 +14,11 @@ interface InstructionsPanelProps {
   onInstructionChange: (instruction: string) => void
   // Optional: for multi-instruction support
   maxInstructions?: number
+  // Recommendations from scene analysis
+  recommendations?: string[]
+  appliedRecommendationIds?: string[]
+  onApplyRecommendation?: (recText: string, recId: string) => void
+  canAddMoreInstructions?: boolean
 }
 
 // Map template IDs to Lucide icons
@@ -31,10 +36,14 @@ const TEMPLATE_ICONS: Record<string, React.ReactNode> = {
 export function InstructionsPanel({ 
   instruction, 
   onInstructionChange,
-  maxInstructions = MAX_INSTRUCTIONS
+  maxInstructions = MAX_INSTRUCTIONS,
+  recommendations = [],
+  appliedRecommendationIds = [],
+  onApplyRecommendation,
+  canAddMoreInstructions: canAddMoreProp
 }: InstructionsPanelProps) {
   const instructionCount = countInstructions(instruction)
-  const canAddMore = instructionCount < maxInstructions
+  const canAddMore = canAddMoreProp !== undefined ? canAddMoreProp : instructionCount < maxInstructions
 
   // Append instruction with numbered format
   const appendInstruction = (newText: string) => {
@@ -55,6 +64,64 @@ export function InstructionsPanel({
 
   return (
     <div className="space-y-4">
+      {/* Scene Recommendations - from analysis */}
+      {recommendations.length > 0 && (
+        <div className="bg-violet-50 dark:bg-violet-900/20 rounded-lg p-3 border border-violet-200 dark:border-violet-800">
+          <h3 className="text-sm font-semibold flex items-center gap-2 mb-3 text-violet-900 dark:text-violet-100">
+            <Sparkles className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+            Scene Recommendations
+            <span className="text-xs font-normal text-violet-600 dark:text-violet-400">
+              ({recommendations.length})
+            </span>
+          </h3>
+          <ul className="space-y-2">
+            {recommendations.map((rec, idx) => {
+              const recId = `rec-${idx}`
+              const isApplied = appliedRecommendationIds.includes(recId)
+              
+              return (
+                <li 
+                  key={idx} 
+                  className={`flex items-start gap-2 text-xs p-2 rounded-lg transition-colors ${
+                    isApplied 
+                      ? 'bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-700' 
+                      : 'bg-white/50 dark:bg-gray-800/30 border border-violet-100 dark:border-violet-800/50 hover:bg-violet-100 dark:hover:bg-violet-900/30'
+                  }`}
+                >
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-violet-200 dark:bg-violet-800 text-violet-700 dark:text-violet-300 text-[10px] font-bold flex-shrink-0 mt-0.5">
+                    {idx + 1}
+                  </span>
+                  <span className={`flex-1 text-gray-700 dark:text-gray-300 leading-relaxed ${isApplied ? 'line-through opacity-60' : ''}`}>
+                    {rec}
+                  </span>
+                  {isApplied ? (
+                    <span className="flex items-center gap-1 text-green-600 dark:text-green-400 text-[10px] font-medium flex-shrink-0">
+                      <Check className="w-3 h-3" />
+                      Added
+                    </span>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[10px] text-violet-600 hover:text-violet-700 hover:bg-violet-100 dark:text-violet-400 dark:hover:bg-violet-900/30 flex-shrink-0"
+                      disabled={!canAddMore}
+                      onClick={() => onApplyRecommendation?.(rec, recId)}
+                    >
+                      + Add
+                    </Button>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+          {!canAddMore && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+              Maximum {maxInstructions} instructions reached.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Instruction Templates */}
       <div>
         <div className="flex items-center justify-between mb-2">
