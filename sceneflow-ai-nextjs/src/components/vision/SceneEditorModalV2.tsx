@@ -14,14 +14,12 @@ import { SceneComparisonPanel } from './SceneComparisonPanel'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { RecommendationPriority } from '@/types/story'
 import { useOverlayStore } from '@/store/useOverlayStore'
-
-// Priority badge colors for recommendations
-const PRIORITY_BADGES: Record<RecommendationPriority, { emoji: string; color: string; label: string }> = {
-  critical: { emoji: '🔴', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400', label: 'Critical' },
-  high: { emoji: '🟡', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400', label: 'High' },
-  medium: { emoji: '🔵', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', label: 'Medium' },
-  optional: { emoji: '⚪', color: 'bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400', label: 'Optional' }
-}
+import { 
+  PRIORITY_BADGES,
+  normalizeRecommendation,
+  SceneRecommendation as SharedSceneRecommendation,
+  SceneAnalysis
+} from '@/lib/constants/scene-optimization'
 
 interface SceneReview {
   overallScore: number
@@ -41,14 +39,6 @@ interface SceneRecommendation {
   category?: string
   // Fallback for old string format
   [key: string]: any
-}
-
-// Helper to normalize recommendations (handle both string and object formats)
-function normalizeRecommendation(rec: string | SceneRecommendation): SceneRecommendation {
-  if (typeof rec === 'string') {
-    return { text: rec, priority: 'medium' as RecommendationPriority }
-  }
-  return { ...rec, priority: rec.priority || 'medium' }
 }
 
 interface SceneEditorModalProps {
@@ -846,6 +836,15 @@ export function SceneEditorModal({
                 <InstructionsPanel
                   instruction={customInstruction}
                   onInstructionChange={setCustomInstruction}
+                  recommendations={[
+                    ...(directorReview?.recommendations || []),
+                    ...(audienceReview?.recommendations || [])
+                  ].map(normalizeRecommendation)}
+                  isLoadingRecommendations={isLoadingReview}
+                  onFetchRecommendations={(!directorReview && !audienceReview) ? fetchSceneReview : undefined}
+                  onRecommendationAdded={(recId) => {
+                    setAppliedRecommendationIds(prev => [...new Set([...prev, recId])])
+                  }}
                 />
                 
                 {/* Voice Input Section */}

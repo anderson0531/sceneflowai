@@ -8,76 +8,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { Loader, Sparkles, CheckCircle2, ChevronDown, ChevronUp, Wand2, Mic, MicOff, CheckSquare, Square, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
-
-// Common scene-level optimization templates
-const SCENE_OPTIMIZATION_TEMPLATES = [
-  {
-    id: 'increase-tension',
-    icon: '⚡',
-    label: 'Increase Tension',
-    description: 'Add conflict and raise stakes',
-    instruction: 'Increase the tension and conflict in this scene. Raise the stakes and add more dramatic weight.'
-  },
-  {
-    id: 'improve-pacing',
-    icon: '⏱️',
-    label: 'Improve Pacing',
-    description: 'Tighten or expand timing',
-    instruction: 'Improve the pacing of this scene. Tighten slow sections and expand moments that need more breathing room.'
-  },
-  {
-    id: 'enhance-dialogue',
-    icon: '💬',
-    label: 'Enhance Dialogue',
-    description: 'Make dialogue more natural',
-    instruction: 'Polish the dialogue to be more natural and character-authentic. Add subtext and remove on-the-nose exposition.'
-  },
-  {
-    id: 'add-emotion',
-    icon: '❤️',
-    label: 'Add Emotion',
-    description: 'Increase emotional impact',
-    instruction: 'Increase the emotional impact of this scene. Deepen the emotional beats and character reactions.'
-  },
-  {
-    id: 'clarify-action',
-    icon: '👁️',
-    label: 'Clarify Action',
-    description: 'Make action clearer',
-    instruction: 'Clarify the action and visual storytelling. Make it clearer what is happening and how it looks on screen.'
-  },
-  {
-    id: 'visual-storytelling',
-    icon: '🎬',
-    label: 'Visual Storytelling',
-    description: 'Show don\'t tell',
-    instruction: 'Enhance visual storytelling. Show emotions and story beats through action and imagery rather than dialogue or narration.'
-  },
-  {
-    id: 'add-humor',
-    icon: '😄',
-    label: 'Add Humor',
-    description: 'Inject comedic elements',
-    instruction: 'Add appropriate humor or levity to this scene while maintaining the overall tone.'
-  },
-  {
-    id: 'deepen-character',
-    icon: '👤',
-    label: 'Deepen Character',
-    description: 'Add character development',
-    instruction: 'Deepen character development in this scene. Show more of who the characters are through their choices and reactions.'
-  }
-]
-
-interface SceneAnalysis {
-  score: number
-  pacing: 'slow' | 'moderate' | 'fast'
-  tension: 'low' | 'medium' | 'high'
-  characterDevelopment: 'minimal' | 'moderate' | 'strong'
-  visualPotential: 'low' | 'medium' | 'high'
-  notes: string
-  recommendations: string[]
-}
+import { 
+  SCENE_OPTIMIZATION_TEMPLATES,
+  SceneAnalysis,
+  getScoreColor,
+  getScoreBgColor
+} from '@/lib/constants/scene-optimization'
 
 interface OptimizeSceneDialogProps {
   isOpen: boolean
@@ -207,20 +143,6 @@ export function OptimizeSceneDialog({
     }
     
     await onOptimize(combinedInstruction, selectedRecTexts)
-  }
-
-  const getScoreColor = (score: number): string => {
-    if (score >= 80) return 'text-green-600 dark:text-green-400'
-    if (score >= 70) return 'text-blue-600 dark:text-blue-400'
-    if (score >= 60) return 'text-yellow-600 dark:text-yellow-400'
-    return 'text-red-600 dark:text-red-400'
-  }
-
-  const getScoreBgColor = (score: number): string => {
-    if (score >= 80) return 'bg-green-100 dark:bg-green-900/30'
-    if (score >= 70) return 'bg-blue-100 dark:bg-blue-900/30'
-    if (score >= 60) return 'bg-yellow-100 dark:bg-yellow-900/30'
-    return 'bg-red-100 dark:bg-red-900/30'
   }
 
   const hasSelections = selectedTemplates.size > 0 || 
@@ -442,12 +364,12 @@ export function OptimizeSceneDialog({
                 {isOptimizing ? (
                   <>
                     <Loader className="w-4 h-4 mr-2 animate-spin" />
-                    Optimizing...
+                    Applying...
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 mr-2" />
-                    Optimize Scene
+                    Apply Recommendations
                   </>
                 )}
               </Button>
