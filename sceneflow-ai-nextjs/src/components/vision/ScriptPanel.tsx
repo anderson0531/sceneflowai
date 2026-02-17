@@ -4633,12 +4633,12 @@ function SceneCard({
                       {optimizingSceneIndex === sceneIdx ? (
                         <>
                           <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                          Optimizing...
+                          Applying...
                         </>
                       ) : (
                         <>
                           <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                          Optimize
+                          Apply Recommendations
                         </>
                       )}
                     </Button>
