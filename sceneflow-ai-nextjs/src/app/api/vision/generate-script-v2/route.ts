@@ -51,8 +51,29 @@ export async function POST(request: NextRequest) {
         }
 
         // Simple duration-based safety cap (no scene-count prescriptions)
-        const duration = project.duration || 300
+        const rawDuration = project.duration || 300
         const projectFormat = treatment.format || 'short-film'
+        
+        // Duration validation: cap based on format to prevent unreasonable generation times
+        // Short films: max 40 min (2400s), Features: max 180 min (10800s)
+        const maxDurationByFormat: Record<string, number> = {
+          'short-film': 2400,      // 40 minutes max
+          'feature': 10800,        // 180 minutes max
+          'pilot': 3600,           // 60 minutes max
+          'series-episode': 3600,  // 60 minutes max
+          'commercial': 180,       // 3 minutes max
+          'music-video': 600,      // 10 minutes max
+        }
+        const maxAllowedDuration = maxDurationByFormat[projectFormat] || 2400
+        const duration = Math.min(rawDuration, maxAllowedDuration)
+        
+        if (rawDuration > maxAllowedDuration) {
+          console.warn(`[Script Gen V2] Duration ${rawDuration}s exceeds max for ${projectFormat} (${maxAllowedDuration}s). Capping to ${duration}s.`)
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+            type: 'warning', 
+            message: `Duration capped from ${Math.round(rawDuration/60)} minutes to ${Math.round(duration/60)} minutes (max for ${projectFormat})` 
+          })}\n\n`))
+        }
         
         // Extract story beats for context (NOT for scene-count calculation)
         const storyBeats = treatment.story_beats || treatment.storyBeats || []
@@ -1148,7 +1169,8 @@ async function callGemini(prompt: string): Promise<string> {
   const result = await generateText(prompt, {
     model: 'gemini-2.5-flash',
     temperature: 0.7,
-    maxOutputTokens: 16384  // Reduced from 32768 to lower memory footprint
+    maxOutputTokens: 16384,  // Reduced from 32768 to lower memory footprint
+    timeoutMs: 180000        // 180s timeout for large script generation (increased from default 90s)
   })
   
   const text = result.text || ''
