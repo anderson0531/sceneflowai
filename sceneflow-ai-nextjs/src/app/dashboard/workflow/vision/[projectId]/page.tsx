@@ -5438,8 +5438,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               const data = JSON.parse(line.slice(6))
 
               if (data.type === 'progress') {
-                // Update progress based on scenes generated
-                const progress = Math.min(90, 10 + (data.scenesGenerated / data.totalScenes) * 80)
+                // Use API's progress field if available (for estimated progress during Gemini call)
+                // Otherwise calculate based on scenesGenerated (for actual scene parsing progress)
+                const progress = data.progress !== undefined 
+                  ? data.progress 
+                  : Math.min(90, 10 + (data.scenesGenerated / data.totalScenes) * 80)
                 setGenerationProgress(prev => ({ 
                   ...prev, 
                   script: { 
@@ -5461,7 +5464,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 overlayStore.setProgress(progress)
                 overlayStore.setStatus(statusText, data.estimatedRemainingSeconds || 0)
                 
-                console.log(`[Vision] ${data.status} (${data.scenesGenerated}/${data.totalScenes})${data.estimatedRemainingSeconds ? ` ~${data.estimatedRemainingSeconds}s remaining` : ''}`)
+                console.log(`[Vision] ${data.status} (${data.scenesGenerated}/${data.totalScenes}) ${progress}%${data.estimatedRemainingSeconds ? ` ~${data.estimatedRemainingSeconds}s remaining` : ''}`)
               } else if (data.type === 'warning') {
                 console.warn(`[Vision] Warning: ${data.message}`)
                 try {
