@@ -195,9 +195,10 @@ export function OptimizeSceneDialog({
     
     const combinedInstruction = allInstructions.join('\n\n')
     
-    // Get selected recommendation texts
+    // Get selected recommendation texts (handle both string and object formats)
     const selectedRecTexts = sceneAnalysis?.recommendations
-      ?.filter((_, i) => selectedRecommendations.has(i)) || []
+      ?.filter((_, i) => selectedRecommendations.has(i))
+      ?.map(rec => typeof rec === 'string' ? rec : (rec as any)?.text || String(rec)) || []
     
     // Validate we have something to do
     if (!combinedInstruction && selectedRecTexts.length === 0) {
@@ -296,6 +297,7 @@ export function OptimizeSceneDialog({
                 <div className="space-y-1.5 pl-1">
                   {sceneAnalysis.recommendations.map((rec, idx) => {
                     const isSelected = selectedRecommendations.has(idx)
+                    const recText = typeof rec === 'string' ? rec : (rec as any)?.text || String(rec)
                     return (
                       <div
                         key={idx}
@@ -321,7 +323,7 @@ export function OptimizeSceneDialog({
                           )}
                         </button>
                         <span className={`text-sm ${isSelected ? 'text-gray-900 dark:text-gray-100' : 'text-gray-600 dark:text-gray-400'}`}>
-                          {rec}
+                          {recText}
                         </span>
                       </div>
                     )
