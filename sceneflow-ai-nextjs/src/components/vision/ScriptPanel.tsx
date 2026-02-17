@@ -187,6 +187,8 @@ interface ScriptPanelProps {
   audienceReview?: any
   // NEW: Scene editing props
   onEditScene?: (sceneIndex: number) => void
+  // NEW: Edit scene with pre-populated recommendations from analysis
+  onEditSceneWithRecommendations?: (sceneIndex: number, recommendations: string[]) => void
   onUpdateSceneAudio?: (sceneIndex: number) => Promise<void>
   onDeleteSceneAudio?: (sceneIndex: number, audioType: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx', dialogueIndex?: number, sfxIndex?: number) => void
   // NEW: Enhance scene context with AI-generated beat, character arc, and thematic context
@@ -3521,6 +3523,7 @@ function SceneCard({
   onAddScene,
   onDeleteScene,
   onEditScene,
+  onEditSceneWithRecommendations,
   onUpdateSceneAudio,
   onDeleteSceneAudio,
   onEnhanceSceneContext,
@@ -4613,34 +4616,21 @@ function SceneCard({
                 
                 {/* Action Buttons */}
                 <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-700/50">
-                  {onOptimizeScene && (scene.audienceAnalysis.score < 80 || (scene.audienceAnalysis.recommendations?.length || 0) > 0) && (
+                  {onEditSceneWithRecommendations && (scene.audienceAnalysis.recommendations?.length || 0) > 0 && (
                     <Button
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation()
-                        const heading = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text || `Scene ${sceneNumber}`
-                        setOptimizeDialogScene({
-                          sceneIndex: sceneIdx,
-                          sceneNumber,
-                          sceneHeading: heading,
-                          audienceAnalysis: scene.audienceAnalysis
-                        })
-                        setOptimizeDialogOpen(true)
+                        // Extract recommendation texts
+                        const recommendations = (scene.audienceAnalysis.recommendations || []).map((rec: string | { text: string }) => 
+                          typeof rec === 'string' ? rec : rec?.text || String(rec)
+                        )
+                        onEditSceneWithRecommendations(sceneIdx, recommendations)
                       }}
-                      disabled={optimizingSceneIndex === sceneIdx}
                       className="h-8 text-xs bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-lg shadow-md"
                     >
-                      {optimizingSceneIndex === sceneIdx ? (
-                        <>
-                          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                          Applying...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                          Apply Recommendations
-                        </>
-                      )}
+                      <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                      Apply Recommendations
                     </Button>
                   )}
                   {onAnalyzeScene && (

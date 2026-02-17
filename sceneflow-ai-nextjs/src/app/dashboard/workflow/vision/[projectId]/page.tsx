@@ -3518,6 +3518,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Scene editor state
     const [editingSceneIndex, setEditingSceneIndex] = useState<number | null>(null)                                                                               
   const [isSceneEditorOpen, setIsSceneEditorOpen] = useState(false)
+  const [sceneEditorInitialInstructions, setSceneEditorInitialInstructions] = useState<string>('')
   
   // Character deletion dialog state
   const [deletionDialogOpen, setDeletionDialogOpen] = useState(false)
@@ -8137,6 +8138,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Scene editor handlers
   const handleEditScene = (sceneIndex: number) => {
     setEditingSceneIndex(sceneIndex)
+    setSceneEditorInitialInstructions('')
+    setIsSceneEditorOpen(true)
+  }
+
+  // Handler for Apply Recommendations - opens Edit dialog with pre-populated instructions
+  const handleEditSceneWithRecommendations = (sceneIndex: number, recommendations: string[]) => {
+    // Format recommendations as numbered instructions for the edit dialog
+    const formattedInstructions = recommendations
+      .map((rec, idx) => `${idx + 1}. ${rec}`)
+      .join('\n')
+    
+    setEditingSceneIndex(sceneIndex)
+    setSceneEditorInitialInstructions(formattedInstructions)
     setIsSceneEditorOpen(true)
   }
 
@@ -9327,6 +9341,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onDeleteScene={handleDeleteScene}
                 onReorderScenes={handleReorderScenes}
                 onEditScene={handleEditScene}
+                onEditSceneWithRecommendations={handleEditSceneWithRecommendations}
                 onUpdateSceneAudio={handleUpdateSceneAudio}
                 onDeleteSceneAudio={handleDeleteSceneAudio}
                 onEnhanceSceneContext={handleEnhanceSceneContext}
@@ -9739,6 +9754,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           onClose={() => {
             setIsSceneEditorOpen(false)
             setEditingSceneIndex(null)
+            setSceneEditorInitialInstructions('')
           }}
           scene={script.script.scenes[editingSceneIndex]}
           sceneIndex={editingSceneIndex}
@@ -9754,6 +9770,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }}
           onApplyChanges={handleApplySceneChanges}
           onUpdateSceneScores={handleUpdateSceneScores}
+          initialInstructions={sceneEditorInitialInstructions}
         />
       )}
 

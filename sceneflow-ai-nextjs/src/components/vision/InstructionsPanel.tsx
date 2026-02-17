@@ -1,21 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Wand2, Edit, Zap, Heart, Eye, Target, Lightbulb, Trash2, Sparkles, AlertTriangle, ChevronDown, ChevronUp, CheckSquare, Square, Loader } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { Wand2, Edit, Zap, Heart, Eye, Target, Lightbulb, Trash2 } from 'lucide-react'
 import { 
   SCENE_OPTIMIZATION_TEMPLATES, 
-  SceneRecommendation,
-  SceneAnalysis,
-  normalizeRecommendation,
   countInstructions,
-  MAX_INSTRUCTIONS,
-  PRIORITY_BADGES,
-  getScoreColor,
-  getScoreBgColor
+  MAX_INSTRUCTIONS
 } from '@/lib/constants/scene-optimization'
 
 interface InstructionsPanelProps {
@@ -23,13 +14,6 @@ interface InstructionsPanelProps {
   onInstructionChange: (instruction: string) => void
   // Optional: for multi-instruction support
   maxInstructions?: number
-  // AI Recommendations support
-  sceneAnalysis?: SceneAnalysis | null
-  recommendations?: SceneRecommendation[]
-  isLoadingRecommendations?: boolean
-  onFetchRecommendations?: () => void
-  // Callback when recommendation is added (for tracking)
-  onRecommendationAdded?: (recommendationId: string) => void
 }
 
 // Map template IDs to Lucide icons
@@ -47,66 +31,13 @@ const TEMPLATE_ICONS: Record<string, React.ReactNode> = {
 export function InstructionsPanel({ 
   instruction, 
   onInstructionChange,
-  maxInstructions = MAX_INSTRUCTIONS,
-  sceneAnalysis,
-  recommendations,
-  isLoadingRecommendations = false,
-  onFetchRecommendations,
-  onRecommendationAdded
+  maxInstructions = MAX_INSTRUCTIONS
 }: InstructionsPanelProps) {
   const instructionCount = countInstructions(instruction)
   const canAddMore = instructionCount < maxInstructions
 
-  // State for AI recommendations section
-  const [showRecommendations, setShowRecommendations] = useState(true)
-  const [selectedRecommendations, setSelectedRecommendations] = useState<Set<string>>(new Set())
-
-  // Normalize recommendations from various sources
-  const normalizedRecommendations = (
-    recommendations || 
-    sceneAnalysis?.recommendations || 
-    []
-  ).map(normalizeRecommendation)
-
-  // Toggle recommendation selection
-  const toggleRecommendation = (recId: string) => {
-    setSelectedRecommendations(prev => {
-      const next = new Set(prev)
-      if (next.has(recId)) {
-        next.delete(recId)
-      } else {
-        next.add(recId)
-      }
-      return next
-    })
-  }
-
-  // Add selected recommendations as instructions
-  const addSelectedRecommendations = () => {
-    const selected = normalizedRecommendations.filter(rec => 
-      rec.id && selectedRecommendations.has(rec.id)
-    )
-    
-    selected.forEach(rec => {
-      if (canAddMore) {
-        appendInstruction(rec.text, rec.id)
-        onRecommendationAdded?.(rec.id!)
-      }
-    })
-    
-    // Clear selections after adding
-    setSelectedRecommendations(new Set())
-  }
-
-  // Add single recommendation
-  const addRecommendation = (rec: SceneRecommendation) => {
-    if (!canAddMore || !rec.text) return
-    appendInstruction(rec.text, rec.id)
-    onRecommendationAdded?.(rec.id!)
-  }
-
   // Append instruction with numbered format
-  const appendInstruction = (newText: string, recommendationId?: string) => {
+  const appendInstruction = (newText: string) => {
     if (!canAddMore) return
     
     if (instruction.trim() === '') {
@@ -124,142 +55,6 @@ export function InstructionsPanel({
 
   return (
     <div className="space-y-4">
-      {/* AI Recommendations Section */}
-      {(normalizedRecommendations.length > 0 || onFetchRecommendations) && (
-        <div className="space-y-2">
-          <button
-            onClick={() => setShowRecommendations(!showRecommendations)}
-            className="flex items-center justify-between w-full text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
-          >
-            <span className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-500" />
-              AI Recommendations 
-              {normalizedRecommendations.length > 0 && (
-                <Badge variant="secondary" className="text-xs">
-                  {normalizedRecommendations.length}
-                </Badge>
-              )}
-              {sceneAnalysis?.score && (
-                <span className={`ml-2 text-xs font-bold ${getScoreColor(sceneAnalysis.score)}`}>
-                  Score: {sceneAnalysis.score}
-                </span>
-              )}
-            </span>
-            {showRecommendations ? (
-              <ChevronUp className="w-4 h-4" />
-            ) : (
-              <ChevronDown className="w-4 h-4" />
-            )}
-          </button>
-          
-          {showRecommendations && (
-            <div className="space-y-2">
-              {/* Loading state */}
-              {isLoadingRecommendations && (
-                <div className="flex items-center justify-center py-4 text-gray-500">
-                  <Loader className="w-4 h-4 mr-2 animate-spin" />
-                  <span className="text-sm">Analyzing scene...</span>
-                </div>
-              )}
-
-              {/* Fetch recommendations button */}
-              {!isLoadingRecommendations && normalizedRecommendations.length === 0 && onFetchRecommendations && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onFetchRecommendations}
-                  className="w-full justify-center"
-                >
-                  <Sparkles className="w-4 h-4 mr-2 text-purple-500" />
-                  Get AI Recommendations
-                </Button>
-              )}
-
-              {/* Recommendations list */}
-              {normalizedRecommendations.length > 0 && (
-                <>
-                  <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
-                    {normalizedRecommendations.map((rec, idx) => {
-                      const isSelected = rec.id ? selectedRecommendations.has(rec.id) : false
-                      const priorityConfig = PRIORITY_BADGES[rec.priority || 'medium']
-                      
-                      return (
-                        <div
-                          key={rec.id || idx}
-                          onClick={() => rec.id && toggleRecommendation(rec.id)}
-                          className={`flex items-start gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
-                            isSelected 
-                              ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700' 
-                              : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750'
-                          }`}
-                        >
-                          <button
-                            type="button"
-                            className="mt-0.5 flex-shrink-0"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              rec.id && toggleRecommendation(rec.id)
-                            }}
-                          >
-                            {isSelected ? (
-                              <CheckSquare className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                            ) : (
-                              <Square className="w-4 h-4 text-gray-400" />
-                            )}
-                          </button>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-xs">{priorityConfig.emoji}</span>
-                              <Badge className={`text-xs ${priorityConfig.color}`}>
-                                {priorityConfig.label}
-                              </Badge>
-                              {rec.category && (
-                                <Badge variant="outline" className="text-xs">
-                                  {rec.category}
-                                </Badge>
-                              )}
-                            </div>
-                            <span className={`text-sm ${isSelected ? 'text-gray-900 dark:text-gray-100' : 'text-gray-600 dark:text-gray-400'}`}>
-                              {rec.text}
-                            </span>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 px-2 text-xs flex-shrink-0"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              addRecommendation(rec)
-                            }}
-                            disabled={!canAddMore}
-                          >
-                            + Add
-                          </Button>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  
-                  {/* Add selected button */}
-                  {selectedRecommendations.size > 0 && (
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={addSelectedRecommendations}
-                      disabled={!canAddMore}
-                      className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Apply {selectedRecommendations.size} Selected Recommendation{selectedRecommendations.size !== 1 ? 's' : ''}
-                    </Button>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Instruction Templates */}
       <div>
         <div className="flex items-center justify-between mb-2">
@@ -349,7 +144,7 @@ Instructions are automatically numbered for clarity:
         <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
           <li>• Combine related changes in one revision</li>
           <li>• Use Common Revisions buttons to build instructions</li>
-          <li>• Add AI recommendations above for scene-specific improvements</li>
+          <li>• Use "Apply Recommendations" from scene analysis for targeted fixes</li>
           <li>• {maxInstructions} instructions per update is optimal for quality</li>
         </ul>
       </div>

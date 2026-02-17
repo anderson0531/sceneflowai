@@ -53,6 +53,8 @@ interface SceneEditorModalProps {
   script?: any
   onApplyChanges: (sceneIndex: number, revisedScene: any) => void
   onUpdateSceneScores?: (sceneIndex: number, directorScore: number, audienceScore: number, dialogReviews: any) => void
+  // Initial instructions to pre-populate (from Apply Recommendations)
+  initialInstructions?: string
 }
 
 export function SceneEditorModal({
@@ -66,10 +68,11 @@ export function SceneEditorModal({
   nextScene,
   script,
   onApplyChanges,
-  onUpdateSceneScores
+  onUpdateSceneScores,
+  initialInstructions = ''
 }: SceneEditorModalProps) {
   // State management
-  const [customInstruction, setCustomInstruction] = useState('')
+  const [customInstruction, setCustomInstruction] = useState(initialInstructions)
   const [previewScene, setPreviewScene] = useState<any | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [revisionHistory, setRevisionHistory] = useState<any[]>([])
@@ -217,6 +220,8 @@ export function SceneEditorModal({
       setCurrentHistoryIndex(0)
       setShowPreview(false)
       setSceneDescription(scene.visualDescription || '')
+      // Set initial instructions if provided (from Apply Recommendations)
+      setCustomInstruction(initialInstructions || '')
       // Load existing reviews from scene if available
       if (scene.dialogReviews?.director) {
         setDirectorReview(scene.dialogReviews.director)
@@ -231,7 +236,7 @@ export function SceneEditorModal({
       setReviewError(null)
       setLeftPanelTab('scene')
     }
-  }, [isOpen, scene])
+  }, [isOpen, scene, initialInstructions])
 
   // Handle voice transcript updates
   useEffect(() => {
@@ -836,15 +841,6 @@ export function SceneEditorModal({
                 <InstructionsPanel
                   instruction={customInstruction}
                   onInstructionChange={setCustomInstruction}
-                  recommendations={[
-                    ...(directorReview?.recommendations || []),
-                    ...(audienceReview?.recommendations || [])
-                  ].map(normalizeRecommendation)}
-                  isLoadingRecommendations={isLoadingReview}
-                  onFetchRecommendations={(!directorReview && !audienceReview) ? fetchSceneReview : undefined}
-                  onRecommendationAdded={(recId) => {
-                    setAppliedRecommendationIds(prev => [...new Set([...prev, recId])])
-                  }}
                 />
                 
                 {/* Voice Input Section */}
