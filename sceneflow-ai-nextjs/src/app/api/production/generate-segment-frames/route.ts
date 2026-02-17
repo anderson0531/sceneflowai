@@ -370,11 +370,11 @@ export async function POST(req: NextRequest) {
       // Gemini Studio handles both character portraits AND scene/frame references
       let startImageDataUrl: string
       
-      // Collect all reference images: character portraits + scene image
+      // Collect all reference images: character portraits + scene image + prop references
       const allReferenceImages: Array<{ imageUrl: string; name: string }> = []
       
-      // Add character portrait references (up to 5)
-      const charRefs = characters.filter(c => c.referenceUrl).slice(0, 5)
+      // Add character portrait references (up to 3 to leave room for props)
+      const charRefs = characters.filter(c => c.referenceUrl).slice(0, 3)
       for (const c of charRefs) {
         allReferenceImages.push({
           imageUrl: c.referenceUrl!,
@@ -382,11 +382,22 @@ export async function POST(req: NextRequest) {
         })
       }
       
-      // Add scene/frame reference if available and we have room (Gemini supports up to 5 refs)
+      // Add scene/frame reference if available
       if (referenceImageUrl && allReferenceImages.length < 5) {
         allReferenceImages.push({
           imageUrl: referenceImageUrl,
           name: 'Scene Reference'
+        })
+      }
+      
+      // Add prop/object reference images (critical and important props with images)
+      const propRefs = objectReferences
+        .filter(obj => obj.imageUrl && (obj.importance === 'critical' || obj.importance === 'important'))
+        .slice(0, 5 - allReferenceImages.length) // Fill remaining slots up to 5
+      for (const prop of propRefs) {
+        allReferenceImages.push({
+          imageUrl: prop.imageUrl!,
+          name: `Prop: ${prop.name}`
         })
       }
       
@@ -566,8 +577,20 @@ Render this scene in ${selectedStyle.name} style.`
         }
       ]
       
-      // DON'T add separate character refs - start frame already has them in context
+      // Add prop/object reference images (critical and important props with images)
+      // This ensures prop consistency between start and end frames
+      const endPropRefs = objectReferences
+        .filter(obj => obj.imageUrl && (obj.importance === 'critical' || obj.importance === 'important'))
+        .slice(0, 4) // Leave room for start frame reference (max 5 total)
+      for (const prop of endPropRefs) {
+        endReferenceImages.push({
+          imageUrl: prop.imageUrl!,
+          name: `Prop: ${prop.name}`
+        })
+      }
+      
       console.log('[Generate Frames] End frame using Gemini Studio with start frame as reference')
+      console.log(`[Generate Frames] End frame refs: ${endReferenceImages.map(r => r.name).join(', ')}`)
       
       // Build enhanced prompt for end frame
       // CRITICAL: For non-photorealistic styles, we must enforce style transformation

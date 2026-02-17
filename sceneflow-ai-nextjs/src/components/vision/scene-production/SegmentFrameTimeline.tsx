@@ -63,6 +63,13 @@ export interface SegmentFrameTimelineProps {
     }
     /** Art style for frame generation */
     artStyle?: string
+    /** Selected object/prop references with images */
+    selectedObjectReferences?: Array<{
+      id: string
+      name: string
+      imageUrl?: string
+      description?: string
+    }>
   }) => Promise<void>
   onGenerateAllFrames: () => Promise<void>
   onGenerateVideo: (segmentId: string) => void
@@ -237,6 +244,8 @@ export function SegmentFrameTimeline({
           visualSetup: options.visualSetup,
           // NEW: Pass art style for generation
           artStyle: options.artStyle,
+          // NEW: Pass selected object/prop references
+          selectedObjectReferences: options.selectedObjectReferences,
         })
       },
       {

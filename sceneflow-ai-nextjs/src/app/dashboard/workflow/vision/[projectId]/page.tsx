@@ -1907,6 +1907,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       /** Art style for frame generation */
       artStyle?: string
+      /** Selected object/prop references with images */
+      selectedObjectReferences?: Array<{
+        id: string
+        name: string
+        imageUrl?: string
+        description?: string
+      }>
     }) => {
       const scene = script?.script?.scenes?.find((s: any) => 
         (s.id || s.sceneId || `scene-${script?.script?.scenes?.indexOf(s)}`) === sceneId
@@ -2006,14 +2013,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 ? (scene.heading.includes('NIGHT') ? 'NIGHT' : scene.heading.includes('DAY') ? 'DAY' : undefined)
                 : undefined
             },
-            // Auto-detected object references for prop consistency
-            objectReferences: detectedObjects.map(obj => ({
-              name: obj.name,
-              description: obj.description,
-              category: obj.category,
-              importance: obj.importance,
-              imageUrl: obj.imageUrl
-            }))
+            // Object references for prop consistency
+            // When user has explicitly selected props in the dialog, prioritize those
+            // Otherwise, fall back to auto-detected objects from segment text
+            objectReferences: options?.selectedObjectReferences?.length
+              ? options.selectedObjectReferences.map(obj => ({
+                  name: obj.name,
+                  description: obj.description,
+                  category: 'prop' as const,
+                  importance: 'critical' as const, // User-selected = critical
+                  imageUrl: obj.imageUrl
+                }))
+              : detectedObjects.map(obj => ({
+                  name: obj.name,
+                  description: obj.description,
+                  category: obj.category,
+                  importance: obj.importance,
+                  imageUrl: obj.imageUrl
+                }))
           })
         })
 
