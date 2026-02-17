@@ -4337,40 +4337,40 @@ function SceneCard({
                                 return newSet
                               })
                             }}
-                            className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-md font-semibold border transition-all cursor-pointer hover:scale-105 ${
+                            className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg font-semibold border transition-all cursor-pointer hover:scale-105 shadow-sm ${
                               scene.audienceAnalysis.score >= 80 
-                                ? 'bg-green-500/20 text-green-300 border-green-500/40 hover:bg-green-500/30' 
+                                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50 hover:bg-emerald-500/30 hover:border-emerald-400/70' 
                                 : scene.audienceAnalysis.score >= 60 
-                                  ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40 hover:bg-yellow-500/30' 
-                                  : 'bg-red-500/20 text-red-300 border-red-500/40 hover:bg-red-500/30'
+                                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50 hover:bg-cyan-500/30 hover:border-cyan-400/70' 
+                                  : 'bg-rose-500/20 text-rose-300 border-rose-400/50 hover:bg-rose-500/30 hover:border-rose-400/70'
                             }`}
                           >
-                            <Users className="w-3 h-3" />
-                            <span>{scene.audienceAnalysis.score}</span>
+                            <Users className="w-3.5 h-3.5" />
+                            <span className="tabular-nums">{scene.audienceAnalysis.score}</span>
                             {(scene.audienceAnalysis.recommendations?.length || 0) > 0 && (
-                              <Badge variant="secondary" className="ml-0.5 h-4 px-1 text-[10px] bg-purple-500/30 text-purple-200 border-none">
+                              <span className="flex items-center justify-center ml-0.5 h-4 min-w-4 px-1 text-[10px] font-bold bg-violet-500/40 text-violet-200 rounded-full">
                                 {scene.audienceAnalysis.recommendations.length}
-                              </Badge>
+                              </span>
                             )}
                             {expandedRecommendations.has(sceneIdx) ? (
-                              <ChevronUp className="w-3 h-3 ml-0.5" />
+                              <ChevronUp className="w-3 h-3 ml-0.5 opacity-70" />
                             ) : (
-                              <ChevronDown className="w-3 h-3 ml-0.5" />
+                              <ChevronDown className="w-3 h-3 ml-0.5 opacity-70" />
                             )}
                           </button>
                         </TooltipTrigger>
-                        <TooltipContent className="bg-gray-900 text-white border border-gray-700 max-w-xs">
-                          <div className="space-y-1">
-                            <p className="text-xs font-medium">Audience Resonance: {scene.audienceAnalysis.score}/100</p>
-                            <div className="flex flex-wrap gap-1">
-                              <Badge variant="outline" className="text-[10px] h-4 border-gray-600">
+                        <TooltipContent className="bg-gray-900/95 backdrop-blur-sm text-white border border-gray-700/50 max-w-xs shadow-xl">
+                          <div className="space-y-2 p-1">
+                            <p className="text-sm font-semibold">Audience Resonance: {scene.audienceAnalysis.score}/100</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-700/50 text-gray-300">
                                 Pacing: {scene.audienceAnalysis.pacing}
-                              </Badge>
-                              <Badge variant="outline" className="text-[10px] h-4 border-gray-600">
+                              </span>
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-700/50 text-gray-300">
                                 Tension: {scene.audienceAnalysis.tension}
-                              </Badge>
+                              </span>
                             </div>
-                            <p className="text-[10px] text-gray-400 mt-1">{scene.audienceAnalysis.notes}</p>
+                            <p className="text-[11px] text-gray-400 leading-relaxed">{scene.audienceAnalysis.notes}</p>
                           </div>
                         </TooltipContent>
                       </Tooltip>
@@ -4390,7 +4390,7 @@ function SceneCard({
                               onAnalyzeScene(sceneIdx)
                             }}
                             disabled={analyzingSceneIndex === sceneIdx}
-                            className="flex items-center gap-1 text-xs px-2 py-1 rounded-md font-medium border transition-all bg-blue-500/20 text-blue-300 border-blue-500/40 hover:bg-blue-500/30 disabled:opacity-50"
+                            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg font-medium border transition-all bg-indigo-500/20 text-indigo-300 border-indigo-400/50 hover:bg-indigo-500/30 hover:border-indigo-400/70 disabled:opacity-50 shadow-sm"
                           >
                             {analyzingSceneIndex === sceneIdx ? (
                               <>
@@ -4533,36 +4533,40 @@ function SceneCard({
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="mt-2 p-3 bg-gray-800/60 border border-gray-700/50 rounded-lg">
-                {/* Analysis Summary Row */}
-                <div className="flex flex-wrap gap-2 mb-3">
-                  <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
-                    Pacing: {scene.audienceAnalysis.pacing}
-                  </Badge>
-                  <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
-                    Tension: {scene.audienceAnalysis.tension}
-                  </Badge>
-                  <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
-                    Character: {scene.audienceAnalysis.characterDevelopment}
-                  </Badge>
-                  <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
-                    Visual: {scene.audienceAnalysis.visualPotential}
-                  </Badge>
+              <div className="mt-3 p-4 bg-gradient-to-br from-gray-800/80 to-gray-900/80 border border-gray-700/60 rounded-xl shadow-lg backdrop-blur-sm">
+                {/* Analysis Metrics Grid */}
+                <div className="grid grid-cols-4 gap-2 mb-4">
+                  {[
+                    { label: 'Pacing', value: scene.audienceAnalysis.pacing, icon: '⚡' },
+                    { label: 'Tension', value: scene.audienceAnalysis.tension, icon: '🎭' },
+                    { label: 'Character', value: scene.audienceAnalysis.characterDevelopment, icon: '👤' },
+                    { label: 'Visual', value: scene.audienceAnalysis.visualPotential, icon: '🎬' },
+                  ].map((metric) => (
+                    <div key={metric.label} className="flex flex-col items-center p-2 bg-gray-800/50 rounded-lg border border-gray-700/40">
+                      <span className="text-sm mb-1">{metric.icon}</span>
+                      <span className="text-[10px] text-gray-400 uppercase tracking-wide">{metric.label}</span>
+                      <span className="text-xs font-medium text-gray-200 capitalize">{metric.value}</span>
+                    </div>
+                  ))}
                 </div>
                 
                 {/* Notes */}
                 {scene.audienceAnalysis.notes && (
-                  <p className="text-xs text-gray-400 mb-3 leading-relaxed">
-                    {scene.audienceAnalysis.notes}
-                  </p>
+                  <div className="mb-4 p-3 bg-gray-800/40 rounded-lg border-l-2 border-cyan-500/50">
+                    <p className="text-xs text-gray-300 leading-relaxed italic">
+                      "{scene.audienceAnalysis.notes}"
+                    </p>
+                  </div>
                 )}
                 
                 {/* Sync CTA - Show when scene was optimized after last analysis */}
                 {scene.audienceAnalysis.optimizedAt && 
                  scene.audienceAnalysis.analyzedAt &&
                  new Date(scene.audienceAnalysis.optimizedAt) > new Date(scene.audienceAnalysis.analyzedAt) && (
-                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5 mb-3 flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mb-4 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                      <AlertTriangle className="w-4 h-4 text-amber-400" />
+                    </div>
                     <span className="text-xs text-amber-200 flex-1">Scene optimized since last analysis - score may have changed</span>
                     {onAnalyzeScene && (
                       <Button
@@ -4572,7 +4576,7 @@ function SceneCard({
                           onAnalyzeScene(sceneIdx)
                         }}
                         disabled={analyzingSceneIndex === sceneIdx}
-                        className="h-6 text-xs bg-amber-600 hover:bg-amber-500 text-white"
+                        className="h-7 text-xs bg-amber-600 hover:bg-amber-500 text-white rounded-lg"
                       >
                         {analyzingSceneIndex === sceneIdx ? (
                           <Loader2 className="w-3 h-3 animate-spin" />
@@ -4586,18 +4590,20 @@ function SceneCard({
                 
                 {/* Recommendations */}
                 {(scene.audienceAnalysis.recommendations?.length || 0) > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-purple-300 flex items-center gap-1">
-                      <Lightbulb className="w-3 h-3" />
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold text-violet-300 flex items-center gap-2">
+                      <Lightbulb className="w-4 h-4" />
                       Recommendations
                     </p>
-                    <ul className="space-y-1.5">
+                    <ul className="space-y-2">
                       {scene.audienceAnalysis.recommendations.map((rec: string | { text: string; category?: string; impact?: string }, rIdx: number) => {
                         const recText = typeof rec === 'string' ? rec : rec?.text || String(rec)
                         return (
-                          <li key={rIdx} className="text-xs text-gray-300 flex gap-2 pl-1">
-                            <span className="text-purple-400 mt-0.5">•</span>
-                            <span>{recText}</span>
+                          <li key={rIdx} className="text-xs text-gray-300 flex gap-3 p-2.5 bg-gray-800/40 rounded-lg border border-gray-700/30 hover:bg-gray-800/60 transition-colors">
+                            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 text-[10px] font-bold flex-shrink-0">
+                              {rIdx + 1}
+                            </span>
+                            <span className="leading-relaxed">{recText}</span>
                           </li>
                         )
                       })}
@@ -4606,7 +4612,7 @@ function SceneCard({
                 )}
                 
                 {/* Action Buttons */}
-                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-700/50">
+                <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-700/50">
                   {onOptimizeScene && (scene.audienceAnalysis.score < 80 || (scene.audienceAnalysis.recommendations?.length || 0) > 0) && (
                     <Button
                       size="sm"
@@ -4622,16 +4628,16 @@ function SceneCard({
                         setOptimizeDialogOpen(true)
                       }}
                       disabled={optimizingSceneIndex === sceneIdx}
-                      className="h-7 text-xs bg-purple-600 hover:bg-purple-500"
+                      className="h-8 text-xs bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-lg shadow-md"
                     >
                       {optimizingSceneIndex === sceneIdx ? (
                         <>
-                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                           Optimizing...
                         </>
                       ) : (
                         <>
-                          <Sparkles className="w-3 h-3 mr-1" />
+                          <Sparkles className="w-3.5 h-3.5 mr-1.5" />
                           Optimize
                         </>
                       )}
@@ -4646,16 +4652,16 @@ function SceneCard({
                         onAnalyzeScene(sceneIdx)
                       }}
                       disabled={analyzingSceneIndex === sceneIdx}
-                      className="h-7 text-xs border-blue-500/50 text-blue-300 hover:bg-blue-500/20 hover:border-blue-400"
+                      className="h-8 text-xs border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-400 rounded-lg"
                     >
                       {analyzingSceneIndex === sceneIdx ? (
                         <>
-                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                           Analyzing...
                         </>
                       ) : (
                         <>
-                          <RefreshCw className="w-3 h-3 mr-1" />
+                          <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
                           Analyze
                         </>
                       )}
