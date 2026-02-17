@@ -41,8 +41,9 @@ interface AudioClip {
   url: string
   startTime: number
   duration: number
-  type: 'narration' | 'dialogue'
+  type: 'narration' | 'dialogue' | 'music' | 'sfx'
   label?: string
+  loop?: boolean
 }
 
 export function AudioGalleryPlayer({
@@ -68,6 +69,8 @@ export function AudioGalleryPlayer({
   
   // Refs
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const musicAudioRef = useRef<HTMLAudioElement | null>(null)
+  const sfxAudioRefs = useRef<(HTMLAudioElement | null)[]>([])
   const animationRef = useRef<number | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   
@@ -99,7 +102,7 @@ export function AudioGalleryPlayer({
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
   }, [])
   
-  // Build audio clips for current scene
+  // Build audio clips for current scene (narration & dialogue - played sequentially)
   const audioClips = useMemo((): AudioClip[] => {
     if (!currentScene) return []
     
@@ -150,6 +153,54 @@ export function AudioGalleryPlayer({
     
     return clips
   }, [currentScene, selectedLanguage])
+  
+  // Build music track for current scene (plays concurrently, loops)
+  const musicTrack = useMemo((): AudioClip | null => {
+    if (!currentScene) return null
+    
+    const musicUrl = currentScene.musicAudio || currentScene.music?.url
+    if (!musicUrl) return null
+    
+    return {
+      id: 'music',
+      url: musicUrl,
+      startTime: 0,
+      duration: currentScene.musicDuration || 60, // Default long duration, will loop
+      type: 'music',
+      label: 'Background Music',
+      loop: true
+    }
+  }, [currentScene])
+  
+  // Build SFX clips for current scene (play concurrently at specific times or distributed)
+  const sfxClips = useMemo((): AudioClip[] => {
+    if (!currentScene) return []
+    
+    const sfxArray = currentScene.sfxAudio || []
+    if (!Array.isArray(sfxArray) || sfxArray.length === 0) return []
+    
+    // Distribute SFX across scene duration or use provided timing
+    const baseDuration = audioClips.length > 0 
+      ? audioClips[audioClips.length - 1].startTime + audioClips[audioClips.length - 1].duration 
+      : 5
+    
+    return sfxArray.map((sfx: any, idx: number) => {
+      const sfxUrl = typeof sfx === 'string' ? sfx : sfx?.url
+      if (!sfxUrl) return null
+      
+      // Calculate distributed start time if not specified
+      const startTime = sfx?.startTime ?? (idx * (baseDuration / Math.max(sfxArray.length, 1)))
+      
+      return {
+        id: `sfx-${idx}`,
+        url: sfxUrl,
+        startTime,
+        duration: sfx?.duration || 3,
+        type: 'sfx' as const,
+        label: sfx?.description || `Sound Effect ${idx + 1}`
+      }
+    }).filter(Boolean) as AudioClip[]
+  }, [currentScene, audioClips])
   
   // Total duration for current scene
   const sceneDuration = useMemo(() => {
@@ -279,6 +330,88 @@ export function AudioGalleryPlayer({
     }
   }, [currentClip])
   
+  // Sync music track (plays throughout scene, loops, lower volume)
+  useEffect(() => {
+    const musicAudio = musicAudioRef.current
+    if (!musicAudio || !musicTrack) return
+    
+    // Set source if changed
+    if (musicAudio.src !== musicTrack.url) {
+      musicAudio.src = musicTrack.url
+      musicAudio.loop = true
+      musicAudio.currentTime = 0
+    }
+    
+    // Sync playback state - music plays at 40% volume
+    const musicVolume = isMuted ? 0 : volume * 0.4
+    musicAudio.volume = musicVolume
+    
+    if (isPlaying && musicAudio.paused && currentTime < sceneDuration) {
+      musicAudio.play().catch(() => {})
+    } else if (!isPlaying && !musicAudio.paused) {
+      musicAudio.pause()
+    }
+  }, [musicTrack, isPlaying, volume, isMuted, currentTime, sceneDuration])
+  
+  // Stop music when scene changes or playback stops
+  useEffect(() => {
+    return () => {
+      if (musicAudioRef.current) {
+        musicAudioRef.current.pause()
+        musicAudioRef.current.currentTime = 0
+      }
+    }
+  }, [currentSceneIndex])
+  
+  // Sync SFX clips (play at scheduled times)
+  useEffect(() => {
+    if (!isPlaying || sfxClips.length === 0) return
+    
+    sfxClips.forEach((sfx, idx) => {
+      // Check if it's time to play this SFX
+      const sfxShouldPlay = currentTime >= sfx.startTime && currentTime < sfx.startTime + sfx.duration
+      
+      // Get or create audio element for this SFX
+      if (!sfxAudioRefs.current[idx]) {
+        sfxAudioRefs.current[idx] = new Audio()
+      }
+      const sfxAudio = sfxAudioRefs.current[idx]
+      if (!sfxAudio) return
+      
+      if (sfxShouldPlay) {
+        // Set source if changed
+        if (sfxAudio.src !== sfx.url) {
+          sfxAudio.src = sfx.url
+          sfxAudio.currentTime = 0
+        }
+        
+        // Play at 80% volume
+        sfxAudio.volume = isMuted ? 0 : volume * 0.8
+        
+        if (sfxAudio.paused) {
+          sfxAudio.play().catch(() => {})
+        }
+      } else if (!sfxAudio.paused && currentTime >= sfx.startTime + sfx.duration) {
+        // Stop if past end time
+        sfxAudio.pause()
+        sfxAudio.currentTime = 0
+      }
+    })
+  }, [isPlaying, sfxClips, currentTime, volume, isMuted])
+  
+  // Cleanup SFX audio elements on scene change
+  useEffect(() => {
+    return () => {
+      sfxAudioRefs.current.forEach(audio => {
+        if (audio) {
+          audio.pause()
+          audio.src = ''
+        }
+      })
+      sfxAudioRefs.current = []
+    }
+  }, [currentSceneIndex])
+  
   // Format time as MM:SS
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -293,7 +426,7 @@ export function AudioGalleryPlayer({
   const formattedHeading = formatSceneHeading(sceneHeading) || sceneHeading || 'Untitled Scene'
   
   // Check if current scene has audio
-  const hasAudio = audioClips.length > 0
+  const hasAudio = audioClips.length > 0 || !!musicTrack || sfxClips.length > 0
   
   // Language display names
   const getLanguageName = (code: string) => {
@@ -564,7 +697,9 @@ export function AudioGalleryPlayer({
           <div className="flex gap-2 overflow-x-auto pb-2 justify-center">
             {scenes.map((scene, idx) => {
               const hasSceneAudio = scene.narrationAudio?.en?.url || scene.narrationAudioUrl || 
-                (scene.dialogueAudio?.en && scene.dialogueAudio.en.length > 0)
+                (scene.dialogueAudio?.en && scene.dialogueAudio.en.length > 0) ||
+                scene.musicAudio || scene.music?.url ||
+                (Array.isArray(scene.sfxAudio) && scene.sfxAudio.length > 0)
               
               return (
                 <button
@@ -600,8 +735,9 @@ export function AudioGalleryPlayer({
           </div>
         </div>
         
-        {/* Hidden audio element */}
+        {/* Hidden audio elements */}
         <audio ref={audioRef} preload="auto" />
+        <audio ref={musicAudioRef} preload="auto" />
       </div>
     </TooltipProvider>
   )

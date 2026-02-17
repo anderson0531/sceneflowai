@@ -13,7 +13,7 @@
 'use client'
 
 import React, { useState, useCallback, useMemo } from 'react'
-import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2, Volume2, VolumeX, Play, Pause, SkipForward, SkipBack, Check, Globe, Users, Package, AlertCircle, CheckCircle2, MapPin } from 'lucide-react'
+import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, EyeOff, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2, Volume2, VolumeX, Play, Pause, SkipForward, SkipBack, Check, Globe, Users, Package, AlertCircle, CheckCircle2, MapPin, FileText, ChevronDown, ChevronUp } from 'lucide-react'
 import { AudioGalleryPlayer } from './AudioGalleryPlayer'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { Button } from '@/components/ui/Button'
@@ -98,6 +98,9 @@ export function SceneGallery({
   const [openProductionScene, setOpenProductionScene] = useState<string | null>(null)
   const [isGeneratingAll, setIsGeneratingAll] = useState(false)
   const [showAudioPlayer, setShowAudioPlayer] = useState(false)
+  const [showStoryboardImages, setShowStoryboardImages] = useState(true)
+  const [isGeneratingDirection, setIsGeneratingDirection] = useState(false)
+  const [directionProgress, setDirectionProgress] = useState<{ current: number; total: number } | null>(null)
   const [selectedLanguage, setSelectedLanguage] = useState('en')
   
   // Edit modal state
@@ -140,6 +143,9 @@ export function SceneGallery({
   
   // Count scenes without images for Generate All button
   const scenesWithoutImages = scenes.filter(scene => !scene.imageUrl).length
+  
+  // Count scenes without direction for Generate Direction button
+  const scenesWithoutDirection = scenes.filter(scene => !scene.sceneDirection || Object.keys(scene.sceneDirection).length === 0).length
   
   // Build smart prompt that includes character AND object references for consistency
   const buildScenePrompt = useCallback((scene: any, sceneIdx: number): string => {
@@ -227,6 +233,68 @@ export function SceneGallery({
       setIsGeneratingAll(false)
     }
   }, [scenes, scenesWithoutImages, buildScenePrompt, onGenerateScene, execute])
+  
+  // Generate direction for all scenes - streaming with progress
+  const handleGenerateAllDirection = useCallback(async () => {
+    if (scenesWithoutDirection === 0) return
+    
+    setIsGeneratingDirection(true)
+    setDirectionProgress({ current: 0, total: scenesWithoutDirection })
+    
+    try {
+      // Get projectId from first scene or URL
+      const projectId = scenes[0]?.projectId || window.location.pathname.split('/').pop()
+      
+      const response = await fetch('/api/vision/generate-all-direction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId })
+      })
+      
+      if (!response.body) throw new Error('No response body')
+      
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6))
+              
+              if (data.type === 'progress') {
+                setDirectionProgress({ current: data.scene, total: data.total })
+              } else if (data.type === 'scene-complete') {
+                setDirectionProgress({ current: data.scene, total: data.total })
+              } else if (data.type === 'complete') {
+                console.log(`[SceneGallery] Direction generation complete: ${data.generated} generated, ${data.skipped} skipped, ${data.failed} failed`)
+              } else if (data.type === 'error') {
+                console.error('[SceneGallery] Direction generation error:', data.error)
+              }
+            } catch (e) {
+              // Ignore parse errors
+            }
+          }
+        }
+      }
+      
+      // Trigger page refresh to show updated directions
+      window.location.reload()
+    } catch (error) {
+      console.error('[SceneGallery] Failed to generate all directions:', error)
+    } finally {
+      setIsGeneratingDirection(false)
+      setDirectionProgress(null)
+    }
+  }, [scenes, scenesWithoutDirection])
 
   return (
     <TooltipProvider>
@@ -270,6 +338,33 @@ export function SceneGallery({
               <TooltipContent>Generate images for all scenes without images</TooltipContent>
             </Tooltip>
           )}
+          {/* Generate All Direction button - only show if scenes without direction exist */}
+          {scenesWithoutDirection > 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateAllDirection}
+                  disabled={isGeneratingDirection}
+                  className="flex items-center gap-2 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/30 hover:border-amber-500/50 hover:from-amber-500/20 hover:to-orange-500/20"
+                >
+                  {isGeneratingDirection ? (
+                    <>
+                      <Loader className="w-4 h-4 animate-spin text-amber-400" />
+                      <span>{directionProgress ? `${directionProgress.current}/${directionProgress.total}` : 'Generating...'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="w-4 h-4 text-amber-400" />
+                      <span>Generate Direction ({scenesWithoutDirection})</span>
+                    </>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Generate scene direction for all scenes without direction</TooltipContent>
+            </Tooltip>
+          )}
           {/* Generate All Audio button */}
           {onOpenGenerateAudio && (
             <Tooltip>
@@ -306,12 +401,30 @@ export function SceneGallery({
                   }
                 >
                   {showAudioPlayer ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                  <span>Audio Player</span>
+                  <span>Player</span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{showAudioPlayer ? 'Hide audio player' : 'Show audio player to preview scene audio'}</TooltipContent>
+              <TooltipContent>{showAudioPlayer ? 'Hide player' : 'Show player to preview scene audio'}</TooltipContent>
             </Tooltip>
           )}
+          {/* Storyboard Images toggle */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowStoryboardImages(!showStoryboardImages)}
+                className={showStoryboardImages 
+                  ? "flex items-center gap-2" 
+                  : "flex items-center gap-2 bg-gray-200 dark:bg-gray-700"
+                }
+              >
+                {showStoryboardImages ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                <span className="hidden sm:inline">Images</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{showStoryboardImages ? 'Hide storyboard images' : 'Show storyboard images'}</TooltipContent>
+          </Tooltip>
           {scenes.length > 0 && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -370,6 +483,9 @@ export function SceneGallery({
         </div>
       )}
       
+      {/* Storyboard Images section - collapsible */}
+      {showStoryboardImages && (
+        <>
       {scenes.length === 0 ? (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
           <Camera className="w-12 h-12 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
@@ -480,6 +596,8 @@ export function SceneGallery({
           onSceneSelect={setSelectedScene}
           onRegenerateScene={onRegenerateScene}
         />
+      )}
+        </>
       )}
       
       {/* Storyboard Report Preview Modal */}
