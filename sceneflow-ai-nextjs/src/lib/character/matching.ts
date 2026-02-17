@@ -71,8 +71,44 @@ const EXCLUDED_WORDS = new Set([
   'the', 'and', 'but', 'or', 'a', 'an', 'in', 'on', 'at', 'to', 'from'
 ])
 
+// Common nickname mappings (nickname -> possible full names)
+const NICKNAME_MAPPINGS: Record<string, string[]> = {
+  'ben': ['benjamin', 'benedict', 'benito'],
+  'alex': ['alexander', 'alexandra', 'alexis', 'alejandro'],
+  'mike': ['michael', 'miguel'],
+  'nick': ['nicholas', 'nicolas', 'nikolas'],
+  'chris': ['christopher', 'christian', 'christina'],
+  'dan': ['daniel', 'danny'],
+  'dave': ['david'],
+  'bob': ['robert', 'bobby'],
+  'bill': ['william', 'billy'],
+  'jim': ['james', 'jimmy'],
+  'joe': ['joseph', 'joey'],
+  'tom': ['thomas', 'tommy'],
+  'tony': ['anthony', 'antonio'],
+  'sam': ['samuel', 'samantha'],
+  'kate': ['katherine', 'kathryn', 'catherine'],
+  'liz': ['elizabeth', 'lizzy', 'beth'],
+  'jenny': ['jennifer'],
+  'meg': ['megan', 'margaret'],
+  'anya': ['anastasia', 'anna'],
+  'matt': ['matthew', 'mathew'],
+  'jake': ['jacob'],
+  'charlie': ['charles', 'charlotte'],
+  'ed': ['edward', 'edwin', 'eduardo'],
+  'ted': ['theodore', 'edward'],
+  'andy': ['andrew', 'anderson'],
+  'steve': ['steven', 'stephen'],
+  'rick': ['richard', 'ricardo', 'ricky'],
+  'dick': ['richard'],
+  'jack': ['john', 'jackson'],
+  'will': ['william', 'willam'],
+  'rob': ['robert', 'roberto'],
+}
+
 /**
  * Find all matching characters for a scene
+ * Uses intelligent nickname matching (e.g., "Ben" matches "Dr. Benjamin Anderson")
  */
 export function findSceneCharacters(
   sceneText: string,
@@ -101,7 +137,49 @@ export function findSceneCharacters(
     if (character) foundCharacters.add(character)
   }
 
-  // Strategy 3: Only if no matches found, try first names (with exclusions)
+  // Strategy 3: Match nicknames to full names (e.g., "Ben" matches "Dr. Benjamin Anderson")
+  // This runs regardless of whether we found matches, to catch nickname references
+  const wordPattern = /\b([A-Z][a-z]+)\b/g
+  const words = [...sceneText.matchAll(wordPattern)].map(m => m[1].toLowerCase())
+  const uniqueWords = [...new Set(words)]
+  
+  for (const word of uniqueWords) {
+    if (EXCLUDED_WORDS.has(word) || word.length < 3) continue
+    
+    // Check if this word is a known nickname
+    const possibleFullNames = NICKNAME_MAPPINGS[word]
+    if (possibleFullNames) {
+      // Try to match against character names
+      availableCharacters.forEach(char => {
+        const charNameLower = char.name.toLowerCase()
+        // Check if any possible full name appears in the character name
+        for (const fullName of possibleFullNames) {
+          if (charNameLower.includes(fullName)) {
+            foundCharacters.add(char)
+            break
+          }
+        }
+      })
+    }
+    
+    // Also check if the word is a first name prefix of any character
+    // (handles cases like "Ben" matching "Benjamin" even without explicit mapping)
+    availableCharacters.forEach(char => {
+      const nameParts = char.name.toLowerCase().split(/\s+/)
+      // Skip titles like "Dr.", "Mr.", etc.
+      const meaningfulParts = nameParts.filter(p => !EXCLUDED_WORDS.has(p.replace('.', '')))
+      
+      for (const part of meaningfulParts) {
+        // Check if the word is a prefix of any name part (min 3 chars match)
+        if (part.startsWith(word) && word.length >= 3 && part.length > word.length) {
+          foundCharacters.add(char)
+          break
+        }
+      }
+    })
+  }
+
+  // Strategy 4: Fallback - try first names only if very few matches found
   if (foundCharacters.size === 0) {
     availableCharacters.forEach(char => {
       const firstName = char.name.split(/\s+/)[0].toLowerCase()

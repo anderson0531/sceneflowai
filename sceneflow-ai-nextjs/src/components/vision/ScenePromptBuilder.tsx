@@ -45,11 +45,18 @@ interface ScenePromptBuilderProps {
     appearanceDescription?: string
     ethnicity?: string
     subject?: string
+    wardrobes?: Array<{
+      id: string
+      name: string
+      description: string
+    }>
   }>
   /** Scene backdrop references from the Reference Library */
   sceneReferences?: VisualReference[]
   /** Prop/object references from the Reference Library */
   objectReferences?: VisualReference[]
+  /** Wardrobe assignments for this scene { characterName: wardrobeId } */
+  sceneWardrobes?: Record<string, string>
   onGenerateImage: (selectedCharacters: any[] | any) => void
   isGenerating?: boolean
 }
@@ -138,6 +145,7 @@ export function ScenePromptBuilder({
   availableCharacters = [],
   sceneReferences = [],
   objectReferences = [],
+  sceneWardrobes = {},
   onGenerateImage,
   isGenerating = false
 }: ScenePromptBuilderProps) {
@@ -184,43 +192,67 @@ export function ScenePromptBuilder({
     const updates: Partial<ScenePromptStructure> = {}
     const sceneDirection: DetailedSceneDirection | undefined = scene.sceneDirection
     
-    // Use ONLY visualDescription (the first paragraph of Scene Direction) for detection
-    // This ensures characters/props detected match exactly what's in the visual prompt baseline
+    // Build comprehensive text for character/prop detection
+    // Include: visualDescription, Scene Direction main text, and keyProps
     const visualDescriptionText = scene.visualDescription || ''
+    const sceneDirectionText = scene.sceneDirectionText || ''
+    const keyPropsText = sceneDirection?.scene?.keyProps?.join(' ') || ''
+    const fullDetectionText = [visualDescriptionText, sceneDirectionText, keyPropsText].filter(Boolean).join(' ')
     
-    // AUTO-DETECT AND PRE-SELECT CHARACTERS from visualDescription
+    // AUTO-DETECT AND PRE-SELECT CHARACTERS using intelligent nickname matching
+    // (e.g., "Ben" in scene direction will match "Dr. Benjamin Anderson")
     if (availableCharacters && availableCharacters.length > 0) {
-      const detectedChars = findSceneCharacters(visualDescriptionText, availableCharacters)
+      const detectedChars = findSceneCharacters(fullDetectionText, availableCharacters)
       
       if (detectedChars.length > 0) {
         updates.characters = detectedChars.map((c: any) => c.name)
-        console.log('[ScenePromptBuilder] Auto-selected characters from visualDescription:', detectedChars.map((c: any) => c.name))
+        console.log('[ScenePromptBuilder] Auto-selected characters (with nickname matching):', detectedChars.map((c: any) => c.name))
       }
     }
     
-    // AUTO-DETECT AND PRE-SELECT OBJECTS from visualDescription
-    // Pre-select detected objects (limited to top 5 by importance: critical > important > background)
+    // AUTO-DETECT AND PRE-SELECT OBJECTS from scene text + keyProps
+    // Matches against both scene text and Scene Direction keyProps for comprehensive detection
     if (objectReferences && objectReferences.length > 0) {
       const detectedObjects = findSceneObjects(
-        visualDescriptionText, 
+        fullDetectionText, 
         objectReferences as any[], 
         scene.sceneNumber
       )
       
-      if (detectedObjects.length > 0) {
-        // Limit to top 5 objects by importance (already sorted by findSceneObjects)
-        const topObjects = detectedObjects.slice(0, 5)
+      // Also match against keyProps names directly
+      const keyProps = sceneDirection?.scene?.keyProps || []
+      const additionalMatches: any[] = []
+      
+      keyProps.forEach((propName: string) => {
+        const propNameLower = propName.toLowerCase()
+        objectReferences.forEach((ref: any) => {
+          const refNameLower = ref.name.toLowerCase()
+          // Check if keyProp name matches or is contained in reference name
+          if (refNameLower.includes(propNameLower) || propNameLower.includes(refNameLower)) {
+            if (!detectedObjects.find(d => d.id === ref.id) && !additionalMatches.find(a => a.id === ref.id)) {
+              additionalMatches.push(ref)
+            }
+          }
+        })
+      })
+      
+      const allDetected = [...detectedObjects, ...additionalMatches]
+      
+      if (allDetected.length > 0) {
+        // Sort by importance and limit to top 5
+        const sorted = allDetected.sort((a: any, b: any) => {
+          const order: Record<string, number> = { critical: 0, important: 1, background: 2 }
+          return (order[a.importance || 'background'] ?? 3) - (order[b.importance || 'background'] ?? 3)
+        })
+        
+        const topObjects = sorted.slice(0, 5)
         const selectedIds = topObjects.map((obj: any) => obj.id)
-        const allDetectedIds = detectedObjects.map((obj: any) => obj.id)
+        const allDetectedIds = sorted.map((obj: any) => obj.id)
         
         // Pre-select top 5 objects and track all detected for UI hints
         setSelectedObjectRefIds(selectedIds)
         setAutoDetectedObjectIds(allDetectedIds)
-        console.log('[ScenePromptBuilder] Auto-selected objects (top 5):', topObjects.map((o: any) => o.name))
-        if (detectedObjects.length > 5) {
-          console.log('[ScenePromptBuilder] Additional detected objects (not pre-selected):', 
-            detectedObjects.slice(5).map((o: any) => o.name))
-        }
+        console.log('[ScenePromptBuilder] Auto-selected props (top 5, including keyProps matches):', topObjects.map((o: any) => o.name))
       }
     }
     
@@ -431,26 +463,50 @@ export function ScenePromptBuilder({
   }, [open])
 
   // Construct prompt from structure
-  // STRATEGY: If scene has visualDescription (from Scene Direction), use that as the baseline
-  // and only add minimal framing (shot type, characters, props, art style).
-  // Otherwise, fall back to building from individual fields.
+  // STRATEGY: Use the Scene Direction main description as the base prompt for storyboard visualization.
+  // The goal is quick visual playback - good enough description, not perfect.
+  // Character and prop references are passed separately to the API for visual consistency.
   const constructPrompt = (): string => {
-    // Check if we have a high-quality visualDescription from Scene Direction
     const hasSceneDirection = !!scene?.sceneDirection
-    const visualDescription = scene?.visualDescription || ''
+    const sceneDirection = scene?.sceneDirection as DetailedSceneDirection | undefined
     
-    // If we have a good visualDescription (first paragraph of Scene Direction), use it as baseline
-    // MINIMAL: Only include the Scene Direction paragraph + art style suffix
-    // Character and prop references are passed separately to the API (not embedded in prompt text)
-    if (hasSceneDirection && visualDescription && visualDescription.length > 100) {
+    // Get the main Scene Direction description (the italicized prose at the top)
+    // This is more concise and cinematically focused than visualDescription
+    const mainDescription = scene?.sceneDirectionText || scene?.visualDescription || ''
+    
+    // If we have Scene Direction data, build a focused storyboard prompt
+    if (hasSceneDirection && mainDescription && mainDescription.length > 50) {
       const parts: string[] = []
       
-      // 1. The visualDescription IS the prompt (first paragraph of Scene Direction)
-      // It already contains shot descriptions like "CLOSE ON", "PULL BACK", "WIDE SHOT", etc.
-      // Do NOT add redundant shot type prefix - it's already in the prose
-      parts.push(visualDescription)
+      // 1. Main Scene Direction description (the key visual prose)
+      // e.g., "Dutch angles emphasize Ben's disorientation. Anya's composed posture contrasts..."
+      parts.push(mainDescription)
       
-      // 2. Art style suffix (from dialog controls - the only UI setting that modifies the prompt)
+      // 2. Add selected character wardrobes for visual consistency
+      // e.g., "Dr. Benjamin Anderson wearing Obsessed Scientist Lab Attire"
+      if (structure.characters.length > 0 && Object.keys(sceneWardrobes).length > 0) {
+        const wardrobeDescriptions: string[] = []
+        
+        structure.characters.forEach(charName => {
+          const wardrobeId = sceneWardrobes[charName]
+          if (wardrobeId) {
+            // Find the character to get their wardrobe details
+            const character = availableCharacters.find(c => c.name === charName)
+            if (character?.wardrobes) {
+              const wardrobe = character.wardrobes.find(w => w.id === wardrobeId)
+              if (wardrobe) {
+                wardrobeDescriptions.push(`${charName} wearing ${wardrobe.name}`)
+              }
+            }
+          }
+        })
+        
+        if (wardrobeDescriptions.length > 0) {
+          parts.push(wardrobeDescriptions.join(', '))
+        }
+      }
+      
+      // 3. Art style suffix (from dialog controls)
       const stylePreset = artStylePresets.find(s => s.id === structure.artStyle)
       if (stylePreset) parts.push(stylePreset.promptSuffix)
       
@@ -888,25 +944,28 @@ export function ScenePromptBuilder({
               </div>
             )}
 
-            {/* Reference Library - Scene Backdrops & Props */}
+            {/* Prop References - Highlighted Section */}
             {(sceneReferences.length > 0 || objectReferences.length > 0) && (
-              <div className="space-y-3 p-3 rounded border border-gray-700 bg-gray-800/50">
+              <div className="space-y-3 p-3 rounded-lg border-2 border-purple-500/50 bg-gradient-to-br from-purple-900/20 to-violet-900/10 shadow-lg shadow-purple-500/10">
                 <button
                   onClick={() => setReferenceLibraryOpen(!referenceLibraryOpen)}
-                  className="w-full flex items-center justify-between text-sm font-semibold text-gray-200 hover:text-white transition-colors"
+                  className="w-full flex items-center justify-between text-sm font-semibold text-purple-200 hover:text-white transition-colors"
                 >
                   <span className="flex items-center gap-2">
-                    Reference Library 📚
+                    <Box className="w-4 h-4 text-purple-400" />
+                    <span className="bg-gradient-to-r from-purple-300 to-violet-300 bg-clip-text text-transparent font-bold">
+                      Prop References
+                    </span>
                     {(selectedSceneRefIds.length > 0 || selectedObjectRefIds.length > 0) && (
-                      <span className="text-xs text-green-400 font-normal">
-                        ({selectedSceneRefIds.length + selectedObjectRefIds.length} selected)
+                      <span className="text-xs bg-purple-500/30 text-purple-200 px-2 py-0.5 rounded-full font-normal">
+                        {selectedSceneRefIds.length + selectedObjectRefIds.length} selected
                       </span>
                     )}
                   </span>
                   {referenceLibraryOpen ? (
-                    <ChevronUp className="w-4 h-4 text-gray-400" />
+                    <ChevronUp className="w-4 h-4 text-purple-400" />
                   ) : (
-                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                    <ChevronDown className="w-4 h-4 text-purple-400" />
                   )}
                 </button>
                 
