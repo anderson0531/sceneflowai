@@ -163,12 +163,15 @@ export default function SceneReviewModal({
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
-              {review.recommendations.map((recommendation, index) => (
-                <li key={index} className="flex items-start gap-2 text-sm">
-                  <span className="text-blue-500 mt-1">•</span>
-                  <span>{recommendation}</span>
-                </li>
-              ))}
+              {review.recommendations.map((recommendation, index) => {
+                const recText = typeof recommendation === 'string' ? recommendation : (recommendation as any)?.text || String(recommendation)
+                return (
+                  <li key={index} className="flex items-start gap-2 text-sm">
+                    <span className="text-blue-500 mt-1">•</span>
+                    <span>{recText}</span>
+                  </li>
+                )
+              })}
             </ul>
           </CardContent>
         </Card>

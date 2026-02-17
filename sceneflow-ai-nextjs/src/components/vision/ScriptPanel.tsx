@@ -4592,12 +4592,15 @@ function SceneCard({
                       Recommendations
                     </p>
                     <ul className="space-y-1.5">
-                      {scene.audienceAnalysis.recommendations.map((rec: string, rIdx: number) => (
-                        <li key={rIdx} className="text-xs text-gray-300 flex gap-2 pl-1">
-                          <span className="text-purple-400 mt-0.5">•</span>
-                          <span>{rec}</span>
-                        </li>
-                      ))}
+                      {scene.audienceAnalysis.recommendations.map((rec: string | { text: string; category?: string; impact?: string }, rIdx: number) => {
+                        const recText = typeof rec === 'string' ? rec : rec?.text || String(rec)
+                        return (
+                          <li key={rIdx} className="text-xs text-gray-300 flex gap-2 pl-1">
+                            <span className="text-purple-400 mt-0.5">•</span>
+                            <span>{recText}</span>
+                          </li>
+                        )
+                      })}
                     </ul>
                   </div>
                 )}
