@@ -100,7 +100,69 @@ export async function POST(request: NextRequest) {
             
             if (imageData.success) {
               generatedCount++
-              console.log(`[Batch Images] Scene ${i + 1}: SUCCESS`)
+              console.log(`[Batch Images] Scene ${i + 1}: SUCCESS - ${imageData.imageUrl}`)
+              
+              // ATOMIC UPDATE: Reload fresh data and update only imageUrl field
+              // This prevents race conditions where stale data overwrites new generation
+              try {
+                const freshProject = await Project.findByPk(projectId)
+                if (freshProject) {
+                  const freshMetadata = freshProject.metadata || {}
+                  const freshVisionPhase = freshMetadata.visionPhase || {}
+                  // Check both possible scene locations (script.script.scenes OR script.scenes)
+                  // This handles both nested and flat script structures
+                  const hasNestedStructure = !!freshVisionPhase.script?.script?.scenes?.length
+                  const freshScenes = [...(freshVisionPhase.script?.script?.scenes || freshVisionPhase.script?.scenes || [])]
+                  
+                  if (freshScenes[i]) {
+                    freshScenes[i] = {
+                      ...freshScenes[i],
+                      imageUrl: imageData.imageUrl,
+                      imagePrompt: scene.visualDescription || scene.action,
+                      imageGeneratedAt: new Date().toISOString(),
+                      // Include workflow sync hashes if returned
+                      ...(imageData.basedOnDirectionHash && { basedOnDirectionHash: imageData.basedOnDirectionHash }),
+                      ...(imageData.basedOnReferencesHash && { basedOnReferencesHash: imageData.basedOnReferencesHash })
+                    }
+                    
+                    // Save back to the SAME structure we read from to maintain consistency
+                    await freshProject.update({
+                      metadata: {
+                        ...freshMetadata,
+                        visionPhase: {
+                          ...freshVisionPhase,
+                          script: hasNestedStructure
+                            ? {
+                                ...freshVisionPhase.script,
+                                script: {
+                                  ...freshVisionPhase.script?.script,
+                                  scenes: freshScenes
+                                }
+                              }
+                            : {
+                                ...freshVisionPhase.script,
+                                scenes: freshScenes
+                              }
+                        }
+                      }
+                    })
+                    console.log(`[Batch Images] Scene ${i + 1}: Saved imageUrl to database`)
+                  }
+                }
+              } catch (saveError) {
+                console.error(`[Batch Images] Failed to save image for scene ${i + 1}:`, saveError)
+                // Don't fail the overall generation, just log the error
+              }
+              
+              // Send success progress update
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                type: 'progress',
+                scene: i + 1,
+                total: scenes.length,
+                status: 'complete',
+                sceneHeading: scene.heading,
+                imageUrl: imageData.imageUrl
+              })}\n\n`))
             } else {
               console.error(`[Batch Images] Scene ${i + 1}: FAILED - ${imageData.error}`)
               
