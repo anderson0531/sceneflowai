@@ -385,8 +385,8 @@ export function AudioGalleryPlayer({
           sfxAudio.currentTime = 0
         }
         
-        // Play at 80% volume
-        sfxAudio.volume = isMuted ? 0 : volume * 0.8
+        // Play at 50% volume
+        sfxAudio.volume = isMuted ? 0 : volume * 0.5
         
         if (sfxAudio.paused) {
           sfxAudio.play().catch(() => {})
@@ -531,7 +531,7 @@ export function AudioGalleryPlayer({
             "relative rounded-lg overflow-hidden bg-black flex-shrink-0",
             isFullscreen 
               ? "w-[75vw] max-w-6xl aspect-video" 
-              : "w-64 aspect-video"
+              : "w-80 h-48"
           )}>
             {currentScene?.imageUrl ? (
               <img
@@ -539,10 +539,8 @@ export function AudioGalleryPlayer({
                 alt={`Scene ${currentSceneIndex + 1}`}
                 className="w-full h-full object-cover"
                 style={{
-                  transform: isPlaying 
-                    ? `scale(${1 + (kenBurnsConfig.scale - 1) * kenBurnsProgress}) translate(${kenBurnsConfig.x * kenBurnsProgress}%, ${kenBurnsConfig.y * kenBurnsProgress}%)`
-                    : 'scale(1) translate(0%, 0%)',
-                  transition: isPlaying ? 'none' : 'transform 0.3s ease-out',
+                  transform: `scale(${1 + (kenBurnsConfig.scale - 1) * kenBurnsProgress}) translate(${kenBurnsConfig.x * kenBurnsProgress}%, ${kenBurnsConfig.y * kenBurnsProgress}%)`,
+                  transition: 'transform 0.1s linear',
                 }}
               />
             ) : (
