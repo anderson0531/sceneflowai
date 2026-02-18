@@ -91,7 +91,7 @@ async function generateAndSaveSFXForScene(scene: any, projectId: string, sceneId
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, includeMusic = false, includeSFX = false, deleteAllAudioFirst = false } = await req.json()
+    const { projectId, includeMusic = false, includeSFX = false, deleteAllAudioFirst = false, language = 'en' } = await req.json()
 
     if (!projectId) {
       return NextResponse.json({ error: 'Project ID is required' }, { status: 400 })                                                                            
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
     const protocol = req.headers.get('x-forwarded-proto') || 'http'
     const host = req.headers.get('host') || 'localhost:3000'
     const baseUrl = `${protocol}://${host}`
-    console.log(`[Batch Audio] Using base URL: ${baseUrl}`)
+    console.log(`[Batch Audio] Using base URL: ${baseUrl}, language: ${language}`)
 
     await sequelize.authenticate()
     const project = await Project.findByPk(projectId)
@@ -269,6 +269,7 @@ export async function POST(req: NextRequest) {
                   audioType: 'narration',
                   text: optimizedNarration.text,
                   voiceConfig: narrationVoice,
+                  language, // Pass language for translation support
                 }),
               })
               const narrationData = await narrationResult.json()
@@ -290,6 +291,7 @@ export async function POST(req: NextRequest) {
                   audioType: 'description',
                   text: optimizedDescription.text,
                   voiceConfig: narrationVoice,
+                  language, // Pass language for translation support
                 }),
               })
               const descriptionData = await descriptionResult.json()
@@ -380,6 +382,7 @@ export async function POST(req: NextRequest) {
                     voiceConfig: character.voiceConfig,
                     characterName: dialogueLine.character,
                     dialogueIndex,
+                    language, // Pass language for translation support
                   }),
                 })
                 const dialogueData = await dialogueResult.json()

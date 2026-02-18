@@ -167,7 +167,7 @@ interface ScriptPanelProps {
   onPlayAudio?: (audioUrl: string, label: string) => void
   onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number, language?: string) => void
   // NEW: Props for Production Script Header
-  onGenerateAllAudio?: () => void
+  onGenerateAllAudio?: (language?: string) => void
   isGeneratingAudio?: boolean
   // NEW: Production readiness for workflow guards (disable actions until prerequisites met)
   productionReadiness?: ProductionReadiness
@@ -1011,12 +1011,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const handleGenerateAudioFromDialog = async (
     language: string,
     audioTypes: { narration: boolean; dialogue: boolean; music: boolean; sfx: boolean },
-    options?: { stayOpen: boolean; generateCharacters?: boolean; generateSceneImages?: boolean }
+    options?: { stayOpen: boolean; generateCharacters?: boolean; generateSceneImages?: boolean; forceRegenerateImages?: boolean }
   ) => {
     // Pass language parameter to enable multi-language TTS with translation
     const stayOpen = options?.stayOpen ?? true
     const includeCharacters = options?.generateCharacters ?? false
     const includeSceneImages = options?.generateSceneImages ?? false
+    const forceRegenerateImages = options?.forceRegenerateImages ?? false
 
     // If all types are selected, use the batch generation API (includes music and SFX)
     if (audioTypes.narration && audioTypes.dialogue && audioTypes.music && audioTypes.sfx) {
@@ -1025,7 +1026,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         setDialogGenerationMode('foreground')
         generationModeRef.current = 'foreground'
         backgroundRequestedRef.current = false
-        await onGenerateAllAudio()
+        await onGenerateAllAudio(language) // Pass language for translation support
         setGenerateAudioDialogOpen(false)
         return
       }
@@ -1347,18 +1348,20 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             const scene = scenes[sceneIdx]
             const sceneHeading = scene?.heading || scene?.action || `Scene ${sceneIdx + 1}`
             const hasImage = !!scene?.imageUrl
+            // Skip existing images unless forceRegenerate is enabled
+            const shouldGenerate = !hasImage || forceRegenerateImages
 
             updateDialogProgress(prev => prev ? {
               ...prev,
               phase: 'images',
               currentScene: sceneIdx + 1,
               currentImage: Math.min(prev.currentImage, sceneIdx),
-              message: hasImage
-                ? `Scene ${sceneIdx + 1} already has an image. Skipping generation...`
-                : `Generating image for scene ${sceneIdx + 1}${sceneHeading ? ` • ${sceneHeading}` : ''}`,
+              message: shouldGenerate
+                ? `${forceRegenerateImages && hasImage ? 'Regenerating' : 'Generating'} image for scene ${sceneIdx + 1}${sceneHeading ? ` • ${sceneHeading}` : ''}`
+                : `Scene ${sceneIdx + 1} already has an image. Skipping generation...`,
             } : prev)
 
-            if (!hasImage) {
+            if (shouldGenerate) {
               await onGenerateSceneImage(sceneIdx)
               if (sceneIdx < scenes.length - 1) {
                 updateDialogProgress(prev => prev ? {
@@ -1377,9 +1380,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               currentScene: sceneIdx + 1,
               currentImage: sceneIdx + 1,
               completedSteps,
-              message: hasImage
-                ? `Scene ${sceneIdx + 1} already had an image (skipped).`
-                : `Generated image for scene ${sceneIdx + 1}.`,
+              message: shouldGenerate
+                ? `${forceRegenerateImages && hasImage ? 'Regenerated' : 'Generated'} image for scene ${sceneIdx + 1}.`
+                : `Scene ${sceneIdx + 1} already had an image (skipped).`,
             } : prev)
           }
 

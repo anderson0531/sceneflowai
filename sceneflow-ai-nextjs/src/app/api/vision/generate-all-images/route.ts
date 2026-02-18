@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const { projectId, imageQuality } = await request.json()
+        const { projectId, imageQuality, forceRegenerate = false } = await request.json()
         
         await sequelize.authenticate()
         const project = await Project.findByPk(projectId)
@@ -53,6 +53,8 @@ export async function POST(request: NextRequest) {
         const characters = visionPhase?.characters || []
         const scenes = visionPhase?.script?.script?.scenes || []
         const baseUrl = `${request.headers.get('x-forwarded-proto') || 'http'}://${request.headers.get('host')}`
+        
+        console.log(`[Batch Images] forceRegenerate: ${forceRegenerate}, scenes: ${scenes.length}`)
         
         // Track status for all scenes
         const sceneStatuses: SceneStatus[] = scenes.map((scene: any, i: number) => ({
@@ -76,6 +78,18 @@ export async function POST(request: NextRequest) {
         
         for (let i = 0; i < scenes.length; i++) {
           const scene = scenes[i]
+          
+          // Skip scenes that already have images (unless forceRegenerate is true)
+          if (!forceRegenerate && scene.imageUrl) {
+            console.log(`[Batch Images] Scene ${i + 1}: Already has image, skipping`)
+            sceneStatuses[i].status = 'skipped'
+            skippedScenes.push({
+              scene: i + 1,
+              heading: scene.heading,
+              reason: 'Already has image (use Regenerate All to overwrite)'
+            })
+            continue
+          }
           
           // Detect characters in scene using smart matching
           // Include sceneDirectionText for better nickname detection (e.g., "Ben" -> "Dr. Benjamin Anderson")

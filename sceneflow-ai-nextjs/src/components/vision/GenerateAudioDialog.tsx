@@ -73,6 +73,7 @@ export function GenerateAudioDialog({
   })
   const [includeCharacters, setIncludeCharacters] = useState(false)
   const [includeSceneImages, setIncludeSceneImages] = useState(false)
+  const [regenerateAllImages, setRegenerateAllImages] = useState(false) // Force regenerate existing images
   const [stayOpen, setStayOpen] = useState(true)
 
   useEffect(() => {
@@ -80,6 +81,7 @@ export function GenerateAudioDialog({
       setStayOpen(true)
       setIncludeCharacters(false)
       setIncludeSceneImages(false)
+      setRegenerateAllImages(false)
       // Reset to English when dialog opens (user can change)
       setSelectedLanguage('en')
     }
@@ -160,6 +162,7 @@ export function GenerateAudioDialog({
       stayOpen,
       generateCharacters: includeCharacters,
       generateSceneImages: includeSceneImages,
+      forceRegenerateImages: regenerateAllImages,
     })
   }
 
@@ -487,19 +490,46 @@ export function GenerateAudioDialog({
                 <Checkbox
                   id="scene-images"
                   checked={includeSceneImages}
-                  onCheckedChange={(checked) => setIncludeSceneImages(!!checked)}
+                  onCheckedChange={(checked) => {
+                    setIncludeSceneImages(!!checked)
+                    if (!checked) setRegenerateAllImages(false)
+                  }}
                   disabled={isRunning || totalScenes === 0}
                 />
                 <label
                   htmlFor="scene-images"
                   className={`flex-1 text-sm ${totalScenes === 0 ? 'text-gray-500' : 'text-gray-200'} cursor-pointer`}
                 >
-                  <div className="font-medium">Scene Images (throttled)</div>
+                  <div className="font-medium">Scene Images (concurrent)</div>
                   <div className="text-xs text-gray-400">
-                    {totalScenes} scenes • {scenesWithImages} ready • 5s delay between requests
+                    {totalScenes} scenes • {scenesWithImages} ready • 3 concurrent
                   </div>
                 </label>
               </div>
+              
+              {/* Regenerate All option - only shown when scene images is selected */}
+              {includeSceneImages && (
+                <div className="flex items-center space-x-3 p-3 ml-6 bg-amber-900/20 border border-amber-600/30 rounded-lg">
+                  <Checkbox
+                    id="regenerate-all-images"
+                    checked={regenerateAllImages}
+                    onCheckedChange={(checked) => setRegenerateAllImages(!!checked)}
+                    disabled={isRunning}
+                  />
+                  <label
+                    htmlFor="regenerate-all-images"
+                    className="flex-1 text-sm text-amber-200 cursor-pointer"
+                  >
+                    <div className="font-medium flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      Regenerate All Images
+                    </div>
+                    <div className="text-xs text-amber-300/70">
+                      Overwrite existing images (default: only missing)
+                    </div>
+                  </label>
+                </div>
+              )}
             </div>
           </div>
 
