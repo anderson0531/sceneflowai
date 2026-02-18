@@ -1026,64 +1026,94 @@ export function SceneProductionManager({
     return assets
   }, [scene])
 
+  // Compute estimated segment count for preview
+  const estimatedSegmentCount = useMemo(() => {
+    const sceneDuration = narrationDriven && narrationDurationSeconds 
+      ? narrationDurationSeconds 
+      : (scene?.duration || totalAudioDurationSeconds || 30)
+    const effectiveDuration = addLeadInSegment ? sceneDuration + leadInDuration : sceneDuration
+    return Math.max(1, Math.ceil(effectiveDuration / targetDuration))
+  }, [narrationDriven, narrationDurationSeconds, scene?.duration, totalAudioDurationSeconds, addLeadInSegment, leadInDuration, targetDuration])
+
+  // Track which instruction presets are active
+  const activePresets = useMemo(() => {
+    const presets: string[] = []
+    if (customInstructions.includes('character reactions')) presets.push('reactions')
+    if (customInstructions.includes('close-ups')) presets.push('closeups')
+    if (customInstructions.includes('wide shots')) presets.push('wide')
+    return presets
+  }, [customInstructions])
+
+  const togglePreset = (preset: string, text: string) => {
+    if (customInstructions.includes(text)) {
+      setCustomInstructions(prev => prev.replace(text, '').replace(/\n\n/g, '\n').trim())
+    } else {
+      setCustomInstructions(prev => prev + (prev ? '\n' : '') + text)
+    }
+  }
+
   // Reusable segment generation dialog content
   const SegmentGenerationDialogContent = ({ isRegenerate = false }: { isRegenerate?: boolean }) => (
-    <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto">
+    <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
       <DialogHeader>
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-            <Film className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+              <Film className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <DialogTitle className="text-left">
+                {isRegenerate ? 'Regenerate Scene Segments' : 'Generate Scene Segments'}
+              </DialogTitle>
+              <DialogDescription className="text-left">
+                Configure how segments are created for this scene.
+              </DialogDescription>
+            </div>
           </div>
-          <div>
-            <DialogTitle className="text-left">
-              {isRegenerate ? 'Regenerate Scene Segments' : 'Generate Scene Segments'}
-            </DialogTitle>
-            <DialogDescription className="text-left">
-              Configure how segments are created for this scene.
-            </DialogDescription>
+          {/* Segment count preview */}
+          <div className="flex flex-col items-center justify-center px-4 py-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{estimatedSegmentCount}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">segments</div>
           </div>
         </div>
       </DialogHeader>
       
       <Tabs defaultValue="timing" className="mt-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="timing" className="flex items-center gap-1.5">
+        <TabsList className="grid w-full grid-cols-3 bg-gray-100 dark:bg-gray-900/60 p-1 rounded-md border border-gray-200 dark:border-gray-800">
+          <TabsTrigger value="timing" className="flex items-center justify-center gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white">
             <Clock className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Timing</span>
+            <span className="text-xs sm:text-sm">Timing</span>
           </TabsTrigger>
-          <TabsTrigger value="alignment" className="flex items-center gap-1.5">
-            <Sliders className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Alignment</span>
-          </TabsTrigger>
-          <TabsTrigger value="references" className="flex items-center gap-1.5">
+          <TabsTrigger value="references" className="flex items-center justify-center gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white">
             <Users className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">References</span>
+            <span className="text-xs sm:text-sm">References</span>
           </TabsTrigger>
-          <TabsTrigger value="instructions" className="flex items-center gap-1.5">
-            <MessageSquare className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Instructions</span>
+          <TabsTrigger value="style" className="flex items-center justify-center gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white">
+            <Sliders className="w-3.5 h-3.5" />
+            <span className="text-xs sm:text-sm">Style</span>
           </TabsTrigger>
         </TabsList>
         
-        {/* Timing Tab */}
+        {/* Timing Tab - Combined timing, narration, and alignment options */}
         <TabsContent value="timing" className="space-y-4 mt-4">
-          <div className="space-y-3">
-            {/* NEW: Narration-Driven Mode Toggle */}
+          <div className="space-y-4">
+            {/* Narration-Driven Mode Toggle - Prominent when available */}
             {(scene?.narration || scene?.narrationAudioUrl) && (
-              <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-purple-700">
+              <div className="flex items-start justify-between gap-4 p-4 rounded-lg bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-purple-700">
                 <div className="flex-1">
                   <Label className="text-sm font-medium flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-purple-100 dark:bg-purple-800 flex items-center justify-center">
-                      🎙️
-                    </span>
+                    <Mic2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                     Narration-Driven Segmentation
                   </Label>
                   <p className="text-xs text-gray-500 mt-1">
                     Create segments that align with and illustrate the narration. Each segment becomes a cinematic backdrop for the voiceover.
                   </p>
-                  {narrationDriven && (
-                    <div className="mt-2 text-xs text-purple-600 dark:text-purple-400">
-                      ✓ Segments will match narration timing ({scene?.duration ? `${scene.duration.toFixed(1)}s` : 'auto-detected'})
+                  {narrationDriven && scene?.narrationAudioUrl && (
+                    <div className="mt-3 flex items-center gap-2">
+                      <audio controls className="h-8 flex-1" src={scene.narrationAudioUrl} />
+                      <span className="text-xs text-purple-500 whitespace-nowrap">
+                        {narrationDurationSeconds ? `${narrationDurationSeconds.toFixed(1)}s` : 'Audio'}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -1099,143 +1129,180 @@ export function SceneProductionManager({
               </div>
             )}
             
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Target Segment Duration</Label>
-              <div className="flex items-center gap-3">
-                <Input
-                  type="number"
-                  min={4}
-                  max={8}
-                  step={0.5}
-                  value={targetDuration}
-                  onChange={(e) => setTargetDuration(Number(e.target.value))}
-                  className="w-24"
-                />
-                <span className="text-sm text-gray-500">seconds (4-8s recommended for Veo 3.1)</span>
-              </div>
-              <p className="text-xs text-gray-400">
-                Shorter segments (4-5s) work better for dialogue-heavy scenes. Longer segments (6-8s) suit action sequences.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Focus Mode</Label>
-              <Select value={focusMode} onValueChange={(v) => setFocusMode(v as typeof focusMode)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select focus" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="balanced">Balanced - Auto-detect optimal cuts</SelectItem>
-                  <SelectItem value="dialogue">Dialogue Focus - Cut on speaker changes</SelectItem>
-                  <SelectItem value="action">Action Focus - Emphasize movement/blocking</SelectItem>
-                  <SelectItem value="cinematic">Cinematic - Longer takes, fewer cuts</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </TabsContent>
-        
-        {/* Alignment Tab */}
-        <TabsContent value="alignment" className="space-y-4 mt-4">
-          <div className="space-y-4">
-            <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
-              <div className="flex-1">
-                <Label className="text-sm font-medium">Align with Narration</Label>
-                <p className="text-xs text-gray-500 mt-1">
-                  Add non-dialogue segments at the beginning to align visuals with narration/voiceover timing.
-                </p>
-              </div>
-              <Switch 
-                checked={alignWithNarration} 
-                onCheckedChange={setAlignWithNarration}
-              />
-            </div>
-            
-            <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
-              <div className="flex-1">
-                <Label className="text-sm font-medium">Add Lead-In Segment</Label>
-                <p className="text-xs text-gray-500 mt-1">
-                  Insert an establishing shot before dialogue begins to set the scene.
-                </p>
-              </div>
-              <Switch 
-                checked={addLeadInSegment} 
-                onCheckedChange={setAddLeadInSegment}
-              />
-            </div>
-            
-            {addLeadInSegment && (
-              <div className="pl-4 border-l-2 border-blue-200 dark:border-blue-800">
-                <Label className="text-sm font-medium">Lead-In Duration</Label>
-                <div className="flex items-center gap-3 mt-2">
+            {/* Core timing controls in a grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Target Segment Duration</Label>
+                <div className="flex items-center gap-2">
                   <Input
                     type="number"
-                    min={1}
-                    max={4}
+                    min={4}
+                    max={8}
                     step={0.5}
-                    value={leadInDuration}
-                    onChange={(e) => setLeadInDuration(Number(e.target.value))}
+                    value={targetDuration}
+                    onChange={(e) => setTargetDuration(Number(e.target.value))}
                     className="w-20"
                   />
-                  <span className="text-sm text-gray-500">seconds</span>
+                  <span className="text-xs text-gray-500">seconds</span>
                 </div>
+                <p className="text-xs text-gray-400">
+                  4-8s recommended for Veo 3.1
+                </p>
               </div>
-            )}
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Focus Mode</Label>
+                <Select value={focusMode} onValueChange={(v) => setFocusMode(v as typeof focusMode)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select focus" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="balanced">Balanced</SelectItem>
+                    <SelectItem value="dialogue">Dialogue Focus</SelectItem>
+                    <SelectItem value="action">Action Focus</SelectItem>
+                    <SelectItem value="cinematic">Cinematic</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Advanced options - collapsible */}
+            <details className="group">
+              <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+                <Layers className="w-4 h-4" />
+                Advanced Timing Options
+                <span className="text-xs text-gray-400 ml-auto">Click to expand</span>
+              </summary>
+              <div className="mt-3 space-y-3 pl-6 border-l-2 border-gray-200 dark:border-gray-700">
+                <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+                  <div className="flex-1">
+                    <Label className="text-sm font-medium">Align with Narration</Label>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Add non-dialogue segments to align visuals with voiceover timing.
+                    </p>
+                  </div>
+                  <Switch 
+                    checked={alignWithNarration} 
+                    onCheckedChange={setAlignWithNarration}
+                  />
+                </div>
+                
+                <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+                  <div className="flex-1">
+                    <Label className="text-sm font-medium">Add Lead-In Segment</Label>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Insert an establishing shot before dialogue begins.
+                    </p>
+                  </div>
+                  <Switch 
+                    checked={addLeadInSegment} 
+                    onCheckedChange={setAddLeadInSegment}
+                  />
+                </div>
+                
+                {addLeadInSegment && (
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
+                    <Label className="text-sm font-medium">Lead-In Duration:</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={4}
+                      step={0.5}
+                      value={leadInDuration}
+                      onChange={(e) => setLeadInDuration(Number(e.target.value))}
+                      className="w-16"
+                    />
+                    <span className="text-sm text-gray-500">seconds</span>
+                  </div>
+                )}
+              </div>
+            </details>
           </div>
         </TabsContent>
         
         {/* References Tab - Character and Scene References for enhanced generation */}
         <TabsContent value="references" className="space-y-4 mt-4">
           <div className="space-y-4">
-            {/* Character References */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Character References
-              </Label>
+            {/* Character References - Enhanced with selection count */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Character References
+                </Label>
+                {characters.length > 0 && (
+                  <span className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
+                    {selectedCharacterRefs.length}/{characters.length} selected
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-gray-500">
                 Select characters to include reference images in segment prompts for consistent appearance.
               </p>
               {characters.length > 0 ? (
-                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
-                  {characters.map((char) => (
-                    <label
-                      key={char.id}
-                      className={cn(
-                        "flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all",
-                        selectedCharacterRefs.includes(char.id)
-                          ? "border-blue-400 bg-blue-50 dark:border-blue-600 dark:bg-blue-900/30"
-                          : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                      )}
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-36 overflow-y-auto p-1">
+                    {characters.map((char) => (
+                      <label
+                        key={char.id}
+                        className={cn(
+                          "flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-all",
+                          selectedCharacterRefs.includes(char.id)
+                            ? "border-blue-400 bg-blue-50 dark:border-blue-600 dark:bg-blue-900/30 ring-1 ring-blue-400/50"
+                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedCharacterRefs.includes(char.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedCharacterRefs([...selectedCharacterRefs, char.id])
+                            } else {
+                              setSelectedCharacterRefs(selectedCharacterRefs.filter(id => id !== char.id))
+                            }
+                          }}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm truncate font-medium">{char.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedCharacterRefs(characters.map(c => c.id))}
+                      className="text-xs"
                     >
-                      <input
-                        type="checkbox"
-                        checked={selectedCharacterRefs.includes(char.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedCharacterRefs([...selectedCharacterRefs, char.id])
-                          } else {
-                            setSelectedCharacterRefs(selectedCharacterRefs.filter(id => id !== char.id))
-                          }
-                        }}
-                        className="rounded border-gray-300"
-                      />
-                      <span className="text-sm truncate">{char.name}</span>
-                    </label>
-                  ))}
-                </div>
+                      Select All
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedCharacterRefs([])}
+                      className="text-xs"
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                </>
               ) : (
-                <p className="text-xs text-gray-400 italic">No characters available. Add characters in the Characters panel.</p>
+                <div className="flex items-center justify-center p-4 rounded-lg bg-gray-50 dark:bg-gray-900/50 border border-dashed border-gray-300 dark:border-gray-700">
+                  <p className="text-xs text-gray-400 italic">No characters available. Add characters in the Characters panel.</p>
+                </div>
               )}
             </div>
             
-            {/* Generation Options */}
-            <div className="space-y-3">
-              <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
-                <div className="flex-1">
-                  <Label className="text-sm font-medium">Include References in Prompts</Label>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Add character appearance descriptions and reference images to each segment prompt.
+            {/* Generation Options - Compact toggles */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm font-medium">Include in Prompts</Label>
+                  <p className="text-xs text-gray-500 mt-0.5 truncate">
+                    Add character descriptions
                   </p>
                 </div>
                 <Switch 
@@ -1244,11 +1311,11 @@ export function SceneProductionManager({
                 />
               </div>
               
-              <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
-                <div className="flex-1">
-                  <Label className="text-sm font-medium">Optimize for Frame Transitions</Label>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Generate detailed start/end frame descriptions for realistic scene transitions.
+              <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm font-medium">Frame Transitions</Label>
+                  <p className="text-xs text-gray-500 mt-0.5 truncate">
+                    Optimize start/end frames
                   </p>
                 </div>
                 <Switch 
@@ -1258,97 +1325,121 @@ export function SceneProductionManager({
               </div>
             </div>
 
-            {/* Narration Preview */}
+            {/* Narration Preview - Only show text preview here, audio moved to Timing tab */}
             {scene?.narration && (
               <div className="space-y-2 p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700">
                 <Label className="text-sm font-medium flex items-center gap-2 text-purple-700 dark:text-purple-300">
                   <Mic2 className="w-4 h-4" />
-                  Scene Narration
+                  Scene Narration Preview
                 </Label>
-                <p className="text-xs text-purple-600 dark:text-purple-400 italic leading-relaxed max-h-24 overflow-y-auto">
+                <p className="text-xs text-purple-600 dark:text-purple-400 italic leading-relaxed max-h-20 overflow-y-auto">
                   "{scene.narration}"
                 </p>
-                {scene?.narrationAudioUrl && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <audio
-                      controls
-                      className="h-8 flex-1"
-                      src={scene.narrationAudioUrl}
-                    />
-                    <span className="text-xs text-purple-500">
-                      {narrationDurationSeconds ? `${narrationDurationSeconds.toFixed(1)}s` : 'Audio'}
-                    </span>
-                  </div>
-                )}
                 {narrationDriven && (
                   <p className="text-xs text-purple-500 dark:text-purple-400 mt-1 flex items-center gap-1">
                     <Sparkles className="w-3 h-3" />
-                    Segments will be synchronized with this narration
+                    Narration-driven mode enabled in Timing tab
                   </p>
                 )}
               </div>
             )}
-            
-            {/* Quick Select */}
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedCharacterRefs(characters.map(c => c.id))}
-              >
-                Select All
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedCharacterRefs([])}
-              >
-                Clear All
-              </Button>
-            </div>
           </div>
         </TabsContent>
         
-        {/* Instructions Tab */}
-        <TabsContent value="instructions" className="space-y-4 mt-4">
-          <div className="space-y-3">
+        {/* Style Tab - Custom instructions and visual style preferences */}
+        <TabsContent value="style" className="space-y-4 mt-4">
+          <div className="space-y-4">
+            {/* Quick Style Presets - Toggle badges */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Quick Style Presets</Label>
+              <p className="text-xs text-gray-500">Click to toggle style instructions on/off</p>
+              <div className="flex flex-wrap gap-2">
+                <button 
+                  type="button"
+                  onClick={() => togglePreset('reactions', 'Focus on character reactions and emotional beats')}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                    activePresets.includes('reactions')
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 ring-1 ring-blue-400/50"
+                      : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  )}
+                >
+                  {activePresets.includes('reactions') ? '✓' : '+'} Reactions
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => togglePreset('closeups', 'Prefer close-ups for dialogue moments')}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                    activePresets.includes('closeups')
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 ring-1 ring-blue-400/50"
+                      : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  )}
+                >
+                  {activePresets.includes('closeups') ? '✓' : '+'} Close-ups
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => togglePreset('wide', 'Include wide shots to show character positions')}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                    activePresets.includes('wide')
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 ring-1 ring-blue-400/50"
+                      : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  )}
+                >
+                  {activePresets.includes('wide') ? '✓' : '+'} Wide Shots
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => togglePreset('establishing', 'Include establishing shots for scene transitions')}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                    customInstructions.includes('establishing shots')
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 ring-1 ring-blue-400/50"
+                      : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  )}
+                >
+                  {customInstructions.includes('establishing shots') ? '✓' : '+'} Establishing
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => togglePreset('tension', 'Emphasize tension and dramatic beats')}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                    customInstructions.includes('tension')
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 ring-1 ring-blue-400/50"
+                      : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  )}
+                >
+                  {customInstructions.includes('tension') ? '✓' : '+'} Dramatic
+                </button>
+              </div>
+            </div>
+
+            {/* Custom Instructions Textarea */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Custom Instructions</Label>
               <Textarea
-                placeholder="Add any special instructions for segment generation...&#10;&#10;Examples:&#10;- Focus on character reactions&#10;- Include more establishing shots&#10;- Emphasize the tension between characters"
+                placeholder="Add any special instructions for segment generation..."
                 value={customInstructions}
                 onChange={(e) => setCustomInstructions(e.target.value)}
-                className="min-h-[120px] text-sm"
+                className="min-h-[100px] text-sm"
               />
+              <p className="text-xs text-gray-400">
+                These instructions guide the AI when generating segment prompts and keyframes.
+              </p>
             </div>
-            
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="sm"
-                onClick={() => setCustomInstructions(prev => prev + (prev ? '\n' : '') + 'Focus on character reactions and emotional beats')}
-              >
-                + Reactions
-              </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="sm"
-                onClick={() => setCustomInstructions(prev => prev + (prev ? '\n' : '') + 'Prefer close-ups for dialogue moments')}
-              >
-                + Close-ups
-              </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="sm"
-                onClick={() => setCustomInstructions(prev => prev + (prev ? '\n' : '') + 'Include wide shots to show character positions')}
-              >
-                + Wide Shots
-              </Button>
+
+            {/* Focus mode description */}
+            <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700">
+              <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Current Focus: {focusMode}</Label>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                {focusMode === 'balanced' && 'Auto-detects optimal cut points based on scene content and pacing.'}
+                {focusMode === 'dialogue' && 'Prioritizes cuts on speaker changes and emotional reactions for dialogue scenes.'}
+                {focusMode === 'action' && 'Emphasizes movement, blocking, and kinetic energy with faster cuts.'}
+                {focusMode === 'cinematic' && 'Longer takes with smooth camera movements for dramatic atmosphere.'}
+              </p>
             </div>
           </div>
         </TabsContent>
