@@ -127,6 +127,82 @@ export async function POST(req: NextRequest) {
     if (deleteAllAudioFirst && scenes.length > 0) {
       console.log(`[Batch Audio] Deleting all existing audio before generation...`)
       
+      // STEP 1: Collect all existing audio URLs for blob deletion
+      const urlsToDelete: string[] = []
+      
+      scenes.forEach((scene: any) => {
+        // Collect narration audio URLs (multi-language object or direct URL)
+        if (scene.narrationAudio) {
+          if (typeof scene.narrationAudio === 'object') {
+            Object.values(scene.narrationAudio).forEach((url: any) => {
+              if (typeof url === 'string' && url.includes('blob')) urlsToDelete.push(url)
+            })
+          } else if (typeof scene.narrationAudio === 'string' && scene.narrationAudio.includes('blob')) {
+            urlsToDelete.push(scene.narrationAudio)
+          }
+        }
+        if (scene.narrationAudioUrl && typeof scene.narrationAudioUrl === 'string' && scene.narrationAudioUrl.includes('blob')) {
+          urlsToDelete.push(scene.narrationAudioUrl)
+        }
+        
+        // Collect description audio URLs (multi-language object or direct URL)
+        if (scene.descriptionAudio) {
+          if (typeof scene.descriptionAudio === 'object') {
+            Object.values(scene.descriptionAudio).forEach((url: any) => {
+              if (typeof url === 'string' && url.includes('blob')) urlsToDelete.push(url)
+            })
+          } else if (typeof scene.descriptionAudio === 'string' && scene.descriptionAudio.includes('blob')) {
+            urlsToDelete.push(scene.descriptionAudio)
+          }
+        }
+        if (scene.descriptionAudioUrl && typeof scene.descriptionAudioUrl === 'string' && scene.descriptionAudioUrl.includes('blob')) {
+          urlsToDelete.push(scene.descriptionAudioUrl)
+        }
+        
+        // Collect dialogue audio URLs (object keyed by index)
+        if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
+          Object.values(scene.dialogueAudio).forEach((url: any) => {
+            if (typeof url === 'string' && url.includes('blob')) urlsToDelete.push(url)
+          })
+        }
+        
+        // Legacy dialogue audioUrl fields
+        if (scene.dialogue && Array.isArray(scene.dialogue)) {
+          scene.dialogue.forEach((d: any) => {
+            if (d.audioUrl && typeof d.audioUrl === 'string' && d.audioUrl.includes('blob')) {
+              urlsToDelete.push(d.audioUrl)
+            }
+          })
+        }
+        
+        // Collect music audio URL
+        if (scene.musicAudio && typeof scene.musicAudio === 'string' && scene.musicAudio.includes('blob')) {
+          urlsToDelete.push(scene.musicAudio)
+        }
+        if (scene.music && typeof scene.music === 'object' && scene.music.url && scene.music.url.includes('blob')) {
+          urlsToDelete.push(scene.music.url)
+        }
+        
+        // Collect SFX audio URLs
+        if (scene.sfxAudio && typeof scene.sfxAudio === 'object') {
+          Object.values(scene.sfxAudio).forEach((url: any) => {
+            if (typeof url === 'string' && url.includes('blob')) urlsToDelete.push(url)
+          })
+        }
+        if (scene.sfx && Array.isArray(scene.sfx)) {
+          scene.sfx.forEach((s: any) => {
+            if (typeof s === 'object' && s.url && s.url.includes('blob')) {
+              urlsToDelete.push(s.url)
+            }
+          })
+        }
+      })
+      
+      // Deduplicate URLs
+      const uniqueUrlsToDelete = [...new Set(urlsToDelete)]
+      console.log(`[Batch Audio] Collected ${uniqueUrlsToDelete.length} blob URLs to delete`)
+      
+      // STEP 2: Clear audio references from scenes
       const cleanedScenes = scenes.map((scene: any) => {
         const cleanedScene = { ...scene }
         
@@ -178,7 +254,7 @@ export async function POST(req: NextRequest) {
         return cleanedScene
       })
       
-      // Save cleaned scenes to database BEFORE any generation
+      // STEP 3: Save cleaned scenes to database BEFORE any generation
       await project.update({
         metadata: {
           ...metadata,
@@ -201,6 +277,25 @@ export async function POST(req: NextRequest) {
       })
       
       console.log(`[Batch Audio] Deleted all existing audio from ${scenes.length} scenes`)
+      
+      // STEP 4: Delete blob files from storage in background (non-blocking)
+      // This matches the pattern used in handleUpdateSceneAudio (page.tsx)
+      if (uniqueUrlsToDelete.length > 0) {
+        console.log(`[Batch Audio] Deleting ${uniqueUrlsToDelete.length} blob(s) from storage (background)...`)
+        fetch(`${baseUrl}/api/blobs/delete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ urls: uniqueUrlsToDelete })
+        }).then(res => res.json()).then(result => {
+          if (result.success) {
+            console.log(`[Batch Audio] Background blob deletion complete: ${result.deleted} blob(s) deleted`)
+          } else {
+            console.warn(`[Batch Audio] Background blob deletion had issues:`, result)
+          }
+        }).catch(err => {
+          console.warn('[Batch Audio] Background blob deletion error (non-fatal):', err)
+        })
+      }
       
       // Update scenes reference to use cleaned version
       scenes = cleanedScenes
