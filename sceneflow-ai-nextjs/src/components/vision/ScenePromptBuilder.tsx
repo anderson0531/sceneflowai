@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Copy, Check, Sparkles, Info, Loader2, ChevronDown, ChevronUp, Image as ImageIcon, Box, Wand2 } from 'lucide-react'
+import { Copy, Check, Sparkles, Info, Loader2, ChevronDown, ChevronUp, Image as ImageIcon, Box, Wand2, Shirt } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { findSceneCharacters, findSceneObjects } from '../../lib/character/matching'
 import { DetailedSceneDirection } from '@/types/scene-direction'
@@ -156,6 +157,10 @@ export function ScenePromptBuilder({
   const [selectedObjectRefIds, setSelectedObjectRefIds] = useState<string[]>([])
   const [autoDetectedObjectIds, setAutoDetectedObjectIds] = useState<string[]>([])  // Track auto-detected objects
   const [referenceLibraryOpen, setReferenceLibraryOpen] = useState(false)
+  
+  // Local wardrobe selections (can override sceneWardrobes prop)
+  const [localWardrobes, setLocalWardrobes] = useState<Record<string, string>>({})
+  
   const [structure, setStructure] = useState<ScenePromptStructure>({
     location: '',
     timeOfDay: 'day',
@@ -246,13 +251,13 @@ export function ScenePromptBuilder({
         })
         
         const topObjects = sorted.slice(0, 5)
-        const selectedIds = topObjects.map((obj: any) => obj.id)
         const allDetectedIds = sorted.map((obj: any) => obj.id)
         
-        // Pre-select top 5 objects and track all detected for UI hints
-        setSelectedObjectRefIds(selectedIds)
-        setAutoDetectedObjectIds(allDetectedIds)
-        console.log('[ScenePromptBuilder] Auto-selected props (top 5, including keyProps matches):', topObjects.map((o: any) => o.name))
+        // DO NOT pre-select props by default - effective scene illustration > prop consistency
+        // Users can manually select props to enhance the image if needed
+        setSelectedObjectRefIds([])  // Start with no props selected
+        setAutoDetectedObjectIds(allDetectedIds)  // Track for "suggested" hints in UI
+        console.log('[ScenePromptBuilder] Detected props (not auto-selected):', topObjects.map((o: any) => o.name))
       }
     }
     
@@ -484,18 +489,22 @@ export function ScenePromptBuilder({
       
       // 2. Add selected character wardrobes for visual consistency
       // e.g., "Dr. Benjamin Anderson wearing Obsessed Scientist Lab Attire"
-      if (structure.characters.length > 0 && Object.keys(sceneWardrobes).length > 0) {
+      // Merge sceneWardrobes with localWardrobes (local takes priority)
+      const effectiveWardrobes = { ...sceneWardrobes, ...localWardrobes }
+      if (structure.characters.length > 0 && Object.keys(effectiveWardrobes).length > 0) {
         const wardrobeDescriptions: string[] = []
         
         structure.characters.forEach(charName => {
-          const wardrobeId = sceneWardrobes[charName]
+          const wardrobeId = effectiveWardrobes[charName]
           if (wardrobeId) {
             // Find the character to get their wardrobe details
             const character = availableCharacters.find(c => c.name === charName)
             if (character?.wardrobes) {
               const wardrobe = character.wardrobes.find(w => w.id === wardrobeId)
               if (wardrobe) {
-                wardrobeDescriptions.push(`${charName} wearing ${wardrobe.name}`)
+                // Use description if available, otherwise just name
+                const wardrobeText = wardrobe.description || wardrobe.name
+                wardrobeDescriptions.push(`${charName} wearing ${wardrobeText}`)
               }
             }
           }
@@ -940,6 +949,48 @@ export function ScenePromptBuilder({
                       className="mt-1"
                     />
                   </div>
+                  
+                  {/* Scene Wardrobe Selection */}
+                  {structure.characters.some(charName => {
+                    const char = availableCharacters.find(c => c.name === charName)
+                    return char?.wardrobes && char.wardrobes.length > 1
+                  }) && (
+                    <div className="mt-3 p-3 rounded border border-purple-500/30 bg-purple-900/10">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Shirt className="w-4 h-4 text-purple-400" />
+                        <span className="text-xs font-medium text-purple-200">Scene Wardrobe</span>
+                        <span className="text-[10px] text-gray-500">(included in prompt)</span>
+                      </div>
+                      <div className="space-y-2">
+                        {structure.characters.map(charName => {
+                          const char = availableCharacters.find(c => c.name === charName)
+                          if (!char?.wardrobes || char.wardrobes.length <= 1) return null
+                          const defaultWardrobe = char.wardrobes.find(w => w.isDefault)
+                          const currentWardrobeId = localWardrobes[charName] || sceneWardrobes[charName] || defaultWardrobe?.id
+                          return (
+                            <div key={charName} className="flex items-center gap-2">
+                              <span className="text-xs text-gray-400 w-32 truncate" title={charName}>{charName}</span>
+                              <Select 
+                                value={currentWardrobeId || ''}
+                                onValueChange={(v) => setLocalWardrobes(prev => ({...prev, [charName]: v}))}
+                              >
+                                <SelectTrigger className="h-7 text-xs flex-1 bg-gray-800 border-gray-700">
+                                  <SelectValue placeholder="Select wardrobe..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {char.wardrobes.map(w => (
+                                    <SelectItem key={w.id} value={w.id} className="text-xs">
+                                      {w.name} {w.isDefault && '(Default)'}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1032,6 +1083,20 @@ export function ScenePromptBuilder({
                               <span className="text-green-400 ml-2">
                                 ({autoDetectedObjectIds.length} suggested)
                               </span>
+                            )}
+                            {/* Key Props tooltip from Scene Direction */}
+                            {scene?.sceneDirection?.scene?.keyProps?.length > 0 && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Info className="w-3 h-3 text-blue-400 cursor-help ml-1" />
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right" className="max-w-sm bg-gray-900 border-gray-700">
+                                    <p className="font-semibold text-blue-300 mb-1">Key Props (Scene Direction):</p>
+                                    <p className="text-xs text-gray-300">{scene.sceneDirection.scene.keyProps.join(', ')}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             )}
                           </label>
                           <div className="flex items-center gap-2">
