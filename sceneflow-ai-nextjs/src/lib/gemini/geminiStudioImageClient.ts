@@ -19,6 +19,19 @@
 let proModelRateLimitedUntil: number | null = null
 const RATE_LIMIT_COOLDOWN_MS = 60000 // 1 minute cooldown after rate limit hit
 
+// Retry configuration for 503 errors (service unavailable / high demand)
+const MAX_RETRIES = 3
+const INITIAL_RETRY_DELAY_MS = 2000 // Start with 2 seconds
+const MAX_RETRY_DELAY_MS = 10000 // Cap at 10 seconds
+
+// Helper to sleep with exponential backoff
+async function sleepWithBackoff(attempt: number): Promise<void> {
+  const delay = Math.min(INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt), MAX_RETRY_DELAY_MS)
+  const jitter = Math.random() * 500 // Add up to 500ms jitter to avoid thundering herd
+  console.log(`[Gemini Studio Image] Waiting ${(delay + jitter).toFixed(0)}ms before retry...`)
+  await new Promise(resolve => setTimeout(resolve, delay + jitter))
+}
+
 export interface GeminiStudioImageOptions {
   prompt: string
   aspectRatio?: '1:1' | '2:3' | '3:2' | '3:4' | '4:3' | '4:5' | '5:4' | '9:16' | '16:9' | '21:9'
@@ -44,7 +57,8 @@ export interface GeminiStudioImageResult {
  * because Gemini 3 Pro handles reference images natively in the prompt context.
  */
 export async function generateImageWithGeminiStudio(
-  options: GeminiStudioImageOptions
+  options: GeminiStudioImageOptions,
+  retryCount: number = 0
 ): Promise<GeminiStudioImageResult> {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
   
@@ -180,9 +194,19 @@ export async function generateImageWithGeminiStudio(
         // Set cooldown and retry with flash model
         proModelRateLimitedUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS
         console.log(`[Gemini Studio Image] Rate limited on pro model, retrying with flash fallback...`)
-        return generateImageWithGeminiStudio(options) // Recursive call will use flash
+        return generateImageWithGeminiStudio(options, 0) // Recursive call will use flash
       }
       throw new Error(`Rate limit exceeded on both models. Please wait a moment and try again.`)
+    }
+    
+    // Handle 503 Service Unavailable with exponential backoff retry
+    if (response.status === 503) {
+      if (retryCount < MAX_RETRIES) {
+        console.log(`[Gemini Studio Image] Service unavailable (503), attempt ${retryCount + 1}/${MAX_RETRIES}...`)
+        await sleepWithBackoff(retryCount)
+        return generateImageWithGeminiStudio(options, retryCount + 1)
+      }
+      throw new Error(`Service unavailable after ${MAX_RETRIES} retries. The model is experiencing high demand. Please try again in a few minutes.`)
     }
     
     let hint = ''
@@ -190,8 +214,6 @@ export async function generateImageWithGeminiStudio(
       hint = 'Bad request. Check prompt and parameters.'
     } else if (response.status === 403) {
       hint = 'API key may be invalid or this model is not available with your API key.'
-    } else if (response.status === 503) {
-      hint = 'Service temporarily unavailable. The model may be under high load.'
     }
     
     throw new Error(`Gemini Studio API error ${response.status}: ${errorText}. ${hint}`)
