@@ -1773,13 +1773,15 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   }
 
   // Audio generation functions
-  const generateSFX = async (sceneIdx: number, sfxIdx: number) => {
+  const generateSFX = async (sceneIdx: number, sfxIdx: number, skipOverlay?: boolean) => {
     const scene = scenes[sceneIdx]
     const sfx = scene?.sfx?.[sfxIdx]
     if (!sfx) return
 
     setGeneratingSFX({ sceneIdx, sfxIdx })
-    overlayStore?.show(`Generating sound effect ${sfxIdx + 1} for Scene ${sceneIdx + 1}...`, 15)
+    if (!skipOverlay) {
+      overlayStore?.show(`Generating sound effect ${sfxIdx + 1} for Scene ${sceneIdx + 1}...`, 15, 'audio-generation')
+    }
     try {
       const response = await fetch('/api/tts/elevenlabs/sound-effects', {
         method: 'POST',
@@ -1814,23 +1816,29 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       
       // Update scene with persistent audio URL
       await saveSceneAudio(sceneIdx, 'sfx', audioUrl, sfxIdx)
-      overlayStore?.hide()
+      if (!skipOverlay) {
+        overlayStore?.hide()
+      }
     } catch (error: any) {
       console.error('[SFX Generation] Error:', error)
-      overlayStore?.hide()
+      if (!skipOverlay) {
+        overlayStore?.hide()
+      }
       toast.error(`Failed to generate sound effect: ${error.message}`)
     } finally {
       setGeneratingSFX(null)
     }
   }
 
-  const generateMusic = async (sceneIdx: number) => {
+  const generateMusic = async (sceneIdx: number, skipOverlay?: boolean) => {
     const scene = scenes[sceneIdx]
     const music = scene?.music
     if (!music) return
 
     setGeneratingMusic(sceneIdx)
-    overlayStore?.show(`Generating music for Scene ${sceneIdx + 1}...`, 45)
+    if (!skipOverlay) {
+      overlayStore?.show(`Generating music for Scene ${sceneIdx + 1}...`, 45, 'audio-generation')
+    }
     try {
       const duration = scene.duration || 30
       // Use saveToBlob to have the server upload directly - avoids 4.5MB payload limit
@@ -1857,10 +1865,14 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       
       // Update scene with persistent audio URL
       await saveSceneAudio(sceneIdx, 'music', audioUrl)
-      overlayStore?.hide()
+      if (!skipOverlay) {
+        overlayStore?.hide()
+      }
     } catch (error: any) {
       console.error('[Music Generation] Error:', error)
-      overlayStore?.hide()
+      if (!skipOverlay) {
+        overlayStore?.hide()
+      }
       toast.error(`Failed to generate music: ${error.message}`)
     } finally {
       setGeneratingMusic(null)
@@ -4920,12 +4932,12 @@ function SceneCard({
                                   }
                                   // Generate music
                                   if (scene.music) {
-                                    await generateMusic(sceneIdx)
+                                    await generateMusic(sceneIdx, true)
                                   }
                                   // Generate all SFX
                                   if (Array.isArray(scene.sfx)) {
                                     for (let sfxIdx = 0; sfxIdx < scene.sfx.length; sfxIdx++) {
-                                      await generateSFX(sceneIdx, sfxIdx)
+                                      await generateSFX(sceneIdx, sfxIdx, true)
                                     }
                                   }
                                   overlayStore?.hide()
