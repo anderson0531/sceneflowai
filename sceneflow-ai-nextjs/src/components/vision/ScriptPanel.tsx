@@ -3065,10 +3065,25 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             referenceImage: c.referenceImage,  // Pass Blob URL for Imagen API
             appearanceDescription: c.appearanceDescription,  // Pass appearance description
             ethnicity: c.ethnicity,
-            subject: c.subject
+            subject: c.subject,
+            wardrobes: c.wardrobes  // Pass wardrobes for costume selection in dialog
           }))}
           sceneReferences={sceneReferences}
           objectReferences={objectReferences}
+          sceneWardrobes={(() => {
+            // Build wardrobes map from scene's characterWardrobes array
+            const scene = scenes[sceneBuilderIdx]
+            const wardrobesMap: Record<string, string> = {}
+            if (scene?.characterWardrobes) {
+              scene.characterWardrobes.forEach((cw: any) => {
+                const char = characters.find(c => c.id === cw.characterId)
+                if (char) {
+                  wardrobesMap[char.name] = cw.wardrobeId
+                }
+              })
+            }
+            return wardrobesMap
+          })()}
           onGenerateImage={async (selectedCharacters) => {
             // Start generation (this sets generatingImageForScene)
             if (onGenerateSceneImage) {
