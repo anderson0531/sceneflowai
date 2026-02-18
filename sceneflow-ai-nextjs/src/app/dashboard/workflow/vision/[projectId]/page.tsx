@@ -8568,7 +8568,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     sceneIndex: number, 
     audioType: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx',
     dialogueIndex?: number,
-    sfxIndex?: number
+    sfxIndex?: number,
+    silent?: boolean // Skip toast notification when deleting in batch
   ) => {
     if (!script?.script?.scenes?.[sceneIndex]) {
       console.error('[Delete Scene Audio] Scene not found')
@@ -8665,7 +8666,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     try {
       await saveScenesToDatabase(updatedScenes)
       console.log(`[Delete Scene Audio] Deleted ${audioType} audio from Scene ${sceneIndex + 1}`)
-      toast.success(`${audioType.charAt(0).toUpperCase() + audioType.slice(1)} audio deleted`)
+      if (!silent) {
+        toast.success(`${audioType.charAt(0).toUpperCase() + audioType.slice(1)} audio deleted`)
+      }
     } catch (error) {
       console.error('[Delete Scene Audio] Failed to save:', error)
       toast.error('Failed to delete audio')

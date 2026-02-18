@@ -4874,29 +4874,29 @@ function SceneCard({
                               onClick={async () => {
                                 setGenerateAllAudioConfirmOpen(false)
                                 
-                                overlayStore?.show(`Regenerating all audio for Scene ${sceneIdx + 1}...`, 60)
+                                overlayStore?.show(`Regenerating all audio for Scene ${sceneIdx + 1}...`, 60, 'audio-generation')
                                 try {
-                                  // First, delete ALL existing audio for this scene
+                                  // First, delete ALL existing audio for this scene (silently)
                                   // This ensures fresh generation even for script updates
                                   if (onDeleteSceneAudio) {
                                     // Delete narration audio
                                     if (scene.narrationAudio || scene.narrationAudioUrl) {
-                                      await onDeleteSceneAudio(sceneIdx, 'narration')
+                                      await onDeleteSceneAudio(sceneIdx, 'narration', undefined, undefined, true)
                                     }
                                     // Delete all dialogue audio
                                     if (scene.dialogue && scene.dialogue.length > 0) {
                                       for (let i = 0; i < scene.dialogue.length; i++) {
-                                        await onDeleteSceneAudio(sceneIdx, 'dialogue', i)
+                                        await onDeleteSceneAudio(sceneIdx, 'dialogue', i, undefined, true)
                                       }
                                     }
                                     // Delete music audio
                                     if (scene.musicAudio || scene.music?.url) {
-                                      await onDeleteSceneAudio(sceneIdx, 'music')
+                                      await onDeleteSceneAudio(sceneIdx, 'music', undefined, undefined, true)
                                     }
                                     // Delete all SFX audio
                                     if (Array.isArray(scene.sfx)) {
                                       for (let sfxIdx = 0; sfxIdx < scene.sfx.length; sfxIdx++) {
-                                        await onDeleteSceneAudio(sceneIdx, 'sfx', undefined, sfxIdx)
+                                        await onDeleteSceneAudio(sceneIdx, 'sfx', undefined, sfxIdx, true)
                                       }
                                     }
                                   }
