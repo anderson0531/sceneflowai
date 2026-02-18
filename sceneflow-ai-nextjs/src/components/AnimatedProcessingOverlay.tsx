@@ -918,6 +918,139 @@ const AnimatedProcessingOverlay = () => {
           </div>
         )}
         
+        {/* Magnifying glass script review animation */}
+        {config.animationType === 'magnifying-glass' && (
+          <div className="mb-8 mt-6 flex justify-center">
+            <div className="relative">
+              {/* Script document */}
+              <div className="relative w-36 h-44 bg-white rounded-lg shadow-xl p-3 overflow-hidden">
+                {/* Script lines */}
+                {[...Array(10)].map((_, i) => {
+                  const lineWidth = i === 2 || i === 5 || i === 8 ? '60%' : i === 9 ? '40%' : '100%'
+                  const isHighlighted = progress > 20 && Math.abs(((progress - 20) / 8) % 10 - i) < 1.5
+                  return (
+                    <div 
+                      key={i}
+                      className={`
+                        h-1.5 rounded mb-1.5 transition-all duration-300
+                        ${isHighlighted 
+                          ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]' 
+                          : 'bg-slate-300'}
+                      `}
+                      style={{ width: lineWidth }}
+                    />
+                  )
+                })}
+                
+                {/* Magnifying glass overlay effect */}
+                <div 
+                  className="absolute w-20 h-20 rounded-full border-4 border-cyan-400/60 pointer-events-none"
+                  style={{
+                    left: `${15 + Math.sin(progress / 12) * 20}%`,
+                    top: `${10 + ((progress * 0.8) % 70)}%`,
+                    boxShadow: '0 0 30px rgba(34, 211, 238, 0.3), inset 0 0 20px rgba(34, 211, 238, 0.1)',
+                    background: 'radial-gradient(circle, rgba(34, 211, 238, 0.15) 0%, transparent 70%)',
+                    transition: 'left 0.5s ease-out, top 0.3s ease-out'
+                  }}
+                >
+                  {/* Magnification effect inside the glass */}
+                  <div className="absolute inset-2 flex flex-col justify-center gap-1 overflow-hidden">
+                    <div className="h-2 bg-slate-400/50 rounded transform scale-125" />
+                    <div className="h-2 bg-slate-400/50 rounded w-4/5 transform scale-125" />
+                    <div className="h-2 bg-slate-400/50 rounded transform scale-125" />
+                  </div>
+                </div>
+                
+                {/* Found highlights */}
+                {progress > 40 && (
+                  <div 
+                    className="absolute left-2 w-6 h-3 bg-emerald-400/40 rounded animate-pulse"
+                    style={{ top: `${15 + ((progress - 40) * 0.5) % 50}%` }}
+                  />
+                )}
+                {progress > 60 && (
+                  <div 
+                    className="absolute right-4 w-8 h-3 bg-amber-400/40 rounded animate-pulse"
+                    style={{ top: `${30 + ((progress - 60) * 0.4) % 40}%` }}
+                  />
+                )}
+              </div>
+              
+              {/* Magnifying glass handle and frame */}
+              <div 
+                className="absolute pointer-events-none"
+                style={{
+                  left: `${40 + Math.sin(progress / 12) * 25}%`,
+                  top: `${15 + ((progress * 0.8) % 70)}%`,
+                  transform: 'translate(-50%, -50%)',
+                  transition: 'left 0.5s ease-out, top 0.3s ease-out'
+                }}
+              >
+                {/* Glass frame */}
+                <div className={`
+                  w-24 h-24 rounded-full border-4 transition-all duration-500
+                  ${progress > 80 
+                    ? 'border-emerald-400 shadow-[0_0_25px_rgba(52,211,153,0.5)]' 
+                    : 'border-cyan-500 shadow-[0_0_20px_rgba(34,211,238,0.4)]'}
+                `}>
+                  {/* Glass shine */}
+                  <div className="absolute top-2 left-3 w-4 h-4 bg-white/40 rounded-full blur-sm" />
+                </div>
+                
+                {/* Handle */}
+                <div 
+                  className={`
+                    absolute w-4 h-12 rounded-full transition-all duration-500
+                    ${progress > 80 ? 'bg-emerald-600' : 'bg-cyan-700'}
+                  `}
+                  style={{
+                    bottom: '-40px',
+                    right: '-8px',
+                    transform: 'rotate(-45deg)',
+                    transformOrigin: 'top center'
+                  }}
+                >
+                  {/* Handle grip */}
+                  <div className="absolute bottom-1 left-0.5 right-0.5 h-4 rounded-b-full bg-slate-800/30" />
+                </div>
+              </div>
+              
+              {/* Analysis indicators */}
+              <div className="absolute -right-8 top-0 bottom-0 flex flex-col justify-around py-4">
+                {['🎭', '💬', '🎬', '⭐'].map((icon, i) => {
+                  const iconProgress = (i + 1) * 20
+                  const isActive = progress >= iconProgress
+                  return (
+                    <div
+                      key={i}
+                      className={`
+                        w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500
+                        ${isActive 
+                          ? 'bg-slate-700 shadow-[0_0_12px_rgba(34,211,238,0.4)] scale-110' 
+                          : 'bg-slate-800/50 scale-90 opacity-50'}
+                      `}
+                    >
+                      <span className={`text-sm transition-all duration-300 ${isActive ? '' : 'grayscale'}`}>
+                        {icon}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+              
+              {/* Status text */}
+              <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-xs text-slate-400 whitespace-nowrap">
+                {progress < 15 ? '📋 Reading scene script...' : 
+                 progress < 35 ? '🔍 Examining dialogue...' :
+                 progress < 55 ? '🎬 Analyzing action beats...' :
+                 progress < 75 ? '🎭 Evaluating character dynamics...' :
+                 progress < 90 ? '💡 Generating insights...' :
+                 '✓ Completing analysis...'}
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Generic animation */}
         {config.animationType === 'generic' && (
           <div className="mb-8 mt-6 flex justify-center">

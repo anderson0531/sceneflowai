@@ -4608,7 +4608,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     
     setAnalyzingSceneIndex(sceneIndex)
     
-    try {
+    await execute(async () => {
       const scene = script.script.scenes[sceneIndex]
       
       // Call the existing analyze-scenes API with just this one scene
@@ -4641,13 +4641,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }])
         toast.success(`Scene ${sceneIndex + 1} analyzed`)
       }
-    } catch (error) {
+    }, {
+      message: `Analyzing Scene ${sceneIndex + 1}...`,
+      estimatedDuration: 12,
+      operationType: 'scene-analysis'
+    }).catch((error) => {
       console.error('[handleAnalyzeScene] Error:', error)
       toast.error('Failed to analyze scene')
-    } finally {
+    }).finally(() => {
       setAnalyzingSceneIndex(null)
-    }
-  }, [projectId, script, handleSceneAnalysisComplete])
+    })
+  }, [projectId, script, handleSceneAnalysisComplete, execute])
 
   // Handler for optimizing a single scene (called from ScriptPanel)
   const handleOptimizeScene = useCallback(async (

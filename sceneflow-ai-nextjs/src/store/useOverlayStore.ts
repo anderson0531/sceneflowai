@@ -11,6 +11,7 @@ export type OperationType =
   | 'script-generation'    // Writing/generating script
   | 'script-optimization'  // Optimizing/revising script
   | 'scene-revision'       // Revising individual scene
+  | 'scene-analysis'       // Scene audience resonance analysis
   | 'series-analysis'      // Series resonance analysis
   | 'series-fix'           // Applying fix to series
   | 'series-edit'          // Editing series storyline
@@ -41,7 +42,7 @@ export interface ProgressPhase {
 export interface OperationConfig {
   title: string
   phases: ProgressPhase[]
-  animationType: 'audience' | 'script' | 'image' | 'video' | 'audio' | 'series' | 'repair' | 'series-craft' | 'photographer' | 'storyboard' | 'generic'
+  animationType: 'audience' | 'script' | 'image' | 'video' | 'audio' | 'series' | 'repair' | 'series-craft' | 'photographer' | 'storyboard' | 'magnifying-glass' | 'generic'
 }
 
 /**
@@ -103,6 +104,20 @@ export const OPERATION_CONFIGS: Record<OperationType, OperationConfig> = {
       { id: 'dialogue', label: 'Refining dialogue...', progress: 70 },
       { id: 'polish', label: 'Polishing details...', progress: 88 },
       { id: 'finalize', label: 'Finalizing revision...', progress: 98 },
+    ]
+  },
+  'scene-analysis': {
+    title: 'Analyzing Scene',
+    animationType: 'magnifying-glass',
+    phases: [
+      { id: 'init', label: 'Preparing analysis...', progress: 8 },
+      { id: 'parse', label: 'Parsing scene structure...', progress: 18 },
+      { id: 'analyze-dialogue', label: 'Reviewing dialogue...', progress: 32 },
+      { id: 'analyze-action', label: 'Examining action beats...', progress: 48 },
+      { id: 'audience-feedback', label: 'Simulating audience response...', progress: 65 },
+      { id: 'recommendations', label: 'Generating recommendations...', progress: 82 },
+      { id: 'scoring', label: 'Calculating resonance score...', progress: 92 },
+      { id: 'finalize', label: 'Finalizing analysis...', progress: 98 },
     ]
   },
   'series-analysis': {
