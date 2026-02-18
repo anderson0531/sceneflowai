@@ -3600,6 +3600,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     total: number
     status: string
     sceneHeading?: string
+    // Concurrent processing fields
+    inProgress?: number
+    pending?: number
+    inProgressScenes?: number[]
+    validScenesCount?: number
+    skippedScenesCount?: number
+    failedCount?: number
   } | null>(null)
 
   // Single keyframe generation state (for global screen freeze)
@@ -7833,12 +7840,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           if (line.startsWith('data: ')) {
             const data = JSON.parse(line.slice(6))
 
-            if (data.type === 'progress') {
+            if (data.type === 'validation-complete') {
+              // Validation phase complete - show what will be processed
+              setImageProgress({
+                scene: 0,
+                total: data.totalScenes,
+                status: `Validated ${data.validScenes} scenes for generation`,
+                validScenesCount: data.validScenes,
+                skippedScenesCount: data.skippedScenes,
+                pending: data.validScenes
+              })
+            } else if (data.type === 'progress') {
               setImageProgress({
                 scene: data.scene,
                 total: data.total,
                 status: data.status,
-                sceneHeading: data.sceneHeading
+                sceneHeading: data.sceneHeading,
+                inProgress: data.inProgress,
+                pending: data.pending,
+                inProgressScenes: data.inProgressScenes,
+                failedCount: data.failedCount
               })
             } else if (data.type === 'complete') {
               setImageProgress(null)
@@ -9809,7 +9830,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             </h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-400">Scene {imageProgress.scene} of {imageProgress.total}</span>
+                <span className="text-gray-400">
+                  {imageProgress.inProgressScenes && imageProgress.inProgressScenes.length > 0
+                    ? `Generating scenes ${imageProgress.inProgressScenes.join(', ')}`
+                    : `Scene ${imageProgress.scene} of ${imageProgress.total}`}
+                </span>
                 <span className="text-gray-400">
                   {Math.round((imageProgress.scene / imageProgress.total) * 100)}%
                 </span>
@@ -9820,6 +9845,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   style={{ width: `${(imageProgress.scene / imageProgress.total) * 100}%` }}
                 />
               </div>
+              {/* Show concurrent status */}
+              {(imageProgress.inProgress !== undefined || imageProgress.pending !== undefined) && (
+                <div className="flex gap-4 text-xs">
+                  {imageProgress.inProgress !== undefined && imageProgress.inProgress > 0 && (
+                    <span className="text-blue-400">⚡ {imageProgress.inProgress} in progress</span>
+                  )}
+                  {imageProgress.pending !== undefined && imageProgress.pending > 0 && (
+                    <span className="text-gray-500">⏳ {imageProgress.pending} pending</span>
+                  )}
+                  {imageProgress.failedCount !== undefined && imageProgress.failedCount > 0 && (
+                    <span className="text-yellow-400">⚠️ {imageProgress.failedCount} failed</span>
+                  )}
+                </div>
+              )}
               {imageProgress.sceneHeading && (
                 <p className="text-xs text-gray-400 truncate">
                   {imageProgress.sceneHeading}
