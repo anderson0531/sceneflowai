@@ -1815,7 +1815,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       // Update scene with persistent audio URL
       await saveSceneAudio(sceneIdx, 'sfx', audioUrl, sfxIdx)
       overlayStore?.hide()
-      toast.success(`Sound effect generated!`)
     } catch (error: any) {
       console.error('[SFX Generation] Error:', error)
       overlayStore?.hide()
@@ -1859,7 +1858,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       // Update scene with persistent audio URL
       await saveSceneAudio(sceneIdx, 'music', audioUrl)
       overlayStore?.hide()
-      toast.success(`Music generated!`)
     } catch (error: any) {
       console.error('[Music Generation] Error:', error)
       overlayStore?.hide()
@@ -4931,7 +4929,6 @@ function SceneCard({
                                     }
                                   }
                                   overlayStore?.hide()
-                                  toast.success('All audio regenerated!')
                                 } catch (error) {
                                   console.error('[ScriptPanel] Generate all failed:', error)
                                   overlayStore?.hide()
@@ -5190,7 +5187,6 @@ function SceneCard({
                                 try {
                                   await onGenerateSceneAudio?.(sceneIdx, 'narration', undefined, undefined, selectedLanguage)
                                   overlayStore?.hide()
-                                  toast.success('Narration regenerated!')
                                 } catch (error) {
                                   console.error('[ScriptPanel] Narration regeneration failed:', error)
                                   overlayStore?.hide()
@@ -5250,7 +5246,6 @@ function SceneCard({
                                 try {
                                   await onGenerateSceneAudio?.(sceneIdx, 'narration', undefined, undefined, selectedLanguage)
                                   overlayStore?.hide()
-                                  toast.success('Narration generated!')
                                 } catch (error) {
                                   console.error('[ScriptPanel] Narration generation failed:', error)
                                   overlayStore?.hide()
@@ -5544,7 +5539,6 @@ function SceneCard({
                                     try {
                                       await onGenerateSceneAudio?.(sceneIdx, 'dialogue', d.character, i, selectedLanguage)
                                       overlayStore?.hide()
-                                      toast.success('Dialogue regenerated!')
                                     } catch (error) {
                                       console.error('[ScriptPanel] Dialogue regeneration failed:', error)
                                       overlayStore?.hide()
@@ -5610,7 +5604,6 @@ function SceneCard({
                                     try {
                                       await onGenerateSceneAudio?.(sceneIdx, 'dialogue', d.character, i, selectedLanguage)
                                       overlayStore?.hide()
-                                      toast.success(`Dialogue generated for ${d.character}`)
                                     } catch (error) {
                                       console.error('[ScriptPanel] Dialogue generation failed:', error)
                                       overlayStore?.hide()

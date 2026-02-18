@@ -1084,9 +1084,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           })
         })
-        
-        const { toast } = require('sonner')
-        toast.success(isComplete ? `Marked as complete` : `Unmarked`)
       } catch (error) {
         console.error('[MarkWorkflowComplete] Failed to save:', error)
         const { toast } = require('sonner')
@@ -2095,7 +2092,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       })
 
       if (pendingSegments.length === 0) {
-        toast.success('All frames are already generated')
+        toast.info('All frames are already generated')
         return
       }
 
@@ -2117,8 +2114,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // Small delay between generations to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 500))
       }
-
-      toast.success('All segment frames generated!')
     },
     [sceneProductionState, handleGenerateSegmentFrames]
   )
@@ -2994,8 +2989,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         
         return { ...current, segments }
       })
-      
-      toast.success('Take selected as active')
     },
     [applySceneProductionUpdate]
   )
@@ -3019,8 +3012,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         
         return { ...current, segments }
       })
-      
-      toast.success('Take deleted')
     },
     [applySceneProductionUpdate]
   )
@@ -3049,11 +3040,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         
         return { ...current, segments: updatedSegments }
       })
-
-      try {
-        const { toast } = require('sonner')
-        toast.success('Segment deleted')
-      } catch {}
     },
     [applySceneProductionUpdate]
   )
@@ -6046,8 +6032,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         } catch (saveError) {
           console.error('Failed to save scene to project:', saveError)
         }
-        
-        try { const { toast } = require('sonner'); toast.success('Scene image generated!') } catch {}
       } else {
         const errorMsg = json?.error || 'Failed to generate image'
         throw new Error(errorMsg)
@@ -6111,8 +6095,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         } catch (saveError) {
           console.error('Failed to save uploaded scene to project:', saveError)
         }
-        
-        try { const { toast } = require('sonner'); toast.success('Scene image uploaded!') } catch {}
       }
       reader.readAsDataURL(file)
     } catch (error) {
@@ -7784,8 +7766,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // NOTE: Database save is handled by the API's updateSceneAudio() function.
         // Do NOT call saveScenesToDatabase here - it would overwrite with stale state
         // and lose the Vercel Blob URLs that the API just persisted.
-        
-        try { const { toast } = require('sonner'); toast.success('Audio generated!') } catch {}
       } else {
         try { const { toast } = require('sonner'); toast.error(data.error || 'Failed to generate audio') } catch {}
       }

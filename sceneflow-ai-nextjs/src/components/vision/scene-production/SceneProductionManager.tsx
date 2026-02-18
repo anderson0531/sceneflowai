@@ -692,7 +692,6 @@ export function SceneProductionManager({
         }
         return newState
       })
-      toast.success('Audio clip removed')
     },
     []
   )
@@ -759,7 +758,6 @@ export function SceneProductionManager({
         }
         return newState
       })
-      toast.success(`Cleared all ${trackType} clips`)
     },
     [audioTracksState]
   )
@@ -805,7 +803,6 @@ export function SceneProductionManager({
           ...prev,
           [selectedSegmentId]: newSet
         }
-        toast.success('Dialogue removed from segment')
       } else {
         // First, remove from any other segment
         updatedAssignments = {}
@@ -819,7 +816,6 @@ export function SceneProductionManager({
         // Add to current segment
         newSet.add(dialogueId)
         updatedAssignments[selectedSegmentId] = newSet
-        toast.success('Dialogue assigned to segment')
       }
       
       // Phase 6: Persist dialogue assignment to database

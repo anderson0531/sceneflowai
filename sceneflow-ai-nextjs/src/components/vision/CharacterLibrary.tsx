@@ -812,14 +812,12 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
         wardrobeId: editingWardrobeId,
         action: 'update'
       })
-      toast.success('Wardrobe updated')
     } else {
       // Legacy: update default wardrobe
       onUpdateWardrobe?.(characterId, {
         defaultWardrobe: wardrobeText.trim(),
         wardrobeAccessories: accessoriesText.trim() || undefined
       })
-      toast.success('Wardrobe updated')
     }
     
     // Reset form state
@@ -837,7 +835,6 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
       wardrobeId,
       action: 'delete'
     })
-    toast.success('Wardrobe deleted')
   }
   
   // Handle setting a wardrobe as default
@@ -846,7 +843,6 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
       wardrobeId,
       action: 'setDefault'
     })
-    toast.success('Default wardrobe updated')
   }
 
   // Overlay store for enhance progress
