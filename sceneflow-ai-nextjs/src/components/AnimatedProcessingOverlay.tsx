@@ -451,21 +451,225 @@ const AnimatedProcessingOverlay = () => {
           </div>
         )}
         
-        {/* Audio generation animation */}
+        {/* Audio generation animation - Studio recording setup */}
         {config.animationType === 'audio' && (
-          <div className="mb-8 mt-6 flex justify-center items-end gap-1 h-20">
-            {[...Array(12)].map((_, i) => {
-              const height = 20 + Math.sin((progress / 10) + i * 0.5) * 30 + Math.random() * 10
-              return (
-                <div
-                  key={i}
-                  className="w-2 bg-gradient-to-t from-blue-500 to-cyan-400 rounded-t transition-all duration-150"
-                  style={{ 
-                    height: `${progress > 10 ? height : 5}px`,
-                  }}
-                />
-              )
-            })}
+          <div className="mb-8 mt-6 flex justify-center">
+            <div className="relative">
+              {/* Recording studio setup */}
+              <div className="flex items-end gap-6">
+                {/* Left speaker */}
+                <div className={`
+                  w-10 h-16 bg-gradient-to-b from-slate-700 to-slate-800 rounded-lg relative
+                  transition-all duration-300
+                  ${progress > 60 ? 'shadow-[0_0_15px_rgba(34,211,238,0.4)]' : ''}
+                `}>
+                  <div className={`
+                    absolute top-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full
+                    transition-all duration-300
+                    ${progress > 60 
+                      ? 'bg-cyan-500 animate-pulse shadow-[0_0_10px_rgba(34,211,238,0.6)]' 
+                      : 'bg-slate-600'}
+                  `} />
+                  <div className={`
+                    absolute bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full
+                    transition-all duration-300
+                    ${progress > 60 ? 'bg-cyan-400' : 'bg-slate-600'}
+                  `} />
+                </div>
+                
+                {/* Central mixing console with microphone */}
+                <div className="relative">
+                  {/* Microphone */}
+                  <div className="absolute -top-16 left-1/2 -translate-x-1/2">
+                    {/* Mic head */}
+                    <div className={`
+                      w-10 h-14 rounded-t-full bg-gradient-to-b from-slate-500 to-slate-600 
+                      border-2 transition-all duration-500 relative overflow-hidden
+                      ${progress > 10 && progress < 70 
+                        ? 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)]' 
+                        : 'border-slate-500'}
+                    `}>
+                      {/* Mic grille lines */}
+                      {[...Array(6)].map((_, i) => (
+                        <div 
+                          key={i}
+                          className="w-full h-0.5 bg-slate-700/50"
+                          style={{ marginTop: i === 0 ? '4px' : '3px' }}
+                        />
+                      ))}
+                      {/* Recording indicator */}
+                      {progress > 10 && progress < 70 && (
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+                      )}
+                    </div>
+                    {/* Mic stand */}
+                    <div className="w-2 h-8 bg-slate-600 mx-auto" />
+                  </div>
+                  
+                  {/* Mixing console / Audio interface */}
+                  <div className={`
+                    w-40 h-20 bg-gradient-to-b from-slate-700 to-slate-800 rounded-lg 
+                    border-2 transition-all duration-500 relative overflow-hidden
+                    ${progress > 70 
+                      ? 'border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.4)]' 
+                      : 'border-slate-600'}
+                  `}>
+                    {/* Channel strips */}
+                    <div className="absolute inset-2 flex gap-1">
+                      {[0, 1, 2, 3].map((channel) => {
+                        const channelActive = progress > (channel + 1) * 15
+                        const channelProgress = Math.max(0, Math.min(100, (progress - channel * 15) * 2))
+                        return (
+                          <div 
+                            key={channel}
+                            className="flex-1 flex flex-col items-center gap-1"
+                          >
+                            {/* Channel label */}
+                            <div className={`
+                              text-[6px] font-mono transition-all duration-300
+                              ${channelActive ? 'text-cyan-400' : 'text-slate-500'}
+                            `}>
+                              {channel === 0 ? 'VOX' : channel === 1 ? 'DLG' : channel === 2 ? 'MUS' : 'SFX'}
+                            </div>
+                            {/* Fader track */}
+                            <div className="w-2 h-8 bg-slate-900 rounded-sm relative">
+                              {/* Fader level */}
+                              <div 
+                                className={`
+                                  absolute bottom-0 left-0 right-0 rounded-sm transition-all duration-500
+                                  ${channelActive 
+                                    ? 'bg-gradient-to-t from-emerald-500 to-emerald-400' 
+                                    : 'bg-slate-700'}
+                                `}
+                                style={{ height: `${channelActive ? 30 + channelProgress * 0.5 : 10}%` }}
+                              />
+                              {/* Fader knob */}
+                              <div 
+                                className={`
+                                  absolute left-1/2 -translate-x-1/2 w-3 h-1.5 rounded-sm transition-all duration-500
+                                  ${channelActive ? 'bg-white shadow-sm' : 'bg-slate-500'}
+                                `}
+                                style={{ 
+                                  bottom: `${channelActive ? 25 + channelProgress * 0.45 : 5}%`,
+                                }}
+                              />
+                            </div>
+                            {/* LED indicator */}
+                            <div className={`
+                              w-1.5 h-1.5 rounded-full transition-all duration-300
+                              ${channelActive 
+                                ? channel < 2 
+                                  ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]' 
+                                  : 'bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.8)]'
+                                : 'bg-slate-600'}
+                            `} />
+                          </div>
+                        )
+                      })}
+                    </div>
+                    
+                    {/* Master output meter */}
+                    <div className="absolute right-1 top-2 bottom-2 w-3 flex gap-0.5">
+                      <div className="flex-1 bg-slate-900 rounded-sm flex flex-col-reverse overflow-hidden">
+                        {[...Array(8)].map((_, i) => {
+                          const meterLevel = progress > 40 ? Math.min(8, Math.floor((progress - 40) / 7)) : 0
+                          const isLit = i < meterLevel
+                          return (
+                            <div 
+                              key={i}
+                              className={`
+                                h-1.5 transition-all duration-150
+                                ${isLit 
+                                  ? i < 5 
+                                    ? 'bg-emerald-400' 
+                                    : i < 7 
+                                      ? 'bg-amber-400' 
+                                      : 'bg-red-500'
+                                  : 'bg-slate-700'}
+                              `}
+                              style={{ transitionDelay: `${i * 30}ms` }}
+                            />
+                          )
+                        })}
+                      </div>
+                      <div className="flex-1 bg-slate-900 rounded-sm flex flex-col-reverse overflow-hidden">
+                        {[...Array(8)].map((_, i) => {
+                          const meterLevel = progress > 45 ? Math.min(8, Math.floor((progress - 45) / 7)) : 0
+                          const isLit = i < meterLevel
+                          return (
+                            <div 
+                              key={i}
+                              className={`
+                                h-1.5 transition-all duration-150
+                                ${isLit 
+                                  ? i < 5 
+                                    ? 'bg-emerald-400' 
+                                    : i < 7 
+                                      ? 'bg-amber-400' 
+                                      : 'bg-red-500'
+                                  : 'bg-slate-700'}
+                              `}
+                              style={{ transitionDelay: `${i * 40}ms` }}
+                            />
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Waveform display below console */}
+                  <div className="mt-2 w-40 h-8 bg-slate-900 rounded border border-slate-700 overflow-hidden flex items-center justify-center gap-0.5 px-1">
+                    {[...Array(24)].map((_, i) => {
+                      const waveHeight = progress > 20 
+                        ? 4 + Math.sin((progress / 5) + i * 0.4) * 10 + Math.random() * 4
+                        : 2
+                      return (
+                        <div
+                          key={i}
+                          className={`
+                            w-1 rounded-full transition-all duration-100
+                            ${progress > 20 
+                              ? 'bg-gradient-to-t from-cyan-500 to-cyan-300' 
+                              : 'bg-slate-700'}
+                          `}
+                          style={{ height: `${waveHeight}px` }}
+                        />
+                      )
+                    })}
+                  </div>
+                </div>
+                
+                {/* Right speaker */}
+                <div className={`
+                  w-10 h-16 bg-gradient-to-b from-slate-700 to-slate-800 rounded-lg relative
+                  transition-all duration-300
+                  ${progress > 60 ? 'shadow-[0_0_15px_rgba(34,211,238,0.4)]' : ''}
+                `}>
+                  <div className={`
+                    absolute top-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full
+                    transition-all duration-300
+                    ${progress > 60 
+                      ? 'bg-cyan-500 animate-pulse shadow-[0_0_10px_rgba(34,211,238,0.6)]' 
+                      : 'bg-slate-600'}
+                  `} />
+                  <div className={`
+                    absolute bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full
+                    transition-all duration-300
+                    ${progress > 60 ? 'bg-cyan-400' : 'bg-slate-600'}
+                  `} />
+                </div>
+              </div>
+              
+              {/* Status text */}
+              <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-xs text-slate-400 whitespace-nowrap">
+                {progress < 15 ? '🎙️ Setting up studio...' : 
+                 progress < 35 ? '🎤 Recording voiceover...' :
+                 progress < 55 ? '💬 Capturing dialogue...' :
+                 progress < 75 ? '🎵 Mixing music tracks...' :
+                 progress < 90 ? '🔊 Adding sound effects...' :
+                 '✓ Mastering final mix...'}
+              </div>
+            </div>
           </div>
         )}
         

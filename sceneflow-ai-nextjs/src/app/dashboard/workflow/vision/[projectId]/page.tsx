@@ -7373,7 +7373,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       },
       {
         message: `Generating all audio for ${sceneCount} scenes (narration, dialogue, music, and SFX)`,
-        estimatedDuration
+        estimatedDuration,
+        operationType: 'audio-generation'
       }
     )
     
