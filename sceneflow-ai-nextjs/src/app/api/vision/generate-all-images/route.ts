@@ -72,20 +72,25 @@ export async function POST(request: NextRequest) {
         }
 
         // Pre-validate scenes and identify which ones can be generated
-        const validScenes: { index: number; scene: any; detectedChars: any[] }[] = []
+        const validScenes: { index: number; scene: any; detectedChars: any[]; scenePrompt: string }[] = []
         
         for (let i = 0; i < scenes.length; i++) {
           const scene = scenes[i]
           
           // Detect characters in scene using smart matching
+          // Include sceneDirectionText for better nickname detection (e.g., "Ben" -> "Dr. Benjamin Anderson")
           const sceneText = [
             scene.heading || '',
             scene.action || '',
             scene.visualDescription || '',
+            scene.sceneDirectionText || '',  // Include scene direction for character detection
             ...(scene.dialogue || []).map((d: any) => d.character || '')
           ].join(' ')
           
           const detectedChars = findSceneCharacters(sceneText, characters)
+          
+          // Build prompt like ScenePromptBuilder does - prefer sceneDirectionText if available
+          const scenePrompt = scene.sceneDirectionText || scene.visualDescription || scene.action || scene.heading || ''
           
           if (detectedChars.length === 0) {
             console.log(`[Batch Images] Scene ${i + 1}: No characters detected, skipping`)
@@ -111,7 +116,7 @@ export async function POST(request: NextRequest) {
             continue
           }
           
-          validScenes.push({ index: i, scene, detectedChars })
+          validScenes.push({ index: i, scene, detectedChars, scenePrompt })
         }
 
         // Send initial progress with validation results
@@ -142,7 +147,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create concurrent tasks for valid scenes
-        const tasks: ConcurrentTask<SceneGenerationResult>[] = validScenes.map(({ index, scene, detectedChars }) => ({
+        const tasks: ConcurrentTask<SceneGenerationResult>[] = validScenes.map(({ index, scene, detectedChars, scenePrompt }) => ({
           id: index,
           execute: async (): Promise<SceneGenerationResult> => {
             try {
@@ -152,9 +157,10 @@ export async function POST(request: NextRequest) {
                 body: JSON.stringify({
                   projectId,
                   sceneIndex: index,
-                  scenePrompt: scene.visualDescription || scene.action || scene.heading,
+                  scenePrompt,  // Use pre-built prompt (prefers sceneDirectionText)
                   selectedCharacters: detectedChars.map((c: any) => c.id),
-                  quality: imageQuality || 'auto'
+                  quality: imageQuality || 'auto',
+                  skipObjectAutoDetection: true  // Batch mode: don't auto-detect props
                 })
               })
               

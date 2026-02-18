@@ -233,6 +233,7 @@ export async function POST(req: NextRequest) {
       objectReferences = [],  // NEW: Prop/object references from Reference Library
       excludeCharacters = false,  // NEW: Generate scene reference only (no people) for production bible
       locationReferences = [],  // NEW: Location references for environment consistency
+      skipObjectAutoDetection = false,  // NEW: Skip auto-detection of objects (for batch mode)
     } = body
     
     // Handle both legacy (selectedCharacters) and new (characters) formats
@@ -418,6 +419,7 @@ export async function POST(req: NextRequest) {
     // This ensures objects mentioned in scene text (like "Sarah's Digital Image") are included
     // INTELLIGENT SELECTION: Prioritizes set-pieces/locations, respects importance levels,
     // and enforces budget constraints to avoid overwhelming the model
+    // SKIP: When skipObjectAutoDetection=true (batch mode), don't auto-detect - use only what's passed
     let detectedObjectReferences = objectReferences
     
     // Reference slot budget: Total 5 slots, reserve 3 for characters, 2 for objects
@@ -425,7 +427,7 @@ export async function POST(req: NextRequest) {
     const MAX_OBJECT_REFERENCES = 2
     const MAX_ALWAYS_INCLUDE = 3  // Safety cap for alwaysInclude to prevent abuse
     
-    if (project && detectedObjectReferences.length === 0) {
+    if (project && detectedObjectReferences.length === 0 && !skipObjectAutoDetection) {
       const projectObjectRefs = project.metadata?.visionPhase?.references?.objectReferences || []
       
       if (projectObjectRefs.length > 0 && fullSceneContext) {

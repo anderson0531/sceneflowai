@@ -953,7 +953,7 @@ export function ScenePromptBuilder({
                   {/* Scene Wardrobe Selection */}
                   {structure.characters.some(charName => {
                     const char = availableCharacters.find(c => c.name === charName)
-                    return char?.wardrobes && char.wardrobes.length > 1
+                    return char?.wardrobes && char.wardrobes.length >= 1
                   }) && (
                     <div className="mt-3 p-3 rounded border border-purple-500/30 bg-purple-900/10">
                       <div className="flex items-center gap-2 mb-2">
@@ -964,7 +964,7 @@ export function ScenePromptBuilder({
                       <div className="space-y-2">
                         {structure.characters.map(charName => {
                           const char = availableCharacters.find(c => c.name === charName)
-                          if (!char?.wardrobes || char.wardrobes.length <= 1) return null
+                          if (!char?.wardrobes || char.wardrobes.length < 1) return null
                           const defaultWardrobe = char.wardrobes.find(w => w.isDefault)
                           const currentWardrobeId = localWardrobes[charName] || sceneWardrobes[charName] || defaultWardrobe?.id
                           return (
