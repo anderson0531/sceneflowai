@@ -8603,7 +8603,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         urlsToDelete.push(updatedScene.narrationAudio[selectedLang].url)
         delete updatedScene.narrationAudio
       }
-    } else if (audioType === 'dialogue' && dialogueIndex !== undefined) {
+    } else if (audioType === 'dialogue') {
       // Get dialogue audio array
       let dialogueAudioArray: any[] = []
       if (Array.isArray(updatedScene.dialogueAudio)) {
@@ -8612,13 +8612,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         dialogueAudioArray = [...(updatedScene.dialogueAudio[selectedLang] || [])]
       }
       
-      // Find and remove the matching dialogue audio
-      const audioIdx = dialogueAudioArray.findIndex((a: any) => 
-        a.dialogueIndex === dialogueIndex
-      )
-      if (audioIdx !== -1 && dialogueAudioArray[audioIdx]?.audioUrl) {
-        urlsToDelete.push(dialogueAudioArray[audioIdx].audioUrl)
-        dialogueAudioArray.splice(audioIdx, 1)
+      // dialogueIndex === -1 means delete ALL dialogue audio (for regenerate all)
+      if (dialogueIndex === -1) {
+        // Delete all dialogue audio entries
+        dialogueAudioArray.forEach((a: any) => {
+          if (a?.audioUrl) urlsToDelete.push(a.audioUrl)
+        })
+        dialogueAudioArray = []
+      } else if (dialogueIndex !== undefined) {
+        // Find and remove the matching dialogue audio
+        const audioIdx = dialogueAudioArray.findIndex((a: any) => 
+          a.dialogueIndex === dialogueIndex
+        )
+        if (audioIdx !== -1 && dialogueAudioArray[audioIdx]?.audioUrl) {
+          urlsToDelete.push(dialogueAudioArray[audioIdx].audioUrl)
+          dialogueAudioArray.splice(audioIdx, 1)
+        }
       }
       
       // Update the scene
@@ -8632,18 +8641,36 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         urlsToDelete.push(updatedScene.musicAudio.url)
       }
       delete updatedScene.musicAudio
-    } else if (audioType === 'sfx' && sfxIndex !== undefined) {
-      if (updatedScene.sfxAudio?.[sfxIndex]) {
-        urlsToDelete.push(updatedScene.sfxAudio[sfxIndex])
-        const newSfxAudio = [...(updatedScene.sfxAudio || [])]
-        newSfxAudio[sfxIndex] = null
-        updatedScene.sfxAudio = newSfxAudio
-      }
-      // Also clear from sfx object if it has audioUrl
-      if (updatedScene.sfx?.[sfxIndex]?.audioUrl) {
-        const newSfx = [...(updatedScene.sfx || [])]
-        newSfx[sfxIndex] = { ...newSfx[sfxIndex], audioUrl: undefined }
-        updatedScene.sfx = newSfx
+    } else if (audioType === 'sfx') {
+      // sfxIndex === -1 means delete ALL SFX audio (for regenerate all)
+      if (sfxIndex === -1) {
+        // Delete all SFX audio entries
+        if (Array.isArray(updatedScene.sfxAudio)) {
+          updatedScene.sfxAudio.forEach((url: string | null) => {
+            if (url) urlsToDelete.push(url)
+          })
+          updatedScene.sfxAudio = []
+        }
+        // Also clear audioUrl from all sfx objects
+        if (Array.isArray(updatedScene.sfx)) {
+          updatedScene.sfx = updatedScene.sfx.map((s: any) => {
+            if (s?.audioUrl) urlsToDelete.push(s.audioUrl)
+            return { ...s, audioUrl: undefined }
+          })
+        }
+      } else if (sfxIndex !== undefined) {
+        if (updatedScene.sfxAudio?.[sfxIndex]) {
+          urlsToDelete.push(updatedScene.sfxAudio[sfxIndex])
+          const newSfxAudio = [...(updatedScene.sfxAudio || [])]
+          newSfxAudio[sfxIndex] = null
+          updatedScene.sfxAudio = newSfxAudio
+        }
+        // Also clear from sfx object if it has audioUrl
+        if (updatedScene.sfx?.[sfxIndex]?.audioUrl) {
+          const newSfx = [...(updatedScene.sfx || [])]
+          newSfx[sfxIndex] = { ...newSfx[sfxIndex], audioUrl: undefined }
+          updatedScene.sfx = newSfx
+        }
       }
     }
     

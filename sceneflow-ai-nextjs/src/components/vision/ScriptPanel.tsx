@@ -4891,26 +4891,14 @@ function SceneCard({
                                   // First, delete ALL existing audio for this scene (silently)
                                   // This ensures fresh generation even for script updates
                                   if (onDeleteSceneAudio) {
-                                    // Delete narration audio
-                                    if (scene.narrationAudio || scene.narrationAudioUrl) {
-                                      await onDeleteSceneAudio(sceneIdx, 'narration', undefined, undefined, true)
-                                    }
-                                    // Delete all dialogue audio
-                                    if (scene.dialogue && scene.dialogue.length > 0) {
-                                      for (let i = 0; i < scene.dialogue.length; i++) {
-                                        await onDeleteSceneAudio(sceneIdx, 'dialogue', i, undefined, true)
-                                      }
-                                    }
+                                    // Delete narration audio (always attempt to clear any orphaned audio)
+                                    await onDeleteSceneAudio(sceneIdx, 'narration', undefined, undefined, true)
+                                    // Delete ALL dialogue audio using -1 index (catches orphaned entries from removed dialogue lines)
+                                    await onDeleteSceneAudio(sceneIdx, 'dialogue', -1, undefined, true)
                                     // Delete music audio
-                                    if (scene.musicAudio || scene.music?.url) {
-                                      await onDeleteSceneAudio(sceneIdx, 'music', undefined, undefined, true)
-                                    }
-                                    // Delete all SFX audio
-                                    if (Array.isArray(scene.sfx)) {
-                                      for (let sfxIdx = 0; sfxIdx < scene.sfx.length; sfxIdx++) {
-                                        await onDeleteSceneAudio(sceneIdx, 'sfx', undefined, sfxIdx, true)
-                                      }
-                                    }
+                                    await onDeleteSceneAudio(sceneIdx, 'music', undefined, undefined, true)
+                                    // Delete ALL SFX audio using -1 index (catches orphaned entries from removed SFX)
+                                    await onDeleteSceneAudio(sceneIdx, 'sfx', undefined, -1, true)
                                   }
                                   
                                   // Small delay to ensure deletions are processed
