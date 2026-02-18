@@ -450,7 +450,7 @@ export function AudioGalleryPlayer({
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <div className="flex items-center gap-3">
             <Volume2 className="w-5 h-5 text-emerald-400" />
-            <span className="font-semibold text-white">Audio Preview</span>
+            <span className="font-semibold text-white">Storyboard Player</span>
             <span className="text-xs text-gray-400 bg-gray-800 px-2 py-0.5 rounded">
               Scene {currentSceneIndex + 1} of {scenes.length}
             </span>
@@ -530,8 +530,8 @@ export function AudioGalleryPlayer({
           <div className={cn(
             "relative rounded-lg overflow-hidden bg-black flex-shrink-0",
             isFullscreen 
-              ? "w-[75vw] max-w-6xl aspect-video" 
-              : "w-80 h-48"
+              ? "w-[80vw] max-w-7xl aspect-video" 
+              : "w-[500px] h-[280px]"
           )}>
             {currentScene?.imageUrl ? (
               <img
@@ -559,16 +559,16 @@ export function AudioGalleryPlayer({
           
           {/* Scene title below video in fullscreen */}
           {isFullscreen && (
-            <div className="w-[75vw] max-w-6xl mt-3 text-center">
-              <span className="text-white/60 text-sm">SCENE {currentSceneIndex + 1}</span>
-              <h2 className="text-white text-xl font-semibold truncate">{formattedHeading}</h2>
+            <div className="w-[80vw] max-w-7xl mt-2 text-center">
+              <span className="text-white/50 text-xs uppercase tracking-wide">SCENE {currentSceneIndex + 1}</span>
+              <h2 className="text-white text-sm font-medium truncate mt-0.5">{formattedHeading}</h2>
             </div>
           )}
           
           {/* Playback controls and info */}
           <div className={cn(
             "flex flex-col justify-between min-w-0",
-            isFullscreen ? "w-[75vw] max-w-6xl mt-4" : "flex-1"
+            isFullscreen ? "w-[80vw] max-w-7xl mt-3" : "flex-1"
           )}>
             {/* Scene info - hide in fullscreen (shown below video) */}
             {!isFullscreen && (
