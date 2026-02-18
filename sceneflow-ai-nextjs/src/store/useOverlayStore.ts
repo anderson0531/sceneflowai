@@ -41,7 +41,7 @@ export interface ProgressPhase {
 export interface OperationConfig {
   title: string
   phases: ProgressPhase[]
-  animationType: 'audience' | 'script' | 'image' | 'video' | 'audio' | 'series' | 'repair' | 'series-craft' | 'photographer' | 'generic'
+  animationType: 'audience' | 'script' | 'image' | 'video' | 'audio' | 'series' | 'repair' | 'series-craft' | 'photographer' | 'storyboard' | 'generic'
 }
 
 /**
@@ -217,15 +217,16 @@ export const OPERATION_CONFIGS: Record<OperationType, OperationConfig> = {
   },
   'storyboard-production': {
     title: 'Storyboard Production',
-    animationType: 'photographer',
+    animationType: 'storyboard',
     phases: [
-      { id: 'analyze', label: 'Analyzing scene description...', progress: 10 },
-      { id: 'lighting', label: 'Setting up studio lighting...', progress: 25 },
-      { id: 'compose', label: 'Composing the shot...', progress: 40 },
-      { id: 'characters', label: 'Matching character references...', progress: 55 },
-      { id: 'generate', label: 'Generating scene visualization...', progress: 75 },
-      { id: 'retouch', label: 'Professional retouching...', progress: 90 },
-      { id: 'finalize', label: 'Finalizing storyboard frame...', progress: 98 },
+      { id: 'analyze', label: 'Reading scene description...', progress: 10 },
+      { id: 'layout', label: 'Planning frame layout...', progress: 20 },
+      { id: 'sketch', label: 'Sketching composition...', progress: 35 },
+      { id: 'characters', label: 'Adding characters...', progress: 50 },
+      { id: 'details', label: 'Drawing scene details...', progress: 65 },
+      { id: 'refine', label: 'Refining artwork...', progress: 80 },
+      { id: 'color', label: 'Applying colors...', progress: 92 },
+      { id: 'finalize', label: 'Finalizing frame...', progress: 98 },
     ]
   },
   'character-enhance': {

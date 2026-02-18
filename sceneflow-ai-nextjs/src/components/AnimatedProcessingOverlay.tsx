@@ -781,6 +781,143 @@ const AnimatedProcessingOverlay = () => {
           </div>
         )}
         
+        {/* Storyboard animation - frames being drawn */}
+        {config.animationType === 'storyboard' && (
+          <div className="mb-8 mt-6 flex justify-center">
+            <div className="relative">
+              {/* Storyboard panel with 3 frames */}
+              <div className="flex gap-3 p-4 bg-slate-800/60 rounded-xl border border-slate-700 backdrop-blur-sm">
+                {[0, 1, 2].map((frameIdx) => {
+                  const frameStart = frameIdx * 30 // Each frame starts at 0%, 30%, 60%
+                  const frameProgress = Math.max(0, Math.min(100, (progress - frameStart) * 3))
+                  const isActive = progress >= frameStart && progress < frameStart + 35
+                  const isComplete = frameProgress >= 100
+                  
+                  return (
+                    <div
+                      key={frameIdx}
+                      className={`
+                        relative w-24 h-16 rounded-md overflow-hidden border-2 transition-all duration-500
+                        ${isComplete 
+                          ? 'border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)]' 
+                          : isActive 
+                            ? 'border-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.4)]'
+                            : 'border-slate-600 bg-slate-700/50'}
+                      `}
+                    >
+                      {/* Background gradient */}
+                      <div className={`
+                        absolute inset-0 transition-opacity duration-500
+                        ${frameProgress > 0 ? 'opacity-100' : 'opacity-0'}
+                      `}>
+                        <div className="absolute inset-0 bg-gradient-to-br from-slate-600 via-slate-700 to-slate-800" />
+                      </div>
+                      
+                      {/* Sketch lines appearing */}
+                      {frameProgress > 10 && (
+                        <div className="absolute inset-0 p-1.5">
+                          {/* Horizon line */}
+                          <div 
+                            className="absolute left-1.5 right-1.5 h-0.5 bg-slate-400/60 rounded"
+                            style={{ 
+                              top: '40%',
+                              width: `${Math.min(frameProgress * 1.5, 100) - 20}%`,
+                              opacity: frameProgress > 20 ? 1 : 0,
+                              transition: 'width 0.3s ease-out'
+                            }}
+                          />
+                          
+                          {/* Character silhouette */}
+                          {frameProgress > 35 && (
+                            <div 
+                              className={`
+                                absolute bottom-1.5 left-1/2 -translate-x-1/2 rounded-t-full transition-all duration-500
+                                ${isComplete ? 'bg-cyan-500/40' : 'bg-amber-500/40'}
+                              `}
+                              style={{
+                                width: `${Math.min((frameProgress - 35) * 0.6, 30)}px`,
+                                height: `${Math.min((frameProgress - 35) * 0.8, 35)}px`
+                              }}
+                            />
+                          )}
+                          
+                          {/* Scene element shapes */}
+                          {frameProgress > 50 && (
+                            <>
+                              <div 
+                                className="absolute top-1 left-1 w-3 h-3 bg-slate-500/50 rounded-sm"
+                                style={{ opacity: (frameProgress - 50) / 50 }}
+                              />
+                              <div 
+                                className="absolute top-2 right-1 w-4 h-2 bg-slate-500/40 rounded-sm"
+                                style={{ opacity: (frameProgress - 55) / 45 }}
+                              />
+                            </>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Color wash effect */}
+                      {frameProgress > 80 && (
+                        <div 
+                          className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 via-transparent to-blue-500/20"
+                          style={{ opacity: (frameProgress - 80) / 20 }}
+                        />
+                      )}
+                      
+                      {/* Drawing pencil indicator */}
+                      {isActive && !isComplete && frameProgress > 0 && (
+                        <div 
+                          className="absolute w-4 h-4 transition-all duration-200"
+                          style={{
+                            left: `${10 + (frameProgress % 40) * 1.8}%`,
+                            top: `${20 + Math.sin(frameProgress / 10) * 30}%`,
+                          }}
+                        >
+                          <span className="text-sm drop-shadow-lg">✏️</span>
+                        </div>
+                      )}
+                      
+                      {/* Completion checkmark */}
+                      {isComplete && (
+                        <div className="absolute top-0.5 right-0.5 w-4 h-4 bg-cyan-500 rounded-full flex items-center justify-center shadow-md animate-[pop_0.3s_ease-out]">
+                          <span className="text-white text-[10px]">✓</span>
+                        </div>
+                      )}
+                      
+                      {/* Frame number */}
+                      <div className="absolute bottom-0.5 left-1 text-[8px] text-slate-400 font-mono">
+                        F{frameIdx + 1}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              
+              {/* Film strip holes decoration */}
+              <div className="absolute -left-2 top-0 bottom-0 w-3 flex flex-col justify-around py-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="w-2 h-2 bg-slate-700 rounded-sm border border-slate-600" />
+                ))}
+              </div>
+              <div className="absolute -right-2 top-0 bottom-0 w-3 flex flex-col justify-around py-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="w-2 h-2 bg-slate-700 rounded-sm border border-slate-600" />
+                ))}
+              </div>
+              
+              {/* Status text */}
+              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-slate-400 whitespace-nowrap">
+                {progress < 15 ? '📋 Reading scene...' : 
+                 progress < 30 ? '✏️ Sketching frame 1...' :
+                 progress < 60 ? '✏️ Drawing frame 2...' :
+                 progress < 85 ? '🎨 Adding details...' :
+                 '✓ Finalizing storyboard...'}
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Generic animation */}
         {config.animationType === 'generic' && (
           <div className="mb-8 mt-6 flex justify-center">
