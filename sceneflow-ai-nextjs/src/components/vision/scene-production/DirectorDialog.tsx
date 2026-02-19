@@ -463,7 +463,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
                 <span>
                   {mode === 'FRAME_TO_VIDEO' 
-                    ? "Tip: Describe the movement, not the scene. Focus on camera motion and character actions." 
+                    ? "✨ AI-Optimized: Your prompt is automatically enhanced for end-frame alignment. Conflicting motion is filtered." 
                     : "Tip: Describe the scene visuals, lighting, and atmosphere. Be specific about what you want to see."}
                 </span>
               </div>

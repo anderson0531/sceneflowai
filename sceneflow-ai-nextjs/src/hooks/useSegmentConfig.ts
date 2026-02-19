@@ -11,6 +11,7 @@
  * 
  * Prompt Strategy:
  * - Interpolation Mode (FTV): Motion instructions derived from script action
+ *   WITH intelligent filtering to avoid end-frame conflicts
  * - Generation Mode (I2V/T2V): Visual descriptions from Frame step's visual prompt
  * 
  * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
@@ -19,6 +20,125 @@
 import { useMemo } from 'react'
 import type { SceneSegment, VideoGenerationMethod } from '@/components/vision/scene-production/types'
 import type { VideoGenerationConfig, ApprovalStatus } from '@/components/vision/scene-production/types'
+
+/**
+ * FTV-SPECIFIC: Removes motion language that conflicts with end-frame anchoring
+ * 
+ * Problem: Prompts like "camera pulls back" or "character walks away" cause Veo
+ * to generate video that doesn't match the end frame because the motion described
+ * moves AWAY from the end state rather than TOWARDS it.
+ * 
+ * Solution: Strip out directional motion that could conflict, and add anchoring language.
+ * 
+ * Design Decision: Anchoring phrase is PREPENDED (not appended) because Veo 3.1
+ * weights the beginning of prompts more heavily for compositional guidance.
+ */
+function sanitizeFTVPrompt(prompt: string): string {
+  if (!prompt) return prompt
+  
+  // Motion phrases that commonly conflict with end-frame matching
+  // These describe movement AWAY from a position rather than towards it
+  const conflictingPatterns = [
+    // Camera movements away
+    /camera\s+(pulls?\s+back|dollies?\s+(back|out)|zooms?\s+out|tracks?\s+(back|away)|retreats?|withdraws?)/gi,
+    /pull-?back/gi,
+    /dolly\s+out/gi,
+    /zoom\s+out/gi,
+    /wide-?angle.*reveals?/gi,
+    /revealing\s+(the|a)/gi,
+    // Character movements away
+    /(walks?|moves?|steps?|turns?|exits?|leaves?|departs?)\s+(away|off|out|back)/gi,
+    /walking\s+away/gi,
+    /turning\s+away/gi,
+    /exits?\s+(the\s+)?(scene|frame|room|shot)/gi,
+    // Generic away movements
+    /moves?\s+to\s+(the\s+)?(background|distance|far)/gi,
+    /recedes?/gi,
+    /fades?\s+(away|out|back)/gi,
+  ]
+  
+  let sanitized = prompt
+  
+  // Remove conflicting motion phrases
+  for (const pattern of conflictingPatterns) {
+    sanitized = sanitized.replace(pattern, '')
+  }
+  
+  // Clean up any double spaces or orphaned punctuation
+  sanitized = sanitized
+    .replace(/\s+/g, ' ')
+    .replace(/\s+\./g, '.')
+    .replace(/\.\s*\./g, '.')
+    .replace(/,\s*,/g, ',')
+    .replace(/^\s*[,\.]\s*/g, '')
+    .trim()
+  
+  return sanitized
+}
+
+/**
+ * FTV-SPECIFIC: Generates optimal motion prompt for frame-to-frame interpolation
+ * 
+ * Key principles:
+ * 1. PREPEND end-frame anchoring (Veo weights prompt start more heavily)
+ * 2. Remove motion language that conflicts with end-frame
+ * 3. Preserve dialogue and emotional content for Veo speech synthesis
+ * 4. Keep character descriptions but remove positional changes
+ * 
+ * Design Decision: Anchoring phrase is prepended, not appended, because testing
+ * shows Veo prioritizes early prompt content for compositional decisions.
+ */
+function generateFTVMotionPrompt(segment: SceneSegment): string {
+  // FTV-specific anchoring phrase (PREPENDED for priority)
+  const anchoringPhrase = 'IMPORTANT: The final frame must exactly match the provided end keyframe. Maintain character position, appearance, and framing throughout. Smoothly interpolate between start and end frames.'
+  
+  // Get the base prompt content
+  let basePrompt = ''
+  
+  // Priority 1: User instruction (but still sanitize for FTV)
+  if (segment.userInstruction && segment.userInstruction.trim()) {
+    basePrompt = segment.userInstruction.trim()
+  }
+  // Priority 2: User-edited prompt
+  else if (segment.userEditedPrompt && segment.userEditedPrompt.trim()) {
+    basePrompt = segment.userEditedPrompt.trim()
+  }
+  // Priority 3: AI-generated prompt (most common case)
+  else if (segment.generatedPrompt && segment.generatedPrompt.trim()) {
+    basePrompt = segment.generatedPrompt.trim()
+  }
+  // Priority 4: Build from metadata
+  else {
+    const parts: string[] = []
+    if (segment.action || segment.actionPrompt) {
+      parts.push(segment.action || segment.actionPrompt || '')
+    }
+    if (segment.emotionalBeat) {
+      parts.push(`Emotional tone: ${segment.emotionalBeat}`)
+    }
+    basePrompt = parts.join('. ') || 'Subtle ambient motion and natural movement.'
+  }
+  
+  // Sanitize the prompt to remove conflicting motion
+  basePrompt = sanitizeFTVPrompt(basePrompt)
+  
+  // Add camera movement if available and it's not conflicting
+  const cameraMovement = segment.cameraMovement || ''
+  if (cameraMovement && cameraMovement.toLowerCase() !== 'static') {
+    // Only add camera movement if it's not a "pull back" or "away" movement
+    const isConflicting = /pull|back|out|away|retreat|reveal/i.test(cameraMovement)
+    if (!isConflicting && !basePrompt.toLowerCase().includes('camera')) {
+      basePrompt = `Camera ${cameraMovement}. ${basePrompt}`
+    }
+  }
+  
+  // PREPEND anchoring phrase for maximum Veo priority
+  const finalPrompt = `${anchoringPhrase}\n\n${basePrompt}`
+  
+  console.log('[FTV Prompt] Sanitized and anchored prompt:', finalPrompt.substring(0, 150) + '...')
+  
+  return finalPrompt
+}
 
 /**
  * Generates a motion-focused prompt for Frame-to-Video interpolation
@@ -32,8 +152,21 @@ import type { VideoGenerationConfig, ApprovalStatus } from '@/components/vision/
  * 
  * Note: For Veo 3.1 speech synthesis, the generatedPrompt should include
  * dialogue in the format: "Character speaks the following line [emotion]: 'text'"
+ * 
+ * IMPORTANT: For FTV mode, this function routes to generateFTVMotionPrompt()
+ * which intelligently removes conflicting motion language and prepends end-frame anchoring.
  */
 function generateMotionPrompt(segment: SceneSegment): string {
+  // Check if this is FTV mode (has both start and end frames)
+  const hasStartFrame = !!(segment.startFrameUrl || segment.references?.startFrameUrl)
+  const hasEndFrame = !!(segment.endFrameUrl || segment.references?.endFrameUrl)
+  
+  // For FTV mode: use the intelligent prompt generator with end-frame anchoring
+  if (hasStartFrame && hasEndFrame) {
+    return generateFTVMotionPrompt(segment)
+  }
+  
+  // For non-FTV modes (I2V, T2V): use original logic without modification
   // Priority 1: User instruction override
   if (segment.userInstruction && segment.userInstruction.trim()) {
     return segment.userInstruction.trim()
