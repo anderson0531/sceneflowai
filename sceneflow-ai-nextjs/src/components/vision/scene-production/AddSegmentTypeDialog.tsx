@@ -42,6 +42,7 @@ import {
   RotateCcw,
   Lightbulb,
   AlertCircle,
+  RefreshCw,
 } from 'lucide-react'
 import { SceneSegment } from './types'
 
@@ -89,6 +90,8 @@ export interface AddSegmentTypeDialogProps {
     insertPosition: 'before' | 'after' | 'start' | 'end'
     insertIndex?: number 
   }) => void
+  /** Optional callback to regenerate all segments (opens KeyframeRegenerationDialog) */
+  onRegenerateAll?: () => void
 }
 
 // ============================================================================
@@ -404,6 +407,7 @@ export function AddSegmentTypeDialog({
   existingSegments,
   adjacentContext,
   onAddSegment,
+  onRegenerateAll,
 }: AddSegmentTypeDialogProps) {
   // State
   const [selectedType, setSelectedType] = useState<SegmentPurpose>('standard')
@@ -579,6 +583,41 @@ export function AddSegmentTypeDialog({
                     </button>
                   )
                 })}
+                
+                {/* Regenerate All Segments Section */}
+                {onRegenerateAll && existingSegments.length > 0 && (
+                  <>
+                    <div className="flex items-center gap-2 pt-4 pb-2">
+                      <div className="flex-1 h-px bg-slate-700" />
+                      <span className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">or</span>
+                      <div className="flex-1 h-px bg-slate-700" />
+                    </div>
+                    <button
+                      onClick={() => {
+                        onOpenChange(false)
+                        onRegenerateAll()
+                      }}
+                      className="w-full text-left p-4 rounded-lg border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/50 transition-all"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-amber-500/20 text-amber-400">
+                          <RefreshCw className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium text-amber-300">Regenerate All Segments</h4>
+                            <Badge variant="outline" className="text-[10px] py-0 h-5 text-amber-400 border-amber-500/30">
+                              {existingSegments.length} segments
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-amber-300/70 mt-1">
+                            Re-analyze the scene and generate new segments with AI. This will replace existing segments.
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  </>
+                )}
               </div>
             </ScrollArea>
           </TabsContent>

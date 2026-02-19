@@ -372,32 +372,15 @@ export function SegmentFrameTimeline({
               </Badge>
             ) : null}
             
-            {/* Segments button - opens intelligent regeneration dialog */}
-            {stats.total > 0 && (onResegment || onResegmentWithConfig) && (
+            {/* Segments button - opens add segment type dialog */}
+            {stats.total > 0 && (
               <Button
                 size="default"
                 variant="outline"
-                onClick={() => {
-                  // If we have scene data and the config handler, use the dialog
-                  if (sceneData && onResegmentWithConfig) {
-                    setKeyframeRegenDialogOpen(true)
-                  } else if (onResegment) {
-                    // Fallback to simple resegment
-                    executeWithOverlay(
-                      async () => {
-                        await onResegment()
-                      },
-                      {
-                        message: 'Re-analyzing scene and generating segments...',
-                        estimatedDuration: 15,
-                        operationType: 'scene-analysis'
-                      }
-                    )
-                  }
-                }}
-                disabled={isGenerating || isRegeneratingKeyframes}
+                onClick={() => setAddSegmentDialogOpen(true)}
+                disabled={isGenerating}
                 className="h-10 px-5 text-sm font-semibold border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 hover:border-cyan-400 shadow-md hover:shadow-lg transition-all"
-                title="Configure segment generation settings"
+                title="Add or manage segments"
               >
                 <Layers className="w-5 h-5 mr-2" />
                 Segments
@@ -489,18 +472,16 @@ export function SegmentFrameTimeline({
           })}
           
           {/* Add Segment Button */}
-          {onAddSegment && (
-            <div className="pt-2">
-              <Button
-                variant="outline"
-                onClick={() => setAddSegmentDialogOpen(true)}
-                className="w-full h-12 border-dashed border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-400/50 transition-all"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                Add Segment
-              </Button>
-            </div>
-          )}
+          <div className="pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setAddSegmentDialogOpen(true)}
+              className="w-full h-12 border-dashed border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-400/50 transition-all"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Add Segment
+            </Button>
+          </div>
         </div>
       )}
       
@@ -598,26 +579,28 @@ export function SegmentFrameTimeline({
       )}
       
       {/* Add Segment Type Dialog */}
-      {onAddSegment && (
-        <AddSegmentTypeDialog
-          open={addSegmentDialogOpen}
-          onOpenChange={setAddSegmentDialogOpen}
-          sceneId={sceneId}
-          sceneNumber={sceneNumber}
-          existingSegments={segments}
-          adjacentContext={adjacentSceneContext || {
-            currentScene: {
-              heading: sceneData?.heading,
-              action: sceneData?.action,
-              narration: sceneData?.narration,
-            },
-            previousScene: segments.length > 0 ? {
-              lastSegment: segments[segments.length - 1]
-            } : undefined
-          }}
-          onAddSegment={onAddSegment}
-        />
-      )}
+      <AddSegmentTypeDialog
+        open={addSegmentDialogOpen}
+        onOpenChange={setAddSegmentDialogOpen}
+        sceneId={sceneId}
+        sceneNumber={sceneNumber}
+        existingSegments={segments}
+        adjacentContext={adjacentSceneContext || {
+          currentScene: {
+            heading: sceneData?.heading,
+            action: sceneData?.action,
+            narration: sceneData?.narration,
+          },
+          previousScene: segments.length > 0 ? {
+            lastSegment: segments[segments.length - 1]
+          } : undefined
+        }}
+        onAddSegment={onAddSegment || ((segment) => {
+          toast.info('Segment created! Connect the onAddSegment handler to persist.')
+          console.log('New segment:', segment)
+        })}
+        onRegenerateAll={sceneData && onResegmentWithConfig ? () => setKeyframeRegenDialogOpen(true) : undefined}
+      />
     </div>
   )
 }
