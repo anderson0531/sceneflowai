@@ -353,7 +353,7 @@ export function SegmentFrameTimeline({
               <span className="text-cyan-400/70 text-[10px] w-8">{Math.round(stats.progressPercent)}%</span>
             </div>
             
-            {/* Batch Generate Button */}
+            {/* Keyframes Button - Generate all frames */}
             {stats.pending > 0 || stats.startLocked > 0 ? (
               <Button
                 size="default"
@@ -363,7 +363,7 @@ export function SegmentFrameTimeline({
                 className="h-10 px-5 text-sm font-semibold bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/40 transition-all"
               >
                 <Wand2 className="w-5 h-5 mr-2" />
-                Generate All
+                Keyframes
               </Button>
             ) : stats.fullyAnchored === stats.total && stats.total > 0 ? (
               <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 h-10 px-4 text-sm font-semibold flex items-center">
@@ -372,18 +372,33 @@ export function SegmentFrameTimeline({
               </Badge>
             ) : null}
             
-            {/* Segments button - opens add segment type dialog */}
+            {/* Segments button - opens regeneration/configuration dialog */}
+            {stats.total > 0 && (onResegment || onResegmentWithConfig) && (
+              <Button
+                size="default"
+                variant="outline"
+                onClick={() => setKeyframeRegenDialogOpen(true)}
+                disabled={isGenerating}
+                className="h-10 px-5 text-sm font-semibold border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 hover:border-cyan-400 shadow-md hover:shadow-lg transition-all"
+                title="Regenerate or configure segments"
+              >
+                <Layers className="w-5 h-5 mr-2" />
+                Segments
+              </Button>
+            )}
+            
+            {/* Add Segment Button - opens add segment type dialog */}
             {stats.total > 0 && (
               <Button
                 size="default"
                 variant="outline"
                 onClick={() => setAddSegmentDialogOpen(true)}
                 disabled={isGenerating}
-                className="h-10 px-5 text-sm font-semibold border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 hover:border-cyan-400 shadow-md hover:shadow-lg transition-all"
-                title="Add or manage segments"
+                className="h-10 px-5 text-sm font-semibold border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 hover:border-emerald-400 shadow-md hover:shadow-lg transition-all"
+                title="Add a new segment"
               >
-                <Layers className="w-5 h-5 mr-2" />
-                Segments
+                <Plus className="w-5 h-5 mr-2" />
+                Add Segment
               </Button>
             )}
           </div>
@@ -470,18 +485,6 @@ export function SegmentFrameTimeline({
               </div>
             )
           })}
-          
-          {/* Add Segment Button */}
-          <div className="pt-2">
-            <Button
-              variant="outline"
-              onClick={() => setAddSegmentDialogOpen(true)}
-              className="w-full h-12 border-dashed border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-400/50 transition-all"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Add Segment
-            </Button>
-          </div>
         </div>
       )}
       

@@ -219,6 +219,7 @@ interface ScriptPanelProps {
   /** Persist rendered scene URL to database */
   onRenderedSceneUrlChange?: (sceneId: string, url: string | null) => void
   onAddSegment?: (sceneId: string, afterSegmentId: string | null, duration: number) => void
+  onAddFullSegment?: (sceneId: string, segment: any) => void
   onDeleteSegment?: (sceneId: string, segmentId: string) => void
   onSegmentResize?: (sceneId: string, segmentId: string, changes: { startTime?: number; duration?: number }) => void
   /** Apply intelligent auto-alignment of keyframes to audio anchors */
@@ -3404,6 +3405,7 @@ interface SceneCardProps {
   /** Persist rendered scene URL to database */
   onRenderedSceneUrlChange?: (sceneId: string, url: string | null) => void
   onAddSegment?: (sceneId: string, afterSegmentId: string | null, duration: number) => void
+  onAddFullSegment?: (sceneId: string, segment: any) => void
   onDeleteSegment?: (sceneId: string, segmentId: string) => void
   onSegmentResize?: (sceneId: string, segmentId: string, changes: { startTime?: number; duration?: number }) => void
   /** Apply intelligent auto-alignment of keyframes to audio anchors */
