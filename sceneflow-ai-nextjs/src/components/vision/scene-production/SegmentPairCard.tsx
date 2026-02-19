@@ -16,7 +16,8 @@ import {
   Pencil,
   RefreshCw,
   Upload,
-  Download
+  Download,
+  Trash2
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
@@ -48,6 +49,8 @@ export interface SegmentPairCardProps {
   onDownloadFrame?: (frameType: 'start' | 'end', frameUrl: string) => void
   /** Callback for animatic settings changes (image duration) */
   onAnimaticSettingsChange?: (settings: { imageDuration?: number }) => void
+  /** Callback to delete this segment */
+  onDelete?: () => void
   isGenerating: boolean
   generatingPhase?: 'start' | 'end' | 'video'
   previousSegmentEndFrame?: string | null
@@ -120,6 +123,7 @@ export function SegmentPairCard({
   onUploadFrame,
   onDownloadFrame,
   onAnimaticSettingsChange,
+  onDelete,
   isGenerating,
   generatingPhase,
   previousSegmentEndFrame,
@@ -208,6 +212,27 @@ export function SegmentPairCard({
             )}
             {getAnchorStatusLabel(anchorStatus)}
           </Badge>
+          
+          {/* Delete Button */}
+          {onDelete && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDelete()
+                  }}
+                  disabled={isGenerating}
+                  className="h-6 w-6 p-0 text-slate-500 hover:text-red-400 hover:bg-red-500/10"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Delete Segment</TooltipContent>
+            </Tooltip>
+          )}
         </div>
       </div>
       

@@ -55,6 +55,19 @@ export type ActionType =
   | 'transformation'   // Major change (costume, lighting, time skip)
 
 /**
+ * Segment purpose/type classification for intelligent segment creation
+ * Used to apply preset settings and context-aware prompt generation
+ */
+export type SegmentPurpose = 
+  | 'standard'      // Normal scene segment
+  | 'extend'        // Extend from previous segment's end frame
+  | 'title'         // Title sequence with text overlay
+  | 'match-cut'     // Match cut transition between scenes
+  | 'establishing'  // Establishing/location shot
+  | 'broll'         // B-Roll/visual breather
+  | 'outro'         // Outro/credits
+
+/**
  * Frame anchor data for Start/End keyframes
  */
 export interface FrameAnchor {
@@ -593,6 +606,13 @@ export interface SceneSegment {
   // 'match-audio' = match the anchored audio clip's duration
   // 'split-even' = split duration evenly with sibling segments on same audio
   durationMode?: DurationMode
+  
+  // ============================================================================
+  // Segment Purpose/Type (for intelligent segment creation)
+  // ============================================================================
+  
+  // Segment purpose classification for preset settings
+  segmentPurpose?: SegmentPurpose
 }
 
 // Character presence in a segment

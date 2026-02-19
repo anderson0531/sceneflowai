@@ -15,6 +15,7 @@ import {
   Layers,
   RefreshCw,
   Settings2,
+  Plus,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
@@ -23,6 +24,8 @@ import { cn } from '@/lib/utils'
 import { SegmentPairCard } from './SegmentPairCard'
 import { FramePromptDialog, type FrameGenerationOptions } from './FramePromptDialog'
 import { KeyframeRegenerationDialog, type KeyframeGenerationConfig } from './KeyframeRegenerationDialog'
+import { DeleteSegmentDialog } from './DeleteSegmentDialog'
+import { AddSegmentTypeDialog, type SegmentPurpose, type AdjacentSceneContext } from './AddSegmentTypeDialog'
 import type { 
   SceneSegment, 
   AnchorStatus 
@@ -115,6 +118,16 @@ export interface SegmentFrameTimelineProps {
     dialogueAudio?: any[] | { en?: any[] }
     sceneDirection?: any
   }
+  /** Callback to delete a segment */
+  onDeleteSegment?: (segmentId: string) => void
+  /** Callback to add a new segment */
+  onAddSegment?: (segment: Partial<SceneSegment> & { 
+    segmentPurpose: SegmentPurpose
+    insertPosition: 'before' | 'after' | 'start' | 'end'
+    insertIndex?: number 
+  }) => void
+  /** Adjacent scene context for intelligent segment creation */
+  adjacentSceneContext?: AdjacentSceneContext
 }
 
 // ============================================================================
@@ -181,6 +194,9 @@ export function SegmentFrameTimeline({
   onResegmentWithConfig,
   totalAudioDurationSeconds,
   sceneData,
+  onDeleteSegment,
+  onAddSegment,
+  adjacentSceneContext,
 }: SegmentFrameTimelineProps) {
   // Calculate stats first to determine initial expanded state
   const stats = useMemo(() => calculateTimelineStats(segments), [segments])
@@ -199,6 +215,14 @@ export function SegmentFrameTimeline({
   // Keyframe regeneration dialog state
   const [keyframeRegenDialogOpen, setKeyframeRegenDialogOpen] = useState(false)
   const [isRegeneratingKeyframes, setIsRegeneratingKeyframes] = useState(false)
+  
+  // Delete segment dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleteSegmentTarget, setDeleteSegmentTarget] = useState<{ segmentId: string; index: number } | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  
+  // Add segment dialog state
+  const [addSegmentDialogOpen, setAddSegmentDialogOpen] = useState(false)
   
   // Get previous segment's end frame for each segment (for CONTINUE transitions)
   const getPreviousEndFrame = useCallback((index: number): string | null => {
@@ -255,6 +279,40 @@ export function SegmentFrameTimeline({
       }
     )
   }, [onGenerateFrames, executeWithOverlay])
+  
+  // Handle delete segment
+  const handleDeleteClick = useCallback((segmentId: string, index: number) => {
+    setDeleteSegmentTarget({ segmentId, index })
+    setDeleteDialogOpen(true)
+  }, [])
+  
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deleteSegmentTarget || !onDeleteSegment) return
+    
+    setIsDeleting(true)
+    try {
+      onDeleteSegment(deleteSegmentTarget.segmentId)
+      toast.success(`Segment ${deleteSegmentTarget.index + 1} deleted`)
+      setDeleteDialogOpen(false)
+      setDeleteSegmentTarget(null)
+    } catch (error) {
+      toast.error('Failed to delete segment')
+    } finally {
+      setIsDeleting(false)
+    }
+  }, [deleteSegmentTarget, onDeleteSegment])
+  
+  // Get segment info for delete dialog
+  const deleteSegmentInfo = useMemo(() => {
+    if (!deleteSegmentTarget) return null
+    const segment = segments.find(s => s.segmentId === deleteSegmentTarget.segmentId)
+    if (!segment) return null
+    return {
+      index: deleteSegmentTarget.index,
+      duration: segment.endTime - segment.startTime,
+      hasFrames: !!(segment.startFrameUrl || segment.endFrameUrl || segment.references?.startFrameUrl || segment.references?.endFrameUrl)
+    }
+  }, [deleteSegmentTarget, segments])
 
   if (segments.length === 0) {
     return (
@@ -298,26 +356,26 @@ export function SegmentFrameTimeline({
             {/* Batch Generate Button */}
             {stats.pending > 0 || stats.startLocked > 0 ? (
               <Button
-                size="sm"
+                size="default"
                 variant="secondary"
                 onClick={onGenerateAllFrames}
                 disabled={isGenerating}
-                className="h-8 px-4 text-xs font-medium bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white border-0 shadow-md shadow-cyan-500/20"
+                className="h-10 px-5 text-sm font-semibold bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/40 transition-all"
               >
-                <Wand2 className="w-4 h-4 mr-1.5" />
+                <Wand2 className="w-5 h-5 mr-2" />
                 Generate All
               </Button>
             ) : stats.fullyAnchored === stats.total && stats.total > 0 ? (
-              <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 h-7 px-3 text-xs font-medium">
-                <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+              <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 h-10 px-4 text-sm font-semibold flex items-center">
+                <CheckCircle2 className="w-5 h-5 mr-2" />
                 FTV Ready
               </Badge>
             ) : null}
             
-            {/* Keyframes button - opens intelligent regeneration dialog */}
+            {/* Segments button - opens intelligent regeneration dialog */}
             {stats.total > 0 && (onResegment || onResegmentWithConfig) && (
               <Button
-                size="sm"
+                size="default"
                 variant="outline"
                 onClick={() => {
                   // If we have scene data and the config handler, use the dialog
@@ -338,11 +396,11 @@ export function SegmentFrameTimeline({
                   }
                 }}
                 disabled={isGenerating || isRegeneratingKeyframes}
-                className="h-8 px-4 text-xs font-medium border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 hover:border-cyan-400"
-                title="Open keyframe generation settings"
+                className="h-10 px-5 text-sm font-semibold border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 hover:border-cyan-400 shadow-md hover:shadow-lg transition-all"
+                title="Configure segment generation settings"
               >
-                <Settings2 className="w-4 h-4 mr-1.5" />
-                Keyframes
+                <Layers className="w-5 h-5 mr-2" />
+                Segments
               </Button>
             )}
           </div>
@@ -419,6 +477,7 @@ export function SegmentFrameTimeline({
                     onEditFrame={onEditFrame ? (frameType, frameUrl) => onEditFrame(segment.segmentId, frameType, frameUrl) : undefined}
                     onUploadFrame={onUploadFrame ? (frameType, file) => onUploadFrame(segment.segmentId, frameType, file) : undefined}
                     onAnimaticSettingsChange={onSegmentAnimaticSettingsChange ? (settings) => onSegmentAnimaticSettingsChange(segment.segmentId, settings) : undefined}
+                    onDelete={onDeleteSegment ? () => handleDeleteClick(segment.segmentId, index) : undefined}
                     isGenerating={isGenerating && generatingSegmentId === segment.segmentId}
                     generatingPhase={generatingSegmentId === segment.segmentId ? generatingPhase : undefined}
                     previousSegmentEndFrame={getPreviousEndFrame(index)}
@@ -428,6 +487,20 @@ export function SegmentFrameTimeline({
               </div>
             )
           })}
+          
+          {/* Add Segment Button */}
+          {onAddSegment && (
+            <div className="pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setAddSegmentDialogOpen(true)}
+                className="w-full h-12 border-dashed border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-400/50 transition-all"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Add Segment
+              </Button>
+            </div>
+          )}
         </div>
       )}
       
@@ -507,6 +580,42 @@ export function SegmentFrameTimeline({
             }
           }}
           isGenerating={isRegeneratingKeyframes}
+        />
+      )}
+      
+      {/* Delete Segment Confirmation Dialog */}
+      {deleteSegmentInfo && (
+        <DeleteSegmentDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          segmentIndex={deleteSegmentInfo.index}
+          segmentDuration={deleteSegmentInfo.duration}
+          hasFrames={deleteSegmentInfo.hasFrames}
+          totalSegments={segments.length}
+          onConfirm={handleDeleteConfirm}
+          isDeleting={isDeleting}
+        />
+      )}
+      
+      {/* Add Segment Type Dialog */}
+      {onAddSegment && (
+        <AddSegmentTypeDialog
+          open={addSegmentDialogOpen}
+          onOpenChange={setAddSegmentDialogOpen}
+          sceneId={sceneId}
+          sceneNumber={sceneNumber}
+          existingSegments={segments}
+          adjacentContext={adjacentSceneContext || {
+            currentScene: {
+              heading: sceneData?.heading,
+              action: sceneData?.action,
+              narration: sceneData?.narration,
+            },
+            previousScene: segments.length > 0 ? {
+              lastSegment: segments[segments.length - 1]
+            } : undefined
+          }}
+          onAddSegment={onAddSegment}
         />
       )}
     </div>
