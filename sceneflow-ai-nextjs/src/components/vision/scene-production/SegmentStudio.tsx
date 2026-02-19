@@ -1366,7 +1366,7 @@ export function SegmentStudio({
                         </div>
                       )}
                       <div className="absolute bottom-1 left-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded">
-                        Take {segment.takes.length - idx}
+                        Take {(segment.takes || []).length - idx}
                       </div>
                     </div>
                     
@@ -1399,7 +1399,7 @@ export function SegmentStudio({
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            if (confirm(`Delete Take ${segment.takes.length - idx}? This cannot be undone.`)) {
+                            if (confirm(`Delete Take ${(segment.takes || []).length - idx}? This cannot be undone.`)) {
                               onDeleteTake(take.id)
                             }
                           }}
@@ -1439,7 +1439,7 @@ export function SegmentStudio({
                 size="sm"
                 className="w-full bg-green-600 hover:bg-green-700 text-white"
                 onClick={() => {
-                  const selectedTake = segment.takes.find(t => t.assetUrl === playingVideoUrl)
+                  const selectedTake = (segment.takes || []).find(t => t.assetUrl === playingVideoUrl)
                   if (selectedTake && selectedTake.assetUrl) {
                     onSelectTake(selectedTake.id, selectedTake.assetUrl)
                     setPlayingVideoUrl(null)
@@ -1459,10 +1459,10 @@ export function SegmentStudio({
               </div>
             </div>
           )}
-          {segment.takes.length > 1 && (
+          {(segment.takes || []).length > 1 && (
             <div className="p-2 bg-gray-900 border-t border-gray-800">
               <div className="flex gap-1.5 overflow-x-auto">
-                {segment.takes.map((take) => (
+                {(segment.takes || []).map((take) => (
                   <div
                     key={take.id}
                     className={cn(

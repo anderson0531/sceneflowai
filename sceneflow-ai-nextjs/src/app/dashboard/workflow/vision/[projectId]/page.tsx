@@ -2496,7 +2496,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               status: data.status === 'COMPLETE' ? 'COMPLETE' : 'GENERATING',
               assetType: data.assetType,
               activeAssetUrl: data.assetUrl,
-              takes: [newTake, ...segment.takes],
+              takes: [newTake, ...(segment.takes || [])],
               references: {
                 ...segment.references,
                 startFrameUrl: options?.startFrameUrl || segment.references.startFrameUrl,
@@ -2589,7 +2589,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       status: 'UPLOADED' as const,
                       notes: 'User upload',
                     },
-                    ...segment.takes,
+                    ...(segment.takes || []),
                   ],
                 }
               : segment
