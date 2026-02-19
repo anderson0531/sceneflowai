@@ -36,6 +36,32 @@ async function sleepWithBackoff(attempt: number): Promise<void> {
   await new Promise(resolve => setTimeout(resolve, delay + jitter))
 }
 
+// ============================================================================
+// Model Tier Types
+// ============================================================================
+
+export type ModelTier = 'eco' | 'designer' | 'director'
+export type ThinkingLevel = 'low' | 'high'
+
+// Model mapping for tiers
+const MODEL_TIER_CONFIG = {
+  eco: {
+    model: 'gemini-2.5-flash-image', // Nano Banana equivalent - fast, affordable
+    maxResolution: '2K',
+    description: 'Fast & Affordable',
+  },
+  designer: {
+    model: 'gemini-3-pro-image-preview', // Nano Banana Pro equivalent - high quality
+    maxResolution: '4K',
+    description: 'High Precision',
+  },
+  director: {
+    model: 'gemini-3-pro-image-preview', // Placeholder until Veo 3.1 available
+    maxResolution: '4K',
+    description: 'Cinematic (Coming Soon)',
+  },
+} as const
+
 export interface GeminiStudioImageOptions {
   prompt: string
   aspectRatio?: '1:1' | '2:3' | '3:2' | '3:4' | '4:3' | '4:5' | '5:4' | '9:16' | '16:9' | '21:9'
@@ -46,6 +72,12 @@ export interface GeminiStudioImageOptions {
     mimeType?: string      // e.g., 'image/jpeg', 'image/png'
     name?: string          // Character name for logging
   }>
+  /** Model quality tier: eco (fast/cheap), designer (high quality), director (cinematic) */
+  modelTier?: ModelTier
+  /** Thinking level: low (fast) or high (more detailed reasoning) */
+  thinkingLevel?: ThinkingLevel
+  /** Negative prompt - elements to avoid in generation */
+  negativePrompt?: string
 }
 
 export interface GeminiStudioImageResult {
@@ -70,27 +102,45 @@ export async function generateImageWithGeminiStudio(
     throw new Error('Missing GEMINI_API_KEY or GOOGLE_GEMINI_API_KEY environment variable')
   }
   
-  // Check if we should use fallback due to rate limiting
-  const useFlashFallback = proModelRateLimitedUntil && Date.now() < proModelRateLimitedUntil
+  // Determine model based on tier (default to designer for best quality)
+  const tier = options.modelTier || 'designer'
+  const tierConfig = MODEL_TIER_CONFIG[tier]
   
-  // Primary: gemini-3-pro-image-preview (20 RPM, higher quality, 4K support)
-  // Fallback: gemini-2.5-flash-image (500 RPM, 1K only) - used when rate limited
-  const model = useFlashFallback ? 'gemini-2.5-flash-image' : 'gemini-3-pro-image-preview'
+  // Check if we should use fallback due to rate limiting (only for designer/director tiers)
+  const useFlashFallback = tier !== 'eco' && proModelRateLimitedUntil && Date.now() < proModelRateLimitedUntil
+  
+  // Select model based on tier and rate limit status
+  let model: string
+  if (tier === 'eco' || useFlashFallback) {
+    model = 'gemini-2.5-flash-image' // Nano Banana - fast, affordable
+  } else {
+    model = 'gemini-3-pro-image-preview' // Nano Banana Pro - high quality
+  }
+  
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
   
   if (useFlashFallback && proModelRateLimitedUntil) {
     console.log(`[Gemini Studio Image] Using flash fallback (rate limited until ${new Date(proModelRateLimitedUntil).toISOString()})`)
   }
   
-  console.log(`[Gemini Studio Image] Generating with ${model}...`)
+  console.log(`[Gemini Studio Image] Generating with ${model} (tier: ${tier}, thinking: ${options.thinkingLevel || 'high'})...`)
   console.log(`[Gemini Studio Image] Prompt preview: ${options.prompt.substring(0, 150)}...`)
+  if (options.negativePrompt) {
+    console.log(`[Gemini Studio Image] Negative prompt: ${options.negativePrompt.substring(0, 100)}...`)
+  }
   console.log(`[Gemini Studio Image] Reference images: ${options.referenceImages?.length || 0}`)
+  
+  // Build the full prompt with negative prompt if provided
+  let fullPrompt = options.prompt
+  if (options.negativePrompt) {
+    fullPrompt += `\n\nAVOID the following in the generated image: ${options.negativePrompt}`
+  }
   
   // Build the contents array with prompt text and reference images
   const parts: Array<{ text: string } | { inline_data: { mime_type: string; data: string } }> = []
   
-  // Add text prompt first
-  parts.push({ text: options.prompt })
+  // Add text prompt first (with negative prompt included)
+  parts.push({ text: fullPrompt })
   
   // Add reference images as inline_data parts
   if (options.referenceImages && options.referenceImages.length > 0) {

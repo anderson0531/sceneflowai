@@ -99,6 +99,12 @@ interface FrameGenerationRequest {
   
   // Art style for frame generation (default: photorealistic)
   artStyle?: string
+  
+  // Model quality tier for generation
+  modelTier?: 'eco' | 'designer' | 'director'
+  
+  // Thinking level for complex prompts
+  thinkingLevel?: 'low' | 'high'
 }
 
 interface FrameGenerationResponse {
@@ -167,7 +173,11 @@ export async function POST(req: NextRequest) {
       // NEW: Object references for prop consistency
       objectReferences = [],
       // NEW: Art style for frame generation
-      artStyle = 'photorealistic'
+      artStyle = 'photorealistic',
+      // NEW: Model quality tier
+      modelTier = 'designer',
+      // NEW: Thinking level
+      thinkingLevel = 'high'
     } = body
     
     // Use custom prompt if provided, otherwise fall back to action prompt
@@ -453,8 +463,11 @@ Render this scene in ${selectedStyle.name} style.`
       const result = await generateImageWithGeminiStudio({
         prompt: geminiPrompt,
         aspectRatio: aspectRatio as '16:9' | '9:16' | '1:1',
-        imageSize: '1K',
-        referenceImages: allReferenceImages.length > 0 ? allReferenceImages : undefined
+        imageSize: modelTier === 'eco' ? '1K' : '2K',
+        referenceImages: allReferenceImages.length > 0 ? allReferenceImages : undefined,
+        modelTier,
+        thinkingLevel,
+        negativePrompt
       })
       startImageDataUrl = result.imageBase64
       
@@ -639,8 +652,11 @@ The reference image shows the START of this segment - maintain perfect character
       const endResult = await generateImageWithGeminiStudio({
         prompt: geminiEndPrompt,
         aspectRatio: aspectRatio as '16:9' | '9:16' | '1:1',
-        imageSize: '1K',
-        referenceImages: endReferenceImages
+        imageSize: modelTier === 'eco' ? '1K' : '2K',
+        referenceImages: endReferenceImages,
+        modelTier,
+        thinkingLevel,
+        negativePrompt
       })
       const endImageDataUrl = endResult.imageBase64
       

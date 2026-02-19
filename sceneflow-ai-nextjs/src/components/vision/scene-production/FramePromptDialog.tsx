@@ -40,6 +40,10 @@ import {
   Palette,
   Check,
   Box,
+  Zap,
+  Brush,
+  Film,
+  Brain,
 } from 'lucide-react'
 import type { SceneSegment, TransitionType, CharacterReference } from './types'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
@@ -118,7 +122,55 @@ export interface FrameGenerationOptions {
   }
   /** Art style for frame generation (default: photorealistic) */
   artStyle?: string
+  /** Model quality tier for generation */
+  modelTier?: 'eco' | 'designer' | 'director'
+  /** Thinking level for complex prompts */
+  thinkingLevel?: 'low' | 'high'
 }
+
+// ============================================================================
+// Model Quality Tiers
+// ============================================================================
+
+export type ModelTier = 'eco' | 'designer' | 'director'
+export type ThinkingLevel = 'low' | 'high'
+
+export const MODEL_TIERS = [
+  {
+    id: 'eco' as const,
+    name: 'Eco Mode',
+    icon: Zap,
+    description: 'Fast & Affordable',
+    details: 'Quick ideation and simple prompts. ~3-5 seconds, lowest cost.',
+    model: 'Nano Banana',
+    resolution: 'Up to 2K',
+    cost: '~$0.025/image',
+    color: 'emerald',
+  },
+  {
+    id: 'designer' as const,
+    name: 'Designer Mode',
+    icon: Brush,
+    description: 'High Precision',
+    details: 'Complex prompts with high-fidelity text and 4K resolution.',
+    model: 'Nano Banana Pro',
+    resolution: 'Up to 4K',
+    cost: '~$0.05/image',
+    color: 'purple',
+  },
+  {
+    id: 'director' as const,
+    name: 'Director Mode',
+    icon: Film,
+    description: 'Cinematic Scene',
+    details: 'Professional video sequence with native audio. Coming Soon.',
+    model: 'Veo 3.1',
+    resolution: '4K+',
+    cost: 'Credit-based',
+    color: 'amber',
+    comingSoon: true,
+  },
+] as const
 
 // ============================================================================
 // Negative Prompt Presets
@@ -154,6 +206,26 @@ export const NEGATIVE_PROMPT_PRESETS = [
     id: 'style',
     label: 'Non-Cinematic',
     value: 'cartoon, anime, illustration, painting, drawing, sketch, 3D render, CGI, video game',
+  },
+  {
+    id: 'cartoon',
+    label: 'Cartoon Style',
+    value: 'cartoon, animated, disney style, pixar style, anime, manga, comic book style',
+  },
+  {
+    id: 'stock',
+    label: 'Stock Photo Look',
+    value: 'stock photo, generic, corporate, posed, fake smile, staged, artificial',
+  },
+  {
+    id: 'cgi',
+    label: 'CGI/3D Look',
+    value: 'CGI, 3D rendered, unreal engine, video game graphics, plastic skin, uncanny valley',
+  },
+  {
+    id: 'motion',
+    label: 'Motion Blur',
+    value: 'motion blur, camera shake, unfocused, blurry movement, ghosting',
   },
 ] as const
 
@@ -204,6 +276,10 @@ export function FramePromptDialog({
   
   // Art style state (default to photorealistic for backward compatibility)
   const [artStyle, setArtStyle] = useState<string>('photorealistic')
+  
+  // Model quality tier and thinking level state
+  const [modelTier, setModelTier] = useState<ModelTier>('designer')
+  const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>('high')
   
   // State
   const [customPrompt, setCustomPrompt] = useState('')
@@ -461,10 +537,13 @@ export function FramePromptDialog({
       visualSetup: mode === 'guided' ? visualSetup : undefined,
       // NEW: Pass art style for generation
       artStyle,
+      // NEW: Pass model tier and thinking level
+      modelTier,
+      thinkingLevel,
     }
 
     onGenerate(options)
-  }, [segment, frameType, customPrompt, buildNegativePrompt, usePreviousEndFrame, previousEndFrameUrl, onGenerate, selectedCharacters, objectReferences, selectedObjectRefIds, mode, visualSetup, artStyle])
+  }, [segment, frameType, customPrompt, buildNegativePrompt, usePreviousEndFrame, previousEndFrameUrl, onGenerate, selectedCharacters, objectReferences, selectedObjectRefIds, mode, visualSetup, artStyle, modelTier, thinkingLevel])
 
   if (!segment) return null
 
@@ -860,6 +939,121 @@ export function FramePromptDialog({
                   </div>
                 </div>
 
+                {/* Quality Mode Selection */}
+                <div className="space-y-3 p-3 rounded border border-slate-700 bg-slate-800/50">
+                  <h4 className="text-sm font-medium text-slate-200 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-cyan-400" />
+                    Quality Mode
+                  </h4>
+                  <div className="grid grid-cols-1 gap-2">
+                    {MODEL_TIERS.map((tier) => {
+                      const Icon = tier.icon
+                      const isSelected = modelTier === tier.id
+                      const isDisabled = tier.comingSoon
+                      return (
+                        <div
+                          key={tier.id}
+                          onClick={() => !isDisabled && setModelTier(tier.id)}
+                          className={cn(
+                            "p-3 rounded-lg border transition-all relative",
+                            isDisabled 
+                              ? "border-slate-700/50 bg-slate-800/30 cursor-not-allowed opacity-60"
+                              : isSelected
+                                ? tier.color === 'emerald' ? "border-emerald-500 bg-emerald-500/10 cursor-pointer"
+                                : tier.color === 'purple' ? "border-purple-500 bg-purple-500/10 cursor-pointer"
+                                : "border-amber-500 bg-amber-500/10 cursor-pointer"
+                                : "border-slate-700 bg-slate-800/50 hover:border-slate-600 cursor-pointer"
+                          )}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={cn(
+                              "w-8 h-8 rounded-lg flex items-center justify-center",
+                              tier.color === 'emerald' ? "bg-emerald-500/20 text-emerald-400"
+                              : tier.color === 'purple' ? "bg-purple-500/20 text-purple-400"
+                              : "bg-amber-500/20 text-amber-400"
+                            )}>
+                              <Icon className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-slate-200">{tier.name}</span>
+                                <span className={cn(
+                                  "text-xs px-1.5 py-0.5 rounded",
+                                  tier.color === 'emerald' ? "bg-emerald-500/20 text-emerald-300"
+                                  : tier.color === 'purple' ? "bg-purple-500/20 text-purple-300"
+                                  : "bg-amber-500/20 text-amber-300"
+                                )}>
+                                  {tier.description}
+                                </span>
+                                {tier.comingSoon && (
+                                  <Badge variant="outline" className="text-[10px] text-amber-400 border-amber-500/50">
+                                    Coming Soon
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-slate-400 mt-1">{tier.details}</p>
+                              <div className="flex items-center gap-3 mt-2 text-[10px] text-slate-500">
+                                <span>{tier.model}</span>
+                                <span>•</span>
+                                <span>{tier.resolution}</span>
+                                <span>•</span>
+                                <span>{tier.cost}</span>
+                              </div>
+                            </div>
+                            {isSelected && !isDisabled && (
+                              <Check className={cn(
+                                "w-5 h-5",
+                                tier.color === 'emerald' ? "text-emerald-400"
+                                : tier.color === 'purple' ? "text-purple-400"
+                                : "text-amber-400"
+                              )} />
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  
+                  {/* Thinking Level Control */}
+                  <div className="mt-4 pt-4 border-t border-slate-700/50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Brain className="w-4 h-4 text-slate-400" />
+                        <span className="text-xs text-slate-400">Thinking Level</span>
+                      </div>
+                      <div className="flex items-center gap-1 bg-slate-900 rounded-lg p-1">
+                        <button
+                          onClick={() => setThinkingLevel('low')}
+                          className={cn(
+                            "px-3 py-1 text-xs rounded transition-colors",
+                            thinkingLevel === 'low'
+                              ? "bg-slate-700 text-white"
+                              : "text-slate-400 hover:text-slate-300"
+                          )}
+                        >
+                          Low
+                        </button>
+                        <button
+                          onClick={() => setThinkingLevel('high')}
+                          className={cn(
+                            "px-3 py-1 text-xs rounded transition-colors",
+                            thinkingLevel === 'high'
+                              ? "bg-slate-700 text-white"
+                              : "text-slate-400 hover:text-slate-300"
+                          )}
+                        >
+                          High
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-2">
+                      {thinkingLevel === 'high' 
+                        ? 'High thinking: Better for complex, multi-layered scenes. Takes longer but captures all details.'
+                        : 'Low thinking: Faster generation for simple prompts. Good for quick iterations.'}
+                    </p>
+                  </div>
+                </div>
+
                 {/* Prompt Preview */}
                 <div className="space-y-2 p-3 rounded border border-slate-700 bg-slate-800/50">
                   <h4 className="text-sm font-medium text-slate-200">Prompt Preview</h4>
@@ -1167,6 +1361,74 @@ export function FramePromptDialog({
                       )}
                     </div>
                   )}
+                </div>
+
+                {/* Quality Mode (Custom Prompt Tab) */}
+                <div className="space-y-3 p-3 rounded border border-slate-700 bg-slate-800/50">
+                  <h4 className="text-sm font-medium text-slate-200 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-cyan-400" />
+                    Quality Mode
+                  </h4>
+                  <div className="flex items-center gap-2">
+                    {MODEL_TIERS.filter(t => !t.comingSoon).map((tier) => {
+                      const Icon = tier.icon
+                      const isSelected = modelTier === tier.id
+                      return (
+                        <button
+                          key={tier.id}
+                          onClick={() => setModelTier(tier.id)}
+                          className={cn(
+                            "flex-1 flex items-center gap-2 p-2 rounded-lg border transition-all",
+                            isSelected
+                              ? tier.color === 'emerald' ? "border-emerald-500 bg-emerald-500/10"
+                              : "border-purple-500 bg-purple-500/10"
+                              : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
+                          )}
+                        >
+                          <Icon className={cn(
+                            "w-4 h-4",
+                            isSelected 
+                              ? tier.color === 'emerald' ? "text-emerald-400" : "text-purple-400"
+                              : "text-slate-400"
+                          )} />
+                          <div className="text-left">
+                            <div className="text-xs font-medium text-slate-200">{tier.name}</div>
+                            <div className="text-[10px] text-slate-500">{tier.cost}</div>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-700/50">
+                    <div className="flex items-center gap-2">
+                      <Brain className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="text-xs text-slate-400">Thinking:</span>
+                    </div>
+                    <div className="flex items-center gap-1 bg-slate-900 rounded-lg p-0.5">
+                      <button
+                        onClick={() => setThinkingLevel('low')}
+                        className={cn(
+                          "px-2 py-0.5 text-[10px] rounded transition-colors",
+                          thinkingLevel === 'low'
+                            ? "bg-slate-700 text-white"
+                            : "text-slate-400 hover:text-slate-300"
+                        )}
+                      >
+                        Low
+                      </button>
+                      <button
+                        onClick={() => setThinkingLevel('high')}
+                        className={cn(
+                          "px-2 py-0.5 text-[10px] rounded transition-colors",
+                          thinkingLevel === 'high'
+                            ? "bg-slate-700 text-white"
+                            : "text-slate-400 hover:text-slate-300"
+                        )}
+                      >
+                        High
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </ScrollArea>

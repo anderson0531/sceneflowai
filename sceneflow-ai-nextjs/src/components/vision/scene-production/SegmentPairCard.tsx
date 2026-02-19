@@ -304,6 +304,72 @@ export function SegmentPairCard({
                 </div>
               )}
             </div>
+            {/* Start Frame Action Buttons */}
+            {isSelected && (
+              <div className="flex items-center gap-1.5 mt-2">
+                {/* Hidden file input for upload */}
+                <input
+                  ref={startFrameInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file && onUploadFrame) {
+                      onUploadFrame('start', file)
+                    }
+                    e.target.value = '' // Reset for re-upload
+                  }}
+                />
+                {/* Generate/Regenerate button */}
+                {startFrameUrl ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={(e) => { e.stopPropagation(); onGenerateStartFrame(); }}
+                        disabled={isGenerating}
+                        className="h-6 text-[10px] px-2 border-orange-500/50 text-orange-400 hover:bg-orange-500/10 flex-1"
+                      >
+                        <RefreshCw className="w-3 h-3 mr-1" />
+                        Generate
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Regenerate Start Frame</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <Button 
+                    size="sm" 
+                    variant="secondary"
+                    onClick={(e) => { e.stopPropagation(); onGenerateStartFrame(); }}
+                    disabled={isGenerating}
+                    className="h-6 text-[10px] px-2 bg-blue-600/20 hover:bg-blue-600/30 border-blue-500/50 text-blue-300 flex-1"
+                  >
+                    <Wand2 className="w-3 h-3 mr-1" />
+                    Generate
+                  </Button>
+                )}
+                {/* Upload button */}
+                {onUploadFrame && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={(e) => { e.stopPropagation(); startFrameInputRef.current?.click(); }}
+                        disabled={isGenerating}
+                        className="h-6 text-[10px] px-2 border-slate-500/50 text-slate-400 hover:bg-slate-500/10 flex-1"
+                      >
+                        <Upload className="w-3 h-3 mr-1" />
+                        Upload
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Upload Start Frame</TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+            )}
           </div>
           
           {/* Arrow with Duration */}
@@ -404,134 +470,75 @@ export function SegmentPairCard({
                 </div>
               )}
             </div>
+            {/* End Frame Action Buttons */}
+            {isSelected && (
+              <div className="flex items-center gap-1.5 mt-2">
+                {/* Hidden file input for upload */}
+                <input
+                  ref={endFrameInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file && onUploadFrame) {
+                      onUploadFrame('end', file)
+                    }
+                    e.target.value = '' // Reset for re-upload
+                  }}
+                />
+                {/* Generate/Regenerate button */}
+                {endFrameUrl ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={(e) => { e.stopPropagation(); onGenerateEndFrame(); }}
+                        disabled={isGenerating}
+                        className="h-6 text-[10px] px-2 border-orange-500/50 text-orange-400 hover:bg-orange-500/10 flex-1"
+                      >
+                        <RefreshCw className="w-3 h-3 mr-1" />
+                        Generate
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Regenerate End Frame</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <Button 
+                    size="sm" 
+                    variant="secondary"
+                    onClick={(e) => { e.stopPropagation(); onGenerateEndFrame(); }}
+                    disabled={isGenerating}
+                    className="h-6 text-[10px] px-2 bg-blue-600/20 hover:bg-blue-600/30 border-blue-500/50 text-blue-300 flex-1"
+                  >
+                    <Wand2 className="w-3 h-3 mr-1" />
+                    Generate
+                  </Button>
+                )}
+                {/* Upload button */}
+                {onUploadFrame && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={(e) => { e.stopPropagation(); endFrameInputRef.current?.click(); }}
+                        disabled={isGenerating}
+                        className="h-6 text-[10px] px-2 border-slate-500/50 text-slate-400 hover:bg-slate-500/10 flex-1"
+                      >
+                        <Upload className="w-3 h-3 mr-1" />
+                        Upload
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Upload End Frame</TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
-      
-      {/* Actions Footer */}
-      {isSelected && (
-        <div className="p-3 border-t border-slate-700/50 flex items-center justify-between gap-2">
-          {/* Hidden file inputs for upload */}
-          <input
-            ref={startFrameInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file && onUploadFrame) {
-                onUploadFrame('start', file)
-              }
-              e.target.value = '' // Reset for re-upload
-            }}
-          />
-          <input
-            ref={endFrameInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file && onUploadFrame) {
-                onUploadFrame('end', file)
-              }
-              e.target.value = '' // Reset for re-upload
-            }}
-          />
-          
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Generation buttons - show when frames don't exist */}
-            {canGenerateStart && (
-              <Button 
-                size="sm" 
-                variant="secondary"
-                onClick={(e) => { e.stopPropagation(); onGenerateStartFrame(); }}
-                disabled={isGenerating}
-                className="h-7 text-xs bg-blue-600/20 hover:bg-blue-600/30 border-blue-500/50 text-blue-300"
-              >
-                <Wand2 className="w-3 h-3 mr-1" />
-                Start
-              </Button>
-            )}
-            {canGenerateEnd && (
-              <Button 
-                size="sm" 
-                variant="secondary"
-                onClick={(e) => { e.stopPropagation(); onGenerateEndFrame(); }}
-                disabled={isGenerating}
-                className="h-7 text-xs bg-blue-600/20 hover:bg-blue-600/30 border-blue-500/50 text-blue-300"
-              >
-                <Wand2 className="w-3 h-3 mr-1" />
-                End
-              </Button>
-            )}
-            
-            {/* Regeneration buttons - show when frames ALREADY exist */}
-            {canRegenerateStart && (
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={(e) => { e.stopPropagation(); onGenerateStartFrame(); }}
-                disabled={isGenerating}
-                className="h-7 text-xs border-orange-500/50 text-orange-400 hover:bg-orange-500/10"
-                title="Regenerate start frame"
-              >
-                <RefreshCw className="w-3 h-3 mr-1" />
-                Start
-              </Button>
-            )}
-            {canRegenerateEnd && (
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={(e) => { e.stopPropagation(); onGenerateEndFrame(); }}
-                disabled={isGenerating}
-                className="h-7 text-xs border-orange-500/50 text-orange-400 hover:bg-orange-500/10"
-                title="Regenerate end frame"
-              >
-                <RefreshCw className="w-3 h-3 mr-1" />
-                End
-              </Button>
-            )}
-            
-            {/* Upload buttons */}
-            {onUploadFrame && (
-              <>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={(e) => { e.stopPropagation(); startFrameInputRef.current?.click(); }}
-                      disabled={isGenerating}
-                      className="h-7 text-xs border-slate-500/50 text-slate-400 hover:bg-slate-500/10"
-                    >
-                      <Upload className="w-3 h-3 mr-1" />
-                      Start
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Upload Start Frame</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={(e) => { e.stopPropagation(); endFrameInputRef.current?.click(); }}
-                      disabled={isGenerating}
-                      className="h-7 text-xs border-slate-500/50 text-slate-400 hover:bg-slate-500/10"
-                    >
-                      <Upload className="w-3 h-3 mr-1" />
-                      End
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Upload End Frame</TooltipContent>
-                </Tooltip>
-              </>
-            )}
-          </div>
-        </div>
-      )}
       
       {/* Generation Progress Overlay */}
       {isGenerating && (
