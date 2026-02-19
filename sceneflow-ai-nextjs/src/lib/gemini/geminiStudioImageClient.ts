@@ -24,6 +24,10 @@ const MAX_RETRIES = 3
 const INITIAL_RETRY_DELAY_MS = 2000 // Start with 2 seconds
 const MAX_RETRY_DELAY_MS = 10000 // Cap at 10 seconds
 
+// Request timeout configuration
+// Vercel functions timeout at 120s, so we use 90s to allow graceful error handling
+const REQUEST_TIMEOUT_MS = 90000
+
 // Helper to sleep with exponential backoff
 async function sleepWithBackoff(attempt: number): Promise<void> {
   const delay = Math.min(INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt), MAX_RETRY_DELAY_MS)
@@ -176,13 +180,52 @@ export async function generateImageWithGeminiStudio(
     imageSize: options.imageSize || '1K'
   }))
   
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(requestBody)
-  })
+  // Create AbortController for request timeout
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => {
+    controller.abort()
+    console.error(`[Gemini Studio Image] Request timed out after ${REQUEST_TIMEOUT_MS / 1000}s`)
+  }, REQUEST_TIMEOUT_MS)
+  
+  let response: Response
+  try {
+    response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody),
+      signal: controller.signal
+    })
+  } catch (error) {
+    clearTimeout(timeoutId)
+    
+    // Handle abort (timeout)
+    if (error instanceof Error && error.name === 'AbortError') {
+      // Retry on timeout with remaining retries
+      if (retryCount < MAX_RETRIES) {
+        console.log(`[Gemini Studio Image] Request timeout, attempt ${retryCount + 1}/${MAX_RETRIES}...`)
+        await sleepWithBackoff(retryCount)
+        return generateImageWithGeminiStudio(options, retryCount + 1)
+      }
+      throw new Error(`Gemini API request timed out after ${MAX_RETRIES} attempts. The service may be experiencing high load. Please try again later.`)
+    }
+    
+    // Handle other network errors
+    if (error instanceof Error) {
+      console.error(`[Gemini Studio Image] Network error:`, error.message)
+      if (retryCount < MAX_RETRIES) {
+        console.log(`[Gemini Studio Image] Network error, attempt ${retryCount + 1}/${MAX_RETRIES}...`)
+        await sleepWithBackoff(retryCount)
+        return generateImageWithGeminiStudio(options, retryCount + 1)
+      }
+      throw new Error(`Network error connecting to Gemini API: ${error.message}`)
+    }
+    
+    throw error
+  }
+  
+  clearTimeout(timeoutId)
   
   if (!response.ok) {
     const errorText = await response.text()
