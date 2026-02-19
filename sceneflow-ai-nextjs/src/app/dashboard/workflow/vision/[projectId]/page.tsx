@@ -2673,13 +2673,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [applySceneProductionUpdate]
   )
   
-  // Handle adding a complete segment with full data (from AddSegmentDialog)
+  // Handle adding a complete segment with full data (from AddSegmentDialog/AddSegmentTypeDialog)
+  // Supports insertPosition: 'start' | 'end' | 'before' | 'after' and insertIndex
   const handleAddFullSegment = useCallback(
     (sceneId: string, newSegment: any) => {
+      const insertPosition = newSegment.insertPosition || 'end'
+      const insertIndex = newSegment.insertIndex ?? -1
+      const duration = (newSegment.endTime || 4) - (newSegment.startTime || 0)
+      
       applySceneProductionUpdate(sceneId, (current) => {
         if (!current) {
           // Initialize production data if it doesn't exist
-          const duration = newSegment.endTime - newSegment.startTime
           return {
             isSegmented: true,
             segments: [{
@@ -2694,32 +2698,60 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
         
         const segments = [...current.segments]
-        const lastSegment = segments[segments.length - 1]
-        const newStartTime = lastSegment ? lastSegment.endTime : 0
-        const duration = newSegment.endTime - newSegment.startTime
         
-        // Append the new segment with correct timing
+        // Determine insertion index based on position
+        let targetIndex: number
+        switch (insertPosition) {
+          case 'start':
+            targetIndex = 0
+            break
+          case 'before':
+            targetIndex = insertIndex >= 0 ? insertIndex : 0
+            break
+          case 'after':
+            targetIndex = insertIndex >= 0 ? insertIndex + 1 : segments.length
+            break
+          case 'end':
+          default:
+            targetIndex = segments.length
+            break
+        }
+        
+        // Create the segment to add (without timing - will be recalculated)
         const segmentToAdd = {
           ...newSegment,
           segmentId: newSegment.segmentId || `seg_${sceneId}_${segments.length + 1}_${Date.now()}`,
-          sequenceIndex: segments.length,
-          startTime: newStartTime,
-          endTime: newStartTime + duration,
+          status: newSegment.status || 'DRAFT',
         }
         
-        segments.push(segmentToAdd)
+        // Insert at the target position
+        segments.splice(targetIndex, 0, segmentToAdd)
+        
+        // Recalculate all times and indices after insertion
+        let currentTime = 0
+        const updatedSegments = segments.map((segment, idx) => {
+          const segDuration = (segment.endTime || 4) - (segment.startTime || 0)
+          const updated = {
+            ...segment,
+            sequenceIndex: idx,
+            startTime: currentTime,
+            endTime: currentTime + segDuration,
+          }
+          currentTime += segDuration
+          return updated
+        })
         
         return { 
           ...current, 
           isSegmented: true,
-          segments,
+          segments: updatedSegments,
         }
       })
 
       try {
         const { toast } = require('sonner')
-        const duration = newSegment.endTime - newSegment.startTime
-        toast.success(`Added ${duration.toFixed(1)}s segment with prompt`)
+        const purposeLabel = newSegment.segmentPurpose ? ` ${newSegment.segmentPurpose}` : ''
+        toast.success(`Added ${duration.toFixed(1)}s${purposeLabel} segment`)
       } catch {}
     },
     [applySceneProductionUpdate]

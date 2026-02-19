@@ -6121,6 +6121,15 @@ function SceneCard({
                           description: obj.description,
                         })) || []}
                         sceneDirection={scene.detailedDirection || scene.sceneDirection}
+                        // Wire segment add/delete handlers with scene context
+                        onAddSegment={onAddFullSegment ? (newSegment) => {
+                          console.log('[ScriptPanel] onAddSegment called:', { sceneId: scene.sceneId || scene.id || `scene-${sceneIdx}`, newSegment })
+                          onAddFullSegment(scene.sceneId || scene.id || `scene-${sceneIdx}`, newSegment)
+                        } : undefined}
+                        onDeleteSegment={onDeleteSegment ? (segmentId) => {
+                          console.log('[ScriptPanel] onDeleteSegment called:', { sceneId: scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId })
+                          onDeleteSegment(scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId)
+                        } : undefined}
                         // Regenerate segments via API with audio duration for proper segment count
                         onResegment={onInitializeSceneProduction ? async () => {
                           // Calculate total audio duration for proper segment count
