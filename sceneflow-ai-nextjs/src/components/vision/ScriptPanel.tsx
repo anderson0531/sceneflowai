@@ -6472,6 +6472,27 @@ function SceneCard({
                             description: obj.description,
                           })) || []}
                           sceneDirection={scene.detailedDirection || scene.sceneDirection}
+                          sceneData={{
+                            id: scene.id,
+                            sceneId: scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                            heading: scene.heading,
+                            action: scene.action,
+                            narration: scene.narration,
+                            dialogue: scene.dialogue,
+                            duration: scene.duration,
+                            narrationAudio: scene.narrationAudio,
+                            dialogueAudio: scene.dialogueAudio,
+                            sceneDirection: scene.detailedDirection || scene.sceneDirection,
+                          }}
+                          onAddSegment={(newSegment) => {
+                            console.log('[ScriptPanel] onAddSegment handler (Storyboard Builder):', { sceneId: scene.sceneId || scene.id, newSegment })
+                            if (onAddFullSegment) {
+                              onAddFullSegment(scene.sceneId || scene.id || `scene-${sceneIdx}`, newSegment)
+                            }
+                          }}
+                          onDeleteSegment={onDeleteSegment ? (segmentId) => {
+                            onDeleteSegment(scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId)
+                          } : undefined}
                           // Regenerate segments via API with audio duration for proper segment count
                           onResegment={onInitializeSceneProduction ? async () => {
                             // Calculate total audio duration for proper segment count
