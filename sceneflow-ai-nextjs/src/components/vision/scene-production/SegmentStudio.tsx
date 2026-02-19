@@ -610,21 +610,21 @@ export function SegmentStudio({
                   )}
                 >
                   <Layers className="w-7 h-7" />
-                  {segment.takes.length > 0 && (
+                  {(segment.takes || []).length > 0 && (
                     <span className={cn(
                       "absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center text-[10px] font-bold rounded-full px-1",
                       activeTab === 'takes'
                         ? "bg-white text-amber-600"
                         : "bg-amber-500 text-white"
                     )}>
-                      {segment.takes.length}
+                      {(segment.takes || []).length}
                     </span>
                   )}
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="bg-gray-900 text-white border-gray-700">
                 <p className="font-medium">Takes</p>
-                <p className="text-xs text-gray-400">{segment.takes.length} generated version{segment.takes.length !== 1 ? 's' : ''}</p>
+                <p className="text-xs text-gray-400">{(segment.takes || []).length} generated version{(segment.takes || []).length !== 1 ? 's' : ''}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -1314,7 +1314,7 @@ export function SegmentStudio({
         
         {/* Takes Tab */}
         <TabsContent value="takes" className="flex-1 overflow-y-auto p-3 m-0">
-          {segment.takes.length === 0 ? (
+          {(segment.takes || []).length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <Layers className="w-10 h-10 text-gray-300 dark:text-gray-600 mb-3" />
               <p className="text-sm text-gray-500 dark:text-gray-400">No takes yet</p>
@@ -1326,14 +1326,14 @@ export function SegmentStudio({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                  {segment.takes.length} Take{segment.takes.length !== 1 ? 's' : ''}
+                  {(segment.takes || []).length} Take{(segment.takes || []).length !== 1 ? 's' : ''}
                 </span>
                 <span className="text-[10px] text-gray-500 dark:text-gray-400">
                   Click to preview • Select best take
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {segment.takes.map((take, idx) => {
+                {(segment.takes || []).map((take, idx) => {
                   const isActive = take.assetUrl === segment.activeAssetUrl
                   return (
                   <div

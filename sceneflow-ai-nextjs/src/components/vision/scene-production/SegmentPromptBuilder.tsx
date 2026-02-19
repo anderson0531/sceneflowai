@@ -203,7 +203,7 @@ export function SegmentPromptBuilder({
   const allVideoTakes = useMemo((): VideoTakeReference[] => {
     const takes: VideoTakeReference[] = []
     allSegments.forEach((seg) => {
-      seg.takes.forEach((take) => {
+      (seg.takes || []).forEach((take) => {
         if (take.assetUrl && take.status === 'COMPLETE') {
           takes.push({
             segmentId: seg.segmentId,

@@ -101,7 +101,7 @@ export const SegmentBlock = memo(({ segment, isSelected, onSelect, isExpanded = 
                 </span>
               ) : null}
               <Badge variant="secondary" className="text-[9px] px-1 py-0">{segment.assetType ? segment.assetType.toUpperCase() : 'No Asset'}</Badge>
-              <span className="font-medium">{segment.takes.length}</span>
+              <span className="font-medium">{(segment.takes || []).length}</span>
             </div>
           </div>
         )}
@@ -133,7 +133,7 @@ export const SegmentBlock = memo(({ segment, isSelected, onSelect, isExpanded = 
               </span>
             )}
             <Badge variant="secondary" className="text-xs">{segment.assetType ? segment.assetType.toUpperCase() : 'No Asset'}</Badge>
-            <span className="font-medium">{segment.takes.length} takes</span>
+            <span className="font-medium">{(segment.takes || []).length} takes</span>
           </div>
           <span className="font-mono text-[10px]">#{segment.segmentId.slice(0, 6)}</span>
         </div>

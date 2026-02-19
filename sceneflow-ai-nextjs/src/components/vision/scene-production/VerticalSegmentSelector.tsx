@@ -177,9 +177,9 @@ const SegmentCard = memo(({ segment, isSelected, isPlaying, onSelect, onEdit, on
                 {assetTypeIcons[segment.assetType] || <Film className="w-3 h-3" />}
               </span>
             )}
-            {segment.takes.length > 0 && (
+            {(segment.takes || []).length > 0 && (
               <Badge variant="secondary" className="text-[8px] px-1 py-0 h-4">
-                {segment.takes.length} take{segment.takes.length !== 1 ? 's' : ''}
+                {(segment.takes || []).length} take{(segment.takes || []).length !== 1 ? 's' : ''}
               </Badge>
             )}
           </div>
