@@ -171,6 +171,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   
   const handleSave = () => {
     const method = modeToMethod[mode]
+    // Use directly resolved frame URLs (not from autoConfig which may be stale)
+    const resolvedStartFrameUrl = segment.startFrameUrl || segment.references?.startFrameUrl || null
+    const resolvedEndFrameUrl = segment.endFrameUrl || segment.references?.endFrameUrl || null
+    
     const savedConfig: VideoGenerationConfig = {
       mode: method,
       prompt: method === 'FTV' ? motionPrompt : visualPrompt,
@@ -181,8 +185,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       aspectRatio,
       resolution,
       duration,
-      startFrameUrl: autoConfig.startFrameUrl,
-      endFrameUrl: autoConfig.endFrameUrl,
+      startFrameUrl: resolvedStartFrameUrl,
+      endFrameUrl: resolvedEndFrameUrl,
       sourceVideoUrl: autoConfig.sourceVideoUrl,
       approvalStatus: 'auto-ready',
       confidence: autoConfig.confidence,
@@ -193,6 +197,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   // Handle generate - saves config AND triggers generation
   const handleGenerate = () => {
     const method = modeToMethod[mode]
+    // Use directly resolved frame URLs (not from autoConfig which may be stale)
+    const resolvedStartFrameUrl = segment.startFrameUrl || segment.references?.startFrameUrl || null
+    const resolvedEndFrameUrl = segment.endFrameUrl || segment.references?.endFrameUrl || null
+    
     const savedConfig: VideoGenerationConfig = {
       mode: method,
       prompt: method === 'FTV' ? motionPrompt : visualPrompt,
@@ -203,12 +211,23 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       aspectRatio,
       resolution,
       duration,
-      startFrameUrl: autoConfig.startFrameUrl,
-      endFrameUrl: autoConfig.endFrameUrl,
+      startFrameUrl: resolvedStartFrameUrl,
+      endFrameUrl: resolvedEndFrameUrl,
       sourceVideoUrl: autoConfig.sourceVideoUrl,
       approvalStatus: 'auto-ready',
       confidence: autoConfig.confidence,
     }
+    
+    // Debug: Log FTV config to verify frame URLs are passed
+    if (method === 'FTV') {
+      console.log('[DirectorDialog] FTV generation config:', {
+        method,
+        startFrameUrl: resolvedStartFrameUrl,
+        endFrameUrl: resolvedEndFrameUrl,
+        prompt: savedConfig.prompt?.substring(0, 50) + '...'
+      })
+    }
+    
     onSaveConfig(savedConfig)
     if (onGenerate) {
       onGenerate(segment.segmentId, savedConfig)
