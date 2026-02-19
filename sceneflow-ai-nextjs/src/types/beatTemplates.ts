@@ -367,13 +367,218 @@ export const debateTemplate: BeatTemplate = {
   ]
 };
 
+// News Report Structure
+export const newsTemplate: BeatTemplate = {
+  id: 'news',
+  name: 'News Report Structure',
+  description: 'Journalistic structure for factual reporting with balanced perspectives',
+  category: 'genre-specific',
+  columns: [
+    {
+      id: 'HEADLINE',
+      label: 'Headline & Lead',
+      description: 'Attention-grabbing lead with key facts',
+      color: 'red',
+      icon: 'Newspaper',
+      order: 1
+    },
+    {
+      id: 'CONTEXT',
+      label: '5W1H Context',
+      description: 'Who, What, When, Where, Why, How',
+      color: 'blue',
+      icon: 'FileText',
+      order: 2
+    },
+    {
+      id: 'DETAILS',
+      label: 'Supporting Details',
+      description: 'Evidence, quotes, data, and sources',
+      color: 'yellow',
+      icon: 'Quote',
+      order: 3
+    },
+    {
+      id: 'PERSPECTIVES',
+      label: 'Multiple Perspectives',
+      description: 'Balance and counterpoints',
+      color: 'orange',
+      icon: 'Users',
+      order: 4
+    },
+    {
+      id: 'WRAP',
+      label: 'Wrap & Next Steps',
+      description: 'Summary and what to watch',
+      color: 'green',
+      icon: 'ArrowRight',
+      order: 5
+    }
+  ]
+};
+
+// Podcast Episode Structure
+export const podcastTemplate: BeatTemplate = {
+  id: 'podcast',
+  name: 'Podcast Episode Structure',
+  description: 'Conversational format with clear segments and listener engagement',
+  category: 'genre-specific',
+  columns: [
+    {
+      id: 'INTRO',
+      label: 'Introduction',
+      description: 'Welcome, hook, episode preview',
+      color: 'blue',
+      icon: 'Mic',
+      order: 1
+    },
+    {
+      id: 'MAIN_TOPIC',
+      label: 'Main Topic',
+      description: 'Core discussion and key points',
+      color: 'purple',
+      icon: 'MessageCircle',
+      order: 2
+    },
+    {
+      id: 'DEEP_DIVE',
+      label: 'Deep Dive',
+      description: 'Expert insights, stories, or analysis',
+      color: 'orange',
+      icon: 'Search',
+      order: 3
+    },
+    {
+      id: 'INTERACTIVE',
+      label: 'Interactive Segment',
+      description: 'Q&A, listener feedback, or discussion',
+      color: 'green',
+      icon: 'MessageSquare',
+      order: 4
+    },
+    {
+      id: 'OUTRO',
+      label: 'Outro',
+      description: 'Recap, CTA, next episode teaser',
+      color: 'gray',
+      icon: 'Bell',
+      order: 5
+    }
+  ]
+};
+
+// Interview Structure
+export const interviewTemplate: BeatTemplate = {
+  id: 'interview',
+  name: 'Interview Structure',
+  description: 'Guest-focused format showcasing expertise and insights',
+  category: 'genre-specific',
+  columns: [
+    {
+      id: 'SETUP',
+      label: 'Setup & Introduction',
+      description: 'Guest introduction and context',
+      color: 'blue',
+      icon: 'User',
+      order: 1
+    },
+    {
+      id: 'BACKGROUND',
+      label: 'Background & Journey',
+      description: 'Guest\'s story and expertise path',
+      color: 'yellow',
+      icon: 'BookOpen',
+      order: 2
+    },
+    {
+      id: 'CORE_INSIGHTS',
+      label: 'Core Insights',
+      description: 'Key expertise and main discussion',
+      color: 'purple',
+      icon: 'Lightbulb',
+      order: 3
+    },
+    {
+      id: 'RAPID_FIRE',
+      label: 'Rapid Fire / Lightning Round',
+      description: 'Quick questions and memorable moments',
+      color: 'orange',
+      icon: 'Zap',
+      order: 4
+    },
+    {
+      id: 'CLOSING',
+      label: 'Closing & CTA',
+      description: 'Final thoughts and where to follow',
+      color: 'green',
+      icon: 'CheckCircle',
+      order: 5
+    }
+  ]
+};
+
+// Education/Training Structure
+export const educationTemplate: BeatTemplate = {
+  id: 'education',
+  name: 'Educational Content Structure',
+  description: 'Learning-focused format with clear objectives and assessments',
+  category: 'genre-specific',
+  columns: [
+    {
+      id: 'HOOK',
+      label: 'Hook & Objectives',
+      description: 'Engage learner and state learning goals',
+      color: 'blue',
+      icon: 'Target',
+      order: 1
+    },
+    {
+      id: 'FOUNDATION',
+      label: 'Foundation',
+      description: 'Core concepts and prerequisite knowledge',
+      color: 'yellow',
+      icon: 'BookOpen',
+      order: 2
+    },
+    {
+      id: 'DEMONSTRATION',
+      label: 'Demonstration',
+      description: 'Show concepts in action with examples',
+      color: 'purple',
+      icon: 'Play',
+      order: 3
+    },
+    {
+      id: 'PRACTICE',
+      label: 'Practice & Application',
+      description: 'Hands-on exercises and real-world application',
+      color: 'orange',
+      icon: 'Wrench',
+      order: 4
+    },
+    {
+      id: 'RECAP',
+      label: 'Recap & Assessment',
+      description: 'Summary, key takeaways, and knowledge check',
+      color: 'green',
+      icon: 'CheckSquare',
+      order: 5
+    }
+  ]
+};
+
 export const allTemplates: BeatTemplate[] = [
   debateTemplate, // Current default first
   threeActTemplate,
   fiveActTemplate,
   saveCatTemplate,
   heroJourneyTemplate,
-  documentaryTemplate
+  documentaryTemplate,
+  // New non-fiction/conversational templates
+  newsTemplate,
+  podcastTemplate,
+  interviewTemplate,
+  educationTemplate
 ];
 
 export const getTemplateById = (id: string): BeatTemplate | undefined => {
@@ -383,3 +588,21 @@ export const getTemplateById = (id: string): BeatTemplate | undefined => {
 export const getTemplatesByCategory = (category: BeatTemplate['category']): BeatTemplate[] => {
   return allTemplates.filter(template => template.category === category);
 };
+
+// Helper to get recommended template for a genre
+export const getTemplateForGenre = (genre: string): BeatTemplate => {
+  const genreTemplateMap: Record<string, string> = {
+    'documentary': 'documentary',
+    'news': 'news',
+    'podcast': 'podcast',
+    'interview': 'interview',
+    'education': 'education',
+    'training': 'education',
+  }
+  const templateId = genreTemplateMap[genre.toLowerCase()]
+  if (templateId) {
+    return getTemplateById(templateId) || threeActTemplate
+  }
+  // Default to 3-act for fiction genres
+  return threeActTemplate
+}

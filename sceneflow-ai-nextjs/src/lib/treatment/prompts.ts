@@ -1,4 +1,4 @@
-type Format = 'youtube' | 'short_film' | 'documentary' | 'education' | 'training'
+type Format = 'youtube' | 'short_film' | 'documentary' | 'education' | 'training' | 'news' | 'podcast' | 'interview'
 
 // =============================================================================
 // STATIC SCHEMA TEMPLATE - Built once at module load, not per-request
@@ -219,8 +219,12 @@ function formatLabel(f: Format): string {
     case 'youtube': return 'YouTube series'
     case 'short_film': return 'short film'
     case 'documentary': return 'documentary'
-    case 'education': return 'education'
-    case 'training': return 'training'
+    case 'education': return 'educational content'
+    case 'training': return 'training program'
+    case 'news': return 'news segment'
+    case 'podcast': return 'podcast episode'
+    case 'interview': return 'interview'
+    default: return 'video'
   }
 }
 
@@ -229,6 +233,9 @@ function getFormatBlock(f: Format) {
   if (f === 'documentary') return { priorities: 'compelling narrative arc, strong voiceover plan, visual motifs; audience engagement cues', includeCTA: true, includeLearning: false }
   if (f === 'education') return { priorities: 'clear learning objectives, scaffolded sections, recap and quick assessment', includeCTA: false, includeLearning: true }
   if (f === 'training') return { priorities: 'task-oriented modules, demonstrations, checkpoints and practice prompts', includeCTA: false, includeLearning: true }
+  if (f === 'news') return { priorities: 'factual accuracy, clear headline/lead, 5W1H structure (Who/What/When/Where/Why/How), balanced perspectives, source attribution', includeCTA: false, includeLearning: false }
+  if (f === 'podcast') return { priorities: 'conversational flow, engaging host presence, clear topic segments, listener hooks, natural dialogue cadence, strong opening and closing', includeCTA: true, includeLearning: false }
+  if (f === 'interview') return { priorities: 'thoughtful questions, guest expertise showcase, natural conversation flow, key insights extraction, compelling story moments', includeCTA: true, includeLearning: false }
   return { priorities: 'three-act arc, character tension, cinematic pacing', includeCTA: false, includeLearning: false }
 }
 
@@ -391,7 +398,14 @@ function getGenreConventions(genre: string): string {
     'action': 'clear hero goal, escalating set-pieces, physical stakes, villain with motivation',
     'fantasy': 'consistent magic system, world-building, quest or chosen one structure',
     'mystery': 'central question, clues and red herrings, satisfying revelation',
-    'documentary': 'clear thesis, compelling subjects, narrative arc despite non-fiction'
+    'documentary': 'clear thesis, compelling subjects, narrative arc despite non-fiction',
+    // Non-fiction formats
+    'education': 'clear learning objectives, scaffolded complexity, instructor credibility, practical examples, assessment checkpoints',
+    'training': 'task-oriented modules, step-by-step demonstrations, hands-on practice, measurable competency goals',
+    'news': 'headline impact, 5W1H coverage, balanced perspectives, source credibility, timeliness, factual accuracy',
+    // Conversational formats
+    'podcast': 'engaging host persona, topic expertise, conversational warmth, listener value, memorable segments, clear episode arc',
+    'interview': 'insightful questions, guest expertise showcase, conversational depth, key takeaways, story moments'
   }
   return map[genre.toLowerCase()] || map['drama']
 }

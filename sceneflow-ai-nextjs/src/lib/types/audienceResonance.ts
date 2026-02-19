@@ -10,6 +10,7 @@
 // =============================================================================
 
 export type PrimaryGenre =
+  // Fiction/Narrative
   | 'action'
   | 'comedy'
   | 'drama'
@@ -18,7 +19,6 @@ export type PrimaryGenre =
   | 'sci-fi'
   | 'fantasy'
   | 'romance'
-  | 'documentary'
   | 'animation'
   | 'mystery'
   | 'western'
@@ -28,6 +28,14 @@ export type PrimaryGenre =
   | 'family'
   | 'adventure'
   | 'biographical'
+  // Non-Fiction/Documentary
+  | 'documentary'
+  | 'education'
+  | 'training'
+  | 'news'
+  // Conversational
+  | 'podcast'
+  | 'interview'
 
 export type TargetDemographic =
   | 'gen-z-18-24'
@@ -476,26 +484,51 @@ export interface ResonancePanelState {
 // CONSTANTS
 // =============================================================================
 
-export const GENRE_OPTIONS: { value: PrimaryGenre; label: string }[] = [
-  { value: 'action', label: 'Action' },
-  { value: 'comedy', label: 'Comedy' },
-  { value: 'drama', label: 'Drama' },
-  { value: 'horror', label: 'Horror' },
-  { value: 'thriller', label: 'Thriller' },
-  { value: 'sci-fi', label: 'Sci-Fi' },
-  { value: 'fantasy', label: 'Fantasy' },
-  { value: 'romance', label: 'Romance' },
-  { value: 'documentary', label: 'Documentary' },
-  { value: 'animation', label: 'Animation' },
-  { value: 'mystery', label: 'Mystery' },
-  { value: 'western', label: 'Western' },
-  { value: 'musical', label: 'Musical' },
-  { value: 'war', label: 'War' },
-  { value: 'crime', label: 'Crime' },
-  { value: 'family', label: 'Family' },
-  { value: 'adventure', label: 'Adventure' },
-  { value: 'biographical', label: 'Biographical' },
+// Genre category for grouping in UI
+export type GenreCategory = 'fiction' | 'non-fiction' | 'conversational'
+
+export interface GenreOption {
+  value: PrimaryGenre
+  label: string
+  category: GenreCategory
+}
+
+export const GENRE_OPTIONS: GenreOption[] = [
+  // Fiction/Narrative (story-based)
+  { value: 'drama', label: 'Drama', category: 'fiction' },
+  { value: 'comedy', label: 'Comedy', category: 'fiction' },
+  { value: 'thriller', label: 'Thriller', category: 'fiction' },
+  { value: 'horror', label: 'Horror', category: 'fiction' },
+  { value: 'sci-fi', label: 'Sci-Fi', category: 'fiction' },
+  { value: 'fantasy', label: 'Fantasy', category: 'fiction' },
+  { value: 'action', label: 'Action', category: 'fiction' },
+  { value: 'romance', label: 'Romance', category: 'fiction' },
+  { value: 'mystery', label: 'Mystery', category: 'fiction' },
+  { value: 'adventure', label: 'Adventure', category: 'fiction' },
+  { value: 'animation', label: 'Animation', category: 'fiction' },
+  { value: 'western', label: 'Western', category: 'fiction' },
+  { value: 'musical', label: 'Musical', category: 'fiction' },
+  { value: 'war', label: 'War', category: 'fiction' },
+  { value: 'crime', label: 'Crime', category: 'fiction' },
+  { value: 'family', label: 'Family', category: 'fiction' },
+  { value: 'biographical', label: 'Biographical', category: 'fiction' },
+  // Non-Fiction/Informational
+  { value: 'documentary', label: 'Documentary', category: 'non-fiction' },
+  { value: 'education', label: 'Education', category: 'non-fiction' },
+  { value: 'training', label: 'Training', category: 'non-fiction' },
+  { value: 'news', label: 'News', category: 'non-fiction' },
+  // Conversational
+  { value: 'podcast', label: 'Podcast', category: 'conversational' },
+  { value: 'interview', label: 'Interview', category: 'conversational' },
 ]
+
+// Helper to get genres by category
+export const getGenresByCategory = (category: GenreCategory): GenreOption[] => 
+  GENRE_OPTIONS.filter(g => g.category === category)
+
+// Legacy flat options for backward compatibility
+export const GENRE_OPTIONS_FLAT: { value: PrimaryGenre; label: string }[] = 
+  GENRE_OPTIONS.map(({ value, label }) => ({ value, label }))
 
 export const DEMOGRAPHIC_OPTIONS: { value: TargetDemographic; label: string }[] = [
   { value: 'general-audience', label: 'General Audience' },

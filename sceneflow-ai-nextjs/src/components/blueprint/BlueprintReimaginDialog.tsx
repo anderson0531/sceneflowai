@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Button } from '../ui/Button'
 import { Textarea } from '../ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '../ui/select'
 import { toast } from 'sonner'
 import { useGuideStore } from '@/store/useGuideStore'
 import { 
@@ -56,21 +56,32 @@ type Props = {
   projectId?: string
 }
 
-// Genre options
+// Genre options with category grouping for better UX
 const GENRE_OPTIONS = [
-  { value: 'drama', label: 'Drama' },
-  { value: 'comedy', label: 'Comedy' },
-  { value: 'thriller', label: 'Thriller' },
-  { value: 'horror', label: 'Horror' },
-  { value: 'scifi', label: 'Sci-Fi' },
-  { value: 'fantasy', label: 'Fantasy' },
-  { value: 'action', label: 'Action' },
-  { value: 'romance', label: 'Romance' },
-  { value: 'documentary', label: 'Documentary' },
-  { value: 'animation', label: 'Animation' },
-  { value: 'mystery', label: 'Mystery' },
-  { value: 'adventure', label: 'Adventure' },
+  // Fiction/Narrative (story-based)
+  { value: 'drama', label: 'Drama', category: 'Fiction' },
+  { value: 'comedy', label: 'Comedy', category: 'Fiction' },
+  { value: 'thriller', label: 'Thriller', category: 'Fiction' },
+  { value: 'horror', label: 'Horror', category: 'Fiction' },
+  { value: 'scifi', label: 'Sci-Fi', category: 'Fiction' },
+  { value: 'fantasy', label: 'Fantasy', category: 'Fiction' },
+  { value: 'action', label: 'Action', category: 'Fiction' },
+  { value: 'romance', label: 'Romance', category: 'Fiction' },
+  { value: 'mystery', label: 'Mystery', category: 'Fiction' },
+  { value: 'adventure', label: 'Adventure', category: 'Fiction' },
+  { value: 'animation', label: 'Animation', category: 'Fiction' },
+  // Non-Fiction/Informational
+  { value: 'documentary', label: 'Documentary', category: 'Non-Fiction' },
+  { value: 'education', label: 'Education', category: 'Non-Fiction' },
+  { value: 'training', label: 'Training', category: 'Non-Fiction' },
+  { value: 'news', label: 'News', category: 'Non-Fiction' },
+  // Conversational
+  { value: 'podcast', label: 'Podcast', category: 'Conversational' },
+  { value: 'interview', label: 'Interview', category: 'Conversational' },
 ]
+
+// Group genres by category for the dropdown
+const GENRE_CATEGORIES = ['Fiction', 'Non-Fiction', 'Conversational'] as const
 
 const TONE_OPTIONS = [
   { value: 'dark', label: 'Dark & Gritty' },
@@ -428,8 +439,13 @@ export function BlueprintReimaginDialog({
                   <SelectValue placeholder="Select..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {GENRE_OPTIONS.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  {GENRE_CATEGORIES.map(category => (
+                    <SelectGroup key={category}>
+                      <SelectLabel className="text-xs text-gray-500 font-semibold px-2 py-1.5">{category}</SelectLabel>
+                      {GENRE_OPTIONS.filter(opt => opt.category === category).map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectGroup>
                   ))}
                 </SelectContent>
               </Select>

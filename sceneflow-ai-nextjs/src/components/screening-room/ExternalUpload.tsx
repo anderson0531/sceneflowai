@@ -54,15 +54,23 @@ const ACCEPTED_FORMATS = ['video/mp4', 'video/quicktime', 'video/x-m4v', 'video/
 const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024 // 5GB
 
 const GENRE_OPTIONS = [
+  // Fiction
   'Drama',
   'Comedy',
   'Action',
   'Thriller',
   'Horror',
   'Sci-Fi',
-  'Documentary',
   'Animation',
   'Romance',
+  // Non-Fiction
+  'Documentary',
+  'Education',
+  'Training',
+  'News',
+  // Conversational
+  'Podcast',
+  'Interview',
   'Other'
 ]
 
