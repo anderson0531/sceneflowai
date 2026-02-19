@@ -92,6 +92,14 @@ export interface AddSegmentTypeDialogProps {
   }) => void
   /** Optional callback to regenerate all segments (opens KeyframeRegenerationDialog) */
   onRegenerateAll?: () => void
+  /** Film context for AI prompt generation */
+  filmContext?: {
+    title?: string
+    logline?: string
+    genre?: string[]
+    tone?: string
+    targetAudience?: string
+  }
 }
 
 // ============================================================================
@@ -408,6 +416,7 @@ export function AddSegmentTypeDialog({
   adjacentContext,
   onAddSegment,
   onRegenerateAll,
+  filmContext,
 }: AddSegmentTypeDialogProps) {
   // State
   const [selectedType, setSelectedType] = useState<SegmentPurpose>('standard')
@@ -417,6 +426,7 @@ export function AddSegmentTypeDialog({
   const [customPrompt, setCustomPrompt] = useState<string>('')
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false)
   const [activeTab, setActiveTab] = useState<'type' | 'position' | 'prompt'>('type')
+  const [aiError, setAiError] = useState<string | null>(null)
   
   // Get selected type config
   const typeConfig = useMemo(() => 
@@ -424,7 +434,7 @@ export function AddSegmentTypeDialog({
     [selectedType]
   )
   
-  // Generate context-aware prompt
+  // Generate context-aware prompt using static builder (fallback)
   const contextAwarePrompt = useMemo(() => {
     if (!adjacentContext) return typeConfig.defaultPromptTemplate
     
@@ -433,12 +443,87 @@ export function AddSegmentTypeDialog({
     }
     return typeConfig.defaultPromptTemplate
   }, [typeConfig, adjacentContext])
+
+  // Generate AI-powered prompt using Gemini 2.5
+  const generateAIPrompt = useCallback(async () => {
+    if (!adjacentContext) {
+      setCustomPrompt(contextAwarePrompt)
+      return
+    }
+
+    setIsGeneratingPrompt(true)
+    setAiError(null)
+
+    try {
+      const response = await fetch('/api/intelligence/generate-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'segment',
+          segmentPurpose: selectedType,
+          adjacentScenes: {
+            previousScene: adjacentContext.previousScene ? {
+              heading: adjacentContext.previousScene.heading,
+              action: adjacentContext.previousScene.action,
+            } : undefined,
+            currentScene: {
+              heading: adjacentContext.currentScene.heading,
+              action: adjacentContext.currentScene.action,
+              narration: adjacentContext.currentScene.narration,
+            },
+            nextScene: adjacentContext.nextScene ? {
+              heading: adjacentContext.nextScene.heading,
+              action: adjacentContext.nextScene.action,
+            } : undefined,
+          },
+          filmContext: filmContext,
+          thinkingLevel: 'low', // Fast generation for interactive use
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to generate prompt')
+      }
+
+      const data = await response.json()
+      
+      if (data.prompt) {
+        setCustomPrompt(data.prompt)
+        // Update duration if AI suggests one
+        if (data.suggestedDuration) {
+          setDuration(data.suggestedDuration)
+        }
+        console.log('[AddSegmentTypeDialog] AI generated prompt, confidence:', data.confidence)
+      } else {
+        // Fallback to static prompt
+        setCustomPrompt(contextAwarePrompt)
+      }
+    } catch (error) {
+      console.error('[AddSegmentTypeDialog] AI prompt generation failed:', error)
+      setAiError(error instanceof Error ? error.message : 'AI unavailable')
+      // Use static fallback
+      setCustomPrompt(contextAwarePrompt)
+    } finally {
+      setIsGeneratingPrompt(false)
+    }
+  }, [selectedType, adjacentContext, filmContext, contextAwarePrompt])
   
-  // Initialize custom prompt when type changes
+  // Initialize prompt when type changes - use AI for special segment types
   useEffect(() => {
-    setCustomPrompt(contextAwarePrompt)
     setDuration(typeConfig.defaultDuration)
-  }, [selectedType, contextAwarePrompt, typeConfig.defaultDuration])
+    
+    // For title sequences, establishing shots, and outros - use AI prompt generation
+    const aiEnabledTypes: SegmentPurpose[] = ['title', 'establishing', 'outro', 'match-cut', 'broll']
+    
+    if (aiEnabledTypes.includes(selectedType) && adjacentContext) {
+      // Generate AI prompt (async)
+      generateAIPrompt()
+    } else {
+      // Use static context-aware prompt
+      setCustomPrompt(contextAwarePrompt)
+    }
+  }, [selectedType, typeConfig.defaultDuration, adjacentContext, generateAIPrompt, contextAwarePrompt])
   
   // Calculate insert index based on position
   const calculateInsertIndex = useCallback((): number => {
@@ -719,8 +804,31 @@ export function AddSegmentTypeDialog({
           {/* Prompt Tab */}
           <TabsContent value="prompt" className="mt-4">
             <div className="space-y-4">
-              {/* Context Awareness Info */}
-              {adjacentContext && typeConfig.contextPromptBuilder && (
+              {/* AI Generation Status */}
+              {isGeneratingPrompt && (
+                <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3">
+                  <div className="flex items-center gap-2 text-purple-400 text-sm font-medium">
+                    <Wand2 className="w-4 h-4 animate-pulse" />
+                    Generating intelligent prompt with Gemini 2.5...
+                  </div>
+                </div>
+              )}
+              
+              {/* AI Error */}
+              {aiError && (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                  <div className="flex items-center gap-2 text-amber-400 text-sm font-medium mb-1">
+                    <AlertCircle className="w-4 h-4" />
+                    AI Unavailable
+                  </div>
+                  <p className="text-xs text-amber-300/70">
+                    Using template prompt. {aiError}
+                  </p>
+                </div>
+              )}
+              
+              {/* Context Awareness Info - Now AI-powered */}
+              {!isGeneratingPrompt && !aiError && adjacentContext && (
                 <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3">
                   <div className="flex items-center gap-2 text-emerald-400 text-sm font-medium mb-1">
                     <Lightbulb className="w-4 h-4" />
@@ -736,21 +844,34 @@ export function AddSegmentTypeDialog({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label className="text-sm font-medium text-slate-300">Generation Prompt</Label>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={resetPrompt}
-                    className="h-7 px-2 text-xs text-slate-400 hover:text-cyan-400"
-                  >
-                    <RotateCcw className="w-3 h-3 mr-1" />
-                    Reset
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={generateAIPrompt}
+                      disabled={isGeneratingPrompt}
+                      className="h-7 px-2 text-xs text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
+                    >
+                      <Wand2 className="w-3 h-3 mr-1" />
+                      {isGeneratingPrompt ? 'Generating...' : 'AI Generate'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={resetPrompt}
+                      className="h-7 px-2 text-xs text-slate-400 hover:text-cyan-400"
+                    >
+                      <RotateCcw className="w-3 h-3 mr-1" />
+                      Reset
+                    </Button>
+                  </div>
                 </div>
                 <Textarea
                   value={customPrompt}
                   onChange={(e) => setCustomPrompt(e.target.value)}
                   placeholder="Describe the visual content..."
                   className="h-[200px] bg-slate-800 border-slate-600 text-white resize-none"
+                  disabled={isGeneratingPrompt}
                 />
                 <p className="text-xs text-slate-500">
                   {customPrompt.length} characters • This prompt will be used for frame generation

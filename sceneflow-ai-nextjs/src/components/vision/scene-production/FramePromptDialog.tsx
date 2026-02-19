@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
@@ -281,8 +281,16 @@ export function FramePromptDialog({
   const [modelTier, setModelTier] = useState<ModelTier>('designer')
   const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>('high')
   
-  // State
-  const [customPrompt, setCustomPrompt] = useState('')
+  // State - Initialize customPrompt from segment data immediately to prevent race conditions
+  const initialPrompt = useMemo(() => {
+    if (!segment) return ''
+    if (frameType === 'start' && segment.startFramePrompt) return segment.startFramePrompt
+    if (frameType === 'end' && segment.endFramePrompt) return segment.endFramePrompt
+    if (frameType === 'both' && segment.startFramePrompt) return segment.startFramePrompt
+    return segment.userEditedPrompt || segment.generatedPrompt || segment.actionPrompt || ''
+  }, [segment, frameType])
+  
+  const [customPrompt, setCustomPrompt] = useState(initialPrompt)
   const [selectedNegativePresets, setSelectedNegativePresets] = useState<Set<string>>(
     new Set(DEFAULT_NEGATIVE_PRESETS)
   )
@@ -309,116 +317,116 @@ export function FramePromptDialog({
   // Check if any selected characters have reference images
   const hasCharacterReferences = selectedCharacters.some(c => c.referenceImageUrl)
 
-  // Initialize prompt from segment when dialog opens
+  // Track previous open state to detect dialog opening
+  const wasOpen = useRef(false)
+
+  // Initialize state from segment when dialog OPENS (not on every dependency change)
   useEffect(() => {
-    if (segment && open) {
-      // Priority: Use pasted frame-specific prompts first, then fall back to other prompts
-      let basePrompt = ''
+    const justOpened = open && !wasOpen.current
+    wasOpen.current = open
+    
+    if (!segment || !justOpened) return
+    
+    // Reset customPrompt to segment's prompt when dialog opens
+    let basePrompt = ''
+    if (frameType === 'start' && segment.startFramePrompt) {
+      basePrompt = segment.startFramePrompt
+    } else if (frameType === 'end' && segment.endFramePrompt) {
+      basePrompt = segment.endFramePrompt
+    } else if (frameType === 'both' && segment.startFramePrompt) {
+      basePrompt = segment.startFramePrompt
+    } else {
+      basePrompt = segment.userEditedPrompt || segment.generatedPrompt || segment.actionPrompt || ''
+    }
+    setCustomPrompt(basePrompt)
+    
+    // Auto-check "use previous end frame" for CONTINUE transitions when available
+    if (segment.transitionType === 'CONTINUE' && previousEndFrameUrl && frameType !== 'end') {
+      setUsePreviousEndFrame(true)
+    } else {
+      setUsePreviousEndFrame(false)
+    }
+    
+    // Initialize visual setup from scene direction
+    if (sceneDirection) {
+      const setup = { ...visualSetup }
       
-      if (frameType === 'start' && segment.startFramePrompt) {
-        // Use the AI-generated start frame prompt from pasted results
-        basePrompt = segment.startFramePrompt
-      } else if (frameType === 'end' && segment.endFramePrompt) {
-        // Use the AI-generated end frame prompt from pasted results
-        basePrompt = segment.endFramePrompt
-      } else if (frameType === 'both' && segment.startFramePrompt) {
-        // For 'both' mode, start with the start frame prompt
-        basePrompt = segment.startFramePrompt
+      // Location from scene direction
+      if (sceneDirection.scene?.location) {
+        setup.location = sceneDirection.scene.location
+      } else if (sceneHeading) {
+        // Parse from heading: "INT./EXT. LOCATION - TIME"
+        const match = sceneHeading.match(/(INT|EXT)\.\s+(.+?)\s+-\s+(.+)/i)
+        if (match) setup.location = match[2].trim()
+      }
+      
+      // Time of day
+      if (sceneDirection.lighting?.timeOfDay) {
+        const tod = sceneDirection.lighting.timeOfDay.toLowerCase()
+        if (tod.includes('night')) setup.timeOfDay = 'night'
+        else if (tod.includes('golden') || tod.includes('sunset')) setup.timeOfDay = 'golden-hour'
+        else if (tod.includes('dawn') || tod.includes('morning')) setup.timeOfDay = 'dawn'
+        else if (tod.includes('dusk')) setup.timeOfDay = 'dusk'
+        else setup.timeOfDay = 'day'
+      }
+      
+      // Atmosphere
+      if (sceneDirection.scene?.atmosphere) {
+        const atmo = sceneDirection.scene.atmosphere.toLowerCase()
+        if (atmo.includes('tense')) setup.atmosphere = 'tense'
+        else if (atmo.includes('energetic')) setup.atmosphere = 'energetic'
+        else if (atmo.includes('serene')) setup.atmosphere = 'serene'
+        else if (atmo.includes('melancholic')) setup.atmosphere = 'melancholic'
+        else if (atmo.includes('hopeful')) setup.atmosphere = 'hopeful'
+        else if (atmo.includes('mysterious')) setup.atmosphere = 'mysterious'
+      }
+      
+      // Shot type from segment or scene direction
+      if (segment.shotType) {
+        setup.shotType = segment.shotType
+      } else if (sceneDirection.camera?.shots?.[0]) {
+        const shot = sceneDirection.camera.shots[0].toLowerCase()
+        if (shot.includes('extreme close')) setup.shotType = 'extreme-close-up'
+        else if (shot.includes('close-up') || shot.includes('close up')) setup.shotType = 'close-up'
+        else if (shot.includes('medium close')) setup.shotType = 'medium-close-up'
+        else if (shot.includes('medium')) setup.shotType = 'medium-shot'
+        else if (shot.includes('wide')) setup.shotType = 'wide-shot'
+      }
+      
+      // Camera angle
+      if (sceneDirection.camera?.angle) {
+        const angle = sceneDirection.camera.angle.toLowerCase()
+        if (angle.includes('low')) setup.cameraAngle = 'low-angle'
+        else if (angle.includes('high')) setup.cameraAngle = 'high-angle'
+        else if (angle.includes('dutch')) setup.cameraAngle = 'dutch-angle'
+        else setup.cameraAngle = 'eye-level'
+      }
+      
+      // Lighting
+      if (sceneDirection.lighting?.overallMood) {
+        const mood = sceneDirection.lighting.overallMood.toLowerCase()
+        if (mood.includes('dramatic') || mood.includes('noir')) setup.lighting = 'dramatic'
+        else if (mood.includes('soft') || mood.includes('high-key')) setup.lighting = 'soft'
+        else if (mood.includes('harsh')) setup.lighting = 'harsh'
+        else setup.lighting = 'natural'
+      }
+      
+      setVisualSetup(setup)
+    }
+    
+    // Auto-detect characters from segment action text
+    if (characters.length > 0) {
+      const segmentText = (segment.action || segment.subject || segment.actionPrompt || '').toLowerCase()
+      const detectedNames = characters
+        .filter(c => segmentText.includes(c.name.toLowerCase()))
+        .map(c => c.name)
+      
+      if (detectedNames.length > 0) {
+        setSelectedCharacterNames(detectedNames)
       } else {
-        // Fall back to existing prompts
-        basePrompt = segment.userEditedPrompt || segment.generatedPrompt || segment.actionPrompt || ''
-      }
-      
-      setCustomPrompt(basePrompt)
-      
-      // Auto-check "use previous end frame" for CONTINUE transitions when available
-      if (segment.transitionType === 'CONTINUE' && previousEndFrameUrl && frameType !== 'end') {
-        setUsePreviousEndFrame(true)
-      } else {
-        setUsePreviousEndFrame(false)
-      }
-      
-      // Initialize visual setup from scene direction
-      if (sceneDirection) {
-        const setup = { ...visualSetup }
-        
-        // Location from scene direction
-        if (sceneDirection.scene?.location) {
-          setup.location = sceneDirection.scene.location
-        } else if (sceneHeading) {
-          // Parse from heading: "INT./EXT. LOCATION - TIME"
-          const match = sceneHeading.match(/(INT|EXT)\.\s+(.+?)\s+-\s+(.+)/i)
-          if (match) setup.location = match[2].trim()
-        }
-        
-        // Time of day
-        if (sceneDirection.lighting?.timeOfDay) {
-          const tod = sceneDirection.lighting.timeOfDay.toLowerCase()
-          if (tod.includes('night')) setup.timeOfDay = 'night'
-          else if (tod.includes('golden') || tod.includes('sunset')) setup.timeOfDay = 'golden-hour'
-          else if (tod.includes('dawn') || tod.includes('morning')) setup.timeOfDay = 'dawn'
-          else if (tod.includes('dusk')) setup.timeOfDay = 'dusk'
-          else setup.timeOfDay = 'day'
-        }
-        
-        // Atmosphere
-        if (sceneDirection.scene?.atmosphere) {
-          const atmo = sceneDirection.scene.atmosphere.toLowerCase()
-          if (atmo.includes('tense')) setup.atmosphere = 'tense'
-          else if (atmo.includes('energetic')) setup.atmosphere = 'energetic'
-          else if (atmo.includes('serene')) setup.atmosphere = 'serene'
-          else if (atmo.includes('melancholic')) setup.atmosphere = 'melancholic'
-          else if (atmo.includes('hopeful')) setup.atmosphere = 'hopeful'
-          else if (atmo.includes('mysterious')) setup.atmosphere = 'mysterious'
-        }
-        
-        // Shot type from segment or scene direction
-        if (segment.shotType) {
-          setup.shotType = segment.shotType
-        } else if (sceneDirection.camera?.shots?.[0]) {
-          const shot = sceneDirection.camera.shots[0].toLowerCase()
-          if (shot.includes('extreme close')) setup.shotType = 'extreme-close-up'
-          else if (shot.includes('close-up') || shot.includes('close up')) setup.shotType = 'close-up'
-          else if (shot.includes('medium close')) setup.shotType = 'medium-close-up'
-          else if (shot.includes('medium')) setup.shotType = 'medium-shot'
-          else if (shot.includes('wide')) setup.shotType = 'wide-shot'
-        }
-        
-        // Camera angle
-        if (sceneDirection.camera?.angle) {
-          const angle = sceneDirection.camera.angle.toLowerCase()
-          if (angle.includes('low')) setup.cameraAngle = 'low-angle'
-          else if (angle.includes('high')) setup.cameraAngle = 'high-angle'
-          else if (angle.includes('dutch')) setup.cameraAngle = 'dutch-angle'
-          else setup.cameraAngle = 'eye-level'
-        }
-        
-        // Lighting
-        if (sceneDirection.lighting?.overallMood) {
-          const mood = sceneDirection.lighting.overallMood.toLowerCase()
-          if (mood.includes('dramatic') || mood.includes('noir')) setup.lighting = 'dramatic'
-          else if (mood.includes('soft') || mood.includes('high-key')) setup.lighting = 'soft'
-          else if (mood.includes('harsh')) setup.lighting = 'harsh'
-          else setup.lighting = 'natural'
-        }
-        
-        setVisualSetup(setup)
-      }
-      
-      // Auto-detect characters from segment action text
-      if (characters.length > 0) {
-        const segmentText = (segment.action || segment.subject || segment.actionPrompt || '').toLowerCase()
-        const detectedNames = characters
-          .filter(c => segmentText.includes(c.name.toLowerCase()))
-          .map(c => c.name)
-        
-        if (detectedNames.length > 0) {
-          setSelectedCharacterNames(detectedNames)
-        } else {
-          // Default: select all characters with reference images
-          const withRefs = characters.filter(c => c.referenceImage).map(c => c.name)
-          setSelectedCharacterNames(withRefs.slice(0, 3)) // Max 3 for image generation
-        }
+        // Default: select all characters with reference images
+        const withRefs = characters.filter(c => c.referenceImage).map(c => c.name)
+        setSelectedCharacterNames(withRefs.slice(0, 3)) // Max 3 for image generation
       }
     }
   }, [segment, open, previousEndFrameUrl, frameType, sceneDirection, sceneHeading, characters])
@@ -476,12 +484,68 @@ export function FramePromptDialog({
     return validateDirectionAdherence(customPrompt, sceneDirection)
   }, [customPrompt, sceneDirection])
 
-  // Apply intelligent prompt
+  // State for AI enhancement
+  const [isEnhancingPrompt, setIsEnhancingPrompt] = useState(false)
+  const [aiEnhanceError, setAiEnhanceError] = useState<string | null>(null)
+
+  // Apply intelligent prompt (local builder)
   const applyIntelligentPrompt = useCallback(() => {
     if (intelligentPrompt) {
       setCustomPrompt(intelligentPrompt.prompt)
     }
   }, [intelligentPrompt])
+
+  // Enhance prompt with Gemini 2.5 AI
+  const enhancePromptWithAI = useCallback(async () => {
+    if (!segment || !customPrompt) return
+    
+    setIsEnhancingPrompt(true)
+    setAiEnhanceError(null)
+    
+    try {
+      const response = await fetch('/api/intelligence/generate-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'keyframe',
+          basePrompt: customPrompt,
+          framePosition: frameType === 'both' ? 'start' : frameType,
+          duration: segment.endTime - segment.startTime,
+          sceneContext: {
+            heading: sceneHeading,
+            action: segment.action || segment.subject,
+          },
+          sceneDirection,
+          characters: selectedCharacters.map(c => ({
+            name: c.name,
+            appearance: c.appearance,
+            ethnicity: c.ethnicity,
+            age: c.age,
+            wardrobe: c.wardrobe,
+          })),
+          segmentPurpose: segment.segmentPurpose,
+          thinkingLevel: thinkingLevel,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to enhance prompt')
+      }
+
+      const data = await response.json()
+      
+      if (data.prompt) {
+        setCustomPrompt(data.prompt)
+        console.log('[FramePromptDialog] AI enhanced prompt, confidence:', data.confidence)
+      }
+    } catch (error) {
+      console.error('[FramePromptDialog] AI enhancement failed:', error)
+      setAiEnhanceError(error instanceof Error ? error.message : 'Enhancement failed')
+    } finally {
+      setIsEnhancingPrompt(false)
+    }
+  }, [segment, customPrompt, frameType, sceneHeading, sceneDirection, selectedCharacters, thinkingLevel])
 
   // Build negative prompt from selected presets + custom
   const buildNegativePrompt = useCallback((): string => {
@@ -1061,10 +1125,20 @@ export function FramePromptDialog({
                     {(() => {
                       const parts: string[] = []
                       if (visualSetup.shotType) parts.push(visualSetup.shotType.replace(/-/g, ' '))
-                      if (visualSetup.location) parts.push(`of ${visualSetup.location}`)
-                      if (visualSetup.timeOfDay && visualSetup.timeOfDay !== 'day') parts.push(`at ${visualSetup.timeOfDay.replace('-', ' ')}`)
-                      if (selectedCharacterNames.length > 0) parts.push(`featuring ${selectedCharacterNames.join(', ')}`)
-                      if (segment?.action) parts.push(segment.action)
+                      // Include the custom prompt from segment (title sequences, etc.)
+                      const segmentPrompt = customPrompt || segment?.generatedPrompt || segment?.userEditedPrompt
+                      if (segmentPrompt) {
+                        // Truncate long prompts for preview
+                        const previewPrompt = segmentPrompt.length > 200 
+                          ? segmentPrompt.substring(0, 200) + '...'
+                          : segmentPrompt
+                        parts.push(previewPrompt)
+                      } else {
+                        if (visualSetup.location) parts.push(`of ${visualSetup.location}`)
+                        if (visualSetup.timeOfDay && visualSetup.timeOfDay !== 'day') parts.push(`at ${visualSetup.timeOfDay.replace('-', ' ')}`)
+                        if (selectedCharacterNames.length > 0) parts.push(`featuring ${selectedCharacterNames.join(', ')}`)
+                        if (segment?.action) parts.push(segment.action)
+                      }
                       if (visualSetup.atmosphere && visualSetup.atmosphere !== 'neutral') parts.push(`${visualSetup.atmosphere} atmosphere`)
                       if (visualSetup.lighting && visualSetup.lighting !== 'natural') parts.push(`${visualSetup.lighting} lighting`)
                       // Add art style to preview
@@ -1240,15 +1314,35 @@ export function FramePromptDialog({
                         <Sparkles className="w-4 h-4 text-cyan-400" />
                         <span className="text-sm font-medium text-cyan-300">AI-Enhanced Prompt</span>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={applyIntelligentPrompt}
-                        className="h-7 text-xs text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/20"
-                      >
-                        Apply Suggestion
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={enhancePromptWithAI}
+                          disabled={isEnhancingPrompt || !customPrompt}
+                          className="h-7 text-xs text-purple-300 hover:text-purple-200 hover:bg-purple-500/20"
+                        >
+                          <Wand2 className="w-3 h-3 mr-1" />
+                          {isEnhancingPrompt ? 'Enhancing...' : 'Gemini Enhance'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={applyIntelligentPrompt}
+                          className="h-7 text-xs text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/20"
+                        >
+                          Apply Local
+                        </Button>
+                      </div>
                     </div>
+                    {aiEnhanceError && (
+                      <div className="mb-2 p-2 rounded bg-amber-500/10 border border-amber-500/30">
+                        <p className="text-xs text-amber-300">
+                          <AlertCircle className="w-3 h-3 inline mr-1" />
+                          {aiEnhanceError}
+                        </p>
+                      </div>
+                    )}
                     <p className="text-xs text-slate-400 mb-2">
                       Prompt enhanced with scene direction (camera, lighting, emotion):
                     </p>

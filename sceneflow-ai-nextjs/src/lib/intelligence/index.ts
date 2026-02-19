@@ -31,8 +31,9 @@ import * as PromptEnhancer from './PromptEnhancer'
 import * as FrameGenerator from './FrameGenerator'
 import { SegmentValidation } from './SegmentValidation'
 import * as KeyframePromptBuilder from './keyframe-prompt-builder'
+import * as PromptIntelligence from './prompt-intelligence'
 
-export { ActionWeights, PromptEnhancer, FrameGenerator, SegmentValidation, KeyframePromptBuilder }
+export { ActionWeights, PromptEnhancer, FrameGenerator, SegmentValidation, KeyframePromptBuilder, PromptIntelligence }
 
 // Re-export key types
 export type { ActionType, ActionWeightConfig } from './ActionWeights'
@@ -56,6 +57,15 @@ export type {
   FramePromptRequest,
   EnhancedFramePrompt
 } from './keyframe-prompt-builder'
+export type {
+  SegmentPurpose as PromptSegmentPurpose,
+  FilmContext,
+  SceneContext as PromptSceneContext,
+  AdjacentSceneData,
+  PromptGenerationRequest,
+  GeneratedPromptResult,
+  KeyframePromptRequest as AIKeyframePromptRequest
+} from './prompt-intelligence'
 
 // Convenience re-exports of commonly used functions
 export const inferActionType = ActionWeights.inferActionType
@@ -71,3 +81,8 @@ export const detectNewEntities = SegmentValidation.detectNewEntities.bind(Segmen
 export const buildKeyframePrompt = KeyframePromptBuilder.buildKeyframePrompt
 export const validateDirectionAdherence = KeyframePromptBuilder.validateDirectionAdherence
 export const enrichPromptWithDirection = KeyframePromptBuilder.enrichPromptWithDirection
+
+// Prompt Intelligence exports (Gemini 2.5 powered)
+export const generateSegmentPrompt = PromptIntelligence.generateSegmentPrompt
+export const enhanceKeyframePrompt = PromptIntelligence.enhanceKeyframePrompt
+export const clearPromptCache = PromptIntelligence.clearPromptCache
