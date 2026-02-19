@@ -6123,11 +6123,26 @@ function SceneCard({
                           description: obj.description,
                         })) || []}
                         sceneDirection={scene.detailedDirection || scene.sceneDirection}
-                        // Wire segment add/delete handlers with scene context
-                        onAddSegment={onAddFullSegment ? (newSegment) => {
-                          console.log('[ScriptPanel] onAddSegment called:', { sceneId: scene.sceneId || scene.id || `scene-${sceneIdx}`, newSegment })
-                          onAddFullSegment(scene.sceneId || scene.id || `scene-${sceneIdx}`, newSegment)
-                        } : undefined}
+                        sceneData={{
+                          id: scene.id,
+                          sceneId: scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                          heading: scene.heading,
+                          action: scene.action,
+                          narration: scene.narration,
+                          dialogue: scene.dialogue,
+                          duration: scene.duration,
+                          narrationAudio: scene.narrationAudio,
+                          dialogueAudio: scene.dialogueAudio,
+                          sceneDirection: scene.detailedDirection || scene.sceneDirection,
+                        }}
+                        onAddSegment={(newSegment) => {
+                          console.log('[ScriptPanel] onAddSegment handler:', { sceneId: scene.sceneId || scene.id || `scene-${sceneIdx}`, newSegment, hasHandler: !!onAddFullSegment })
+                          if (onAddFullSegment) {
+                            onAddFullSegment(scene.sceneId || scene.id || `scene-${sceneIdx}`, newSegment)
+                          } else {
+                            console.error('[ScriptPanel] onAddFullSegment is undefined!')
+                          }
+                        }}
                         onDeleteSegment={onDeleteSegment ? (segmentId) => {
                           console.log('[ScriptPanel] onDeleteSegment called:', { sceneId: scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId })
                           onDeleteSegment(scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId)
