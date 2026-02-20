@@ -820,25 +820,6 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                     <Settings2 className="w-3.5 h-3.5 mr-1" />
                     {item.status === 'complete' ? 'Edit' : 'Take'} (1)
                   </Button>
-                  
-                  {/* Cinematic Elements Button - Insert cinematic segment after this one */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="text-slate-500 hover:text-amber-400"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          // Open cinematic dialog to insert after this segment
-                          setCinematicDialogSegmentIndex(item.sequenceIndex)
-                        }}
-                      >
-                        <Wand2 className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Add Cinematic Element</TooltipContent>
-                  </Tooltip>
                 </div>
               </div>
               
