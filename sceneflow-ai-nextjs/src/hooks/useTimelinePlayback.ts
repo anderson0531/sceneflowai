@@ -461,7 +461,12 @@ export function segmentsToVisualClips(
     return []
   }
   
-  return segments.map((segment, index) => {
+  // Filter out any undefined or invalid segments
+  const validSegments = segments.filter((s): s is typeof segments[number] => 
+    s != null && typeof s.segmentId === 'string'
+  )
+  
+  return validSegments.map((segment, index) => {
     // Get timing from segment bounds or distribute evenly
     const hasValidTiming = (segment.startTime ?? 0) > 0 || (segment.endTime ?? 0) > 0
     

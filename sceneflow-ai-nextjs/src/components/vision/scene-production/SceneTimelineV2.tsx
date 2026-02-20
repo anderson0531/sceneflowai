@@ -461,8 +461,13 @@ export function SceneTimelineV2({
     // This extends each segment's display duration for translated audio
     const effectiveOffset = selectedLanguage !== baselineLanguage ? playbackOffset : 0
     
+    // Filter out any undefined or invalid segments first
+    const validSegments = segments.filter((seg): seg is SceneSegment => 
+      seg != null && typeof seg.segmentId === 'string'
+    )
+    
     let cumulativeStart = 0
-    return segments.map(seg => {
+    return validSegments.map(seg => {
       const baseDuration = seg.endTime - seg.startTime
       // Display duration = base + offset (for animatic playback)
       const displayDuration = baseDuration + effectiveOffset

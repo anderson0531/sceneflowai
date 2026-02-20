@@ -2499,8 +2499,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               takes: [newTake, ...(segment.takes || [])],
               references: {
                 ...segment.references,
-                startFrameUrl: options?.startFrameUrl || segment.references.startFrameUrl,
-                endFrameUrl: lastFrameUrl || segment.references.endFrameUrl,
+                startFrameUrl: options?.startFrameUrl || segment.references?.startFrameUrl,
+                endFrameUrl: lastFrameUrl || segment.references?.endFrameUrl,
               },
             }
           })

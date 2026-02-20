@@ -227,7 +227,7 @@ export function SegmentStudio({
     if (!segment || !onGenerateEndFrame) return
     
     // Get the start frame URL - prioritize references, then scene image, then previous segment's last frame
-    const startFrameUrl = segment.references.startFrameUrl || sceneImageUrl || previousSegmentLastFrame
+    const startFrameUrl = segment.references?.startFrameUrl || sceneImageUrl || previousSegmentLastFrame
     if (!startFrameUrl) {
       console.warn('[SegmentStudio] Cannot generate end frame: no start frame available')
       return
@@ -261,8 +261,8 @@ export function SegmentStudio({
     setIsRegeneratingVideo(true)
     try {
       // Determine best generation method based on available assets
-      const startFrame = segment.references.startFrameUrl || sceneImageUrl || previousSegmentLastFrame
-      const endFrame = segment.references.endFrameUrl
+      const startFrame = segment.references?.startFrameUrl || sceneImageUrl || previousSegmentLastFrame
+      const endFrame = segment.references?.endFrameUrl
       const hasExistingVideo = segment.activeAssetUrl && segment.assetType === 'video'
       
       // Determine generation method: FTV if both frames, I2V if start frame only, EXT if extending video
@@ -852,7 +852,7 @@ export function SegmentStudio({
           </div>
 
           {/* Frame Anchoring Section - Generate end frame for better video quality */}
-          {onGenerateEndFrame && (segment.references.startFrameUrl || sceneImageUrl || previousSegmentLastFrame) && (segment.userEditedPrompt || segment.generatedPrompt) && (
+          {onGenerateEndFrame && (segment.references?.startFrameUrl || sceneImageUrl || previousSegmentLastFrame) && (segment.userEditedPrompt || segment.generatedPrompt) && (
             <div className="space-y-2">
               <div className="text-[10px] font-semibold uppercase text-gray-500 dark:text-gray-400 tracking-wide flex items-center gap-1.5">
                 <span>Frame Anchoring</span>
@@ -874,7 +874,7 @@ export function SegmentStudio({
                 <div className="flex-1 text-center">
                   <div className="text-[10px] font-medium text-green-600 dark:text-green-400 mb-1 flex items-center justify-center gap-1">
                     Start Frame
-                    {(segment.references.startFrameUrl || sceneImageUrl || previousSegmentLastFrame) && onGenerateEndFrame && (
+                    {(segment.references?.startFrameUrl || sceneImageUrl || previousSegmentLastFrame) && onGenerateEndFrame && (
                       <button
                         onClick={() => {
                           // Regenerate start frame by generating a new scene keyframe
@@ -890,9 +890,9 @@ export function SegmentStudio({
                     )}
                   </div>
                   <div className="relative aspect-video bg-green-100 dark:bg-green-800/50 rounded-lg overflow-hidden border border-green-200 dark:border-green-700">
-                    {(segment.references.startFrameUrl || sceneImageUrl || previousSegmentLastFrame) ? (
+                    {(segment.references?.startFrameUrl || sceneImageUrl || previousSegmentLastFrame) ? (
                       <img 
-                        src={segment.references.startFrameUrl || sceneImageUrl || previousSegmentLastFrame!} 
+                        src={segment.references?.startFrameUrl || sceneImageUrl || previousSegmentLastFrame!} 
                         alt="Start frame" 
                         className="w-full h-full object-cover"
                       />
@@ -994,7 +994,7 @@ export function SegmentStudio({
               </button>
               
               {/* FTV Mode Hint */}
-              {segment.references.endFrameUrl && segment.references.startFrameUrl && (
+              {segment.references?.endFrameUrl && segment.references?.startFrameUrl && (
                 <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-700 rounded-lg p-2">
                   <p className="text-[10px] text-teal-700 dark:text-teal-300 flex items-center gap-1.5">
                     <Sparkles className="w-3 h-3" />
