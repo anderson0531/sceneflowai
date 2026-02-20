@@ -16,6 +16,7 @@ import {
   RefreshCw,
   Settings2,
   Plus,
+  Clapperboard,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
@@ -26,6 +27,7 @@ import { FramePromptDialog, type FrameGenerationOptions } from './FramePromptDia
 import { KeyframeRegenerationDialog, type KeyframeGenerationConfig } from './KeyframeRegenerationDialog'
 import { DeleteSegmentDialog } from './DeleteSegmentDialog'
 import { AddSegmentTypeDialog, type SegmentPurpose, type AdjacentSceneContext } from './AddSegmentTypeDialog'
+import { AddSpecialSegmentDialog } from './AddSpecialSegmentDialog'
 import type { 
   SceneSegment, 
   AnchorStatus 
@@ -128,6 +130,15 @@ export interface SegmentFrameTimelineProps {
   }) => void
   /** Adjacent scene context for intelligent segment creation */
   adjacentSceneContext?: AdjacentSceneContext
+  /** Film context for AI prompt generation (for special segments) */
+  filmContext?: {
+    title?: string
+    logline?: string
+    genre?: string[]
+    tone?: string
+    visualStyle?: string
+    targetAudience?: string
+  }
 }
 
 // ============================================================================
@@ -197,6 +208,7 @@ export function SegmentFrameTimeline({
   onDeleteSegment,
   onAddSegment,
   adjacentSceneContext,
+  filmContext,
 }: SegmentFrameTimelineProps) {
   // Calculate stats first to determine initial expanded state
   const stats = useMemo(() => calculateTimelineStats(segments), [segments])
@@ -221,8 +233,11 @@ export function SegmentFrameTimeline({
   const [deleteSegmentTarget, setDeleteSegmentTarget] = useState<{ segmentId: string; index: number } | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   
-  // Add segment dialog state
+  // Add segment dialog state (for standard keyframe segments)
   const [addSegmentDialogOpen, setAddSegmentDialogOpen] = useState(false)
+  
+  // Add special segment dialog state (for cinematic elements: title, match-cut, etc.)
+  const [specialSegmentDialogOpen, setSpecialSegmentDialogOpen] = useState(false)
   
   // Get previous segment's end frame for each segment (for CONTINUE transitions)
   const getPreviousEndFrame = useCallback((index: number): string | null => {
@@ -387,7 +402,7 @@ export function SegmentFrameTimeline({
               </Button>
             )}
             
-            {/* Add Segment Button - opens add segment type dialog */}
+            {/* Add Segment Button - opens add segment type dialog for keyframe-based segments */}
             {stats.total > 0 && (
               <Button
                 size="default"
@@ -395,10 +410,25 @@ export function SegmentFrameTimeline({
                 onClick={() => setAddSegmentDialogOpen(true)}
                 disabled={isGenerating}
                 className="h-10 px-5 text-sm font-semibold border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 hover:border-emerald-400 shadow-md hover:shadow-lg transition-all"
-                title="Add a new segment"
+                title="Add a keyframe-based segment"
               >
                 <Plus className="w-5 h-5 mr-2" />
                 Add Segment
+              </Button>
+            )}
+            
+            {/* Cinematic Elements Button - opens special segment dialog for title, transitions, b-roll */}
+            {stats.total > 0 && (
+              <Button
+                size="default"
+                variant="outline"
+                onClick={() => setSpecialSegmentDialogOpen(true)}
+                disabled={isGenerating}
+                className="h-10 px-5 text-sm font-semibold border-purple-500/50 text-purple-300 hover:bg-purple-500/10 hover:border-purple-400 shadow-md hover:shadow-lg transition-all"
+                title="Add cinematic elements: titles, transitions, B-roll"
+              >
+                <Clapperboard className="w-5 h-5 mr-2" />
+                Cinematic Elements
               </Button>
             )}
           </div>
@@ -581,7 +611,7 @@ export function SegmentFrameTimeline({
         />
       )}
       
-      {/* Add Segment Type Dialog */}
+      {/* Add Segment Type Dialog - for keyframe-based segments */}
       <AddSegmentTypeDialog
         open={addSegmentDialogOpen}
         onOpenChange={setAddSegmentDialogOpen}
@@ -603,6 +633,34 @@ export function SegmentFrameTimeline({
           console.log('New segment:', segment)
         })}
         onRegenerateAll={sceneData && onResegmentWithConfig ? () => setKeyframeRegenDialogOpen(true) : undefined}
+      />
+      
+      {/* Add Special Segment Dialog - for cinematic elements (title, match-cut, establishing, b-roll, outro) */}
+      <AddSpecialSegmentDialog
+        open={specialSegmentDialogOpen}
+        onOpenChange={setSpecialSegmentDialogOpen}
+        sceneId={sceneId}
+        sceneNumber={sceneNumber}
+        existingSegments={segments}
+        insertAfterIndex={segments.length > 0 ? segments.length - 1 : undefined}
+        adjacentContext={adjacentSceneContext || {
+          currentScene: {
+            heading: sceneData?.heading,
+            action: sceneData?.action,
+            narration: sceneData?.narration,
+          },
+          previousScene: segments.length > 0 ? {
+            lastSegment: segments[segments.length - 1]
+          } : undefined
+        }}
+        onAddSegment={onAddSegment || ((segment) => {
+          toast.info('Cinematic element created! Connect the onAddSegment handler to persist.')
+          console.log('New special segment:', segment)
+        })}
+        filmContext={filmContext || {
+          // Fallback: extract from scene heading if no film context provided
+          title: sceneData?.heading?.split('-')[0]?.trim(),
+        }}
       />
     </div>
   )

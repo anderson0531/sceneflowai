@@ -31,11 +31,6 @@ import {
   Plus,
   ArrowRight,
   Sparkles,
-  Type,
-  Scissors,
-  MapPin,
-  Coffee,
-  CreditCard,
   Wand2,
   Eye,
   ChevronRight,
@@ -122,14 +117,40 @@ interface SegmentTypeConfig {
   contextPromptBuilder?: (context: AdjacentSceneContext) => string
 }
 
+// Standard segment types for keyframe-based video generation
+// Special segments (title, match-cut, establishing, broll, outro) are now handled
+// by AddSpecialSegmentDialog with AI-powered prompt generation
 const SEGMENT_TYPES: SegmentTypeConfig[] = [
   {
-    id: 'extend',
-    name: 'Extend Segment',
-    icon: ArrowRight,
-    description: 'Continue from previous segment\'s end frame with matching camera, lighting, and style.',
+    id: 'standard',
+    name: 'Standard Segment',
+    icon: Film,
+    description: 'Scene segment with start/end keyframes for AI video generation. Full control over shot composition.',
     defaultDuration: 6,
-    defaultPromptTemplate: 'Continue the action from the previous shot. Maintain camera angle, lighting, and visual style. Character continues their motion.',
+    defaultPromptTemplate: 'Cinematic shot. Professional lighting and composition.',
+    presetSettings: {
+      transitionType: 'CUT',
+      actionType: 'gesture'
+    },
+    contextPromptBuilder: (ctx) => {
+      const parts: string[] = ['Cinematic shot.']
+      
+      if (ctx.currentScene.action) {
+        const actionPreview = ctx.currentScene.action.substring(0, 150)
+        parts.push(`Action: ${actionPreview}...`)
+      }
+      
+      parts.push('Professional lighting, cinematic composition.')
+      return parts.join(' ')
+    }
+  },
+  {
+    id: 'extend',
+    name: 'Continue Shot',
+    icon: ArrowRight,
+    description: 'Continue from previous segment\'s end frame. Maintains visual continuity across cuts.',
+    defaultDuration: 6,
+    defaultPromptTemplate: 'Continue the action from the previous shot. Maintain camera angle, lighting, and visual style.',
     presetSettings: {
       transitionType: 'CONTINUE',
       actionType: 'movement'
@@ -145,247 +166,6 @@ const SEGMENT_TYPES: SegmentTypeConfig[] = [
         parts.push(`Action: ${actionPreview}...`)
       }
       return parts.join(' ')
-    }
-  },
-  {
-    id: 'title',
-    name: 'Title Sequence',
-    icon: Type,
-    description: 'Bold white text on blurred cinematic background. Brand the video and set the tone.',
-    defaultDuration: 4,
-    defaultPromptTemplate: 'Cinematic title card. Bold white text centered on screen. Blurred cinematic background with subtle bokeh lights. Professional film title aesthetic. Slight camera drift or lens flare.',
-    presetSettings: {
-      shotType: 'wide',
-      cameraMovement: 'static',
-      transitionType: 'CUT',
-      actionType: 'static'
-    },
-    contextPromptBuilder: (ctx) => {
-      const parts: string[] = ['Cinematic title sequence.']
-      if (ctx.currentScene.heading) {
-        // Extract location from heading for background mood
-        const location = ctx.currentScene.heading.toLowerCase()
-        if (location.includes('night')) {
-          parts.push('Dark, moody background with subtle city lights bokeh.')
-        } else if (location.includes('day') || location.includes('morning')) {
-          parts.push('Warm, golden hour glow with soft lens flare.')
-        } else {
-          parts.push('Elegant blurred background with cinematic depth.')
-        }
-      }
-      parts.push('Bold white text, centered composition. Professional title card aesthetic.')
-      return parts.join(' ')
-    }
-  },
-  {
-    id: 'match-cut',
-    name: 'Match Cut Bridge',
-    icon: Scissors,
-    description: 'Transition by mimicking a shape or movement. E.g., spinning wheel → spinning clock.',
-    defaultDuration: 3,
-    defaultPromptTemplate: 'Visual match cut transition. Object or shape transforms smoothly. Matching movement carries across the cut. Seamless visual bridge.',
-    presetSettings: {
-      cameraMovement: 'static',
-      transitionType: 'CUT',
-      actionType: 'transformation'
-    },
-    contextPromptBuilder: (ctx) => {
-      const parts: string[] = []
-      
-      // Analyze both scenes for common visual elements
-      const prevAction = ctx.previousScene?.action?.toLowerCase() || ''
-      const nextAction = ctx.nextScene?.heading?.toLowerCase() || ctx.currentScene.action?.toLowerCase() || ''
-      
-      // Look for matching visual motifs
-      const motifs = {
-        circular: ['wheel', 'clock', 'sun', 'moon', 'eye', 'ring', 'circle', 'ball', 'spin'],
-        linear: ['road', 'path', 'river', 'corridor', 'train', 'car', 'line'],
-        vertical: ['building', 'tree', 'tower', 'fall', 'rise', 'elevator'],
-        human: ['face', 'hand', 'silhouette', 'figure', 'walk', 'run']
-      }
-      
-      let foundMotif = null
-      for (const [type, keywords] of Object.entries(motifs)) {
-        for (const kw of keywords) {
-          if (prevAction.includes(kw) || nextAction.includes(kw)) {
-            foundMotif = { type, keyword: kw }
-            break
-          }
-        }
-        if (foundMotif) break
-      }
-      
-      if (foundMotif) {
-        parts.push(`Match cut transition using ${foundMotif.type} motif.`)
-        parts.push(`Transform ${foundMotif.keyword} shape into matching element in new scene.`)
-      } else {
-        parts.push('Creative match cut transition.')
-        parts.push('Find visual similarity between scenes - shape, movement, or color.')
-      }
-      
-      parts.push('Smooth, seamless visual bridge. Maintain momentum across cut.')
-      return parts.join(' ')
-    }
-  },
-  {
-    id: 'establishing',
-    name: 'Establishing Shot',
-    icon: MapPin,
-    description: 'Wide drone shot to set new location after scene jump. Establish geography and mood.',
-    defaultDuration: 5,
-    defaultPromptTemplate: 'Wide establishing shot. Drone or crane perspective. Full environment visible. Golden hour lighting. Cinematic depth and scale.',
-    presetSettings: {
-      shotType: 'extreme-wide',
-      cameraMovement: 'crane',
-      transitionType: 'CUT',
-      actionType: 'static'
-    },
-    contextPromptBuilder: (ctx) => {
-      const parts: string[] = []
-      
-      // Parse location from scene heading
-      const heading = ctx.currentScene.heading || ''
-      const headingLower = heading.toLowerCase()
-      
-      // Extract time of day
-      let timeOfDay = 'day'
-      if (headingLower.includes('night')) timeOfDay = 'night'
-      else if (headingLower.includes('dawn') || headingLower.includes('sunrise')) timeOfDay = 'dawn'
-      else if (headingLower.includes('dusk') || headingLower.includes('sunset')) timeOfDay = 'dusk'
-      else if (headingLower.includes('morning')) timeOfDay = 'morning'
-      else if (headingLower.includes('afternoon')) timeOfDay = 'afternoon'
-      
-      // Extract interior/exterior
-      const isInterior = headingLower.includes('int.')
-      const isExterior = headingLower.includes('ext.')
-      
-      // Extract location type
-      const locationMatch = heading.replace(/^(INT\.|EXT\.)\s*/i, '').split('-')[0].trim()
-      
-      if (isExterior) {
-        parts.push(`Wide aerial establishing shot of ${locationMatch || 'the location'}.`)
-        parts.push(`Drone perspective, sweeping view at ${timeOfDay}.`)
-        if (timeOfDay === 'night') {
-          parts.push('City lights twinkling, moody atmosphere.')
-        } else if (timeOfDay === 'dawn' || timeOfDay === 'dusk') {
-          parts.push('Golden hour lighting, dramatic sky.')
-        }
-      } else if (isInterior) {
-        parts.push(`Wide interior establishing shot of ${locationMatch || 'the space'}.`)
-        parts.push('Slow reveal, atmospheric lighting.')
-      } else {
-        parts.push(`Establishing shot of ${locationMatch || heading}.`)
-      }
-      
-      parts.push('Cinematic scale, professional composition.')
-      return parts.join(' ')
-    }
-  },
-  {
-    id: 'broll',
-    name: 'B-Roll (The Lull)',
-    icon: Coffee,
-    description: 'Visual breather between high-action scenes. Close-ups of atmospheric details.',
-    defaultDuration: 4,
-    defaultPromptTemplate: 'Atmospheric B-roll shot. Close-up of environmental detail. Soft focus, slow motion. Contemplative mood. Ambient texture.',
-    presetSettings: {
-      shotType: 'close-up',
-      cameraMovement: 'static',
-      transitionType: 'CUT',
-      actionType: 'subtle'
-    },
-    contextPromptBuilder: (ctx) => {
-      const parts: string[] = []
-      
-      const heading = ctx.currentScene.heading?.toLowerCase() || ''
-      const action = ctx.currentScene.action?.toLowerCase() || ''
-      
-      // Suggest B-roll based on scene context
-      const brollSuggestions: { keywords: string[], suggestions: string[] }[] = [
-        { 
-          keywords: ['rain', 'storm', 'weather'], 
-          suggestions: ['Close-up of rain droplets on window', 'Water ripples in puddle'] 
-        },
-        { 
-          keywords: ['office', 'work', 'desk'], 
-          suggestions: ['Steam rising from coffee cup', 'Fingers typing on keyboard'] 
-        },
-        { 
-          keywords: ['night', 'city', 'urban'], 
-          suggestions: ['Neon signs reflecting on wet pavement', 'Traffic lights bokeh'] 
-        },
-        { 
-          keywords: ['nature', 'forest', 'outdoor'], 
-          suggestions: ['Sunlight filtering through leaves', 'Morning dew on grass'] 
-        },
-        { 
-          keywords: ['home', 'house', 'room'], 
-          suggestions: ['Dust particles in sunbeam', 'Clock ticking on wall'] 
-        }
-      ]
-      
-      let foundSuggestion = null
-      for (const { keywords, suggestions } of brollSuggestions) {
-        for (const kw of keywords) {
-          if (heading.includes(kw) || action.includes(kw)) {
-            foundSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)]
-            break
-          }
-        }
-        if (foundSuggestion) break
-      }
-      
-      if (foundSuggestion) {
-        parts.push(foundSuggestion + '.')
-      } else {
-        parts.push('Atmospheric detail shot.')
-      }
-      
-      parts.push('Slow motion, shallow depth of field. Visual breathing room.')
-      parts.push('Contemplative mood, ambient lighting.')
-      return parts.join(' ')
-    }
-  },
-  {
-    id: 'outro',
-    name: 'Outro / Credits',
-    icon: CreditCard,
-    description: 'Professional closure with slow scroll or fade to black. Production credits and CTA.',
-    defaultDuration: 6,
-    defaultPromptTemplate: 'Professional outro sequence. Slow vertical scroll or elegant fade to black. Production credits style. Clean typography on dark background.',
-    presetSettings: {
-      shotType: 'medium',
-      cameraMovement: 'tilt-up',
-      transitionType: 'CUT',
-      actionType: 'static'
-    },
-    contextPromptBuilder: (ctx) => {
-      const parts: string[] = []
-      parts.push('Professional outro sequence.')
-      
-      // Match the tone from the scene
-      const heading = ctx.currentScene.heading?.toLowerCase() || ''
-      if (heading.includes('night')) {
-        parts.push('Dark, elegant background with subtle light particles.')
-      } else {
-        parts.push('Clean, cinematic background with soft gradient.')
-      }
-      
-      parts.push('Slow fade or gentle upward drift.')
-      parts.push('Production quality finish, credit roll aesthetic.')
-      return parts.join(' ')
-    }
-  },
-  {
-    id: 'standard',
-    name: 'Standard Segment',
-    icon: Film,
-    description: 'Regular scene segment with full customization options.',
-    defaultDuration: 6,
-    defaultPromptTemplate: 'Cinematic shot. Professional lighting and composition.',
-    presetSettings: {
-      transitionType: 'CUT',
-      actionType: 'gesture'
     }
   }
 ]
@@ -599,7 +379,7 @@ export function AddSegmentTypeDialog({
             Add Segment to Scene {sceneNumber}
           </DialogTitle>
           <DialogDescription className="text-slate-400">
-            Choose a segment type and customize the prompt for intelligent generation.
+            Add a keyframe-based segment for AI video generation. For cinematic elements (titles, transitions, B-roll), use the Cinematic Elements button.
           </DialogDescription>
         </DialogHeader>
         

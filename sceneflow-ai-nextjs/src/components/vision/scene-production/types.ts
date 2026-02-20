@@ -613,6 +613,10 @@ export interface SceneSegment {
   
   // Segment purpose classification for preset settings
   segmentPurpose?: SegmentPurpose
+  
+  // Special segment flag - true for cinematic elements (title, match-cut, establishing, b-roll, outro)
+  // Special segments are video-only placeholders that don't require keyframe images
+  isSpecialSegment?: boolean
 }
 
 // Character presence in a segment

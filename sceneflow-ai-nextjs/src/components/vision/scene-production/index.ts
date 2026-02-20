@@ -28,6 +28,12 @@ export type { SceneBible, ProposedSegment, BuilderPhase } from './SegmentBuilder
 export { SegmentPreviewTimeline } from './SegmentPreviewTimeline'
 export { SegmentPromptEditor } from './SegmentPromptEditor'
 
+// Add Segment Dialogs
+export { AddSegmentTypeDialog } from './AddSegmentTypeDialog'
+export type { SegmentPurpose, AdjacentSceneContext, AddSegmentTypeDialogProps } from './AddSegmentTypeDialog'
+export { AddSpecialSegmentDialog } from './AddSpecialSegmentDialog'
+export type { SpecialSegmentType, AddSpecialSegmentDialogProps } from './AddSpecialSegmentDialog'
+
 // Production Streams (Multi-language render outputs)
 export { ProductionStreamsPanel } from './ProductionStreamsPanel'
 export { SceneProductionMixer } from './SceneProductionMixer'
