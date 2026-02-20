@@ -317,12 +317,12 @@ export async function generateSpecialSegmentPrompt(
     const options: TextGenerationOptions = {
       model: 'gemini-2.5-flash',
       temperature: 0.8, // Slightly higher for creative prompts
-      maxOutputTokens: 1024,
+      maxOutputTokens: 2048, // Increased to prevent truncation of cinematic prompts
       responseMimeType: 'application/json',
       systemInstruction: systemPrompt,
       thinkingBudget: 2048, // Medium thinking for creative work
       maxRetries: 2,
-      timeoutMs: 20000
+      timeoutMs: 30000 // Increased timeout for longer responses
     }
     
     const response = await generateText(userPrompt, options)
