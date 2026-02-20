@@ -2404,6 +2404,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (!prompt) {
           throw new Error('Segment prompt is required')
         }
+        
+        // Debug: Log which prompt source is being used
+        console.log('[Segment Generate] Prompt source:', {
+          hasOptionsPrompt: !!options?.prompt,
+          hasUserEditedPrompt: !!segment.userEditedPrompt,
+          hasGeneratedPrompt: !!segment.generatedPrompt,
+          promptLength: prompt.length,
+          promptPreview: prompt.substring(0, 100) + '...',
+          generationMethod: options?.generationMethod,
+        })
 
         // Call the asset generation API with all prompt builder options
         const response = await fetch(`/api/segments/${encodeURIComponent(segmentId)}/generate-asset`, {

@@ -134,15 +134,28 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const generateCinematicPrompt = useCallback(async () => {
     setIsGeneratingCinematicPrompt(true)
     try {
+      // Build film context from scene data - supports both array and string genres
+      const filmTitle = scene?.filmTitle || 'Untitled Project'
+      const genre = scene?.genre 
+        ? (Array.isArray(scene.genre) ? scene.genre : [scene.genre])
+        : ['drama']
+      const logline = scene?.logline || ''
+      const tone = scene?.tone || 'cinematic'
+      const visualStyle = scene?.visualStyle || ''
+      
+      console.log('[DirectorDialog] Generating cinematic prompt with context:', { filmTitle, genre, logline, tone })
+      
       const response = await fetch('/api/intelligence/generate-special-segment-prompt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           segmentType: cinematicType,
           filmContext: {
-            title: scene?.filmTitle || 'Untitled Project',
-            genre: scene?.genre ? [scene.genre] : [],
-            tone: scene?.tone || 'cinematic',
+            title: filmTitle,
+            logline: logline,
+            genre: genre,
+            tone: tone,
+            visualStyle: visualStyle,
           },
           adjacentContext: {
             currentScene: {

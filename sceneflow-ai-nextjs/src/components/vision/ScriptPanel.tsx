@@ -6766,7 +6766,16 @@ function SceneCard({
                             projectId={projectId}
                             productionData={sceneProductionData}
                             sceneImageUrl={scene.imageUrl}
-                            scene={scene}
+                            scene={{
+                              ...scene,
+                              // Pass film-level context for cinematic element generation
+                              filmTitle: projectTitle || script?.title,
+                              logline: projectLogline || script?.logline,
+                              genre: script?.genre,
+                              tone: script?.tone,
+                              visualStyle: visualStyle,
+                              sceneHeading: scene.sceneHeading,
+                            }}
                             onGenerate={onSegmentGenerate || (async () => {})}
                             onSegmentUpload={onSegmentUpload ? (segmentId, file) => onSegmentUpload(scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId, file) : undefined}
                             onLockSegment={onLockSegment ? (segmentId, locked) => onLockSegment(scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId, locked) : undefined}

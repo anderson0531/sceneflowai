@@ -81,6 +81,16 @@ import type { SceneSegment, SegmentDialogueLine, NarratorVoiceType, VoiceAnchorP
  * Scene data passed from parent - contains audio and direction information
  */
 export interface SceneAudioData {
+  // Film Context (for AI prompt generation - cinematic elements)
+  filmTitle?: string
+  logline?: string
+  genre?: string | string[]
+  tone?: string
+  visualStyle?: string
+  
+  // Scene heading/context
+  sceneHeading?: string
+  
   // Narration
   narration?: string
   narrationAudio?: {
