@@ -31,6 +31,7 @@ import {
   Plus,
   ArrowRight,
   Sparkles,
+  MapPin,
   Wand2,
   Eye,
   ChevronRight,
