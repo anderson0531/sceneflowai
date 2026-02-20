@@ -538,7 +538,12 @@ export function useSegmentConfigs(
   return useMemo(() => {
     const configMap = new Map<string, SegmentConfigResult>()
     
-    for (const segment of segments) {
+    // Filter out any undefined or invalid segments
+    const validSegments = segments.filter((s): s is SceneSegment => 
+      s != null && typeof s.segmentId === 'string'
+    )
+    
+    for (const segment of validSegments) {
       const method = detectRecommendedMethod(segment)
       const confidence = calculateConfidence(segment, method)
       const approvalStatus = determineApprovalStatus(segment)

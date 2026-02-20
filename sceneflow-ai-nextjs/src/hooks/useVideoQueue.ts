@@ -104,13 +104,18 @@ export function useVideoQueue(
   
   // Build queue from segments and configs
   const queue = useMemo<DirectorQueueItem[]>(() => {
+    // Filter out any undefined or invalid segments
+    const validSegments = segments.filter((s): s is SceneSegment => 
+      s != null && typeof s.segmentId === 'string'
+    )
+    
     // Log initial segments to debug lock state persistence
-    console.log('[useVideoQueue] Building queue from segments:', segments.map(s => ({
+    console.log('[useVideoQueue] Building queue from segments:', validSegments.map(s => ({
       id: s.segmentId,
       lockedForProduction: s.lockedForProduction
     })))
     
-    return segments.map((segment) => {
+    return validSegments.map((segment) => {
       const autoConfig = configsMap.get(segment.segmentId)
       const userConfig = userConfigs.get(segment.segmentId)
       
