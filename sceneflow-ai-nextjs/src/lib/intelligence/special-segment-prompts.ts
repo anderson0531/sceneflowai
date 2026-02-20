@@ -40,9 +40,18 @@ export interface AdjacentSceneData {
   nextScene?: SceneContext
 }
 
+export interface CreditsInfo {
+  title?: string
+  director?: string
+  writer?: string
+  producer?: string
+  customText?: string
+}
+
 export interface SpecialSegmentPromptRequest {
   segmentType: SpecialSegmentType
   filmContext?: FilmContext
+  credits?: CreditsInfo
   adjacentScenes?: AdjacentSceneData
   typeConfig?: {
     name: string
@@ -306,11 +315,11 @@ function suggestBRollDetail(context: string): string {
 export async function generateSpecialSegmentPrompt(
   request: SpecialSegmentPromptRequest
 ): Promise<SpecialSegmentPromptResult> {
-  const { segmentType, filmContext = {}, adjacentScenes, typeConfig } = request
+  const { segmentType, filmContext = {}, credits, adjacentScenes, typeConfig } = request
   
   try {
     const systemPrompt = buildSpecialSegmentSystemPrompt(segmentType)
-    const userPrompt = buildSpecialSegmentUserPrompt(segmentType, filmContext, adjacentScenes, typeConfig)
+    const userPrompt = buildSpecialSegmentUserPrompt(segmentType, filmContext, credits, adjacentScenes, typeConfig)
     
     console.log('[SpecialSegmentPrompts] Generating prompt with Gemini 2.5 for:', segmentType)
     
@@ -421,6 +430,7 @@ Output JSON with:
 function buildSpecialSegmentUserPrompt(
   segmentType: SpecialSegmentType,
   filmContext: FilmContext,
+  credits?: CreditsInfo,
   adjacentScenes?: AdjacentSceneData,
   typeConfig?: { name: string; aiHint: string; styleKeywords: string[] }
 ): string {
@@ -431,13 +441,28 @@ function buildSpecialSegmentUserPrompt(
   
   // Film context
   parts.push('FILM CONTEXT:')
-  parts.push(`- Title: "${filmContext.title || 'Untitled'}"`)
+  parts.push(`- Title: "${credits?.title || filmContext.title || 'Untitled'}"`)
   if (filmContext.logline) parts.push(`- Logline: ${filmContext.logline}`)
   parts.push(`- Genre: ${filmContext.genre?.join(', ') || 'Drama'}`)
   parts.push(`- Tone: ${filmContext.tone || 'Cinematic'}`)
   if (filmContext.visualStyle) parts.push(`- Visual Style: ${filmContext.visualStyle}`)
   if (filmContext.targetAudience) parts.push(`- Target Audience: ${filmContext.targetAudience}`)
   parts.push('')
+  
+  // Credits section - for title and outro sequences
+  if (credits && (segmentType === 'title' || segmentType === 'outro')) {
+    parts.push('CREDITS/TEXT TO DISPLAY:')
+    if (credits.title) parts.push(`- Film Title: "${credits.title}"`)
+    if (credits.director) parts.push(`- Directed by: ${credits.director}`)
+    if (credits.writer) parts.push(`- Written by: ${credits.writer}`)
+    if (credits.producer) parts.push(`- Produced by: ${credits.producer}`)
+    if (credits.customText) parts.push(`- Additional Text: ${credits.customText}`)
+    parts.push('')
+    parts.push('IMPORTANT: Incorporate the above credits text naturally into the visual design.')
+    parts.push('For title sequences, the film title should be prominently displayed.')
+    parts.push('For outros, arrange credits in an elegant, readable format.')
+    parts.push('')
+  }
   
   // Scene context if available
   if (adjacentScenes) {

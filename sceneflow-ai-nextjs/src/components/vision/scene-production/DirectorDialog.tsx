@@ -130,6 +130,13 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const [cinematicDuration, setCinematicDuration] = useState(4)
   const [isGeneratingCinematicPrompt, setIsGeneratingCinematicPrompt] = useState(false)
   
+  // Credits/Title Card entries - included in AI prompt generation
+  const [creditsTitle, setCreditsTitle] = useState(scene?.filmTitle || '')
+  const [creditsDirector, setCreditsDirector] = useState('')
+  const [creditsWriter, setCreditsWriter] = useState('')
+  const [creditsProducer, setCreditsProducer] = useState('')
+  const [creditsCustomText, setCreditsCustomText] = useState('')
+  
   // Generate AI-powered cinematic prompt
   const generateCinematicPrompt = useCallback(async () => {
     setIsGeneratingCinematicPrompt(true)
@@ -145,18 +152,28 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       
       console.log('[DirectorDialog] Generating cinematic prompt with context:', { filmTitle, genre, logline, tone })
       
+      // Build credits object for title/outro sequences
+      const credits = {
+        title: creditsTitle || filmTitle,
+        director: creditsDirector,
+        writer: creditsWriter,
+        producer: creditsProducer,
+        customText: creditsCustomText,
+      }
+      
       const response = await fetch('/api/intelligence/generate-special-segment-prompt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           segmentType: cinematicType,
           filmContext: {
-            title: filmTitle,
+            title: creditsTitle || filmTitle,
             logline: logline,
             genre: genre,
             tone: tone,
             visualStyle: visualStyle,
           },
+          credits: credits,
           adjacentContext: {
             currentScene: {
               heading: scene?.sceneHeading,
@@ -655,6 +672,88 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                     Recommended: {getCinematicElementConfig(cinematicType).defaultDuration}s for {getCinematicElementConfig(cinematicType).name}
                   </p>
                 </div>
+                
+                {/* Credits/Title Card Entry Fields - shown for title and outro */}
+                {(cinematicType === 'title' || cinematicType === 'outro') && (
+                  <div className="flex flex-col gap-3 p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                    <div className="flex items-center gap-2">
+                      <Type className="w-4 h-4 text-amber-400" />
+                      <Label className="text-slate-300 text-sm font-medium">
+                        {cinematicType === 'title' ? 'Opening Credits' : 'Closing Credits'}
+                      </Label>
+                    </div>
+                    
+                    {/* Film Title */}
+                    <div className="flex flex-col gap-1.5">
+                      <Label className="text-slate-400 text-xs">Film Title</Label>
+                      <input
+                        type="text"
+                        value={creditsTitle}
+                        onChange={(e) => setCreditsTitle(e.target.value)}
+                        placeholder={scene?.filmTitle || 'Enter film title...'}
+                        className="w-full px-3 py-1.5 text-sm bg-slate-900 border border-slate-600 rounded-md text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none"
+                      />
+                    </div>
+                    
+                    {/* Director */}
+                    <div className="flex flex-col gap-1.5">
+                      <Label className="text-slate-400 text-xs">Directed by</Label>
+                      <input
+                        type="text"
+                        value={creditsDirector}
+                        onChange={(e) => setCreditsDirector(e.target.value)}
+                        placeholder="Director name (optional)"
+                        className="w-full px-3 py-1.5 text-sm bg-slate-900 border border-slate-600 rounded-md text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none"
+                      />
+                    </div>
+                    
+                    {/* Writer - only show for outro */}
+                    {cinematicType === 'outro' && (
+                      <div className="flex flex-col gap-1.5">
+                        <Label className="text-slate-400 text-xs">Written by</Label>
+                        <input
+                          type="text"
+                          value={creditsWriter}
+                          onChange={(e) => setCreditsWriter(e.target.value)}
+                          placeholder="Writer name (optional)"
+                          className="w-full px-3 py-1.5 text-sm bg-slate-900 border border-slate-600 rounded-md text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none"
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Producer - only show for outro */}
+                    {cinematicType === 'outro' && (
+                      <div className="flex flex-col gap-1.5">
+                        <Label className="text-slate-400 text-xs">Produced by</Label>
+                        <input
+                          type="text"
+                          value={creditsProducer}
+                          onChange={(e) => setCreditsProducer(e.target.value)}
+                          placeholder="Producer name (optional)"
+                          className="w-full px-3 py-1.5 text-sm bg-slate-900 border border-slate-600 rounded-md text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none"
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Custom Text */}
+                    <div className="flex flex-col gap-1.5">
+                      <Label className="text-slate-400 text-xs">
+                        {cinematicType === 'title' ? 'Tagline / Subtitle' : 'Additional Credits'}
+                      </Label>
+                      <input
+                        type="text"
+                        value={creditsCustomText}
+                        onChange={(e) => setCreditsCustomText(e.target.value)}
+                        placeholder={cinematicType === 'title' ? 'Optional tagline...' : 'Additional credits text...'}
+                        className="w-full px-3 py-1.5 text-sm bg-slate-900 border border-slate-600 rounded-md text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none"
+                      />
+                    </div>
+                    
+                    <p className="text-xs text-slate-500 mt-1">
+                      These details will be incorporated into the AI-generated prompt.
+                    </p>
+                  </div>
+                )}
                 
                 {/* AI Prompt Generation */}
                 <div className="flex flex-col gap-2">

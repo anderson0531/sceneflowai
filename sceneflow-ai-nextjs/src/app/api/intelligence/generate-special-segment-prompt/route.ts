@@ -16,6 +16,13 @@ interface GenerateSpecialSegmentPromptRequest {
     visualStyle?: string
     targetAudience?: string
   }
+  credits?: {
+    title?: string
+    director?: string
+    writer?: string
+    producer?: string
+    customText?: string
+  }
   adjacentScenes?: {
     previousScene?: {
       heading?: string
@@ -59,7 +66,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body: GenerateSpecialSegmentPromptRequest = await req.json()
-    const { segmentType, filmContext, adjacentScenes, typeConfig } = body
+    const { segmentType, filmContext, credits, adjacentScenes, typeConfig } = body
 
     // Validate required fields
     if (!segmentType) {
@@ -74,6 +81,7 @@ export async function POST(req: NextRequest) {
     const result = await generateSpecialSegmentPrompt({
       segmentType,
       filmContext,
+      credits,
       adjacentScenes,
       typeConfig,
     })
