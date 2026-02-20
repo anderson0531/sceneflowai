@@ -162,17 +162,24 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       
       if (response.ok) {
         const data = await response.json()
+        console.log('[DirectorDialog] Raw API response:', JSON.stringify(data).substring(0, 200))
         if (data.prompt) {
           // Handle case where AI returns JSON-formatted string instead of plain text
           let promptText = data.prompt
+          console.log('[DirectorDialog] Initial promptText type:', typeof promptText, 'starts with {:', promptText?.trim?.()?.startsWith('{'))
+          
+          // Try to parse if it looks like JSON
           if (typeof promptText === 'string' && promptText.trim().startsWith('{')) {
             try {
               const parsed = JSON.parse(promptText)
               promptText = parsed.prompt || promptText
-            } catch {
-              // Not valid JSON, use as-is
+              console.log('[DirectorDialog] Successfully parsed JSON, extracted prompt')
+            } catch (e) {
+              console.log('[DirectorDialog] JSON parse failed, using as-is:', e)
             }
           }
+          
+          console.log('[DirectorDialog] Final promptText:', promptText?.substring?.(0, 100))
           setCinematicPrompt(promptText)
           setVisualPrompt(promptText) // Sync with main prompt
         }
