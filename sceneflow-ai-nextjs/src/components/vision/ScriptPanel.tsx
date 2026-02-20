@@ -3696,21 +3696,6 @@ function SceneCard({
   // Production workflow container collapse states
   const [storyboardBuilderCollapsed, setStoryboardBuilderCollapsed] = useState(false)
   const [videoProductionCollapsed, setVideoProductionCollapsed] = useState(false)
-  // Video Editor collapsed state with localStorage persistence (default: expanded)
-  const [videoEditorCollapsed, setVideoEditorCollapsed] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('videoEditorCollapsed')
-      return saved ? JSON.parse(saved) : false // Default expanded
-    }
-    return false
-  })
-  
-  // Persist videoEditorCollapsed to localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('videoEditorCollapsed', JSON.stringify(videoEditorCollapsed))
-    }
-  }, [videoEditorCollapsed])
   
   // Determine active step for Co-Pilot
   const activeStep: WorkflowStep | null = activeWorkflowTab
@@ -6797,106 +6782,6 @@ function SceneCard({
                             onProductionDataChange={onProductionDataChange ? (data) => onProductionDataChange(scene.sceneId || scene.id || `scene-${sceneIdx}`, data) : undefined}
                           />
                         </div>
-                        
-                        {/* Video Editor - Edit final cut with rendered videos */}
-                        {(() => {
-                          // Check if any segments have rendered or uploaded videos
-                          const hasRenderedVideos = sceneProductionData?.segments?.some((seg: SceneSegment) => 
-                            (seg.status === 'COMPLETE' || seg.status === 'UPLOADED') && seg.activeAssetUrl?.includes('.mp4')
-                          )
-                          
-                          // Build audio tracks for video editor
-                          const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
-                          let dialogueAudioArray: any[] = []
-                          if (Array.isArray(scene.dialogueAudio)) {
-                            dialogueAudioArray = scene.dialogueAudio
-                          } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
-                            dialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
-                          }
-                          const hasAnyAudio = narrationUrl || dialogueAudioArray.some((d: any) => d?.audioUrl)
-                          const completedCount = sceneProductionData?.segments?.filter((s: SceneSegment) => s.status === 'COMPLETE' || s.status === 'UPLOADED').length || 0
-                          const totalCount = sceneProductionData?.segments?.length || 0
-                          
-                          return (
-                            <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-lg overflow-hidden">
-                              {/* Video Editor Header - Collapsible */}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setVideoEditorCollapsed(!videoEditorCollapsed)
-                                }}
-                                className="w-full p-4 hover:bg-emerald-500/5 transition-colors flex items-center gap-3"
-                              >
-                                {videoEditorCollapsed ? <ChevronRight className="w-4 h-4 text-emerald-400 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-emerald-400 flex-shrink-0" />}
-                                <Film className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                                <span className="text-emerald-300 font-medium">Video Editor</span>
-                                <span className="text-emerald-400/70 text-sm ml-auto">
-                                  {completedCount}/{totalCount} videos ready
-                                </span>
-                              </button>
-                              
-                              {/* Collapsible Content */}
-                              <AnimatePresence>
-                                {!videoEditorCollapsed && (
-                                  <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="px-4 pb-4 border-t border-emerald-500/20"
-                                  >
-                              {!hasRenderedVideos ? (
-                                <div className="flex flex-col items-center justify-center py-8 text-center">
-                                  <Film className="w-8 h-8 text-emerald-400/30 mb-3" />
-                                  <p className="text-emerald-300/70 font-medium">No videos rendered yet</p>
-                                  <p className="text-emerald-400/50 text-sm mt-1">Generate video clips above to start editing your final cut</p>
-                                </div>
-                              ) : (
-                              <div className="pt-4">
-                                <SceneTimelineV2
-                                  mode="video"
-                                  segments={sceneProductionData?.segments || []}
-                                  scene={scene}
-                                  selectedSegmentId={selectedSegmentId}
-                                  selectedLanguage={selectedLanguage}
-                                  playbackOffset={getPlaybackOffsetForScene?.(scene.sceneId || scene.id || `scene-${sceneIdx}`, selectedLanguage) ?? 0}
-                                  suggestedOffset={getSuggestedOffsetForScene?.(scene)}
-                                  onPlaybackOffsetChange={(offset) => {
-                                    const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
-                                    handlePlaybackOffsetChange?.(sceneId, sceneIdx, selectedLanguage, offset)
-                                  }}
-                                  onLanguageChange={(lang) => setSelectedLanguage(lang)}
-                                  onSegmentSelect={setSelectedSegmentId}
-                                  onVisualClipChange={(clipId, changes) => {
-                                    const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
-                                    onSegmentResize?.(sceneId, clipId, changes)
-                                  }}
-                                  onAudioClipChange={(trackType: AudioTrackType, clipId: string, changes: { startTime?: number; duration?: number }) => {
-                                    onAudioClipChange?.(sceneIdx, trackType, clipId, changes)
-                                  }}
-                                  onDeleteSegment={(segmentId) => {
-                                    const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
-                                    onDeleteSegment?.(sceneId, segmentId)
-                                  }}
-                                  onReorderSegments={(oldIndex, newIndex) => {
-                                    const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
-                                    onReorderSegments?.(sceneId, oldIndex, newIndex)
-                                  }}
-                                  onApplyIntelligentAlignment={onApplyIntelligentAlignment}
-                                  sceneFrameUrl={scene?.imageUrl}
-                                  onGenerateSceneMp4={() => {
-                                    setAnimaticRenderSceneIdx(sceneIdx)
-                                    setAnimaticRenderDialogOpen(true)
-                                  }}
-                                />
-                              </div>
-                              )}
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </div>
-                          )
-                        })()}
                         </motion.div>
                           )}
                         </AnimatePresence>

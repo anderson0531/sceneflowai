@@ -35,6 +35,10 @@ import {
   SkipBack,
   SkipForward,
   AlertTriangle,
+  Type,
+  Plus,
+  Trash2,
+  X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
@@ -52,6 +56,98 @@ import { Progress } from '@/components/ui/progress'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { MixerTimeline } from './MixerTimeline'
 import type { SceneSegment, SceneProductionData, ProductionStream } from './types'
+
+// ============================================================================
+// Text Overlay Types
+// ============================================================================
+
+export interface TextOverlayStyle {
+  preset: 'title' | 'lower-third' | 'subtitle' | 'custom'
+  fontFamily: string
+  fontSize: number  // percentage of video height (e.g., 8 = 8%)
+  fontWeight: 400 | 500 | 600 | 700 | 800
+  color: string
+  backgroundColor?: string
+  backgroundOpacity?: number
+  textShadow?: boolean
+  padding?: number
+}
+
+export interface TextOverlayPosition {
+  x: number  // 0-100 percentage
+  y: number  // 0-100 percentage
+  anchor: 'top-left' | 'top-center' | 'center' | 'bottom-left' | 'bottom-center' | 'bottom-right'
+}
+
+export interface TextOverlayTiming {
+  startTime: number   // seconds from video start
+  duration: number    // seconds, or -1 for full video
+  fadeInMs: number
+  fadeOutMs: number
+}
+
+export interface TextOverlay {
+  id: string
+  text: string
+  subtext?: string  // For lower thirds (name + title)
+  position: TextOverlayPosition
+  style: TextOverlayStyle
+  timing: TextOverlayTiming
+  animation?: {
+    enter: 'fade' | 'slide-up' | 'slide-left' | 'typewriter' | 'none'
+    exit: 'fade' | 'slide-down' | 'slide-right' | 'none'
+  }
+}
+
+// Text overlay presets
+const TEXT_OVERLAY_PRESETS: Record<string, Partial<TextOverlay>> = {
+  'title': {
+    position: { x: 50, y: 50, anchor: 'center' },
+    style: {
+      preset: 'title',
+      fontFamily: 'Inter',
+      fontSize: 10,
+      fontWeight: 700,
+      color: '#FFFFFF',
+      textShadow: true,
+      padding: 0,
+    },
+    timing: { startTime: 0, duration: -1, fadeInMs: 500, fadeOutMs: 500 },
+    animation: { enter: 'fade', exit: 'fade' },
+  },
+  'lower-third': {
+    position: { x: 5, y: 80, anchor: 'bottom-left' },
+    style: {
+      preset: 'lower-third',
+      fontFamily: 'Inter',
+      fontSize: 4,
+      fontWeight: 600,
+      color: '#FFFFFF',
+      backgroundColor: '#000000',
+      backgroundOpacity: 0.7,
+      textShadow: false,
+      padding: 12,
+    },
+    timing: { startTime: 0, duration: 5, fadeInMs: 300, fadeOutMs: 300 },
+    animation: { enter: 'slide-left', exit: 'fade' },
+  },
+  'subtitle': {
+    position: { x: 50, y: 90, anchor: 'bottom-center' },
+    style: {
+      preset: 'subtitle',
+      fontFamily: 'Inter',
+      fontSize: 3.5,
+      fontWeight: 500,
+      color: '#FFFFFF',
+      backgroundColor: '#000000',
+      backgroundOpacity: 0.6,
+      textShadow: false,
+      padding: 8,
+    },
+    timing: { startTime: 0, duration: -1, fadeInMs: 200, fadeOutMs: 200 },
+    animation: { enter: 'fade', exit: 'fade' },
+  },
+}
 
 // ============================================================================
 // Types
@@ -115,6 +211,10 @@ interface SceneProductionMixerProps {
   segments: SceneSegment[]
   productionData: SceneProductionData | null
   audioAssets: SceneAudioAssets
+  /** Text overlays for the scene */
+  textOverlays?: TextOverlay[]
+  /** Callback when text overlays change */
+  onTextOverlaysChange?: (overlays: TextOverlay[]) => void
   /** Callback when render completes successfully */
   onRenderComplete?: (downloadUrl: string, language: string) => void
   /** Callback to update production streams in parent */
@@ -272,6 +372,9 @@ function ScenePreviewPlayer({
   isMuted,
   onToggleMute,
   segmentAudioConfigs,
+  textOverlays = [],
+  onEditOverlay,
+  onDeleteOverlay,
 }: {
   segments: SceneSegment[]
   audioTracks: MixerAudioTracks
@@ -286,6 +389,9 @@ function ScenePreviewPlayer({
   isMuted: boolean
   onToggleMute: () => void
   segmentAudioConfigs: Record<string, SegmentAudioConfig>
+  textOverlays?: TextOverlay[]
+  onEditOverlay?: (overlay: TextOverlay) => void
+  onDeleteOverlay?: (overlayId: string) => void
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const narrationRef = useRef<HTMLAudioElement>(null)
@@ -632,6 +738,66 @@ function ScenePreviewPlayer({
             </Badge>
           )}
         </div>
+        
+        {/* Text Overlays - Rendered on top of video */}
+        {textOverlays.map((overlay) => {
+          // Check if overlay should be visible based on timing
+          const isVisible = overlay.timing.duration === -1 
+            || (currentTime >= overlay.timing.startTime && currentTime < overlay.timing.startTime + overlay.timing.duration)
+          
+          if (!isVisible) return null
+          
+          // Calculate position based on anchor
+          const getPositionStyles = () => {
+            const { x, y, anchor } = overlay.position
+            const base: React.CSSProperties = { position: 'absolute' }
+            
+            switch (anchor) {
+              case 'top-left':
+                return { ...base, left: `${x}%`, top: `${y}%` }
+              case 'top-center':
+                return { ...base, left: `${x}%`, top: `${y}%`, transform: 'translateX(-50%)' }
+              case 'center':
+                return { ...base, left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)' }
+              case 'bottom-left':
+                return { ...base, left: `${x}%`, bottom: `${100 - y}%` }
+              case 'bottom-center':
+                return { ...base, left: `${x}%`, bottom: `${100 - y}%`, transform: 'translateX(-50%)' }
+              case 'bottom-right':
+                return { ...base, right: `${100 - x}%`, bottom: `${100 - y}%` }
+              default:
+                return { ...base, left: `${x}%`, top: `${y}%` }
+            }
+          }
+          
+          return (
+            <div
+              key={overlay.id}
+              style={{
+                ...getPositionStyles(),
+                fontFamily: overlay.style.fontFamily,
+                fontSize: `${overlay.style.fontSize}vh`,
+                fontWeight: overlay.style.fontWeight,
+                color: overlay.style.color,
+                backgroundColor: overlay.style.backgroundColor 
+                  ? `${overlay.style.backgroundColor}${Math.round((overlay.style.backgroundOpacity || 1) * 255).toString(16).padStart(2, '0')}`
+                  : undefined,
+                padding: overlay.style.padding ? `${overlay.style.padding}px` : undefined,
+                textShadow: overlay.style.textShadow 
+                  ? '2px 2px 4px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.5)' 
+                  : undefined,
+                zIndex: 10,
+                pointerEvents: 'none',
+              }}
+              className="transition-opacity duration-300"
+            >
+              <div>{overlay.text}</div>
+              {overlay.subtext && (
+                <div style={{ fontSize: '0.75em', opacity: 0.9 }}>{overlay.subtext}</div>
+              )}
+            </div>
+          )
+        })}
         
         {/* Play Button Overlay */}
         <button
@@ -1150,6 +1316,8 @@ export function SceneProductionMixer({
   segments,
   productionData,
   audioAssets,
+  textOverlays: externalTextOverlays,
+  onTextOverlaysChange,
   onRenderComplete,
   onProductionStreamsChange,
   isGeneratingSegments,
@@ -1157,6 +1325,57 @@ export function SceneProductionMixer({
   // === Language/Stream State ===
   const [selectedLanguage, setSelectedLanguage] = useState('en')
   const [resolution, setResolution] = useState<'720p' | '1080p' | '4K'>('1080p')
+  
+  // === Text Overlay State ===
+  const [textOverlays, setTextOverlays] = useState<TextOverlay[]>(externalTextOverlays || [])
+  const [showOverlayPanel, setShowOverlayPanel] = useState(false)
+  const [editingOverlay, setEditingOverlay] = useState<TextOverlay | null>(null)
+  
+  // Sync with external overlays
+  useEffect(() => {
+    if (externalTextOverlays) {
+      setTextOverlays(externalTextOverlays)
+    }
+  }, [externalTextOverlays])
+  
+  // Update external state when overlays change
+  const handleOverlaysChange = useCallback((newOverlays: TextOverlay[]) => {
+    setTextOverlays(newOverlays)
+    onTextOverlaysChange?.(newOverlays)
+  }, [onTextOverlaysChange])
+  
+  // Add a new text overlay
+  const addTextOverlay = useCallback((preset: 'title' | 'lower-third' | 'subtitle') => {
+    const presetConfig = TEXT_OVERLAY_PRESETS[preset]
+    const newOverlay: TextOverlay = {
+      id: `overlay-${Date.now()}`,
+      text: preset === 'title' ? 'Title Text' : preset === 'lower-third' ? 'Name Here' : 'Subtitle text',
+      subtext: preset === 'lower-third' ? 'Title or Role' : undefined,
+      position: presetConfig.position as TextOverlayPosition,
+      style: presetConfig.style as TextOverlayStyle,
+      timing: presetConfig.timing as TextOverlayTiming,
+      animation: presetConfig.animation as TextOverlay['animation'],
+    }
+    handleOverlaysChange([...textOverlays, newOverlay])
+    setEditingOverlay(newOverlay)
+    setShowOverlayPanel(true)
+  }, [textOverlays, handleOverlaysChange])
+  
+  // Update an existing overlay
+  const updateOverlay = useCallback((updatedOverlay: TextOverlay) => {
+    const newOverlays = textOverlays.map(o => o.id === updatedOverlay.id ? updatedOverlay : o)
+    handleOverlaysChange(newOverlays)
+    setEditingOverlay(updatedOverlay)
+  }, [textOverlays, handleOverlaysChange])
+  
+  // Delete an overlay
+  const deleteOverlay = useCallback((overlayId: string) => {
+    const newOverlays = textOverlays.filter(o => o.id !== overlayId)
+    handleOverlaysChange(newOverlays)
+    if (editingOverlay?.id === overlayId) {
+      setEditingOverlay(null)
+    }
+  }, [textOverlays, handleOverlaysChange, editingOverlay])
   
   // === Audio Track Configs ===
   const [audioTracks, setAudioTracks] = useState<MixerAudioTracks>({
@@ -1491,7 +1710,224 @@ export function SceneProductionMixer({
                 isMuted={isMuted}
                 onToggleMute={() => setIsMuted(prev => !prev)}
                 segmentAudioConfigs={segmentAudioConfigs}
+                textOverlays={textOverlays}
+                onEditOverlay={(overlay) => {
+                  setEditingOverlay(overlay)
+                  setShowOverlayPanel(true)
+                }}
+                onDeleteOverlay={deleteOverlay}
               />
+              
+              {/* Text Overlay Controls */}
+              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Type className="w-4 h-4 text-amber-400" />
+                    <span className="text-sm font-medium text-white">Text Overlays</span>
+                    {textOverlays.length > 0 && (
+                      <Badge variant="outline" className="text-xs bg-amber-500/20 border-amber-500/50 text-amber-300">
+                        {textOverlays.length}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => addTextOverlay('title')}
+                      className="h-7 text-xs bg-gray-700/50 border-gray-600 hover:bg-gray-700"
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      Title
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => addTextOverlay('lower-third')}
+                      className="h-7 text-xs bg-gray-700/50 border-gray-600 hover:bg-gray-700"
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      Lower Third
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => addTextOverlay('subtitle')}
+                      className="h-7 text-xs bg-gray-700/50 border-gray-600 hover:bg-gray-700"
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      Subtitle
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Overlay List */}
+                {textOverlays.length > 0 ? (
+                  <div className="space-y-2">
+                    {textOverlays.map((overlay) => (
+                      <div
+                        key={overlay.id}
+                        className={`flex items-center gap-3 p-2 rounded-md border transition-colors cursor-pointer ${
+                          editingOverlay?.id === overlay.id 
+                            ? 'bg-amber-500/20 border-amber-500/50' 
+                            : 'bg-gray-900/50 border-gray-700 hover:border-gray-600'
+                        }`}
+                        onClick={() => {
+                          setEditingOverlay(overlay)
+                          setShowOverlayPanel(true)
+                        }}
+                      >
+                        <Type className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm text-white truncate">{overlay.text}</div>
+                          {overlay.subtext && (
+                            <div className="text-xs text-gray-400 truncate">{overlay.subtext}</div>
+                          )}
+                        </div>
+                        <Badge variant="outline" className="text-[10px] capitalize">
+                          {overlay.style.preset}
+                        </Badge>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            deleteOverlay(overlay.id)
+                          }}
+                          className="h-6 w-6 p-0 text-gray-400 hover:text-red-400"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-gray-500 text-sm">
+                    No text overlays. Add a title, lower third, or subtitle.
+                  </div>
+                )}
+                
+                {/* Overlay Editor Panel */}
+                {showOverlayPanel && editingOverlay && (
+                  <div className="mt-3 pt-3 border-t border-gray-700">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-medium text-white">Edit Overlay</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setShowOverlayPanel(false)
+                          setEditingOverlay(null)
+                        }}
+                        className="h-6 w-6 p-0 text-gray-400 hover:text-white"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="space-y-3">
+                      {/* Text Input */}
+                      <div>
+                        <label className="text-xs text-gray-400 mb-1 block">Text</label>
+                        <Input
+                          value={editingOverlay.text}
+                          onChange={(e) => updateOverlay({ ...editingOverlay, text: e.target.value })}
+                          className="h-8 bg-gray-900 border-gray-600 text-white text-sm"
+                          placeholder="Enter text..."
+                        />
+                      </div>
+                      {/* Subtext Input (for lower-thirds) */}
+                      {editingOverlay.style.preset === 'lower-third' && (
+                        <div>
+                          <label className="text-xs text-gray-400 mb-1 block">Subtitle / Role</label>
+                          <Input
+                            value={editingOverlay.subtext || ''}
+                            onChange={(e) => updateOverlay({ ...editingOverlay, subtext: e.target.value })}
+                            className="h-8 bg-gray-900 border-gray-600 text-white text-sm"
+                            placeholder="Title or role..."
+                          />
+                        </div>
+                      )}
+                      {/* Position Controls */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-xs text-gray-400 mb-1 block">X Position (%)</label>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={100}
+                            value={editingOverlay.position.x}
+                            onChange={(e) => updateOverlay({ 
+                              ...editingOverlay, 
+                              position: { ...editingOverlay.position, x: Number(e.target.value) }
+                            })}
+                            className="h-8 bg-gray-900 border-gray-600 text-white text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-400 mb-1 block">Y Position (%)</label>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={100}
+                            value={editingOverlay.position.y}
+                            onChange={(e) => updateOverlay({ 
+                              ...editingOverlay, 
+                              position: { ...editingOverlay.position, y: Number(e.target.value) }
+                            })}
+                            className="h-8 bg-gray-900 border-gray-600 text-white text-sm"
+                          />
+                        </div>
+                      </div>
+                      {/* Font Size */}
+                      <div>
+                        <label className="text-xs text-gray-400 mb-1 block">Font Size ({editingOverlay.style.fontSize}%)</label>
+                        <Slider
+                          value={[editingOverlay.style.fontSize]}
+                          onValueChange={([v]) => updateOverlay({
+                            ...editingOverlay,
+                            style: { ...editingOverlay.style, fontSize: v }
+                          })}
+                          min={2}
+                          max={20}
+                          step={0.5}
+                          className="w-full"
+                        />
+                      </div>
+                      {/* Timing */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-xs text-gray-400 mb-1 block">Start (seconds)</label>
+                          <Input
+                            type="number"
+                            min={0}
+                            step={0.1}
+                            value={editingOverlay.timing.startTime}
+                            onChange={(e) => updateOverlay({
+                              ...editingOverlay,
+                              timing: { ...editingOverlay.timing, startTime: Number(e.target.value) }
+                            })}
+                            className="h-8 bg-gray-900 border-gray-600 text-white text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-400 mb-1 block">Duration (s, -1=full)</label>
+                          <Input
+                            type="number"
+                            min={-1}
+                            step={0.5}
+                            value={editingOverlay.timing.duration}
+                            onChange={(e) => updateOverlay({
+                              ...editingOverlay,
+                              timing: { ...editingOverlay.timing, duration: Number(e.target.value) }
+                            })}
+                            className="h-8 bg-gray-900 border-gray-600 text-white text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
               
               <SegmentAudioControls
                 segments={renderedSegments}
