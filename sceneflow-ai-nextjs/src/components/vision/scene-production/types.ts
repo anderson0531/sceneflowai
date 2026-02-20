@@ -116,8 +116,8 @@ export type SceneSegmentAssetType = 'video' | 'image' | null
 
 export type GenerationType = 'T2V' | 'I2V' | 'T2I' | 'UPLOAD'
 
-// Veo 3.1 generation methods
-export type VideoGenerationMethod = 'T2V' | 'I2V' | 'EXT' | 'FTV' | 'REF'
+// Veo 3.1 generation methods + CIN for cinematic elements
+export type VideoGenerationMethod = 'T2V' | 'I2V' | 'EXT' | 'FTV' | 'REF' | 'CIN'
 
 // ============================================================================
 // Unified Generation Config Types

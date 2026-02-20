@@ -34,6 +34,20 @@ export type { SegmentPurpose, AdjacentSceneContext, AddSegmentTypeDialogProps } 
 export { AddSpecialSegmentDialog } from './AddSpecialSegmentDialog'
 export type { SpecialSegmentType, AddSpecialSegmentDialogProps } from './AddSpecialSegmentDialog'
 
+// Cinematic Elements (shared constants and utilities)
+export { 
+  CINEMATIC_ELEMENT_TYPES, 
+  getCinematicElementConfig,
+  generateFallbackPrompt,
+  segmentPurposeToCinematicType,
+  cinematicTypeToSegmentPurpose
+} from './cinematic-elements'
+export type { 
+  SpecialSegmentConfig,
+  FilmContext,
+  AdjacentSceneContext as CinematicAdjacentSceneContext 
+} from './cinematic-elements'
+
 // Production Streams (Multi-language render outputs)
 export { ProductionStreamsPanel } from './ProductionStreamsPanel'
 export { SceneProductionMixer } from './SceneProductionMixer'

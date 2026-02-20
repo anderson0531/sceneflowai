@@ -48,6 +48,7 @@ import {
   ChevronDown,
   ChevronRight,
   Copy,
+  Wand2,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -63,6 +64,7 @@ import { DirectorDialog } from './DirectorDialog'
 import { VideoEditingDialog } from './VideoEditingDialog'
 import { SceneVideoPlayer } from './SceneVideoPlayer'
 import { SceneRenderDialog } from './SceneRenderDialog'
+import { AddSpecialSegmentDialog, type FilmContext, type AdjacentSceneContext } from './AddSpecialSegmentDialog'
 import { ProductionStreamsPanel } from './ProductionStreamsPanel'
 import { SceneProductionMixer } from './SceneProductionMixer'
 import { useVideoQueue } from '@/hooks/useVideoQueue'
@@ -239,6 +241,9 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   
   // Segment-specific playback: start player at this segment index
   const [playFromSegmentIndex, setPlayFromSegmentIndex] = useState<number>(0)
+  
+  // Cinematic Elements dialog state - opens for inserting new cinematic segment
+  const [cinematicDialogSegmentIndex, setCinematicDialogSegmentIndex] = useState<number | null>(null)
   
   // Audio track selection for video playback overlay
   const [selectedAudioTracks, setSelectedAudioTracks] = useState<SelectedAudioTracks>(DEFAULT_AUDIO_TRACKS)
@@ -815,6 +820,25 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                     <Settings2 className="w-3.5 h-3.5 mr-1" />
                     {item.status === 'complete' ? 'Edit' : 'Take'} (1)
                   </Button>
+                  
+                  {/* Cinematic Elements Button - Insert cinematic segment after this one */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-slate-500 hover:text-amber-400"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          // Open cinematic dialog to insert after this segment
+                          setCinematicDialogSegmentIndex(item.sequenceIndex)
+                        }}
+                      >
+                        <Wand2 className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Add Cinematic Element</TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
               
@@ -1150,6 +1174,42 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           </div>
         </div>
       )}
+      
+      {/* AddSpecialSegmentDialog for inserting cinematic elements */}
+      <AddSpecialSegmentDialog
+        open={cinematicDialogSegmentIndex !== null}
+        onOpenChange={(open) => {
+          if (!open) setCinematicDialogSegmentIndex(null)
+        }}
+        sceneId={sceneId}
+        sceneNumber={sceneNumber}
+        existingSegments={segments}
+        insertAfterIndex={cinematicDialogSegmentIndex ?? undefined}
+        adjacentContext={{
+          currentScene: {
+            heading: scene?.sceneHeading,
+            action: scene?.action,
+            narration: scene?.narration,
+          },
+          // Adjacent context could be enhanced with previous/next scene data if available
+        }}
+        onAddSegment={(segmentData) => {
+          // Handle adding the new cinematic segment
+          // This will need to integrate with the parent component's segment management
+          import('sonner').then(({ toast }) => {
+            toast.success(`${segmentData.segmentPurpose} segment added!`, {
+              description: 'Configure it in the Director Dialog to generate video.',
+            })
+          })
+          setCinematicDialogSegmentIndex(null)
+          // TODO: Actually insert the segment via onProductionDataChange
+        }}
+        filmContext={{
+          title: scene?.filmTitle,
+          genre: scene?.genre ? [scene.genre] : undefined,
+          tone: scene?.tone,
+        }}
+      />
     </div>
     </TooltipProvider>
   )

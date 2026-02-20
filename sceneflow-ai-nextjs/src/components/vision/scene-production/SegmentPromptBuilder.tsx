@@ -1,23 +1,32 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Copy, Check, Sparkles, Info, Loader2, Video, Image as ImageIcon, Clock, ArrowRight, Film, Link as LinkIcon, Upload, Camera, Wand2, Library, Users, Box, Clapperboard, X, Plus, MessageSquare, AlertCircle } from 'lucide-react'
+import { Copy, Check, Sparkles, Info, Loader2, Video, Image as ImageIcon, Clock, ArrowRight, Film, Link as LinkIcon, Upload, Camera, Wand2, Library, Users, Box, Clapperboard, X, Plus, MessageSquare, AlertCircle, RotateCcw, Eye, Type, Scissors, MapPin, Coffee, CreditCard } from 'lucide-react'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { SceneSegment, SceneSegmentTake } from './types'
 import { VisualReference } from '@/types/visionReferences'
 import { cn } from '@/lib/utils'
+import { 
+  CINEMATIC_ELEMENT_TYPES, 
+  type SpecialSegmentType, 
+  type SpecialSegmentConfig,
+  getCinematicElementConfig,
+  generateFallbackPrompt,
+  type FilmContext,
+  type AdjacentSceneContext
+} from './cinematic-elements'
 
 // ============================================
 // Types & Interfaces
 // ============================================
 
-export type VideoGenerationMethod = 'T2V' | 'I2V' | 'FTV' | 'EXT' | 'REF'
+export type VideoGenerationMethod = 'T2V' | 'I2V' | 'FTV' | 'EXT' | 'REF' | 'CIN'
 
 // Reference selection types
 export type ReferenceType = 'scene' | 'character' | 'object'
@@ -171,6 +180,12 @@ export function SegmentPromptBuilder({
   // Enhanced: Character dialog connections
   const [characterDialogConnections, setCharacterDialogConnections] = useState<Map<string, string>>(new Map())
   
+  // Cinematic Elements (CIN mode) state
+  const [selectedCinematicType, setSelectedCinematicType] = useState<SpecialSegmentType>('title')
+  const [cinematicPrompt, setCinematicPrompt] = useState('')
+  const [isGeneratingCinematicPrompt, setIsGeneratingCinematicPrompt] = useState(false)
+  const [cinematicDuration, setCinematicDuration] = useState(4)
+  
   // Watch for segment status changes after generation starts
   // Note: We don't auto-close on success - user may want to generate multiple takes
   useEffect(() => {
@@ -303,6 +318,61 @@ export function SegmentPromptBuilder({
   const handleUpdateCharacterDialogConnection = (charName: string, referenceId: string) => {
     setCharacterDialogConnections(prev => new Map(prev).set(charName, referenceId))
   }
+  
+  // Generate AI-powered cinematic prompt (CIN mode)
+  const generateCinematicPrompt = useCallback(async () => {
+    setIsGeneratingCinematicPrompt(true)
+    
+    try {
+      const response = await fetch('/api/intelligence/generate-special-segment-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          segmentType: selectedCinematicType,
+          filmContext: {
+            title: 'Untitled Project', // Could be passed as prop
+            genre: [], // Could be passed as prop
+            tone: 'cinematic',
+          },
+          adjacentContext: {
+            currentScene: {
+              heading: sceneHeading,
+              action: sceneDescription,
+              narration: sceneNarration,
+            },
+          },
+          duration: cinematicDuration,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate cinematic prompt')
+      }
+
+      const data = await response.json()
+      if (data.prompt) {
+        setCinematicPrompt(data.prompt)
+        setAdvancedPrompt(data.prompt) // Also update advanced prompt
+        setDuration(cinematicDuration) // Sync duration
+      }
+    } catch (error) {
+      console.error('Cinematic prompt generation error:', error)
+      // Use fallback template
+      const fallback = generateFallbackPrompt(selectedCinematicType)
+      setCinematicPrompt(fallback)
+      setAdvancedPrompt(fallback)
+    } finally {
+      setIsGeneratingCinematicPrompt(false)
+    }
+  }, [selectedCinematicType, cinematicDuration, sceneHeading, sceneDescription, sceneNarration])
+  
+  // Update cinematic prompt and duration when type changes
+  useEffect(() => {
+    if (generationMethod === 'CIN') {
+      const config = getCinematicElementConfig(selectedCinematicType)
+      setCinematicDuration(config.defaultDuration)
+    }
+  }, [selectedCinematicType, generationMethod])
   
   // Video settings
   const [duration, setDuration] = useState<number>(8)
@@ -754,6 +824,11 @@ export function SegmentPromptBuilder({
       label: 'Reference Images', 
       description: 'Use up to 3 reference images for style/character',
       icon: <Wand2 className="w-4 h-4" />
+    },
+    'CIN': { 
+      label: 'Cinematic', 
+      description: 'AI-powered cinematic elements (titles, transitions, B-roll)',
+      icon: <Clapperboard className="w-4 h-4" />
     }
   }
 
@@ -1200,6 +1275,158 @@ export function SegmentPromptBuilder({
                             </div>
                           )
                         })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Cinematic Elements (CIN) Mode */}
+              {generationMethod === 'CIN' && (
+                <div className="mt-4">
+                  <div className="text-xs text-amber-400 mb-3 flex items-center gap-2">
+                    <Clapperboard className="w-4 h-4" />
+                    <span>Select a cinematic element type, then generate AI-powered prompt</span>
+                  </div>
+                  
+                  {/* Cinematic Element Type Selector */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+                    {CINEMATIC_ELEMENT_TYPES.map((config) => {
+                      const IconComponent = config.icon
+                      return (
+                        <button
+                          key={config.id}
+                          onClick={() => setSelectedCinematicType(config.id)}
+                          className={cn(
+                            'p-3 rounded-lg border text-left transition-all',
+                            selectedCinematicType === config.id
+                              ? 'border-amber-500 bg-amber-500/20 ring-2 ring-amber-500'
+                              : 'border-gray-700 hover:border-gray-600'
+                          )}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <IconComponent className="w-4 h-4 text-amber-400" />
+                            <span className="text-sm font-medium text-white">{config.name}</span>
+                          </div>
+                          <div className="text-[10px] text-gray-400">{config.shortDescription}</div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  
+                  {/* Selected Type Details */}
+                  {selectedCinematicType && (
+                    <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          {(() => {
+                            const config = getCinematicElementConfig(selectedCinematicType)
+                            const IconComponent = config.icon
+                            return <IconComponent className="w-5 h-5 text-amber-400" />
+                          })()}
+                          <span className="font-medium text-amber-200">
+                            {getCinematicElementConfig(selectedCinematicType).name}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          Default: {getCinematicElementConfig(selectedCinematicType).defaultDuration}s
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-300">
+                        {getCinematicElementConfig(selectedCinematicType).description}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Duration Selector for Cinematic */}
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="text-xs text-gray-400">Duration (seconds)</label>
+                      <Select value={String(cinematicDuration)} onValueChange={(v) => setCinematicDuration(Number(v))}>
+                        <SelectTrigger className="mt-1 h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="3">3 seconds</SelectItem>
+                          <SelectItem value="4">4 seconds</SelectItem>
+                          <SelectItem value="5">5 seconds</SelectItem>
+                          <SelectItem value="6">6 seconds</SelectItem>
+                          <SelectItem value="8">8 seconds</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-end">
+                      <Button
+                        variant="outline"
+                        onClick={generateCinematicPrompt}
+                        disabled={isGeneratingCinematicPrompt}
+                        className="w-full bg-amber-600 hover:bg-amber-700 border-amber-500 text-white"
+                      >
+                        {isGeneratingCinematicPrompt ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Generate AI Prompt
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Generated Cinematic Prompt */}
+                  {cinematicPrompt && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs text-gray-400">Generated Cinematic Prompt</label>
+                        <button
+                          onClick={() => {
+                            setCinematicPrompt('')
+                            setAdvancedPrompt('')
+                          }}
+                          className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          Clear
+                        </button>
+                      </div>
+                      <Textarea
+                        value={cinematicPrompt}
+                        onChange={(e) => {
+                          setCinematicPrompt(e.target.value)
+                          setAdvancedPrompt(e.target.value)
+                        }}
+                        rows={4}
+                        className="bg-gray-800 border-gray-700 text-white"
+                        placeholder="AI-generated cinematic prompt will appear here..."
+                      />
+                      <div className="flex items-center gap-2 text-[10px] text-gray-500">
+                        <Eye className="w-3 h-3" />
+                        <span>Edit the prompt as needed before generating video</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Quick Fallback Prompt Option */}
+                  {!cinematicPrompt && (
+                    <div className="mt-3 p-3 rounded-lg border border-gray-700 bg-gray-800/50">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-400">Or use template prompt:</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const fallback = generateFallbackPrompt(selectedCinematicType)
+                            setCinematicPrompt(fallback)
+                            setAdvancedPrompt(fallback)
+                          }}
+                          className="text-xs text-amber-400 hover:text-amber-300"
+                        >
+                          Use Template
+                        </Button>
                       </div>
                     </div>
                   )}
