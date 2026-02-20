@@ -2895,6 +2895,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       productionReadiness={productionReadiness}
                       onResyncAudioTiming={onResyncAudioTiming}
                       resyncingAudioSceneIndex={resyncingAudioSceneIndex}
+                      projectTitle={projectTitle}
+                      projectLogline={projectLogline}
+                      visualStyle={visualStyle}
                     />
                     )
                   })}
@@ -3322,6 +3325,9 @@ interface SceneCardProps {
   sceneNumber: number
   isSelected: boolean
   onClick: () => void
+  projectTitle?: string
+  projectLogline?: string
+  visualStyle?: string
   onExpand?: (sceneNumber: number) => Promise<void>
   isExpanding?: boolean
   onPlayScene?: (sceneIdx: number) => Promise<void>
@@ -3516,6 +3522,10 @@ interface SceneCardProps {
   resyncingAudioSceneIndex?: number | null
   // Production readiness for workflow guards (voices assigned, etc.)
   productionReadiness?: ProductionReadiness
+  // Film context for cinematic elements
+  projectTitle?: string
+  projectLogline?: string
+  visualStyle?: string
 }
 
 function SceneCard({
@@ -3651,6 +3661,9 @@ function SceneCard({
   setOptimizeDialogOpen,
   onResyncAudioTiming,
   resyncingAudioSceneIndex,
+  projectTitle = '',
+  projectLogline = '',
+  visualStyle,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(null)
