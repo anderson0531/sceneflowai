@@ -218,6 +218,7 @@ export function SegmentPromptBuilder({
   const allVideoTakes = useMemo((): VideoTakeReference[] => {
     const takes: VideoTakeReference[] = []
     allSegments.forEach((seg) => {
+      if (!seg) return  // Skip undefined segments
       (seg.takes || []).forEach((take) => {
         if (take.assetUrl && take.status === 'COMPLETE') {
           takes.push({
@@ -228,7 +229,7 @@ export function SegmentPromptBuilder({
             thumbnailUrl: take.thumbnailUrl,
             // For I2V/EXT mode: use thumbnailUrl (which stores lastFrame for videos), 
             // or fall back to segment's endFrameUrl
-            lastFrameUrl: take.thumbnailUrl || seg.references.endFrameUrl || undefined,
+            lastFrameUrl: take.thumbnailUrl || seg.references?.endFrameUrl || undefined,
             durationSec: take.durationSec,
           })
         }

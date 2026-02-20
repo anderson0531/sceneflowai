@@ -383,8 +383,13 @@ export function FullscreenPlayer({
     // Determine effective offset (only for non-baseline languages)
     const effectiveOffset = selectedLanguage !== baselineLanguage ? playbackOffset : 0
     
+    // Filter out any undefined or invalid segments first
+    const validSegments = segments.filter((seg): seg is SegmentData => 
+      seg != null && typeof seg.segmentId === 'string'
+    )
+    
     let cumulativeOffset = 0
-    return segments.map(seg => {
+    return validSegments.map(seg => {
       const baseDuration = seg.endTime - seg.startTime
       const clip = {
         id: seg.segmentId,

@@ -368,11 +368,16 @@ export function SceneTimeline({
   
   // Build visual clips from segments
   const visualClips = useMemo<VisualClip[]>(() => {
-    return segments.map(seg => ({
+    // Filter out any undefined or invalid segments first
+    const validSegments = segments.filter((seg): seg is SceneSegment => 
+      seg != null && typeof seg.segmentId === 'string'
+    )
+    
+    return validSegments.map(seg => ({
       id: seg.segmentId,
       segmentId: seg.segmentId,
       url: seg.activeAssetUrl || undefined,
-      thumbnailUrl: seg.references.thumbnailUrl || seg.activeAssetUrl || undefined,
+      thumbnailUrl: seg.references?.thumbnailUrl || seg.activeAssetUrl || undefined,
       startTime: seg.startTime,
       duration: seg.endTime - seg.startTime,
       originalDuration: seg.endTime - seg.startTime,
