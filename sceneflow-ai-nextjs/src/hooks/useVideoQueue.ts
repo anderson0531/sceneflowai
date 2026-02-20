@@ -45,13 +45,18 @@ export interface VideoQueueState {
   rateLimitCountdown: number
 }
 
+export interface BatchRenderOptionsWithOverrides extends BatchRenderOptions {
+  /** Override configs for specific segments - bypasses React state async timing issues */
+  overrideConfigs?: Map<string, VideoGenerationConfig>
+}
+
 export interface VideoQueueActions {
   /** Update config for a specific segment */
   updateConfig: (segmentId: string, config: VideoGenerationConfig) => void
   /** Mark a segment as approved */
   approveSegment: (segmentId: string) => void
   /** Process the queue with specified options */
-  processQueue: (options: BatchRenderOptions) => Promise<void>
+  processQueue: (options: BatchRenderOptionsWithOverrides) => Promise<void>
   /** Cancel ongoing batch rendering */
   cancelRendering: () => void
   /** Reset queue to auto-drafted state */
@@ -208,13 +213,13 @@ export function useVideoQueue(
   }, [queue])
   
   // Process the queue
-  const processQueue = useCallback(async (options: BatchRenderOptions) => {
+  const processQueue = useCallback(async (options: BatchRenderOptionsWithOverrides) => {
     if (!onGenerate) {
       toast.error('Video generation handler not available')
       return
     }
     
-    const { mode, priority, delayBetween, selectedIds } = options
+    const { mode, priority, delayBetween, selectedIds, overrideConfigs } = options
     
     // Filter queue based on mode
     let itemsToProcess = queue.filter((item) => {
@@ -281,27 +286,31 @@ export function useVideoQueue(
       setCurrentSegmentId(item.segmentId)
       setProgress(Math.round((i / itemsToProcess.length) * 100))
       
+      // Use override config if provided (fixes React state async timing issues)
+      // This ensures the freshly-set config from DirectorDialog is used immediately
+      const config = overrideConfigs?.get(item.segmentId) || item.config
+      
       try {
         // Map mode to generation type
         const genType: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD' = 
-          item.config.mode === 'FTV' || item.config.mode === 'I2V' ? 'I2V' :
-          item.config.mode === 'EXT' ? 'I2V' : 'T2V'
+          config.mode === 'FTV' || config.mode === 'I2V' ? 'I2V' :
+          config.mode === 'EXT' ? 'I2V' : 'T2V'
         
         await onGenerate(
           sceneId,
           item.segmentId,
           genType,
           {
-            startFrameUrl: item.config.startFrameUrl || undefined,
-            endFrameUrl: item.config.endFrameUrl || undefined,
-            sourceVideoUrl: item.config.sourceVideoUrl || undefined,
-            prompt: item.config.prompt,
-            negativePrompt: item.config.negativePrompt || undefined,
-            duration: item.config.duration,
-            aspectRatio: item.config.aspectRatio,
-            resolution: item.config.resolution,
-            generationMethod: item.config.mode,
-            guidePrompt: item.config.guidePrompt,  // Voice/dialogue/SFX for Veo 3.1 audio
+            startFrameUrl: config.startFrameUrl || undefined,
+            endFrameUrl: config.endFrameUrl || undefined,
+            sourceVideoUrl: config.sourceVideoUrl || undefined,
+            prompt: config.prompt,
+            negativePrompt: config.negativePrompt || undefined,
+            duration: config.duration,
+            aspectRatio: config.aspectRatio,
+            resolution: config.resolution,
+            generationMethod: config.mode,
+            guidePrompt: config.guidePrompt,  // Voice/dialogue/SFX for Veo 3.1 audio
           }
         )
         

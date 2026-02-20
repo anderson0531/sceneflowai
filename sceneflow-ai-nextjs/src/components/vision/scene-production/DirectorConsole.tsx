@@ -291,6 +291,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   }, [selectedSegment, updateConfig])
   
   // Handle generate from dialog - saves config and triggers single segment generation
+  // Pass config via overrideConfigs to bypass React state async timing issues
   const handleGenerateFromDialog = useCallback((segmentId: string, config: VideoGenerationConfig) => {
     updateConfig(segmentId, config)
     processQueue({
@@ -298,6 +299,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
       priority: 'sequence',
       delayBetween: 6000,
       selectedIds: [segmentId],
+      overrideConfigs: new Map([[segmentId, config]]),
     })
   }, [updateConfig, processQueue])
   
@@ -1074,7 +1076,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           onGenerate={async (data) => {
             // Map VideoEditingDialog data to VideoGenerationConfig
             const segmentId = editingVideoSegment.segmentId
-            updateConfig(segmentId, {
+            const updatedConfig = {
               ...editingVideoSegment.config,
               mode: data.method,
               prompt: data.prompt,
@@ -1082,12 +1084,15 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
               duration: data.duration || editingVideoSegment.config.duration,
               aspectRatio: data.aspectRatio || editingVideoSegment.config.aspectRatio,
               resolution: data.resolution || editingVideoSegment.config.resolution,
-            })
+            }
+            updateConfig(segmentId, updatedConfig)
+            // Pass config via overrideConfigs to bypass React state async timing
             processQueue({
               mode: 'selected',
               priority: 'sequence',
               delayBetween: 6000,
               selectedIds: [segmentId],
+              overrideConfigs: new Map([[segmentId, updatedConfig]]),
             })
             setEditingVideoSegment(null)
           }}
