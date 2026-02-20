@@ -385,10 +385,30 @@ Think of elegant credit sequences that honor the story's conclusion.
 The mood should match the film's ending - triumphant, melancholic, hopeful, or ambiguous.`
   }
   
+  // Content safety guidelines to avoid Vertex AI rejections
+  const contentSafetyGuidelines = `
+CRITICAL - CONTENT SAFETY GUIDELINES:
+Your prompts must be safe for AI video generation APIs (Vertex AI, Veo). AVOID:
+- Medical/anatomical terms: "tissue", "organ", "neural tissue", "biological matter", "veins", "arteries"
+- Body horror descriptors: "sickly", "diseased", "decomposing", "rotting", "infected", "mutated"
+- Distressing terms: "claustrophobic", "suffocating", "agonizing", "tormented"
+- Violence descriptors: "blood", "gore", "violent", "brutal", "graphic"
+- Sexual content or suggestive terms
+
+INSTEAD USE:
+- For sci-fi/tech: "circuit patterns", "digital networks", "glowing pathways", "data streams"
+- For atmosphere: "moody", "atmospheric", "ethereal", "dramatic", "intense", "mysterious"
+- For dark tones: "shadowy", "noir", "dramatic contrast", "deep shadows", "low-key lighting"
+- For organic aesthetics: "flowing patterns", "natural textures", "organic shapes", "botanical elements"
+
+The prompt should be evocative and cinematic while remaining safe for AI generation.`
+  
   return `You are an expert cinematographer and title designer creating prompts for AI video generation.
 Your prompts should be highly detailed, visually evocative, and optimized for Veo/Sora-style video generation.
 
 ${typeInstructions[segmentType]}
+
+${contentSafetyGuidelines}
 
 Output JSON with:
 - prompt: The complete video generation prompt (string, 150-300 words). Include: composition, camera movement, lighting, color palette, atmosphere, specific visual elements. End with "4K, photorealistic, cinematic lighting."
