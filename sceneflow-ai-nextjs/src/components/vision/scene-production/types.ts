@@ -340,6 +340,9 @@ export interface VideoGenerationConfig {
   endFrameUrl: string | null
   sourceVideoUrl: string | null  // For EXT mode
   
+  // Cinematic element settings (for CIN mode)
+  cinematicElementType?: string  // Type of cinematic element (title-sequence, match-cut-bridge, etc.)
+  
   // Workflow status
   approvalStatus: ApprovalStatus
   confidence: number          // 0-100, auto-calculated confidence in settings

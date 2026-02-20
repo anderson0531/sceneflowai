@@ -16,7 +16,7 @@
 
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -42,6 +42,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { Slider } from '@/components/ui/slider'
 import { 
   ArrowRight, 
   CheckCircle, 
@@ -53,6 +54,9 @@ import {
   Type,
   AlertCircle,
   Play,
+  Clapperboard,
+  Sparkles,
+  Loader2,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -61,6 +65,13 @@ import type {
 } from './types'
 import { useSegmentConfig } from '@/hooks/useSegmentConfig'
 import { GuidePromptEditor, type SceneAudioData } from './GuidePromptEditor'
+import { cn } from '@/lib/utils'
+import {
+  CINEMATIC_ELEMENT_TYPES,
+  type SpecialSegmentType,
+  getCinematicElementConfig,
+  generateFallbackPrompt,
+} from './cinematic-elements'
 
 interface DirectorDialogProps {
   segment: SceneSegment
@@ -78,6 +89,7 @@ const modeToMethod: Record<string, VideoGenerationMethod> = {
   'IMAGE_TO_VIDEO': 'I2V',
   'FRAME_TO_VIDEO': 'FTV',
   'EXTEND': 'EXT',
+  'CINEMATIC': 'CIN',
 }
 
 const methodToMode: Record<VideoGenerationMethod, string> = {
@@ -86,6 +98,7 @@ const methodToMode: Record<VideoGenerationMethod, string> = {
   'FTV': 'FRAME_TO_VIDEO',
   'EXT': 'EXTEND',
   'REF': 'IMAGE_TO_VIDEO', // Fallback
+  'CIN': 'CINEMATIC',
 }
 
 export const DirectorDialog: React.FC<DirectorDialogProps> = ({ 
@@ -110,6 +123,71 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const [resolution, setResolution] = useState<'720p' | '1080p'>(autoConfig.resolution)
   const [duration, setDuration] = useState(autoConfig.duration)
   const [guidePrompt, setGuidePrompt] = useState('')
+  
+  // Cinematic Element state
+  const [cinematicType, setCinematicType] = useState<SpecialSegmentType>('title')
+  const [cinematicPrompt, setCinematicPrompt] = useState('')
+  const [cinematicDuration, setCinematicDuration] = useState(4)
+  const [isGeneratingCinematicPrompt, setIsGeneratingCinematicPrompt] = useState(false)
+  
+  // Generate AI-powered cinematic prompt
+  const generateCinematicPrompt = useCallback(async () => {
+    setIsGeneratingCinematicPrompt(true)
+    try {
+      const response = await fetch('/api/intelligence/generate-special-segment-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          segmentType: cinematicType,
+          filmContext: {
+            title: scene?.filmTitle || 'Untitled Project',
+            genre: scene?.genre ? [scene.genre] : [],
+            tone: scene?.tone || 'cinematic',
+          },
+          adjacentContext: {
+            currentScene: {
+              heading: scene?.sceneHeading,
+              action: scene?.action,
+              narration: scene?.narration,
+            },
+          },
+          segmentContext: {
+            action: segment.action,
+            dialogue: segment.dialogue,
+            emotionalBeat: segment.emotionalBeat,
+          },
+          duration: cinematicDuration,
+        }),
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.prompt) {
+          setCinematicPrompt(data.prompt)
+          setVisualPrompt(data.prompt) // Sync with main prompt
+        }
+      } else {
+        // Use fallback
+        const fallback = generateFallbackPrompt(cinematicType)
+        setCinematicPrompt(fallback)
+        setVisualPrompt(fallback)
+      }
+    } catch (error) {
+      const fallback = generateFallbackPrompt(cinematicType)
+      setCinematicPrompt(fallback)
+      setVisualPrompt(fallback)
+    } finally {
+      setIsGeneratingCinematicPrompt(false)
+    }
+  }, [cinematicType, cinematicDuration, scene, segment])
+  
+  // Update cinematic duration when type changes
+  useEffect(() => {
+    if (mode === 'CINEMATIC') {
+      const config = getCinematicElementConfig(cinematicType)
+      setCinematicDuration(config.defaultDuration)
+    }
+  }, [cinematicType, mode])
   
   // Calculate dynamic Visual Fidelity based on currently selected mode
   const visualFidelity = useMemo(() => {
@@ -201,21 +279,30 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     const resolvedStartFrameUrl = segment.startFrameUrl || segment.references?.startFrameUrl || null
     const resolvedEndFrameUrl = segment.endFrameUrl || segment.references?.endFrameUrl || null
     
+    // For Cinematic mode, use cinematic-specific values
+    const isCinematic = mode === 'CINEMATIC'
+    const finalPrompt = isCinematic ? cinematicPrompt : (method === 'FTV' ? motionPrompt : visualPrompt)
+    const finalDuration = isCinematic ? cinematicDuration : duration
+    
     const savedConfig: VideoGenerationConfig = {
       mode: method,
-      prompt: method === 'FTV' ? motionPrompt : visualPrompt,
-      motionPrompt,
-      visualPrompt,
+      prompt: finalPrompt,
+      motionPrompt: isCinematic ? cinematicPrompt : motionPrompt,
+      visualPrompt: isCinematic ? cinematicPrompt : visualPrompt,
       negativePrompt,
       guidePrompt: guidePrompt || undefined,
       aspectRatio,
       resolution,
-      duration,
+      duration: finalDuration,
       startFrameUrl: resolvedStartFrameUrl,
       endFrameUrl: resolvedEndFrameUrl,
       sourceVideoUrl: autoConfig.sourceVideoUrl,
       approvalStatus: 'auto-ready',
       confidence: autoConfig.confidence,
+      // Add cinematic-specific metadata
+      ...(isCinematic && {
+        cinematicElementType: cinematicType,
+      }),
     }
     
     // Debug: Log FTV config to verify frame URLs are passed
@@ -225,6 +312,16 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
         startFrameUrl: resolvedStartFrameUrl,
         endFrameUrl: resolvedEndFrameUrl,
         prompt: savedConfig.prompt?.substring(0, 50) + '...'
+      })
+    }
+    
+    // Debug: Log Cinematic config
+    if (isCinematic) {
+      console.log('[DirectorDialog] Cinematic generation config:', {
+        method,
+        elementType: cinematicType,
+        duration: finalDuration,
+        prompt: finalPrompt?.substring(0, 50) + '...'
       })
     }
     
@@ -247,6 +344,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     IMAGE_TO_VIDEO: !!startFrameUrl || !!sceneImageUrl,
     FRAME_TO_VIDEO: !!startFrameUrl && !!endFrameUrl,
     EXTEND: !!hasExistingVideo,
+    CINEMATIC: true, // Always available - for cinematic elements
   }
   
   // Messaging for disabled tabs
@@ -310,7 +408,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
             )}
             
             <Tabs value={mode} onValueChange={setMode}>
-              <TabsList className="bg-slate-800/80 w-full grid grid-cols-2 md:grid-cols-4 gap-1 p-1">
+              <TabsList className="bg-slate-800/80 w-full grid grid-cols-3 md:grid-cols-5 gap-1 p-1">
                 <TabsTrigger 
                   value="TEXT_TO_VIDEO" 
                   className="gap-2 data-[state=active]:bg-indigo-600"
@@ -349,6 +447,14 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                   <FastForward className="w-4 h-4" />
                   <span>Extend</span>
                 </TabsTrigger>
+                <TabsTrigger 
+                  value="CINEMATIC" 
+                  className="gap-2 data-[state=active]:bg-amber-600"
+                >
+                  <Clapperboard className="w-4 h-4" />
+                  <span className="hidden sm:inline">Cinematic</span>
+                  <span className="sm:hidden">CIN</span>
+                </TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
@@ -356,7 +462,32 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
           {/* Preview Area */}
           <div className="col-span-7 bg-black rounded-lg min-h-[300px] flex items-center justify-center relative overflow-hidden">
             {/* Visual Logic based on Mode */}
-            {mode === 'FRAME_TO_VIDEO' && startFrameUrl && endFrameUrl ? (
+            {mode === 'CINEMATIC' ? (
+              /* Cinematic Element Preview */
+              <div className="p-6 w-full flex flex-col items-center justify-center">
+                {(() => {
+                  const config = getCinematicElementConfig(cinematicType)
+                  const IconComponent = config.icon
+                  return (
+                    <>
+                      <div className="w-24 h-24 rounded-full bg-amber-500/20 flex items-center justify-center mb-4 border border-amber-500/30">
+                        <IconComponent className="w-12 h-12 text-amber-400" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-white mb-2">{config.name}</h3>
+                      <p className="text-sm text-slate-400 text-center max-w-md">{config.description}</p>
+                      <div className="flex items-center gap-2 mt-4">
+                        <Badge variant="outline" className="bg-amber-500/20 text-amber-300 border-amber-500/50">
+                          {cinematicDuration}s duration
+                        </Badge>
+                        <Badge variant="outline" className="bg-slate-700 text-slate-300">
+                          AI-Optimized Prompt
+                        </Badge>
+                      </div>
+                    </>
+                  )
+                })()}
+              </div>
+            ) : mode === 'FRAME_TO_VIDEO' && startFrameUrl && endFrameUrl ? (
               <div className="flex items-center gap-4 p-4">
                 <div className="flex-1 relative">
                   <img 
@@ -406,86 +537,183 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
             )}
             
             {/* Mode Badge */}
-            <div className="absolute top-2 right-2">
-              <Badge 
-                variant="outline" 
-                className={`
-                  ${mode === 'FRAME_TO_VIDEO' ? 'bg-purple-500/20 text-purple-300 border-purple-500/50' : ''}
-                  ${mode === 'IMAGE_TO_VIDEO' ? 'bg-blue-500/20 text-blue-300 border-blue-500/50' : ''}
-                  ${mode === 'TEXT_TO_VIDEO' ? 'bg-green-500/20 text-green-300 border-green-500/50' : ''}
-                  ${mode === 'EXTEND' ? 'bg-amber-500/20 text-amber-300 border-amber-500/50' : ''}
-                `}
-              >
-                {mode === 'FRAME_TO_VIDEO' ? 'Interpolation Mode' : 'Generation Mode'}
-              </Badge>
-            </div>
+            {mode !== 'CINEMATIC' && (
+              <div className="absolute top-2 right-2">
+                <Badge 
+                  variant="outline" 
+                  className={`
+                    ${mode === 'FRAME_TO_VIDEO' ? 'bg-purple-500/20 text-purple-300 border-purple-500/50' : ''}
+                    ${mode === 'IMAGE_TO_VIDEO' ? 'bg-blue-500/20 text-blue-300 border-blue-500/50' : ''}
+                    ${mode === 'TEXT_TO_VIDEO' ? 'bg-green-500/20 text-green-300 border-green-500/50' : ''}
+                    ${mode === 'EXTEND' ? 'bg-amber-500/20 text-amber-300 border-amber-500/50' : ''}
+                  `}
+                >
+                  {mode === 'FRAME_TO_VIDEO' ? 'Interpolation Mode' : 'Generation Mode'}
+                </Badge>
+              </div>
+            )}
             
             {/* Visual Fidelity indicator - predicts generation accuracy and consistency */}
-            <div className="absolute bottom-2 left-2">
-              <Badge 
-                variant="outline" 
-                className={`bg-slate-800/80 border-slate-600 ${
-                  visualFidelity >= 85 ? 'text-green-400' :
-                  visualFidelity >= 70 ? 'text-yellow-400' :
-                  'text-orange-400'
-                }`}
-              >
-                Visual Fidelity: {visualFidelity}%
-              </Badge>
-            </div>
+            {mode !== 'CINEMATIC' && (
+              <div className="absolute bottom-2 left-2">
+                <Badge 
+                  variant="outline" 
+                  className={`bg-slate-800/80 border-slate-600 ${
+                    visualFidelity >= 85 ? 'text-green-400' :
+                    visualFidelity >= 70 ? 'text-yellow-400' :
+                    'text-orange-400'
+                  }`}
+                >
+                  Visual Fidelity: {visualFidelity}%
+                </Badge>
+              </div>
+            )}
           </div>
 
           {/* Right Panel: Controls & Prompt */}
           <div className="col-span-5 flex flex-col gap-4">
             
-            {/* Prompt Input */}
-            <div className="flex flex-col gap-2">
-              <Label className="text-slate-300">
-                {mode === 'FRAME_TO_VIDEO' ? 'Motion Instructions' : 'Visual Description'}
-              </Label>
-              <Textarea 
-                value={mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt}
-                onChange={(e) => {
-                  if (mode === 'FRAME_TO_VIDEO') {
-                    setMotionPrompt(e.target.value)
-                  } else {
-                    setVisualPrompt(e.target.value)
-                  }
-                }}
-                className="h-32 bg-slate-800 border-slate-700 text-white placeholder-slate-500 resize-none"
-                placeholder={
-                  mode === 'FRAME_TO_VIDEO' 
-                    ? "Describe the motion between frames..." 
-                    : "Describe the scene and atmosphere..."
-                }
-              />
-              <div className="flex items-start gap-2 text-xs text-slate-400">
-                <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span>
-                  {mode === 'FRAME_TO_VIDEO' 
-                    ? "✨ AI-Optimized: Your prompt is automatically enhanced for end-frame alignment. Conflicting motion is filtered." 
-                    : "Tip: Describe the scene visuals, lighting, and atmosphere. Be specific about what you want to see."}
-                </span>
-              </div>
-            </div>
+            {/* Cinematic Mode Controls */}
+            {mode === 'CINEMATIC' ? (
+              <>
+                {/* Element Type Selector */}
+                <div className="flex flex-col gap-2">
+                  <Label className="text-slate-300">Cinematic Element Type</Label>
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+                    {CINEMATIC_ELEMENT_TYPES.map((config) => {
+                      const IconComponent = config.icon
+                      return (
+                        <button
+                          key={config.id}
+                          onClick={() => setCinematicType(config.id)}
+                          className={cn(
+                            'w-full flex items-center gap-3 p-2.5 rounded-lg border text-left transition-all',
+                            cinematicType === config.id
+                              ? 'border-amber-500 bg-amber-500/20'
+                              : 'border-slate-700 hover:border-slate-600 bg-slate-800/50'
+                          )}
+                        >
+                          <IconComponent className="w-5 h-5 text-amber-400 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-white">{config.name}</span>
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0">{config.defaultDuration}s</Badge>
+                            </div>
+                            <p className="text-xs text-slate-400 truncate">{config.shortDescription}</p>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+                
+                {/* Duration Slider for Cinematic */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-slate-300">Duration</Label>
+                    <span className="text-sm text-amber-400 font-medium">{cinematicDuration}s</span>
+                  </div>
+                  <Slider
+                    value={[cinematicDuration]}
+                    onValueChange={(v) => setCinematicDuration(v[0])}
+                    min={3}
+                    max={8}
+                    step={1}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-slate-500">
+                    Recommended: {getCinematicElementConfig(cinematicType).defaultDuration}s for {getCinematicElementConfig(cinematicType).name}
+                  </p>
+                </div>
+                
+                {/* AI Prompt Generation */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-slate-300">Video Generation Prompt</Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={generateCinematicPrompt}
+                      disabled={isGeneratingCinematicPrompt}
+                      className="text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 h-7 px-2"
+                    >
+                      {isGeneratingCinematicPrompt ? (
+                        <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                      ) : (
+                        <Sparkles className="w-4 h-4 mr-1" />
+                      )}
+                      {cinematicPrompt ? 'Regenerate' : 'Generate'}
+                    </Button>
+                  </div>
+                  <Textarea 
+                    value={cinematicPrompt}
+                    onChange={(e) => {
+                      setCinematicPrompt(e.target.value)
+                      setVisualPrompt(e.target.value)
+                    }}
+                    className="h-28 bg-slate-800 border-slate-700 text-white placeholder-slate-500 resize-none text-sm"
+                    placeholder="Click Generate to create an AI-optimized prompt based on your script and scene context..."
+                  />
+                  <div className="flex items-start gap-2 text-xs text-slate-400">
+                    <Sparkles className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-400" />
+                    <span>
+                      AI analyzes your script, treatment, and scene context to generate optimal cinematic prompts using Gemini 2.5.
+                    </span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Standard Prompt Input */}
+                <div className="flex flex-col gap-2">
+                  <Label className="text-slate-300">
+                    {mode === 'FRAME_TO_VIDEO' ? 'Motion Instructions' : 'Visual Description'}
+                  </Label>
+                  <Textarea 
+                    value={mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt}
+                    onChange={(e) => {
+                      if (mode === 'FRAME_TO_VIDEO') {
+                        setMotionPrompt(e.target.value)
+                      } else {
+                        setVisualPrompt(e.target.value)
+                      }
+                    }}
+                    className="h-32 bg-slate-800 border-slate-700 text-white placeholder-slate-500 resize-none"
+                    placeholder={
+                      mode === 'FRAME_TO_VIDEO' 
+                        ? "Describe the motion between frames..." 
+                        : "Describe the scene and atmosphere..."
+                    }
+                  />
+                  <div className="flex items-start gap-2 text-xs text-slate-400">
+                    <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>
+                      {mode === 'FRAME_TO_VIDEO' 
+                        ? "✨ AI-Optimized: Your prompt is automatically enhanced for end-frame alignment. Conflicting motion is filtered." 
+                        : "Tip: Describe the scene visuals, lighting, and atmosphere. Be specific about what you want to see."}
+                    </span>
+                  </div>
+                </div>
 
-            {/* Duration Selector */}
-            <div className="flex flex-col gap-2">
-              <Label className="text-slate-300">Duration</Label>
-              <div className="flex gap-2">
-                {[4, 6, 8].map((d) => (
-                  <Button
-                    key={d}
-                    variant={duration === d ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setDuration(d)}
-                    className={`flex-1 ${duration === d ? 'bg-indigo-600' : 'bg-slate-800 border-slate-700 text-slate-300'}`}
-                  >
-                    {d}s
-                  </Button>
-                ))}
-              </div>
-            </div>
+                {/* Duration Selector */}
+                <div className="flex flex-col gap-2">
+                  <Label className="text-slate-300">Duration</Label>
+                  <div className="flex gap-2">
+                    {[4, 6, 8].map((d) => (
+                      <Button
+                        key={d}
+                        variant={duration === d ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setDuration(d)}
+                        className={`flex-1 ${duration === d ? 'bg-indigo-600' : 'bg-slate-800 border-slate-700 text-slate-300'}`}
+                      >
+                        {d}s
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* Advanced Settings Accordion */}
             <Accordion type="single" collapsible className="w-full">
