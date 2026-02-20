@@ -163,8 +163,18 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       if (response.ok) {
         const data = await response.json()
         if (data.prompt) {
-          setCinematicPrompt(data.prompt)
-          setVisualPrompt(data.prompt) // Sync with main prompt
+          // Handle case where AI returns JSON-formatted string instead of plain text
+          let promptText = data.prompt
+          if (typeof promptText === 'string' && promptText.trim().startsWith('{')) {
+            try {
+              const parsed = JSON.parse(promptText)
+              promptText = parsed.prompt || promptText
+            } catch {
+              // Not valid JSON, use as-is
+            }
+          }
+          setCinematicPrompt(promptText)
+          setVisualPrompt(promptText) // Sync with main prompt
         }
       } else {
         // Use fallback
