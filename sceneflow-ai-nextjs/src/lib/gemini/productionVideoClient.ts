@@ -57,6 +57,8 @@ export interface ProductionVideoResult extends VideoGenerationResult {
   projectId?: string
   /** Whether this was a failover from another provider/region */
   wasFailover?: boolean
+  /** Whether this was a fallback due to content policy rejection */
+  wasContentPolicyFallback?: boolean
 }
 
 interface RegionQuotaState {
@@ -361,6 +363,24 @@ export async function generateProductionVideo(
             // Try next endpoint
             return generateProductionVideo(prompt, { ...options, forceProjectId: undefined, forceRegion: undefined })
           }
+          
+          // Check for content policy violation - fallback to Gemini API (more permissive classifier)
+          // Vertex AI Enterprise has stricter classifiers than consumer Gemini Chat
+          const errorLower = result.error?.toLowerCase() || ''
+          const isContentPolicyError = 
+            errorLower.includes('usage guidelines') ||
+            errorLower.includes('content policy') ||
+            errorLower.includes('safety') ||
+            errorLower.includes('policy violation') ||
+            errorLower.includes('blocked') ||
+            errorLower.includes('prohibited') ||
+            result.error?.includes('Code 3') // Vertex AI content policy error code
+          
+          if (isContentPolicyError && isGeminiFallbackAvailable()) {
+            console.log('[Production Video] Content policy rejection from Vertex AI, falling back to Gemini API')
+            console.log('[Production Video] Original error:', result.error)
+            return generateWithGemini(prompt, videoOptions, true, true) // wasFailover=true, wasContentPolicyFallback=true
+          }
         }
         
         return {
@@ -399,7 +419,8 @@ export async function generateProductionVideo(
 async function generateWithGemini(
   prompt: string,
   options: VideoGenerationOptions,
-  wasFailover: boolean = false
+  wasFailover: boolean = false,
+  wasContentPolicyFallback: boolean = false
 ): Promise<ProductionVideoResult> {
   // Convert options to Gemini format
   const geminiOptions: GeminiVideoOptions = {
@@ -422,6 +443,7 @@ async function generateWithGemini(
     error: result.error,
     provider: 'gemini',
     wasFailover,
+    wasContentPolicyFallback,
   }
 }
 

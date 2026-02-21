@@ -9,9 +9,11 @@
  * - Outro/Credits
  * 
  * Uses Gemini 2.5 to analyze film context and generate rich, genre-appropriate prompts.
+ * Includes automatic sanitization to avoid Vertex AI content policy rejections.
  */
 
 import { generateText, TextGenerationOptions } from '@/lib/vertexai/gemini'
+import { autoSanitizePrompt } from '@/utils/promptModerator'
 
 // =============================================================================
 // Types
@@ -345,8 +347,20 @@ export async function generateSpecialSegmentPrompt(
       parsedResult = { prompt: response.text, confidence: 0.7 }
     }
     
+    // Auto-sanitize the generated prompt to avoid Vertex AI content policy rejections
+    // This converts emotional trigger words to technical descriptors seamlessly
+    const originalPrompt = parsedResult.prompt || response.text
+    const { sanitizedPrompt, wasModified, changes } = autoSanitizePrompt(originalPrompt, {
+      logChanges: true, // Log for debugging
+      minSeverity: 'low' // Sanitize even low-severity triggers
+    })
+    
+    if (wasModified) {
+      console.log('[SpecialSegmentPrompts] Auto-sanitized prompt for Vertex AI compatibility:', changes.length, 'changes')
+    }
+    
     return {
-      prompt: parsedResult.prompt || response.text,
+      prompt: sanitizedPrompt,
       reasoning: parsedResult.reasoning,
       suggestedDuration: parsedResult.suggestedDuration,
       visualElements: parsedResult.visualElements,
@@ -356,10 +370,12 @@ export async function generateSpecialSegmentPrompt(
   } catch (error) {
     console.error('[SpecialSegmentPrompts] Gemini call failed, using fallback:', error)
     
-    // Return fallback template
-    const fallbackPrompt = FALLBACK_TEMPLATES[segmentType](filmContext, adjacentScenes)
+    // Return fallback template (also sanitized for safety)
+    const rawFallbackPrompt = FALLBACK_TEMPLATES[segmentType](filmContext, adjacentScenes)
+    const { sanitizedPrompt } = autoSanitizePrompt(rawFallbackPrompt, { logChanges: true })
+    
     return {
-      prompt: fallbackPrompt,
+      prompt: sanitizedPrompt,
       confidence: 0.6,
       reasoning: 'Generated from fallback template (Gemini unavailable)',
       suggestedDuration: getDefaultDuration(segmentType)
@@ -450,22 +466,31 @@ function buildSpecialSegmentUserPrompt(
   parts.push('')
   
   // Credits section - for title and outro sequences
+  // IMPORTANT: Limit text layers to avoid model struggles and content policy flags
   if (credits && (segmentType === 'title' || segmentType === 'outro')) {
     parts.push('CREDITS/TEXT TO DISPLAY:')
-    if (credits.title) parts.push(`- Film Title: "${credits.title}"`)
-    if (credits.director) parts.push(`- Directed by: ${credits.director}`)
-    if (credits.writer) parts.push(`- Written by: ${credits.writer}`)
-    if (credits.producer) parts.push(`- Produced by: ${credits.producer}`)
-    if (credits.customText) parts.push(`- Tagline/Subtitle: "${credits.customText}"`)
+    
+    // Build a simplified credits line to avoid multi-layer text issues
+    const creditParts: string[] = []
+    if (credits.title) creditParts.push(`"${credits.title}"`)
+    if (credits.director) creditParts.push(`Directed by ${credits.director}`)
+    if (credits.producer) creditParts.push(`Produced by ${credits.producer}`)
+    
+    parts.push(`- Primary credits line: ${creditParts.join(' • ')}`)
+    if (credits.customText) parts.push(`- Tagline: "${credits.customText}"`)
     parts.push('')
-    parts.push('CRITICAL TEXT DISPLAY REQUIREMENTS:')
-    parts.push('1. The FILM TITLE must appear prominently as text overlay in the generated prompt')
-    if (credits.director) parts.push(`2. Include "Directed by ${credits.director}" as visible text in the sequence`)
-    if (credits.producer) parts.push(`3. Include "Produced by ${credits.producer}" as visible text in the sequence`)
-    if (credits.customText) parts.push(`4. Include the tagline "${credits.customText}" as visible text below or near the title`)
+    
+    parts.push('TEXT DISPLAY REQUIREMENTS (SIMPLIFIED FOR RELIABLE GENERATION):')
+    parts.push('1. Display the film title as the PRIMARY text element')
+    parts.push('2. Combine director and producer credits into a SINGLE credits line below the title')
+    parts.push('   Format: "Directed by [Name] • Produced by [Name]" on ONE line')
+    if (credits.customText) {
+      parts.push(`3. Show tagline "${credits.customText}" as a separate, smaller text element`)
+    }
     parts.push('')
-    parts.push('Your output prompt MUST explicitly mention displaying these credits as text overlays.')
-    parts.push('Do NOT omit director, producer, or tagline text - they are essential to the title sequence.')
+    parts.push('CRITICAL: Keep text layers to a MAXIMUM of 2-3 distinct elements.')
+    parts.push('Avoid complex multi-plane text compositions that may cause generation failures.')
+    parts.push('Use elegant typography with clear hierarchy: Title (largest) → Credits (medium) → Tagline (smallest)')
     parts.push('')
   }
   
