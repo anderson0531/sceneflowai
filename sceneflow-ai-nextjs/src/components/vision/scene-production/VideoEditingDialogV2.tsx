@@ -284,7 +284,7 @@ function ExtendTab({
             </SelectTrigger>
             <SelectContent>
               {currentTakes.map((take, idx) => (
-                <SelectItem key={take.id} value={take.assetUrl}>
+                <SelectItem key={take.id} value={take.veoVideoRef || ''}>
                   Take {idx + 1} ({take.durationSec || 5}s)
                 </SelectItem>
               ))}
@@ -333,11 +333,11 @@ function ExtendTab({
         <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
           <Clock className="w-4 h-4 text-gray-500" />
           <span className="text-sm text-gray-600 dark:text-gray-400">
-            Current: {currentTakes.find(t => t.assetUrl === sourceVideoUrl)?.durationSec || 5}s
+            Current: {currentTakes.find(t => t.veoVideoRef === sourceVideoUrl)?.durationSec || 5}s
           </span>
           <ArrowRight className="w-4 h-4 text-gray-400" />
           <span className="text-sm font-medium text-green-600 dark:text-green-400">
-            Extended: {(currentTakes.find(t => t.assetUrl === sourceVideoUrl)?.durationSec || 5) + duration}s
+            Extended: {(currentTakes.find(t => t.veoVideoRef === sourceVideoUrl)?.durationSec || 5) + duration}s
           </span>
         </div>
       )}
@@ -856,12 +856,18 @@ export function VideoEditingDialog({
   onGenerate,
   isGenerating = false
 }: VideoEditingDialogProps) {
+  // Tab state - which mode is active
+  const [activeTab, setActiveTab] = useState<VideoEditingTab>(initialTab)
+  
   // Shared state
   const [prompt, setPrompt] = useState('')
   const [negativePrompt, setNegativePrompt] = useState('')
   const [duration, setDuration] = useState(6)
   const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>('16:9')
   const [resolution, setResolution] = useState<'720p' | '1080p'>('720p')
+  
+  // Extend Tab state - stores Gemini Files API reference for video extension
+  const [sourceVideoRef, setSourceVideoRef] = useState('')
   
   // Smart Prompt state
   const [smartPromptSettings, setSmartPromptSettings] = useState<SmartPromptSettings>(createDefaultSmartPromptSettings())
@@ -955,6 +961,22 @@ export function VideoEditingDialog({
 
   // Handle generation based on active tab
   const handleGenerate = async () => {
+    // Handle EXTEND tab - Video Extension via Gemini API
+    if (activeTab === 'extend' && sourceVideoRef) {
+      console.log('[Video Editor] Using EXT mode with Gemini API, veoVideoRef:', sourceVideoRef)
+      const data: Parameters<typeof onGenerate>[0] = {
+        method: 'EXT',
+        prompt: prompt || 'Continue the video naturally',
+        duration,
+        aspectRatio,
+        resolution,
+        sourceVideoUrl: sourceVideoRef, // Pass the Gemini Files API reference
+      }
+      await onGenerate(data)
+      return
+    }
+    
+    // Handle SMART-PROMPT tab - Standard T2V generation
     // Compile the smart prompt settings with general instruction prepended
     const baseWithInstruction = generalInstruction 
       ? `${generalInstruction}. ${prompt}`.trim()
@@ -980,10 +1002,15 @@ export function VideoEditingDialog({
     await onGenerate(data)
   }
 
-  // Check if generation is possible - just need a prompt
+  // Check if generation is possible based on active tab
   const canGenerate = useMemo(() => {
+    if (activeTab === 'extend') {
+      // For extension, need a valid veoVideoRef
+      return !!sourceVideoRef
+    }
+    // For smart-prompt, need a prompt
     return prompt.trim().length > 0
-  }, [prompt])
+  }, [activeTab, prompt, sourceVideoRef])
 
   // Early return after all hooks if segment is not available
   if (!segment) {
@@ -1004,41 +1031,72 @@ export function VideoEditingDialog({
         <div className="flex-1 flex min-h-0">
           {/* Left Panel - Controls (50%) */}
           <div className="w-1/2 border-r border-gray-200 dark:border-gray-700 flex flex-col min-h-0">
-            <div className="flex-1 overflow-y-auto p-4">
-              {/* Content Policy Alert - shown at top of controls */}
-              {showPolicyAlert && !moderationResult.isClean && !policyAlertDismissed && (
-                <ContentPolicyAlert
-                  moderationResult={moderationResult}
-                  onApplyFix={handleApplyModerationFix}
-                  onDismiss={() => {
-                    setShowPolicyAlert(false)
-                    setPolicyAlertDismissed(true)
-                  }}
-                  enableAIRegeneration={true}
-                  onRegenerateWithAI={handleRegenerateWithAI}
-                  className="mb-4"
-                />
-              )}
+            {/* Tab Navigation */}
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as VideoEditingTab)} className="flex flex-col h-full">
+              <TabsList className="mx-4 mt-4 mb-2 grid grid-cols-2 w-auto">
+                <TabsTrigger value="smart-prompt" className="gap-1.5">
+                  <Wand2 className="w-3.5 h-3.5" />
+                  Smart Prompt
+                </TabsTrigger>
+                <TabsTrigger value="extend" className="gap-1.5">
+                  <Film className="w-3.5 h-3.5" />
+                  Extend Video
+                </TabsTrigger>
+              </TabsList>
               
-              {/* Success banner after fix applied */}
-              {showPolicyFixed && (
-                <PolicyFixedBanner
-                  onDismiss={() => setShowPolicyFixed(false)}
-                  className="mb-4"
-                />
-              )}
+              <div className="flex-1 overflow-y-auto p-4 pt-2">
+                {/* Content Policy Alert - shown at top of controls */}
+                {showPolicyAlert && !moderationResult.isClean && !policyAlertDismissed && (
+                  <ContentPolicyAlert
+                    moderationResult={moderationResult}
+                    onApplyFix={handleApplyModerationFix}
+                    onDismiss={() => {
+                      setShowPolicyAlert(false)
+                      setPolicyAlertDismissed(true)
+                    }}
+                    enableAIRegeneration={true}
+                    onRegenerateWithAI={handleRegenerateWithAI}
+                    className="mb-4"
+                  />
+                )}
+                
+                {/* Success banner after fix applied */}
+                {showPolicyFixed && (
+                  <PolicyFixedBanner
+                    onDismiss={() => setShowPolicyFixed(false)}
+                    className="mb-4"
+                  />
+                )}
 
-              <SmartPromptTab
-                segment={segment}
-                characters={characters}
-                prompt={prompt}
-                setPrompt={setPrompt}
-                smartPromptSettings={smartPromptSettings}
-                setSmartPromptSettings={setSmartPromptSettings}
-                generalInstruction={generalInstruction}
-                setGeneralInstruction={setGeneralInstruction}
-              />
-            </div>
+                {/* Smart Prompt Tab Content */}
+                <TabsContent value="smart-prompt" className="mt-0">
+                  <SmartPromptTab
+                    segment={segment}
+                    characters={characters}
+                    prompt={prompt}
+                    setPrompt={setPrompt}
+                    smartPromptSettings={smartPromptSettings}
+                    setSmartPromptSettings={setSmartPromptSettings}
+                    generalInstruction={generalInstruction}
+                    setGeneralInstruction={setGeneralInstruction}
+                  />
+                </TabsContent>
+                
+                {/* Extend Video Tab Content */}
+                <TabsContent value="extend" className="mt-0">
+                  <ExtendTab
+                    segment={segment}
+                    allSegments={allSegments}
+                    prompt={prompt}
+                    setPrompt={setPrompt}
+                    sourceVideoUrl={sourceVideoRef}
+                    setSourceVideoUrl={setSourceVideoRef}
+                    duration={duration}
+                    setDuration={setDuration}
+                  />
+                </TabsContent>
+              </div>
+            </Tabs>
           </div>
 
           {/* Right Panel - Preview (50%) with vertical centering */}

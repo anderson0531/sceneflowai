@@ -204,14 +204,19 @@ export async function POST(
       }
       
       // EXT (Extend) mode: True video extension using Veo's native capability
-      // Priority 1: Use previousSegmentVeoRef if available (true extension)
-      // Priority 2: Fall back to I2V with the last frame as start frame
+      // Priority 1: Use sourceVideoUrl if provided (from Video Editor - user selected a specific take)
+      // Priority 2: Use previousSegmentVeoRef if available (auto-extend from previous segment)
+      // Priority 3: Fall back to I2V with the last frame as start frame
       if (method === 'EXT') {
-        if (previousSegmentVeoRef) {
-          // True video extension - use the Veo video reference from previous generation
+        // Determine which veoVideoRef to use - explicit selection takes priority
+        const veoRefToUse = sourceVideoUrl || previousSegmentVeoRef
+        
+        if (veoRefToUse) {
+          // True video extension - use the Veo video reference from selected take or previous generation
           // This only works if the video is still in Gemini's 2-day cache
-          videoOptions.sourceVideo = previousSegmentVeoRef
-          console.log('[Segment Asset Generation] Using TRUE EXT mode with Veo video reference:', previousSegmentVeoRef)
+          videoOptions.sourceVideo = veoRefToUse
+          console.log('[Segment Asset Generation] Using TRUE EXT mode with Veo video reference:', veoRefToUse)
+          console.log('[Segment Asset Generation] Source:', sourceVideoUrl ? 'Video Editor selection' : 'Previous segment auto-chain')
           // Note: When using sourceVideo, we don't need startFrame - Veo continues from where the video left off
         } else if (startFrameUrl) {
           // Fallback: No Veo reference available (video too old or from external source)

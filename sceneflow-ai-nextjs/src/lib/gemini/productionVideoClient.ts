@@ -479,6 +479,13 @@ async function generateWithGemini(
     startFrame: options.startFrame,
     lastFrame: options.lastFrame,
     referenceImages: options.referenceImages,
+    // Video Extension (EXT mode) - pass the Gemini Files API reference for video continuation
+    // VideoGenerationOptions uses sourceVideo, maps to Gemini's sourceVideo parameter
+    sourceVideo: options.sourceVideo,
+  }
+  
+  if (options.sourceVideo) {
+    console.log('[Production Video] Gemini EXT mode with sourceVideo:', options.sourceVideo)
   }
   
   const result = await generateVideoWithGeminiStudio(prompt, geminiOptions)
