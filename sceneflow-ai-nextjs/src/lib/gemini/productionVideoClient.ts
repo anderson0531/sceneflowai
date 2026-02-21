@@ -292,16 +292,16 @@ export function getEndpointStatus(): Record<string, Record<string, { available: 
 /**
  * Check if Gemini should be used as the primary video generation provider.
  * 
- * Gemini API is now the DEFAULT because:
- * 1. More permissive content classifier (consumer vs enterprise)
- * 2. Supports video extension (EXT mode) with sourceVideo parameter
- * 3. Better for creative/cinematic prompts
+ * Vertex AI is the DEFAULT provider because:
+ * 1. Stable API with predictLongRunning support
+ * 2. Multi-region failover support
+ * 3. Gemini API video models not yet fully available
  * 
- * Set USE_GEMINI_PRIMARY=false to use Vertex AI instead.
+ * Set USE_GEMINI_PRIMARY=true to use Gemini API instead.
  */
 function useGeminiAsPrimary(): boolean {
-  // Default to Gemini API unless explicitly disabled
-  return process.env.USE_GEMINI_PRIMARY !== 'false'
+  // Default to Vertex AI unless explicitly enabled
+  return process.env.USE_GEMINI_PRIMARY === 'true'
 }
 
 /**
@@ -311,8 +311,8 @@ function useGeminiAsPrimary(): boolean {
  * 1. If USE_GEMINI_PRIMARY=true: Gemini API first, then Vertex AI fallback
  * 2. Otherwise: Vertex AI first (multi-region), then Gemini API fallback
  * 
- * Gemini API uses the more permissive consumer classifier, which is better
- * for creative/cinematic content that may trigger Vertex AI's stricter Enterprise classifier.
+ * Vertex AI is the default for stability. Gemini API can be enabled for
+ * testing or when video extension (V2V) features become available.
  */
 export async function generateProductionVideo(
   prompt: string,
