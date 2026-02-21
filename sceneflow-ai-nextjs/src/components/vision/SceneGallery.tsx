@@ -23,6 +23,8 @@ import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData } from '@/lib/types/reports'
 import { SceneProductionManager } from './scene-production'
 import { SceneProductionData, SceneProductionReferences } from './scene-production/types'
+import { GenerationType } from './scene-production/SegmentStudio'
+import { VideoGenerationMethod } from './scene-production/SegmentPromptBuilder'
 import { cn } from '@/lib/utils'
 import { formatSceneHeading, extractLocation } from '@/lib/script/formatSceneHeading'
 import { ImageEditModal } from './ImageEditModal'
@@ -43,7 +45,19 @@ interface SceneGalleryProps {
   productionReferences: SceneProductionReferences
   onInitializeProduction: (sceneId: string, options: { targetDuration: number }) => Promise<void>
   onSegmentPromptChange: (sceneId: string, segmentId: string, prompt: string) => void
-  onSegmentGenerate: (sceneId: string, segmentId: string, mode: 'video' | 'image') => Promise<void>
+  onSegmentGenerate: (sceneId: string, segmentId: string, mode: GenerationType, options?: {
+    startFrameUrl?: string
+    endFrameUrl?: string
+    referenceImages?: Array<{ url: string; type: 'style' | 'character' }>
+    generationMethod?: VideoGenerationMethod
+    prompt?: string
+    negativePrompt?: string
+    duration?: number
+    aspectRatio?: '16:9' | '9:16'
+    resolution?: '720p' | '1080p'
+    sourceVideoUrl?: string
+    guidePrompt?: string
+  }) => Promise<void>
   onSegmentUpload: (sceneId: string, segmentId: string, file: File) => Promise<void>
   onOpenAssets?: () => void
   onOpenPreview?: () => void
@@ -666,7 +680,19 @@ interface SceneCardProps {
   productionReferences: SceneProductionReferences
   onInitializeProduction: (sceneId: string, options: { targetDuration: number }) => Promise<void>
   onSegmentPromptChange: (sceneId: string, segmentId: string, prompt: string) => void
-  onSegmentGenerate: (sceneId: string, segmentId: string, mode: 'video' | 'image') => Promise<void>
+  onSegmentGenerate: (sceneId: string, segmentId: string, mode: GenerationType, options?: {
+    startFrameUrl?: string
+    endFrameUrl?: string
+    referenceImages?: Array<{ url: string; type: 'style' | 'character' }>
+    generationMethod?: VideoGenerationMethod
+    prompt?: string
+    negativePrompt?: string
+    duration?: number
+    aspectRatio?: '16:9' | '9:16'
+    resolution?: '720p' | '1080p'
+    sourceVideoUrl?: string
+    guidePrompt?: string
+  }) => Promise<void>
   onSegmentUpload: (sceneId: string, segmentId: string, file: File) => Promise<void>
   /** All project characters for reference status checking */
   characters?: any[]

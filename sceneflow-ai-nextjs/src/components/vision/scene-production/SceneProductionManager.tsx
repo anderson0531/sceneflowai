@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input'
 import { SceneTimeline, AudioTracksData } from './SceneTimeline'
 import { SceneTimelineV2 } from './SceneTimelineV2'
 import { SegmentStudio, GenerationType } from './SegmentStudio'
+import { VideoGenerationMethod } from './SegmentPromptBuilder'
 import {
   SceneProductionData,
   SceneProductionReferences,
@@ -67,11 +68,16 @@ interface SceneProductionManagerProps {
   onDialogueAssignmentChange?: (sceneId: string, segmentId: string, dialogueLineIds: string[]) => void
   onGenerate: (sceneId: string, segmentId: string, mode: GenerationType, options?: { 
     startFrameUrl?: string
+    endFrameUrl?: string
+    referenceImages?: Array<{ url: string; type: 'style' | 'character' }>
+    generationMethod?: VideoGenerationMethod
     prompt?: string
     negativePrompt?: string
     duration?: number
     aspectRatio?: '16:9' | '9:16'
     resolution?: '720p' | '1080p'
+    sourceVideoUrl?: string
+    guidePrompt?: string
   }) => Promise<void>
   onUpload: (sceneId: string, segmentId: string, file: File) => Promise<void>
   audioTracks?: AudioTracksData
@@ -913,12 +919,16 @@ export function SceneProductionManager({
 
   const handleGenerate = async (mode: GenerationType, options?: { 
     startFrameUrl?: string
+    endFrameUrl?: string
+    referenceImages?: Array<{ url: string; type: 'style' | 'character' }>
+    generationMethod?: VideoGenerationMethod
     prompt?: string
     negativePrompt?: string
     duration?: number
     aspectRatio?: '16:9' | '9:16'
     resolution?: '720p' | '1080p'
-    guidePrompt?: string  // Voice/dialogue/SFX instructions for Veo 3.1 audio
+    sourceVideoUrl?: string
+    guidePrompt?: string
   }) => {
     if (!selectedSegment) return
     await onGenerate(sceneId, selectedSegment.segmentId, mode, options)
