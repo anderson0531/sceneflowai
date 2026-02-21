@@ -374,6 +374,49 @@ export interface SceneRenderJobSpec {
   includeSegmentAudio?: boolean
   /** Volume for segment audio (0.0 to 1.0) */
   segmentAudioVolume?: number
+  /** Text overlays to burn into the video (FFmpeg drawtext filter) */
+  textOverlays?: SceneRenderTextOverlay[]
+}
+
+/**
+ * Text overlay specification for FFmpeg drawtext filter
+ * Converted from percentage-based UI coordinates to pixel values
+ */
+export interface SceneRenderTextOverlay {
+  /** Unique overlay ID */
+  id: string
+  /** Main text content */
+  text: string
+  /** Secondary text (for lower-thirds: name + title) */
+  subtext?: string
+  /** X position in pixels (from left) */
+  x: number
+  /** Y position in pixels (from top) */
+  y: number
+  /** Anchor point for positioning */
+  anchor: 'top-left' | 'top-center' | 'center' | 'bottom-left' | 'bottom-center' | 'bottom-right'
+  /** Font family name (must be available in FFmpeg container) */
+  fontFamily: 'Montserrat' | 'Roboto' | 'RobotoMono' | 'Lora'
+  /** Font size in pixels */
+  fontSize: number
+  /** Font weight (100-900) */
+  fontWeight: number
+  /** Text color in hex (#RRGGBB) */
+  color: string
+  /** Background color in hex (#RRGGBB), optional */
+  backgroundColor?: string
+  /** Background opacity (0-1), default 0.7 if backgroundColor set */
+  backgroundOpacity?: number
+  /** Enable text shadow (drop shadow effect) */
+  textShadow?: boolean
+  /** Start time in seconds */
+  startTime: number
+  /** Duration in seconds (-1 for full video) */
+  duration: number
+  /** Fade-in duration in milliseconds */
+  fadeInMs: number
+  /** Fade-out duration in milliseconds */
+  fadeOutMs: number
 }
 
 /**
@@ -400,4 +443,26 @@ export interface CreateSceneRenderJobRequest {
     music?: Array<{ url: string; startTime: number; duration: number }>
     sfx?: Array<{ url: string; startTime: number; duration: number }>
   }
+  /** Text overlays to burn into video */
+  textOverlays?: Array<{
+    id: string
+    text: string
+    subtext?: string
+    position: { x: number; y: number; anchor: string }
+    style: {
+      fontFamily: string
+      fontSize: number
+      fontWeight: number
+      color: string
+      backgroundColor?: string
+      backgroundOpacity?: number
+      textShadow?: boolean
+    }
+    timing: {
+      startTime: number
+      duration: number
+      fadeInMs: number
+      fadeOutMs: number
+    }
+  }>
 }

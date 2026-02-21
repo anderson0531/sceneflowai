@@ -8,8 +8,9 @@
 'use client'
 
 import React, { useRef, useCallback, useState, useMemo } from 'react'
-import { Mic2, MessageSquare, Music, Sparkles, GripVertical } from 'lucide-react'
-import type { AudioTrackConfig, MixerAudioTracks } from './SceneProductionMixer'
+import { Mic2, MessageSquare, Music, Sparkles, GripVertical, Type, Info } from 'lucide-react'
+import type { AudioTrackConfig, MixerAudioTracks, TextOverlay } from './SceneProductionMixer'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 // ============================================================================
 // Types
@@ -31,6 +32,10 @@ interface MixerTimelineProps {
   dialogueDuration?: number
   musicDuration?: number
   sfxDuration?: number
+  /** Text overlays to display on timeline */
+  textOverlays?: TextOverlay[]
+  /** Callback when text overlay timing changes (drag-to-reposition) */
+  onTextOverlayChange?: (overlay: TextOverlay) => void
   disabled?: boolean
   className?: string
 }
@@ -45,6 +50,14 @@ const TRACK_VISUALS: TrackVisual[] = [
   { key: 'sfx', label: 'SFX', icon: Sparkles, color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.25)' },
   { key: 'music', label: 'Music', icon: Music, color: '#22c55e', bgColor: 'rgba(34, 197, 94, 0.25)' },
 ]
+
+// Text track visual config
+const TEXT_TRACK_VISUAL = {
+  label: 'Text',
+  icon: Type,
+  color: '#ec4899',  // Pink
+  bgColor: 'rgba(236, 72, 153, 0.25)',
+}
 
 // ============================================================================
 // Helper Functions
@@ -68,11 +81,14 @@ export function MixerTimeline({
   dialogueDuration = 0,
   musicDuration = 0,
   sfxDuration = 0,
+  textOverlays = [],
+  onTextOverlayChange,
   disabled,
   className = '',
 }: MixerTimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [draggingTrack, setDraggingTrack] = useState<keyof MixerAudioTracks | null>(null)
+  const [draggingTextId, setDraggingTextId] = useState<string | null>(null)
 
   // Duration map
   const durations: Record<keyof MixerAudioTracks, number> = {
@@ -91,8 +107,13 @@ export function MixerTimeline({
         maxEnd = Math.max(maxEnd, track.startOffset + (durations[key] || 0))
       }
     }
+    // Include text overlays in duration calculation
+    for (const overlay of textOverlays) {
+      const overlayEnd = overlay.timing.startTime + (overlay.timing.duration === -1 ? videoTotalDuration : overlay.timing.duration)
+      maxEnd = Math.max(maxEnd, overlayEnd)
+    }
     return Math.max(maxEnd, 10) // Minimum 10 seconds
-  }, [audioTracks, videoTotalDuration, durations])
+  }, [audioTracks, videoTotalDuration, durations, textOverlays])
 
   // Generate ruler ticks
   const ticks = useMemo(() => {
@@ -134,6 +155,43 @@ export function MixerTimeline({
     document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('mouseup', handleMouseUp)
   }, [disabled, audioTracks, totalDuration, onTrackChange])
+
+  // Handle text overlay drag
+  const handleTextDragStart = useCallback((
+    e: React.MouseEvent,
+    overlay: TextOverlay
+  ) => {
+    if (disabled || !onTextOverlayChange) return
+    e.preventDefault()
+    setDraggingTextId(overlay.id)
+
+    const container = containerRef.current
+    if (!container) return
+
+    const containerRect = container.getBoundingClientRect()
+    const startX = e.clientX
+    const startOffset = overlay.timing.startTime
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - startX
+      const deltaPercent = deltaX / containerRect.width
+      const deltaSeconds = deltaPercent * totalDuration
+      const newStartTime = Math.max(0, Math.round((startOffset + deltaSeconds) * 10) / 10)
+      onTextOverlayChange({
+        ...overlay,
+        timing: { ...overlay.timing, startTime: newStartTime }
+      })
+    }
+
+    const handleMouseUp = () => {
+      setDraggingTextId(null)
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }, [disabled, totalDuration, onTextOverlayChange])
 
   const videoEndPercent = (videoTotalDuration / totalDuration) * 100
 
@@ -226,6 +284,60 @@ export function MixerTimeline({
               </div>
             )
           })}
+
+          {/* Text Overlay Track */}
+          {textOverlays.length > 0 && (
+            <div className="h-5 relative">
+              {textOverlays.map((overlay) => {
+                const duration = overlay.timing.duration === -1 
+                  ? videoTotalDuration - overlay.timing.startTime 
+                  : overlay.timing.duration
+                const startPercent = (overlay.timing.startTime / totalDuration) * 100
+                const widthPercent = (duration / totalDuration) * 100
+                const endTime = overlay.timing.startTime + duration
+                const extendsVideo = endTime > videoTotalDuration
+                const isDragging = draggingTextId === overlay.id
+
+                return (
+                  <div
+                    key={overlay.id}
+                    className={`
+                      absolute top-0 h-full rounded-sm flex items-center gap-1 px-1.5
+                      cursor-grab active:cursor-grabbing select-none
+                      transition-shadow duration-100
+                      ${isDragging ? 'ring-1 ring-white/40 z-10' : 'hover:ring-1 hover:ring-white/20'}
+                      ${disabled || !onTextOverlayChange ? 'opacity-50 cursor-not-allowed' : ''}
+                    `}
+                    style={{
+                      left: `${startPercent}%`,
+                      width: `${Math.max(widthPercent, 4)}%`,
+                      backgroundColor: TEXT_TRACK_VISUAL.bgColor,
+                      borderLeft: `2px solid ${TEXT_TRACK_VISUAL.color}`,
+                      borderRight: extendsVideo ? `1px dashed ${TEXT_TRACK_VISUAL.color}` : undefined,
+                    }}
+                    onMouseDown={(e) => handleTextDragStart(e, overlay)}
+                    title={overlay.text}
+                  >
+                    <GripVertical className="w-2.5 h-2.5 text-gray-500 flex-shrink-0" />
+                    <Type className="w-3 h-3 flex-shrink-0" style={{ color: TEXT_TRACK_VISUAL.color }} />
+                    <span className="text-[9px] text-gray-400 truncate max-w-[60px]">
+                      {overlay.text.slice(0, 10)}{overlay.text.length > 10 ? '…' : ''}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Empty text track placeholder */}
+          {textOverlays.length === 0 && (
+            <div className="h-5 flex items-center">
+              <div className="flex items-center gap-1 text-gray-600 text-[10px] opacity-50">
+                <Type className="w-3 h-3" />
+                <span>Text</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Legend */}
@@ -242,6 +354,25 @@ export function MixerTimeline({
             <div className="w-3 h-2 rounded-sm border-r border-dashed" style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', borderColor: 'rgba(168, 85, 247, 0.5)' }} />
             <span>Audio extends</span>
           </div>
+          {textOverlays.length > 0 && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1 cursor-help">
+                    <div className="w-3 h-2 rounded-sm" style={{ backgroundColor: TEXT_TRACK_VISUAL.bgColor, borderLeft: `2px solid ${TEXT_TRACK_VISUAL.color}` }} />
+                    <span>Text</span>
+                    <Info className="w-2.5 h-2.5 text-gray-500" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[220px]">
+                  <p className="text-xs">
+                    <strong>Preview vs Final Render:</strong> Text overlays are shown as CSS overlays in preview. 
+                    The final rendered video will burn text using FFmpeg, which may appear slightly different.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       </div>
     </div>

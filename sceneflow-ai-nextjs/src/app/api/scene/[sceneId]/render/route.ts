@@ -19,6 +19,7 @@ import type {
   SceneRenderJobSpec,
   SceneRenderVideoSegment,
   SceneRenderAudioClip,
+  SceneRenderTextOverlay,
 } from '@/lib/video/renderTypes'
 import { RENDER_DEFAULTS } from '@/lib/video/renderTypes'
 import { uploadJobSpec, getOutputPath, getRenderBucket, getSignedDownloadUrl } from '@/lib/gcs/renderStorage'
@@ -257,6 +258,61 @@ export async function POST(
     // Calculate total duration from segments
     const totalDuration = videoSegments.reduce((sum, seg) => sum + seg.duration, 0)
     
+    // Convert text overlays from percentage-based UI coordinates to pixels
+    // Resolution lookup for pixel conversion
+    const resolutionMap = {
+      '720p': { width: 1280, height: 720 },
+      '1080p': { width: 1920, height: 1080 },
+      '4K': { width: 3840, height: 2160 },
+    }
+    const resolution = resolutionMap[body.resolution] || resolutionMap['1080p']
+    
+    // Font family mapping (UI font names -> bundled FFmpeg fonts)
+    const fontFamilyMap: Record<string, 'Montserrat' | 'Roboto' | 'RobotoMono' | 'Lora'> = {
+      'Inter': 'Montserrat',       // Modern sans-serif -> Montserrat
+      'Montserrat': 'Montserrat',
+      'Roboto': 'Roboto',
+      'Roboto Mono': 'RobotoMono',
+      'monospace': 'RobotoMono',
+      'Lora': 'Lora',
+      'serif': 'Lora',
+      'Georgia': 'Lora',
+    }
+    
+    const textOverlays: SceneRenderTextOverlay[] = (body.textOverlays || []).map(overlay => {
+      // Convert percentage position to pixels
+      const xPercent = overlay.position.x
+      const yPercent = overlay.position.y
+      const xPixels = Math.round((xPercent / 100) * resolution.width)
+      const yPixels = Math.round((yPercent / 100) * resolution.height)
+      
+      // Convert font size from percentage of video height to pixels
+      const fontSizePixels = Math.round((overlay.style.fontSize / 100) * resolution.height)
+      
+      // Map font family to bundled fonts
+      const mappedFont = fontFamilyMap[overlay.style.fontFamily] || 'Montserrat'
+      
+      return {
+        id: overlay.id,
+        text: overlay.text,
+        subtext: overlay.subtext,
+        x: xPixels,
+        y: yPixels,
+        anchor: overlay.position.anchor as SceneRenderTextOverlay['anchor'],
+        fontFamily: mappedFont,
+        fontSize: fontSizePixels,
+        fontWeight: overlay.style.fontWeight,
+        color: overlay.style.color,
+        backgroundColor: overlay.style.backgroundColor,
+        backgroundOpacity: overlay.style.backgroundOpacity,
+        textShadow: overlay.style.textShadow,
+        startTime: overlay.timing.startTime,
+        duration: overlay.timing.duration,
+        fadeInMs: overlay.timing.fadeInMs,
+        fadeOutMs: overlay.timing.fadeOutMs,
+      }
+    })
+    
     // Build job spec
     const jobSpec: SceneRenderJobSpec = {
       jobId,
@@ -274,12 +330,14 @@ export async function POST(
       language: body.audioConfig.language,
       includeSegmentAudio,
       segmentAudioVolume,
+      textOverlays: textOverlays.length > 0 ? textOverlays : undefined,
     }
     
     console.log(`[SceneRender] Job spec created:`, {
       jobId,
       videoSegments: videoSegments.length,
       audioClips: audioClips.length,
+      textOverlays: textOverlays.length,
       totalDuration,
       resolution: body.resolution,
     })

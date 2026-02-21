@@ -1608,6 +1608,23 @@ export function SceneProductionMixer({
           },
           segments: segmentData,
           audioTracks: audioTracksPayload,
+          // Include text overlays for FFmpeg drawtext burning
+          textOverlays: textOverlays.map(overlay => ({
+            id: overlay.id,
+            text: overlay.text,
+            subtext: overlay.subtext,
+            position: overlay.position,
+            style: {
+              fontFamily: overlay.style.fontFamily,
+              fontSize: overlay.style.fontSize,
+              fontWeight: overlay.style.fontWeight,
+              color: overlay.style.color,
+              backgroundColor: overlay.style.backgroundColor,
+              backgroundOpacity: overlay.style.backgroundOpacity,
+              textShadow: overlay.style.textShadow,
+            },
+            timing: overlay.timing,
+          })),
         }),
       })
       
@@ -1629,7 +1646,8 @@ export function SceneProductionMixer({
     }
   }, [
     renderedSegments, segmentAudioConfigs, audioTracks, currentAudioUrls,
-    totalDuration, sceneId, projectId, sceneNumber, resolution, selectedLanguage
+    totalDuration, sceneId, projectId, sceneNumber, resolution, selectedLanguage,
+    textOverlays, masterSegmentVolume
   ])
   
   // Poll job status
@@ -2131,6 +2149,8 @@ export function SceneProductionMixer({
                 dialogueDuration={currentAudioUrls.dialogue.reduce((sum, d) => sum + ((d as { duration?: number }).duration || 3), 0)}
                 musicDuration={30} // Music typically loops, assume 30s
                 sfxDuration={currentAudioUrls.sfx.reduce((sum, s) => sum + (s.duration || 2), 0)}
+                textOverlays={textOverlays}
+                onTextOverlayChange={updateOverlay}
                 disabled={isRendering}
                 className="mt-4"
               />

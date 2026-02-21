@@ -849,12 +849,50 @@ export interface SceneProductionData {
   lastGeneratedAt?: string | null
   /** Optional timeline audio clips for this scene */
   audioTracks?: AudioTracksData
+  /** Text overlays for this scene (titles, lower-thirds, subtitles) */
+  textOverlays?: TextOverlayData[]
   /** @deprecated Use productionStreams instead. Kept for backwards compatibility. */
   renderedSceneUrl?: string | null
   /** @deprecated Use productionStreams instead. Kept for backwards compatibility. */
   renderedAt?: string | null
   /** Multi-language production streams */
   productionStreams?: ProductionStream[]
+}
+
+/**
+ * Text overlay data stored in production data
+ * Simplified version for persistence (full types in SceneProductionMixer.tsx)
+ */
+export interface TextOverlayData {
+  id: string
+  text: string
+  subtext?: string
+  position: {
+    x: number
+    y: number
+    anchor: 'top-left' | 'top-center' | 'center' | 'bottom-left' | 'bottom-center' | 'bottom-right'
+  }
+  style: {
+    preset: 'title' | 'lower-third' | 'subtitle' | 'custom'
+    fontFamily: string
+    fontSize: number
+    fontWeight: 400 | 500 | 600 | 700 | 800
+    color: string
+    backgroundColor?: string
+    backgroundOpacity?: number
+    textShadow?: boolean
+    padding?: number
+  }
+  timing: {
+    startTime: number
+    duration: number
+    fadeInMs: number
+    fadeOutMs: number
+  }
+  animation?: {
+    enter: 'fade' | 'slide-up' | 'slide-left' | 'typewriter' | 'none'
+    exit: 'fade' | 'slide-down' | 'slide-right' | 'none'
+  }
 }
 
 export interface SceneProductionReferences {
