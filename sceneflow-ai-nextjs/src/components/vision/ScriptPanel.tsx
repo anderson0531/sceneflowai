@@ -3694,8 +3694,8 @@ function SceneCard({
   // Scene Image section: collapsed by default
   const [sceneImageCollapsed, setSceneImageCollapsed] = useState(true)
   // Production workflow container collapse states
-  const [storyboardBuilderCollapsed, setStoryboardBuilderCollapsed] = useState(false)
-  const [videoProductionCollapsed, setVideoProductionCollapsed] = useState(false)
+  const [storyboardBuilderCollapsed, setStoryboardBuilderCollapsed] = useState(true)
+  const [videoProductionCollapsed, setVideoProductionCollapsed] = useState(true)
   
   // Determine active step for Co-Pilot
   const activeStep: WorkflowStep | null = activeWorkflowTab
