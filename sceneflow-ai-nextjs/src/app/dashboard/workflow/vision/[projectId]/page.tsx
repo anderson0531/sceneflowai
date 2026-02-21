@@ -73,6 +73,7 @@ import { applyIntelligentDefaults } from '@/lib/audio/anchoredTiming'
 import { buildAudioTracksForLanguage, buildAudioTracksWithBaselineTiming, determineBaselineLanguage, applySequentialAlignmentToScene } from '@/components/vision/scene-production/audioTrackBuilder'
 import { buildSceneReferencePrompt } from '@/lib/vision/sceneReferencePromptBuilder'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
+import { autoSanitizePrompt } from '@/utils/promptModerator'
 
 /**
  * Client-side upload helper that uses the API endpoint
@@ -2534,18 +2535,72 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           return { ...current, segments }
         })
 
-        // Show brief toast - detailed error is stored in segment
+        // Show toast with action button for content policy violations
         try {
           const { toast } = require('sonner')
-          const isContentFiltered = errorMessage.includes('Content Safety Filter')
-          toast.error(isContentFiltered 
-            ? 'Content filtered - click segment for details'
-            : 'Generation failed - click segment for details'
-          )
+          // Detect content policy violations (multiple patterns)
+          const isContentPolicy = errorMessage.includes('Content Policy') ||
+            errorMessage.includes('Content Safety Filter') ||
+            errorMessage.includes('violate') ||
+            errorMessage.includes('usage guidelines') ||
+            errorMessage.includes('safety filters')
+          
+          if (isContentPolicy) {
+            // Get the current prompt from production state
+            const sceneState = sceneProductionState[sceneId]
+            const segment = sceneState?.segments?.find((s: any) => s.segmentId === segmentId)
+            const currentPrompt = options?.prompt || segment?.userEditedPrompt || segment?.generatedPrompt || ''
+            
+            toast.error('Content policy violation', {
+              description: 'Your prompt was flagged by safety filters. Auto-fix replaces sensitive terms with cinematic alternatives.',
+              duration: 15000, // Keep visible longer for user to decide
+              action: {
+                label: 'Auto-Fix & Retry',
+                onClick: () => {
+                  // Sanitize the prompt and retry
+                  const { sanitizedPrompt, wasModified, changes } = autoSanitizePrompt(currentPrompt, { logChanges: true })
+                  
+                  if (wasModified) {
+                    console.log('[Sanitize & Retry] Fixed terms:', changes)
+                    // Update the segment's prompt with sanitized version
+                    applySceneProductionUpdate(sceneId, (current) => {
+                      if (!current) return current
+                      const segments = current.segments.map((seg) =>
+                        seg.segmentId === segmentId 
+                          ? { ...seg, userEditedPrompt: sanitizedPrompt, status: 'IDLE' as const, errorMessage: undefined } 
+                          : seg
+                      )
+                      return { ...current, segments }
+                    })
+                    
+                    // Show info about what was changed
+                    toast.info(`Fixed ${changes.length} term(s): ${changes.slice(0, 2).join(', ')}${changes.length > 2 ? '...' : ''}`, {
+                      duration: 5000
+                    })
+                    
+                    // Retry generation with sanitized prompt
+                    setTimeout(() => {
+                      handleSegmentGenerate(sceneId, segmentId, mode, {
+                        ...options,
+                        prompt: sanitizedPrompt
+                      })
+                    }, 500)
+                  } else {
+                    // Prompt moderator didn't find known trigger words - suggest AI rephrase
+                    toast.warning('Could not auto-fix prompt. Try editing manually or use AI Rephrase in the Video Editor.', {
+                      duration: 8000
+                    })
+                  }
+                }
+              }
+            })
+          } else {
+            toast.error('Generation failed - click segment for details')
+          }
         } catch {}
       }
     },
-    [applySceneProductionUpdate, project?.id, sceneProductionState]
+    [applySceneProductionUpdate, project?.id, sceneProductionState, handleSegmentGenerate]
   )
 
   const handleSegmentUpload = useCallback(
