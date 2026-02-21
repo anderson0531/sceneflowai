@@ -128,11 +128,11 @@ function getGenreVisualStyle(genres: string[]): GenreVisualStyle {
   
   const styles: Record<string, GenreVisualStyle> = {
     horror: {
-      background: 'The background is a heavily distorted, desaturated environment with flickering shadows and deep blacks',
-      textTreatment: 'the title emerges from darkness with subtle blood-red chromatic aberration',
-      cameraMove: 'slow, unsettling forward dolly with slight shake',
-      atmosphere: 'The atmosphere is claustrophobic, sterile, and carries a sense of dread',
-      outroBackground: 'Deep black background with barely visible fog tendrils'
+      background: 'The background features high-contrast lighting with deep shadows, geometric darkness, and mysterious atmosphere',
+      textTreatment: 'the title emerges from darkness with subtle crimson chromatic aberration',
+      cameraMove: 'slow, deliberate forward dolly with subtle shake',
+      atmosphere: 'The atmosphere is intense, mysterious, and carries a sense of anticipation',
+      outroBackground: 'Deep black background with barely visible mist elements'
     },
     thriller: {
       background: 'The background features high-contrast urban nightscape with sharp geometric shadows',
@@ -437,19 +437,34 @@ The mood should match the film's ending - triumphant, melancholic, hopeful, or a
   
   // Content safety guidelines to avoid Vertex AI rejections
   const contentSafetyGuidelines = `
-CRITICAL - CONTENT SAFETY GUIDELINES:
-Your prompts must be safe for AI video generation APIs (Vertex AI, Veo). AVOID:
-- Medical/anatomical terms: "tissue", "organ", "neural tissue", "biological matter", "veins", "arteries"
-- Body horror descriptors: "sickly", "diseased", "decomposing", "rotting", "infected", "mutated"
-- Distressing terms: "claustrophobic", "suffocating", "agonizing", "tormented"
-- Violence descriptors: "blood", "gore", "violent", "brutal", "graphic"
-- Sexual content or suggestive terms
+CRITICAL - VERTEX AI CONTENT SAFETY GUARDRAILS:
+Vertex AI's content classifier is hyper-sensitive to words implying biological decay, medical conditions, psychological distress, or malware.
 
-INSTEAD USE:
-- For sci-fi/tech: "circuit patterns", "digital networks", "glowing pathways", "data streams"
-- For atmosphere: "moody", "atmospheric", "ethereal", "dramatic", "intense", "mysterious"
-- For dark tones: "shadowy", "noir", "dramatic contrast", "deep shadows", "low-key lighting"
-- For organic aesthetics: "flowing patterns", "natural textures", "organic shapes", "botanical elements"
+**STRICTLY BLACKLISTED WORDS (will cause immediate rejection):**
+- Corrupted, Deteriorating, Rotting, Sickly, Fleshy, Alien, Unease, Terror, Malware, Viral
+- Organic (in biological context), Fibrous, Neural tissue, Biological matter
+- Necrotic, Infected, Decomposing, Festering, Diseased, Mutated
+- Claustrophobic, Suffocating, Agonizing, Tormented, Horror, Nightmare
+- Pervasive, Enveloping, Pressing, Distorted (in disturbing context)
+
+**REQUIRED SAFE SUBSTITUTIONS:**
+| Instead of... | Use... |
+| Deteriorating/Corrupting | Weathered/Transforming |
+| Fibrous/Organic | Interwoven/Intricate |
+| Alien/Enveloping | Geometric/Expansive |
+| Pervasive/Corrupted | Complex/Integrated |
+| Pressing/Distorted | Atmospheric/Dynamic |
+| Sterile/Cold | Precision/Polished |
+| Sickly/Diseased | Muted/Weathered |
+
+**MATERIALITY FOCUS (always safe):**
+- Obsidian, Slate, Brushed Metal, Crystalline, Polished Stone
+- Circuit patterns, Digital networks, Glowing pathways, Data streams
+- Geometric shapes, Abstract forms, Architectural elements
+
+**LIGHTING DESCRIPTIONS (safe for dark tones):**
+- "High-contrast", "Low-key", "Chiaroscuro", "Deep shadows", "Dramatic contrast"
+- "Moody", "Atmospheric", "Mysterious", "Ethereal", "Cinematic"
 
 The prompt should be evocative and cinematic while remaining safe for AI generation.`
   

@@ -158,6 +158,31 @@ export const TRIGGER_WORD_ALTERNATIVES: Record<string, string[]> = {
   'pulsating': ['glowing', 'rhythmic', 'dynamic'],
   'throbbing': ['pulsing', 'rhythmic', 'dynamic'],
   'writhing': ['flowing', 'undulating', 'moving'],
+  
+  // NEW: Additional triggers identified from Vertex AI content policy analysis
+  // These terms trigger "biological decay", "medical", "psychological distress", or "malware" classifiers
+  'deteriorating': ['weathered', 'transforming', 'evolving', 'shifting'],
+  'corrupting': ['transforming', 'integrating', 'merging', 'spreading'],
+  'corrupted': ['complex', 'integrated', 'merged', 'transformed'],
+  'corruption': ['transformation', 'integration', 'merging', 'change'],
+  'fibrous': ['interwoven', 'intricate', 'woven', 'layered'],
+  'alien': ['geometric', 'otherworldly', 'cosmic', 'ethereal'],
+  'enveloping': ['expansive', 'surrounding', 'encompassing', 'broad'],
+  'pervasive': ['complex', 'intricate', 'extensive', 'widespread'],
+  'pressing': ['atmospheric', 'intense', 'heavy', 'imposing'],
+  'distorted': ['dynamic', 'altered', 'transformed', 'modified'],
+  'sterile': ['precision', 'polished', 'clean', 'pristine'],
+  'sickly': ['muted', 'desaturated', 'pale', 'faded'],
+  'diseased': ['weathered', 'aged', 'worn', 'textured'],
+  'malware': ['digital pattern', 'data stream', 'signal', 'network'],
+  'viral': ['spreading', 'expanding', 'growing', 'dynamic'],
+  'infection': ['spread', 'pattern', 'growth', 'expansion'],
+  'invasive': ['spreading', 'expanding', 'growing', 'permeating'],
+  'horror': ['mystery', 'suspense', 'drama', 'tension'],
+  'scary': ['mysterious', 'dramatic', 'tense', 'atmospheric'],
+  'frightening': ['intense', 'dramatic', 'striking', 'powerful'],
+  'nightmare': ['dreamscape', 'surreal landscape', 'abstract vision'],
+  'nightmarish': ['surreal', 'dreamlike', 'abstract', 'otherworldly'],
 };
 
 /**
