@@ -505,15 +505,23 @@ function buildSpecialSegmentUserPrompt(
   if (filmContext.targetAudience) parts.push(`- Target Audience: ${filmContext.targetAudience}`)
   parts.push('')
   
-  // Title sequence - Focus on visual atmosphere only
-  // Note: Text overlays (credits, titles) should be added via Text Overlay feature in Scene Production Mixer
-  // AI-generated text is unreliable, so we only describe the VISUAL scene without text requirements
-  if (segmentType === 'title' || segmentType === 'outro') {
-    parts.push('TITLE/OUTRO SEQUENCE VISUAL REQUIREMENTS:')
-    parts.push('- Create an atmospheric, cinematic opening/closing visual')
-    parts.push('- Focus on abstract, evocative imagery that sets the mood')
-    parts.push('- Do NOT include any text, titles, or credits in the generated video')
-    parts.push('- Text overlays will be added separately via post-production tools')
+  // Title sequence - Include title text instruction for Veo to attempt rendering
+  // Note: AI-generated text may not render perfectly, but users want to see the title
+  if (segmentType === 'title') {
+    const filmTitle = credits?.title || filmContext.title || 'UNTITLED'
+    parts.push('TITLE SEQUENCE REQUIREMENTS:')
+    parts.push('- Create an atmospheric, cinematic title card visual')
+    parts.push(`- Include bold, prominent text that reads "${filmTitle}" - centered in the composition`)
+    parts.push('- Use clean, modern sans-serif or elegant serif typography')
+    parts.push('- The title should be clearly readable against the background')
+    parts.push('- Include subtle camera movement or atmospheric effects around the text')
+    parts.push('')
+  } else if (segmentType === 'outro') {
+    parts.push('OUTRO SEQUENCE REQUIREMENTS:')
+    parts.push('- Create an atmospheric, cinematic closing visual')
+    parts.push('- Focus on abstract, evocative imagery that provides closure')
+    parts.push('- Do NOT include credits text - credits will be added in post-production')
+    parts.push('- Use subtle movement (fade, drift, or slow motion feel)')
     parts.push('')
   }
   
@@ -546,13 +554,14 @@ function buildSpecialSegmentUserPrompt(
   }
   
   // Type-specific instructions
+  const filmTitle = credits?.title || filmContext.title || 'UNTITLED'
   const typeInstructions: Record<SpecialSegmentType, string> = {
     title: `Create a title sequence visual that:
-1. Creates atmospheric, abstract imagery suitable for a title card background
+1. Features bold, prominent title text "${filmTitle}" centered in the composition
 2. Matches the ${filmContext.genre?.join('/')} genre visual language
 3. Sets the ${filmContext.tone || 'dramatic'} tone immediately
-4. Do NOT include any text - text overlays will be added in post-production
-5. Includes subtle camera movement through the visual elements`,
+4. Uses clean, readable typography (modern sans-serif or elegant serif)
+5. Includes subtle camera movement or atmospheric effects around the title`,
     
     'match-cut': `Create a match cut that:
 1. Finds visual connection between the scenes described
