@@ -1893,6 +1893,115 @@ export function SceneProductionMixer({
                           className="w-full"
                         />
                       </div>
+                      
+                      {/* Text Style Controls */}
+                      <div className="space-y-2">
+                        <label className="text-xs text-gray-400 block">Text Style</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {/* Text Color */}
+                          <div>
+                            <label className="text-xs text-gray-500 mb-1 block">Color</label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={editingOverlay.style.color}
+                                onChange={(e) => updateOverlay({
+                                  ...editingOverlay,
+                                  style: { ...editingOverlay.style, color: e.target.value }
+                                })}
+                                className="w-8 h-8 rounded cursor-pointer bg-transparent border border-gray-600"
+                              />
+                              <Input
+                                value={editingOverlay.style.color}
+                                onChange={(e) => updateOverlay({
+                                  ...editingOverlay,
+                                  style: { ...editingOverlay.style, color: e.target.value }
+                                })}
+                                className="h-8 bg-gray-900 border-gray-600 text-white text-xs flex-1"
+                                placeholder="#FFFFFF"
+                              />
+                            </div>
+                          </div>
+                          {/* Font Weight / Bold */}
+                          <div>
+                            <label className="text-xs text-gray-500 mb-1 block">Weight</label>
+                            <select
+                              value={editingOverlay.style.fontWeight}
+                              onChange={(e) => updateOverlay({
+                                ...editingOverlay,
+                                style: { ...editingOverlay.style, fontWeight: Number(e.target.value) as 400 | 500 | 600 | 700 | 800 }
+                              })}
+                              className="w-full h-8 px-2 bg-gray-900 border border-gray-600 rounded-md text-white text-xs"
+                            >
+                              <option value={400}>Regular</option>
+                              <option value={500}>Medium</option>
+                              <option value={600}>Semibold</option>
+                              <option value={700}>Bold</option>
+                              <option value={800}>Extra Bold</option>
+                            </select>
+                          </div>
+                        </div>
+                        
+                        {/* Background Color & Opacity */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-xs text-gray-500 mb-1 block">Background</label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={editingOverlay.style.backgroundColor || '#000000'}
+                                onChange={(e) => updateOverlay({
+                                  ...editingOverlay,
+                                  style: { ...editingOverlay.style, backgroundColor: e.target.value }
+                                })}
+                                className="w-8 h-8 rounded cursor-pointer bg-transparent border border-gray-600"
+                              />
+                              <Input
+                                value={editingOverlay.style.backgroundColor || ''}
+                                onChange={(e) => updateOverlay({
+                                  ...editingOverlay,
+                                  style: { ...editingOverlay.style, backgroundColor: e.target.value || undefined }
+                                })}
+                                className="h-8 bg-gray-900 border-gray-600 text-white text-xs flex-1"
+                                placeholder="None"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 mb-1 block">BG Opacity ({Math.round((editingOverlay.style.backgroundOpacity || 0) * 100)}%)</label>
+                            <Slider
+                              value={[editingOverlay.style.backgroundOpacity || 0]}
+                              onValueChange={([v]) => updateOverlay({
+                                ...editingOverlay,
+                                style: { ...editingOverlay.style, backgroundOpacity: v }
+                              })}
+                              min={0}
+                              max={1}
+                              step={0.05}
+                              className="w-full mt-2"
+                            />
+                          </div>
+                        </div>
+                        
+                        {/* Text Shadow Toggle */}
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs text-gray-400">Text Shadow</label>
+                          <button
+                            onClick={() => updateOverlay({
+                              ...editingOverlay,
+                              style: { ...editingOverlay.style, textShadow: !editingOverlay.style.textShadow }
+                            })}
+                            className={`w-10 h-5 rounded-full transition-colors ${
+                              editingOverlay.style.textShadow ? 'bg-purple-500' : 'bg-gray-600'
+                            }`}
+                          >
+                            <div className={`w-4 h-4 rounded-full bg-white transition-transform mx-0.5 ${
+                              editingOverlay.style.textShadow ? 'translate-x-5' : 'translate-x-0'
+                            }`} />
+                          </button>
+                        </div>
+                      </div>
+                      
                       {/* Timing */}
                       <div className="grid grid-cols-2 gap-2">
                         <div>
