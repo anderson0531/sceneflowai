@@ -347,7 +347,9 @@ export async function POST(
         )
         
         // Check if Vertex AI returned a content policy error during polling
-        // If so, retry with Gemini API (more permissive consumer classifier)
+        // NOTE: Gemini API fallback is NOT available for video generation
+        // Veo models only exist on Vertex AI, not on generativelanguage.googleapis.com
+        // For content policy errors, we return a clear error message
         if (finalResult.status === 'FAILED' && finalResult.provider === 'vertex' && finalResult.error) {
           const errorLower = finalResult.error.toLowerCase()
           const isContentPolicyError = 
@@ -360,33 +362,16 @@ export async function POST(
             finalResult.error.includes('Code 3') // Vertex AI content policy error code
           
           if (isContentPolicyError) {
-            console.log('[Segment Asset Generation] Vertex AI content policy error, retrying with Gemini API...')
+            console.log('[Segment Asset Generation] Vertex AI content policy error - no alternative video API available')
             console.log('[Segment Asset Generation] Original error:', finalResult.error)
             
-            // Retry with Gemini API (forceProvider: 'gemini')
-            const geminiResult = await generateProductionVideo(enhancedPrompt, {
-              ...videoOptions,
-              forceProvider: 'gemini'
-            })
-            
-            if (geminiResult.status === 'FAILED') {
-              throw new Error(geminiResult.error || 'Video generation failed with both Vertex AI and Gemini')
-            }
-            
-            // Wait for Gemini completion if needed
-            if (geminiResult.status === 'QUEUED' || geminiResult.status === 'PROCESSING') {
-              console.log('[Segment Asset Generation] Waiting for Gemini video completion...')
-              finalResult = await waitForProductionVideoCompletion(
-                geminiResult.operationName!,
-                'gemini',
-                240,
-                10
-              )
-            } else {
-              finalResult = geminiResult
-            }
-            
-            console.log('[Segment Asset Generation] Gemini fallback result:', finalResult.status)
+            // Return a helpful error message since Gemini API doesn't support video generation
+            throw new Error(
+              `Content Policy Violation: The video prompt was rejected by Vertex AI's safety filters. ` +
+              `Please try rephrasing the prompt to remove any potentially sensitive content. ` +
+              `Tip: Avoid words related to violence, medical conditions, or explicit content. ` +
+              `Original error: ${finalResult.error}`
+            )
           }
         }
       }

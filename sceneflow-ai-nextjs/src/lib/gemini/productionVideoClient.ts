@@ -415,23 +415,10 @@ export async function generateProductionVideo(
             return generateProductionVideo(prompt, { ...options, forceProjectId: undefined, forceRegion: undefined })
           }
           
-          // Check for content policy violation - fallback to Gemini API (more permissive classifier)
-          // Vertex AI Enterprise has stricter classifiers than consumer Gemini Chat
-          const errorLower = result.error?.toLowerCase() || ''
-          const isContentPolicyError = 
-            errorLower.includes('usage guidelines') ||
-            errorLower.includes('content policy') ||
-            errorLower.includes('safety') ||
-            errorLower.includes('policy violation') ||
-            errorLower.includes('blocked') ||
-            errorLower.includes('prohibited') ||
-            result.error?.includes('Code 3') // Vertex AI content policy error code
-          
-          if (isContentPolicyError && isGeminiFallbackAvailable()) {
-            console.log('[Production Video] Content policy rejection from Vertex AI, falling back to Gemini API')
-            console.log('[Production Video] Original error:', result.error)
-            return generateWithGemini(prompt, videoOptions, true, true) // wasFailover=true, wasContentPolicyFallback=true
-          }
+          // NOTE: Content policy violations cannot fallback to Gemini API
+          // Veo video generation models are ONLY available on Vertex AI
+          // The Gemini API (generativelanguage.googleapis.com) does not support video generation
+          // So we just return the error - the caller should handle it appropriately
         }
         
         return {
