@@ -707,6 +707,18 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                       />
                     </div>
                     
+                    {/* Producer - show for both title and outro */}
+                    <div className="flex flex-col gap-1.5">
+                      <Label className="text-slate-400 text-xs">Produced by</Label>
+                      <input
+                        type="text"
+                        value={creditsProducer}
+                        onChange={(e) => setCreditsProducer(e.target.value)}
+                        placeholder="Producer name (optional)"
+                        className="w-full px-3 py-1.5 text-sm bg-slate-900 border border-slate-600 rounded-md text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none"
+                      />
+                    </div>
+                    
                     {/* Writer - only show for outro */}
                     {cinematicType === 'outro' && (
                       <div className="flex flex-col gap-1.5">
@@ -716,20 +728,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                           value={creditsWriter}
                           onChange={(e) => setCreditsWriter(e.target.value)}
                           placeholder="Writer name (optional)"
-                          className="w-full px-3 py-1.5 text-sm bg-slate-900 border border-slate-600 rounded-md text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none"
-                        />
-                      </div>
-                    )}
-                    
-                    {/* Producer - only show for outro */}
-                    {cinematicType === 'outro' && (
-                      <div className="flex flex-col gap-1.5">
-                        <Label className="text-slate-400 text-xs">Produced by</Label>
-                        <input
-                          type="text"
-                          value={creditsProducer}
-                          onChange={(e) => setCreditsProducer(e.target.value)}
-                          placeholder="Producer name (optional)"
                           className="w-full px-3 py-1.5 text-sm bg-slate-900 border border-slate-600 rounded-md text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none"
                         />
                       </div>
@@ -783,12 +781,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                     className="h-28 bg-slate-800 border-slate-700 text-white placeholder-slate-500 resize-none text-sm"
                     placeholder="Click Generate to create an AI-optimized prompt based on your script and scene context..."
                   />
-                  <div className="flex items-start gap-2 text-xs text-slate-400">
-                    <Sparkles className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-400" />
-                    <span>
-                      AI analyzes your script, treatment, and scene context to generate optimal cinematic prompts using Gemini 2.5.
-                    </span>
-                  </div>
                 </div>
               </>
             ) : (
