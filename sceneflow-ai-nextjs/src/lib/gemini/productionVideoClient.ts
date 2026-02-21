@@ -106,9 +106,16 @@ function getConfiguredProjectIds(): string[] {
   return projectIds
 }
 
-/** Check if Gemini API fallback is available */
+/** Check if Gemini API fallback is available
+ * NOTE: Gemini API does NOT support video generation models (Veo)
+ * Video generation is ONLY available through Vertex AI
+ * This returns false to prevent attempting the broken fallback
+ */
 function isGeminiFallbackAvailable(): boolean {
-  return !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY)
+  // Gemini API (generativelanguage.googleapis.com) does NOT support Veo video models
+  // Attempting to use it results in 404 errors
+  // Video generation is ONLY available through Vertex AI
+  return false
 }
 
 // ============================================================================
@@ -323,8 +330,7 @@ export async function generateProductionVideo(
   console.log('[Production Video] Starting video generation...')
   console.log('[Production Video] Configured regions:', getConfiguredRegions())
   console.log('[Production Video] Configured projects:', getConfiguredProjectIds().length)
-  console.log('[Production Video] Gemini fallback available:', isGeminiFallbackAvailable())
-  console.log('[Production Video] Use Gemini as primary:', useGeminiAsPrimary())
+  console.log('[Production Video] Note: Gemini API does not support video - Vertex AI only')
   
   // If forcing Gemini, skip Vertex AI
   if (forceProvider === 'gemini') {
