@@ -291,13 +291,17 @@ export function getEndpointStatus(): Record<string, Record<string, { available: 
 
 /**
  * Check if Gemini should be used as the primary video generation provider.
- * This is useful when Vertex AI's stricter content classifiers cause issues
- * with creative/cinematic prompts that work fine in Gemini Chat.
  * 
- * Set USE_GEMINI_PRIMARY=true to use Gemini API by default.
+ * Gemini API is now the DEFAULT because:
+ * 1. More permissive content classifier (consumer vs enterprise)
+ * 2. Supports video extension (EXT mode) with sourceVideo parameter
+ * 3. Better for creative/cinematic prompts
+ * 
+ * Set USE_GEMINI_PRIMARY=false to use Vertex AI instead.
  */
 function useGeminiAsPrimary(): boolean {
-  return process.env.USE_GEMINI_PRIMARY === 'true'
+  // Default to Gemini API unless explicitly disabled
+  return process.env.USE_GEMINI_PRIMARY !== 'false'
 }
 
 /**

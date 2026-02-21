@@ -306,7 +306,13 @@ export async function POST(
       }
       
       // Trigger video generation using Production Video Client
-      // Automatically uses Vertex AI with multi-region failover, falls back to Gemini API
+      // IMPORTANT: For EXT mode with sourceVideo, we MUST use Gemini API
+      // Vertex AI does NOT support the video extension parameter - only Gemini API does
+      if (method === 'EXT' && videoOptions.sourceVideo) {
+        console.log('[Segment Asset Generation] EXT mode with sourceVideo - forcing Gemini API (Vertex AI does not support video extension)')
+        videoOptions.forceProvider = 'gemini'
+      }
+      
       console.log('[Segment Asset Generation] Using Production Video Client for Veo 3.1')
       console.log('[Segment Asset Generation] Endpoint status:', JSON.stringify(getEndpointStatus()))
       const veoResult = await generateProductionVideo(enhancedPrompt, videoOptions)
