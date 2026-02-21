@@ -770,6 +770,15 @@ function ScenePreviewPlayer({
             }
           }
           
+          // Convert hex color to rgba with opacity
+          const hexToRgba = (hex: string, opacity: number) => {
+            const cleanHex = hex.replace('#', '')
+            const r = parseInt(cleanHex.substring(0, 2), 16)
+            const g = parseInt(cleanHex.substring(2, 4), 16)
+            const b = parseInt(cleanHex.substring(4, 6), 16)
+            return `rgba(${r}, ${g}, ${b}, ${opacity})`
+          }
+          
           return (
             <div
               key={overlay.id}
@@ -779,8 +788,8 @@ function ScenePreviewPlayer({
                 fontSize: `${overlay.style.fontSize}vh`,
                 fontWeight: overlay.style.fontWeight,
                 color: overlay.style.color,
-                backgroundColor: overlay.style.backgroundColor 
-                  ? `${overlay.style.backgroundColor}${Math.round((overlay.style.backgroundOpacity || 1) * 255).toString(16).padStart(2, '0')}`
+                backgroundColor: overlay.style.backgroundColor && (overlay.style.backgroundOpacity ?? 0) > 0
+                  ? hexToRgba(overlay.style.backgroundColor, overlay.style.backgroundOpacity ?? 0.7)
                   : undefined,
                 padding: overlay.style.padding ? `${overlay.style.padding}px` : undefined,
                 textShadow: overlay.style.textShadow 
@@ -788,6 +797,7 @@ function ScenePreviewPlayer({
                   : undefined,
                 zIndex: 10,
                 pointerEvents: 'none',
+                borderRadius: overlay.style.padding ? '4px' : undefined,
               }}
               className="transition-opacity duration-300"
             >
@@ -1919,6 +1929,25 @@ export function SceneProductionMixer({
                         />
                       </div>
                       
+                      {/* Font Family */}
+                      <div>
+                        <label className="text-xs text-gray-400 mb-1 block">Font Family</label>
+                        <select
+                          value={editingOverlay.style.fontFamily}
+                          onChange={(e) => updateOverlay({
+                            ...editingOverlay,
+                            style: { ...editingOverlay.style, fontFamily: e.target.value }
+                          })}
+                          className="w-full h-8 px-2 bg-gray-900 border border-gray-600 rounded-md text-white text-xs"
+                        >
+                          <option value="Inter">Inter (Sans)</option>
+                          <option value="Montserrat">Montserrat (Display)</option>
+                          <option value="Roboto">Roboto (Sans)</option>
+                          <option value="Georgia">Georgia (Serif)</option>
+                          <option value="monospace">Monospace</option>
+                        </select>
+                      </div>
+                      
                       {/* Text Style Controls */}
                       <div className="space-y-2">
                         <label className="text-xs text-gray-400 block">Text Style</label>
@@ -2056,6 +2085,48 @@ export function SceneProductionMixer({
                             })}
                             className="h-8 bg-gray-900 border-gray-600 text-white text-sm"
                           />
+                        </div>
+                      </div>
+                      
+                      {/* Animation Controls */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-xs text-gray-400 mb-1 block">Enter Animation</label>
+                          <select
+                            value={editingOverlay.animation?.enter || 'fade'}
+                            onChange={(e) => updateOverlay({
+                              ...editingOverlay,
+                              animation: { 
+                                enter: e.target.value as 'fade' | 'slide-up' | 'slide-left' | 'typewriter' | 'none',
+                                exit: editingOverlay.animation?.exit || 'fade'
+                              }
+                            })}
+                            className="w-full h-8 px-2 bg-gray-900 border border-gray-600 rounded-md text-white text-xs"
+                          >
+                            <option value="none">None</option>
+                            <option value="fade">Fade In</option>
+                            <option value="slide-up">Slide Up</option>
+                            <option value="slide-left">Slide Left</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-400 mb-1 block">Exit Animation</label>
+                          <select
+                            value={editingOverlay.animation?.exit || 'fade'}
+                            onChange={(e) => updateOverlay({
+                              ...editingOverlay,
+                              animation: { 
+                                enter: editingOverlay.animation?.enter || 'fade',
+                                exit: e.target.value as 'fade' | 'slide-down' | 'slide-right' | 'none'
+                              }
+                            })}
+                            className="w-full h-8 px-2 bg-gray-900 border border-gray-600 rounded-md text-white text-xs"
+                          >
+                            <option value="none">None</option>
+                            <option value="fade">Fade Out</option>
+                            <option value="slide-down">Slide Down</option>
+                            <option value="slide-right">Slide Right</option>
+                          </select>
                         </div>
                       </div>
                     </div>

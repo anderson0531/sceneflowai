@@ -1706,7 +1706,8 @@ export function SceneTimelineV2({
       </div>
       
       {/* Hidden audio elements - keyed by ID:URL to force re-mount when URL changes */}
-      {allAudioClips.map(clip => clip.url && (
+      {/* Skip rendering for URLs already known to be stale (404) */}
+      {allAudioClips.map(clip => clip.url && !staleUrls.has(clip.url) && (
         <audio
           key={`${clip.id}:${clip.url}`}
           ref={el => {

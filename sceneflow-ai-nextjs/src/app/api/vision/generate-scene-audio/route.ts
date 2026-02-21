@@ -598,14 +598,32 @@ async function updateSceneAudio(
       },
     },
   })
-  
+
   console.log('[Update Scene Audio] Project updated successfully for language:', language)
   
-  // NOTE: We intentionally do NOT delete old audio blobs synchronously here.
-  // Synchronous deletion causes 404 errors when UI components still reference the old URL.
-  // Orphaned blobs will be cleaned up via scheduled cleanup job or admin action.
-  // See: https://github.com/anderson0531/sceneflowai/issues/audio-404-fix
+  // Delete old audio blob asynchronously after successful regeneration
+  // Fire-and-forget pattern: don't block response, don't fail on error
+  // The UI has already been updated with the new URL, so 404 on old URL is expected
   if (oldAudioUrl && oldAudioUrl !== audioUrl) {
-    console.log('[Update Scene Audio] Old audio URL detected, skipping immediate deletion to prevent 404s:', oldAudioUrl)
+    console.log('[Update Scene Audio] Queuing async deletion of old audio:', oldAudioUrl)
+    
+    // Use setTimeout to ensure this runs after response is sent
+    setTimeout(async () => {
+      try {
+        const deleteResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || ''}/api/blobs/delete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ urls: [oldAudioUrl] }),
+        })
+        if (deleteResponse.ok) {
+          console.log('[Update Scene Audio] Old audio blob deleted successfully:', oldAudioUrl)
+        } else {
+          console.warn('[Update Scene Audio] Failed to delete old audio blob:', oldAudioUrl, deleteResponse.status)
+        }
+      } catch (error) {
+        // Ignore errors - orphaned blobs will be cleaned up by scheduled job
+        console.warn('[Update Scene Audio] Error deleting old audio blob (will be cleaned up later):', error)
+      }
+    }, 100)
   }
 }

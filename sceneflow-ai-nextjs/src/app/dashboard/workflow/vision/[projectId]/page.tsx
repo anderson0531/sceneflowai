@@ -3491,7 +3491,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Debounce the actual cleanup to batch multiple stale URL removals
       // and allow time for regeneration to complete first.
-      // Use 10-second delay to prevent race conditions with audio regeneration.
+      // Use 2-second delay (reduced from 10s) for faster cleanup while still batching.
       if (staleCleanupTimeoutRef.current) {
         clearTimeout(staleCleanupTimeoutRef.current)
       }
