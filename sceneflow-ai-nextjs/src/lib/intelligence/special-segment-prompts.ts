@@ -490,32 +490,15 @@ function buildSpecialSegmentUserPrompt(
   if (filmContext.targetAudience) parts.push(`- Target Audience: ${filmContext.targetAudience}`)
   parts.push('')
   
-  // Credits section - for title and outro sequences
-  // IMPORTANT: Limit text layers to avoid model struggles and content policy flags
-  if (credits && (segmentType === 'title' || segmentType === 'outro')) {
-    parts.push('CREDITS/TEXT TO DISPLAY:')
-    
-    // Build a simplified credits line to avoid multi-layer text issues
-    const creditParts: string[] = []
-    if (credits.title) creditParts.push(`"${credits.title}"`)
-    if (credits.director) creditParts.push(`Directed by ${credits.director}`)
-    if (credits.producer) creditParts.push(`Produced by ${credits.producer}`)
-    
-    parts.push(`- Primary credits line: ${creditParts.join(' • ')}`)
-    if (credits.customText) parts.push(`- Tagline: "${credits.customText}"`)
-    parts.push('')
-    
-    parts.push('TEXT DISPLAY REQUIREMENTS (SIMPLIFIED FOR RELIABLE GENERATION):')
-    parts.push('1. Display the film title as the PRIMARY text element')
-    parts.push('2. Combine director and producer credits into a SINGLE credits line below the title')
-    parts.push('   Format: "Directed by [Name] • Produced by [Name]" on ONE line')
-    if (credits.customText) {
-      parts.push(`3. Show tagline "${credits.customText}" as a separate, smaller text element`)
-    }
-    parts.push('')
-    parts.push('CRITICAL: Keep text layers to a MAXIMUM of 2-3 distinct elements.')
-    parts.push('Avoid complex multi-plane text compositions that may cause generation failures.')
-    parts.push('Use elegant typography with clear hierarchy: Title (largest) → Credits (medium) → Tagline (smallest)')
+  // Title sequence - Focus on visual atmosphere only
+  // Note: Text overlays (credits, titles) should be added via Text Overlay feature in Scene Production Mixer
+  // AI-generated text is unreliable, so we only describe the VISUAL scene without text requirements
+  if (segmentType === 'title' || segmentType === 'outro') {
+    parts.push('TITLE/OUTRO SEQUENCE VISUAL REQUIREMENTS:')
+    parts.push('- Create an atmospheric, cinematic opening/closing visual')
+    parts.push('- Focus on abstract, evocative imagery that sets the mood')
+    parts.push('- Do NOT include any text, titles, or credits in the generated video')
+    parts.push('- Text overlays will be added separately via post-production tools')
     parts.push('')
   }
   
@@ -549,12 +532,12 @@ function buildSpecialSegmentUserPrompt(
   
   // Type-specific instructions
   const typeInstructions: Record<SpecialSegmentType, string> = {
-    title: `Create a title sequence that:
-1. Integrates the film title "${filmContext.title || 'TITLE'}" as text overlay
+    title: `Create a title sequence visual that:
+1. Creates atmospheric, abstract imagery suitable for a title card background
 2. Matches the ${filmContext.genre?.join('/')} genre visual language
 3. Sets the ${filmContext.tone || 'dramatic'} tone immediately
-4. Uses appropriate typography style
-5. Includes subtle camera movement`,
+4. Do NOT include any text - text overlays will be added in post-production
+5. Includes subtle camera movement through the visual elements`,
     
     'match-cut': `Create a match cut that:
 1. Finds visual connection between the scenes described
@@ -574,11 +557,12 @@ function buildSpecialSegmentUserPrompt(
 3. Provides visual breathing room
 4. Adds emotional texture`,
     
-    outro: `Create an outro sequence that:
+    outro: `Create an outro sequence visual that:
 1. Provides visual closure matching the film's ending
-2. Has credits-appropriate composition
-3. Uses subtle movement (fade, drift, or scroll feel)
-4. Maintains the film's established visual language`
+2. Creates atmospheric background suitable for credits overlay (added in post)
+3. Uses subtle movement (fade, drift, or slow motion feel)
+4. Do NOT include any text - credits will be overlaid in post-production
+5. Maintains the film's established visual language`
   }
   
   parts.push(typeInstructions[segmentType])

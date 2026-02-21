@@ -1338,12 +1338,6 @@ export function SceneProductionMixer({
     }
   }, [externalTextOverlays])
   
-  // Update external state when overlays change
-  const handleOverlaysChange = useCallback((newOverlays: TextOverlay[]) => {
-    setTextOverlays(newOverlays)
-    onTextOverlaysChange?.(newOverlays)
-  }, [onTextOverlaysChange])
-  
   // Add a new text overlay
   const addTextOverlay = useCallback((preset: 'title' | 'lower-third' | 'subtitle') => {
     const presetConfig = TEXT_OVERLAY_PRESETS[preset]
@@ -1356,26 +1350,39 @@ export function SceneProductionMixer({
       timing: presetConfig.timing as TextOverlayTiming,
       animation: presetConfig.animation as TextOverlay['animation'],
     }
-    handleOverlaysChange([...textOverlays, newOverlay])
+    // Use functional update for consistency
+    setTextOverlays(prevOverlays => {
+      const newOverlays = [...prevOverlays, newOverlay]
+      onTextOverlaysChange?.(newOverlays)
+      return newOverlays
+    })
     setEditingOverlay(newOverlay)
     setShowOverlayPanel(true)
-  }, [textOverlays, handleOverlaysChange])
+  }, [onTextOverlaysChange])
   
   // Update an existing overlay
   const updateOverlay = useCallback((updatedOverlay: TextOverlay) => {
-    const newOverlays = textOverlays.map(o => o.id === updatedOverlay.id ? updatedOverlay : o)
-    handleOverlaysChange(newOverlays)
+    // Use functional update to avoid stale closure issues during rapid changes
+    setTextOverlays(prevOverlays => {
+      const newOverlays = prevOverlays.map(o => o.id === updatedOverlay.id ? updatedOverlay : o)
+      onTextOverlaysChange?.(newOverlays)
+      return newOverlays
+    })
     setEditingOverlay(updatedOverlay)
-  }, [textOverlays, handleOverlaysChange])
+  }, [onTextOverlaysChange])
   
   // Delete an overlay
   const deleteOverlay = useCallback((overlayId: string) => {
-    const newOverlays = textOverlays.filter(o => o.id !== overlayId)
-    handleOverlaysChange(newOverlays)
+    // Use functional update for consistency
+    setTextOverlays(prevOverlays => {
+      const newOverlays = prevOverlays.filter(o => o.id !== overlayId)
+      onTextOverlaysChange?.(newOverlays)
+      return newOverlays
+    })
     if (editingOverlay?.id === overlayId) {
       setEditingOverlay(null)
     }
-  }, [textOverlays, handleOverlaysChange, editingOverlay])
+  }, [onTextOverlaysChange, editingOverlay])
   
   // === Audio Track Configs ===
   const [audioTracks, setAudioTracks] = useState<MixerAudioTracks>({
