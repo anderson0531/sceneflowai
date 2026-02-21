@@ -495,8 +495,12 @@ export async function POST(
     }
     
     // Handle common error types with user-friendly messages
-    if (errorMessage.includes('Content Safety Filter') || errorMessage.includes('filtered')) {
-      errorMessage = 'Content Safety Filter: The prompt was flagged by safety policies. Try adjusting the prompt to be less dramatic or violent.'
+    if (errorMessage.includes('Content Safety Filter') || 
+        errorMessage.includes('filtered') || 
+        errorMessage.includes('violate') ||
+        errorMessage.includes('usage guidelines')) {
+      statusCode = 422 // Unprocessable Entity - indicates content issue, not server error
+      errorMessage = 'Content Policy Violation: Your prompt was flagged by Google\'s safety filters. This often happens with medical, violent, or graphic terms. Use the "Auto-Fix" button in the editor to rephrase with cinematic alternatives, or try the "AI Rephrase" feature for a complete rewrite.'
     } else if (errorMessage.includes('Invalid JSON payload') || errorMessage.includes('INVALID_ARGUMENT')) {
       errorMessage = 'API Error: Invalid request format. Please try a different generation method.'
     } else if (errorMessage.includes('quota') || errorMessage.includes('RESOURCE_EXHAUSTED')) {

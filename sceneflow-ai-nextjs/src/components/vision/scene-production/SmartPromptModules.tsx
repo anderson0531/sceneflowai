@@ -74,13 +74,13 @@ interface ModuleHeaderProps {
 
 function ModuleHeader({ icon, title, subtitle, badge }: ModuleHeaderProps) {
   return (
-    <div className="flex items-center gap-3 w-full">
-      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-sf-primary/20 to-sf-primary/5 flex items-center justify-center">
+    <div className="flex items-center gap-2.5 w-full">
+      <div className="flex-shrink-0 w-6 h-6 rounded-md bg-sf-surface-light dark:bg-sf-surface-elevated flex items-center justify-center">
         {icon}
       </div>
       <div className="flex-1 text-left">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-sm">{title}</span>
+          <span className="font-medium text-sm text-gray-800 dark:text-gray-200">{title}</span>
           {badge && (
             <span className={cn(
               "text-[9px] px-1.5 py-0.5 rounded font-medium",
@@ -93,7 +93,7 @@ function ModuleHeader({ icon, title, subtitle, badge }: ModuleHeaderProps) {
           )}
         </div>
         {subtitle && (
-          <span className="text-[10px] text-gray-500 dark:text-gray-400">{subtitle}</span>
+          <span className="text-[10px] text-gray-400 dark:text-gray-500">{subtitle}</span>
         )}
       </div>
     </div>
