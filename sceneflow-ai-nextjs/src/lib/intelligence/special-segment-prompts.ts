@@ -328,23 +328,48 @@ export async function generateSpecialSegmentPrompt(
     const options: TextGenerationOptions = {
       model: 'gemini-2.5-flash',
       temperature: 0.8, // Slightly higher for creative prompts
-      maxOutputTokens: 2048, // Increased to prevent truncation of cinematic prompts
+      maxOutputTokens: 4096, // Increased significantly to prevent truncation of cinematic prompts + JSON structure
       responseMimeType: 'application/json',
       systemInstruction: systemPrompt,
       thinkingBudget: 2048, // Medium thinking for creative work
       maxRetries: 2,
-      timeoutMs: 30000 // Increased timeout for longer responses
+      timeoutMs: 45000 // Increased timeout for longer responses
     }
     
     const response = await generateText(userPrompt, options)
     
-    // Parse JSON response
+    // Parse JSON response with truncation recovery
     let parsedResult: any
     try {
       parsedResult = JSON.parse(response.text)
     } catch {
-      // If JSON parse fails, use text as prompt directly
-      parsedResult = { prompt: response.text, confidence: 0.7 }
+      // If JSON parse fails, check if it's a truncation issue
+      console.warn('[SpecialSegmentPrompts] JSON parse failed, attempting truncation recovery')
+      
+      // Try to extract prompt from truncated JSON
+      const promptMatch = response.text.match(/"prompt"\s*:\s*"([^"]+)/)
+      if (promptMatch) {
+        // Complete the truncated prompt with a proper ending
+        let recoveredPrompt = promptMatch[1]
+        // If it doesn't end properly, add a clean ending
+        if (!recoveredPrompt.match(/\.\s*$/)) {
+          recoveredPrompt = recoveredPrompt.replace(/[^.]*$/, '') + ' 4K, photorealistic, cinematic lighting.'
+        }
+        parsedResult = { prompt: recoveredPrompt, confidence: 0.6, reasoning: 'Recovered from truncated response' }
+        console.log('[SpecialSegmentPrompts] Recovered truncated prompt')
+      } else {
+        // Fall back to using text directly
+        parsedResult = { prompt: response.text, confidence: 0.5 }
+      }
+    }
+    
+    // Validate prompt completeness - check if it was truncated
+    const promptText = parsedResult.prompt || response.text
+    const isTruncated = !promptText.match(/[.!?]\s*$/) && !promptText.includes('4K') && !promptText.includes('cinematic')
+    
+    if (isTruncated) {
+      console.warn('[SpecialSegmentPrompts] Detected truncated prompt, adding completion')
+      parsedResult.prompt = promptText.replace(/[^.]*$/, '') + ' 4K, photorealistic, cinematic lighting.'
     }
     
     // Auto-sanitize the generated prompt to avoid Vertex AI content policy rejections
