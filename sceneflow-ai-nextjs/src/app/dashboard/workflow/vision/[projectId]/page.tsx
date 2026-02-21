@@ -2579,12 +2579,55 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     })
                     
                     // Retry generation with sanitized prompt
-                    setTimeout(() => {
-                      handleSegmentGenerate(sceneId, segmentId, mode, {
-                        ...options,
-                        prompt: sanitizedPrompt
-                      })
-                    }, 500)
+                    // Note: We re-call the API directly instead of handleSegmentGenerate to avoid circular deps
+                    toast.loading('Retrying with sanitized prompt...', { id: 'retry-sanitized' })
+                    fetch(`/api/segments/${encodeURIComponent(segmentId)}/generate-asset`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      credentials: 'include',
+                      body: JSON.stringify({
+                        prompt: sanitizedPrompt,
+                        genType: mode,
+                        startFrameUrl: options?.startFrameUrl,
+                        sourceVideoUrl: options?.sourceVideoUrl,
+                        endFrameUrl: options?.endFrameUrl,
+                        referenceImages: options?.referenceImages,
+                        generationMethod: options?.generationMethod,
+                        sceneId,
+                        projectId: project?.id,
+                        negativePrompt: options?.negativePrompt,
+                        duration: options?.duration,
+                        aspectRatio: options?.aspectRatio,
+                        resolution: options?.resolution,
+                        guidePrompt: options?.guidePrompt,
+                      }),
+                    }).then(async (retryResponse) => {
+                      toast.dismiss('retry-sanitized')
+                      if (retryResponse.ok) {
+                        const retryData = await retryResponse.json()
+                        if (retryData.success) {
+                          toast.success('Video generation started with sanitized prompt')
+                          // Update segment status
+                          applySceneProductionUpdate(sceneId, (current) => {
+                            if (!current) return current
+                            const segments = current.segments.map((seg) =>
+                              seg.segmentId === segmentId 
+                                ? { ...seg, status: 'GENERATING' as const, errorMessage: undefined } 
+                                : seg
+                            )
+                            return { ...current, segments }
+                          })
+                        } else {
+                          toast.error(retryData.error || 'Retry failed')
+                        }
+                      } else {
+                        const errorData = await retryResponse.json().catch(() => ({ error: 'Retry failed' }))
+                        toast.error(errorData.error || 'Retry failed')
+                      }
+                    }).catch(() => {
+                      toast.dismiss('retry-sanitized')
+                      toast.error('Retry failed - please try again')
+                    })
                   } else {
                     // Prompt moderator didn't find known trigger words - suggest AI rephrase
                     toast.warning('Could not auto-fix prompt. Try editing manually or use AI Rephrase in the Video Editor.', {
@@ -2600,7 +2643,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         } catch {}
       }
     },
-    [applySceneProductionUpdate, project?.id, sceneProductionState, handleSegmentGenerate]
+    [applySceneProductionUpdate, project?.id, sceneProductionState]
   )
 
   const handleSegmentUpload = useCallback(
