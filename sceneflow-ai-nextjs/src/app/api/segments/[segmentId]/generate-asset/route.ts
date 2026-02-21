@@ -334,6 +334,50 @@ export async function POST(
           240, // 4 minutes max wait
           10   // Poll every 10 seconds
         )
+        
+        // Check if Vertex AI returned a content policy error during polling
+        // If so, retry with Gemini API (more permissive consumer classifier)
+        if (finalResult.status === 'FAILED' && finalResult.provider === 'vertex' && finalResult.error) {
+          const errorLower = finalResult.error.toLowerCase()
+          const isContentPolicyError = 
+            errorLower.includes('usage guidelines') ||
+            errorLower.includes('content policy') ||
+            errorLower.includes('safety') ||
+            errorLower.includes('policy violation') ||
+            errorLower.includes('blocked') ||
+            errorLower.includes('prohibited') ||
+            finalResult.error.includes('Code 3') // Vertex AI content policy error code
+          
+          if (isContentPolicyError) {
+            console.log('[Segment Asset Generation] Vertex AI content policy error, retrying with Gemini API...')
+            console.log('[Segment Asset Generation] Original error:', finalResult.error)
+            
+            // Retry with Gemini API (forceProvider: 'gemini')
+            const geminiResult = await generateProductionVideo(enhancedPrompt, {
+              ...videoOptions,
+              forceProvider: 'gemini'
+            })
+            
+            if (geminiResult.status === 'FAILED') {
+              throw new Error(geminiResult.error || 'Video generation failed with both Vertex AI and Gemini')
+            }
+            
+            // Wait for Gemini completion if needed
+            if (geminiResult.status === 'QUEUED' || geminiResult.status === 'PROCESSING') {
+              console.log('[Segment Asset Generation] Waiting for Gemini video completion...')
+              finalResult = await waitForProductionVideoCompletion(
+                geminiResult.operationName!,
+                'gemini',
+                240,
+                10
+              )
+            } else {
+              finalResult = geminiResult
+            }
+            
+            console.log('[Segment Asset Generation] Gemini fallback result:', finalResult.status)
+          }
+        }
       }
 
       if (finalResult.status !== 'COMPLETED' || !finalResult.videoUrl) {
