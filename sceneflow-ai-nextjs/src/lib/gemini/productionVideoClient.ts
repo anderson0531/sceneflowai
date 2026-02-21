@@ -290,8 +290,25 @@ export function getEndpointStatus(): Record<string, Record<string, { available: 
 // ============================================================================
 
 /**
+ * Check if Gemini should be used as the primary video generation provider.
+ * This is useful when Vertex AI's stricter content classifiers cause issues
+ * with creative/cinematic prompts that work fine in Gemini Chat.
+ * 
+ * Set USE_GEMINI_PRIMARY=true to use Gemini API by default.
+ */
+function useGeminiAsPrimary(): boolean {
+  return process.env.USE_GEMINI_PRIMARY === 'true'
+}
+
+/**
  * Generate video using the production configuration
- * Automatically selects best available region/project and falls back to Gemini API if needed
+ * 
+ * Provider selection order:
+ * 1. If USE_GEMINI_PRIMARY=true: Gemini API first, then Vertex AI fallback
+ * 2. Otherwise: Vertex AI first (multi-region), then Gemini API fallback
+ * 
+ * Gemini API uses the more permissive consumer classifier, which is better
+ * for creative/cinematic content that may trigger Vertex AI's stricter Enterprise classifier.
  */
 export async function generateProductionVideo(
   prompt: string,
@@ -303,13 +320,43 @@ export async function generateProductionVideo(
   console.log('[Production Video] Configured regions:', getConfiguredRegions())
   console.log('[Production Video] Configured projects:', getConfiguredProjectIds().length)
   console.log('[Production Video] Gemini fallback available:', isGeminiFallbackAvailable())
+  console.log('[Production Video] Use Gemini as primary:', useGeminiAsPrimary())
   
   // If forcing Gemini, skip Vertex AI
   if (forceProvider === 'gemini') {
     return generateWithGemini(prompt, videoOptions)
   }
   
-  // Try Vertex AI first
+  // If USE_GEMINI_PRIMARY is true and Gemini is available, use it first
+  // This avoids Vertex AI's stricter content classifier for creative prompts
+  if (useGeminiAsPrimary() && isGeminiFallbackAvailable() && forceProvider !== 'vertex') {
+    console.log('[Production Video] Using Gemini API as primary provider (USE_GEMINI_PRIMARY=true)')
+    const geminiResult = await generateWithGemini(prompt, videoOptions)
+    
+    // If Gemini fails with a non-content-policy error, try Vertex AI
+    if (geminiResult.status === 'FAILED' && geminiResult.error) {
+      const errorLower = geminiResult.error.toLowerCase()
+      const isContentPolicyError = 
+        errorLower.includes('safety') ||
+        errorLower.includes('blocked') ||
+        errorLower.includes('policy')
+      
+      // Only fall back to Vertex for non-content issues (rate limits, etc.)
+      // If it's a content policy error from Gemini too, don't bother trying Vertex (stricter)
+      if (!isContentPolicyError) {
+        console.log('[Production Video] Gemini failed with non-content error, trying Vertex AI')
+        // Continue to Vertex AI below
+      } else {
+        // Content policy error from Gemini - Vertex won't help, return error
+        return geminiResult
+      }
+    } else {
+      // Gemini succeeded or is processing
+      return geminiResult
+    }
+  }
+  
+  // Try Vertex AI first (default) or as fallback when Gemini primary fails
   if (forceProvider !== 'gemini') {
     // Select endpoint
     let selectedEndpoint: SelectedEndpoint | null = null
