@@ -45,12 +45,13 @@ import { SmartPromptControlDeck } from './SmartPromptModules'
 import { compileVideoPrompt } from './videoPromptCompiler'
 import { moderatePrompt, ModerationResult, buildRegenerationSystemPrompt, buildRegenerationUserPrompt } from '@/utils/promptModerator'
 import { ContentPolicyAlert, PolicyFixedBanner } from './ContentPolicyAlert'
+import { extractVideoFrame } from '@/lib/video/clientVideoUtils'
 
 // ============================================
 // Types & Interfaces
 // ============================================
 
-export type VideoEditingTab = 'smart-prompt' | 'extend' | 'interpolate' | 'audio' | 'history'
+export type VideoEditingTab = 'smart-prompt' | 'extend' | 'edit' | 'interpolate' | 'audio' | 'history'
 
 export interface SelectedReference {
   id: string
@@ -339,6 +340,231 @@ function ExtendTab({
           <span className="text-sm font-medium text-green-600 dark:text-green-400">
             Extended: {(currentTakes.find(t => t.veoVideoRef === sourceVideoUrl)?.durationSec || 5) + duration}s
           </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ============================================
+// Edit Video Tab (V2V Workaround via REF)
+// ============================================
+
+interface EditTabProps {
+  segment: SceneSegment
+  editSourceVideoUrl: string
+  setEditSourceVideoUrl: (u: string) => void
+  extractedFrames: string[]
+  setExtractedFrames: (frames: string[]) => void
+  editInstruction: string
+  setEditInstruction: (i: string) => void
+  editNegativePrompt: string
+  setEditNegativePrompt: (n: string) => void
+  isExtractingFrames: boolean
+  setIsExtractingFrames: (v: boolean) => void
+  basePrompt: string
+}
+
+function EditTab({
+  segment,
+  editSourceVideoUrl,
+  setEditSourceVideoUrl,
+  extractedFrames,
+  setExtractedFrames,
+  editInstruction,
+  setEditInstruction,
+  editNegativePrompt,
+  setEditNegativePrompt,
+  isExtractingFrames,
+  setIsExtractingFrames,
+  basePrompt
+}: EditTabProps) {
+  // Find takes with video URLs for editing
+  const currentTakes = segment.takes?.filter(t => t.videoUrl) || []
+  const hasEditableVideo = currentTakes.length > 0
+
+  // Extract 3 frames from video (start, middle, end)
+  const handleExtractFrames = async () => {
+    if (!editSourceVideoUrl) {
+      toast.error('Please select a source video first')
+      return
+    }
+
+    setIsExtractingFrames(true)
+    try {
+      // Extract frames at start (0.1s), middle, and near-end
+      const video = document.createElement('video')
+      video.crossOrigin = 'anonymous'
+      video.preload = 'metadata'
+      
+      const duration = await new Promise<number>((resolve, reject) => {
+        video.onloadedmetadata = () => resolve(video.duration)
+        video.onerror = () => reject(new Error('Failed to load video'))
+        video.src = editSourceVideoUrl
+        video.load()
+      })
+
+      const times = [
+        0.1, // Start
+        duration / 2, // Middle
+        Math.max(0, duration - 0.1) // End
+      ]
+
+      const frames = await Promise.all(
+        times.map(time => extractVideoFrame(editSourceVideoUrl, time))
+      )
+
+      setExtractedFrames(frames)
+      toast.success('Extracted 3 reference frames')
+    } catch (error) {
+      console.error('Frame extraction error:', error)
+      toast.error('Failed to extract frames from video')
+    } finally {
+      setIsExtractingFrames(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-start gap-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+        <SlidersHorizontal className="w-5 h-5 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0" />
+        <div>
+          <h4 className="font-medium text-purple-900 dark:text-purple-100">Edit Video (Reference-Based)</h4>
+          <p className="text-sm text-purple-700 dark:text-purple-300 mt-0.5">
+            Extract frames from existing video as references, then regenerate with your edits applied.
+          </p>
+        </div>
+      </div>
+
+      {/* Warning if no editable videos */}
+      {!hasEditableVideo && (
+        <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+          <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="font-medium text-amber-900 dark:text-amber-100">No Videos Available</h4>
+            <p className="text-sm text-amber-700 dark:text-amber-300 mt-0.5">
+              Generate a video first using Smart Prompt, then you can edit it here.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Source Video Selection */}
+      {hasEditableVideo && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Source Video to Edit
+          </label>
+          <Select value={editSourceVideoUrl} onValueChange={(url) => {
+            setEditSourceVideoUrl(url)
+            setExtractedFrames([]) // Clear frames when source changes
+          }}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a video take..." />
+            </SelectTrigger>
+            <SelectContent>
+              {currentTakes.map((take, idx) => (
+                <SelectItem key={take.id} value={take.videoUrl || ''}>
+                  Take {idx + 1} ({take.durationSec || 5}s)
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          {/* Video Preview */}
+          {editSourceVideoUrl && (
+            <div className="mt-2">
+              <video
+                src={editSourceVideoUrl}
+                controls
+                className="w-full max-h-32 rounded-lg bg-black"
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Extract Frames Button */}
+      {editSourceVideoUrl && (
+        <div className="space-y-2">
+          <Button
+            onClick={handleExtractFrames}
+            disabled={isExtractingFrames}
+            className="w-full"
+            variant="outline"
+          >
+            {isExtractingFrames ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Extracting Frames...
+              </>
+            ) : (
+              <>
+                <ImageIcon className="w-4 h-4 mr-2" />
+                Extract 3 Reference Frames
+              </>
+            )}
+          </Button>
+          
+          {/* Extracted Frames Preview */}
+          {extractedFrames.length > 0 && (
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500">Reference Frames (Start, Middle, End)</label>
+              <div className="grid grid-cols-3 gap-2">
+                {extractedFrames.map((frame, idx) => (
+                  <div key={idx} className="relative aspect-video rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                    <img src={frame} alt={`Frame ${idx + 1}`} className="w-full h-full object-cover" />
+                    <div className="absolute bottom-1 left-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded">
+                      {idx === 0 ? 'Start' : idx === 1 ? 'Middle' : 'End'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Edit Instruction */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          Edit Instruction <span className="text-red-500">*</span>
+        </label>
+        <Textarea
+          value={editInstruction}
+          onChange={(e) => setEditInstruction(e.target.value)}
+          placeholder="Describe your edit... e.g., 'Change the sky to a golden sunset', 'Add rain falling', 'Make the lighting more dramatic'"
+          className="min-h-[80px]"
+        />
+        <p className="text-xs text-gray-500">
+          The AI will apply this edit while preserving the visual consistency from the reference frames.
+        </p>
+      </div>
+
+      {/* Negative Prompt for Error Removal */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          Remove from Result (Negative Prompt)
+        </label>
+        <Textarea
+          value={editNegativePrompt}
+          onChange={(e) => setEditNegativePrompt(e.target.value)}
+          placeholder="What to avoid... e.g., 'original blue sky', 'daytime lighting', 'clear weather'"
+          className="min-h-[60px]"
+        />
+        <p className="text-xs text-gray-500">
+          Use this to remove unwanted elements from the original that conflict with your edit.
+        </p>
+      </div>
+
+      {/* Base Prompt (read-only reference) */}
+      {basePrompt && (
+        <div className="space-y-2">
+          <label className="text-xs text-gray-500">Original Scene Prompt (for reference)</label>
+          <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-400 max-h-20 overflow-y-auto">
+            {basePrompt}
+          </div>
         </div>
       )}
     </div>
@@ -869,6 +1095,13 @@ export function VideoEditingDialog({
   // Extend Tab state - stores Gemini Files API reference for video extension
   const [sourceVideoRef, setSourceVideoRef] = useState('')
   
+  // Edit Tab state - V2V workaround via reference frames
+  const [editSourceVideoUrl, setEditSourceVideoUrl] = useState('')
+  const [extractedFrames, setExtractedFrames] = useState<string[]>([])
+  const [editInstruction, setEditInstruction] = useState('')
+  const [editNegativePrompt, setEditNegativePrompt] = useState('')
+  const [isExtractingFrames, setIsExtractingFrames] = useState(false)
+  
   // Smart Prompt state
   const [smartPromptSettings, setSmartPromptSettings] = useState<SmartPromptSettings>(createDefaultSmartPromptSettings())
   const [generalInstruction, setGeneralInstruction] = useState('')
@@ -976,6 +1209,37 @@ export function VideoEditingDialog({
       return
     }
     
+    // Handle EDIT tab - V2V workaround via REF mode with extracted frames
+    if (activeTab === 'edit' && extractedFrames.length === 3 && editInstruction.trim()) {
+      console.log('[Video Editor] Using REF mode for V2V edit workaround')
+      console.log('[Video Editor] Edit instruction:', editInstruction)
+      console.log('[Video Editor] Reference frames:', extractedFrames.length)
+      
+      // Build the edited prompt: prepend edit instruction to base prompt
+      const editedPrompt = `${editInstruction}. ${prompt || segment.generatedPrompt || ''}`.trim()
+      
+      // Combine user's negative prompt with standard anti-artifacts
+      const combinedNegative = editNegativePrompt 
+        ? `${editNegativePrompt}, unnatural motion, morphing artifacts, temporal inconsistency`
+        : 'unnatural motion, morphing artifacts, temporal inconsistency'
+      
+      const data: Parameters<typeof onGenerate>[0] = {
+        method: 'REF',
+        prompt: editedPrompt,
+        negativePrompt: combinedNegative,
+        duration,
+        aspectRatio,
+        resolution,
+        // Pass extracted frames as reference images for visual consistency
+        referenceImages: extractedFrames.map((frame, idx) => ({
+          url: frame,
+          type: 'style' as const // Use 'style' for visual consistency across the video
+        })),
+      }
+      await onGenerate(data)
+      return
+    }
+    
     // Handle SMART-PROMPT tab - Standard T2V generation
     // Compile the smart prompt settings with general instruction prepended
     const baseWithInstruction = generalInstruction 
@@ -1008,9 +1272,13 @@ export function VideoEditingDialog({
       // For extension, need a valid veoVideoRef
       return !!sourceVideoRef
     }
+    if (activeTab === 'edit') {
+      // For edit mode, need 3 extracted frames and an edit instruction
+      return extractedFrames.length === 3 && editInstruction.trim().length > 0
+    }
     // For smart-prompt, need a prompt
     return prompt.trim().length > 0
-  }, [activeTab, prompt, sourceVideoRef])
+  }, [activeTab, prompt, sourceVideoRef, extractedFrames, editInstruction])
 
   // Early return after all hooks if segment is not available
   if (!segment) {
@@ -1033,10 +1301,14 @@ export function VideoEditingDialog({
           <div className="w-1/2 border-r border-gray-200 dark:border-gray-700 flex flex-col min-h-0">
             {/* Tab Navigation */}
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as VideoEditingTab)} className="flex flex-col h-full">
-              <TabsList className="mx-4 mt-4 mb-2 grid grid-cols-2 w-auto">
+              <TabsList className="mx-4 mt-4 mb-2 grid grid-cols-3 w-auto">
                 <TabsTrigger value="smart-prompt" className="gap-1.5">
                   <Wand2 className="w-3.5 h-3.5" />
                   Smart Prompt
+                </TabsTrigger>
+                <TabsTrigger value="edit" className="gap-1.5">
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  Edit Video
                 </TabsTrigger>
                 <TabsTrigger value="extend" className="gap-1.5">
                   <Film className="w-3.5 h-3.5" />
@@ -1093,6 +1365,24 @@ export function VideoEditingDialog({
                     setSourceVideoUrl={setSourceVideoRef}
                     duration={duration}
                     setDuration={setDuration}
+                  />
+                </TabsContent>
+                
+                {/* Edit Video Tab Content */}
+                <TabsContent value="edit" className="mt-0">
+                  <EditTab
+                    segment={segment}
+                    editSourceVideoUrl={editSourceVideoUrl}
+                    setEditSourceVideoUrl={setEditSourceVideoUrl}
+                    extractedFrames={extractedFrames}
+                    setExtractedFrames={setExtractedFrames}
+                    editInstruction={editInstruction}
+                    setEditInstruction={setEditInstruction}
+                    editNegativePrompt={editNegativePrompt}
+                    setEditNegativePrompt={setEditNegativePrompt}
+                    isExtractingFrames={isExtractingFrames}
+                    setIsExtractingFrames={setIsExtractingFrames}
+                    basePrompt={prompt || segment.generatedPrompt || ''}
                   />
                 </TabsContent>
               </div>
