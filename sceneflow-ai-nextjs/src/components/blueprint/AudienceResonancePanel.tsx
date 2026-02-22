@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react'
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Target, 
@@ -90,6 +90,9 @@ export function AudienceResonancePanel({
   // Zustand store for persistence
   const { getAnalysis, setAnalysis: setStoreAnalysis, clearAnalysis: clearStoreAnalysis } = useResonanceStore()
   const cachedState = getAnalysis(treatmentId)
+  
+  // Flag to prevent restore effect from re-initializing state after user reset
+  const wasResetByUser = useRef(false)
   
   // State - initialized from cache if available
   const [intent, setIntentLocal] = useState<AudienceIntent>(
@@ -275,6 +278,13 @@ export function AudienceResonancePanel({
     // 1. We have saved analysis from database
     // 2. We don't have cached state already (localStorage takes priority for fresh session data)
     // 3. The saved analysis has actual data
+    // 4. User hasn't just reset (prevents re-initializing after manual reset)
+    if (wasResetByUser.current) {
+      // User clicked Reset - don't restore from saved analysis
+      console.log('[AudienceResonancePanel] Skipping restore - user reset in progress')
+      return
+    }
+    
     if (savedAnalysis?.analysis && !cachedState?.analysis) {
       console.log('[AudienceResonancePanel] Restoring saved analysis from database')
       
@@ -878,6 +888,9 @@ export function AudienceResonancePanel({
   
   // Manual reset handler for user control
   const handleReset = () => {
+    // Set flag to prevent useEffect from restoring from savedAnalysis
+    wasResetByUser.current = true
+    
     setAnalysisLocal(null)
     setIterationCountLocal(0)
     setIsReadyForProductionLocal(false)
@@ -896,6 +909,11 @@ export function AudienceResonancePanel({
     setTargetProfileLocal(null)
     // Clear store for this treatment
     clearStoreAnalysis(treatmentId)
+    
+    // Clear the flag after a short delay to allow effects to run
+    setTimeout(() => {
+      wasResetByUser.current = false
+    }, 100)
   }
   
   // No treatment available
@@ -1254,6 +1272,7 @@ export function AudienceResonancePanel({
                     onApplyFix={() => applyFix(insight)}
                     isApplying={applyingFix === insight.id}
                     isApplied={appliedFixes.includes(insight.id)}
+                    maxIterationsReached={iterationCount >= MAX_ITERATIONS}
                   />
                 ))}
                 
@@ -1465,7 +1484,8 @@ function InsightCard({
   onToggle,
   onApplyFix,
   isApplying,
-  isApplied
+  isApplied,
+  maxIterationsReached
 }: {
   insight: ResonanceInsight
   expanded: boolean
@@ -1473,6 +1493,7 @@ function InsightCard({
   onApplyFix: () => void
   isApplying: boolean
   isApplied: boolean
+  maxIterationsReached: boolean
 }) {
   const statusConfig = {
     strength: {
@@ -1576,22 +1597,29 @@ function InsightCard({
               
               {/* Fix Button - hidden when applied */}
               {!isApplied && insight.actionable && insight.fixSuggestion && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onApplyFix()
-                  }}
-                  disabled={isApplying}
-                  className="flex items-center gap-2 px-3 py-2 bg-cyan-500/10 text-cyan-400 text-xs font-medium rounded-lg hover:bg-cyan-500/20 transition-colors disabled:opacity-50"
-                >
-                  {isApplying ? (
-                    <RefreshCw className="w-3 h-3 animate-spin" />
-                  ) : (
-                    <Zap className="w-3 h-3" />
-                  )}
-                  Apply Fix
-                  <ArrowRight className="w-3 h-3" />
-                </button>
+                maxIterationsReached ? (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-gray-500/10 text-gray-500 text-xs font-medium rounded-lg cursor-not-allowed">
+                    <ShieldCheck className="w-3 h-3" />
+                    Max iterations reached - Reset to continue
+                  </div>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onApplyFix()
+                    }}
+                    disabled={isApplying}
+                    className="flex items-center gap-2 px-3 py-2 bg-cyan-500/10 text-cyan-400 text-xs font-medium rounded-lg hover:bg-cyan-500/20 transition-colors disabled:opacity-50"
+                  >
+                    {isApplying ? (
+                      <RefreshCw className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Zap className="w-3 h-3" />
+                    )}
+                    Apply Fix
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+                )
               )}
               
               {/* Applied confirmation */}
