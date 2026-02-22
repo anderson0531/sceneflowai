@@ -140,6 +140,19 @@ export async function POST(
     let scene: any = null
     scene = allScenes.find((s: any) => s.id === sceneId || s.sceneId === sceneId)
     
+    // Check for cinematic scene by ID pattern (cinematic-{type}-{timestamp})
+    if (!scene && sceneId.startsWith('cinematic-')) {
+      // Try to find by cinematicType field or by ID prefix
+      const cinematicMatch = sceneId.match(/^cinematic-(title|outro|establishing|broll|matchcut)-/)
+      if (cinematicMatch) {
+        const cinematicType = cinematicMatch[1] === 'matchcut' ? 'match-cut' : cinematicMatch[1]
+        scene = allScenes.find((s: any) => 
+          s.cinematicType === cinematicType || 
+          s.id?.startsWith(`cinematic-${cinematicMatch[1]}`)
+        )
+      }
+    }
+    
     if (!scene && !isNaN(parseInt(sceneId))) {
       const sceneNumber = parseInt(sceneId)
       scene = allScenes.find((s: any) => s.sceneNumber === sceneNumber)
