@@ -131,11 +131,14 @@ export async function POST(
       }
     })
     
+    // Debug logging for cinematic scenes
     console.log('[Scene Segmentation] Found scenes:', allScenes.length)
+    console.log('[Scene Segmentation] Looking for sceneId:', sceneId)
+    console.log('[Scene Segmentation] Scene IDs available:', allScenes.map((s: any) => s.id || s.sceneId || `index-${s.sceneNumber}`))
 
     // Find the scene
     let scene: any = null
-    scene = allScenes.find((s: any) => s.id === sceneId)
+    scene = allScenes.find((s: any) => s.id === sceneId || s.sceneId === sceneId)
     
     if (!scene && !isNaN(parseInt(sceneId))) {
       const sceneNumber = parseInt(sceneId)
@@ -161,8 +164,14 @@ export async function POST(
     
     if (!scene) {
       console.error('[Scene Segmentation] Scene not found. SceneId:', sceneId)
+      console.error('[Scene Segmentation] Available scene IDs:', allScenes.map((s: any) => s.id || s.sceneId))
       return NextResponse.json(
-        { error: 'Scene not found', sceneId, availableScenes: allScenes.length },
+        { 
+          error: 'Scene not found', 
+          sceneId, 
+          availableScenes: allScenes.length,
+          availableIds: allScenes.map((s: any) => s.id || s.sceneId || `scene-${s.sceneNumber}`)
+        },
         { status: 404 }
       )
     }
