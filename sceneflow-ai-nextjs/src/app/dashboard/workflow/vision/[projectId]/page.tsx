@@ -6263,6 +6263,60 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  // Handler for saving edited scene images from ImageEditModal
+  const handleSaveEditedScene = async (sceneIndex: number, newImageUrl: string) => {
+    if (!script?.script?.scenes) return
+    
+    console.log('[handleSaveEditedScene] Saving edited scene:', { sceneIndex, newImageUrl: newImageUrl.substring(0, 80) })
+    
+    const updatedScenes = script.script.scenes.map((s: any, idx: number) => 
+      idx === sceneIndex 
+        ? { ...s, imageUrl: newImageUrl } 
+        : s
+    )
+    
+    // Update script state
+    setScript((prev: any) => ({
+      ...prev,
+      script: {
+        ...prev?.script,
+        scenes: updatedScenes
+      }
+    }))
+    
+    // Persist to database
+    try {
+      const existingMetadata = project?.metadata || {}
+      const existingVisionPhase = existingMetadata.visionPhase || {}
+      
+      await fetch(`/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          metadata: {
+            ...existingMetadata,
+            visionPhase: {
+              ...existingVisionPhase,
+              script: {
+                ...script,
+                script: {
+                  ...script.script,
+                  scenes: updatedScenes
+                }
+              },
+              characters: characters
+            }
+          }
+        })
+      })
+      console.log('[handleSaveEditedScene] Successfully saved to database')
+      try { const { toast } = require('sonner'); toast.success('Scene image updated') } catch {}
+    } catch (saveError) {
+      console.error('[handleSaveEditedScene] Failed to save:', saveError)
+      try { const { toast } = require('sonner'); toast.error('Failed to save edited image') } catch {}
+    }
+  }
+
   const handleAddToReferenceLibrary = async (imageUrl: string, name: string, sceneNumber: number) => {
     // Add the scene frame to the scene references library
     const newReference: VisualReference = {
@@ -9664,6 +9718,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onOpenPromptBuilder={openPromptBuilder}
                             onGenerateScene={handleGenerateScene}
                             onUploadScene={handleUploadScene}
+                            onSaveEditedScene={handleSaveEditedScene}
                             onClose={() => setShowSceneGallery(false)}
                             onAddToSceneLibrary={async (index, imageUrl) => {
                               const scenes = normalizeScenes(script)
