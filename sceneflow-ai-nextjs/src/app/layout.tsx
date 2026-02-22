@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Montserrat, Roboto_Mono, Lora } from 'next/font/google'
 import './globals.css'
 
 import { StoreProvider } from '@/components/providers/StoreProvider'
@@ -14,7 +14,28 @@ import AnimatedProcessingOverlay from '../components/AnimatedProcessingOverlay'
 import { CreditsProvider } from '@/contexts/CreditsContext'
 import { CookieConsent } from '@/components/ui/CookieConsent'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ 
+  subsets: ['latin'],
+  variable: '--font-inter',
+})
+
+const montserrat = Montserrat({ 
+  subsets: ['latin'],
+  variable: '--font-montserrat',
+  weight: ['400', '500', '600', '700', '800', '900'],
+})
+
+const robotoMono = Roboto_Mono({ 
+  subsets: ['latin'],
+  variable: '--font-roboto-mono',
+  weight: ['400', '500', '700'],
+})
+
+const lora = Lora({ 
+  subsets: ['latin'],
+  variable: '--font-lora',
+  weight: ['400', '500', '600', '700'],
+})
 
 export const metadata: Metadata = {
   title: 'SceneFlow AI - AI-Powered Video Creation',
@@ -138,7 +159,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={`${inter.variable} ${montserrat.variable} ${robotoMono.variable} ${lora.variable} ${inter.className}`} suppressHydrationWarning>
         {/* Skip to main content link for accessibility */}
         <a 
           href="#main-content" 

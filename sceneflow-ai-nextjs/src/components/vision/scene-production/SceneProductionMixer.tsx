@@ -779,14 +779,32 @@ function ScenePreviewPlayer({
             return `rgba(${r}, ${g}, ${b}, ${opacity})`
           }
           
+          // Map font family to CSS variable for next/font/google loaded fonts
+          const getFontFamily = (font: string): string => {
+            switch (font) {
+              case 'Inter':
+                return 'var(--font-inter), Inter, system-ui, sans-serif'
+              case 'Montserrat':
+                return 'var(--font-montserrat), Montserrat, system-ui, sans-serif'
+              case 'Roboto':
+                return 'Roboto, var(--font-inter), system-ui, sans-serif'
+              case 'Georgia':
+                return 'var(--font-lora), Georgia, serif'
+              case 'monospace':
+                return 'var(--font-roboto-mono), "Roboto Mono", ui-monospace, monospace'
+              default:
+                return 'var(--font-inter), system-ui, sans-serif'
+            }
+          }
+          
           return (
             <div
               key={overlay.id}
               style={{
                 ...getPositionStyles(),
-                fontFamily: overlay.style.fontFamily,
+                fontFamily: getFontFamily(overlay.style.fontFamily),
                 fontSize: `${overlay.style.fontSize}vh`,
-                fontWeight: overlay.style.fontWeight,
+                fontWeight: overlay.style.fontWeight as number,
                 color: overlay.style.color,
                 backgroundColor: overlay.style.backgroundColor && (overlay.style.backgroundOpacity ?? 0) > 0
                   ? hexToRgba(overlay.style.backgroundColor, overlay.style.backgroundOpacity ?? 0.7)
@@ -798,12 +816,29 @@ function ScenePreviewPlayer({
                 zIndex: 10,
                 pointerEvents: 'none',
                 borderRadius: overlay.style.padding ? '4px' : undefined,
+                // Ensure styles aren't overridden by Tailwind preflight
+                lineHeight: 1.2,
+                letterSpacing: 'normal',
               }}
               className="transition-opacity duration-300"
             >
-              <div>{overlay.text}</div>
+              <span style={{ 
+                color: 'inherit', 
+                fontSize: 'inherit', 
+                fontWeight: 'inherit',
+                fontFamily: 'inherit',
+              }}>
+                {overlay.text}
+              </span>
               {overlay.subtext && (
-                <div style={{ fontSize: '0.75em', opacity: 0.9 }}>{overlay.subtext}</div>
+                <div style={{ 
+                  fontSize: '0.75em', 
+                  opacity: 0.9,
+                  color: 'inherit',
+                  fontFamily: 'inherit',
+                }}>
+                  {overlay.subtext}
+                </div>
               )}
             </div>
           )
