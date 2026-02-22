@@ -219,12 +219,43 @@ export async function PUT(
             }
             
             // Deep merge scenes array - preserve fields like sceneDirection from existing scenes
+            // Use ID-based matching when available, fall back to index-based for legacy scenes
             if (incomingScript.script.scenes && existingScript.script.scenes) {
               const existingScenes = existingScript.script.scenes
               const incomingScenes = incomingScript.script.scenes
               
+              // Create a map of existing scenes by ID for quick lookup
+              const existingScenesById = new Map(
+                existingScenes
+                  .filter((s: any) => s.id || s.sceneId)
+                  .map((s: any) => [s.id || s.sceneId, s])
+              )
+              
               mergedMetadata.visionPhase.script.script.scenes = incomingScenes.map((incomingScene: any, idx: number) => {
-                const existingScene = existingScenes[idx]
+                // For new scenes (like cinematic scenes), just return as-is
+                const incomingId = incomingScene.id || incomingScene.sceneId
+                
+                // If incoming scene has an ID that doesn't exist in existing scenes, it's new
+                if (incomingId && !existingScenesById.has(incomingId)) {
+                  // Check if it's a cinematic scene (starts with 'cinematic-')
+                  if (incomingId.startsWith('cinematic-')) {
+                    console.log('[Projects PUT] Preserving new cinematic scene:', incomingId)
+                    return incomingScene
+                  }
+                }
+                
+                // Try to find existing scene by ID first
+                let existingScene = incomingId ? existingScenesById.get(incomingId) : null
+                
+                // Fall back to index-based matching for legacy scenes without IDs
+                if (!existingScene && idx < existingScenes.length) {
+                  const existingAtIdx = existingScenes[idx]
+                  // Only use index match if existing scene also has no ID
+                  if (!existingAtIdx.id && !existingAtIdx.sceneId) {
+                    existingScene = existingAtIdx
+                  }
+                }
+                
                 if (!existingScene) return incomingScene
                 
                 // Merge scene data, preserving sceneDirection if not explicitly being updated
@@ -239,6 +270,8 @@ export async function PUT(
               console.log('[Projects PUT] Deep merged scenes:', {
                 existingScenesCount: existingScenes.length,
                 incomingScenesCount: incomingScenes.length,
+                mergedScenesCount: mergedMetadata.visionPhase.script.script.scenes.length,
+                cinematicScenes: mergedMetadata.visionPhase.script.script.scenes.filter((s: any) => s.cinematicType).length,
                 mergedScenesWithDirection: mergedMetadata.visionPhase.script.script.scenes.filter((s: any) => !!s.sceneDirection).length
               })
             }
