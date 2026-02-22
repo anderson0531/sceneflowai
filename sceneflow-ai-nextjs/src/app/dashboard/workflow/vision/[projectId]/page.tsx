@@ -53,7 +53,7 @@ const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement> & { size?: numbe
   </svg>
 )
 import Link from 'next/link'
-import ScriptReviewModal from '@/components/vision/ScriptReviewModal'
+import ScriptReviewModal, { type CinematicScenePlan } from '@/components/vision/ScriptReviewModal'
 import { SceneEditorModal } from '@/components/vision/SceneEditorModalV2'
 import { NavigationWarningDialog } from '@/components/workflow/NavigationWarningDialog'
 import { FilmTreatmentReviewModal } from '@/components/vision/FilmTreatmentReviewModal'
@@ -9921,6 +9921,155 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           setReviseScriptInstruction(instruction)
           setShowReviewModal(false)
           toast.success('Opening Script Editor with review recommendations...')
+        }}
+        onCinematicScenesApply={async (cinematicScenes) => {
+          // Convert cinematic scene plans into ParsedScene objects
+          if (!script?.script?.scenes) return
+          
+          const existingScenes = [...script.script.scenes]
+          const newScenes: any[] = []
+          
+          // Process each cinematic scene plan
+          for (const plan of cinematicScenes) {
+            if (plan.type === 'title') {
+              // Title sequence goes at scene 0
+              const creditText = plan.creditLines?.map(c => 
+                c.role ? `${c.role}: ${c.name}` : c.name
+              ).join('\n') || ''
+              
+              newScenes.push({
+                id: `cinematic-title-${Date.now()}`,
+                sceneNumber: 0,
+                heading: 'INT. TITLE SEQUENCE - DAY',
+                location: 'TITLE SEQUENCE',
+                timeOfDay: 'DAY',
+                interior: true,
+                action: `[TITLE SEQUENCE]\n${creditText}\n\n${plan.notes || 'Cinematic title card with bold text overlay.'}`,
+                dialogue: [],
+                characters: [],
+                duration: plan.duration,
+                cinematicType: 'title',
+                creditLines: plan.creditLines
+              })
+            } else if (plan.type === 'outro') {
+              // Outro goes at the end (will be renumbered)
+              const creditText = plan.creditLines?.map(c => 
+                c.role ? `${c.role}: ${c.name}` : c.name
+              ).join('\n') || ''
+              
+              newScenes.push({
+                id: `cinematic-outro-${Date.now()}`,
+                sceneNumber: existingScenes.length + 1,
+                heading: 'INT. CREDITS - DAY',
+                location: 'CREDITS',
+                timeOfDay: 'DAY',
+                interior: true,
+                action: `[OUTRO / CREDITS]\n${creditText}\n\n${plan.notes || 'Professional closing sequence with credits.'}`,
+                dialogue: [],
+                characters: [],
+                duration: plan.duration,
+                cinematicType: 'outro',
+                creditLines: plan.creditLines
+              })
+            } else if (plan.type === 'establishing') {
+              // Establishing shot before the target scene
+              const targetScene = existingScenes[Math.max(0, (plan.targetScene || 1) - 1)]
+              newScenes.push({
+                id: `cinematic-establishing-${Date.now()}`,
+                sceneNumber: (plan.targetScene || 1) - 0.5,
+                heading: `EXT. ${targetScene?.location || 'LOCATION'} - ESTABLISHING - ${targetScene?.timeOfDay || 'DAY'}`,
+                location: targetScene?.location || 'LOCATION',
+                timeOfDay: targetScene?.timeOfDay || 'DAY',
+                interior: false,
+                action: `[ESTABLISHING SHOT]\nWide drone or crane shot establishing the location: ${targetScene?.location || 'the scene'}.\n\n${plan.notes || ''}`.trim(),
+                dialogue: [],
+                characters: [],
+                duration: plan.duration,
+                cinematicType: 'establishing',
+                targetScene: plan.targetScene
+              })
+            } else if (plan.type === 'broll') {
+              // B-Roll inserted within/after the target scene
+              const targetScene = existingScenes[Math.max(0, (plan.targetScene || 1) - 1)]
+              newScenes.push({
+                id: `cinematic-broll-${Date.now()}`,
+                sceneNumber: (plan.targetScene || 1) + 0.1,
+                heading: `INT/EXT. ${targetScene?.location || 'LOCATION'} - B-ROLL - ${targetScene?.timeOfDay || 'DAY'}`,
+                location: targetScene?.location || 'LOCATION',
+                timeOfDay: targetScene?.timeOfDay || 'DAY',
+                interior: targetScene?.interior ?? true,
+                action: `[B-ROLL]\nAtmospheric visual breather. Close-ups of environmental details.\n\n${plan.notes || ''}`.trim(),
+                dialogue: [],
+                characters: [],
+                duration: plan.duration,
+                cinematicType: 'broll',
+                targetScene: plan.targetScene
+              })
+            } else if (plan.type === 'match-cut') {
+              // Match cut bridge after the specified scene
+              const afterScene = existingScenes[Math.max(0, (plan.insertAfterScene || 1) - 1)]
+              const beforeScene = existingScenes[Math.min(existingScenes.length - 1, plan.insertAfterScene || 1)]
+              newScenes.push({
+                id: `cinematic-matchcut-${Date.now()}`,
+                sceneNumber: (plan.insertAfterScene || 1) + 0.5,
+                heading: 'INT/EXT. MATCH CUT TRANSITION',
+                location: 'TRANSITION',
+                timeOfDay: afterScene?.timeOfDay || 'DAY',
+                interior: true,
+                action: `[MATCH CUT BRIDGE]\nCreative visual transition from Scene ${plan.insertAfterScene} to Scene ${(plan.insertAfterScene || 1) + 1}.\n\n${plan.notes || 'Visual match connecting shapes, movements, or colors between scenes.'}`.trim(),
+                dialogue: [],
+                characters: [],
+                duration: plan.duration,
+                cinematicType: 'match-cut',
+                insertAfterScene: plan.insertAfterScene
+              })
+            }
+          }
+          
+          // Merge and sort scenes by sceneNumber
+          const allScenes = [...existingScenes, ...newScenes]
+            .sort((a, b) => a.sceneNumber - b.sceneNumber)
+            .map((scene, idx) => ({
+              ...scene,
+              sceneNumber: idx + 1 // Renumber sequentially
+            }))
+          
+          // Update script state
+          const updatedScript = {
+            ...script,
+            script: {
+              ...script?.script,
+              scenes: allScenes
+            }
+          }
+          setScript(updatedScript)
+          
+          // Persist to database
+          try {
+            const existingMetadata = project?.metadata || {}
+            const existingVisionPhase = existingMetadata.visionPhase || {}
+            
+            await fetch(`/api/projects/${projectId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                metadata: {
+                  ...existingMetadata,
+                  visionPhase: {
+                    ...existingVisionPhase,
+                    script: updatedScript,
+                    cinematicScenes: cinematicScenes // Also store the plans for reference
+                  }
+                }
+              })
+            })
+            
+            toast.success(`Added ${cinematicScenes.length} cinematic scene${cinematicScenes.length > 1 ? 's' : ''} to script`)
+            setShowReviewModal(false)
+          } catch (error) {
+            console.error('[Cinematic] Failed to save cinematic scenes:', error)
+            toast.error('Cinematic scenes added but failed to save to database')
+          }
         }}
       />
 

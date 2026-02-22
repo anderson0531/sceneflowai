@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { X, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Settings2, Check, Square, CheckSquare, BarChart3, MessageSquare, ListChecks, Film, Sparkles, CheckCircle2, Edit, Mic, Eye, FileText, Lightbulb, Info } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { X, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Settings2, Check, Square, CheckSquare, BarChart3, MessageSquare, ListChecks, Film, Sparkles, CheckCircle2, Edit, Mic, Eye, FileText, Lightbulb, Info, Clapperboard, Plus, Trash2, GripVertical } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/Input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { VoiceSelectorDialog } from '@/components/tts/VoiceSelectorDialog'
 import { OptimizeSceneDialog } from '@/components/vision/OptimizeSceneDialog'
@@ -14,6 +15,7 @@ import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { toast } from 'sonner'
 import type { CharacterContext } from '@/lib/voiceRecommendation'
+import { CINEMATIC_ELEMENT_TYPES, type SpecialSegmentType } from '@/components/vision/scene-production/cinematic-elements'
 
 // Common optimization templates for "You Direct" tab
 const SCRIPT_INSTRUCTION_TEMPLATES = [
@@ -333,9 +335,41 @@ interface ScriptReviewModalProps {
       analyzedAt: string
     }
   }>) => void
+  // Callback to add cinematic scenes to the script
+  onCinematicScenesApply?: (scenes: CinematicScenePlan[]) => void
+  // Existing cinematic scenes planned
+  existingCinematicScenes?: CinematicScenePlan[]
 }
 
-type ReviewTab = 'overview' | 'analysis' | 'recommendations' | 'you-direct'
+// ============================================================================
+// Cinematic Scene Planning Types
+// ============================================================================
+
+/** Credit line for Title/Outro sequences */
+export interface CreditLine {
+  id: string
+  role?: string // e.g., "Director", "Producer", "Written by" (optional for plain text)
+  name: string  // e.g., "John Smith"
+  isPrimary?: boolean // Primary credits get solo segments, secondary are 2-per-segment
+}
+
+/** Planned cinematic scene (Title, Outro, Establishing, etc.) */
+export interface CinematicScenePlan {
+  id: string
+  type: SpecialSegmentType
+  /** For Title/Outro: credit lines to display */
+  creditLines?: CreditLine[]
+  /** For Match Cut: which scene transition (e.g., "after scene 3") */
+  insertAfterScene?: number
+  /** For Establishing/B-Roll: target scene number */
+  targetScene?: number
+  /** Custom notes or context */
+  notes?: string
+  /** Estimated duration in seconds */
+  duration: number
+}
+
+type ReviewTab = 'overview' | 'analysis' | 'recommendations' | 'cinematic' | 'you-direct'
 
 export default function ScriptReviewModal({
   isOpen,
@@ -351,10 +385,17 @@ export default function ScriptReviewModal({
   onScriptOptimized,
   scoreOutdated,
   reviewHistory = [],
-  onSceneAnalysisComplete
+  onSceneAnalysisComplete,
+  onCinematicScenesApply,
+  existingCinematicScenes = []
 }: ScriptReviewModalProps) {
   const [voices, setVoices] = useState<Voice[]>([])
   const [activeTab, setActiveTab] = useState<ReviewTab>('overview')
+  
+  // Cinematic scene planning state
+  const [cinematicScenes, setCinematicScenes] = useState<CinematicScenePlan[]>(existingCinematicScenes)
+  const [editingCreditId, setEditingCreditId] = useState<string | null>(null)
+  
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -1282,7 +1323,8 @@ export default function ScriptReviewModal({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Target className="w-6 h-6 text-purple-500" />
-              <h2 className="text-xl font-semibold">Audience Resonance Analysis</h2>
+              <h2 className="text-xl font-semibold">Script Editor</h2>
+              <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">Analysis & Planning</span>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -1414,7 +1456,7 @@ export default function ScriptReviewModal({
                     </Button>
                   </div>
                 )}
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                   <TabsTrigger 
                     value="overview" 
                     className="flex items-center gap-1.5 text-xs sm:text-sm"
@@ -1441,6 +1483,19 @@ export default function ScriptReviewModal({
                     {review.recommendations.length > 0 && (
                       <Badge variant="secondary" className="ml-1 text-xs h-5 px-1.5 hidden sm:flex">
                         {review.recommendations.length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="cinematic" 
+                    className="flex items-center gap-1.5 text-xs sm:text-sm"
+                    title="Plan cinematic elements: titles, credits, establishing shots"
+                  >
+                    <Clapperboard className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Cinematic</span>
+                    {cinematicScenes.length > 0 && (
+                      <Badge variant="secondary" className="ml-1 text-xs h-5 px-1.5 hidden sm:flex bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                        {cinematicScenes.length}
                       </Badge>
                     )}
                   </TabsTrigger>
@@ -1805,6 +1860,295 @@ export default function ScriptReviewModal({
                   </div>
                 </CardContent>
                     </Card>
+                  </div>
+                )}
+
+                {/* Cinematic Elements Tab */}
+                {activeTab === 'cinematic' && (
+                  <div className="space-y-6">
+                    {/* Introduction */}
+                    <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <Clapperboard className="w-5 h-5 text-purple-600 dark:text-purple-400 mt-0.5" />
+                        <div>
+                          <h3 className="font-medium text-purple-900 dark:text-purple-100">Cinematic Elements</h3>
+                          <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
+                            Add professional polish to your video with title sequences, establishing shots, and credits.
+                            These will be created as dedicated scenes in your script.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Add Element Buttons */}
+                    <div>
+                      <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                        <Plus className="w-4 h-4 text-purple-600" />
+                        Add Cinematic Element
+                      </h3>
+                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                        {CINEMATIC_ELEMENT_TYPES.map((element) => {
+                          const Icon = element.icon
+                          const isDisabled = (element.id === 'title' || element.id === 'outro') && 
+                            cinematicScenes.some(s => s.type === element.id)
+                          return (
+                            <Button
+                              key={element.id}
+                              variant="outline"
+                              size="sm"
+                              disabled={isDisabled}
+                              onClick={() => {
+                                const newScene: CinematicScenePlan = {
+                                  id: `cinematic-${Date.now()}`,
+                                  type: element.id,
+                                  duration: element.defaultDuration,
+                                  creditLines: (element.id === 'title' || element.id === 'outro') 
+                                    ? [{ id: `credit-${Date.now()}`, name: '', isPrimary: true }] 
+                                    : undefined,
+                                  insertAfterScene: element.id === 'match-cut' ? 1 : undefined,
+                                  targetScene: element.id === 'establishing' || element.id === 'broll' ? 1 : undefined,
+                                }
+                                setCinematicScenes(prev => [...prev, newScene])
+                              }}
+                              className={`h-auto py-3 px-3 justify-start text-left ${
+                                isDisabled ? 'opacity-50' : 'hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300'
+                              }`}
+                              title={isDisabled ? `${element.name} already added` : element.description}
+                            >
+                              <div className="flex items-start gap-2 w-full">
+                                <Icon className="w-4 h-4 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0" />
+                                <div className="text-left min-w-0">
+                                  <div className="font-medium text-xs truncate">{element.name}</div>
+                                  <div className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{element.shortDescription}</div>
+                                </div>
+                              </div>
+                            </Button>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Planned Cinematic Scenes */}
+                    {cinematicScenes.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                          <Film className="w-4 h-4 text-blue-600" />
+                          Planned Scenes ({cinematicScenes.length})
+                        </h3>
+                        <div className="space-y-3">
+                          {cinematicScenes.map((scene) => {
+                            const config = CINEMATIC_ELEMENT_TYPES.find(t => t.id === scene.type)
+                            if (!config) return null
+                            const Icon = config.icon
+                            
+                            return (
+                              <Card key={scene.id} className="border-purple-200 dark:border-purple-800">
+                                <CardContent className="p-4">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                                      <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                                        <Icon className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-medium text-sm">{config.name}</span>
+                                          <Badge variant="outline" className="text-xs">
+                                            {scene.duration}s
+                                          </Badge>
+                                        </div>
+                                        
+                                        {/* Title/Outro: Credit Lines Editor */}
+                                        {(scene.type === 'title' || scene.type === 'outro') && scene.creditLines && (
+                                          <div className="mt-3 space-y-2">
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                              {scene.type === 'title' ? 'Opening Credits' : 'Closing Credits'}
+                                              <span className="text-gray-400 dark:text-gray-500 ml-1">
+                                                (Primary credits = solo segment, others = 2 per segment)
+                                              </span>
+                                            </div>
+                                            {scene.creditLines.map((credit, idx) => (
+                                              <div key={credit.id} className="flex items-center gap-2">
+                                                <GripVertical className="w-3 h-3 text-gray-400 cursor-grab" />
+                                                <Input
+                                                  value={credit.role || ''}
+                                                  onChange={(e) => {
+                                                    setCinematicScenes(prev => prev.map(s => 
+                                                      s.id === scene.id 
+                                                        ? { ...s, creditLines: s.creditLines?.map(c => 
+                                                            c.id === credit.id ? { ...c, role: e.target.value } : c
+                                                          )}
+                                                        : s
+                                                    ))
+                                                  }}
+                                                  placeholder="Role (optional)"
+                                                  className="w-28 h-8 text-xs"
+                                                />
+                                                <Input
+                                                  value={credit.name}
+                                                  onChange={(e) => {
+                                                    setCinematicScenes(prev => prev.map(s => 
+                                                      s.id === scene.id 
+                                                        ? { ...s, creditLines: s.creditLines?.map(c => 
+                                                            c.id === credit.id ? { ...c, name: e.target.value } : c
+                                                          )}
+                                                        : s
+                                                    ))
+                                                  }}
+                                                  placeholder="Name"
+                                                  className="flex-1 h-8 text-xs"
+                                                />
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  onClick={() => {
+                                                    setCinematicScenes(prev => prev.map(s => 
+                                                      s.id === scene.id 
+                                                        ? { ...s, creditLines: s.creditLines?.map(c => 
+                                                            c.id === credit.id ? { ...c, isPrimary: !c.isPrimary } : c
+                                                          )}
+                                                        : s
+                                                    ))
+                                                  }}
+                                                  className={`h-8 px-2 ${credit.isPrimary ? 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20' : 'text-gray-400'}`}
+                                                  title={credit.isPrimary ? 'Primary (solo segment)' : 'Secondary (paired)'}
+                                                >
+                                                  <Star className={`w-3 h-3 ${credit.isPrimary ? 'fill-current' : ''}`} />
+                                                </Button>
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  onClick={() => {
+                                                    setCinematicScenes(prev => prev.map(s => 
+                                                      s.id === scene.id 
+                                                        ? { ...s, creditLines: s.creditLines?.filter(c => c.id !== credit.id) }
+                                                        : s
+                                                    ))
+                                                  }}
+                                                  className="h-8 px-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                >
+                                                  <Trash2 className="w-3 h-3" />
+                                                </Button>
+                                              </div>
+                                            ))}
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() => {
+                                                setCinematicScenes(prev => prev.map(s => 
+                                                  s.id === scene.id 
+                                                    ? { ...s, creditLines: [...(s.creditLines || []), { id: `credit-${Date.now()}`, name: '', isPrimary: false }] }
+                                                    : s
+                                                ))
+                                              }}
+                                              className="h-7 text-xs mt-1"
+                                            >
+                                              <Plus className="w-3 h-3 mr-1" />
+                                              Add Credit Line
+                                            </Button>
+                                          </div>
+                                        )}
+
+                                        {/* Match Cut: Scene Selector */}
+                                        {scene.type === 'match-cut' && (
+                                          <div className="mt-3 flex items-center gap-2">
+                                            <span className="text-xs text-gray-500">Insert after scene:</span>
+                                            <Input
+                                              type="number"
+                                              min={1}
+                                              value={scene.insertAfterScene || 1}
+                                              onChange={(e) => {
+                                                setCinematicScenes(prev => prev.map(s => 
+                                                  s.id === scene.id 
+                                                    ? { ...s, insertAfterScene: parseInt(e.target.value) || 1 }
+                                                    : s
+                                                ))
+                                              }}
+                                              className="w-16 h-7 text-xs"
+                                            />
+                                          </div>
+                                        )}
+
+                                        {/* Establishing/B-Roll: Target Scene */}
+                                        {(scene.type === 'establishing' || scene.type === 'broll') && (
+                                          <div className="mt-3 flex items-center gap-2">
+                                            <span className="text-xs text-gray-500">For scene:</span>
+                                            <Input
+                                              type="number"
+                                              min={1}
+                                              value={scene.targetScene || 1}
+                                              onChange={(e) => {
+                                                setCinematicScenes(prev => prev.map(s => 
+                                                  s.id === scene.id 
+                                                    ? { ...s, targetScene: parseInt(e.target.value) || 1 }
+                                                    : s
+                                                ))
+                                              }}
+                                              className="w-16 h-7 text-xs"
+                                            />
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                    
+                                    {/* Remove Button */}
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setCinematicScenes(prev => prev.filter(s => s.id !== scene.id))
+                                      }}
+                                      className="h-8 px-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Apply Button */}
+                    {cinematicScenes.length > 0 && onCinematicScenesApply && (
+                      <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCinematicScenes([])}
+                        >
+                          Clear All
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            // Validate credit lines have names
+                            const invalidScenes = cinematicScenes.filter(s => 
+                              s.creditLines?.some(c => !c.name.trim())
+                            )
+                            if (invalidScenes.length > 0) {
+                              toast.error('Please fill in all credit line names')
+                              return
+                            }
+                            onCinematicScenesApply(cinematicScenes)
+                            toast.success(`${cinematicScenes.length} cinematic scene${cinematicScenes.length > 1 ? 's' : ''} will be added to your script`)
+                          }}
+                          className="bg-purple-600 hover:bg-purple-500 text-white px-6"
+                        >
+                          <Clapperboard className="w-4 h-4 mr-2" />
+                          Apply {cinematicScenes.length} Scene{cinematicScenes.length !== 1 ? 's' : ''} to Script
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Empty State */}
+                    {cinematicScenes.length === 0 && (
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <Clapperboard className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                        <p className="text-sm">No cinematic elements planned yet</p>
+                        <p className="text-xs mt-1">Add a title sequence, establishing shots, or credits above</p>
+                      </div>
+                    )}
                   </div>
                 )}
 
