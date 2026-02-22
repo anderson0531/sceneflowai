@@ -267,9 +267,35 @@ export async function PUT(
                 }
               })
               
+              // CRITICAL FIX: Also preserve existing scenes that are NOT in the incoming payload
+              // This prevents cinematic scenes (or any scenes with IDs) from being deleted by stale client state
+              const incomingScenesById = new Map(
+                incomingScenes
+                  .filter((s: any) => s.id || s.sceneId)
+                  .map((s: any) => [s.id || s.sceneId, s])
+              )
+              
+              const preservedScenes = existingScenes.filter((existingScene: any) => {
+                const existingId = existingScene.id || existingScene.sceneId
+                // Preserve scenes with IDs that aren't in the incoming payload
+                return existingId && !incomingScenesById.has(existingId)
+              })
+              
+              if (preservedScenes.length > 0) {
+                console.log('[Projects PUT] Preserving existing scenes not in incoming payload:', 
+                  preservedScenes.map((s: any) => s.id || s.sceneId || `scene-${s.sceneNumber}`))
+                
+                // Append preserved scenes and re-sort by sceneNumber
+                mergedMetadata.visionPhase.script.script.scenes = [
+                  ...mergedMetadata.visionPhase.script.script.scenes,
+                  ...preservedScenes
+                ].sort((a: any, b: any) => (a.sceneNumber || 0) - (b.sceneNumber || 0))
+              }
+              
               console.log('[Projects PUT] Deep merged scenes:', {
                 existingScenesCount: existingScenes.length,
                 incomingScenesCount: incomingScenes.length,
+                preservedScenesCount: preservedScenes.length,
                 mergedScenesCount: mergedMetadata.visionPhase.script.script.scenes.length,
                 cinematicScenes: mergedMetadata.visionPhase.script.script.scenes.filter((s: any) => s.cinematicType).length,
                 mergedScenesWithDirection: mergedMetadata.visionPhase.script.script.scenes.filter((s: any) => !!s.sceneDirection).length
