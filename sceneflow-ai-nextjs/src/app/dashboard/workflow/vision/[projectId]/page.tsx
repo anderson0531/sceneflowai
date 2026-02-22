@@ -596,6 +596,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [mounted, setMounted] = useState(false)
   const [project, setProject] = useState<Project | null>(null)
   const [script, setScript] = useState<any>(null)
+  // Series/Episode context for subtitle display
+  const [seriesInfo, setSeriesInfo] = useState<{ seriesTitle: string; episodeNumber: number } | null>(null)
   // Timestamp updated when script is edited - used to clear audio caches in ScreeningRoom
   const [scriptEditedAt, setScriptEditedAt] = useState<number>(Date.now())
   const [characters, setCharacters] = useState<any[]>([])
@@ -5060,6 +5062,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const proj = data.project || data
       setProject(proj)
       
+      // Fetch series info if project belongs to a series
+      if (proj.series_id) {
+        try {
+          const seriesRes = await fetch(`/api/series/${proj.series_id}`)
+          if (seriesRes.ok) {
+            const seriesData = await seriesRes.json()
+            setSeriesInfo({
+              seriesTitle: seriesData.series?.title || seriesData.title || 'Untitled Series',
+              episodeNumber: proj.episode_number || 1
+            })
+          }
+        } catch (seriesError) {
+          console.error('[Load Series] Failed to load series info:', seriesError)
+        }
+      } else {
+        setSeriesInfo(null)
+      }
+      
       // DEBUG: Log loaded scene assets from BOTH locations
       const loadedScenesFromVisionPhase = proj.metadata?.visionPhase?.scenes || []
       const loadedScenesFromScript = proj.metadata?.visionPhase?.script?.script?.scenes || []
@@ -9413,6 +9433,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 projectTitle={projectTitle}
                 projectLogline={projectLogline}
                 projectDuration={projectDuration || undefined}
+                seriesInfo={seriesInfo}
                 timelineSlot={
                   <SceneSelector
                     scenes={(script?.script?.scenes || []).map((scene: any, idx: number, allScenes: any[]) => {
