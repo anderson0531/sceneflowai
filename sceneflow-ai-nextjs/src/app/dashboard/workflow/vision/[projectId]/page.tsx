@@ -10070,7 +10070,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             const existingMetadata = project?.metadata || {}
             const existingVisionPhase = existingMetadata.visionPhase || {}
             
-            await fetch(`/api/projects/${projectId}`, {
+            console.log('[Cinematic] Saving cinematic scenes:', {
+              totalScenes: allScenes.length,
+              cinematicSceneIds: newScenes.map(s => s.id),
+              cinematicTypes: newScenes.map(s => s.cinematicType)
+            })
+            
+            const response = await fetch(`/api/projects/${projectId}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -10083,6 +10089,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   }
                 }
               })
+            })
+            
+            if (!response.ok) {
+              const errorText = await response.text()
+              console.error('[Cinematic] Failed to save - server error:', response.status, errorText)
+              throw new Error(`Server error: ${response.status}`)
+            }
+            
+            const result = await response.json()
+            console.log('[Cinematic] Save successful:', {
+              savedScenes: result.project?.metadata?.visionPhase?.script?.script?.scenes?.length,
+              cinematicInResult: result.project?.metadata?.visionPhase?.script?.script?.scenes?.filter((s: any) => s.cinematicType)?.length
             })
             
             toast.success(`Added ${cinematicScenes.length} cinematic scene${cinematicScenes.length > 1 ? 's' : ''} to script`)
