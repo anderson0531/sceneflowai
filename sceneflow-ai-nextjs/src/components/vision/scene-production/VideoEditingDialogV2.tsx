@@ -264,7 +264,7 @@ function ExtendTab({
   const currentSegmentIndex = allSegments.findIndex(s => s.segmentId === segment.segmentId)
   
   // Get previous segment with its takes
-  const previousSegmentInfo: PreviousSegmentInfo | null = useMemo(() => {
+  const previousSegmentInfo: PreviousSegmentInfo | null = React.useMemo(() => {
     if (currentSegmentIndex <= 0) return null
     const prevSeg = allSegments[currentSegmentIndex - 1]
     const successfulTakes = prevSeg.takes?.filter(t => t.status === 'done') || []
@@ -277,7 +277,7 @@ function ExtendTab({
   }, [allSegments, currentSegmentIndex])
 
   // Determine source frame based on selection
-  const sourceFrameInfo = useMemo(() => {
+  const sourceFrameInfo = React.useMemo(() => {
     if (!sourceVideoUrl || sourceVideoUrl === 'auto') {
       // Auto mode: use the best available source
       if (previousSegmentInfo && previousSegmentInfo.takes.length > 0) {
