@@ -934,13 +934,52 @@ export function SceneProductionManager({
     await onGenerate(sceneId, selectedSegment.segmentId, mode, options)
   }
 
-  // Get previous segment's last frame for continuity
+  // Get previous segment's last frame for continuity (prefer actual video last frame over pre-generated keyframe)
   const previousSegmentLastFrame = useMemo(() => {
     if (!selectedSegment || segments.length === 0) return null
     const currentIndex = segments.findIndex(s => s.segmentId === selectedSegment.segmentId)
     if (currentIndex <= 0) return null
     const previousSegment = segments[currentIndex - 1]
+    
+    // Priority 1: Get the latest successful take's actual last frame (extracted from video)
+    const successfulTakes = previousSegment.takes?.filter(t => 
+      t.status === 'done' && (t.lastFrameUrl || t.videoUrl || t.assetUrl)
+    ) || []
+    
+    if (successfulTakes.length > 0) {
+      // Use the most recent successful take
+      const latestTake = successfulTakes[successfulTakes.length - 1]
+      // Prefer the actual extracted lastFrameUrl, then thumbnailUrl as fallback
+      if (latestTake.lastFrameUrl) {
+        return latestTake.lastFrameUrl
+      }
+      if (latestTake.thumbnailUrl) {
+        return latestTake.thumbnailUrl
+      }
+    }
+    
+    // Priority 2: Fallback to pre-generated end keyframe
     return previousSegment.references.endFrameUrl || null
+  }, [selectedSegment, segments])
+
+  // Get previous segment info for UI display
+  const previousSegmentInfo = useMemo(() => {
+    if (!selectedSegment || segments.length === 0) return null
+    const currentIndex = segments.findIndex(s => s.segmentId === selectedSegment.segmentId)
+    if (currentIndex <= 0) return null
+    const previousSegment = segments[currentIndex - 1]
+    const successfulTakes = previousSegment.takes?.filter(t => t.status === 'done') || []
+    const latestTake = successfulTakes.length > 0 ? successfulTakes[successfulTakes.length - 1] : null
+    
+    return {
+      segmentNumber: currentIndex, // 1-indexed (previous segment)
+      segmentId: previousSegment.segmentId,
+      hasTakes: successfulTakes.length > 0,
+      takeCount: successfulTakes.length,
+      latestTake,
+      isFromVideo: !!(latestTake?.lastFrameUrl || latestTake?.thumbnailUrl),
+      isFromKeyframe: !latestTake && !!previousSegment.references.endFrameUrl
+    }
   }, [selectedSegment, segments])
 
   const handleUpload = async (file: File) => {

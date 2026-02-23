@@ -222,6 +222,13 @@ function SmartPromptTab({
 // Scene Extension Tab
 // ============================================
 
+interface PreviousSegmentInfo {
+  segmentNumber: number
+  segmentId: string
+  takes: SceneSegmentTake[]
+  endFrameUrl?: string | null
+}
+
 interface ExtendTabProps {
   segment: SceneSegment
   allSegments?: SceneSegment[]
@@ -253,100 +260,196 @@ function ExtendTab({
   creditLine2,
   setCreditLine2,
 }: ExtendTabProps) {
-  // Find takes with video URL or lastFrameUrl for I2V extension
-  const currentTakes = segment.takes?.filter(t => t.videoUrl || t.lastFrameUrl || t.thumbnailUrl) || []
-  const hasExtensibleVideo = currentTakes.length > 0 || !!previousSegmentLastFrame
+  // Find the current segment index and get previous segment info
+  const currentSegmentIndex = allSegments.findIndex(s => s.segmentId === segment.segmentId)
+  
+  // Get previous segment with its takes
+  const previousSegmentInfo: PreviousSegmentInfo | null = useMemo(() => {
+    if (currentSegmentIndex <= 0) return null
+    const prevSeg = allSegments[currentSegmentIndex - 1]
+    const successfulTakes = prevSeg.takes?.filter(t => t.status === 'done') || []
+    return {
+      segmentNumber: currentSegmentIndex, // 1-indexed display
+      segmentId: prevSeg.segmentId,
+      takes: successfulTakes,
+      endFrameUrl: prevSeg.references?.endFrameUrl
+    }
+  }, [allSegments, currentSegmentIndex])
 
-  // Get selected take's end frame URL
-  const selectedTake = currentTakes.find(t => t.id === sourceVideoUrl || t.videoUrl === sourceVideoUrl)
-  const selectedEndFrameUrl = selectedTake?.lastFrameUrl || selectedTake?.thumbnailUrl || previousSegmentLastFrame
+  // Determine source frame based on selection
+  const sourceFrameInfo = useMemo(() => {
+    if (!sourceVideoUrl || sourceVideoUrl === 'auto') {
+      // Auto mode: use the best available source
+      if (previousSegmentInfo && previousSegmentInfo.takes.length > 0) {
+        const latestTake = previousSegmentInfo.takes[previousSegmentInfo.takes.length - 1]
+        return {
+          type: 'previous-video' as const,
+          url: latestTake.lastFrameUrl || latestTake.thumbnailUrl || previousSegmentLastFrame,
+          label: `Segment ${previousSegmentInfo.segmentNumber} - Take ${previousSegmentInfo.takes.length} (Latest)`,
+          takeInfo: latestTake
+        }
+      }
+      if (previousSegmentLastFrame) {
+        return {
+          type: 'keyframe' as const,
+          url: previousSegmentLastFrame,
+          label: `Segment ${currentSegmentIndex} - End Keyframe`,
+          takeInfo: null
+        }
+      }
+      return null
+    }
+    
+    // Specific take selection from previous segment
+    if (sourceVideoUrl.startsWith('prev-take-')) {
+      const takeIndex = parseInt(sourceVideoUrl.replace('prev-take-', ''))
+      const take = previousSegmentInfo?.takes[takeIndex]
+      if (take) {
+        return {
+          type: 'previous-video' as const,
+          url: take.lastFrameUrl || take.thumbnailUrl,
+          label: `Segment ${previousSegmentInfo?.segmentNumber} - Take ${takeIndex + 1}`,
+          takeInfo: take
+        }
+      }
+    }
+    
+    // Previous segment keyframe fallback
+    if (sourceVideoUrl === 'prev-keyframe') {
+      return {
+        type: 'keyframe' as const,
+        url: previousSegmentInfo?.endFrameUrl || previousSegmentLastFrame,
+        label: `Segment ${currentSegmentIndex} - End Keyframe (Storyboard)`,
+        takeInfo: null
+      }
+    }
+    
+    return null
+  }, [sourceVideoUrl, previousSegmentInfo, previousSegmentLastFrame, currentSegmentIndex])
+
+  const hasExtensibleSource = !!sourceFrameInfo?.url
 
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-start gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+      <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-200 dark:border-green-800">
         <Film className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
         <div>
-          <h4 className="font-medium text-green-900 dark:text-green-100">Scene Extension</h4>
+          <h4 className="font-medium text-green-900 dark:text-green-100">Extend from Previous Segment</h4>
           <p className="text-sm text-green-700 dark:text-green-300 mt-0.5">
-            Extend your video using the end frame of a previous segment as the starting point for Image-to-Video generation.
+            Continue your video seamlessly by using the last frame of Segment {currentSegmentIndex} as the starting point for Segment {currentSegmentIndex + 1}.
           </p>
         </div>
       </div>
 
-      {/* Info about I2V approach */}
-      {!hasExtensibleVideo && (
-        <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-          <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-          <div>
-            <h4 className="font-medium text-amber-900 dark:text-amber-100">No Source Videos Available</h4>
-            <p className="text-sm text-amber-700 dark:text-amber-300 mt-0.5">
-              Generate a video first in the current or previous segment. The extension will use the last frame as a starting point.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Source Video Selection */}
-      {currentTakes.length > 0 && (
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Source Video (use end frame)
+      {/* Source Selection */}
+      {currentSegmentIndex > 0 ? (
+        <div className="space-y-3">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+            <ArrowRight className="w-4 h-4" />
+            Source Frame from Segment {currentSegmentIndex}
           </label>
-          <Select value={sourceVideoUrl} onValueChange={setSourceVideoUrl}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a video take..." />
+          
+          <Select value={sourceVideoUrl || 'auto'} onValueChange={setSourceVideoUrl}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select source..." />
             </SelectTrigger>
             <SelectContent>
-              {currentTakes.map((take, idx) => (
-                <SelectItem key={take.id} value={take.id || take.videoUrl || ''}>
-                  Take {idx + 1} ({take.durationSec || 5}s) {take.lastFrameUrl ? '✓ Has end frame' : ''}
-                </SelectItem>
-              ))}
-              {previousSegmentLastFrame && (
-                <SelectItem value="previous-segment">
-                  Previous Segment End Frame
-                </SelectItem>
+              <SelectItem value="auto">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-green-500" />
+                  <span>Auto (Best Available)</span>
+                </div>
+              </SelectItem>
+              
+              {previousSegmentInfo && previousSegmentInfo.takes.length > 0 && (
+                <>
+                  <div className="px-2 py-1 text-xs text-gray-500 border-t mt-1">
+                    Video Takes from Segment {previousSegmentInfo.segmentNumber}
+                  </div>
+                  {previousSegmentInfo.takes.map((take, idx) => (
+                    <SelectItem key={take.id} value={`prev-take-${idx}`}>
+                      <div className="flex items-center gap-2">
+                        <Film className="w-4 h-4 text-blue-500" />
+                        <span>Take {idx + 1}</span>
+                        <span className="text-xs text-gray-400">
+                          ({take.durationSec || 5}s)
+                        </span>
+                        {take.lastFrameUrl && (
+                          <Check className="w-3 h-3 text-green-500" />
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </>
+              )}
+              
+              {previousSegmentInfo?.endFrameUrl && (
+                <>
+                  <div className="px-2 py-1 text-xs text-gray-500 border-t mt-1">
+                    Storyboard Keyframe
+                  </div>
+                  <SelectItem value="prev-keyframe">
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4 text-purple-500" />
+                      <span>End Keyframe (Storyboard)</span>
+                    </div>
+                  </SelectItem>
+                </>
               )}
             </SelectContent>
           </Select>
-        </div>
-      )}
-
-      {/* Show previous segment option if no current takes but has previous frame */}
-      {currentTakes.length === 0 && previousSegmentLastFrame && (
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Source Frame
-          </label>
-          <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-3">
-              <img 
-                src={previousSegmentLastFrame} 
-                alt="Previous segment end frame" 
-                className="w-24 h-14 object-cover rounded"
-              />
-              <div>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Previous Segment End Frame</p>
-                <p className="text-xs text-gray-500">Will be used as starting point for I2V generation</p>
+          
+          {/* Source Frame Preview */}
+          {sourceFrameInfo && sourceFrameInfo.url && (
+            <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="flex items-start gap-4">
+                <div className="relative">
+                  <img 
+                    src={sourceFrameInfo.url} 
+                    alt="Source frame for extension" 
+                    className="w-32 h-20 object-cover rounded-lg border border-gray-300 dark:border-gray-600"
+                  />
+                  <div className={cn(
+                    "absolute -top-2 -right-2 px-2 py-0.5 rounded-full text-[10px] font-medium",
+                    sourceFrameInfo.type === 'previous-video' 
+                      ? "bg-blue-500 text-white" 
+                      : "bg-purple-500 text-white"
+                  )}>
+                    {sourceFrameInfo.type === 'previous-video' ? 'Video Frame' : 'Keyframe'}
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {sourceFrameInfo.label}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {sourceFrameInfo.type === 'previous-video' 
+                      ? 'Last frame extracted from rendered video - best for visual continuity'
+                      : 'Pre-generated storyboard keyframe - may differ from actual video'}
+                  </p>
+                  {sourceFrameInfo.takeInfo && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <Clock className="w-3 h-3 text-gray-400" />
+                      <span className="text-xs text-gray-500">
+                        Source: {sourceFrameInfo.takeInfo.durationSec || 5}s
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
-      )}
-
-      {/* Selected End Frame Preview */}
-      {selectedEndFrameUrl && sourceVideoUrl && (
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Starting Frame Preview
-          </label>
-          <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-            <img 
-              src={selectedEndFrameUrl} 
-              alt="End frame for extension" 
-              className="w-full max-w-xs h-auto object-cover rounded"
-            />
+      ) : (
+        /* First segment - no previous to extend from */
+        <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+          <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="font-medium text-amber-900 dark:text-amber-100">First Segment</h4>
+            <p className="text-sm text-amber-700 dark:text-amber-300 mt-0.5">
+              This is the first segment - there's no previous segment to extend from. Use Text-to-Video or Image-to-Video mode instead.
+            </p>
           </div>
         </div>
       )}
@@ -354,7 +457,7 @@ function ExtendTab({
       {/* Extension Duration */}
       <div className="space-y-2">
         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Extension Duration
+          New Segment Duration
         </label>
         <div className="flex items-center gap-2">
           <Select value={String(duration)} onValueChange={(v) => setDuration(Number(v))}>
@@ -373,14 +476,18 @@ function ExtendTab({
       {/* Extension Prompt */}
       <div className="space-y-2">
         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Extension Prompt (Optional)
+          Visual Description
         </label>
         <Textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Describe what should happen next... Leave empty to let AI continue naturally."
+          placeholder="Describe what should happen next... The AI will animate from the source frame while following your direction."
           className="min-h-[80px]"
         />
+        <p className="text-xs text-gray-500 flex items-center gap-1">
+          <Info className="w-3 h-3" />
+          Tip: Describe the scene visuals, lighting, and atmosphere. Be specific about what you want to see.
+        </p>
       </div>
 
       {/* Credit Lines Section */}
@@ -412,16 +519,13 @@ function ExtendTab({
         </div>
       </div>
 
-      {/* Current Duration Display */}
-      {sourceVideoUrl && selectedTake && (
+      {/* Generation Info */}
+      {hasExtensibleSource && (
         <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-          <Clock className="w-4 h-4 text-gray-500" />
+          <ArrowRight className="w-4 h-4 text-green-500" />
           <span className="text-sm text-gray-600 dark:text-gray-400">
-            Source: {selectedTake.durationSec || 5}s
-          </span>
-          <ArrowRight className="w-4 h-4 text-gray-400" />
-          <span className="text-sm font-medium text-green-600 dark:text-green-400">
-            New clip: {duration}s (I2V from end frame)
+            <span className="font-medium text-green-600 dark:text-green-400">I2V Generation:</span>{' '}
+            Starting from {sourceFrameInfo?.type === 'previous-video' ? 'video frame' : 'keyframe'} → {duration}s new video
           </span>
         </div>
       )}
@@ -1295,27 +1399,54 @@ export function VideoEditingDialog({
     return finalPrompt
   }
 
+  // Helper to get the source frame URL for Extend mode based on selection
+  const getExtendSourceFrameUrl = useCallback((): string | undefined => {
+    // Find the current segment index and previous segment
+    const currentIndex = allSegments?.findIndex(s => s.segmentId === segment.segmentId) ?? -1
+    const previousSegment = currentIndex > 0 ? allSegments?.[currentIndex - 1] : null
+    const previousTakes = previousSegment?.takes?.filter(t => t.status === 'done') || []
+    
+    // Handle different selection modes
+    if (!sourceVideoRef || sourceVideoRef === 'auto') {
+      // Auto mode: prefer latest video take's last frame, fallback to keyframe
+      if (previousTakes.length > 0) {
+        const latestTake = previousTakes[previousTakes.length - 1]
+        return latestTake.lastFrameUrl || latestTake.thumbnailUrl || previousSegmentLastFrame || undefined
+      }
+      return previousSegmentLastFrame || undefined
+    }
+    
+    // Specific take from previous segment
+    if (sourceVideoRef.startsWith('prev-take-')) {
+      const takeIndex = parseInt(sourceVideoRef.replace('prev-take-', ''))
+      const take = previousTakes[takeIndex]
+      if (take) {
+        return take.lastFrameUrl || take.thumbnailUrl || undefined
+      }
+    }
+    
+    // Previous segment keyframe
+    if (sourceVideoRef === 'prev-keyframe') {
+      return previousSegment?.references?.endFrameUrl || previousSegmentLastFrame || undefined
+    }
+    
+    // Legacy fallback for old selection format
+    if (sourceVideoRef === 'previous-segment') {
+      return previousSegmentLastFrame || undefined
+    }
+    
+    return previousSegmentLastFrame || undefined
+  }, [sourceVideoRef, allSegments, segment.segmentId, previousSegmentLastFrame])
+
   // Handle generation based on active tab
   const handleGenerate = async () => {
     // Handle EXTEND tab - I2V extension using end frame of previous video
     if (activeTab === 'extend') {
-      // Get the start frame URL from selected take or previous segment
-      let startFrameUrl: string | undefined
-      
-      if (sourceVideoRef === 'previous-segment') {
-        // Use previous segment's last frame directly
-        startFrameUrl = previousSegmentLastFrame || undefined
-      } else if (sourceVideoRef) {
-        // Find the selected take and get its end frame
-        const selectedTake = segment.takes?.find(t => t.id === sourceVideoRef || t.videoUrl === sourceVideoRef)
-        startFrameUrl = selectedTake?.lastFrameUrl || selectedTake?.thumbnailUrl || previousSegmentLastFrame || undefined
-      } else if (previousSegmentLastFrame) {
-        // Fallback to previous segment's last frame
-        startFrameUrl = previousSegmentLastFrame
-      }
+      // Get the start frame URL based on selection
+      const startFrameUrl = getExtendSourceFrameUrl()
       
       if (!startFrameUrl) {
-        toast.error('No end frame available for extension. Please select a source video or generate one first.')
+        toast.error('No source frame available for extension. Generate a video in the previous segment first.')
         return
       }
       
@@ -1323,6 +1454,8 @@ export function VideoEditingDialog({
       const extendPrompt = buildPromptWithCredits(prompt || 'Continue the video naturally, maintaining visual continuity')
       
       console.log('[Video Editor] Using I2V mode for extension with start frame:', startFrameUrl)
+      console.log('[Video Editor] Source selection:', sourceVideoRef || 'auto')
+      
       const data: Parameters<typeof onGenerate>[0] = {
         method: 'I2V',
         prompt: extendPrompt,

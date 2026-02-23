@@ -475,6 +475,11 @@ export interface SceneSegmentTake {
   durationSec?: number
   status: SceneSegmentStatus
   notes?: string
+  // Video URL - the actual playable video asset (may differ from assetUrl for blob storage)
+  videoUrl?: string
+  // Last frame URL - extracted from the actual video for I2V extension continuity
+  // This is the REAL last frame from the video, not a pre-generated keyframe
+  lastFrameUrl?: string
   // Veo video reference for extension - stores the Gemini Files API reference (e.g., "files/xxx")
   // This is needed for Veo video extension which only works with Veo-generated videos still in Gemini's system
   veoVideoRef?: string

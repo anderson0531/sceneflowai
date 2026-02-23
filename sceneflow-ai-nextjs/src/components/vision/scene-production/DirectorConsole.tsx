@@ -267,6 +267,28 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
       localStorage.setItem('mixerCollapsed', JSON.stringify(mixerCollapsed))
     }
   }, [mixerCollapsed])
+
+  // Get previous segment's last frame for Extend mode (prefer actual video frame over keyframe)
+  const previousSegmentLastFrame = useMemo(() => {
+    if (!editingVideoSegment || segments.length === 0) return null
+    const currentIndex = segments.findIndex(s => s.segmentId === editingVideoSegment.segmentId)
+    if (currentIndex <= 0) return null
+    const previousSegment = segments[currentIndex - 1]
+    
+    // Priority 1: Get the latest successful take's actual last frame (extracted from video)
+    const successfulTakes = previousSegment.takes?.filter(t => 
+      t.status === 'done' && (t.lastFrameUrl || t.videoUrl || t.assetUrl)
+    ) || []
+    
+    if (successfulTakes.length > 0) {
+      const latestTake = successfulTakes[successfulTakes.length - 1]
+      if (latestTake.lastFrameUrl) return latestTake.lastFrameUrl
+      if (latestTake.thumbnailUrl) return latestTake.thumbnailUrl
+    }
+    
+    // Priority 2: Fallback to pre-generated end keyframe
+    return previousSegment.references?.endFrameUrl || null
+  }, [editingVideoSegment, segments])
   
   // Update track timing
   const updateTrackTiming = useCallback((track: keyof AudioTrackTimingState, field: 'startTime' | 'duration', value: number) => {
@@ -1095,6 +1117,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           allSegments={segments}
           sceneImageUrl={sceneImageUrl}
           characters={scene?.characters}
+          previousSegmentLastFrame={previousSegmentLastFrame}
           onGenerate={async (data) => {
             // Map VideoEditingDialog data to VideoGenerationConfig
             const segmentId = editingVideoSegment.segmentId
