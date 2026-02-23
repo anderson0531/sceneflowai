@@ -231,6 +231,11 @@ interface ExtendTabProps {
   setSourceVideoUrl: (u: string) => void
   duration: number
   setDuration: (d: number) => void
+  previousSegmentLastFrame?: string | null
+  creditLine1: string
+  setCreditLine1: (c: string) => void
+  creditLine2: string
+  setCreditLine2: (c: string) => void
 }
 
 function ExtendTab({ 
@@ -241,11 +246,20 @@ function ExtendTab({
   sourceVideoUrl,
   setSourceVideoUrl,
   duration,
-  setDuration
+  setDuration,
+  previousSegmentLastFrame,
+  creditLine1,
+  setCreditLine1,
+  creditLine2,
+  setCreditLine2,
 }: ExtendTabProps) {
-  // Find takes with veoVideoRef for extension
-  const currentTakes = segment.takes?.filter(t => t.veoVideoRef) || []
-  const hasExtensibleVideo = currentTakes.length > 0
+  // Find takes with video URL or lastFrameUrl for I2V extension
+  const currentTakes = segment.takes?.filter(t => t.videoUrl || t.lastFrameUrl || t.thumbnailUrl) || []
+  const hasExtensibleVideo = currentTakes.length > 0 || !!previousSegmentLastFrame
+
+  // Get selected take's end frame URL
+  const selectedTake = currentTakes.find(t => t.id === sourceVideoUrl || t.videoUrl === sourceVideoUrl)
+  const selectedEndFrameUrl = selectedTake?.lastFrameUrl || selectedTake?.thumbnailUrl || previousSegmentLastFrame
 
   return (
     <div className="space-y-4">
@@ -255,29 +269,29 @@ function ExtendTab({
         <div>
           <h4 className="font-medium text-green-900 dark:text-green-100">Scene Extension</h4>
           <p className="text-sm text-green-700 dark:text-green-300 mt-0.5">
-            Extend your video beyond its original length using the context of the last frames.
+            Extend your video using the end frame of a previous segment as the starting point for Image-to-Video generation.
           </p>
         </div>
       </div>
 
-      {/* Warning if no extensible videos */}
+      {/* Info about I2V approach */}
       {!hasExtensibleVideo && (
         <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
           <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
           <div>
-            <h4 className="font-medium text-amber-900 dark:text-amber-100">No Extensible Videos</h4>
+            <h4 className="font-medium text-amber-900 dark:text-amber-100">No Source Videos Available</h4>
             <p className="text-sm text-amber-700 dark:text-amber-300 mt-0.5">
-              Video extension only works with Veo-generated videos still in the system cache (2-day retention). Generate a new video first, or use Smart Prompt with a starting frame.
+              Generate a video first in the current or previous segment. The extension will use the last frame as a starting point.
             </p>
           </div>
         </div>
       )}
 
       {/* Source Video Selection */}
-      {hasExtensibleVideo && (
+      {currentTakes.length > 0 && (
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Source Video to Extend
+            Source Video (use end frame)
           </label>
           <Select value={sourceVideoUrl} onValueChange={setSourceVideoUrl}>
             <SelectTrigger>
@@ -285,12 +299,55 @@ function ExtendTab({
             </SelectTrigger>
             <SelectContent>
               {currentTakes.map((take, idx) => (
-                <SelectItem key={take.id} value={take.veoVideoRef || ''}>
-                  Take {idx + 1} ({take.durationSec || 5}s)
+                <SelectItem key={take.id} value={take.id || take.videoUrl || ''}>
+                  Take {idx + 1} ({take.durationSec || 5}s) {take.lastFrameUrl ? '✓ Has end frame' : ''}
                 </SelectItem>
               ))}
+              {previousSegmentLastFrame && (
+                <SelectItem value="previous-segment">
+                  Previous Segment End Frame
+                </SelectItem>
+              )}
             </SelectContent>
           </Select>
+        </div>
+      )}
+
+      {/* Show previous segment option if no current takes but has previous frame */}
+      {currentTakes.length === 0 && previousSegmentLastFrame && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Source Frame
+          </label>
+          <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3">
+              <img 
+                src={previousSegmentLastFrame} 
+                alt="Previous segment end frame" 
+                className="w-24 h-14 object-cover rounded"
+              />
+              <div>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Previous Segment End Frame</p>
+                <p className="text-xs text-gray-500">Will be used as starting point for I2V generation</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Selected End Frame Preview */}
+      {selectedEndFrameUrl && sourceVideoUrl && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Starting Frame Preview
+          </label>
+          <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+            <img 
+              src={selectedEndFrameUrl} 
+              alt="End frame for extension" 
+              className="w-full max-w-xs h-auto object-cover rounded"
+            />
+          </div>
         </div>
       )}
 
@@ -310,9 +367,6 @@ function ExtendTab({
               <SelectItem value="8">8 seconds</SelectItem>
             </SelectContent>
           </Select>
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            Can extend up to 20 times (max 148s total)
-          </span>
         </div>
       </div>
 
@@ -325,20 +379,49 @@ function ExtendTab({
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="Describe what should happen next... Leave empty to let AI continue naturally."
-          className="min-h-[100px]"
+          className="min-h-[80px]"
         />
       </div>
 
+      {/* Credit Lines Section */}
+      <div className="space-y-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          <label className="text-sm font-medium text-blue-900 dark:text-blue-100">
+            Credit Lines (Optional)
+          </label>
+        </div>
+        <p className="text-xs text-blue-700 dark:text-blue-300">
+          Add credit text to be displayed as title card overlays in the generated video.
+        </p>
+        <div className="space-y-2">
+          <input
+            type="text"
+            value={creditLine1}
+            onChange={(e) => setCreditLine1(e.target.value)}
+            placeholder="Line 1 (e.g., 'Created by: Your Name')"
+            className="w-full px-3 py-2 text-sm rounded-md border border-blue-200 dark:border-blue-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+          />
+          <input
+            type="text"
+            value={creditLine2}
+            onChange={(e) => setCreditLine2(e.target.value)}
+            placeholder="Line 2 (e.g., 'Production by: Studio Name')"
+            className="w-full px-3 py-2 text-sm rounded-md border border-blue-200 dark:border-blue-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+          />
+        </div>
+      </div>
+
       {/* Current Duration Display */}
-      {sourceVideoUrl && (
+      {sourceVideoUrl && selectedTake && (
         <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
           <Clock className="w-4 h-4 text-gray-500" />
           <span className="text-sm text-gray-600 dark:text-gray-400">
-            Current: {currentTakes.find(t => t.veoVideoRef === sourceVideoUrl)?.durationSec || 5}s
+            Source: {selectedTake.durationSec || 5}s
           </span>
           <ArrowRight className="w-4 h-4 text-gray-400" />
           <span className="text-sm font-medium text-green-600 dark:text-green-400">
-            Extended: {(currentTakes.find(t => t.veoVideoRef === sourceVideoUrl)?.durationSec || 5) + duration}s
+            New clip: {duration}s (I2V from end frame)
           </span>
         </div>
       )}
@@ -1092,8 +1175,10 @@ export function VideoEditingDialog({
   const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>('16:9')
   const [resolution, setResolution] = useState<'720p' | '1080p'>('720p')
   
-  // Extend Tab state - stores Gemini Files API reference for video extension
+  // Extend Tab state - stores selected video/frame for I2V extension
   const [sourceVideoRef, setSourceVideoRef] = useState('')
+  const [creditLine1, setCreditLine1] = useState('')
+  const [creditLine2, setCreditLine2] = useState('')
   
   // Edit Tab state - V2V workaround via reference frames
   const [editSourceVideoUrl, setEditSourceVideoUrl] = useState('')
@@ -1192,18 +1277,59 @@ export function VideoEditingDialog({
     }
   }, [open, segment])
 
+  // Helper to build prompt with credit lines
+  const buildPromptWithCredits = (basePrompt: string): string => {
+    let finalPrompt = basePrompt
+    
+    // Add credit lines if provided
+    if (creditLine1 || creditLine2) {
+      const creditParts: string[] = []
+      if (creditLine1) creditParts.push(creditLine1)
+      if (creditLine2) creditParts.push(creditLine2)
+      
+      // Intelligently add credits to the prompt
+      const creditText = creditParts.join('. ')
+      finalPrompt = `${finalPrompt}. Title card displays text: "${creditText}".`
+    }
+    
+    return finalPrompt
+  }
+
   // Handle generation based on active tab
   const handleGenerate = async () => {
-    // Handle EXTEND tab - Video Extension via Gemini API
-    if (activeTab === 'extend' && sourceVideoRef) {
-      console.log('[Video Editor] Using EXT mode with Gemini API, veoVideoRef:', sourceVideoRef)
+    // Handle EXTEND tab - I2V extension using end frame of previous video
+    if (activeTab === 'extend') {
+      // Get the start frame URL from selected take or previous segment
+      let startFrameUrl: string | undefined
+      
+      if (sourceVideoRef === 'previous-segment') {
+        // Use previous segment's last frame directly
+        startFrameUrl = previousSegmentLastFrame || undefined
+      } else if (sourceVideoRef) {
+        // Find the selected take and get its end frame
+        const selectedTake = segment.takes?.find(t => t.id === sourceVideoRef || t.videoUrl === sourceVideoRef)
+        startFrameUrl = selectedTake?.lastFrameUrl || selectedTake?.thumbnailUrl || previousSegmentLastFrame || undefined
+      } else if (previousSegmentLastFrame) {
+        // Fallback to previous segment's last frame
+        startFrameUrl = previousSegmentLastFrame
+      }
+      
+      if (!startFrameUrl) {
+        toast.error('No end frame available for extension. Please select a source video or generate one first.')
+        return
+      }
+      
+      // Build prompt with credits
+      const extendPrompt = buildPromptWithCredits(prompt || 'Continue the video naturally, maintaining visual continuity')
+      
+      console.log('[Video Editor] Using I2V mode for extension with start frame:', startFrameUrl)
       const data: Parameters<typeof onGenerate>[0] = {
-        method: 'EXT',
-        prompt: prompt || 'Continue the video naturally',
+        method: 'I2V',
+        prompt: extendPrompt,
         duration,
         aspectRatio,
         resolution,
-        sourceVideoUrl: sourceVideoRef, // Pass the Gemini Files API reference
+        startFrameUrl, // Use end frame of previous video as start frame for I2V
       }
       await onGenerate(data)
       return
@@ -1266,11 +1392,23 @@ export function VideoEditingDialog({
     await onGenerate(data)
   }
 
+  // Get previous segment's last frame (passed from props)
+  const previousSegmentLastFrame = (segment as any).previousSegmentLastFrame || null
+
   // Check if generation is possible based on active tab
   const canGenerate = useMemo(() => {
     if (activeTab === 'extend') {
-      // For extension, need a valid veoVideoRef
-      return !!sourceVideoRef
+      // For I2V extension, need either:
+      // 1. A selected video take with end frame
+      // 2. Previous segment's last frame available
+      if (sourceVideoRef) {
+        if (sourceVideoRef === 'previous-segment') {
+          return !!previousSegmentLastFrame
+        }
+        const selectedTake = segment.takes?.find(t => t.id === sourceVideoRef || t.videoUrl === sourceVideoRef)
+        return !!(selectedTake?.lastFrameUrl || selectedTake?.thumbnailUrl || previousSegmentLastFrame)
+      }
+      return !!previousSegmentLastFrame
     }
     if (activeTab === 'edit') {
       // For edit mode, need 3 extracted frames and an edit instruction
@@ -1365,6 +1503,11 @@ export function VideoEditingDialog({
                     setSourceVideoUrl={setSourceVideoRef}
                     duration={duration}
                     setDuration={setDuration}
+                    previousSegmentLastFrame={previousSegmentLastFrame}
+                    creditLine1={creditLine1}
+                    setCreditLine1={setCreditLine1}
+                    creditLine2={creditLine2}
+                    setCreditLine2={setCreditLine2}
                   />
                 </TabsContent>
                 
