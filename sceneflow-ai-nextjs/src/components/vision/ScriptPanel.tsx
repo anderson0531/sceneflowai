@@ -3871,11 +3871,11 @@ function SceneCard({
     locked: 'bg-slate-600'
   }
 
-  const workflowTabs: Array<{ key: WorkflowStep; label: string; icon: React.ReactNode }> = useMemo(() => [
-    { key: 'dialogueAction', label: 'Script', icon: <FileText className="w-4 h-4" /> },
+  const workflowTabs: Array<{ key: WorkflowStep; label: string; icon: React.ReactNode; description: string }> = useMemo(() => [
+    { key: 'dialogueAction', label: 'Script', icon: <FileText className="w-4 h-4" />, description: 'Write and edit your scene script' },
     // Direction (directorsChair) is hidden - auto-generated from Script, accessible via Frame dialog and Export
-    // Frame (storyboardPreViz) merged into Call Action for unified production workflow
-    { key: 'callAction', label: 'Call Action', icon: <Clapperboard className="w-4 h-4" /> }
+    // Frame (storyboardPreViz) merged into Action for unified production workflow
+    { key: 'callAction', label: 'Action', icon: <Clapperboard className="w-4 h-4" />, description: 'Build storyboard and produce video' }
   ], [])
   
   // Set default tab to first incomplete unlocked step (Feature 3: auto-open first incomplete)
@@ -4216,67 +4216,135 @@ function SceneCard({
           </div>
         </div>
 
-        {/* Dedicated Workflow Tabs Row - Full-Width Section Header */}
+        {/* Dedicated Workflow Tabs Row - Interactive Stepper Design */}
         {!isOutline && (
           <div className="w-full py-3 mb-2">
-            <div className="flex w-full items-center bg-gray-900/80 rounded-xl p-1.5 gap-1 border-2 border-blue-500/50 shadow-lg shadow-blue-500/20">
-              {workflowTabs.map((tab) => {
-                const status = getStepStatus(tab.key)
-                const isComplete = status === 'complete'
-                const isStale = status === 'stale'
-                const isLocked = !stepUnlocked[tab.key as keyof typeof stepUnlocked]
-                const isActive = activeWorkflowTab === tab.key
-                
-                return (
-                  <TooltipProvider key={tab.key}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            if (!isLocked) {
-                              setActiveWorkflowTab(tab.key)
-                              if (!isWorkflowOpen && onWorkflowOpenChange) {
-                                onWorkflowOpenChange(true)
-                              }
-                            }
-                          }}
-                          disabled={isLocked}
-                          className={`
-                            relative flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all
-                            ${isActive 
-                              ? 'bg-gradient-to-r from-blue-600/30 to-purple-600/30 text-white border border-blue-500/50 shadow-lg shadow-blue-500/20' 
-                              : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
-                            }
-                            ${isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                          `}
-                        >
-                          <div className="flex items-center justify-center gap-2">
-                            {isLocked ? (
-                              <Lock className="w-4 h-4 text-slate-500" />
-                            ) : isStale ? (
-                              <AlertTriangle className="w-4 h-4 text-amber-400" />
-                            ) : isComplete ? (
-                              <CheckCircle className="w-4 h-4 text-green-500" />
-                            ) : (
-                              React.cloneElement(tab.icon as React.ReactElement, { 
-                                className: `w-4 h-4 ${isActive ? 'text-blue-400' : ''}` 
-                              })
-                            )}
-                            <span className={`${isStale ? 'text-amber-300' : ''} truncate`}>{tab.label}</span>
-                          </div>
-                          {isActive && (
-                            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" />
-                          )}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                        {isLocked ? 'Complete previous steps' : isStale ? 'Needs update' : isComplete ? 'Complete' : 'In progress'}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )
-              })}
+            {/* Progress connector line */}
+            <div className="relative">
+              {/* Background track */}
+              <div className="absolute top-6 left-[10%] right-[10%] h-1 bg-gray-700/50 rounded-full z-0" />
+              {/* Progress fill - fills based on completion */}
+              <div 
+                className="absolute top-6 left-[10%] h-1 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full z-0 transition-all duration-500"
+                style={{ 
+                  width: stepCompletion.callAction 
+                    ? '80%' 
+                    : stepCompletion.dialogueAction 
+                      ? '40%' 
+                      : '0%' 
+                }}
+              />
+              
+              {/* Tabs container */}
+              <div className="relative z-10 flex w-full items-center justify-between px-4">
+                {workflowTabs.map((tab, index) => {
+                  const status = getStepStatus(tab.key)
+                  const isComplete = status === 'complete'
+                  const isStale = status === 'stale'
+                  const isLocked = !stepUnlocked[tab.key as keyof typeof stepUnlocked]
+                  const isActive = activeWorkflowTab === tab.key
+                  const stepNumber = index + 1
+                  
+                  return (
+                    <div key={tab.key} className="flex flex-col items-center flex-1">
+                      {/* Step indicator circle */}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (!isLocked) {
+                                  setActiveWorkflowTab(tab.key)
+                                  if (!isWorkflowOpen && onWorkflowOpenChange) {
+                                    onWorkflowOpenChange(true)
+                                  }
+                                }
+                              }}
+                              disabled={isLocked}
+                              className={`
+                                relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300
+                                ${isActive 
+                                  ? 'bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg shadow-blue-500/40 scale-110 ring-4 ring-blue-500/20' 
+                                  : isComplete
+                                    ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-md shadow-emerald-500/30'
+                                    : isStale
+                                      ? 'bg-gradient-to-br from-amber-500 to-amber-600 shadow-md shadow-amber-500/30'
+                                      : isLocked
+                                        ? 'bg-gray-700/50 border-2 border-dashed border-gray-600'
+                                        : 'bg-gray-700 hover:bg-gray-600 border-2 border-gray-500'
+                                }
+                                ${isLocked ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-105'}
+                              `}
+                            >
+                              {isLocked ? (
+                                <Lock className="w-5 h-5 text-gray-500" />
+                              ) : isComplete ? (
+                                <Check className="w-6 h-6 text-white" />
+                              ) : isStale ? (
+                                <AlertTriangle className="w-5 h-5 text-white" />
+                              ) : (
+                                React.cloneElement(tab.icon as React.ReactElement, { 
+                                  className: `w-5 h-5 ${isActive ? 'text-white' : 'text-gray-300'}` 
+                                })
+                              )}
+                              
+                              {/* Step number badge */}
+                              <span className={`
+                                absolute -top-1 -right-1 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center
+                                ${isComplete 
+                                  ? 'bg-emerald-400 text-emerald-900' 
+                                  : isActive 
+                                    ? 'bg-blue-400 text-blue-900'
+                                    : 'bg-gray-600 text-gray-300'
+                                }
+                              `}>
+                                {stepNumber}
+                              </span>
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-900 text-white border border-gray-700 max-w-xs">
+                            <div className="space-y-1">
+                              <p className="font-semibold">{tab.label}</p>
+                              <p className="text-xs text-gray-400">{tab.description}</p>
+                              <p className="text-xs text-gray-500">
+                                {isLocked ? 'Complete previous step to unlock' : isStale ? 'Content changed - needs update' : isComplete ? 'Completed' : 'In progress'}
+                              </p>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      
+                      {/* Label below circle */}
+                      <div className="mt-2 text-center">
+                        <p className={`
+                          text-sm font-semibold transition-colors
+                          ${isActive 
+                            ? 'text-blue-400' 
+                            : isComplete 
+                              ? 'text-emerald-400'
+                              : isStale
+                                ? 'text-amber-400'
+                                : isLocked
+                                  ? 'text-gray-500'
+                                  : 'text-gray-300'
+                          }
+                        `}>
+                          {tab.label}
+                        </p>
+                        {isComplete && !isActive && (
+                          <span className="text-[10px] text-emerald-400/70 flex items-center justify-center gap-1">
+                            <CheckCircle className="w-3 h-3" /> Done
+                          </span>
+                        )}
+                        {isStale && (
+                          <span className="text-[10px] text-amber-400/70">Needs update</span>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           </div>
         )}
