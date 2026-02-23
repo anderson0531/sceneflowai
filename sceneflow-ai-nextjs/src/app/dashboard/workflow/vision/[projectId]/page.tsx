@@ -9719,6 +9719,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onGenerateScene={handleGenerateScene}
                             onUploadScene={handleUploadScene}
                             onSaveEditedScene={handleSaveEditedScene}
+                            onReorderScenes={handleReorderScenes}
                             onClose={() => setShowSceneGallery(false)}
                             onAddToSceneLibrary={async (index, imageUrl) => {
                               const scenes = normalizeScenes(script)

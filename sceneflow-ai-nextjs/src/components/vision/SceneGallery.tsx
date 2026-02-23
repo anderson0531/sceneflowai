@@ -13,7 +13,10 @@
 'use client'
 
 import React, { useState, useCallback, useMemo } from 'react'
-import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, EyeOff, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2, Volume2, VolumeX, Play, Pause, SkipForward, SkipBack, Check, Globe, Users, Package, AlertCircle, CheckCircle2, MapPin, FileText, ChevronDown, ChevronUp } from 'lucide-react'
+import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, EyeOff, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2, Volume2, VolumeX, Play, Pause, SkipForward, SkipBack, Check, Globe, Users, Package, AlertCircle, CheckCircle2, MapPin, FileText, ChevronDown, ChevronUp, GripVertical } from 'lucide-react'
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { AudioGalleryPlayer } from './AudioGalleryPlayer'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { Button } from '@/components/ui/Button'
@@ -73,6 +76,8 @@ interface SceneGalleryProps {
   pinnedLocations?: Set<string>
   /** Callback when an edited image is saved */
   onSaveEditedScene?: (sceneIndex: number, newImageUrl: string) => void
+  /** Callback to reorder scenes (drag and drop) */
+  onReorderScenes?: (startIndex: number, endIndex: number) => void
 }
 
 const buildSceneKey = (scene: any, index: number) => scene.sceneId || scene.id || `scene-${index}`
@@ -103,7 +108,28 @@ export function SceneGallery({
   onPinAsLocationReference,
   pinnedLocations,
   onSaveEditedScene,
+  onReorderScenes,
 }: SceneGalleryProps) {
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 }
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  // Handle drag end for scene reordering
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (over && active.id !== over.id) {
+      const oldIndex = parseInt(String(active.id))
+      const newIndex = parseInt(String(over.id))
+      onReorderScenes?.(oldIndex, newIndex)
+    }
+  }
+
   const [viewMode, setViewMode] = useState<'grid' | 'timeline'>('grid')
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
   const [scenePrompts, setScenePrompts] = useState<Record<number, string>>({})
@@ -506,18 +532,29 @@ export function SceneGallery({
           <p>No scenes generated yet</p>
         </div>
       ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          {scenes.map((scene, idx) => {
-            const sceneKey = buildSceneKey(scene, idx)
-            const defaultPrompt = buildScenePrompt(scene, idx)
-            const productionData = sceneProductionState[sceneKey] ?? (scene.productionData as SceneProductionData | undefined)
-            const isProductionOpen = openProductionScene === sceneKey
-            return (
-              <div
-                key={sceneKey}
-                className={cn('col-span-1', isProductionOpen && 'col-span-2 lg:col-span-3')}
-              >
-                <SceneCard
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={scenes.map((_, idx) => idx)}
+            strategy={rectSortingStrategy}
+          >
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+              {scenes.map((scene, idx) => {
+                const sceneKey = buildSceneKey(scene, idx)
+                const defaultPrompt = buildScenePrompt(scene, idx)
+                const productionData = sceneProductionState[sceneKey] ?? (scene.productionData as SceneProductionData | undefined)
+                const isProductionOpen = openProductionScene === sceneKey
+                return (
+                  <SortableSceneWrapper
+                    key={sceneKey}
+                    id={idx}
+                    isProductionOpen={isProductionOpen}
+                    disabled={!onReorderScenes}
+                  >
+                    <SceneCard
                   sceneKey={sceneKey}
                   scene={scene}
                   sceneNumber={idx + 1}
@@ -599,11 +636,14 @@ export function SceneGallery({
                     const location = extractLocation(sceneHeading)
                     return location ? pinnedLocations.has(location) : false
                   })()}
+                  showDragHandle={!!onReorderScenes}
                 />
-              </div>
-            )
-          })}
-        </div>
+                  </SortableSceneWrapper>
+                )
+              })}
+            </div>
+          </SortableContext>
+        </DndContext>
       ) : (
         <TimelineView 
           scenes={scenes}
@@ -702,6 +742,49 @@ interface SceneCardProps {
   onPinAsLocationReference?: () => void
   /** Whether this location is already pinned */
   isLocationPinned?: boolean
+  /** Whether to show the drag handle for reordering */
+  showDragHandle?: boolean
+}
+
+// Sortable wrapper component for drag-and-drop
+function SortableSceneWrapper({ 
+  id, 
+  children, 
+  isProductionOpen,
+  disabled = false
+}: { 
+  id: number
+  children: React.ReactNode
+  isProductionOpen: boolean
+  disabled?: boolean
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id, disabled })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 1,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn('col-span-1', isProductionOpen && 'col-span-2 lg:col-span-3')}
+      {...attributes}
+      {...listeners}
+    >
+      {children}
+    </div>
+  )
 }
 
 function SceneCard({
@@ -733,6 +816,7 @@ function SceneCard({
   objectReferences = [],
   onPinAsLocationReference,
   isLocationPinned = false,
+  showDragHandle = false,
 }: SceneCardProps) {
   const hasImage = !!scene.imageUrl
   const fileInputRef = React.useRef<HTMLInputElement>(null)
@@ -792,6 +876,16 @@ function SceneCard({
           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
       }`}
     >
+      {/* Drag Handle Indicator */}
+      {showDragHandle && (
+        <div 
+          className="absolute top-2 left-2 p-1.5 bg-black/50 rounded cursor-grab hover:bg-black/70 transition-colors z-20 opacity-0 group-hover:opacity-100"
+          title="Drag to reorder scenes"
+        >
+          <GripVertical className="w-4 h-4 text-white/80" />
+        </div>
+      )}
+
       {/* Scene Image */}
       <div className="aspect-video bg-gray-100 dark:bg-gray-800 relative">
         {scene.imageUrl ? (
