@@ -4216,135 +4216,48 @@ function SceneCard({
           </div>
         </div>
 
-        {/* Dedicated Workflow Tabs Row - Interactive Stepper Design */}
+        {/* Production Section Navigation - Segmented Tab Control */}
         {!isOutline && (
-          <div className="w-full py-3 mb-2">
-            {/* Progress connector line */}
-            <div className="relative">
-              {/* Background track */}
-              <div className="absolute top-6 left-[10%] right-[10%] h-1 bg-gray-700/50 rounded-full z-0" />
-              {/* Progress fill - fills based on completion */}
-              <div 
-                className="absolute top-6 left-[10%] h-1 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full z-0 transition-all duration-500"
-                style={{ 
-                  width: stepCompletion.callAction 
-                    ? '80%' 
-                    : stepCompletion.dialogueAction 
-                      ? '40%' 
-                      : '0%' 
-                }}
-              />
-              
-              {/* Tabs container */}
-              <div className="relative z-10 flex w-full items-center justify-between px-4">
-                {workflowTabs.map((tab, index) => {
-                  const status = getStepStatus(tab.key)
-                  const isComplete = status === 'complete'
-                  const isStale = status === 'stale'
-                  const isLocked = !stepUnlocked[tab.key as keyof typeof stepUnlocked]
-                  const isActive = activeWorkflowTab === tab.key
-                  const stepNumber = index + 1
-                  
-                  return (
-                    <div key={tab.key} className="flex flex-col items-center flex-1">
-                      {/* Step indicator circle */}
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                if (!isLocked) {
-                                  setActiveWorkflowTab(tab.key)
-                                  if (!isWorkflowOpen && onWorkflowOpenChange) {
-                                    onWorkflowOpenChange(true)
-                                  }
-                                }
-                              }}
-                              disabled={isLocked}
-                              className={`
-                                relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300
-                                ${isActive 
-                                  ? 'bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg shadow-blue-500/40 scale-110 ring-4 ring-blue-500/20' 
-                                  : isComplete
-                                    ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-md shadow-emerald-500/30'
-                                    : isStale
-                                      ? 'bg-gradient-to-br from-amber-500 to-amber-600 shadow-md shadow-amber-500/30'
-                                      : isLocked
-                                        ? 'bg-gray-700/50 border-2 border-dashed border-gray-600'
-                                        : 'bg-gray-700 hover:bg-gray-600 border-2 border-gray-500'
-                                }
-                                ${isLocked ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-105'}
-                              `}
-                            >
-                              {isLocked ? (
-                                <Lock className="w-5 h-5 text-gray-500" />
-                              ) : isComplete ? (
-                                <Check className="w-6 h-6 text-white" />
-                              ) : isStale ? (
-                                <AlertTriangle className="w-5 h-5 text-white" />
-                              ) : (
-                                React.cloneElement(tab.icon as React.ReactElement, { 
-                                  className: `w-5 h-5 ${isActive ? 'text-white' : 'text-gray-300'}` 
-                                })
-                              )}
-                              
-                              {/* Step number badge */}
-                              <span className={`
-                                absolute -top-1 -right-1 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center
-                                ${isComplete 
-                                  ? 'bg-emerald-400 text-emerald-900' 
-                                  : isActive 
-                                    ? 'bg-blue-400 text-blue-900'
-                                    : 'bg-gray-600 text-gray-300'
-                                }
-                              `}>
-                                {stepNumber}
-                              </span>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-gray-900 text-white border border-gray-700 max-w-xs">
-                            <div className="space-y-1">
-                              <p className="font-semibold">{tab.label}</p>
-                              <p className="text-xs text-gray-400">{tab.description}</p>
-                              <p className="text-xs text-gray-500">
-                                {isLocked ? 'Complete previous step to unlock' : isStale ? 'Content changed - needs update' : isComplete ? 'Completed' : 'In progress'}
-                              </p>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      
-                      {/* Label below circle */}
-                      <div className="mt-2 text-center">
-                        <p className={`
-                          text-sm font-semibold transition-colors
-                          ${isActive 
-                            ? 'text-blue-400' 
-                            : isComplete 
-                              ? 'text-emerald-400'
-                              : isStale
-                                ? 'text-amber-400'
-                                : isLocked
-                                  ? 'text-gray-500'
-                                  : 'text-gray-300'
-                          }
-                        `}>
-                          {tab.label}
-                        </p>
-                        {isComplete && !isActive && (
-                          <span className="text-[10px] text-emerald-400/70 flex items-center justify-center gap-1">
-                            <CheckCircle className="w-3 h-3" /> Done
-                          </span>
-                        )}
-                        {isStale && (
-                          <span className="text-[10px] text-amber-400/70">Needs update</span>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+          <div className="w-full py-2 mb-3">
+            {/* Segmented Control Container */}
+            <div className="inline-flex w-full bg-gray-800/60 rounded-xl p-1.5 border border-gray-700/50">
+              {workflowTabs.map((tab) => {
+                const isActive = activeWorkflowTab === tab.key
+                
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setActiveWorkflowTab(tab.key)
+                      if (!isWorkflowOpen && onWorkflowOpenChange) {
+                        onWorkflowOpenChange(true)
+                      }
+                    }}
+                    className={`
+                      flex-1 flex items-center justify-center gap-3 px-6 py-3 rounded-lg
+                      transition-all duration-200 ease-out
+                      ${isActive 
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25' 
+                        : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                      }
+                    `}
+                  >
+                    {/* Icon - always visible */}
+                    {React.cloneElement(tab.icon as React.ReactElement, { 
+                      className: `w-5 h-5 ${isActive ? 'text-white' : ''}` 
+                    })}
+                    
+                    {/* Large Section Title */}
+                    <span className={`
+                      text-xl font-bold tracking-wide
+                      ${isActive ? 'text-white' : ''}
+                    `}>
+                      {tab.label}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}
