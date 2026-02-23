@@ -5,11 +5,13 @@ Provides functions for building FFmpeg commands with:
 - Ken Burns effects (zoom/pan on static images)
 - Audio track mixing
 - Resolution and quality settings
+- Text overlays (drawtext filter)
 """
 
 import os
 import subprocess
 import json
+import re
 from typing import List, Dict, Any, Optional
 
 # Resolution presets
@@ -22,6 +24,311 @@ RESOLUTIONS = {
 # Ken Burns effect parameters
 # We scale images 2x to allow for pan/zoom headroom
 SCALE_FACTOR = 2
+
+# Font mapping for text overlays (maps UI font names to system font names)
+FONT_MAP = {
+    'Montserrat': 'Montserrat',
+    'Roboto': 'Roboto',
+    'RobotoMono': 'Roboto Mono',
+    'Lora': 'Lora',
+}
+
+# Default fallback font
+DEFAULT_FONT = 'DejaVu Sans'
+
+
+def escape_drawtext(text: str) -> str:
+    """
+    Escape text for FFmpeg drawtext filter.
+    Special characters need to be escaped: \\, ', :, %
+    """
+    # First escape backslashes
+    text = text.replace('\\', '\\\\\\\\')
+    # Escape single quotes
+    text = text.replace("'", "\\'")
+    # Escape colons
+    text = text.replace(':', '\\:')
+    # Escape percent signs (FFmpeg uses them for timestamps)
+    text = text.replace('%', '\\%')
+    return text
+
+
+def hex_to_ffmpeg_color(hex_color: str, opacity: float = 1.0) -> str:
+    """
+    Convert hex color (#RRGGBB) to FFmpeg color format (0xRRGGBBAA).
+    
+    Args:
+        hex_color: Color in #RRGGBB format
+        opacity: Opacity from 0.0 to 1.0
+    
+    Returns:
+        FFmpeg color string like 0xRRGGBBAA
+    """
+    # Remove # if present
+    hex_color = hex_color.lstrip('#')
+    
+    # Convert opacity to hex (00-FF)
+    alpha = int(opacity * 255)
+    alpha_hex = f'{alpha:02X}'
+    
+    return f'0x{hex_color}{alpha_hex}'
+
+
+def get_font_file(font_family: str, font_weight: int = 400) -> str:
+    """
+    Get the path to a font file based on family and weight.
+    
+    Args:
+        font_family: Font family name (Montserrat, Roboto, etc.)
+        font_weight: Font weight (100-900)
+    
+    Returns:
+        Path to the font file
+    """
+    # Determine weight suffix based on weight value
+    weight_suffixes = {
+        100: 'Thin',
+        200: 'ExtraLight',
+        300: 'Light',
+        400: 'Regular',
+        500: 'Medium',
+        600: 'SemiBold',
+        700: 'Bold',
+        800: 'ExtraBold',
+        900: 'Black',
+    }
+    
+    # Find closest weight
+    closest_weight = min(weight_suffixes.keys(), key=lambda x: abs(x - font_weight))
+    weight_name = weight_suffixes[closest_weight]
+    
+    # Build font file path
+    font_dir_map = {
+        'Montserrat': '/usr/share/fonts/google/montserrat',
+        'Roboto': '/usr/share/fonts/google/roboto',
+        'RobotoMono': '/usr/share/fonts/google/robotomono',
+        'Lora': '/usr/share/fonts/liberation2',  # Lora falls back to Liberation Serif
+    }
+    
+    # Font name mapping (in case of fallbacks)
+    font_name_map = {
+        'Montserrat': 'Montserrat',
+        'Roboto': 'Roboto',
+        'RobotoMono': 'RobotoMono',
+        'Lora': 'LiberationSerif',  # Fallback for Lora
+    }
+    
+    font_dir = font_dir_map.get(font_family, '')
+    font_base_name = font_name_map.get(font_family, font_family)
+    
+    if not font_dir:
+        # Return fontconfig name for fallback
+        return DEFAULT_FONT
+    
+    # Try to find the font file with the right weight
+    # Google Fonts use naming like: Montserrat-Bold.ttf, Roboto-Medium.ttf
+    font_file = os.path.join(font_dir, f'{font_base_name}-{weight_name}.ttf')
+    
+    # Check if static folder exists (Google Fonts sometimes use static subfolder)
+    static_font_file = os.path.join(font_dir, 'static', f'{font_base_name}-{weight_name}.ttf')
+    
+    if os.path.exists(static_font_file):
+        return static_font_file
+    elif os.path.exists(font_file):
+        return font_file
+    else:
+        # Try with just the family name + Regular
+        regular_file = os.path.join(font_dir, f'{font_base_name}-Regular.ttf')
+        static_regular = os.path.join(font_dir, 'static', f'{font_base_name}-Regular.ttf')
+        
+        if os.path.exists(static_regular):
+            return static_regular
+        elif os.path.exists(regular_file):
+            return regular_file
+        else:
+            print(f"[FFmpeg] Warning: Font file not found for {font_family}-{weight_name}, using fontconfig")
+            return FONT_MAP.get(font_family, DEFAULT_FONT)
+
+
+def build_drawtext_filter(
+    overlay: Dict[str, Any],
+    input_label: str,
+    output_label: str,
+    width: int = 1920,
+    height: int = 1080,
+) -> str:
+    """
+    Build FFmpeg drawtext filter for a text overlay.
+    
+    Args:
+        overlay: Text overlay specification dict
+        input_label: Input stream label (e.g., "[outv]")
+        output_label: Output stream label (e.g., "[text0]")
+        width: Video width in pixels
+        height: Video height in pixels
+    
+    Returns:
+        FFmpeg filter string for this text overlay
+    """
+    text = escape_drawtext(overlay.get('text', ''))
+    x = overlay.get('x', 0)
+    y = overlay.get('y', 0)
+    anchor = overlay.get('anchor', 'top-left')
+    font_family = overlay.get('fontFamily', 'Montserrat')
+    font_size = overlay.get('fontSize', 48)
+    font_weight = overlay.get('fontWeight', 400)
+    color = overlay.get('color', '#FFFFFF')
+    bg_color = overlay.get('backgroundColor')
+    bg_opacity = overlay.get('backgroundOpacity', 0.7)
+    text_shadow = overlay.get('textShadow', False)
+    start_time = overlay.get('startTime', 0)
+    duration = overlay.get('duration', -1)  # -1 means full video
+    fade_in_ms = overlay.get('fadeInMs', 0)
+    fade_out_ms = overlay.get('fadeOutMs', 0)
+    subtext = overlay.get('subtext', '')
+    
+    # Get font file path
+    font_file = get_font_file(font_family, font_weight)
+    
+    # Convert hex color to FFmpeg format
+    fontcolor = hex_to_ffmpeg_color(color)
+    
+    # Build position expression based on anchor
+    # x and y are pixel positions from UI
+    if anchor == 'top-left':
+        x_expr = str(x)
+        y_expr = str(y)
+    elif anchor == 'top-center':
+        x_expr = f'{x}-(tw/2)'
+        y_expr = str(y)
+    elif anchor == 'center':
+        x_expr = f'{x}-(tw/2)'
+        y_expr = f'{y}-(th/2)'
+    elif anchor == 'bottom-left':
+        x_expr = str(x)
+        y_expr = f'{y}-th'
+    elif anchor == 'bottom-center':
+        x_expr = f'{x}-(tw/2)'
+        y_expr = f'{y}-th'
+    elif anchor == 'bottom-right':
+        x_expr = f'{x}-tw'
+        y_expr = f'{y}-th'
+    else:
+        x_expr = str(x)
+        y_expr = str(y)
+    
+    # Build enable expression for timing
+    if duration > 0:
+        end_time = start_time + duration
+        enable_expr = f"between(t,{start_time},{end_time})"
+    else:
+        enable_expr = f"gte(t,{start_time})"
+    
+    # Build alpha expression for fade effects
+    fade_in_sec = fade_in_ms / 1000.0
+    fade_out_sec = fade_out_ms / 1000.0
+    
+    if fade_in_sec > 0 or fade_out_sec > 0:
+        alpha_parts = []
+        
+        if fade_in_sec > 0:
+            # Fade in: from 0 to 1 over fade_in duration
+            alpha_parts.append(f"if(lt(t,{start_time + fade_in_sec}),(t-{start_time})/{fade_in_sec},1)")
+        
+        if fade_out_sec > 0 and duration > 0:
+            end_time = start_time + duration
+            fade_out_start = end_time - fade_out_sec
+            # Fade out: from 1 to 0 over fade_out duration
+            alpha_parts.append(f"if(gt(t,{fade_out_start}),({end_time}-t)/{fade_out_sec},1)")
+        
+        if len(alpha_parts) == 2:
+            alpha_expr = f"min({alpha_parts[0]},{alpha_parts[1]})"
+        elif len(alpha_parts) == 1:
+            alpha_expr = alpha_parts[0]
+        else:
+            alpha_expr = "1"
+    else:
+        alpha_expr = "1"
+    
+    # Build drawtext filter parts
+    filter_parts = [
+        f"fontfile='{font_file}'" if os.path.exists(font_file) else f"font='{font_file}'",
+        f"text='{text}'",
+        f"fontsize={font_size}",
+        f"fontcolor={fontcolor}",
+        f"x={x_expr}",
+        f"y={y_expr}",
+        f"enable='{enable_expr}'",
+    ]
+    
+    # Add alpha for fades
+    if alpha_expr != "1":
+        filter_parts.append(f"alpha='{alpha_expr}'")
+    
+    # Add background box if specified
+    if bg_color:
+        box_color = hex_to_ffmpeg_color(bg_color, bg_opacity)
+        filter_parts.extend([
+            "box=1",
+            f"boxcolor={box_color}",
+            "boxborderw=10",
+        ])
+    
+    # Add text shadow
+    if text_shadow:
+        filter_parts.extend([
+            "shadowcolor=0x00000080",
+            "shadowx=2",
+            "shadowy=2",
+        ])
+    
+    # Build the filter string
+    filter_str = f"{input_label}drawtext={':'.join(filter_parts)}{output_label}"
+    
+    return filter_str
+
+
+def build_text_overlay_filters(
+    text_overlays: List[Dict[str, Any]],
+    input_label: str,
+    output_label: str,
+    width: int = 1920,
+    height: int = 1080,
+) -> List[str]:
+    """
+    Build FFmpeg filter chain for multiple text overlays.
+    
+    Args:
+        text_overlays: List of text overlay specifications
+        input_label: Input stream label (e.g., "[outv]")
+        output_label: Final output stream label (e.g., "[final]")
+        width: Video width in pixels
+        height: Video height in pixels
+    
+    Returns:
+        List of FFmpeg filter strings to chain together
+    """
+    if not text_overlays:
+        return []
+    
+    filters = []
+    current_label = input_label
+    
+    for i, overlay in enumerate(text_overlays):
+        is_last = (i == len(text_overlays) - 1)
+        next_label = output_label if is_last else f"[text{i}]"
+        
+        filter_str = build_drawtext_filter(
+            overlay=overlay,
+            input_label=current_label,
+            output_label=next_label,
+            width=width,
+            height=height,
+        )
+        filters.append(filter_str)
+        current_label = next_label
+    
+    return filters
 
 
 def build_ken_burns_filter(
@@ -279,6 +586,7 @@ def build_concat_ffmpeg_command(
     temp_dir: str = '/tmp',
     include_segment_audio: bool = True,
     segment_audio_volume: float = 1.0,
+    text_overlays: Optional[List[Dict[str, Any]]] = None,
 ) -> List[str]:
     """
     Build FFmpeg command for concatenating video segments with audio mixing.
@@ -295,6 +603,7 @@ def build_concat_ffmpeg_command(
         temp_dir: Directory containing downloaded assets
         include_segment_audio: Whether to include audio from video segments
         segment_audio_volume: Volume level for segment audio (0.0 to 1.0)
+        text_overlays: List of text overlays to burn into the video
     
     Returns:
         FFmpeg command as list of arguments
@@ -393,6 +702,20 @@ def build_concat_ffmpeg_command(
         video_output = "[outv]"
     else:
         video_output = "[v0]"
+    
+    # Apply text overlays to the video stream
+    if text_overlays and len(text_overlays) > 0:
+        print(f"[FFmpeg] Adding {len(text_overlays)} text overlay(s)")
+        text_filters = build_text_overlay_filters(
+            text_overlays=text_overlays,
+            input_label=video_output,
+            output_label="[finalv]",
+            width=width,
+            height=height,
+        )
+        if text_filters:
+            filter_parts.extend(text_filters)
+            video_output = "[finalv]"
     
     # Initialize audio tracking
     src_audio_output = None

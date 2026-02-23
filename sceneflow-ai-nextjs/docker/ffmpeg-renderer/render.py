@@ -275,6 +275,7 @@ def main():
         video_segments = job_spec.get('videoSegments', [])
         include_segment_audio = job_spec.get('includeSegmentAudio', True)
         segment_audio_volume = job_spec.get('segmentAudioVolume', 1.0)
+        text_overlays = job_spec.get('textOverlays', [])
         log(f"Video Segments: {len(video_segments)}")
         
         # Debug: Log per-segment audio settings from job spec
@@ -286,8 +287,10 @@ def main():
         log(f"Audio clips: {len(audio_clips)}")
         log(f"Include Segment Audio: {include_segment_audio}")
         log(f"Segment Audio Volume: {segment_audio_volume}")
+        log(f"Text Overlays: {len(text_overlays)}")
         render_video_concatenation(job_id, video_segments, audio_clips, output_path_gcs, 
-                                   resolution, fps, callback_url, include_segment_audio, segment_audio_volume)
+                                   resolution, fps, callback_url, include_segment_audio, segment_audio_volume,
+                                   text_overlays)
     else:
         # Ken Burns mode (for project renders with images)
         segments = job_spec.get('segments', [])
@@ -373,8 +376,12 @@ def render_ken_burns(job_id: str, segments: list, audio_clips: list,
 
 def render_video_concatenation(job_id: str, video_segments: list, audio_clips: list,
                                output_path_gcs: str, resolution: str, fps: int, callback_url: str,
-                               include_segment_audio: bool = True, segment_audio_volume: float = 1.0):
-    """Render by concatenating video segments with audio mixing."""
+                               include_segment_audio: bool = True, segment_audio_volume: float = 1.0,
+                               text_overlays: list = None):
+    """Render by concatenating video segments with audio mixing and text overlays."""
+    
+    if text_overlays is None:
+        text_overlays = []
     
     # Send processing status
     send_callback(callback_url, job_id, 'PROCESSING', 10)
@@ -434,6 +441,11 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
     
     # Build and run FFmpeg command for video concatenation
     log("=== Starting FFmpeg Render (Concatenation) ===")
+    if text_overlays:
+        log(f"Text overlays to apply: {len(text_overlays)}")
+        for i, overlay in enumerate(text_overlays):
+            log(f"  Overlay {i}: text='{overlay.get('text', '')[:30]}...', startTime={overlay.get('startTime', 0)}")
+    
     output_file = os.path.join(OUTPUT_DIR, f"{job_id}.mp4")
     
     ffmpeg_cmd = build_concat_ffmpeg_command(
@@ -445,6 +457,7 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
         temp_dir=TEMP_DIR,
         include_segment_audio=include_segment_audio,
         segment_audio_volume=segment_audio_volume,
+        text_overlays=text_overlays,
     )
     
     log(f"FFmpeg command length: {len(ffmpeg_cmd)} args")

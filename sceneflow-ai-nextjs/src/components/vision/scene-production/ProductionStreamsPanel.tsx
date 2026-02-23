@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { 
@@ -17,7 +17,10 @@ import {
   Clock,
   XCircle,
   Clapperboard,
-  Video as VideoIcon
+  Video as VideoIcon,
+  Maximize2,
+  X,
+  Pause
 } from 'lucide-react'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import type { 
@@ -139,9 +142,175 @@ function formatTimeAgo(isoString: string): string {
   return `${diffDays}d ago`
 }
 
+// ============================================================================
+// Inline Video Player Component
+// ============================================================================
+
+interface InlineVideoPlayerProps {
+  stream: ProductionStream
+  onClose: () => void
+  onExpandFullscreen: () => void
+  onDownload: () => void
+}
+
+function InlineVideoPlayer({ stream, onClose, onExpandFullscreen, onDownload }: InlineVideoPlayerProps) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [isLoaded, setIsLoaded] = useState(false)
+  
+  const flag = FLAG_EMOJIS[stream.language] || '🌐'
+  const streamTypeConfig = STREAM_TYPE_CONFIG[stream.streamType || 'animatic']
+  
+  const togglePlayPause = useCallback(() => {
+    if (!videoRef.current) return
+    if (isPlaying) {
+      videoRef.current.pause()
+    } else {
+      videoRef.current.play()
+    }
+  }, [isPlaying])
+  
+  const handleTimeUpdate = useCallback(() => {
+    if (videoRef.current) {
+      setCurrentTime(videoRef.current.currentTime)
+    }
+  }, [])
+  
+  const handleLoadedMetadata = useCallback(() => {
+    if (videoRef.current) {
+      setDuration(videoRef.current.duration)
+      setIsLoaded(true)
+    }
+  }, [])
+  
+  const handleSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTime = parseFloat(e.target.value)
+    if (videoRef.current) {
+      videoRef.current.currentTime = newTime
+      setCurrentTime(newTime)
+    }
+  }, [])
+  
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+  
+  // Auto-play on mount
+  useEffect(() => {
+    if (videoRef.current && stream.mp4Url) {
+      videoRef.current.play().catch(() => {
+        // Auto-play may be blocked by browser
+      })
+    }
+  }, [stream.mp4Url])
+  
+  return (
+    <div className="mb-4 bg-slate-900/90 rounded-xl border border-cyan-500/30 overflow-hidden shadow-lg shadow-cyan-500/10 animate-in slide-in-from-top-2 duration-300">
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2 bg-slate-800/80 border-b border-slate-700/50">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{flag}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-white">{stream.languageLabel}</span>
+            <span className={`flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ${
+              stream.streamType === 'video' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-purple-500/20 text-purple-300'
+            }`}>
+              {streamTypeConfig.icon}
+              {streamTypeConfig.label}
+            </span>
+            {stream.resolution && (
+              <span className="text-xs text-slate-400">{stream.resolution}</span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={onDownload}
+            className="p-1.5 text-slate-400 hover:text-cyan-400 hover:bg-slate-700 rounded transition-colors"
+            title="Download MP4"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+          <button
+            onClick={onExpandFullscreen}
+            className="p-1.5 text-slate-400 hover:text-cyan-400 hover:bg-slate-700 rounded transition-colors"
+            title="Expand to fullscreen"
+          >
+            <Maximize2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={onClose}
+            className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded transition-colors"
+            title="Close preview"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+      
+      {/* Video Container */}
+      <div className="relative bg-black">
+        <video
+          ref={videoRef}
+          src={stream.mp4Url}
+          className="w-full aspect-video"
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          onTimeUpdate={handleTimeUpdate}
+          onLoadedMetadata={handleLoadedMetadata}
+          onEnded={() => setIsPlaying(false)}
+          playsInline
+        />
+        
+        {/* Loading overlay */}
+        {!isLoaded && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+            <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+          </div>
+        )}
+      </div>
+      
+      {/* Custom Controls */}
+      <div className="flex items-center gap-3 px-3 py-2 bg-slate-800/80">
+        <button
+          onClick={togglePlayPause}
+          className="p-1.5 text-white hover:text-cyan-400 transition-colors"
+        >
+          {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+        </button>
+        
+        <span className="text-xs text-slate-400 min-w-[40px]">
+          {formatTime(currentTime)}
+        </span>
+        
+        <input
+          type="range"
+          min={0}
+          max={duration || 100}
+          value={currentTime}
+          onChange={handleSeek}
+          className="flex-1 h-1 bg-slate-700 rounded-full appearance-none cursor-pointer
+            [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 
+            [&::-webkit-slider-thumb]:bg-cyan-400 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer
+            [&::-webkit-slider-thumb]:hover:bg-cyan-300 [&::-webkit-slider-thumb]:transition-colors"
+        />
+        
+        <span className="text-xs text-slate-400 min-w-[40px] text-right">
+          {formatTime(duration)}
+        </span>
+      </div>
+    </div>
+  )
+}
+
 function ProductionStreamCard({
   stream,
   isRendering,
+  isActive,
   renderProgress,
   onPreview,
   onDownload,
@@ -151,6 +320,7 @@ function ProductionStreamCard({
 }: {
   stream: ProductionStream
   isRendering: boolean
+  isActive?: boolean
   renderProgress?: number
   onPreview: () => void
   onDownload: () => void
@@ -163,7 +333,11 @@ function ProductionStreamCard({
   const streamTypeConfig = STREAM_TYPE_CONFIG[stream.streamType || 'animatic']
   
   return (
-    <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg border border-gray-700/50 hover:border-gray-600/50 transition-colors">
+    <div className={`flex items-center justify-between p-3 bg-gray-800/50 rounded-lg border transition-all duration-200 ${
+      isActive 
+        ? 'border-cyan-500/60 ring-1 ring-cyan-500/30 bg-cyan-500/5' 
+        : 'border-gray-700/50 hover:border-gray-600/50'
+    }`}>
       {/* Left: Language, type, and status */}
       <div className="flex items-center gap-3 min-w-0">
         <span className="text-xl" title={stream.languageLabel}>{flag}</span>
@@ -298,6 +472,40 @@ export function ProductionStreamsPanel({
   const [kenBurnsIntensity, setKenBurnsIntensity] = useState<KenBurnsIntensity>('subtle')
   const [transitionStyle, setTransitionStyle] = useState<'cut' | 'crossfade' | 'fade-to-black'>('crossfade')
   
+  // Inline video preview state
+  const [previewingStreamId, setPreviewingStreamId] = useState<string | null>(null)
+  
+  // Get the stream being previewed
+  const previewingStream = useMemo(() => 
+    previewingStreamId ? productionStreams.find(s => s.id === previewingStreamId) : null,
+    [previewingStreamId, productionStreams]
+  )
+  
+  // Handle inline preview toggle
+  const handleInlinePreview = useCallback((streamId: string) => {
+    setPreviewingStreamId(current => current === streamId ? null : streamId)
+  }, [])
+  
+  // Handle expanding to fullscreen (uses existing parent callback)
+  const handleExpandFullscreen = useCallback(() => {
+    if (previewingStream?.mp4Url) {
+      onPreviewStream(previewingStream.id, previewingStream.mp4Url)
+      setPreviewingStreamId(null)
+    }
+  }, [previewingStream, onPreviewStream])
+  
+  // Handle download from inline player
+  const handleInlineDownload = useCallback(() => {
+    if (previewingStream?.mp4Url) {
+      onDownloadStream(previewingStream.id, previewingStream.mp4Url, previewingStream.language)
+    }
+  }, [previewingStream, onDownloadStream])
+  
+  // Close inline preview when switching tabs
+  useEffect(() => {
+    setPreviewingStreamId(null)
+  }, [selectedStreamType])
+  
   // Filter streams by type
   const animaticStreams = useMemo(() => 
     productionStreams.filter(s => !s.streamType || s.streamType === 'animatic'),
@@ -406,6 +614,16 @@ export function ProductionStreamsPanel({
         </button>
       </div>
       
+      {/* Inline Video Player */}
+      {previewingStream && previewingStream.mp4Url && (
+        <InlineVideoPlayer
+          stream={previewingStream}
+          onClose={() => setPreviewingStreamId(null)}
+          onExpandFullscreen={handleExpandFullscreen}
+          onDownload={handleInlineDownload}
+        />
+      )}
+      
       {/* Existing Streams (filtered by type) */}
       {currentStreams.length > 0 && (
         <div className="space-y-2">
@@ -414,8 +632,9 @@ export function ProductionStreamsPanel({
               key={stream.id}
               stream={stream}
               isRendering={isRendering && renderingStreamId === stream.id}
+              isActive={previewingStreamId === stream.id}
               renderProgress={renderingStreamId === stream.id ? renderProgress : undefined}
-              onPreview={() => stream.mp4Url && onPreviewStream(stream.id, stream.mp4Url)}
+              onPreview={() => stream.mp4Url && handleInlinePreview(stream.id)}
               onDownload={() => stream.mp4Url && onDownloadStream(stream.id, stream.mp4Url, stream.language)}
               onReRender={() => onReRenderStream(stream.id)}
               onDelete={() => onDeleteStream(stream.id)}
