@@ -1,6 +1,7 @@
 import { GoogleAuth } from 'google-auth-library'
 import { fetchWithRetry } from '../utils/retry'
 import { getImagenModel, DEFAULT_IMAGE_QUALITY, type ModelQuality } from '@/lib/config/modelConfig'
+import { getImagenSafetyFilterLevel, getImagenPersonGeneration } from './safety'
 
 let authClient: any = null
 
@@ -102,6 +103,12 @@ export async function callVertexAIImagen(
   const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${MODEL_ID}:predict`
   
   // Build request body for Vertex AI Imagen 
+  // Use configurable safety settings (default: block_few for creative content)
+  const safetySetting = getImagenSafetyFilterLevel()
+  const personGeneration = options.personGeneration || getImagenPersonGeneration()
+  
+  console.log('[Imagen] Safety settings:', { safetySetting, personGeneration })
+  
   const requestBody: any = {
     instances: [{
       prompt: prompt
@@ -109,8 +116,8 @@ export async function callVertexAIImagen(
     parameters: {
       sampleCount: options.numberOfImages || 1,
       aspectRatio: options.aspectRatio || '16:9',
-      safetySetting: 'block_some',
-      personGeneration: options.personGeneration || 'allow_adult'
+      safetySetting: safetySetting,
+      personGeneration: personGeneration
     }
   }
   

@@ -1,4 +1,5 @@
 import { IVideoGeneratorAdapter, StandardVideoRequest, StandardVideoResult, ProviderCredentials, ProviderCapabilities, ProviderStatus } from './BaseAIProviderAdapter'
+import { getGeminiSafetyThreshold } from '@/lib/vertexai/safety'
 
 export interface GoogleVeoCredentials {
   type: string
@@ -247,14 +248,23 @@ export class GoogleVeoAdapter extends IVideoGeneratorAdapter {
         topK: 40,
         maxOutputTokens: 1024
       },
+      // Use configurable safety settings (default: BLOCK_ONLY_HIGH for creative content)
       safetySettings: [
         {
           category: 'HARM_CATEGORY_HARASSMENT',
-          threshold: 'BLOCK_MEDIUM_AND_ABOVE'
+          threshold: getGeminiSafetyThreshold()
         },
         {
           category: 'HARM_CATEGORY_HATE_SPEECH',
-          threshold: 'BLOCK_MEDIUM_AND_ABOVE'
+          threshold: getGeminiSafetyThreshold()
+        },
+        {
+          category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+          threshold: getGeminiSafetyThreshold()
+        },
+        {
+          category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+          threshold: getGeminiSafetyThreshold()
         }
       ]
     }

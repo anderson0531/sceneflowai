@@ -17,6 +17,7 @@
 
 import { EditMode, AspectRatioPreset } from '@/types/imageEdit'
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
+import { getImagenSafetyFilterLevel, getImagenPersonGeneration } from '@/lib/vertexai/safety'
 
 // Vertex AI configuration
 function getVertexConfig() {
@@ -205,8 +206,8 @@ export async function editImageWithInstruction(
           baseSteps: 50  // Balance between quality and speed
         },
         sampleCount: 1,
-        safetySetting: 'block_some',
-        personGeneration: 'allow_adult'
+        safetySetting: getImagenSafetyFilterLevel(),
+        personGeneration: getImagenPersonGeneration()
       }
     }
     
@@ -343,8 +344,8 @@ export async function inpaintImage(
           baseSteps: 50
         },
         sampleCount: 1,
-        safetySetting: 'block_some',
-        personGeneration: 'allow_adult'
+        safetySetting: getImagenSafetyFilterLevel(),
+        personGeneration: getImagenPersonGeneration()
       }
     }
     
@@ -474,8 +475,8 @@ export async function outpaintImage(
           baseSteps: 50
         },
         sampleCount: 1,
-        safetySetting: 'block_some',
-        personGeneration: 'allow_adult'
+        safetySetting: getImagenSafetyFilterLevel(),
+        personGeneration: getImagenPersonGeneration()
       }
     }
     

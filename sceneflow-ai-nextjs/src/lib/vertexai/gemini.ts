@@ -15,6 +15,12 @@
 
 import { getVertexAIAuthToken } from './client'
 import { fetchWithRetry } from '../utils/retry'
+import { 
+  getDefaultGeminiSafetySettings, 
+  getImagenSafetyFilterLevel, 
+  getImagenPersonGeneration,
+  type SafetySetting 
+} from './safety'
 
 // =============================================================================
 // Configuration
@@ -48,6 +54,8 @@ export interface TextGenerationOptions {
   topK?: number
   responseMimeType?: 'text/plain' | 'application/json'
   systemInstruction?: string
+  /** Safety settings for content filtering (default: BLOCK_ONLY_HIGH for all categories) */
+  safetySettings?: SafetySetting[]
   /** Maximum retry attempts for 429/transient errors (default: 3) */
   maxRetries?: number
   /** Initial retry delay in ms (default: 1000) */
@@ -131,6 +139,10 @@ export async function generateText(
       parts: [{ text: options.systemInstruction }]
     }
   }
+  
+  // Add safety settings (default: BLOCK_ONLY_HIGH for creative content flexibility)
+  requestBody.safetySettings = options.safetySettings || getDefaultGeminiSafetySettings()
+  console.log(`[Vertex Gemini] Safety settings: ${requestBody.safetySettings.map((s: SafetySetting) => `${s.category}=${s.threshold}`).join(', ')}`)
   
   // Add thinking config for Gemini 2.5 models
   // Setting thinkingBudget to 0 disables thinking mode (prevents OOM issues)
@@ -244,7 +256,9 @@ export async function generateWithVision(
       temperature: options.temperature ?? 0.2,
       topP: options.topP ?? 0.9,
       maxOutputTokens: options.maxOutputTokens ?? 8192,
-    }
+    },
+    // Add safety settings for vision (default: BLOCK_ONLY_HIGH for creative content)
+    safetySettings: options.safetySettings || getDefaultGeminiSafetySettings()
   }
   
   if (options.systemInstruction) {
@@ -254,6 +268,7 @@ export async function generateWithVision(
   }
   
   console.log(`[Vertex Gemini Vision] Generating with ${model}...`)
+  console.log(`[Vertex Gemini Vision] Safety settings applied: ${requestBody.safetySettings.map((s: SafetySetting) => s.threshold).join(', ')}`)
   
   const response = await fetchWithRetry(
     endpoint,
@@ -343,6 +358,12 @@ export async function generateImage(
   const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:predict`
   
   // Build request body
+  // Use configurable safety settings from environment (default: block_few for creative content)
+  const safetySetting = getImagenSafetyFilterLevel()
+  const personGeneration = options.personGeneration || getImagenPersonGeneration()
+  
+  console.log('[Vertex Imagen] Safety settings:', { safetySetting, personGeneration })
+  
   const requestBody: any = {
     instances: [{
       prompt: prompt
@@ -350,8 +371,8 @@ export async function generateImage(
     parameters: {
       sampleCount: options.numberOfImages || 1,
       aspectRatio: options.aspectRatio || '16:9',
-      safetySetting: 'block_some',
-      personGeneration: options.personGeneration || 'allow_adult'
+      safetySetting: safetySetting,
+      personGeneration: personGeneration
     }
   }
   

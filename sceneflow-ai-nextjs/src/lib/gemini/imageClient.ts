@@ -13,6 +13,7 @@
 
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
 import { getImagenModel, DEFAULT_IMAGE_QUALITY, type ModelQuality } from '@/lib/config/modelConfig'
+import { getImagenSafetyFilterLevel, getImagenPersonGeneration } from '@/lib/vertexai/safety'
 
 interface ReferenceImage {
   referenceId: number
@@ -92,6 +93,12 @@ export async function generateImageWithGemini(
   console.log('[Vertex Imagen] Endpoint:', endpoint)
   
   // Build request body
+  // Use configurable safety settings from environment (default: block_few for creative content)
+  const safetySetting = getImagenSafetyFilterLevel()
+  const personGeneration = options.personGeneration || getImagenPersonGeneration()
+  
+  console.log('[Vertex Imagen] Safety settings:', { safetySetting, personGeneration })
+  
   const requestBody: any = {
     instances: [{
       prompt: finalPrompt
@@ -99,8 +106,8 @@ export async function generateImageWithGemini(
     parameters: {
       sampleCount: options.numberOfImages || 1,
       aspectRatio: options.aspectRatio || '16:9',
-      safetySetting: 'block_some',
-      personGeneration: options.personGeneration || 'allow_adult'
+      safetySetting: safetySetting,
+      personGeneration: personGeneration
     }
   }
   

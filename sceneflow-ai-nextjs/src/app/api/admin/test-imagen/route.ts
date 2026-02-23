@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStorageClient } from '@/lib/storage/gcs';
 import { getVertexAIAuthToken } from '@/lib/vertexai/client';
+import { getImagenSafetyFilterLevel, getImagenPersonGeneration } from '@/lib/vertexai/safety';
 
 export const maxDuration = 120; // Increased for new AI image models
 
@@ -56,8 +57,8 @@ export async function POST(req: NextRequest) {
       parameters: {
         sampleCount: 1,
         aspectRatio: "1:1",
-        personGeneration: "allow_adult",
-        safetySetting: "block_some"
+        personGeneration: getImagenPersonGeneration(),
+        safetySetting: getImagenSafetyFilterLevel()
       }
     };
 

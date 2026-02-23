@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { generateText } from '@/lib/vertexai/gemini'
+import { SCENEFLOW_CREATIVE_SYSTEM_INSTRUCTION } from '@/lib/vertexai/safety'
 
 export type Provider = 'openai' | 'gemini'
 
@@ -14,6 +15,8 @@ export interface LLMConfig {
   temperature?: number
   /** Timeout in ms (default: 90000) */
   timeoutMs?: number
+  /** Custom system instruction (default: SceneFlow creative context) */
+  systemInstruction?: string
 }
 
 export const JsonResponseSchema = z.string().min(2)
@@ -48,6 +51,7 @@ export async function callLLM(config: LLMConfig, prompt: string): Promise<string
   }
 
   // Use Vertex AI for Gemini (pay-as-you-go, no free tier limits)
+  // Safety settings are automatically applied via getDefaultGeminiSafetySettings()
   const result = await generateText(prompt, {
     model,
     temperature,
@@ -55,7 +59,8 @@ export async function callLLM(config: LLMConfig, prompt: string): Promise<string
     maxOutputTokens,
     timeoutMs,
     responseMimeType: 'application/json',
-    systemInstruction: 'Return ONLY valid JSON that matches the requested schema. No prose.'
+    systemInstruction: config.systemInstruction || 
+      `${SCENEFLOW_CREATIVE_SYSTEM_INSTRUCTION}\n\nOutput Format: Return ONLY valid JSON that matches the requested schema. No prose.`
   })
   
   if (!result.text) throw new Error('Gemini returned empty content')

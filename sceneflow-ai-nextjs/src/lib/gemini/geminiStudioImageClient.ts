@@ -15,6 +15,8 @@
  * @see https://ai.google.dev/gemini-api/docs/image-generation
  */
 
+import { getGeminiSafetyThreshold } from '@/lib/vertexai/safety'
+
 // Rate limit tracking for automatic fallback
 let proModelRateLimitedUntil: number | null = null
 const RATE_LIMIT_COOLDOWN_MS = 60000 // 1 minute cooldown after rate limit hit
@@ -215,11 +217,12 @@ export async function generateImageWithGeminiStudio(
       } : {})
     },
     // Safety settings to allow adult content (required for character generation)
+    // Uses configurable threshold from environment (default: BLOCK_ONLY_HIGH)
     safetySettings: [
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' }
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: getGeminiSafetyThreshold() },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: getGeminiSafetyThreshold() },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: getGeminiSafetyThreshold() },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: getGeminiSafetyThreshold() }
     ]
   }
   

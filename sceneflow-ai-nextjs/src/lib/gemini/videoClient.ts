@@ -1,5 +1,6 @@
 import { JWT } from 'google-auth-library';
 import { getVeoModel, DEFAULT_VIDEO_QUALITY } from '@/lib/config/modelConfig';
+import { getVeoSafetySetting, getImagenPersonGeneration } from '@/lib/vertexai/safety';
 
 /**
  * Get Google OAuth2 Bearer token for Vertex AI
@@ -254,19 +255,20 @@ export async function generateVideoWithVeo(
   // For image-to-video, it should be 'allow_adult'
   const isImageToVideo = !!options.startFrame
   
-  // Safety setting: Use 'block_only_high' for creative content (least restrictive public setting)
+  // Safety setting: Use configurable setting from environment (default: 'block_only_high')
   // This reduces false positives for dramatic/cinematic content while still blocking egregious content
   // Options: 'block_most' (default/strict), 'block_some', 'block_few', 'block_only_high' (least restrictive)
-  const safetySetting = options.safetySetting || process.env.VEO_SAFETY_SETTING || 'block_only_high'
+  const safetySetting = options.safetySetting || getVeoSafetySetting()
+  const personGeneration = isImageToVideo ? getImagenPersonGeneration() : 'allow_all'
   
   const parameters: Record<string, any> = {
     aspectRatio: options.aspectRatio || '16:9',
     durationSeconds: options.durationSeconds || 8,
-    personGeneration: isImageToVideo ? 'allow_adult' : 'allow_all',
+    personGeneration: personGeneration,
     safetySetting: safetySetting
   }
   
-  console.log('[Veo Video] Safety setting:', safetySetting)
+  console.log('[Veo Video] Safety settings:', { safetySetting, personGeneration, isImageToVideo })
 
   // Add resolution if 1080p (720p is default)
   if (options.resolution === '1080p') {

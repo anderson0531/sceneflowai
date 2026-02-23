@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getVertexAIAuthToken } from '@/lib/vertexai/client';
+import { getImagenSafetyFilterLevel, getImagenPersonGeneration } from '@/lib/vertexai/safety';
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -99,8 +100,8 @@ export async function POST(req: NextRequest) {
           parameters: {
             sampleCount: 1,
             aspectRatio: '16:9',
-            safetySetting: 'block_some',
-            personGeneration: 'allow_adult'
+            safetySetting: getImagenSafetyFilterLevel(),
+            personGeneration: getImagenPersonGeneration()
           }
         };
 

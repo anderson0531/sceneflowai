@@ -17,6 +17,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { downloadImageAsBase64 } from '@/lib/storage/gcs'
 import { generateLinkingDescription } from '@/lib/imagen/promptOptimizer'
+import { getImagenSafetyFilterLevel, getImagenPersonGeneration } from '@/lib/vertexai/safety'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -117,8 +118,8 @@ export async function POST(req: NextRequest) {
       parameters: {
         sampleCount: 1,
         aspectRatio: '1:1',
-        safetySetting: 'block_some',
-        personGeneration: 'allow_adult'
+        safetySetting: getImagenSafetyFilterLevel(),
+        personGeneration: getImagenPersonGeneration()
       }
     }
 
