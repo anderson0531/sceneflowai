@@ -14,7 +14,7 @@
  * Veo 3.1 Audio Capabilities:
  * - ✅ Native speech synthesis (narration, dialogue with voice)
  * - ✅ Sound effects (ambient, impacts, environment)
- * - ❌ Background music (must be added as MP3 overlay in post-production)
+ * - ✅ Background music (ambient music and atmosphere from descriptions)
  * 
  * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
  */
@@ -779,7 +779,7 @@ export function GuidePromptEditor({
       })
     }
     
-    // 4. Music (NOT selected by default - Veo can't generate music)
+    // 4. Music (selected by default - Veo CAN generate music/ambience)
     const musicDesc = getMusicDescription(scene.music)
     if (musicDesc) {
       newElements.push({
@@ -788,7 +788,7 @@ export function GuidePromptEditor({
         label: 'Music',
         content: musicDesc,
         audioUrl: scene.musicAudio,
-        selected: false, // Never include - must be post-production overlay
+        selected: true, // Veo can generate background music and ambience
         portionStart: 0,
         portionEnd: 100,
       })
@@ -981,7 +981,20 @@ export function GuidePromptEditor({
       visualParts.push(`Audio includes ${sfxDescriptions}`)
     }
     
-    // 6. CUSTOM NOTES (user additions)
+    // 6. BACKGROUND MUSIC - Integrated into scene description
+    // Format: "Background music: [music description]"
+    const musicElements = selectedElements.filter(el => el.type === 'music')
+    if (musicElements.length > 0) {
+      const musicDescriptions = musicElements
+        .map(m => {
+          const musicText = getTextPortion(m.content, m.portionStart, m.portionEnd)
+          return musicText.toLowerCase()
+        })
+        .join(', ')
+      visualParts.push(`Background music: ${musicDescriptions}`)
+    }
+    
+    // 7. CUSTOM NOTES (user additions)
     if (customAddition.trim()) {
       visualParts.push(customAddition.trim())
     }
@@ -1019,6 +1032,11 @@ export function GuidePromptEditor({
     const sfx = selectedElements.filter(el => el.type === 'sfx')
     if (sfx.length > 0) {
       parts.push(`[SOUND EFFECTS]\n${sfx.map(s => getTextPortion(s.content, s.portionStart, s.portionEnd)).join(', ')}`)
+    }
+    
+    const music = selectedElements.filter(el => el.type === 'music')
+    if (music.length > 0) {
+      parts.push(`[MUSIC]\n${music.map(m => getTextPortion(m.content, m.portionStart, m.portionEnd)).join(', ')}`)
     }
     
     if (customAddition.trim()) {
@@ -1136,12 +1154,12 @@ export function GuidePromptEditor({
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1.5 text-red-400 cursor-help">
-                      <Ban className="w-3.5 h-3.5" /> Music
+                    <div className="flex items-center gap-1.5 text-green-400 cursor-help">
+                      <Check className="w-3.5 h-3.5" /> Music
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Background music must be added as MP3 overlay in post-production</p>
+                    <p>Veo can generate background music and ambience from descriptions</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
