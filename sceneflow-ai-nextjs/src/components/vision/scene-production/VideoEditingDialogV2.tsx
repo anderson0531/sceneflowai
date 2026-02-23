@@ -1173,7 +1173,7 @@ export function VideoEditingDialog({
   const [negativePrompt, setNegativePrompt] = useState('')
   const [duration, setDuration] = useState(6)
   const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>('16:9')
-  const [resolution, setResolution] = useState<'720p' | '1080p'>('720p')
+  const [resolution, setResolution] = useState<'720p' | '1080p'>('1080p')
   
   // Extend Tab state - stores selected video/frame for I2V extension
   const [sourceVideoRef, setSourceVideoRef] = useState('')
