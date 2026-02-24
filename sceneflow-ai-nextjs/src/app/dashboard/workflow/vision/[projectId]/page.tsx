@@ -2684,7 +2684,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             segment.segmentId === segmentId
               ? {
                   ...segment,
-                  status: 'UPLOADED' as const,
+                  status: 'COMPLETE' as const, // Use COMPLETE so segment is recognized as ready
                   assetType: file.type.startsWith('image') ? 'image' : 'video',
                   activeAssetUrl: assetUrl,
                   takes: [
@@ -2693,7 +2693,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       createdAt: new Date().toISOString(),
                       assetUrl: assetUrl,
                       thumbnailUrl: file.type.startsWith('image') ? assetUrl : segment.activeAssetUrl,
-                      status: 'UPLOADED' as const,
+                      status: 'COMPLETE' as const,
                       notes: 'User upload',
                     },
                     ...(segment.takes || []),
