@@ -443,14 +443,23 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
       createdAt: new Date().toISOString(),
     }
     
-    setProductionStreams(prev => [...prev, newStream])
+    const updatedStreams = [...productionStreams, newStream]
+    setProductionStreams(updatedStreams)
     setRenderingStreamId(streamId)
     setStreamRenderProgress(0)
     setSelectedStreamLanguage(language)
     
+    // Persist new stream to database
+    if (onProductionDataChange && productionData) {
+      onProductionDataChange({
+        ...productionData,
+        productionStreams: updatedStreams,
+      })
+    }
+    
     // Open the render dialog with the selected language
     setIsRenderDialogOpen(true)
-  }, [])
+  }, [productionStreams, productionData, onProductionDataChange])
   
   // Delete a production stream
   const handleDeleteStream = useCallback((streamId: string) => {
@@ -472,18 +481,27 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     if (!stream) return
     
     // Update stream status to rendering
-    setProductionStreams(prev => prev.map(s => 
+    const updatedStreams = productionStreams.map(s => 
       s.id === streamId 
         ? { ...s, status: 'rendering' as const, mp4Url: undefined }
         : s
-    ))
+    )
+    setProductionStreams(updatedStreams)
     setRenderingStreamId(streamId)
     setStreamRenderProgress(0)
     setSelectedStreamLanguage(stream.language)
     
+    // Persist updated stream status to database
+    if (onProductionDataChange && productionData) {
+      onProductionDataChange({
+        ...productionData,
+        productionStreams: updatedStreams,
+      })
+    }
+    
     // Open render dialog
     setIsRenderDialogOpen(true)
-  }, [productionStreams])
+  }, [productionStreams, productionData, onProductionDataChange])
   
   // Preview a production stream
   const handlePreviewStream = useCallback((streamId: string, mp4Url: string) => {
@@ -507,9 +525,9 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     console.log('[DirectorConsole] Scene render complete:', downloadUrl)
     setRenderedSceneUrl(downloadUrl)
     
-    // If we were rendering a specific stream, update it
+    // If we were rendering a specific stream, update it and persist to database
     if (renderingStreamId) {
-      setProductionStreams(prev => prev.map(s => 
+      const updatedStreams = productionStreams.map(s => 
         s.id === renderingStreamId 
           ? { 
               ...s, 
@@ -518,16 +536,25 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
               completedAt: new Date().toISOString(),
             }
           : s
-      ))
+      )
+      setProductionStreams(updatedStreams)
       setRenderingStreamId(null)
       setStreamRenderProgress(0)
+      
+      // Persist production streams to database
+      if (onProductionDataChange && productionData) {
+        onProductionDataChange({
+          ...productionData,
+          productionStreams: updatedStreams,
+        })
+      }
     }
     
-    // Persist to database
+    // Persist rendered scene URL to database
     if (onRenderedSceneUrlChange) {
       onRenderedSceneUrlChange(downloadUrl)
     }
-  }, [renderingStreamId, onRenderedSceneUrlChange])
+  }, [renderingStreamId, productionStreams, productionData, onProductionDataChange, onRenderedSceneUrlChange])
   
   // Count segments by status
   const statusCounts = {
