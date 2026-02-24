@@ -74,6 +74,7 @@ import { buildAudioTracksForLanguage, buildAudioTracksWithBaselineTiming, determ
 import { buildSceneReferencePrompt } from '@/lib/vision/sceneReferencePromptBuilder'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
+import { useAutoMigrate } from '@/hooks/useMediaLoader'
 
 /**
  * Client-side upload helper that uses the API endpoint
@@ -608,6 +609,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [isSaving, setIsSaving] = useState(false)
   const [uploadingRef, setUploadingRef] = useState<Record<string, boolean>>({})
   const [validationWarnings, setValidationWarnings] = useState<Record<number, string>>({})
+  
+  // Auto-migrate base64 images to blob storage when project loads
+  // This runs in the background and updates media URLs without blocking
+  const { migrating: isMigratingMedia, migrated: mediaMigrated } = useAutoMigrate(projectId, mounted && !!project)
   
   // Debounce ref for audio clip persistence
   const audioClipPersistDebounceRef = useRef<NodeJS.Timeout | null>(null)

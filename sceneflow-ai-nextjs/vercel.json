@@ -47,7 +47,11 @@
     },
     "src/app/api/projects/[id]/route.ts": {
       "maxDuration": 60,
-      "memory": 1024
+      "memory": 3008
+    },
+    "src/app/api/projects/[id]/media/route.ts": {
+      "maxDuration": 120,
+      "memory": 3008
     },
     "src/app/api/cron/voice-cleanup/route.ts": {
       "maxDuration": 60

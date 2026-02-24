@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
+import { stripBase64FromMetadata, calculateBase64Size } from '@/lib/storage/mediaStorage'
 
 // Increase timeout for large project updates
 export const maxDuration = 60 // 60 seconds timeout
@@ -14,6 +15,10 @@ export async function GET(
 ) {
   try {
     const { id } = await params
+    
+    // Check for lite mode - excludes large base64 images from response
+    const searchParams = request.nextUrl.searchParams
+    const liteMode = searchParams.get('lite') === 'true'
     
     // Validate UUID format - reject placeholder IDs like 'new-project'
     if (!id || !UUID_REGEX.test(id)) {
@@ -44,6 +49,18 @@ export async function GET(
     // Reload to get fresh data from database
     await project.reload()
     
+    // Get metadata - optionally strip base64 data in lite mode
+    let metadata = project.metadata || {}
+    let base64Size = 0
+    
+    if (liteMode) {
+      base64Size = calculateBase64Size(metadata)
+      if (base64Size > 0) {
+        console.log(`[Projects GET] Lite mode: stripping ${Math.round(base64Size / 1024)}KB of base64 data`)
+        metadata = stripBase64FromMetadata(metadata)
+      }
+    }
+    
     // Return project with formatted fields (matching /api/projects route format)
     const response = NextResponse.json({ 
       success: true, 
@@ -59,8 +76,10 @@ export async function GET(
         completedSteps: Object.entries(project.step_progress || {})
           .filter(([_, v]) => v === 100)
           .map(([k]) => k),
-        metadata: project.metadata || {}
-      }
+        metadata
+      },
+      // Include metadata size info when in lite mode
+      ...(liteMode && { base64Size, liteMode: true })
     })
     
     // Add cache control headers to prevent any caching
