@@ -1889,28 +1889,30 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                             {/* Wardrobe Preview Thumbnail */}
                             <div className="flex-shrink-0 w-14 h-14 rounded overflow-hidden bg-gray-200 dark:bg-gray-700">
                               {(w.fullBodyUrl || w.previewImageUrl) ? (
-                                <img 
-                                  src={w.fullBodyUrl || w.previewImageUrl} 
-                                  alt={`${w.name} preview`}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    // Hide broken image and show generate button
-                                    e.currentTarget.style.display = 'none'
-                                    e.currentTarget.nextElementSibling?.classList.remove('hidden')
-                                  }}
-                                />
-                                <button
-                                  className="hidden w-full h-full flex flex-col items-center justify-center gap-0.5 text-gray-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors disabled:opacity-50"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleGenerateWardrobePreview(w.id)
-                                  }}
-                                  disabled={generatingPreviewFor !== null || isGeneratingAllPreviews}
-                                  title="Generate preview (5 credits)"
-                                >
-                                  <ImageIcon className="w-4 h-4" />
-                                  <span className="text-[8px]">Retry</span>
-                                </button>
+                                <>
+                                  <img 
+                                    src={w.fullBodyUrl || w.previewImageUrl} 
+                                    alt={`${w.name} preview`}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      // Hide broken image and show generate button
+                                      e.currentTarget.style.display = 'none'
+                                      e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                                    }}
+                                  />
+                                  <button
+                                    className="hidden w-full h-full flex flex-col items-center justify-center gap-0.5 text-gray-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors disabled:opacity-50"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleGenerateWardrobePreview(w.id)
+                                    }}
+                                    disabled={generatingPreviewFor !== null || isGeneratingAllPreviews}
+                                    title="Generate preview (5 credits)"
+                                  >
+                                    <ImageIcon className="w-4 h-4" />
+                                    <span className="text-[8px]">Retry</span>
+                                  </button>
+                                </>
                               ) : (
                                 <button
                                   onClick={(e) => {
@@ -2191,30 +2193,32 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                     </div>
                     <div className="aspect-[9/16] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                       {(expandedWardrobe.fullBodyUrl || expandedWardrobe.previewImageUrl) ? (
-                        <img 
-                          src={expandedWardrobe.fullBodyUrl || expandedWardrobe.previewImageUrl} 
-                          alt={`${expandedWardrobe.name} full body`}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            // Hide broken image and show placeholder
-                            e.currentTarget.style.display = 'none'
-                            e.currentTarget.nextElementSibling?.classList.remove('hidden')
-                          }}
-                        />
-                        <div className="hidden w-full h-full flex flex-col items-center justify-center gap-2 text-gray-400">
-                          <Shirt className="w-12 h-12" />
-                          <span className="text-sm">Image unavailable</span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleGenerateWardrobePreview(expandedWardrobe.id)
+                        <>
+                          <img 
+                            src={expandedWardrobe.fullBodyUrl || expandedWardrobe.previewImageUrl} 
+                            alt={`${expandedWardrobe.name} full body`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              // Hide broken image and show placeholder
+                              e.currentTarget.style.display = 'none'
+                              e.currentTarget.nextElementSibling?.classList.remove('hidden')
                             }}
-                            disabled={generatingPreviewFor !== null}
-                            className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
-                          >
-                            {generatingPreviewFor === expandedWardrobe.id ? 'Generating...' : 'Regenerate Preview'}
-                          </button>
-                        </div>
+                          />
+                          <div className="hidden w-full h-full flex flex-col items-center justify-center gap-2 text-gray-400">
+                            <Shirt className="w-12 h-12" />
+                            <span className="text-sm">Image unavailable</span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleGenerateWardrobePreview(expandedWardrobe.id)
+                              }}
+                              disabled={generatingPreviewFor !== null}
+                              className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
+                            >
+                              {generatingPreviewFor === expandedWardrobe.id ? 'Generating...' : 'Regenerate Preview'}
+                            </button>
+                          </div>
+                        </>
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-400">
                           <Shirt className="w-12 h-12" />
