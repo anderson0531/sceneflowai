@@ -53,6 +53,10 @@
       "maxDuration": 120,
       "memory": 3008
     },
+    "src/app/api/admin/migrate-media/route.ts": {
+      "maxDuration": 300,
+      "memory": 3008
+    },
     "src/app/api/cron/voice-cleanup/route.ts": {
       "maxDuration": 60
     },
