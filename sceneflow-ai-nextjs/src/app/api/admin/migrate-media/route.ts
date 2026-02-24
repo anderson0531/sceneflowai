@@ -131,14 +131,21 @@ export async function POST(request: NextRequest) {
  * GET /api/admin/migrate-media
  * 
  * Check migration status - lists projects with base64 data
+ * Add ?diagnostics=true to see all image URLs
  */
 export async function GET(request: NextRequest) {
   try {
     await sequelize.authenticate()
     
-    const projects = await Project.findAll()
+    const searchParams = request.nextUrl.searchParams
+    const showDiagnostics = searchParams.get('diagnostics') === 'true'
+    const projectIdFilter = searchParams.get('project_id')
+    
+    const whereClause = projectIdFilter ? { id: projectIdFilter } : {}
+    const projects = await Project.findAll({ where: whereClause })
     
     const projectsWithBase64: any[] = []
+    const allImageUrls: any[] = []
     let totalBase64Size = 0
     
     for (const project of projects) {
@@ -154,16 +161,81 @@ export async function GET(request: NextRequest) {
         })
         totalBase64Size += base64Size
       }
+      
+      // Collect all image URLs for diagnostics
+      if (showDiagnostics) {
+        const visionPhase = metadata.visionPhase || {}
+        
+        // Props
+        const props = visionPhase.references?.objectReferences || []
+        for (const prop of props) {
+          if (prop.imageUrl) {
+            allImageUrls.push({
+              projectId: project.id,
+              projectTitle: project.title,
+              type: 'prop',
+              name: prop.name,
+              imageUrl: prop.imageUrl.substring(0, 100) + (prop.imageUrl.length > 100 ? '...' : ''),
+              fullUrl: prop.imageUrl,
+              isBase64: prop.imageUrl.startsWith('data:'),
+              urlLength: prop.imageUrl.length
+            })
+          }
+        }
+        
+        // Characters
+        const characters = visionPhase.characters || []
+        for (const char of characters) {
+          if (char.referenceImage) {
+            allImageUrls.push({
+              projectId: project.id,
+              projectTitle: project.title,
+              type: 'character',
+              name: char.name,
+              imageUrl: char.referenceImage.substring(0, 100) + (char.referenceImage.length > 100 ? '...' : ''),
+              fullUrl: char.referenceImage,
+              isBase64: char.referenceImage.startsWith('data:'),
+              urlLength: char.referenceImage.length
+            })
+          }
+        }
+        
+        // Backdrops
+        const backdrops = visionPhase.references?.sceneReferences || []
+        for (const backdrop of backdrops) {
+          if (backdrop.imageUrl) {
+            allImageUrls.push({
+              projectId: project.id,
+              projectTitle: project.title,
+              type: 'backdrop',
+              name: backdrop.name,
+              imageUrl: backdrop.imageUrl.substring(0, 100) + (backdrop.imageUrl.length > 100 ? '...' : ''),
+              fullUrl: backdrop.imageUrl,
+              isBase64: backdrop.imageUrl.startsWith('data:'),
+              urlLength: backdrop.imageUrl.length
+            })
+          }
+        }
+      }
     }
     
-    return NextResponse.json({
+    const response: any = {
       success: true,
       totalProjects: projects.length,
       projectsWithBase64: projectsWithBase64.length,
       totalBase64Size,
       totalBase64SizeMB: (totalBase64Size / 1024 / 1024).toFixed(2),
       projects: projectsWithBase64
-    })
+    }
+    
+    if (showDiagnostics) {
+      response.diagnostics = {
+        totalImages: allImageUrls.length,
+        images: allImageUrls
+      }
+    }
+    
+    return NextResponse.json(response)
   } catch (error: any) {
     console.error('[Admin Migration] Status check error:', error)
     return NextResponse.json(
