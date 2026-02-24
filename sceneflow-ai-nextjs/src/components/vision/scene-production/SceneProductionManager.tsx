@@ -14,7 +14,7 @@ import {
   SegmentKeyframeSettings,
   AudioTrackType,
 } from './types'
-import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Film, Clock, Sliders, MessageSquare, Settings2, Volume2, Users, ImageIcon, Layers, Mic2 } from 'lucide-react'
+import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Film, Clock, Sliders, MessageSquare, Settings2, Volume2, Users, ImageIcon, Layers, Mic2, SkipForward } from 'lucide-react'
 import { AudioAssetsDialog, AudioTrackClip } from './AudioAssetsDialog'
 import { toast } from 'sonner'
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
@@ -62,7 +62,7 @@ interface SceneProductionManagerProps {
   projectId?: string // For audio file uploads
   productionData?: SceneProductionData | null
   references: SceneProductionReferences
-  onInitialize: (sceneId: string, options: { targetDuration: number; generationOptions?: SegmentGenerationOptions }) => Promise<void>
+  onInitialize: (sceneId: string, options: { targetDuration: number; generationOptions?: SegmentGenerationOptions; segments?: SceneSegment[] }) => Promise<void>
   onPromptChange: (sceneId: string, segmentId: string, prompt: string) => void
   onKeyframeChange?: (sceneId: string, segmentId: string, keyframeSettings: SegmentKeyframeSettings) => void
   onDialogueAssignmentChange?: (sceneId: string, segmentId: string, dialogueLineIds: string[]) => void
@@ -912,6 +912,52 @@ export function SceneProductionManager({
     }
   }
 
+  // Bypass: Create single segment for entire scene without AI generation
+  // Allows immediate image/video uploads without going through Configure dialog
+  const handleBypass = async () => {
+    setIsInitializing(true)
+    setGenerationProgress(50)
+    
+    try {
+      // Use scene audio duration, or default to 8 seconds (Veo 3.1 max)
+      const bypassDuration = Math.min(8, totalAudioDurationSeconds || scene?.duration || 8)
+      
+      // Create a single segment covering the entire scene
+      const bypassSegment: SceneSegment = {
+        segmentId: `seg-${sceneId}-bypass-${Date.now()}`,
+        sequenceIndex: 0,
+        startTime: 0,
+        endTime: bypassDuration,
+        status: 'DRAFT',
+        assetType: null,
+        references: {
+          characterIds: [],
+          sceneRefIds: [],
+          objectRefIds: [],
+        },
+        takes: [],
+        generatedPrompt: `Scene ${sceneNumber} - Full scene segment (${bypassDuration}s). Ready for image or video upload.`,
+      }
+      
+      // Call onInitialize with pre-parsed segment to bypass API generation
+      await onInitialize(sceneId, { 
+        targetDuration: bypassDuration, 
+        segments: [bypassSegment]
+      })
+      
+      setGenerationProgress(100)
+      toast.success('Quick start segment created', {
+        description: 'You can now upload images or videos directly'
+      })
+    } catch (error) {
+      console.error('[SceneProduction] Bypass failed', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to create segment')
+    } finally {
+      setIsInitializing(false)
+      setGenerationProgress(0)
+    }
+  }
+
   const handlePromptChange = (prompt: string) => {
     if (!selectedSegment) return
     onPromptChange(sceneId, selectedSegment.segmentId, prompt)
@@ -1536,6 +1582,18 @@ export function SceneProductionManager({
             >
               <Settings2 className="w-4 h-4" />
               Configure & Generate
+            </Button>
+            <Button
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation()
+                handleBypass()
+              }}
+              disabled={isInitializing}
+              className="flex items-center gap-2"
+            >
+              <SkipForward className="w-4 h-4" />
+              Quick Start
             </Button>
           </div>
           <p className="text-xs text-gray-400 mt-3 flex items-center gap-2">
