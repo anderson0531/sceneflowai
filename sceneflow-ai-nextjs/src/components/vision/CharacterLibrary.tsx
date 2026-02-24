@@ -523,7 +523,14 @@ export function CharacterLibrary({ characters, scenes = [], onRegenerateCharacte
 }
 
 const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, isUploading = false, isOrphan = false, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateWardrobe, onBatchUpdateWardrobes, scenes = [], onRemove, onEditImage, ttsProvider, voiceSectionExpanded, onToggleVoiceSection, enableDrag = false, onOpenCharacterPrompt, screenplayContext }: CharacterCardProps) => {
-  const hasImage = !!character.referenceImage
+  const [imageError, setImageError] = useState(false) // Track if image failed to load
+  
+  // Reset imageError when referenceImage changes (new image uploaded)
+  useEffect(() => {
+    setImageError(false)
+  }, [character.referenceImage])
+  
+  const hasImage = !!character.referenceImage && !imageError
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
   const isAppearanceExpanded = expandedCharId === `${characterId}-appear`
@@ -1091,11 +1098,12 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
           <div className="flex items-center gap-3 min-w-0">
             {/* Small avatar thumbnail */}
             <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0">
-              {character.referenceImage ? (
+              {character.referenceImage && !imageError ? (
                 <img 
                   src={character.referenceImage} 
                   alt={character.name}
                   className="w-full h-full object-cover"
+                  onError={() => setImageError(true)}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
@@ -1147,12 +1155,13 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
       
       {/* Image Section */}
       <div className="relative aspect-square bg-gray-100 dark:bg-gray-800">
-        {character.referenceImage ? (
+        {character.referenceImage && !imageError ? (
           <>
             <img 
               src={character.referenceImage} 
               alt={character.name}
               className="w-full h-full object-cover"
+              onError={() => setImageError(true)}
             />
             {/* Overlay controls - only show on hover */}
             <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all opacity-0 hover:opacity-100 flex items-center justify-center gap-2">
@@ -1884,7 +1893,24 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                                   src={w.fullBodyUrl || w.previewImageUrl} 
                                   alt={`${w.name} preview`}
                                   className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    // Hide broken image and show generate button
+                                    e.currentTarget.style.display = 'none'
+                                    e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                                  }}
                                 />
+                                <button
+                                  className="hidden w-full h-full flex flex-col items-center justify-center gap-0.5 text-gray-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors disabled:opacity-50"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleGenerateWardrobePreview(w.id)
+                                  }}
+                                  disabled={generatingPreviewFor !== null || isGeneratingAllPreviews}
+                                  title="Generate preview (5 credits)"
+                                >
+                                  <ImageIcon className="w-4 h-4" />
+                                  <span className="text-[8px]">Retry</span>
+                                </button>
                               ) : (
                                 <button
                                   onClick={(e) => {
@@ -2169,7 +2195,26 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                           src={expandedWardrobe.fullBodyUrl || expandedWardrobe.previewImageUrl} 
                           alt={`${expandedWardrobe.name} full body`}
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // Hide broken image and show placeholder
+                            e.currentTarget.style.display = 'none'
+                            e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                          }}
                         />
+                        <div className="hidden w-full h-full flex flex-col items-center justify-center gap-2 text-gray-400">
+                          <Shirt className="w-12 h-12" />
+                          <span className="text-sm">Image unavailable</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleGenerateWardrobePreview(expandedWardrobe.id)
+                            }}
+                            disabled={generatingPreviewFor !== null}
+                            className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
+                          >
+                            {generatingPreviewFor === expandedWardrobe.id ? 'Generating...' : 'Regenerate Preview'}
+                          </button>
+                        </div>
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-400">
                           <Shirt className="w-12 h-12" />
