@@ -2662,23 +2662,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       })
 
       try {
-        // Upload to server (local storage for demo mode)
-        const formData = new FormData()
-        formData.append('file', file)
-        formData.append('projectId', project?.id || 'default')
+        // Use client-side upload to bypass serverless function size limit (4.5MB)
+        // This uploads directly to Vercel Blob from the browser
+        const fileExt = file.name.split('.').pop() || 'mp4'
+        const blob = await upload(
+          `segments/${segmentId}/video-${Date.now()}.${fileExt}`,
+          file,
+          {
+            access: 'public',
+            handleUploadUrl: '/api/segments/upload-video-url',
+          }
+        )
 
-        const response = await fetch(`/api/segments/${segmentId}/upload-video`, {
-          method: 'POST',
-          body: formData,
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.error || `Upload failed: ${response.status}`)
-        }
-
-        const result = await response.json()
-        const assetUrl = result.url || result.assetUrl
+        const assetUrl = blob.url
+        console.log('[Segment Upload] Success via client upload:', assetUrl, 'Size:', Math.round(file.size / 1024 / 1024), 'MB')
 
         // Update segment with uploaded asset
         applySceneProductionUpdate(sceneId, (current) => {
@@ -2727,7 +2724,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         toast.error(error.message || 'Upload failed')
       }
     },
-    [applySceneProductionUpdate, project?.id]
+    [applySceneProductionUpdate]
   )
   
   // Handle adding a new segment
