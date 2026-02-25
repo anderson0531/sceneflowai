@@ -514,6 +514,7 @@ export function SceneProductionManager({
   const [isInitializing, setIsInitializing] = useState(false)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [showAudioAssetsDialog, setShowAudioAssetsDialog] = useState(false)
+  const [showPasteDialog, setShowPasteDialog] = useState(false)
   const [generationProgress, setGenerationProgress] = useState(0)
   const [currentPlayingSegmentId, setCurrentPlayingSegmentId] = useState<string | null>(null)
   const [isSidePanelVisible, setIsSidePanelVisible] = useState(true)
