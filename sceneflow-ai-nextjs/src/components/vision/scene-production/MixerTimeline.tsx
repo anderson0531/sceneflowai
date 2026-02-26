@@ -24,6 +24,15 @@ interface TrackVisual {
   bgColor: string
 }
 
+export interface AudioClipInfo {
+  id: string
+  label?: string
+  startTime: number
+  duration: number
+  audioUrl?: string
+  character?: string
+}
+
 interface MixerTimelineProps {
   audioTracks: MixerAudioTracks
   onTrackChange: (track: keyof MixerAudioTracks, config: AudioTrackConfig) => void
@@ -32,6 +41,10 @@ interface MixerTimelineProps {
   dialogueDuration?: number
   musicDuration?: number
   sfxDuration?: number
+  /** Individual dialogue clips for per-line control */
+  dialogueClips?: AudioClipInfo[]
+  /** Individual SFX clips */
+  sfxClips?: AudioClipInfo[]
   /** Text overlays to display on timeline */
   textOverlays?: TextOverlay[]
   /** Callback when text overlay timing changes (drag-to-reposition) */
@@ -81,6 +94,8 @@ export function MixerTimeline({
   dialogueDuration = 0,
   musicDuration = 0,
   sfxDuration = 0,
+  dialogueClips = [],
+  sfxClips = [],
   textOverlays = [],
   onTextOverlayChange,
   disabled,
@@ -99,6 +114,7 @@ export function MixerTimeline({
   }
 
   // Calculate total timeline duration (max of video or audio end times)
+  // Adapts to actual video duration - no artificial 8-second cap
   const totalDuration = useMemo(() => {
     let maxEnd = videoTotalDuration
     for (const key of Object.keys(audioTracks) as Array<keyof MixerAudioTracks>) {
@@ -112,12 +128,19 @@ export function MixerTimeline({
       const overlayEnd = overlay.timing.startTime + (overlay.timing.duration === -1 ? videoTotalDuration : overlay.timing.duration)
       maxEnd = Math.max(maxEnd, overlayEnd)
     }
-    return Math.max(maxEnd, 10) // Minimum 10 seconds
+    // Minimum of 5 seconds or video duration (no artificial cap)
+    return Math.max(maxEnd, Math.max(5, videoTotalDuration))
   }, [audioTracks, videoTotalDuration, durations, textOverlays])
 
-  // Generate ruler ticks
+  // Generate ruler ticks - adaptive intervals for any duration
   const ticks = useMemo(() => {
-    const interval = totalDuration <= 30 ? 5 : totalDuration <= 60 ? 10 : 15
+    let interval: number
+    if (totalDuration <= 15) interval = 2
+    else if (totalDuration <= 30) interval = 5
+    else if (totalDuration <= 60) interval = 10
+    else if (totalDuration <= 120) interval = 15
+    else if (totalDuration <= 300) interval = 30
+    else interval = 60
     const count = Math.ceil(totalDuration / interval) + 1
     return Array.from({ length: count }, (_, i) => i * interval).filter(t => t <= totalDuration)
   }, [totalDuration])
