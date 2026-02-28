@@ -167,6 +167,72 @@ const TEXT_OVERLAY_PRESETS: Record<string, Partial<TextOverlay>> = {
 }
 
 // ============================================================================
+// Watermark Types
+// ============================================================================
+
+export type WatermarkType = 'text' | 'image'
+
+export type WatermarkAnchor = 
+  | 'top-left' 
+  | 'top-center' 
+  | 'top-right' 
+  | 'bottom-left' 
+  | 'bottom-center' 
+  | 'bottom-right'
+
+export interface WatermarkTextStyle {
+  fontFamily: string
+  fontSize: number  // percentage of video height
+  fontWeight: 400 | 500 | 600 | 700 | 800
+  color: string
+  opacity: number   // 0-1
+  textShadow?: boolean
+}
+
+export interface WatermarkImageStyle {
+  width: number     // percentage of video width
+  opacity: number   // 0-1
+}
+
+export interface WatermarkConfig {
+  enabled: boolean
+  type: WatermarkType
+  /** Text content (for text watermarks) */
+  text?: string
+  /** Text styling */
+  textStyle: WatermarkTextStyle
+  /** Image URL (for image watermarks) */
+  imageUrl?: string
+  /** Image styling */
+  imageStyle: WatermarkImageStyle
+  /** Position anchor on the video */
+  anchor: WatermarkAnchor
+  /** Padding from edge in pixels */
+  padding: number
+}
+
+export const DEFAULT_WATERMARK_CONFIG: WatermarkConfig = {
+  enabled: false,
+  type: 'text',
+  text: '© SceneFlow',
+  textStyle: {
+    fontFamily: 'Inter',
+    fontSize: 2.5,
+    fontWeight: 500,
+    color: '#FFFFFF',
+    opacity: 0.6,
+    textShadow: true,
+  },
+  imageUrl: '',
+  imageStyle: {
+    width: 10,
+    opacity: 0.7,
+  },
+  anchor: 'bottom-right',
+  padding: 20,
+}
+
+// ============================================================================
 // Types
 // ============================================================================
 
@@ -1740,6 +1806,9 @@ export function SceneProductionMixer({
   const [showOverlayPanel, setShowOverlayPanel] = useState(false)
   const [editingOverlay, setEditingOverlay] = useState<TextOverlay | null>(null)
   
+  // === Watermark State ===
+  const [watermarkConfig, setWatermarkConfig] = useState<WatermarkConfig>(DEFAULT_WATERMARK_CONFIG)
+  
   // Sync with external overlays
   useEffect(() => {
     if (externalTextOverlays) {
@@ -2088,6 +2157,16 @@ export function SceneProductionMixer({
             },
             timing: overlay.timing,
           })),
+          // Include watermark config for FFmpeg burning
+          watermark: watermarkConfig.enabled ? {
+            type: watermarkConfig.type,
+            text: watermarkConfig.text,
+            imageUrl: watermarkConfig.imageUrl,
+            anchor: watermarkConfig.anchor,
+            padding: watermarkConfig.padding,
+            textStyle: watermarkConfig.textStyle,
+            imageStyle: watermarkConfig.imageStyle,
+          } : null,
         }),
       })
       
@@ -2110,7 +2189,7 @@ export function SceneProductionMixer({
   }, [
     renderedSegments, segmentAudioConfigs, audioTracks, currentAudioUrls,
     totalDuration, sceneId, projectId, sceneNumber, resolution, selectedLanguage,
-    textOverlays, masterSegmentVolume
+    textOverlays, masterSegmentVolume, watermarkConfig
   ])
   
   // Poll job status
@@ -2263,6 +2342,15 @@ export function SceneProductionMixer({
             fadeOutMs: overlay.timing.fadeOutMs,
           },
         })),
+        watermark: watermarkConfig.enabled ? {
+          type: watermarkConfig.type,
+          text: watermarkConfig.text,
+          imageUrl: watermarkConfig.imageUrl,
+          anchor: watermarkConfig.anchor,
+          padding: watermarkConfig.padding,
+          textStyle: watermarkConfig.textStyle,
+          imageStyle: watermarkConfig.imageStyle,
+        } : undefined,
         resolution: localResolution,
         fps: 30,
         totalDuration,
@@ -2299,7 +2387,7 @@ export function SceneProductionMixer({
   }, [
     renderedSegments, segmentAudioConfigs, audioTracks, currentAudioUrls,
     totalDuration, resolution, selectedLanguage, textOverlays, masterSegmentVolume,
-    localRenderSupported, dialogueClipConfigs, sceneNumber, onRenderComplete
+    localRenderSupported, dialogueClipConfigs, sceneNumber, onRenderComplete, watermarkConfig
   ])
   
   // === Smart Render Handler (routes to local or server) ===
@@ -2745,6 +2833,215 @@ export function SceneProductionMixer({
                           </select>
                         </div>
                       </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Watermark Controls */}
+              <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-yellow-400" />
+                    <span className="text-sm font-medium text-white">Watermark</span>
+                    <Badge variant="outline" className="text-xs border-yellow-500/30 text-yellow-400">
+                      {watermarkConfig.enabled ? 'On' : 'Off'}
+                    </Badge>
+                  </div>
+                  <Switch
+                    checked={watermarkConfig.enabled}
+                    onCheckedChange={(enabled) => setWatermarkConfig(prev => ({ ...prev, enabled }))}
+                    disabled={isRendering}
+                  />
+                </div>
+                
+                {watermarkConfig.enabled && (
+                  <div className="space-y-3">
+                    {/* Watermark Type Toggle */}
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant={watermarkConfig.type === 'text' ? 'default' : 'outline'}
+                        onClick={() => setWatermarkConfig(prev => ({ ...prev, type: 'text' }))}
+                        className={`flex-1 h-8 ${watermarkConfig.type === 'text' ? 'bg-purple-600 hover:bg-purple-700' : 'border-gray-600'}`}
+                        disabled={isRendering}
+                      >
+                        <Type className="w-3 h-3 mr-1" />
+                        Text
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={watermarkConfig.type === 'image' ? 'default' : 'outline'}
+                        onClick={() => setWatermarkConfig(prev => ({ ...prev, type: 'image' }))}
+                        className={`flex-1 h-8 ${watermarkConfig.type === 'image' ? 'bg-purple-600 hover:bg-purple-700' : 'border-gray-600'}`}
+                        disabled={isRendering}
+                      >
+                        <Film className="w-3 h-3 mr-1" />
+                        Image
+                      </Button>
+                    </div>
+                    
+                    {/* Text Watermark Controls */}
+                    {watermarkConfig.type === 'text' && (
+                      <>
+                        <div>
+                          <label className="text-xs text-gray-400 mb-1 block">Watermark Text</label>
+                          <Input
+                            value={watermarkConfig.text || ''}
+                            onChange={(e) => setWatermarkConfig(prev => ({ ...prev, text: e.target.value }))}
+                            className="h-8 bg-gray-900 border-gray-600 text-white text-sm"
+                            placeholder="© Your Name or Company"
+                            disabled={isRendering}
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs text-gray-400 mb-1 block">Opacity ({Math.round(watermarkConfig.textStyle.opacity * 100)}%)</label>
+                            <Slider
+                              value={[watermarkConfig.textStyle.opacity * 100]}
+                              onValueChange={([v]) => setWatermarkConfig(prev => ({
+                                ...prev,
+                                textStyle: { ...prev.textStyle, opacity: v / 100 }
+                              }))}
+                              max={100}
+                              min={10}
+                              step={5}
+                              disabled={isRendering}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-400 mb-1 block">Size ({watermarkConfig.textStyle.fontSize}%)</label>
+                            <Slider
+                              value={[watermarkConfig.textStyle.fontSize * 10]}
+                              onValueChange={([v]) => setWatermarkConfig(prev => ({
+                                ...prev,
+                                textStyle: { ...prev.textStyle, fontSize: v / 10 }
+                              }))}
+                              min={10}
+                              max={80}
+                              step={5}
+                              disabled={isRendering}
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs text-gray-400 mb-1 block">Color</label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={watermarkConfig.textStyle.color}
+                                onChange={(e) => setWatermarkConfig(prev => ({
+                                  ...prev,
+                                  textStyle: { ...prev.textStyle, color: e.target.value }
+                                }))}
+                                className="w-8 h-8 rounded cursor-pointer bg-transparent border border-gray-600"
+                                disabled={isRendering}
+                              />
+                              <Input
+                                value={watermarkConfig.textStyle.color}
+                                onChange={(e) => setWatermarkConfig(prev => ({
+                                  ...prev,
+                                  textStyle: { ...prev.textStyle, color: e.target.value }
+                                }))}
+                                className="h-8 bg-gray-900 border-gray-600 text-white text-xs flex-1"
+                                placeholder="#FFFFFF"
+                                disabled={isRendering}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-end">
+                            <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
+                              <Switch
+                                checked={watermarkConfig.textStyle.textShadow || false}
+                                onCheckedChange={(checked) => setWatermarkConfig(prev => ({
+                                  ...prev,
+                                  textStyle: { ...prev.textStyle, textShadow: checked }
+                                }))}
+                                disabled={isRendering}
+                              />
+                              Text Shadow
+                            </label>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                    
+                    {/* Image Watermark Controls */}
+                    {watermarkConfig.type === 'image' && (
+                      <>
+                        <div>
+                          <label className="text-xs text-gray-400 mb-1 block">Image URL</label>
+                          <Input
+                            value={watermarkConfig.imageUrl || ''}
+                            onChange={(e) => setWatermarkConfig(prev => ({ ...prev, imageUrl: e.target.value }))}
+                            className="h-8 bg-gray-900 border-gray-600 text-white text-sm"
+                            placeholder="https://... (PNG with transparency recommended)"
+                            disabled={isRendering}
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs text-gray-400 mb-1 block">Size ({watermarkConfig.imageStyle.width}% width)</label>
+                            <Slider
+                              value={[watermarkConfig.imageStyle.width]}
+                              onValueChange={([v]) => setWatermarkConfig(prev => ({
+                                ...prev,
+                                imageStyle: { ...prev.imageStyle, width: v }
+                              }))}
+                              min={3}
+                              max={30}
+                              step={1}
+                              disabled={isRendering}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-400 mb-1 block">Opacity ({Math.round(watermarkConfig.imageStyle.opacity * 100)}%)</label>
+                            <Slider
+                              value={[watermarkConfig.imageStyle.opacity * 100]}
+                              onValueChange={([v]) => setWatermarkConfig(prev => ({
+                                ...prev,
+                                imageStyle: { ...prev.imageStyle, opacity: v / 100 }
+                              }))}
+                              min={10}
+                              max={100}
+                              step={5}
+                              disabled={isRendering}
+                            />
+                          </div>
+                        </div>
+                      </>
+                    )}
+                    
+                    {/* Position Selector */}
+                    <div>
+                      <label className="text-xs text-gray-400 mb-1 block">Position</label>
+                      <select
+                        value={watermarkConfig.anchor}
+                        onChange={(e) => setWatermarkConfig(prev => ({ ...prev, anchor: e.target.value as WatermarkAnchor }))}
+                        className="w-full h-8 px-2 bg-gray-900 border border-gray-600 rounded-md text-white text-sm"
+                        disabled={isRendering}
+                      >
+                        <option value="top-left">Top Left</option>
+                        <option value="top-center">Top Center</option>
+                        <option value="top-right">Top Right</option>
+                        <option value="bottom-left">Bottom Left</option>
+                        <option value="bottom-center">Bottom Center</option>
+                        <option value="bottom-right">Bottom Right</option>
+                      </select>
+                    </div>
+                    
+                    {/* Padding Control */}
+                    <div>
+                      <label className="text-xs text-gray-400 mb-1 block">Edge Padding ({watermarkConfig.padding}px)</label>
+                      <Slider
+                        value={[watermarkConfig.padding]}
+                        onValueChange={([v]) => setWatermarkConfig(prev => ({ ...prev, padding: v }))}
+                        min={0}
+                        max={60}
+                        step={5}
+                        disabled={isRendering}
+                      />
                     </div>
                   </div>
                 )}

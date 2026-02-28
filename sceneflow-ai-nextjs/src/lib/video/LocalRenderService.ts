@@ -71,6 +71,26 @@ export interface LocalRenderTextOverlay {
   }
 }
 
+export interface LocalRenderWatermark {
+  type: 'text' | 'image'
+  text?: string
+  imageUrl?: string
+  anchor: 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right'
+  padding: number
+  textStyle: {
+    fontFamily: string
+    fontSize: number
+    fontWeight: number
+    color: string
+    opacity: number
+    textShadow?: boolean
+  }
+  imageStyle: {
+    width: number
+    opacity: number
+  }
+}
+
 export interface LocalRenderConfig {
   /** Video segments to composite */
   segments: LocalRenderSegment[]
@@ -78,6 +98,8 @@ export interface LocalRenderConfig {
   audioClips: LocalRenderAudioClip[]
   /** Text overlays to burn in */
   textOverlays?: LocalRenderTextOverlay[]
+  /** Watermark to burn in */
+  watermark?: LocalRenderWatermark
   /** Output resolution */
   resolution: '720p' | '1080p'
   /** Frames per second */
@@ -352,6 +374,11 @@ export class LocalRenderService {
           this.drawTextOverlays(currentTime, config.textOverlays)
         }
         
+        // Draw watermark (always on top)
+        if (config.watermark) {
+          this.drawWatermark(config.watermark)
+        }
+        
         // Report progress
         const progress = 40 + Math.round((frame / totalFrames) * 50)
         onProgress?.({
@@ -620,6 +647,77 @@ export class LocalRenderService {
       
       this.ctx.globalAlpha = 1
     }
+  }
+  
+  private drawWatermark(watermark: LocalRenderWatermark): void {
+    if (!this.ctx || !this.canvas) return
+    
+    const { width, height } = this.canvas
+    const { anchor, padding, type } = watermark
+    
+    // Calculate position based on anchor
+    let x: number
+    let y: number
+    
+    // Horizontal position
+    if (anchor.includes('left')) {
+      x = padding
+    } else if (anchor.includes('right')) {
+      x = width - padding
+    } else {
+      x = width / 2 // center
+    }
+    
+    // Vertical position
+    if (anchor.includes('top')) {
+      y = padding
+    } else if (anchor.includes('bottom')) {
+      y = height - padding
+    } else {
+      y = height / 2 // center
+    }
+    
+    if (type === 'text' && watermark.text) {
+      const { textStyle } = watermark
+      const fontSize = (textStyle.fontSize / 100) * height
+      
+      // Set font
+      this.ctx.font = `${textStyle.fontWeight} ${fontSize}px ${textStyle.fontFamily}`
+      this.ctx.globalAlpha = textStyle.opacity
+      
+      // Set text alignment based on anchor
+      if (anchor.includes('left')) {
+        this.ctx.textAlign = 'left'
+      } else if (anchor.includes('right')) {
+        this.ctx.textAlign = 'right'
+      } else {
+        this.ctx.textAlign = 'center'
+      }
+      
+      // Set baseline based on vertical anchor
+      if (anchor.includes('top')) {
+        this.ctx.textBaseline = 'top'
+      } else if (anchor.includes('bottom')) {
+        this.ctx.textBaseline = 'bottom'
+      } else {
+        this.ctx.textBaseline = 'middle'
+      }
+      
+      // Draw text shadow if enabled
+      if (textStyle.textShadow) {
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+        this.ctx.fillText(watermark.text, x + 2, y + 2)
+      }
+      
+      // Draw text
+      this.ctx.fillStyle = textStyle.color
+      this.ctx.fillText(watermark.text, x, y)
+      
+      this.ctx.globalAlpha = 1
+    }
+    
+    // Image watermark would require preloading in render() - simplified for now
+    // For image watermarks, you'd need to load the image in preloadAssets and draw here
   }
   
   private sleep(ms: number, signal?: AbortSignal): Promise<void> {
