@@ -39,6 +39,10 @@ import {
   Plus,
   Trash2,
   X,
+  Zap,
+  Server,
+  Monitor,
+  ChevronDown,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
@@ -56,6 +60,19 @@ import { Progress } from '@/components/ui/progress'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { MixerTimeline } from './MixerTimeline'
 import type { SceneSegment, SceneProductionData, ProductionStream } from './types'
+import {
+  getLocalRenderService,
+  isLocalRenderSupported,
+  LOCAL_RENDER_MAX_DURATION,
+  type LocalRenderConfig,
+  type LocalRenderProgress,
+} from '@/lib/video/LocalRenderService'
+import {
+  determineRenderStrategy,
+  getRenderModeOptions,
+  type RenderMode,
+  type RenderContext,
+} from '@/lib/video/RenderStrategyRouter'
 
 // ============================================================================
 // Text Overlay Types
@@ -213,6 +230,7 @@ export interface SegmentAudioConfig {
 }
 
 type RenderStatus = 'idle' | 'preparing' | 'rendering' | 'complete' | 'error'
+type ActiveRenderMode = 'local' | 'server'
 
 interface SceneProductionMixerProps {
   sceneId: string
@@ -231,6 +249,10 @@ interface SceneProductionMixerProps {
   onProductionStreamsChange?: (streams: ProductionStream[]) => void
   /** Whether segment generation is in progress */
   isGeneratingSegments?: boolean
+  /** User's subscription tier for render routing */
+  userTier?: 'trial' | 'starter' | 'pro' | 'studio' | 'enterprise'
+  /** Remaining server renders this month (for trial/starter tiers) */
+  remainingServerRenders?: number
 }
 
 // ============================================================================
@@ -1802,6 +1824,15 @@ export function SceneProductionMixer({
   const [renderError, setRenderError] = useState<string | null>(null)
   const [lastRenderedUrl, setLastRenderedUrl] = useState<string | null>(null)
   
+  // === Render Mode State (Local vs Server) ===
+  const [selectedRenderMode, setSelectedRenderMode] = useState<RenderMode>('auto')
+  const [activeRenderMode, setActiveRenderMode] = useState<ActiveRenderMode>('server')
+  const [localRenderProgress, setLocalRenderProgress] = useState<LocalRenderProgress | null>(null)
+  
+  // Check if local rendering is supported in this browser
+  const localRenderSupportCheck = useMemo(() => isLocalRenderSupported(), [])
+  const localRenderSupported = localRenderSupportCheck.supported
+  
   // === Derived Data ===
   
   // Get available languages from audio assets
@@ -1887,6 +1918,47 @@ export function SceneProductionMixer({
     return Math.max(videoTotalDuration, maxAudioDuration)
   }, [videoTotalDuration, maxAudioDuration])
   
+  const audioTrackCount = useMemo(() => {
+    let count = 0
+    if (audioTracks.narration.enabled) count += 1
+    if (audioTracks.dialogue.enabled) count += 1
+    if (audioTracks.music.enabled) count += 1
+    if (audioTracks.sfx.enabled) count += 1
+    if (Object.values(segmentAudioConfigs).some(c => c.includeAudio)) count += 1
+    return count
+  }, [audioTracks, segmentAudioConfigs])
+  
+  const renderContext = useMemo<RenderContext>(() => ({
+    duration: totalDuration,
+    resolution,
+    segmentCount: renderedSegments.length,
+    audioTrackCount,
+    hasTextOverlays: textOverlays.length > 0,
+    textOverlayCount: textOverlays.length,
+    userTier,
+    remainingServerRenders,
+    userPreference: selectedRenderMode,
+  }), [
+    totalDuration,
+    resolution,
+    renderedSegments.length,
+    audioTrackCount,
+    textOverlays.length,
+    userTier,
+    remainingServerRenders,
+    selectedRenderMode,
+  ])
+  
+  // Get available render options based on context
+  const renderOptions = useMemo(() => {
+    return getRenderModeOptions(renderContext)
+  }, [renderContext])
+  
+  // Determine which strategy will be used
+  const renderStrategy = useMemo(() => {
+    return determineRenderStrategy(renderContext)
+  }, [renderContext])
+  
   // Get language label
   const languageLabel = useMemo(() => {
     return SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name || selectedLanguage.toUpperCase()
@@ -1909,6 +1981,7 @@ export function SceneProductionMixer({
     }
     
     setRenderStatus('preparing')
+    setActiveRenderMode('server')
     setRenderProgress(0)
     setRenderError(null)
     
@@ -2073,6 +2146,169 @@ export function SceneProductionMixer({
     
     throw new Error('Render job timed out')
   }
+  
+  // === Local Render Handler ===
+  const handleLocalRender = useCallback(async () => {
+    if (renderedSegments.length === 0) {
+      setRenderError('No rendered video segments available')
+      return
+    }
+    
+    if (!localRenderSupported) {
+      setRenderError(localRenderSupportCheck.reason || 'Local rendering is not supported in this browser')
+      return
+    }
+    
+    if (resolution === '4K') {
+      setRenderError('Local rendering does not support 4K. Use server rendering instead.')
+      return
+    }
+    
+    const localResolution: '720p' | '1080p' = resolution === '4K' ? '1080p' : resolution
+    
+    setRenderStatus('preparing')
+    setActiveRenderMode('local')
+    setRenderProgress(0)
+    setRenderError(null)
+    setLocalRenderProgress(null)
+    
+    try {
+      const segmentsForLocal = renderedSegments.map(seg => ({
+        segmentId: seg.segmentId,
+        assetUrl: seg.activeAssetUrl!,
+        assetType: 'video' as const,
+        startTime: seg.startTime,
+        duration: seg.endTime - seg.startTime,
+        volume: (segmentAudioConfigs[seg.segmentId]?.volume ?? 1.0) * masterSegmentVolume,
+      }))
+      
+      const audioClips: LocalRenderConfig['audioClips'] = []
+      
+      if (audioTracks.narration.enabled && currentAudioUrls.narration) {
+        audioClips.push({
+          url: currentAudioUrls.narration,
+          startTime: audioTracks.narration.startOffset,
+          duration: currentAudioUrls.narrationDuration || Math.max(0, totalDuration - audioTracks.narration.startOffset),
+          volume: audioTracks.narration.volume,
+          type: 'narration',
+        })
+      }
+      
+      if (audioTracks.dialogue.enabled && currentAudioUrls.dialogue.length > 0) {
+        currentAudioUrls.dialogue.forEach((clip, idx) => {
+          if (!clip.audioUrl) return
+          const clipConfig = dialogueClipConfigs[clip.clipId || `clip-${idx}`]
+          const startTime = audioTracks.dialogue.startOffset + (clip.startTime || idx * 2)
+          audioClips.push({
+            url: clip.audioUrl,
+            startTime,
+            duration: clip.duration || Math.max(0, totalDuration - startTime),
+            volume: (clipConfig?.volume ?? 1.0) * audioTracks.dialogue.volume,
+            type: 'dialogue',
+          })
+        })
+      }
+      
+      if (audioTracks.music.enabled && currentAudioUrls.music) {
+        audioClips.push({
+          url: currentAudioUrls.music,
+          startTime: audioTracks.music.startOffset,
+          duration: Math.max(0, totalDuration - audioTracks.music.startOffset),
+          volume: audioTracks.music.volume,
+          type: 'music',
+        })
+      }
+      
+      if (audioTracks.sfx.enabled && currentAudioUrls.sfx.length > 0) {
+        currentAudioUrls.sfx.forEach(s => {
+          if (!s.audioUrl) return
+          const startTime = audioTracks.sfx.startOffset + (s.startTime || 0)
+          audioClips.push({
+            url: s.audioUrl,
+            startTime,
+            duration: s.duration || Math.max(0, totalDuration - startTime),
+            volume: audioTracks.sfx.volume,
+            type: 'sfx',
+          })
+        })
+      }
+      
+      const renderService = getLocalRenderService()
+      
+      setRenderStatus('rendering')
+      
+      const renderResult = await renderService.render({
+        segments: segmentsForLocal,
+        audioClips,
+        textOverlays: textOverlays.map(overlay => ({
+          id: overlay.id,
+          text: overlay.text,
+          subtext: overlay.subtext,
+          position: { x: overlay.position.x, y: overlay.position.y, anchor: 'center' },
+          style: {
+            fontFamily: overlay.style.fontFamily,
+            fontSize: overlay.style.fontSize,
+            fontWeight: overlay.style.fontWeight,
+            color: overlay.style.color,
+            backgroundColor: overlay.style.backgroundColor,
+            backgroundOpacity: overlay.style.backgroundOpacity,
+            textShadow: overlay.style.textShadow,
+          },
+          timing: {
+            startTime: overlay.timing.startTime,
+            duration: overlay.timing.duration,
+            fadeInMs: overlay.timing.fadeInMs,
+            fadeOutMs: overlay.timing.fadeOutMs,
+          },
+        })),
+        resolution: localResolution,
+        fps: 30,
+        totalDuration,
+      }, (progress) => {
+        setLocalRenderProgress(progress)
+        setRenderProgress(progress.progress)
+      })
+      
+      if (!renderResult.success || !renderResult.blobUrl || !renderResult.blob) {
+        throw new Error(renderResult.error || 'Local render failed')
+      }
+      
+      const downloadUrl = renderResult.blobUrl
+      
+      setRenderStatus('complete')
+      setRenderProgress(100)
+      setLastRenderedUrl(downloadUrl)
+      
+      // Auto-trigger download
+      const a = document.createElement('a')
+      a.href = downloadUrl
+      a.download = `scene-${sceneNumber}-${selectedLanguage}-${Date.now()}.webm`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      
+      onRenderComplete?.(downloadUrl, selectedLanguage)
+      
+    } catch (err) {
+      console.error('[SceneProductionMixer] Local render error:', err)
+      setRenderError(err instanceof Error ? err.message : 'Local rendering failed')
+      setRenderStatus('error')
+    }
+  }, [
+    renderedSegments, segmentAudioConfigs, audioTracks, currentAudioUrls,
+    totalDuration, resolution, selectedLanguage, textOverlays, masterSegmentVolume,
+    localRenderSupported, dialogueClipConfigs, sceneNumber, onRenderComplete
+  ])
+  
+  // === Smart Render Handler (routes to local or server) ===
+  const handleSmartRender = useCallback(async () => {
+    if (renderStrategy.mode === 'local') {
+      await handleLocalRender()
+    } else {
+      setActiveRenderMode('server')
+      await handleRender()
+    }
+  }, [renderStrategy, handleLocalRender, handleRender])
   
   // === Render ===
   
@@ -2627,62 +2863,128 @@ export function SceneProductionMixer({
       
       {/* Footer - Render Action */}
       {hasRenderedSegments && (
-        <div className="px-4 sm:px-5 py-4 bg-gray-800/50 border-t border-gray-700/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3 flex-wrap">
-            {renderStatus === 'complete' && lastRenderedUrl && (
-              <>
-                <CheckCircle2 className="w-5 h-5 text-green-400" />
-                <span className="text-sm text-green-400">Render complete!</span>
-                <a 
-                  href={lastRenderedUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-purple-400 hover:text-purple-300 underline"
-                >
-                  Download MP4
-                </a>
-              </>
-            )}
-            {renderStatus === 'error' && renderError && (
-              <>
-                <span className="text-sm text-red-400">Error: {renderError}</span>
-                <button
-                  onClick={() => setRenderStatus('idle')}
-                  className="text-xs text-gray-400 hover:text-white"
-                >
-                  Dismiss
-                </button>
-              </>
-            )}
-            {isRendering && (
-              <div className="flex items-center gap-3">
-                <Loader2 className="w-5 h-5 text-purple-400 animate-spin" />
-                <div className="w-32 sm:w-48">
-                  <Progress value={renderProgress} className="h-2" />
+        <div className="px-4 sm:px-5 py-4 bg-gray-800/50 border-t border-gray-700/50">
+          {/* Render Status Row */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              {renderStatus === 'complete' && lastRenderedUrl && (
+                <>
+                  <CheckCircle2 className="w-5 h-5 text-green-400" />
+                  <span className="text-sm text-green-400">
+                    Render complete! ({activeRenderMode === 'local' ? 'Local' : 'Server'})
+                  </span>
+                  <a 
+                    href={lastRenderedUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download={activeRenderMode === 'local' ? `scene-${sceneNumber}.webm` : undefined}
+                    className="text-sm text-purple-400 hover:text-purple-300 underline"
+                  >
+                    Download {activeRenderMode === 'local' ? 'WebM' : 'MP4'}
+                  </a>
+                </>
+              )}
+              {renderStatus === 'error' && renderError && (
+                <>
+                  <span className="text-sm text-red-400">Error: {renderError}</span>
+                  <button
+                    onClick={() => setRenderStatus('idle')}
+                    className="text-xs text-gray-400 hover:text-white"
+                  >
+                    Dismiss
+                  </button>
+                </>
+              )}
+              {isRendering && (
+                <div className="flex items-center gap-3">
+                  <Loader2 className="w-5 h-5 text-purple-400 animate-spin" />
+                  <div className="w-32 sm:w-48">
+                    <Progress value={renderProgress} className="h-2" />
+                  </div>
+                  <span className="text-sm text-gray-400">
+                    {Math.round(renderProgress)}% {activeRenderMode === 'local' && localRenderProgress?.phase ? `(${localRenderProgress.phase})` : ''}
+                  </span>
                 </div>
-                <span className="text-sm text-gray-400">{Math.round(renderProgress)}%</span>
+              )}
+            </div>
+            
+            {/* Render Mode Selector & Buttons */}
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              {/* Render Mode Dropdown */}
+              <div className="relative">
+                <select
+                  value={selectedRenderMode}
+                  onChange={(e) => setSelectedRenderMode(e.target.value as RenderMode)}
+                  disabled={isRendering}
+                  className="appearance-none bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 pr-8 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                >
+                  <option value="auto">Auto ({renderStrategy.mode})</option>
+                  {renderOptions
+                    .filter(opt => opt.available && opt.mode !== 'auto')
+                    .map(opt => (
+                      <option key={opt.mode} value={opt.mode} disabled={!opt.available}>
+                        {opt.mode === 'local' ? '⚡ Quick Export (Local)' : '🎬 Final Render (Server)'}
+                      </option>
+                    ))}
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               </div>
-            )}
+              
+              {/* Quick Export Button (Local) */}
+              {localRenderSupported && (
+                <Button
+                  onClick={handleLocalRender}
+                  disabled={isRendering || !hasRenderedSegments || totalDuration > LOCAL_RENDER_MAX_DURATION || resolution === '4K'}
+                  variant="outline"
+                  size="lg"
+                  className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10 px-4"
+                  title={totalDuration > LOCAL_RENDER_MAX_DURATION ? `Local render limited to ${LOCAL_RENDER_MAX_DURATION}s` : resolution === '4K' ? 'Local render limited to 1080p' : 'Fast browser-based export (WebM)'}
+                >
+                  <Zap className="w-4 h-4 mr-1" />
+                  Quick
+                </Button>
+              )}
+              
+              {/* Final Render Button (Server) */}
+              <Button
+                onClick={selectedRenderMode === 'auto' ? handleSmartRender : selectedRenderMode === 'local' ? handleLocalRender : handleRender}
+                disabled={isRendering || !hasRenderedSegments}
+                size="lg"
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6"
+              >
+                {isRendering ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {activeRenderMode === 'local' ? 'Exporting...' : 'Rendering...'}
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 mr-2" />
+                    Render {languageLabel}
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
           
-          <Button
-            onClick={handleRender}
-            disabled={isRendering || !hasRenderedSegments}
-            size="lg"
-            className="bg-purple-600 hover:bg-purple-700 text-white px-6 w-full sm:w-auto"
-          >
-            {isRendering ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Rendering...
-              </>
-            ) : (
-              <>
-                <Download className="w-4 h-4 mr-2" />
-                Render {languageLabel} Scene
-              </>
-            )}
-          </Button>
+          {/* Render Mode Info */}
+          {renderStatus === 'idle' && (
+            <div className="mt-3 pt-3 border-t border-gray-700/50 flex items-center gap-4 text-xs text-gray-500">
+              <div className="flex items-center gap-1">
+                <Zap className="w-3 h-3" />
+                <span>Quick: Browser-based (WebM, &lt;{LOCAL_RENDER_MAX_DURATION}s)</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Server className="w-3 h-3" />
+                <span>Final: Cloud render (MP4, unlimited)</span>
+                {remainingServerRenders !== undefined && userTier && (
+                  <span className="text-purple-400 ml-1">
+                    ({remainingServerRenders} left)
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

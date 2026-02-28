@@ -47,4 +47,6 @@ export async function analyzeStoryboardV2(req: V2StoryboardRequestType): Promise
   return { data, provider, model }
 }
 
+// Alias for backward compatibility with route that expects generateStoryboardV2
+export const generateStoryboardV2 = analyzeStoryboardV2
 
