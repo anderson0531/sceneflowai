@@ -1728,6 +1728,8 @@ export function SceneProductionMixer({
   onRenderComplete,
   onProductionStreamsChange,
   isGeneratingSegments,
+  userTier = 'pro',
+  remainingServerRenders = Infinity,
 }: SceneProductionMixerProps) {
   // === Language/Stream State ===
   const [selectedLanguage, setSelectedLanguage] = useState('en')
