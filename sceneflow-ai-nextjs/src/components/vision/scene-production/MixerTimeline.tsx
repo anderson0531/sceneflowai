@@ -1,16 +1,19 @@
 /**
- * MixerTimeline - Compact visual timeline for audio track offsets in the mixer
+ * MixerTimeline - Full-width visual timeline for audio track offsets in the mixer
  * 
  * Shows a horizontal overview of all audio tracks' timing relative to video duration.
  * Allows drag-to-reposition for quick offset adjustments.
+ * Features: horizontal scroll for long videos, zoom controls, segment visualization
  */
 
 'use client'
 
-import React, { useRef, useCallback, useState, useMemo } from 'react'
-import { Mic2, MessageSquare, Music, Sparkles, GripVertical, Type, Info } from 'lucide-react'
+import React, { useRef, useCallback, useState, useMemo, useEffect } from 'react'
+import { Mic2, MessageSquare, Music, Sparkles, GripVertical, Type, Info, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react'
 import type { AudioTrackConfig, MixerAudioTracks, TextOverlay } from './SceneProductionMixer'
+import type { SceneSegment } from './types'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Button } from '@/components/ui/Button'
 
 // ============================================================================
 // Types
@@ -49,6 +52,10 @@ interface MixerTimelineProps {
   textOverlays?: TextOverlay[]
   /** Callback when text overlay timing changes (drag-to-reposition) */
   onTextOverlayChange?: (overlay: TextOverlay) => void
+  /** Video segments to show on timeline */
+  segments?: SceneSegment[]
+  /** Current playback time for playhead position */
+  currentPlaybackTime?: number
   disabled?: boolean
   className?: string
 }
@@ -98,12 +105,20 @@ export function MixerTimeline({
   sfxClips = [],
   textOverlays = [],
   onTextOverlayChange,
+  segments = [],
+  currentPlaybackTime = 0,
   disabled,
   className = '',
 }: MixerTimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [draggingTrack, setDraggingTrack] = useState<keyof MixerAudioTracks | null>(null)
   const [draggingTextId, setDraggingTextId] = useState<string | null>(null)
+  
+  // Zoom state: pixels per second (higher = more zoomed in)
+  const [pixelsPerSecond, setPixelsPerSecond] = useState(30)
+  const MIN_PPS = 10  // Minimum zoom (zoomed out)
+  const MAX_PPS = 100 // Maximum zoom (zoomed in)
 
   // Duration map
   const durations: Record<keyof MixerAudioTracks, number> = {
@@ -216,186 +231,290 @@ export function MixerTimeline({
     document.addEventListener('mouseup', handleMouseUp)
   }, [disabled, totalDuration, onTextOverlayChange])
 
-  const videoEndPercent = (videoTotalDuration / totalDuration) * 100
+  // Calculate timeline width based on zoom level
+  const timelineWidth = totalDuration * pixelsPerSecond
+  const minWidth = 600 // Minimum timeline width in pixels
+  const effectiveWidth = Math.max(timelineWidth, minWidth)
+  
+  // Zoom handlers
+  const handleZoomIn = useCallback(() => {
+    setPixelsPerSecond(prev => Math.min(MAX_PPS, prev + 10))
+  }, [])
+  
+  const handleZoomOut = useCallback(() => {
+    setPixelsPerSecond(prev => Math.max(MIN_PPS, prev - 10))
+  }, [])
+  
+  const handleZoomFit = useCallback(() => {
+    // Fit timeline to container width
+    if (scrollContainerRef.current) {
+      const containerWidth = scrollContainerRef.current.clientWidth - 48 // Account for padding
+      const fittedPPS = Math.max(MIN_PPS, Math.min(MAX_PPS, containerWidth / totalDuration))
+      setPixelsPerSecond(fittedPPS)
+    }
+  }, [totalDuration])
+  
+  // Auto-scroll to follow playhead
+  useEffect(() => {
+    if (scrollContainerRef.current && currentPlaybackTime > 0) {
+      const playheadX = (currentPlaybackTime / totalDuration) * effectiveWidth
+      const container = scrollContainerRef.current
+      const containerWidth = container.clientWidth
+      const scrollLeft = container.scrollLeft
+      
+      // If playhead is outside visible area, scroll to it
+      if (playheadX < scrollLeft + 50 || playheadX > scrollLeft + containerWidth - 50) {
+        container.scrollTo({
+          left: Math.max(0, playheadX - containerWidth / 2),
+          behavior: 'smooth'
+        })
+      }
+    }
+  }, [currentPlaybackTime, totalDuration, effectiveWidth])
+  
+  // Calculate segment positions for video track
+  const segmentPositions = useMemo(() => {
+    let elapsed = 0
+    return segments.map(seg => {
+      const duration = seg.actualVideoDuration ?? (seg.endTime - seg.startTime)
+      const pos = { start: elapsed, duration, segment: seg }
+      elapsed += duration
+      return pos
+    })
+  }, [segments])
 
   return (
     <div className={`bg-gray-900/60 rounded-lg border border-gray-700/50 overflow-hidden ${className}`}>
-      {/* Header */}
-      <div className="px-3 py-1.5 bg-gray-800/40 border-b border-gray-700/30 flex items-center justify-between">
-        <span className="text-[10px] text-gray-500 uppercase tracking-wider">Timeline Overview</span>
-        <span className="text-[10px] text-gray-500">
-          Video: {formatTime(videoTotalDuration)} | Total: {formatTime(totalDuration)}
-        </span>
+      {/* Header with zoom controls */}
+      <div className="px-3 py-2 bg-gray-800/40 border-b border-gray-700/30 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-medium text-gray-400">Timeline</span>
+          <span className="text-[10px] text-gray-500">
+            Video: {formatTime(videoTotalDuration)} | Total: {formatTime(totalDuration)}
+          </span>
+        </div>
+        
+        {/* Zoom Controls */}
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleZoomOut}
+            disabled={pixelsPerSecond <= MIN_PPS}
+            className="h-6 w-6 p-0 text-gray-400 hover:text-white"
+            title="Zoom out"
+          >
+            <ZoomOut className="w-3.5 h-3.5" />
+          </Button>
+          <span className="text-[10px] text-gray-500 w-10 text-center">{pixelsPerSecond}px/s</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleZoomIn}
+            disabled={pixelsPerSecond >= MAX_PPS}
+            className="h-6 w-6 p-0 text-gray-400 hover:text-white"
+            title="Zoom in"
+          >
+            <ZoomIn className="w-3.5 h-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleZoomFit}
+            className="h-6 w-6 p-0 text-gray-400 hover:text-white"
+            title="Fit to view"
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+          </Button>
+        </div>
       </div>
 
-      {/* Timeline Content */}
-      <div ref={containerRef} className="relative px-3 py-2">
-        {/* Ruler */}
-        <div className="h-4 relative mb-1 border-b border-gray-700/30">
-          {/* Video duration background */}
-          <div 
-            className="absolute inset-y-0 left-0 bg-gray-700/20"
-            style={{ width: `${videoEndPercent}%` }}
-          />
-          {/* Video end marker */}
-          {videoTotalDuration < totalDuration && (
+      {/* Scrollable Timeline Content */}
+      <div 
+        ref={scrollContainerRef}
+        className="overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900"
+        style={{ maxHeight: '280px' }}
+      >
+        <div 
+          ref={containerRef} 
+          className="relative px-3 py-3"
+          style={{ width: `${effectiveWidth + 48}px`, minWidth: '100%' }}
+        >
+          {/* Playhead */}
+          {currentPlaybackTime > 0 && (
             <div 
-              className="absolute top-0 bottom-0 w-0.5 bg-amber-500/50"
-              style={{ left: `${videoEndPercent}%` }}
-            />
-          )}
-          {/* Tick marks */}
-          {ticks.map((t) => (
-            <div
-              key={t}
-              className="absolute bottom-0 flex flex-col items-center"
-              style={{ left: `${(t / totalDuration) * 100}%` }}
+              className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20 pointer-events-none"
+              style={{ left: `${24 + (currentPlaybackTime / totalDuration) * effectiveWidth}px` }}
             >
-              <span className="text-[8px] text-gray-600 -translate-x-1/2">{formatTime(t)}</span>
+              <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rotate-45" />
             </div>
-          ))}
-        </div>
-
-        {/* Track Bars */}
-        <div className="space-y-1">
-          {TRACK_VISUALS.map((visual) => {
-            const config = audioTracks[visual.key]
-            const duration = durations[visual.key]
-            const startPercent = (config.startOffset / totalDuration) * 100
-            const widthPercent = (duration / totalDuration) * 100
-            const endTime = config.startOffset + duration
-            const extendsVideo = endTime > videoTotalDuration
-            const isDragging = draggingTrack === visual.key
-
-            if (!config.enabled) {
-              return (
-                <div key={visual.key} className="h-5 flex items-center">
-                  <div className="flex items-center gap-1 text-gray-600 text-[10px] opacity-50">
-                    <visual.icon className="w-3 h-3" />
-                    <span>{visual.label}</span>
-                  </div>
-                </div>
-              )
-            }
-
-            return (
-              <div key={visual.key} className="h-5 relative">
-                {/* Track bar */}
-                <div
-                  className={`
-                    absolute top-0 h-full rounded-sm flex items-center gap-1 px-1.5
-                    cursor-grab active:cursor-grabbing select-none
-                    transition-shadow duration-100
-                    ${isDragging ? 'ring-1 ring-white/40 z-10' : 'hover:ring-1 hover:ring-white/20'}
-                    ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                  `}
-                  style={{
-                    left: `${startPercent}%`,
-                    width: `${Math.max(widthPercent, 4)}%`,
-                    backgroundColor: visual.bgColor,
-                    borderLeft: `2px solid ${visual.color}`,
-                    borderRight: extendsVideo ? `1px dashed ${visual.color}` : undefined,
-                  }}
-                  onMouseDown={(e) => handleDragStart(e, visual.key)}
-                >
-                  <GripVertical className="w-2.5 h-2.5 text-gray-500 flex-shrink-0" />
-                  <visual.icon className="w-3 h-3 flex-shrink-0" style={{ color: visual.color }} />
-                  <span className="text-[9px] text-gray-400 truncate">
-                    {formatTime(config.startOffset)}
-                  </span>
-                </div>
+          )}
+          
+          {/* Ruler */}
+          <div className="h-5 relative mb-2 border-b border-gray-700/30">
+            {/* Tick marks */}
+            {ticks.map((t) => (
+              <div
+                key={t}
+                className="absolute bottom-0 flex flex-col items-center"
+                style={{ left: `${(t / totalDuration) * effectiveWidth}px` }}
+              >
+                <div className="w-px h-2 bg-gray-600" />
+                <span className="text-[9px] text-gray-500 -translate-x-1/2 mt-0.5">{formatTime(t)}</span>
               </div>
-            )
-          })}
+            ))}
+          </div>
 
-          {/* Text Overlay Track */}
-          {textOverlays.length > 0 && (
-            <div className="h-5 relative">
-              {textOverlays.map((overlay) => {
-                const duration = overlay.timing.duration === -1 
-                  ? videoTotalDuration - overlay.timing.startTime 
-                  : overlay.timing.duration
-                const startPercent = (overlay.timing.startTime / totalDuration) * 100
-                const widthPercent = (duration / totalDuration) * 100
-                const endTime = overlay.timing.startTime + duration
-                const extendsVideo = endTime > videoTotalDuration
-                const isDragging = draggingTextId === overlay.id
-
+          {/* Video Segments Track */}
+          <div className="h-8 relative mb-2 rounded bg-gray-800/30">
+            <div className="absolute left-0 top-0 bottom-0 w-12 flex items-center">
+              <span className="text-[10px] text-gray-500 font-medium pl-1">Video</span>
+            </div>
+            <div className="ml-12 h-full relative">
+              {segmentPositions.map((pos, idx) => {
+                const startPercent = (pos.start / totalDuration) * 100
+                const widthPercent = (pos.duration / totalDuration) * 100
+                const isUserUpload = pos.segment.isUserUpload
+                
                 return (
                   <div
-                    key={overlay.id}
-                    className={`
-                      absolute top-0 h-full rounded-sm flex items-center gap-1 px-1.5
-                      cursor-grab active:cursor-grabbing select-none
-                      transition-shadow duration-100
-                      ${isDragging ? 'ring-1 ring-white/40 z-10' : 'hover:ring-1 hover:ring-white/20'}
-                      ${disabled || !onTextOverlayChange ? 'opacity-50 cursor-not-allowed' : ''}
-                    `}
+                    key={pos.segment.segmentId}
+                    className="absolute top-1 bottom-1 rounded-sm flex items-center overflow-hidden"
                     style={{
                       left: `${startPercent}%`,
-                      width: `${Math.max(widthPercent, 4)}%`,
-                      backgroundColor: TEXT_TRACK_VISUAL.bgColor,
-                      borderLeft: `2px solid ${TEXT_TRACK_VISUAL.color}`,
-                      borderRight: extendsVideo ? `1px dashed ${TEXT_TRACK_VISUAL.color}` : undefined,
+                      width: `${Math.max(widthPercent, 1)}%`,
+                      backgroundColor: isUserUpload ? 'rgba(34, 197, 94, 0.3)' : 'rgba(168, 85, 247, 0.3)',
+                      borderLeft: `2px solid ${isUserUpload ? '#22c55e' : '#a855f7'}`,
                     }}
-                    onMouseDown={(e) => handleTextDragStart(e, overlay)}
-                    title={overlay.text}
+                    title={`Seg ${idx + 1}: ${pos.duration.toFixed(1)}s${isUserUpload ? ' (upload)' : ''}`}
                   >
-                    <GripVertical className="w-2.5 h-2.5 text-gray-500 flex-shrink-0" />
-                    <Type className="w-3 h-3 flex-shrink-0" style={{ color: TEXT_TRACK_VISUAL.color }} />
-                    <span className="text-[9px] text-gray-400 truncate max-w-[60px]">
-                      {overlay.text.slice(0, 10)}{overlay.text.length > 10 ? '…' : ''}
+                    <span className="text-[8px] text-white/60 px-1 truncate">
+                      {idx + 1}
                     </span>
                   </div>
                 )
               })}
             </div>
-          )}
+          </div>
 
-          {/* Empty text track placeholder */}
-          {textOverlays.length === 0 && (
-            <div className="h-5 flex items-center">
-              <div className="flex items-center gap-1 text-gray-600 text-[10px] opacity-50">
-                <Type className="w-3 h-3" />
-                <span>Text</span>
+          {/* Audio Track Bars */}
+          <div className="space-y-1.5">
+            {TRACK_VISUALS.map((visual) => {
+              const config = audioTracks[visual.key]
+              const duration = durations[visual.key]
+              const startPercent = (config.startOffset / totalDuration) * 100
+              const widthPercent = (duration / totalDuration) * 100
+              const endTime = config.startOffset + duration
+              const extendsVideo = endTime > videoTotalDuration
+              const isDragging = draggingTrack === visual.key
+
+              return (
+                <div key={visual.key} className="h-7 relative rounded bg-gray-800/30">
+                  {/* Track label */}
+                  <div className="absolute left-0 top-0 bottom-0 w-12 flex items-center">
+                    <visual.icon className="w-3 h-3 ml-1" style={{ color: config.enabled ? visual.color : '#6b7280' }} />
+                    <span className={`text-[10px] ml-1 ${config.enabled ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {visual.label}
+                    </span>
+                  </div>
+                  
+                  {/* Track content area */}
+                  <div className="ml-12 h-full relative">
+                    {config.enabled && (
+                      <div
+                        className={`
+                          absolute top-1 bottom-1 rounded-sm flex items-center gap-1 px-1.5
+                          cursor-grab active:cursor-grabbing select-none
+                          transition-shadow duration-100
+                          ${isDragging ? 'ring-1 ring-white/40 z-10' : 'hover:ring-1 hover:ring-white/20'}
+                          ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+                        `}
+                        style={{
+                          left: `${startPercent}%`,
+                          width: `${Math.max(widthPercent, 3)}%`,
+                          backgroundColor: visual.bgColor,
+                          borderLeft: `2px solid ${visual.color}`,
+                          borderRight: extendsVideo ? `1px dashed ${visual.color}` : undefined,
+                        }}
+                        onMouseDown={(e) => handleDragStart(e, visual.key)}
+                      >
+                        <GripVertical className="w-2.5 h-2.5 text-gray-500 flex-shrink-0" />
+                        <span className="text-[9px] text-gray-400 truncate">
+                          {formatTime(config.startOffset)} - {formatTime(endTime)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+
+            {/* Text Overlay Track */}
+            <div className="h-7 relative rounded bg-gray-800/30">
+              <div className="absolute left-0 top-0 bottom-0 w-12 flex items-center">
+                <Type className="w-3 h-3 ml-1" style={{ color: textOverlays.length > 0 ? TEXT_TRACK_VISUAL.color : '#6b7280' }} />
+                <span className={`text-[10px] ml-1 ${textOverlays.length > 0 ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Text
+                </span>
+              </div>
+              <div className="ml-12 h-full relative">
+                {textOverlays.map((overlay) => {
+                  const duration = overlay.timing.duration === -1 
+                    ? videoTotalDuration - overlay.timing.startTime 
+                    : overlay.timing.duration
+                  const startPercent = (overlay.timing.startTime / totalDuration) * 100
+                  const widthPercent = (duration / totalDuration) * 100
+                  const isDragging = draggingTextId === overlay.id
+
+                  return (
+                    <div
+                      key={overlay.id}
+                      className={`
+                        absolute top-1 bottom-1 rounded-sm flex items-center gap-1 px-1.5
+                        cursor-grab active:cursor-grabbing select-none
+                        transition-shadow duration-100
+                        ${isDragging ? 'ring-1 ring-white/40 z-10' : 'hover:ring-1 hover:ring-white/20'}
+                        ${disabled || !onTextOverlayChange ? 'opacity-50 cursor-not-allowed' : ''}
+                      `}
+                      style={{
+                        left: `${startPercent}%`,
+                        width: `${Math.max(widthPercent, 3)}%`,
+                        backgroundColor: TEXT_TRACK_VISUAL.bgColor,
+                        borderLeft: `2px solid ${TEXT_TRACK_VISUAL.color}`,
+                      }}
+                      onMouseDown={(e) => handleTextDragStart(e, overlay)}
+                      title={overlay.text}
+                    >
+                      <GripVertical className="w-2.5 h-2.5 text-gray-500 flex-shrink-0" />
+                      <span className="text-[8px] text-gray-400 truncate">
+                        {overlay.text.slice(0, 15)}{overlay.text.length > 15 ? '…' : ''}
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Legend */}
-        <div className="mt-2 pt-1.5 border-t border-gray-700/30 flex items-center gap-4 text-[9px] text-gray-600">
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-gray-700/40 rounded-sm" />
-            <span>Video</span>
+          {/* Legend */}
+          <div className="mt-3 pt-2 border-t border-gray-700/30 flex items-center gap-4 text-[9px] text-gray-500">
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-2 rounded-sm" style={{ backgroundColor: 'rgba(168, 85, 247, 0.3)', borderLeft: '2px solid #a855f7' }} />
+              <span>AI Video</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-2 rounded-sm" style={{ backgroundColor: 'rgba(34, 197, 94, 0.3)', borderLeft: '2px solid #22c55e' }} />
+              <span>Uploaded</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-0.5 h-3 bg-red-500" />
+              <span>Playhead</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-2 rounded-sm border-r border-dashed" style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', borderColor: 'rgba(168, 85, 247, 0.5)' }} />
+              <span>Extends video</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-0.5 h-2 bg-amber-500/50" />
-            <span>Video End</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-2 rounded-sm border-r border-dashed" style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', borderColor: 'rgba(168, 85, 247, 0.5)' }} />
-            <span>Audio extends</span>
-          </div>
-          {textOverlays.length > 0 && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-1 cursor-help">
-                    <div className="w-3 h-2 rounded-sm" style={{ backgroundColor: TEXT_TRACK_VISUAL.bgColor, borderLeft: `2px solid ${TEXT_TRACK_VISUAL.color}` }} />
-                    <span>Text</span>
-                    <Info className="w-2.5 h-2.5 text-gray-500" />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-[220px]">
-                  <p className="text-xs">
-                    <strong>Preview vs Final Render:</strong> Text overlays are shown as CSS overlays in preview. 
-                    The final rendered video will burn text using FFmpeg, which may appear slightly different.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
         </div>
       </div>
     </div>

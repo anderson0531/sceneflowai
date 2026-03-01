@@ -2682,30 +2682,87 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const assetUrl = blob.url
         console.log('[Segment Upload] Success via client upload:', assetUrl, 'Size:', Math.round(file.size / 1024 / 1024), 'MB')
 
-        // Update segment with uploaded asset
+        // Extract actual video duration for uploaded videos
+        let actualVideoDuration: number | undefined
+        if (file.type.startsWith('video')) {
+          try {
+            actualVideoDuration = await new Promise<number>((resolve, reject) => {
+              const video = document.createElement('video')
+              video.preload = 'metadata'
+              video.onloadedmetadata = () => {
+                const duration = video.duration
+                URL.revokeObjectURL(video.src)
+                if (isFinite(duration) && duration > 0) {
+                  console.log('[Segment Upload] Extracted video duration:', duration, 'seconds')
+                  resolve(duration)
+                } else {
+                  reject(new Error('Invalid duration'))
+                }
+              }
+              video.onerror = () => {
+                URL.revokeObjectURL(video.src)
+                reject(new Error('Failed to load video metadata'))
+              }
+              // Create object URL from file for duration extraction
+              video.src = URL.createObjectURL(file)
+            })
+          } catch (err) {
+            console.warn('[Segment Upload] Could not extract video duration, using segment bounds:', err)
+          }
+        }
+
+        // Update segment with uploaded asset AND actual duration
         applySceneProductionUpdate(sceneId, (current) => {
           if (!current) return current
-          const segments = current.segments.map((segment) =>
-            segment.segmentId === segmentId
-              ? {
+          
+          // Find the current segment to get its startTime
+          const currentSegment = current.segments.find(s => s.segmentId === segmentId)
+          const startTime = currentSegment?.startTime || 0
+          
+          // Calculate new endTime based on actual video duration (if available)
+          const newEndTime = actualVideoDuration 
+            ? startTime + actualVideoDuration 
+            : currentSegment?.endTime || startTime + 8
+          
+          // Find the index of this segment to update subsequent segments
+          const segmentIndex = current.segments.findIndex(s => s.segmentId === segmentId)
+          
+          const segments = current.segments.map((segment, idx) => {
+            if (segment.segmentId === segmentId) {
+              return {
+                ...segment,
+                status: 'COMPLETE' as const,
+                assetType: file.type.startsWith('image') ? 'image' : 'video',
+                activeAssetUrl: assetUrl,
+                endTime: newEndTime,
+                actualVideoDuration: actualVideoDuration,
+                isUserUpload: true,
+                takes: [
+                  {
+                    id: `${segmentId}-take-${Date.now()}`,
+                    createdAt: new Date().toISOString(),
+                    assetUrl: assetUrl,
+                    thumbnailUrl: file.type.startsWith('image') ? assetUrl : segment.activeAssetUrl,
+                    status: 'COMPLETE' as const,
+                    notes: `User upload${actualVideoDuration ? ` (${actualVideoDuration.toFixed(1)}s)` : ''}`,
+                  },
+                  ...(segment.takes || []),
+                ],
+              }
+            }
+            // Shift subsequent segments if this upload changed the timeline
+            if (idx > segmentIndex && actualVideoDuration) {
+              const durationDiff = newEndTime - (currentSegment?.endTime || startTime + 8)
+              if (durationDiff !== 0) {
+                return {
                   ...segment,
-                  status: 'COMPLETE' as const, // Use COMPLETE so segment is recognized as ready
-                  assetType: file.type.startsWith('image') ? 'image' : 'video',
-                  activeAssetUrl: assetUrl,
-                  takes: [
-                    {
-                      id: `${segmentId}-take-${Date.now()}`,
-                      createdAt: new Date().toISOString(),
-                      assetUrl: assetUrl,
-                      thumbnailUrl: file.type.startsWith('image') ? assetUrl : segment.activeAssetUrl,
-                      status: 'COMPLETE' as const,
-                      notes: 'User upload',
-                    },
-                    ...(segment.takes || []),
-                  ],
+                  startTime: segment.startTime + durationDiff,
+                  endTime: segment.endTime + durationDiff,
                 }
-              : segment
-          )
+              }
+            }
+            return segment
+          })
           return { ...current, segments }
         })
 

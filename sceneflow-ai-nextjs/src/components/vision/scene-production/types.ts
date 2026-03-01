@@ -625,6 +625,17 @@ export interface SceneSegment {
   // Special segment flag - true for cinematic elements (title, match-cut, establishing, b-roll, outro)
   // Special segments are video-only placeholders that don't require keyframe images
   isSpecialSegment?: boolean
+  
+  // ============================================================================
+  // Uploaded Video Duration (for user-uploaded videos that may exceed 8s limit)
+  // ============================================================================
+  
+  // Actual video duration in seconds (extracted from uploaded video metadata)
+  // Used to override startTime/endTime for uploaded videos that exceed AI-generated limits
+  actualVideoDuration?: number
+  
+  // Flag indicating this segment contains a user-uploaded video (vs AI-generated)
+  isUserUpload?: boolean
 }
 
 // Character presence in a segment

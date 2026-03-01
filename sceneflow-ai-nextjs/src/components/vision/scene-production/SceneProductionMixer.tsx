@@ -519,23 +519,28 @@ function ScenePreviewPlayer({
   // Timer for audio-extended playback (when video is frozen)
   const audioTimerRef = useRef<NodeJS.Timeout | null>(null)
   
+  // Helper: Get effective duration of a segment (uses actualVideoDuration for uploads)
+  const getSegmentDuration = useCallback((segment: SceneSegment) => {
+    return segment.actualVideoDuration ?? (segment.endTime - segment.startTime)
+  }, [])
+  
   // Helper: Calculate start time for a segment index
   const getSegmentStartTime = useCallback((segmentIndex: number) => {
     let elapsed = 0
     for (let i = 0; i < Math.min(segmentIndex, segments.length); i++) {
-      elapsed += segments[i].endTime - segments[i].startTime
+      elapsed += getSegmentDuration(segments[i])
     }
     return elapsed
-  }, [segments])
+  }, [segments, getSegmentDuration])
   
   // Helper: Calculate end time for a segment index (end of that segment)
   const getSegmentEndTime = useCallback((segmentIndex: number) => {
     let elapsed = 0
     for (let i = 0; i <= Math.min(segmentIndex, segments.length - 1); i++) {
-      elapsed += segments[i].endTime - segments[i].startTime
+      elapsed += getSegmentDuration(segments[i])
     }
     return elapsed
-  }, [segments])
+  }, [segments, getSegmentDuration])
   
   // Calculate progress percentage
   const progressPercent = totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0
@@ -548,14 +553,14 @@ function ScenePreviewPlayer({
     return { segment: segments[0], index: 0 }
   }, [segments, currentSegmentIndex])
   
-  // Calculate cumulative start time for current segment
+  // Calculate cumulative start time for current segment (uses actualVideoDuration for uploads)
   const segmentStartTime = useMemo(() => {
     let elapsed = 0
     for (let i = 0; i < currentSegmentIndex; i++) {
-      elapsed += segments[i].endTime - segments[i].startTime
+      elapsed += getSegmentDuration(segments[i])
     }
     return elapsed
-  }, [segments, currentSegmentIndex])
+  }, [segments, currentSegmentIndex, getSegmentDuration])
 
   // Handle video time updates
   useEffect(() => {
@@ -2069,8 +2074,13 @@ export function SceneProductionMixer({
   }, [segments])
   
   // Calculate video-only duration from segments
+  // Uses actualVideoDuration for uploaded videos, otherwise falls back to segment bounds
   const videoTotalDuration = useMemo(() => {
-    return renderedSegments.reduce((sum, s) => sum + (s.endTime - s.startTime), 0)
+    return renderedSegments.reduce((sum, s) => {
+      // For user uploads with actual duration, use that; otherwise use segment bounds
+      const segmentDuration = s.actualVideoDuration ?? (s.endTime - s.startTime)
+      return sum + segmentDuration
+    }, 0)
   }, [renderedSegments])
   
   // Calculate max audio duration across all enabled tracks
@@ -3317,6 +3327,8 @@ export function SceneProductionMixer({
               
               {/* Timeline Overview - Visual representation of all tracks */}
               <MixerTimeline
+                segments={renderedSegments}
+                currentPlaybackTime={currentTime}
                 audioTracks={audioTracks}
                 onTrackChange={updateTrackConfig}
                 videoTotalDuration={videoTotalDuration}
