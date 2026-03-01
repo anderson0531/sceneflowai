@@ -979,53 +979,51 @@ function ScenePreviewPlayer({
         })}
         
         {/* Watermark Preview Overlay */}
-        {watermarkConfig?.enabled && watermarkConfig.type !== 'none' && (
+        {watermarkConfig?.enabled && watermarkConfig.type && (
           <div
             className="absolute pointer-events-none"
             style={{
-              ...(watermarkConfig.position.anchor === 'top-left' && { 
-                top: `${watermarkConfig.position.y}%`, 
-                left: `${watermarkConfig.position.x}%` 
+              // Calculate position based on anchor and padding
+              ...(watermarkConfig.anchor === 'top-left' && { 
+                top: `${watermarkConfig.padding ?? 20}px`, 
+                left: `${watermarkConfig.padding ?? 20}px` 
               }),
-              ...(watermarkConfig.position.anchor === 'top-center' && { 
-                top: `${watermarkConfig.position.y}%`, 
+              ...(watermarkConfig.anchor === 'top-center' && { 
+                top: `${watermarkConfig.padding ?? 20}px`, 
                 left: '50%', 
                 transform: 'translateX(-50%)' 
               }),
-              ...(watermarkConfig.position.anchor === 'top-right' && { 
-                top: `${watermarkConfig.position.y}%`, 
-                right: `${100 - watermarkConfig.position.x}%` 
+              ...(watermarkConfig.anchor === 'top-right' && { 
+                top: `${watermarkConfig.padding ?? 20}px`, 
+                right: `${watermarkConfig.padding ?? 20}px` 
               }),
-              ...(watermarkConfig.position.anchor === 'center' && { 
-                top: '50%', 
-                left: '50%', 
-                transform: 'translate(-50%, -50%)' 
+              ...(watermarkConfig.anchor === 'bottom-left' && { 
+                bottom: `${watermarkConfig.padding ?? 20}px`, 
+                left: `${watermarkConfig.padding ?? 20}px` 
               }),
-              ...(watermarkConfig.position.anchor === 'bottom-left' && { 
-                bottom: `${100 - watermarkConfig.position.y}%`, 
-                left: `${watermarkConfig.position.x}%` 
-              }),
-              ...(watermarkConfig.position.anchor === 'bottom-center' && { 
-                bottom: `${100 - watermarkConfig.position.y}%`, 
+              ...(watermarkConfig.anchor === 'bottom-center' && { 
+                bottom: `${watermarkConfig.padding ?? 20}px`, 
                 left: '50%', 
                 transform: 'translateX(-50%)' 
               }),
-              ...(watermarkConfig.position.anchor === 'bottom-right' && { 
-                bottom: `${100 - watermarkConfig.position.y}%`, 
-                right: `${100 - watermarkConfig.position.x}%` 
+              ...(watermarkConfig.anchor === 'bottom-right' && { 
+                bottom: `${watermarkConfig.padding ?? 20}px`, 
+                right: `${watermarkConfig.padding ?? 20}px` 
               }),
-              opacity: watermarkConfig.opacity / 100,
               zIndex: 15,
             }}
           >
             {watermarkConfig.type === 'text' && watermarkConfig.text && (
               <span
                 style={{
-                  fontFamily: watermarkConfig.style?.fontFamily || 'Inter, sans-serif',
-                  fontSize: `${watermarkConfig.style?.fontSize || 16}px`,
-                  fontWeight: watermarkConfig.style?.fontWeight || 400,
-                  color: watermarkConfig.style?.color || '#FFFFFF',
-                  textShadow: '1px 1px 3px rgba(0,0,0,0.7)',
+                  fontFamily: watermarkConfig.textStyle?.fontFamily || 'Inter, sans-serif',
+                  fontSize: `${watermarkConfig.textStyle?.fontSize ?? 2.5}vh`,
+                  fontWeight: watermarkConfig.textStyle?.fontWeight || 500,
+                  color: watermarkConfig.textStyle?.color || '#FFFFFF',
+                  opacity: watermarkConfig.textStyle?.opacity ?? 0.6,
+                  textShadow: watermarkConfig.textStyle?.textShadow 
+                    ? '1px 1px 3px rgba(0,0,0,0.7)' 
+                    : undefined,
                 }}
               >
                 {watermarkConfig.text}
@@ -1036,8 +1034,9 @@ function ScenePreviewPlayer({
                 src={watermarkConfig.imageUrl}
                 alt="Watermark"
                 style={{
-                  maxWidth: `${watermarkConfig.scale || 100}px`,
+                  width: `${watermarkConfig.imageStyle?.width ?? 10}%`,
                   height: 'auto',
+                  opacity: watermarkConfig.imageStyle?.opacity ?? 0.7,
                   filter: 'drop-shadow(1px 1px 3px rgba(0,0,0,0.5))',
                 }}
               />
