@@ -43,6 +43,8 @@ import {
   Server,
   Monitor,
   ChevronDown,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
@@ -473,6 +475,7 @@ function ScenePreviewPlayer({
   textOverlays = [],
   onEditOverlay,
   onDeleteOverlay,
+  watermarkConfig,
 }: {
   segments: SceneSegment[]
   audioTracks: MixerAudioTracks
@@ -490,7 +493,9 @@ function ScenePreviewPlayer({
   textOverlays?: TextOverlay[]
   onEditOverlay?: (overlay: TextOverlay) => void
   onDeleteOverlay?: (overlayId: string) => void
+  watermarkConfig?: WatermarkConfig
 }) {
+  const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const narrationRef = useRef<HTMLAudioElement>(null)
   const musicRef = useRef<HTMLAudioElement>(null)
@@ -500,6 +505,7 @@ function ScenePreviewPlayer({
   const [currentTime, setCurrentTime] = useState(0)
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0)
   const [isVideoFrozen, setIsVideoFrozen] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   
   // Track loaded video URL to prevent duplicate loads
   const loadedVideoUrlRef = useRef<string | null>(null)
@@ -802,10 +808,40 @@ function ScenePreviewPlayer({
     loadedVideoUrlRef.current = null // Force reload
   }
   
+  // Toggle fullscreen mode
+  const toggleFullscreen = useCallback(async () => {
+    if (!containerRef.current) return
+    
+    try {
+      if (!document.fullscreenElement) {
+        await containerRef.current.requestFullscreen()
+        setIsFullscreen(true)
+      } else {
+        await document.exitFullscreen()
+        setIsFullscreen(false)
+      }
+    } catch (err) {
+      console.warn('Fullscreen error:', err)
+    }
+  }, [])
+  
+  // Listen for fullscreen changes (e.g., user presses Esc)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+    
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
+  
   return (
-    <div className="bg-black rounded-lg overflow-hidden border border-gray-700">
+    <div 
+      ref={containerRef}
+      className={`bg-black rounded-lg overflow-hidden border border-gray-700 ${isFullscreen ? 'flex flex-col' : ''}`}
+    >
       {/* Video Display Area */}
-      <div className="relative aspect-video bg-gray-900 flex items-center justify-center">
+      <div className={`relative bg-gray-900 flex items-center justify-center ${isFullscreen ? 'flex-1' : 'aspect-video'}`}>
         {currentSegment.segment?.activeAssetUrl ? (
           <video
             ref={videoRef}
@@ -942,6 +978,73 @@ function ScenePreviewPlayer({
           )
         })}
         
+        {/* Watermark Preview Overlay */}
+        {watermarkConfig?.enabled && watermarkConfig.type !== 'none' && (
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              ...(watermarkConfig.position.anchor === 'top-left' && { 
+                top: `${watermarkConfig.position.y}%`, 
+                left: `${watermarkConfig.position.x}%` 
+              }),
+              ...(watermarkConfig.position.anchor === 'top-center' && { 
+                top: `${watermarkConfig.position.y}%`, 
+                left: '50%', 
+                transform: 'translateX(-50%)' 
+              }),
+              ...(watermarkConfig.position.anchor === 'top-right' && { 
+                top: `${watermarkConfig.position.y}%`, 
+                right: `${100 - watermarkConfig.position.x}%` 
+              }),
+              ...(watermarkConfig.position.anchor === 'center' && { 
+                top: '50%', 
+                left: '50%', 
+                transform: 'translate(-50%, -50%)' 
+              }),
+              ...(watermarkConfig.position.anchor === 'bottom-left' && { 
+                bottom: `${100 - watermarkConfig.position.y}%`, 
+                left: `${watermarkConfig.position.x}%` 
+              }),
+              ...(watermarkConfig.position.anchor === 'bottom-center' && { 
+                bottom: `${100 - watermarkConfig.position.y}%`, 
+                left: '50%', 
+                transform: 'translateX(-50%)' 
+              }),
+              ...(watermarkConfig.position.anchor === 'bottom-right' && { 
+                bottom: `${100 - watermarkConfig.position.y}%`, 
+                right: `${100 - watermarkConfig.position.x}%` 
+              }),
+              opacity: watermarkConfig.opacity / 100,
+              zIndex: 15,
+            }}
+          >
+            {watermarkConfig.type === 'text' && watermarkConfig.text && (
+              <span
+                style={{
+                  fontFamily: watermarkConfig.style?.fontFamily || 'Inter, sans-serif',
+                  fontSize: `${watermarkConfig.style?.fontSize || 16}px`,
+                  fontWeight: watermarkConfig.style?.fontWeight || 400,
+                  color: watermarkConfig.style?.color || '#FFFFFF',
+                  textShadow: '1px 1px 3px rgba(0,0,0,0.7)',
+                }}
+              >
+                {watermarkConfig.text}
+              </span>
+            )}
+            {watermarkConfig.type === 'image' && watermarkConfig.imageUrl && (
+              <img
+                src={watermarkConfig.imageUrl}
+                alt="Watermark"
+                style={{
+                  maxWidth: `${watermarkConfig.scale || 100}px`,
+                  height: 'auto',
+                  filter: 'drop-shadow(1px 1px 3px rgba(0,0,0,0.5))',
+                }}
+              />
+            )}
+          </div>
+        )}
+        
         {/* Play Button Overlay */}
         <button
           onClick={handlePlayPause}
@@ -1018,6 +1121,15 @@ function ScenePreviewPlayer({
           className="p-2 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
         >
           {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+        </button>
+        
+        {/* Fullscreen Button */}
+        <button
+          onClick={toggleFullscreen}
+          className="p-2 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+          title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+        >
+          {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
         </button>
       </div>
       
@@ -2450,6 +2562,7 @@ export function SceneProductionMixer({
                 onToggleMute={() => setIsMuted(prev => !prev)}
                 segmentAudioConfigs={segmentAudioConfigs}
                 textOverlays={textOverlays}
+                watermarkConfig={watermarkConfig}
                 onEditOverlay={(overlay) => {
                   setEditingOverlay(overlay)
                   setShowOverlayPanel(true)
