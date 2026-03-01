@@ -189,6 +189,9 @@ export interface WatermarkTextStyle {
   color: string
   opacity: number   // 0-1
   textShadow?: boolean
+  background?: boolean
+  backgroundColor?: string
+  backgroundOpacity?: number  // 0-1
 }
 
 export interface WatermarkImageStyle {
@@ -224,6 +227,9 @@ export const DEFAULT_WATERMARK_CONFIG: WatermarkConfig = {
     color: '#FFFFFF',
     opacity: 0.6,
     textShadow: true,
+    background: false,
+    backgroundColor: '#000000',
+    backgroundOpacity: 0.5,
   },
   imageUrl: '',
   imageStyle: {
@@ -1024,6 +1030,11 @@ function ScenePreviewPlayer({
                   textShadow: watermarkConfig.textStyle?.textShadow 
                     ? '1px 1px 3px rgba(0,0,0,0.7)' 
                     : undefined,
+                  backgroundColor: watermarkConfig.textStyle?.background 
+                    ? `${watermarkConfig.textStyle.backgroundColor || '#000000'}${Math.round((watermarkConfig.textStyle.backgroundOpacity ?? 0.5) * 255).toString(16).padStart(2, '0')}`
+                    : undefined,
+                  padding: watermarkConfig.textStyle?.background ? '4px 8px' : undefined,
+                  borderRadius: watermarkConfig.textStyle?.background ? '4px' : undefined,
                 }}
               >
                 {watermarkConfig.text}
@@ -3075,6 +3086,67 @@ export function SceneProductionMixer({
                               Text Shadow
                             </label>
                           </div>
+                        </div>
+                        
+                        {/* Background Controls */}
+                        <div className="space-y-2 pt-2 border-t border-gray-700">
+                          <div className="flex items-center justify-between">
+                            <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
+                              <Switch
+                                checked={watermarkConfig.textStyle.background || false}
+                                onCheckedChange={(checked) => setWatermarkConfig(prev => ({
+                                  ...prev,
+                                  textStyle: { ...prev.textStyle, background: checked }
+                                }))}
+                                disabled={isRendering}
+                              />
+                              Background
+                            </label>
+                          </div>
+                          
+                          {watermarkConfig.textStyle.background && (
+                            <div className="grid grid-cols-2 gap-3 pl-4">
+                              <div>
+                                <label className="text-xs text-gray-500 mb-1 block">Color</label>
+                                <div className="flex gap-2">
+                                  <input
+                                    type="color"
+                                    value={watermarkConfig.textStyle.backgroundColor || '#000000'}
+                                    onChange={(e) => setWatermarkConfig(prev => ({
+                                      ...prev,
+                                      textStyle: { ...prev.textStyle, backgroundColor: e.target.value }
+                                    }))}
+                                    className="w-8 h-8 rounded cursor-pointer bg-transparent border border-gray-600"
+                                    disabled={isRendering}
+                                  />
+                                  <Input
+                                    value={watermarkConfig.textStyle.backgroundColor || '#000000'}
+                                    onChange={(e) => setWatermarkConfig(prev => ({
+                                      ...prev,
+                                      textStyle: { ...prev.textStyle, backgroundColor: e.target.value }
+                                    }))}
+                                    className="h-8 bg-gray-900 border-gray-600 text-white text-xs flex-1"
+                                    placeholder="#000000"
+                                    disabled={isRendering}
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="text-xs text-gray-500 mb-1 block">Opacity ({Math.round((watermarkConfig.textStyle.backgroundOpacity ?? 0.5) * 100)}%)</label>
+                                <Slider
+                                  value={[(watermarkConfig.textStyle.backgroundOpacity ?? 0.5) * 100]}
+                                  onValueChange={([v]) => setWatermarkConfig(prev => ({
+                                    ...prev,
+                                    textStyle: { ...prev.textStyle, backgroundOpacity: v / 100 }
+                                  }))}
+                                  min={10}
+                                  max={100}
+                                  step={5}
+                                  disabled={isRendering}
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </>
                     )}
