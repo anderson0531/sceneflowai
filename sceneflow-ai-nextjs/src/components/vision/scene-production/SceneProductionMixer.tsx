@@ -1733,7 +1733,7 @@ function MusicDurationControl({
             }
           }}
           placeholder={formatTime(videoTotalDuration)}
-          className="w-20 h-7 text-xs font-mono bg-gray-800 border-gray-600 text-center"
+          className="w-24 h-7 text-xs font-mono bg-gray-800 border-gray-600 text-center"
           disabled={disabled}
         />
         <span className="text-[10px] text-gray-500">(m:ss)</span>
