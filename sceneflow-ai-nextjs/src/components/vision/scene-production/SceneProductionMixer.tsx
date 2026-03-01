@@ -778,7 +778,7 @@ function ScenePreviewPlayer({
     const videoTargetTime = Math.min(targetTime, videoTotalDuration)
     let elapsed = 0
     for (let i = 0; i < segments.length; i++) {
-      const segDuration = segments[i].endTime - segments[i].startTime
+      const segDuration = getSegmentDuration(segments[i])
       if (videoTargetTime < elapsed + segDuration) {
         setCurrentSegmentIndex(i)
         const localTime = videoTargetTime - elapsed
@@ -794,7 +794,7 @@ function ScenePreviewPlayer({
     // If seeking beyond video, seek to end of last segment
     setCurrentSegmentIndex(segments.length - 1)
     if (videoRef.current) {
-      const lastSegDuration = segments[segments.length - 1].endTime - segments[segments.length - 1].startTime
+      const lastSegDuration = getSegmentDuration(segments[segments.length - 1])
       videoRef.current.currentTime = lastSegDuration
     }
     setCurrentTime(targetTime)
@@ -2076,11 +2076,21 @@ export function SceneProductionMixer({
   // Calculate video-only duration from segments
   // Uses actualVideoDuration for uploaded videos, otherwise falls back to segment bounds
   const videoTotalDuration = useMemo(() => {
-    return renderedSegments.reduce((sum, s) => {
+    const duration = renderedSegments.reduce((sum, s) => {
       // For user uploads with actual duration, use that; otherwise use segment bounds
       const segmentDuration = s.actualVideoDuration ?? (s.endTime - s.startTime)
+      console.log('[SceneProductionMixer] Segment duration:', {
+        segmentId: s.segmentId,
+        actualVideoDuration: s.actualVideoDuration,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        calculatedDuration: segmentDuration,
+        isUserUpload: s.isUserUpload,
+      })
       return sum + segmentDuration
     }, 0)
+    console.log('[SceneProductionMixer] Total video duration:', duration)
+    return duration
   }, [renderedSegments])
   
   // Calculate max audio duration across all enabled tracks
@@ -2391,7 +2401,7 @@ export function SceneProductionMixer({
         assetUrl: seg.activeAssetUrl!,
         assetType: 'video' as const,
         startTime: seg.startTime,
-        duration: seg.endTime - seg.startTime,
+        duration: seg.actualVideoDuration ?? (seg.endTime - seg.startTime),
         volume: (segmentAudioConfigs[seg.segmentId]?.volume ?? 1.0) * masterSegmentVolume,
       }))
       
