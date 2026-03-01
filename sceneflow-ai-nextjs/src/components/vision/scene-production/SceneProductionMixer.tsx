@@ -3328,7 +3328,7 @@ export function SceneProductionMixer({
               {/* Timeline Overview - Visual representation of all tracks */}
               <MixerTimeline
                 segments={renderedSegments}
-                currentPlaybackTime={currentTime}
+                currentPlaybackTime={0}
                 audioTracks={audioTracks}
                 onTrackChange={updateTrackConfig}
                 videoTotalDuration={videoTotalDuration}
