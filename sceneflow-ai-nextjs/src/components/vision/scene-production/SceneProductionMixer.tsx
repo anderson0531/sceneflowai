@@ -2396,14 +2396,28 @@ export function SceneProductionMixer({
     setLocalRenderProgress(null)
     
     try {
-      const segmentsForLocal = renderedSegments.map(seg => ({
-        segmentId: seg.segmentId,
-        assetUrl: seg.activeAssetUrl!,
-        assetType: 'video' as const,
-        startTime: seg.startTime,
-        duration: seg.actualVideoDuration ?? (seg.endTime - seg.startTime),
-        volume: (segmentAudioConfigs[seg.segmentId]?.volume ?? 1.0) * masterSegmentVolume,
-      }))
+      const segmentsForLocal = renderedSegments.map(seg => {
+        const duration = seg.actualVideoDuration ?? (seg.endTime - seg.startTime)
+        console.log('[LocalRender] Segment config:', {
+          segmentId: seg.segmentId,
+          actualVideoDuration: seg.actualVideoDuration,
+          startTime: seg.startTime,
+          endTime: seg.endTime,
+          calculatedDuration: duration,
+          isUserUpload: seg.isUserUpload,
+        })
+        return {
+          segmentId: seg.segmentId,
+          assetUrl: seg.activeAssetUrl!,
+          assetType: 'video' as const,
+          startTime: seg.startTime,
+          duration,
+          volume: (segmentAudioConfigs[seg.segmentId]?.volume ?? 1.0) * masterSegmentVolume,
+        }
+      })
+      
+      console.log('[LocalRender] Total duration for render:', totalDuration)
+      console.log('[LocalRender] Segments for local render:', segmentsForLocal)
       
       const audioClips: LocalRenderConfig['audioClips'] = []
       

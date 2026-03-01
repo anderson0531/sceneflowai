@@ -147,8 +147,8 @@ const RESOLUTIONS = {
   '1080p': { width: 1920, height: 1080 },
 } as const
 
-/** Max duration for local rendering (seconds) */
-export const LOCAL_RENDER_MAX_DURATION = 60
+/** Max duration for local rendering (seconds) - supports longer user uploads */
+export const LOCAL_RENDER_MAX_DURATION = 300
 
 /** Max resolution for local rendering */
 export const LOCAL_RENDER_MAX_RESOLUTION = '1080p'
@@ -358,6 +358,21 @@ export class LocalRenderService {
       const totalFrames = Math.ceil(config.totalDuration * config.fps)
       const frameDuration = 1000 / config.fps
       
+      console.log('[LocalRender] Starting render:', {
+        totalDuration: config.totalDuration,
+        fps: config.fps,
+        totalFrames,
+        frameDuration,
+        segmentCount: config.segments.length,
+        segments: config.segments.map(s => ({
+          id: s.segmentId,
+          startTime: s.startTime,
+          duration: s.duration,
+          assetType: s.assetType,
+          assetUrl: s.assetUrl?.substring(0, 50) + '...'
+        }))
+      })
+      
       for (let frame = 0; frame < totalFrames; frame++) {
         if (signal.aborted) {
           this.mediaRecorder.stop()
@@ -533,6 +548,16 @@ export class LocalRenderService {
     const segment = config.segments.find(
       (s) => currentTime >= s.startTime && currentTime < s.startTime + s.duration
     )
+    
+    // Debug logging for first frame and every 10 seconds
+    if (currentTime === 0 || Math.floor(currentTime) % 10 === 0) {
+      console.log('[LocalRender] drawFrame at', currentTime, 'segments:', config.segments.map(s => ({
+        id: s.segmentId,
+        start: s.startTime,
+        duration: s.duration,
+        end: s.startTime + s.duration
+      })), 'found segment:', segment?.segmentId)
+    }
     
     if (!segment) return
     
