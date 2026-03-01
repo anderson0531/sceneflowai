@@ -301,8 +301,45 @@ export class LocalRenderService {
         throw new Error('Render aborted')
       }
       
+      // CRITICAL: Update segment durations based on actual video durations
+      // This fixes cases where actualVideoDuration wasn't saved during upload
+      let adjustedTotalDuration = 0
+      const adjustedSegments = config.segments.map((segment, idx) => {
+        const asset = assets.get(segment.segmentId)
+        let actualDuration = segment.duration
+        
+        if (asset instanceof HTMLVideoElement && isFinite(asset.duration) && asset.duration > 0) {
+          const videoDuration = asset.duration
+          if (Math.abs(videoDuration - segment.duration) > 0.5) {
+            console.log(`[LocalRender] Segment ${segment.segmentId}: correcting duration from ${segment.duration}s to ${videoDuration}s (actual video)`)
+            actualDuration = videoDuration
+          }
+        }
+        
+        const adjustedSegment = {
+          ...segment,
+          startTime: adjustedTotalDuration,
+          duration: actualDuration,
+        }
+        adjustedTotalDuration += actualDuration
+        return adjustedSegment
+      })
+      
+      // Update config with adjusted segments and total duration
+      const adjustedConfig: LocalRenderConfig = {
+        ...config,
+        segments: adjustedSegments,
+        totalDuration: adjustedTotalDuration,
+      }
+      
+      console.log('[LocalRender] Duration adjustment:', {
+        originalDuration: config.totalDuration,
+        adjustedDuration: adjustedTotalDuration,
+        segments: adjustedSegments.map(s => ({ id: s.segmentId, duration: s.duration }))
+      })
+      
       onProgress?.({ phase: 'preparing', progress: 30 })
-      const audioBuffers = await this.preloadAudio(config.audioClips, signal)
+      const audioBuffers = await this.preloadAudio(adjustedConfig.audioClips, signal)
       
       if (signal.aborted) {
         throw new Error('Render aborted')
@@ -311,7 +348,7 @@ export class LocalRenderService {
       // Setup MediaRecorder
       onProgress?.({ phase: 'rendering', progress: 40 })
       const mimeType = getMediaRecorderMimeType()!
-      const stream = this.canvas.captureStream(config.fps)
+      const stream = this.canvas.captureStream(adjustedConfig.fps)
       
       // Mix audio into the stream
       const audioDestination = this.audioContext.createMediaStreamDestination()
@@ -323,7 +360,7 @@ export class LocalRenderService {
       this.recordedChunks = []
       this.mediaRecorder = new MediaRecorder(stream, {
         mimeType,
-        videoBitsPerSecond: config.resolution === '1080p' ? 8000000 : 5000000,
+        videoBitsPerSecond: adjustedConfig.resolution === '1080p' ? 8000000 : 5000000,
       })
       
       this.mediaRecorder.ondataavailable = (event) => {
@@ -352,19 +389,19 @@ export class LocalRenderService {
       this.mediaRecorder.start(100) // Capture every 100ms
       
       // Schedule audio playback
-      this.scheduleAudio(audioBuffers, config.audioClips, audioDestination)
+      this.scheduleAudio(audioBuffers, adjustedConfig.audioClips, audioDestination)
       
       // Render frames
-      const totalFrames = Math.ceil(config.totalDuration * config.fps)
-      const frameDuration = 1000 / config.fps
+      const totalFrames = Math.ceil(adjustedConfig.totalDuration * adjustedConfig.fps)
+      const frameDuration = 1000 / adjustedConfig.fps
       
       console.log('[LocalRender] Starting render:', {
-        totalDuration: config.totalDuration,
-        fps: config.fps,
+        totalDuration: adjustedConfig.totalDuration,
+        fps: adjustedConfig.fps,
         totalFrames,
         frameDuration,
-        segmentCount: config.segments.length,
-        segments: config.segments.map(s => ({
+        segmentCount: adjustedConfig.segments.length,
+        segments: adjustedConfig.segments.map(s => ({
           id: s.segmentId,
           startTime: s.startTime,
           duration: s.duration,
@@ -379,19 +416,19 @@ export class LocalRenderService {
           throw new Error('Render aborted')
         }
         
-        const currentTime = frame / config.fps
+        const currentTime = frame / adjustedConfig.fps
         
         // Draw current frame
-        this.drawFrame(currentTime, config, assets)
+        this.drawFrame(currentTime, adjustedConfig, assets)
         
         // Draw text overlays
-        if (config.textOverlays) {
-          this.drawTextOverlays(currentTime, config.textOverlays)
+        if (adjustedConfig.textOverlays) {
+          this.drawTextOverlays(currentTime, adjustedConfig.textOverlays)
         }
         
         // Draw watermark (always on top)
-        if (config.watermark) {
-          this.drawWatermark(config.watermark)
+        if (adjustedConfig.watermark) {
+          this.drawWatermark(adjustedConfig.watermark)
         }
         
         // Report progress
@@ -422,7 +459,7 @@ export class LocalRenderService {
         blobUrl,
         blob,
         mimeType,
-        duration: config.totalDuration,
+        duration: adjustedConfig.totalDuration,
       }
       
     } catch (error) {
