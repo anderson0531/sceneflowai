@@ -49,6 +49,9 @@ import {
   ChevronRight,
   Copy,
   Wand2,
+  Shield,
+  ShieldCheck,
+  CloudUpload,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -752,9 +755,15 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                           <CheckCircle className="w-3 h-3 mr-1" />
                           Done
                         </Badge>
+                        {segment.isUserUpload && (
+                          <Badge className="bg-sky-500/80 text-white text-[10px] px-1.5 py-0">
+                            <CloudUpload className="w-3 h-3 mr-1" />
+                            Uploaded
+                          </Badge>
+                        )}
                         {item.config.approvalStatus === 'locked' && (
-                          <Badge className="bg-green-500/80 text-white text-[10px] px-1.5 py-0">
-                            <Lock className="w-3 h-3" />
+                          <Badge className="bg-amber-500/80 text-white text-[10px] px-1.5 py-0">
+                            <ShieldCheck className="w-3 h-3" />
                           </Badge>
                         )}
                       </div>
@@ -798,11 +807,30 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                   </p>
                   
                   <div className="flex items-center gap-2 mt-2 text-xs text-slate-500">
-                    <span>{item.config.duration}s</span>
-                    <span>•</span>
-                    <span>{item.config.aspectRatio}</span>
-                    <span>•</span>
-                    <span>{item.config.confidence}% confidence</span>
+                    {segment.isUserUpload ? (
+                      // Uploaded video: show actual duration and upload indicator
+                      <>
+                        <span className="text-sky-400 font-medium">
+                          {segment.actualVideoDuration 
+                            ? `${Math.round(segment.actualVideoDuration)}s` 
+                            : `${item.config.duration}s`
+                          }
+                        </span>
+                        <span>•</span>
+                        <span>{item.config.aspectRatio}</span>
+                        <span>•</span>
+                        <span className="text-sky-400">User Upload</span>
+                      </>
+                    ) : (
+                      // AI-generated video: show configured duration and confidence
+                      <>
+                        <span>{item.config.duration}s</span>
+                        <span>•</span>
+                        <span>{item.config.aspectRatio}</span>
+                        <span>•</span>
+                        <span>{item.config.confidence}% confidence</span>
+                      </>
+                    )}
                   </div>
                 </div>
                 
@@ -894,7 +922,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                 </div>
               </div>
               
-              {/* Lock / Regenerate Actions for completed segments */}
+              {/* Protect / Regenerate Actions for completed segments */}
               {item.status === 'complete' && (
                 <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-700/50">
                   <Tooltip>
@@ -903,28 +931,28 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                         variant={item.config.approvalStatus === 'locked' ? 'default' : 'outline'}
                         size="sm"
                         className={item.config.approvalStatus === 'locked' 
-                          ? 'flex-1 bg-green-600 hover:bg-green-700 text-white' 
+                          ? 'flex-1 bg-amber-600 hover:bg-amber-700 text-white' 
                           : 'flex-1 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700'
                         }
                         onClick={() => handleToggleLock(item.segmentId)}
                       >
                         {item.config.approvalStatus === 'locked' ? (
                           <>
-                            <Lock className="w-3.5 h-3.5 mr-1.5" />
-                            Locked
+                            <ShieldCheck className="w-3.5 h-3.5 mr-1.5" />
+                            Protected
                           </>
                         ) : (
                           <>
-                            <Unlock className="w-3.5 h-3.5 mr-1.5" />
-                            Lock
+                            <Shield className="w-3.5 h-3.5 mr-1.5" />
+                            Protect
                           </>
                         )}
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
                       {item.config.approvalStatus === 'locked' 
-                        ? 'Unlock to allow regeneration' 
-                        : 'Lock this take for production'}
+                        ? 'Unprotect to allow replacement' 
+                        : 'Protect this segment from batch operations'}
                     </TooltipContent>
                   </Tooltip>
                   
@@ -934,16 +962,24 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                         variant={item.config.approvalStatus === 'auto-ready' ? 'default' : 'outline'}
                         size="sm"
                         className={item.config.approvalStatus === 'auto-ready' 
-                          ? 'flex-1 bg-amber-600 hover:bg-amber-700 text-white' 
+                          ? 'flex-1 bg-purple-600 hover:bg-purple-700 text-white' 
                           : 'flex-1 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700'
                         }
                         onClick={() => handleMarkRetake(item.segmentId)}
+                        disabled={item.config.approvalStatus === 'locked'}
                       >
                         <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-                        Regenerate
+                        {segment.isUserUpload ? 'Replace' : 'Regenerate'}
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Queue for regeneration</TooltipContent>
+                    <TooltipContent>
+                      {item.config.approvalStatus === 'locked' 
+                        ? 'Unprotect first to allow replacement'
+                        : segment.isUserUpload 
+                          ? 'Queue for replacement with AI generation' 
+                          : 'Queue for regeneration'
+                      }
+                    </TooltipContent>
                   </Tooltip>
                 </div>
               )}
