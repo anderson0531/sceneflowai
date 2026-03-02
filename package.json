@@ -12,6 +12,9 @@
     "deploy:prod": "node scripts/deploy-verify.js",
     "deploy:dol": "bash scripts/deploy-dol-production.sh"
   },
+  "dependencies": {
+    "next": "^15.0.0"
+  },
   "keywords": [
     "ai",
     "video",
