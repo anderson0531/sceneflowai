@@ -34,6 +34,8 @@ export interface LocalRenderSegment {
   duration: number
   /** Volume for this segment (0-1) */
   volume?: number
+  /** Include the video's audio track in the render */
+  includeVideoAudio?: boolean
 }
 
 export interface LocalRenderAudioClip {
@@ -811,12 +813,34 @@ export class LocalRenderService {
       }
     }
     
+    // Clear recorded chunks to free memory BEFORE nullifying references
+    // This is critical for preventing memory buildup
+    if (this.recordedChunks.length > 0) {
+      console.log('[LocalRender] Clearing', this.recordedChunks.length, 'recorded chunks')
+      this.recordedChunks.length = 0
+    }
+    
     this.canvas = null
     this.ctx = null
     this.audioContext = null
     this.mediaRecorder = null
     this.recordedChunks = []
     this.abortController = null
+  }
+  
+  /**
+   * Revoke a blob URL to free memory
+   * Call this after the blob URL is no longer needed (e.g., after upload to storage)
+   */
+  static revokeBlobUrl(blobUrl: string): void {
+    if (blobUrl && blobUrl.startsWith('blob:')) {
+      try {
+        URL.revokeObjectURL(blobUrl)
+        console.log('[LocalRender] Revoked blob URL:', blobUrl.substring(0, 50))
+      } catch (e) {
+        console.warn('[LocalRender] Failed to revoke blob URL:', e)
+      }
+    }
   }
 }
 

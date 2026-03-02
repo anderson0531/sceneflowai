@@ -130,11 +130,18 @@ export function MixerTimeline({
 
   // Calculate total timeline duration (max of video or audio end times)
   // Adapts to actual video duration - no artificial 8-second cap
+  // NOTE: Music track does NOT extend duration - it loops/fades within video duration
   const totalDuration = useMemo(() => {
     let maxEnd = videoTotalDuration
     for (const key of Object.keys(audioTracks) as Array<keyof MixerAudioTracks>) {
       const track = audioTracks[key]
       if (track.enabled) {
+        // Music should NOT extend the render duration - it loops or fades within video
+        // Only narration, dialogue, and sfx can extend the duration
+        if (key === 'music') {
+          // Music is capped to video duration
+          continue
+        }
         maxEnd = Math.max(maxEnd, track.startOffset + (durations[key] || 0))
       }
     }

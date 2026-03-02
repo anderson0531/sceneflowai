@@ -47,6 +47,7 @@ import {
   Maximize2,
   Minimize2,
 } from 'lucide-react'
+import { upload } from '@vercel/blob/client'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
@@ -733,12 +734,42 @@ function ScenePreviewPlayer({
     }
   }, [currentSegmentIndex, currentSegment.segment?.activeAssetUrl, isPlaying, isVideoFrozen])
   
-  // Cleanup audio timer on unmount
+  // Comprehensive cleanup on unmount - prevents memory leaks
   useEffect(() => {
     return () => {
+      // Clear audio timer
       if (audioTimerRef.current) {
         clearInterval(audioTimerRef.current)
+        audioTimerRef.current = null
       }
+      
+      // Pause and clear video
+      if (videoRef.current) {
+        videoRef.current.pause()
+        videoRef.current.src = ''
+        videoRef.current.load()
+      }
+      
+      // Pause and clear all audio
+      if (narrationRef.current) {
+        narrationRef.current.pause()
+        narrationRef.current.src = ''
+      }
+      if (musicRef.current) {
+        musicRef.current.pause()
+        musicRef.current.src = ''
+      }
+      dialogueRefs.current.forEach(el => {
+        if (el) {
+          el.pause()
+          el.src = ''
+        }
+      })
+      
+      // Clear loaded URL ref
+      loadedVideoUrlRef.current = null
+      
+      console.log('[ScenePreviewPlayer] Cleanup complete')
     }
   }, [])
   
@@ -2587,21 +2618,48 @@ export function SceneProductionMixer({
         throw new Error(renderResult.error || 'Local render failed')
       }
       
-      const downloadUrl = renderResult.blobUrl
+      // Upload the rendered video to persistent blob storage
+      // This is critical - the local blob: URL is only valid during the browser session
+      setRenderStatus('rendering')
+      setRenderProgress(95)
+      
+      let persistentUrl: string
+      try {
+        console.log('[SceneProductionMixer] Uploading rendered video to blob storage...')
+        const filename = `scene-${sceneNumber}-${selectedLanguage}-${Date.now()}.webm`
+        const uploadedBlob = await upload(
+          `renders/${filename}`,
+          renderResult.blob,
+          {
+            access: 'public',
+            handleUploadUrl: '/api/segments/upload-video-url',
+          }
+        )
+        persistentUrl = uploadedBlob.url
+        console.log('[SceneProductionMixer] Uploaded to:', persistentUrl)
+        
+        // Revoke the temporary blob URL to free memory
+        const { LocalRenderService } = await import('@/lib/video/LocalRenderService')
+        LocalRenderService.revokeBlobUrl(renderResult.blobUrl)
+      } catch (uploadError) {
+        console.error('[SceneProductionMixer] Failed to upload to blob storage, using local URL:', uploadError)
+        // Fallback to local blob URL (will be lost on refresh)
+        persistentUrl = renderResult.blobUrl
+      }
       
       setRenderStatus('complete')
       setRenderProgress(100)
-      setLastRenderedUrl(downloadUrl)
+      setLastRenderedUrl(persistentUrl)
       
       // Auto-trigger download
       const a = document.createElement('a')
-      a.href = downloadUrl
+      a.href = persistentUrl
       a.download = `scene-${sceneNumber}-${selectedLanguage}-${Date.now()}.webm`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
       
-      onRenderComplete?.(downloadUrl, selectedLanguage)
+      onRenderComplete?.(persistentUrl, selectedLanguage)
       
     } catch (err) {
       console.error('[SceneProductionMixer] Local render error:', err)
