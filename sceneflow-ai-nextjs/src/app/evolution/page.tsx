@@ -44,8 +44,8 @@ const FloatingNav = dynamic(
   { ssr: false }
 )
 
-const LandingFooter = dynamic(
-  () => import('@/components/landing/LandingFooter').then(mod => ({ default: mod.LandingFooter })),
+const Footer = dynamic(
+  () => import('@/app/components/Footer').then(mod => ({ default: mod.Footer })),
   { ssr: false }
 )
 
@@ -94,7 +94,7 @@ export default function EvolutionLandingPage() {
 
       {/* Footer */}
       <Suspense fallback={null}>
-        <LandingFooter />
+        <Footer />
       </Suspense>
     </main>
   )
