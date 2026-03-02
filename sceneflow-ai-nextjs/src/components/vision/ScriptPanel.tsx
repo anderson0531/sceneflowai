@@ -2539,17 +2539,17 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               <span className="text-sm hidden sm:inline">Budget</span>
             </Button>
 
-            {/* Go to Bookmark Button */}
+            {/* Resume (Go to Bookmark) Button */}
             {bookmarkedScene && onJumpToBookmark && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={onJumpToBookmark}
                 className="flex items-center gap-2 border-amber-500/30 hover:border-amber-500/50 hover:bg-amber-500/10"
-                title={`Jump to bookmarked scene ${bookmarkedScene.sceneNumber || ''}`}
+                title={`Resume at Scene ${bookmarkedScene.sceneNumber || ''}`}
               >
-                <Bookmark className="w-4 h-4 text-amber-400" />
-                <span className="text-sm hidden sm:inline">Bookmark</span>
+                <Play className="w-4 h-4 text-amber-400 fill-amber-400" />
+                <span className="text-sm hidden sm:inline">Resume</span>
               </Button>
             )}
 
@@ -4208,7 +4208,7 @@ function SceneCard({
                     </button>
                   </TooltipTrigger>
                   <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                    {isBookmarked ? 'Remove bookmark' : 'Bookmark this scene'}
+                    {isBookmarked ? 'Remove bookmark' : 'Mark for Resume'}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
