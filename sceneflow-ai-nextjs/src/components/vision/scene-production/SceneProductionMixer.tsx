@@ -43,6 +43,7 @@ import {
   Server,
   Monitor,
   ChevronDown,
+  ChevronUp,
   Maximize2,
   Minimize2,
 } from 'lucide-react'
@@ -1190,6 +1191,8 @@ function AudioTrackRow({
   dialogueClipConfigs,
   onDialogueClipConfigChange,
   showMusicDuration,
+  isCollapsed = false,
+  onToggleCollapse,
 }: {
   type: 'narration' | 'dialogue' | 'music' | 'sfx'
   label: string
@@ -1215,6 +1218,8 @@ function AudioTrackRow({
   dialogueClipConfigs?: Record<string, AudioClipConfig>
   onDialogueClipConfigChange?: (configs: Record<string, AudioClipConfig>) => void
   showMusicDuration?: boolean
+  isCollapsed?: boolean
+  onToggleCollapse?: () => void
 }) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPreviewPlaying, setIsPreviewPlaying] = useState(false)
@@ -1255,9 +1260,22 @@ function AudioTrackRow({
   const bgClass = config.enabled ? `${colors.bg} ${colors.border}` : 'bg-gray-800/30 border-gray-700/50 opacity-60'
   
   return (
-    <div className={`p-4 rounded-lg border transition-all ${bgClass}`}>
-      {/* Header Row */}
-      <div className="flex items-center gap-3 mb-3">
+    <div className={`rounded-lg border transition-all ${bgClass}`}>
+      {/* Header Row - Clickable for collapse */}
+      <div 
+        className={`flex items-center gap-3 p-4 ${onToggleCollapse ? 'cursor-pointer hover:bg-white/5' : ''}`}
+        onClick={onToggleCollapse}
+      >
+        {/* Collapse Toggle */}
+        {onToggleCollapse && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleCollapse(); }}
+            className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+          >
+            {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+          </button>
+        )}
+        
         <div className={`w-9 h-9 rounded-full bg-gray-700/50 flex items-center justify-center`}>
           <Icon className={`w-4 h-4 ${colors.icon}`} />
         </div>
@@ -1306,7 +1324,7 @@ function AudioTrackRow({
         {/* Preview Button */}
         {hasAudio && audioUrl && (
           <button
-            onClick={togglePreview}
+            onClick={(e) => { e.stopPropagation(); togglePreview(); }}
             disabled={disabled}
             className={`
               p-2 rounded-lg transition-colors
@@ -1321,16 +1339,18 @@ function AudioTrackRow({
         )}
         
         {/* Enable Toggle */}
-        <Switch
-          checked={config.enabled}
-          onCheckedChange={(enabled) => onConfigChange({ ...config, enabled })}
-          disabled={disabled || !hasAudio}
-        />
+        <div onClick={(e) => e.stopPropagation()}>
+          <Switch
+            checked={config.enabled}
+            onCheckedChange={(enabled) => onConfigChange({ ...config, enabled })}
+            disabled={disabled || !hasAudio}
+          />
+        </div>
       </div>
       
-      {/* Controls Row - Only visible when enabled */}
-      {config.enabled && hasAudio && (
-        <div className="flex flex-col gap-3 pt-3 border-t border-gray-700/50">
+      {/* Controls Row - Only visible when enabled and not collapsed */}
+      {config.enabled && hasAudio && !isCollapsed && (
+        <div className="flex flex-col gap-3 px-4 pb-4 pt-3 border-t border-gray-700/50">
           {/* Segment Range Selector */}
           {segmentCount && segmentCount > 0 && (
             <div className="flex items-center gap-2">
@@ -1789,6 +1809,8 @@ function SegmentAudioControls({
   masterVolume,
   onMasterVolumeChange,
   disabled,
+  isCollapsed = false,
+  onToggleCollapse,
 }: {
   segments: SceneSegment[]
   segmentConfigs: Record<string, SegmentAudioConfig>
@@ -1796,6 +1818,8 @@ function SegmentAudioControls({
   masterVolume: number
   onMasterVolumeChange: (volume: number) => void
   disabled?: boolean
+  isCollapsed?: boolean
+  onToggleCollapse?: () => void
 }) {
   const allMuted = Object.values(segmentConfigs).every(c => !c.includeAudio)
   
@@ -1824,12 +1848,27 @@ function SegmentAudioControls({
   }
   
   return (
-    <div className="p-3 bg-gray-800/50 rounded-lg space-y-3">
+    <div className="bg-gray-800/50 rounded-lg">
       {/* Header with master volume */}
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-400 uppercase tracking-wide">Segment Audio</span>
+      <div 
+        className={`flex items-center justify-between p-3 ${onToggleCollapse ? 'cursor-pointer hover:bg-white/5' : ''}`}
+        onClick={onToggleCollapse}
+      >
+        <div className="flex items-center gap-2">
+          {onToggleCollapse && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleCollapse(); }}
+              className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+            >
+              {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+            </button>
+          )}
+          <Film className="w-4 h-4 text-purple-400" />
+          <span className="text-xs text-gray-400 uppercase tracking-wide">Segment Audio</span>
+          <span className="text-xs text-gray-500">{segments.length} segments</span>
+        </div>
         <button
-          onClick={toggleAll}
+          onClick={(e) => { e.stopPropagation(); toggleAll(); }}
           disabled={disabled}
           className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
         >
@@ -1837,6 +1876,8 @@ function SegmentAudioControls({
         </button>
       </div>
       
+      {!isCollapsed && (
+        <div className="px-3 pb-3 space-y-3">
       {/* Master Volume Slider */}
       <div className="flex items-center gap-3">
         <Volume2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -1901,6 +1942,8 @@ function SegmentAudioControls({
           )
         })}
       </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1935,6 +1978,31 @@ export function SceneProductionMixer({
   
   // === Watermark State ===
   const [watermarkConfig, setWatermarkConfig] = useState<WatermarkConfig>(DEFAULT_WATERMARK_CONFIG)
+  
+  // === Section Collapse State ===
+  const [collapsedSections, setCollapsedSections] = useState<{
+    textOverlays: boolean
+    watermark: boolean
+    segmentAudio: boolean
+    narration: boolean
+    dialogue: boolean
+    sfx: boolean
+    music: boolean
+    timeline: boolean
+  }>({
+    textOverlays: false,
+    watermark: false,
+    segmentAudio: false,
+    narration: false,
+    dialogue: false,
+    sfx: false,
+    music: false,
+    timeline: false,
+  })
+  
+  const toggleSection = useCallback((section: keyof typeof collapsedSections) => {
+    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }))
+  }, [])
   
   // Sync with external overlays
   useEffect(() => {
@@ -2615,9 +2683,18 @@ export function SceneProductionMixer({
               />
               
               {/* Text Overlay Controls */}
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
-                <div className="flex items-center justify-between mb-3">
+              <div className="bg-gray-800/50 border border-gray-700 rounded-lg">
+                <div 
+                  className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/5"
+                  onClick={() => toggleSection('textOverlays')}
+                >
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toggleSection('textOverlays'); }}
+                      className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                    >
+                      {collapsedSections.textOverlays ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                    </button>
                     <Type className="w-4 h-4 text-amber-400" />
                     <span className="text-sm font-medium text-white">Text Overlays</span>
                     {textOverlays.length > 0 && (
@@ -2626,7 +2703,7 @@ export function SceneProductionMixer({
                       </Badge>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     <Button
                       size="sm"
                       variant="outline"
@@ -2657,7 +2734,9 @@ export function SceneProductionMixer({
                   </div>
                 </div>
                 
-                {/* Overlay List */}
+                {/* Overlay List - Collapsible */}
+                {!collapsedSections.textOverlays && (
+                  <div className="px-3 pb-3">
                 {textOverlays.length > 0 ? (
                   <div className="space-y-2">
                     {textOverlays.map((overlay) => (
@@ -2993,25 +3072,40 @@ export function SceneProductionMixer({
                     </div>
                   </div>
                 )}
+                  </div>
+                )}
               </div>
               
               {/* Watermark Controls */}
-              <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3">
-                <div className="flex items-center justify-between mb-3">
+              <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg">
+                <div 
+                  className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/5"
+                  onClick={() => toggleSection('watermark')}
+                >
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toggleSection('watermark'); }}
+                      className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                    >
+                      {collapsedSections.watermark ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                    </button>
                     <Sparkles className="w-4 h-4 text-yellow-400" />
                     <span className="text-sm font-medium text-white">Watermark</span>
                     <Badge variant="outline" className="text-xs border-yellow-500/30 text-yellow-400">
                       {watermarkConfig.enabled ? 'On' : 'Off'}
                     </Badge>
                   </div>
-                  <Switch
-                    checked={watermarkConfig.enabled}
-                    onCheckedChange={(enabled) => setWatermarkConfig(prev => ({ ...prev, enabled }))}
-                    disabled={isRendering}
-                  />
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <Switch
+                      checked={watermarkConfig.enabled}
+                      onCheckedChange={(enabled) => setWatermarkConfig(prev => ({ ...prev, enabled }))}
+                      disabled={isRendering}
+                    />
+                  </div>
                 </div>
                 
+                {!collapsedSections.watermark && (
+                <div className="px-3 pb-3">
                 {watermarkConfig.enabled && (
                   <div className="space-y-3">
                     {/* Watermark Type Toggle */}
@@ -3263,6 +3357,8 @@ export function SceneProductionMixer({
                     </div>
                   </div>
                 )}
+                </div>
+                )}
               </div>
               
               <SegmentAudioControls
@@ -3272,6 +3368,8 @@ export function SceneProductionMixer({
                 masterVolume={masterSegmentVolume}
                 onMasterVolumeChange={setMasterSegmentVolume}
                 disabled={isRendering}
+                isCollapsed={collapsedSections.segmentAudio}
+                onToggleCollapse={() => toggleSection('segmentAudio')}
               />
             </div>
             
@@ -3290,6 +3388,8 @@ export function SceneProductionMixer({
                 subtitle={audioAssets.narration ? `"${audioAssets.narration.slice(0, 60)}..."` : undefined}
                 hasAudio={!!currentAudioUrls.narration}
                 disabled={isRendering}
+                isCollapsed={collapsedSections.narration}
+                onToggleCollapse={() => toggleSection('narration')}
               />
               
               <AudioTrackRow
@@ -3311,6 +3411,8 @@ export function SceneProductionMixer({
                 dialogueClips={currentAudioUrls.dialogue}
                 dialogueClipConfigs={dialogueClipConfigs}
                 onDialogueClipConfigChange={setDialogueClipConfigs}
+                isCollapsed={collapsedSections.dialogue}
+                onToggleCollapse={() => toggleSection('dialogue')}
               />
               
               <AudioTrackRow
@@ -3328,6 +3430,8 @@ export function SceneProductionMixer({
                 }
                 hasAudio={currentAudioUrls.sfx.length > 0}
                 disabled={isRendering}
+                isCollapsed={collapsedSections.sfx}
+                onToggleCollapse={() => toggleSection('sfx')}
               />
               
               <AudioTrackRow
@@ -3347,24 +3451,47 @@ export function SceneProductionMixer({
                 hasAudio={!!currentAudioUrls.music}
                 disabled={isRendering}
                 showMusicDuration={true}
+                isCollapsed={collapsedSections.music}
+                onToggleCollapse={() => toggleSection('music')}
               />
               
               {/* Timeline Overview - Visual representation of all tracks */}
-              <MixerTimeline
-                segments={renderedSegments}
-                currentPlaybackTime={0}
-                audioTracks={audioTracks}
-                onTrackChange={updateTrackConfig}
-                videoTotalDuration={videoTotalDuration}
-                narrationDuration={currentAudioUrls.narrationDuration}
-                dialogueDuration={currentAudioUrls.dialogue.reduce((sum, d) => sum + ((d as { duration?: number }).duration || 3), 0)}
-                musicDuration={audioTracks.music.duration ?? videoTotalDuration}
-                sfxDuration={currentAudioUrls.sfx.reduce((sum, s) => sum + (s.duration || 2), 0)}
-                textOverlays={textOverlays}
-                onTextOverlayChange={updateOverlay}
-                disabled={isRendering}
-                className="mt-4"
-              />
+              <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg mt-4">
+                <div 
+                  className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/5"
+                  onClick={() => toggleSection('timeline')}
+                >
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toggleSection('timeline'); }}
+                      className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                    >
+                      {collapsedSections.timeline ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                    </button>
+                    <Clock className="w-4 h-4 text-blue-400" />
+                    <span className="text-sm font-medium text-white">Timeline</span>
+                    <span className="text-xs text-gray-500">Video: {formatTime(videoTotalDuration)} | Total: {formatTime(totalDuration)}</span>
+                  </div>
+                </div>
+                {!collapsedSections.timeline && (
+                  <div className="px-3 pb-3">
+                    <MixerTimeline
+                      segments={renderedSegments}
+                      currentPlaybackTime={0}
+                      audioTracks={audioTracks}
+                      onTrackChange={updateTrackConfig}
+                      videoTotalDuration={videoTotalDuration}
+                      narrationDuration={currentAudioUrls.narrationDuration}
+                      dialogueDuration={currentAudioUrls.dialogue.reduce((sum, d) => sum + ((d as { duration?: number }).duration || 3), 0)}
+                      musicDuration={audioTracks.music.duration ?? videoTotalDuration}
+                      sfxDuration={currentAudioUrls.sfx.reduce((sum, s) => sum + (s.duration || 2), 0)}
+                      textOverlays={textOverlays}
+                      onTextOverlayChange={updateOverlay}
+                      disabled={isRendering}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ) : (
