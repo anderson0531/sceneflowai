@@ -836,7 +836,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                 
                 {/* Action Icons */}
                 <div className="flex-shrink-0 flex items-center gap-1">
-                  {/* Upload Video Button */}
+                  {/* Upload Video Button - Disabled when protected */}
                   {onSegmentUpload && (
                     <>
                       <input
@@ -851,22 +851,40 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                           }
                           e.target.value = '' // Reset for re-upload
                         }}
+                        disabled={item.config.approvalStatus === 'locked'}
                       />
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            className="text-slate-500 hover:text-slate-300"
+                            className={item.config.approvalStatus === 'locked' 
+                              ? "text-slate-600 cursor-not-allowed opacity-50" 
+                              : "text-slate-500 hover:text-slate-300"
+                            }
+                            disabled={item.config.approvalStatus === 'locked'}
                             onClick={(e) => {
                               e.stopPropagation()
+                              if (item.config.approvalStatus === 'locked') {
+                                import('sonner').then(({ toast }) => {
+                                  toast.error('Segment is protected', {
+                                    description: 'Unprotect this segment first to upload a new video',
+                                  })
+                                })
+                                return
+                              }
                               document.getElementById(`upload-video-${item.segmentId}`)?.click()
                             }}
                           >
                             <Upload className="w-4 h-4" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Upload Video</TooltipContent>
+                        <TooltipContent>
+                          {item.config.approvalStatus === 'locked' 
+                            ? 'Unprotect segment to upload' 
+                            : 'Upload Video'
+                          }
+                        </TooltipContent>
                       </Tooltip>
                     </>
                   )}
