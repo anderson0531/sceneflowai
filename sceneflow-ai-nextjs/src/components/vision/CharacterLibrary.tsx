@@ -534,7 +534,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
   const isAppearanceExpanded = expandedCharId === `${characterId}-appear`
-  const [isCollapsed, setIsCollapsed] = useState(false) // Hide/show card content
+  const [isCollapsed, setIsCollapsed] = useState(true) // Hide/show card content - default to collapsed
   const [editingName, setEditingName] = useState(false)
   const [nameText, setNameText] = useState('')
   const [editingRole, setEditingRole] = useState(false)
