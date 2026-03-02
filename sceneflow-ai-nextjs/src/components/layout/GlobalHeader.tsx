@@ -72,7 +72,7 @@ export function GlobalHeader() {
                 </div>
               </div>
               <span translate="no" className="app-name-text font-bold text-lg md:text-xl tracking-tight text-gray-900 dark:text-white flex items-baseline gap-1 leading-none">
-                <span>SceneFlow</span> <span className="text-sf-primary">AI</span>
+                <span>SceneFlow</span> <span className="text-sf-primary">AI</span> <span className="text-gray-500 dark:text-gray-400 font-medium text-sm md:text-base">Studio</span>
               </span>
             </a>
           </div>
