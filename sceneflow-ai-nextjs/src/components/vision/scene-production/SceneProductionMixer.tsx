@@ -2023,14 +2023,14 @@ export function SceneProductionMixer({
     music: boolean
     timeline: boolean
   }>({
-    textOverlays: false,
-    watermark: false,
-    segmentAudio: false,
-    narration: false,
-    dialogue: false,
-    sfx: false,
-    music: false,
-    timeline: false,
+    textOverlays: true,
+    watermark: true,
+    segmentAudio: true,
+    narration: true,
+    dialogue: true,
+    sfx: true,
+    music: true,
+    timeline: true,
   })
   
   const toggleSection = useCallback((section: keyof typeof collapsedSections) => {
