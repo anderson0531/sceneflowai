@@ -1088,9 +1088,11 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
             }
             
             // Persist production streams to database
-            if (onProductionDataChange && productionData) {
+            // Always call with the new data, even if productionData was initially undefined
+            if (onProductionDataChange) {
+              const baseData = productionData || { isSegmented: false, segments: [] }
               onProductionDataChange({
-                ...productionData,
+                ...baseData,
                 renderedSceneUrl: downloadUrl,
                 renderedAt: new Date().toISOString(),
                 productionStreams: updatedStreams,

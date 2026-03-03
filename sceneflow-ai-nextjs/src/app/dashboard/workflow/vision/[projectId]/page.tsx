@@ -2311,9 +2311,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     (sceneId: string, url: string | null) => {
       console.log('[handleRenderedSceneUrlChange] Persisting rendered URL:', { sceneId, url: url?.substring(0, 50) })
       applySceneProductionUpdate(sceneId, (current) => {
-        if (!current) return current
+        // Create minimal production data if it doesn't exist yet
+        const base = current || { isSegmented: false, segments: [] }
         return { 
-          ...current, 
+          ...base, 
           renderedSceneUrl: url,
           renderedAt: url ? new Date().toISOString() : null,
         }
