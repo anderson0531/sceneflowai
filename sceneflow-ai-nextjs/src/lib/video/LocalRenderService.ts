@@ -379,6 +379,15 @@ export class LocalRenderService {
         }
         
         this.mediaRecorder.onstop = () => {
+          const totalChunkSize = this.recordedChunks.reduce((sum, chunk) => sum + chunk.size, 0)
+          console.log('[LocalRender] Recording stopped:', {
+            chunkCount: this.recordedChunks.length,
+            totalChunkSize,
+            mimeType
+          })
+          if (this.recordedChunks.length === 0 || totalChunkSize === 0) {
+            console.error('[LocalRender] No data recorded - canvas may not have rendered any content')
+          }
           const blob = new Blob(this.recordedChunks, { type: mimeType })
           resolve(blob)
         }
@@ -483,30 +492,47 @@ export class LocalRenderService {
   ): Promise<Map<string, HTMLImageElement | HTMLVideoElement>> {
     const assets = new Map<string, HTMLImageElement | HTMLVideoElement>()
     
+    console.log('[LocalRender] Preloading assets for', segments.length, 'segments:', 
+      segments.map(s => ({ id: s.segmentId, type: s.assetType, url: s.assetUrl?.substring(0, 80) })))
+    
     await Promise.all(
       segments.map(async (segment) => {
         if (signal.aborted) return
         
         if (segment.assetType === 'video') {
+          console.log('[LocalRender] Loading video asset:', segment.segmentId)
           const video = document.createElement('video')
           video.crossOrigin = 'anonymous'
           video.preload = 'auto'
           video.muted = true // We handle audio separately
           
           await new Promise<void>((resolve, reject) => {
-            video.onloadeddata = () => resolve()
-            video.onerror = () => reject(new Error(`Failed to load video: ${segment.assetUrl}`))
+            video.onloadeddata = () => {
+              console.log('[LocalRender] Video loaded:', segment.segmentId, video.videoWidth, 'x', video.videoHeight)
+              resolve()
+            }
+            video.onerror = (e) => {
+              console.error('[LocalRender] Video load failed (CORS issue?):', segment.segmentId, e)
+              reject(new Error(`Failed to load video: ${segment.assetUrl}`))
+            }
             video.src = segment.assetUrl
           })
           
           assets.set(segment.segmentId, video)
         } else {
+          console.log('[LocalRender] Loading image asset:', segment.segmentId)
           const img = new Image()
           img.crossOrigin = 'anonymous'
           
           await new Promise<void>((resolve, reject) => {
-            img.onload = () => resolve()
-            img.onerror = () => reject(new Error(`Failed to load image: ${segment.assetUrl}`))
+            img.onload = () => {
+              console.log('[LocalRender] Image loaded:', segment.segmentId, img.width, 'x', img.height)
+              resolve()
+            }
+            img.onerror = (e) => {
+              console.error('[LocalRender] Image load failed (CORS issue?):', segment.segmentId, e)
+              reject(new Error(`Failed to load image: ${segment.assetUrl}`))
+            }
             img.src = segment.assetUrl
           })
           

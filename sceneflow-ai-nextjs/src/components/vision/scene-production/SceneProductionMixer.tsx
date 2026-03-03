@@ -2175,8 +2175,20 @@ export function SceneProductionMixer({
   }, [segments])
   
   // Video-only segments for Video render mode (excludes image-only segments)
+  // Check assetType === 'video' OR infer from URL (for uploaded videos where assetType may not be set)
   const videoSegments = useMemo(() => {
-    return segments.filter(s => s.status === 'COMPLETE' && s.activeAssetUrl && s.assetType === 'video')
+    return segments.filter(s => {
+      if (s.status !== 'COMPLETE' || !s.activeAssetUrl) return false
+      // Explicit video asset type
+      if (s.assetType === 'video') return true
+      // Infer from URL extension for uploaded videos (bypass segments may not have assetType set)
+      const url = s.activeAssetUrl.toLowerCase()
+      const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.m4v']
+      if (videoExtensions.some(ext => url.includes(ext))) return true
+      // Check for video blob URLs or GCS video paths
+      if (url.includes('video/') || url.includes('/videos/')) return true
+      return false
+    })
   }, [segments])
   
   // Calculate video-only duration from segments
@@ -2478,8 +2490,33 @@ export function SceneProductionMixer({
   
   // === Local Render Handler ===
   const handleLocalRender = useCallback(async () => {
+    console.log('[LocalRender] Checking segments:', {
+      totalSegments: segments.length,
+      videoSegmentsCount: videoSegments.length,
+      renderedSegmentsCount: renderedSegments.length,
+      segments: segments.map(s => ({
+        id: s.segmentId,
+        status: s.status,
+        assetType: s.assetType,
+        hasUrl: !!s.activeAssetUrl,
+        url: s.activeAssetUrl?.substring(0, 50)
+      }))
+    })
+    
     if (videoSegments.length === 0) {
-      setRenderError('No rendered video segments available. Generate or upload videos first (images cannot be used for Video render).')
+      // Provide helpful context about what segments exist
+      const completeSegments = segments.filter(s => s.status === 'COMPLETE' && s.activeAssetUrl)
+      const imageSegments = completeSegments.filter(s => s.assetType === 'image')
+      
+      let errorMessage = 'No video segments available for Video render mode. '
+      if (imageSegments.length > 0) {
+        errorMessage += `Found ${imageSegments.length} image-only segment(s) - use Animatic mode for images, or upload/generate video content.`
+      } else if (completeSegments.length > 0) {
+        errorMessage += `Found ${completeSegments.length} segment(s) but they don't appear to be video. Check that your uploaded files are video format (mp4, webm, mov).`
+      } else {
+        errorMessage += 'Generate or upload video content first.'
+      }
+      setRenderError(errorMessage)
       return
     }
     
@@ -2624,6 +2661,11 @@ export function SceneProductionMixer({
       
       if (!renderResult.success || !renderResult.blobUrl || !renderResult.blob) {
         throw new Error(renderResult.error || 'Local render failed')
+      }
+      
+      // Validate blob has content (0-byte blobs indicate render failure)
+      if (renderResult.blob.size === 0) {
+        throw new Error('Render produced empty video. This can happen if video assets failed to load (CORS issues) or if segments have invalid durations.')
       }
       
       // Upload the rendered video to persistent blob storage
