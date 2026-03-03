@@ -18,7 +18,7 @@ import { createPortal } from 'react-dom'
 import { 
   Play, Pause, Volume2, VolumeX, Mic, Music, Zap, 
   SkipBack, SkipForward, Film, Plus, Trash2, X, Maximize2, Minimize2, 
-  MessageSquare, GripVertical, Globe, AlertCircle, Download, Layers, Magnet, Link2, Pencil, Anchor, Clock
+  MessageSquare, GripVertical, Globe, AlertCircle, Download, Layers, Magnet, Link2, Pencil, Anchor, Clock, ImageIcon
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
@@ -1314,9 +1314,15 @@ export function SceneTimelineV2({
           {onGenerateSceneMp4 && (
             <>
               <div className="flex-1" />
-              <Button variant="outline" size="sm" onClick={onGenerateSceneMp4} className="h-8 text-xs gap-1.5 border-gray-700 text-gray-300 hover:bg-gray-800">
-                <Download className="w-3.5 h-3.5" />
-                Generate MP4
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onGenerateSceneMp4} 
+                className="h-8 text-xs gap-1.5 border-amber-600/50 text-amber-400 hover:bg-amber-600/10"
+                title="Render animatic from keyframe images with Ken Burns pan/zoom effect and audio tracks"
+              >
+                <ImageIcon className="w-3.5 h-3.5" />
+                Render Animatic
               </Button>
             </>
           )}

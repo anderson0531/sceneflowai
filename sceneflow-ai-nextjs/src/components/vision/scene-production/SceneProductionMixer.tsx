@@ -16,6 +16,7 @@
 'use client'
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { toast } from 'sonner'
 import { 
   Play, 
   Pause, 
@@ -46,6 +47,7 @@ import {
   ChevronUp,
   Maximize2,
   Minimize2,
+  Video,
 } from 'lucide-react'
 import { upload } from '@vercel/blob/client'
 import { Button } from '@/components/ui/Button'
@@ -2651,13 +2653,22 @@ export function SceneProductionMixer({
       setRenderProgress(100)
       setLastRenderedUrl(persistentUrl)
       
-      // Auto-trigger download
-      const a = document.createElement('a')
-      a.href = persistentUrl
-      a.download = `scene-${sceneNumber}-${selectedLanguage}-${Date.now()}.webm`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
+      // Show success toast with download action (no auto-download)
+      toast.success('Video render complete!', {
+        description: 'Your scene video is ready for download.',
+        duration: 10000,
+        action: {
+          label: 'Download',
+          onClick: () => {
+            const a = document.createElement('a')
+            a.href = persistentUrl
+            a.download = `scene-${sceneNumber}-${selectedLanguage}-${Date.now()}.webm`
+            document.body.appendChild(a)
+            a.click()
+            document.body.removeChild(a)
+          }
+        }
+      })
       
       onRenderComplete?.(persistentUrl, selectedLanguage)
       
@@ -2697,7 +2708,7 @@ export function SceneProductionMixer({
           </div>
           <div>
             <h3 className="!text-lg !leading-normal !mb-0 font-semibold text-white">Scene Production Mixer</h3>
-            <p className="text-xs text-gray-400">Configure audio tracks and render your scene</p>
+            <p className="text-xs text-gray-400">Render video segments with audio tracks</p>
           </div>
         </div>
         
@@ -3634,7 +3645,7 @@ export function SceneProductionMixer({
                 <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               </div>
               
-              {/* Quick Export Button (Local) */}
+              {/* Quick Video Export Button (Local) */}
               {localRenderSupported && (
                 <Button
                   onClick={handleLocalRender}
@@ -3642,29 +3653,30 @@ export function SceneProductionMixer({
                   variant="outline"
                   size="lg"
                   className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10 px-4"
-                  title={totalDuration > LOCAL_RENDER_MAX_DURATION ? `Local render limited to ${LOCAL_RENDER_MAX_DURATION}s` : resolution === '4K' ? 'Local render limited to 1080p' : 'Fast browser-based export (WebM)'}
+                  title={totalDuration > LOCAL_RENDER_MAX_DURATION ? `Local render limited to ${LOCAL_RENDER_MAX_DURATION}s` : resolution === '4K' ? 'Local render limited to 1080p' : 'Fast browser-based video export (WebM) - renders video segments with audio'}
                 >
                   <Zap className="w-4 h-4 mr-1" />
-                  Quick
+                  Quick Video
                 </Button>
               )}
               
-              {/* Final Render Button (Server) */}
+              {/* Final Video Render Button (Server) */}
               <Button
                 onClick={selectedRenderMode === 'auto' ? handleSmartRender : selectedRenderMode === 'local' ? handleLocalRender : handleRender}
                 disabled={isRendering || !hasRenderedSegments}
                 size="lg"
                 className="bg-purple-600 hover:bg-purple-700 text-white px-6"
+                title="Render video segments with audio tracks to MP4"
               >
                 {isRendering ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {activeRenderMode === 'local' ? 'Exporting...' : 'Rendering...'}
+                    {activeRenderMode === 'local' ? 'Exporting Video...' : 'Rendering Video...'}
                   </>
                 ) : (
                   <>
-                    <Download className="w-4 h-4 mr-2" />
-                    Render {languageLabel}
+                    <Video className="w-4 h-4 mr-2" />
+                    Render Video {languageLabel}
                   </>
                 )}
               </Button>
@@ -3673,19 +3685,28 @@ export function SceneProductionMixer({
           
           {/* Render Mode Info */}
           {renderStatus === 'idle' && (
-            <div className="mt-3 pt-3 border-t border-gray-700/50 flex items-center gap-4 text-xs text-gray-500">
-              <div className="flex items-center gap-1">
-                <Zap className="w-3 h-3" />
-                <span>Quick: Browser-based (WebM, &lt;{LOCAL_RENDER_MAX_DURATION}s)</span>
+            <div className="mt-3 pt-3 border-t border-gray-700/50 flex flex-col gap-2 text-xs text-gray-500">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1">
+                  <Video className="w-3 h-3 text-purple-400" />
+                  <span className="text-purple-300">Video Mode:</span>
+                  <span>Concatenates rendered video segments with audio</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <Server className="w-3 h-3" />
-                <span>Final: Cloud render (MP4, unlimited)</span>
-                {remainingServerRenders !== undefined && userTier && (
-                  <span className="text-purple-400 ml-1">
-                    ({remainingServerRenders} left)
-                  </span>
-                )}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1">
+                  <Zap className="w-3 h-3" />
+                  <span>Quick Video: Browser-based (WebM, &lt;{LOCAL_RENDER_MAX_DURATION}s)</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Server className="w-3 h-3" />
+                  <span>Render Video: Cloud render (MP4, unlimited)</span>
+                  {remainingServerRenders !== undefined && userTier && (
+                    <span className="text-purple-400 ml-1">
+                      ({remainingServerRenders} left)
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           )}
