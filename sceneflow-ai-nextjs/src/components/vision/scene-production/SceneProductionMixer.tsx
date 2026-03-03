@@ -2629,9 +2629,14 @@ export function SceneProductionMixer({
       try {
         console.log('[SceneProductionMixer] Uploading rendered video to blob storage...')
         const filename = `scene-${sceneNumber}-${selectedLanguage}-${Date.now()}.webm`
+        // Convert Blob to File for proper content-length header in upload
+        const videoFile = new File([renderResult.blob], filename, { 
+          type: renderResult.blob.type || 'video/webm' 
+        })
+        console.log('[SceneProductionMixer] Video file size:', videoFile.size, 'bytes')
         const uploadedBlob = await upload(
           `renders/${filename}`,
-          renderResult.blob,
+          videoFile,
           {
             access: 'public',
             handleUploadUrl: '/api/segments/upload-video-url',

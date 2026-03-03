@@ -1065,7 +1065,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                 // Update existing stream to complete
                 return prev.map((s, i) => 
                   i === existingIndex 
-                    ? { ...s, status: 'complete' as const, mp4Url: downloadUrl, completedAt: new Date().toISOString() }
+                    ? { ...s, status: 'complete' as const, streamType: 'video' as const, mp4Url: downloadUrl, completedAt: new Date().toISOString() }
                     : s
                 )
               }
@@ -1075,6 +1075,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                 language,
                 languageLabel: languageInfo?.name || language,
                 status: 'complete' as const,
+                streamType: 'video' as const,
                 mp4Url: downloadUrl,
                 completedAt: new Date().toISOString(),
               }]
