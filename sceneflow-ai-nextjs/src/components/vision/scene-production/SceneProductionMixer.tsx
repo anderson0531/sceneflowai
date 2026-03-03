@@ -2169,9 +2169,14 @@ export function SceneProductionMixer({
     }
   }, [audioAssets, selectedLanguage])
   
-  // Rendered segments
+  // Rendered segments (includes both video and image assets)
   const renderedSegments = useMemo(() => {
     return segments.filter(s => s.status === 'COMPLETE' && s.activeAssetUrl)
+  }, [segments])
+  
+  // Video-only segments for Video render mode (excludes image-only segments)
+  const videoSegments = useMemo(() => {
+    return segments.filter(s => s.status === 'COMPLETE' && s.activeAssetUrl && s.assetType === 'video')
   }, [segments])
   
   // Calculate video-only duration from segments
@@ -2473,8 +2478,8 @@ export function SceneProductionMixer({
   
   // === Local Render Handler ===
   const handleLocalRender = useCallback(async () => {
-    if (renderedSegments.length === 0) {
-      setRenderError('No rendered video segments available')
+    if (videoSegments.length === 0) {
+      setRenderError('No rendered video segments available. Generate or upload videos first (images cannot be used for Video render).')
       return
     }
     
@@ -2497,7 +2502,7 @@ export function SceneProductionMixer({
     setLocalRenderProgress(null)
     
     try {
-      const segmentsForLocal = renderedSegments.map(seg => {
+      const segmentsForLocal = videoSegments.map(seg => {
         const duration = seg.actualVideoDuration ?? (seg.endTime - seg.startTime)
         console.log('[LocalRender] Segment config:', {
           segmentId: seg.segmentId,
@@ -2506,11 +2511,12 @@ export function SceneProductionMixer({
           endTime: seg.endTime,
           calculatedDuration: duration,
           isUserUpload: seg.isUserUpload,
+          assetType: seg.assetType,
         })
         return {
           segmentId: seg.segmentId,
           assetUrl: seg.activeAssetUrl!,
-          assetType: 'video' as const,
+          assetType: (seg.assetType || 'video') as 'video' | 'image',
           startTime: seg.startTime,
           duration,
           volume: (segmentAudioConfigs[seg.segmentId]?.volume ?? 1.0) * masterSegmentVolume,
@@ -2683,7 +2689,7 @@ export function SceneProductionMixer({
       setRenderStatus('error')
     }
   }, [
-    renderedSegments, segmentAudioConfigs, audioTracks, currentAudioUrls,
+    videoSegments, segmentAudioConfigs, audioTracks, currentAudioUrls,
     totalDuration, resolution, selectedLanguage, textOverlays, masterSegmentVolume,
     localRenderSupported, dialogueClipConfigs, sceneNumber, onRenderComplete, watermarkConfig
   ])
