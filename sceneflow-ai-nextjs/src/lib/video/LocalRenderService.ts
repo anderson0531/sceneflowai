@@ -429,8 +429,8 @@ export class LocalRenderService {
         
         const currentTime = frame / adjustedConfig.fps
         
-        // Draw current frame
-        this.drawFrame(currentTime, adjustedConfig, assets)
+        // Draw current frame (await for video seeking)
+        await this.drawFrame(currentTime, adjustedConfig, assets)
         
         // Draw text overlays
         if (adjustedConfig.textOverlays) {
@@ -596,11 +596,11 @@ export class LocalRenderService {
     })
   }
   
-  private drawFrame(
+  private async drawFrame(
     currentTime: number,
     config: LocalRenderConfig,
     assets: Map<string, HTMLImageElement | HTMLVideoElement>
-  ): void {
+  ): Promise<void> {
     if (!this.ctx || !this.canvas) return
     
     const { width, height } = this.canvas
@@ -639,11 +639,28 @@ export class LocalRenderService {
     const x = (width - scaledWidth) / 2
     const y = (height - scaledHeight) / 2
     
-    // If video, seek to correct time
+    // If video, seek to correct time and WAIT for seek to complete
     if (asset instanceof HTMLVideoElement) {
       const localTime = currentTime - segment.startTime
-      if (Math.abs(asset.currentTime - localTime) > 0.1) {
-        asset.currentTime = localTime
+      // Only seek if we're more than 1 frame off (at 30fps, ~0.033s)
+      if (Math.abs(asset.currentTime - localTime) > 0.04) {
+        // Wait for video to seek to the correct frame
+        await new Promise<void>((resolve) => {
+          const onSeeked = () => {
+            asset.removeEventListener('seeked', onSeeked)
+            resolve()
+          }
+          // Add timeout to prevent hanging if seeked never fires
+          const timeout = setTimeout(() => {
+            asset.removeEventListener('seeked', onSeeked)
+            resolve()
+          }, 100)
+          asset.addEventListener('seeked', () => {
+            clearTimeout(timeout)
+            onSeeked()
+          })
+          asset.currentTime = localTime
+        })
       }
     }
     

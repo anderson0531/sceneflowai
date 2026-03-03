@@ -2520,6 +2520,13 @@ export function SceneProductionMixer({
       return
     }
     
+    // Validate duration is finite and positive
+    if (!Number.isFinite(totalDuration) || totalDuration <= 0) {
+      console.error('[LocalRender] Invalid duration:', totalDuration, { videoTotalDuration, maxAudioDuration })
+      setRenderError('Invalid video duration. Please check that your video segment has valid timing information.')
+      return
+    }
+    
     if (!localRenderSupported) {
       setRenderError(localRenderSupportCheck.reason || 'Local rendering is not supported in this browser')
       return
@@ -2731,9 +2738,10 @@ export function SceneProductionMixer({
       setRenderStatus('error')
     }
   }, [
-    videoSegments, segmentAudioConfigs, audioTracks, currentAudioUrls,
-    totalDuration, resolution, selectedLanguage, textOverlays, masterSegmentVolume,
-    localRenderSupported, dialogueClipConfigs, sceneNumber, onRenderComplete, watermarkConfig
+    videoSegments, segments, segmentAudioConfigs, audioTracks, currentAudioUrls,
+    totalDuration, videoTotalDuration, maxAudioDuration, resolution, selectedLanguage, 
+    textOverlays, masterSegmentVolume, localRenderSupported, localRenderSupportCheck.reason,
+    dialogueClipConfigs, sceneNumber, onRenderComplete, watermarkConfig
   ])
   
   // === Smart Render Handler (routes to local or server) ===
