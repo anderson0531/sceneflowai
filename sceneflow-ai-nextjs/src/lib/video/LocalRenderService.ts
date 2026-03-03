@@ -399,8 +399,11 @@ export class LocalRenderService {
       
       this.mediaRecorder.start(100) // Capture every 100ms
       
-      // Schedule audio playback
+      // Schedule audio playback (TTS, music, SFX from audio clips)
       this.scheduleAudio(audioBuffers, adjustedConfig.audioClips, audioDestination)
+      
+      // Schedule video audio (native audio from video files)
+      this.scheduleVideoAudio(adjustedConfig, assets, audioDestination)
       
       // Render frames
       const totalFrames = Math.ceil(adjustedConfig.totalDuration * adjustedConfig.fps)
@@ -596,6 +599,50 @@ export class LocalRenderService {
     })
   }
   
+  /**
+   * Schedule video audio tracks for playback alongside the render
+   * This extracts audio from video elements and plays them in sync
+   */
+  private scheduleVideoAudio(
+    config: LocalRenderConfig,
+    assets: Map<string, HTMLImageElement | HTMLVideoElement>,
+    destination: MediaStreamAudioDestinationNode
+  ): void {
+    if (!this.audioContext) return
+    
+    // Filter segments that have video audio enabled
+    const videoAudioSegments = config.segments.filter(s => s.includeVideoAudio && s.assetType === 'video')
+    
+    if (videoAudioSegments.length === 0) return
+    
+    console.log('[LocalRender] Scheduling video audio for', videoAudioSegments.length, 'segments')
+    
+    videoAudioSegments.forEach(segment => {
+      const video = assets.get(segment.segmentId)
+      if (!(video instanceof HTMLVideoElement)) return
+      
+      try {
+        // Create a media element source from the video
+        // Note: Can only create one MediaElementAudioSourceNode per video
+        const source = this.audioContext!.createMediaElementSource(video)
+        
+        const gainNode = this.audioContext!.createGain()
+        gainNode.gain.value = segment.volume ?? 1.0
+        
+        source.connect(gainNode)
+        gainNode.connect(destination)
+        
+        // Unmute the video so audio flows through
+        video.muted = false
+        
+        console.log('[LocalRender] Video audio scheduled for segment:', segment.segmentId, 'volume:', segment.volume)
+      } catch (error) {
+        // MediaElementAudioSourceNode may fail if already created for this video
+        console.warn('[LocalRender] Could not create audio source for video:', segment.segmentId, error)
+      }
+    })
+  }
+  
   private async drawFrame(
     currentTime: number,
     config: LocalRenderConfig,
@@ -646,15 +693,15 @@ export class LocalRenderService {
       if (Math.abs(asset.currentTime - localTime) > 0.04) {
         // Wait for video to seek to the correct frame
         await new Promise<void>((resolve) => {
+          let resolved = false
           const onSeeked = () => {
+            if (resolved) return
+            resolved = true
             asset.removeEventListener('seeked', onSeeked)
             resolve()
           }
-          // Add timeout to prevent hanging if seeked never fires
-          const timeout = setTimeout(() => {
-            asset.removeEventListener('seeked', onSeeked)
-            resolve()
-          }, 100)
+          // Add timeout to prevent hanging if seeked never fires (500ms for long videos)
+          const timeout = setTimeout(onSeeked, 500)
           asset.addEventListener('seeked', () => {
             clearTimeout(timeout)
             onSeeked()

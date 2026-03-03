@@ -497,8 +497,11 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, handlePlayPause, handleSkipBack, handleSkipForward, handleMuteToggle, handleFullscreenToggle, onClose])
   
-  // Format time as MM:SS
+  // Format time as MM:SS (handles invalid values gracefully)
   const formatTime = (seconds: number): string => {
+    if (!Number.isFinite(seconds) || seconds < 0) {
+      return '0:00'
+    }
     const mins = Math.floor(seconds / 60)
     const secs = Math.floor(seconds % 60)
     return `${mins}:${secs.toString().padStart(2, '0')}`

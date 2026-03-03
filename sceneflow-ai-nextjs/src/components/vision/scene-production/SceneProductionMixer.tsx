@@ -354,12 +354,20 @@ const TRACK_COLORS = {
 // ============================================================================
 
 function formatTime(secs: number): string {
+  // Handle invalid values
+  if (!Number.isFinite(secs) || secs < 0) {
+    return '0:00'
+  }
   const m = Math.floor(secs / 60)
   const s = Math.floor(secs % 60)
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
 function formatTimeWithMs(secs: number): string {
+  // Handle invalid values
+  if (!Number.isFinite(secs) || secs < 0) {
+    return '0:00.0'
+  }
   const m = Math.floor(secs / 60)
   const s = Math.floor(secs % 60)
   const ms = Math.round((secs % 1) * 10)
@@ -2548,6 +2556,9 @@ export function SceneProductionMixer({
     try {
       const segmentsForLocal = videoSegments.map(seg => {
         const duration = seg.actualVideoDuration ?? (seg.endTime - seg.startTime)
+        const audioConfig = segmentAudioConfigs[seg.segmentId]
+        // Include video audio if: config says includeAudio=true (default), OR config doesn't exist (default to include)
+        const includeVideoAudio = audioConfig?.includeAudio ?? true
         console.log('[LocalRender] Segment config:', {
           segmentId: seg.segmentId,
           actualVideoDuration: seg.actualVideoDuration,
@@ -2556,6 +2567,8 @@ export function SceneProductionMixer({
           calculatedDuration: duration,
           isUserUpload: seg.isUserUpload,
           assetType: seg.assetType,
+          includeVideoAudio,
+          volume: audioConfig?.volume ?? 1.0,
         })
         return {
           segmentId: seg.segmentId,
@@ -2563,7 +2576,8 @@ export function SceneProductionMixer({
           assetType: (seg.assetType || 'video') as 'video' | 'image',
           startTime: seg.startTime,
           duration,
-          volume: (segmentAudioConfigs[seg.segmentId]?.volume ?? 1.0) * masterSegmentVolume,
+          volume: (audioConfig?.volume ?? 1.0) * masterSegmentVolume,
+          includeVideoAudio, // Pass through to LocalRenderService for video audio extraction
         }
       })
       
