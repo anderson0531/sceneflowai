@@ -43,6 +43,9 @@ import {
   FileText,
   Volume2,
   CheckCircle2,
+  Clapperboard,
+  Camera,
+  Video,
 } from 'lucide-react'
 import {
   SceneSegment,
@@ -52,6 +55,111 @@ import {
 import { SegmentPreviewTimeline } from './SegmentPreviewTimeline'
 import { SegmentPromptEditor } from './SegmentPromptEditor'
 import { SegmentValidation, ValidationResult } from '@/lib/intelligence/SegmentValidation'
+
+// ============================================================================
+// Movie Set Production Overlay
+// ============================================================================
+
+const PRODUCTION_STAGES = [
+  { id: 'setup', label: 'Setting up the scene...', icon: 'clapperboard', duration: 1500 },
+  { id: 'lighting', label: 'Adjusting lights...', icon: 'lightbulb', duration: 1500 },
+  { id: 'camera', label: 'Positioning camera...', icon: 'camera', duration: 1500 },
+  { id: 'rolling', label: 'Rolling camera...', icon: 'video', duration: 2000 },
+  { id: 'action', label: 'Action! Capturing takes...', icon: 'film', duration: 3000 },
+  { id: 'processing', label: 'Processing footage...', icon: 'sparkles', duration: 0 }, // 0 = until complete
+]
+
+function ProductionOverlay({ isVisible, currentStage }: { isVisible: boolean; currentStage: number }) {
+  if (!isVisible) return null
+
+  const stage = PRODUCTION_STAGES[Math.min(currentStage, PRODUCTION_STAGES.length - 1)]
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
+      <div className="relative flex flex-col items-center gap-8 p-12">
+        {/* Animated spotlight effect */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gradient-radial from-amber-500/10 via-transparent to-transparent animate-pulse" />
+          <div className="absolute top-0 left-1/4 w-2 h-32 bg-gradient-to-b from-amber-400/50 to-transparent rotate-12 animate-[pulse_2s_ease-in-out_infinite]" />
+          <div className="absolute top-0 right-1/4 w-2 h-32 bg-gradient-to-b from-amber-400/50 to-transparent -rotate-12 animate-[pulse_2s_ease-in-out_infinite_0.5s]" />
+        </div>
+
+        {/* Clapperboard animation */}
+        <div className="relative">
+          <div className="relative w-32 h-32">
+            {/* Clapper base */}
+            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-zinc-800 to-zinc-900 rounded-lg border-2 border-zinc-700 flex items-center justify-center overflow-hidden">
+              <div className="absolute inset-0 bg-[repeating-linear-gradient(90deg,transparent,transparent_10px,rgba(255,255,255,0.03)_10px,rgba(255,255,255,0.03)_20px)]" />
+              <Film className="w-10 h-10 text-amber-500/60" />
+            </div>
+            {/* Clapper top (animated) */}
+            <div 
+              className={cn(
+                "absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-zinc-700 to-zinc-800 rounded-t-lg border-2 border-zinc-600 origin-bottom transition-transform duration-300",
+                currentStage >= 3 ? "animate-[clap_0.3s_ease-in-out]" : ""
+              )}
+              style={{
+                background: 'repeating-linear-gradient(45deg, #18181b, #18181b 8px, #27272a 8px, #27272a 16px)'
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Stage indicator */}
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex items-center gap-3 text-amber-400">
+            {stage.icon === 'clapperboard' && <Clapperboard className="w-6 h-6 animate-bounce" />}
+            {stage.icon === 'lightbulb' && <div className="w-6 h-6 rounded-full bg-amber-400 animate-pulse shadow-[0_0_20px_rgba(251,191,36,0.6)]" />}
+            {stage.icon === 'camera' && <Camera className="w-6 h-6 animate-[wiggle_0.5s_ease-in-out_infinite]" />}
+            {stage.icon === 'video' && <Video className="w-6 h-6 text-red-500 animate-pulse" />}
+            {stage.icon === 'film' && <Film className="w-6 h-6 animate-spin" style={{ animationDuration: '3s' }} />}
+            {stage.icon === 'sparkles' && <Sparkles className="w-6 h-6 animate-pulse" />}
+            <span className="text-xl font-semibold tracking-wide">{stage.label}</span>
+          </div>
+
+          {/* Progress bar */}
+          <div className="w-64 h-2 bg-zinc-800 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-500 ease-out"
+              style={{ width: `${((currentStage + 1) / PRODUCTION_STAGES.length) * 100}%` }}
+            />
+          </div>
+
+          {/* Stage dots */}
+          <div className="flex items-center gap-2">
+            {PRODUCTION_STAGES.map((s, idx) => (
+              <div
+                key={s.id}
+                className={cn(
+                  "w-2 h-2 rounded-full transition-all duration-300",
+                  idx < currentStage ? "bg-amber-500" :
+                  idx === currentStage ? "bg-amber-400 scale-150 animate-pulse" :
+                  "bg-zinc-700"
+                )}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Production quote */}
+        <p className="text-zinc-500 text-sm italic mt-4">
+          "Quiet on set... and... ACTION!"
+        </p>
+      </div>
+
+      <style jsx>{`
+        @keyframes clap {
+          0%, 100% { transform: rotate(0deg); }
+          50% { transform: rotate(-25deg); }
+        }
+        @keyframes wiggle {
+          0%, 100% { transform: rotate(-3deg); }
+          50% { transform: rotate(3deg); }
+        }
+      `}</style>
+    </div>
+  )
+}
 
 // ============================================================================
 // Types & Interfaces
@@ -464,6 +572,10 @@ export function SegmentBuilder({
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   
+  // Production overlay state
+  const [showProductionOverlay, setShowProductionOverlay] = useState(false)
+  const [productionStage, setProductionStage] = useState(0)
+  
   // Generation options
   const [targetDuration, setTargetDuration] = useState(6) // 4-8 seconds
   const [narrationDriven, setNarrationDriven] = useState(false)
@@ -536,6 +648,14 @@ export function SegmentBuilder({
     return proposedSegments.reduce((sum, seg) => sum + seg.duration, 0)
   }, [proposedSegments])
   
+  // Check if scene has direction
+  const hasSceneDirection = useMemo(() => {
+    const dir = scene?.sceneDirection
+    if (!dir) return false
+    // Check if any meaningful direction exists
+    return !!(dir.camera || dir.lighting || dir.scene || dir.talent || dir.audio)
+  }, [scene?.sceneDirection])
+  
   // Staleness detection - check if scene content changed since last generation
   const isStale = useMemo(() => {
     if (!lastGeneratedHash) return false
@@ -555,9 +675,32 @@ export function SegmentBuilder({
   // Handlers
   // -------------------------------------------------------------------------
 
+  // Progress through production stages
+  const runProductionAnimation = useCallback(async () => {
+    setShowProductionOverlay(true)
+    setProductionStage(0)
+    
+    for (let i = 0; i < PRODUCTION_STAGES.length - 1; i++) {
+      await new Promise(resolve => setTimeout(resolve, PRODUCTION_STAGES[i].duration))
+      setProductionStage(i + 1)
+    }
+    // Stay on final stage until generation completes
+  }, [])
+
   const handleAnalyze = useCallback(async () => {
+    // Check for scene direction requirement
+    if (!hasSceneDirection) {
+      toast.error('Scene direction required', {
+        description: 'Please generate scene direction first before creating segments.',
+      })
+      return
+    }
+    
     setIsAnalyzing(true)
     setError(null)
+    
+    // Start production animation
+    runProductionAnimation()
 
     try {
       const response = await fetch(`/api/scenes/${sceneId}/generate-segments`, {
@@ -621,8 +764,10 @@ export function SegmentBuilder({
       toast.error('Failed to analyze scene')
     } finally {
       setIsAnalyzing(false)
+      setShowProductionOverlay(false)
+      setProductionStage(0)
     }
-  }, [sceneId, projectId, targetDuration, narrationDriven, audioMetadata, sceneBible.contentHash])
+  }, [sceneId, projectId, targetDuration, narrationDriven, audioMetadata, sceneBible.contentHash, hasSceneDirection, runProductionAnimation])
 
   const handlePromptEdit = useCallback((segmentId: string, newPrompt: string) => {
     setProposedSegments(prev => prev.map(seg => {
@@ -745,6 +890,9 @@ export function SegmentBuilder({
 
   return (
     <div className="flex flex-col h-full bg-background">
+      {/* Production Overlay */}
+      <ProductionOverlay isVisible={showProductionOverlay} currentStage={productionStage} />
+      
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-4">
@@ -857,6 +1005,16 @@ export function SegmentBuilder({
                     </Button>
                   </div>
 
+                  {/* Scene Direction Requirement Warning */}
+                  {!hasSceneDirection && (
+                    <Alert className="border-amber-500/50 bg-amber-950/20">
+                      <AlertTriangle className="w-4 h-4 text-amber-500" />
+                      <AlertDescription className="text-amber-200">
+                        <strong>Scene direction required.</strong> Generate scene direction first to ensure segments follow your creative vision.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
                   {/* Error Display */}
                   {error && (
                     <Alert variant="destructive">
@@ -868,10 +1026,11 @@ export function SegmentBuilder({
                   {/* Generate Button */}
                   <Button
                     onClick={handleAnalyze}
-                    disabled={isAnalyzing}
+                    disabled={isAnalyzing || !hasSceneDirection}
                     className="w-full"
                     size="lg"
                     variant={hasExistingVideoAssets ? 'destructive' : 'default'}
+                    title={!hasSceneDirection ? 'Generate scene direction first' : undefined}
                   >
                     {isAnalyzing ? (
                       <>

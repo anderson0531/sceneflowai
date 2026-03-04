@@ -502,7 +502,7 @@ export function SceneDirectionOptimizeDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Wand2 className="w-5 h-5 text-purple-500" />
-            Optimize Scene Direction
+            Direct Scene
           </DialogTitle>
           <DialogDescription className="flex items-center justify-between">
             <span className="truncate max-w-[400px]">Scene {sceneNumber}: {sceneHeading}</span>
@@ -546,7 +546,7 @@ export function SceneDirectionOptimizeDialog({
           <TabsList className="grid grid-cols-3 mb-2">
             <TabsTrigger value="quick" className="flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5" />
-              Quick Optimize
+              Quick Direct
             </TabsTrigger>
             <TabsTrigger value="dialogue" className="flex items-center gap-1.5">
               <MessageSquare className="w-3.5 h-3.5" />
@@ -564,7 +564,7 @@ export function SceneDirectionOptimizeDialog({
           </TabsList>
           
           <div className="flex-1 overflow-y-auto">
-            {/* Quick Optimize Tab */}
+            {/* Quick Direct Tab */}
             <TabsContent value="quick" className="mt-0 space-y-4">
               {/* Performance Category */}
               <div className="space-y-2">
@@ -939,12 +939,12 @@ export function SceneDirectionOptimizeDialog({
             {isOptimizing ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Optimizing...
+                Directing...
               </>
             ) : (
               <>
                 <Wand2 className="w-4 h-4 mr-2" />
-                Optimize Direction
+                Apply Direction
               </>
             )}
           </Button>

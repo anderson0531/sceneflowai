@@ -5019,7 +5019,7 @@ function SceneCard({
                             )}
                           </button>
                           <div className="flex items-center gap-1">
-                            {/* Optimize Direction Button - shows when direction exists */}
+                            {/* Direct Scene Button - shows when direction exists */}
                             {hasDirection && onOpenDirectionOptimize && (
                               <button
                                 onClick={(e) => {
@@ -5028,10 +5028,10 @@ function SceneCard({
                                 }}
                                 disabled={isGeneratingDirection || isOptimizingDirection}
                                 className="text-xs px-2 py-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
-                                title="Optimize scene direction for professional video production"
+                                title="Direct and refine scene for professional video production"
                               >
                                 <Wand2 className="w-3 h-3" />
-                                Optimize
+                                Direct
                               </button>
                             )}
                             <button

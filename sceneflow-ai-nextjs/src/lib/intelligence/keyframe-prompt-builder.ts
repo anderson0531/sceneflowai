@@ -270,12 +270,18 @@ function buildLightingBlock(lighting: DetailedSceneDirection['lighting'] | undef
 
 /**
  * Build talent/performance direction block for prompt
+ * Returns empty string if scene explicitly has no talent
  */
 function buildTalentBlock(
   talent: DetailedSceneDirection['talent'] | undefined,
   actionPrompt: string
 ): string {
   if (!talent) return ''
+  
+  // Check for explicit "no talent" indicators
+  if (isNoTalentScene(talent)) {
+    return '' // Don't add talent direction for no-talent scenes
+  }
   
   const parts: string[] = []
   
@@ -294,6 +300,38 @@ function buildTalentBlock(
   }
   
   return parts.length > 0 ? parts.join('. ') + '. ' : ''
+}
+
+/**
+ * Check if the scene direction indicates no on-screen talent
+ * Used to prevent adding characters to abstract/title sequences
+ */
+function isNoTalentScene(talent: DetailedSceneDirection['talent'] | undefined | string): boolean {
+  if (!talent) return false
+  
+  // Handle string format (from flattened scene direction)
+  const talentStr = typeof talent === 'string' ? talent : 
+    (talent.blocking || talent.emotionalBeat || '')
+  
+  const talentLower = talentStr.toLowerCase()
+  
+  // Check for explicit no-talent indicators
+  const noTalentIndicators = [
+    'n/a',
+    'no on-screen talent',
+    'no talent',
+    'no actors',
+    'no characters',
+    'no people',
+    'abstract',
+    'title sequence',
+    'text only',
+    'graphics only',
+    'vfx only',
+    'visual effects only',
+  ]
+  
+  return noTalentIndicators.some(indicator => talentLower.includes(indicator))
 }
 
 /**
@@ -572,10 +610,15 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
     promptParts.push(lightingBlock)
   }
   
-  // 6. Character identities
-  const characterBlock = buildCharacterBlock(characters)
-  if (characterBlock) {
-    promptParts.push(characterBlock)
+  // Check if this is a no-talent scene (title sequence, abstract, etc.)
+  const noTalentScene = isNoTalentScene(sceneDirection?.talent)
+  
+  // 6. Character identities - SKIP if no-talent scene
+  if (!noTalentScene) {
+    const characterBlock = buildCharacterBlock(characters)
+    if (characterBlock) {
+      promptParts.push(characterBlock)
+    }
   }
   
   // 7. Object/prop identities (auto-detected from segment text)
@@ -587,16 +630,23 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
   // 8. Core action/visual content
   promptParts.push(actionPrompt.trim())
   
-  // 9. Talent/performance direction (critical for emotion)
-  const talentBlock = buildTalentBlock(sceneDirection?.talent, actionPrompt)
-  if (talentBlock) {
-    promptParts.push(' ' + talentBlock)
+  // 9. Talent/performance direction - SKIP if no-talent scene  
+  if (!noTalentScene) {
+    const talentBlock = buildTalentBlock(sceneDirection?.talent, actionPrompt)
+    if (talentBlock) {
+      promptParts.push(' ' + talentBlock)
+    }
+  } else {
+    // Explicitly add no-humans instruction for no-talent scenes
+    promptParts.push(' No people, no human figures, no characters, no faces, no bodies. ')
   }
   
-  // 10. Performance direction (NEW: cinematic acting with micro-expressions)
-  const performanceBlock = buildPerformanceBlock(sceneDirection?.performanceDirection)
-  if (performanceBlock) {
-    promptParts.push(performanceBlock)
+  // 10. Performance direction - SKIP if no-talent scene
+  if (!noTalentScene) {
+    const performanceBlock = buildPerformanceBlock(sceneDirection?.performanceDirection)
+    if (performanceBlock) {
+      promptParts.push(performanceBlock)
+    }
   }
   
   // 11. Veo-3 optimization (NEW: video generation quality keywords)
@@ -638,8 +688,8 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
     imageStrength = Math.min(0.90, imageStrength + 0.15)
   }
   
-  // Build negative prompt (include Veo optimization if available)
-  const negativePrompt = buildNegativePrompt(actionType, sceneDirection?.veoOptimization?.negativePrompts)
+  // Build negative prompt (include Veo optimization if available, and no-human negatives for no-talent scenes)
+  const negativePrompt = buildNegativePrompt(actionType, sceneDirection?.veoOptimization?.negativePrompts, noTalentScene)
   
   return {
     prompt: promptParts.join('').replace(/\s+/g, ' ').trim(),
@@ -661,8 +711,13 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
 /**
  * Build negative prompt based on action type
  * NEW: Includes Veo-3 anti-mannequin prompts when available
+ * NEW: Adds no-human negatives for no-talent scenes
  */
-function buildNegativePrompt(actionType: ActionType, veoNegativePrompts?: string[]): string {
+function buildNegativePrompt(
+  actionType: ActionType, 
+  veoNegativePrompts?: string[],
+  isNoTalent?: boolean
+): string {
   const baseNegatives = [
     'blurry', 'low quality', 'pixelated', 'noisy', 'grainy',
     'jpeg artifacts', 'compression artifacts', 'bad anatomy',
@@ -675,6 +730,16 @@ function buildNegativePrompt(actionType: ActionType, veoNegativePrompts?: string
     'distorted perspective', 'cartoon', 'anime', 'illustration',
     'painting', 'drawing', 'sketch', '3D render', 'CGI', 'video game'
   ]
+  
+  // For no-talent scenes, add explicit human-related negatives
+  if (isNoTalent) {
+    baseNegatives.push(
+      'person', 'people', 'human', 'humans', 'character', 'characters',
+      'face', 'faces', 'body', 'bodies', 'figure', 'figures',
+      'man', 'woman', 'child', 'actor', 'actress', 'silhouette',
+      'portrait', 'selfie', 'crowd'
+    )
+  }
   
   // Action-specific additions
   if (actionType === 'static' || actionType === 'subtle') {
@@ -689,8 +754,8 @@ function buildNegativePrompt(actionType: ActionType, veoNegativePrompts?: string
   // Add Veo-3 anti-mannequin prompts (NEW)
   if (veoNegativePrompts?.length) {
     baseNegatives.push(...veoNegativePrompts)
-  } else {
-    // Default anti-mannequin prompts for video generation quality
+  } else if (!isNoTalent) {
+    // Default anti-mannequin prompts for video generation quality (only when there IS talent)
     baseNegatives.push(
       'stiff posture', 'frozen expression', 'robotic movement',
       'mannequin-like', 'digital mask', 'dead eyes'
