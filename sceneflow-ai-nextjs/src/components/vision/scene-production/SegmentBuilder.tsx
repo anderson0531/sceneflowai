@@ -55,7 +55,7 @@ import {
 import { SegmentPreviewTimeline } from './SegmentPreviewTimeline'
 import { SegmentPromptEditor } from './SegmentPromptEditor'
 import { SegmentValidation, ValidationResult } from '@/lib/intelligence/SegmentValidation'
-import { Input } from '@/components/ui/input'
+import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
