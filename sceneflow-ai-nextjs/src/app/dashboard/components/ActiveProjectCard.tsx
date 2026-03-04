@@ -1,11 +1,14 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { FolderOpen, Play, ChevronRight, CheckCircle, AlertTriangle, Lightbulb, X, Film, Users } from 'lucide-react'
+import { FolderOpen, Play, ChevronRight, CheckCircle, AlertTriangle, Lightbulb, X, Film, Users, Maximize2, Sparkles, Edit3 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 import { useState } from 'react'
 import Image from 'next/image'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import ThumbnailPromptDrawer from '@/components/project/ThumbnailPromptDrawer'
+import { ImageEditModal } from '@/components/vision/ImageEditModal'
 
 interface NextStep {
   name: string
@@ -43,6 +46,9 @@ interface ActiveProjectCardProps {
   budgetStatus: 'on-track' | 'near-limit' | 'over-budget'
   collaborators?: number
   index?: number
+  genre?: string
+  metadata?: any
+  onThumbnailUpdated?: (newUrl: string) => void
 }
 
 function NextStepPanel({ nextStep }: { nextStep: NextStep }) {
@@ -99,9 +105,15 @@ export function ActiveProjectCard({
   lastActive,
   budgetStatus,
   collaborators,
-  index = 0
+  index = 0,
+  genre,
+  metadata,
+  onThumbnailUpdated
 }: ActiveProjectCardProps) {
   const [tipDismissed, setTipDismissed] = useState(false)
+  const [expandedImageOpen, setExpandedImageOpen] = useState(false)
+  const [generateDialogOpen, setGenerateDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
 
   const getBudgetBadge = () => {
     switch (budgetStatus) {
@@ -124,7 +136,7 @@ export function ActiveProjectCard({
       className="bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-gray-700/50 shadow-2xl overflow-hidden hover:border-gray-600/50 transition-all duration-200"
     >
       {/* Cinematic Header with Thumbnail */}
-      <div className="relative">
+      <div className="relative group">
         {/* Thumbnail Image */}
         <div className="relative h-96 w-full overflow-hidden">
           {thumbnailUrl && thumbnailUrl.startsWith('http') ? (
@@ -143,6 +155,38 @@ export function ActiveProjectCard({
           )}
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/50 to-transparent" />
+          
+          {/* Image action buttons - appear on hover */}
+          <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            {/* Expand button */}
+            {thumbnailUrl && thumbnailUrl.startsWith('http') && (
+              <button
+                onClick={() => setExpandedImageOpen(true)}
+                className="p-2 bg-black/60 backdrop-blur-sm rounded-lg border border-white/20 text-white hover:bg-black/80 transition-colors"
+                title="View full image"
+              >
+                <Maximize2 className="w-5 h-5" />
+              </button>
+            )}
+            {/* Generate button */}
+            <button
+              onClick={() => setGenerateDialogOpen(true)}
+              className="p-2 bg-blue-600/80 backdrop-blur-sm rounded-lg border border-blue-400/30 text-white hover:bg-blue-600 transition-colors"
+              title="Generate new image"
+            >
+              <Sparkles className="w-5 h-5" />
+            </button>
+            {/* Edit button */}
+            {thumbnailUrl && thumbnailUrl.startsWith('http') && (
+              <button
+                onClick={() => setEditDialogOpen(true)}
+                className="p-2 bg-purple-600/80 backdrop-blur-sm rounded-lg border border-purple-400/30 text-white hover:bg-purple-600 transition-colors"
+                title="Edit image"
+              >
+                <Edit3 className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
         
         {/* Title overlay on thumbnail */}
@@ -288,6 +332,55 @@ export function ActiveProjectCard({
           )}
         </div>
       </div>
+
+      {/* Expanded Image Dialog */}
+      <Dialog open={expandedImageOpen} onOpenChange={setExpandedImageOpen}>
+        <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 border-none bg-black">
+          <DialogTitle className="sr-only">{title} Billboard</DialogTitle>
+          <div className="relative w-full h-full flex items-center justify-center">
+            {thumbnailUrl && (
+              <img
+                src={thumbnailUrl}
+                alt={title}
+                className="max-w-full max-h-[90vh] object-contain"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Generate Image Dialog */}
+      <ThumbnailPromptDrawer
+        open={generateDialogOpen}
+        onClose={() => setGenerateDialogOpen(false)}
+        project={{
+          id: String(id),
+          title,
+          description: description || '',
+          genre,
+          metadata
+        }}
+        currentThumbnail={thumbnailUrl}
+        onThumbnailGenerated={(newUrl) => {
+          setGenerateDialogOpen(false)
+          onThumbnailUpdated?.(newUrl)
+        }}
+      />
+
+      {/* Edit Image Dialog */}
+      {thumbnailUrl && (
+        <ImageEditModal
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          imageUrl={thumbnailUrl}
+          imageType="scene"
+          onSave={(newUrl) => {
+            setEditDialogOpen(false)
+            onThumbnailUpdated?.(newUrl)
+          }}
+          title="Edit Billboard Image"
+        />
+      )}
     </motion.div>
   )
 }

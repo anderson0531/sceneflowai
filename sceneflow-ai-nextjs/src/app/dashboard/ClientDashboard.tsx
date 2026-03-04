@@ -10,10 +10,10 @@ import { ProductSwitcher } from '@/components/layout/ProductSwitcher'
 import { useDashboardData } from '@/hooks/useDashboardData'
 import { useEnhancedStore } from '@/store/enhancedStore'
 import { Loader2 } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
 
 export default function ClientDashboard() {
-  const { credits, subscription, projects, isLoading } = useDashboardData()
+  const { credits, subscription, projects, isLoading, refresh } = useDashboardData()
   const { selectedProjectId, setSelectedProjectId } = useEnhancedStore()
   
   // Auto-select most recently updated project if none selected
@@ -83,7 +83,10 @@ export default function ClientDashboard() {
         </div>
         
         {/* Row 2: Current Project - Shows only the selected project */}
-        <ActiveProjectsContainer projects={displayProjects} />
+        <ActiveProjectsContainer 
+          projects={displayProjects} 
+          onProjectUpdated={refresh}
+        />
         
         {/* Row 3: Budget Health Widget - Live Data */}
         <BudgetHealthWidget 

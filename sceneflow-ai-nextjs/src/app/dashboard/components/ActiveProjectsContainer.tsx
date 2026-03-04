@@ -19,10 +19,12 @@ interface DashboardProject {
   updatedAt: string
   completedSteps: string[]
   metadata: Record<string, any>
+  genre?: string
 }
 
 interface ActiveProjectsContainerProps {
   projects?: DashboardProject[]
+  onProjectUpdated?: () => void
 }
 
 // Transform API project to ActiveProjectCard props
@@ -121,11 +123,13 @@ function transformProject(project: DashboardProject, index: number) {
     estimatedCredits: scenes.length * 50 || 250,
     lastActive: formatRelativeTime(project.updatedAt),
     budgetStatus: budgetStatus as 'on-track' | 'near-limit' | 'over-budget',
-    index
+    index,
+    genre: project.genre || project.metadata?.genre,
+    metadata: project.metadata
   }
 }
 
-export function ActiveProjectsContainer({ projects = [] }: ActiveProjectsContainerProps) {
+export function ActiveProjectsContainer({ projects = [], onProjectUpdated }: ActiveProjectsContainerProps) {
   const displayProjects = projects.length > 0 ? projects : []
 
   return (
@@ -140,6 +144,7 @@ export function ActiveProjectsContainer({ projects = [] }: ActiveProjectsContain
         <ActiveProjectCard
           key={project.id}
           {...transformProject(project, index)}
+          onThumbnailUpdated={() => onProjectUpdated?.()}
         />
       ))}
 
