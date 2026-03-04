@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
 import { moderatePrompt, getUserModerationContext, createBlockedResponse } from '@/lib/moderation'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { SegmentDirection, detectNoTalentSegment } from '@/types/scene-direction'
 
 export const maxDuration = 120
 export const runtime = 'nodejs'
@@ -61,6 +62,10 @@ interface GenerateSegmentsRequest {
   totalAudioDurationSeconds?: number
   // NEW: Preview mode - returns proposals without committing
   previewMode?: boolean
+  // NEW: Two-phase workflow
+  phase?: 'directions' | 'prompts'
+  // NEW: User-approved directions for phase 2
+  approvedDirections?: SegmentDirection[]
 }
 
 // Enhanced segment structure for Veo 3.1 intelligent generation
@@ -112,7 +117,10 @@ export async function POST(
       // NEW: Audio-aware segmentation - includes dialogue duration
       totalAudioDurationSeconds,
       // NEW: Preview mode - returns proposals without committing to DB
-      previewMode = false
+      previewMode = false,
+      // NEW: Two-phase workflow
+      phase = 'prompts', // Default to legacy behavior (full prompts)
+      approvedDirections,
     } = body
 
     if (!sceneId || !projectId) {
@@ -239,7 +247,111 @@ export async function POST(
     const effectiveAudioDuration = totalAudioDurationSeconds || sceneData.estimatedTotalDuration
     const minimumSegmentsRequired = Math.ceil(effectiveAudioDuration / MAX_SEGMENT_SECONDS)
     
-    console.log(`[Scene Segmentation] Audio duration: ${effectiveAudioDuration}s, min segments required: ${minimumSegmentsRequired}`)
+    console.log(`[Scene Segmentation] Audio duration: ${effectiveAudioDuration}s, min segments required: ${minimumSegmentsRequired}, phase: ${phase}`)
+    
+    // ============================================================================
+    // PHASE 1: DIRECTIONS ONLY
+    // Returns lightweight segment directions for user review before prompt generation
+    // ============================================================================
+    if (phase === 'directions') {
+      console.log(`[Scene Segmentation] Phase 1: Generating directions only for user review`)
+      
+      // Generate directions-only prompt (faster, smaller output)
+      const directionsPrompt = generateDirectionsOnlyPrompt(sceneData, preferredDuration, minimumSegmentsRequired)
+      
+      // Pre-screen content
+      const moderationContext = await getUserModerationContext('anonymous', projectId)
+      const promptModeration = await moderatePrompt(directionsPrompt, moderationContext)
+      
+      if (!promptModeration.allowed) {
+        return NextResponse.json(
+          { error: 'Content policy violation', flaggedCategories: promptModeration.result?.flaggedCategories || [] },
+          { status: 403 }
+        )
+      }
+      
+      // Call Gemini for directions only
+      const directions = await callGeminiForSegmentDirections(directionsPrompt)
+      
+      // Transform to SegmentDirection objects
+      const segmentDirections: SegmentDirection[] = directions.map((dir: any, idx: number) => ({
+        shotType: dir.shot_type || 'Medium Shot',
+        cameraMovement: dir.camera_movement || 'Static',
+        cameraAngle: dir.camera_angle || 'Eye-Level',
+        talentAction: dir.talent_action || '',
+        emotionalBeat: dir.emotional_beat || '',
+        characters: dir.characters || [],
+        isNoTalent: dir.is_no_talent || detectNoTalentSegment(sceneData.sceneDirection.talent),
+        lightingMood: dir.lighting_mood,
+        keyProps: dir.key_props || [],
+        dialogueLineIds: (dir.dialogue_indices || []).map((i: number) => `dialogue-${i}`),
+        isApproved: false,
+        isUserEdited: false,
+        generationMethod: dir.generation_method || 'T2V',
+        triggerReason: dir.trigger_reason || 'AI-determined cut point',
+        confidence: dir.confidence || 75,
+      }))
+      
+      console.log(`[Scene Segmentation] Phase 1 complete: ${segmentDirections.length} directions generated`)
+      
+      return NextResponse.json({
+        success: true,
+        phase: 'directions',
+        directions: segmentDirections,
+        targetSegmentDuration: preferredDuration,
+        sceneData: {
+          heading: sceneData.heading,
+          dialogueCount: sceneData.dialogue.length,
+          characterCount: sceneData.characters.length,
+          estimatedDuration: sceneData.estimatedTotalDuration,
+          hasSceneFrame: !!sceneData.sceneFrameUrl,
+        },
+      })
+    }
+    
+    // ============================================================================
+    // PHASE 2: PROMPTS FROM APPROVED DIRECTIONS
+    // Generates full video prompts using user-approved directions
+    // ============================================================================
+    if (phase === 'prompts' && approvedDirections && approvedDirections.length > 0) {
+      console.log(`[Scene Segmentation] Phase 2: Generating prompts from ${approvedDirections.length} approved directions`)
+      
+      // Generate prompts based on approved directions
+      const promptsFromDirections = generatePromptsFromDirectionsPrompt(sceneData, approvedDirections, preferredDuration)
+      
+      // Pre-screen content
+      const moderationContext = await getUserModerationContext('anonymous', projectId)
+      const promptModeration = await moderatePrompt(promptsFromDirections, moderationContext)
+      
+      if (!promptModeration.allowed) {
+        return NextResponse.json(
+          { error: 'Content policy violation', flaggedCategories: promptModeration.result?.flaggedCategories || [] },
+          { status: 403 }
+        )
+      }
+      
+      // Call Gemini with approved directions to generate full prompts
+      const segments = await callGeminiForPromptsFromDirections(promptsFromDirections)
+      
+      // Transform to full segment structure (same as legacy flow)
+      const transformedSegments = transformSegmentsToOutput(segments, sceneData, sceneId, scene, approvedDirections)
+      
+      console.log(`[Scene Segmentation] Phase 2 complete: ${transformedSegments.length} segments with prompts`)
+      
+      return NextResponse.json({
+        success: true,
+        phase: 'prompts',
+        segments: transformedSegments,
+        targetSegmentDuration: preferredDuration,
+        previewMode,
+        sceneBibleHash: sceneData.visualDescriptionHash || '',
+      })
+    }
+    
+    // ============================================================================
+    // LEGACY FLOW: Full segments in one call (backwards compatible)
+    // ============================================================================
+    console.log(`[Scene Segmentation] Legacy flow: Generating full segments in one call`)
     
     // Generate intelligent segmentation prompt
     const prompt = generateIntelligentSegmentationPrompt(sceneData, preferredDuration, minimumSegmentsRequired)
@@ -1162,3 +1274,360 @@ function parseGeminiResponseText(text: string): IntelligentSegment[] {
   return segments
 }
 
+// ============================================================================
+// PHASE 1: Directions-Only Generation
+// ============================================================================
+
+/**
+ * Generate a prompt for Phase 1: Segment directions only (no full prompts)
+ * This is faster and allows user review before expensive prompt generation
+ */
+function generateDirectionsOnlyPrompt(
+  sceneData: ComprehensiveSceneData,
+  preferredDuration: number,
+  minimumSegmentsRequired: number
+): string {
+  const noTalentScene = isNoTalentScene(sceneData.sceneDirection.talent)
+  
+  const dialogueList = noTalentScene
+    ? 'NO DIALOGUE - No on-screen talent'
+    : sceneData.dialogue.map((d, idx) => `[${idx}] ${d.character}: "${d.text.substring(0, 50)}${d.text.length > 50 ? '...' : ''}"`).join('\n')
+  
+  const characterList = noTalentScene
+    ? 'NO CHARACTERS'
+    : sceneData.characters.map(c => c.name).join(', ') || 'None specified'
+
+  return `
+**SYSTEM ROLE:** You are a Video Director analyzing a scene to determine optimal segment cut points and directions.
+Your job is to OUTPUT DIRECTIONS ONLY - not full video prompts. This allows the user to review and adjust before prompt generation.
+
+**SCENE DATA:**
+Heading: ${sceneData.heading}
+Visual Description: ${sceneData.visualDescription}
+Estimated Duration: ${Math.round(sceneData.estimatedTotalDuration)}s
+
+**DIALOGUE:**
+${dialogueList}
+
+**CHARACTERS:** ${characterList}
+
+**DIRECTOR'S NOTES:**
+Camera: ${sceneData.sceneDirection.camera}
+Lighting: ${sceneData.sceneDirection.lighting}
+Talent: ${sceneData.sceneDirection.talent}
+
+**CONSTRAINTS:**
+- Target ${preferredDuration}s per segment (8s max)
+- Minimum ${minimumSegmentsRequired} segments required
+${noTalentScene ? '- NO ON-SCREEN TALENT: This is an abstract/title scene' : ''}
+
+**OUTPUT FORMAT:**
+Return a JSON array of segment directions. Each object:
+{
+  "sequence": 1,
+  "estimated_duration": 6.0,
+  "shot_type": "Medium Shot",
+  "camera_movement": "Static",
+  "camera_angle": "Eye-Level",
+  "talent_action": "SARAH looks up from laptop",
+  "emotional_beat": "Tension building",
+  "characters": ["SARAH"],
+  "is_no_talent": false,
+  "lighting_mood": "Low-key dramatic",
+  "key_props": ["laptop", "coffee cup"],
+  "dialogue_indices": [0, 1],
+  "generation_method": "T2V",
+  "trigger_reason": "Angle change to close-up",
+  "confidence": 85
+}
+
+**RULES:**
+1. Split at MAJOR changes only (angle, location, emotional shift)
+2. Combine consecutive dialogue lines in same shot
+3. Each dialogue index appears in exactly ONE segment
+4. is_no_talent=true means NO characters/dialogue in that segment
+5. confidence: 80+ for clear cuts, 50-70 for ambiguous
+
+Return ONLY valid JSON array. No markdown, no explanation.
+`
+}
+
+/**
+ * Call Gemini to generate segment directions (Phase 1)
+ */
+async function callGeminiForSegmentDirections(prompt: string): Promise<any[]> {
+  const projectId = process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID
+  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
+  
+  if (projectId) {
+    try {
+      const result = await generateText(prompt, {
+        model: 'gemini-2.5-flash',
+        temperature: 0.5, // Lower temperature for more consistent structure
+        maxOutputTokens: 8192, // Directions are much smaller than full prompts
+        responseMimeType: 'application/json',
+        timeoutMs: 30000, // 30s should be plenty for directions
+        thinkingBudget: 0,
+      })
+      return parseDirectionsResponse(result.text)
+    } catch (vertexError: any) {
+      console.warn(`[Scene Segmentation] Vertex AI failed for directions:`, vertexError?.message)
+    }
+  }
+  
+  if (!geminiApiKey) {
+    throw new Error('Gemini API not configured')
+  }
+  
+  const genAI = new GoogleGenerativeAI(geminiApiKey)
+  const model = genAI.getGenerativeModel({ 
+    model: 'gemini-2.5-flash',
+    generationConfig: { temperature: 0.5, maxOutputTokens: 8192, responseMimeType: 'application/json' }
+  })
+  
+  const result = await model.generateContent(prompt)
+  return parseDirectionsResponse(result.response.text())
+}
+
+function parseDirectionsResponse(text: string): any[] {
+  if (!text) throw new Error('No response for directions')
+  
+  let cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+  
+  // Repair truncated JSON
+  if (!cleanedText.endsWith(']')) {
+    const lastComplete = cleanedText.lastIndexOf('},')
+    if (lastComplete > 0) {
+      cleanedText = cleanedText.substring(0, lastComplete + 1) + ']'
+    }
+  }
+  
+  const directions = JSON.parse(cleanedText)
+  if (!Array.isArray(directions) || directions.length === 0) {
+    throw new Error('Invalid directions format')
+  }
+  
+  return directions
+}
+
+// ============================================================================
+// PHASE 2: Prompts from Approved Directions
+// ============================================================================
+
+/**
+ * Generate prompt for Phase 2: Full video prompts based on user-approved directions
+ */
+function generatePromptsFromDirectionsPrompt(
+  sceneData: ComprehensiveSceneData,
+  approvedDirections: SegmentDirection[],
+  preferredDuration: number
+): string {
+  const noTalentScene = isNoTalentScene(sceneData.sceneDirection.talent)
+  
+  const characterDescriptions = sceneData.characters.map(c => {
+    let desc = `- ${c.name}: ${c.description}`
+    if (c.wardrobe) desc += ` | Wardrobe: ${c.wardrobe}`
+    if (c.hasReferenceImage) desc += ' (✓ Reference available)'
+    return desc
+  }).join('\n')
+  
+  const dialogueList = sceneData.dialogue.map((d, idx) => 
+    `[${idx}] ${d.character}${d.emotion ? ` (${d.emotion})` : ''}: "${d.text}"`
+  ).join('\n')
+  
+  const directionsJson = approvedDirections.map((dir, idx) => ({
+    sequence: idx + 1,
+    shot_type: dir.shotType,
+    camera_movement: dir.cameraMovement,
+    camera_angle: dir.cameraAngle,
+    talent_action: dir.talentAction,
+    emotional_beat: dir.emotionalBeat,
+    characters: dir.characters,
+    is_no_talent: dir.isNoTalent,
+    lighting_mood: dir.lightingMood,
+    dialogue_indices: dir.dialogueLineIds?.map(id => parseInt(id.replace('dialogue-', ''))) || [],
+    generation_method: dir.generationMethod,
+  }))
+
+  return `
+**SYSTEM ROLE:** You are a Video Director generating cinematic video prompts based on PRE-APPROVED segment directions.
+The user has already reviewed and approved the shot breakdown. Your job is to write RICH VIDEO PROMPTS for each segment.
+
+**SCENE DATA:**
+Heading: ${sceneData.heading}
+Visual Description: ${sceneData.visualDescription}
+
+**CHARACTERS:**
+${noTalentScene ? 'NO CHARACTERS - This is a no-talent scene' : characterDescriptions || 'None specified'}
+
+**DIALOGUE:**
+${noTalentScene ? 'NO DIALOGUE - Audio is voiceover only' : dialogueList || 'No dialogue'}
+
+**DIRECTOR'S NOTES:**
+Camera: ${sceneData.sceneDirection.camera}
+Lighting: ${sceneData.sceneDirection.lighting}
+Talent: ${sceneData.sceneDirection.talent}
+
+**SCENE FRAME:** ${sceneData.sceneFrameUrl ? 'Available for I2V on Segment 1' : 'Not available'}
+
+**APPROVED SEGMENT DIRECTIONS:**
+${JSON.stringify(directionsJson, null, 2)}
+
+**YOUR TASK:**
+For each approved direction, generate a rich cinematic video prompt (50-150 words) that:
+1. FOLLOWS the approved shot_type, camera_movement, camera_angle exactly
+2. INCLUDES the specified talent_action and emotional_beat
+3. FOR DIALOGUE segments: Include dialogue as "[Name] speaks, \\"[text]\\""
+4. FOR NO-TALENT segments: Focus on environment, VFX, atmosphere only
+5. ADD lens choice, lighting details, texture hints
+6. DESCRIBE end frame state for next segment continuity
+
+**PROMPT FORMULA:**
+[Shot Type] + [Lens] + [Subject/Action] + [DIALOGUE if any] + [Camera Movement] + [Lighting] + [Technical Specs]
+
+**OUTPUT FORMAT:**
+Return a JSON array with one object per segment:
+[
+  {
+    "sequence": 1,
+    "estimated_duration": 6.0,
+    "video_generation_prompt": "[50-150 word rich cinematic prompt]",
+    "generation_method": "I2V",
+    "reference_strategy": { "use_scene_frame": true, "use_character_refs": ["CharName"] },
+    "end_frame_description": "Detailed end state for continuity",
+    "camera_notes": "Specific camera/lens notes",
+    "trigger_reason": "From approved direction",
+    "emotional_beat": "From approved direction",
+    "assigned_dialogue_indices": [0, 1]
+  }
+]
+
+Return ONLY valid JSON array. No markdown, no explanation.
+`
+}
+
+/**
+ * Call Gemini to generate full prompts from approved directions (Phase 2)
+ */
+async function callGeminiForPromptsFromDirections(prompt: string): Promise<IntelligentSegment[]> {
+  const projectId = process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID
+  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
+  
+  if (projectId) {
+    try {
+      const result = await generateText(prompt, {
+        model: 'gemini-2.5-flash',
+        temperature: 0.7,
+        maxOutputTokens: 32768,
+        responseMimeType: 'application/json',
+        timeoutMs: 100000,
+        thinkingBudget: 0,
+      })
+      return parseGeminiResponseText(result.text)
+    } catch (vertexError: any) {
+      console.warn(`[Scene Segmentation] Vertex AI failed for prompts:`, vertexError?.message)
+    }
+  }
+  
+  if (!geminiApiKey) {
+    throw new Error('Gemini API not configured')
+  }
+  
+  const genAI = new GoogleGenerativeAI(geminiApiKey)
+  const model = genAI.getGenerativeModel({ 
+    model: 'gemini-2.5-flash',
+    generationConfig: { temperature: 0.7, maxOutputTokens: 32768, responseMimeType: 'application/json' }
+  })
+  
+  const result = await model.generateContent(prompt)
+  return parseGeminiResponseText(result.response.text())
+}
+
+/**
+ * Transform AI segments to full output structure (shared between legacy and Phase 2)
+ */
+function transformSegmentsToOutput(
+  segments: IntelligentSegment[],
+  sceneData: ComprehensiveSceneData,
+  sceneId: string,
+  scene: any,
+  approvedDirections?: SegmentDirection[]
+): any[] {
+  return segments.map((seg: IntelligentSegment, idx: number) => {
+    let cumulativeTime = 0
+    for (let i = 0; i < idx; i++) {
+      cumulativeTime += segments[i].estimated_duration
+    }
+
+    const methodMap: Record<string, string> = { 'I2V': 'I2V', 'EXT': 'EXT', 'T2V': 'T2V', 'FTV': 'FTV' }
+    const isFirstSegment = idx === 0
+    const useSceneFrame = seg.reference_strategy?.use_scene_frame ?? isFirstSegment
+    const startFrameUrl = (isFirstSegment && useSceneFrame && sceneData.sceneFrameUrl) ? sceneData.sceneFrameUrl : null
+
+    const dialogueLineIds = (seg.assigned_dialogue_indices || []).map((index: number) => `dialogue-${index}`)
+    const assignedDialogue = sceneData.dialogue.filter((_, didx) => (seg.assigned_dialogue_indices || []).includes(didx))
+    const dialogueText = assignedDialogue.map(d => `${d.character}:${d.text}`).join('|')
+    const dialogueHash = simpleHash(dialogueText)
+    const visualDescriptionHash = simpleHash(sceneData.visualDescription || '')
+
+    const hasSceneFrame = !!sceneData.sceneFrameUrl
+    const generatedMethod = methodMap[seg.generation_method] || 'T2V'
+    
+    // Include approved direction metadata if available
+    const approvedDir = approvedDirections?.[idx]
+
+    const generationPlan = {
+      recommendedMethod: generatedMethod,
+      confidence: seg.generation_plan?.confidence || (isFirstSegment && hasSceneFrame ? 90 : 70),
+      reasoning: seg.generation_plan?.reasoning || seg.trigger_reason || 'AI-recommended method',
+      fallbackMethod: seg.generation_plan?.fallback_method || (generatedMethod === 'I2V' ? 'T2V' : undefined),
+      fallbackReason: generatedMethod === 'I2V' ? 'Use T2V if I2V produces unwanted motion' : undefined,
+      prerequisites: [
+        { type: 'scene-image', label: 'Scene keyframe image', met: hasSceneFrame, required: isFirstSegment, assetUrl: sceneData.sceneFrameUrl || undefined },
+        ...(idx > 0 ? [{ type: 'previous-frame', label: 'Previous segment last frame', met: false, required: false }] : []),
+      ],
+      batchPriority: idx,
+      qualityEstimate: hasSceneFrame ? 85 : 65,
+      warnings: seg.generation_plan?.warnings,
+    }
+
+    return {
+      segmentId: `seg_${sceneId}_${seg.sequence}`,
+      sequenceIndex: Math.max(0, (Number(seg.sequence) || (idx + 1)) - 1),
+      startTime: cumulativeTime,
+      endTime: cumulativeTime + seg.estimated_duration,
+      status: 'DRAFT' as const,
+      generatedPrompt: seg.video_generation_prompt,
+      userEditedPrompt: null,
+      activeAssetUrl: null,
+      assetType: null as 'video' | 'image' | null,
+      generationMethod: generatedMethod,
+      triggerReason: seg.trigger_reason,
+      endFrameDescription: seg.end_frame_description,
+      cameraMovement: seg.camera_notes,
+      emotionalBeat: seg.emotional_beat,
+      dialogueLineIds,
+      generationPlan,
+      promptContext: {
+        dialogueHash,
+        visualDescriptionHash,
+        generatedAt: new Date().toISOString(),
+        sceneNumber: scene.sceneNumber || (typeof sceneId === 'string' ? parseInt(sceneId) : undefined),
+      },
+      isStale: false,
+      // NEW: Include approved direction for reference
+      segmentDirection: approvedDir || null,
+      references: {
+        startFrameUrl,
+        endFrameUrl: null,
+        useSceneFrame,
+        characterRefs: seg.reference_strategy?.use_character_refs || [],
+        startFrameDescription: seg.reference_strategy?.start_frame_description || null,
+        characterIds: [],
+        sceneRefIds: [],
+        objectRefIds: [],
+      },
+      takes: [],
+    }
+  })
+}

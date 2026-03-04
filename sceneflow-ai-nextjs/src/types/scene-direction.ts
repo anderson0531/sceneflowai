@@ -140,3 +140,108 @@ export interface DetailedSceneDirection {
   dialogueTalentDirections?: DialogueTalentDirection[]
 }
 
+// ============================================================================
+// Per-Segment Direction (for user review before prompt generation)
+// ============================================================================
+
+/**
+ * Lightweight segment-level direction for user review workflow.
+ * Inherits/overrides scene-level DetailedSceneDirection.
+ * Allows users to review and edit direction BEFORE generating video prompts.
+ */
+export interface SegmentDirection {
+  /** Shot type for this segment (e.g., "Wide Shot", "Close-Up", "Medium Shot") */
+  shotType: string
+  /** Camera movement for this segment (e.g., "Static", "Dolly In", "Pan Right") */
+  cameraMovement: string
+  /** Camera angle (e.g., "Eye-Level", "Low Angle", "High Angle") */
+  cameraAngle: string
+  /** What talent does in this segment (e.g., "SARAH looks up from laptop, startled") */
+  talentAction: string
+  /** Emotional beat/tone (e.g., "Tension building", "Moment of realization") */
+  emotionalBeat: string
+  /** Characters appearing in this segment (empty for no-talent scenes) */
+  characters: string[]
+  /** Whether this segment has no on-screen talent (title sequence, abstract, etc.) */
+  isNoTalent: boolean
+  /** Lighting mood override (if different from scene) */
+  lightingMood?: string
+  /** Key props visible in this segment */
+  keyProps?: string[]
+  /** Dialogue line IDs covered by this segment (for reference) */
+  dialogueLineIds?: string[]
+  /** User has reviewed/approved this direction */
+  isApproved: boolean
+  /** User has edited this direction (vs AI-generated default) */
+  isUserEdited: boolean
+  /** Generation method recommendation from AI */
+  generationMethod: 'T2V' | 'I2V' | 'EXT' | 'FTV'
+  /** Why AI chose to cut here */
+  triggerReason: string
+  /** AI confidence in this direction (0-100) */
+  confidence: number
+}
+
+/**
+ * Helper to create a SegmentDirection from scene-level direction
+ * with segment-specific overrides
+ */
+export function createSegmentDirection(
+  sceneDirection: DetailedSceneDirection | null,
+  overrides: Partial<SegmentDirection>
+): SegmentDirection {
+  const defaultDirection: SegmentDirection = {
+    shotType: sceneDirection?.camera?.shots?.[0] || 'Medium Shot',
+    cameraMovement: sceneDirection?.camera?.movement || 'Static',
+    cameraAngle: sceneDirection?.camera?.angle || 'Eye-Level',
+    talentAction: sceneDirection?.talent?.keyActions?.[0] || '',
+    emotionalBeat: sceneDirection?.talent?.emotionalBeat || '',
+    characters: [],
+    isNoTalent: false,
+    lightingMood: sceneDirection?.lighting?.overallMood,
+    keyProps: sceneDirection?.scene?.keyProps,
+    dialogueLineIds: [],
+    isApproved: false,
+    isUserEdited: false,
+    generationMethod: 'T2V',
+    triggerReason: 'AI-determined cut point',
+    confidence: 75,
+  }
+  
+  return { ...defaultDirection, ...overrides }
+}
+
+/**
+ * Detect if a segment should be marked as no-talent based on direction
+ */
+export function detectNoTalentSegment(
+  talentDirection: string | TalentDirection | undefined | null
+): boolean {
+  if (!talentDirection) return false
+  
+  const talentText = typeof talentDirection === 'string' 
+    ? talentDirection 
+    : talentDirection.blocking || talentDirection.emotionalBeat || ''
+  
+  const talentLower = talentText.toLowerCase()
+  const noTalentIndicators = [
+    'n/a',
+    'no on-screen talent',
+    'no talent',
+    'no actors',
+    'no characters',
+    'no people',
+    'no human',
+    'abstract',
+    'title sequence',
+    'text only',
+    'graphics only',
+    'vfx only',
+    'visual effects only',
+    'establishing shot',
+    'location only',
+  ]
+  
+  return noTalentIndicators.some(indicator => talentLower.includes(indicator))
+}
+
