@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { CreditService } from '@/services/CreditService'
+import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 import { generateText } from '@/lib/vertexai/gemini'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
+
+const BLUEPRINT_ANALYZE_CREDIT_COST = BLUEPRINT_CREDITS.BLUEPRINT_ANALYZE // 20 credits
 
 type SimpleBeat = {
   act: string
@@ -97,10 +103,28 @@ function extractJson(text: string): string {
 export async function POST(req: NextRequest) {
   const reqId = crypto.randomUUID()
   try {
+    // Get session and user ID for credit charging
+    const session = await getServerSession(authOptions as any).catch(() => null)
+    const userId = (session?.user as any)?.id
+    if (!userId) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401, headers: { 'x-sf-request-id': reqId } })
+    }
+
     const body = await req.json()
     const input = String(body?.input || '')
     const variantsRequested = Math.max(1, Math.min(5, Number(body?.variants || 1)))
     if (!input) return NextResponse.json({ success: false, error: 'Missing input' }, { status: 400 })
+
+    // Check credits before AI generation
+    const creditCheck = await CreditService.ensureCredits(userId, BLUEPRINT_ANALYZE_CREDIT_COST, 'Blueprint Analyze V3')
+    if (!creditCheck.hasCredits) {
+      return NextResponse.json({
+        success: false,
+        error: creditCheck.message,
+        creditsRequired: BLUEPRINT_ANALYZE_CREDIT_COST,
+        creditsAvailable: creditCheck.currentBalance
+      }, { status: 402, headers: { 'x-sf-request-id': reqId } })
+    }
 
     const hasOpenAI = !!process.env.OPENAI_API_KEY
     const provider = 'vertex' // Always use Vertex AI for Gemini now
@@ -151,9 +175,13 @@ export async function POST(req: NextRequest) {
 
     if (!results.length) throw new Error('No valid variants generated')
 
+    // Charge credits after successful generation
+    await CreditService.charge(userId, BLUEPRINT_ANALYZE_CREDIT_COST, 'Blueprint Analyze V3')
+    console.log(`[Blueprint V3] Charged ${BLUEPRINT_ANALYZE_CREDIT_COST} credits to user ${userId} for ${target} variant(s)`)
+
     const payload = target === 1 ? results[0] : results.slice(0, target)
 
-    return NextResponse.json({ success: true, data: payload, debug: { api: 'v3-blueprint', provider, model, reqId, variants: target } }, {
+    return NextResponse.json({ success: true, data: payload, creditsUsed: BLUEPRINT_ANALYZE_CREDIT_COST, debug: { api: 'v3-blueprint', provider, model, reqId, variants: target } }, {
       headers: {
         'x-sf-api': 'v3-blueprint',
         'x-sf-provider': provider,

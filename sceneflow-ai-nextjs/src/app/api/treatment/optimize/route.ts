@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { CreditService } from '@/services/CreditService'
+import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 import { strictJsonPromptSuffix, safeParseJsonFromText } from '@/lib/safeJson'
 import { generateText } from '@/lib/vertexai/gemini'
 import type { AudienceResonanceAnalysis } from '@/lib/types/audienceResonance'
+
+const BLUEPRINT_OPTIMIZE_CREDIT_COST = BLUEPRINT_CREDITS.BLUEPRINT_OPTIMIZE // 15 credits
 
 /**
  * Blueprint Optimization API
@@ -36,6 +42,13 @@ interface OptimizedSection {
 
 export async function POST(request: NextRequest) {
   try {
+    // Get session and user ID for credit charging
+    const session = await getServerSession(authOptions as any).catch(() => null)
+    const userId = (session?.user as any)?.id
+    if (!userId) {
+      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
+    }
+
     const body: OptimizeRequest = await request.json()
     const { variant, previousAnalysis, focusAreas = ['clarity', 'pacing', 'character'] } = body
 
@@ -44,6 +57,17 @@ export async function POST(request: NextRequest) {
         { success: false, message: 'variant is required' },
         { status: 400 }
       )
+    }
+
+    // Check credits before AI generation
+    const creditCheck = await CreditService.ensureCredits(userId, BLUEPRINT_OPTIMIZE_CREDIT_COST, 'Blueprint Optimize')
+    if (!creditCheck.hasCredits) {
+      return NextResponse.json({
+        success: false,
+        message: creditCheck.message,
+        creditsRequired: BLUEPRINT_OPTIMIZE_CREDIT_COST,
+        creditsAvailable: creditCheck.currentBalance
+      }, { status: 402 })
     }
 
     // Build context from previous analysis
@@ -181,11 +205,16 @@ ${strictJsonPromptSuffix}`
 
     console.log('[Optimize Blueprint] Successfully optimized', Object.keys(optimizedDraft).length, 'fields')
 
+    // Charge credits after successful optimization
+    await CreditService.charge(userId, BLUEPRINT_OPTIMIZE_CREDIT_COST, 'Blueprint Optimize')
+    console.log(`[Optimize Blueprint] Charged ${BLUEPRINT_OPTIMIZE_CREDIT_COST} credits to user ${userId}`)
+
     return NextResponse.json({
       success: true,
       optimizedDraft,
       fieldsUpdated: Object.keys(optimizedDraft),
-      focusAreas
+      focusAreas,
+      creditsUsed: BLUEPRINT_OPTIMIZE_CREDIT_COST
     })
 
   } catch (error) {

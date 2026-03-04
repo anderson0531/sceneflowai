@@ -254,6 +254,43 @@ export const TEXT_CREDITS = {
 export const CONTEXT_TOKEN_LIMIT = 10000;
 
 // =============================================================================
+// BLUEPRINT PHASE / AUDIENCE RESONANCE
+// =============================================================================
+
+/**
+ * Blueprint Phase Credits
+ * 
+ * These operations use Gemini for AI-powered content analysis and generation.
+ * Provider cost: ~$0.01-0.05 per request depending on context size
+ * Target margin: 50-60%
+ */
+export const BLUEPRINT_CREDITS = {
+  /** Audience Resonance analysis - full AI-powered review (25 credits = $0.25) */
+  AUDIENCE_RESONANCE_ANALYSIS: 25,
+  
+  /** Blueprint optimization - improve structure/content (15 credits = $0.15) */
+  BLUEPRINT_OPTIMIZE: 15,
+  
+  /** Blueprint refinement - single section (10 credits = $0.10) */
+  BLUEPRINT_REFINE: 10,
+  
+  /** Blueprint V2/V3 analysis (20 credits = $0.20) */
+  BLUEPRINT_ANALYZE: 20,
+  
+  /** Treatment visual/hero image prompt generation (10 credits = $0.10) */
+  TREATMENT_VISUAL: 10,
+  
+  /** Scene outline generation (10 credits = $0.10) */
+  SCENE_OUTLINE: 10,
+  
+  /** Script generation per scene (10 credits = $0.10) */
+  SCRIPT_GENERATION: 10,
+  
+  /** Script batch generation - multiple scenes (25 credits = $0.25) */
+  SCRIPT_BATCH: 25,
+} as const;
+
+// =============================================================================
 // RENDERING / EXPORT
 // =============================================================================
 

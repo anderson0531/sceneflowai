@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { RecommendationPriority } from '@/types/story'
 import { generateText } from '@/lib/vertexai/gemini'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { CreditService } from '@/services/CreditService'
+import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
+
+const AUDIENCE_RESONANCE_CREDIT_COST = BLUEPRINT_CREDITS.AUDIENCE_RESONANCE_ANALYSIS // 25 credits
 
 interface ReviewRecommendation {
   text: string
@@ -105,6 +111,10 @@ function calculateShowVsTellRatio(scenes: any[]): { ratio: number; narrationWord
 
 export async function POST(req: NextRequest) {
   try {
+    // Get user session for credit charging
+    const session = await getServerSession(authOptions)
+    const userId = session?.user?.id
+
     const { projectId, script, previousScores, previousAnalysis, scriptHash, previousScriptHash }: ScriptReviewRequest = await req.json()
 
     if (!projectId || !script) {
@@ -176,8 +186,46 @@ export async function POST(req: NextRequest) {
     contentSeed = Math.abs(contentSeed)
     console.log('[Script Review] Content seed:', contentSeed, '| from scriptHash:', !!scriptHash, '| scriptUnchanged:', scriptUnchanged)
 
+    // =========================================================================
+    // CREDIT CHECK: Verify user has sufficient credits before AI generation
+    // Only charged when AI is actually used (cached results are free)
+    // =========================================================================
+    if (userId) {
+      const hasCredits = await CreditService.ensureCredits(userId, AUDIENCE_RESONANCE_CREDIT_COST)
+      if (!hasCredits) {
+        console.log('[Script Review] Insufficient credits for user:', userId)
+        return NextResponse.json(
+          { 
+            error: 'Insufficient credits for Audience Resonance analysis',
+            required: AUDIENCE_RESONANCE_CREDIT_COST,
+            operation: 'audience_resonance_analysis'
+          },
+          { status: 402 }
+        )
+      }
+    }
+
     // Generate Audience Resonance review (replaces both director and audience)
     const audienceResonance = await generateAudienceResonance(script, showVsTellMetrics, contentSeed, previousScores, scriptUnchanged, previousAnalysis)
+
+    // =========================================================================
+    // CREDIT CHARGE: Deduct credits after successful AI generation
+    // =========================================================================
+    if (userId) {
+      await CreditService.charge(
+        userId,
+        AUDIENCE_RESONANCE_CREDIT_COST,
+        'ai_usage',
+        null,
+        {
+          operation: 'audience_resonance_analysis',
+          projectId,
+          sceneCount: script.scenes?.length || 0,
+          overallScore: audienceResonance.overallScore
+        }
+      )
+      console.log('[Script Review] Charged', AUDIENCE_RESONANCE_CREDIT_COST, 'credits to user:', userId)
+    }
 
     return NextResponse.json({
       success: true,
@@ -194,7 +242,8 @@ export async function POST(req: NextRequest) {
       },
       // Director review removed - user is the director
       director: null,
-      generatedAt: new Date().toISOString()
+      generatedAt: new Date().toISOString(),
+      creditsUsed: userId ? AUDIENCE_RESONANCE_CREDIT_COST : 0
     })
   } catch (error: any) {
     console.error('[Script Review] Error:', error)

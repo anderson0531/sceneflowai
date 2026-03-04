@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { CreditService } from '@/services/CreditService'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { uploadToGCS } from '@/lib/storage/gcsAssets'
 import { DEFAULT_PROMPT_TEMPLATES, TREATMENT_VISUAL_CREDITS } from '@/types/treatment-visuals'
@@ -326,6 +329,13 @@ async function generateActAnchor(
 
 export async function POST(request: NextRequest) {
   try {
+    // Get session and user ID for credit charging
+    const session = await getServerSession(authOptions as any).catch(() => null)
+    const userId = (session?.user as any)?.id
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body: GenerateVisualRequest = await request.json()
     const { projectId, treatment, generateAll, visualType, visualId, mood = 'balanced' } = body
     
@@ -334,6 +344,35 @@ export async function POST(request: NextRequest) {
         { error: 'Missing projectId or treatment data' },
         { status: 400 }
       )
+    }
+
+    // Estimate credits needed based on what we're generating
+    let estimatedCredits = 0
+    if (generateAll) {
+      estimatedCredits = TREATMENT_VISUAL_CREDITS.heroImage
+      const charCount = Math.min((treatment.character_descriptions?.length || 0), 4)
+      estimatedCredits += charCount * TREATMENT_VISUAL_CREDITS.characterPortrait
+      const actBreakdown = treatment.act_breakdown || {}
+      const actCount = [actBreakdown.act1, actBreakdown.act2, actBreakdown.act3].filter(Boolean).length
+      estimatedCredits += actCount * TREATMENT_VISUAL_CREDITS.actEstablishing
+    } else if (visualType === 'hero') {
+      estimatedCredits = TREATMENT_VISUAL_CREDITS.heroImage
+    } else if (visualType === 'character') {
+      estimatedCredits = TREATMENT_VISUAL_CREDITS.characterPortrait
+    } else if (visualType === 'act') {
+      estimatedCredits = TREATMENT_VISUAL_CREDITS.actEstablishing
+    }
+
+    // Check credits before image generation
+    if (estimatedCredits > 0) {
+      const creditCheck = await CreditService.ensureCredits(userId, estimatedCredits, 'Treatment Visual Generation')
+      if (!creditCheck.hasCredits) {
+        return NextResponse.json({
+          error: creditCheck.message,
+          creditsRequired: estimatedCredits,
+          creditsAvailable: creditCheck.currentBalance
+        }, { status: 402 })
+      }
     }
     
     let visuals: Partial<TreatmentVisuals> = {

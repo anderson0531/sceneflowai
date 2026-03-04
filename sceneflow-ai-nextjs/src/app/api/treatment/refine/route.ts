@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { CreditService } from '@/services/CreditService'
+import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 import { strictJsonPromptSuffix, safeParseJsonFromText } from '@/lib/safeJson'
 import { generateText } from '@/lib/vertexai/gemini'
+
+const BLUEPRINT_REFINE_CREDIT_COST = BLUEPRINT_CREDITS.BLUEPRINT_REFINE // 10 credits
 
 /**
  * Section-aware Blueprint Refinement API
@@ -61,6 +67,13 @@ Include physical descriptions suitable for image generation.`
 
 export async function POST(request: NextRequest) {
   try {
+    // Get session and user ID for credit charging
+    const session = await getServerSession(authOptions as any).catch(() => null)
+    const userId = (session?.user as any)?.id
+    if (!userId) {
+      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
+    }
+
     const body: RefineRequest = await request.json()
     const { variant, section, instructions } = body
 
@@ -140,6 +153,17 @@ IMPORTANT:
 
 ${strictJsonPromptSuffix}`
 
+    // Check credits before AI generation
+    const creditCheck = await CreditService.ensureCredits(userId, BLUEPRINT_REFINE_CREDIT_COST, 'Blueprint Refine')
+    if (!creditCheck.hasCredits) {
+      return NextResponse.json({
+        success: false,
+        message: creditCheck.message,
+        creditsRequired: BLUEPRINT_REFINE_CREDIT_COST,
+        creditsAvailable: creditCheck.currentBalance
+      }, { status: 402 })
+    }
+
     console.log(`[Refine Treatment] Refining section "${section}" with instructions: ${instructions.substring(0, 100)}...`)
     console.log(`[Refine Treatment] Using maxTokens: ${maxTokens} for section: ${section}`)
     
@@ -171,11 +195,16 @@ ${strictJsonPromptSuffix}`
 
     console.log(`[Refine Treatment] Successfully refined ${Object.keys(filteredDraft).length} fields in section "${section}"`)
 
+    // Charge credits after successful refinement
+    await CreditService.charge(userId, BLUEPRINT_REFINE_CREDIT_COST, `Blueprint Refine (${section})`)
+    console.log(`[Refine Treatment] Charged ${BLUEPRINT_REFINE_CREDIT_COST} credits to user ${userId}`)
+
     return NextResponse.json({
       success: true,
       draft: filteredDraft,
       section,
-      fieldsUpdated: Object.keys(filteredDraft)
+      fieldsUpdated: Object.keys(filteredDraft),
+      creditsUsed: BLUEPRINT_REFINE_CREDIT_COST
     })
 
   } catch (error) {

@@ -1,21 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { CreditService } from '@/services/CreditService'
+import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 import { V2BlueprintRequest, analyzeBlueprintV2, analyzeBlueprintV2Batch } from '@/domain/blueprint/v2/BlueprintService'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
 
+const BLUEPRINT_ANALYZE_CREDIT_COST = BLUEPRINT_CREDITS.BLUEPRINT_ANALYZE // 20 credits
+
 export async function POST(request: NextRequest) {
   const reqId = crypto.randomUUID()
   let parsedInput: any = null
   try {
+    // Get session and user ID for credit charging
+    const session = await getServerSession(authOptions as any).catch(() => null)
+    const userId = (session?.user as any)?.id
+    if (!userId) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401, headers: { 'x-sf-request-id': reqId } })
+    }
+
     const body = await request.json()
     const input = V2BlueprintRequest.parse(body)
     parsedInput = input
 
+    // Check credits before AI generation
+    const creditCheck = await CreditService.ensureCredits(userId, BLUEPRINT_ANALYZE_CREDIT_COST, 'Blueprint Analyze V2')
+    if (!creditCheck.hasCredits) {
+      return NextResponse.json({
+        success: false,
+        error: creditCheck.message,
+        creditsRequired: BLUEPRINT_ANALYZE_CREDIT_COST,
+        creditsAvailable: creditCheck.currentBalance
+      }, { status: 402, headers: { 'x-sf-request-id': reqId } })
+    }
+
     // If variants requested >1, use batch generation to return multiple ideas in a single call
     if ((input.variants || 1) > 1) {
       const { items, provider, model } = await analyzeBlueprintV2Batch(input)
-      return NextResponse.json({ success: true, data: items, debug: { api: 'v2-blueprint', provider, model, reqId, batch: true } }, {
+      
+      // Charge credits after successful generation
+      await CreditService.charge(userId, BLUEPRINT_ANALYZE_CREDIT_COST, 'Blueprint Analyze V2 (Batch)')
+      console.log(`[Blueprint V2] Charged ${BLUEPRINT_ANALYZE_CREDIT_COST} credits to user ${userId} for batch analysis`)
+      
+      return NextResponse.json({ success: true, data: items, creditsUsed: BLUEPRINT_ANALYZE_CREDIT_COST, debug: { api: 'v2-blueprint', provider, model, reqId, batch: true } }, {
         headers: {
           'x-sf-api': 'v2-blueprint',
           'x-sf-provider': provider,
@@ -28,7 +57,11 @@ export async function POST(request: NextRequest) {
 
     const { data, provider, model } = await analyzeBlueprintV2(input)
 
-    return NextResponse.json({ success: true, data, debug: { api: 'v2-blueprint', provider, model, reqId, batch: false } }, {
+    // Charge credits after successful generation
+    await CreditService.charge(userId, BLUEPRINT_ANALYZE_CREDIT_COST, 'Blueprint Analyze V2')
+    console.log(`[Blueprint V2] Charged ${BLUEPRINT_ANALYZE_CREDIT_COST} credits to user ${userId} for single analysis`)
+
+    return NextResponse.json({ success: true, data, creditsUsed: BLUEPRINT_ANALYZE_CREDIT_COST, debug: { api: 'v2-blueprint', provider, model, reqId, batch: false } }, {
       headers: {
         'x-sf-api': 'v2-blueprint',
         'x-sf-provider': provider,
