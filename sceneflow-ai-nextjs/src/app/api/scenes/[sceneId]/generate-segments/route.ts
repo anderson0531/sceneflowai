@@ -972,11 +972,19 @@ async function callGeminiForIntelligentSegmentation(prompt: string): Promise<Int
       const result = await generateText(prompt, {
         model: 'gemini-2.5-flash',
         temperature: 0.7,
-        maxOutputTokens: 16384,
-        responseMimeType: 'application/json'
+        maxOutputTokens: 32768, // Increased for complex segmentation responses
+        responseMimeType: 'application/json',
+        timeoutMs: 100000, // 100s timeout (buffer for Vercel's 120s limit)
+        thinkingBudget: 0, // Disable thinking mode to reduce latency
       })
       
-      console.log(`[Scene Segmentation] Success with Vertex AI`)
+      console.log(`[Scene Segmentation] Success with Vertex AI, finishReason: ${result.finishReason || 'unknown'}`)
+      
+      // Check for truncated response due to token limit
+      if (result.finishReason === 'MAX_TOKENS') {
+        console.warn('[Scene Segmentation] Response may be truncated (MAX_TOKENS), attempting parse...')
+      }
+      
       return parseGeminiResponseText(result.text)
     } catch (vertexError: any) {
       console.warn(`[Scene Segmentation] Vertex AI failed, trying Gemini API fallback:`, vertexError?.message)
@@ -996,7 +1004,7 @@ async function callGeminiForIntelligentSegmentation(prompt: string): Promise<Int
     model: 'gemini-2.5-flash',
     generationConfig: {
       temperature: 0.7,
-      maxOutputTokens: 16384,
+      maxOutputTokens: 32768, // Increased for complex segmentation responses
       responseMimeType: 'application/json'
     }
   })
@@ -1017,11 +1025,31 @@ function parseGeminiResponseText(text: string): IntelligentSegment[] {
   let segments: IntelligentSegment[]
   try {
     // Remove markdown code blocks if present
-    const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+    let cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+    
+    // Try to repair truncated JSON arrays
+    if (!cleanedText.endsWith(']')) {
+      console.warn('[Scene Segmentation] JSON appears truncated, attempting repair...')
+      
+      // Find the last complete object by looking for the last "}," or "}"
+      const lastCompleteObjectEnd = cleanedText.lastIndexOf('},')
+      const lastObjectEnd = cleanedText.lastIndexOf('}')
+      
+      if (lastCompleteObjectEnd > 0) {
+        // There are complete objects followed by incomplete ones
+        cleanedText = cleanedText.substring(0, lastCompleteObjectEnd + 1) + ']'
+        console.log('[Scene Segmentation] Repaired JSON by removing incomplete trailing object')
+      } else if (lastObjectEnd > 0 && cleanedText.startsWith('[')) {
+        // Only one object, try to close it
+        cleanedText = cleanedText.substring(0, lastObjectEnd + 1) + ']'
+        console.log('[Scene Segmentation] Repaired JSON by closing array')
+      }
+    }
+    
     segments = JSON.parse(cleanedText)
   } catch (parseError) {
     console.error('[Scene Segmentation] JSON parse error:', parseError)
-    console.error('[Scene Segmentation] Response text:', text.substring(0, 1000))
+    console.error('[Scene Segmentation] Response text:', text.substring(0, 1500))
     throw new Error('Failed to parse segments JSON')
   }
 
