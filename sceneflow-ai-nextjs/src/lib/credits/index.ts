@@ -22,6 +22,11 @@ export {
   RENDER_CREDITS,
   STORAGE_CREDITS,
   
+  // BYOK (Bring Your Own Key) discount
+  BYOK_PLATFORM_FEE_PERCENT,
+  calculateBYOKCredits,
+  getEffectiveCredits,
+  
   // Plan definitions
   SUBSCRIPTION_PLANS,
   TOP_UP_PACKS,
@@ -70,3 +75,17 @@ export {
   type LowCreditEmailData,
   type ToastContent,
 } from './nudgeRecommendation'
+
+// Cost tracking and reconciliation
+export {
+  logProviderCost,
+  trackCost,
+  calculateMargin as calculateCostMargin,
+  getEstimatedProviderCost,
+  generateReconciliationReport,
+  TARGET_MARGINS,
+  MARGIN_ALERT_THRESHOLD,
+  type ProviderCostLog,
+  type MarginAlert,
+  type ReconciliationReport,
+} from './costTracking'

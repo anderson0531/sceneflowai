@@ -48,6 +48,43 @@ export function creditsToUsd(credits: number): number {
 }
 
 // =============================================================================
+// BYOK (Bring Your Own Key) DISCOUNT
+// =============================================================================
+
+/**
+ * BYOK Platform Fee: 20% of standard credits
+ * When users use their own API keys, they still pay a platform fee
+ * for infrastructure, tooling, and orchestration.
+ */
+export const BYOK_PLATFORM_FEE_PERCENT = 0.20;
+
+/**
+ * Calculate BYOK platform fee (20% of standard price)
+ * Use this when user provides their own API key for a service.
+ * 
+ * Example: 
+ * - Standard image generation: 10 credits
+ * - BYOK image generation: 2 credits (20% platform fee)
+ * 
+ * @param standardCredits - The standard credit cost
+ * @returns The BYOK discounted credit cost (minimum 1 credit)
+ */
+export function calculateBYOKCredits(standardCredits: number): number {
+  return Math.max(1, Math.ceil(standardCredits * BYOK_PLATFORM_FEE_PERCENT));
+}
+
+/**
+ * Get the appropriate credit cost based on BYOK status
+ * 
+ * @param standardCredits - The standard credit cost
+ * @param hasBYOK - Whether the user is using their own API key
+ * @returns The credit cost to charge
+ */
+export function getEffectiveCredits(standardCredits: number, hasBYOK: boolean = false): number {
+  return hasBYOK ? calculateBYOKCredits(standardCredits) : standardCredits;
+}
+
+// =============================================================================
 // PROFIT GUARDRAILS
 // =============================================================================
 

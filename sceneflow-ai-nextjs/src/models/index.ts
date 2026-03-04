@@ -18,6 +18,7 @@ import CollabRecommendation from './CollabRecommendation'
 import CollabChatMessage from './CollabChatMessage'
 import SubscriptionTier from './SubscriptionTier'
 import RateCard from './RateCard'
+import CreditPricing from './CreditPricing'
 // Compliance Layer models
 import VoiceConsent from './VoiceConsent'
 import UserVoiceClone from './UserVoiceClone'
@@ -168,6 +169,7 @@ export {
   AIPricing,
   CreditLedger,
   AIUsage,
+  CreditPricing,
   CollabSession,
   CollabParticipant,
   CollabScore,
@@ -196,6 +198,7 @@ export default {
   AIPricing,
   CreditLedger,
   AIUsage,
+  CreditPricing,
   CollabSession,
   CollabParticipant,
   CollabScore,

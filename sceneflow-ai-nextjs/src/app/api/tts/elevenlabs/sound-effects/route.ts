@@ -1,10 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { put } from '@vercel/blob'
+import { AUDIO_CREDITS } from '@/lib/credits/creditCosts'
+import { CreditService } from '@/services/CreditService'
+import { trackCost } from '@/lib/credits/costTracking'
 
 export const dynamic = 'force-dynamic'
 
+// SFX credit cost is 15 credits per generation
+const SFX_CREDIT_COST = AUDIO_CREDITS.SOUND_EFFECT // 15 credits
+
 export async function POST(request: NextRequest) {
   try {
+    // Get user session for credit charging
+    const session = await getServerSession(authOptions)
+    const userId = session?.user?.id || session?.user?.email
+    
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized - please sign in' }, { status: 401 })
+    }
+    
+    // Check if user has sufficient credits
+    const hasCredits = await CreditService.ensureCredits(userId, SFX_CREDIT_COST)
+    if (!hasCredits) {
+      return NextResponse.json({ 
+        error: 'Insufficient credits', 
+        required: SFX_CREDIT_COST,
+        operation: 'sound_effect_generation'
+      }, { status: 402 })
+    }
+    
     const { text, duration, projectId, sceneId, saveToBlob = false } = await request.json()
 
     if (!text || typeof text !== 'string') {
@@ -62,6 +88,27 @@ export async function POST(request: NextRequest) {
 
     const arrayBuffer = await response.arrayBuffer()
     console.log('[SFX] Sound effect generated successfully, size:', arrayBuffer.byteLength)
+    
+    // Charge credits after successful generation
+    try {
+      await CreditService.charge(
+        userId,
+        SFX_CREDIT_COST,
+        'ai_usage',
+        null,
+        { operation: 'elevenlabs_sfx', duration: durationSeconds, prompt: text.substring(0, 100) }
+      )
+      console.log(`[SFX] Charged ${SFX_CREDIT_COST} credits to user ${userId}`)
+      
+      // Track cost for reconciliation
+      await trackCost(userId, 'elevenlabs_sfx', SFX_CREDIT_COST, { 
+        projectId,
+        sceneId
+      })
+    } catch (chargeError: any) {
+      console.error('[SFX] Failed to charge credits:', chargeError)
+      // Don't fail the request if credit charge fails - the user already got the audio
+    }
     
     // Optionally save to Vercel Blob for persistence
     if (saveToBlob) {

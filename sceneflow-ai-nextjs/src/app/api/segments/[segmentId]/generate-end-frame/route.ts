@@ -4,9 +4,15 @@ import { generateImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageCli
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
+import { CreditService } from '@/services/CreditService'
+import { trackCost } from '@/lib/credits/costTracking'
 
 export const maxDuration = 60 // 1 minute for image generation
 export const runtime = 'nodejs'
+
+// End frame generation uses Imagen 3 - same as FRAME_GENERATION cost
+const END_FRAME_CREDIT_COST = IMAGE_CREDITS.FRAME_GENERATION // 10 credits
 
 interface GenerateEndFrameRequest {
   startFrameUrl: string
@@ -46,8 +52,20 @@ export async function POST(
 
     // Get user session for authentication
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    const userId = session?.user?.id || session?.user?.email
+    
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    
+    // Check if user has sufficient credits
+    const hasCredits = await CreditService.ensureCredits(userId, END_FRAME_CREDIT_COST)
+    if (!hasCredits) {
+      return NextResponse.json({ 
+        error: 'Insufficient credits', 
+        required: END_FRAME_CREDIT_COST,
+        operation: 'end_frame_generation'
+      }, { status: 402 })
     }
 
     if (!startFrameUrl || !segmentPrompt) {
@@ -133,6 +151,27 @@ export async function POST(
     )
 
     console.log('[Generate End Frame] Successfully generated and uploaded:', endFrameUrl)
+
+    // Charge credits after successful generation
+    try {
+      await CreditService.charge(
+        userId,
+        END_FRAME_CREDIT_COST,
+        'ai_usage',
+        segmentId,
+        { operation: 'end_frame_generation', segmentId, aspectRatio, hasCharacterRefs: hasCharacterPortraitRefs }
+      )
+      console.log(`[Generate End Frame] Charged ${END_FRAME_CREDIT_COST} credits to user ${userId}`)
+      
+      // Track cost for reconciliation
+      await trackCost(userId, 'end_frame_generation', END_FRAME_CREDIT_COST, {
+        imageCount: 1,
+        segmentId
+      })
+    } catch (chargeError: any) {
+      console.error('[Generate End Frame] Failed to charge credits:', chargeError)
+      // Don't fail the request if credit charge fails - the user already got the frame
+    }
 
     return NextResponse.json({
       success: true,
