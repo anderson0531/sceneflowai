@@ -35,13 +35,15 @@ function transformProject(project: DashboardProject, index: number) {
   const visionPhase = project.metadata?.visionPhase
   const scenes = visionPhase?.script?.script?.scenes || visionPhase?.scenes || []
   
-  // Get thumbnail from first scene image or project thumbnail
+  // Get thumbnail - prioritize billboard, then thumbnail, then first scene image
   const thumbnailUrl = 
+    project.metadata?.billboardUrl ||
+    visionPhase?.billboardUrl ||
     project.metadata?.thumbnailUrl || 
     project.metadata?.thumbnail ||
+    visionPhase?.thumbnailUrl ||
     scenes[0]?.imageUrl ||
     scenes[0]?.generatedImage?.url ||
-    visionPhase?.thumbnailUrl ||
     null
   
   // Calculate average scene score
@@ -52,9 +54,10 @@ function transformProject(project: DashboardProject, index: number) {
     ? Math.round(sceneScores.reduce((a: number, b: number) => a + b, 0) / sceneScores.length)
     : 75
 
-  // Director score from metadata or default
-  const directorScore = project.metadata?.directorScore || avgScene + 5
-  const audienceScore = project.metadata?.audienceScore || avgScene - 3
+  // Extract Audience Resonance score from vision phase reviews
+  const audienceResonanceScore = visionPhase?.reviews?.audience?.overallScore || 
+    project.metadata?.audienceScore || 
+    avgScene
 
   // Determine next step based on current step
   const getNextStep = () => {
@@ -91,7 +94,7 @@ function transformProject(project: DashboardProject, index: number) {
       name: config.name,
       description: config.description,
       estimatedCredits: scenes.length * 10 || 35,
-      actionLabel: project.progress >= 100 ? 'View Project' : 'Continue',
+      actionLabel: project.progress >= 100 ? 'View Project' : 'Resume',
       actionUrl: config.url,
       isComplete: project.progress >= 100
     }
@@ -113,11 +116,7 @@ function transformProject(project: DashboardProject, index: number) {
     totalSteps,
     phaseName,
     progressPercent: project.progress,
-    scores: {
-      director: Math.min(100, Math.max(0, directorScore)),
-      audience: Math.min(100, Math.max(0, audienceScore)),
-      avgScene: Math.min(100, Math.max(0, avgScene))
-    },
+    audienceResonanceScore: Math.min(100, Math.max(0, audienceResonanceScore)),
     nextStep: getNextStep(),
     estimatedCredits: scenes.length * 50 || 250,
     lastActive: formatRelativeTime(project.updatedAt),

@@ -1,17 +1,11 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { FolderOpen, Play, ChevronRight, CheckCircle, AlertTriangle, Lightbulb, X, Film } from 'lucide-react'
+import { FolderOpen, Play, ChevronRight, CheckCircle, AlertTriangle, Lightbulb, X, Film, Users } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 import { useState } from 'react'
 import Image from 'next/image'
-
-interface ReviewScores {
-  director: number
-  audience: number
-  avgScene?: number
-}
 
 interface NextStep {
   name: string
@@ -41,7 +35,7 @@ interface ActiveProjectCardProps {
   totalSteps: number
   phaseName: string
   progressPercent: number
-  scores: ReviewScores
+  audienceResonanceScore: number
   nextStep: NextStep
   cueTip?: CueTip
   estimatedCredits: number
@@ -49,39 +43,6 @@ interface ActiveProjectCardProps {
   budgetStatus: 'on-track' | 'near-limit' | 'over-budget'
   collaborators?: number
   index?: number
-}
-
-function ReviewScoreBadge({ 
-  label, 
-  icon, 
-  score 
-}: { 
-  label: string
-  icon: React.ReactNode
-  score: number 
-}) {
-  const getScoreStatus = (score: number) => {
-    if (score >= 85) return { color: 'bg-green-500', status: '🟢', barColor: 'bg-green-500' }
-    if (score >= 75) return { color: 'bg-yellow-500', status: '🟡', barColor: 'bg-yellow-500' }
-    return { color: 'bg-red-500', status: '🔴', barColor: 'bg-red-500' }
-  }
-
-  const { status, barColor } = getScoreStatus(score)
-
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-gray-400">{icon}</span>
-      <span className="text-sm text-gray-300 w-16">{label}</span>
-      <span className="text-sm font-bold text-white w-8">{score}</span>
-      <div className="flex-1 bg-gray-700 rounded-full h-2 max-w-[100px]">
-        <div 
-          className={`h-2 rounded-full transition-all duration-300 ${barColor}`}
-          style={{ width: `${score}%` }}
-        />
-      </div>
-      <span className="text-xs">{status}</span>
-    </div>
-  )
 }
 
 function NextStepPanel({ nextStep }: { nextStep: NextStep }) {
@@ -131,7 +92,7 @@ export function ActiveProjectCard({
   totalSteps,
   phaseName,
   progressPercent,
-  scores,
+  audienceResonanceScore,
   nextStep,
   cueTip,
   estimatedCredits,
@@ -227,27 +188,27 @@ export function ActiveProjectCard({
             </div>
           </div>
 
-          {/* Column 2: Review Scores */}
+          {/* Column 2: Audience Resonance */}
           <div className="bg-gray-900/50 rounded-lg p-4">
-            <h4 className="text-xs uppercase tracking-wider text-gray-500 mb-3">Review Scores</h4>
-            <div className="space-y-3">
-              <ReviewScoreBadge 
-                label="Director" 
-                icon="🎬" 
-                score={scores.director} 
-              />
-              <ReviewScoreBadge 
-                label="Audience" 
-                icon="👥" 
-                score={scores.audience} 
-              />
-              {scores.avgScene && (
-                <div className="pt-2 border-t border-gray-700">
-                  <div className="text-xs text-gray-500">
-                    Avg Scene: <span className="text-white font-medium">{scores.avgScene}</span>
-                  </div>
-                </div>
-              )}
+            <h4 className="text-xs uppercase tracking-wider text-gray-500 mb-3">Audience Resonance</h4>
+            <div className="flex flex-col items-center justify-center h-full">
+              <div className="flex items-center gap-3 mb-4">
+                <Users className="w-8 h-8 text-blue-400" />
+                <span className="text-4xl font-bold text-white">{audienceResonanceScore}</span>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-3">
+                <div 
+                  className={`h-3 rounded-full transition-all duration-300 ${
+                    audienceResonanceScore >= 85 ? 'bg-green-500' :
+                    audienceResonanceScore >= 75 ? 'bg-yellow-500' : 'bg-red-500'
+                  }`}
+                  style={{ width: `${audienceResonanceScore}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                {audienceResonanceScore >= 85 ? '🟢 Excellent' :
+                 audienceResonanceScore >= 75 ? '🟡 Good' : '🔴 Needs Work'}
+              </p>
             </div>
           </div>
 
@@ -326,12 +287,6 @@ export function ActiveProjectCard({
             </>
           )}
         </div>
-        <Link href={`/dashboard/workflow/vision/${id}`}>
-          <Button size="sm" variant="outline" className="border-gray-600 text-gray-300 hover:text-white hover:border-gray-500">
-            Open Project
-            <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
-        </Link>
       </div>
     </motion.div>
   )
