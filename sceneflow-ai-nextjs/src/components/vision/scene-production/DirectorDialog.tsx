@@ -508,11 +508,11 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
           </div>
 
           {/* Preview Area */}
-          <div className="col-span-7 bg-black rounded-lg min-h-[300px] flex items-center justify-center relative overflow-hidden">
+          <div className="col-span-7 bg-black rounded-lg flex items-center justify-center relative overflow-hidden">
             {/* Visual Logic based on Mode */}
             {mode === 'CINEMATIC' ? (
               /* Cinematic Element Preview */
-              <div className="p-6 w-full flex flex-col items-center justify-center">
+              <div className="p-6 w-full flex flex-col items-center justify-center min-h-[200px]">
                 {(() => {
                   const config = getCinematicElementConfig(cinematicType)
                   const IconComponent = config.icon
@@ -536,44 +536,52 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 })()}
               </div>
             ) : mode === 'FRAME_TO_VIDEO' && startFrameUrl && endFrameUrl ? (
-              <div className="flex items-center gap-4 p-4">
+              <div className="flex items-center gap-4 p-4 w-full">
                 <div className="flex-1 relative">
-                  <img 
-                    src={startFrameUrl} 
-                    alt="Start Frame"
-                    className="w-full rounded-lg opacity-90 border border-slate-700" 
-                  />
+                  <div className="aspect-video w-full">
+                    <img 
+                      src={startFrameUrl} 
+                      alt="Start Frame"
+                      className="w-full h-full object-contain rounded-lg border border-slate-700" 
+                    />
+                  </div>
                   <Badge className="absolute top-2 left-2 bg-slate-800">Start</Badge>
                 </div>
-                <div className="flex items-center justify-center">
+                <div className="flex items-center justify-center flex-shrink-0">
                   <ArrowRight className="w-8 h-8 text-indigo-400" />
                 </div>
                 <div className="flex-1 relative">
-                  <img 
-                    src={endFrameUrl} 
-                    alt="End Frame"
-                    className="w-full rounded-lg opacity-90 border border-slate-700" 
-                  />
+                  <div className="aspect-video w-full">
+                    <img 
+                      src={endFrameUrl} 
+                      alt="End Frame"
+                      className="w-full h-full object-contain rounded-lg border border-slate-700" 
+                    />
+                  </div>
                   <Badge className="absolute top-2 left-2 bg-slate-800">End</Badge>
                 </div>
               </div>
             ) : mode === 'EXTEND' && hasExistingVideo ? (
               <div className="p-4 w-full">
-                <video 
-                  src={segment.activeAssetUrl!}
-                  className="w-full rounded-lg border border-slate-700"
-                  controls
-                  muted
-                />
+                <div className="aspect-video w-full">
+                  <video 
+                    src={segment.activeAssetUrl!}
+                    className="w-full h-full object-contain rounded-lg border border-slate-700"
+                    controls
+                    muted
+                  />
+                </div>
                 <Badge className="absolute top-2 left-2 bg-slate-800">Source Video</Badge>
               </div>
             ) : (startFrameUrl || sceneImageUrl) ? (
               <div className="p-4 w-full">
-                <img 
-                  src={startFrameUrl || sceneImageUrl} 
-                  alt="Reference Frame"
-                  className="w-full rounded-lg opacity-90 border border-slate-700" 
-                />
+                <div className="aspect-video w-full">
+                  <img 
+                    src={startFrameUrl || sceneImageUrl} 
+                    alt="Reference Frame"
+                    className="w-full h-full object-contain rounded-lg border border-slate-700" 
+                  />
+                </div>
                 <Badge className="absolute top-2 left-2 bg-slate-800">Reference Image</Badge>
               </div>
             ) : (
