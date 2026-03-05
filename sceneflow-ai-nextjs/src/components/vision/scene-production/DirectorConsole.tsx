@@ -62,6 +62,7 @@ import type {
   AudioTrackTimingSettings,
   SceneAudioConfig,
   ProductionStream,
+  TextOverlay,
 } from './types'
 import { DirectorDialog } from './DirectorDialog'
 import { VideoEditingDialog } from './VideoEditingDialog'
@@ -243,8 +244,8 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   const [selectedStreamLanguage, setSelectedStreamLanguage] = useState('en')
   
   // Text overlays state - titles, lower thirds, subtitles
-  const [textOverlays, setTextOverlays] = useState<import('./SceneProductionMixer').TextOverlay[]>(
-    (productionData?.textOverlays as import('./SceneProductionMixer').TextOverlay[]) || []
+  const [textOverlays, setTextOverlays] = useState<TextOverlay[]>(
+    (productionData?.textOverlays as TextOverlay[]) || []
   )
   
   // Segment-specific playback: start player at this segment index
@@ -436,7 +437,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   // === Text Overlay Handlers ===
   
   // Handle text overlay changes - update local state and persist to database
-  const handleTextOverlaysChange = useCallback((newOverlays: import('./SceneProductionMixer').TextOverlay[]) => {
+  const handleTextOverlaysChange = useCallback((newOverlays: TextOverlay[]) => {
     setTextOverlays(newOverlays)
     
     // Persist to database via onProductionDataChange
