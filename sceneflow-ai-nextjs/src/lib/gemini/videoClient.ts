@@ -280,7 +280,9 @@ export async function generateVideoWithVeo(
     parameters.negativePrompt = options.negativePrompt
   }
 
-  // Add last frame for interpolation
+  // Add last frame for FTV interpolation mode
+  // IMPORTANT: lastFrame must go in the INSTANCE object alongside the start frame,
+  // NOT in parameters. The Veo API uses both frames from the instance to interpolate.
   if (options.lastFrame) {
     let lastFrameData: string
     let mimeType = 'image/png'
@@ -293,12 +295,14 @@ export async function generateVideoWithVeo(
       lastFrameData = options.lastFrame
     }
     
-    parameters.lastFrame = {
+    // lastFrame goes in instance, not parameters - this is critical for FTV to work
+    instance.lastFrame = {
       image: {
         bytesBase64Encoded: lastFrameData,
         mimeType: mimeType
       }
     }
+    console.log('[Veo Video] Added last frame for FTV interpolation, mimeType:', mimeType)
   }
 
   // Add reference images to instance (Veo 3.1 feature - T2V only, NOT compatible with I2V)
