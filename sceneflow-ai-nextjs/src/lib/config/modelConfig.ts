@@ -42,11 +42,12 @@ export const DEFAULT_VEO_QUALITY: VeoQualityTier = 'fast';
 
 /**
  * Default quality tier for FTV (Frame-to-Video) interpolation
- * Premium tier has significantly better "motion reasoning" for complex interpolations
- * Set FTV_USE_FAST=true to use fast tier for FTV (cost savings, lower quality)
+ * Fast tier is more stable for FTV interpolation (March 2026)
+ * Premium tier has better "motion reasoning" but may crash due to VRAM limits
+ * Set FTV_USE_PREMIUM=true to use premium tier for FTV (higher quality, less stable)
  */
 export const DEFAULT_FTV_QUALITY: VeoQualityTier = 
-  process.env.FTV_USE_FAST === 'true' ? 'fast' : 'premium';
+  process.env.FTV_USE_PREMIUM === 'true' ? 'premium' : 'fast';
 
 /** Get Veo model name for quality tier */
 export function getVeoModel(quality: VeoQualityTier | ModelQuality = DEFAULT_VEO_QUALITY): string {

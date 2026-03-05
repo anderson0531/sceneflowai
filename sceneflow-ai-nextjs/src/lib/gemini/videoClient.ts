@@ -254,6 +254,21 @@ export async function generateVideoWithVeo(
   // Note: For Veo 3 text-to-video, personGeneration must be 'allow_all'
   // For image-to-video, it should be 'allow_adult'
   const isImageToVideo = !!options.startFrame
+  const isFTV = !!options.startFrame && !!options.lastFrame
+  
+  // FTV Stability Constraints (March 2026):
+  // - Duration MUST be 8s (temporal bridge calculation is hardcoded for 8s)
+  // - Resolution MUST be 720p (reduces VRAM load by ~55% vs 1080p)
+  // - Fast tier recommended (handles bidirectional constraints better)
+  if (isFTV) {
+    if (options.durationSeconds && options.durationSeconds !== 8) {
+      console.warn(`[Veo Video] FTV mode: Overriding duration ${options.durationSeconds}s → 8s (required for stability)`)
+    }
+    if (options.resolution && options.resolution !== '720p') {
+      console.warn(`[Veo Video] FTV mode: Overriding resolution ${options.resolution} → 720p (required for stability)`)
+    }
+    console.log('[Veo Video] FTV MODE: Enforcing stability constraints (8s duration, 720p resolution)')
+  }
   
   // Safety setting: Use configurable setting from environment (default: 'block_only_high')
   // This reduces false positives for dramatic/cinematic content while still blocking egregious content
@@ -263,15 +278,19 @@ export async function generateVideoWithVeo(
   
   const parameters: Record<string, any> = {
     aspectRatio: options.aspectRatio || '16:9',
-    durationSeconds: options.durationSeconds || 8,
+    // FTV requires exactly 8s duration for stability
+    durationSeconds: isFTV ? 8 : (options.durationSeconds || 8),
     personGeneration: personGeneration,
     safetySetting: safetySetting
   }
   
-  console.log('[Veo Video] Safety settings:', { safetySetting, personGeneration, isImageToVideo })
+  console.log('[Veo Video] Safety settings:', { safetySetting, personGeneration, isImageToVideo, isFTV })
 
-  // Add resolution if 1080p (720p is default)
-  if (options.resolution === '1080p') {
+  // Add resolution - FTV requires 720p for stability, others can use 1080p
+  if (isFTV) {
+    // FTV: Force 720p to prevent VRAM overflow
+    parameters.resolution = '720p'
+  } else if (options.resolution === '1080p') {
     parameters.resolution = '1080p'
   }
 

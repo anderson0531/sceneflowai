@@ -296,6 +296,8 @@ export async function generateVideoWithGeminiStudio(
   }
   
   // Add last frame for interpolation (FTV mode)
+  // CRITICAL: Gemini API uses snake_case 'last_frame' in the config/parameters object
+  // This is different from Vertex AI which uses camelCase 'lastFrame' in the instance
   if (options.lastFrame) {
     let imageData: string
     let mimeType = 'image/png'
@@ -316,12 +318,27 @@ export async function generateVideoWithGeminiStudio(
       imageData = options.lastFrame
     }
     
-    // lastFrame goes in instance for FTV interpolation
-    instance.lastFrame = {
+    // Gemini API: last_frame goes in PARAMETERS (config), not instance
+    // Use snake_case per Python SDK: config.last_frame
+    parameters.last_frame = {
       bytesBase64Encoded: imageData,
       mimeType: mimeType
     }
-    console.log('[Gemini Studio Video] Added last frame for FTV interpolation')
+    
+    // FTV Stability Constraints (March 2026):
+    // - Duration MUST be 8s (temporal bridge calculation hardcoded)
+    // - Resolution MUST be 720p (prevents VRAM overflow)
+    if (parameters.durationSeconds && parameters.durationSeconds !== 8) {
+      console.warn(`[Gemini Studio Video] FTV mode: Overriding duration ${parameters.durationSeconds}s → 8s (required for stability)`)
+    }
+    if (parameters.resolution && parameters.resolution !== '720p') {
+      console.warn(`[Gemini Studio Video] FTV mode: Overriding resolution ${parameters.resolution} → 720p (required for stability)`)
+    }
+    parameters.durationSeconds = 8
+    parameters.resolution = '720p'
+    
+    console.log('[Gemini Studio Video] FTV MODE: last_frame added to parameters (snake_case)')
+    console.log('[Gemini Studio Video] FTV MODE: Enforcing stability constraints (8s duration, 720p resolution)')
   }
   
   // Add reference images (REF mode) - T2V only, not compatible with I2V
@@ -374,14 +391,17 @@ export async function generateVideoWithGeminiStudio(
   console.log('[Gemini Studio Video] Instance keys:', Object.keys(instance))
   console.log('[Gemini Studio Video] Parameters keys:', Object.keys(parameters))
   
-  // FTV Debug: Confirm frame fields are at correct level (instance, not parameters)
-  if (instance.image && instance.lastFrame) {
-    console.log('[Gemini Studio Video] FTV MODE CONFIRMED:')
+  // FTV Debug: Confirm frame fields are at correct level
+  // Gemini API: image in instance, last_frame in parameters (snake_case)
+  if (instance.image && parameters.last_frame) {
+    console.log('[Gemini Studio Video] FTV MODE CONFIRMED (Gemini API schema):')
     console.log('[Gemini Studio Video]   - image (start frame): Present at instance level ✓')
-    console.log('[Gemini Studio Video]   - lastFrame (end frame): Present at instance level ✓')
+    console.log('[Gemini Studio Video]   - last_frame (end frame): Present at parameters level (snake_case) ✓')
+    console.log('[Gemini Studio Video]   - durationSeconds:', parameters.durationSeconds, '(should be 8)')
+    console.log('[Gemini Studio Video]   - resolution:', parameters.resolution, '(should be 720p)')
     console.log('[Gemini Studio Video]   - referenceImages: ', instance.referenceImages ? 'PRESENT (may conflict!)' : 'Not present ✓')
   } else if (instance.image) {
-    console.log('[Gemini Studio Video] I2V MODE: image present, no lastFrame')
+    console.log('[Gemini Studio Video] I2V MODE: image present, no last_frame')
   }
   
   // Debug: Log full request structure (with base64 truncated)
@@ -389,8 +409,9 @@ export async function generateVideoWithGeminiStudio(
   if (debugRequestBody.instances?.[0]?.image?.bytesBase64Encoded) {
     debugRequestBody.instances[0].image.bytesBase64Encoded = `[BASE64_TRUNCATED: ${debugRequestBody.instances[0].image.bytesBase64Encoded.length} chars]`
   }
-  if (debugRequestBody.instances?.[0]?.lastFrame?.bytesBase64Encoded) {
-    debugRequestBody.instances[0].lastFrame.bytesBase64Encoded = `[BASE64_TRUNCATED: ${debugRequestBody.instances[0].lastFrame.bytesBase64Encoded.length} chars]`
+  // last_frame is now in parameters, not instance
+  if (debugRequestBody.parameters?.last_frame?.bytesBase64Encoded) {
+    debugRequestBody.parameters.last_frame.bytesBase64Encoded = `[BASE64_TRUNCATED: ${debugRequestBody.parameters.last_frame.bytesBase64Encoded.length} chars]`
   }
   if (debugRequestBody.instances?.[0]?.referenceImages) {
     debugRequestBody.instances[0].referenceImages = debugRequestBody.instances[0].referenceImages.map((ref: any) => ({
