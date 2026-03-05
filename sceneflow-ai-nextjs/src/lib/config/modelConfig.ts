@@ -30,10 +30,10 @@ export type ModelQuality = 'fast' | 'standard';
 export type VeoQualityTier = 'fast' | 'premium';
 
 export const VEO_MODELS = {
-  /** Veo 3 Fast - ~$0.15-0.25/sec, 1080p, faster generation */
-  fast: 'veo-3.0-fast-generate-preview',
+  /** Veo 3.1 Fast - ~$0.20/sec, 1080p, faster generation, supports FTV (lastFrame) */
+  fast: 'veo-3.1-fast-generate-preview',
   
-  /** Veo 3.1 Premium - ~$0.75/sec, 4K capable, best quality */
+  /** Veo 3.1 Premium - ~$0.75/sec, 4K capable, best quality, supports FTV (lastFrame) */
   premium: 'veo-3.1-generate-preview',
 } as const;
 
