@@ -87,8 +87,11 @@ function sanitizeFTVPrompt(prompt: string): string {
  * 
  * Design Decision: Anchoring phrase is prepended, not appended, because testing
  * shows Veo prioritizes early prompt content for compositional decisions.
+ * 
+ * NEW: If the base prompt already contains transition/interpolation language,
+ * we skip the anchoring phrase to avoid duplicate/conflicting instructions.
  */
-function generateFTVMotionPrompt(segment: SceneSegment): string {
+function generateFTVMotionPrompt(segment: SceneSegment, skipAnchoringPhrase?: boolean): string {
   // FTV-specific anchoring phrase (PREPENDED for priority)
   const anchoringPhrase = 'IMPORTANT: The final frame must exactly match the provided end keyframe. Maintain character position, appearance, and framing throughout. Smoothly interpolate between start and end frames.'
   
@@ -130,6 +133,15 @@ function generateFTVMotionPrompt(segment: SceneSegment): string {
     if (!isConflicting && !basePrompt.toLowerCase().includes('camera')) {
       basePrompt = `Camera ${cameraMovement}. ${basePrompt}`
     }
+  }
+  
+  // Check if base prompt already has transition/interpolation language
+  const hasTransitionLanguage = /\b(interpolat|transition|between.*frame|start.*end\s*frame|end\s*keyframe|final\s*frame|smoothly\s*(interpolate|transition)|match.*end)\b/i.test(basePrompt)
+  
+  // Skip anchoring if explicitly requested OR if prompt already has transition language
+  if (skipAnchoringPhrase || hasTransitionLanguage) {
+    console.log('[FTV Prompt] Skipping anchoring phrase:', skipAnchoringPhrase ? 'explicitly requested' : 'prompt already has transition language')
+    return basePrompt
   }
   
   // PREPEND anchoring phrase for maximum Veo priority

@@ -59,6 +59,9 @@ import {
   Loader2,
   Undo2,
   Send,
+  Users,
+  X,
+  Plus,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -85,6 +88,7 @@ const modeToMethod: Record<string, VideoGenerationMethod> = {
   'IMAGE_TO_VIDEO': 'I2V',
   'FRAME_TO_VIDEO': 'FTV',
   'EXTEND': 'EXT',
+  'REFERENCE_IMAGES': 'REF',
 }
 
 const methodToMode: Record<VideoGenerationMethod, string> = {
@@ -92,7 +96,7 @@ const methodToMode: Record<VideoGenerationMethod, string> = {
   'I2V': 'IMAGE_TO_VIDEO',
   'FTV': 'FRAME_TO_VIDEO',
   'EXT': 'EXTEND',
-  'REF': 'IMAGE_TO_VIDEO', // Fallback
+  'REF': 'REFERENCE_IMAGES',
 }
 
 export const DirectorDialog: React.FC<DirectorDialogProps> = ({ 
@@ -123,6 +127,12 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const [isModifyingPrompt, setIsModifyingPrompt] = useState(false)
   const [isOptimizingForMode, setIsOptimizingForMode] = useState(false)
   const [promptHistory, setPromptHistory] = useState<string[]>([])  // For undo support
+  
+  // Reference images state (for REF mode - up to 3 character/style references)
+  const [referenceImages, setReferenceImages] = useState<string[]>([])
+  
+  // FTV prompt options
+  const [skipAnchoringPhrase, setSkipAnchoringPhrase] = useState(false)
   
   // Intelligent prompt modification handler
   const handleModifyPrompt = useCallback(async () => {
@@ -322,6 +332,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       sourceVideoUrl: autoConfig.sourceVideoUrl,
       approvalStatus: 'auto-ready',
       confidence: autoConfig.confidence,
+      // FTV options
+      skipAnchoringPhrase: method === 'FTV' ? skipAnchoringPhrase : undefined,
+      // Reference images (for REF mode)
+      referenceImages: method === 'REF' ? referenceImages : undefined,
     }
     onSaveConfig(savedConfig)
   }
@@ -350,6 +364,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       sourceVideoUrl: autoConfig.sourceVideoUrl,
       approvalStatus: 'auto-ready',
       confidence: autoConfig.confidence,
+      // FTV options
+      skipAnchoringPhrase: method === 'FTV' ? skipAnchoringPhrase : undefined,
+      // Reference images (for REF mode)
+      referenceImages: method === 'REF' ? referenceImages : undefined,
     }
     
     // Debug: Log FTV config to verify frame URLs are passed
@@ -381,6 +399,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     IMAGE_TO_VIDEO: !!startFrameUrl || !!sceneImageUrl,
     FRAME_TO_VIDEO: !!startFrameUrl && !!endFrameUrl,
     EXTEND: !!hasExistingVideo,
+    REFERENCE_IMAGES: true, // Always available - uses character reference images
   }
   
   // Messaging for disabled tabs
@@ -444,7 +463,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
             )}
             
             <Tabs value={mode} onValueChange={setMode}>
-              <TabsList className="bg-slate-800/80 w-full grid grid-cols-2 md:grid-cols-4 gap-1 p-1">
+              <TabsList className="bg-slate-800/80 w-full grid grid-cols-3 md:grid-cols-5 gap-1 p-1">
                 <TabsTrigger 
                   value="TEXT_TO_VIDEO" 
                   className="gap-2 data-[state=active]:bg-indigo-600"
@@ -473,6 +492,15 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                   <Film className="w-4 h-4" />
                   <span className="hidden sm:inline">Frame-to-Video</span>
                   <span className="sm:hidden">FTV</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="REFERENCE_IMAGES" 
+                  className="gap-2 data-[state=active]:bg-emerald-600"
+                  disabled={!tabStates.REFERENCE_IMAGES}
+                >
+                  <Users className="w-4 h-4" />
+                  <span className="hidden sm:inline">Reference</span>
+                  <span className="sm:hidden">REF</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="EXTEND" 
@@ -516,6 +544,65 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                   <Badge className="absolute top-2 left-2 bg-slate-800">End</Badge>
                 </div>
               </div>
+            ) : mode === 'REFERENCE_IMAGES' ? (
+              /* Reference Images Preview - Shows uploaded character/style references */
+              <div className="p-4 w-full">
+                <div className="flex flex-col items-center justify-center min-h-[200px]">
+                  <div className="flex items-center gap-3 mb-4">
+                    {referenceImages.length > 0 ? (
+                      referenceImages.map((url, index) => (
+                        <div key={index} className="relative group">
+                          <div className="w-24 h-24 bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
+                            <img 
+                              src={url} 
+                              alt={`Reference ${index + 1}`}
+                              className="w-full h-full object-cover" 
+                            />
+                          </div>
+                          <button
+                            onClick={() => setReferenceImages(prev => prev.filter((_, i) => i !== index))}
+                            className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-3 h-3 text-white" />
+                          </button>
+                          <Badge className="absolute bottom-1 left-1 text-[10px] bg-slate-800/90">Ref {index + 1}</Badge>
+                        </div>
+                      ))
+                    ) : null}
+                    {referenceImages.length < 3 && (
+                      <label className="w-24 h-24 bg-slate-800/50 rounded-lg border-2 border-dashed border-slate-600 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500 hover:bg-slate-800 transition-colors">
+                        <Plus className="w-6 h-6 text-slate-400 mb-1" />
+                        <span className="text-[10px] text-slate-400">Add Ref</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0]
+                            if (file && referenceImages.length < 3) {
+                              // Convert to data URL for preview (in production, upload to storage)
+                              const reader = new FileReader()
+                              reader.onload = () => {
+                                setReferenceImages(prev => [...prev, reader.result as string])
+                              }
+                              reader.readAsDataURL(file)
+                            }
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-400 text-center">
+                    {referenceImages.length === 0 
+                      ? 'Add up to 3 reference images for character/style consistency'
+                      : `${referenceImages.length}/3 reference images added`
+                    }
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Use character headshots or style references from your project
+                  </p>
+                </div>
+              </div>
             ) : mode === 'EXTEND' && hasExistingVideo ? (
               <div className="p-4 w-full">
                 <div className="aspect-video w-full bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
@@ -556,9 +643,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                     ${mode === 'IMAGE_TO_VIDEO' ? 'bg-blue-500/20 text-blue-300 border-blue-500/50' : ''}
                     ${mode === 'TEXT_TO_VIDEO' ? 'bg-green-500/20 text-green-300 border-green-500/50' : ''}
                     ${mode === 'EXTEND' ? 'bg-amber-500/20 text-amber-300 border-amber-500/50' : ''}
+                    ${mode === 'REFERENCE_IMAGES' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50' : ''}
                   `}
                 >
-                  {mode === 'FRAME_TO_VIDEO' ? 'Interpolation Mode' : 'Generation Mode'}
+                  {mode === 'FRAME_TO_VIDEO' ? 'Interpolation Mode' : mode === 'REFERENCE_IMAGES' ? 'Reference Mode' : 'Generation Mode'}
                 </Badge>
             </div>
             
@@ -702,6 +790,28 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-4 pt-2">
+                    {/* FTV Anchoring Option - Only show for FTV mode */}
+                    {mode === 'FRAME_TO_VIDEO' && (
+                      <div className="flex items-start gap-3 p-3 bg-purple-900/20 border border-purple-500/30 rounded-lg">
+                        <input
+                          type="checkbox"
+                          id="skipAnchoringPhrase"
+                          checked={skipAnchoringPhrase}
+                          onChange={(e) => setSkipAnchoringPhrase(e.target.checked)}
+                          className="mt-1 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500"
+                        />
+                        <div className="flex-1">
+                          <label htmlFor="skipAnchoringPhrase" className="text-sm text-slate-300 cursor-pointer">
+                            Skip automatic end-frame anchoring
+                          </label>
+                          <p className="text-xs text-slate-400 mt-1">
+                            By default, we prepend &quot;IMPORTANT: final frame must match...&quot; to FTV prompts. 
+                            Enable this if your prompt already includes transition instructions to avoid duplicate guidance.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    
                     {/* Aspect Ratio */}
                     <div className="flex flex-col gap-2">
                       <Label className="text-slate-400 text-xs">Aspect Ratio</Label>

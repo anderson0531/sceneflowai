@@ -330,6 +330,9 @@ export interface VideoGenerationConfig {
   negativePrompt: string      // What to avoid in generation
   guidePrompt?: string        // Composed from audio/direction elements (narration, dialogue, music, sfx, direction)
   
+  // FTV prompt options
+  skipAnchoringPhrase?: boolean  // Skip prepending "IMPORTANT: final frame must match..." for FTV
+  
   // Video parameters
   aspectRatio: '16:9' | '9:16'
   resolution: '720p' | '1080p'
@@ -339,6 +342,9 @@ export interface VideoGenerationConfig {
   startFrameUrl: string | null
   endFrameUrl: string | null
   sourceVideoUrl: string | null  // For EXT mode
+  
+  // Reference images for REF mode (up to 3 character/style references)
+  referenceImages?: string[]
   
   // Cinematic element settings (for CIN mode)
   cinematicElementType?: string  // Type of cinematic element (title-sequence, match-cut-bridge, etc.)
