@@ -130,6 +130,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   // Intelligent prompt modification state
   const [promptInstruction, setPromptInstruction] = useState('')
   const [isModifyingPrompt, setIsModifyingPrompt] = useState(false)
+  const [isOptimizingForMode, setIsOptimizingForMode] = useState(false)
   const [promptHistory, setPromptHistory] = useState<string[]>([])  // For undo support
   
   // Cinematic Element state
@@ -297,6 +298,65 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       setVisualPrompt(previousPrompt)
     }
   }, [mode, promptHistory])
+  
+  // Optimize prompt for the currently selected mode
+  const handleOptimizeForMode = useCallback(async () => {
+    const currentPrompt = mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt
+    if (!currentPrompt?.trim()) return
+    
+    setIsOptimizingForMode(true)
+    
+    // Save current prompt to history for undo
+    setPromptHistory(prev => [...prev, currentPrompt])
+    
+    // Mode-specific optimization instructions
+    const modeInstructions: Record<string, string> = {
+      'FRAME_TO_VIDEO': 'Rewrite this prompt specifically for Frame-to-Video (FTV) interpolation mode. Focus ONLY on describing smooth motion and transitions between the start and end keyframes. Remove any camera movements that would cause the video to deviate from matching the end frame (no zoom out, pan away, pull back). Add language that anchors to the end frame. Remove detailed scene descriptions - focus on MOTION only.',
+      'IMAGE_TO_VIDEO': 'Rewrite this prompt for Image-to-Video (I2V) mode. The video will animate from a reference image. Describe how the static image should come to life - subtle movements, breathing, blinking, environmental motion. Maintain consistency with the starting image composition.',
+      'TEXT_TO_VIDEO': 'Rewrite this prompt for Text-to-Video (T2V) mode. Describe the complete visual scene including composition, lighting, characters, environment, and action. Be specific about visual details since there is no reference image.',
+      'EXTEND': 'Rewrite this prompt for video extension mode. Focus on describing the continuation of motion and action that would naturally follow from a previous video clip. Maintain visual continuity.',
+      'CINEMATIC': 'Rewrite this prompt for cinematic element mode. Focus on stylized visual effects, mood, atmosphere, and professional film aesthetics.',
+    }
+    
+    const instruction = modeInstructions[mode] || modeInstructions['TEXT_TO_VIDEO']
+    
+    try {
+      const response = await fetch('/api/prompt/modify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPrompt,
+          instruction,
+          mode: modeToMethod[mode],
+          context: {
+            hasStartFrame: !!(segment.startFrameUrl || segment.references?.startFrameUrl),
+            hasEndFrame: !!(segment.endFrameUrl || segment.references?.endFrameUrl),
+          }
+        }),
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.modifiedPrompt) {
+          if (mode === 'FRAME_TO_VIDEO') {
+            setMotionPrompt(data.modifiedPrompt)
+          } else {
+            setVisualPrompt(data.modifiedPrompt)
+          }
+        }
+      } else {
+        console.error('[DirectorDialog] Failed to optimize prompt for mode')
+        // Revert history since optimization failed
+        setPromptHistory(prev => prev.slice(0, -1))
+      }
+    } catch (error) {
+      console.error('[DirectorDialog] Error optimizing prompt:', error)
+      // Revert history since optimization failed
+      setPromptHistory(prev => prev.slice(0, -1))
+    } finally {
+      setIsOptimizingForMode(false)
+    }
+  }, [mode, motionPrompt, visualPrompt, segment])
   
   // Update cinematic duration when type changes
   useEffect(() => {
@@ -802,6 +862,20 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                       {mode === 'FRAME_TO_VIDEO' ? 'Motion Instructions' : 'Visual Description'}
                     </Label>
                     <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleOptimizeForMode}
+                        disabled={isOptimizingForMode || !(mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt)?.trim()}
+                        className="h-6 px-2 text-xs text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/50"
+                      >
+                        {isOptimizingForMode ? (
+                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                        ) : (
+                          <Wand2 className="w-3 h-3 mr-1" />
+                        )}
+                        Optimize for {mode === 'FRAME_TO_VIDEO' ? 'FTV' : mode === 'IMAGE_TO_VIDEO' ? 'I2V' : mode === 'TEXT_TO_VIDEO' ? 'T2V' : mode === 'EXTEND' ? 'Extend' : 'Mode'}
+                      </Button>
                       {promptHistory.length > 0 && (
                         <Button
                           variant="ghost"
@@ -827,7 +901,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                         setVisualPrompt(e.target.value)
                       }
                     }}
-                    className="min-h-40 max-h-64 bg-slate-800 border-slate-700 text-white placeholder-slate-500 resize-y"
+                    className="min-h-[180px] max-h-[400px] bg-slate-800 border-slate-700 text-white placeholder-slate-500 resize-y text-sm leading-relaxed"
                     placeholder={
                       mode === 'FRAME_TO_VIDEO' 
                         ? "Describe the motion between frames..." 
