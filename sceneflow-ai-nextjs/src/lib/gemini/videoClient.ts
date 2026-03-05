@@ -295,12 +295,10 @@ export async function generateVideoWithVeo(
       lastFrameData = options.lastFrame
     }
     
-    // lastFrame goes in instance, not parameters - this is critical for FTV to work
+    // lastFrame structure must match instance.image - flat structure, not nested
     instance.lastFrame = {
-      image: {
-        bytesBase64Encoded: lastFrameData,
-        mimeType: mimeType
-      }
+      bytesBase64Encoded: lastFrameData,
+      mimeType: mimeType
     }
     console.log('[Veo Video] Added last frame for FTV interpolation, mimeType:', mimeType)
   }
