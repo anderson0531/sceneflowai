@@ -3,12 +3,16 @@ export * from './SegmentTimeline'
 export { SegmentStudio } from './SegmentStudio'
 export type { GenerationType } from './SegmentStudio'
 export { SegmentPromptBuilder } from './SegmentPromptBuilder'
-export type { GeneratePromptData, VideoGenerationMethod } from './SegmentPromptBuilder'
+// VideoGenerationMethod is exported from types.ts via export * below
+export type { GeneratePromptData } from './SegmentPromptBuilder'
 export { AudioTimeline } from './AudioTimeline'
 export type { AudioTracksData as LegacyAudioTracksData, AudioTrackClip as LegacyAudioTrackClip } from './AudioTimeline'
 export { SceneTimeline } from './SceneTimeline'
 export type { AudioTracksData, AudioTrackClip } from './SceneTimeline'
 export { VerticalSegmentSelector } from './VerticalSegmentSelector'
+
+// Types - single source of truth for all shared types
+// NOTE: VideoGenerationMethod, SegmentPurpose, etc. are all exported from here
 export * from './types'
 
 // Keyframe State Machine Components
@@ -29,10 +33,12 @@ export { SegmentPreviewTimeline } from './SegmentPreviewTimeline'
 export { SegmentPromptEditor } from './SegmentPromptEditor'
 
 // Add Segment Dialogs
+// NOTE: SegmentPurpose and AdjacentSceneContext are exported from types.ts
 export { AddSegmentTypeDialog } from './AddSegmentTypeDialog'
-export type { SegmentPurpose, AdjacentSceneContext, AddSegmentTypeDialogProps } from './AddSegmentTypeDialog'
+export type { AddSegmentTypeDialogProps } from './AddSegmentTypeDialog'
 export { AddSpecialSegmentDialog } from './AddSpecialSegmentDialog'
-export type { SpecialSegmentType, AddSpecialSegmentDialogProps } from './AddSpecialSegmentDialog'
+// NOTE: SpecialSegmentType is exported from cinematic-elements below
+export type { AddSpecialSegmentDialogProps } from './AddSpecialSegmentDialog'
 
 // Cinematic Elements (shared constants and utilities)
 export { 
@@ -43,6 +49,7 @@ export {
   cinematicTypeToSegmentPurpose
 } from './cinematic-elements'
 export type { 
+  SpecialSegmentType,
   SpecialSegmentConfig,
   FilmContext,
   AdjacentSceneContext as CinematicAdjacentSceneContext 
@@ -56,4 +63,3 @@ export { SceneProductionMixer } from './SceneProductionMixer'
 export * from './methodPromptBuilder'
 export * from './promptSyncService'
 export { compileVideoPrompt, formatPayloadForDisplay, extractSettingsFromSegment } from './videoPromptCompiler'
-
