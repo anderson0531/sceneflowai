@@ -538,24 +538,24 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
             ) : mode === 'FRAME_TO_VIDEO' && startFrameUrl && endFrameUrl ? (
               <div className="flex items-center gap-4 p-4 w-full">
                 <div className="flex-1 relative">
-                  <div className="aspect-video w-full">
+                  <div className="aspect-video w-full bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
                     <img 
                       src={startFrameUrl} 
                       alt="Start Frame"
-                      className="w-full h-full object-contain rounded-lg border border-slate-700" 
+                      className="w-full h-full object-cover" 
                     />
                   </div>
                   <Badge className="absolute top-2 left-2 bg-slate-800">Start</Badge>
                 </div>
                 <div className="flex items-center justify-center flex-shrink-0">
-                  <ArrowRight className="w-8 h-8 text-indigo-400" />
+                  <ArrowRight className="w-6 h-6 text-indigo-400" />
                 </div>
                 <div className="flex-1 relative">
-                  <div className="aspect-video w-full">
+                  <div className="aspect-video w-full bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
                     <img 
                       src={endFrameUrl} 
                       alt="End Frame"
-                      className="w-full h-full object-contain rounded-lg border border-slate-700" 
+                      className="w-full h-full object-cover" 
                     />
                   </div>
                   <Badge className="absolute top-2 left-2 bg-slate-800">End</Badge>
@@ -563,10 +563,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               </div>
             ) : mode === 'EXTEND' && hasExistingVideo ? (
               <div className="p-4 w-full">
-                <div className="aspect-video w-full">
+                <div className="aspect-video w-full bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
                   <video 
                     src={segment.activeAssetUrl!}
-                    className="w-full h-full object-contain rounded-lg border border-slate-700"
+                    className="w-full h-full object-cover"
                     controls
                     muted
                   />
@@ -575,11 +575,11 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               </div>
             ) : (startFrameUrl || sceneImageUrl) ? (
               <div className="p-4 w-full">
-                <div className="aspect-video w-full">
+                <div className="aspect-video w-full bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
                   <img 
                     src={startFrameUrl || sceneImageUrl} 
                     alt="Reference Frame"
-                    className="w-full h-full object-contain rounded-lg border border-slate-700" 
+                    className="w-full h-full object-cover" 
                   />
                 </div>
                 <Badge className="absolute top-2 left-2 bg-slate-800">Reference Image</Badge>
