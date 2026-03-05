@@ -5049,7 +5049,7 @@ function SceneCard({
                               ) : (
                                 <Sparkles className="w-3 h-3" />
                               )}
-                              {hasDirection ? 'Refresh' : 'Generate'}
+                              {hasDirection ? 'Update' : 'Generate'}
                             </button>
                           </div>
                         </div>
