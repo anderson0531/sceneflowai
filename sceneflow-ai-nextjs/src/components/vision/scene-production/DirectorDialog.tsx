@@ -43,6 +43,7 @@ import {
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Slider } from '@/components/ui/slider'
+import { Input } from '@/components/ui/Input'
 import { 
   ArrowRight, 
   CheckCircle, 
@@ -57,6 +58,8 @@ import {
   Clapperboard,
   Sparkles,
   Loader2,
+  Undo2,
+  Send,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -123,6 +126,11 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const [resolution, setResolution] = useState<'720p' | '1080p'>(autoConfig.resolution)
   const [duration, setDuration] = useState(autoConfig.duration)
   const [guidePrompt, setGuidePrompt] = useState('')
+  
+  // Intelligent prompt modification state
+  const [promptInstruction, setPromptInstruction] = useState('')
+  const [isModifyingPrompt, setIsModifyingPrompt] = useState(false)
+  const [promptHistory, setPromptHistory] = useState<string[]>([])  // For undo support
   
   // Cinematic Element state
   const [cinematicType, setCinematicType] = useState<SpecialSegmentType>('title')
@@ -228,6 +236,67 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       setIsGeneratingCinematicPrompt(false)
     }
   }, [cinematicType, cinematicDuration, scene, segment])
+  
+  // Intelligent prompt modification handler
+  const handleModifyPrompt = useCallback(async () => {
+    if (!promptInstruction.trim()) return
+    
+    const currentPrompt = mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt
+    if (!currentPrompt) return
+    
+    setIsModifyingPrompt(true)
+    
+    // Save current prompt to history for undo
+    setPromptHistory(prev => [...prev, currentPrompt])
+    
+    try {
+      const response = await fetch('/api/prompt/modify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPrompt,
+          instruction: promptInstruction,
+          mode: modeToMethod[mode],
+          context: {
+            hasStartFrame: !!(segment.startFrameUrl || segment.references?.startFrameUrl),
+            hasEndFrame: !!(segment.endFrameUrl || segment.references?.endFrameUrl),
+          }
+        }),
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.modifiedPrompt) {
+          if (mode === 'FRAME_TO_VIDEO') {
+            setMotionPrompt(data.modifiedPrompt)
+          } else {
+            setVisualPrompt(data.modifiedPrompt)
+          }
+          setPromptInstruction('') // Clear instruction after successful modification
+        }
+      } else {
+        console.error('[DirectorDialog] Failed to modify prompt')
+      }
+    } catch (error) {
+      console.error('[DirectorDialog] Error modifying prompt:', error)
+    } finally {
+      setIsModifyingPrompt(false)
+    }
+  }, [mode, motionPrompt, visualPrompt, promptInstruction, segment])
+  
+  // Undo prompt modification
+  const handleUndoPrompt = useCallback(() => {
+    if (promptHistory.length === 0) return
+    
+    const previousPrompt = promptHistory[promptHistory.length - 1]
+    setPromptHistory(prev => prev.slice(0, -1))
+    
+    if (mode === 'FRAME_TO_VIDEO') {
+      setMotionPrompt(previousPrompt)
+    } else {
+      setVisualPrompt(previousPrompt)
+    }
+  }, [mode, promptHistory])
   
   // Update cinematic duration when type changes
   useEffect(() => {
@@ -728,9 +797,27 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               <>
                 {/* Standard Prompt Input */}
                 <div className="flex flex-col gap-2">
-                  <Label className="text-slate-300">
-                    {mode === 'FRAME_TO_VIDEO' ? 'Motion Instructions' : 'Visual Description'}
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-slate-300">
+                      {mode === 'FRAME_TO_VIDEO' ? 'Motion Instructions' : 'Visual Description'}
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      {promptHistory.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleUndoPrompt}
+                          className="h-6 px-2 text-xs text-slate-400 hover:text-white"
+                        >
+                          <Undo2 className="w-3 h-3 mr-1" />
+                          Undo
+                        </Button>
+                      )}
+                      <span className="text-xs text-slate-500">
+                        {(mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt).length} chars
+                      </span>
+                    </div>
+                  </div>
                   <Textarea 
                     value={mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt}
                     onChange={(e) => {
@@ -740,19 +827,50 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                         setVisualPrompt(e.target.value)
                       }
                     }}
-                    className="h-32 bg-slate-800 border-slate-700 text-white placeholder-slate-500 resize-none"
+                    className="min-h-40 max-h-64 bg-slate-800 border-slate-700 text-white placeholder-slate-500 resize-y"
                     placeholder={
                       mode === 'FRAME_TO_VIDEO' 
                         ? "Describe the motion between frames..." 
                         : "Describe the scene and atmosphere..."
                     }
                   />
+                  
+                  {/* Intelligent Instruction Input */}
+                  <div className="flex gap-2">
+                    <Input
+                      value={promptInstruction}
+                      onChange={(e) => setPromptInstruction(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault()
+                          handleModifyPrompt()
+                        }
+                      }}
+                      placeholder="e.g., Make it more dramatic, add camera movement, slow down the motion..."
+                      className="flex-1 bg-slate-800 border-slate-700 text-white placeholder-slate-500 text-sm"
+                      disabled={isModifyingPrompt}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleModifyPrompt}
+                      disabled={!promptInstruction.trim() || isModifyingPrompt}
+                      className="bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white"
+                    >
+                      {isModifyingPrompt ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Send className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+                  
                   <div className="flex items-start gap-2 text-xs text-slate-400">
                     <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
                     <span>
                       {mode === 'FRAME_TO_VIDEO' 
                         ? "✨ AI-Optimized: Your prompt is automatically enhanced for end-frame alignment. Conflicting motion is filtered." 
-                        : "Tip: Describe the scene visuals, lighting, and atmosphere. Be specific about what you want to see."}
+                        : "Tip: Describe the scene visuals, lighting, and atmosphere. Use the input above to refine with natural language."}
                     </span>
                   </div>
                 </div>
