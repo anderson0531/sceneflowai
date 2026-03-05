@@ -48,6 +48,7 @@ import {
   Maximize2,
   Minimize2,
   Video,
+  Coins,
 } from 'lucide-react'
 import { upload } from '@vercel/blob/client'
 import { Button } from '@/components/ui/Button'
@@ -3698,55 +3699,28 @@ export function SceneProductionMixer({
               )}
             </div>
             
-            {/* Render Mode Selector & Buttons */}
+            {/* Render Button */}
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              {/* Render Mode Dropdown */}
-              <div className="relative">
-                <select
-                  value={selectedRenderMode}
-                  onChange={(e) => setSelectedRenderMode(e.target.value as RenderMode)}
-                  disabled={isRendering}
-                  className="appearance-none bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 pr-8 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
-                >
-                  <option value="auto">Auto ({renderStrategy.mode})</option>
-                  {renderOptions
-                    .filter(opt => opt.available && opt.mode !== 'auto')
-                    .map(opt => (
-                      <option key={opt.mode} value={opt.mode} disabled={!opt.available}>
-                        {opt.mode === 'local' ? '⚡ Quick Export (Local)' : '🎬 Final Render (Server)'}
-                      </option>
-                    ))}
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </div>
-              
-              {/* Quick Video Export Button (Local) */}
-              {localRenderSupported && (
-                <Button
-                  onClick={handleLocalRender}
-                  disabled={isRendering || !hasRenderedSegments || totalDuration > LOCAL_RENDER_MAX_DURATION || resolution === '4K'}
-                  variant="outline"
-                  size="lg"
-                  className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10 px-4"
-                  title={totalDuration > LOCAL_RENDER_MAX_DURATION ? `Local render limited to ${LOCAL_RENDER_MAX_DURATION}s` : resolution === '4K' ? 'Local render limited to 1080p' : 'Fast browser-based video export (WebM) - renders video segments with audio'}
-                >
-                  <Zap className="w-4 h-4 mr-1" />
-                  Quick Video
-                </Button>
+              {/* Credit Cost Indicator */}
+              {!isRendering && renderStrategy.estimatedCredits && renderStrategy.estimatedCredits > 0 && (
+                <div className="flex items-center gap-1 text-xs text-amber-400 bg-amber-500/10 px-2 py-1 rounded">
+                  <Coins className="w-3 h-3" />
+                  <span>~{renderStrategy.estimatedCredits} credits</span>
+                </div>
               )}
               
               {/* Final Video Render Button (Server) */}
               <Button
-                onClick={selectedRenderMode === 'auto' ? handleSmartRender : selectedRenderMode === 'local' ? handleLocalRender : handleRender}
+                onClick={handleRender}
                 disabled={isRendering || !hasRenderedSegments}
                 size="lg"
                 className="bg-purple-600 hover:bg-purple-700 text-white px-6"
-                title="Render video segments with audio tracks to MP4"
+                title="Render video segments with audio tracks to MP4 (Cloud render)"
               >
                 {isRendering ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {activeRenderMode === 'local' ? 'Exporting Video...' : 'Rendering Video...'}
+                    Rendering Video...
                   </>
                 ) : (
                   <>
@@ -3758,29 +3732,18 @@ export function SceneProductionMixer({
             </div>
           </div>
           
-          {/* Render Mode Info */}
+          {/* Render Info */}
           {renderStatus === 'idle' && (
             <div className="mt-3 pt-3 border-t border-gray-700/50 flex flex-col gap-2 text-xs text-gray-500">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1">
                   <Video className="w-3 h-3 text-purple-400" />
-                  <span className="text-purple-300">Video Mode:</span>
-                  <span>Concatenates rendered video segments with audio</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1">
-                  <Zap className="w-3 h-3" />
-                  <span>Quick Video: Browser-based (WebM, &lt;{LOCAL_RENDER_MAX_DURATION}s)</span>
+                  <span className="text-purple-300">Cloud Render:</span>
+                  <span>Concatenates rendered video segments with audio to MP4</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Server className="w-3 h-3" />
-                  <span>Render Video: Cloud render (MP4, unlimited)</span>
-                  {remainingServerRenders !== undefined && userTier && (
-                    <span className="text-purple-400 ml-1">
-                      ({remainingServerRenders} left)
-                    </span>
-                  )}
+                  <span>{renderStrategy.estimatedCredits || 5} credits/min</span>
                 </div>
               </div>
             </div>

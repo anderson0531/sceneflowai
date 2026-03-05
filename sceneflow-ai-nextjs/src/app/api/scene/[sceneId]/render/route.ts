@@ -10,10 +10,15 @@
  * 3. Concatenate videos and mix audio
  * 4. Upload final MP4 to GCS
  * 5. Return signed download URL
+ * 
+ * Credit Cost: 5 credits per minute of rendered video
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { CreditService } from '@/services/CreditService'
 import type { 
   CreateSceneRenderJobRequest,
   SceneRenderJobSpec,
@@ -25,6 +30,9 @@ import { RENDER_DEFAULTS } from '@/lib/video/renderTypes'
 import { uploadJobSpec, getOutputPath, getRenderBucket, getSignedDownloadUrl } from '@/lib/gcs/renderStorage'
 import { isCloudRunJobsEnabled } from '@/lib/video/CloudRunJobsService'
 import { getJobStatus, setJobStatus } from '@/lib/render/jobStatusStore'
+
+// Credit cost constants
+const SERVER_RENDER_CREDITS_PER_MINUTE = 5
 
 // Environment configuration
 const CALLBACK_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://sceneflowai.studio'
@@ -149,6 +157,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ sceneId: string }> }
 ) {
+  let creditsCharged = 0
+  let userId: string | undefined
+  
   try {
     const { sceneId } = await params
     const body: CreateSceneRenderJobRequest = await request.json()
@@ -162,12 +173,43 @@ export async function POST(
       audioConfig: body.audioConfig,
     })
     
+    // 1. Authenticate user
+    const session = await getServerSession(authOptions)
+    userId = session?.user?.id || session?.user?.email || undefined
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required', code: 'AUTH_REQUIRED' },
+        { status: 401 }
+      )
+    }
+    
     // Validate request
     if (!body.segments || body.segments.length === 0) {
       return NextResponse.json(
         { error: 'No video segments provided' },
         { status: 400 }
       )
+    }
+    
+    // 2. Calculate credit cost based on total duration
+    const totalDuration = body.segments.reduce((sum, seg) => sum + (seg.endTime - seg.startTime), 0)
+    const creditCost = Math.max(SERVER_RENDER_CREDITS_PER_MINUTE, Math.ceil(totalDuration / 60) * SERVER_RENDER_CREDITS_PER_MINUTE)
+    
+    console.log(`[SceneRender] Credit cost calculation: ${totalDuration}s = ${creditCost} credits (${SERVER_RENDER_CREDITS_PER_MINUTE}/min)`)
+    
+    // 3. Pre-check credit balance
+    const hasEnoughCredits = await CreditService.ensureCredits(userId, creditCost)
+    if (!hasEnoughCredits) {
+      const breakdown = await CreditService.getCreditBreakdown(userId)
+      return NextResponse.json({
+        error: 'Insufficient credits for scene render',
+        code: 'INSUFFICIENT_CREDITS',
+        required: creditCost,
+        balance: breakdown.total_credits,
+        duration: totalDuration,
+        costPerMinute: SERVER_RENDER_CREDITS_PER_MINUTE,
+      }, { status: 402 })
     }
     
     // Generate job ID
@@ -255,8 +297,7 @@ export async function POST(
       }
     }
     
-    // Calculate total duration from segments
-    const totalDuration = videoSegments.reduce((sum, seg) => sum + seg.duration, 0)
+    // Note: totalDuration already calculated above for credit cost
     
     // Convert text overlays from percentage-based UI coordinates to pixels
     // Resolution lookup for pixel conversion
@@ -396,6 +437,28 @@ export async function POST(
         progress: 10,
         createdAt: new Date().toISOString(),
       })
+      
+      // 4. Charge credits after successful job trigger
+      try {
+        await CreditService.charge(
+          userId!,
+          creditCost,
+          'ai_usage',
+          jobId,
+          { 
+            operation: 'scene_render', 
+            sceneId, 
+            duration: totalDuration,
+            resolution: body.resolution,
+            segments: body.segments.length,
+          }
+        )
+        creditsCharged = creditCost
+        console.log(`[SceneRender] Charged ${creditCost} credits to user ${userId} for ${totalDuration}s render`)
+      } catch (chargeError) {
+        // Log but don't fail the render - job is already processing
+        console.error('[SceneRender] Failed to charge credits (job still processing):', chargeError)
+      }
     } catch (triggerError) {
       console.error('[SceneRender] Failed to trigger Cloud Run job:', triggerError)
       
@@ -429,6 +492,7 @@ export async function POST(
       status: 'PROCESSING',
       message: 'Scene render job started successfully',
       estimatedDuration: totalDuration,
+      creditsCharged,
     })
     
   } catch (error) {

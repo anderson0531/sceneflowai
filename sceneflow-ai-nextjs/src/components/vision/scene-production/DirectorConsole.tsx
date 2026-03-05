@@ -271,6 +271,26 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     }
   }, [mixerCollapsed])
 
+  // Sync renderedSceneUrl when productionData changes (e.g., after page reload)
+  useEffect(() => {
+    if (productionData?.renderedSceneUrl && productionData.renderedSceneUrl !== renderedSceneUrl) {
+      console.log('[DirectorConsole] Syncing renderedSceneUrl from productionData:', productionData.renderedSceneUrl)
+      setRenderedSceneUrl(productionData.renderedSceneUrl)
+    }
+  }, [productionData?.renderedSceneUrl])
+
+  // Sync productionStreams when productionData changes (e.g., after page reload)
+  useEffect(() => {
+    if (productionData?.productionStreams && productionData.productionStreams.length > 0) {
+      const currentIds = productionStreams.map(s => s.id).join(',')
+      const newIds = productionData.productionStreams.map((s: ProductionStream) => s.id).join(',')
+      if (currentIds !== newIds) {
+        console.log('[DirectorConsole] Syncing productionStreams from productionData')
+        setProductionStreams(productionData.productionStreams)
+      }
+    }
+  }, [productionData?.productionStreams])
+
   // Get previous segment's last frame for Extend mode (prefer actual video frame over keyframe)
   const previousSegmentLastFrame = useMemo(() => {
     if (!editingVideoSegment || segments.length === 0) return null
