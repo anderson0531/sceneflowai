@@ -374,6 +374,16 @@ export async function generateVideoWithGeminiStudio(
   console.log('[Gemini Studio Video] Instance keys:', Object.keys(instance))
   console.log('[Gemini Studio Video] Parameters keys:', Object.keys(parameters))
   
+  // FTV Debug: Confirm frame fields are at correct level (instance, not parameters)
+  if (instance.image && instance.lastFrame) {
+    console.log('[Gemini Studio Video] FTV MODE CONFIRMED:')
+    console.log('[Gemini Studio Video]   - image (start frame): Present at instance level ✓')
+    console.log('[Gemini Studio Video]   - lastFrame (end frame): Present at instance level ✓')
+    console.log('[Gemini Studio Video]   - referenceImages: ', instance.referenceImages ? 'PRESENT (may conflict!)' : 'Not present ✓')
+  } else if (instance.image) {
+    console.log('[Gemini Studio Video] I2V MODE: image present, no lastFrame')
+  }
+  
   // Debug: Log full request structure (with base64 truncated)
   const debugRequestBody = JSON.parse(JSON.stringify(requestBody))
   if (debugRequestBody.instances?.[0]?.image?.bytesBase64Encoded) {

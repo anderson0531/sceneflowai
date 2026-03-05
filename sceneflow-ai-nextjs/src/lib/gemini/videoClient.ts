@@ -358,6 +358,18 @@ export async function generateVideoWithVeo(
     parameters: parameters
   }
 
+  // FTV Debug: Confirm frame fields are at correct level (instance, not parameters)
+  console.log('[Veo Video] Instance keys:', Object.keys(instance))
+  console.log('[Veo Video] Parameters keys:', Object.keys(parameters))
+  if (instance.image && instance.lastFrame) {
+    console.log('[Veo Video] FTV MODE CONFIRMED:')
+    console.log('[Veo Video]   - image (start frame): Present at instance level ✓')
+    console.log('[Veo Video]   - lastFrame (end frame): Present at instance level ✓')
+    console.log('[Veo Video]   - referenceImages: ', instance.referenceImages ? 'PRESENT (may conflict!)' : 'Not present ✓')
+  } else if (instance.image) {
+    console.log('[Veo Video] I2V MODE: image present, no lastFrame')
+  }
+
   try {
     const accessToken = await getVertexAccessToken();
     const response = await fetch(endpoint, {

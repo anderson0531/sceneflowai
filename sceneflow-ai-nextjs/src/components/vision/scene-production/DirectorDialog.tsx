@@ -133,6 +133,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   
   // FTV prompt options
   const [skipAnchoringPhrase, setSkipAnchoringPhrase] = useState(false)
+  // Quality tier state - FTV defaults to premium for better interpolation
+  const [qualityTier, setQualityTier] = useState<'fast' | 'premium'>(
+    mode === 'FRAME_TO_VIDEO' ? 'premium' : 'fast'
+  )
   
   // Intelligent prompt modification handler
   const handleModifyPrompt = useCallback(async () => {
@@ -297,6 +301,13 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     }
   }, [mode, motionPrompt, visualPrompt])
   
+  // Auto-switch quality tier when mode changes to FTV (premium recommended)
+  useEffect(() => {
+    if (mode === 'FRAME_TO_VIDEO') {
+      setQualityTier('premium')
+    }
+  }, [mode])
+  
   // Reset state when dialog opens with new segment
   useEffect(() => {
     if (isOpen) {
@@ -334,6 +345,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       confidence: autoConfig.confidence,
       // FTV options
       skipAnchoringPhrase: method === 'FTV' ? skipAnchoringPhrase : undefined,
+      // Quality tier
+      qualityTier: qualityTier,
       // Reference images (for REF mode)
       referenceImages: method === 'REF' ? referenceImages : undefined,
     }
@@ -366,6 +379,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       confidence: autoConfig.confidence,
       // FTV options
       skipAnchoringPhrase: method === 'FTV' ? skipAnchoringPhrase : undefined,
+      // Quality tier - FTV can use premium for better interpolation
+      qualityTier: qualityTier,
       // Reference images (for REF mode)
       referenceImages: method === 'REF' ? referenceImages : undefined,
     }
@@ -802,11 +817,11 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                         />
                         <div className="flex-1">
                           <label htmlFor="skipAnchoringPhrase" className="text-sm text-slate-300 cursor-pointer">
-                            Skip automatic end-frame anchoring
+                            Skip motion transition guidance
                           </label>
                           <p className="text-xs text-slate-400 mt-1">
-                            By default, we prepend &quot;IMPORTANT: final frame must match...&quot; to FTV prompts. 
-                            Enable this if your prompt already includes transition instructions to avoid duplicate guidance.
+                            By default, we prepend motion instructions like &quot;A smooth, continuous transition...&quot; to FTV prompts. 
+                            Enable this if your prompt already describes the transition to avoid duplicate guidance.
                           </p>
                         </div>
                       </div>
@@ -838,6 +853,27 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                           <SelectItem value="1080p">1080p Full HD</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                    
+                    {/* Quality Tier - Show cost difference, FTV benefits from premium */}
+                    <div className="flex flex-col gap-2">
+                      <Label className="text-slate-400 text-xs">
+                        Quality Tier {mode === 'FRAME_TO_VIDEO' && <span className="text-purple-400">(Premium recommended for FTV)</span>}
+                      </Label>
+                      <Select value={qualityTier} onValueChange={(v) => setQualityTier(v as 'fast' | 'premium')}>
+                        <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-300">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-slate-800 border-slate-700">
+                          <SelectItem value="fast">Fast (~$1.60/8s) - Good for T2V, I2V</SelectItem>
+                          <SelectItem value="premium">Premium (~$6.00/8s) - Better motion reasoning</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {mode === 'FRAME_TO_VIDEO' && qualityTier === 'fast' && (
+                        <p className="text-xs text-amber-400/80 mt-1">
+                          ⚠️ FTV interpolation quality is significantly better with Premium tier
+                        </p>
+                      )}
                     </div>
                     
                     {/* Negative Prompt */}

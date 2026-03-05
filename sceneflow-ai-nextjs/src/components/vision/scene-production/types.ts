@@ -333,6 +333,9 @@ export interface VideoGenerationConfig {
   // FTV prompt options
   skipAnchoringPhrase?: boolean  // Skip prepending "IMPORTANT: final frame must match..." for FTV
   
+  // Quality tier (FTV defaults to 'premium' for better motion reasoning)
+  qualityTier?: 'fast' | 'premium'  // fast: ~$0.20/sec, premium: ~$0.75/sec
+  
   // Video parameters
   aspectRatio: '16:9' | '9:16'
   resolution: '720p' | '1080p'

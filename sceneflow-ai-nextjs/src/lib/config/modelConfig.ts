@@ -40,11 +40,36 @@ export const VEO_MODELS = {
 /** Default Veo quality tier (cost-optimized) */
 export const DEFAULT_VEO_QUALITY: VeoQualityTier = 'fast';
 
+/**
+ * Default quality tier for FTV (Frame-to-Video) interpolation
+ * Premium tier has significantly better "motion reasoning" for complex interpolations
+ * Set FTV_USE_FAST=true to use fast tier for FTV (cost savings, lower quality)
+ */
+export const DEFAULT_FTV_QUALITY: VeoQualityTier = 
+  process.env.FTV_USE_FAST === 'true' ? 'fast' : 'premium';
+
 /** Get Veo model name for quality tier */
 export function getVeoModel(quality: VeoQualityTier | ModelQuality = DEFAULT_VEO_QUALITY): string {
   // Map 'standard' to 'premium' for backward compatibility
   const tier = quality === 'standard' ? 'premium' : (quality as VeoQualityTier);
   return VEO_MODELS[tier] || VEO_MODELS.fast;
+}
+
+/**
+ * Get the appropriate quality tier for a generation method
+ * FTV uses premium by default for better interpolation quality
+ */
+export function getQualityForMethod(method: string, requestedQuality?: VeoQualityTier | ModelQuality): VeoQualityTier {
+  // If quality explicitly requested, use it
+  if (requestedQuality) {
+    return requestedQuality === 'standard' ? 'premium' : (requestedQuality as VeoQualityTier);
+  }
+  // FTV (Frame-to-Video) benefits significantly from premium tier's motion reasoning
+  if (method === 'FTV') {
+    return DEFAULT_FTV_QUALITY;
+  }
+  // All other methods use default (fast)
+  return DEFAULT_VEO_QUALITY;
 }
 
 /** Estimated cost per second for each Veo tier */

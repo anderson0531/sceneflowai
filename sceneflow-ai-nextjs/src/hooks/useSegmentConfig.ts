@@ -92,8 +92,11 @@ function sanitizeFTVPrompt(prompt: string): string {
  * we skip the anchoring phrase to avoid duplicate/conflicting instructions.
  */
 function generateFTVMotionPrompt(segment: SceneSegment, skipAnchoringPhrase?: boolean): string {
-  // FTV-specific anchoring phrase (PREPENDED for priority)
-  const anchoringPhrase = 'IMPORTANT: The final frame must exactly match the provided end keyframe. Maintain character position, appearance, and framing throughout. Smoothly interpolate between start and end frames.'
+  // FTV-specific motion phrase (PREPENDED for priority)
+  // NOTE: Veo 3.1 works better with motion descriptions than constraint instructions.
+  // "IMPORTANT" meta-instructions cause the model to take shortcuts (fades/cuts).
+  // Instead, describe the BRIDGE between frames - the motion that connects them.
+  const anchoringPhrase = 'A smooth, continuous transition. Static camera. No fades, cuts, or scene changes. All elements gradually evolve from their starting positions to their final positions over the full duration.'
   
   // Get the base prompt content
   let basePrompt = ''

@@ -17,6 +17,7 @@ import {
   VideoGenerationMethod,
   MethodSelectionResult
 } from '@/lib/vision/intelligentMethodSelection'
+import { getQualityForMethod } from '@/lib/config/modelConfig'
 
 export const maxDuration = 300 // 5 minutes for video generation
 export const runtime = 'nodejs'
@@ -37,6 +38,7 @@ interface GenerateAssetRequest {
   duration?: number
   aspectRatio?: '16:9' | '9:16'
   resolution?: '720p' | '1080p'
+  qualityTier?: 'fast' | 'premium'  // Veo quality tier - FTV benefits from premium
   // Context for intelligent method selection
   segmentIndex?: number
   totalSegments?: number
@@ -79,6 +81,7 @@ export async function POST(
       duration,
       aspectRatio,
       resolution,
+      qualityTier,  // User-selected quality tier (FTV defaults to premium)
       // Context for intelligent method selection
       segmentIndex = 0,
       totalSegments = 1,
@@ -186,16 +189,20 @@ export async function POST(
       }
       
       // Build video generation options based on effective method
+      // FTV uses premium tier by default for better motion reasoning (user can override via UI)
+      const effectiveQualityTier = qualityTier || getQualityForMethod(method)
       const videoOptions: any = {
         aspectRatio: aspectRatio || '16:9',
         resolution: resolution || '720p',
         durationSeconds: effectiveDuration,
         negativePrompt: negativePrompt,
-        personGeneration: isImageBasedMethod ? 'allow_adult' : 'allow_all'
+        personGeneration: isImageBasedMethod ? 'allow_adult' : 'allow_all',
+        quality: effectiveQualityTier
       }
       
       console.log(`[Segment Asset Generation] personGeneration: ${videoOptions.personGeneration} (method: ${method}, isImageBased: ${isImageBasedMethod})`)
       console.log(`[Segment Asset Generation] durationSeconds: ${effectiveDuration} (requested: ${duration || 'default'})`)
+      console.log(`[Segment Asset Generation] quality tier: ${effectiveQualityTier} (requested: ${qualityTier || 'auto'}, method: ${method})`)
       
       // Start Frame - used for I2V and FTV methods
       if ((method === 'I2V' || method === 'FTV') && startFrameUrl) {
