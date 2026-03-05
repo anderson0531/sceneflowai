@@ -10,9 +10,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
-
 interface ModifyPromptRequest {
   currentPrompt: string
   instruction: string
@@ -26,6 +23,16 @@ interface ModifyPromptRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check for API key at request time
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) {
+      console.error('[Prompt Modify] GEMINI_API_KEY not configured')
+      return NextResponse.json(
+        { error: 'AI service not configured' },
+        { status: 503 }
+      )
+    }
+
     const body: ModifyPromptRequest = await request.json()
     const { currentPrompt, instruction, mode = 'FTV', context } = body
 
@@ -46,6 +53,9 @@ export async function POST(request: NextRequest) {
     console.log('[Prompt Modify] Mode:', mode)
     console.log('[Prompt Modify] Instruction:', instruction)
     console.log('[Prompt Modify] Current prompt length:', currentPrompt.length)
+
+    // Initialize Gemini with validated API key
+    const genAI = new GoogleGenerativeAI(apiKey)
 
     // Build system prompt based on mode
     const systemPrompt = buildSystemPrompt(mode, context)
