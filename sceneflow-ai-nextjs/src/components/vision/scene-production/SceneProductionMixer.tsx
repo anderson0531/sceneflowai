@@ -66,7 +66,22 @@ import {
 import { Progress } from '@/components/ui/progress'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { MixerTimeline } from './MixerTimeline'
-import type { SceneSegment, SceneProductionData, ProductionStream } from './types'
+import type { 
+  SceneSegment, 
+  SceneProductionData, 
+  ProductionStream,
+  // Re-import these types that we moved to types.ts to break circular dep
+  TextOverlay,
+  TextOverlayStyle,
+  TextOverlayPosition,
+  TextOverlayTiming,
+  AudioTrackConfig,
+  MixerAudioTracks,
+} from './types'
+
+// Re-export the types for backwards compatibility
+export type { TextOverlay, TextOverlayStyle, TextOverlayPosition, TextOverlayTiming, AudioTrackConfig, MixerAudioTracks }
+
 import {
   getLocalRenderService,
   isLocalRenderSupported,
@@ -80,48 +95,6 @@ import {
   type RenderMode,
   type RenderContext,
 } from '@/lib/video/RenderStrategyRouter'
-
-// ============================================================================
-// Text Overlay Types
-// ============================================================================
-
-export interface TextOverlayStyle {
-  preset: 'title' | 'lower-third' | 'subtitle' | 'custom'
-  fontFamily: string
-  fontSize: number  // percentage of video height (e.g., 8 = 8%)
-  fontWeight: 400 | 500 | 600 | 700 | 800
-  color: string
-  backgroundColor?: string
-  backgroundOpacity?: number
-  textShadow?: boolean
-  padding?: number
-}
-
-export interface TextOverlayPosition {
-  x: number  // 0-100 percentage
-  y: number  // 0-100 percentage
-  anchor: 'top-left' | 'top-center' | 'center' | 'bottom-left' | 'bottom-center' | 'bottom-right'
-}
-
-export interface TextOverlayTiming {
-  startTime: number   // seconds from video start
-  duration: number    // seconds, or -1 for full video
-  fadeInMs: number
-  fadeOutMs: number
-}
-
-export interface TextOverlay {
-  id: string
-  text: string
-  subtext?: string  // For lower thirds (name + title)
-  position: TextOverlayPosition
-  style: TextOverlayStyle
-  timing: TextOverlayTiming
-  animation?: {
-    enter: 'fade' | 'slide-up' | 'slide-left' | 'typewriter' | 'none'
-    exit: 'fade' | 'slide-down' | 'slide-right' | 'none'
-  }
-}
 
 // Text overlay presets
 const TEXT_OVERLAY_PRESETS: Record<string, Partial<TextOverlay>> = {
@@ -246,17 +219,8 @@ export const DEFAULT_WATERMARK_CONFIG: WatermarkConfig = {
 }
 
 // ============================================================================
-// Types
+// Types (remaining types that aren't shared with MixerTimeline)
 // ============================================================================
-
-export interface AudioTrackConfig {
-  enabled: boolean
-  volume: number       // 0 to 1
-  startOffset: number  // Legacy: Start time in seconds
-  startSegment: number // Segment index where audio starts (0-based)
-  endSegment: number   // Segment index where audio ends (0-based, -1 = all remaining)
-  duration?: number    // Optional duration override (for music)
-}
 
 /** Individual audio clip configuration for per-line control */
 export interface AudioClipConfig {
@@ -265,13 +229,6 @@ export interface AudioClipConfig {
   volume: number
   startTime: number
   duration: number
-}
-
-export interface MixerAudioTracks {
-  narration: AudioTrackConfig
-  dialogue: AudioTrackConfig
-  music: AudioTrackConfig
-  sfx: AudioTrackConfig
 }
 
 export interface SceneAudioAssets {

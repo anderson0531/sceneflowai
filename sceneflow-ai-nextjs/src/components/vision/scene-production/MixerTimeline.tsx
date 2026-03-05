@@ -10,8 +10,7 @@
 
 import React, { useRef, useCallback, useState, useMemo, useEffect } from 'react'
 import { Mic2, MessageSquare, Music, Sparkles, GripVertical, Type, Info, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react'
-import type { AudioTrackConfig, MixerAudioTracks, TextOverlay } from './SceneProductionMixer'
-import type { SceneSegment } from './types'
+import type { AudioTrackConfig, MixerAudioTracks, TextOverlay, SceneSegment } from './types'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Button } from '@/components/ui/Button'
 

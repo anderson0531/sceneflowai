@@ -1447,3 +1447,79 @@ export interface AudioVolumes {
   sfx: number
 }
 
+// ============================================================================
+// Mixer Timeline Types (moved from SceneProductionMixer to break circular dep)
+// ============================================================================
+
+/**
+ * Text overlay style configuration
+ */
+export interface TextOverlayStyle {
+  preset: 'title' | 'lower-third' | 'subtitle' | 'custom'
+  fontFamily: string
+  fontSize: number  // percentage of video height (e.g., 8 = 8%)
+  fontWeight: 400 | 500 | 600 | 700 | 800
+  color: string
+  backgroundColor?: string
+  backgroundOpacity?: number
+  textShadow?: boolean
+  padding?: number
+}
+
+/**
+ * Text overlay position
+ */
+export interface TextOverlayPosition {
+  x: number  // 0-100 percentage
+  y: number  // 0-100 percentage
+  anchor: 'top-left' | 'top-center' | 'center' | 'bottom-left' | 'bottom-center' | 'bottom-right'
+}
+
+/**
+ * Text overlay timing
+ */
+export interface TextOverlayTiming {
+  startTime: number   // seconds from video start
+  duration: number    // seconds, or -1 for full video
+  fadeInMs: number
+  fadeOutMs: number
+}
+
+/**
+ * Text overlay configuration for video captions, titles, and lower thirds
+ */
+export interface TextOverlay {
+  id: string
+  text: string
+  subtext?: string  // For lower thirds (name + title)
+  position: TextOverlayPosition
+  style: TextOverlayStyle
+  timing: TextOverlayTiming
+  animation?: {
+    enter: 'fade' | 'slide-up' | 'slide-left' | 'typewriter' | 'none'
+    exit: 'fade' | 'slide-down' | 'slide-right' | 'none'
+  }
+}
+
+/**
+ * Audio track configuration for mixer
+ */
+export interface AudioTrackConfig {
+  enabled: boolean
+  volume: number       // 0 to 1
+  startOffset: number  // Legacy: Start time in seconds
+  startSegment: number // Segment index where audio starts (0-based)
+  endSegment: number   // Segment index where audio ends (0-based, -1 = all remaining)
+  duration?: number    // Optional duration override (for music)
+}
+
+/**
+ * Audio tracks for the scene mixer
+ */
+export interface MixerAudioTracks {
+  narration: AudioTrackConfig
+  dialogue: AudioTrackConfig
+  music: AudioTrackConfig
+  sfx: AudioTrackConfig
+}
+
