@@ -940,28 +940,20 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                     <TooltipContent>Copy Prompt for External Generation</TooltipContent>
                   </Tooltip>
                   
-                  {/* Take/Edit Button - Opens config dialog or video editing dialog */}
+                  {/* Take Button - Opens DirectorDialog for generation/regeneration */}
                   <Button 
                     variant="outline" 
                     size="sm"
                     className="text-xs bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700 px-2"
-                    onClick={() => {
-                      if (item.status === 'complete') {
-                        // Open VideoEditingDialog for completed segments
-                        setEditingVideoSegment(segment)
-                      } else {
-                        // Open DirectorDialog for segments not yet complete
-                        setSelectedSegment(segment)
-                      }
-                    }}
+                    onClick={() => setSelectedSegment(segment)}
                   >
                     <Settings2 className="w-3.5 h-3.5 mr-1" />
-                    {item.status === 'complete' ? 'Edit' : 'Take'} (1)
+                    Take ({segment.takes?.length || 1})
                   </Button>
                 </div>
               </div>
               
-              {/* Protect / Regenerate Actions for completed segments */}
+              {/* Protect Action for completed segments */}
               {item.status === 'complete' && (
                 <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-700/50">
                   <Tooltip>
@@ -992,32 +984,6 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                       {item.config.approvalStatus === 'locked' 
                         ? 'Unprotect to allow replacement' 
                         : 'Protect this segment from batch operations'}
-                    </TooltipContent>
-                  </Tooltip>
-                  
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                        variant={item.config.approvalStatus === 'auto-ready' ? 'default' : 'outline'}
-                        size="sm"
-                        className={item.config.approvalStatus === 'auto-ready' 
-                          ? 'flex-1 bg-purple-600 hover:bg-purple-700 text-white' 
-                          : 'flex-1 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700'
-                        }
-                        onClick={() => handleMarkRetake(item.segmentId)}
-                        disabled={item.config.approvalStatus === 'locked'}
-                      >
-                        <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-                        {segment.isUserUpload ? 'Replace' : 'Regenerate'}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {item.config.approvalStatus === 'locked' 
-                        ? 'Unprotect first to allow replacement'
-                        : segment.isUserUpload 
-                          ? 'Queue for replacement with AI generation' 
-                          : 'Queue for regeneration'
-                      }
                     </TooltipContent>
                   </Tooltip>
                 </div>
