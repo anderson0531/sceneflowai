@@ -318,7 +318,12 @@ export class LocalRenderService {
       this.canvas = document.createElement('canvas')
       this.canvas.width = width
       this.canvas.height = height
-      this.ctx = this.canvas.getContext('2d', { alpha: false })
+      // desynchronized: false forces sync mode (required for captureStream reliability)
+      // preserveDrawingBuffer: true ensures buffer persists between frames
+      this.ctx = this.canvas.getContext('2d', { 
+        alpha: false,
+        desynchronized: false,
+      } as CanvasRenderingContext2DSettings)
       
       if (!this.ctx || !this.hiddenCtx) {
         throw new Error('Could not create canvas context')
@@ -529,9 +534,36 @@ export class LocalRenderService {
           // getImageData forces Chromium to resolve all pending operations
           // This prevents "half-baked" frames in headless/GCP environments
           this.ctx.getImageData(0, 0, 1, 1)
+          
+          // Step 5b: WATERMARK VERIFICATION (first frame only)
+          // Sample pixels from bottom-right watermark region to confirm drawing
+          if (frame === 0 && adjustedConfig.watermark) {
+            const { width: cw, height: ch } = this.canvas
+            // Sample 10x10 region from watermark area (bottom-right, with padding)
+            const sampleX = Math.max(0, cw - 200)
+            const sampleY = Math.max(0, ch - 100)
+            const sampleData = this.ctx.getImageData(sampleX, sampleY, 100, 50)
+            let nonTransparentPixels = 0
+            for (let i = 0; i < sampleData.data.length; i += 4) {
+              // Check if pixel differs from pure black (video background)
+              if (sampleData.data[i] > 10 || sampleData.data[i + 1] > 10 || sampleData.data[i + 2] > 10) {
+                nonTransparentPixels++
+              }
+            }
+            console.log('[LocalRender] Watermark verification:', {
+              sampleRegion: { x: sampleX, y: sampleY, w: 100, h: 50 },
+              nonTransparentPixels,
+              totalPixels: sampleData.data.length / 4,
+              watermarkLikelyVisible: nonTransparentPixels > 100,
+            })
+          }
         }
         
-        // Step 6: Request frame capture AFTER atomic commit and flush
+        // Step 6: SOFTWARE TICK - Allow browser task runner to catch up
+        // This microtask delay ensures the buffer state is registered
+        await new Promise(resolve => setTimeout(resolve, 0))
+        
+        // Step 7: Request frame capture AFTER atomic commit, flush, and tick
         if (canvasVideoTrack && 'requestFrame' in canvasVideoTrack) {
           canvasVideoTrack.requestFrame()
         }
@@ -1083,9 +1115,24 @@ export class LocalRenderService {
       const { textStyle } = watermark
       const fontSize = (textStyle.fontSize / 100) * height
       
-      // Set font
-      ctx.font = `${textStyle.fontWeight} ${fontSize}px ${textStyle.fontFamily}`
+      // Set font with fallback to system fonts (ensures text renders even if custom font fails)
+      const fontFamily = `"${textStyle.fontFamily}", Arial, Helvetica, sans-serif`
+      ctx.font = `${textStyle.fontWeight} ${fontSize}px ${fontFamily}`
       ctx.globalAlpha = textStyle.opacity
+      
+      // Enhanced diagnostic logging (first frame only)
+      if (!this._watermarkLogged) {
+        console.log('[LocalRender] Watermark text details:', {
+          text: watermark.text,
+          position: { x, y },
+          fontSize: `${fontSize}px (${textStyle.fontSize}% of ${height}px)`,
+          font: ctx.font,
+          color: textStyle.color,
+          opacity: textStyle.opacity,
+          anchor,
+          canvasSize: { width, height },
+        })
+      }
       
       // Set text alignment based on anchor
       if (anchor.includes('left')) {
@@ -1114,6 +1161,16 @@ export class LocalRenderService {
       // Draw text
       ctx.fillStyle = textStyle.color
       ctx.fillText(watermark.text, x, y)
+      
+      // Diagnostic: Verify fillText was called (first frame only)
+      if (!this._watermarkLogged) {
+        console.log('[LocalRender] Watermark fillText completed:', {
+          fillStyle: ctx.fillStyle,
+          textAlign: ctx.textAlign,
+          textBaseline: ctx.textBaseline,
+          globalAlpha: ctx.globalAlpha,
+        })
+      }
     } else if (type === 'image' && this.watermarkImage && this.watermarkImage.complete) {
       // Draw image watermark (preloaded in preloadWatermarkImage)
       const { imageStyle } = watermark
