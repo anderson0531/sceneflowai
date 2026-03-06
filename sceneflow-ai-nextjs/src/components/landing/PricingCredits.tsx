@@ -16,7 +16,9 @@ import {
   Users,
   Building2,
   ChevronDown,
-  Info
+  Info,
+  Key,
+  Gift
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
@@ -82,18 +84,45 @@ const creditPacks = [
   { credits: 100000, price: 600, label: 'Studio Pack', description: 'Full production capacity' },
 ]
 
+// BYOK Platform Fee: 20% of standard credits when using your own API keys
+const BYOK_PLATFORM_FEE_PERCENT = 0.20;
+const BYOK_SAVINGS_PERCENT = 80; // 80% savings on SceneFlow credits with BYOK
+
+// Explorer one-time plan
+const explorerPlan = {
+  id: 'explorer',
+  name: 'Explorer',
+  price: 10,
+  includedCredits: 750,
+  storage: '5 GB',
+  description: 'One-time purchase to try it out',
+  isOneTime: true,
+  features: [
+    'One-time purchase',
+    '750 credits (never expire)',
+    '5 GB storage (30 days)',
+    'Full platform access',
+    'MP4 export (any resolution)',
+    'AI voiceover (32 languages)',
+  ],
+  limitations: [
+    'No recurring credits',
+    'Community support only',
+  ],
+}
+
 // Base access plans
 const basePlans = [
   {
     id: 'starter',
     name: 'Starter',
-    price: 29,
-    includedCredits: 3000,
+    price: 49,
+    includedCredits: 4500,
     storage: '25 GB',
     description: 'For individual creators',
     features: [
       'Full platform access',
-      '3,000 credits/month included',
+      '4,500 credits/month included',
       '25 GB active storage',
       'MP4 export (any resolution)',
       'AI voiceover (32 languages)',
@@ -107,18 +136,19 @@ const basePlans = [
   {
     id: 'pro',
     name: 'Pro',
-    price: 79,
-    includedCredits: 10000,
+    price: 149,
+    includedCredits: 15000,
     storage: '100 GB',
     description: 'For professional creators',
     popular: true,
     features: [
       'Everything in Starter, plus:',
-      '10,000 credits/month included',
+      '15,000 credits/month included',
       '100 GB active storage',
       'Veo 3.1 Quality (4K) access',
       'Character consistency engine',
       'Voice cloning',
+      'BYOK (Bring Your Own Key)',
       '3 team seats',
       'Priority support',
     ],
@@ -127,15 +157,16 @@ const basePlans = [
   {
     id: 'studio',
     name: 'Studio',
-    price: 249,
-    includedCredits: 50000,
+    price: 599,
+    includedCredits: 75000,
     storage: '500 GB',
     description: 'For teams & agencies',
     features: [
       'Everything in Pro, plus:',
-      '50,000 credits/month included',
+      '75,000 credits/month included',
       '500 GB active storage',
       'White-label exports',
+      'BYOK (Bring Your Own Key)',
       'API access',
       '10 team seats',
       'Dedicated account manager',
@@ -155,6 +186,10 @@ function ProjectBudgetCalculator() {
     videoQuality: 'fast' as 'fast' | 'quality' | 'mixed',
     voiceMinutes: 2,
   })
+  
+  // BYOK toggles
+  const [byokVertexAI, setByokVertexAI] = useState(false)
+  const [byokElevenLabs, setByokElevenLabs] = useState(false)
 
   const calculateCredits = useMemo(() => {
     const values = showCustom ? customValues : selectedPreset
@@ -164,16 +199,28 @@ function ProjectBudgetCalculator() {
         ? (creditCosts.videoFast + creditCosts.videoQuality) / 2
         : creditCosts.videoFast
 
-    return {
-      images: (showCustom ? customValues.images : selectedPreset.images) * creditCosts.imageGeneration,
-      video: (showCustom ? customValues.videoClips : selectedPreset.videoClips) * videoRate,
-      voice: Math.ceil((showCustom ? customValues.voiceMinutes : selectedPreset.voiceMinutes) * 2) * creditCosts.voiceover,
-      total: 0,
-    }
-  }, [selectedPreset, showCustom, customValues])
+    // Standard credits
+    const standardImages = (showCustom ? customValues.images : selectedPreset.images) * creditCosts.imageGeneration
+    const standardVideo = (showCustom ? customValues.videoClips : selectedPreset.videoClips) * videoRate
+    const standardVoice = Math.ceil((showCustom ? customValues.voiceMinutes : selectedPreset.voiceMinutes) * 2) * creditCosts.voiceover
 
-  const totalCredits = calculateCredits.images + calculateCredits.video + calculateCredits.voice
-  const estimatedCost = (totalCredits / 1000) * 8 // Rough $8 per 1000 credits
+    // BYOK credits (20% platform fee when using your own keys)
+    const byokImages = byokVertexAI ? Math.ceil(standardImages * BYOK_PLATFORM_FEE_PERCENT) : standardImages
+    const byokVideo = byokVertexAI ? Math.ceil(standardVideo * BYOK_PLATFORM_FEE_PERCENT) : standardVideo
+    const byokVoice = byokElevenLabs ? Math.ceil(standardVoice * BYOK_PLATFORM_FEE_PERCENT) : standardVoice
+
+    return {
+      images: { standard: standardImages, byok: byokImages },
+      video: { standard: standardVideo, byok: byokVideo },
+      voice: { standard: standardVoice, byok: byokVoice },
+    }
+  }, [selectedPreset, showCustom, customValues, byokVertexAI, byokElevenLabs])
+
+  const totalStandardCredits = calculateCredits.images.standard + calculateCredits.video.standard + calculateCredits.voice.standard
+  const totalByokCredits = calculateCredits.images.byok + calculateCredits.video.byok + calculateCredits.voice.byok
+  const hasByokEnabled = byokVertexAI || byokElevenLabs
+  const creditSavings = totalStandardCredits - totalByokCredits
+  const estimatedCost = (totalByokCredits / 1000) * 8 // Rough $8 per 1000 credits
 
   return (
     <div className="bg-gray-900/60 backdrop-blur-sm rounded-2xl border border-gray-800 p-6 lg:p-8">
@@ -273,6 +320,58 @@ function ProjectBudgetCalculator() {
         )}
       </AnimatePresence>
 
+      {/* BYOK Controls */}
+      <div className="mb-6 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
+        <div className="flex items-center gap-2 mb-4">
+          <Key className="w-4 h-4 text-purple-400" />
+          <span className="text-sm font-medium text-purple-400">Bring Your Own Key (BYOK)</span>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300">Pro & Studio</span>
+        </div>
+        <p className="text-xs text-gray-400 mb-4">
+          Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.
+        </p>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-300">Vertex AI (Images & Video)</span>
+            </div>
+            <button
+              onClick={() => setByokVertexAI(!byokVertexAI)}
+              className={cn(
+                'relative w-11 h-6 rounded-full transition-colors',
+                byokVertexAI ? 'bg-purple-500' : 'bg-gray-700'
+              )}
+            >
+              <span
+                className={cn(
+                  'absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform',
+                  byokVertexAI && 'translate-x-5'
+                )}
+              />
+            </button>
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-300">ElevenLabs (Voiceover)</span>
+            </div>
+            <button
+              onClick={() => setByokElevenLabs(!byokElevenLabs)}
+              className={cn(
+                'relative w-11 h-6 rounded-full transition-colors',
+                byokElevenLabs ? 'bg-purple-500' : 'bg-gray-700'
+              )}
+            >
+              <span
+                className={cn(
+                  'absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform',
+                  byokElevenLabs && 'translate-x-5'
+                )}
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Cost Breakdown */}
       <div className="bg-gray-800/50 rounded-xl p-5 mb-6">
         <div className="space-y-3 mb-4">
@@ -280,22 +379,40 @@ function ProjectBudgetCalculator() {
             <div className="flex items-center gap-2 text-gray-400">
               <ImageIcon className="w-4 h-4" />
               <span>Image Generation</span>
+              {byokVertexAI && <span className="text-xs text-purple-400">(BYOK)</span>}
             </div>
-            <span className="text-white font-medium">{calculateCredits.images.toLocaleString()} credits</span>
+            <div className="text-right">
+              {byokVertexAI && (
+                <span className="text-xs text-gray-500 line-through mr-2">{calculateCredits.images.standard.toLocaleString()}</span>
+              )}
+              <span className="text-white font-medium">{calculateCredits.images.byok.toLocaleString()} credits</span>
+            </div>
           </div>
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2 text-gray-400">
               <Film className="w-4 h-4" />
               <span>Video Generation</span>
+              {byokVertexAI && <span className="text-xs text-purple-400">(BYOK)</span>}
             </div>
-            <span className="text-white font-medium">{calculateCredits.video.toLocaleString()} credits</span>
+            <div className="text-right">
+              {byokVertexAI && (
+                <span className="text-xs text-gray-500 line-through mr-2">{calculateCredits.video.standard.toLocaleString()}</span>
+              )}
+              <span className="text-white font-medium">{calculateCredits.video.byok.toLocaleString()} credits</span>
+            </div>
           </div>
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2 text-gray-400">
               <Mic className="w-4 h-4" />
               <span>Voiceover</span>
+              {byokElevenLabs && <span className="text-xs text-purple-400">(BYOK)</span>}
             </div>
-            <span className="text-white font-medium">{calculateCredits.voice.toLocaleString()} credits</span>
+            <div className="text-right">
+              {byokElevenLabs && (
+                <span className="text-xs text-gray-500 line-through mr-2">{calculateCredits.voice.standard.toLocaleString()}</span>
+              )}
+              <span className="text-white font-medium">{calculateCredits.voice.byok.toLocaleString()} credits</span>
+            </div>
           </div>
         </div>
 
@@ -303,10 +420,26 @@ function ProjectBudgetCalculator() {
           <div className="flex items-center justify-between">
             <span className="text-lg font-semibold text-white">Total Estimate</span>
             <div className="text-right">
-              <div className="text-2xl font-bold text-emerald-400">{totalCredits.toLocaleString()} credits</div>
+              {hasByokEnabled && (
+                <div className="text-xs text-gray-500 line-through mb-1">{totalStandardCredits.toLocaleString()} credits</div>
+              )}
+              <div className="text-2xl font-bold text-emerald-400">{totalByokCredits.toLocaleString()} credits</div>
               <div className="text-sm text-gray-400">≈ ${estimatedCost.toFixed(2)} with top-ups</div>
             </div>
           </div>
+          
+          {/* BYOK Savings Display */}
+          {hasByokEnabled && (
+            <div className="mt-4 p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-purple-300">SceneFlow credit savings</span>
+                <span className="text-lg font-bold text-purple-400">-{creditSavings.toLocaleString()} credits</span>
+              </div>
+              <div className="text-xs text-gray-400 mt-1">
+                You save {Math.round((creditSavings / totalStandardCredits) * 100)}% on SceneFlow credits
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -317,6 +450,17 @@ function ProjectBudgetCalculator() {
           <span className="font-medium text-emerald-400">Full transparency:</span> You&apos;ll see real-time credit usage as you work. No surprises—adjust your project scope anytime.
         </div>
       </div>
+      
+      {/* BYOK Disclaimer */}
+      {hasByokEnabled && (
+        <div className="flex items-start gap-3 p-4 mt-4 rounded-lg bg-gray-800/50 border border-gray-700">
+          <Info className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+          <div className="text-xs text-gray-400">
+            <span className="font-medium text-gray-300">BYOK Note:</span> Credit savings shown reflect SceneFlow platform credit reductions only. 
+            Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -383,6 +527,55 @@ export function PricingCredits() {
                 Save 17%
               </span>
             </button>
+          </div>
+        </motion.div>
+
+        {/* Explorer One-Time Plan */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-md mx-auto mb-12"
+        >
+          <div className="relative rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-950/20 via-gray-900 to-gray-900 p-6 lg:p-8">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+              <div className="px-4 py-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold flex items-center gap-1">
+                <Gift className="w-3 h-3" />
+                One-Time Purchase
+              </div>
+            </div>
+            
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pt-2">
+              <div>
+                <h3 className="text-xl font-bold text-white mb-1">{explorerPlan.name}</h3>
+                <p className="text-sm text-gray-400">{explorerPlan.description}</p>
+              </div>
+              
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-white">${explorerPlan.price}</div>
+                  <div className="text-sm text-amber-400">{explorerPlan.includedCredits} credits</div>
+                </div>
+                <Button
+                  onClick={() => window.location.href = '/?signup=explorer'}
+                  className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6"
+                >
+                  Try It
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+            
+            <div className="mt-4 pt-4 border-t border-gray-800">
+              <div className="flex flex-wrap gap-3">
+                {explorerPlan.features.slice(0, 4).map((feature, idx) => (
+                  <div key={idx} className="flex items-center gap-1.5 text-xs text-gray-400">
+                    <Check className="w-3 h-3 text-amber-400" />
+                    <span>{feature}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </motion.div>
 
@@ -486,7 +679,7 @@ export function PricingCredits() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-20"
+          className="text-center mb-12"
         >
           <div className="inline-flex items-center gap-4 p-4 rounded-xl bg-gray-900/60 border border-gray-800">
             <Building2 className="w-6 h-6 text-purple-400" />
@@ -497,6 +690,109 @@ export function PricingCredits() {
             <Button variant="outline" className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10">
               Contact Sales
             </Button>
+          </div>
+        </motion.div>
+
+        {/* BYOK Value Proposition Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-20"
+        >
+          <div className="max-w-4xl mx-auto">
+            <div className="rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-950/20 via-gray-900 to-gray-900 p-8 lg:p-10">
+              <div className="flex flex-col lg:flex-row gap-8">
+                {/* BYOK Header */}
+                <div className="lg:w-1/2">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                      <Key className="w-6 h-6 text-purple-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-white">Bring Your Own Key</h3>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300">Pro & Studio Plans</span>
+                    </div>
+                  </div>
+                  
+                  <p className="text-gray-300 mb-6">
+                    Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to <span className="text-purple-400 font-semibold">80% on platform credits</span>.
+                  </p>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <Check className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-white font-medium">80% SceneFlow Credit Savings</span>
+                        <p className="text-sm text-gray-400">Pay only a 20% platform fee for orchestration & tools</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Check className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-white font-medium">Leverage Corporate Plans</span>
+                        <p className="text-sm text-gray-400">Use your existing Vertex AI or ElevenLabs volume discounts</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Check className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-white font-medium">Full Control</span>
+                        <p className="text-sm text-gray-400">Your keys, your billing, your cost management</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* BYOK Providers */}
+                <div className="lg:w-1/2">
+                  <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
+                    <h4 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">Supported Providers</h4>
+                    
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 rounded-lg bg-gray-900/50 border border-gray-700/50">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                            <Film className="w-5 h-5 text-blue-400" />
+                          </div>
+                          <div>
+                            <div className="text-white font-medium">Google Vertex AI</div>
+                            <div className="text-xs text-gray-400">Imagen 4 & Veo 3.1</div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm text-purple-400 font-medium">80% savings</div>
+                          <div className="text-xs text-gray-500">on images & video</div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-4 rounded-lg bg-gray-900/50 border border-gray-700/50">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
+                            <Mic className="w-5 h-5 text-violet-400" />
+                          </div>
+                          <div>
+                            <div className="text-white font-medium">ElevenLabs</div>
+                            <div className="text-xs text-gray-400">Text-to-Speech & Voice Cloning</div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm text-purple-400 font-medium">80% savings</div>
+                          <div className="text-xs text-gray-500">on voiceover</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 p-3 rounded-lg bg-gray-900/30 border border-gray-700/30">
+                      <p className="text-xs text-gray-400">
+                        <span className="text-gray-300 font-medium">Note:</span> Credit savings shown are SceneFlow platform savings. 
+                        Your actual total costs depend on your personal or corporate API pricing with each provider.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </motion.div>
 
