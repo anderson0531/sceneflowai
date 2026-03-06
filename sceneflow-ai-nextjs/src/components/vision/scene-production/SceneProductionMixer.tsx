@@ -195,12 +195,12 @@ export interface WatermarkConfig {
 }
 
 export const DEFAULT_WATERMARK_CONFIG: WatermarkConfig = {
-  enabled: false,
+  enabled: true,
   type: 'text',
-  text: '© SceneFlow',
+  text: 'SceneFlow AI Studio',
   textStyle: {
     fontFamily: 'Inter',
-    fontSize: 2.5,
+    fontSize: 3,
     fontWeight: 500,
     color: '#FFFFFF',
     opacity: 0.6,
@@ -215,7 +215,7 @@ export const DEFAULT_WATERMARK_CONFIG: WatermarkConfig = {
     opacity: 0.7,
   },
   anchor: 'bottom-right',
-  padding: 20,
+  padding: 60,
 }
 
 // ============================================================================
