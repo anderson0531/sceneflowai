@@ -3937,30 +3937,76 @@ export function SceneProductionMixer({
             {/* Render Button */}
             <div className="flex items-center gap-2 w-full sm:w-auto">
               {/* Credit Cost Indicator */}
-              {!isRendering && renderStrategy.estimatedCredits && renderStrategy.estimatedCredits > 0 && (
+              {!isRendering && renderStrategy.estimatedCredits && renderStrategy.estimatedCredits > 0 && selectedRenderMode !== 'local' && (
                 <div className="flex items-center gap-1 text-xs text-amber-400 bg-amber-500/10 px-2 py-1 rounded">
                   <Coins className="w-3 h-3" />
                   <span>~{renderStrategy.estimatedCredits} credits</span>
                 </div>
               )}
               
-              {/* Final Video Render Button (Server) */}
+              {/* Render Mode Selector */}
+              <Select
+                value={selectedRenderMode}
+                onValueChange={(value) => setSelectedRenderMode(value as RenderMode)}
+                disabled={isRendering}
+              >
+                <SelectTrigger className="w-[140px] h-9 bg-gray-800 border-gray-600">
+                  <SelectValue placeholder="Render mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  {renderOptions.filter(opt => opt.available).map((option) => (
+                    <SelectItem key={option.mode} value={option.mode}>
+                      <div className="flex items-center gap-2">
+                        {option.mode === 'local' && <Zap className="w-3 h-3 text-yellow-400" />}
+                        {option.mode === 'server' && <Server className="w-3 h-3 text-purple-400" />}
+                        {option.mode === 'headless' && <Monitor className="w-3 h-3 text-blue-400" />}
+                        {option.mode === 'auto' && <Sparkles className="w-3 h-3 text-gray-400" />}
+                        <span>{option.label}</span>
+                        {option.badge && (
+                          <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0">
+                            {option.badge}
+                          </Badge>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {/* Smart Render Button */}
               <Button
-                onClick={handleRender}
+                onClick={handleSmartRender}
                 disabled={isRendering || !hasRenderedSegments}
                 size="lg"
-                className="bg-purple-600 hover:bg-purple-700 text-white px-6"
-                title="Render video segments with audio tracks to MP4 (Cloud render)"
+                className={`px-6 ${
+                  selectedRenderMode === 'local' 
+                    ? 'bg-yellow-600 hover:bg-yellow-700' 
+                    : selectedRenderMode === 'headless'
+                    ? 'bg-blue-600 hover:bg-blue-700'
+                    : 'bg-purple-600 hover:bg-purple-700'
+                } text-white`}
+                title={
+                  selectedRenderMode === 'local' 
+                    ? 'Quick Export: Render in browser (instant, no credits)' 
+                    : selectedRenderMode === 'headless'
+                    ? 'Pro Cloud: Deterministic 4K render with guaranteed watermarks'
+                    : 'Final Render: Cloud render to MP4'
+                }
               >
                 {isRendering ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Rendering Video...
+                    Rendering...
                   </>
                 ) : (
                   <>
-                    <Video className="w-4 h-4 mr-2" />
-                    Render Video {languageLabel}
+                    {selectedRenderMode === 'local' && <Zap className="w-4 h-4 mr-2" />}
+                    {selectedRenderMode === 'server' && <Video className="w-4 h-4 mr-2" />}
+                    {selectedRenderMode === 'headless' && <Monitor className="w-4 h-4 mr-2" />}
+                    {selectedRenderMode === 'auto' && <Sparkles className="w-4 h-4 mr-2" />}
+                    {selectedRenderMode === 'local' ? 'Quick Export' : 
+                     selectedRenderMode === 'headless' ? 'Pro Cloud' : 
+                     'Render'} {languageLabel}
                   </>
                 )}
               </Button>
@@ -3970,16 +4016,59 @@ export function SceneProductionMixer({
           {/* Render Info */}
           {renderStatus === 'idle' && (
             <div className="mt-3 pt-3 border-t border-gray-700/50 flex flex-col gap-2 text-xs text-gray-500">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1">
-                  <Video className="w-3 h-3 text-purple-400" />
-                  <span className="text-purple-300">Cloud Render:</span>
-                  <span>Concatenates rendered video segments with audio to MP4</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Server className="w-3 h-3" />
-                  <span>{renderStrategy.estimatedCredits || 5} credits/min</span>
-                </div>
+              <div className="flex items-center gap-4 flex-wrap">
+                {selectedRenderMode === 'local' && (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <Zap className="w-3 h-3 text-yellow-400" />
+                      <span className="text-yellow-300">Quick Export:</span>
+                      <span>Browser-based render • Instant • No credits • WebM output</span>
+                    </div>
+                    {watermarkConfig.enabled && (
+                      <div className="flex items-center gap-1 text-green-400">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Watermark enabled</span>
+                      </div>
+                    )}
+                  </>
+                )}
+                {selectedRenderMode === 'server' && (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <Video className="w-3 h-3 text-purple-400" />
+                      <span className="text-purple-300">Cloud Render:</span>
+                      <span>FFmpeg server • MP4 output • {renderStrategy.estimatedCredits || 5} credits/min</span>
+                    </div>
+                    {watermarkConfig.enabled && (
+                      <div className="flex items-center gap-1 text-green-400">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Watermark enabled</span>
+                      </div>
+                    )}
+                  </>
+                )}
+                {selectedRenderMode === 'headless' && (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <Monitor className="w-3 h-3 text-blue-400" />
+                      <span className="text-blue-300">Pro Cloud:</span>
+                      <span>Deterministic 4K • Frame-perfect watermarks • WebM output</span>
+                    </div>
+                    {watermarkConfig.enabled && (
+                      <div className="flex items-center gap-1 text-green-400">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Guaranteed watermark</span>
+                      </div>
+                    )}
+                  </>
+                )}
+                {selectedRenderMode === 'auto' && (
+                  <div className="flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-gray-400" />
+                    <span className="text-gray-300">Auto:</span>
+                    <span>Will use {renderStrategy.mode === 'local' ? 'Quick Export' : 'Cloud Render'} based on video complexity</span>
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -25,6 +25,7 @@ import type {
   SceneRenderVideoSegment,
   SceneRenderAudioClip,
   SceneRenderTextOverlay,
+  SceneRenderWatermark,
 } from '@/lib/video/renderTypes'
 import { RENDER_DEFAULTS } from '@/lib/video/renderTypes'
 import { uploadJobSpec, getOutputPath, getRenderBucket, getSignedDownloadUrl } from '@/lib/gcs/renderStorage'
@@ -354,6 +355,48 @@ export async function POST(
       }
     })
     
+    // Process watermark config if provided
+    // Convert percentage-based values to pixels for FFmpeg
+    let watermark: SceneRenderWatermark | undefined
+    if (body.watermark && body.watermark.type) {
+      const wmPadding = body.watermark.padding || 60
+      // Font size is percentage of video height, convert to pixels
+      const wmFontSize = body.watermark.textStyle?.fontSize 
+        ? Math.round((body.watermark.textStyle.fontSize / 100) * resolution.height)
+        : Math.round(resolution.height * 0.03) // Default 3% of height
+      // Image width is percentage of video width
+      const wmImageWidth = body.watermark.imageStyle?.width
+        ? Math.round((body.watermark.imageStyle.width / 100) * resolution.width)
+        : Math.round(resolution.width * 0.1) // Default 10% of width
+      
+      watermark = {
+        type: body.watermark.type,
+        text: body.watermark.text,
+        imageUrl: body.watermark.imageUrl,
+        anchor: body.watermark.anchor as SceneRenderWatermark['anchor'],
+        padding: wmPadding,
+        textStyle: {
+          fontFamily: fontFamilyMap[body.watermark.textStyle?.fontFamily || 'Inter'] || 'Montserrat',
+          fontSize: wmFontSize,
+          fontWeight: body.watermark.textStyle?.fontWeight || 400,
+          color: body.watermark.textStyle?.color || '#FFFFFF',
+          opacity: body.watermark.textStyle?.opacity ?? 0.7,
+          textShadow: body.watermark.textStyle?.textShadow ?? true,
+        },
+        imageStyle: {
+          width: wmImageWidth,
+          opacity: body.watermark.imageStyle?.opacity ?? 0.7,
+        },
+      }
+      
+      console.log(`[SceneRender] Watermark config:`, {
+        type: watermark.type,
+        text: watermark.text?.substring(0, 20),
+        anchor: watermark.anchor,
+        fontSize: watermark.textStyle.fontSize,
+      })
+    }
+    
     // Build job spec
     const jobSpec: SceneRenderJobSpec = {
       jobId,
@@ -372,6 +415,7 @@ export async function POST(
       includeSegmentAudio,
       segmentAudioVolume,
       textOverlays: textOverlays.length > 0 ? textOverlays : undefined,
+      watermark,
     }
     
     console.log(`[SceneRender] Job spec created:`, {
@@ -379,6 +423,8 @@ export async function POST(
       videoSegments: videoSegments.length,
       audioClips: audioClips.length,
       textOverlays: textOverlays.length,
+      hasWatermark: !!watermark,
+      watermarkType: watermark?.type,
       totalDuration,
       resolution: body.resolution,
     })

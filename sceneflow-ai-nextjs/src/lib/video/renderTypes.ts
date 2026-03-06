@@ -376,6 +376,39 @@ export interface SceneRenderJobSpec {
   segmentAudioVolume?: number
   /** Text overlays to burn into the video (FFmpeg drawtext filter) */
   textOverlays?: SceneRenderTextOverlay[]
+  /** Watermark to burn into the video (full duration) */
+  watermark?: SceneRenderWatermark
+}
+
+/**
+ * Watermark specification for FFmpeg drawtext/overlay filter
+ * Applied to entire video duration
+ */
+export interface SceneRenderWatermark {
+  /** Watermark type */
+  type: 'text' | 'image'
+  /** Text content (for type='text') */
+  text?: string
+  /** Image URL (for type='image') */
+  imageUrl?: string
+  /** Position anchor */
+  anchor: 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right'
+  /** Padding from edges in pixels */
+  padding: number
+  /** Text styling (for type='text') */
+  textStyle: {
+    fontFamily: string
+    fontSize: number
+    fontWeight: number
+    color: string
+    opacity: number
+    textShadow?: boolean
+  }
+  /** Image styling (for type='image') */
+  imageStyle: {
+    width: number
+    opacity: number
+  }
 }
 
 /**

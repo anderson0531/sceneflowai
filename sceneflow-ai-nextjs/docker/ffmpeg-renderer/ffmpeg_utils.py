@@ -331,6 +331,102 @@ def build_text_overlay_filters(
     return filters
 
 
+def build_watermark_filter(
+    watermark: Dict[str, Any],
+    input_label: str,
+    output_label: str,
+    width: int = 1920,
+    height: int = 1080,
+) -> str:
+    """
+    Build FFmpeg drawtext filter for a watermark (applied to entire video).
+    
+    Args:
+        watermark: Watermark specification dict
+        input_label: Input stream label (e.g., "[outv]")
+        output_label: Output stream label (e.g., "[wm]")
+        width: Video width in pixels
+        height: Video height in pixels
+    
+    Returns:
+        FFmpeg filter string for the watermark
+    """
+    wm_type = watermark.get('type', 'text')
+    
+    if wm_type == 'image':
+        # Image watermark requires overlay filter (not implemented here)
+        # For now, skip image watermarks
+        print(f"[FFmpeg] Warning: Image watermarks not yet supported in FFmpeg renderer")
+        return ""
+    
+    # Text watermark using drawtext
+    text = escape_drawtext(watermark.get('text', 'SceneFlow AI'))
+    anchor = watermark.get('anchor', 'bottom-right')
+    padding = watermark.get('padding', 60)
+    
+    text_style = watermark.get('textStyle', {})
+    font_family = text_style.get('fontFamily', 'Montserrat')
+    font_size = text_style.get('fontSize', 32)  # Already converted to pixels by API
+    font_weight = text_style.get('fontWeight', 400)
+    color = text_style.get('color', '#FFFFFF')
+    opacity = text_style.get('opacity', 0.7)
+    text_shadow = text_style.get('textShadow', True)
+    
+    # Get font file path
+    font_file = get_font_file(font_family, font_weight)
+    
+    # Convert hex color to FFmpeg format with opacity
+    fontcolor = hex_to_ffmpeg_color(color, opacity)
+    
+    # Calculate position based on anchor
+    if anchor == 'top-left':
+        x_expr = str(padding)
+        y_expr = str(padding)
+    elif anchor == 'top-center':
+        x_expr = f'(w-tw)/2'
+        y_expr = str(padding)
+    elif anchor == 'top-right':
+        x_expr = f'w-tw-{padding}'
+        y_expr = str(padding)
+    elif anchor == 'bottom-left':
+        x_expr = str(padding)
+        y_expr = f'h-th-{padding}'
+    elif anchor == 'bottom-center':
+        x_expr = f'(w-tw)/2'
+        y_expr = f'h-th-{padding}'
+    elif anchor == 'bottom-right':
+        x_expr = f'w-tw-{padding}'
+        y_expr = f'h-th-{padding}'
+    else:
+        x_expr = f'w-tw-{padding}'
+        y_expr = f'h-th-{padding}'
+    
+    # Build drawtext filter parts
+    filter_parts = [
+        f"fontfile='{font_file}'" if os.path.exists(font_file) else f"font='{font_file}'",
+        f"text='{text}'",
+        f"fontsize={font_size}",
+        f"fontcolor={fontcolor}",
+        f"x={x_expr}",
+        f"y={y_expr}",
+    ]
+    
+    # Add text shadow for better visibility
+    if text_shadow:
+        filter_parts.extend([
+            "shadowcolor=0x00000080",
+            "shadowx=2",
+            "shadowy=2",
+        ])
+    
+    # Build the filter string
+    filter_str = f"{input_label}drawtext={':'.join(filter_parts)}{output_label}"
+    
+    print(f"[FFmpeg] Watermark filter: text='{watermark.get('text', '')[:30]}', anchor={anchor}, fontSize={font_size}")
+    
+    return filter_str
+
+
 def build_ken_burns_filter(
     segment_index: int,
     duration_frames: int,
@@ -587,6 +683,7 @@ def build_concat_ffmpeg_command(
     include_segment_audio: bool = True,
     segment_audio_volume: float = 1.0,
     text_overlays: Optional[List[Dict[str, Any]]] = None,
+    watermark: Optional[Dict[str, Any]] = None,
 ) -> List[str]:
     """
     Build FFmpeg command for concatenating video segments with audio mixing.
@@ -604,6 +701,7 @@ def build_concat_ffmpeg_command(
         include_segment_audio: Whether to include audio from video segments
         segment_audio_volume: Volume level for segment audio (0.0 to 1.0)
         text_overlays: List of text overlays to burn into the video
+        watermark: Watermark specification to burn into the video
     
     Returns:
         FFmpeg command as list of arguments
@@ -709,13 +807,27 @@ def build_concat_ffmpeg_command(
         text_filters = build_text_overlay_filters(
             text_overlays=text_overlays,
             input_label=video_output,
-            output_label="[finalv]",
+            output_label="[textv]",
             width=width,
             height=height,
         )
         if text_filters:
             filter_parts.extend(text_filters)
-            video_output = "[finalv]"
+            video_output = "[textv]"
+    
+    # Apply watermark to the video stream (after text overlays)
+    if watermark and watermark.get('type'):
+        print(f"[FFmpeg] Adding watermark: type={watermark.get('type')}, text={watermark.get('text', '')[:30]}")
+        wm_filter = build_watermark_filter(
+            watermark=watermark,
+            input_label=video_output,
+            output_label="[wmv]",
+            width=width,
+            height=height,
+        )
+        if wm_filter:
+            filter_parts.append(wm_filter)
+            video_output = "[wmv]"
     
     # Initialize audio tracking
     src_audio_output = None

@@ -276,6 +276,7 @@ def main():
         include_segment_audio = job_spec.get('includeSegmentAudio', True)
         segment_audio_volume = job_spec.get('segmentAudioVolume', 1.0)
         text_overlays = job_spec.get('textOverlays', [])
+        watermark = job_spec.get('watermark')
         log(f"Video Segments: {len(video_segments)}")
         
         # Debug: Log per-segment audio settings from job spec
@@ -288,9 +289,14 @@ def main():
         log(f"Include Segment Audio: {include_segment_audio}")
         log(f"Segment Audio Volume: {segment_audio_volume}")
         log(f"Text Overlays: {len(text_overlays)}")
+        log(f"Watermark: {'enabled' if watermark else 'disabled'}")
+        if watermark:
+            log(f"  Watermark type: {watermark.get('type')}")
+            log(f"  Watermark text: {watermark.get('text', '')[:30]}")
+            log(f"  Watermark anchor: {watermark.get('anchor')}")
         render_video_concatenation(job_id, video_segments, audio_clips, output_path_gcs, 
                                    resolution, fps, callback_url, include_segment_audio, segment_audio_volume,
-                                   text_overlays)
+                                   text_overlays, watermark)
     else:
         # Ken Burns mode (for project renders with images)
         segments = job_spec.get('segments', [])
@@ -377,8 +383,8 @@ def render_ken_burns(job_id: str, segments: list, audio_clips: list,
 def render_video_concatenation(job_id: str, video_segments: list, audio_clips: list,
                                output_path_gcs: str, resolution: str, fps: int, callback_url: str,
                                include_segment_audio: bool = True, segment_audio_volume: float = 1.0,
-                               text_overlays: list = None):
-    """Render by concatenating video segments with audio mixing and text overlays."""
+                               text_overlays: list = None, watermark: dict = None):
+    """Render by concatenating video segments with audio mixing, text overlays, and watermark."""
     
     if text_overlays is None:
         text_overlays = []
@@ -458,6 +464,7 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
         include_segment_audio=include_segment_audio,
         segment_audio_volume=segment_audio_volume,
         text_overlays=text_overlays,
+        watermark=watermark,
     )
     
     log(f"FFmpeg command length: {len(ffmpeg_cmd)} args")
