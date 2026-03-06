@@ -15,70 +15,74 @@ import {
   Layers,
   Palette,
   RefreshCw,
-  Zap
+  Zap,
+  BarChart3,
+  AlertTriangle,
+  CheckCircle2,
+  TrendingUp,
+  Target
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
-// Series Launch Checklist Steps
+// Series Launch Checklist Steps - Simplified 3-step flow
 const launchSteps = [
   {
     step: 1,
-    title: 'Enter Your Topic',
-    description: 'Just describe your series concept',
-    time: '30 sec',
+    title: 'Ideate',
+    description: 'Enter a topic and get a 10-episode Series Storyline',
+    time: '2 min',
     icon: Sparkles,
   },
   {
     step: 2,
-    title: 'AI Builds Your Bible',
-    description: 'Characters, locations, visual style generated',
-    time: '2 min',
-    icon: BookOpen,
+    title: 'Analyze',
+    description: 'Run Audience Resonance™ to find weaknesses before rendering',
+    time: '3 min',
+    icon: BarChart3,
   },
   {
     step: 3,
-    title: 'Review Episode Blueprints',
-    description: '10-20 episode outlines with story arcs',
-    time: '3 min',
-    icon: Layers,
-  },
-  {
-    step: 4,
-    title: 'Lock Your Characters',
-    description: 'Visual consistency across all episodes',
-    time: '2 min',
-    icon: Users,
-  },
-  {
-    step: 5,
-    title: 'Launch Episode 1',
-    description: 'One click to start full production',
-    time: '2 min',
-    icon: Play,
+    title: 'Sync',
+    description: 'Production Bible auto-carries your Protagonist into every scene',
+    time: '5 min',
+    icon: RefreshCw,
   },
 ]
 
-// Comparison Table Data
+// Script Analysis Feedback - From product screenshots
+const scriptStrengths = [
+  "The integration of the 'small, worn device' in Scene 1 and 3 effectively foreshadows its later use",
+  "Alexander's transformation in Scene 8 is now much more visually compelling",
+  "The overall pacing has improved, with a good balance of action and emotional beats",
+]
+
+const scriptImprovements = [
+  "Narration in Scene 5 and 6 still explains emotions directly, rather than showing them",
+  "Alexander's dialogue in Scene 4 could still have more subtext",
+  "Anya's motivation could be further explored beyond 'zealous conviction'",
+]
+
+// Comparison Table Data - Updated with Intelligence row
 const comparisonRows = [
   {
-    feature: 'Character Consistency',
-    standard: 'Changes every time you prompt',
-    showrunner: 'Locked in the Production Bible',
+    feature: 'Consistency',
+    standard: 'Characters change every prompt',
+    showrunner: 'Shared Production Bible for characters & locations',
   },
   {
-    feature: 'Story Arc',
-    standard: 'One-off, disconnected clips',
-    showrunner: 'Narrative-aware across 40+ episodes',
+    feature: 'Scale',
+    standard: 'One video at a time',
+    showrunner: 'Season-at-a-glance with up to 40 episode blueprints',
   },
   {
-    feature: 'Workflow',
-    standard: 'Start from scratch every video',
-    showrunner: 'Episode 1 feeds Episode 2 automatically',
+    feature: 'Intelligence',
+    standard: 'Guesswork',
+    showrunner: 'Audience Resonance™ scoring and script analysis',
   },
   {
-    feature: 'Scalability',
-    standard: 'Burnout-inducing manual work',
-    showrunner: '"Coffee Break" batch production',
+    feature: 'Efficiency',
+    standard: 'Start from scratch',
+    showrunner: '"Continue Project" from previous episode data',
   },
 ]
 
@@ -152,6 +156,70 @@ const EpisodeCard = ({
   )
 }
 
+// Audience Resonance Score Component
+const AudienceResonanceScore = () => {
+  const score = 86
+  const circumference = 2 * Math.PI * 45
+  const strokeDashoffset = circumference - (score / 100) * circumference
+
+  return (
+    <motion.div
+      className="relative w-32 h-32"
+      initial={{ opacity: 0, scale: 0.8 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6 }}
+    >
+      <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+        {/* Background circle */}
+        <circle
+          cx="50"
+          cy="50"
+          r="45"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="8"
+          className="text-gray-800"
+        />
+        {/* Progress circle */}
+        <motion.circle
+          cx="50"
+          cy="50"
+          r="45"
+          fill="none"
+          stroke="url(#resonanceGradient)"
+          strokeWidth="8"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          initial={{ strokeDashoffset: circumference }}
+          whileInView={{ strokeDashoffset }}
+          viewport={{ once: true }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
+        />
+        <defs>
+          <linearGradient id="resonanceGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#22c55e" />
+            <stop offset="50%" stopColor="#06b6d4" />
+            <stop offset="100%" stopColor="#8b5cf6" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <motion.span 
+          className="text-3xl font-bold text-white"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.8 }}
+        >
+          {score}
+        </motion.span>
+        <span className="text-xs text-gray-400">/ 100</span>
+      </div>
+    </motion.div>
+  )
+}
+
 export function ShowrunnerEngineSection() {
   return (
     <section id="showrunner" className="py-24 relative overflow-hidden">
@@ -202,6 +270,26 @@ export function ShowrunnerEngineSection() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
+            {/* Cognitive Horizons Series Card */}
+            <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-purple-900/30 to-cyan-900/30 border border-purple-500/20">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                    <Clapperboard className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-400 uppercase tracking-wider">Active Series</span>
+                    <h4 className="text-lg font-bold text-white">Cognitive Horizons</h4>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs text-gray-400">Episodes</span>
+                  <p className="text-lg font-bold text-cyan-400">10/20</p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-400 mt-2">Join Dr. Benjamin Anderson as he navigates the cutting edge of artificial intelligence...</p>
+            </div>
+
             <div className="flex items-center gap-2 mb-4">
               <BookOpen className="w-5 h-5 text-purple-400" />
               <h3 className="text-xl font-bold text-white">Shared Production Bible</h3>
@@ -214,31 +302,31 @@ export function ShowrunnerEngineSection() {
             <div className="grid grid-cols-2 gap-4">
               <BibleCard
                 icon={Users}
-                title="Characters"
-                items={['Dr. Benjamin Anderson', 'Sarah Chen, PhD', 'Marcus Webb']}
+                title="Cast (4)"
+                items={['Dr. Benjamin Anderson', 'Dr. Alexander Anderson', 'Dr. Sara Anderson']}
                 gradient="from-purple-900/40 to-purple-950/40"
               />
               <BibleCard
                 icon={MapPin}
-                title="Locations"
+                title="Locations (6)"
                 items={['Research Laboratory', 'City Skyline', 'Conference Room']}
                 gradient="from-cyan-900/40 to-cyan-950/40"
               />
               <BibleCard
                 icon={Palette}
                 title="Visual Style"
-                items={['Cinematic 2.35:1', 'Warm color grade', 'Natural lighting']}
+                items={['Cinematic 2.35:1', 'Cool 5500K-6000K', 'Low-Key lighting']}
                 gradient="from-amber-900/40 to-amber-950/40"
               />
               <BibleCard
                 icon={Film}
                 title="Tone Guidelines"
-                items={['Documentary feel', 'Thoughtful pacing', 'Expert interviews']}
+                items={['Thriller genre', 'High tension pacing', 'Mystery atmosphere']}
                 gradient="from-emerald-900/40 to-emerald-950/40"
               />
             </div>
 
-            {/* Consistency Badge */}
+            {/* Bible-to-Script Consistency Flow */}
             <motion.div
               className="mt-6 p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20"
               initial={{ opacity: 0, y: 10 }}
@@ -251,8 +339,8 @@ export function ShowrunnerEngineSection() {
                   <RefreshCw className="w-5 h-5 text-emerald-400" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">Auto-Sync Across Episodes</p>
-                  <p className="text-xs text-gray-400">Update a character once, changes propagate to all episodes.</p>
+                  <p className="text-sm font-semibold text-white">Bible → Script → Scene → Output</p>
+                  <p className="text-xs text-gray-400">Characters auto-populate in every episode&apos;s Production panel.</p>
                 </div>
               </div>
             </motion.div>
@@ -332,6 +420,78 @@ export function ShowrunnerEngineSection() {
           </motion.div>
         </div>
 
+        {/* Audience Resonance & Script Analysis */}
+        <motion.div
+          className="mb-20"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center px-3 py-1.5 bg-cyan-500/10 border border-cyan-500/20 rounded-full mb-4">
+              <Target className="w-3.5 h-3.5 text-cyan-400 mr-1.5" />
+              <span className="text-xs font-medium text-cyan-300">AI Script Intelligence</span>
+            </div>
+            <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">Audience Resonance™ Analysis</h3>
+            <p className="text-gray-400">Know your score <em>before</em> you hit publish — not after</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {/* Left Column - Resonance Score */}
+            <div className="p-6 rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700/50">
+              <div className="flex flex-col items-center">
+                <AudienceResonanceScore score={86} />
+                <div className="mt-4 flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  <span className="text-emerald-300 font-medium">Ready for Production</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  Top 15% of scripts analyzed this month
+                </p>
+              </div>
+            </div>
+
+            {/* Center Column - Strengths */}
+            <div className="p-6 rounded-2xl bg-gradient-to-br from-emerald-900/20 to-gray-900 border border-emerald-500/20">
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="w-5 h-5 text-emerald-400" />
+                <h4 className="text-lg font-semibold text-white">Strengths</h4>
+              </div>
+              <div className="space-y-3">
+                {scriptStrengths.map((strength, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-200">{strength}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right Column - Areas for Improvement */}
+            <div className="p-6 rounded-2xl bg-gradient-to-br from-amber-900/20 to-gray-900 border border-amber-500/20">
+              <div className="flex items-center gap-2 mb-4">
+                <AlertTriangle className="w-5 h-5 text-amber-400" />
+                <h4 className="text-lg font-semibold text-white">Areas for Improvement</h4>
+              </div>
+              <div className="space-y-3">
+                {scriptImprovements.map((improvement, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <span className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-300 text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
+                      {idx + 1}
+                    </span>
+                    <span className="text-sm text-gray-200">{improvement}</span>
+                  </div>
+                ))}
+              </div>
+              <button className="w-full mt-4 py-2.5 px-4 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-300 text-sm font-medium hover:from-amber-500/30 hover:to-orange-500/30 transition-all flex items-center justify-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                One-Click Optimization
+              </button>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Comparison Table */}
         <motion.div
           className="mb-20"
@@ -341,7 +501,7 @@ export function ShowrunnerEngineSection() {
           transition={{ duration: 0.6 }}
         >
           <div className="text-center mb-8">
-            <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">Solo Video vs. Showrunner Engine</h3>
+            <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">One-Off AI vs. Series Studio</h3>
             <p className="text-gray-400">Why YouTube documentarians are switching to series-first production</p>
           </div>
 
@@ -353,13 +513,13 @@ export function ShowrunnerEngineSection() {
                   <th className="py-4 px-4 text-left text-sm font-semibold text-red-400">
                     <div className="flex items-center gap-2">
                       <X className="w-4 h-4" />
-                      Standard AI Video
+                      Generic AI Tools
                     </div>
                   </th>
                   <th className="py-4 px-4 text-left text-sm font-semibold text-cyan-400">
                     <div className="flex items-center gap-2">
                       <Clapperboard className="w-4 h-4" />
-                      Showrunner Engine™
+                      SceneFlow Series Studio
                     </div>
                   </th>
                 </tr>
@@ -399,7 +559,7 @@ export function ShowrunnerEngineSection() {
             {/* Connection Line */}
             <div className="absolute top-8 left-8 right-8 h-0.5 bg-gradient-to-r from-cyan-500/30 via-purple-500/30 to-amber-500/30 hidden md:block" />
 
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {launchSteps.map((step, idx) => {
                 const Icon = step.icon
                 return (
