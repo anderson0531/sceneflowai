@@ -90,13 +90,35 @@ export function FinalCTA() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="bg-gradient-to-r from-emerald-500/10 to-green-500/10 border border-emerald-500/20 rounded-xl p-4 mb-8 max-w-2xl mx-auto"
+            className="bg-gradient-to-r from-emerald-500/10 to-green-500/10 border border-emerald-500/20 rounded-xl p-4 mb-4 max-w-2xl mx-auto"
           >
             <div className="flex items-center justify-center gap-3">
               <Shield className="w-5 h-5 text-emerald-500 flex-shrink-0" />
               <span className="text-emerald-400 font-medium text-sm sm:text-base">
                 7-Day Money-Back Guarantee — Not satisfied? Request a refund within 7 days.
               </span>
+            </div>
+          </motion.div>
+
+          {/* Enterprise Privacy Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="flex flex-wrap items-center justify-center gap-4 mb-8 max-w-2xl mx-auto"
+          >
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-cyan-500/10 border border-cyan-500/20 rounded-full">
+              <Shield className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="text-xs text-cyan-300">Google Cloud Infrastructure</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/10 border border-purple-500/20 rounded-full">
+              <Shield className="w-3.5 h-3.5 text-purple-400" />
+              <span className="text-xs text-purple-300">Scripts never train public models</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full">
+              <Shield className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-xs text-amber-300">SOC 2 Compliant</span>
             </div>
           </motion.div>
 

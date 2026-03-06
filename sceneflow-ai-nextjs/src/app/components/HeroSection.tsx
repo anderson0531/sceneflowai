@@ -275,6 +275,16 @@ export function HeroSection() {
             >
               View Pricing
             </Button>
+            
+            <Button
+              variant="ghost"
+              size="lg"
+              className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 px-6 py-4 text-base font-medium transition-all duration-200"
+              onClick={() => setIsDemoOpen(true)}
+            >
+              <Play className="w-4 h-4 mr-2" />
+              Watch 2-Min Walkthrough
+            </Button>
           </motion.div>
 
           {/* Microcopy */}

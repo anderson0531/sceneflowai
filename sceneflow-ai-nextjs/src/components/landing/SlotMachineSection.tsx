@@ -167,6 +167,37 @@ export default function SlotMachineSection() {
             transition={{ duration: 0.6 }}
           >
             <SlotMachineVideo />
+            
+            {/* Character Sheet Visual Proof */}
+            <motion.div
+              className="mt-8 p-4 rounded-xl bg-gradient-to-br from-cyan-950/30 to-gray-900/80 border border-cyan-500/20"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Character Consistency Proof</span>
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full">
+                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                  <span className="text-xs font-medium text-emerald-400">Character Locked</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {['Medieval Castle', 'Modern Office', 'Cinematic Noir', 'Close-up'].map((setting, idx) => (
+                  <div key={idx} className="relative aspect-square rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-purple-500 border-2 border-white/20" />
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 p-1.5">
+                      <span className="text-[10px] text-gray-300 font-medium block text-center">{setting}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mt-3 text-center">Same character, different settings — Frame-Anchored Precision™</p>
+            </motion.div>
           </motion.div>
 
           {/* Right: Problem Points */}

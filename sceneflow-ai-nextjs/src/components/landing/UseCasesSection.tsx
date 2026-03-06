@@ -225,6 +225,27 @@ const PersonaCard = ({ persona, isActive }: { persona: UseCasePersona; isActive:
               </div>
             </div>
 
+            {/* Before/After ROI Table */}
+            <div className="bg-gray-800/30 backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-2 h-2 rounded-full bg-amber-500" />
+                <span className="text-amber-400 text-xs font-semibold uppercase tracking-wide">Before vs After</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                  <span className="text-[10px] text-gray-500 block mb-1">Before</span>
+                  <span className="text-sm font-bold text-red-400">{persona.id === 'creator' ? '40 hrs' : '$5K risk'}</span>
+                </div>
+                <div className="p-2 flex items-center justify-center">
+                  <span className="text-gray-600">→</span>
+                </div>
+                <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                  <span className="text-[10px] text-gray-500 block mb-1">After</span>
+                  <span className="text-sm font-bold text-emerald-400">{persona.id === 'creator' ? '25 mins' : '$0 risk'}</span>
+                </div>
+              </div>
+            </div>
+
             {/* The Win - Quote Style */}
             <div className="relative p-6 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
               <Quote className="absolute top-4 left-4 w-8 h-8 text-emerald-500/30" />

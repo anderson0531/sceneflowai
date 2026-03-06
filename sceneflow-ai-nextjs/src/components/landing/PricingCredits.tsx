@@ -165,8 +165,9 @@ const basePlans = [
       'Everything in Pro, plus:',
       '75,000 credits/month included',
       '500 GB active storage',
+      '🔥 Veo 3.1 4K Priority Queue',
+      '🔥 Unlimited Character Consistency',
       'White-label exports',
-      'BYOK (Bring Your Own Key)',
       'API access',
       '10 team seats',
       'Dedicated account manager',
@@ -575,6 +576,29 @@ export function PricingCredits() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Value Anchor - Industry Comparison */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-2xl mx-auto mb-12 p-4 rounded-xl bg-gradient-to-r from-amber-500/5 via-orange-500/5 to-red-500/5 border border-amber-500/20"
+        >
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-center">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500 line-through text-lg">$2,000+</span>
+              <span className="text-xs text-gray-400">Traditional pre-vis</span>
+            </div>
+            <div className="hidden sm:block text-gray-600">vs</div>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-bold text-amber-400">$49-149</span>
+              <span className="text-xs text-gray-400">SceneFlow monthly</span>
+            </div>
+            <div className="px-3 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full">
+              <span className="text-xs font-semibold text-emerald-400">Save 90%+ per project</span>
             </div>
           </div>
         </motion.div>
