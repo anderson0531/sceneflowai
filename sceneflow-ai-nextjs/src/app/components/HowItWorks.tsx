@@ -52,7 +52,7 @@ export function HowItWorks() {
       {/* Background accent */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(139,92,246,0.05),transparent_70%)]" />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 relative">
         <motion.div 
           className="text-center mb-16"
           initial={{ opacity: 0, y: 20 }}
@@ -75,7 +75,7 @@ export function HowItWorks() {
         </motion.div>
 
         {/* Steps Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 xl:gap-5">
           {steps.map((step, index) => (
             <motion.div
               key={index}
@@ -98,7 +98,7 @@ export function HowItWorks() {
                 </div>
                 
                 {/* Content */}
-                <h3 className="text-base md:text-lg font-bold text-white mb-1">{step.title}</h3>
+                <h3 className="text-base md:text-lg font-bold text-white mb-1 whitespace-nowrap">{step.title}</h3>
                 <p className="text-xs text-gray-500 mb-2">{step.subtitle}</p>
                 <p className="text-gray-400 text-xs md:text-sm leading-relaxed">{step.description}</p>
               </div>
