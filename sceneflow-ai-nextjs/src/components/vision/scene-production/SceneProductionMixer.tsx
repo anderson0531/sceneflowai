@@ -266,7 +266,7 @@ export interface SegmentAudioConfig {
 }
 
 type RenderStatus = 'idle' | 'preparing' | 'rendering' | 'complete' | 'error'
-type ActiveRenderMode = 'local' | 'server'
+type ActiveRenderMode = 'local' | 'server' | 'headless'
 
 interface SceneProductionMixerProps {
   sceneId: string
@@ -2787,15 +2787,222 @@ export function SceneProductionMixer({
     dialogueClipConfigs, sceneNumber, onRenderComplete, watermarkConfig
   ])
   
-  // === Smart Render Handler (routes to local or server) ===
+  // === Headless Render Handler (GCP Cloud Run) ===
+  const handleHeadlessRender = useCallback(async () => {
+    if (videoSegments.length === 0) {
+      setRenderError('No video segments available for headless rendering')
+      return
+    }
+    
+    setRenderStatus('preparing')
+    setActiveRenderMode('headless')
+    setRenderProgress(0)
+    setRenderError(null)
+    
+    try {
+      // Build segments for headless render
+      const segmentsForHeadless = videoSegments.map(seg => {
+        const duration = seg.actualVideoDuration ?? (seg.endTime - seg.startTime)
+        const audioConfig = segmentAudioConfigs[seg.segmentId]
+        const includeVideoAudio = audioConfig?.includeAudio ?? true
+        return {
+          segmentId: seg.segmentId,
+          assetUrl: seg.activeAssetUrl!,
+          assetType: (seg.assetType || 'video') as 'video' | 'image',
+          startTime: seg.startTime,
+          duration,
+          volume: includeVideoAudio ? (audioConfig?.volume ?? 1.0) * masterSegmentVolume : 0,
+        }
+      })
+      
+      // Build audio clips
+      const audioClips: Array<{
+        url: string
+        startTime: number
+        duration: number
+        volume: number
+        type: 'narration' | 'dialogue' | 'music' | 'sfx'
+      }> = []
+      
+      if (audioTracks.narration.enabled && currentAudioUrls.narration) {
+        audioClips.push({
+          url: currentAudioUrls.narration,
+          startTime: audioTracks.narration.startOffset,
+          duration: currentAudioUrls.narrationDuration || Math.max(0, totalDuration - audioTracks.narration.startOffset),
+          volume: audioTracks.narration.volume,
+          type: 'narration',
+        })
+      }
+      
+      if (audioTracks.dialogue.enabled && currentAudioUrls.dialogue.length > 0) {
+        currentAudioUrls.dialogue.forEach((clip, idx) => {
+          if (!clip.audioUrl) return
+          const clipConfig = dialogueClipConfigs[clip.clipId || `clip-${idx}`]
+          const startTime = audioTracks.dialogue.startOffset + (clip.startTime || idx * 2)
+          audioClips.push({
+            url: clip.audioUrl,
+            startTime,
+            duration: clip.duration || Math.max(0, totalDuration - startTime),
+            volume: (clipConfig?.volume ?? 1.0) * audioTracks.dialogue.volume,
+            type: 'dialogue',
+          })
+        })
+      }
+      
+      if (audioTracks.music.enabled && currentAudioUrls.music) {
+        audioClips.push({
+          url: currentAudioUrls.music,
+          startTime: audioTracks.music.startOffset,
+          duration: Math.max(0, totalDuration - audioTracks.music.startOffset),
+          volume: audioTracks.music.volume,
+          type: 'music',
+        })
+      }
+      
+      if (audioTracks.sfx.enabled && currentAudioUrls.sfx.length > 0) {
+        currentAudioUrls.sfx.forEach(s => {
+          if (!s.audioUrl) return
+          const startTime = audioTracks.sfx.startOffset + (s.startTime || 0)
+          audioClips.push({
+            url: s.audioUrl,
+            startTime,
+            duration: s.duration || Math.max(0, totalDuration - startTime),
+            volume: audioTracks.sfx.volume,
+            type: 'sfx',
+          })
+        })
+      }
+      
+      setRenderStatus('rendering')
+      setRenderProgress(10)
+      
+      console.log('[HeadlessRender] Starting Pro Cloud render:', {
+        segments: segmentsForHeadless.length,
+        audioClips: audioClips.length,
+        duration: totalDuration,
+        resolution,
+        hasWatermark: watermarkConfig.enabled,
+      })
+      
+      // Call headless render API
+      const response = await fetch('/api/render/headless', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          segments: segmentsForHeadless,
+          audioClips,
+          textOverlays: textOverlays.map(overlay => ({
+            id: overlay.id,
+            text: overlay.text,
+            subtext: overlay.subtext,
+            position: { x: overlay.position.x, y: overlay.position.y, anchor: 'center' },
+            style: {
+              fontFamily: overlay.style.fontFamily,
+              fontSize: overlay.style.fontSize,
+              fontWeight: overlay.style.fontWeight,
+              color: overlay.style.color,
+              backgroundColor: overlay.style.backgroundColor,
+              backgroundOpacity: overlay.style.backgroundOpacity,
+              textShadow: overlay.style.textShadow,
+            },
+            timing: {
+              startTime: overlay.timing.startTime,
+              duration: overlay.timing.duration,
+              fadeInMs: overlay.timing.fadeInMs,
+              fadeOutMs: overlay.timing.fadeOutMs,
+            },
+          })),
+          watermark: watermarkConfig.enabled ? {
+            type: watermarkConfig.type,
+            text: watermarkConfig.text,
+            imageUrl: watermarkConfig.imageUrl,
+            anchor: watermarkConfig.anchor,
+            padding: watermarkConfig.padding,
+            textStyle: watermarkConfig.textStyle,
+            imageStyle: watermarkConfig.imageStyle,
+          } : undefined,
+          resolution: resolution === '4K' ? '4k' : resolution.toLowerCase() as '720p' | '1080p',
+          fps: 30,
+          totalDuration,
+        }),
+      })
+      
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || `Headless render failed: ${response.status}`)
+      }
+      
+      const result = await response.json()
+      setRenderProgress(30)
+      
+      console.log('[HeadlessRender] Job created:', result.jobId)
+      
+      // Poll for job completion
+      await pollHeadlessJobStatus(result.jobId)
+      
+    } catch (err) {
+      console.error('[SceneProductionMixer] Headless render error:', err)
+      setRenderError(err instanceof Error ? err.message : 'Headless rendering failed')
+      setRenderStatus('error')
+    }
+  }, [
+    videoSegments, segmentAudioConfigs, audioTracks, currentAudioUrls,
+    totalDuration, resolution, textOverlays, masterSegmentVolume,
+    dialogueClipConfigs, watermarkConfig
+  ])
+  
+  // Poll headless job status
+  const pollHeadlessJobStatus = useCallback(async (jobId: string) => {
+    const maxAttempts = 180 // 15 minutes at 5s intervals
+    let attempts = 0
+    
+    while (attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 5000))
+      attempts++
+      
+      try {
+        const response = await fetch(`/api/render/headless?jobId=${jobId}`)
+        if (!response.ok) continue
+        
+        const data = await response.json()
+        
+        if (data.status === 'complete') {
+          setRenderStatus('complete')
+          setRenderProgress(100)
+          setLastRenderedUrl(data.outputUrl || data.publicUrl)
+          onRenderComplete?.(data.outputUrl || data.publicUrl, selectedLanguage)
+          return
+        }
+        
+        if (data.status === 'error' || data.status === 'failed') {
+          throw new Error(data.error || 'Headless render job failed')
+        }
+        
+        // Still processing
+        setRenderProgress(30 + Math.min(attempts, 60))
+      } catch (err) {
+        console.warn('[HeadlessRender] Poll error:', err)
+      }
+    }
+    
+    throw new Error('Headless render job timed out')
+  }, [onRenderComplete, selectedLanguage])
+  
+  // === Smart Render Handler (routes to local, server, or headless) ===
   const handleSmartRender = useCallback(async () => {
+    // Check for headless preference
+    if (selectedRenderMode === 'headless') {
+      await handleHeadlessRender()
+      return
+    }
+    
     if (renderStrategy.mode === 'local') {
       await handleLocalRender()
     } else {
       setActiveRenderMode('server')
       await handleRender()
     }
-  }, [renderStrategy, handleLocalRender, handleRender])
+  }, [selectedRenderMode, renderStrategy, handleLocalRender, handleRender, handleHeadlessRender])
   
   // === Render ===
   
@@ -3690,7 +3897,7 @@ export function SceneProductionMixer({
                 <>
                   <CheckCircle2 className="w-5 h-5 text-green-400" />
                   <span className="text-sm text-green-400">
-                    Render complete! ({activeRenderMode === 'local' ? 'Local' : 'Server'})
+                    Render complete! ({activeRenderMode === 'local' ? 'Quick Export' : activeRenderMode === 'headless' ? 'Pro Cloud' : 'Server'})
                   </span>
                   <a 
                     href={lastRenderedUrl}
@@ -3699,7 +3906,7 @@ export function SceneProductionMixer({
                     download={activeRenderMode === 'local' ? `scene-${sceneNumber}.webm` : undefined}
                     className="text-sm text-purple-400 hover:text-purple-300 underline"
                   >
-                    Download {activeRenderMode === 'local' ? 'WebM' : 'MP4'}
+                    Download {activeRenderMode === 'local' ? 'WebM' : activeRenderMode === 'headless' ? 'WebM' : 'MP4'}
                   </a>
                 </>
               )}
@@ -3721,7 +3928,7 @@ export function SceneProductionMixer({
                     <Progress value={renderProgress} className="h-2" />
                   </div>
                   <span className="text-sm text-gray-400">
-                    {Math.round(renderProgress)}% {activeRenderMode === 'local' && localRenderProgress?.phase ? `(${localRenderProgress.phase})` : ''}
+                    {Math.round(renderProgress)}% {activeRenderMode === 'local' && localRenderProgress?.phase ? `(${localRenderProgress.phase})` : activeRenderMode === 'headless' ? '(Pro Cloud)' : ''}
                   </span>
                 </div>
               )}
