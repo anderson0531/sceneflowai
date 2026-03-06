@@ -14,11 +14,36 @@
  * - GCP_REGION: Cloud Run region (default: us-central1)
  * - GCS_RENDER_BUCKET: GCS bucket for job specs and outputs
  * - CLOUD_RUN_PUPPETEER_JOB_NAME: Cloud Run job name (default: puppeteer-render-job)
+ * - GOOGLE_APPLICATION_CREDENTIALS_JSON: Service account JSON (for Vercel deployment)
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { Storage } from '@google-cloud/storage'
 import { v4 as uuidv4 } from 'uuid'
+
+// =============================================================================
+// Helper: Get Storage client with credentials
+// =============================================================================
+
+function getStorageClient(): Storage {
+  const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
+  
+  if (credentialsJson) {
+    try {
+      const credentials = JSON.parse(credentialsJson)
+      return new Storage({
+        projectId: credentials.project_id,
+        credentials,
+      })
+    } catch (e) {
+      console.error('[HeadlessRender API] Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON:', e)
+      throw new Error('Invalid GCP credentials configuration')
+    }
+  }
+  
+  // Fall back to Application Default Credentials (works in GCP environments)
+  return new Storage()
+}
 
 // =============================================================================
 // Types
@@ -141,6 +166,19 @@ export async function POST(request: NextRequest): Promise<NextResponse<HeadlessR
       )
     }
 
+    // Check for GCP credentials
+    if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+      console.error('[HeadlessRender API] No GCP credentials configured')
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Pro Cloud rendering requires GCP credentials. Please configure GOOGLE_APPLICATION_CREDENTIALS_JSON in Vercel.',
+          code: 'CREDENTIALS_NOT_CONFIGURED'
+        },
+        { status: 503 }
+      )
+    }
+
     // Generate unique job ID
     const jobId = uuidv4()
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
@@ -165,7 +203,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<HeadlessR
     }
 
     // Upload job spec to GCS
-    const storage = new Storage()
+    const storage = getStorageClient()
     const bucket = storage.bucket(GCS_RENDER_BUCKET)
     
     await bucket.file(jobSpecPath).save(JSON.stringify(jobSpec, null, 2), {
@@ -225,8 +263,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       )
     }
 
+    // Check for GCP credentials
+    if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'GCP credentials not configured. Please set GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable.' 
+        },
+        { status: 503 }
+      )
+    }
+
     // Check for output file in GCS
-    const storage = new Storage()
+    const storage = getStorageClient()
     const bucket = storage.bucket(GCS_RENDER_BUCKET)
     
     // List files matching the job ID pattern
