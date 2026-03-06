@@ -250,6 +250,10 @@ export class LocalRenderService {
   private _watermarkLogged = false // Debug flag to log watermark only once
   private watermarkImage: HTMLImageElement | null = null // Preloaded watermark image for image-type watermarks
   
+  // Content bounds tracking - stores where the actual video content is drawn
+  // This is crucial for watermark positioning when video aspect ratio differs from canvas
+  private contentBounds: { x: number; y: number; width: number; height: number } = { x: 0, y: 0, width: 0, height: 0 }
+  
   /**
    * Check if a render is currently in progress
    */
@@ -941,6 +945,10 @@ export class LocalRenderService {
     const x = (width - scaledWidth) / 2
     const y = (height - scaledHeight) / 2
     
+    // Store content bounds for watermark positioning
+    // This ensures watermarks appear on the actual video content, not black bars
+    this.contentBounds = { x, y, width: scaledWidth, height: scaledHeight }
+    
     // If video, seek to correct time and WAIT for seek to complete
     if (asset instanceof HTMLVideoElement) {
       const localTime = currentTime - segment.startTime
@@ -1080,40 +1088,48 @@ export class LocalRenderService {
     // Save canvas state to ensure proper restoration after drawing
     ctx.save()
     
-    const { width, height } = canvas
+    // Use content bounds if available, otherwise fall back to canvas dimensions
+    // This ensures watermark appears on the actual video content, not black bars
+    const bounds = this.contentBounds.width > 0 
+      ? this.contentBounds 
+      : { x: 0, y: 0, width: canvas.width, height: canvas.height }
     const { anchor, padding, type } = watermark
     
     // Debug: Log watermark drawing (only on first frame to avoid spam)
     if (!this._watermarkLogged) {
-      console.log('[LocalRender] Drawing watermark:', { type, anchor, padding, text: watermark.text, canvas: { width, height } })
-      this._watermarkLogged = true
+      console.log('[LocalRender] Drawing watermark with content bounds:', { 
+        canvasSize: { width: canvas.width, height: canvas.height },
+        contentBounds: bounds,
+        type, anchor, padding, text: watermark.text 
+      })
     }
     
-    // Calculate position based on anchor
+    // Calculate position based on anchor WITHIN the content bounds
     let x: number
     let y: number
     
-    // Horizontal position
+    // Horizontal position - relative to content bounds
     if (anchor.includes('left')) {
-      x = padding
+      x = bounds.x + padding
     } else if (anchor.includes('right')) {
-      x = width - padding
+      x = bounds.x + bounds.width - padding
     } else {
-      x = width / 2 // center
+      x = bounds.x + bounds.width / 2 // center within content
     }
     
-    // Vertical position
+    // Vertical position - relative to content bounds
     if (anchor.includes('top')) {
-      y = padding
+      y = bounds.y + padding
     } else if (anchor.includes('bottom')) {
-      y = height - padding
+      y = bounds.y + bounds.height - padding
     } else {
-      y = height / 2 // center
+      y = bounds.y + bounds.height / 2 // center within content
     }
     
     if (type === 'text' && watermark.text) {
       const { textStyle } = watermark
-      const fontSize = (textStyle.fontSize / 100) * height
+      // Use content bounds height for font size calculation (not canvas height)
+      const fontSize = (textStyle.fontSize / 100) * bounds.height
       
       // Set font with fallback to system fonts (ensures text renders even if custom font fails)
       const fontFamily = `"${textStyle.fontFamily}", Arial, Helvetica, sans-serif`
@@ -1125,13 +1141,14 @@ export class LocalRenderService {
         console.log('[LocalRender] Watermark text details:', {
           text: watermark.text,
           position: { x, y },
-          fontSize: `${fontSize}px (${textStyle.fontSize}% of ${height}px)`,
+          fontSize: `${fontSize}px (${textStyle.fontSize}% of ${bounds.height}px content height)`,
           font: ctx.font,
           color: textStyle.color,
           opacity: textStyle.opacity,
           anchor,
-          canvasSize: { width, height },
+          contentBounds: bounds,
         })
+        this._watermarkLogged = true
       }
       
       // Set text alignment based on anchor
@@ -1176,8 +1193,8 @@ export class LocalRenderService {
       const { imageStyle } = watermark
       const img = this.watermarkImage
       
-      // Calculate scaled dimensions (imageStyle.width is percentage of canvas width)
-      const targetWidth = (imageStyle.width / 100) * width
+      // Calculate scaled dimensions using content bounds width (not canvas width)
+      const targetWidth = (imageStyle.width / 100) * bounds.width
       const aspectRatio = img.naturalHeight / img.naturalWidth
       const targetHeight = targetWidth * aspectRatio
       
