@@ -245,6 +245,7 @@ export class LocalRenderService {
   private abortController: AbortController | null = null
   private isRendering = false
   private _watermarkLogged = false // Debug flag to log watermark only once
+  private watermarkImage: HTMLImageElement | null = null // Preloaded watermark image for image-type watermarks
   
   /**
    * Check if a render is currently in progress
@@ -313,6 +314,23 @@ export class LocalRenderService {
       // Preload all assets
       onProgress?.({ phase: 'preparing', progress: 10 })
       const assets = await this.preloadAssets(config.segments, signal)
+      
+      if (signal.aborted) {
+        throw new Error('Render aborted')
+      }
+      
+      // Preload fonts for text overlays and watermarks
+      // This ensures fonts are loaded before rendering starts, preventing fallback font issues
+      onProgress?.({ phase: 'preparing', progress: 15 })
+      await this.preloadFonts(config, signal)
+      
+      if (signal.aborted) {
+        throw new Error('Render aborted')
+      }
+      
+      // Preload watermark image if needed
+      onProgress?.({ phase: 'preparing', progress: 20 })
+      await this.preloadWatermarkImage(config.watermark, signal)
       
       if (signal.aborted) {
         throw new Error('Render aborted')
@@ -682,6 +700,135 @@ export class LocalRenderService {
     })
   }
   
+  /**
+   * Preload fonts to ensure they're available for canvas rendering.
+   * Without this, text may render with fallback fonts on first frames.
+   */
+  private async preloadFonts(
+    config: LocalRenderConfig,
+    signal: AbortSignal
+  ): Promise<void> {
+    if (typeof document === 'undefined' || !document.fonts) {
+      console.warn('[LocalRender] document.fonts not available, skipping font preload')
+      return
+    }
+    
+    const fontsToLoad = new Set<string>()
+    
+    // Collect fonts from text overlays
+    if (config.textOverlays) {
+      for (const overlay of config.textOverlays) {
+        // Use a standard size for preloading (the actual size doesn't matter for loading)
+        const fontString = `${overlay.style.fontWeight} 16px "${overlay.style.fontFamily}"`
+        fontsToLoad.add(fontString)
+      }
+    }
+    
+    // Collect font from watermark
+    if (config.watermark?.type === 'text' && config.watermark.textStyle) {
+      const { textStyle } = config.watermark
+      const fontString = `${textStyle.fontWeight} 16px "${textStyle.fontFamily}"`
+      fontsToLoad.add(fontString)
+    }
+    
+    if (fontsToLoad.size === 0) {
+      console.log('[LocalRender] No custom fonts to preload')
+      return
+    }
+    
+    console.log('[LocalRender] Preloading fonts:', Array.from(fontsToLoad))
+    
+    // Load all fonts in parallel with timeout
+    const fontPromises = Array.from(fontsToLoad).map(async (fontString) => {
+      try {
+        await Promise.race([
+          document.fonts.load(fontString),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error(`Font load timeout: ${fontString}`)), 5000)
+          )
+        ])
+        console.log('[LocalRender] Font loaded:', fontString)
+      } catch (error) {
+        console.warn('[LocalRender] Font load failed (will use fallback):', fontString, error)
+      }
+    })
+    
+    await Promise.all(fontPromises)
+    
+    // Wait for all fonts to be ready (belt and suspenders)
+    try {
+      await document.fonts.ready
+      console.log('[LocalRender] All fonts ready')
+    } catch (e) {
+      console.warn('[LocalRender] document.fonts.ready failed:', e)
+    }
+  }
+  
+  /**
+   * Preload watermark image if type is 'image'.
+   * Must be called before render loop to ensure image is ready for drawImage().
+   */
+  private async preloadWatermarkImage(
+    watermark: LocalRenderWatermark | undefined,
+    signal: AbortSignal
+  ): Promise<void> {
+    this.watermarkImage = null
+    
+    if (!watermark || watermark.type !== 'image' || !watermark.imageUrl) {
+      console.log('[LocalRender] No watermark image to preload (type:', watermark?.type, ')')
+      return
+    }
+    
+    console.log('[LocalRender] Preloading watermark image:', watermark.imageUrl)
+    
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error('Watermark image load timeout (10s)'))
+        }, 10000)
+        
+        const cleanup = () => {
+          clearTimeout(timeoutId)
+          img.onload = null
+          img.onerror = null
+        }
+        
+        img.onload = () => {
+          cleanup()
+          console.log('[LocalRender] Watermark image loaded:', img.naturalWidth, 'x', img.naturalHeight)
+          resolve()
+        }
+        
+        img.onerror = () => {
+          cleanup()
+          reject(new Error(`Failed to load watermark image: ${watermark.imageUrl}`))
+        }
+        
+        if (signal.aborted) {
+          cleanup()
+          reject(new Error('Aborted'))
+          return
+        }
+        
+        img.src = watermark.imageUrl
+      })
+      
+      // Use decode() for additional guarantee the image is ready for rendering
+      if (img.decode) {
+        await img.decode()
+        console.log('[LocalRender] Watermark image decoded and ready')
+      }
+      
+      this.watermarkImage = img
+    } catch (error) {
+      console.error('[LocalRender] Failed to preload watermark image:', error)
+      // Don't throw - watermark is optional, render should continue without it
+    }
+  }
+  
   private async drawFrame(
     currentTime: number,
     config: LocalRenderConfig,
@@ -921,10 +1068,38 @@ export class LocalRenderService {
       // Draw text
       this.ctx.fillStyle = textStyle.color
       this.ctx.fillText(watermark.text, x, y)
+    } else if (type === 'image' && this.watermarkImage && this.watermarkImage.complete) {
+      // Draw image watermark (preloaded in preloadWatermarkImage)
+      const { imageStyle } = watermark
+      const img = this.watermarkImage
+      
+      // Calculate scaled dimensions (imageStyle.width is percentage of canvas width)
+      const targetWidth = (imageStyle.width / 100) * width
+      const aspectRatio = img.naturalHeight / img.naturalWidth
+      const targetHeight = targetWidth * aspectRatio
+      
+      this.ctx.globalAlpha = imageStyle.opacity
+      
+      // Adjust position based on anchor for image drawing
+      let drawX = x
+      let drawY = y
+      
+      if (anchor.includes('right')) {
+        drawX = x - targetWidth
+      } else if (!anchor.includes('left')) {
+        // center
+        drawX = x - targetWidth / 2
+      }
+      
+      if (anchor.includes('bottom')) {
+        drawY = y - targetHeight
+      } else if (!anchor.includes('top')) {
+        // center
+        drawY = y - targetHeight / 2
+      }
+      
+      this.ctx.drawImage(img, drawX, drawY, targetWidth, targetHeight)
     }
-    
-    // Image watermark would require preloading in render() - simplified for now
-    // For image watermarks, you'd need to load the image in preloadAssets and draw here
     
     // Restore canvas state (resets globalAlpha, font, fillStyle, textAlign, etc.)
     this.ctx.restore()
@@ -965,6 +1140,9 @@ export class LocalRenderService {
       console.log('[LocalRender] Clearing', this.recordedChunks.length, 'recorded chunks')
       this.recordedChunks.length = 0
     }
+    
+    // Clear preloaded watermark image to free memory
+    this.watermarkImage = null
     
     this.canvas = null
     this.ctx = null
