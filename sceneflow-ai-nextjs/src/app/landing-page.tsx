@@ -94,16 +94,16 @@ export default function LandingPage() {
       {/* 15. Pricing: Usage-based credits with project calculator */}
       <PricingCredits />
       
-      {/* 15. Engineering: Platform trust and security */}
+      {/* 16. Engineering: Platform trust and security */}
       <EngineeringTrust />
       
-      {/* 16. FAQ: Objection handling */}
+      {/* 17. FAQ: Objection handling */}
       <FAQ />
       
-      {/* 17. Final CTA: Conversion */}
+      {/* 18. Final CTA: Conversion */}
       <FinalCTA />
       
-      {/* 18. Footer: Navigation */}
+      {/* 19. Footer: Navigation */}
       <Footer />
     </div>
   )

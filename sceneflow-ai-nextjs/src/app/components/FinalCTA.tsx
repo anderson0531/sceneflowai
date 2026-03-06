@@ -52,7 +52,7 @@ export function FinalCTA() {
           <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-8">
             Join creators who are transforming their ideas into professional films 
             with AI-powered video production. From screenplay to screening room—
-            experience our complete 4-phase workflow.
+            experience our complete 5-phase workflow.
           </p>
 
           {/* Social Proof Bar */}
@@ -129,14 +129,14 @@ export function FinalCTA() {
               className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-cyan-500 via-purple-500 to-amber-500 text-white font-semibold rounded-xl hover:opacity-90 transition-all shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40"
             >
               <Rocket className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
-              Launch Your First Show
+              Start Your Production
             </button>
             <button
               onClick={() => (window.location.href = '/?signup=explorer')}
               className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-gray-600 text-gray-200 font-semibold rounded-xl hover:border-amber-500/50 hover:bg-amber-500/10 transition-all"
             >
               <Zap className="w-5 h-5" />
-              Start Single Project — $9
+              Try Explorer — $9
             </button>
           </div>
 
