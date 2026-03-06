@@ -307,6 +307,10 @@ const TRACK_COLORS = {
   music: { icon: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/30', slider: 'bg-green-500' },
 }
 
+// LocalStorage keys for persisting mixer settings
+const WATERMARK_STORAGE_KEY = 'sceneflow-watermark-config'
+const MIXER_SETTINGS_STORAGE_KEY = 'sceneflow-mixer-settings'
+
 // ============================================================================
 // Utility Functions
 // ============================================================================
@@ -1975,10 +1979,25 @@ export function SceneProductionMixer({
   const [showOverlayPanel, setShowOverlayPanel] = useState(false)
   const [editingOverlay, setEditingOverlay] = useState<TextOverlay | null>(null)
   
-  // === Watermark State ===
-  const [watermarkConfig, setWatermarkConfig] = useState<WatermarkConfig>(DEFAULT_WATERMARK_CONFIG)
+  // === Watermark State (with localStorage persistence) ===
+  const [watermarkConfig, setWatermarkConfig] = useState<WatermarkConfig>(() => {
+    // Initialize from localStorage if available
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(WATERMARK_STORAGE_KEY)
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          // Merge with defaults to handle any new fields
+          return { ...DEFAULT_WATERMARK_CONFIG, ...parsed }
+        }
+      } catch (e) {
+        console.warn('[SceneProductionMixer] Failed to load watermark config from localStorage:', e)
+      }
+    }
+    return DEFAULT_WATERMARK_CONFIG
+  })
   
-  // === Section Collapse State ===
+  // === Section Collapse State (with localStorage persistence) ===
   const [collapsedSections, setCollapsedSections] = useState<{
     textOverlays: boolean
     watermark: boolean
@@ -1988,20 +2007,63 @@ export function SceneProductionMixer({
     sfx: boolean
     music: boolean
     timeline: boolean
-  }>({
-    textOverlays: true,
-    watermark: true,
-    segmentAudio: true,
-    narration: true,
-    dialogue: true,
-    sfx: true,
-    music: true,
-    timeline: true,
+  }>(() => {
+    const defaultSections = {
+      textOverlays: true,
+      watermark: true,
+      segmentAudio: true,
+      narration: true,
+      dialogue: true,
+      sfx: true,
+      music: true,
+      timeline: true,
+    }
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(MIXER_SETTINGS_STORAGE_KEY)
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          if (parsed.collapsedSections) {
+            return { ...defaultSections, ...parsed.collapsedSections }
+          }
+        }
+      } catch (e) {
+        console.warn('[SceneProductionMixer] Failed to load mixer settings from localStorage:', e)
+      }
+    }
+    return defaultSections
   })
   
   const toggleSection = useCallback((section: keyof typeof collapsedSections) => {
     setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }))
   }, [])
+  
+  // Persist watermark config to localStorage when it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(WATERMARK_STORAGE_KEY, JSON.stringify(watermarkConfig))
+      } catch (e) {
+        console.warn('[SceneProductionMixer] Failed to save watermark config to localStorage:', e)
+      }
+    }
+  }, [watermarkConfig])
+  
+  // Persist collapsed sections to localStorage when they change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(MIXER_SETTINGS_STORAGE_KEY)
+        const existing = stored ? JSON.parse(stored) : {}
+        localStorage.setItem(MIXER_SETTINGS_STORAGE_KEY, JSON.stringify({
+          ...existing,
+          collapsedSections
+        }))
+      } catch (e) {
+        console.warn('[SceneProductionMixer] Failed to save mixer settings to localStorage:', e)
+      }
+    }
+  }, [collapsedSections])
   
   // Sync with external overlays
   useEffect(() => {
