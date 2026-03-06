@@ -70,6 +70,7 @@ import type {
 } from './types'
 import { useSegmentConfig } from '@/hooks/useSegmentConfig'
 import { GuidePromptEditor, type SceneAudioData } from './GuidePromptEditor'
+import { DirectionDialog } from './DirectionDialog'
 import { cn } from '@/lib/utils'
 
 interface DirectorDialogProps {
@@ -130,6 +131,9 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   
   // Reference images state (for REF mode - up to 3 character/style references)
   const [referenceImages, setReferenceImages] = useState<string[]>([])
+  
+  // Direction Dialog state
+  const [isDirectionDialogOpen, setIsDirectionDialogOpen] = useState(false)
   
   // FTV prompt options
   const [skipAnchoringPhrase, setSkipAnchoringPhrase] = useState(false)
@@ -308,6 +312,73 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     }
   }, [mode])
   
+  // Auto-optimize prompt when mode changes
+  const handleModeChange = useCallback((newMode: string) => {
+    setMode(newMode)
+    // Trigger auto-optimization for the new mode (after state updates)
+    setTimeout(() => {
+      const currentPrompt = newMode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt
+      if (currentPrompt?.trim()) {
+        handleOptimizeForModeWithValue(newMode, currentPrompt)
+      }
+    }, 0)
+  }, [motionPrompt, visualPrompt])
+  
+  // Optimize prompt for a specific mode with a given prompt value
+  const handleOptimizeForModeWithValue = useCallback(async (targetMode: string, currentPrompt: string) => {
+    if (!currentPrompt?.trim()) return
+    
+    setIsOptimizingForMode(true)
+    
+    // Save current prompt to history for undo
+    setPromptHistory(prev => [...prev, currentPrompt])
+    
+    // Mode-specific optimization instructions
+    const modeInstructions: Record<string, string> = {
+      'FRAME_TO_VIDEO': 'Rewrite this prompt specifically for Frame-to-Video (FTV) interpolation mode. Focus ONLY on describing smooth motion and transitions between the start and end keyframes. Remove any camera movements that would cause the video to deviate from matching the end frame (no zoom out, pan away, pull back). Add language that anchors to the end frame. Remove detailed scene descriptions - focus on MOTION only.',
+      'IMAGE_TO_VIDEO': 'Rewrite this prompt for Image-to-Video (I2V) mode. The video will animate from a reference image. Describe how the static image should come to life - subtle movements, breathing, blinking, environmental motion. Maintain consistency with the starting image composition.',
+      'TEXT_TO_VIDEO': 'Rewrite this prompt for Text-to-Video (T2V) mode. Describe the complete visual scene including composition, lighting, characters, environment, and action. Be specific about visual details since there is no reference image.',
+      'EXTEND': 'Rewrite this prompt for video extension mode. Focus on describing the continuation of motion and action that would naturally follow from a previous video clip. Maintain visual continuity.',
+    }
+    
+    const instruction = modeInstructions[targetMode] || modeInstructions['TEXT_TO_VIDEO']
+    
+    try {
+      const response = await fetch('/api/prompt/modify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPrompt,
+          instruction,
+          mode: modeToMethod[targetMode],
+          context: {
+            hasStartFrame: !!(segment.startFrameUrl || segment.references?.startFrameUrl),
+            hasEndFrame: !!(segment.endFrameUrl || segment.references?.endFrameUrl),
+          }
+        }),
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.modifiedPrompt) {
+          if (targetMode === 'FRAME_TO_VIDEO') {
+            setMotionPrompt(data.modifiedPrompt)
+          } else {
+            setVisualPrompt(data.modifiedPrompt)
+          }
+        }
+      } else {
+        console.error('[DirectorDialog] Failed to optimize prompt for mode')
+        setPromptHistory(prev => prev.slice(0, -1))
+      }
+    } catch (error) {
+      console.error('[DirectorDialog] Error optimizing prompt:', error)
+      setPromptHistory(prev => prev.slice(0, -1))
+    } finally {
+      setIsOptimizingForMode(false)
+    }
+  }, [segment])
+  
   // Reset state when dialog opens with new segment
   useEffect(() => {
     if (isOpen) {
@@ -477,7 +548,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               </div>
             )}
             
-            <Tabs value={mode} onValueChange={setMode}>
+            <Tabs value={mode} onValueChange={handleModeChange}>
               <TabsList className="bg-slate-800/80 w-full grid grid-cols-3 md:grid-cols-5 gap-1 p-1">
                 <TabsTrigger 
                   value="TEXT_TO_VIDEO" 
@@ -685,99 +756,37 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
           {/* Right Panel: Controls & Prompt */}
           <div className="col-span-5 flex flex-col gap-4">
             
-            {/* Prompt Input */}
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-slate-300">
-                      {mode === 'FRAME_TO_VIDEO' ? 'Motion Instructions' : 'Visual Description'}
-                    </Label>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleOptimizeForMode}
-                        disabled={isOptimizingForMode || !(mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt)?.trim()}
-                        className="h-6 px-2 text-xs text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/50"
-                      >
-                        {isOptimizingForMode ? (
-                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                        ) : (
-                          <Wand2 className="w-3 h-3 mr-1" />
-                        )}
-                        Optimize for {mode === 'FRAME_TO_VIDEO' ? 'FTV' : mode === 'IMAGE_TO_VIDEO' ? 'I2V' : mode === 'TEXT_TO_VIDEO' ? 'T2V' : mode === 'EXTEND' ? 'Extend' : 'Mode'}
-                      </Button>
-                      {promptHistory.length > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleUndoPrompt}
-                          className="h-6 px-2 text-xs text-slate-400 hover:text-white"
-                        >
-                          <Undo2 className="w-3 h-3 mr-1" />
-                          Undo
-                        </Button>
-                      )}
-                      <span className="text-xs text-slate-500">
-                        {(mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt).length} chars
-                      </span>
-                    </div>
+            {/* Prompt Direction Preview with Direct Button */}
+            <div className="flex flex-col gap-2">
+              {/* Prompt Preview Box */}
+              <div 
+                className="bg-slate-800/60 border border-slate-700 rounded-lg p-3 cursor-pointer hover:border-indigo-500/50 hover:bg-slate-800/80 transition-colors group"
+                onClick={() => setIsDirectionDialogOpen(true)}
+              >
+                <p className="text-sm text-slate-300 leading-relaxed line-clamp-4">
+                  {(mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt) || (
+                    <span className="text-slate-500 italic">No prompt direction set. Click to add direction.</span>
+                  )}
+                </p>
+                {isOptimizingForMode && (
+                  <div className="flex items-center gap-2 mt-2 text-xs text-indigo-400">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <span>Optimizing for {mode === 'FRAME_TO_VIDEO' ? 'Frame-to-Video' : mode === 'IMAGE_TO_VIDEO' ? 'Image-to-Video' : 'Text-to-Video'}...</span>
                   </div>
-                  <Textarea 
-                    value={mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt}
-                    onChange={(e) => {
-                      if (mode === 'FRAME_TO_VIDEO') {
-                        setMotionPrompt(e.target.value)
-                      } else {
-                        setVisualPrompt(e.target.value)
-                      }
-                    }}
-                    className="min-h-[180px] max-h-[400px] bg-slate-800 border-slate-700 text-white placeholder-slate-500 resize-y text-sm leading-relaxed"
-                    placeholder={
-                      mode === 'FRAME_TO_VIDEO' 
-                        ? "Describe the motion between frames..." 
-                        : "Describe the scene and atmosphere..."
-                    }
-                  />
-                  
-                  {/* Intelligent Instruction Input */}
-                  <div className="flex gap-2">
-                    <Input
-                      value={promptInstruction}
-                      onChange={(e) => setPromptInstruction(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault()
-                          handleModifyPrompt()
-                        }
-                      }}
-                      placeholder="e.g., Make it more dramatic, add camera movement, slow down the motion..."
-                      className="flex-1 bg-slate-800 border-slate-700 text-white placeholder-slate-500 text-sm"
-                      disabled={isModifyingPrompt}
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleModifyPrompt}
-                      disabled={!promptInstruction.trim() || isModifyingPrompt}
-                      className="bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white"
-                    >
-                      {isModifyingPrompt ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Send className="w-4 h-4" />
-                      )}
-                    </Button>
-                  </div>
-                  
-                  <div className="flex items-start gap-2 text-xs text-slate-400">
-                    <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    <span>
-                      {mode === 'FRAME_TO_VIDEO' 
-                        ? "✨ AI-Optimized: Your prompt is automatically enhanced for end-frame alignment. Conflicting motion is filtered." 
-                        : "Tip: Describe the scene visuals, lighting, and atmosphere. Use the input above to refine with natural language."}
-                    </span>
-                  </div>
-                </div>
+                )}
+              </div>
+              
+              {/* Direct Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsDirectionDialogOpen(true)}
+                className="w-full bg-slate-800 border-slate-700 text-indigo-400 hover:bg-indigo-950/50 hover:border-indigo-500/50 hover:text-indigo-300"
+              >
+                <Wand2 className="w-4 h-4 mr-2" />
+                Direct
+              </Button>
+            </div>
 
                 {/* Duration Selector */}
                 <div className="flex flex-col gap-2">
@@ -911,6 +920,23 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
           </div>
 
         </div>
+        
+        {/* Direction Dialog for prompt review and modification */}
+        <DirectionDialog
+          isOpen={isDirectionDialogOpen}
+          onClose={() => setIsDirectionDialogOpen(false)}
+          currentPrompt={mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt}
+          onPromptChange={(newPrompt) => {
+            if (mode === 'FRAME_TO_VIDEO') {
+              setMotionPrompt(newPrompt)
+            } else {
+              setVisualPrompt(newPrompt)
+            }
+          }}
+          mode={mode}
+          hasStartFrame={!!(segment.startFrameUrl || segment.references?.startFrameUrl)}
+          hasEndFrame={!!(segment.endFrameUrl || segment.references?.endFrameUrl)}
+        />
       </DialogContent>
     </Dialog>
   )
