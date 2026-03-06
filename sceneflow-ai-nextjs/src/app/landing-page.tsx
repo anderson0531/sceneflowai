@@ -79,7 +79,7 @@ export default function LandingPage() {
       {/* 10. Features: All-in-one platform capabilities */}
       <FeatureHighlight />
       
-      {/* 11. Templates Gallery: Quick Start for new users */}
+      {/* 11. Production Showcase: Versatile formats, styles, and resolutions */}
       <TemplatesGallery />
       
       {/* 12. Testimonials: Creator stories */}
