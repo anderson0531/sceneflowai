@@ -205,7 +205,7 @@ export function Pricing() {
             </span>
           </h2>
           <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
-            From hobbyists to professional studios—start free and scale as you grow.
+            From hobbyists to professional studios—start with Explorer at $9 and scale as you grow.
           </p>
         </motion.div>
 

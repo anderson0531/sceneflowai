@@ -330,7 +330,7 @@ export function FeatureHighlight() {
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
           <p className="text-sm text-gray-500 mt-4">
-            Start free with 1,000 credits • No credit card required
+            Explorer: $9 one-time • 750 credits • Full platform access
           </p>
         </motion.div>
 

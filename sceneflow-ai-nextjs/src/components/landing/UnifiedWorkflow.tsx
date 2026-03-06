@@ -293,10 +293,10 @@ export function UnifiedWorkflow() {
             </p>
             <Button
               size="lg"
-              onClick={() => window.location.href = '/?signup=1'}
+              onClick={() => window.location.href = '/?signup=explorer'}
               className="bg-gradient-to-r from-cyan-500 via-purple-500 to-amber-500 text-white px-8 py-3 font-semibold"
             >
-              Start Free Trial
+              Try Explorer — $9
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </div>

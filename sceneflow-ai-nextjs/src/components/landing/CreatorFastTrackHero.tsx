@@ -44,7 +44,7 @@ const modeConfigs: Record<CreatorMode, ModeConfig> = {
       { icon: TrendingUp, text: 'Accelerate releases' }
     ],
     cta: {
-      text: 'Try Storyteller Mode Free',
+      text: 'Try Explorer — $9',
       gradient: 'from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-orange-500/25'
     },
     social: 'Built for digital storytellers'

@@ -12,7 +12,7 @@ export function FAQ() {
     {
       question: 'How does AI-guided production work for ideas, scripts, and videos?',
       answer:
-        'SceneFlow AI guides you through a seamless 4-phase workflow: Ideation → Script → Storyboard → Video. Start by describing your concept in plain language, and our AI generates a professional screenplay with proper formatting, scene breakdowns, and character arcs. From there, it creates visual storyboards for each scene and produces video with AI-generated imagery and voice acting. The AI handles all technical complexity while you focus on creative decisions.',
+        'SceneFlow AI guides you through a seamless 5-phase workflow: Series → Blueprint → Production → Final Cut → Premiere. Start by describing your concept in plain language, and our AI generates a professional screenplay with proper formatting, scene breakdowns, and character arcs. From there, it creates visual storyboards for each scene and produces video with AI-generated imagery and voice acting. The AI handles all technical complexity while you focus on creative decisions.',
     },
     {
       question: 'Can I customize the AI-generated scripts and storyboards?',

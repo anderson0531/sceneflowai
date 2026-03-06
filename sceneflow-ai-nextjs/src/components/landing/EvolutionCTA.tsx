@@ -24,7 +24,7 @@ export function EvolutionCTA() {
           {/* Badge */}
           <div className="inline-flex items-center px-4 py-2 rounded-full border border-amber-500/30 bg-amber-500/10 mb-8">
             <Gift className="w-4 h-4 text-amber-400 mr-2" />
-            <span className="text-sm font-medium text-amber-400">Early Access: Start Free Today</span>
+            <span className="text-sm font-medium text-amber-400">Try Explorer: $9 One-Time</span>
           </div>
 
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">

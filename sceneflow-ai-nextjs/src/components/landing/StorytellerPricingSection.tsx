@@ -47,7 +47,7 @@ const pricingTiers: PricingTier[] = [
       'Screening Room collaboration',
       '10 video credits included',
     ],
-    cta: 'Start Free Trial',
+    cta: 'Try Explorer — $9',
     ctaVariant: 'primary'
   },
   {
@@ -109,7 +109,7 @@ export function StorytellerPricingSection() {
             SIMPLE PRICING
           </span>
           <h2 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-            Start Free, Scale as You Grow
+            Start with Explorer, Scale as You Grow
           </h2>
           <p className="text-lg text-gray-400">
             Animatics are always included. Only pay for full AI video when you need it.
