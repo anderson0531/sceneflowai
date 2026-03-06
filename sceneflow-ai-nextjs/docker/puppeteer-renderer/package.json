@@ -1,0 +1,18 @@
+{
+  "name": "sceneflow-puppeteer-renderer",
+  "version": "1.0.0",
+  "description": "Headless browser video renderer for SceneFlow AI Studio",
+  "main": "render.js",
+  "scripts": {
+    "start": "node render.js",
+    "test": "node -e \"console.log('Renderer ready')\"",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@google-cloud/storage": "^7.11.3",
+    "puppeteer-core": "^23.7.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

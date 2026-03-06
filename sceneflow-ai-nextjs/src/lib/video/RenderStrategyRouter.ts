@@ -21,7 +21,7 @@ import {
 // Types
 // =============================================================================
 
-export type RenderMode = 'local' | 'server' | 'auto'
+export type RenderMode = 'local' | 'server' | 'headless' | 'auto'
 
 export type SubscriptionTier = 'trial' | 'starter' | 'pro' | 'studio' | 'enterprise'
 
@@ -339,6 +339,9 @@ export function getRenderModeOptions(context: RenderContext): Array<{
   const localSupport = isLocalRenderSupported()
   const canServer = canUseServerRendering(context.userTier, context.remainingServerRenders)
   
+  // Pro Cloud (headless) is available for pro+ tiers or 4K renders
+  const canHeadless = ['pro', 'studio', 'enterprise'].includes(context.userTier)
+  
   return [
     {
       mode: 'local',
@@ -355,6 +358,14 @@ export function getRenderModeOptions(context: RenderContext): Array<{
       available: canServer.allowed,
       recommended: decision.mode === 'server',
       badge: decision.mode === 'server' ? 'Recommended' : canServer.allowed ? undefined : 'Upgrade',
+    },
+    {
+      mode: 'headless',
+      label: 'Pro Cloud',
+      description: '4K deterministic • Frame-perfect watermarks • Guaranteed quality',
+      available: canHeadless,
+      recommended: context.resolution === '4K' || context.duration > 60,
+      badge: canHeadless ? 'Pro' : 'Pro Plan',
     },
     {
       mode: 'auto',
