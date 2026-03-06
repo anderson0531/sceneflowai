@@ -75,57 +75,95 @@ const FirewallVideo = () => {
   );
 };
 
-// Three-Layer Defense Card Component
-const LayerCard = ({ 
-  layer,
+// Workflow Step Component - Vertical Mobile-First Design
+const WorkflowStep = ({ 
+  step,
   icon: Icon, 
   title, 
   subtitle,
   description, 
-  outcome,
   costLabel,
-  delay 
+  costColor,
+  delay,
+  isLast = false
 }: { 
-  layer: number;
+  step: number;
   icon: React.ElementType; 
   title: string;
   subtitle: string;
   description: string;
-  outcome: string;
   costLabel: string;
+  costColor: 'green' | 'yellow' | 'red';
   delay: number;
+  isLast?: boolean;
 }) => {
-  const colors = [
-    { bg: 'from-cyan-500/20 to-cyan-600/10', border: 'border-cyan-500/30', icon: 'text-cyan-400', badge: 'bg-cyan-500/20 text-cyan-400' },
-    { bg: 'from-purple-500/20 to-purple-600/10', border: 'border-purple-500/30', icon: 'text-purple-400', badge: 'bg-purple-500/20 text-purple-400' },
-    { bg: 'from-amber-500/20 to-amber-600/10', border: 'border-amber-500/30', icon: 'text-amber-400', badge: 'bg-amber-500/20 text-amber-400' },
-  ];
-  const color = colors[layer - 1];
+  const colors = {
+    green: { bg: 'from-emerald-500/20 to-emerald-600/10', border: 'border-emerald-500/30', icon: 'text-emerald-400', badge: 'bg-emerald-500/20 text-emerald-400', line: 'from-emerald-500 to-emerald-500' },
+    yellow: { bg: 'from-amber-500/20 to-amber-600/10', border: 'border-amber-500/30', icon: 'text-amber-400', badge: 'bg-amber-500/20 text-amber-400', line: 'from-amber-500 to-amber-500' },
+    red: { bg: 'from-red-500/20 to-red-600/10', border: 'border-red-500/30', icon: 'text-red-400', badge: 'bg-red-500/20 text-red-400', line: 'from-red-500 to-red-500' },
+  };
+  const color = colors[costColor];
 
   return (
-    <motion.div
-      className={`relative p-6 rounded-2xl bg-gradient-to-br ${color.bg} border ${color.border} backdrop-blur-sm`}
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay }}
-    >
-      <div className={`absolute top-4 right-4 px-2 py-1 rounded-full text-xs font-semibold ${color.badge}`}>
-        {costLabel}
-      </div>
-      <div className={`w-12 h-12 rounded-xl bg-gray-900/50 flex items-center justify-center mb-4`}>
-        <Icon className={`w-6 h-6 ${color.icon}`} />
-      </div>
-      <h4 className="text-lg font-bold text-white mb-1">{title}</h4>
-      <p className="text-sm text-gray-400 mb-3">{subtitle}</p>
-      <p className="text-sm text-gray-300 mb-4">{description}</p>
-      <div className="pt-3 border-t border-white/10">
-        <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Outcome</p>
-        <p className={`text-sm font-medium ${color.icon}`}>{outcome}</p>
-      </div>
-    </motion.div>
+    <div className="relative">
+      <motion.div
+        className="flex gap-4 md:gap-6"
+        initial={{ opacity: 0, x: -20 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay }}
+      >
+        {/* Step indicator with connecting line */}
+        <div className="flex flex-col items-center">
+          <div className={`relative w-14 h-14 rounded-xl bg-gradient-to-br ${color.bg} border-2 ${color.border} flex items-center justify-center z-10`}>
+            <Icon className={`w-7 h-7 ${color.icon}`} />
+            <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gray-900 border ${color.border} flex items-center justify-center`}>
+              <span className={`text-xs font-bold ${color.icon}`}>{step}</span>
+            </div>
+          </div>
+          {/* Connecting line */}
+          {!isLast && (
+            <div className={`w-0.5 h-24 bg-gradient-to-b ${color.line} opacity-30`} />
+          )}
+        </div>
+        
+        {/* Content */}
+        <div className={`flex-1 pb-8 ${isLast ? '' : ''}`}>
+          <div className="flex items-center gap-3 mb-2">
+            <h4 className="text-lg md:text-xl font-bold text-white">{title}</h4>
+            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${color.badge}`}>
+              {costLabel}
+            </span>
+          </div>
+          <p className="text-sm text-gray-400 mb-2">{subtitle}</p>
+          <p className="text-sm text-gray-300">{description}</p>
+        </div>
+      </motion.div>
+    </div>
   );
 };
+
+// Firewall Line Component
+const FirewallLine = () => (
+  <motion.div
+    className="relative my-6"
+    initial={{ opacity: 0, scaleX: 0 }}
+    whileInView={{ opacity: 1, scaleX: 1 }}
+    viewport={{ once: true }}
+    transition={{ duration: 0.8, delay: 0.3 }}
+  >
+    <div className="flex items-center gap-4">
+      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-500/50 to-amber-500" />
+      <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 border border-amber-500/40">
+        <Shield className="w-5 h-5 text-amber-400" />
+        <span className="text-sm font-bold text-amber-300 whitespace-nowrap">THE FINANCIAL FIREWALL</span>
+        <Shield className="w-5 h-5 text-amber-400" />
+      </div>
+      <div className="flex-1 h-px bg-gradient-to-l from-transparent via-amber-500/50 to-amber-500" />
+    </div>
+    <p className="text-center text-xs text-amber-400/80 mt-2">No credits spent until your vision is locked</p>
+  </motion.div>
+);
 
 export default function FinancialFirewallSection() {
   return (
@@ -170,37 +208,46 @@ export default function FinancialFirewallSection() {
           </p>
         </motion.div>
 
-        {/* Three-Layer Defense Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-16">
-          <LayerCard
-            layer={1}
+        {/* Vertical Workflow Breadcrumb */}
+        <div className="max-w-2xl mx-auto mb-16">
+          {/* Step 1: Blueprint - FREE */}
+          <WorkflowStep
+            step={1}
             icon={FileText}
             title="The Blueprint"
             subtitle="Script & Audience Analysis"
             description="Iterate on your story using Gemini 3.0. Get Audience Resonance™ scores and 'Director' feedback before a single pixel is generated."
-            outcome="Narrative Logic"
-            costLabel="Free / Cheap"
+            costLabel="$0 - FREE"
+            costColor="green"
             delay={0.1}
           />
-          <LayerCard
-            layer={2}
+          
+          {/* Step 2: Visualizer - LOW */}
+          <WorkflowStep
+            step={2}
             icon={Play}
-            title="The Preview"
-            subtitle="The Kinetic Animatic"
+            title="The Visualizer"
+            subtitle="Consistent Storyboards & Animatic"
             description="Watch your film as an animated storyboard with Ken Burns motion and ElevenLabs audio. Perfect your pacing without spending credits."
-            outcome="Timing & Flow"
-            costLabel="Near-Zero Cost"
+            costLabel="$ LOW"
+            costColor="yellow"
             delay={0.2}
           />
-          <LayerCard
-            layer={3}
+          
+          {/* FIREWALL LINE */}
+          <FirewallLine />
+          
+          {/* Step 3: Rendering - HIGH (but controlled) */}
+          <WorkflowStep
+            step={3}
             icon={Target}
-            title="The Engine"
-            subtitle="Frame-Anchored Rendering"
-            description="Only when the edit is 'Locked' do you trigger Veo 3.1. Our Anchor Frames ensure the AI hits your marks exactly."
-            outcome="Final Cinematic Render"
-            costLabel="Precision"
-            delay={0.3}
+            title="The Rendering Engine"
+            subtitle="Final 4K Veo 3.1 Output"
+            description="Only when the edit is 'Locked' do you trigger Veo 3.1. Our Anchor Frames ensure the AI hits your marks exactly—no wasted credits on 'rerolls'."
+            costLabel="$ PRECISION"
+            costColor="red"
+            delay={0.4}
+            isLast={true}
           />
         </div>
 

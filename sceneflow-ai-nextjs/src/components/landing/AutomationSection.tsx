@@ -178,7 +178,7 @@ export default function AutomationSection() {
           ))}
         </div>
 
-        {/* Bottom Callout */}
+        {/* Bottom Callout - Coffee Break Workflow */}
         <motion.div
           className="relative bg-gradient-to-r from-slate-800/80 via-slate-800/60 to-slate-800/80 rounded-2xl p-8 md:p-10 border border-slate-700/50 overflow-hidden"
           initial={{ opacity: 0, y: 20 }}
@@ -197,12 +197,12 @@ export default function AutomationSection() {
               </div>
               <div>
                 <h3 className="text-xl md:text-2xl font-bold text-white mb-1">
-                  The "Coffee Break" Workflow
+                  You Direct. We Render. Take a Break.
                 </h3>
                 <p className="text-gray-400 text-sm md:text-base">
-                  Click <span className="text-cyan-300 font-medium">Generate All</span>, take a break, return to your complete project.
+                  Click <span className="text-cyan-300 font-medium">Generate All</span>, take a 30-minute break, return to your complete project.
                   <br className="hidden md:block" />
-                  <span className="text-gray-500">Perfect for agency pitches, studio contracts, and indie filmmaker funding decks.</span>
+                  <span className="text-gray-500">How much of your day will this tool take? Almost none.</span>
                 </p>
               </div>
             </div>

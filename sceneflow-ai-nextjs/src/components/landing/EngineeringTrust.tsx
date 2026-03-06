@@ -160,6 +160,68 @@ export function EngineeringTrust() {
           </div>
         </motion.div>
 
+        {/* Why Google Vertex AI? Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.35 }}
+          className="mt-12"
+        >
+          <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-950/20 via-slate-900 to-slate-900 p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                <Cloud className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white">Why Google Vertex AI?</h3>
+                <p className="text-sm text-gray-400">The technical moat that matters</p>
+              </div>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-6">
+              {/* Data Privacy */}
+              <div className="p-5 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                    <Lock className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <h4 className="font-semibold text-white">Data Privacy</h4>
+                </div>
+                <p className="text-sm text-gray-400">
+                  Your scripts and creative assets are <span className="text-emerald-400 font-medium">never used for AI training</span>. Google&apos;s enterprise ToS guarantees your IP stays yours.
+                </p>
+              </div>
+              
+              {/* Enterprise Speed */}
+              <div className="p-5 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                    <Zap className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <h4 className="font-semibold text-white">No Generation Queues</h4>
+                </div>
+                <p className="text-sm text-gray-400">
+                  Enterprise-grade infrastructure means <span className="text-amber-400 font-medium">instant API access</span>—no waiting in line behind consumer users during peak hours.
+                </p>
+              </div>
+              
+              {/* Frame-Anchored Precision */}
+              <div className="p-5 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                    <Database className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <h4 className="font-semibold text-white">Frame-Anchored Precision</h4>
+                </div>
+                <p className="text-sm text-gray-400">
+                  Unlike Sora or Runway, our Vertex AI integration supports <span className="text-purple-400 font-medium">reference image anchoring</span>—ensuring character consistency that competitors can&apos;t match.
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Google Cloud Partnership */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -181,7 +243,7 @@ export function EngineeringTrust() {
             </span>
           </div>
           <p className="text-gray-500 text-xs mt-3 max-w-lg mx-auto">
-            SceneFlow AI runs on Google's enterprise infrastructure, leveraging the same AI models used by Fortune 500 companies.
+            SceneFlow AI runs on Google&apos;s enterprise infrastructure, leveraging the same AI models used by Fortune 500 companies.
           </p>
         </motion.div>
 

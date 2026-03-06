@@ -146,7 +146,7 @@ const basePlans = [
       '15,000 credits/month included',
       '100 GB active storage',
       'Veo 3.1 Quality (4K) access',
-      'Character consistency engine',
+      '⭐ Character Consistency Engine',
       'Voice cloning',
       'BYOK (Bring Your Own Key)',
       '3 team seats',
@@ -541,14 +541,14 @@ export function PricingCredits() {
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
               <div className="px-4 py-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold flex items-center gap-1">
                 <Gift className="w-3 h-3" />
-                One-Time Purchase
+                Production Test Flight
               </div>
             </div>
             
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pt-2">
               <div>
                 <h3 className="text-xl font-bold text-white mb-1">{explorerPlan.name}</h3>
-                <p className="text-sm text-gray-400">{explorerPlan.description}</p>
+                <p className="text-sm text-gray-400">Sample the full production pipeline</p>
               </div>
               
               <div className="flex items-center gap-4">
@@ -560,7 +560,7 @@ export function PricingCredits() {
                   onClick={() => window.location.href = '/?signup=explorer'}
                   className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6"
                 >
-                  Try It
+                  Start Test Flight
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>

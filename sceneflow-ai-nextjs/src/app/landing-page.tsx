@@ -72,22 +72,22 @@ export default function LandingPage() {
       {/* 9. Technical: Frame-anchored architecture */}
       <FrameAnchoredSection />
       
-      {/* 10. Automation: One-click generation */}
-      <AutomationSection />
-      
-      {/* 11. Features: All-in-one platform capabilities */}
+      {/* 10. Features: All-in-one platform capabilities */}
       <FeatureHighlight />
       
-      {/* 12. Templates Gallery: Quick Start for new users */}
+      {/* 11. Templates Gallery: Quick Start for new users */}
       <TemplatesGallery />
       
-      {/* 13. Testimonials: Creator stories */}
+      {/* 12. Testimonials: Creator stories */}
       <TestimonialsSection />
       
       {/* 13. Proof: Real use cases with video demos */}
       <UseCasesSection />
       
-      {/* 14. Pricing: Usage-based credits with project calculator */}
+      {/* 14. Coffee Break: Lifestyle benefit - positioned right before pricing */}
+      <AutomationSection />
+      
+      {/* 15. Pricing: Usage-based credits with project calculator */}
       <PricingCredits />
       
       {/* 15. Engineering: Platform trust and security */}

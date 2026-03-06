@@ -1,59 +1,86 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Video, Play, Building2, Film, Sparkles, Volume2, VolumeX, Maximize2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Video, Play, Building2, Film, Sparkles, Volume2, VolumeX, Maximize2, User, Briefcase, Clock, DollarSign, Target, CheckCircle2, ArrowRight, Quote } from 'lucide-react';
 
-interface UseCase {
-  id: string;
-  persona: string;
+// Toggle personas for "Choose Your Path"
+type Persona = 'creator' | 'agency';
+
+interface UseCasePersona {
+  id: Persona;
+  label: string;
+  title: string;
   icon: React.ElementType;
   gradient: string;
   bgGradient: string;
-  challenge: string;
-  solution: string;
-  outcome: string;
-  videoUrl?: string; // Actual video URL
+  challenge: {
+    title: string;
+    description: string;
+  };
+  solution: {
+    title: string;
+    description: string;
+    features: string[];
+  };
+  win: string;
+  keyPhrases: string[];
+  videoUrl?: string;
 }
 
-const useCases: UseCase[] = [
+const personas: UseCasePersona[] = [
   {
-    id: 'content-creator',
-    persona: 'Content Creator',
+    id: 'creator',
+    label: 'I am a Solo Creator',
+    title: 'The YouTube Documentarian',
     icon: Video,
     gradient: 'from-amber-500 to-orange-600',
     bgGradient: 'from-amber-500/10 to-orange-600/10',
-    challenge: 'Creating professional video content requires expensive equipment, editing software, and hours of post-production—limiting output to 2-3 videos per week.',
-    solution: 'SceneFlow AI transforms ideas into polished short films with AI-generated scripts, consistent characters, and professional voiceovers—dramatically faster than traditional production.',
-    outcome: 'Increased content output with AI-powered production. Creators can produce more narrative content without needing a full production team.',
+    challenge: {
+      title: 'The "B-Roll" Bottleneck',
+      description: 'You have a world-class script, but you\'re stuck spending 40+ hours hunting for mediocre stock footage or "gambling" your monthly budget on AI rerolls that don\'t match. Every time your character changes face between scenes, your audience\'s immersion breaks—and your retention drops.',
+    },
+    solution: {
+      title: 'The Automated Storyteller',
+      description: 'Transform your script into a 4K visual narrative in under 30 minutes. Use Frame-Anchored Precision™ to keep your historical figures or protagonists visually consistent from the first frame to the last.',
+      features: [
+        'Retention-Optimized visuals that match your script beat-by-beat',
+        'Consistent Protagonists across every scene',
+        'Script-to-Screen automation—your script becomes your timeline',
+      ],
+    },
+    win: 'Increase your upload frequency from monthly to weekly without hiring a single editor. Your script becomes your timeline, automatically.',
+    keyPhrases: ['Retention-Optimized', 'Consistent Protagonists', 'Script-to-Screen'],
     videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Jul_16__0705_34s_202512231713_zzqmk.mp4',
   },
   {
-    id: 'agency-studio',
-    persona: 'Agency / Studio',
-    icon: Building2,
+    id: 'agency',
+    label: 'I am an Agency/Studio',
+    title: 'The Agency Pitch Lead',
+    icon: Briefcase,
     gradient: 'from-cyan-500 to-blue-600',
     bgGradient: 'from-cyan-500/10 to-blue-600/10',
-    challenge: 'Client pitches require expensive sizzle reels and concept videos. Teams spend weeks on pre-visualization that may never get approved.',
-    solution: 'Generate pitch-ready concept videos in hours. Iterate on client feedback instantly with AI-powered revisions and consistent brand styling.',
-    outcome: 'Win more pitches with lower upfront investment. Reduce pre-production costs and speed up turnaround on client concepts.',
+    challenge: {
+      title: 'High-Stakes Spec Work',
+      description: 'Winning the contract requires a "Sizzle Reel," but spending $5,000 on pre-vis for a project that isn\'t greenlit yet is a massive financial risk. Traditional AI tools are too "random" for brand guidelines, and manual storyboarding is too slow for 48-hour pitch windows.',
+    },
+    solution: {
+      title: 'The "Locked" Concept Engine',
+      description: 'Build a pitch-ready director\'s treatment with 100% brand styling control. Use the Financial Firewall™ to iterate on the client\'s feedback for free in the "Visualizer" layer. Only spend credits on the final 4K render once the client approves the animatic.',
+      features: [
+        'Budget Protection—iterate for free until approval',
+        'Fixed Brand Guidelines—every frame on-brand',
+        'Zero-Risk Pre-Vis—no credits until locked',
+      ],
+    },
+    win: 'Win more pitches with 90% lower upfront costs. Move from "Concept" to "Approved" while your competitors are still sketching storyboards.',
+    keyPhrases: ['Budget Protection', 'Fixed Brand Guidelines', 'Zero-Risk Pre-Vis'],
     videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Jul_16__0705_24s_202512231746_xzz58.mp4',
-  },
-  {
-    id: 'indie-filmmaker',
-    persona: 'Indie Filmmaker',
-    icon: Film,
-    gradient: 'from-purple-500 to-pink-600',
-    bgGradient: 'from-purple-500/10 to-pink-600/10',
-    challenge: 'Limited budgets make it impossible to visualize ambitious stories. Traditional pre-vis tools are prohibitively expensive for independent projects.',
-    solution: 'Bring your screenplay to life with AI storyboards, character designs, and animatic videos—all maintaining visual consistency across every scene.',
-    outcome: 'Professional proof of concepts on indie budgets. Filmmakers use SceneFlow outputs to secure funding, attract talent, and greenlight productions.',
-    videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Jul_16__0705_24s_202512231846_2egwk.mp4',
   },
 ];
 
 // Video Player Component with Controls
-const VideoPlayer = ({ useCase }: { useCase: UseCase }) => {
+const VideoPlayer = ({ persona }: { persona: UseCasePersona }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isMuted, setIsMuted] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -65,56 +92,39 @@ const VideoPlayer = ({ useCase }: { useCase: UseCase }) => {
     }
   };
 
-  // If no video URL, show placeholder
-  if (!useCase.videoUrl) {
+  if (!persona.videoUrl) {
     return (
-      <div className="relative aspect-video bg-slate-800/50 rounded-2xl border border-white/10 overflow-hidden group">
-        {/* Gradient background */}
-        <div className={`absolute inset-0 bg-gradient-to-br ${useCase.bgGradient} opacity-50`} />
-        
-        {/* Play button */}
+      <div className="relative aspect-video bg-slate-800/50 rounded-2xl border border-white/10 overflow-hidden">
+        <div className={`absolute inset-0 bg-gradient-to-br ${persona.bgGradient} opacity-50`} />
         <div className="absolute inset-0 flex items-center justify-center">
           <motion.div
-            className={`w-20 h-20 rounded-full bg-gradient-to-br ${useCase.gradient} flex items-center justify-center shadow-2xl cursor-pointer`}
+            className={`w-20 h-20 rounded-full bg-gradient-to-br ${persona.gradient} flex items-center justify-center shadow-2xl`}
             whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
           >
             <Play className="w-8 h-8 text-white ml-1" fill="white" />
           </motion.div>
         </div>
-        
-        {/* Coming Soon label */}
         <div className="absolute bottom-4 left-4 flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-gray-400" />
-          <span className="text-gray-400 text-sm font-medium">Video Coming Soon</span>
-        </div>
-        
-        {/* Persona label */}
-        <div className="absolute top-4 right-4">
-          <div className={`px-3 py-1.5 rounded-full bg-gradient-to-r ${useCase.gradient} text-white text-xs font-semibold`}>
-            {useCase.persona}
-          </div>
+          <span className="text-gray-400 text-sm font-medium">Demo Coming Soon</span>
         </div>
       </div>
     );
   }
 
-  // Video player with controls
   return (
     <div className={`relative w-full mx-auto transition-all duration-300 ${isExpanded ? 'max-w-4xl' : ''}`}>
       <motion.div
-        className={`relative rounded-2xl overflow-hidden border-2 shadow-2xl`}
-        style={{ borderColor: useCase.gradient.includes('amber') ? 'rgba(245, 158, 11, 0.3)' : useCase.gradient.includes('cyan') ? 'rgba(6, 182, 212, 0.3)' : 'rgba(168, 85, 247, 0.3)' }}
+        className="relative rounded-2xl overflow-hidden border-2 shadow-2xl"
+        style={{ borderColor: persona.id === 'creator' ? 'rgba(245, 158, 11, 0.3)' : 'rgba(6, 182, 212, 0.3)' }}
         initial={{ opacity: 0, scale: 0.95 }}
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
         layout
       >
-        {/* Glow effect */}
-        <div className={`absolute -inset-2 bg-gradient-to-r ${useCase.bgGradient} rounded-2xl blur-xl -z-10 opacity-50`} />
+        <div className={`absolute -inset-2 bg-gradient-to-r ${persona.bgGradient} rounded-2xl blur-xl -z-10 opacity-50`} />
         
-        {/* Video */}
         <div className="aspect-video bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
           <video
             ref={videoRef}
@@ -125,37 +135,25 @@ const VideoPlayer = ({ useCase }: { useCase: UseCase }) => {
             preload="auto"
             className="w-full h-full object-cover"
           >
-            <source src={`${useCase.videoUrl}#t=0.1`} type="video/mp4" />
-            Your browser does not support the video tag.
+            <source src={`${persona.videoUrl}#t=0.1`} type="video/mp4" />
           </video>
           
-          {/* Persona label */}
           <div className="absolute top-3 right-3">
-            <div className={`px-3 py-1.5 rounded-full bg-gradient-to-r ${useCase.gradient} text-white text-xs font-semibold shadow-lg`}>
-              {useCase.persona}
+            <div className={`px-3 py-1.5 rounded-full bg-gradient-to-r ${persona.gradient} text-white text-xs font-semibold shadow-lg`}>
+              {persona.title}
             </div>
           </div>
           
-          {/* Video controls */}
           <div className="absolute bottom-3 right-3 flex items-center gap-2">
-            {/* Audio toggle button */}
             <button
               onClick={toggleMute}
               className="p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm transition-all opacity-60 hover:opacity-100"
-              title={isMuted ? 'Unmute' : 'Mute'}
             >
-              {isMuted ? (
-                <VolumeX className="w-4 h-4 text-white/80" />
-              ) : (
-                <Volume2 className="w-4 h-4 text-white/80" />
-              )}
+              {isMuted ? <VolumeX className="w-4 h-4 text-white/80" /> : <Volume2 className="w-4 h-4 text-white/80" />}
             </button>
-            
-            {/* Expand/Fullscreen button */}
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className="p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm transition-all opacity-60 hover:opacity-100"
-              title={isExpanded ? 'Shrink' : 'Expand'}
             >
               <Maximize2 className="w-4 h-4 text-white/80" />
             </button>
@@ -166,102 +164,209 @@ const VideoPlayer = ({ useCase }: { useCase: UseCase }) => {
   );
 };
 
-// Use Case Card Component
-const UseCaseCard = ({ useCase, index }: { useCase: UseCase; index: number }) => {
-  const isEven = index % 2 === 0;
-  const Icon = useCase.icon;
+// Persona Card Component
+const PersonaCard = ({ persona, isActive }: { persona: UseCasePersona; isActive: boolean }) => {
+  const Icon = persona.icon;
 
   return (
-    <motion.div
-      className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center"
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-100px' }}
-      transition={{ duration: 0.6, delay: index * 0.1 }}
-    >
-      {/* Content - alternates sides on desktop */}
-      <div className={`${isEven ? 'lg:order-1' : 'lg:order-2'}`}>
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${useCase.gradient} flex items-center justify-center shadow-lg`}>
-            <Icon className="w-7 h-7 text-white" />
-          </div>
-          <h3 className="text-2xl md:text-3xl font-bold text-white">
-            {useCase.persona}
-          </h3>
-        </div>
-
-        {/* Challenge / Solution / Outcome */}
-        <div className="space-y-6">
-          {/* Challenge */}
-          <div className="bg-slate-800/30 backdrop-blur-sm rounded-xl p-5 border border-red-500/20">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 rounded-full bg-red-500" />
-              <span className="text-red-400 text-sm font-semibold uppercase tracking-wide">Challenge</span>
+    <AnimatePresence mode="wait">
+      {isActive && (
+        <motion.div
+          key={persona.id}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.4 }}
+          className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start"
+        >
+          {/* Left: Content */}
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center gap-4">
+              <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${persona.gradient} flex items-center justify-center shadow-lg`}>
+                <Icon className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-400 uppercase tracking-wider">Target Persona</p>
+                <h3 className="text-2xl md:text-3xl font-bold text-white">{persona.title}</h3>
+              </div>
             </div>
-            <p className="text-gray-300 leading-relaxed">{useCase.challenge}</p>
-          </div>
 
-          {/* Solution */}
-          <div className="bg-slate-800/30 backdrop-blur-sm rounded-xl p-5 border border-cyan-500/20">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 rounded-full bg-cyan-500" />
-              <span className="text-cyan-400 text-sm font-semibold uppercase tracking-wide">Solution</span>
+            {/* Challenge */}
+            <div className="bg-red-500/5 backdrop-blur-sm rounded-xl p-6 border border-red-500/20">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-2 h-2 rounded-full bg-red-500" />
+                <span className="text-red-400 text-sm font-semibold uppercase tracking-wide">The Challenge</span>
+              </div>
+              <h4 className="text-lg font-bold text-white mb-2">{persona.challenge.title}</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">{persona.challenge.description}</p>
             </div>
-            <p className="text-gray-300 leading-relaxed">{useCase.solution}</p>
-          </div>
 
-          {/* Outcome */}
-          <div className="bg-slate-800/30 backdrop-blur-sm rounded-xl p-5 border border-green-500/20">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 rounded-full bg-green-500" />
-              <span className="text-green-400 text-sm font-semibold uppercase tracking-wide">Outcome</span>
+            {/* Solution */}
+            <div className={`bg-gradient-to-br ${persona.bgGradient} backdrop-blur-sm rounded-xl p-6 border ${persona.id === 'creator' ? 'border-amber-500/20' : 'border-cyan-500/20'}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <div className={`w-2 h-2 rounded-full ${persona.id === 'creator' ? 'bg-amber-500' : 'bg-cyan-500'}`} />
+                <span className={`text-sm font-semibold uppercase tracking-wide ${persona.id === 'creator' ? 'text-amber-400' : 'text-cyan-400'}`}>The SceneFlow Solution</span>
+              </div>
+              <h4 className="text-lg font-bold text-white mb-2">{persona.solution.title}</h4>
+              <p className="text-gray-300 text-sm leading-relaxed mb-4">{persona.solution.description}</p>
+              
+              <div className="space-y-2">
+                {persona.solution.features.map((feature, idx) => (
+                  <div key={idx} className="flex items-start gap-2">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${persona.id === 'creator' ? 'text-amber-400' : 'text-cyan-400'}`} />
+                    <span className="text-sm text-gray-300">
+                      {feature.split('—').map((part, i) => 
+                        i === 0 ? <strong key={i} className="text-white">{part}</strong> : <span key={i}>—{part}</span>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <p className="text-gray-300 leading-relaxed">{useCase.outcome}</p>
-          </div>
-        </div>
-      </div>
 
-      {/* Video Player - alternates sides on desktop */}
-      <div className={`${isEven ? 'lg:order-2' : 'lg:order-1'}`}>
-        <VideoPlayer useCase={useCase} />
-      </div>
-    </motion.div>
+            {/* The Win - Quote Style */}
+            <div className="relative p-6 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+              <Quote className="absolute top-4 left-4 w-8 h-8 text-emerald-500/30" />
+              <div className="pl-8">
+                <p className="text-emerald-400 text-sm font-semibold uppercase tracking-wide mb-2">The "Win"</p>
+                <p className="text-white text-lg font-medium italic leading-relaxed">"{persona.win}"</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Video + One-Take Badge (Agency only) */}
+          <div className="space-y-6">
+            <VideoPlayer persona={persona} />
+            
+            {/* One-Take Social Proof - Agency Only */}
+            {persona.id === 'agency' && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20"
+              >
+                <div className="flex items-start gap-3">
+                  <Target className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-purple-300 font-medium mb-1">Frame-Anchored Continuity</p>
+                    <p className="text-xs text-gray-400">
+                      SceneFlow is the only tool that allows <span className="text-purple-400 font-semibold">Frame-Anchored</span> continuity, ensuring your client's product or character remains identical across every scene segment.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Key Phrases */}
+            <div className="flex flex-wrap gap-2">
+              {persona.keyPhrases.map((phrase, idx) => (
+                <span
+                  key={idx}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium ${
+                    persona.id === 'creator' 
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                      : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                  }`}
+                >
+                  {phrase}
+                </span>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 
 export default function UseCasesSection() {
+  const [activePersona, setActivePersona] = useState<Persona>('creator');
+
   return (
-    <section id="use-cases" className="py-24 bg-slate-950 relative overflow-hidden">
-      {/* Background accent */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.08),transparent_60%)]" />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+    <section id="use-cases" className="py-24 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <motion.div
-          className="text-center mb-16"
+        <motion.div 
+          className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="landing-section-heading text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-6">
-            Built for{' '}
-            <span className="landing-gradient-text bg-gradient-to-r from-amber-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent">
+          <div className="inline-flex items-center px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-full mb-6">
+            <User className="w-4 h-4 text-purple-400 mr-2" />
+            <span className="text-purple-300 text-sm font-medium">Choose Your Path</span>
+          </div>
+          
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
+            Production Certainty for{' '}
+            <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-cyan-400 bg-clip-text text-transparent">
               Every Creator
             </span>
           </h2>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-            From solo creators to enterprise studios—see how SceneFlow AI transforms ideas into production-ready content.
+          
+          <p className="text-gray-400 max-w-2xl mx-auto text-lg">
+            Whether you're fighting a clock or fighting a budget, SceneFlow gives you control.
           </p>
         </motion.div>
 
-        {/* Use Case Cards */}
-        <div className="space-y-24">
-          {useCases.map((useCase, index) => (
-            <UseCaseCard key={useCase.id} useCase={useCase} index={index} />
+        {/* Toggle Selector */}
+        <motion.div
+          className="flex justify-center mb-12"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          <div className="inline-flex p-1.5 rounded-2xl bg-slate-800/50 border border-slate-700/50">
+            {personas.map((persona) => {
+              const Icon = persona.icon;
+              return (
+                <button
+                  key={persona.id}
+                  onClick={() => setActivePersona(persona.id)}
+                  className={`
+                    flex items-center gap-3 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300
+                    ${activePersona === persona.id
+                      ? `bg-gradient-to-r ${persona.gradient} text-white shadow-lg`
+                      : 'text-gray-400 hover:text-white hover:bg-slate-700/50'
+                    }
+                  `}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span>{persona.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </motion.div>
+
+        {/* Active Persona Content */}
+        <div className="min-h-[600px]">
+          {personas.map((persona) => (
+            <PersonaCard key={persona.id} persona={persona} isActive={activePersona === persona.id} />
           ))}
         </div>
+
+        {/* CTA */}
+        <motion.div
+          className="text-center mt-12"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <button
+            onClick={() => window.location.href = '/?signup=explorer'}
+            className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 via-pink-500 to-amber-500 text-white font-semibold text-lg shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300"
+          >
+            Start Your Production Test Flight
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </button>
+          <p className="text-gray-500 text-sm mt-3">$9 one-time • 750 credits • Full platform access</p>
+        </motion.div>
       </div>
     </section>
   );
