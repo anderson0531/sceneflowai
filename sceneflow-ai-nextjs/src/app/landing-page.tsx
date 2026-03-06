@@ -25,6 +25,7 @@ const AutomationSection = dynamic(() => import('@/components/landing/AutomationS
 const FeatureHighlight = dynamic(() => import('./components/FeatureHighlight').then(m => m.FeatureHighlight), { ssr: false })
 const TestimonialsSection = dynamic(() => import('@/components/landing/TestimonialsSection'), { ssr: false })
 const UseCasesSection = dynamic(() => import('@/components/landing/UseCasesSection'), { ssr: false })
+const TemplatesGallery = dynamic(() => import('@/components/landing/TemplatesGallery'), { ssr: false })
 const FloatingNav = dynamic(() => import('@/components/landing/FloatingNav'), { ssr: false })
 const FloatingCTA = dynamic(() => import('@/components/landing/FloatingCTA'), { ssr: false })
 const ExitIntentPopup = dynamic(() => import('@/components/landing/ExitIntentPopup'), { ssr: false })
@@ -40,30 +41,30 @@ export default function LandingPage() {
       <FloatingCTA />
       <ExitIntentPopup />
       
-      {/* 1. Hero: "The AI Studio That Adapts to You" + Pipeline Animation */}
+      {/* 1. Hero: "Stop Gambling on AI Video" + Pipeline Animation */}
       <HeroSection />
       
       {/* 2. Trust: Powered by Google Cloud credibility */}
       <TrustSignals />
       
-      {/* 3. Modular Showcase: 4 modules with standalone value + ecosystem bonuses */}
-      <ModularShowcase />
-      
-      {/* 4. Unified Workflow: "Better Together" split comparison */}
+      {/* 3. Old Way vs SceneFlow Way - Establish the "Why" immediately */}
       <UnifiedWorkflow />
       
-      {/* 5. Problem: Slot machine metaphor - why current tools fail */}
+      {/* 4. Problem: Slot machine metaphor - why current tools fail */}
       <SlotMachineSection />
+      
+      {/* 5. Solution: Financial Firewall™ - The differentiator */}
+      <FinancialFirewallSection />
       
       {/* 6. How: Simple 4-step process */}
       <HowItWorks />
       
-      {/* 7. Storyteller Mode: Audio-first creator targeting */}
+      {/* 7. Modular Showcase: 4 modules with standalone value + ecosystem bonuses */}
+      <ModularShowcase />
+      
+      {/* 8. Storyteller Mode: Audio-first creator targeting */}
       <CreatorFastTrackHero />
       <StorytellerFeatureSection />
-      
-      {/* 8. Solution: Financial safety with budget controls */}
-      <FinancialFirewallSection />
       
       {/* 8.5. Value Calculator: Cost, Time, and Expertise savings */}
       <ProductivityValueSection />
@@ -77,7 +78,10 @@ export default function LandingPage() {
       {/* 11. Features: All-in-one platform capabilities */}
       <FeatureHighlight />
       
-      {/* 12. Testimonials: Creator stories */}
+      {/* 12. Templates Gallery: Quick Start for new users */}
+      <TemplatesGallery />
+      
+      {/* 13. Testimonials: Creator stories */}
       <TestimonialsSection />
       
       {/* 13. Proof: Real use cases with video demos */}

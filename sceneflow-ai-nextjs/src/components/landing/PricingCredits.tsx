@@ -92,7 +92,7 @@ const BYOK_SAVINGS_PERCENT = 80; // 80% savings on SceneFlow credits with BYOK
 const explorerPlan = {
   id: 'explorer',
   name: 'Explorer',
-  price: 10,
+  price: 9,
   includedCredits: 750,
   storage: '5 GB',
   description: 'One-time purchase to try it out',

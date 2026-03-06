@@ -43,29 +43,31 @@ export interface TierGateModalProps {
 const TIER_DETAILS = {
   pro: {
     name: 'Pro',
-    price: '$29/mo',
+    price: '$149/mo',
     icon: Sparkles,
     color: 'blue',
     features: [
       '3 Custom Voice Clones',
       'Priority Processing',
-      '50GB Storage',
-      'HD Video Export',
+      '100GB Storage',
+      '4K Video Export',
       'All AI Models',
+      'BYOK Support',
     ],
   },
   studio: {
     name: 'Studio',
-    price: '$79/mo',
+    price: '$599/mo',
     icon: Crown,
     color: 'purple',
     features: [
       '10 Custom Voice Clones',
       'Priority+ Processing',
-      '200GB Storage',
+      '500GB Storage',
       '4K Video Export',
       'Team Collaboration',
       'API Access',
+      'BYOK Support',
     ],
   },
   enterprise: {

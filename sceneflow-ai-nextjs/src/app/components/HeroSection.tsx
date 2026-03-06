@@ -95,9 +95,9 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
           >
-            <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white">The AI Studio</span>
-            <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400">
-              That Adapts to You
+            <span className="block text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white">Stop Gambling on AI Video.</span>
+            <span className="block text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400">
+              Direct Your Vision with Frame-Anchored Precision™
             </span>
           </motion.h1>
 
@@ -108,7 +108,7 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.7 }}
           >
-            Use our <span className="text-white font-semibold">specialized tools</span> to solve a single problem, or connect them for a seamless <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 font-semibold">Concept-to-Publish</span> production workflow—powered by Google&apos;s Veo 3 and Gemini 3.0.
+            The only production suite that decouples <span className="text-white font-semibold">Creative Direction</span> from <span className="text-white font-semibold">Expensive Rendering</span>. Use Gemini 3.0 and Veo 3.1 to script, storyboard, and iterate for free—then render once with <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 font-semibold">100% character consistency</span>.
           </motion.p>
 
           {/* Pipeline Visual - The Living Pipeline */}
@@ -151,10 +151,10 @@ export function HeroSection() {
           >
             <Button
               size="lg"
-              onClick={() => window.location.href = '/?signup=1'}
+              onClick={() => window.location.href = '/?signup=explorer'}
               className="bg-gradient-to-r from-cyan-500 via-purple-500 to-amber-500 hover:from-cyan-400 hover:via-purple-400 hover:to-amber-400 text-white px-8 py-4 text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-500/25"
             >
-              Start a Project
+              Start Your First Project ($9)
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
             
@@ -179,11 +179,11 @@ export function HeroSection() {
             transition={{ duration: 0.6, delay: 1.4 }}
           >
             <p className="text-sm text-gray-400">
-              <span className="text-emerald-400 font-medium">✓ Pay only for what you use</span>
+              <span className="text-emerald-400 font-medium">✓ 7-Day Money-Back Guarantee</span>
               <span className="text-gray-500 mx-2">•</span>
-              <span>Base access from $29/mo</span>
+              <span>Explorer: $9 one-time</span>
               <span className="text-gray-500 mx-2">•</span>
-              <span className="text-gray-500">Credits for AI generation</span>
+              <span className="text-gray-500">No CC required for free tier</span>
             </p>
           </motion.div>
 
