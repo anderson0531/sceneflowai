@@ -1,13 +1,21 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Lightbulb, Film, Scissors, Rocket, ArrowRight } from 'lucide-react'
+import { Lightbulb, Film, Scissors, Rocket, ArrowRight, Clapperboard } from 'lucide-react'
 
 export function HowItWorks() {
   const steps = [
     {
+      icon: <Clapperboard className="w-10 h-10" />,
+      title: '1. Series',
+      subtitle: 'Showrunner Engine',
+      description: 'Transform a single idea into a multi-episode franchise. The Series Studio manages long-form narrative arcs and maintains total visual continuity across up to 40 episodes with a shared Production Bible.',
+      color: 'from-purple-500 to-cyan-600',
+      borderColor: 'border-purple-500/30',
+    },
+    {
       icon: <Lightbulb className="w-10 h-10" />,
-      title: '1. Blueprint',
+      title: '2. Blueprint',
       subtitle: 'Story Development',
       description: 'AI-assisted ideation with proprietary Audience Resonance™ scoring. Get automated story fixes, professional script generation, and industry-standard exports—then refine every detail through guided dialogs.',
       color: 'from-cyan-500 to-cyan-600',
@@ -15,7 +23,7 @@ export function HowItWorks() {
     },
     {
       icon: <Film className="w-10 h-10" />,
-      title: '2. Production',
+      title: '3. Production',
       subtitle: 'Your Creative Bible',
       description: 'Production Bible locks character, wardrobe, and location references for frame-perfect consistency. 800+ premium voices with cloning. Imagen 4 storyboards flow to Veo 3 video—each frame AI-generated, each cut director-approved.',
       color: 'from-amber-500 to-amber-600',
@@ -23,19 +31,19 @@ export function HowItWorks() {
     },
     {
       icon: <Scissors className="w-10 h-10" />,
-      title: '3. Final Cut',
+      title: '4. Final Cut',
       subtitle: 'Professional Editor',
       description: 'Full NLE timeline with transitions, overlays, and multi-track audio mixing. Import external clips, add reusable intros and ads, upscale to 4K/8K with Topaz AI. Every automation has an override—you\'re always in control.',
-      color: 'from-purple-500 to-purple-600',
-      borderColor: 'border-purple-500/30',
+      color: 'from-emerald-500 to-teal-600',
+      borderColor: 'border-emerald-500/30',
     },
     {
       icon: <Rocket className="w-10 h-10" />,
-      title: '4. Premiere',
+      title: '5. Premiere',
       subtitle: 'Audience Intelligence',
-      description: 'Screening Room with Biometric Sentiment Player—upload any video for AI focus group analysis. Automated publishing generates titles, descriptions, and promo clips. One-click export to YouTube, Vimeo, and beyond.',
-      color: 'from-green-500 to-green-600',
-      borderColor: 'border-green-500/30',
+      description: 'Screening Room with Audience Resonance™ scoring—get critical analysis before you publish. Automated publishing generates titles, descriptions, and promo clips. One-click export to YouTube, Vimeo, and beyond.',
+      color: 'from-amber-500 to-orange-600',
+      borderColor: 'border-amber-500/30',
     },
   ]
   
@@ -53,7 +61,7 @@ export function HowItWorks() {
           transition={{ duration: 0.6 }}
         >
           <h2 className="landing-section-heading text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-4">
-            Four Phases to{' '}
+            Five Phases to{' '}
             <span className="landing-gradient-text bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent">
               Cinematic Excellence
             </span>
@@ -67,7 +75,7 @@ export function HowItWorks() {
         </motion.div>
 
         {/* Steps Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-5">
           {steps.map((step, index) => (
             <motion.div
               key={index}
@@ -78,27 +86,27 @@ export function HowItWorks() {
               className="relative group"
             >
               {/* Card */}
-              <div className={`relative h-full bg-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border ${step.borderColor} hover:border-opacity-60 transition-all duration-300`}>
+              <div className={`relative h-full bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 border ${step.borderColor} hover:border-opacity-60 transition-all duration-300`}>
                 {/* Step Number Badge */}
-                <div className={`absolute -top-3 -right-3 w-8 h-8 rounded-full bg-gradient-to-br ${step.color} flex items-center justify-center text-white text-sm font-bold shadow-lg`}>
+                <div className={`absolute -top-3 -right-3 w-7 h-7 rounded-full bg-gradient-to-br ${step.color} flex items-center justify-center text-white text-xs font-bold shadow-lg`}>
                   {index + 1}
                 </div>
                 
                 {/* Icon */}
-                <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${step.color} flex items-center justify-center mb-4 text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${step.color} flex items-center justify-center mb-4 text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                   {step.icon}
                 </div>
                 
                 {/* Content */}
-                <h3 className="text-lg md:text-xl font-bold text-white mb-1">{step.title}</h3>
-                <p className="text-xs md:text-sm text-gray-500 mb-3">{step.subtitle}</p>
-                <p className="text-gray-400 text-sm md:text-base leading-relaxed">{step.description}</p>
+                <h3 className="text-base md:text-lg font-bold text-white mb-1">{step.title}</h3>
+                <p className="text-xs text-gray-500 mb-2">{step.subtitle}</p>
+                <p className="text-gray-400 text-xs md:text-sm leading-relaxed">{step.description}</p>
               </div>
               
               {/* Connector Arrow (hidden on last item and mobile) */}
               {index < steps.length - 1 && (
-                <div className="hidden lg:flex absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">
-                  <ArrowRight className="w-6 h-6 text-gray-600" />
+                <div className="hidden lg:flex absolute top-1/2 -right-3 transform -translate-y-1/2 z-10">
+                  <ArrowRight className="w-5 h-5 text-gray-600" />
                 </div>
               )}
             </motion.div>
