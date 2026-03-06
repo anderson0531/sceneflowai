@@ -18,13 +18,42 @@ import {
   TrendingUp,
   MessageSquare,
   CheckCircle2,
-  Zap
+  Zap,
+  Clapperboard,
+  Target,
+  Layers,
+  BookOpen,
+  GitBranch
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 
 // Module definitions with standalone and ecosystem features
 const modules = [
+  {
+    id: 'series',
+    name: 'Series Studio',
+    phase: 'Showrunner',
+    icon: Clapperboard,
+    color: 'from-purple-500 to-cyan-600',
+    bgColor: 'bg-purple-500/10',
+    borderColor: 'border-purple-500/30',
+    glowColor: 'shadow-purple-500/30',
+    textColor: 'text-purple-400',
+    accentColor: 'purple',
+    standaloneValue: 'The AI Showrunner Engine',
+    standaloneDescription: 'Transform a single idea into a multi-episode franchise. The Series Studio acts as the "Brain" of your production, managing long-form narrative arcs and maintaining total visual continuity across up to 40 episodes.',
+    standaloneFeatures: [
+      { icon: BookOpen, text: 'Shared Production Bible' },
+      { icon: Layers, text: 'Season-at-a-Glance (40 episodes)' },
+      { icon: GitBranch, text: 'Narrative continuity tracking' },
+      { icon: CheckCircle2, text: 'Franchise management' },
+    ],
+    ecosystemBonus: 'Series-to-Script Sync: Your Series Storyline automatically populates the Writer\'s Room for every episode.',
+    ecosystemDetail: 'The characters, voices, and locations saved in your Production Bible flow directly into the Visualizer and Smart Editor, ensuring your cast looks and sounds identical in every scene.',
+    videoPlaceholder: '/demo/series-studio.mp4',
+    alignment: 'left' as const,
+  },
   {
     id: 'writer',
     name: "Writer's Room",
@@ -47,7 +76,7 @@ const modules = [
     ecosystemBonus: 'One-Click Export: Your script tags are automatically formatted into Prompts for the Visualizer.',
     ecosystemDetail: 'Character descriptions, scene settings, and mood tags flow directly into image prompts—no copy-pasting required.',
     videoPlaceholder: '/demo/writer-room.mp4',
-    alignment: 'left' as const,
+    alignment: 'right' as const,
   },
   {
     id: 'visualizer',
@@ -108,16 +137,16 @@ const modules = [
     glowColor: 'shadow-amber-500/30',
     textColor: 'text-amber-400',
     accentColor: 'amber',
-    standaloneValue: 'Predict audience drop-off',
-    standaloneDescription: 'Behavioral analytics that reveal what resonates. Understand engagement patterns, predict retention, and optimize before you publish.',
+    standaloneValue: 'Audience Resonance™ Intelligence',
+    standaloneDescription: 'Know your score before you hit publish. Select your target audience and get critical analysis with a real-time Resonance Score (e.g., 86/100) that indicates when your project is optimized for maximum retention.',
     standaloneFeatures: [
-      { icon: TrendingUp, text: 'Engagement heatmaps' },
-      { icon: MessageSquare, text: 'Sentiment analysis' },
-      { icon: BarChart3, text: 'Retention predictions' },
-      { icon: CheckCircle2, text: 'A/B testing framework' },
+      { icon: Target, text: 'Audience Resonance™ scoring' },
+      { icon: Sparkles, text: 'One-click optimization' },
+      { icon: TrendingUp, text: 'Retention predictions' },
+      { icon: CheckCircle2, text: 'Ready-for-Production score' },
     ],
-    ecosystemBonus: 'Feedback Loop: Auto-updates your Script in the Writer\'s Room based on engagement data.',
-    ecosystemDetail: 'Low engagement on a scene? Get AI suggestions to revise dialogue or pacing—directly in your script.',
+    ecosystemBonus: 'Auto-Optimization: Get specific recommendations to improve emotional stakes or pacing, then apply them automatically.',
+    ecosystemDetail: 'Low engagement on a scene? The Resonance assistant suggests revisions to dialogue or pacing—apply them with one click directly to your script.',
     videoPlaceholder: '/demo/screening-room.mp4',
     alignment: 'right' as const,
   },
@@ -166,7 +195,7 @@ function ModuleCard({ module, index }: ModuleCardProps) {
                 )}>
                   {module.phase}
                 </span>
-                <span className="text-xs text-gray-500">Step {index + 1} of 4</span>
+                <span className="text-xs text-gray-500">Step {index + 1} of 5</span>
               </div>
               <h3 className="dashboard-widget-title text-2xl font-bold text-white mt-1">
                 {module.name}
@@ -269,6 +298,7 @@ function ModuleCard({ module, index }: ModuleCardProps) {
             {/* Decorative Elements */}
             <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-gray-800/80 backdrop-blur-sm rounded-lg border border-white/10">
               <div className={cn('w-2 h-2 rounded-full animate-pulse', 
+                module.accentColor === 'purple' && 'bg-purple-400',
                 module.accentColor === 'violet' && 'bg-violet-400',
                 module.accentColor === 'cyan' && 'bg-cyan-400',
                 module.accentColor === 'emerald' && 'bg-emerald-400',
@@ -308,7 +338,7 @@ export function ModularShowcase() {
           </div>
           
           <h2 className="landing-section-heading text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6">
-            Four Tools. One Vision.
+            Five Tools. One Vision.
           </h2>
           
           <p className="text-lg text-gray-400 max-w-2xl mx-auto">
