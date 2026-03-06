@@ -67,7 +67,7 @@ const helpSections: HelpSection[] = [
       {
         id: 'welcome',
         title: 'Welcome to SceneFlow AI',
-        content: 'SceneFlow AI is an AI-powered video production platform that helps you create professional video content from concept to final cut. Our workflow guides you through four phases: Blueprint, Production, Final Cut, and Premiere.',
+        content: 'SceneFlow AI is an AI-powered video production platform that helps you create professional video content from concept to final cut. Our workflow guides you through five phases: Series, Blueprint, Production, Final Cut, and Premiere.',
         steps: [
           'Start with your idea or concept in the Blueprint phase',
           'Develop your script, characters, and visuals in Production',

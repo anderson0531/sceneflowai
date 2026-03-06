@@ -48,47 +48,43 @@ export default function LandingPage() {
       {/* 2. Trust: Powered by Google Cloud credibility */}
       <TrustSignals />
       
-      {/* 3. Old Way vs SceneFlow Way - Establish the "Why" immediately */}
-      <UnifiedWorkflow />
-      
-      {/* 4. Problem: Slot machine metaphor - why current tools fail */}
+      {/* 3. Problem: Slot machine metaphor - why current tools fail */}
       <SlotMachineSection />
       
-      {/* 5. Solution: Financial Firewall™ - The differentiator */}
+      {/* 4. Solution: Financial Firewall™ - The differentiator */}
       <FinancialFirewallSection />
       
-      {/* 6. How: Simple 4-step process */}
+      {/* 5. Old Way vs SceneFlow Way - Now that problem is established */}
+      <UnifiedWorkflow />
+      
+      {/* 6. How: Five Phases to Cinematic Excellence */}
       <HowItWorks />
       
-      {/* 7. Modular Showcase: 4 modules with standalone value + ecosystem bonuses */}
+      {/* 7. Modular Showcase: 5 tools with standalone value + ecosystem bonuses */}
       <ModularShowcase />
       
-      {/* 7.5. Showrunner Engine: Series production for YouTube franchises */}
-      <ShowrunnerEngineSection />
-      
-      {/* 8. Storyteller Mode: Audio-first creator targeting */}
-      <CreatorFastTrackHero />
-      <StorytellerFeatureSection />
-      
-      {/* 8.5. Value Calculator: Cost, Time, and Expertise savings */}
-      <ProductivityValueSection />
-      
-      {/* 9. Technical: Frame-anchored architecture */}
-      <FrameAnchoredSection />
-      
-      {/* 10. Features: All-in-one platform capabilities */}
-      <FeatureHighlight />
-      
-      {/* 11. Production Showcase: Versatile formats, styles, and resolutions */}
-      <TemplatesGallery />
-      
-      {/* 12. Testimonials: Creator stories */}
+      {/* 8. Testimonials: Creator stories - moved earlier for social proof */}
       <TestimonialsSection />
       
-      {/* 13. Proof: Real use cases with video demos */}
+      {/* 9. Storyteller Mode: Audio-first creator targeting */}
+      <CreatorFastTrackHero />
+      
+      {/* 10. Value Calculator: Cost, Time, and Expertise savings */}
+      <ProductivityValueSection />
+      
+      {/* 11. Technical: Frame-anchored architecture */}
+      <FrameAnchoredSection />
+      
+      {/* 12. Features: All-in-one platform capabilities */}
+      <FeatureHighlight />
+      
+      {/* 13. Production Showcase: Versatile formats, styles, and resolutions */}
+      <TemplatesGallery />
+      
+      {/* 14. Proof: Real use cases with video demos */}
       <UseCasesSection />
       
-      {/* 14. Coffee Break: Lifestyle benefit - positioned right before pricing */}
+      {/* 15. Coffee Break: Lifestyle benefit - positioned right before pricing */}
       <AutomationSection />
       
       {/* 15. Pricing: Usage-based credits with project calculator */}

@@ -196,7 +196,7 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.7 }}
           >
-            The only production suite that decouples <span className="text-white font-semibold">Creative Direction</span> from <span className="text-white font-semibold">Expensive Rendering</span>. Use Gemini 3.0 and Veo 3.1 to script, storyboard, and iterate for free—then render once with <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 font-semibold">100% character consistency</span>.
+            Perfect your story before spending a dime on rendering. Use <span className="text-white font-semibold">Gemini 3.0</span> and <span className="text-white font-semibold">Veo 3.1</span> to script, storyboard, and iterate for free—then render once with <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 font-semibold">100% character consistency</span>.
           </motion.p>
 
           {/* Quality Reel - Character Consistency Demo */}
