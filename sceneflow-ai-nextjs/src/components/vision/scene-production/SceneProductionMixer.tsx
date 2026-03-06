@@ -95,6 +95,11 @@ import {
   type RenderMode,
   type RenderContext,
 } from '@/lib/video/RenderStrategyRouter'
+import {
+  storeVideo,
+  getVideo,
+  cacheVideoFromUrl,
+} from '@/lib/storage/indexedDB'
 
 // Text overlay presets
 const TEXT_OVERLAY_PRESETS: Record<string, Partial<TextOverlay>> = {
@@ -2072,6 +2077,38 @@ export function SceneProductionMixer({
     }
   }, [externalTextOverlays])
   
+  // Sync lastRenderedUrl when productionData changes (e.g., after page reload)
+  useEffect(() => {
+    if (productionData?.renderedSceneUrl && productionData.renderedSceneUrl !== lastRenderedUrl) {
+      console.log('[SceneProductionMixer] Syncing lastRenderedUrl from productionData:', productionData.renderedSceneUrl)
+      setLastRenderedUrl(productionData.renderedSceneUrl)
+      // Set render status to complete if we have a URL (restored from DB)
+      if (renderStatus === 'idle') {
+        setRenderStatus('complete')
+      }
+    }
+  }, [productionData?.renderedSceneUrl, lastRenderedUrl, renderStatus])
+  
+  // Try to load cached video from IndexedDB on mount
+  useEffect(() => {
+    const loadCachedVideo = async () => {
+      // Only try to cache if we have a cloud URL but no local blob URL
+      if (lastRenderedUrl && !lastRenderedUrl.startsWith('blob:')) {
+        try {
+          const cached = await getVideo(projectId, sceneId, selectedLanguage)
+          if (cached) {
+            console.log('[SceneProductionMixer] Using cached video from IndexedDB')
+            // We have a local copy, but keep using the cloud URL for consistency
+            // The cached blob can be used for faster playback
+          }
+        } catch (error) {
+          console.warn('[SceneProductionMixer] Failed to check video cache:', error)
+        }
+      }
+    }
+    loadCachedVideo()
+  }, [projectId, sceneId, selectedLanguage, lastRenderedUrl])
+  
   // Add a new text overlay
   const addTextOverlay = useCallback((preset: 'title' | 'lower-third' | 'subtitle') => {
     const presetConfig = TEXT_OVERLAY_PRESETS[preset]
@@ -2149,7 +2186,10 @@ export function SceneProductionMixer({
   const [renderStatus, setRenderStatus] = useState<RenderStatus>('idle')
   const [renderProgress, setRenderProgress] = useState(0)
   const [renderError, setRenderError] = useState<string | null>(null)
-  const [lastRenderedUrl, setLastRenderedUrl] = useState<string | null>(null)
+  // Initialize from persisted production data if available
+  const [lastRenderedUrl, setLastRenderedUrl] = useState<string | null>(
+    productionData?.renderedSceneUrl || null
+  )
   
   // === Render Mode State (Local vs Server) ===
   const [selectedRenderMode, setSelectedRenderMode] = useState<RenderMode>('auto')
@@ -2499,6 +2539,15 @@ export function SceneProductionMixer({
           setRenderStatus('complete')
           setRenderProgress(100)
           setLastRenderedUrl(data.downloadUrl)
+          
+          // Cache the video to IndexedDB for offline access
+          try {
+            await cacheVideoFromUrl(projectId, sceneId, selectedLanguage, data.downloadUrl)
+            console.log('[ServerRender] Video cached to IndexedDB')
+          } catch (cacheError) {
+            console.warn('[ServerRender] Failed to cache video to IndexedDB:', cacheError)
+          }
+          
           onRenderComplete?.(data.downloadUrl, selectedLanguage)
           return
         }
@@ -2773,6 +2822,14 @@ export function SceneProductionMixer({
         }
       })
       
+      // Cache the video to IndexedDB for offline access and persistence
+      try {
+        await storeVideo(projectId, sceneId, selectedLanguage, renderResult.blob, persistentUrl)
+        console.log('[SceneProductionMixer] Video cached to IndexedDB')
+      } catch (cacheError) {
+        console.warn('[SceneProductionMixer] Failed to cache video to IndexedDB:', cacheError)
+      }
+      
       onRenderComplete?.(persistentUrl, selectedLanguage)
       
     } catch (err) {
@@ -2967,10 +3024,20 @@ export function SceneProductionMixer({
         const data = await response.json()
         
         if (data.status === 'complete') {
+          const outputUrl = data.outputUrl || data.publicUrl
           setRenderStatus('complete')
           setRenderProgress(100)
-          setLastRenderedUrl(data.outputUrl || data.publicUrl)
-          onRenderComplete?.(data.outputUrl || data.publicUrl, selectedLanguage)
+          setLastRenderedUrl(outputUrl)
+          
+          // Cache the video to IndexedDB for offline access
+          try {
+            await cacheVideoFromUrl(projectId, sceneId, selectedLanguage, outputUrl)
+            console.log('[HeadlessRender] Video cached to IndexedDB')
+          } catch (cacheError) {
+            console.warn('[HeadlessRender] Failed to cache video to IndexedDB:', cacheError)
+          }
+          
+          onRenderComplete?.(outputUrl, selectedLanguage)
           return
         }
         
