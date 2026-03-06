@@ -51,8 +51,8 @@ const products = [
     bgColor: 'bg-amber-500/10',
   },
   {
-    id: 'showrunner',
-    name: 'Showrunner Engine™',
+    id: 'series',
+    name: 'Series Studio™',
     description: 'Multi-episode series production',
     icon: Clapperboard,
     color: 'text-purple-400',

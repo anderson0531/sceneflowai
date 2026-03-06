@@ -9,7 +9,6 @@ import { EngineeringTrust } from '@/components/landing/EngineeringTrust'
 
 // New "Living Pipeline" Ecosystem Sections
 const ModularShowcase = dynamic(() => import('@/components/landing/ModularShowcase'), { ssr: false })
-const ShowrunnerEngineSection = dynamic(() => import('@/components/landing/ShowrunnerEngineSection').then(m => m.ShowrunnerEngineSection), { ssr: false })
 const UnifiedWorkflow = dynamic(() => import('@/components/landing/UnifiedWorkflow'), { ssr: false })
 const PricingCredits = dynamic(() => import('@/components/landing/PricingCredits'), { ssr: false })
 
@@ -18,7 +17,6 @@ const SlotMachineSection = dynamic(() => import('@/components/landing/SlotMachin
 const HowItWorks = dynamic(() => import('./components/HowItWorks').then(m => m.HowItWorks), { ssr: false })
 // Storyteller Mode - Audio-first creator targeting
 const CreatorFastTrackHero = dynamic(() => import('@/components/landing/CreatorFastTrackHero').then(m => m.CreatorFastTrackHero), { ssr: false })
-const StorytellerFeatureSection = dynamic(() => import('@/components/landing/StorytellerFeatureSection').then(m => m.StorytellerFeatureSection), { ssr: false })
 const FinancialFirewallSection = dynamic(() => import('@/components/landing/FinancialFirewallSection'), { ssr: false })
 const ProductivityValueSection = dynamic(() => import('./components/ProductivityValueSection'), { ssr: false })
 const FrameAnchoredSection = dynamic(() => import('@/components/landing/FrameAnchoredSection'), { ssr: false })
@@ -87,19 +85,19 @@ export default function LandingPage() {
       {/* 15. Coffee Break: Lifestyle benefit - positioned right before pricing */}
       <AutomationSection />
       
-      {/* 15. Pricing: Usage-based credits with project calculator */}
+      {/* 16. Pricing: Usage-based credits with project calculator */}
       <PricingCredits />
       
-      {/* 16. Engineering: Platform trust and security */}
+      {/* 17. Engineering: Platform trust and security */}
       <EngineeringTrust />
       
-      {/* 17. FAQ: Objection handling */}
+      {/* 18. FAQ: Objection handling */}
       <FAQ />
       
-      {/* 18. Final CTA: Conversion */}
+      {/* 19. Final CTA: Conversion */}
       <FinalCTA />
       
-      {/* 19. Footer: Navigation */}
+      {/* 20. Footer: Navigation */}
       <Footer />
     </div>
   )

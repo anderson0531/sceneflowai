@@ -67,7 +67,7 @@ const modeConfigs: Record<CreatorMode, ModeConfig> = {
       { icon: Zap, text: 'AI scene generation' }
     ],
     cta: {
-      text: 'Start Full Production',
+      text: 'Start Your Production',
       gradient: 'from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 shadow-purple-500/25'
     },
     social: 'Trusted by studios and indie filmmakers'
