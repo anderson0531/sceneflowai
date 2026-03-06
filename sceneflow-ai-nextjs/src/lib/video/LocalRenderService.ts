@@ -18,6 +18,19 @@
 'use client'
 
 // =============================================================================
+// Canvas Capture Interface
+// =============================================================================
+
+/**
+ * Extended MediaStreamTrack interface for canvas capture streams.
+ * The requestFrame() method allows manual frame capture instead of automatic intervals.
+ */
+interface CanvasCaptureMediaStreamTrack extends MediaStreamTrack {
+  /** Request a new frame to be captured from the canvas */
+  requestFrame(): void
+}
+
+// =============================================================================
 // Types
 // =============================================================================
 
@@ -231,6 +244,7 @@ export class LocalRenderService {
   private recordedChunks: Blob[] = []
   private abortController: AbortController | null = null
   private isRendering = false
+  private _watermarkLogged = false // Debug flag to log watermark only once
   
   /**
    * Check if a render is currently in progress
@@ -275,6 +289,7 @@ export class LocalRenderService {
     
     this.isRendering = true
     this.abortController = new AbortController()
+    this._watermarkLogged = false // Reset for new render
     const signal = this.abortController.signal
     
     try {
@@ -340,6 +355,19 @@ export class LocalRenderService {
         segments: adjustedSegments.map(s => ({ id: s.segmentId, duration: s.duration }))
       })
       
+      // Debug: Log watermark configuration
+      if (config.watermark) {
+        console.log('[LocalRender] Watermark config:', {
+          type: config.watermark.type,
+          text: config.watermark.text,
+          anchor: config.watermark.anchor,
+          padding: config.watermark.padding,
+          textStyle: config.watermark.textStyle
+        })
+      } else {
+        console.log('[LocalRender] Watermark: disabled')
+      }
+      
       onProgress?.({ phase: 'preparing', progress: 30 })
       const audioBuffers = await this.preloadAudio(adjustedConfig.audioClips, signal)
       
@@ -350,7 +378,11 @@ export class LocalRenderService {
       // Setup MediaRecorder
       onProgress?.({ phase: 'rendering', progress: 40 })
       const mimeType = getMediaRecorderMimeType()!
-      const stream = this.canvas.captureStream(adjustedConfig.fps)
+      // Use captureStream(0) for manual frame capture - this ensures all drawing
+      // (including overlays and watermarks) is complete before frame is captured
+      const stream = this.canvas.captureStream(0)
+      // Get video track for manual frame requests
+      const canvasVideoTrack = stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack | undefined
       
       // Mix audio into the stream
       const audioDestination = this.audioContext.createMediaStreamDestination()
@@ -445,6 +477,13 @@ export class LocalRenderService {
           this.drawWatermark(adjustedConfig.watermark)
         }
         
+        // CRITICAL: Request frame capture AFTER all drawing is complete
+        // This fixes the race condition where captureStream(fps) might capture
+        // frames before overlays/watermarks are drawn
+        if (canvasVideoTrack && 'requestFrame' in canvasVideoTrack) {
+          canvasVideoTrack.requestFrame()
+        }
+        
         // Report progress
         const progress = 40 + Math.round((frame / totalFrames) * 50)
         onProgress?.({
@@ -454,8 +493,8 @@ export class LocalRenderService {
           totalFrames,
         })
         
-        // Wait for next frame (allow UI updates)
-        await this.sleep(frameDuration / 2, signal)
+        // Wait for next frame timing (use full frameDuration for proper pacing)
+        await this.sleep(frameDuration, signal)
       }
       
       // Stop recording
@@ -723,6 +762,9 @@ export class LocalRenderService {
     
     const { width, height } = this.canvas
     
+    // Save canvas state to ensure proper restoration after drawing
+    this.ctx.save()
+    
     for (const overlay of overlays) {
       const { timing, style, position } = overlay
       const endTime = timing.duration === -1 
@@ -798,16 +840,29 @@ export class LocalRenderService {
         this.ctx.font = `${style.fontWeight - 100} ${fontSize * 0.7}px ${style.fontFamily}`
         this.ctx.fillText(overlay.subtext, x, y + fontSize)
       }
-      
-      this.ctx.globalAlpha = 1
     }
+    
+    // Restore canvas state (resets globalAlpha, font, fillStyle, etc.)
+    this.ctx.restore()
   }
   
   private drawWatermark(watermark: LocalRenderWatermark): void {
-    if (!this.ctx || !this.canvas) return
+    if (!this.ctx || !this.canvas) {
+      console.warn('[LocalRender] drawWatermark: no canvas context')
+      return
+    }
+    
+    // Save canvas state to ensure proper restoration after drawing
+    this.ctx.save()
     
     const { width, height } = this.canvas
     const { anchor, padding, type } = watermark
+    
+    // Debug: Log watermark drawing (only on first frame to avoid spam)
+    if (!this._watermarkLogged) {
+      console.log('[LocalRender] Drawing watermark:', { type, anchor, padding, text: watermark.text, canvas: { width, height } })
+      this._watermarkLogged = true
+    }
     
     // Calculate position based on anchor
     let x: number
@@ -866,12 +921,13 @@ export class LocalRenderService {
       // Draw text
       this.ctx.fillStyle = textStyle.color
       this.ctx.fillText(watermark.text, x, y)
-      
-      this.ctx.globalAlpha = 1
     }
     
     // Image watermark would require preloading in render() - simplified for now
     // For image watermarks, you'd need to load the image in preloadAssets and draw here
+    
+    // Restore canvas state (resets globalAlpha, font, fillStyle, textAlign, etc.)
+    this.ctx.restore()
   }
   
   private sleep(ms: number, signal?: AbortSignal): Promise<void> {

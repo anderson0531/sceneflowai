@@ -2659,6 +2659,15 @@ export function SceneProductionMixer({
       
       setRenderStatus('rendering')
       
+      // Debug: Log watermark config being passed to render
+      console.log('[SceneProductionMixer] Starting local render with watermark:', {
+        enabled: watermarkConfig.enabled,
+        type: watermarkConfig.type,
+        text: watermarkConfig.text,
+        anchor: watermarkConfig.anchor,
+        padding: watermarkConfig.padding,
+      })
+      
       const renderResult = await renderService.render({
         segments: segmentsForLocal,
         audioClips,
