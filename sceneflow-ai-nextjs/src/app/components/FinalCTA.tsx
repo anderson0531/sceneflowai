@@ -126,19 +126,17 @@ export function FinalCTA() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <button
               onClick={() => (window.location.href = '/?signup=1')}
-              className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-xl hover:opacity-90 transition-all shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40"
+              className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-cyan-500 via-purple-500 to-amber-500 text-white font-semibold rounded-xl hover:opacity-90 transition-all shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40"
             >
               <Rocket className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
-              Start Exploring — $9
+              Launch Your First Show
             </button>
-            <button 
-              onClick={() => { 
-                setIsDemoOpen(true) 
-              }}
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-gray-600 text-gray-200 font-semibold rounded-xl hover:border-blue-500/50 hover:bg-blue-500/10 transition-all"
+            <button
+              onClick={() => (window.location.href = '/?signup=explorer')}
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-gray-600 text-gray-200 font-semibold rounded-xl hover:border-amber-500/50 hover:bg-amber-500/10 transition-all"
             >
-              <Play className="w-5 h-5" />
-              Watch Demo
+              <Zap className="w-5 h-5" />
+              Start Single Project — $9
             </button>
           </div>
 

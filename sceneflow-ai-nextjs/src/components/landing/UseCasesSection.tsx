@@ -46,11 +46,11 @@ const personas: UseCasePersona[] = [
       features: [
         'Retention-Optimized visuals that match your script beat-by-beat',
         'Consistent Protagonists across every scene',
-        'Script-to-Screen automation—your script becomes your timeline',
+        'Showrunner Engine™—scale to 40+ episode series with shared Production Bible',
       ],
     },
-    win: 'Increase your upload frequency from monthly to weekly without hiring a single editor. Your script becomes your timeline, automatically.',
-    keyPhrases: ['Retention-Optimized', 'Consistent Protagonists', 'Script-to-Screen'],
+    win: 'Go from monthly uploads to launching a full YouTube franchise. Your script becomes a series, automatically.',
+    keyPhrases: ['Retention-Optimized', 'Consistent Protagonists', 'Showrunner Engine™'],
     videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Jul_16__0705_34s_202512231713_zzqmk.mp4',
   },
   {

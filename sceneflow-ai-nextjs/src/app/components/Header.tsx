@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { trackCta } from '@/lib/analytics'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
-import { Menu, X, User, LogOut, Shield, Calculator, Sparkles, ChevronDown, LayoutDashboard, Settings, Pen, Image as ImageIcon, Film, BarChart3, Building2, Workflow, ArrowRight } from 'lucide-react'
+import { Menu, X, User, LogOut, Shield, Calculator, Sparkles, ChevronDown, LayoutDashboard, Settings, Pen, Image as ImageIcon, Film, BarChart3, Building2, Workflow, ArrowRight, Clapperboard } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { AuthModal } from '@/components/auth/AuthModal'
@@ -49,6 +49,14 @@ const products = [
     icon: BarChart3,
     color: 'text-amber-400',
     bgColor: 'bg-amber-500/10',
+  },
+  {
+    id: 'showrunner',
+    name: 'Showrunner Engine™',
+    description: 'Multi-episode series production',
+    icon: Clapperboard,
+    color: 'text-purple-400',
+    bgColor: 'bg-purple-500/10',
   },
 ]
 
@@ -172,6 +180,7 @@ export function Header() {
               <span className="text-2xl font-bold tracking-tight leading-none">
                 <span className="text-white">SceneFlow</span>
                 <span className="text-sf-primary"> AI</span>
+                <span className="text-gray-400 text-lg ml-1">Studio</span>
               </span>
             </div>
             

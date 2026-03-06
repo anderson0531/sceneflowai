@@ -9,6 +9,7 @@ import { EngineeringTrust } from '@/components/landing/EngineeringTrust'
 
 // New "Living Pipeline" Ecosystem Sections
 const ModularShowcase = dynamic(() => import('@/components/landing/ModularShowcase'), { ssr: false })
+const ShowrunnerEngineSection = dynamic(() => import('@/components/landing/ShowrunnerEngineSection').then(m => m.ShowrunnerEngineSection), { ssr: false })
 const UnifiedWorkflow = dynamic(() => import('@/components/landing/UnifiedWorkflow'), { ssr: false })
 const PricingCredits = dynamic(() => import('@/components/landing/PricingCredits'), { ssr: false })
 
@@ -61,6 +62,9 @@ export default function LandingPage() {
       
       {/* 7. Modular Showcase: 4 modules with standalone value + ecosystem bonuses */}
       <ModularShowcase />
+      
+      {/* 7.5. Showrunner Engine: Series production for YouTube franchises */}
+      <ShowrunnerEngineSection />
       
       {/* 8. Storyteller Mode: Audio-first creator targeting */}
       <CreatorFastTrackHero />
