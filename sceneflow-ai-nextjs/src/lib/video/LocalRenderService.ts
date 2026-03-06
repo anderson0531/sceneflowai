@@ -237,8 +237,11 @@ export function isLocalRenderSupported(): { supported: boolean; reason?: string 
  * LocalRenderService - Main service for client-side video rendering
  */
 export class LocalRenderService {
-  private canvas: HTMLCanvasElement | null = null
-  private ctx: CanvasRenderingContext2D | null = null
+  // Double-buffer pattern: draw to hidden canvas, then copy atomically to output
+  private canvas: HTMLCanvasElement | null = null // Output canvas (for captureStream)
+  private ctx: CanvasRenderingContext2D | null = null // Output context
+  private hiddenCanvas: HTMLCanvasElement | null = null // Hidden canvas for all draw operations
+  private hiddenCtx: CanvasRenderingContext2D | null = null // Hidden context
   private audioContext: AudioContext | null = null
   private mediaRecorder: MediaRecorder | null = null
   private recordedChunks: Blob[] = []
@@ -296,16 +299,34 @@ export class LocalRenderService {
     try {
       onProgress?.({ phase: 'preparing', progress: 0 })
       
-      // Setup canvas
+      // Setup canvas with Double-Buffer pattern for reliable overlay rendering
+      // This fixes race conditions in GCP/headless environments where captureStream
+      // may capture frames before overlays are fully committed to the GPU buffer
       const { width, height } = RESOLUTIONS[config.resolution]
+      
+      // Hidden canvas: All draw operations happen here first
+      this.hiddenCanvas = document.createElement('canvas')
+      this.hiddenCanvas.width = width
+      this.hiddenCanvas.height = height
+      // willReadFrequently optimizes for getImageData calls used in frame commit
+      this.hiddenCtx = this.hiddenCanvas.getContext('2d', { 
+        alpha: false,
+        willReadFrequently: true 
+      })
+      
+      // Output canvas: Used for captureStream, receives atomic frame copies
       this.canvas = document.createElement('canvas')
       this.canvas.width = width
       this.canvas.height = height
       this.ctx = this.canvas.getContext('2d', { alpha: false })
       
-      if (!this.ctx) {
+      if (!this.ctx || !this.hiddenCtx) {
         throw new Error('Could not create canvas context')
       }
+      
+      // Reset any existing transforms to ensure consistent coordinate system
+      this.ctx.setTransform(1, 0, 0, 1, 0, 0)
+      this.hiddenCtx.setTransform(1, 0, 0, 1, 0, 0)
       
       // Setup audio context
       const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
@@ -482,22 +503,35 @@ export class LocalRenderService {
         
         const currentTime = frame / adjustedConfig.fps
         
-        // Draw current frame (await for video seeking)
+        // === DOUBLE-BUFFER PATTERN ===
+        // All drawing happens on hiddenCtx first, then atomically copied to output
+        // This fixes race conditions where captureStream captures incomplete frames
+        
+        // Step 1: Draw base video frame to hidden buffer
         await this.drawFrame(currentTime, adjustedConfig, assets)
         
-        // Draw text overlays
+        // Step 2: Draw text overlays to hidden buffer
         if (adjustedConfig.textOverlays) {
           this.drawTextOverlays(currentTime, adjustedConfig.textOverlays)
         }
         
-        // Draw watermark (always on top)
+        // Step 3: Draw watermark to hidden buffer (always last/on top)
         if (adjustedConfig.watermark) {
           this.drawWatermark(adjustedConfig.watermark)
         }
         
-        // CRITICAL: Request frame capture AFTER all drawing is complete
-        // This fixes the race condition where captureStream(fps) might capture
-        // frames before overlays/watermarks are drawn
+        // Step 4: ATOMIC COMMIT - Copy completed frame to output buffer
+        // This single drawImage call ensures overlays/watermarks are never skipped
+        if (this.ctx && this.hiddenCanvas) {
+          this.ctx.drawImage(this.hiddenCanvas, 0, 0)
+          
+          // Step 5: SYNCHRONOUS FLUSH - Force GPU to complete all pending draws
+          // getImageData forces Chromium to resolve all pending operations
+          // This prevents "half-baked" frames in headless/GCP environments
+          this.ctx.getImageData(0, 0, 1, 1)
+        }
+        
+        // Step 6: Request frame capture AFTER atomic commit and flush
         if (canvasVideoTrack && 'requestFrame' in canvasVideoTrack) {
           canvasVideoTrack.requestFrame()
         }
@@ -834,13 +868,16 @@ export class LocalRenderService {
     config: LocalRenderConfig,
     assets: Map<string, HTMLImageElement | HTMLVideoElement>
   ): Promise<void> {
-    if (!this.ctx || !this.canvas) return
+    // Use hidden canvas for double-buffer pattern
+    const ctx = this.hiddenCtx
+    const canvas = this.hiddenCanvas
+    if (!ctx || !canvas) return
     
-    const { width, height } = this.canvas
+    const { width, height } = canvas
     
     // Clear to black
-    this.ctx.fillStyle = '#000000'
-    this.ctx.fillRect(0, 0, width, height)
+    ctx.fillStyle = '#000000'
+    ctx.fillRect(0, 0, width, height)
     
     // Find the current segment
     const segment = config.segments.find(
@@ -897,20 +934,26 @@ export class LocalRenderService {
       }
     }
     
-    // Draw the asset
-    this.ctx.drawImage(asset, x, y, scaledWidth, scaledHeight)
+    // Draw the asset to hidden canvas
+    ctx.drawImage(asset, x, y, scaledWidth, scaledHeight)
   }
   
   private drawTextOverlays(
     currentTime: number,
     overlays: LocalRenderTextOverlay[]
   ): void {
-    if (!this.ctx || !this.canvas) return
+    // Use hidden canvas for double-buffer pattern
+    const ctx = this.hiddenCtx
+    const canvas = this.hiddenCanvas
+    if (!ctx || !canvas) return
     
-    const { width, height } = this.canvas
+    const { width, height } = canvas
     
     // Save canvas state to ensure proper restoration after drawing
-    this.ctx.save()
+    ctx.save()
+    
+    // Force reset alpha to prevent "alpha bleed" from previous operations
+    ctx.globalAlpha = 1.0
     
     for (const overlay of overlays) {
       const { timing, style, position } = overlay
@@ -942,67 +985,70 @@ export class LocalRenderService {
       const fontSize = (style.fontSize / 100) * height
       
       // Set font
-      this.ctx.font = `${style.fontWeight} ${fontSize}px ${style.fontFamily}`
-      this.ctx.textBaseline = 'middle'
+      ctx.font = `${style.fontWeight} ${fontSize}px ${style.fontFamily}`
+      ctx.textBaseline = 'middle'
       
       // Calculate text alignment based on anchor
       if (position.anchor.includes('center')) {
-        this.ctx.textAlign = 'center'
+        ctx.textAlign = 'center'
       } else if (position.anchor.includes('right')) {
-        this.ctx.textAlign = 'right'
+        ctx.textAlign = 'right'
       } else {
-        this.ctx.textAlign = 'left'
+        ctx.textAlign = 'left'
       }
       
       // Draw background if specified
       if (style.backgroundColor && style.backgroundOpacity) {
-        const metrics = this.ctx.measureText(overlay.text)
+        const metrics = ctx.measureText(overlay.text)
         const padding = fontSize * 0.3
         const bgWidth = metrics.width + padding * 2
         const bgHeight = fontSize + padding * 2
         
         let bgX = x - padding
-        if (this.ctx.textAlign === 'center') bgX -= metrics.width / 2
-        else if (this.ctx.textAlign === 'right') bgX -= metrics.width
+        if (ctx.textAlign === 'center') bgX -= metrics.width / 2
+        else if (ctx.textAlign === 'right') bgX -= metrics.width
         
-        this.ctx.fillStyle = style.backgroundColor
-        this.ctx.globalAlpha = opacity * (style.backgroundOpacity || 0.7)
-        this.ctx.fillRect(bgX, y - bgHeight / 2, bgWidth, bgHeight)
+        ctx.fillStyle = style.backgroundColor
+        ctx.globalAlpha = opacity * (style.backgroundOpacity || 0.7)
+        ctx.fillRect(bgX, y - bgHeight / 2, bgWidth, bgHeight)
       }
       
       // Draw text shadow if enabled
       if (style.textShadow) {
-        this.ctx.fillStyle = '#000000'
-        this.ctx.globalAlpha = opacity * 0.5
-        this.ctx.fillText(overlay.text, x + 2, y + 2)
+        ctx.fillStyle = '#000000'
+        ctx.globalAlpha = opacity * 0.5
+        ctx.fillText(overlay.text, x + 2, y + 2)
       }
       
       // Draw text
-      this.ctx.fillStyle = style.color
-      this.ctx.globalAlpha = opacity
-      this.ctx.fillText(overlay.text, x, y)
+      ctx.fillStyle = style.color
+      ctx.globalAlpha = opacity
+      ctx.fillText(overlay.text, x, y)
       
       // Draw subtext if present
       if (overlay.subtext) {
-        this.ctx.font = `${style.fontWeight - 100} ${fontSize * 0.7}px ${style.fontFamily}`
-        this.ctx.fillText(overlay.subtext, x, y + fontSize)
+        ctx.font = `${style.fontWeight - 100} ${fontSize * 0.7}px ${style.fontFamily}`
+        ctx.fillText(overlay.subtext, x, y + fontSize)
       }
     }
     
     // Restore canvas state (resets globalAlpha, font, fillStyle, etc.)
-    this.ctx.restore()
+    ctx.restore()
   }
   
   private drawWatermark(watermark: LocalRenderWatermark): void {
-    if (!this.ctx || !this.canvas) {
-      console.warn('[LocalRender] drawWatermark: no canvas context')
+    // Use hidden canvas for double-buffer pattern
+    const ctx = this.hiddenCtx
+    const canvas = this.hiddenCanvas
+    if (!ctx || !canvas) {
+      console.warn('[LocalRender] drawWatermark: no hidden canvas context')
       return
     }
     
     // Save canvas state to ensure proper restoration after drawing
-    this.ctx.save()
+    ctx.save()
     
-    const { width, height } = this.canvas
+    const { width, height } = canvas
     const { anchor, padding, type } = watermark
     
     // Debug: Log watermark drawing (only on first frame to avoid spam)
@@ -1038,36 +1084,36 @@ export class LocalRenderService {
       const fontSize = (textStyle.fontSize / 100) * height
       
       // Set font
-      this.ctx.font = `${textStyle.fontWeight} ${fontSize}px ${textStyle.fontFamily}`
-      this.ctx.globalAlpha = textStyle.opacity
+      ctx.font = `${textStyle.fontWeight} ${fontSize}px ${textStyle.fontFamily}`
+      ctx.globalAlpha = textStyle.opacity
       
       // Set text alignment based on anchor
       if (anchor.includes('left')) {
-        this.ctx.textAlign = 'left'
+        ctx.textAlign = 'left'
       } else if (anchor.includes('right')) {
-        this.ctx.textAlign = 'right'
+        ctx.textAlign = 'right'
       } else {
-        this.ctx.textAlign = 'center'
+        ctx.textAlign = 'center'
       }
       
       // Set baseline based on vertical anchor
       if (anchor.includes('top')) {
-        this.ctx.textBaseline = 'top'
+        ctx.textBaseline = 'top'
       } else if (anchor.includes('bottom')) {
-        this.ctx.textBaseline = 'bottom'
+        ctx.textBaseline = 'bottom'
       } else {
-        this.ctx.textBaseline = 'middle'
+        ctx.textBaseline = 'middle'
       }
       
       // Draw text shadow if enabled
       if (textStyle.textShadow) {
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
-        this.ctx.fillText(watermark.text, x + 2, y + 2)
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+        ctx.fillText(watermark.text, x + 2, y + 2)
       }
       
       // Draw text
-      this.ctx.fillStyle = textStyle.color
-      this.ctx.fillText(watermark.text, x, y)
+      ctx.fillStyle = textStyle.color
+      ctx.fillText(watermark.text, x, y)
     } else if (type === 'image' && this.watermarkImage && this.watermarkImage.complete) {
       // Draw image watermark (preloaded in preloadWatermarkImage)
       const { imageStyle } = watermark
@@ -1078,7 +1124,7 @@ export class LocalRenderService {
       const aspectRatio = img.naturalHeight / img.naturalWidth
       const targetHeight = targetWidth * aspectRatio
       
-      this.ctx.globalAlpha = imageStyle.opacity
+      ctx.globalAlpha = imageStyle.opacity
       
       // Adjust position based on anchor for image drawing
       let drawX = x
@@ -1098,11 +1144,11 @@ export class LocalRenderService {
         drawY = y - targetHeight / 2
       }
       
-      this.ctx.drawImage(img, drawX, drawY, targetWidth, targetHeight)
+      ctx.drawImage(img, drawX, drawY, targetWidth, targetHeight)
     }
     
     // Restore canvas state (resets globalAlpha, font, fillStyle, textAlign, etc.)
-    this.ctx.restore()
+    ctx.restore()
   }
   
   private sleep(ms: number, signal?: AbortSignal): Promise<void> {
@@ -1144,6 +1190,9 @@ export class LocalRenderService {
     // Clear preloaded watermark image to free memory
     this.watermarkImage = null
     
+    // Clear double-buffer canvases
+    this.hiddenCanvas = null
+    this.hiddenCtx = null
     this.canvas = null
     this.ctx = null
     this.audioContext = null
