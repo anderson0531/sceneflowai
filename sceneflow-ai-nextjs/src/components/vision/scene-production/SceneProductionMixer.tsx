@@ -82,13 +82,50 @@ import type {
 // Re-export the types for backwards compatibility
 export type { TextOverlay, TextOverlayStyle, TextOverlayPosition, TextOverlayTiming, AudioTrackConfig, MixerAudioTracks }
 
-import {
-  getLocalRenderService,
-  isLocalRenderSupported,
-  LOCAL_RENDER_MAX_DURATION,
-  type LocalRenderConfig,
-  type LocalRenderProgress,
+// =============================================================================
+// IMPORTANT: TDZ Prevention - Do NOT import LocalRenderService at module level
+// =============================================================================
+// The circular import chain (DirectorConsole → SceneProductionMixer → LocalRenderService)
+// causes TDZ errors in production builds. We use dynamic imports and duplicated constants.
+// =============================================================================
+
+// Types can be imported statically (they're erased at compile time)
+import type {
+  LocalRenderConfig,
+  LocalRenderProgress,
 } from '@/lib/video/LocalRenderService'
+
+// Duplicate constant to avoid module-level import (keep in sync with LocalRenderService.ts)
+const LOCAL_RENDER_MAX_DURATION = 300
+
+// Lazy-loaded cache for LocalRenderService functions
+let _localRenderServiceCache: {
+  getLocalRenderService: () => import('@/lib/video/LocalRenderService').LocalRenderService
+  isLocalRenderSupported: () => { supported: boolean; reason?: string }
+} | null = null
+
+// Dynamic import helper for LocalRenderService functions
+const getLocalRenderFunctions = async () => {
+  if (!_localRenderServiceCache) {
+    const mod = await import('@/lib/video/LocalRenderService')
+    _localRenderServiceCache = {
+      getLocalRenderService: mod.getLocalRenderService,
+      isLocalRenderSupported: mod.isLocalRenderSupported,
+    }
+  }
+  return _localRenderServiceCache
+}
+
+// Synchronous check for local render support (used in useMemo)
+// Returns false if module not yet loaded, true check happens async
+const checkLocalRenderSupport = (): { supported: boolean; reason?: string } => {
+  if (_localRenderServiceCache) {
+    return _localRenderServiceCache.isLocalRenderSupported()
+  }
+  // Module not loaded yet - return safe default, will be updated when loaded
+  return { supported: false, reason: 'Checking browser capabilities...' }
+}
+
 import {
   determineRenderStrategy,
   getRenderModeOptions,
@@ -2195,8 +2232,18 @@ export function SceneProductionMixer({
   const [activeRenderMode, setActiveRenderMode] = useState<ActiveRenderMode>('server')
   const [localRenderProgress, setLocalRenderProgress] = useState<LocalRenderProgress | null>(null)
   
-  // Check if local rendering is supported in this browser
-  const localRenderSupportCheck = useMemo(() => isLocalRenderSupported(), [])
+  // Check if local rendering is supported in this browser (async load)
+  const [localRenderSupportCheck, setLocalRenderSupportCheck] = useState<{ supported: boolean; reason?: string }>(
+    { supported: false, reason: 'Checking browser capabilities...' }
+  )
+  
+  // Load LocalRenderService on mount to check browser support
+  useEffect(() => {
+    getLocalRenderFunctions().then(({ isLocalRenderSupported }) => {
+      setLocalRenderSupportCheck(isLocalRenderSupported())
+    })
+  }, [])
+  
   const localRenderSupported = localRenderSupportCheck.supported
   
   // === Derived Data ===
@@ -2704,6 +2751,7 @@ export function SceneProductionMixer({
         })
       }
       
+      const { getLocalRenderService } = await getLocalRenderFunctions()
       const renderService = getLocalRenderService()
       
       setRenderStatus('rendering')
