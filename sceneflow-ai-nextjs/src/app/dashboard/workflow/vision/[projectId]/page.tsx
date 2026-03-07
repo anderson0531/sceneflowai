@@ -16,12 +16,28 @@ Implement the fix * Do NOT create separate `scenes` state - this causes sync bug
 
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels'
 import { upload } from '@vercel/blob/client'
 import { debounce } from 'lodash'
 import { cleanupStaleAudio, clearAllSceneAudio } from '@/lib/audio/cleanupAudio'
 import { toast } from 'sonner'
-import { ScriptPanel } from '@/components/vision/ScriptPanel'
+
+// Dynamic import to break TDZ initialization chain - ScriptPanel imports heavy scene-production modules
+const ScriptPanel = dynamic(
+  () => import('@/components/vision/ScriptPanel').then(mod => ({ default: mod.ScriptPanel })),
+  { 
+    ssr: false, 
+    loading: () => (
+      <div className="flex items-center justify-center h-full p-8 text-zinc-500">
+        <div className="flex flex-col items-center gap-2">
+          <div className="animate-spin h-6 w-6 border-2 border-zinc-500 border-t-transparent rounded-full" />
+          <span>Loading Script Panel...</span>
+        </div>
+      </div>
+    )
+  }
+)
 import { SceneSelector } from '@/components/vision/SceneSelector'
 import { SceneGallery } from '@/components/vision/SceneGallery'
 import { GenerationProgress } from '@/components/vision/GenerationProgress'
