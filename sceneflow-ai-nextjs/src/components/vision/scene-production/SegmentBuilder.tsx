@@ -51,10 +51,15 @@ import {
   SceneSegment,
   SceneProductionData,
   SceneProductionReferences,
+  ValidationResult,
+  SceneBible,
+  ProposedDirection,
+  ProposedSegment,
+  BuilderPhase,
 } from './types'
 import { SegmentPreviewTimeline } from './SegmentPreviewTimeline'
 import { SegmentPromptEditor } from './SegmentPromptEditor'
-import { SegmentValidation, ValidationResult } from '@/lib/intelligence/SegmentValidation'
+// SegmentValidation is dynamically imported to avoid circular dependency TDZ
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -64,6 +69,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+
+// ============================================================================
+// Dynamic Import Helper - Avoids TDZ circular dependency
+// ============================================================================
+
+/**
+ * Lazily loads SegmentValidation class to avoid circular dependency TDZ error.
+ * The validation module imports types from ./types, and we import from ./types too.
+ * Static imports would cause bundler to evaluate both before either is ready.
+ */
+const getSegmentValidation = async () => {
+  const { SegmentValidation } = await import('@/lib/intelligence/SegmentValidation')
+  return SegmentValidation
+}
 
 // ============================================================================
 // Segment Direction Card Component
@@ -460,93 +479,8 @@ function ProductionOverlay({ isVisible, currentStage }: { isVisible: boolean; cu
 }
 
 // ============================================================================
-// Types & Interfaces
+// Component Props (types imported from ./types to avoid circular dependency)
 // ============================================================================
-
-/**
- * Scene Bible - Immutable scene content during segmentation
- * This is the "single source of truth" for the scene's creative content
- */
-export interface SceneBible {
-  sceneId: string
-  sceneNumber: number
-  heading: string
-  location: string
-  timeOfDay: string
-  visualDescription: string
-  narration: string | null
-  dialogue: Array<{
-    id: string
-    character: string
-    text: string
-    emotion?: string
-  }>
-  characters: Array<{
-    id: string
-    name: string
-    description?: string
-    appearanceDescription?: string
-    referenceImageUrl?: string
-  }>
-  sceneFrameUrl?: string | null
-  // Computed content hash for staleness detection
-  contentHash: string
-}
-
-/**
- * Segment direction from Phase 1 (user reviews before prompt generation)
- */
-export interface ProposedDirection {
-  id: string
-  sequenceIndex: number
-  estimatedDuration: number
-  shotType: string
-  cameraMovement: string
-  cameraAngle: string
-  talentAction: string
-  emotionalBeat: string
-  characters: string[]
-  isNoTalent: boolean
-  lightingMood?: string
-  keyProps?: string[]
-  dialogueLineIds: string[]
-  generationMethod: 'T2V' | 'I2V' | 'EXT' | 'FTV'
-  triggerReason: string
-  confidence: number
-  // User review status
-  isApproved: boolean
-  isUserEdited: boolean
-}
-
-/**
- * Proposed segment from AI analysis (preview mode) - Phase 2 output
- */
-export interface ProposedSegment {
-  id: string
-  sequenceIndex: number
-  startTime: number
-  endTime: number
-  duration: number
-  triggerReason: string
-  generationMethod: 'T2V' | 'I2V' | 'EXT' | 'FTV'
-  generatedPrompt: string
-  emotionalBeat: string
-  dialogueLineIds: string[]
-  confidence: number
-  // Validation status
-  validation?: ValidationResult
-  // User adjustments
-  isAdjusted: boolean
-  userEditedPrompt?: string | null
-  // Link to approved direction
-  directionId?: string
-}
-
-/**
- * Workflow phase for the builder
- * NEW: Added 'directions' phase between analyze and review
- */
-export type BuilderPhase = 'analyze' | 'directions' | 'review' | 'finalize'
 
 interface SegmentBuilderProps {
   sceneId: string
@@ -926,6 +860,9 @@ export function SegmentBuilder({
   // Track scene bible hash for staleness
   const [lastGeneratedHash, setLastGeneratedHash] = useState<string | null>(null)
   
+  // Validation results (loaded asynchronously to avoid TDZ)
+  const [allValidations, setAllValidations] = useState<Array<{ segmentId: string; validation: ValidationResult }>>([])
+  
   // Track if we have existing finalized segments
   const existingSegments = productionData?.segments || []
   const hasExistingSegments = existingSegments.length > 0
@@ -959,12 +896,24 @@ export function SegmentBuilder({
     return proposedSegments.find(s => s.id === selectedSegmentId) || null
   }, [proposedSegments, selectedSegmentId])
 
-  // Validation for all segments
-  const allValidations = useMemo(() => {
-    return proposedSegments.map(seg => ({
-      segmentId: seg.id,
-      validation: SegmentValidation.validateSegment(seg, sceneBible),
-    }))
+  // Validation for all segments (loaded asynchronously to avoid TDZ)
+  useEffect(() => {
+    if (proposedSegments.length === 0 || !sceneBible) {
+      setAllValidations([])
+      return
+    }
+    
+    // Dynamically import and run validation
+    const runValidation = async () => {
+      const SegmentValidation = await getSegmentValidation()
+      const results = proposedSegments.map(seg => ({
+        segmentId: seg.id,
+        validation: SegmentValidation.validateSegment(seg, sceneBible),
+      }))
+      setAllValidations(results)
+    }
+    
+    runValidation()
   }, [proposedSegments, sceneBible])
 
   // Check if can advance to next phase

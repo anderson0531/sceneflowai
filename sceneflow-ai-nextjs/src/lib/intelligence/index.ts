@@ -46,12 +46,13 @@ export type {
   FrameGenerationRequest,
   FrameGenerationResult
 } from './FrameGenerator'
+// Validation types now live in scene-production/types.ts to break circular dependency
 export type { 
   ValidationResult, 
   ValidationIssue, 
   ValidationSeverity,
-  ValidationConfig 
-} from './SegmentValidation'
+} from '@/components/vision/scene-production/types'
+export type { ValidationConfig } from './SegmentValidation'
 export type {
   KeyframeContext,
   FramePromptRequest,
