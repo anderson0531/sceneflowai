@@ -84,8 +84,10 @@ export const SERVER_RENDER_CREDITS_PER_MINUTE = 5
 
 /**
  * Thresholds for routing decisions
+ * Using a lazy getter to avoid TDZ errors when LOCAL_RENDER_MAX_DURATION
+ * might not be initialized during module evaluation (circular import chain)
  */
-export const ROUTING_THRESHOLDS = {
+export const getRoutingThresholds = () => ({
   /** Duration above which server is recommended (seconds) */
   DURATION_SERVER_RECOMMENDED: 30,
   /** Duration above which server is required (seconds) */
@@ -94,6 +96,15 @@ export const ROUTING_THRESHOLDS = {
   SEGMENTS_SERVER_RECOMMENDED: 10,
   /** Audio tracks above which server is recommended */
   AUDIO_TRACKS_SERVER_RECOMMENDED: 4,
+} as const)
+
+// Legacy export for backward compatibility - evaluates at call time, not module load
+// @deprecated Use getRoutingThresholds() instead
+export const ROUTING_THRESHOLDS = {
+  get DURATION_SERVER_RECOMMENDED() { return 30 },
+  get DURATION_SERVER_REQUIRED() { return LOCAL_RENDER_MAX_DURATION },
+  get SEGMENTS_SERVER_RECOMMENDED() { return 10 },
+  get AUDIO_TRACKS_SERVER_RECOMMENDED() { return 4 },
 } as const
 
 // =============================================================================

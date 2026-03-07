@@ -94,6 +94,10 @@ const DEFAULT_TIMING: AudioTrackTimingSettings = {
   duration: 30,
 }
 
+// Stable empty segments reference to prevent TDZ render loops
+// Using a module-level constant guarantees the same reference for the app's lifecycle
+const EMPTY_SEGMENTS: SceneSegment[] = []
+
 // Audio track timing state type
 interface AudioTrackTimingState {
   narration: AudioTrackTimingSettings
@@ -166,7 +170,9 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   onRenderedSceneUrlChange,
   onProductionDataChange,
 }) => {
-  const segments = productionData?.segments || []
+  // Use stable EMPTY_SEGMENTS constant to prevent TDZ render loops
+  // productionData?.segments || [] creates a new array reference each render
+  const segments = productionData?.segments ?? EMPTY_SEGMENTS
   
   // Video queue state and actions
   const {

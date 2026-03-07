@@ -15,7 +15,7 @@
  * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
  */
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef } from 'react'
 import { toast } from 'sonner'
 import type { 
   SceneSegment, 
@@ -94,6 +94,11 @@ export function useVideoQueue(
   // Get auto-drafted configs for all segments
   const configsMap = useSegmentConfigs(segments, sceneImageUrl)
   
+  // Track previous segments to prevent redundant queue rebuilds
+  // This guards against rapid re-renders when segments reference is unstable
+  const lastSegmentsRef = useRef<SceneSegment[]>(segments)
+  const lastSegmentsLengthRef = useRef<number>(segments.length)
+  
   // Local state for user-modified configs
   const [userConfigs, setUserConfigs] = useState<Map<string, VideoGenerationConfig>>(new Map())
   
@@ -109,6 +114,21 @@ export function useVideoQueue(
   
   // Build queue from segments and configs
   const queue = useMemo<DirectorQueueItem[]>(() => {
+    // Guard against rapid re-renders when segments haven't actually changed
+    // This prevents the TDZ crash from rapid queue rebuilds during initialization
+    const segmentsChanged = segments !== lastSegmentsRef.current || 
+                           segments.length !== lastSegmentsLengthRef.current
+    
+    // Update refs for next comparison
+    lastSegmentsRef.current = segments
+    lastSegmentsLengthRef.current = segments.length
+    
+    // Early return empty array for empty segments to avoid expensive processing
+    if (segments.length === 0) {
+      console.log('[useVideoQueue] Empty segments, skipping queue build')
+      return []
+    }
+    
     // Filter out any undefined or invalid segments
     const validSegments = segments.filter((s): s is SceneSegment => 
       s != null && typeof s.segmentId === 'string'
