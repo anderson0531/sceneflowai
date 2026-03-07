@@ -95,11 +95,9 @@ import {
   type RenderMode,
   type RenderContext,
 } from '@/lib/video/RenderStrategyRouter'
-import {
-  storeVideo,
-  getVideo,
-  cacheVideoFromUrl,
-} from '@/lib/storage/indexedDB'
+
+// NOTE: IndexedDB functions are imported dynamically to avoid SSR bundling issues
+// Use: const { storeVideo } = await import('@/lib/storage/indexedDB')
 
 // Text overlay presets
 const TEXT_OVERLAY_PRESETS: Record<string, Partial<TextOverlay>> = {
@@ -2095,6 +2093,7 @@ export function SceneProductionMixer({
       // Only try to cache if we have a cloud URL but no local blob URL
       if (lastRenderedUrl && !lastRenderedUrl.startsWith('blob:')) {
         try {
+          const { getVideo } = await import('@/lib/storage/indexedDB')
           const cached = await getVideo(projectId, sceneId, selectedLanguage)
           if (cached) {
             console.log('[SceneProductionMixer] Using cached video from IndexedDB')
@@ -2542,6 +2541,7 @@ export function SceneProductionMixer({
           
           // Cache the video to IndexedDB for offline access
           try {
+            const { cacheVideoFromUrl } = await import('@/lib/storage/indexedDB')
             await cacheVideoFromUrl(projectId, sceneId, selectedLanguage, data.downloadUrl)
             console.log('[ServerRender] Video cached to IndexedDB')
           } catch (cacheError) {
@@ -2824,6 +2824,7 @@ export function SceneProductionMixer({
       
       // Cache the video to IndexedDB for offline access and persistence
       try {
+        const { storeVideo } = await import('@/lib/storage/indexedDB')
         await storeVideo(projectId, sceneId, selectedLanguage, renderResult.blob, persistentUrl)
         console.log('[SceneProductionMixer] Video cached to IndexedDB')
       } catch (cacheError) {
@@ -3031,6 +3032,7 @@ export function SceneProductionMixer({
           
           // Cache the video to IndexedDB for offline access
           try {
+            const { cacheVideoFromUrl } = await import('@/lib/storage/indexedDB')
             await cacheVideoFromUrl(projectId, sceneId, selectedLanguage, outputUrl)
             console.log('[HeadlessRender] Video cached to IndexedDB')
           } catch (cacheError) {
