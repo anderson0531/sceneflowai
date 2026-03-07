@@ -33,10 +33,14 @@ const DirectorConsole = dynamic(
   { ssr: false, loading: () => <div className="p-4 text-center text-zinc-500">Loading Director Console...</div> }
 )
 import { SceneTimelineV2 } from './scene-production/SceneTimelineV2'
-import { SceneRenderDialog } from './scene-production/SceneRenderDialog'
+// Dynamic import for SceneRenderDialog - shared between ScriptPanel and DirectorConsole chunks
+const SceneRenderDialog = dynamic(
+  () => import('./scene-production/SceneRenderDialog').then(mod => ({ default: mod.SceneRenderDialog })),
+  { ssr: false }
+)
 import { applySequentialAlignmentToScene, AUDIO_ALIGNMENT_BUFFERS, getLanguagePlaybackOffset, calculateSuggestedOffset } from './scene-production/audioTrackBuilder'
 import { type AudioTracksData, type AudioTrackClip } from './scene-production/AudioTimeline'
-import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings, SceneSegment, AudioTrackType } from './scene-production/types'
+import type { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings, SceneSegment, AudioTrackType } from './scene-production/types'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'

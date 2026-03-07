@@ -1,13 +1,19 @@
 'use client'
 
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { SceneSegment, SceneProductionReferences, SceneSegmentStatus, SegmentKeyframeSettings, KeyframeEasingType, KeyframePanDirection } from './types'
+import type { SceneSegment, SceneProductionReferences, SceneSegmentStatus, SegmentKeyframeSettings, KeyframeEasingType, KeyframePanDirection } from './types'
 import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer, MessageSquare, User, Check, Move, ZoomIn, ZoomOut, RotateCcw, Pencil, Layers, Info, Clapperboard, Camera, Sparkles, Users, FileText, Trash2, ImagePlus, AlertCircle, FrameIcon, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SegmentPromptBuilder, GeneratePromptData, VideoGenerationMethod } from './SegmentPromptBuilder'
-import { VideoEditingDialog, VideoEditingTab } from './VideoEditingDialog'
+// Dynamic import for VideoEditingDialog - shared between SegmentStudio and DirectorConsole chunks
+const VideoEditingDialog = dynamic(
+  () => import('./VideoEditingDialogV2').then(mod => ({ default: mod.VideoEditingDialog })),
+  { ssr: false }
+)
+import type { VideoEditingTab } from './VideoEditingDialogV2'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { AudioTrackClip, AudioTracksData } from './SceneTimeline'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'

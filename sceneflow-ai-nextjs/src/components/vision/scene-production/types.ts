@@ -1,4 +1,4 @@
-import { VisualReference } from '@/types/visionReferences'
+import type { VisualReference } from '@/types/visionReferences'
 
 export type SceneSegmentStatus = 'DRAFT' | 'READY' | 'GENERATING' | 'COMPLETE' | 'UPLOADED' | 'ERROR'
 
