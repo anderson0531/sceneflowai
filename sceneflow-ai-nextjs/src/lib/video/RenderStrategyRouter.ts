@@ -11,11 +11,64 @@
  * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
  */
 
-import { 
-  isLocalRenderSupported, 
-  LOCAL_RENDER_MAX_DURATION, 
-  LOCAL_RENDER_MAX_RESOLUTION 
-} from './LocalRenderService'
+// =============================================================================
+// IMPORTANT: TDZ Prevention
+// =============================================================================
+// Do NOT import from LocalRenderService at module level.
+// The circular import chain (DirectorConsole → SceneProductionMixer → RenderStrategyRouter → LocalRenderService)
+// causes TDZ errors in production builds. Constants are duplicated here and the browser
+// capability check is inlined to break the dependency.
+//
+// If LOCAL_RENDER_MAX_DURATION changes in LocalRenderService.ts, update it here too.
+// =============================================================================
+
+/** Max duration for local rendering (seconds) - MUST match LocalRenderService.ts */
+const LOCAL_RENDER_MAX_DURATION = 300
+
+/** Max resolution for local rendering - MUST match LocalRenderService.ts */
+const LOCAL_RENDER_MAX_RESOLUTION = '1080p'
+
+/**
+ * Check if local rendering is supported in this browser
+ * Inlined from LocalRenderService to avoid circular import TDZ
+ */
+function isLocalRenderSupported(): { supported: boolean; reason?: string } {
+  if (typeof window === 'undefined') {
+    return { supported: false, reason: 'Server-side rendering not supported' }
+  }
+  
+  if (!window.MediaRecorder) {
+    return { supported: false, reason: 'MediaRecorder API not available' }
+  }
+  
+  // Check for supported video codecs
+  const mimeTypes = [
+    'video/webm;codecs=vp9,opus',
+    'video/webm;codecs=vp8,opus',
+    'video/webm;codecs=vp9',
+    'video/webm;codecs=vp8',
+    'video/webm',
+    'video/mp4',
+  ]
+  
+  let hasSupportedCodec = false
+  for (const mimeType of mimeTypes) {
+    if (MediaRecorder.isTypeSupported(mimeType)) {
+      hasSupportedCodec = true
+      break
+    }
+  }
+  
+  if (!hasSupportedCodec) {
+    return { supported: false, reason: 'No supported video codec found' }
+  }
+  
+  if (!window.AudioContext && !(window as unknown as { webkitAudioContext: unknown }).webkitAudioContext) {
+    return { supported: false, reason: 'Web Audio API not available' }
+  }
+  
+  return { supported: true }
+}
 
 // =============================================================================
 // Types
@@ -84,8 +137,7 @@ export const SERVER_RENDER_CREDITS_PER_MINUTE = 5
 
 /**
  * Thresholds for routing decisions
- * Using a lazy getter to avoid TDZ errors when LOCAL_RENDER_MAX_DURATION
- * might not be initialized during module evaluation (circular import chain)
+ * Now uses local constants to avoid TDZ from circular imports
  */
 export const getRoutingThresholds = () => ({
   /** Duration above which server is recommended (seconds) */
@@ -98,13 +150,15 @@ export const getRoutingThresholds = () => ({
   AUDIO_TRACKS_SERVER_RECOMMENDED: 4,
 } as const)
 
-// Legacy export for backward compatibility - evaluates at call time, not module load
-// @deprecated Use getRoutingThresholds() instead
+/**
+ * Static routing thresholds - safe to use at module level now that
+ * LOCAL_RENDER_MAX_DURATION is defined locally (no circular import)
+ */
 export const ROUTING_THRESHOLDS = {
-  get DURATION_SERVER_RECOMMENDED() { return 30 },
-  get DURATION_SERVER_REQUIRED() { return LOCAL_RENDER_MAX_DURATION },
-  get SEGMENTS_SERVER_RECOMMENDED() { return 10 },
-  get AUDIO_TRACKS_SERVER_RECOMMENDED() { return 4 },
+  DURATION_SERVER_RECOMMENDED: 30,
+  DURATION_SERVER_REQUIRED: LOCAL_RENDER_MAX_DURATION,
+  SEGMENTS_SERVER_RECOMMENDED: 10,
+  AUDIO_TRACKS_SERVER_RECOMMENDED: 4,
 } as const
 
 // =============================================================================
