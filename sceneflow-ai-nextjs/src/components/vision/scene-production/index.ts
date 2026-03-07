@@ -28,7 +28,8 @@ export type { SceneAudioData, GuidePromptEditorProps } from './GuidePromptEditor
 
 // Segment Builder Components (Intelligent Segmentation)
 export { SegmentBuilder } from './SegmentBuilder'
-export type { SceneBible, ProposedSegment, BuilderPhase } from './SegmentBuilder'
+// Types moved to types.ts to break circular dependency with SegmentValidation
+export type { SceneBible, ProposedSegment, BuilderPhase, ValidationResult } from './types'
 export { SegmentPreviewTimeline } from './SegmentPreviewTimeline'
 export { SegmentPromptEditor } from './SegmentPromptEditor'
 

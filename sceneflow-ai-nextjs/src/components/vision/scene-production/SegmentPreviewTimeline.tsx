@@ -14,7 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
-import type { SceneBible, ProposedSegment } from './SegmentBuilder'
+import type { SceneBible, ProposedSegment } from './types'
 
 // ============================================================================
 // Types & Interfaces

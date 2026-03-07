@@ -12,39 +12,17 @@
  * 4. Duration constraints (≤8s) are enforced for Veo 3.1 compatibility
  */
 
-import type { SceneBible, ProposedSegment } from '@/components/vision/scene-production/SegmentBuilder'
+// Types imported from shared types.ts to break circular dependency
+import type { 
+  SceneBible, 
+  ProposedSegment, 
+  ValidationResult,
+  ValidationIssue,
+  ValidationSeverity 
+} from '@/components/vision/scene-production/types'
 
-// ============================================================================
-// Types & Interfaces
-// ============================================================================
-
-/**
- * Validation rule severity
- */
-export type ValidationSeverity = 'error' | 'warning' | 'info'
-
-/**
- * Individual validation issue
- */
-export interface ValidationIssue {
-  code: string
-  severity: ValidationSeverity
-  message: string
-  field?: string
-  suggestion?: string
-}
-
-/**
- * Complete validation result for a segment
- */
-export interface ValidationResult {
-  isValid: boolean
-  issues: ValidationIssue[]
-  // Computed scores
-  durationScore: number      // 0-100, how well duration fits constraints
-  bibleFidelityScore: number // 0-100, how well prompt matches scene bible
-  promptQualityScore: number // 0-100, overall prompt effectiveness
-}
+// Re-export types for consumers that previously imported from here
+export type { ValidationResult, ValidationIssue, ValidationSeverity }
 
 /**
  * Validation configuration options

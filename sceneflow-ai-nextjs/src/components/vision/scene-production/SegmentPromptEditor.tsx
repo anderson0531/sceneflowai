@@ -34,8 +34,7 @@ import {
   Copy,
   Lightbulb,
 } from 'lucide-react'
-import type { SceneBible, ProposedSegment } from './SegmentBuilder'
-import type { ValidationResult } from '@/lib/intelligence/SegmentValidation'
+import type { SceneBible, ProposedSegment, ValidationResult } from './types'
 
 // ============================================================================
 // Types & Interfaces

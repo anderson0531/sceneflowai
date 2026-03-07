@@ -1532,3 +1532,120 @@ export interface MixerAudioTracks {
   sfx: AudioTrackConfig
 }
 
+// ============================================================================
+// Segment Builder Types (moved here to break circular dependency)
+// These types were previously in SegmentBuilder.tsx, causing circular imports
+// with SegmentValidation.ts, SegmentPreviewTimeline.tsx, SegmentPromptEditor.tsx
+// ============================================================================
+
+/**
+ * Validation rule severity
+ */
+export type ValidationSeverity = 'error' | 'warning' | 'info'
+
+/**
+ * Individual validation issue
+ */
+export interface ValidationIssue {
+  code: string
+  severity: ValidationSeverity
+  message: string
+  field?: string
+  suggestion?: string
+}
+
+/**
+ * Complete validation result for a segment
+ */
+export interface ValidationResult {
+  isValid: boolean
+  issues: ValidationIssue[]
+  // Computed scores
+  durationScore: number      // 0-100, how well duration fits constraints
+  bibleFidelityScore: number // 0-100, how well prompt matches scene bible
+  promptQualityScore: number // 0-100, overall prompt effectiveness
+}
+
+/**
+ * Scene Bible - Immutable scene content during segmentation
+ * This is the "single source of truth" for the scene's creative content
+ */
+export interface SceneBible {
+  sceneId: string
+  sceneNumber: number
+  heading: string
+  location: string
+  timeOfDay: string
+  visualDescription: string
+  narration: string | null
+  dialogue: Array<{
+    id: string
+    character: string
+    text: string
+    emotion?: string
+  }>
+  characters: Array<{
+    id: string
+    name: string
+    description?: string
+    appearanceDescription?: string
+    referenceImageUrl?: string
+  }>
+  sceneFrameUrl?: string | null
+  // Computed content hash for staleness detection
+  contentHash: string
+}
+
+/**
+ * Segment direction from Phase 1 (user reviews before prompt generation)
+ */
+export interface ProposedDirection {
+  id: string
+  sequenceIndex: number
+  estimatedDuration: number
+  shotType: string
+  cameraMovement: string
+  cameraAngle: string
+  talentAction: string
+  emotionalBeat: string
+  characters: string[]
+  isNoTalent: boolean
+  lightingMood?: string
+  keyProps?: string[]
+  dialogueLineIds: string[]
+  generationMethod: 'T2V' | 'I2V' | 'EXT' | 'FTV'
+  triggerReason: string
+  confidence: number
+  // User review status
+  isApproved: boolean
+  isUserEdited: boolean
+}
+
+/**
+ * Proposed segment from AI analysis (preview mode) - Phase 2 output
+ */
+export interface ProposedSegment {
+  id: string
+  sequenceIndex: number
+  startTime: number
+  endTime: number
+  duration: number
+  triggerReason: string
+  generationMethod: 'T2V' | 'I2V' | 'EXT' | 'FTV'
+  generatedPrompt: string
+  emotionalBeat: string
+  dialogueLineIds: string[]
+  confidence: number
+  // Validation status
+  validation?: ValidationResult
+  // User adjustments
+  isAdjusted: boolean
+  userEditedPrompt?: string | null
+  // Link to approved direction
+  directionId?: string
+}
+
+/**
+ * Workflow phase for the builder
+ */
+export type BuilderPhase = 'analyze' | 'directions' | 'review' | 'finalize'
