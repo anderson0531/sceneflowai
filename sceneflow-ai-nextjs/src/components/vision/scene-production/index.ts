@@ -20,10 +20,9 @@ export { SegmentPairCard } from './SegmentPairCard'
 export { SegmentFrameTimeline } from './SegmentFrameTimeline'
 
 // Director's Console Components
-export { DirectorDialog } from './DirectorDialog'
+// NOTE: DirectorDialog, SceneVideoPlayer are imported directly by DirectorConsole, not via barrel
 // NOTE: DirectorConsole MUST be imported dynamically to avoid TDZ errors:
 //   const DirectorConsole = dynamic(() => import('./scene-production/DirectorConsole').then(mod => ({ default: mod.DirectorConsole })), { ssr: false })
-export { SceneVideoPlayer } from './SceneVideoPlayer'
 export { GuidePromptEditor } from './GuidePromptEditor'
 export type { SceneAudioData, GuidePromptEditorProps } from './GuidePromptEditor'
 
@@ -39,8 +38,7 @@ export { SegmentPromptEditor } from './SegmentPromptEditor'
 // NOTE: SegmentPurpose and AdjacentSceneContext are exported from types.ts
 export { AddSegmentTypeDialog } from './AddSegmentTypeDialog'
 export type { AddSegmentTypeDialogProps } from './AddSegmentTypeDialog'
-export { AddSpecialSegmentDialog } from './AddSpecialSegmentDialog'
-// NOTE: SpecialSegmentType is exported from cinematic-elements below
+// NOTE: AddSpecialSegmentDialog is imported directly by DirectorConsole, not via barrel
 export type { AddSpecialSegmentDialogProps } from './AddSpecialSegmentDialog'
 
 // Cinematic Elements (shared constants and utilities)
@@ -59,7 +57,7 @@ export type {
 } from './cinematic-elements'
 
 // Production Streams (Multi-language render outputs)
-export { ProductionStreamsPanel } from './ProductionStreamsPanel'
+// NOTE: ProductionStreamsPanel is imported directly by DirectorConsole, not via barrel
 // NOTE: SceneProductionMixer MUST be imported dynamically to avoid TDZ errors (uses LocalRenderService chain):
 //   const SceneProductionMixer = dynamic(() => import('./scene-production/SceneProductionMixer').then(mod => ({ default: mod.SceneProductionMixer })), { ssr: false })
 
