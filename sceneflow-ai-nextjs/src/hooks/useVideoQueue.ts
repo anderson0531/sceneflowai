@@ -108,11 +108,6 @@ export function useVideoQueue(
   // This prevents heavy computation during the TDZ-vulnerable initialization phase
   const configsMap = useSegmentConfigs(segments, sceneImageUrl, !isReady)
   
-  // Track previous segments to prevent redundant queue rebuilds
-  // This guards against rapid re-renders when segments reference is unstable
-  const lastSegmentsRef = useRef<SceneSegment[]>(segments)
-  const lastSegmentsLengthRef = useRef<number>(segments.length)
-  
   // Local state for user-modified configs
   const [userConfigs, setUserConfigs] = useState<Map<string, VideoGenerationConfig>>(new Map())
   
@@ -126,35 +121,52 @@ export function useVideoQueue(
   const [isRateLimitPaused, setIsRateLimitPaused] = useState(false)
   const [rateLimitCountdown, setRateLimitCountdown] = useState(0)
   
+  // Content hash to prevent redundant queue rebuilds during render loops
+  // This compares actual segment content, not just array references
+  const lastContentHashRef = useRef<string>('')
+  const lastQueueRef = useRef<DirectorQueueItem[]>([])
+  
   // Build queue from segments and configs
   const queue = useMemo<DirectorQueueItem[]>(() => {
-    // Guard against rapid re-renders when segments haven't actually changed
-    // This prevents the TDZ crash from rapid queue rebuilds during initialization
-    const segmentsChanged = segments !== lastSegmentsRef.current || 
-                           segments.length !== lastSegmentsLengthRef.current
-    
-    // Update refs for next comparison
-    lastSegmentsRef.current = segments
-    lastSegmentsLengthRef.current = segments.length
-    
-    // Early return empty array for empty segments to avoid expensive processing
-    if (segments.length === 0) {
-      console.log('[useVideoQueue] Empty segments, skipping queue build')
+    // QUARANTINE: Skip all processing until module graph has settled
+    // This is the critical guard that prevents TDZ errors during rapid initial renders
+    if (!isReady) {
       return []
     }
+    
+    // Early return empty array for empty segments to avoid expensive processing
+    if (!segments || segments.length === 0) {
+      return []
+    }
+    
+    // CONTENT HASH GUARD: Prevent render loop by checking actual content, not references
+    // This stops the cascade where new Map/array references trigger infinite re-renders
+    const contentHash = JSON.stringify(
+      segments.map(s => ({
+        id: s.segmentId,
+        status: s.status,
+        locked: s.lockedForProduction,
+        asset: s.activeAssetUrl?.slice(-20), // Last 20 chars of URL for change detection
+      }))
+    )
+    
+    if (contentHash === lastContentHashRef.current && lastQueueRef.current.length > 0) {
+      // Content hasn't changed - return cached queue to break render loop
+      return lastQueueRef.current
+    }
+    
+    // Content has changed - update hash and proceed with rebuild
+    lastContentHashRef.current = contentHash
     
     // Filter out any undefined or invalid segments
     const validSegments = segments.filter((s): s is SceneSegment => 
       s != null && typeof s.segmentId === 'string'
     )
     
-    // Log initial segments to debug lock state persistence
-    console.log('[useVideoQueue] Building queue from segments:', validSegments.map(s => ({
-      id: s.segmentId,
-      lockedForProduction: s.lockedForProduction
-    })))
+    // Log only when actually rebuilding (not during loop iterations)
+    console.log('[useVideoQueue] Building queue from segments:', validSegments.length)
     
-    return validSegments.map((segment) => {
+    const result = validSegments.map((segment) => {
       const autoConfig = configsMap.get(segment.segmentId)
       const userConfig = userConfigs.get(segment.segmentId)
       
@@ -215,7 +227,11 @@ export function useVideoQueue(
         error: segment.errorMessage,
       }
     }).sort((a, b) => a.sequenceIndex - b.sequenceIndex)
-  }, [segments, configsMap, userConfigs, sceneImageUrl])
+    
+    // Cache the result to return on subsequent render loop iterations
+    lastQueueRef.current = result
+    return result
+  }, [isReady, segments, configsMap, userConfigs, sceneImageUrl])
   
   // Update config for a segment
   const updateConfig = useCallback((segmentId: string, config: VideoGenerationConfig) => {
