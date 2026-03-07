@@ -12,16 +12,26 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
 import { SegmentFrameTimeline } from './scene-production/SegmentFrameTimeline'
-import { SegmentBuilder } from './scene-production/SegmentBuilder'
 import { AddSegmentDialog } from './scene-production/AddSegmentDialog'
 import { EditSegmentDialog } from './scene-production/EditSegmentDialog'
-import { DirectorConsole } from './scene-production/DirectorConsole'
+
+// Dynamic imports with ssr: false to prevent TDZ circular dependency issues
+// These components have complex initialization that can cause module load order problems
+const SegmentBuilder = dynamic(
+  () => import('./scene-production/SegmentBuilder').then(mod => ({ default: mod.SegmentBuilder })),
+  { ssr: false, loading: () => <div className="p-4 text-center text-zinc-500">Loading Segment Builder...</div> }
+)
+const DirectorConsole = dynamic(
+  () => import('./scene-production/DirectorConsole').then(mod => ({ default: mod.DirectorConsole })),
+  { ssr: false, loading: () => <div className="p-4 text-center text-zinc-500">Loading Director Console...</div> }
+)
 import { SceneTimelineV2 } from './scene-production/SceneTimelineV2'
 import { SceneRenderDialog } from './scene-production/SceneRenderDialog'
 import { applySequentialAlignmentToScene, AUDIO_ALIGNMENT_BUFFERS, getLanguagePlaybackOffset, calculateSuggestedOffset } from './scene-production/audioTrackBuilder'
