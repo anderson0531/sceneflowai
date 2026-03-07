@@ -2019,6 +2019,15 @@ export function SceneProductionMixer({
   const [showOverlayPanel, setShowOverlayPanel] = useState(false)
   const [editingOverlay, setEditingOverlay] = useState<TextOverlay | null>(null)
   
+  // === Render State (declared early to avoid TDZ in useEffect dependency arrays) ===
+  const [renderStatus, setRenderStatus] = useState<RenderStatus>('idle')
+  const [renderProgress, setRenderProgress] = useState(0)
+  const [renderError, setRenderError] = useState<string | null>(null)
+  // Initialize from persisted production data if available
+  const [lastRenderedUrl, setLastRenderedUrl] = useState<string | null>(
+    productionData?.renderedSceneUrl || null
+  )
+  
   // === Watermark State (with localStorage persistence) ===
   const [watermarkConfig, setWatermarkConfig] = useState<WatermarkConfig>(() => {
     // Initialize from localStorage if available
@@ -2218,14 +2227,7 @@ export function SceneProductionMixer({
   // === Preview State ===
   const [isMuted, setIsMuted] = useState(false)
   
-  // === Render State ===
-  const [renderStatus, setRenderStatus] = useState<RenderStatus>('idle')
-  const [renderProgress, setRenderProgress] = useState(0)
-  const [renderError, setRenderError] = useState<string | null>(null)
-  // Initialize from persisted production data if available
-  const [lastRenderedUrl, setLastRenderedUrl] = useState<string | null>(
-    productionData?.renderedSceneUrl || null
-  )
+  // (Render State declared earlier to avoid TDZ — see above text overlay block)
   
   // === Render Mode State (Local vs Server) ===
   const [selectedRenderMode, setSelectedRenderMode] = useState<RenderMode>('auto')
