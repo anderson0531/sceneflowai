@@ -230,4 +230,15 @@ class DynamicOptimizationLayer {
   }
 }
 
-export const dol = new DynamicOptimizationLayer();
+// Lazy singleton pattern to prevent TDZ during module initialization
+let _dolInstance: DynamicOptimizationLayer | null = null;
+
+export function getDOL(): DynamicOptimizationLayer {
+  if (!_dolInstance) {
+    _dolInstance = new DynamicOptimizationLayer();
+  }
+  return _dolInstance;
+}
+
+// @deprecated Use getDOL() instead - kept for backward compatibility
+export const dol = { get: getDOL };

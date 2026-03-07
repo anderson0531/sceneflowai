@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { continuityService } from '@/lib/orchestration/ContinuityService'
+import { getContinuityService } from '@/lib/orchestration/ContinuityService'
 
 export default function Phase2VisualScript() {
   const [script, setScript] = useState('INT. ROOM - DAY\nA character speaks...')
@@ -11,6 +11,7 @@ export default function Phase2VisualScript() {
   ])
 
   const inject = async () => {
+    const continuityService = getContinuityService()
     const series = await continuityService.getSeries('series-1')
     const enhanced = continuityService.enhanceVDP(series, shots.map(s=>({ id: s.id, text: s.text })))
     setShots(shots.map(s=> ({ ...s, vdp: enhanced.find(e=>e.id===s.id)?.vdp })))

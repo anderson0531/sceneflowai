@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Project from '@/models/Project';
-import { shotstackService } from '@/services/ShotstackService';
+import { getShotstackService } from '@/services/ShotstackService';
 import { VideoStitchRequest } from '@/app/api/video/stitch/route';
 
 export const maxDuration = 300; // 5 minutes max
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       }
     };
 
-    const result = await shotstackService.assembleVideo(stitchRequest);
+    const result = await getShotstackService().assembleVideo(stitchRequest);
 
     if (!result.success) {
       return NextResponse.json({ 

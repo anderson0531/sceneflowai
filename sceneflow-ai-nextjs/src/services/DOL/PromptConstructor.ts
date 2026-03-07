@@ -234,4 +234,15 @@ Provide a high-quality, professional result.`;
   }
 }
 
-export const promptConstructor = new PromptConstructor();
+// Lazy singleton pattern to prevent TDZ during module initialization
+let _promptConstructorInstance: PromptConstructor | null = null;
+
+export function getPromptConstructor(): PromptConstructor {
+  if (!_promptConstructorInstance) {
+    _promptConstructorInstance = new PromptConstructor();
+  }
+  return _promptConstructorInstance;
+}
+
+// @deprecated Use getPromptConstructor() instead - kept for backward compatibility
+export const promptConstructor = { get: getPromptConstructor };

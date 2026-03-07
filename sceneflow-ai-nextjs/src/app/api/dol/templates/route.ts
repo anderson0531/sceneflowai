@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { dol } from '@/services/DOL/DynamicOptimizationLayer';
+import { getDOL } from '@/services/DOL/DynamicOptimizationLayer';
 
 export async function GET() {
   try {
-    const templates = await dol.getAllTemplates();
+    const templates = await getDOL().getAllTemplates();
     return NextResponse.json({ success: true, templates });
   } catch (error) {
     console.error('Error fetching templates:', error);
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const template = await dol.createTemplate(body);
+    const template = await getDOL().createTemplate(body);
     
     return NextResponse.json({ 
       success: true, 
@@ -52,7 +52,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    await dol.updateTemplateScore(body.templateId, body.newScore);
+    await getDOL().updateTemplateScore(body.templateId, body.newScore);
     
     return NextResponse.json({ 
       success: true, 

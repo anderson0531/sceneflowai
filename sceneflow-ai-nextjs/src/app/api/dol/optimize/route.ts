@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { dol } from '@/services/DOL/DynamicOptimizationLayer';
+import { getDOL } from '@/services/DOL/DynamicOptimizationLayer';
 import { TaskType, TaskComplexity } from '@/types/dol';
 
 export async function POST(request: NextRequest) {
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Call DOL optimization
-    const result = await dol.optimize(dolRequest);
+    const result = await getDOL().optimize(dolRequest);
 
     if (result.success) {
       return NextResponse.json(result);

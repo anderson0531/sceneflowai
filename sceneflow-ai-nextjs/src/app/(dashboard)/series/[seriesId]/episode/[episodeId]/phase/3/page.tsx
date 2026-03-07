@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { timingAnalysisService } from '@/lib/orchestration/TimingAnalysisService'
+import { getTimingAnalysisService } from '@/lib/orchestration/TimingAnalysisService'
 
 export default function Phase3Audio() {
   const [voiceCasting, setVoiceCasting] = useState<Record<string, { provider:string; voiceId:string }>>({
@@ -15,7 +15,7 @@ export default function Phase3Audio() {
   const [timing, setTiming] = useState<Array<{ shotId: string; startSec: number; durationSec: number }>>([])
 
   const analyze = async () => {
-    const map = await timingAnalysisService.analyze(audioUrl, shots)
+    const map = await getTimingAnalysisService().analyze(audioUrl, shots)
     setTiming(map)
   }
 

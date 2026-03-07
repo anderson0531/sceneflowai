@@ -202,4 +202,15 @@ export class ShotstackService {
   }
 }
 
-export const shotstackService = new ShotstackService()
+// Lazy singleton pattern to prevent TDZ during module initialization
+let _shotstackServiceInstance: ShotstackService | null = null
+
+export function getShotstackService(): ShotstackService {
+  if (!_shotstackServiceInstance) {
+    _shotstackServiceInstance = new ShotstackService()
+  }
+  return _shotstackServiceInstance
+}
+
+// @deprecated Use getShotstackService() instead - kept for backward compatibility
+export const shotstackService = { get: getShotstackService }

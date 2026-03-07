@@ -16,7 +16,7 @@ import {
   Wrench
 } from 'lucide-react';
 
-import { storyMutationService } from '@/services/storyMutationService';
+import { getStoryMutationService } from '@/services/storyMutationService';
 
 // Utility functions using live services
 const openReviewModal = (mutation: any) => {
@@ -27,7 +27,7 @@ const openReviewModal = (mutation: any) => {
 
 const undoMutation = async (mutation: any) => {
   try {
-    await storyMutationService.undoLastMutation();
+    await getStoryMutationService().undoLastMutation();
   } catch (error) {
     console.error('Failed to undo mutation:', error);
   }

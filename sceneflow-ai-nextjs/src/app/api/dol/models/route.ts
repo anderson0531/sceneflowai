@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { dol } from '@/services/DOL/DynamicOptimizationLayer';
+import { getDOL } from '@/services/DOL/DynamicOptimizationLayer';
 
 export async function GET() {
   try {
-    const models = await dol.getAllModels();
+    const models = await getDOL().getAllModels();
     return NextResponse.json({ success: true, models });
   } catch (error) {
     console.error('Error fetching models:', error);
@@ -25,7 +25,7 @@ export async function PUT(request: Request) {
       );
     }
 
-    await dol.updateModelFeatures(body.modelId, body.features);
+    await getDOL().updateModelFeatures(body.modelId, body.features);
     
     return NextResponse.json({ 
       success: true, 

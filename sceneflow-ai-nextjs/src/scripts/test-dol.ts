@@ -1,8 +1,10 @@
-import { dol } from '../services/DOL/DynamicOptimizationLayer';
+import { getDOL } from '../services/DOL/DynamicOptimizationLayer';
 import { TaskType, TaskComplexity } from '../types/dol';
 
 async function testDOL() {
-  console.log('🧪 Testing Dynamic Optimization Layer (DOL)...\n');
+  console.log('🧪 Testing Dynamic Optimization Layer (DOL)...\\n');
+
+  const dol = getDOL();
 
   // Test 1: Intelligence task with high complexity
   console.log('🔍 Test 1: High complexity intelligence task');

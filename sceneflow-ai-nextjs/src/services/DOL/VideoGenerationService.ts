@@ -1,4 +1,4 @@
-import { dol } from './DynamicOptimizationLayer';
+import { getDOL } from './DynamicOptimizationLayer';
 import { TaskType, TaskComplexity, PlatformModel } from '@/types/dol';
 import { StandardVideoRequest, StandardVideoResult } from '../ai-providers/BaseAIProviderAdapter';
 import { AIProviderFactory } from '../ai-providers/AIProviderFactory';
@@ -46,7 +46,7 @@ export class DOLVideoGenerationService {
       const { taskType, complexity } = this.analyzeVideoRequest(request);
 
       // Step 2: Use DOL to optimize the generation
-      const dolResult = await dol.optimize({
+      const dolResult = await getDOL().optimize({
         taskType,
         complexity,
         userInput: {
@@ -240,7 +240,7 @@ export class DOLVideoGenerationService {
    * Get all available video generation models
    */
   public async getAvailableModels(): Promise<PlatformModel[]> {
-    return dol.getAllModels();
+    return getDOL().getAllModels();
   }
 
   /**
@@ -254,7 +254,7 @@ export class DOLVideoGenerationService {
   }> {
     const { taskType, complexity } = this.analyzeVideoRequest(request);
     
-    const dolResult = await dol.optimize({
+    const dolResult = await getDOL().optimize({
       taskType,
       complexity,
       userInput: {

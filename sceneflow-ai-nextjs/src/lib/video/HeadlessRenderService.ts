@@ -732,5 +732,15 @@ export class HeadlessRenderService {
   }
 }
 
-// Export singleton instance
-export const headlessRenderService = new HeadlessRenderService()
+// Lazy singleton pattern to prevent TDZ during module initialization
+let _headlessRenderServiceInstance: HeadlessRenderService | null = null
+
+export function getHeadlessRenderService(): HeadlessRenderService {
+  if (!_headlessRenderServiceInstance) {
+    _headlessRenderServiceInstance = new HeadlessRenderService()
+  }
+  return _headlessRenderServiceInstance
+}
+
+// @deprecated Use getHeadlessRenderService() instead - kept for backward compatibility
+export const headlessRenderService = { get: getHeadlessRenderService }

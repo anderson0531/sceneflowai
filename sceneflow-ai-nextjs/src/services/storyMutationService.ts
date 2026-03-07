@@ -319,4 +319,15 @@ class StoryMutationService {
   }
 }
 
-export const storyMutationService = new StoryMutationService();
+// Lazy singleton pattern to prevent TDZ during module initialization
+let _storyMutationServiceInstance: StoryMutationService | null = null;
+
+export function getStoryMutationService(): StoryMutationService {
+  if (!_storyMutationServiceInstance) {
+    _storyMutationServiceInstance = new StoryMutationService();
+  }
+  return _storyMutationServiceInstance;
+}
+
+// @deprecated Use getStoryMutationService() instead - kept for backward compatibility
+export const storyMutationService = { get: getStoryMutationService };

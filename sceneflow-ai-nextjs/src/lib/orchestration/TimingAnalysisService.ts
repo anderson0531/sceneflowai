@@ -8,4 +8,15 @@ export class TimingAnalysisService {
   }
 }
 
-export const timingAnalysisService = new TimingAnalysisService()
+// Lazy singleton pattern to prevent TDZ during module initialization
+let _timingAnalysisServiceInstance: TimingAnalysisService | null = null
+
+export function getTimingAnalysisService(): TimingAnalysisService {
+  if (!_timingAnalysisServiceInstance) {
+    _timingAnalysisServiceInstance = new TimingAnalysisService()
+  }
+  return _timingAnalysisServiceInstance
+}
+
+// @deprecated Use getTimingAnalysisService() instead - kept for backward compatibility
+export const timingAnalysisService = { get: getTimingAnalysisService }

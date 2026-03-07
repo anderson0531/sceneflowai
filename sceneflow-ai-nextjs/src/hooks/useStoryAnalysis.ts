@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { StoryRecommendation, ActionableMutation } from '@/types/story';
 import { usePreferences } from '@/store/usePreferences';
-import { storyAnalysisService, StoryAnalysisRequest } from '@/services/storyAnalysisService';
+import { getStoryAnalysisService, StoryAnalysisRequest } from '@/services/storyAnalysisService';
 
-import { storyMutationService } from '@/services/storyMutationService';
+import { getStoryMutationService } from '@/services/storyMutationService';
 
 export const useStoryAnalysis = (currentStoryData: any) => {
   const [recommendations, setRecommendations] = useState<StoryRecommendation[]>([]);
@@ -21,7 +21,7 @@ export const useStoryAnalysis = (currentStoryData: any) => {
         // Criteria for auto-application: Low/Medium impact AND High confidence
         if (rec.status === 'pending_review' && rec.impact !== 'high' && rec.confidenceScore > 0.85) {
           try {
-            const result = await storyMutationService.applyMutation(rec.proposedMutation);
+            const result = await getStoryMutationService().applyMutation(rec.proposedMutation);
             if (result.success) {
               rec.status = 'applied';
               rec.isAutoApplied = true;
@@ -55,7 +55,7 @@ export const useStoryAnalysis = (currentStoryData: any) => {
         analysisType: 'comprehensive'
       };
       
-      const response = await storyAnalysisService.analyzeStory(request);
+      const response = await getStoryAnalysisService().analyzeStory(request);
       processRecommendations(response.recommendations);
     } catch (error) {
       console.error('Failed to fetch analysis:', error);
@@ -78,7 +78,7 @@ export const useStoryAnalysis = (currentStoryData: any) => {
     if (!recommendation) return;
 
     try {
-      const result = await storyMutationService.applyMutation(recommendation.proposedMutation);
+      const result = await getStoryMutationService().applyMutation(recommendation.proposedMutation);
       
       if (result.success) {
         setRecommendations(prev => prev.map(rec => 
@@ -98,7 +98,7 @@ export const useStoryAnalysis = (currentStoryData: any) => {
     if (!recommendation || recommendation.status !== 'applied') return;
 
     try {
-      const result = await storyMutationService.undoLastMutation();
+      const result = await getStoryMutationService().undoLastMutation();
       
       if (result) {
         setRecommendations(prev => prev.map(rec => 

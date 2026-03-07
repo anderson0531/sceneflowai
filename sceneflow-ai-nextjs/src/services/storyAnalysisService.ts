@@ -323,4 +323,15 @@ Focus on practical, implementable suggestions that will make the story stronger.
   }
 }
 
-export const storyAnalysisService = new StoryAnalysisService();
+// Lazy singleton pattern to prevent TDZ during module initialization
+let _storyAnalysisServiceInstance: StoryAnalysisService | null = null;
+
+export function getStoryAnalysisService(): StoryAnalysisService {
+  if (!_storyAnalysisServiceInstance) {
+    _storyAnalysisServiceInstance = new StoryAnalysisService();
+  }
+  return _storyAnalysisServiceInstance;
+}
+
+// @deprecated Use getStoryAnalysisService() instead - kept for backward compatibility
+export const storyAnalysisService = { get: getStoryAnalysisService };

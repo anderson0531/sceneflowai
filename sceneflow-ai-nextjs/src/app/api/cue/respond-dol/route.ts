@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { dol } from '@/services/DOL/DynamicOptimizationLayer';
+import { getDOL } from '@/services/DOL/DynamicOptimizationLayer';
 import { TaskType, TaskComplexity } from '@/types/dol';
 import { generateText } from '@/lib/vertexai/gemini';
 
@@ -232,7 +232,7 @@ export async function POST(req: NextRequest) {
 
     try {
       // Use DOL to optimize the task
-      const dolResult = await dol.optimize({
+      const dolResult = await getDOL().optimize({
         taskType,
         complexity,
         userInput,

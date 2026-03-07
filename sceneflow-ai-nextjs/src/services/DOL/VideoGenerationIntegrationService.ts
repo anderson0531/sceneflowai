@@ -1,4 +1,4 @@
-import { dol } from './DynamicOptimizationLayer';
+import { getDOL } from './DynamicOptimizationLayer';
 import { feedbackLoop } from './FeedbackLoop';
 import { TaskType, TaskComplexity } from '@/types/dol';
 import { UserProviderConfig } from '@/models/UserProviderConfig';
@@ -193,7 +193,7 @@ export class VideoGenerationIntegrationService {
         const taskType = this.determineVideoTaskType(scene, request.generationSettings);
 
         // Use DOL to optimize the scene
-        const dolResult = await dol.optimize({
+        const dolResult = await getDOL().optimize({
           taskType,
           complexity,
           userInput: {

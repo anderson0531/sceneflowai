@@ -24,4 +24,15 @@ export class ContinuityService {
   }
 }
 
-export const continuityService = new ContinuityService()
+// Lazy singleton pattern to prevent TDZ during module initialization
+let _continuityServiceInstance: ContinuityService | null = null
+
+export function getContinuityService(): ContinuityService {
+  if (!_continuityServiceInstance) {
+    _continuityServiceInstance = new ContinuityService()
+  }
+  return _continuityServiceInstance
+}
+
+// @deprecated Use getContinuityService() instead - kept for backward compatibility
+export const continuityService = { get: getContinuityService }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { shotstackService } from '@/services/ShotstackService'
+import { getShotstackService } from '@/services/ShotstackService'
 
 export interface VideoStitchRequest {
   generationId: string
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Call Shotstack service to assemble video
-    const result = await shotstackService.assembleVideo(body)
+    const result = await getShotstackService().assembleVideo(body)
 
     if (!result.success) {
       return NextResponse.json({
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     // Check status with Shotstack
-    const status = await shotstackService.getRenderStatus(stitchId)
+    const status = await getShotstackService().getRenderStatus(stitchId)
     
     let mappedStatus = 'queued';
     if (status.status === 'rendering' || status.status === 'saving') {

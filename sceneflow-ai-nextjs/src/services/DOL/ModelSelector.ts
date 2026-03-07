@@ -265,4 +265,15 @@ class ModelSelector {
   }
 }
 
-export const modelSelector = new ModelSelector();
+// Lazy singleton pattern to prevent TDZ during module initialization
+let _modelSelectorInstance: ModelSelector | null = null;
+
+export function getModelSelector(): ModelSelector {
+  if (!_modelSelectorInstance) {
+    _modelSelectorInstance = new ModelSelector();
+  }
+  return _modelSelectorInstance;
+}
+
+// @deprecated Use getModelSelector() instead - kept for backward compatibility
+export const modelSelector = { get: getModelSelector };

@@ -1,4 +1,4 @@
-import { dol } from './DynamicOptimizationLayer';
+import { getDOL } from './DynamicOptimizationLayer';
 import { feedbackLoop } from './FeedbackLoop';
 import { TaskType, TaskComplexity } from '@/types/dol';
 import { callLLM, type Provider as LLMProvider } from '@/services/llmGateway';
@@ -77,7 +77,7 @@ export class CueIntegrationService {
       };
 
       // Use DOL to optimize the task
-      const dolResult = await dol.optimize({
+      const dolResult = await getDOL().optimize({
         taskType,
         complexity,
         userInput,
