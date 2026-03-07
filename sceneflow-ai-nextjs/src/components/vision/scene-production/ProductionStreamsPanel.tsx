@@ -88,14 +88,20 @@ const FLAG_EMOJIS: Record<string, string> = {
   ru: '🇷🇺'
 }
 
-const STREAM_TYPE_CONFIG: Record<ProductionStreamType, { icon: React.ReactNode; label: string; description: string }> = {
+interface StreamTypeEntry {
+  Icon: React.ComponentType<{ className?: string }>
+  label: string
+  description: string
+}
+
+const STREAM_TYPE_CONFIG: Record<ProductionStreamType, StreamTypeEntry> = {
   animatic: { 
-    icon: <Clapperboard className="w-4 h-4" />, 
+    Icon: Clapperboard, 
     label: 'Animatic', 
     description: 'Ken Burns animation with keyframes'
   },
   video: { 
-    icon: <VideoIcon className="w-4 h-4" />, 
+    Icon: VideoIcon, 
     label: 'Video', 
     description: 'Full AI-generated video'
   },
@@ -114,12 +120,19 @@ const TRANSITION_OPTIONS: { value: 'cut' | 'crossfade' | 'fade-to-black'; label:
   { value: 'fade-to-black', label: 'Fade to Black' },
 ]
 
-const STATUS_CONFIG: Record<ProductionStreamStatus, { icon: React.ReactNode; label: string; className: string }> = {
-  pending: { icon: <Clock className="w-4 h-4" />, label: 'Pending', className: 'text-gray-400' },
-  rendering: { icon: <Loader2 className="w-4 h-4 animate-spin" />, label: 'Rendering', className: 'text-blue-400' },
-  complete: { icon: <CheckCircle2 className="w-4 h-4" />, label: 'Ready', className: 'text-green-400' },
-  failed: { icon: <XCircle className="w-4 h-4" />, label: 'Failed', className: 'text-red-400' },
-  stale: { icon: <AlertCircle className="w-4 h-4" />, label: 'Stale', className: 'text-amber-400' }
+interface StatusEntry {
+  Icon: React.ComponentType<{ className?: string }>
+  iconClassName?: string
+  label: string
+  className: string
+}
+
+const STATUS_CONFIG: Record<ProductionStreamStatus, StatusEntry> = {
+  pending: { Icon: Clock, label: 'Pending', className: 'text-gray-400' },
+  rendering: { Icon: Loader2, iconClassName: 'animate-spin', label: 'Rendering', className: 'text-blue-400' },
+  complete: { Icon: CheckCircle2, label: 'Ready', className: 'text-green-400' },
+  failed: { Icon: XCircle, label: 'Failed', className: 'text-red-400' },
+  stale: { Icon: AlertCircle, label: 'Stale', className: 'text-amber-400' }
 }
 
 function formatDuration(seconds: number): string {
@@ -219,7 +232,7 @@ function InlineVideoPlayer({ stream, onClose, onExpandFullscreen, onDownload }: 
             <span className={`flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ${
               stream.streamType === 'video' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-purple-500/20 text-purple-300'
             }`}>
-              {streamTypeConfig.icon}
+              <streamTypeConfig.Icon className="w-4 h-4" />
               {streamTypeConfig.label}
             </span>
             {stream.resolution && (
@@ -348,11 +361,11 @@ function ProductionStreamCard({
             <span className={`flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ${
               stream.streamType === 'video' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-purple-500/20 text-purple-300'
             }`}>
-              {streamTypeConfig.icon}
+              <streamTypeConfig.Icon className="w-4 h-4" />
               {streamTypeConfig.label}
             </span>
             <span className={`flex items-center gap-1 text-xs ${statusConfig.className}`}>
-              {statusConfig.icon}
+              <statusConfig.Icon className={`w-4 h-4 ${statusConfig.iconClassName || ''}`} />
               {statusConfig.label}
             </span>
           </div>
