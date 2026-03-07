@@ -60,7 +60,6 @@ export type {
 export { ProductionStreamsPanel } from './ProductionStreamsPanel'
 export { SceneProductionMixer } from './SceneProductionMixer'
 
-// Prompt utilities
-export * from './methodPromptBuilder'
-export * from './promptSyncService'
+// Prompt utilities - explicit exports only (no `export *` to avoid TDZ module graph issues)
+// Import directly from './methodPromptBuilder' or './promptSyncService' if needed
 export { compileVideoPrompt, formatPayloadForDisplay, extractSettingsFromSegment } from './videoPromptCompiler'
