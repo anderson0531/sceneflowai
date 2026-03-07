@@ -4089,7 +4089,10 @@ export function SceneProductionMixer({
                     <div className="flex items-center gap-1">
                       <Zap className="w-3 h-3 text-yellow-400" />
                       <span className="text-yellow-300">Quick Export:</span>
-                      <span>Browser-based render • Instant • No credits • WebM output</span>
+                      <span>Browser-based • Instant • Free • WebM output</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-gray-400">
+                      <span>Best for: Fast previews, social sharing</span>
                     </div>
                     {watermarkConfig.enabled && (
                       <div className="flex items-center gap-1 text-green-400">
@@ -4103,13 +4106,16 @@ export function SceneProductionMixer({
                   <>
                     <div className="flex items-center gap-1">
                       <Video className="w-3 h-3 text-purple-400" />
-                      <span className="text-purple-300">Cloud Render:</span>
-                      <span>FFmpeg server • MP4 output • {renderStrategy.estimatedCredits || 5} credits/min</span>
+                      <span className="text-purple-300">Final Render (FFmpeg):</span>
+                      <span>Cloud server • MP4 (H.264) • {renderStrategy.estimatedCredits || 5} credits/min</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-gray-400">
+                      <span>Best for: Final delivery, universal compatibility</span>
                     </div>
                     {watermarkConfig.enabled && (
                       <div className="flex items-center gap-1 text-green-400">
                         <CheckCircle2 className="w-3 h-3" />
-                        <span>Watermark enabled</span>
+                        <span>Watermark burned in</span>
                       </div>
                     )}
                   </>
@@ -4118,13 +4124,16 @@ export function SceneProductionMixer({
                   <>
                     <div className="flex items-center gap-1">
                       <Monitor className="w-3 h-3 text-blue-400" />
-                      <span className="text-blue-300">Pro Cloud:</span>
-                      <span>Deterministic 4K • Frame-perfect watermarks • WebM output</span>
+                      <span className="text-blue-300">Pro Cloud (Puppeteer):</span>
+                      <span>Frame-perfect 4K • WebM (VP9) • Guaranteed watermarks</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-gray-400">
+                      <span>Best for: Pixel-perfect quality, consistent results across devices</span>
                     </div>
                     {watermarkConfig.enabled && (
                       <div className="flex items-center gap-1 text-green-400">
                         <CheckCircle2 className="w-3 h-3" />
-                        <span>Guaranteed watermark</span>
+                        <span>Guaranteed watermark (frame-by-frame)</span>
                       </div>
                     )}
                   </>
@@ -4133,7 +4142,7 @@ export function SceneProductionMixer({
                   <div className="flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-gray-400" />
                     <span className="text-gray-300">Auto:</span>
-                    <span>Will use {renderStrategy.mode === 'local' ? 'Quick Export' : 'Cloud Render'} based on video complexity</span>
+                    <span>Will use {renderStrategy.mode === 'local' ? 'Quick Export' : 'Final Render'} based on video complexity</span>
                   </div>
                 )}
               </div>

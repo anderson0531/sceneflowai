@@ -20,6 +20,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Storage } from '@google-cloud/storage'
 import { v4 as uuidv4 } from 'uuid'
+import crypto from 'crypto'
 
 // =============================================================================
 // Helper: Get Storage client with credentials
@@ -43,6 +44,89 @@ function getStorageClient(): Storage {
   
   // Fall back to Application Default Credentials (works in GCP environments)
   return new Storage()
+}
+
+// =============================================================================
+// Helper: Get Access Token for Cloud Run API
+// =============================================================================
+
+async function getAccessToken(): Promise<string> {
+  const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
+  
+  if (credentialsJson) {
+    try {
+      const credentials = JSON.parse(credentialsJson)
+      // Create signed JWT for service account authentication
+      const jwt = await createJWT(credentials)
+      
+      const response = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+          assertion: jwt,
+        }),
+      })
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Token request failed: ${response.status} - ${errorText}`)
+      }
+      
+      const data = await response.json()
+      return data.access_token
+    } catch (error) {
+      console.error('[HeadlessRender API] Failed to get access token:', error)
+      throw error
+    }
+  }
+  
+  // Fallback: try metadata server (when running on GCP)
+  try {
+    const response = await fetch(
+      'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token',
+      { headers: { 'Metadata-Flavor': 'Google' } }
+    )
+    
+    if (response.ok) {
+      const data = await response.json()
+      return data.access_token
+    }
+  } catch {
+    // Not running on GCP, ignore
+  }
+  
+  throw new Error('No valid credentials found for Cloud Run API')
+}
+
+/**
+ * Create a signed JWT for service account authentication
+ */
+async function createJWT(credentials: { client_email: string; private_key: string }): Promise<string> {
+  const header = {
+    alg: 'RS256',
+    typ: 'JWT',
+  }
+  
+  const now = Math.floor(Date.now() / 1000)
+  const payload = {
+    iss: credentials.client_email,
+    sub: credentials.client_email,
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600,
+    scope: 'https://www.googleapis.com/auth/cloud-platform',
+  }
+  
+  const base64Header = Buffer.from(JSON.stringify(header)).toString('base64url')
+  const base64Payload = Buffer.from(JSON.stringify(payload)).toString('base64url')
+  const signatureInput = `${base64Header}.${base64Payload}`
+  
+  const sign = crypto.createSign('RSA-SHA256')
+  sign.update(signatureInput)
+  const signature = sign.sign(credentials.private_key, 'base64url')
+  
+  return `${signatureInput}.${signature}`
 }
 
 // =============================================================================
@@ -212,25 +296,71 @@ export async function POST(request: NextRequest): Promise<NextResponse<HeadlessR
 
     console.log(`[HeadlessRender API] Job spec uploaded to gs://${GCS_RENDER_BUCKET}/${jobSpecPath}`)
 
-    // Trigger Cloud Run Job using gcloud CLI via exec
-    // Note: In production, you'd use the @google-cloud/run library
-    // For now, we return the job info and the job can be triggered via:
-    // - Cloud Scheduler
-    // - Pub/Sub trigger
-    // - Direct gcloud CLI call
-    // - Cloud Function trigger
+    // Trigger Cloud Run Job via REST API
+    const jobName = `projects/${GCP_PROJECT_ID}/locations/${GCP_REGION}/jobs/${CLOUD_RUN_JOB_NAME}`
+    const apiUrl = `https://run.googleapis.com/v2/${jobName}:run`
     
-    // For immediate execution, the client can poll the GET endpoint
-    // while a Cloud Function or Scheduler triggers the job
+    console.log(`[HeadlessRender API] Triggering Cloud Run Job: ${jobName}`)
     
-    console.log(`[HeadlessRender API] Job created: ${jobId}`)
-    console.log(`[HeadlessRender API] To trigger manually:`)
-    console.log(`  gcloud run jobs execute ${CLOUD_RUN_JOB_NAME} --region=${GCP_REGION} \\`)
-    console.log(`    --update-env-vars="JOB_SPEC_PATH=${GCS_RENDER_BUCKET}/${jobSpecPath}"`)
+    // Get access token for API authentication
+    const accessToken = await getAccessToken()
+    
+    // Build the request body with environment overrides
+    const CALLBACK_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://sceneflowai.studio'
+    const requestBody = {
+      overrides: {
+        containerOverrides: [
+          {
+            env: [
+              { name: 'JOB_ID', value: jobId },
+              { name: 'JOB_SPEC_PATH', value: `${GCS_RENDER_BUCKET}/${jobSpecPath}` },
+              { name: 'GCS_BUCKET', value: GCS_RENDER_BUCKET },
+              { name: 'CALLBACK_URL', value: `${CALLBACK_BASE_URL}/api/render/headless/callback` },
+            ],
+          },
+        ],
+      },
+    }
+    
+    const runResponse = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    })
+    
+    if (!runResponse.ok) {
+      const errorText = await runResponse.text()
+      console.error(`[HeadlessRender API] Failed to trigger Cloud Run Job:`, errorText)
+      
+      // Clean up job spec if trigger fails
+      try {
+        await bucket.file(jobSpecPath).delete()
+      } catch (deleteError) {
+        console.warn(`[HeadlessRender API] Failed to clean up job spec:`, deleteError)
+      }
+      
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `Failed to trigger render job: ${runResponse.status}`,
+          details: errorText.substring(0, 200),
+        },
+        { status: 500 }
+      )
+    }
+    
+    const runResult = await runResponse.json()
+    const executionName = runResult.name || runResult.metadata?.name || 'unknown'
+    
+    console.log(`[HeadlessRender API] Cloud Run Job triggered successfully: ${executionName}`)
 
     return NextResponse.json({
       success: true,
       jobId,
+      executionName,
       jobSpecPath: `gs://${GCS_RENDER_BUCKET}/${jobSpecPath}`,
       outputPath: `gs://${GCS_RENDER_BUCKET}/${outputPath}`,
     })
@@ -278,7 +408,38 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const storage = getStorageClient()
     const bucket = storage.bucket(GCS_RENDER_BUCKET)
     
-    // List files matching the job ID pattern
+    // First, check for callback status file (fastest detection)
+    const statusFile = bucket.file(`job-status/${jobId}.json`)
+    const [statusExists] = await statusFile.exists()
+    
+    if (statusExists) {
+      const [statusData] = await statusFile.download()
+      const status = JSON.parse(statusData.toString())
+      
+      if (status.status === 'complete' && status.outputUrl) {
+        return NextResponse.json({
+          success: true,
+          status: 'complete',
+          jobId,
+          outputUrl: status.outputUrl,
+          publicUrl: status.outputUrl,
+          duration: status.duration,
+          frameCount: status.frameCount,
+          resolution: status.resolution,
+        })
+      }
+      
+      if (status.status === 'failed') {
+        return NextResponse.json({
+          success: false,
+          status: 'failed',
+          jobId,
+          error: status.error || 'Render job failed',
+        })
+      }
+    }
+    
+    // Fallback: List files matching the job ID pattern
     const [files] = await bucket.getFiles({
       prefix: `renders/`,
       maxResults: 100,
