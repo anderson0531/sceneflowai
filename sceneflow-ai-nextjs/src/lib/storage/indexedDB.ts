@@ -10,7 +10,13 @@
  * - Cloud URL is stored alongside the blob for fallback
  * - Blobs can be retrieved even when offline
  * - Storage is automatically cleaned up for old/unused videos
+ * 
+ * NOTE: This module is safe to import on the server side.
+ * All functions check for browser environment before accessing IndexedDB.
  */
+
+// SSR guard - check if we're in a browser environment
+const isBrowser = typeof window !== 'undefined' && typeof indexedDB !== 'undefined'
 
 const DB_NAME = 'sceneflow-renders'
 const DB_VERSION = 1
@@ -46,15 +52,14 @@ let dbPromise: Promise<IDBDatabase> | null = null
  * Get or create the IndexedDB database
  */
 function getDB(): Promise<IDBDatabase> {
+  // SSR guard
+  if (!isBrowser) {
+    return Promise.reject(new Error('IndexedDB not available (server-side)'))
+  }
+  
   if (dbPromise) return dbPromise
 
   dbPromise = new Promise((resolve, reject) => {
-    // Check if IndexedDB is available
-    if (typeof indexedDB === 'undefined') {
-      reject(new Error('IndexedDB not available'))
-      return
-    }
-
     const request = indexedDB.open(DB_NAME, DB_VERSION)
 
     request.onerror = () => {
@@ -103,6 +108,11 @@ export async function storeVideo(
   blob: Blob,
   cloudUrl: string
 ): Promise<void> {
+  // SSR guard - silently no-op on server
+  if (!isBrowser) {
+    return
+  }
+  
   try {
     const db = await getDB()
     const id = getVideoKey(projectId, sceneId, language)
@@ -149,6 +159,11 @@ export async function getVideo(
   sceneId: string,
   language: string = 'en'
 ): Promise<{ blobUrl: string; cloudUrl: string } | null> {
+  // SSR guard - return null on server
+  if (!isBrowser) {
+    return null
+  }
+  
   try {
     const db = await getDB()
     const id = getVideoKey(projectId, sceneId, language)
@@ -371,6 +386,11 @@ export async function cacheVideoFromUrl(
   language: string,
   cloudUrl: string
 ): Promise<string> {
+  // SSR guard - return cloud URL on server
+  if (!isBrowser) {
+    return cloudUrl
+  }
+  
   // First check if we already have it cached
   const cached = await getVideo(projectId, sceneId, language)
   if (cached) {
