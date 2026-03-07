@@ -7,7 +7,7 @@
  * @see https://shotstack.io/docs/api/
  */
 
-import { KeyframePanDirection, SegmentKeyframeSettings } from '@/components/vision/scene-production/types'
+import type { KeyframePanDirection, SegmentKeyframeSettings } from '@/components/vision/scene-production/types'
 
 // Shotstack API Configuration
 const SHOTSTACK_API_BASE = process.env.SHOTSTACK_ENV === 'production'

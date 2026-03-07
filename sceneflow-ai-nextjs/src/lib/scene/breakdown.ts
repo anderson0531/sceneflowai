@@ -1,4 +1,4 @@
-import { SceneSegment, SceneSegmentStatus } from '@/components/vision/scene-production/types'
+import type { SceneSegment, SceneSegmentStatus } from '@/components/vision/scene-production/types'
 
 interface SceneData {
   heading?: string

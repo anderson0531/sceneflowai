@@ -11,9 +11,9 @@ export { SceneTimeline } from './SceneTimeline'
 export type { AudioTracksData, AudioTrackClip } from './SceneTimeline'
 export { VerticalSegmentSelector } from './VerticalSegmentSelector'
 
-// Types - single source of truth for all shared types
-// NOTE: VideoGenerationMethod, SegmentPurpose, etc. are all exported from here
-export * from './types'
+// Types - DO NOT re-export * from ./types to avoid circular dependency TDZ errors
+// Import types directly from '@/components/vision/scene-production/types' instead
+// Common types: SceneProductionData, SceneSegment, VideoGenerationConfig, etc.
 
 // Keyframe State Machine Components
 export { SegmentPairCard } from './SegmentPairCard'
