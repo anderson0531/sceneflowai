@@ -18,6 +18,7 @@
 'use client'
 
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -70,7 +71,11 @@ import { SceneVideoPlayer } from './SceneVideoPlayer'
 import { SceneRenderDialog } from './SceneRenderDialog'
 import { AddSpecialSegmentDialog, type FilmContext, type AdjacentSceneContext } from './AddSpecialSegmentDialog'
 import { ProductionStreamsPanel } from './ProductionStreamsPanel'
-import { SceneProductionMixer } from './SceneProductionMixer'
+// Dynamic import for SceneProductionMixer to avoid TDZ with LocalRenderService chain
+const SceneProductionMixer = dynamic(
+  () => import('./SceneProductionMixer').then(mod => ({ default: mod.SceneProductionMixer })),
+  { ssr: false, loading: () => <div className="p-4 text-center text-zinc-500">Loading Mixer...</div> }
+)
 import { useVideoQueue } from '@/hooks/useVideoQueue'
 import type { SceneAudioData } from './GuidePromptEditor'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
