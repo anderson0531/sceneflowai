@@ -43,7 +43,7 @@ import {
   Lock,
 } from 'lucide-react'
 
-import {
+import type {
   CameraControlSettings,
   PerformanceSettings,
   VisualStyleSettings,

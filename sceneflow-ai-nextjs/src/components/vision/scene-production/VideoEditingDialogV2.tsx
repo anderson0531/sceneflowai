@@ -38,7 +38,8 @@ import {
   SlidersHorizontal,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { SceneSegment, SceneSegmentTake, VideoGenerationMethod, SmartPromptSettings, createDefaultSmartPromptSettings } from './types'
+import type { SceneSegment, SceneSegmentTake, VideoGenerationMethod, SmartPromptSettings } from './types'
+import { createDefaultSmartPromptSettings } from './defaults'
 import { VisualReference } from '@/types/visionReferences'
 import { toast } from 'sonner'
 import { SmartPromptControlDeck } from './SmartPromptModules'

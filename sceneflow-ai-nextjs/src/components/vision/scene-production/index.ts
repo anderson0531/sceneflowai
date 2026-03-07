@@ -61,6 +61,17 @@ export type {
 // NOTE: SceneProductionMixer MUST be imported dynamically to avoid TDZ errors (uses LocalRenderService chain):
 //   const SceneProductionMixer = dynamic(() => import('./scene-production/SceneProductionMixer').then(mod => ({ default: mod.SceneProductionMixer })), { ssr: false })
 
+// Runtime values (functions, consts) - re-exported from defaults.ts (NOT types.ts)
+// types.ts is now purely type definitions that TypeScript erases at compile time
+export {
+  prioritizeCharacterReferences,
+  isAnimaticStream,
+  isVideoStream,
+  DEFAULT_ANIMATIC_SETTINGS,
+  DEFAULT_VIDEO_SETTINGS,
+  createDefaultSmartPromptSettings,
+} from './defaults'
+
 // Prompt utilities - explicit exports only (no `export *` to avoid TDZ module graph issues)
 // Import directly from './methodPromptBuilder' or './promptSyncService' if needed
 export { compileVideoPrompt, formatPayloadForDisplay, extractSettingsFromSegment } from './videoPromptCompiler'

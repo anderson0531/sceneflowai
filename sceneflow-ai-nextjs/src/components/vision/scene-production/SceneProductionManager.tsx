@@ -7,7 +7,7 @@ import { SceneTimeline, AudioTracksData } from './SceneTimeline'
 import { SceneTimelineV2 } from './SceneTimelineV2'
 import { SegmentStudio, GenerationType } from './SegmentStudio'
 import { VideoGenerationMethod } from './SegmentPromptBuilder'
-import {
+import type {
   SceneProductionData,
   SceneProductionReferences,
   SceneSegment,

@@ -54,7 +54,7 @@ import {
   type KeyframeContext 
 } from '@/lib/intelligence/keyframe-prompt-builder'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { prioritizeCharacterReferences } from './types'
+import { prioritizeCharacterReferences } from './defaults'
 import { artStylePresets } from '@/constants/artStylePresets'
 
 // ============================================================================

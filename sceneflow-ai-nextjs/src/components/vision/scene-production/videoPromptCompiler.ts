@@ -7,7 +7,7 @@
  * @module videoPromptCompiler
  */
 
-import {
+import type {
   SmartPromptSettings,
   VideoPromptPayload,
   VideoGenerationMethod,
