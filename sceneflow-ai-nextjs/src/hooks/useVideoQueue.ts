@@ -15,7 +15,7 @@
  * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
  */
 
-import { useState, useCallback, useMemo, useRef } from 'react'
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
 import type { 
   SceneSegment, 
@@ -91,8 +91,22 @@ export function useVideoQueue(
     }
   ) => Promise<void>
 ): UseVideoQueueReturn {
-  // Get auto-drafted configs for all segments
-  const configsMap = useSegmentConfigs(segments, sceneImageUrl)
+  // QUARANTINE GUARD: Delay initialization by one frame to let module graph settle
+  // This prevents TDZ errors from rapid re-renders during initial mount
+  const [isReady, setIsReady] = useState(false)
+  
+  useEffect(() => {
+    // Delay by one frame using requestAnimationFrame to ensure all modules are fully evaluated
+    // This breaks the synchronous execution that triggers TDZ errors
+    const rafId = requestAnimationFrame(() => {
+      setIsReady(true)
+    })
+    return () => cancelAnimationFrame(rafId)
+  }, [])
+  
+  // Get auto-drafted configs for all segments - skip processing until ready
+  // This prevents heavy computation during the TDZ-vulnerable initialization phase
+  const configsMap = useSegmentConfigs(segments, sceneImageUrl, !isReady)
   
   // Track previous segments to prevent redundant queue rebuilds
   // This guards against rapid re-renders when segments reference is unstable

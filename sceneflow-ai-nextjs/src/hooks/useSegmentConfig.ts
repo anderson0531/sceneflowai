@@ -545,12 +545,22 @@ export function useSegmentConfig(
 
 /**
  * Hook to batch-process multiple segments and generate configs
+ * @param segments - Array of scene segments to process
+ * @param sceneImageUrl - Optional fallback image URL
+ * @param skip - If true, skip all processing and return empty map (for TDZ quarantine)
  */
 export function useSegmentConfigs(
   segments: SceneSegment[],
-  sceneImageUrl?: string
+  sceneImageUrl?: string,
+  skip?: boolean
 ): Map<string, SegmentConfigResult> {
   return useMemo(() => {
+    // QUARANTINE GUARD: Skip all processing if told to
+    // This prevents TDZ errors during the initial module evaluation phase
+    if (skip) {
+      return new Map<string, SegmentConfigResult>()
+    }
+    
     const configMap = new Map<string, SegmentConfigResult>()
     
     // Filter out any undefined or invalid segments
@@ -609,7 +619,7 @@ export function useSegmentConfigs(
     }
     
     return configMap
-  }, [segments, sceneImageUrl])
+  }, [segments, sceneImageUrl, skip])
 }
 
 export default useSegmentConfig
