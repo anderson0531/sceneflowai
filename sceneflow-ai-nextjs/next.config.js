@@ -283,6 +283,15 @@ const nextConfig = {
     config.resolve.alias = config.resolve.alias || {}
     config.resolve.alias['@/services'] = path.resolve(__dirname, 'src/services')
     config.resolve.alias['@/service-stubs'] = path.resolve(__dirname, 'src/service-stubs')
+    
+    // Disable module concatenation (scope hoisting) to prevent TDZ errors.
+    // Webpack's ModuleConcatenationPlugin merges modules into a single scope,
+    // reordering const/let declarations. When shared dependencies (e.g.
+    // VideoEditingDialogV2) are split across chunks, this reordering causes
+    // 'Cannot access eJ before initialization' in production builds.
+    config.optimization = config.optimization || {}
+    config.optimization.concatenateModules = false
+    
     return config
   }
 };

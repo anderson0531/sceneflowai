@@ -66,7 +66,14 @@ import type {
   TextOverlay,
 } from './types'
 import { DirectorDialog } from './DirectorDialog'
-import { VideoEditingDialog } from './VideoEditingDialog'
+// Dynamic import for VideoEditingDialog to prevent TDZ
+// VideoEditingDialog → VideoEditingDialogV2 is shared between DirectorConsole (chunk 4195)
+// and SegmentStudio (ScriptPanel chunk). When webpack's ModuleConcatenationPlugin scope-hoists
+// this shared dependency, it reorders const declarations causing 'Cannot access eJ before initialization'.
+const VideoEditingDialog = dynamic(
+  () => import('./VideoEditingDialogV2').then(mod => ({ default: mod.VideoEditingDialog })),
+  { ssr: false }
+)
 import { SceneVideoPlayer } from './SceneVideoPlayer'
 import { SceneRenderDialog } from './SceneRenderDialog'
 import { AddSpecialSegmentDialog, type FilmContext, type AdjacentSceneContext } from './AddSpecialSegmentDialog'
