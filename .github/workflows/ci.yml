@@ -29,6 +29,10 @@ jobs:
         run: npm run lint
         continue-on-error: true
 
+      - name: Check circular dependencies
+        working-directory: sceneflow-ai-nextjs
+        run: npm run ci:circular
+
       - name: TypeScript check
         working-directory: sceneflow-ai-nextjs
         run: npx tsc --noEmit

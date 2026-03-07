@@ -21,13 +21,15 @@ export { SegmentFrameTimeline } from './SegmentFrameTimeline'
 
 // Director's Console Components
 export { DirectorDialog } from './DirectorDialog'
-export { DirectorConsole } from './DirectorConsole'
+// NOTE: DirectorConsole MUST be imported dynamically to avoid TDZ errors:
+//   const DirectorConsole = dynamic(() => import('./scene-production/DirectorConsole').then(mod => ({ default: mod.DirectorConsole })), { ssr: false })
 export { SceneVideoPlayer } from './SceneVideoPlayer'
 export { GuidePromptEditor } from './GuidePromptEditor'
 export type { SceneAudioData, GuidePromptEditorProps } from './GuidePromptEditor'
 
 // Segment Builder Components (Intelligent Segmentation)
-export { SegmentBuilder } from './SegmentBuilder'
+// NOTE: SegmentBuilder MUST be imported dynamically to avoid TDZ errors:
+//   const SegmentBuilder = dynamic(() => import('./scene-production/SegmentBuilder').then(mod => ({ default: mod.SegmentBuilder })), { ssr: false })
 // Types moved to types.ts to break circular dependency with SegmentValidation
 export type { SceneBible, ProposedSegment, BuilderPhase, ValidationResult } from './types'
 export { SegmentPreviewTimeline } from './SegmentPreviewTimeline'
@@ -58,7 +60,8 @@ export type {
 
 // Production Streams (Multi-language render outputs)
 export { ProductionStreamsPanel } from './ProductionStreamsPanel'
-export { SceneProductionMixer } from './SceneProductionMixer'
+// NOTE: SceneProductionMixer MUST be imported dynamically to avoid TDZ errors (uses LocalRenderService chain):
+//   const SceneProductionMixer = dynamic(() => import('./scene-production/SceneProductionMixer').then(mod => ({ default: mod.SceneProductionMixer })), { ssr: false })
 
 // Prompt utilities - explicit exports only (no `export *` to avoid TDZ module graph issues)
 // Import directly from './methodPromptBuilder' or './promptSyncService' if needed
