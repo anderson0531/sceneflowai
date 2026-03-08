@@ -1,11 +1,12 @@
 import { PlatformModel, PromptTemplate, TaskType } from '@/types/dol';
+import { GEMINI_TEXT_MODELS } from '@/lib/config/modelConfig';
 
 // Mock database functions - will be replaced with actual database calls
 const mockPromptTemplates: PromptTemplate[] = [
   {
     id: '1',
     templateId: 'script-writing-gemini',
-    modelId: 'gemini-3.0-flash',
+    modelId: GEMINI_TEXT_MODELS.flash,
     taskType: TaskType.SCRIPT_WRITING,
     templateString: `You are an expert screenwriter. Create a compelling script based on the following concept:
 

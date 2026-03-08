@@ -4,7 +4,7 @@
   - Optionally runs `vercel --prod` from sceneflow-ai-nextjs
   - Polls DEPLOY_VERIFY_URL (e.g., https://yourdomain.com) /api/build-info to validate:
     - commit matches local HEAD (short or long)
-    - model === gemini-2.5-flash
+    - model is set (from GEMINI_MODEL env or central config)
     - uiMarker.tabs contains both labels
 */
 const { execSync } = require('node:child_process')
@@ -69,7 +69,7 @@ async function main() {
       const tabs = (json.uiMarker && json.uiMarker.tabs) || []
 
       const commitMatches = commit.startsWith(headShort) || commit === headLong
-      const modelOk = model === 'gemini-2.5-flash'
+      const modelOk = model && model.startsWith('gemini-')
       const tabsOk = Array.isArray(tabs) && tabs.includes('Your Direction') && tabs.includes('Flow Direction')
 
       if (commitMatches && modelOk && tabsOk) {

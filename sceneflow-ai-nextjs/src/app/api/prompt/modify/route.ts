@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { generateText } from '@/lib/vertexai/gemini'
 
 interface ModifyPromptRequest {
   currentPrompt: string
@@ -23,16 +23,6 @@ interface ModifyPromptRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    // Check for API key at request time
-    const apiKey = process.env.GEMINI_API_KEY
-    if (!apiKey) {
-      console.error('[Prompt Modify] GEMINI_API_KEY not configured')
-      return NextResponse.json(
-        { error: 'AI service not configured' },
-        { status: 503 }
-      )
-    }
-
     const body: ModifyPromptRequest = await request.json()
     const { currentPrompt, instruction, mode = 'FTV', context } = body
 
@@ -54,23 +44,17 @@ export async function POST(request: NextRequest) {
     console.log('[Prompt Modify] Instruction:', instruction)
     console.log('[Prompt Modify] Current prompt length:', currentPrompt.length)
 
-    // Initialize Gemini with validated API key
-    const genAI = new GoogleGenerativeAI(apiKey)
-
     // Build system prompt based on mode
     const systemPrompt = buildSystemPrompt(mode, context)
-
-    // Use Gemini Flash for fast, cost-effective modification
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash',
-      systemInstruction: systemPrompt,
-    })
-
     const userPrompt = buildUserPrompt(currentPrompt, instruction, mode)
 
-    const result = await model.generateContent(userPrompt)
-    const response = await result.response
-    let modifiedPrompt = response.text().trim()
+    const result = await generateText(userPrompt, {
+      systemInstruction: systemPrompt,
+      temperature: 0.7,
+      maxOutputTokens: 2048,
+    })
+
+    let modifiedPrompt = result.text.trim()
     
     // Clean up any markdown formatting
     modifiedPrompt = modifiedPrompt

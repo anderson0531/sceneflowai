@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { generateText } from '@/lib/vertexai/gemini'
+import { safeParseJsonFromText } from '@/lib/safeJson'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -107,15 +108,7 @@ export async function POST(req: NextRequest) {
       ? `\n\nExisting wardrobes (already defined - DO NOT suggest these again):\n${character.existingWardrobes.map(w => `- ${w.name}${w.sceneNumbers?.length ? ` (Scenes ${w.sceneNumbers.join(', ')})` : ''}`).join('\n')}`
       : ''
 
-    // Use Gemini to analyze script for wardrobe requirements
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-    if (!apiKey) {
-      throw new Error('Missing Gemini API key')
-    }
-
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
-
+    // Use Vertex AI Gemini to analyze script for wardrobe requirements
     const analysisPrompt = `You are a costume designer analyzing a film script to determine what wardrobes/outfits a character needs across different scenes.
 
 CHARACTER: ${character.name}
@@ -167,31 +160,30 @@ Respond with valid JSON only:
   "analysis": "Brief overall analysis of the character's wardrobe needs"
 }`
 
-    const result = await model.generateContent(analysisPrompt)
-    const responseText = result.response.text()
+    const result = await generateText(analysisPrompt, {
+      temperature: 0.7,
+      maxOutputTokens: 4096,
+      responseMimeType: 'application/json',
+    })
 
-    // Parse JSON from response
+    // Parse JSON from response using safe parser
     let suggestions: WardrobeSuggestion[] = []
     let analysis = ''
     
     try {
-      // Extract JSON from response (handle markdown code blocks)
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/)
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0])
-        suggestions = (parsed.suggestions || []).map((s: any) => ({
-          name: s.name,
-          description: s.description,
-          accessories: s.accessories || undefined,
-          sceneNumbers: s.sceneNumbers || [],
-          reason: s.reason || '',
-          confidence: s.confidence || 0.7
-        }))
-        analysis = parsed.analysis || ''
-      }
+      const parsed = safeParseJsonFromText(result.text)
+      suggestions = (parsed.suggestions || []).map((s: any) => ({
+        name: s.name,
+        description: s.description,
+        accessories: s.accessories || undefined,
+        sceneNumbers: s.sceneNumbers || [],
+        reason: s.reason || '',
+        confidence: s.confidence || 0.7
+      }))
+      analysis = parsed.analysis || ''
     } catch (parseError) {
       console.error('[Wardrobe Suggestion] Failed to parse AI response:', parseError)
-      console.error('[Wardrobe Suggestion] Raw response:', responseText)
+      console.error('[Wardrobe Suggestion] Raw response:', result.text)
     }
 
     // Filter out suggestions that match existing wardrobes

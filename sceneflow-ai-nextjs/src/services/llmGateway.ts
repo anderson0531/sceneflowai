@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { generateText } from '@/lib/vertexai/gemini'
 import { SCENEFLOW_CREATIVE_SYSTEM_INSTRUCTION } from '@/lib/vertexai/safety'
+import { safeParseJsonFromText } from '@/lib/safeJson'
 
 export type Provider = 'openai' | 'gemini'
 
@@ -47,7 +48,7 @@ export async function callLLM(config: LLMConfig, prompt: string): Promise<string
     const json = await resp.json()
     const content: string | undefined = json?.choices?.[0]?.message?.content
     if (!content) throw new Error('OpenAI returned empty content')
-    return normalizeToJsonString(content)
+    return JSON.stringify(safeParseJsonFromText(content))
   }
 
   // Use Vertex AI for Gemini (pay-as-you-go, no free tier limits)
@@ -64,35 +65,5 @@ export async function callLLM(config: LLMConfig, prompt: string): Promise<string
   })
   
   if (!result.text) throw new Error('Gemini returned empty content')
-  return normalizeToJsonString(result.text)
+  return JSON.stringify(safeParseJsonFromText(result.text))
 }
-
-function normalizeToJsonString(raw: string): string {
-  let s = raw.trim()
-  // strip ```json ... ``` fences
-  if (s.startsWith('```')) {
-    s = s.replace(/^```[a-zA-Z]*\n?/, '').replace(/```\s*$/, '').trim()
-  }
-  // extract first JSON object or array
-  const start = Math.min(...[...['{', '[']].map(ch => s.indexOf(ch)).filter(i => i >= 0))
-  if (start > 0) s = s.slice(start)
-  // find matching closing brace/bracket
-  try {
-    // quick attempt
-    JSON.parse(s)
-    return s
-  } catch {
-    // try to truncate to last closing brace/bracket
-    const lastObj = s.lastIndexOf('}')
-    const lastArr = s.lastIndexOf(']')
-    const end = Math.max(lastObj, lastArr)
-    if (end > 0) {
-      const candidate = s.slice(0, end + 1)
-      JSON.parse(candidate)
-      return candidate
-    }
-    throw new Error('LLM returned non-JSON content')
-  }
-}
-
-

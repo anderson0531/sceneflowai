@@ -323,15 +323,14 @@ export async function generateSpecialSegmentPrompt(
     const systemPrompt = buildSpecialSegmentSystemPrompt(segmentType)
     const userPrompt = buildSpecialSegmentUserPrompt(segmentType, filmContext, credits, adjacentScenes, typeConfig)
     
-    console.log('[SpecialSegmentPrompts] Generating prompt with Gemini 2.5 for:', segmentType)
+    console.log('[SpecialSegmentPrompts] Generating prompt with Gemini for:', segmentType)
     
     const options: TextGenerationOptions = {
-      model: 'gemini-2.5-flash',
       temperature: 0.8, // Slightly higher for creative prompts
       maxOutputTokens: 4096, // Increased significantly to prevent truncation of cinematic prompts + JSON structure
       responseMimeType: 'application/json',
       systemInstruction: systemPrompt,
-      thinkingBudget: 2048, // Medium thinking for creative work
+      thinkingLevel: 'medium', // Medium thinking for creative work
       maxRetries: 2,
       timeoutMs: 45000 // Increased timeout for longer responses
     }

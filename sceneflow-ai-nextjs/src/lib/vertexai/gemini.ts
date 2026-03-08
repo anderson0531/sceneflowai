@@ -21,6 +21,11 @@ import {
   getImagenPersonGeneration,
   type SafetySetting 
 } from './safety'
+import { 
+  getGeminiTextModel, 
+  buildThinkingConfig, 
+  type GeminiThinkingLevel 
+} from '../config/modelConfig'
 
 // =============================================================================
 // Configuration
@@ -63,11 +68,19 @@ export interface TextGenerationOptions {
   /** Timeout in ms for the entire request including retries (default: 90000) */
   timeoutMs?: number
   /** 
-   * Thinking budget for Gemini 2.5 models. Set to 0 to disable thinking mode.
-   * For Gemini 2.5 Flash: valid range is 0-24576 (0 disables thinking)
+   * Thinking budget for Gemini 2.5 models (numeric: 0-24576, 0 disables).
+   * For Gemini 3.0+ models, use thinkingLevel instead. If both are set,
+   * thinkingLevel takes precedence on 3.0+ models.
    * Default: undefined (auto/dynamic thinking)
    */
   thinkingBudget?: number
+  /**
+   * Thinking level for Gemini 3.0+ models.
+   * 'minimal' = fastest (replaces thinkingBudget: 0)
+   * 'low' | 'medium' | 'high' = increasing reasoning depth
+   * Ignored on Gemini 2.5 models (use thinkingBudget instead).
+   */
+  thinkingLevel?: GeminiThinkingLevel
   /**
    * Seed for deterministic output. Same seed + same input = same output.
    * Useful for scoring consistency across repeated analysis runs.
@@ -95,7 +108,7 @@ export async function generateText(
   options: TextGenerationOptions = {}
 ): Promise<TextGenerationResult> {
   const { projectId, location: defaultLocation } = getConfig()
-  const model = options.model || 'gemini-2.5-flash'
+  const model = options.model || getGeminiTextModel()
   
   // Gemini 3 models require the global endpoint
   const isGemini3Model = model.startsWith('gemini-3')
@@ -144,12 +157,13 @@ export async function generateText(
   requestBody.safetySettings = options.safetySettings || getDefaultGeminiSafetySettings()
   console.log(`[Vertex Gemini] Safety settings: ${requestBody.safetySettings.map((s: SafetySetting) => `${s.category}=${s.threshold}`).join(', ')}`)
   
-  // Add thinking config for Gemini 2.5 models
-  // Setting thinkingBudget to 0 disables thinking mode (prevents OOM issues)
-  if (options.thinkingBudget !== undefined && model.includes('2.5')) {
-    requestBody.generationConfig.thinkingConfig = {
-      thinkingBudget: options.thinkingBudget
-    }
+  // Add thinking config — supports both Gemini 2.5 (numeric) and 3.0+ (string levels)
+  const thinkingConfig = buildThinkingConfig(model, {
+    thinkingBudget: options.thinkingBudget,
+    thinkingLevel: options.thinkingLevel,
+  });
+  if (thinkingConfig) {
+    requestBody.generationConfig.thinkingConfig = thinkingConfig;
   }
   
   console.log(`[Vertex Gemini] Generating text with ${model}...`)
@@ -222,8 +236,8 @@ export async function generateWithVision(
   options: VisionGenerationOptions = {}
 ): Promise<TextGenerationResult> {
   const { projectId, location } = getConfig()
-  // Use gemini-2.5-flash for vision by default (fast and capable)
-  const model = options.model || 'gemini-2.5-flash'
+  // Use central model constant for vision by default
+  const model = options.model || getGeminiTextModel()
   
   const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
   

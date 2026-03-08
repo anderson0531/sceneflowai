@@ -138,7 +138,7 @@ export async function POST(req: NextRequest) {
       // Use Vertex AI Gemini (preferred) or fallback to OpenAI
       try {
         console.log('[Blueprint V3] Calling Vertex AI Gemini...')
-        jsonText = await generateText(prompt, { model: 'gemini-2.5-flash' }) || ''
+        jsonText = await generateText(prompt, { }) || ''
       } catch (vertexError) {
         if (hasOpenAI) {
           console.log('[Blueprint V3] Vertex AI failed, falling back to OpenAI...')

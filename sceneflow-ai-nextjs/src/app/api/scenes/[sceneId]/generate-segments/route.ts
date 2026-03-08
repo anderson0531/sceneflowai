@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
 import { moderatePrompt, getUserModerationContext, createBlockedResponse } from '@/lib/moderation'
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import { SegmentDirection, detectNoTalentSegment } from '@/types/scene-direction'
 
 export const maxDuration = 120
@@ -1131,60 +1130,24 @@ Return ONLY valid JSON array. No markdown code blocks, no explanatory text.
 }
 
 async function callGeminiForIntelligentSegmentation(prompt: string): Promise<IntelligentSegment[]> {
-  // Try Vertex AI first, fall back to Gemini API with API key
-  const projectId = process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID
-  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
+  console.log(`[Scene Segmentation] Calling Vertex AI Gemini...`)
   
-  // Try Vertex AI first if configured
-  if (projectId) {
-    try {
-      console.log(`[Scene Segmentation] Trying Vertex AI Gemini...`)
-      
-      const result = await generateText(prompt, {
-        model: 'gemini-2.5-flash',
-        temperature: 0.7,
-        maxOutputTokens: 32768, // Increased for complex segmentation responses
-        responseMimeType: 'application/json',
-        timeoutMs: 100000, // 100s timeout (buffer for Vercel's 120s limit)
-        thinkingBudget: 0, // Disable thinking mode to reduce latency
-      })
-      
-      console.log(`[Scene Segmentation] Success with Vertex AI, finishReason: ${result.finishReason || 'unknown'}`)
-      
-      // Check for truncated response due to token limit
-      if (result.finishReason === 'MAX_TOKENS') {
-        console.warn('[Scene Segmentation] Response may be truncated (MAX_TOKENS), attempting parse...')
-      }
-      
-      return parseGeminiResponseText(result.text)
-    } catch (vertexError: any) {
-      console.warn(`[Scene Segmentation] Vertex AI failed, trying Gemini API fallback:`, vertexError?.message)
-      // Fall through to Gemini API fallback
-    }
-  }
-  
-  // Fallback: Use Gemini API with API key (generativelanguage.googleapis.com)
-  if (!geminiApiKey) {
-    throw new Error('Gemini API not configured: neither Vertex AI nor GEMINI_API_KEY available')
-  }
-  
-  console.log(`[Scene Segmentation] Using Gemini API with API key (fallback)`)
-  
-  const genAI = new GoogleGenerativeAI(geminiApiKey)
-  const model = genAI.getGenerativeModel({ 
-    model: 'gemini-2.5-flash',
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 32768, // Increased for complex segmentation responses
-      responseMimeType: 'application/json'
-    }
+  const result = await generateText(prompt, {
+    temperature: 0.7,
+    maxOutputTokens: 32768, // Increased for complex segmentation responses
+    responseMimeType: 'application/json',
+    timeoutMs: 100000, // 100s timeout (buffer for Vercel's 120s limit)
+    thinkingLevel: 'minimal', // Disable deep thinking to reduce latency
   })
   
-  const result = await model.generateContent(prompt)
-  const responseText = result.response.text()
+  console.log(`[Scene Segmentation] Success, finishReason: ${result.finishReason || 'unknown'}`)
   
-  console.log(`[Scene Segmentation] Success with Gemini API fallback`)
-  return parseGeminiResponseText(responseText)
+  // Check for truncated response due to token limit
+  if (result.finishReason === 'MAX_TOKENS') {
+    console.warn('[Scene Segmentation] Response may be truncated (MAX_TOKENS), attempting parse...')
+  }
+  
+  return parseGeminiResponseText(result.text)
 }
 
 function parseGeminiResponseText(text: string): IntelligentSegment[] {
@@ -1356,37 +1319,14 @@ Return ONLY valid JSON array. No markdown, no explanation.
  * Call Gemini to generate segment directions (Phase 1)
  */
 async function callGeminiForSegmentDirections(prompt: string): Promise<any[]> {
-  const projectId = process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID
-  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-  
-  if (projectId) {
-    try {
-      const result = await generateText(prompt, {
-        model: 'gemini-2.5-flash',
-        temperature: 0.5, // Lower temperature for more consistent structure
-        maxOutputTokens: 8192, // Directions are much smaller than full prompts
-        responseMimeType: 'application/json',
-        timeoutMs: 30000, // 30s should be plenty for directions
-        thinkingBudget: 0,
-      })
-      return parseDirectionsResponse(result.text)
-    } catch (vertexError: any) {
-      console.warn(`[Scene Segmentation] Vertex AI failed for directions:`, vertexError?.message)
-    }
-  }
-  
-  if (!geminiApiKey) {
-    throw new Error('Gemini API not configured')
-  }
-  
-  const genAI = new GoogleGenerativeAI(geminiApiKey)
-  const model = genAI.getGenerativeModel({ 
-    model: 'gemini-2.5-flash',
-    generationConfig: { temperature: 0.5, maxOutputTokens: 8192, responseMimeType: 'application/json' }
+  const result = await generateText(prompt, {
+    temperature: 0.5, // Lower temperature for more consistent structure
+    maxOutputTokens: 8192, // Directions are much smaller than full prompts
+    responseMimeType: 'application/json',
+    timeoutMs: 30000, // 30s should be plenty for directions
+    thinkingLevel: 'minimal',
   })
-  
-  const result = await model.generateContent(prompt)
-  return parseDirectionsResponse(result.response.text())
+  return parseDirectionsResponse(result.text)
 }
 
 function parseDirectionsResponse(text: string): any[] {
@@ -1510,37 +1450,14 @@ Return ONLY valid JSON array. No markdown, no explanation.
  * Call Gemini to generate full prompts from approved directions (Phase 2)
  */
 async function callGeminiForPromptsFromDirections(prompt: string): Promise<IntelligentSegment[]> {
-  const projectId = process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID
-  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-  
-  if (projectId) {
-    try {
-      const result = await generateText(prompt, {
-        model: 'gemini-2.5-flash',
-        temperature: 0.7,
-        maxOutputTokens: 32768,
-        responseMimeType: 'application/json',
-        timeoutMs: 100000,
-        thinkingBudget: 0,
-      })
-      return parseGeminiResponseText(result.text)
-    } catch (vertexError: any) {
-      console.warn(`[Scene Segmentation] Vertex AI failed for prompts:`, vertexError?.message)
-    }
-  }
-  
-  if (!geminiApiKey) {
-    throw new Error('Gemini API not configured')
-  }
-  
-  const genAI = new GoogleGenerativeAI(geminiApiKey)
-  const model = genAI.getGenerativeModel({ 
-    model: 'gemini-2.5-flash',
-    generationConfig: { temperature: 0.7, maxOutputTokens: 32768, responseMimeType: 'application/json' }
+  const result = await generateText(prompt, {
+    temperature: 0.7,
+    maxOutputTokens: 32768,
+    responseMimeType: 'application/json',
+    timeoutMs: 100000,
+    thinkingLevel: 'minimal',
   })
-  
-  const result = await model.generateContent(prompt)
-  return parseGeminiResponseText(result.response.text())
+  return parseGeminiResponseText(result.text)
 }
 
 /**

@@ -1,14 +1,44 @@
 # Gemini 2.5 → 3.0 Migration Plan
 
 **Created:** March 5, 2026  
-**Status:** 📋 PLANNED (Pending video production optimization completion)  
+**Updated:** March 8, 2026  
+**Status:** 🚧 IN PROGRESS — Phase 0 (Pre-Migration Hardening) complete  
 **Priority:** High - After video production fixes
 
 ---
 
 ## Overview
 
-Phased migration from Gemini 2.5 to 3.0 Flash across 40+ API routes, starting with the central `geminiClient.ts` utility and progressing through high-priority creative workflows (Series, Treatment, Script generation), with feature flags for A/B testing.
+Phased migration from Gemini 2.5 to 3.0 Flash across 40+ API routes, built on a **single-source-of-truth model registry** so that future model upgrades (3.0 → 4.0, etc.) require changing one file instead of 40+.
+
+### Architecture Principle: Future-Proof Model Consistency
+
+All AI model versions are now centralized in `src/lib/config/modelConfig.ts`. This file already housed Veo (video) and Imagen (image) model constants — Gemini text model constants follow the exact same pattern:
+
+```typescript
+// One place to change for the next model upgrade
+export const GEMINI_TEXT_MODELS = {
+  flash: 'gemini-3.0-flash',        // primary workhorse
+  pro:   'gemini-3.1-pro-preview',   // complex reasoning
+  lite:  'gemini-3.1-flash-lite-preview', // lightweight/cheap
+}
+
+// Every route uses this — no hardcoded strings anywhere
+getGeminiTextModel()       // → env override or 'gemini-3.0-flash'
+getGeminiTextModel('pro')  // → 'gemini-3.1-pro-preview'
+```
+
+### Thinking Config Abstraction
+
+Gemini 2.5 used numeric `thinkingBudget` (0–24576). Gemini 3.0+ uses string levels. The abstraction handles both transparently via `buildThinkingConfig()`:
+
+```typescript
+// Routes use semantic levels — the config maps to the correct format
+thinkingLevel: 'minimal'  // 3.0: string, 2.5: maps to 0
+thinkingLevel: 'high'     // 3.0: string, 2.5: maps to 8192
+```
+
+If Gemini 4.0 changes the format again, only `buildThinkingConfig()` needs updating.
 
 ### Gemini 3.0 New Features to Utilize
 
@@ -26,28 +56,53 @@ Phased migration from Gemini 2.5 to 3.0 Flash across 40+ API routes, starting wi
 
 ---
 
-## Phase 1: Foundation & Testing Infrastructure (Week 1)
+## ✅ Phase 0: Pre-Migration Hardening (COMPLETE — March 8, 2026)
+
+Infrastructure consolidation before any model version change.
+
+### Completed Tasks
+
+- [x] **Central model constants** — Added `GEMINI_TEXT_MODELS`, `getGeminiTextModel()`, `getModelFamily()`, `buildThinkingConfig()` to `src/lib/config/modelConfig.ts`
+- [x] **Updated `gemini.ts` core client** — `generateText()` and `generateWithVision()` now default to `getGeminiTextModel()` instead of hardcoded `'gemini-2.5-flash'`
+- [x] **Thinking config gate fixed** — Replaced `model.includes('2.5')` check with `buildThinkingConfig()` that supports both 2.5 numeric and 3.0+ string levels
+- [x] **Removed 14+ hardcoded model strings** — All routes that passed `model: 'gemini-2.5-flash'` to `generateText()` now omit the model param (picks up central default)
+- [x] **Migrated 6 direct SDK routes to Vertex AI** — Eliminated `@google/generative-ai` imports from:
+  - `prompt/modify` (was on stale `gemini-2.0-flash`!)
+  - `prompt/rephrase` (was on `gemini-2.0-flash`!)
+  - `character/suggest-wardrobes`
+  - `vision/suggest-objects`
+  - `review/summarize`
+  - `scenes/[sceneId]/generate-segments` (3 internal functions consolidated)
+- [x] **V2/DOL services aligned** — `BlueprintService`, `DirectionService`, `StoryboardService`, `ModelSelector`, `PromptConstructor` now use `getGeminiTextModel()` / `GEMINI_TEXT_MODELS.flash`
+- [x] **JSON handling standardized** — `llmGateway.ts` now uses `safeParseJsonFromText()` from `src/lib/safeJson.ts` instead of its own `normalizeToJsonString()`. Migrated SDK routes now use `safeParseJsonFromText` + `responseMimeType: 'application/json'`
+- [x] **Deploy verification relaxed** — `deploy-verify.js` no longer hardcodes `model === 'gemini-2.5-flash'`; checks `model.startsWith('gemini-')` instead
+- [x] **Cost tracking updated** — `costTracking.ts` model mappings updated from `gemini-2.5-flash` → `gemini-3.0-flash`
+
+### Impact
+
+After Phase 0, **changing the default model is a one-line edit** in `GEMINI_TEXT_MODELS.flash`. The `GEMINI_MODEL` env var provides per-environment override for rollback without any code changes.
+
+---
+
+## Phase 1: Model Flip & Feature Flags (Week 1)
 
 ### Tasks
 
-- [ ] Add Gemini 3.0 model constants to `modelConfig.ts`
-  - `GEMINI_3_FLASH = 'gemini-3.0-flash'`
-  - `GEMINI_3_PRO = 'gemini-3.1-pro-preview'`
-  - Add thinking level and media resolution type definitions
-
-- [ ] Create feature flag system for model selection
-  - Add `useGemini3` toggle in environment variables
-  - Allow per-route override via query param `?model=gemini3` for testing
-
-- [ ] Update central client `geminiClient.ts`
-  - Add new parameters: `thinkingLevel`, `mediaResolution`, `outputVerbosity`
-  - Support both 2.5 and 3.0 model strings with graceful fallback
+- [ ] Set `GEMINI_MODEL=gemini-2.5-flash` in production env (explicit rollback safety net)
+- [ ] Deploy Phase 0 code to production (model stays 2.5 via env override)
+- [ ] Remove env override in staging → staging runs 3.0
+- [ ] Validate all routes on staging against 3.0:
+  - JSON parse success rate ≥ 99% over 20 test calls per route
+  - Latency within 2× of 2.5 baseline
+  - No output schema regressions (Zod validation where available)
+- [ ] Add `useGemini3` feature flag for beta users
+- [ ] Allow admin override in DOL dashboard
 
 ---
 
 ## Phase 2: High-Priority Creative Workflows (Week 2-3)
 
-### Series Generation - 3 routes
+### Series Generation - 2 routes
 | Route | Purpose | Thinking Level |
 |-------|---------|----------------|
 | `/api/series/[seriesId]/generate` | Full series storyline | high |
@@ -73,7 +128,7 @@ Phased migration from Gemini 2.5 to 3.0 Flash across 40+ API routes, starting wi
 
 ## Phase 3: Script Generation & Analysis (Week 4)
 
-### Script Generation - 8 routes
+### Script Generation - 7 routes
 | Route | Purpose | Thinking Level |
 |-------|---------|----------------|
 | `/api/vision/generate-script` | Main screenplay generation | high |
@@ -90,55 +145,68 @@ Phased migration from Gemini 2.5 to 3.0 Flash across 40+ API routes, starting wi
 
 ## Phase 4: Supporting Features (Week 5-6)
 
-### Migrate direct `@google/generative-ai` SDK calls to Vertex AI
-- [ ] `/api/prompt/modify/route.ts`
-- [ ] `/api/prompt/enhance/route.ts`
-- [ ] `/api/concept/analyze/route.ts`
-- [ ] `/api/concept/iterate/route.ts`
-- [ ] `/api/character/generate-description/route.ts`
-
 ### Update remaining routes
 - [ ] Cue Assistant routes (2)
 - [ ] Scene/Segment generation routes (6)
 - [ ] Vision pipeline routes (8)
 - [ ] Character utility routes (4)
+- [ ] Prompt refinement routes (3)
 
 ---
 
 ## API Inventory Tracking Table
 
-| Category | Route | Current Model | Target Model | Thinking | Status |
-|----------|-------|---------------|--------------|----------|--------|
-| **Series** | `/api/series/[seriesId]/generate` | 2.5-flash | 3.0-flash | high | ⬜ TODO |
-| **Series** | `/api/series/[seriesId]/analyze-resonance` | 2.5-flash | 3.0-flash | high | ⬜ TODO |
-| **Treatment** | `/api/ideation/film-treatment` | 2.5-flash | 3.0-flash | high | ⬜ TODO |
-| **Treatment** | `/api/ideation/core-concept` | 2.5-flash | 3.0-flash | medium | ⬜ TODO |
-| **Treatment** | `/api/ideation/character-breakdown` | 2.5-flash | 3.0-flash | high | ⬜ TODO |
-| **Treatment** | `/api/ideation/beat-sheet` | 2.5-flash | 3.0-flash | high | ⬜ TODO |
-| **Treatment** | `/api/ideation/generate` | 2.5-flash | 3.0-flash | high | ⬜ TODO |
-| **Treatment** | `/api/ideation/generate-sequential` | 2.5-flash | 3.0-flash | high | ⬜ TODO |
-| **Resonance** | `/api/treatment/analyze-resonance` | 2.5-flash | 3.0-flash | high | ⬜ TODO |
-| **Resonance** | `/api/treatment/optimize` | 2.5-flash | 3.0-flash | medium | ⬜ TODO |
-| **Script** | `/api/vision/generate-script` | 2.5-flash | 3.0-flash | high | ⬜ TODO |
-| **Script** | `/api/vision/generate-script-v2` | 2.5-flash | 3.0-flash | high | ⬜ TODO |
-| **Script** | `/api/generate/script` | 2.5-flash | 3.0-flash | medium | ⬜ TODO |
-| **Script** | `/api/generate/outline` | 2.5-flash | 3.0-flash | medium | ⬜ TODO |
-| **Script** | `/api/vision/optimize-script` | 2.5-flash | 3.0-flash | medium | ⬜ TODO |
-| **Script** | `/api/vision/review-script` | 2.5-flash | 3.0-flash | high | ⬜ TODO |
-| **Script** | `/api/vision/analyze-script` | 2.5-flash | 3.0-flash | high | ⬜ TODO |
-| **Prompt** | `/api/prompt/modify` | 2.5-flash-preview | 3.0-flash | minimal | ⬜ TODO |
-| **Prompt** | `/api/prompt/enhance` | 2.0-flash | 3.0-flash | minimal | ⬜ TODO |
+| Category | Route | Thinking | Validation | Status |
+|----------|-------|----------|------------|--------|
+| **V2 Services** | `BlueprintService` | high | Zod schema | ✅ DONE (central constant) |
+| **V2 Services** | `DirectionService` | medium | Zod schema | ✅ DONE (central constant) |
+| **V2 Services** | `StoryboardService` | medium | Zod schema | ✅ DONE (central constant) |
+| **Series** | `/api/series/[seriesId]/generate` | high | JSON parse | ⬜ TODO |
+| **Series** | `/api/series/[seriesId]/analyze-resonance` | high | JSON parse | ⬜ TODO |
+| **Treatment** | `/api/ideation/film-treatment` | high | safeParseJsonFromText | ⬜ TODO |
+| **Treatment** | `/api/ideation/core-concept` | medium | safeParseJsonFromText | ⬜ TODO |
+| **Treatment** | `/api/ideation/character-breakdown` | high | safeParseJsonFromText | ⬜ TODO |
+| **Treatment** | `/api/ideation/beat-sheet` | high | safeParseJsonFromText | ⬜ TODO |
+| **Treatment** | `/api/ideation/generate` | high | safeParseJsonFromText | ⬜ TODO |
+| **Treatment** | `/api/ideation/generate-sequential` | high | safeParseJsonFromText | ⬜ TODO |
+| **Resonance** | `/api/treatment/analyze-resonance` | high | safeParseJsonFromText | ⬜ TODO |
+| **Resonance** | `/api/treatment/optimize` | medium | safeParseJsonFromText | ⬜ TODO |
+| **Script** | `/api/vision/generate-script` | high | JSON parse | ⬜ TODO |
+| **Script** | `/api/vision/generate-script-v2` | high | JSON parse | ⬜ TODO |
+| **Script** | `/api/generate/script` | medium | JSON parse | ⬜ TODO |
+| **Script** | `/api/generate/outline` | medium | text | ⬜ TODO |
+| **Script** | `/api/vision/optimize-script` | medium | safeParseJsonFromText | ⬜ TODO |
+| **Script** | `/api/vision/review-script` | high | JSON parse | ⬜ TODO |
+| **Script** | `/api/vision/analyze-script` | high | JSON parse | ⬜ TODO |
+| **Prompt** | `/api/prompt/modify` | minimal | text (no JSON) | ✅ DONE (migrated to Vertex AI) |
+| **Prompt** | `/api/prompt/rephrase` | minimal | text (no JSON) | ✅ DONE (migrated to Vertex AI) |
+| **Prompt** | `/api/prompt/enhance` | minimal | text | ✅ DONE (central constant) |
+| **Segments** | `/api/scenes/[sceneId]/generate-segments` | minimal | responseMimeType JSON | ✅ DONE (migrated to Vertex AI) |
+| **Objects** | `/api/vision/suggest-objects` | medium | safeParseJsonFromText | ✅ DONE (migrated to Vertex AI) |
+| **Wardrobe** | `/api/character/suggest-wardrobes` | medium | safeParseJsonFromText | ✅ DONE (migrated to Vertex AI) |
+| **Review** | `/api/review/summarize` | medium | safeParseJsonFromText | ✅ DONE (migrated to Vertex AI) |
+
+---
+
+## Per-Route Validation Gate
+
+Each route moves from ⬜ TODO → ✅ DONE only after passing:
+
+1. **JSON Parse Success**: ≥ 99% success rate over 20 test calls (for JSON-returning routes)
+2. **Schema Validation**: No regressions in output schema (Zod where V2 services use it, manual spot-check elsewhere)
+3. **Latency**: Within 2× of Gemini 2.5 baseline
+4. **Quality**: Spot-check output quality on 3 representative inputs
 
 ---
 
 ## Testing Strategy
 
-**Recommended: Feature flag per-user (beta testers get Gemini 3)**
+**Recommended: Environment-variable rollback per environment**
 
-1. Add environment variable `GEMINI_3_ENABLED=false`
-2. Allow admin override in DOL dashboard
-3. Beta users can opt-in via settings
-4. A/B comparison reporting in analytics
+1. Deploy Phase 0 code with `GEMINI_MODEL=gemini-2.5-flash` env override in production
+2. Staging uses the default (`gemini-3.0-flash` from `modelConfig.ts`)
+3. Remove production env override once staging validation passes
+4. If issues arise, re-add `GEMINI_MODEL=gemini-2.5-flash` — instant rollback, zero code changes
 
 ---
 
@@ -158,70 +226,75 @@ Gemini 3 is more concise by default. Add explicit instructions for routes needin
 
 ---
 
-## Rollback Strategy
+## Rollback Strategy (Per-Route)
 
-1. Keep 2.5 model strings in config as fallback
-2. Feature flag allows instant rollback without deployment
-3. Monitor error rates and quality metrics during rollout
-
----
-
-## Central Migration Points
-
-### `src/lib/gemini/geminiClient.ts` ⭐ CRITICAL
-- Default Model: `gemini-2.5-flash`
-- **SINGLE POINT OF MIGRATION** - Most API routes use this
-- Changing the default here affects all routes using `geminiClient`
-
-### `src/lib/ai/llmService.ts`
-- LLM abstraction layer for multi-provider support
-- Wraps `generateContent` from Vertex AI client
+1. **Global rollback**: Set `GEMINI_MODEL=gemini-2.5-flash` in environment → all routes revert instantly
+2. **Per-route rollback**: Pass `model: GEMINI_TEXT_MODELS_PREVIOUS.flash` in the specific route's `generateText()` options
+3. **Previous-gen constants**: `GEMINI_TEXT_MODELS_PREVIOUS` map kept in `modelConfig.ts` for easy reference
+4. No deployment required for global rollback — just env var change
 
 ---
 
-## Implementation Code Snippet (Vertex AI Node.js SDK)
+## Central Files Reference
+
+### `src/lib/config/modelConfig.ts` ⭐ SINGLE SOURCE OF TRUTH
+- `GEMINI_TEXT_MODELS` — current model strings (`flash`, `pro`, `lite`)
+- `GEMINI_TEXT_MODELS_PREVIOUS` — previous-gen for rollback
+- `getGeminiTextModel(tier?)` — accessor with `GEMINI_MODEL` env override
+- `getModelFamily(model)` — returns `'2.5'` or `'3.0'` for thinking config
+- `buildThinkingConfig(model, options)` — cross-family thinking config builder
+- Also: `VEO_MODELS`, `IMAGEN_MODELS` (video/image — separate from text migration)
+
+### `src/lib/vertexai/gemini.ts` ⭐ UNIFIED AI CLIENT
+- `generateText()` — all text generation goes through here
+- `generateWithVision()` — all vision/multimodal goes through here
+- Both default to `getGeminiTextModel()` — no hardcoded model strings
+- Retry, timeout, auth, safety settings all built-in
+
+### `src/lib/safeJson.ts` — CANONICAL JSON PARSER
+- `safeParseJsonFromText()` — multi-strategy parser (direct → fenced → balanced → sanitized)
+- `strictJsonPromptSuffix` — append to prompts requesting JSON output
+- Used by `llmGateway.ts` and all migrated routes
+
+---
+
+## Implementation Code Snippet (Vertex AI REST API)
 
 ```typescript
-// New Gemini 3.0 configuration options
-interface Gemini3Config {
-  model: 'gemini-3.0-flash' | 'gemini-3.1-pro-preview' | 'gemini-3.1-flash-lite-preview'
-  thinkingConfig?: {
-    thinkingBudget: 'minimal' | 'low' | 'medium' | 'high'
-  }
-  mediaResolution?: 'media_resolution_high' | 'media_resolution_medium'
-}
+import { generateText } from '@/lib/vertexai/gemini'
 
-// Example generateContent call with Gemini 3.0
-const result = await model.generateContent({
-  contents: [{ role: 'user', parts: [{ text: prompt }] }],
-  generationConfig: {
-    temperature: 0.7,
-    maxOutputTokens: 8192,
-  },
-  // New Gemini 3.0 parameters
-  thinkingConfig: {
-    thinkingBudget: 'high', // For complex reasoning tasks
-  },
+// Simple call — picks up central model default
+const result = await generateText(prompt, {
+  temperature: 0.7,
+  responseMimeType: 'application/json',
+})
+
+// With thinking level (works on both 2.5 and 3.0)
+const result = await generateText(prompt, {
+  thinkingLevel: 'high',  // semantic level, auto-mapped per model family
+  responseMimeType: 'application/json',
+})
+
+// Pin a specific tier
+import { getGeminiTextModel } from '@/lib/config/modelConfig'
+const result = await generateText(prompt, {
+  model: getGeminiTextModel('pro'),  // 'gemini-3.1-pro-preview'
 })
 ```
 
 ---
 
-## Files Using Direct `@google/generative-ai` SDK (Require Migration)
+## Scope Exclusions
 
-These files bypass Vertex AI client and need refactoring:
-
-1. `src/app/api/prompt/modify/route.ts`
-2. `src/app/api/prompt/enhance/route.ts`
-3. `src/app/api/concept/analyze/route.ts`
-4. `src/app/api/concept/iterate/route.ts`
-5. `src/app/api/character/generate-description/route.ts`
-6. `src/app/api/continuity/analyze/route.ts` (partial)
+- **`gemini-2.5-flash-image`** in `geminiStudioImageClient.ts` — image generation model, separate capability, stays on 2.5 until a 3.0 equivalent is confirmed
+- **Imagen models** (`imagen-3.0-*`) — already managed separately in `modelConfig.ts`, not part of this migration
+- **Veo models** (`veo-3.1-*`) — already managed separately in `modelConfig.ts`
 
 ---
 
 ## Dependencies
 
-- Complete video production optimization first
-- Ensure Vertex AI SDK supports Gemini 3.0 parameters
-- Update `@google-cloud/vertexai` package if needed
+- ✅ Video production optimization (complete)
+- ✅ Phase 0 hardening (complete)
+- Validate Gemini 3.0 Flash availability in `us-central1` and `global` endpoints
+- Monitor Google Cloud billing for 3.0 pricing changes

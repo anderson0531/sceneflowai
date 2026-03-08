@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { generateText } from '@/lib/vertexai/gemini'
+import { safeParseJsonFromText } from '@/lib/safeJson'
 import { ObjectSuggestion, ObjectCategory, ObjectImportance } from '@/types/visionReferences'
 
 export const runtime = 'nodejs'
@@ -72,15 +73,7 @@ export async function POST(req: NextRequest) {
       ? `\n\nAlready added objects (exclude these): ${existingObjects.join(', ')}`
       : ''
 
-    // Use Gemini to analyze script for significant objects
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-    if (!apiKey) {
-      throw new Error('Missing Gemini API key')
-    }
-
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
-
+    // Use Vertex AI Gemini to analyze script for significant objects
     const analysisPrompt = `You are a production designer analyzing a film script to identify significant props, vehicles, set pieces, costumes, and technology items that need consistent visual reference images for production.
 
 SCRIPT SCENES:
@@ -118,30 +111,29 @@ Respond with valid JSON only:
   ]
 }`
 
-    const result = await model.generateContent(analysisPrompt)
-    const responseText = result.response.text()
+    const result = await generateText(analysisPrompt, {
+      temperature: 0.7,
+      maxOutputTokens: 4096,
+      responseMimeType: 'application/json',
+    })
 
-    // Parse JSON from response
+    // Parse JSON from response using safe parser
     let suggestions: ObjectSuggestion[] = []
     try {
-      // Extract JSON from response (handle markdown code blocks)
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/)
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0])
-        suggestions = (parsed.suggestions || []).map((s: any, index: number) => ({
-          id: `suggestion-${Date.now()}-${index}`,
-          name: s.name,
-          description: s.description,
-          category: s.category as ObjectCategory,
-          importance: s.importance as ObjectImportance,
-          suggestedPrompt: buildObjectPrompt(s.name, s.category, s.description),
-          sceneNumbers: s.sceneNumbers || [],
-          confidence: s.confidence || 0.7
-        }))
-      }
+      const parsed = safeParseJsonFromText(result.text)
+      suggestions = (parsed.suggestions || []).map((s: any, index: number) => ({
+        id: `suggestion-${Date.now()}-${index}`,
+        name: s.name,
+        description: s.description,
+        category: s.category as ObjectCategory,
+        importance: s.importance as ObjectImportance,
+        suggestedPrompt: buildObjectPrompt(s.name, s.category, s.description),
+        sceneNumbers: s.sceneNumbers || [],
+        confidence: s.confidence || 0.7
+      }))
     } catch (parseError) {
       console.error('[Object Suggestion] Failed to parse AI response:', parseError)
-      console.error('[Object Suggestion] Raw response:', responseText)
+      console.error('[Object Suggestion] Raw response:', result.text)
     }
 
     // Filter: Only show props that recur across 2+ scenes OR are critical importance

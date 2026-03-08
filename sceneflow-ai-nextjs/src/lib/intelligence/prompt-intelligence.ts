@@ -223,15 +223,14 @@ export async function generateSegmentPrompt(
     const systemPrompt = buildSystemPrompt(segmentPurpose)
     const userPrompt = buildUserPrompt(segmentPurpose, filmContext, adjacentScenes, sceneDirection)
     
-    console.log('[PromptIntelligence] Generating prompt with Gemini 2.5 for:', segmentPurpose)
+    console.log('[PromptIntelligence] Generating prompt with Gemini for:', segmentPurpose)
     
     const options: TextGenerationOptions = {
-      model: request.model || 'gemini-2.5-flash',
       temperature: 0.7,
       maxOutputTokens: 1024,
       responseMimeType: 'application/json',
       systemInstruction: systemPrompt,
-      thinkingBudget: thinkingLevel === 'high' ? 8192 : 1024,
+      thinkingLevel: thinkingLevel === 'high' ? 'high' : 'low',
       maxRetries: 2,
       timeoutMs: 15000
     }
@@ -342,12 +341,11 @@ Create a detailed, visually rich prompt that:
 5. Is optimized for AI image generation (Imagen 4 / DALL-E style)`
 
     const options: TextGenerationOptions = {
-      model: 'gemini-2.5-flash',
       temperature: 0.7,
       maxOutputTokens: 1024,
       responseMimeType: 'application/json',
       systemInstruction: systemPrompt,
-      thinkingBudget: thinkingLevel === 'high' ? 8192 : 1024,
+      thinkingLevel: thinkingLevel === 'high' ? 'high' : 'low',
       maxRetries: 2,
       timeoutMs: 15000
     }

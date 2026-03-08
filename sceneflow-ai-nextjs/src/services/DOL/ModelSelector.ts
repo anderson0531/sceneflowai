@@ -1,11 +1,12 @@
 import { APICategory, PlatformType, TaskType, TaskComplexity, PlatformModel, TaskContext } from '@/types/dol';
+import { GEMINI_TEXT_MODELS } from '@/lib/config/modelConfig';
 
 // Mock database functions - will be replaced with actual database calls
 const mockPlatformModels: PlatformModel[] = [
   // Intelligence Models
   {
     id: '1',
-    modelId: 'gemini-3.0-flash',
+    modelId: GEMINI_TEXT_MODELS.flash,
     platformId: 'google',
     platformType: PlatformType.GOOGLE,
     category: APICategory.INTELLIGENCE,
@@ -23,7 +24,7 @@ const mockPlatformModels: PlatformModel[] = [
   },
   {
     id: '2',
-    modelId: 'gemini-3.0-flash',
+    modelId: GEMINI_TEXT_MODELS.flash,
     platformId: 'google',
     platformType: PlatformType.GOOGLE,
     category: APICategory.INTELLIGENCE,

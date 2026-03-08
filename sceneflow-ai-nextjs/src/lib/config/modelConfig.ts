@@ -160,6 +160,104 @@ export function getEnvImagenQuality(): ImagenQualityTier {
 }
 
 // =============================================================================
+// TEXT GENERATION MODELS (Gemini)
+// =============================================================================
+
+export type GeminiTextTier = 'flash' | 'pro' | 'lite';
+
+/**
+ * Model family identifier — determines API behavior like thinking config format.
+ * - '2.5': numeric thinkingBudget (0–24576)
+ * - '3.0': string thinkingLevel ('minimal' | 'low' | 'medium' | 'high')
+ */
+export type GeminiModelFamily = '2.5' | '3.0';
+
+/** Thinking level for Gemini 3.0+ models */
+export type GeminiThinkingLevel = 'minimal' | 'low' | 'medium' | 'high';
+
+export const GEMINI_TEXT_MODELS = {
+  /** Gemini 3.0 Flash — primary workhorse, fast + capable */
+  flash: 'gemini-3.0-flash',
+
+  /** Gemini 3.1 Pro Preview — complex reasoning, highest quality */
+  pro: 'gemini-3.1-pro-preview',
+
+  /** Gemini 3.1 Flash Lite Preview — lightweight, lowest cost */
+  lite: 'gemini-3.1-flash-lite-preview',
+} as const;
+
+/** Previous-generation models kept for rollback */
+export const GEMINI_TEXT_MODELS_PREVIOUS = {
+  flash: 'gemini-2.5-flash',
+  pro: 'gemini-2.5-pro',
+} as const;
+
+/** Default Gemini text tier */
+export const DEFAULT_GEMINI_TEXT_TIER: GeminiTextTier = 'flash';
+
+/**
+ * Get the Gemini text model string for a quality tier.
+ * Checks GEMINI_MODEL env override first, then falls back to the tier map.
+ * 
+ * Usage:
+ *   getGeminiTextModel()        → env override or 'gemini-3.0-flash'
+ *   getGeminiTextModel('pro')   → 'gemini-3.1-pro-preview'
+ *   getGeminiTextModel('lite')  → 'gemini-3.1-flash-lite-preview'
+ */
+export function getGeminiTextModel(tier: GeminiTextTier = DEFAULT_GEMINI_TEXT_TIER): string {
+  // Environment override takes precedence (for rollback / staging)
+  const envModel = process.env.GEMINI_MODEL;
+  if (envModel && tier === DEFAULT_GEMINI_TEXT_TIER) {
+    return envModel;
+  }
+  return GEMINI_TEXT_MODELS[tier] || GEMINI_TEXT_MODELS.flash;
+}
+
+/**
+ * Detect which model family a model string belongs to.
+ * Used to determine thinking config format, endpoint routing, etc.
+ */
+export function getModelFamily(model: string): GeminiModelFamily {
+  if (model.includes('3.0') || model.includes('3.1') || model.startsWith('gemini-3')) {
+    return '3.0';
+  }
+  return '2.5';
+}
+
+/**
+ * Build the correct thinking config for the model family.
+ * 
+ * - Gemini 2.5: numeric thinkingBudget (0 = disabled, up to 24576)
+ * - Gemini 3.0+: string thinkingLevel ('minimal' | 'low' | 'medium' | 'high')
+ * 
+ * Returns undefined if no thinking config should be sent.
+ */
+export function buildThinkingConfig(
+  model: string,
+  options: { thinkingBudget?: number; thinkingLevel?: GeminiThinkingLevel }
+): Record<string, any> | undefined {
+  const family = getModelFamily(model);
+
+  if (family === '3.0') {
+    // Gemini 3.0+: string-based thinking levels
+    if (options.thinkingLevel) {
+      return { thinkingBudget: options.thinkingLevel };
+    }
+    // Map legacy numeric 0 → 'minimal' for backward compat
+    if (options.thinkingBudget === 0) {
+      return { thinkingBudget: 'minimal' };
+    }
+    return undefined; // Let model use its default
+  }
+
+  // Gemini 2.5: numeric thinking budget
+  if (options.thinkingBudget !== undefined) {
+    return { thinkingBudget: options.thinkingBudget };
+  }
+  return undefined;
+}
+
+// =============================================================================
 // BACKWARD COMPATIBILITY ALIASES
 // =============================================================================
 

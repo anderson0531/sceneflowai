@@ -306,7 +306,7 @@ async function callGoogleGemini(
   const prompt = promptParts.join('\n\n')
 
   console.log('[Ideation Generate] Calling Vertex AI Gemini...')
-  const content = await generateText(prompt, { model: 'gemini-2.5-flash' })
+  const content = await generateText(prompt, { })
   
   if (!content) {
     throw new Error('Vertex AI Gemini returned no content')

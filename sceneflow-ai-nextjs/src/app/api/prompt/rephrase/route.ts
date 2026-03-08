@@ -9,10 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
-
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+import { generateText } from '@/lib/vertexai/gemini'
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,17 +25,16 @@ export async function POST(request: NextRequest) {
 
     console.log('[Prompt Rephrase] Rephrasing prompt with flagged terms:', flaggedTerms)
 
-    // Use Gemini Flash for fast, cost-effective rephrasing
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.0-flash',
-      systemInstruction: systemPrompt || getDefaultSystemPrompt(),
-    })
-
+    const finalSystemPrompt = systemPrompt || getDefaultSystemPrompt()
     const finalUserPrompt = userPrompt || buildUserPrompt(prompt, flaggedTerms)
 
-    const result = await model.generateContent(finalUserPrompt)
-    const response = await result.response
-    const rephrasedPrompt = response.text().trim()
+    const result = await generateText(finalUserPrompt, {
+      systemInstruction: finalSystemPrompt,
+      temperature: 0.7,
+      maxOutputTokens: 2048,
+    })
+
+    const rephrasedPrompt = result.text.trim()
 
     console.log('[Prompt Rephrase] Original:', prompt.substring(0, 100) + '...')
     console.log('[Prompt Rephrase] Rephrased:', rephrasedPrompt.substring(0, 100) + '...')

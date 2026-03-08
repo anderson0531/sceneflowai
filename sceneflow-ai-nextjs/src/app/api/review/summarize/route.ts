@@ -10,7 +10,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { generateText } from '@/lib/vertexai/gemini'
+import { safeParseJsonFromText } from '@/lib/safeJson'
 import type { SceneFeedback, FeedbackSummary } from '@/types/productionStreams'
 
 export const runtime = 'nodejs'
@@ -232,48 +233,25 @@ export async function POST(request: NextRequest) {
       .replace('{{SCENE_COUNT}}', sceneCount.toString())
       .replace('{{FEEDBACK_DATA}}', feedbackText)
 
-    // Get Gemini API key
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
-    if (!apiKey) {
-      throw new Error('Missing Gemini API key')
-    }
-
-    // Call Gemini for AI summary
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
-    
-    const result = await model.generateContent({
-      contents: [{
-        role: 'user',
-        parts: [{ text: prompt }]
-      }],
-      generationConfig: {
-        maxOutputTokens: 2000,
-        temperature: 0.7,
-      },
+    // Call Gemini for AI summary via Vertex AI
+    const result = await generateText(prompt, {
       systemInstruction: 'You are a professional video production consultant providing actionable feedback analysis. Return JSON only.',
+      temperature: 0.7,
+      maxOutputTokens: 2000,
+      responseMimeType: 'application/json',
     })
 
-    const aiResult = result.response.text()
-
-    // Parse AI response
+    // Parse AI response using safe parser
     let aiSummary = ''
     let revisionRecommendations: FeedbackSummary['revisionRecommendations'] = []
 
     try {
-      // Try to parse as JSON
-      const jsonMatch = aiResult.match(/\{[\s\S]*\}/)
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0])
-        aiSummary = parsed.aiSummary || ''
-        revisionRecommendations = parsed.revisionRecommendations || []
-      } else {
-        // Use raw text as summary if JSON parse fails
-        aiSummary = aiResult
-      }
+      const parsed = safeParseJsonFromText(result.text)
+      aiSummary = parsed.aiSummary || ''
+      revisionRecommendations = parsed.revisionRecommendations || []
     } catch (parseError) {
       console.error('[Feedback Summarize] Failed to parse AI response:', parseError)
-      aiSummary = aiResult
+      aiSummary = result.text
     }
 
     // Build response

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { callLLM, LLMConfig, Provider } from '@/services/llmGateway'
+import { getGeminiTextModel } from '@/lib/config/modelConfig'
 
 export const V2BlueprintSchema = z.object({
   // Top-level summary
@@ -105,7 +106,7 @@ export async function analyzeBlueprintV2(req: V2BlueprintRequestType): Promise<{
   })()
   const model = req.model || (provider === 'openai'
     ? (process.env.OPENAI_MODEL || 'gpt-4.1')
-    : (process.env.GEMINI_MODEL || 'gemini-3.0-flash'))
+    : getGeminiTextModel())
 
   const modeHint = req.variantHint ? `\nMODE_HINT: ${req.variantHint}` : ''
   const narrativeIntro = req.detailMode === 'narrative' ? `\nOUTPUT STYLE: high-detail narrative. Use rich, concrete language, and fill arrays with 3–5 items.` : ''
@@ -209,7 +210,7 @@ export async function analyzeBlueprintV2Batch(req: V2BlueprintRequestType): Prom
     if (hasOpenAI) return 'openai'
     return 'gemini'
   })()
-  const model = req.model || (provider === 'openai' ? (process.env.OPENAI_MODEL || 'gpt-4.1') : (process.env.GEMINI_MODEL || 'gemini-3.0-flash'))
+  const model = req.model || (provider === 'openai' ? (process.env.OPENAI_MODEL || 'gpt-4.1') : getGeminiTextModel())
 
   const count = Math.min(Math.max(req.variants || 1, 1), 4)
   const modeHint = req.variantHint ? `\nMODE_HINT: ${req.variantHint}` : ''
