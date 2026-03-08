@@ -459,6 +459,77 @@ export function SceneProductionManager({
 
   // Manual sync audio handler - clears existing tracks and rebuilds fresh from scene data
   // Uses sceneRef to always get the latest scene data (avoids stale closure)
+  // Copy the regeneration prompt to clipboard for manual Gemini usage
+  const handleCopyPrompt = useCallback(async () => {
+    try {
+      const sceneData = sceneRef.current
+      const sceneDesc = sceneData?.visualDescription || sceneData?.action || sceneData?.heading || ''
+      const promptText = `Generate scene segments as JSON for this scene:\n\n${sceneDesc}\n\nReturn JSON in this format:\n{\n  "segments": [\n    {\n      "label": "Shot description",\n      "prompt": "Detailed visual prompt for this segment",\n      "duration": 5,\n      "shotType": "wide|medium|close-up|extreme-close-up",\n      "cameraMovement": "static|pan|tilt|dolly|tracking|crane"\n    }\n  ]\n}`
+      await navigator.clipboard?.writeText(promptText)
+      setCopiedPrompt(true)
+      setTimeout(() => setCopiedPrompt(false), 2000)
+      toast.success('Prompt copied to clipboard')
+    } catch (err) {
+      toast.error('Failed to copy prompt')
+    }
+  }, [])
+
+  // Process pasted JSON results from manual Gemini usage
+  const handleProcessPastedResults = useCallback(async () => {
+    if (!pastedJson.trim()) return
+    
+    setIsProcessingPaste(true)
+    try {
+      const parsed = JSON.parse(pastedJson)
+      const rawSegments = parsed.segments || parsed
+      
+      if (!Array.isArray(rawSegments) || rawSegments.length === 0) {
+        toast.error('Invalid JSON: expected an array of segments or { segments: [...] }')
+        return
+      }
+      
+      // Convert pasted segments into SceneSegment format
+      let currentTime = 0
+      const segments: SceneSegment[] = rawSegments.map((seg: any, idx: number) => {
+        const duration = seg.duration || 5
+        const segment: SceneSegment = {
+          segmentId: `seg-${sceneId}-paste-${Date.now()}-${idx}`,
+          sequenceIndex: idx,
+          startTime: currentTime,
+          endTime: currentTime + duration,
+          status: 'DRAFT',
+          assetType: null,
+          references: {
+            characterIds: [],
+            sceneRefIds: [],
+            objectRefIds: [],
+          },
+          takes: [],
+          generatedPrompt: seg.prompt || seg.label || `Segment ${idx + 1}`,
+        }
+        currentTime += duration
+        return segment
+      })
+      
+      await onInitialize(sceneId, {
+        targetDuration: currentTime,
+        segments
+      })
+      
+      setPastedJson('')
+      setShowPasteDialog(false)
+      toast.success(`Created ${segments.length} segments from pasted results`)
+    } catch (err) {
+      if (err instanceof SyntaxError) {
+        toast.error('Invalid JSON format. Please paste valid JSON.')
+      } else {
+        toast.error(err instanceof Error ? err.message : 'Failed to process pasted results')
+      }
+    } finally {
+      setIsProcessingPaste(false)
+    }
+  }, [pastedJson, sceneId, onInitialize])
+
   const handleSyncAudio = useCallback(() => {
     // Use ref to get the latest scene data (not stale from closure)
     const currentScene = sceneRef.current
@@ -515,6 +586,9 @@ export function SceneProductionManager({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [showAudioAssetsDialog, setShowAudioAssetsDialog] = useState(false)
   const [showPasteDialog, setShowPasteDialog] = useState(false)
+  const [pastedJson, setPastedJson] = useState('')
+  const [isProcessingPaste, setIsProcessingPaste] = useState(false)
+  const [copiedPrompt, setCopiedPrompt] = useState(false)
   const [generationProgress, setGenerationProgress] = useState(0)
   const [currentPlayingSegmentId, setCurrentPlayingSegmentId] = useState<string | null>(null)
   const [isSidePanelVisible, setIsSidePanelVisible] = useState(true)
