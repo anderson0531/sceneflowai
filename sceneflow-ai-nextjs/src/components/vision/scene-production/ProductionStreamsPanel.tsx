@@ -547,21 +547,9 @@ export function ProductionStreamsPanel({
   const handleRenderNew = async () => {
     if (!newLanguage) return
     
-    if (selectedStreamType === 'animatic') {
-      const settings: AnimaticRenderSettings = {
-        kenBurnsIntensity,
-        transitionStyle,
-        transitionDuration: 0.5,
-        includeSubtitles: false,
-      }
-      
-      if (onRenderAnimatic) {
-        await onRenderAnimatic(newLanguage, newResolution, settings)
-      } else if (onRenderProduction) {
-        // Legacy fallback
-        await onRenderProduction(newLanguage, newResolution)
-      }
-    } else if (selectedStreamType === 'video' && onRenderVideo) {
+    // Only video rendering is triggered from this panel.
+    // Animatic rendering is handled by the Storyboard Editor's "Render Animatic" button.
+    if (selectedStreamType === 'video' && onRenderVideo) {
       await onRenderVideo(newLanguage, newResolution)
     }
   }
@@ -657,113 +645,66 @@ export function ProductionStreamsPanel({
         </div>
       )}
       
-      {/* Add New Production */}
-      <div className="flex items-center gap-2 p-3 bg-gray-800/30 rounded-lg border border-dashed border-gray-700">
-        <Globe className="w-4 h-4 text-gray-500" />
-        <Select
-          value={newLanguage}
-          onValueChange={setNewLanguage}
-          disabled={disabled || isRendering}
-        >
-          <SelectTrigger className="w-[140px] h-8 bg-gray-800 border-gray-600 text-sm">
-            <SelectValue placeholder="Language" />
-          </SelectTrigger>
-          <SelectContent className="bg-gray-800 border-gray-600">
-            {/* Show current language first, even if stream exists */}
-            {SUPPORTED_LANGUAGES.map(lang => (
-              <SelectItem 
-                key={lang.code} 
-                value={lang.code}
-                className="text-gray-200"
-              >
-                {FLAG_EMOJIS[lang.code] || '🌐'} {lang.name}
-                {existingLanguages.has(lang.code) && ' (exists)'}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        
-        <Select
-          value={newResolution}
-          onValueChange={(v) => setNewResolution(v as '720p' | '1080p' | '4K')}
-          disabled={disabled || isRendering}
-        >
-          <SelectTrigger className="w-[90px] h-8 bg-gray-800 border-gray-600 text-sm">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="bg-gray-800 border-gray-600">
-            <SelectItem value="720p" className="text-gray-200">720p</SelectItem>
-            <SelectItem value="1080p" className="text-gray-200">1080p</SelectItem>
-            <SelectItem value="4K" className="text-gray-200">4K</SelectItem>
-          </SelectContent>
-        </Select>
-        
-        <Button
-          size="sm"
-          onClick={handleRenderNew}
-          disabled={disabled || isRendering || !newLanguage || (selectedStreamType === 'video' && !videoGenerationAvailable)}
-          className={`h-8 text-white ${
-            selectedStreamType === 'animatic' 
-              ? 'bg-purple-600 hover:bg-purple-700' 
-              : 'bg-indigo-600 hover:bg-indigo-700'
-          }`}
-        >
-          {isRendering ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-              Rendering...
-            </>
-          ) : (
-            <>
-              <Plus className="w-4 h-4 mr-1" />
-              Render {STREAM_TYPE_CONFIG[selectedStreamType].label}
-            </>
-          )}
-        </Button>
-      </div>
-      
-      {/* Animatic Settings (only shown when animatic tab is selected) */}
-      {selectedStreamType === 'animatic' && (
-        <div className="flex items-center gap-4 p-3 bg-gray-800/30 rounded-lg border border-gray-700/50">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-400">Ken Burns:</span>
-            <Select
-              value={kenBurnsIntensity}
-              onValueChange={(v) => setKenBurnsIntensity(v as KenBurnsIntensity)}
-              disabled={disabled || isRendering}
-            >
-              <SelectTrigger className="w-[100px] h-7 bg-gray-800 border-gray-600 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-600">
-                {KEN_BURNS_OPTIONS.map(opt => (
-                  <SelectItem key={opt.value} value={opt.value} className="text-gray-200 text-xs">
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      {/* Add New Production - Only shown on Video tab */}
+      {selectedStreamType === 'video' && (
+        <div className="flex items-center gap-2 p-3 bg-gray-800/30 rounded-lg border border-dashed border-gray-700">
+          <Globe className="w-4 h-4 text-gray-500" />
+          <Select
+            value={newLanguage}
+            onValueChange={setNewLanguage}
+            disabled={disabled || isRendering}
+          >
+            <SelectTrigger className="w-[140px] h-8 bg-gray-800 border-gray-600 text-sm">
+              <SelectValue placeholder="Language" />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-800 border-gray-600">
+              {/* Show current language first, even if stream exists */}
+              {SUPPORTED_LANGUAGES.map(lang => (
+                <SelectItem 
+                  key={lang.code} 
+                  value={lang.code}
+                  className="text-gray-200"
+                >
+                  {FLAG_EMOJIS[lang.code] || '🌐'} {lang.name}
+                  {existingLanguages.has(lang.code) && ' (exists)'}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-400">Transitions:</span>
-            <Select
-              value={transitionStyle}
-              onValueChange={(v) => setTransitionStyle(v as 'cut' | 'crossfade' | 'fade-to-black')}
-              disabled={disabled || isRendering}
-            >
-              <SelectTrigger className="w-[110px] h-7 bg-gray-800 border-gray-600 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-600">
-                {TRANSITION_OPTIONS.map(opt => (
-                  <SelectItem key={opt.value} value={opt.value} className="text-gray-200 text-xs">
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Select
+            value={newResolution}
+            onValueChange={(v) => setNewResolution(v as '720p' | '1080p' | '4K')}
+            disabled={disabled || isRendering}
+          >
+            <SelectTrigger className="w-[90px] h-8 bg-gray-800 border-gray-600 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-800 border-gray-600">
+              <SelectItem value="720p" className="text-gray-200">720p</SelectItem>
+              <SelectItem value="1080p" className="text-gray-200">1080p</SelectItem>
+              <SelectItem value="4K" className="text-gray-200">4K</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Button
+            size="sm"
+            onClick={handleRenderNew}
+            disabled={disabled || isRendering || !newLanguage || !videoGenerationAvailable}
+            className="h-8 text-white bg-indigo-600 hover:bg-indigo-700"
+          >
+            {isRendering ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                Rendering...
+              </>
+            ) : (
+              <>
+                <Plus className="w-4 h-4 mr-1" />
+                Render Video
+              </>
+            )}
+          </Button>
         </div>
       )}
       
@@ -777,13 +718,17 @@ export function ProductionStreamsPanel({
         </div>
       )}
       
-      {/* Help text */}
-      {currentStreams.length === 0 && selectedStreamType === 'animatic' && (
-        <p className="text-xs text-gray-500 text-center">
-          Create animatic streams to render your scene with Ken Burns animation and audio.
-          Great for early reviews and storyboard presentations.
-        </p>
+      {/* Animatic tab info - rendering is done from Storyboard Editor */}
+      {selectedStreamType === 'animatic' && animaticStreams.length === 0 && (
+        <div className="p-3 bg-purple-900/20 border border-purple-700/50 rounded-lg">
+          <p className="text-xs text-purple-300 text-center">
+            Animatics are rendered from the Storyboard Editor using the &quot;Render Animatic&quot; button.
+            Completed animatic renders will appear here.
+          </p>
+        </div>
       )}
+      
+      {/* Help text */}
       {currentStreams.length === 0 && selectedStreamType === 'video' && videoGenerationAvailable && (
         <p className="text-xs text-gray-500 text-center">
           Create video streams to combine your AI-generated video segments with audio.
@@ -793,4 +738,3 @@ export function ProductionStreamsPanel({
     </div>
   )
 }
-

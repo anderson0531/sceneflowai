@@ -30,7 +30,7 @@ import type {
 import { RENDER_DEFAULTS } from '@/lib/video/renderTypes'
 import { uploadJobSpec, getOutputPath, getRenderBucket, getSignedDownloadUrl } from '@/lib/gcs/renderStorage'
 import { isCloudRunJobsEnabled } from '@/lib/video/CloudRunJobsService'
-import { getJobStatus, setJobStatus } from '@/lib/render/jobStatusStore'
+import { getJobStatus, getJobStatusAsync, setJobStatus } from '@/lib/render/jobStatusStore'
 
 // Credit cost constants
 const SERVER_RENDER_CREDITS_PER_MINUTE = 5
@@ -572,11 +572,11 @@ export async function GET(
       )
     }
     
-    // Check in-memory store
-    const jobStatus = getJobStatus(jobId)
+    // Check database first (persistent), then in-memory fallback
+    const jobStatus = await getJobStatusAsync(jobId)
     
     if (!jobStatus) {
-      // Job not found in memory - could be expired or from before restart
+      // Job not found in DB or memory - could be expired or from before restart
       return NextResponse.json({
         success: true,
         jobId,

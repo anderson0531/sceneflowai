@@ -1120,25 +1120,24 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
         </div>
       )}
       
-      {/* Legacy Production Streams Panel - for viewing existing streams */}
-      {productionStreams.length > 0 && (
-        <div className="mt-4 p-4 bg-slate-800/50 rounded-lg border border-purple-500/30">
-          <ProductionStreamsPanel
-            productionStreams={productionStreams}
-            selectedLanguage={selectedStreamLanguage}
-            onRenderProduction={handleRenderProduction}
-            onDeleteStream={handleDeleteStream}
-            onReRenderStream={handleReRenderStream}
-            onPreviewStream={handlePreviewStream}
-            onDownloadStream={handleDownloadStream}
-            isRendering={!!renderingStreamId}
-            renderingStreamId={renderingStreamId}
-            renderProgress={streamRenderProgress}
-            hasSegmentChanges={false}
-            disabled={isRendering}
-          />
-        </div>
-      )}
+      {/* Production Streams Panel - View & manage animatic/video renders */}
+      <div className="mt-4 p-4 bg-slate-800/50 rounded-lg border border-purple-500/30">
+        <ProductionStreamsPanel
+          productionStreams={productionStreams}
+          selectedLanguage={selectedStreamLanguage}
+          onRenderVideo={handleRenderProduction}
+          onDeleteStream={handleDeleteStream}
+          onReRenderStream={handleReRenderStream}
+          onPreviewStream={handlePreviewStream}
+          onDownloadStream={handleDownloadStream}
+          isRendering={!!renderingStreamId}
+          renderingStreamId={renderingStreamId}
+          renderProgress={streamRenderProgress}
+          hasSegmentChanges={false}
+          videoGenerationAvailable={segments.some(s => s.activeAssetUrl && s.status === 'COMPLETE')}
+          disabled={isRendering}
+        />
+      </div>
 
       {/* DirectorDialog Modal */}
       {selectedSegment && (

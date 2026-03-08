@@ -3069,6 +3069,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             sceneId={sceneId}
             sceneNumber={animaticRenderSceneIdx + 1}
             projectId={projectId}
+            renderMode="animatic"
             segments={sceneProductionData?.segments || []}
             productionData={sceneProductionData || null}
             audioData={{
@@ -3082,9 +3083,27 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               musicUrl: scene?.musicAudio || scene?.music?.url,
               musicDuration: scene?.music?.duration,
             }}
-            onRenderComplete={(downloadUrl) => {
+            onRenderComplete={(downloadUrl, streamType) => {
               toast.success('Animatic rendered successfully!')
               console.log('[ScriptPanel] Animatic render complete:', downloadUrl)
+              
+              // Persist the animatic stream to production data
+              if (onProductionDataChange && sceneProductionData) {
+                const existingStreams = sceneProductionData.productionStreams || []
+                const newStream = {
+                  id: `animatic-${selectedLanguage}-${Date.now()}`,
+                  streamType: 'animatic' as const,
+                  language: selectedLanguage,
+                  languageLabel: SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name || selectedLanguage,
+                  status: 'complete' as const,
+                  mp4Url: downloadUrl,
+                  completedAt: new Date().toISOString(),
+                }
+                onProductionDataChange(sceneId, {
+                  ...sceneProductionData,
+                  productionStreams: [...existingStreams, newStream],
+                })
+              }
             }}
           />
         )

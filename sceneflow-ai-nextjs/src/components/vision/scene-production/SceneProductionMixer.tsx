@@ -2568,6 +2568,37 @@ export function SceneProductionMixer({
     textOverlays, masterSegmentVolume, watermarkConfig
   ])
   
+  // Re-upload a GCS signed URL to Vercel Blob for persistent storage
+  // GCS signed URLs expire after 7 days. Vercel Blob URLs are permanent.
+  const reuploadToVercelBlob = async (gcsUrl: string, label: string): Promise<string> => {
+    try {
+      // Fetch through our proxy to bypass CORS
+      const proxyUrl = `/api/proxy-video?url=${encodeURIComponent(gcsUrl)}`
+      console.log(`[${label}] Fetching render via proxy for Vercel Blob re-upload...`)
+      const response = await fetch(proxyUrl)
+      if (!response.ok) {
+        throw new Error(`Proxy fetch failed: ${response.status}`)
+      }
+      const blob = await response.blob()
+      const filename = `renders/scene-${sceneNumber}-${selectedLanguage}-${Date.now()}.mp4`
+      const videoFile = new File([blob], filename, { type: blob.type || 'video/mp4' })
+      console.log(`[${label}] Re-uploading ${(videoFile.size / 1024 / 1024).toFixed(1)}MB to Vercel Blob...`)
+      const uploadedBlob = await upload(
+        filename,
+        videoFile,
+        {
+          access: 'public',
+          handleUploadUrl: '/api/segments/upload-video-url',
+        }
+      )
+      console.log(`[${label}] Persistent URL: ${uploadedBlob.url}`)
+      return uploadedBlob.url
+    } catch (err) {
+      console.warn(`[${label}] Vercel Blob re-upload failed, using GCS URL:`, err)
+      return gcsUrl // Fallback to original GCS URL
+    }
+  }
+
   // Poll job status
   const pollJobStatus = async (jobId: string) => {
     const maxAttempts = 120
@@ -2584,20 +2615,29 @@ export function SceneProductionMixer({
         const data = await response.json()
         
         if (data.status === 'COMPLETED') {
+          setRenderProgress(95)
+          
+          // Re-upload GCS signed URL to Vercel Blob for persistent storage
+          // GCS signed URLs expire after 7 days; Vercel Blob URLs are permanent
+          let persistentUrl = data.downloadUrl
+          if (data.downloadUrl?.includes('storage.googleapis.com')) {
+            persistentUrl = await reuploadToVercelBlob(data.downloadUrl, 'ServerRender')
+          }
+          
           setRenderStatus('complete')
           setRenderProgress(100)
-          setLastRenderedUrl(data.downloadUrl)
+          setLastRenderedUrl(persistentUrl)
           
           // Cache the video to IndexedDB for offline access
           try {
             const { cacheVideoFromUrl } = await import('@/lib/storage/indexedDB')
-            await cacheVideoFromUrl(projectId, sceneId, selectedLanguage, data.downloadUrl)
+            await cacheVideoFromUrl(projectId, sceneId, selectedLanguage, persistentUrl)
             console.log('[ServerRender] Video cached to IndexedDB')
           } catch (cacheError) {
             console.warn('[ServerRender] Failed to cache video to IndexedDB:', cacheError)
           }
           
-          onRenderComplete?.(data.downloadUrl, selectedLanguage)
+          onRenderComplete?.(persistentUrl, selectedLanguage)
           return
         }
         
@@ -3076,20 +3116,28 @@ export function SceneProductionMixer({
         
         if (data.status === 'complete') {
           const outputUrl = data.outputUrl || data.publicUrl
+          setRenderProgress(95)
+          
+          // Re-upload GCS signed URL to Vercel Blob for persistent storage
+          let persistentUrl = outputUrl
+          if (outputUrl?.includes('storage.googleapis.com')) {
+            persistentUrl = await reuploadToVercelBlob(outputUrl, 'HeadlessRender')
+          }
+          
           setRenderStatus('complete')
           setRenderProgress(100)
-          setLastRenderedUrl(outputUrl)
+          setLastRenderedUrl(persistentUrl)
           
           // Cache the video to IndexedDB for offline access
           try {
             const { cacheVideoFromUrl } = await import('@/lib/storage/indexedDB')
-            await cacheVideoFromUrl(projectId, sceneId, selectedLanguage, outputUrl)
+            await cacheVideoFromUrl(projectId, sceneId, selectedLanguage, persistentUrl)
             console.log('[HeadlessRender] Video cached to IndexedDB')
           } catch (cacheError) {
             console.warn('[HeadlessRender] Failed to cache video to IndexedDB:', cacheError)
           }
           
-          onRenderComplete?.(outputUrl, selectedLanguage)
+          onRenderComplete?.(persistentUrl, selectedLanguage)
           return
         }
         

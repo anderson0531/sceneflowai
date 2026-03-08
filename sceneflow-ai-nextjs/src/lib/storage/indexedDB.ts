@@ -378,6 +378,29 @@ export async function getStorageStats(): Promise<{
 }
 
 /**
+ * Check if a URL is a GCS signed URL that needs CORS proxying.
+ * GCS signed URLs from storage.googleapis.com are blocked by CORS when
+ * fetched from the browser. We proxy these through our server-side API.
+ */
+function needsCorsProxy(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    return parsed.hostname === 'storage.googleapis.com' || 
+           parsed.hostname === 'storage.cloud.google.com'
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Get the proxied URL for a video that needs CORS bypass.
+ * Routes the fetch through /api/proxy-video which fetches server-side.
+ */
+function getProxiedUrl(originalUrl: string): string {
+  return `/api/proxy-video?url=${encodeURIComponent(originalUrl)}`
+}
+
+/**
  * Fetch a video from a URL and store it in IndexedDB
  */
 export async function cacheVideoFromUrl(
@@ -398,9 +421,11 @@ export async function cacheVideoFromUrl(
   }
 
   try {
-    // Fetch the video
-    console.log(`[IndexedDB] Caching video from: ${cloudUrl.substring(0, 50)}...`)
-    const response = await fetch(cloudUrl)
+    // Use proxy for GCS URLs to bypass CORS restrictions
+    const fetchUrl = needsCorsProxy(cloudUrl) ? getProxiedUrl(cloudUrl) : cloudUrl
+    
+    console.log(`[IndexedDB] Caching video from: ${cloudUrl.substring(0, 50)}...${needsCorsProxy(cloudUrl) ? ' (via proxy)' : ''}`)
+    const response = await fetch(fetchUrl)
     if (!response.ok) {
       throw new Error(`Failed to fetch video: ${response.status}`)
     }

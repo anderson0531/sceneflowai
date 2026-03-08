@@ -64,6 +64,8 @@ interface SceneRenderDialogProps {
   projectId: string
   segments: SceneSegment[]
   productionData: SceneProductionData | null
+  /** Render mode: 'video' stitches AI video segments, 'animatic' renders Ken Burns from keyframe images */
+  renderMode?: 'video' | 'animatic'
   audioData?: {
     narrationUrl?: string
     narrationDuration?: number
@@ -77,7 +79,7 @@ interface SceneRenderDialogProps {
     sfxUrl?: string
     sfxDuration?: number
   }
-  onRenderComplete?: (downloadUrl: string) => void
+  onRenderComplete?: (downloadUrl: string, streamType?: 'video' | 'animatic') => void
 }
 
 type RenderStatus = 'idle' | 'preparing' | 'uploading' | 'rendering' | 'complete' | 'error'
@@ -90,6 +92,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
   projectId,
   segments,
   productionData,
+  renderMode = 'video',
   audioData,
   onRenderComplete,
 }) => {
@@ -115,10 +118,26 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
   const [jobId, setJobId] = useState<string | null>(null)
 
-  // Calculate rendered segments
+  // Calculate rendered segments (video mode) or keyframe segments (animatic mode)
   const renderedSegments = useMemo(() => {
+    if (renderMode === 'animatic') {
+      // For animatic: use segments with image URLs (keyframes)
+      return segments.filter(s => {
+        const imageUrl = s.keyframeUrl || s.thumbnailUrl || (s as any).imageUrl
+        return !!imageUrl
+      })
+    }
     return segments.filter(s => s.activeAssetUrl && s.status === 'COMPLETE')
-  }, [segments])
+  }, [segments, renderMode])
+
+  // Detect effective mode: auto-detect if segments have video vs only images
+  const effectiveMode = useMemo(() => {
+    if (renderMode === 'animatic') return 'animatic'
+    // If explicitly video but no video segments, fall back to animatic
+    const hasVideoSegments = segments.some(s => s.activeAssetUrl && s.status === 'COMPLETE')
+    if (!hasVideoSegments) return 'animatic'
+    return 'video'
+  }, [renderMode, segments])
 
   // Calculate total video duration
   const totalDuration = useMemo(() => {
@@ -160,7 +179,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
   // Handle render button click
   const handleRender = async () => {
     if (renderedSegments.length === 0) {
-      setError('No rendered video segments available')
+      setError(effectiveMode === 'animatic' ? 'No keyframe images available' : 'No rendered video segments available')
       return
     }
 
@@ -169,6 +188,101 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
     setError(null)
     setDownloadUrl(null)
 
+    try {
+      if (effectiveMode === 'animatic') {
+        await handleAnimaticRender()
+      } else {
+        await handleVideoRender()
+      }
+    } catch (err) {
+      console.error('[SceneRenderDialog] Render error:', err)
+      setError(err instanceof Error ? err.message : 'Unknown error')
+      setStatus('error')
+    }
+  }
+
+  // Animatic render: calls /api/export/scene-animatic with keyframe images
+  const handleAnimaticRender = async () => {
+    // Build segment data with image URLs
+    const animaticSegments = renderedSegments.map(s => ({
+      segmentId: s.segmentId,
+      imageUrl: s.keyframeUrl || s.thumbnailUrl || (s as any).imageUrl || '',
+      startTime: s.startTime,
+      duration: s.endTime - s.startTime,
+    }))
+
+    // Build audio clips
+    const audioClips: Array<{ url: string; startTime: number; duration: number; volume?: number; type?: string }> = []
+    if (narrationConfig.enabled && audioData?.narrationUrl) {
+      audioClips.push({
+        url: audioData.narrationUrl,
+        startTime: narrationConfig.startOffset,
+        duration: audioData.narrationDuration || totalDuration,
+        volume: narrationConfig.volume,
+        type: 'narration',
+      })
+    }
+    if (dialogueConfig.enabled && audioData?.dialogueEntries) {
+      audioData.dialogueEntries.filter(d => d.audioUrl).forEach(d => {
+        audioClips.push({
+          url: d.audioUrl!,
+          startTime: dialogueConfig.startOffset,
+          duration: d.duration || 3,
+          volume: dialogueConfig.volume,
+          type: 'dialogue',
+        })
+      })
+    }
+    if (musicConfig.enabled && audioData?.musicUrl) {
+      audioClips.push({
+        url: audioData.musicUrl,
+        startTime: musicConfig.startOffset,
+        duration: audioData.musicDuration || totalDuration,
+        volume: musicConfig.volume,
+        type: 'music',
+      })
+    }
+
+    setStatus('uploading')
+    setProgress(10)
+
+    // Call scene animatic API
+    const response = await fetch('/api/export/scene-animatic', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        projectId,
+        sceneId,
+        sceneNumber,
+        language: selectedLanguage,
+        resolution,
+        segments: animaticSegments,
+        audioClips,
+        settings: {
+          kenBurnsIntensity: 'subtle',
+          transitionStyle: 'crossfade',
+          transitionDuration: 0.5,
+          includeSubtitles: false,
+        },
+      }),
+    })
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(data.error || `Animatic render failed: ${response.status}`)
+    }
+
+    const result = await response.json()
+    setJobId(result.jobId)
+    setStatus('rendering')
+    setProgress(30)
+
+    // Poll for animatic job status via RenderJob DB
+    await pollAnimaticJobStatus(result.jobId)
+  }
+
+  // Video render: calls /api/scene/[sceneId]/render with video segments
+  const handleVideoRender = async () => {
     try {
       // Build request payload with per-segment audio settings
       const segmentData = renderedSegments.map((s, idx) => {
@@ -281,13 +395,58 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
       await pollJobStatus(result.jobId)
 
     } catch (err) {
-      console.error('[SceneRenderDialog] Render error:', err)
+      console.error('[SceneRenderDialog] Video render error:', err)
       setError(err instanceof Error ? err.message : 'Unknown error')
       setStatus('error')
     }
   }
 
-  // Poll job status until complete
+  // Poll animatic job status from /api/export/video/status (uses RenderJob DB)
+  const pollAnimaticJobStatus = async (jobId: string) => {
+    const maxAttempts = 180 // 15 minutes at 5s intervals
+    let attempts = 0
+
+    while (attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 5000))
+      attempts++
+
+      try {
+        // Poll via video status endpoint which reads from RenderJob DB
+        const response = await fetch(`/api/export/video/status/${jobId}`)
+        if (!response.ok) continue
+
+        const data = await response.json()
+        
+        // Status endpoint returns 'done' for completed, 'rendering' for in-progress
+        if (data.status === 'done') {
+          const url = data.url || data.downloadUrl || data.download_url
+          if (!url) {
+            console.warn('[SceneRenderDialog] Animatic complete but no URL yet, continuing poll...')
+            continue
+          }
+          setStatus('complete')
+          setProgress(100)
+          setDownloadUrl(url)
+          onRenderComplete?.(url, 'animatic')
+          return
+        }
+
+        if (data.status === 'failed' || data.status === 'blocked') {
+          throw new Error(data.error || 'Animatic render job failed')
+        }
+
+        // Update progress
+        setProgress(Math.max(30, data.progress || 30 + Math.min(attempts, 60)))
+      } catch (err) {
+        if (err instanceof Error && err.message.includes('failed')) throw err
+        console.warn('[SceneRenderDialog] Animatic poll error:', err)
+      }
+    }
+
+    throw new Error('Animatic render timed out after 15 minutes')
+  }
+
+  // Poll video job status until complete
   const pollJobStatus = async (jobId: string) => {
     const maxAttempts = 120
     let attempts = 0
@@ -306,7 +465,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
           setStatus('complete')
           setProgress(100)
           setDownloadUrl(data.downloadUrl)
-          onRenderComplete?.(data.downloadUrl)
+          onRenderComplete?.(data.downloadUrl, 'video')
           return
         }
 
