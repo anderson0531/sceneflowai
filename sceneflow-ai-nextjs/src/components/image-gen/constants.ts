@@ -13,6 +13,7 @@ export const TIME_OF_DAY_OPTIONS = [
   { value: 'dawn', label: 'Dawn' },
   { value: 'dusk', label: 'Dusk' },
   { value: 'golden-hour', label: 'Golden Hour' },
+  { value: 'ambient', label: 'Ambient / N/A' },
 ] as const
 
 export const WEATHER_OPTIONS = [
@@ -22,6 +23,7 @@ export const WEATHER_OPTIONS = [
   { value: 'stormy', label: 'Stormy' },
   { value: 'foggy', label: 'Foggy' },
   { value: 'snowy', label: 'Snowy' },
+  { value: 'none', label: 'None (Interior/Abstract)' },
 ] as const
 
 export const ATMOSPHERE_OPTIONS = [
@@ -32,6 +34,9 @@ export const ATMOSPHERE_OPTIONS = [
   { value: 'serene', label: 'Serene' },
   { value: 'melancholic', label: 'Melancholic' },
   { value: 'hopeful', label: 'Hopeful' },
+  { value: 'futuristic', label: 'Futuristic / High-Tech' },
+  { value: 'intimate', label: 'Intimate / Warm' },
+  { value: 'custom', label: 'Custom (from Scene Direction)' },
 ] as const
 
 // ============================================================================
@@ -79,6 +84,7 @@ export const LIGHTING_OPTIONS = [
   { value: 'harsh', label: 'Harsh' },
   { value: 'silhouette', label: 'Silhouette' },
   { value: 'neon', label: 'Neon / Stylized' },
+  { value: 'stylized', label: 'Stylized / Digital' },
 ] as const
 
 export const LENS_OPTIONS = [

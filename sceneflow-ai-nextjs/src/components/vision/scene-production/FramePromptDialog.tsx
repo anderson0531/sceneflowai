@@ -345,7 +345,11 @@ export function FramePromptDialog({
     }
     
     // Auto-detect characters from segment action text using intelligent matching
-    if (characters.length > 0) {
+    // CRITICAL: Skip character detection for no-talent scenes (title sequences, VFX-only, etc.)
+    const talentText = sceneDirection?.talent?.blocking || sceneDirection?.talent?.emotionalBeat || ''
+    const isNoTalentScene = talentText.toLowerCase().match(/\b(n\/a|no\s+(live\s+)?actors?|no\s+talent|no\s+performers?)\b/)
+    
+    if (!isNoTalentScene && characters.length > 0) {
       const segmentText = segment.action || segment.subject || segment.actionPrompt || ''
       const detected = findSceneCharacters(segmentText, characters.map(c => ({ name: c.name })))
       const detectedNames = detected.map(c => c.name)
@@ -357,6 +361,9 @@ export function FramePromptDialog({
         const withRefs = characters.filter(c => c.referenceImage).map(c => c.name)
         setSelectedCharacterNames(withRefs.slice(0, 3))
       }
+    } else if (isNoTalentScene) {
+      setSelectedCharacterNames([])
+      console.log('[FramePromptDialog] No-talent scene detected — skipping character auto-selection')
     }
 
     // Auto-detect props/objects from segment text

@@ -219,13 +219,20 @@ export function ScenePromptBuilder({
     
     // AUTO-DETECT AND PRE-SELECT CHARACTERS using intelligent nickname matching
     // (e.g., "Ben" in scene direction will match "Dr. Benjamin Anderson")
-    if (availableCharacters && availableCharacters.length > 0) {
+    // CRITICAL: Skip character detection for no-talent scenes (title sequences, VFX-only, etc.)
+    const talentText = sceneDirection?.talent?.blocking || sceneDirection?.talent?.emotionalBeat || ''
+    const isNoTalentScene = talentText.toLowerCase().match(/\b(n\/a|no\s+(live\s+)?actors?|no\s+talent|no\s+performers?)\b/)
+    
+    if (!isNoTalentScene && availableCharacters && availableCharacters.length > 0) {
       const detectedChars = findSceneCharacters(fullDetectionText, availableCharacters)
       
       if (detectedChars.length > 0) {
         updates.characters = detectedChars.map((c: any) => c.name)
         console.log('[ScenePromptBuilder] Auto-selected characters (with nickname matching):', detectedChars.map((c: any) => c.name))
       }
+    } else if (isNoTalentScene) {
+      updates.characters = []
+      console.log('[ScenePromptBuilder] No-talent scene detected — skipping character auto-selection')
     }
     
     // AUTO-DETECT AND PRE-SELECT OBJECTS from scene text + keyProps
@@ -326,15 +333,19 @@ export function ScenePromptBuilder({
           else if (moodStr.includes('low-key') || moodStr.includes('low key') || moodStr.includes('noir')) updates.lighting = 'dramatic'
           else if (moodStr.includes('natural') || moodStr.includes('soft')) updates.lighting = 'natural'
           else if (moodStr.includes('harsh') || moodStr.includes('hard')) updates.lighting = 'harsh'
+          else if (moodStr.includes('stylized') || moodStr.includes('digital') || moodStr.includes('neon') || moodStr.includes('self-illuminat') || moodStr.includes('ethereal')) updates.lighting = 'stylized'
         }
         
         // Time of Day from lighting
         if (sceneDirection.lighting.timeOfDay) {
           const timeStr = sceneDirection.lighting.timeOfDay.toLowerCase()
-          if (timeStr.includes('golden') || timeStr.includes('sunset')) updates.timeOfDay = 'golden-hour'
+          if (timeStr.includes('n/a') || timeStr.includes('not applicable') || timeStr.includes('continuous') || timeStr.includes('stylized') || timeStr.includes('digital')) {
+            updates.timeOfDay = 'ambient'
+          } else if (timeStr.includes('golden') || timeStr.includes('sunset')) updates.timeOfDay = 'golden-hour'
           else if (timeStr.includes('night')) updates.timeOfDay = 'night'
           else if (timeStr.includes('dawn') || timeStr.includes('morning')) updates.timeOfDay = 'dawn'
           else if (timeStr.includes('twilight') || timeStr.includes('dusk')) updates.timeOfDay = 'dusk'
+          else if (timeStr.includes('mid-day') || timeStr.includes('midday') || timeStr.includes('noon') || timeStr.includes('afternoon')) updates.timeOfDay = 'day'
           else updates.timeOfDay = 'day'
         }
       }
@@ -346,21 +357,57 @@ export function ScenePromptBuilder({
           updates.location = sceneDirection.scene.location
         }
         
-        // Atmosphere
+        // Atmosphere — map to closest enum, or 'custom' with raw text preserved
         if (sceneDirection.scene.atmosphere) {
           const atmoStr = sceneDirection.scene.atmosphere.toLowerCase()
-          if (atmoStr.includes('tense')) updates.atmosphere = 'tense'
-          else if (atmoStr.includes('mysterious') || atmoStr.includes('hazy')) updates.atmosphere = 'mysterious'
-          else if (atmoStr.includes('chaotic') || atmoStr.includes('energetic')) updates.atmosphere = 'energetic'
-          else if (atmoStr.includes('serene') || atmoStr.includes('peaceful') || atmoStr.includes('minimalist')) updates.atmosphere = 'serene'
-          else if (atmoStr.includes('melancholic') || atmoStr.includes('sad')) updates.atmosphere = 'melancholic'
-          else if (atmoStr.includes('hopeful') || atmoStr.includes('bright')) updates.atmosphere = 'hopeful'
+          if (atmoStr.includes('tense') || atmoStr.includes('suspense') || atmoStr.includes('urgent')) {
+            updates.atmosphere = 'tense'
+          } else if (atmoStr.includes('mysterious') || atmoStr.includes('hazy') || atmoStr.includes('eerie')) {
+            updates.atmosphere = 'mysterious'
+          } else if (atmoStr.includes('chaotic') || atmoStr.includes('energetic') || atmoStr.includes('frenetic')) {
+            updates.atmosphere = 'energetic'
+          } else if (atmoStr.includes('serene') || atmoStr.includes('peaceful') || atmoStr.includes('tranquil')) {
+            updates.atmosphere = 'serene'
+          } else if (atmoStr.includes('melancholic') || atmoStr.includes('sad') || atmoStr.includes('somber') || atmoStr.includes('mournful')) {
+            updates.atmosphere = 'melancholic'
+          } else if (atmoStr.includes('hopeful') || atmoStr.includes('bright') || atmoStr.includes('uplifting') || atmoStr.includes('optimistic')) {
+            updates.atmosphere = 'hopeful'
+          } else if (atmoStr.includes('futuristic') || atmoStr.includes('high-tech') || atmoStr.includes('hi-tech') || atmoStr.includes('sleek') || atmoStr.includes('sci-fi') || atmoStr.includes('digital') || atmoStr.includes('cyber') || atmoStr.includes('tech')) {
+            updates.atmosphere = 'futuristic'
+          } else if (atmoStr.includes('intimate') || atmoStr.includes('warm') || atmoStr.includes('cozy') || atmoStr.includes('domestic') || atmoStr.includes('personal')) {
+            updates.atmosphere = 'intimate'
+          } else {
+            // No keyword match — preserve the rich Scene Direction description as custom
+            updates.atmosphere = 'custom'
+            updates.additionalDetails = `Atmosphere: ${sceneDirection.scene.atmosphere}`
+            console.log('[ScenePromptBuilder] Custom atmosphere preserved:', sceneDirection.scene.atmosphere)
+          }
         }
         
         // Key Props
         if (sceneDirection.scene.keyProps && sceneDirection.scene.keyProps.length > 0) {
           updates.keyProps = sceneDirection.scene.keyProps.join(', ')
         }
+        
+        // Weather — extract from atmosphere/location, or set 'none' for interior/abstract scenes
+        const locationStr = (sceneDirection.scene.location || '').toLowerCase()
+        const atmoWeatherStr = (sceneDirection.scene.atmosphere || '').toLowerCase()
+        const isAbstractOrInterior = locationStr.match(/\b(abstract|digital|virtual|cyber|interior|int\.|studio|office|room|apartment|house|lab|indoor|inside|stage|set)\b/)
+        
+        if (isAbstractOrInterior) {
+          updates.weather = 'none'
+        } else if (atmoWeatherStr.includes('overcast') || atmoWeatherStr.includes('cloudy') || atmoWeatherStr.includes('grey sky')) {
+          updates.weather = 'overcast'
+        } else if (atmoWeatherStr.includes('rain') || atmoWeatherStr.includes('wet') || atmoWeatherStr.includes('drizzle')) {
+          updates.weather = 'rainy'
+        } else if (atmoWeatherStr.includes('storm') || atmoWeatherStr.includes('thunder') || atmoWeatherStr.includes('lightning')) {
+          updates.weather = 'stormy'
+        } else if (atmoWeatherStr.includes('fog') || atmoWeatherStr.includes('mist') || atmoWeatherStr.includes('haze')) {
+          updates.weather = 'foggy'
+        } else if (atmoWeatherStr.includes('snow') || atmoWeatherStr.includes('frost') || atmoWeatherStr.includes('ice') || atmoWeatherStr.includes('winter')) {
+          updates.weather = 'snowy'
+        }
+        // Otherwise keep default 'clear' for outdoor scenes without weather indication
       }
       
       // TALENT DIRECTION (Blocking & Actions)
@@ -528,7 +575,36 @@ export function ScenePromptBuilder({
         }
       }
       
-      // 3. Art style suffix (from dialog controls)
+      // 3. Guided-mode overrides: incorporate user-adjusted values that Scene Direction
+      //    prose may not capture (e.g., custom atmosphere, talent blocking, emotional beat)
+      if (structure.atmosphere === 'custom' && structure.additionalDetails) {
+        parts.push(structure.additionalDetails)
+      } else if (structure.atmosphere && structure.atmosphere !== 'neutral') {
+        // Only add atmosphere if it differs from what the prose already describes
+        const atmoLabels: Record<string, string> = {
+          'tense': 'tense atmosphere',
+          'mysterious': 'mysterious atmosphere',
+          'energetic': 'energetic atmosphere',
+          'serene': 'serene atmosphere',
+          'melancholic': 'melancholic atmosphere',
+          'hopeful': 'hopeful atmosphere',
+          'futuristic': 'futuristic high-tech atmosphere',
+          'intimate': 'intimate warm atmosphere',
+        }
+        if (atmoLabels[structure.atmosphere]) {
+          parts.push(atmoLabels[structure.atmosphere])
+        }
+      }
+      
+      // 4. Talent direction from guided mode (blocking + emotional beat)
+      if (structure.talentBlocking) {
+        parts.push(structure.talentBlocking)
+      }
+      if (structure.emotionalBeat) {
+        parts.push(`conveying ${structure.emotionalBeat}`)
+      }
+      
+      // 5. Art style suffix (from dialog controls)
       const stylePreset = artStylePresets.find(s => s.id === structure.artStyle)
       if (stylePreset) parts.push(stylePreset.promptSuffix)
       
@@ -557,7 +633,7 @@ export function ScenePromptBuilder({
     
     // Time and weather
     const timeWeather: string[] = []
-    if (structure.timeOfDay && structure.timeOfDay !== 'day') {
+    if (structure.timeOfDay && structure.timeOfDay !== 'day' && structure.timeOfDay !== 'ambient') {
       const timeLabels: Record<string, string> = {
         'dawn': 'at dawn',
         'day': 'during the day',
@@ -567,7 +643,7 @@ export function ScenePromptBuilder({
       }
       timeWeather.push(timeLabels[structure.timeOfDay] || structure.timeOfDay)
     }
-    if (structure.weather && structure.weather !== 'clear') timeWeather.push(structure.weather)
+    if (structure.weather && structure.weather !== 'clear' && structure.weather !== 'none') timeWeather.push(structure.weather)
     if (timeWeather.length) parts.push(timeWeather.join(', '))
     
     // Characters, actions, and talent blocking
@@ -599,7 +675,15 @@ export function ScenePromptBuilder({
     
     // Atmosphere
     if (structure.atmosphere && structure.atmosphere !== 'neutral') {
-      parts.push(`${structure.atmosphere} atmosphere`)
+      if (structure.atmosphere === 'custom' && structure.additionalDetails) {
+        // Custom atmosphere from Scene Direction — already included via additionalDetails below
+      } else if (structure.atmosphere === 'futuristic') {
+        parts.push('futuristic high-tech atmosphere')
+      } else if (structure.atmosphere === 'intimate') {
+        parts.push('intimate warm atmosphere')
+      } else {
+        parts.push(`${structure.atmosphere} atmosphere`)
+      }
     }
     
     // Camera angle
@@ -630,7 +714,10 @@ export function ScenePromptBuilder({
       'dramatic': 'dramatic cinematic lighting',
       'soft': 'soft diffused lighting',
       'harsh': 'harsh contrast lighting',
-      'backlit': 'backlit scene'
+      'backlit': 'backlit scene',
+      'stylized': 'stylized digital lighting',
+      'neon': 'neon stylized lighting',
+      'silhouette': 'silhouette lighting',
     }
     if (structure.lighting) parts.push(lightingTypes[structure.lighting] || structure.lighting)
     
