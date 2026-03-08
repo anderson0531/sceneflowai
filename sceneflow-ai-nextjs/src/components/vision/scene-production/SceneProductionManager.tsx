@@ -14,7 +14,7 @@ import type {
   SegmentKeyframeSettings,
   AudioTrackType,
 } from './types'
-import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Film, Clock, Sliders, MessageSquare, Settings2, Volume2, Users, ImageIcon, Layers, Mic2, SkipForward } from 'lucide-react'
+import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Film, Clock, Sliders, MessageSquare, Settings2, Volume2, Users, ImageIcon, Layers, Mic2, SkipForward, ClipboardPaste, Copy } from 'lucide-react'
 import { AudioAssetsDialog, AudioTrackClip } from './AudioAssetsDialog'
 import { toast } from 'sonner'
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
