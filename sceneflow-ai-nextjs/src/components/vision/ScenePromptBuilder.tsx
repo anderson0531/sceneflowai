@@ -13,6 +13,17 @@ import { artStylePresets } from '@/constants/artStylePresets'
 import { findSceneCharacters, findSceneObjects } from '../../lib/character/matching'
 import { DetailedSceneDirection } from '@/types/scene-direction'
 import { VisualReference } from '@/types/visionReferences'
+import { cn } from '@/lib/utils'
+import {
+  LocationSettingSection,
+  CharacterSelectionSection,
+  PropSelectionSection,
+  CameraCompositionSection,
+  ArtStyleGrid,
+  QualityModeSection,
+  TalentDirectionSection,
+} from '@/components/image-gen'
+import type { ModelTier, ThinkingLevel } from '@/components/image-gen'
 
 interface ScenePromptStructure {
   location: string
@@ -151,6 +162,8 @@ export function ScenePromptBuilder({
   isGenerating = false
 }: ScenePromptBuilderProps) {
   const [mode, setMode] = useState<'guided' | 'advanced'>('guided')
+  const [modelTier, setModelTier] = useState<ModelTier>('designer')
+  const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>('high')
   
   // Reference Library state
   const [selectedSceneRefIds, setSelectedSceneRefIds] = useState<string[]>([])
@@ -788,7 +801,7 @@ export function ScenePromptBuilder({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[85vh] bg-gray-900 text-white border-gray-700 flex flex-col overflow-hidden">
+      <DialogContent className="max-w-4xl h-[85vh] bg-slate-900 text-white border-slate-700 flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-white">Opening Frame — {scene?.heading || `Scene ${scene?.sceneNumber || ''}`}</DialogTitle>
         </DialogHeader>
@@ -827,196 +840,81 @@ export function ScenePromptBuilder({
 
           {/* Guided Mode */}
           <TabsContent value="guided" className="space-y-4 mt-4">
-            {/* Location & Setting */}
-            <div className="space-y-3 p-3 rounded border border-gray-700 bg-gray-800/50">
-              <h3 className="text-sm font-semibold text-gray-200">Location & Setting</h3>
-              <div className="space-y-2">
-                <div>
-                  <label className="text-xs text-gray-400">Location/Setting</label>
-                  <Input
-                    value={structure.location}
-                    onChange={(e) => setStructure(prev => ({ ...prev, location: e.target.value }))}
-                    placeholder="beach at sunrise, urban street, mountain peak"
-                    className="mt-1"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs text-gray-400">Time of Day</label>
-                    <Select value={structure.timeOfDay} onValueChange={(v) => setStructure(prev => ({ ...prev, timeOfDay: v }))}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="dawn">Dawn</SelectItem>
-                        <SelectItem value="day">Day</SelectItem>
-                        <SelectItem value="dusk">Dusk</SelectItem>
-                        <SelectItem value="night">Night</SelectItem>
-                        <SelectItem value="golden-hour">Golden Hour</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-400">Weather</label>
-                    <Select value={structure.weather} onValueChange={(v) => setStructure(prev => ({ ...prev, weather: v }))}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="clear">Clear</SelectItem>
-                        <SelectItem value="overcast">Overcast</SelectItem>
-                        <SelectItem value="rainy">Rainy</SelectItem>
-                        <SelectItem value="stormy">Stormy</SelectItem>
-                        <SelectItem value="foggy">Foggy</SelectItem>
-                        <SelectItem value="snowy">Snowy</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400">Atmosphere/Mood</label>
-                  <Select value={structure.atmosphere} onValueChange={(v) => setStructure(prev => ({ ...prev, atmosphere: v }))}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="neutral">Neutral</SelectItem>
-                      <SelectItem value="serene">Serene</SelectItem>
-                      <SelectItem value="tense">Tense</SelectItem>
-                      <SelectItem value="mysterious">Mysterious</SelectItem>
-                      <SelectItem value="energetic">Energetic</SelectItem>
-                      <SelectItem value="melancholic">Melancholic</SelectItem>
-                      <SelectItem value="hopeful">Hopeful</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
+            {/* Location & Setting — Shared Component */}
+            <LocationSettingSection
+              visualSetup={{
+                location: structure.location,
+                timeOfDay: structure.timeOfDay,
+                weather: structure.weather,
+                atmosphere: structure.atmosphere,
+                shotType: structure.shotType,
+                cameraAngle: structure.cameraAngle,
+                lighting: structure.lighting,
+                lensChoice: structure.lensChoice,
+                lightingMood: structure.lightingMood,
+              }}
+              onVisualSetupChange={(update) => setStructure(prev => ({ ...prev, ...update }))}
+            />
 
-            {/* Characters */}
-            {availableCharacters.length > 0 && (
-              <div className="space-y-3 p-3 rounded border border-gray-700 bg-gray-800/50">
-                <h3 className="text-sm font-semibold text-gray-200">Characters in Scene</h3>
-                <div className="space-y-2">
-                  <div>
-                    <label className="text-xs text-gray-400">Select Characters</label>
-                    <div className="mt-1 space-y-2">
-                      {availableCharacters.map(char => (
-                        <label 
-                          key={char.name} 
-                          className={`flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors ${
-                            structure.characters.includes(char.name)
-                              ? 'border-blue-500 bg-blue-500/10'
-                              : 'border-gray-700 hover:border-gray-600'
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={structure.characters.includes(char.name)}
-                            onChange={(e) => {
-                              setStructure(prev => ({
-                                ...prev,
-                                characters: e.target.checked
-                                  ? [...prev.characters, char.name]
-                                  : prev.characters.filter(n => n !== char.name)
-                              }))
-                            }}
-                            className="rounded"
-                          />
-                          {char.referenceImage && (
-                            <img
-                              src={char.referenceImage}
-                              alt={char.name}
-                              className="w-8 h-8 rounded-full object-cover border border-gray-600"
-                            />
-                          )}
-                          <div className="flex-1">
-                            <div className="text-sm text-gray-200">{char.name}</div>
-                            {char.referenceImage && (
-                              <div className="text-[10px] text-green-400">✓ Has reference image</div>
-                            )}
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-400">What are they doing?</label>
-                    <Input
-                      value={structure.characterActions}
-                      onChange={(e) => setStructure(prev => ({ ...prev, characterActions: e.target.value }))}
-                      placeholder="walking along the shore, engaged in conversation"
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  {/* Scene Wardrobe Selection */}
-                  {structure.characters.some(charName => {
-                    const char = availableCharacters.find(c => c.name === charName)
-                    return char?.wardrobes && char.wardrobes.length >= 1
-                  }) && (
-                    <div className="mt-3 p-3 rounded border border-purple-500/30 bg-purple-900/10">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Shirt className="w-4 h-4 text-purple-400" />
-                        <span className="text-xs font-medium text-purple-200">Scene Wardrobe</span>
-                        <span className="text-[10px] text-gray-500">(included in prompt)</span>
-                      </div>
-                      <div className="space-y-2">
-                        {structure.characters.map(charName => {
-                          const char = availableCharacters.find(c => c.name === charName)
-                          if (!char?.wardrobes || char.wardrobes.length < 1) return null
-                          const defaultWardrobe = char.wardrobes.find(w => w.isDefault)
-                          const currentWardrobeId = localWardrobes[charName] || sceneWardrobes[charName] || defaultWardrobe?.id
-                          return (
-                            <div key={charName} className="flex items-center gap-2">
-                              <span className="text-xs text-gray-400 w-32 truncate" title={charName}>{charName}</span>
-                              <Select 
-                                value={currentWardrobeId || ''}
-                                onValueChange={(v) => setLocalWardrobes(prev => ({...prev, [charName]: v}))}
-                              >
-                                <SelectTrigger className="h-7 text-xs flex-1 bg-gray-800 border-gray-700">
-                                  <SelectValue placeholder="Select wardrobe..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {char.wardrobes.map(w => (
-                                    <SelectItem key={w.id} value={w.id} className="text-xs">
-                                      {w.name} {w.isDefault && '(Default)'}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
+            {/* Characters — Shared Component */}
+            <CharacterSelectionSection
+              characters={availableCharacters.map(c => ({
+                name: c.name,
+                referenceImage: c.referenceImage,
+                appearance: c.appearanceDescription,
+                description: c.description,
+                ethnicity: c.ethnicity,
+                subject: c.subject,
+                wardrobes: c.wardrobes?.map(w => ({
+                  id: w.id,
+                  name: w.name,
+                  description: w.description,
+                })),
+              }))}
+              selectedCharacterNames={structure.characters}
+              onSelectionChange={(names) => setStructure(prev => ({ ...prev, characters: names }))}
+              selectedWardrobes={localWardrobes}
+              onWardrobeChange={(name, wardrobeId) => setLocalWardrobes(prev => ({...prev, [name]: wardrobeId}))}
+              sceneWardrobes={sceneWardrobes}
+              hasCharacterReferences={structure.characters.some(charName => {
+                const char = availableCharacters.find(c => c.name === charName)
+                return !!char?.referenceImage
+              })}
+            />
+
+            {/* Character Actions — kept inline (no equivalent in FramePromptDialog) */}
+            {structure.characters.length > 0 && (
+              <div className="space-y-2 p-3 rounded border border-slate-700 bg-slate-800/50">
+                <label className="text-xs text-slate-400">What are they doing?</label>
+                <Input
+                  value={structure.characterActions}
+                  onChange={(e) => setStructure(prev => ({ ...prev, characterActions: e.target.value }))}
+                  placeholder="walking along the shore, engaged in conversation"
+                  className="bg-slate-900 border-slate-700 text-sm"
+                />
               </div>
             )}
 
-            {/* Prop References - Highlighted Section */}
+            {/* Prop References */}
             {(sceneReferences.length > 0 || objectReferences.length > 0) && (
-              <div className="space-y-3 p-3 rounded-lg border-2 border-purple-500/50 bg-gradient-to-br from-purple-900/20 to-violet-900/10 shadow-lg shadow-purple-500/10">
+              <div className="space-y-3 p-3 rounded-lg border border-slate-700 bg-slate-800/50">
                 <button
                   onClick={() => setReferenceLibraryOpen(!referenceLibraryOpen)}
-                  className="w-full flex items-center justify-between text-sm font-semibold text-purple-200 hover:text-white transition-colors"
+                  className="w-full flex items-center justify-between text-sm font-semibold text-slate-200 hover:text-white transition-colors"
                 >
                   <span className="flex items-center gap-2">
-                    <Box className="w-4 h-4 text-purple-400" />
-                    <span className="bg-gradient-to-r from-purple-300 to-violet-300 bg-clip-text text-transparent font-bold">
-                      Prop References
-                    </span>
+                    <Box className="w-4 h-4 text-cyan-400" />
+                    Prop References
                     {(selectedSceneRefIds.length > 0 || selectedObjectRefIds.length > 0) && (
-                      <span className="text-xs bg-purple-500/30 text-purple-200 px-2 py-0.5 rounded-full font-normal">
+                      <span className="text-xs bg-cyan-500/20 text-cyan-200 px-2 py-0.5 rounded-full font-normal">
                         {selectedSceneRefIds.length + selectedObjectRefIds.length} selected
                       </span>
                     )}
                   </span>
                   {referenceLibraryOpen ? (
-                    <ChevronUp className="w-4 h-4 text-purple-400" />
+                    <ChevronUp className="w-4 h-4 text-slate-400" />
                   ) : (
-                    <ChevronDown className="w-4 h-4 text-purple-400" />
+                    <ChevronDown className="w-4 h-4 text-slate-400" />
                   )}
                 </button>
                 
@@ -1025,7 +923,7 @@ export function ScenePromptBuilder({
                     {/* Scenes */}
                     {sceneReferences.length > 0 && (
                       <div>
-                        <label className="text-xs text-gray-400 flex items-center gap-1 mb-2">
+                        <label className="text-xs text-slate-400 flex items-center gap-1 mb-2">
                           <ImageIcon className="w-3 h-3" />
                           Scenes
                         </label>
@@ -1040,29 +938,26 @@ export function ScenePromptBuilder({
                                     : [...prev, ref.id]
                                 )
                               }}
-                              className={`relative aspect-video rounded overflow-hidden border-2 transition-all ${
+                              className={cn(
+                                'relative aspect-video rounded overflow-hidden border-2 transition-all',
                                 selectedSceneRefIds.includes(ref.id)
-                                  ? 'border-blue-500 ring-2 ring-blue-500/50'
-                                  : 'border-gray-700 hover:border-gray-500'
-                              }`}
+                                  ? 'border-cyan-500 ring-2 ring-cyan-500/50'
+                                  : 'border-slate-700 hover:border-slate-500'
+                              )}
                               title={ref.description || ref.name}
                             >
                               {ref.imageUrl ? (
-                                <img
-                                  src={ref.imageUrl}
-                                  alt={ref.name}
-                                  className="w-full h-full object-cover"
-                                />
+                                <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
                               ) : (
-                                <div className="w-full h-full bg-gray-700 flex items-center justify-center">
-                                  <ImageIcon className="w-4 h-4 text-gray-500" />
+                                <div className="w-full h-full bg-slate-700 flex items-center justify-center">
+                                  <ImageIcon className="w-4 h-4 text-slate-500" />
                                 </div>
                               )}
                               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1">
                                 <div className="text-[9px] text-white truncate">{ref.name}</div>
                               </div>
                               {selectedSceneRefIds.includes(ref.id) && (
-                                <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                                <div className="absolute top-1 right-1 w-4 h-4 bg-cyan-500 rounded-full flex items-center justify-center">
                                   <Check className="w-3 h-3 text-white" />
                                 </div>
                               )}
@@ -1072,108 +967,23 @@ export function ScenePromptBuilder({
                       </div>
                     )}
 
-                    {/* Props */}
+                    {/* Props — Shared Component */}
                     {objectReferences.length > 0 && (
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <label className="text-xs text-gray-400 flex items-center gap-1">
-                            <Box className="w-3 h-3" />
-                            Props
-                            {autoDetectedObjectIds.length > 0 && (
-                              <span className="text-green-400 ml-2">
-                                ({autoDetectedObjectIds.length} suggested)
-                              </span>
-                            )}
-                            {/* Key Props tooltip from Scene Direction */}
-                            {scene?.sceneDirection?.scene?.keyProps?.length > 0 && (
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Info className="w-3 h-3 text-blue-400 cursor-help ml-1" />
-                                  </TooltipTrigger>
-                                  <TooltipContent side="right" className="max-w-sm bg-gray-900 border-gray-700">
-                                    <p className="font-semibold text-blue-300 mb-1">Key Props (Scene Direction):</p>
-                                    <p className="text-xs text-gray-300">{scene.sceneDirection.scene.keyProps.join(', ')}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            )}
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => setSelectedObjectRefIds(autoDetectedObjectIds)}
-                              className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors"
-                              title="Select suggested props"
-                            >
-                              Select Suggested
-                            </button>
-                            <span className="text-gray-600">|</span>
-                            <button
-                              onClick={() => setSelectedObjectRefIds([])}
-                              className="text-[10px] text-gray-400 hover:text-gray-300 transition-colors"
-                              title="Unselect all props"
-                            >
-                              Unselect All
-                            </button>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-4 gap-2">
-                          {objectReferences.map(ref => {
-                            const isSelected = selectedObjectRefIds.includes(ref.id)
-                            const isAutoDetected = autoDetectedObjectIds.includes(ref.id)
-                            return (
-                              <button
-                                key={ref.id}
-                                onClick={() => {
-                                  setSelectedObjectRefIds(prev => 
-                                    prev.includes(ref.id) 
-                                      ? prev.filter(id => id !== ref.id)
-                                      : [...prev, ref.id]
-                                  )
-                                }}
-                                className={`relative aspect-square rounded overflow-hidden border-2 transition-all ${
-                                  isSelected
-                                    ? 'border-purple-500 ring-2 ring-purple-500/50'
-                                    : 'border-gray-700 hover:border-gray-500'
-                                }`}
-                                title={ref.description || ref.name}
-                              >
-                                {ref.imageUrl ? (
-                                  <img
-                                    src={ref.imageUrl}
-                                    alt={ref.name}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full bg-gray-700 flex items-center justify-center">
-                                    <Box className="w-4 h-4 text-gray-500" />
-                                  </div>
-                                )}
-                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1">
-                                  <div className="text-[9px] text-white truncate">{ref.name}</div>
-                                  {isAutoDetected && (
-                                    <div className="text-[8px] text-green-400">✓ Suggested</div>
-                                  )}
-                                </div>
-                                {isSelected && (
-                                  <div className="absolute top-1 right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
-                                    <Check className="w-3 h-3 text-white" />
-                                  </div>
-                                )}
-                                {/* Show importance badge for critical objects */}
-                                {ref.importance === 'critical' && (
-                                  <div className="absolute top-1 left-1 px-1 py-0.5 bg-red-500/80 rounded text-[8px] text-white">
-                                    Critical
-                                  </div>
-                                )}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
+                      <PropSelectionSection
+                        objectReferences={objectReferences.map(ref => ({
+                          id: ref.id,
+                          name: ref.name,
+                          imageUrl: ref.imageUrl,
+                          description: ref.description,
+                          importance: ref.importance,
+                        }))}
+                        selectedObjectIds={selectedObjectRefIds}
+                        onSelectionChange={setSelectedObjectRefIds}
+                        autoDetectedObjectIds={new Set(autoDetectedObjectIds)}
+                      />
                     )}
 
-                    <p className="text-[10px] text-gray-500">
+                    <p className="text-[10px] text-slate-500">
                       Selected references will be used for visual style consistency in the generated image.
                     </p>
                   </div>
@@ -1181,181 +991,55 @@ export function ScenePromptBuilder({
               </div>
             )}
 
-            {/* Camera & Composition */}
-            <div className="space-y-3 p-3 rounded border border-gray-700 bg-gray-800/50">
-              <h3 className="text-sm font-semibold text-gray-200">Camera & Composition 🎬</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-gray-400">Shot Type</label>
-                  <Select value={structure.shotType} onValueChange={(v) => setStructure(prev => ({ ...prev, shotType: v }))}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(() => {
-                        const hasReferences = structure.characters.some(charName => {
-                          const char = availableCharacters.find(c => c.name === charName)
-                          return char?.referenceImage
-                        })
-                        
-                        return (
-                          <>
-                            <SelectItem value="extreme-close-up">
-                              Extreme Close-Up (ECU) {hasReferences && '✓'}
-                            </SelectItem>
-                            <SelectItem value="close-up">
-                              Close-Up (CU) {hasReferences && '✓ Recommended'}
-                            </SelectItem>
-                            <SelectItem value="medium-close-up">
-                              Medium Close-Up (MCU) {hasReferences && '✓'}
-                            </SelectItem>
-                            <SelectItem value="medium-shot">
-                              Medium Shot (MS) {hasReferences && '✓'}
-                            </SelectItem>
-                            <SelectItem value="over-shoulder">
-                              Over Shoulder {hasReferences && '✓'}
-                            </SelectItem>
-                            <SelectItem value="wide-shot" className={hasReferences ? 'text-yellow-400' : ''}>
-                              Wide Shot (WS) {hasReferences && '⚠️ Limited'}
-                            </SelectItem>
-                            <SelectItem value="extreme-wide" className={hasReferences ? 'text-red-400' : ''}>
-                              Extreme Wide {hasReferences && '❌ Too small'}
-                            </SelectItem>
-                          </>
-                        )
-                      })()}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400">Camera Angle</label>
-                  <Select value={structure.cameraAngle} onValueChange={(v) => setStructure(prev => ({ ...prev, cameraAngle: v }))}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="eye-level">Eye Level</SelectItem>
-                      <SelectItem value="low-angle">Low Angle</SelectItem>
-                      <SelectItem value="high-angle">High Angle</SelectItem>
-                      <SelectItem value="birds-eye">Bird's Eye</SelectItem>
-                      <SelectItem value="dutch-angle">Dutch Angle</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400">Lens Choice</label>
-                  <Select value={structure.lensChoice} onValueChange={(v) => setStructure(prev => ({ ...prev, lensChoice: v }))}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="standard">Standard (50mm)</SelectItem>
-                      <SelectItem value="wide-angle">Wide-Angle (24mm)</SelectItem>
-                      <SelectItem value="telephoto">Telephoto (85mm+)</SelectItem>
-                      <SelectItem value="macro">Macro</SelectItem>
-                      <SelectItem value="anamorphic">Anamorphic</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-gray-400">Lighting</label>
-                  <Select value={structure.lighting} onValueChange={(v) => setStructure(prev => ({ ...prev, lighting: v }))}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="natural">Natural</SelectItem>
-                      <SelectItem value="golden-hour">Golden Hour</SelectItem>
-                      <SelectItem value="dramatic">Dramatic</SelectItem>
-                      <SelectItem value="soft">Soft Diffused</SelectItem>
-                      <SelectItem value="harsh">Harsh Contrast</SelectItem>
-                      <SelectItem value="backlit">Backlit</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400">Lighting Mood</label>
-                  <Input
-                    value={structure.lightingMood}
-                    onChange={(e) => setStructure(prev => ({ ...prev, lightingMood: e.target.value }))}
-                    placeholder="e.g., High-Key, Low-Key, Film Noir"
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-            </div>
+            {/* Camera & Composition — Shared Component with extended options */}
+            <CameraCompositionSection
+              visualSetup={{
+                location: structure.location,
+                timeOfDay: structure.timeOfDay,
+                weather: structure.weather,
+                atmosphere: structure.atmosphere,
+                shotType: structure.shotType,
+                cameraAngle: structure.cameraAngle,
+                lighting: structure.lighting,
+                lensChoice: structure.lensChoice,
+                lightingMood: structure.lightingMood,
+              }}
+              onVisualSetupChange={(update) => setStructure(prev => ({ ...prev, ...update }))}
+              hasCharacterReferences={structure.characters.some(charName => {
+                const char = availableCharacters.find(c => c.name === charName)
+                return !!char?.referenceImage
+              })}
+              showExtendedOptions={true}
+            />
 
-            {/* Talent Direction (from Scene Direction) */}
-            <div className="space-y-3 p-3 rounded border border-gray-700 bg-gray-800/50">
-              <h3 className="text-sm font-semibold text-gray-200">Talent Direction 🎭</h3>
-              <div className="space-y-2">
-                <div>
-                  <label className="text-xs text-gray-400">Blocking/Positioning</label>
-                  <Input
-                    value={structure.talentBlocking}
-                    onChange={(e) => setStructure(prev => ({ ...prev, talentBlocking: e.target.value }))}
-                    placeholder="e.g., Actor A at window, Actor B enters from left"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400">Emotional Beat</label>
-                  <Input
-                    value={structure.emotionalBeat}
-                    onChange={(e) => setStructure(prev => ({ ...prev, emotionalBeat: e.target.value }))}
-                    placeholder="e.g., Convey anxiety, Moment of realization"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400">Key Props</label>
-                  <Input
-                    value={structure.keyProps}
-                    onChange={(e) => setStructure(prev => ({ ...prev, keyProps: e.target.value }))}
-                    placeholder="e.g., steaming coffee mug, flickering neon sign"
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-            </div>
+            {/* Talent Direction — Shared Component */}
+            <TalentDirectionSection
+              talentDirection={{
+                talentBlocking: structure.talentBlocking,
+                emotionalBeat: structure.emotionalBeat,
+                keyProps: structure.keyProps,
+              }}
+              onTalentDirectionChange={(update) => setStructure(prev => ({ ...prev, ...update }))}
+              defaultCollapsed={false}
+            />
 
-            {/* Art Style */}
-            <div className="space-y-3 p-3 rounded border border-gray-700 bg-gray-800/50">
-              <h3 className="text-sm font-semibold text-gray-200">Art Style 🎨</h3>
-              <div className="grid grid-cols-5 gap-2">
-                {artStylePresets.map(style => (
-                  <button
-                    key={style.id}
-                    onClick={() => setStructure(prev => ({ ...prev, artStyle: style.id }))}
-                    className={`p-2 rounded border transition-all ${
-                      structure.artStyle === style.id
-                        ? 'border-blue-500 bg-blue-500/20 ring-2 ring-blue-500'
-                        : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
-                    }`}
-                    title={style.description}
-                  >
-                    <div className="aspect-square bg-gray-700 rounded mb-1 flex items-center justify-center overflow-hidden">
-                      {style.thumbnail ? (
-                        <img 
-                          src={style.thumbnail} 
-                          alt={style.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-2xl text-gray-400">{style.name[0]}</span>
-                      )}
-                    </div>
-                    <div className="text-[10px] text-gray-300 truncate">{style.name}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* Art Style — Shared Component */}
+            <ArtStyleGrid
+              artStyle={structure.artStyle}
+              onArtStyleChange={(styleId) => setStructure(prev => ({ ...prev, artStyle: styleId }))}
+            />
+
+            {/* Quality Mode — Shared Component (NEW for ScenePromptBuilder) */}
+            <QualityModeSection
+              modelTier={modelTier}
+              onModelTierChange={setModelTier}
+              thinkingLevel={thinkingLevel}
+              onThinkingLevelChange={setThinkingLevel}
+            />
 
             {/* Additional Details */}
-            <div className="space-y-3 p-3 rounded border border-gray-700 bg-gray-800/50">
-              <h3 className="text-sm font-semibold text-gray-200">Additional Details</h3>
+            <div className="space-y-3 p-3 rounded border border-slate-700 bg-slate-800/50">
+              <h3 className="text-sm font-semibold text-slate-200">Additional Details</h3>
               <Textarea
                 value={structure.additionalDetails}
                 onChange={(e) => setStructure(prev => ({ ...prev, additionalDetails: e.target.value }))}
@@ -1371,7 +1055,7 @@ export function ScenePromptBuilder({
             {/* Custom Prompt - Editable */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-xs text-gray-400">Custom Scene Prompt</label>
+                <label className="text-xs text-slate-400">Custom Scene Prompt</label>
                 <Button
                   onClick={handleOptimizePrompt}
                   disabled={isOptimizing || !advancedPrompt.trim()}
@@ -1402,13 +1086,13 @@ export function ScenePromptBuilder({
                 placeholder="Enter your custom prompt here. The API will optimize it with character references and safety filters..."
                 className="resize-vertical"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 💡 Tip: Use &quot;Optimize Prompt&quot; to restructure verbose prompts into a hierarchical format that AI models follow more effectively.
               </p>
             </div>
 
             <div>
-              <label className="text-xs text-gray-400 mb-1 block">Negative Prompt</label>
+              <label className="text-xs text-slate-400 mb-1 block">Negative Prompt</label>
               <Textarea
                 value={structure.negativePrompt}
                 onChange={(e) => setStructure(prev => ({ ...prev, negativePrompt: e.target.value }))}
@@ -1422,17 +1106,17 @@ export function ScenePromptBuilder({
         </div>
 
         {/* Fixed Footer - Always Visible */}
-        <div className="border-t border-gray-700 p-4 bg-gray-900">
+        <div className="border-t border-slate-700 p-4 bg-slate-900">
           <div className="flex items-center justify-between mb-2">
-            <label className="text-xs text-gray-400">
+            <label className="text-xs text-slate-400">
               {mode === 'guided' 
                 ? 'Prompt Preview'
                 : 'Custom Prompt'
               }
             </label>
           </div>
-          <div className="text-sm text-gray-200 p-2 bg-gray-800 rounded border border-gray-700 max-h-32 overflow-y-auto leading-relaxed">
-            {constructedPrompt || <span className="text-gray-500 italic">Fill in the fields above to build your prompt...</span>}
+          <div className="text-sm text-slate-200 p-2 bg-slate-800 rounded border border-slate-700 max-h-32 overflow-y-auto leading-relaxed">
+            {constructedPrompt || <span className="text-slate-500 italic">Fill in the fields above to build your prompt...</span>}
           </div>
           <div className="flex gap-2 mt-2">
             <Button 
@@ -1461,7 +1145,7 @@ export function ScenePromptBuilder({
         {/* Loading Overlay - Freeze screen during generation */}
         {isGenerating && (
           <div className="absolute inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center rounded-lg">
-            <div className="bg-gray-900 border-2 border-purple-500 rounded-xl p-8 shadow-2xl flex flex-col items-center max-w-sm">
+            <div className="bg-slate-900 border-2 border-purple-500 rounded-xl p-8 shadow-2xl flex flex-col items-center max-w-sm">
               <div className="relative mb-4">
                 <Loader2 className="w-16 h-16 animate-spin text-purple-500" />
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -1469,10 +1153,10 @@ export function ScenePromptBuilder({
                 </div>
               </div>
               <h3 className="text-xl font-bold text-white mb-2">Generating Scene Image</h3>
-              <p className="text-sm text-gray-300 text-center">
+              <p className="text-sm text-slate-300 text-center">
                 Creating your scene visualization...
               </p>
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-slate-400 mt-2">
                 This may take 10-15 seconds
               </p>
               <div className="mt-4 flex items-center gap-2">

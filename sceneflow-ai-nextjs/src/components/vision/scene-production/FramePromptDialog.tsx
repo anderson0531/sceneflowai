@@ -56,10 +56,30 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { prioritizeCharacterReferences } from './defaults'
 import { artStylePresets } from '@/constants/artStylePresets'
+import { findSceneCharacters, findSceneObjects } from '@/lib/character/matching'
+import {
+  LocationSettingSection,
+  CharacterSelectionSection,
+  PropSelectionSection,
+  CameraCompositionSection,
+  ArtStyleGrid,
+  QualityModeSection,
+  TalentDirectionSection,
+} from '@/components/image-gen'
+import type { VisualSetup, TalentDirection as TalentDirectionType } from '@/components/image-gen'
 
-// ============================================================================
-// Types
-// ============================================================================
+import {
+  MODEL_TIERS,
+  NEGATIVE_PROMPT_PRESETS,
+  DEFAULT_NEGATIVE_PRESETS as SHARED_DEFAULT_NEGATIVE_PRESETS,
+  type ModelTier,
+  type ThinkingLevel,
+} from '@/components/image-gen'
+
+// Re-export for backward compatibility
+export type { ModelTier, ThinkingLevel }
+
+const DEFAULT_NEGATIVE_PRESETS = SHARED_DEFAULT_NEGATIVE_PRESETS
 
 export interface FramePromptDialogProps {
   open: boolean
@@ -129,109 +149,6 @@ export interface FrameGenerationOptions {
 }
 
 // ============================================================================
-// Model Quality Tiers
-// ============================================================================
-
-export type ModelTier = 'eco' | 'designer' | 'director'
-export type ThinkingLevel = 'low' | 'high'
-
-export const MODEL_TIERS = [
-  {
-    id: 'eco' as const,
-    name: 'Eco Mode',
-    icon: Zap,
-    description: 'Fast & Affordable',
-    details: 'Quick ideation and simple prompts. ~3-5 seconds, lowest cost.',
-    model: 'Nano Banana',
-    resolution: 'Up to 2K',
-    cost: '~$0.025/image',
-    color: 'emerald',
-  },
-  {
-    id: 'designer' as const,
-    name: 'Designer Mode',
-    icon: Brush,
-    description: 'High Precision',
-    details: 'Complex prompts with high-fidelity text and 4K resolution.',
-    model: 'Nano Banana Pro',
-    resolution: 'Up to 4K',
-    cost: '~$0.05/image',
-    color: 'purple',
-  },
-  {
-    id: 'director' as const,
-    name: 'Director Mode',
-    icon: Film,
-    description: 'Cinematic Scene',
-    details: 'Professional video sequence with native audio. Coming Soon.',
-    model: 'Veo 3.1',
-    resolution: '4K+',
-    cost: 'Credit-based',
-    color: 'amber',
-    comingSoon: true,
-  },
-] as const
-
-// ============================================================================
-// Negative Prompt Presets
-// ============================================================================
-
-export const NEGATIVE_PROMPT_PRESETS = [
-  {
-    id: 'quality',
-    label: 'Low Quality',
-    value: 'blurry, low quality, pixelated, noisy, grainy, jpeg artifacts, compression artifacts',
-  },
-  {
-    id: 'anatomy',
-    label: 'Bad Anatomy',
-    value: 'bad anatomy, extra limbs, missing limbs, deformed, mutated, disfigured, malformed hands, extra fingers, missing fingers',
-  },
-  {
-    id: 'text',
-    label: 'Text & Watermarks',
-    value: 'text, watermark, logo, signature, username, copyright, words, letters',
-  },
-  {
-    id: 'lighting',
-    label: 'Bad Lighting',
-    value: 'overexposed, underexposed, harsh lighting, flat lighting, washed out, oversaturated',
-  },
-  {
-    id: 'composition',
-    label: 'Poor Composition',
-    value: 'cropped, out of frame, bad framing, awkward angle, distorted perspective',
-  },
-  {
-    id: 'style',
-    label: 'Non-Cinematic',
-    value: 'cartoon, anime, illustration, painting, drawing, sketch, 3D render, CGI, video game',
-  },
-  {
-    id: 'cartoon',
-    label: 'Cartoon Style',
-    value: 'cartoon, animated, disney style, pixar style, anime, manga, comic book style',
-  },
-  {
-    id: 'stock',
-    label: 'Stock Photo Look',
-    value: 'stock photo, generic, corporate, posed, fake smile, staged, artificial',
-  },
-  {
-    id: 'cgi',
-    label: 'CGI/3D Look',
-    value: 'CGI, 3D rendered, unreal engine, video game graphics, plastic skin, uncanny valley',
-  },
-  {
-    id: 'motion',
-    label: 'Motion Blur',
-    value: 'motion blur, camera shake, unfocused, blurry movement, ghosting',
-  },
-] as const
-
-const DEFAULT_NEGATIVE_PRESETS = ['quality', 'anatomy']
-
-// ============================================================================
 // FramePromptDialog Component
 // ============================================================================
 
@@ -299,6 +216,19 @@ export function FramePromptDialog({
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [showDirectionPanel, setShowDirectionPanel] = useState(false)
   const [useIntelligentPrompt, setUseIntelligentPrompt] = useState(true)
+  
+  // Talent direction state (NEW — unified with ScenePromptBuilder)
+  const [talentDirection, setTalentDirection] = useState<TalentDirectionType>({
+    talentBlocking: '',
+    emotionalBeat: '',
+    keyProps: '',
+  })
+  
+  // Auto-detected object IDs for suggestion badges (NEW)
+  const [autoDetectedObjectIds, setAutoDetectedObjectIds] = useState<Set<string>>(new Set())
+  
+  // Wardrobe selection per character (NEW — unified with ScenePromptBuilder)
+  const [selectedWardrobes, setSelectedWardrobes] = useState<Record<string, string>>({})
   
   // Get selected characters with their reference images
   const selectedCharacters = useMemo(() => {
@@ -414,20 +344,39 @@ export function FramePromptDialog({
       setVisualSetup(setup)
     }
     
-    // Auto-detect characters from segment action text
+    // Auto-detect characters from segment action text using intelligent matching
     if (characters.length > 0) {
-      const segmentText = (segment.action || segment.subject || segment.actionPrompt || '').toLowerCase()
-      const detectedNames = characters
-        .filter(c => segmentText.includes(c.name.toLowerCase()))
-        .map(c => c.name)
+      const segmentText = segment.action || segment.subject || segment.actionPrompt || ''
+      const detected = findSceneCharacters(segmentText, characters.map(c => ({ name: c.name })))
+      const detectedNames = detected.map(c => c.name)
       
       if (detectedNames.length > 0) {
         setSelectedCharacterNames(detectedNames)
       } else {
-        // Default: select all characters with reference images
+        // Fallback: select characters with reference images (max 3)
         const withRefs = characters.filter(c => c.referenceImage).map(c => c.name)
-        setSelectedCharacterNames(withRefs.slice(0, 3)) // Max 3 for image generation
+        setSelectedCharacterNames(withRefs.slice(0, 3))
       }
+    }
+
+    // Auto-detect props/objects from segment text
+    if (objectReferences.length > 0) {
+      const segmentText = segment.action || segment.subject || segment.actionPrompt || ''
+      const detected = findSceneObjects(segmentText, objectReferences.map(o => ({
+        id: o.id,
+        name: o.name,
+        description: o.description,
+      })))
+      setAutoDetectedObjectIds(new Set(detected.map(o => o.id)))
+    }
+
+    // Initialize talent direction from scene direction
+    if (sceneDirection?.talent) {
+      setTalentDirection(prev => ({
+        ...prev,
+        emotionalBeat: sceneDirection.talent?.emotionalBeat || prev.emotionalBeat,
+        talentBlocking: sceneDirection.talent?.blocking || prev.talentBlocking,
+      }))
     }
   }, [segment, open, previousEndFrameUrl, frameType, sceneDirection, sceneHeading, characters])
 
@@ -616,7 +565,7 @@ export function FramePromptDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Wand2 className="w-5 h-5 text-cyan-400" />
@@ -720,403 +669,57 @@ export function FramePromptDialog({
                   </div>
                 )}
 
-                {/* Location & Setting */}
-                <div className="space-y-3 p-3 rounded border border-slate-700 bg-slate-800/50">
-                  <h4 className="text-sm font-medium text-slate-200">Location & Setting</h4>
-                  <div className="space-y-3">
-                    <div>
-                      <Label className="text-xs text-slate-400">Location/Setting</Label>
-                      <input
-                        type="text"
-                        value={visualSetup.location}
-                        onChange={(e) => setVisualSetup(prev => ({ ...prev, location: e.target.value }))}
-                        placeholder="e.g., Modern apartment living room"
-                        className="w-full mt-1 px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-md text-white placeholder:text-slate-500"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label className="text-xs text-slate-400">Time of Day</Label>
-                        <Select value={visualSetup.timeOfDay} onValueChange={(v) => setVisualSetup(prev => ({ ...prev, timeOfDay: v }))}>
-                          <SelectTrigger className="mt-1 bg-slate-900 border-slate-700">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="day">Day</SelectItem>
-                            <SelectItem value="night">Night</SelectItem>
-                            <SelectItem value="dawn">Dawn</SelectItem>
-                            <SelectItem value="dusk">Dusk</SelectItem>
-                            <SelectItem value="golden-hour">Golden Hour</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="text-xs text-slate-400">Weather</Label>
-                        <Select value={visualSetup.weather} onValueChange={(v) => setVisualSetup(prev => ({ ...prev, weather: v }))}>
-                          <SelectTrigger className="mt-1 bg-slate-900 border-slate-700">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="clear">Clear</SelectItem>
-                            <SelectItem value="cloudy">Cloudy</SelectItem>
-                            <SelectItem value="rainy">Rainy</SelectItem>
-                            <SelectItem value="stormy">Stormy</SelectItem>
-                            <SelectItem value="foggy">Foggy</SelectItem>
-                            <SelectItem value="snowy">Snowy</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-xs text-slate-400">Atmosphere/Mood</Label>
-                      <Select value={visualSetup.atmosphere} onValueChange={(v) => setVisualSetup(prev => ({ ...prev, atmosphere: v }))}>
-                        <SelectTrigger className="mt-1 bg-slate-900 border-slate-700">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="neutral">Neutral</SelectItem>
-                          <SelectItem value="tense">Tense</SelectItem>
-                          <SelectItem value="mysterious">Mysterious</SelectItem>
-                          <SelectItem value="energetic">Energetic</SelectItem>
-                          <SelectItem value="serene">Serene</SelectItem>
-                          <SelectItem value="melancholic">Melancholic</SelectItem>
-                          <SelectItem value="hopeful">Hopeful</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
+                {/* Location & Setting — Shared Component */}
+                <LocationSettingSection
+                  visualSetup={visualSetup}
+                  onVisualSetupChange={(update) => setVisualSetup(prev => ({ ...prev, ...update }))}
+                />
 
-                {/* Characters in Scene */}
-                {characters.length > 0 && (
-                  <div className="space-y-3 p-3 rounded border border-slate-700 bg-slate-800/50">
-                    <h4 className="text-sm font-medium text-slate-200 flex items-center gap-2">
-                      <Users className="w-4 h-4 text-cyan-400" />
-                      Characters in Scene
-                    </h4>
-                    <p className="text-xs text-slate-400">Select Characters</p>
-                    <div className="space-y-2">
-                      {characters.map((char) => (
-                        <div
-                          key={char.name}
-                          className={cn(
-                            "flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-colors",
-                            selectedCharacterNames.includes(char.name)
-                              ? "border-cyan-500/50 bg-cyan-500/10"
-                              : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
-                          )}
-                          onClick={() => {
-                            setSelectedCharacterNames(prev => 
-                              prev.includes(char.name)
-                                ? prev.filter(n => n !== char.name)
-                                : [...prev, char.name]
-                            )
-                          }}
-                        >
-                          <Checkbox
-                            checked={selectedCharacterNames.includes(char.name)}
-                            onCheckedChange={(checked) => {
-                              setSelectedCharacterNames(prev =>
-                                checked
-                                  ? [...prev, char.name]
-                                  : prev.filter(n => n !== char.name)
-                              )
-                            }}
-                          />
-                          {char.referenceImage ? (
-                            <img
-                              src={char.referenceImage}
-                              alt={char.name}
-                              className="w-10 h-10 rounded-full object-cover border-2 border-slate-600"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
-                              <Users className="w-5 h-5 text-slate-500" />
-                            </div>
-                          )}
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-slate-200">{char.name}</p>
-                            {char.referenceImage && (
-                              <p className="text-xs text-emerald-400 flex items-center gap-1">
-                                <CheckCircle2 className="w-3 h-3" />
-                                Has reference image
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* Characters in Scene — Shared Component with wardrobe */}
+                <CharacterSelectionSection
+                  characters={characters}
+                  selectedCharacterNames={selectedCharacterNames}
+                  onSelectionChange={setSelectedCharacterNames}
+                  selectedWardrobes={selectedWardrobes}
+                  onWardrobeChange={(name, wardrobeId) => setSelectedWardrobes(prev => ({ ...prev, [name]: wardrobeId }))}
+                  hasCharacterReferences={hasCharacterReferences}
+                />
 
-                {/* Props & Objects */}
-                {objectReferences.length > 0 && (
-                  <div className="space-y-3 p-3 rounded border border-slate-700 bg-slate-800/50">
-                    <h4 className="text-sm font-medium text-slate-200 flex items-center gap-2">
-                      <Box className="w-4 h-4 text-cyan-400" />
-                      Props & Objects
-                    </h4>
-                    <p className="text-xs text-slate-400">Select objects to include for visual consistency</p>
-                    {selectedObjectRefIds.length > 5 && (
-                      <div className="flex items-start gap-2 p-2 rounded bg-amber-500/10 border border-amber-500/30">
-                        <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-                        <p className="text-xs text-amber-300">
-                          You've selected {selectedObjectRefIds.length} objects. For best results, limit to 5 or fewer key props.
-                        </p>
-                      </div>
-                    )}
-                    <div className="grid grid-cols-3 gap-2">
-                      {objectReferences.map((obj) => {
-                        const isSelected = selectedObjectRefIds.includes(obj.id)
-                        return (
-                          <button
-                            key={obj.id}
-                            onClick={() => {
-                              setSelectedObjectRefIds(prev =>
-                                prev.includes(obj.id)
-                                  ? prev.filter(id => id !== obj.id)
-                                  : [...prev, obj.id]
-                              )
-                            }}
-                            className={cn(
-                              "relative aspect-square rounded-lg border cursor-pointer transition-all overflow-hidden",
-                              isSelected
-                                ? "border-purple-500 ring-2 ring-purple-500/50"
-                                : "border-slate-700 hover:border-slate-600"
-                            )}
-                            title={obj.description || obj.name}
-                          >
-                            {obj.imageUrl ? (
-                              <img
-                                src={obj.imageUrl}
-                                alt={obj.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-slate-700 flex items-center justify-center">
-                                <Box className="w-6 h-6 text-slate-500" />
-                              </div>
-                            )}
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5">
-                              <div className="text-[10px] text-white truncate font-medium">{obj.name}</div>
-                            </div>
-                            {isSelected && (
-                              <div className="absolute top-1 right-1 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
-                                <Check className="w-3 h-3 text-white" />
-                              </div>
-                            )}
-                            {obj.importance === 'critical' && (
-                              <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-red-500/90 rounded text-[9px] text-white font-medium">
-                                Critical
-                              </div>
-                            )}
-                          </button>
-                        )
-                      })}
-                    </div>
-                    <p className="text-[10px] text-slate-500">
-                      Selected objects will be included for visual consistency in the generated frame.
-                    </p>
-                  </div>
-                )}
+                {/* Props & Objects — Shared Component with auto-detection */}
+                <PropSelectionSection
+                  objectReferences={objectReferences}
+                  selectedObjectIds={selectedObjectRefIds}
+                  onSelectionChange={setSelectedObjectRefIds}
+                  autoDetectedObjectIds={autoDetectedObjectIds}
+                />
 
-                {/* Camera & Lighting */}
-                <div className="space-y-3 p-3 rounded border border-slate-700 bg-slate-800/50">
-                  <h4 className="text-sm font-medium text-slate-200 flex items-center gap-2">
-                    <Camera className="w-4 h-4 text-cyan-400" />
-                    Camera & Lighting
-                  </h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs text-slate-400">Shot Type</Label>
-                      <Select value={visualSetup.shotType} onValueChange={(v) => setVisualSetup(prev => ({ ...prev, shotType: v }))}>
-                        <SelectTrigger className="mt-1 bg-slate-900 border-slate-700">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="extreme-close-up">Extreme Close-Up</SelectItem>
-                          <SelectItem value="close-up">Close-Up</SelectItem>
-                          <SelectItem value="medium-close-up">Medium Close-Up</SelectItem>
-                          <SelectItem value="medium-shot">Medium Shot</SelectItem>
-                          <SelectItem value="wide-shot">Wide Shot</SelectItem>
-                          <SelectItem value="extreme-wide">Extreme Wide</SelectItem>
-                          <SelectItem value="over-shoulder">Over the Shoulder</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-xs text-slate-400">Camera Angle</Label>
-                      <Select value={visualSetup.cameraAngle} onValueChange={(v) => setVisualSetup(prev => ({ ...prev, cameraAngle: v }))}>
-                        <SelectTrigger className="mt-1 bg-slate-900 border-slate-700">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="eye-level">Eye Level</SelectItem>
-                          <SelectItem value="low-angle">Low Angle</SelectItem>
-                          <SelectItem value="high-angle">High Angle</SelectItem>
-                          <SelectItem value="dutch-angle">Dutch Angle</SelectItem>
-                          <SelectItem value="birds-eye">Bird's Eye</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-slate-400">Lighting</Label>
-                    <Select value={visualSetup.lighting} onValueChange={(v) => setVisualSetup(prev => ({ ...prev, lighting: v }))}>
-                      <SelectTrigger className="mt-1 bg-slate-900 border-slate-700">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="natural">Natural</SelectItem>
-                        <SelectItem value="soft">Soft / High-Key</SelectItem>
-                        <SelectItem value="dramatic">Dramatic / Low-Key</SelectItem>
-                        <SelectItem value="harsh">Harsh</SelectItem>
-                        <SelectItem value="silhouette">Silhouette</SelectItem>
-                        <SelectItem value="neon">Neon / Stylized</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                {/* Camera & Composition — Shared Component */}
+                <CameraCompositionSection
+                  visualSetup={visualSetup}
+                  onVisualSetupChange={(update) => setVisualSetup(prev => ({ ...prev, ...update }))}
+                  hasCharacterReferences={hasCharacterReferences}
+                />
 
-                {/* Art Style Selection */}
-                <div className="space-y-3 p-3 rounded border border-slate-700 bg-slate-800/50">
-                  <h4 className="text-sm font-medium text-slate-200 flex items-center gap-2">
-                    <Palette className="w-4 h-4 text-cyan-400" />
-                    Art Style
-                  </h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    {artStylePresets.map((style) => (
-                      <div
-                        key={style.id}
-                        onClick={() => setArtStyle(style.id)}
-                        className={cn(
-                          "p-3 rounded-lg border cursor-pointer transition-all",
-                          artStyle === style.id
-                            ? "border-cyan-500 bg-cyan-500/10"
-                            : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
-                        )}
-                      >
-                        <div className="text-sm font-medium text-slate-200">{style.name}</div>
-                        <div className="text-xs text-slate-400 mt-0.5">{style.description}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                {/* Talent Direction — Shared Component (collapsed by default) */}
+                <TalentDirectionSection
+                  talentDirection={talentDirection}
+                  onTalentDirectionChange={(update) => setTalentDirection(prev => ({ ...prev, ...update }))}
+                  defaultCollapsed={true}
+                />
 
-                {/* Quality Mode Selection */}
-                <div className="space-y-3 p-3 rounded border border-slate-700 bg-slate-800/50">
-                  <h4 className="text-sm font-medium text-slate-200 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-cyan-400" />
-                    Quality Mode
-                  </h4>
-                  <div className="grid grid-cols-1 gap-2">
-                    {MODEL_TIERS.map((tier) => {
-                      const Icon = tier.icon
-                      const isSelected = modelTier === tier.id
-                      const isDisabled = tier.comingSoon
-                      return (
-                        <div
-                          key={tier.id}
-                          onClick={() => !isDisabled && setModelTier(tier.id)}
-                          className={cn(
-                            "p-3 rounded-lg border transition-all relative",
-                            isDisabled 
-                              ? "border-slate-700/50 bg-slate-800/30 cursor-not-allowed opacity-60"
-                              : isSelected
-                                ? tier.color === 'emerald' ? "border-emerald-500 bg-emerald-500/10 cursor-pointer"
-                                : tier.color === 'purple' ? "border-purple-500 bg-purple-500/10 cursor-pointer"
-                                : "border-amber-500 bg-amber-500/10 cursor-pointer"
-                                : "border-slate-700 bg-slate-800/50 hover:border-slate-600 cursor-pointer"
-                          )}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className={cn(
-                              "w-8 h-8 rounded-lg flex items-center justify-center",
-                              tier.color === 'emerald' ? "bg-emerald-500/20 text-emerald-400"
-                              : tier.color === 'purple' ? "bg-purple-500/20 text-purple-400"
-                              : "bg-amber-500/20 text-amber-400"
-                            )}>
-                              <Icon className="w-4 h-4" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-slate-200">{tier.name}</span>
-                                <span className={cn(
-                                  "text-xs px-1.5 py-0.5 rounded",
-                                  tier.color === 'emerald' ? "bg-emerald-500/20 text-emerald-300"
-                                  : tier.color === 'purple' ? "bg-purple-500/20 text-purple-300"
-                                  : "bg-amber-500/20 text-amber-300"
-                                )}>
-                                  {tier.description}
-                                </span>
-                                {tier.comingSoon && (
-                                  <Badge variant="outline" className="text-[10px] text-amber-400 border-amber-500/50">
-                                    Coming Soon
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-xs text-slate-400 mt-1">{tier.details}</p>
-                              <div className="flex items-center gap-3 mt-2 text-[10px] text-slate-500">
-                                <span>{tier.model}</span>
-                                <span>•</span>
-                                <span>{tier.resolution}</span>
-                                <span>•</span>
-                                <span>{tier.cost}</span>
-                              </div>
-                            </div>
-                            {isSelected && !isDisabled && (
-                              <Check className={cn(
-                                "w-5 h-5",
-                                tier.color === 'emerald' ? "text-emerald-400"
-                                : tier.color === 'purple' ? "text-purple-400"
-                                : "text-amber-400"
-                              )} />
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  
-                  {/* Thinking Level Control */}
-                  <div className="mt-4 pt-4 border-t border-slate-700/50">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Brain className="w-4 h-4 text-slate-400" />
-                        <span className="text-xs text-slate-400">Thinking Level</span>
-                      </div>
-                      <div className="flex items-center gap-1 bg-slate-900 rounded-lg p-1">
-                        <button
-                          onClick={() => setThinkingLevel('low')}
-                          className={cn(
-                            "px-3 py-1 text-xs rounded transition-colors",
-                            thinkingLevel === 'low'
-                              ? "bg-slate-700 text-white"
-                              : "text-slate-400 hover:text-slate-300"
-                          )}
-                        >
-                          Low
-                        </button>
-                        <button
-                          onClick={() => setThinkingLevel('high')}
-                          className={cn(
-                            "px-3 py-1 text-xs rounded transition-colors",
-                            thinkingLevel === 'high'
-                              ? "bg-slate-700 text-white"
-                              : "text-slate-400 hover:text-slate-300"
-                          )}
-                        >
-                          High
-                        </button>
-                      </div>
-                    </div>
-                    <p className="text-[10px] text-slate-500 mt-2">
-                      {thinkingLevel === 'high' 
-                        ? 'High thinking: Better for complex, multi-layered scenes. Takes longer but captures all details.'
-                        : 'Low thinking: Faster generation for simple prompts. Good for quick iterations.'}
-                    </p>
-                  </div>
-                </div>
+                {/* Art Style — Shared Component */}
+                <ArtStyleGrid
+                  artStyle={artStyle}
+                  onArtStyleChange={setArtStyle}
+                />
+
+                {/* Quality Mode — Shared Component */}
+                <QualityModeSection
+                  modelTier={modelTier}
+                  onModelTierChange={setModelTier}
+                  thinkingLevel={thinkingLevel}
+                  onThinkingLevelChange={setThinkingLevel}
+                />
 
                 {/* Prompt Preview */}
                 <div className="space-y-2 p-3 rounded border border-slate-700 bg-slate-800/50">
@@ -1457,73 +1060,14 @@ export function FramePromptDialog({
                   )}
                 </div>
 
-                {/* Quality Mode (Custom Prompt Tab) */}
-                <div className="space-y-3 p-3 rounded border border-slate-700 bg-slate-800/50">
-                  <h4 className="text-sm font-medium text-slate-200 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-cyan-400" />
-                    Quality Mode
-                  </h4>
-                  <div className="flex items-center gap-2">
-                    {MODEL_TIERS.filter(t => !t.comingSoon).map((tier) => {
-                      const Icon = tier.icon
-                      const isSelected = modelTier === tier.id
-                      return (
-                        <button
-                          key={tier.id}
-                          onClick={() => setModelTier(tier.id)}
-                          className={cn(
-                            "flex-1 flex items-center gap-2 p-2 rounded-lg border transition-all",
-                            isSelected
-                              ? tier.color === 'emerald' ? "border-emerald-500 bg-emerald-500/10"
-                              : "border-purple-500 bg-purple-500/10"
-                              : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
-                          )}
-                        >
-                          <Icon className={cn(
-                            "w-4 h-4",
-                            isSelected 
-                              ? tier.color === 'emerald' ? "text-emerald-400" : "text-purple-400"
-                              : "text-slate-400"
-                          )} />
-                          <div className="text-left">
-                            <div className="text-xs font-medium text-slate-200">{tier.name}</div>
-                            <div className="text-[10px] text-slate-500">{tier.cost}</div>
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-700/50">
-                    <div className="flex items-center gap-2">
-                      <Brain className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="text-xs text-slate-400">Thinking:</span>
-                    </div>
-                    <div className="flex items-center gap-1 bg-slate-900 rounded-lg p-0.5">
-                      <button
-                        onClick={() => setThinkingLevel('low')}
-                        className={cn(
-                          "px-2 py-0.5 text-[10px] rounded transition-colors",
-                          thinkingLevel === 'low'
-                            ? "bg-slate-700 text-white"
-                            : "text-slate-400 hover:text-slate-300"
-                        )}
-                      >
-                        Low
-                      </button>
-                      <button
-                        onClick={() => setThinkingLevel('high')}
-                        className={cn(
-                          "px-2 py-0.5 text-[10px] rounded transition-colors",
-                          thinkingLevel === 'high'
-                            ? "bg-slate-700 text-white"
-                            : "text-slate-400 hover:text-slate-300"
-                        )}
-                      >
-                        High
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                {/* Quality Mode (Custom Prompt Tab) — Shared Component (compact) */}
+                <QualityModeSection
+                  modelTier={modelTier}
+                  onModelTierChange={setModelTier}
+                  thinkingLevel={thinkingLevel}
+                  onThinkingLevelChange={setThinkingLevel}
+                  compact={true}
+                />
               </div>
             </ScrollArea>
           </TabsContent>
