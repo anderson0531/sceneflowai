@@ -257,9 +257,33 @@ export async function POST(request: NextRequest) {
       })
       console.log(`[Scene Animatic] RenderJob record created: ${jobId}`)
     } catch (dbError) {
-      // Non-blocking: continue even if DB insert fails
-      // The render will still work, just won't have tracking
-      console.error(`[Scene Animatic] Failed to create RenderJob record:`, dbError)
+      // If scene_id column is missing, retry without it
+      const errMsg = dbError instanceof Error ? dbError.message : String(dbError)
+      if (errMsg.includes('column') && errMsg.includes('does not exist')) {
+        console.warn(`[Scene Animatic] Column missing, retrying without scene_id:`, errMsg)
+        try {
+          await RenderJob.create({
+            id: jobId,
+            project_id: body.projectId,
+            user_id: userId,
+            status: 'QUEUED',
+            progress: 0,
+            resolution: body.resolution,
+            language: body.language,
+            include_subtitles: body.settings.includeSubtitles,
+            render_type: 'scene_animatic',
+            stream_type: 'animatic',
+            estimated_duration: totalDuration,
+          })
+          console.log(`[Scene Animatic] RenderJob record created (without scene_id): ${jobId}`)
+        } catch (retryError) {
+          console.error(`[Scene Animatic] Retry also failed:`, retryError)
+        }
+      } else {
+        // Non-blocking: continue even if DB insert fails
+        // The render will still work, just won't have tracking
+        console.error(`[Scene Animatic] Failed to create RenderJob record:`, dbError)
+      }
     }
 
     // Trigger Cloud Run Job

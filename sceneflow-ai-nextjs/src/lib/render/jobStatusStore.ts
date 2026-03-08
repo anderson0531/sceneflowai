@@ -6,9 +6,27 @@
  * function instances on Vercel.
  * 
  * Falls back to in-memory Map for local development or when DB is unavailable.
+ * 
+ * RESILIENCE: If the DB schema is missing columns (e.g., scene_id),
+ * queries will retry without those columns before falling back to in-memory.
  */
 
 import RenderJob from '@/models/RenderJob'
+
+/**
+ * Helper: Detect if a Sequelize error is caused by a missing column
+ * and return the column name if so.
+ */
+function getMissingColumn(err: unknown): string | null {
+  const msg = err instanceof Error ? err.message : String(err)
+  // Matches: column "scene_id" does not exist
+  const match = msg.match(/column "(\w+)" does not exist/)
+  return match ? match[1] : null
+}
+
+// Track columns that are known to be missing from the DB
+// so we can exclude them from subsequent queries without retrying
+const missingColumns = new Set<string>()
 
 export interface JobStatus {
   status: 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED'
@@ -23,11 +41,19 @@ export interface JobStatus {
 const fallbackStore = new Map<string, JobStatus>()
 
 /**
- * Get job status by ID - checks database first, then in-memory fallback
+ * Get job status by ID - checks database first, then in-memory fallback.
+ * Resilient to missing columns (e.g., scene_id not yet migrated).
  */
 export async function getJobStatusAsync(jobId: string): Promise<JobStatus | undefined> {
   try {
-    const job = await RenderJob.findByPk(jobId)
+    // Exclude known missing columns from the SELECT
+    const excludeAttrs = Array.from(missingColumns)
+    const queryOptions: Record<string, unknown> = {}
+    if (excludeAttrs.length > 0) {
+      queryOptions.attributes = { exclude: excludeAttrs }
+    }
+    
+    const job = await RenderJob.findByPk(jobId, queryOptions)
     if (job) {
       return {
         status: job.status as JobStatus['status'],
@@ -39,6 +65,14 @@ export async function getJobStatusAsync(jobId: string): Promise<JobStatus | unde
       }
     }
   } catch (dbError) {
+    // Check if error is caused by a missing column
+    const col = getMissingColumn(dbError)
+    if (col && !missingColumns.has(col)) {
+      console.warn(`[JobStatusStore] Column "${col}" missing from DB, excluding from future queries. Run migration: scripts/migrations/add_scene_id_to_render_jobs.sql`)
+      missingColumns.add(col)
+      // Retry once with the column excluded
+      return getJobStatusAsync(jobId)
+    }
     console.warn('[JobStatusStore] DB read failed, checking fallback:', dbError)
   }
   
@@ -65,7 +99,7 @@ export function setJobStatus(jobId: string, status: JobStatus): void {
   fallbackStore.set(jobId, statusWithTimestamp)
   
   // Async write to database (non-blocking)
-  RenderJob.findByPk(jobId)
+  RenderJob.findByPk(jobId, missingColumns.size > 0 ? { attributes: { exclude: Array.from(missingColumns) } } : {})
     .then(async (existing) => {
       if (existing) {
         await existing.update({
@@ -79,6 +113,11 @@ export function setJobStatus(jobId: string, status: JobStatus): void {
       // If job doesn't exist in DB, it was likely created by the render route already
     })
     .catch(err => {
+      const col = getMissingColumn(err)
+      if (col) {
+        missingColumns.add(col)
+        console.warn(`[JobStatusStore] Column "${col}" missing, added to exclusion list`)
+      }
       console.warn('[JobStatusStore] DB write failed (in-memory still updated):', err)
     })
 }
@@ -108,7 +147,7 @@ export function updateJobStatus(jobId: string, update: Partial<JobStatus>): bool
   }
   
   // Async write to database (non-blocking)
-  RenderJob.findByPk(jobId)
+  RenderJob.findByPk(jobId, missingColumns.size > 0 ? { attributes: { exclude: Array.from(missingColumns) } } : {})
     .then(async (job) => {
       if (job) {
         const dbUpdate: Record<string, unknown> = {}
@@ -123,6 +162,11 @@ export function updateJobStatus(jobId: string, update: Partial<JobStatus>): bool
       }
     })
     .catch(err => {
+      const col = getMissingColumn(err)
+      if (col) {
+        missingColumns.add(col)
+        console.warn(`[JobStatusStore] Column "${col}" missing, added to exclusion list`)
+      }
       console.warn('[JobStatusStore] DB update failed:', err)
     })
   

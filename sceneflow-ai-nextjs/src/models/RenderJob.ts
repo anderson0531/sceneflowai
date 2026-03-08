@@ -3,6 +3,10 @@
  * 
  * Tracks video rendering jobs submitted to GCP Cloud Run.
  * Used for status polling and job management.
+ * 
+ * NOTE: If the `scene_id` column is missing in production, queries will
+ * gracefully exclude it. Run the migration:
+ *   scripts/migrations/add_scene_id_to_render_jobs.sql
  */
 
 import { DataTypes, Model, Optional } from 'sequelize'

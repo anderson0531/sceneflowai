@@ -66,6 +66,7 @@ import {
 import { Progress } from '@/components/ui/progress'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { MixerTimeline } from './MixerTimeline'
+import { useOverlayStore } from '@/store/useOverlayStore'
 import type { 
   SceneSegment, 
   SceneProductionData, 
@@ -2234,6 +2235,9 @@ export function SceneProductionMixer({
   const [activeRenderMode, setActiveRenderMode] = useState<ActiveRenderMode>('server')
   const [localRenderProgress, setLocalRenderProgress] = useState<LocalRenderProgress | null>(null)
   
+  // === Global Processing Overlay ===
+  const overlayStore = useOverlayStore()
+  
   // Check if local rendering is supported in this browser (async load)
   const [localRenderSupportCheck, setLocalRenderSupportCheck] = useState<{ supported: boolean; reason?: string }>(
     { supported: false, reason: 'Checking browser capabilities...' }
@@ -2432,6 +2436,13 @@ export function SceneProductionMixer({
     setRenderProgress(0)
     setRenderError(null)
     
+    // Show global processing overlay for server render
+    overlayStore.show(
+      'Cloud rendering in progress — please don\'t close this tab',
+      Math.max(60, Math.ceil(totalDuration * 1.5)),
+      'video-generation'
+    )
+    
     try {
       // Build segment data
       const segmentData = renderedSegments.map(seg => {
@@ -2561,11 +2572,12 @@ export function SceneProductionMixer({
       console.error('[SceneProductionMixer] Render error:', err)
       setRenderError(err instanceof Error ? err.message : 'Unknown error')
       setRenderStatus('error')
+      overlayStore.hide()
     }
   }, [
     renderedSegments, segmentAudioConfigs, audioTracks, currentAudioUrls,
     totalDuration, sceneId, projectId, sceneNumber, resolution, selectedLanguage,
-    textOverlays, masterSegmentVolume, watermarkConfig
+    textOverlays, masterSegmentVolume, watermarkConfig, overlayStore
   ])
   
   // Re-upload a GCS signed URL to Vercel Blob for persistent storage
@@ -2621,12 +2633,14 @@ export function SceneProductionMixer({
           // GCS signed URLs expire after 7 days; Vercel Blob URLs are permanent
           let persistentUrl = data.downloadUrl
           if (data.downloadUrl?.includes('storage.googleapis.com')) {
+            overlayStore.setStatus('Uploading to permanent storage...')
             persistentUrl = await reuploadToVercelBlob(data.downloadUrl, 'ServerRender')
           }
           
           setRenderStatus('complete')
           setRenderProgress(100)
           setLastRenderedUrl(persistentUrl)
+          overlayStore.hide()
           
           // Cache the video to IndexedDB for offline access
           try {
@@ -2642,10 +2656,13 @@ export function SceneProductionMixer({
         }
         
         if (data.status === 'FAILED') {
+          overlayStore.hide()
           throw new Error(data.error || 'Render job failed')
         }
         
-        setRenderProgress(40 + (data.progress || 0) * 0.6)
+        const currentProgress = 40 + (data.progress || 0) * 0.6
+        setRenderProgress(currentProgress)
+        overlayStore.setProgress(currentProgress)
       } catch (err) {
         console.warn('[SceneProductionMixer] Poll error:', err)
       }
@@ -2710,6 +2727,13 @@ export function SceneProductionMixer({
     setRenderProgress(0)
     setRenderError(null)
     setLocalRenderProgress(null)
+    
+    // Show global processing overlay
+    overlayStore.show(
+      'Rendering video — please don\'t close this tab',
+      Math.max(30, Math.ceil(totalDuration * 2)), // Estimate: ~2x video duration
+      'video-generation'
+    )
     
     try {
       const segmentsForLocal = videoSegments.map(seg => {
@@ -2846,6 +2870,15 @@ export function SceneProductionMixer({
       }, (progress) => {
         setLocalRenderProgress(progress)
         setRenderProgress(progress.progress)
+        // Update global overlay with real progress
+        overlayStore.setProgress(progress.progress)
+        if (progress.phase === 'preparing') {
+          overlayStore.setStatus('Preparing assets...')
+        } else if (progress.phase === 'rendering' && progress.currentFrame !== undefined && progress.totalFrames) {
+          overlayStore.setStatus(`Rendering frame ${progress.currentFrame + 1}/${progress.totalFrames}`)
+        } else if (progress.phase === 'encoding') {
+          overlayStore.setStatus('Encoding video...')
+        }
       })
       
       if (!renderResult.success || !renderResult.blobUrl || !renderResult.blob) {
@@ -2895,6 +2928,9 @@ export function SceneProductionMixer({
       setRenderProgress(100)
       setLastRenderedUrl(persistentUrl)
       
+      // Hide global processing overlay
+      overlayStore.hide()
+      
       // Show success toast with download action (no auto-download)
       toast.success('Video render complete!', {
         description: 'Your scene video is ready for download.',
@@ -2927,12 +2963,14 @@ export function SceneProductionMixer({
       console.error('[SceneProductionMixer] Local render error:', err)
       setRenderError(err instanceof Error ? err.message : 'Local rendering failed')
       setRenderStatus('error')
+      // Hide global processing overlay on error
+      overlayStore.hide()
     }
   }, [
     videoSegments, segments, segmentAudioConfigs, audioTracks, currentAudioUrls,
     totalDuration, videoTotalDuration, maxAudioDuration, resolution, selectedLanguage, 
     textOverlays, masterSegmentVolume, localRenderSupported, localRenderSupportCheck.reason,
-    dialogueClipConfigs, sceneNumber, onRenderComplete, watermarkConfig
+    dialogueClipConfigs, sceneNumber, onRenderComplete, watermarkConfig, overlayStore
   ])
   
   // === Headless Render Handler (GCP Cloud Run) ===
@@ -2946,6 +2984,13 @@ export function SceneProductionMixer({
     setActiveRenderMode('headless')
     setRenderProgress(0)
     setRenderError(null)
+    
+    // Show global processing overlay for headless render
+    overlayStore.show(
+      'Pro Cloud rendering in progress — this may take a few minutes',
+      Math.max(120, Math.ceil(totalDuration * 3)),
+      'video-generation'
+    )
     
     try {
       // Build segments for headless render
@@ -3092,11 +3137,12 @@ export function SceneProductionMixer({
       console.error('[SceneProductionMixer] Headless render error:', err)
       setRenderError(err instanceof Error ? err.message : 'Headless rendering failed')
       setRenderStatus('error')
+      overlayStore.hide()
     }
   }, [
     videoSegments, segmentAudioConfigs, audioTracks, currentAudioUrls,
     totalDuration, resolution, textOverlays, masterSegmentVolume,
-    dialogueClipConfigs, watermarkConfig
+    dialogueClipConfigs, watermarkConfig, overlayStore
   ])
   
   // Poll headless job status
@@ -3121,12 +3167,14 @@ export function SceneProductionMixer({
           // Re-upload GCS signed URL to Vercel Blob for persistent storage
           let persistentUrl = outputUrl
           if (outputUrl?.includes('storage.googleapis.com')) {
+            overlayStore.setStatus('Uploading to permanent storage...')
             persistentUrl = await reuploadToVercelBlob(outputUrl, 'HeadlessRender')
           }
           
           setRenderStatus('complete')
           setRenderProgress(100)
           setLastRenderedUrl(persistentUrl)
+          overlayStore.hide()
           
           // Cache the video to IndexedDB for offline access
           try {
@@ -3142,11 +3190,14 @@ export function SceneProductionMixer({
         }
         
         if (data.status === 'error' || data.status === 'failed') {
+          overlayStore.hide()
           throw new Error(data.error || 'Headless render job failed')
         }
         
         // Still processing
-        setRenderProgress(30 + Math.min(attempts, 60))
+        const headlessProgress = 30 + Math.min(attempts, 60)
+        setRenderProgress(headlessProgress)
+        overlayStore.setProgress(headlessProgress)
       } catch (err) {
         console.warn('[HeadlessRender] Poll error:', err)
       }
@@ -4145,7 +4196,7 @@ export function SceneProductionMixer({
                 onClick={handleSmartRender}
                 disabled={isRendering || !hasRenderedSegments}
                 size="lg"
-                className={`px-6 ${
+                className={`px-6 whitespace-nowrap min-w-[160px] ${
                   selectedRenderMode === 'local' 
                     ? 'bg-yellow-600 hover:bg-yellow-700' 
                     : selectedRenderMode === 'headless'

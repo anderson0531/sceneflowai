@@ -243,6 +243,7 @@ export class LocalRenderService {
   private hiddenCanvas: HTMLCanvasElement | null = null // Hidden canvas for all draw operations
   private hiddenCtx: CanvasRenderingContext2D | null = null // Hidden context
   private audioContext: AudioContext | null = null
+  private playbackAudioContext: AudioContext | null = null // For playing pre-rendered audio into MediaRecorder
   private mediaRecorder: MediaRecorder | null = null
   private recordedChunks: Blob[] = []
   private abortController: AbortController | null = null
@@ -337,7 +338,7 @@ export class LocalRenderService {
       this.ctx.setTransform(1, 0, 0, 1, 0, 0)
       this.hiddenCtx.setTransform(1, 0, 0, 1, 0, 0)
       
-      // Setup audio context
+      // Setup audio context for preloading (will be replaced by offline context for rendering)
       const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
       this.audioContext = new AudioContextClass()
       
@@ -432,8 +433,110 @@ export class LocalRenderService {
       // Get video track for manual frame requests
       const canvasVideoTrack = stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack | undefined
       
-      // Mix audio into the stream
-      const audioDestination = this.audioContext.createMediaStreamDestination()
+      // ===========================================================================
+      // PRE-RENDER AUDIO using OfflineAudioContext
+      // ===========================================================================
+      // The render loop runs slower than real-time (frame-by-frame with seeks).
+      // If we used a real-time AudioContext, audio would play at normal speed 
+      // and finish before the video render completes, causing silent output.
+      //
+      // Solution: Pre-render ALL audio (TTS, music, SFX, video audio) into a 
+      // single buffer using OfflineAudioContext, then play it back via a 
+      // real-time AudioContext that feeds into MediaRecorder's stream.
+      // ===========================================================================
+      
+      const sampleRate = 44100
+      const totalSamples = Math.ceil(adjustedConfig.totalDuration * sampleRate)
+      
+      let preRenderedAudioBuffer: AudioBuffer | null = null
+      
+      if (audioBuffers.size > 0 || adjustedConfig.segments.some(s => s.includeVideoAudio)) {
+        try {
+          console.log('[LocalRender] Pre-rendering audio with OfflineAudioContext:', {
+            duration: adjustedConfig.totalDuration,
+            sampleRate,
+            totalSamples,
+            audioClipCount: adjustedConfig.audioClips.length,
+            videoAudioSegments: adjustedConfig.segments.filter(s => s.includeVideoAudio).length,
+          })
+          
+          const offlineCtx = new OfflineAudioContext(2, totalSamples, sampleRate)
+          
+          // Schedule all audio clips (narration, dialogue, music, sfx) into offline context
+          adjustedConfig.audioClips.forEach((clip, index) => {
+            const buffer = audioBuffers.get(`${clip.type}-${index}`)
+            if (!buffer) return
+            
+            const source = offlineCtx.createBufferSource()
+            source.buffer = buffer
+            
+            const gainNode = offlineCtx.createGain()
+            gainNode.gain.value = clip.volume
+            
+            source.connect(gainNode)
+            gainNode.connect(offlineCtx.destination)
+            
+            // Schedule at the correct time offset within the composition
+            const startTime = Math.max(0, clip.startTime)
+            const maxDuration = Math.max(0, adjustedConfig.totalDuration - startTime)
+            source.start(startTime, 0, Math.min(clip.duration, maxDuration))
+          })
+          
+          // Pre-render video audio from video elements
+          // Extract audio from each video that has includeVideoAudio enabled
+          for (const segment of adjustedConfig.segments) {
+            if (!segment.includeVideoAudio || segment.assetType !== 'video') continue
+            
+            const video = assets.get(segment.segmentId)
+            if (!(video instanceof HTMLVideoElement)) continue
+            
+            try {
+              // Fetch the video's audio track separately and decode it
+              const response = await fetch(segment.assetUrl, { signal })
+              const arrayBuffer = await response.arrayBuffer()
+              
+              // Decode the video file's audio using the offline context
+              const videoAudioBuffer = await offlineCtx.decodeAudioData(arrayBuffer)
+              
+              const source = offlineCtx.createBufferSource()
+              source.buffer = videoAudioBuffer
+              
+              const gainNode = offlineCtx.createGain()
+              gainNode.gain.value = segment.volume ?? 1.0
+              
+              source.connect(gainNode)
+              gainNode.connect(offlineCtx.destination)
+              
+              // Schedule at the segment's start time
+              source.start(segment.startTime, 0, segment.duration)
+              
+              console.log('[LocalRender] Video audio scheduled in offline context:', {
+                segmentId: segment.segmentId,
+                startTime: segment.startTime,
+                duration: segment.duration,
+                volume: segment.volume,
+              })
+            } catch (videoAudioError) {
+              console.warn('[LocalRender] Could not extract audio from video:', segment.segmentId, videoAudioError)
+            }
+          }
+          
+          // Render the complete audio mix
+          preRenderedAudioBuffer = await offlineCtx.startRendering()
+          console.log('[LocalRender] Audio pre-rendered successfully:', {
+            duration: preRenderedAudioBuffer.duration,
+            channels: preRenderedAudioBuffer.numberOfChannels,
+            sampleRate: preRenderedAudioBuffer.sampleRate,
+          })
+        } catch (audioError) {
+          console.error('[LocalRender] Failed to pre-render audio, video will have no audio:', audioError)
+        }
+      }
+      
+      // Create a real-time AudioContext to play the pre-rendered audio into MediaRecorder
+      const playbackAudioContext = new AudioContextClass()
+      this.playbackAudioContext = playbackAudioContext
+      const audioDestination = playbackAudioContext.createMediaStreamDestination()
       const audioTrack = audioDestination.stream.getAudioTracks()[0]
       if (audioTrack) {
         stream.addTrack(audioTrack)
@@ -479,11 +582,15 @@ export class LocalRenderService {
       
       this.mediaRecorder.start(100) // Capture every 100ms
       
-      // Schedule audio playback (TTS, music, SFX from audio clips)
-      this.scheduleAudio(audioBuffers, adjustedConfig.audioClips, audioDestination)
-      
-      // Schedule video audio (native audio from video files)
-      this.scheduleVideoAudio(adjustedConfig, assets, audioDestination)
+      // Play back pre-rendered audio through the real-time context
+      // This will be captured by the MediaRecorder's audio track
+      if (preRenderedAudioBuffer) {
+        const audioSource = playbackAudioContext.createBufferSource()
+        audioSource.buffer = preRenderedAudioBuffer
+        audioSource.connect(audioDestination)
+        audioSource.start(0)
+        console.log('[LocalRender] Pre-rendered audio playback started')
+      }
       
       // Render frames
       const totalFrames = Math.ceil(adjustedConfig.totalDuration * adjustedConfig.fps)
@@ -1254,6 +1361,14 @@ export class LocalRenderService {
       }
     }
     
+    if (this.playbackAudioContext && this.playbackAudioContext.state !== 'closed') {
+      try {
+        this.playbackAudioContext.close()
+      } catch {
+        // Ignore
+      }
+    }
+    
     // Clear recorded chunks to free memory BEFORE nullifying references
     // This is critical for preventing memory buildup
     if (this.recordedChunks.length > 0) {
@@ -1270,6 +1385,7 @@ export class LocalRenderService {
     this.canvas = null
     this.ctx = null
     this.audioContext = null
+    this.playbackAudioContext = null
     this.mediaRecorder = null
     this.recordedChunks = []
     this.abortController = null
