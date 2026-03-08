@@ -122,6 +122,20 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
   // Determine if currently in Production phase (Vision page)
   const isInProductionPhase = pathname.includes('/workflow/vision/')
 
+  // Track storyboard open/close state (broadcast by Vision page)
+  const [isStoryboardOpen, setIsStoryboardOpen] = useState(false)
+  useEffect(() => {
+    const handler = (e: CustomEvent<{ open: boolean }>) => {
+      setIsStoryboardOpen(e.detail.open)
+    }
+    window.addEventListener('production:storyboard-state' as any, handler)
+    return () => window.removeEventListener('production:storyboard-state' as any, handler)
+  }, [])
+  // Reset when navigating away from production
+  useEffect(() => {
+    if (!isInProductionPhase) setIsStoryboardOpen(false)
+  }, [isInProductionPhase])
+
   // Listen for blueprint guide status updates
   useEffect(() => {
     const handleStatusUpdate = (e: CustomEvent<Record<string, GuideStepStatus>>) => {
@@ -347,9 +361,14 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
                   <ImageIcon className="w-3.5 h-3.5 text-cyan-400" />
                   <span>Storyboard</span>
                 </div>
-                <div className="flex items-center gap-1 text-[10px] font-normal text-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span>Open</span>
-                  <ChevronDown className="w-3 h-3 rotate-[-90deg]" />
+                <div className={cn(
+                  "flex items-center gap-1 text-[10px] font-normal transition-opacity",
+                  isStoryboardOpen
+                    ? "text-cyan-400 opacity-100"
+                    : "text-cyan-400 opacity-0 group-hover:opacity-100"
+                )}>
+                  <span>{isStoryboardOpen ? 'Close' : 'Open'}</span>
+                  <ChevronDown className={cn("w-3 h-3 transition-transform", isStoryboardOpen ? 'rotate-90' : 'rotate-[-90deg]')} />
                 </div>
               </button>
               <p className="text-[10px] text-slate-500 mt-1.5 pl-5">

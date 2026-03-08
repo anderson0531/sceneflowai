@@ -5086,6 +5086,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }, [])
   // ============================================================================
 
+  // Broadcast storyboard open/close state to sidebar
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('production:storyboard-state', { detail: { open: showSceneGallery } }))
+  }, [showSceneGallery])
+
   const generateScriptHash = (script: any): string => {
     // Simple hash based on script content for change detection
     const content = JSON.stringify({
