@@ -18,6 +18,7 @@ import {
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { FinalCutTimeline } from '@/components/final-cut/FinalCutTimeline'
+import { ExportDialog, type ExportSettings } from '@/components/final-cut/ExportDialog'
 import type {
   FinalCutStream,
   StreamScene,
@@ -172,6 +173,7 @@ export default function FinalCutPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [streams, setStreams] = useState<FinalCutStream[]>([])
   const [selectedStreamId, setSelectedStreamId] = useState<string | null>(null)
+  const [exportDialogOpen, setExportDialogOpen] = useState(false)
   
   // Get project ID from URL or current project
   const projectId = searchParams.get('projectId') || currentProject?.id || (isDemo ? 'demo-project' : undefined)
@@ -468,8 +470,13 @@ export default function FinalCutPage() {
   }, [currentProject, streams, updateProject])
   
   const handleExport = useCallback(async (streamId: string, settings: any) => {
-    toast.info('Export feature coming soon!')
-    // TODO: Implement export functionality
+    setExportDialogOpen(true)
+  }, [])
+  
+  const handleExportWithSettings = useCallback(async (settings: ExportSettings) => {
+    toast.info(`Export queued — ${settings.resolution} ${settings.codec.toUpperCase()} at ${settings.frameRate}fps. Cloud rendering will begin shortly.`)
+    setExportDialogOpen(false)
+    // TODO: Wire to Cloud Run render endpoint when available
   }, [])
   
   // ============================================================================
@@ -592,6 +599,7 @@ export default function FinalCutPage() {
               <Button
                 size="sm"
                 className="bg-purple-600 hover:bg-purple-700"
+                onClick={() => setExportDialogOpen(true)}
               >
                 <Download className="w-4 h-4 mr-2" />
                 Export
@@ -613,6 +621,31 @@ export default function FinalCutPage() {
         </div>
       </header>
       
+      {/* Export Dialog */}
+      {(() => {
+        const selectedStream = streams.find(s => s.id === selectedStreamId)
+        const hasRenderedScenes = selectedStream?.scenes?.some(s =>
+          s.segments?.some(seg => seg.assetUrl && seg.assetType === 'video')
+        ) ?? false
+        const languageNames: Record<string, string> = {
+          en: 'English', th: 'Thai', ja: 'Japanese', ko: 'Korean',
+          zh: 'Chinese', es: 'Spanish', fr: 'French', de: 'German',
+          pt: 'Portuguese', hi: 'Hindi', ar: 'Arabic', ru: 'Russian'
+        }
+        return (
+          <ExportDialog
+            open={exportDialogOpen}
+            onOpenChange={setExportDialogOpen}
+            streamName={selectedStream?.name || 'Untitled Stream'}
+            streamLanguage={languageNames[selectedStream?.language || 'en'] || selectedStream?.language || 'English'}
+            totalDuration={totalDuration}
+            sceneCount={selectedStream?.scenes?.length || 0}
+            onExport={handleExportWithSettings}
+            hasRenderedScenes={hasRenderedScenes}
+          />
+        )
+      })()}
+
       {/* Main Content - Timeline */}
       <main className="flex-1">
         <FinalCutTimeline

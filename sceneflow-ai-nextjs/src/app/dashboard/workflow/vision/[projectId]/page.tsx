@@ -39,6 +39,8 @@ const ScriptPanel = dynamic(
   }
 )
 import { SceneSelector } from '@/components/vision/SceneSelector'
+import { SceneProgressDashboard, type SceneProgressItem } from '@/components/vision/SceneProgressDashboard'
+import { ProductionOnboarding } from '@/components/vision/ProductionOnboarding'
 import { SceneGallery } from '@/components/vision/SceneGallery'
 import { GenerationProgress } from '@/components/vision/GenerationProgress'
 import { ScreeningRoomV2 } from '@/components/vision/ScreeningRoomV2'
@@ -9565,6 +9567,54 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 projectDuration={projectDuration || undefined}
                 seriesInfo={seriesInfo}
                 timelineSlot={
+                  <>
+                  <SceneProgressDashboard
+                    scenes={(script?.script?.scenes || []).map((scene: any, idx: number) => {
+                      const sceneId = scene.id || scene.sceneId || `scene-${idx}`
+                      const productionData = sceneProductionState[sceneId]
+                      const segments = productionData?.segments || []
+                      const hasScript = !!(scene.content || scene.dialog || scene.narration || scene.description)
+                      const hasDirection = !!(scene.direction || scene.sceneDirection || scene.cameraDirection)
+                      const hasFrame = !!scene.imageUrl
+                      const hasCallAction = segments.some((s: any) => s.activeAssetUrl && s.assetType)
+                      const hasAudio = !!(scene.narrationAudioUrl || scene.musicAudio || scene.narrationAudio)
+                      const hasRender = !!(productionData?.renderedSceneUrl || (productionData?.productionStreams && productionData.productionStreams.length > 0))
+                      const allSegmentsComplete = segments.length > 0 && segments.every((s: any) => s.status === 'complete' || s.status === 'COMPLETE')
+                      return {
+                        id: sceneId,
+                        sceneNumber: idx + 1,
+                        name: typeof scene.heading === 'string' ? scene.heading : scene.heading?.text || `Scene ${idx + 1}`,
+                        hasScript,
+                        hasDirection,
+                        hasFrame,
+                        hasCallAction,
+                        hasAudio,
+                        hasRender,
+                        status: (allSegmentsComplete && hasRender) ? 'complete' as const
+                          : (hasCallAction || hasFrame || hasAudio) ? 'in-progress' as const
+                          : 'not-started' as const,
+                        score: scene.audienceAnalysis?.score || scene.scoreAnalysis?.overallScore,
+                      } satisfies SceneProgressItem
+                    })}
+                    selectedSceneId={
+                      selectedSceneIndex !== null
+                        ? (script?.script?.scenes?.[selectedSceneIndex]?.id ||
+                           script?.script?.scenes?.[selectedSceneIndex]?.sceneId ||
+                           `scene-${selectedSceneIndex}`)
+                        : undefined
+                    }
+                    onSelectScene={(sceneId) => {
+                      const scenes = script?.script?.scenes || []
+                      const idx = scenes.findIndex(
+                        (s: any, i: number) =>
+                          (s.id || s.sceneId || `scene-${i}`) === sceneId
+                      )
+                      if (idx !== -1) {
+                        setSelectedSceneIndex(idx)
+                      }
+                    }}
+                    className="mb-3"
+                  />
                   <SceneSelector
                     scenes={(script?.script?.scenes || []).map((scene: any, idx: number, allScenes: any[]) => {
                       const sceneId = scene.id || scene.sceneId || `scene-${idx}`
@@ -9663,6 +9713,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       }
                     }}
                   />
+                  </>
                 }
                 onPlayScript={() => setIsPlayerOpen(true)}
                 onAddScene={handleAddScene}
@@ -10614,6 +10665,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* First-time onboarding tour */}
+      <ProductionOnboarding />
     </div>
   )
 }
