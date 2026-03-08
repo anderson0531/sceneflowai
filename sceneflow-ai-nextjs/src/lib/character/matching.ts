@@ -162,16 +162,25 @@ export function findSceneCharacters(
       })
     }
     
-    // Also check if the word is a first name prefix of any character
-    // (handles cases like "Ben" matching "Benjamin" even without explicit mapping)
+    // Also check if the word is a KNOWN SHORT FORM of any character name
+    // Only match if the word is a substantial prefix (at least 4 chars AND at least 60% of the full name part)
+    // This prevents false positives like "Reed" matching in "agreed" or "Ben" matching in "benefit"
     availableCharacters.forEach(char => {
       const nameParts = char.name.toLowerCase().split(/\s+/)
       // Skip titles like "Dr.", "Mr.", etc.
       const meaningfulParts = nameParts.filter(p => !EXCLUDED_WORDS.has(p.replace('.', '')))
       
       for (const part of meaningfulParts) {
-        // Check if the word is a prefix of any name part (min 3 chars match)
-        if (part.startsWith(word) && word.length >= 3 && part.length > word.length) {
+        // Only match short prefixes if they're a substantial portion of the full name
+        // e.g., "Ben" (3 chars) matches "Benjamin" (8 chars) = 37.5% — too low, skip
+        // e.g., "Benj" (4 chars) matches "Benjamin" (8 chars) = 50% — still too low
+        // e.g., "Benja" (5 chars) matches "Benjamin" (8 chars) = 62.5% — OK
+        // For exact full-part matches, always accept ("Anderson" = "Anderson")
+        if (word === part) {
+          foundCharacters.add(char)
+          break
+        }
+        if (part.startsWith(word) && word.length >= 4 && (word.length / part.length) >= 0.6) {
           foundCharacters.add(char)
           break
         }
@@ -180,14 +189,20 @@ export function findSceneCharacters(
   }
 
   // Strategy 4: Fallback - try first names only if very few matches found
+  // Requires at least 4-char first names to avoid false positives on short common words
   if (foundCharacters.size === 0) {
     availableCharacters.forEach(char => {
-      const firstName = char.name.split(/\s+/)[0].toLowerCase()
+      // Skip titles like "Dr.", "Mr.", etc. to get the actual first name
+      const nameParts = char.name.split(/\s+/)
+      const meaningfulName = nameParts.find(p => !EXCLUDED_WORDS.has(p.replace('.', '').toLowerCase()) && p.length >= 4)
+      if (!meaningfulName) return
       
-      // Skip if excluded word or too short
-      if (EXCLUDED_WORDS.has(firstName) || firstName.length < 3) return
+      const firstName = meaningfulName.toLowerCase()
       
-      // Only match if first name appears as standalone word
+      // Skip if excluded word
+      if (EXCLUDED_WORDS.has(firstName)) return
+      
+      // Only match if first name appears as standalone word with word boundaries
       const wordBoundaryRegex = new RegExp(`\\b${firstName}\\b`, 'i')
       if (wordBoundaryRegex.test(sceneText)) {
         foundCharacters.add(char)

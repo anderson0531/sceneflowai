@@ -7136,25 +7136,37 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // Check if it's a prompt data object from Scene Prompt Builder
         if (selectedCharacters.characters && Array.isArray(selectedCharacters.characters)) {
           promptData = selectedCharacters  // Contains customPrompt, artStyle, shotType, etc.
+          promptData.characterSelectionExplicit = true  // User made explicit choice (even if empty = no characters wanted)
           sceneCharacters = selectedCharacters.characters
         } else if (Array.isArray(selectedCharacters)) {
-          // Legacy: Just character array
+          // Legacy: Just character array — still explicit since caller passed specific characters
+          promptData.characterSelectionExplicit = true
           sceneCharacters = selectedCharacters
         } else {
           // Single character object
+          promptData.characterSelectionExplicit = true
           sceneCharacters = [selectedCharacters]
         }
       } else {
         // Auto-detect characters from scene using smart matching
-        // Use smart matching to find characters in scene
-        const sceneText = [
-          scene.heading || '',
-          scene.action || '',
-          scene.visualDescription || '',
-          ...(scene.dialogue || []).map((d: any) => d.character || '')
-        ].join(' ')
+        // CRITICAL: Skip character detection for no-talent scenes (title sequences, VFX-only, etc.)
+        const talentText = scene.sceneDirection?.talent?.blocking || scene.sceneDirection?.talent?.emotionalBeat || ''
+        const isNoTalentScene = /\b(n\/a|no\s+(live\s+)?actors?|no\s+talent|no\s+performers?)\b/i.test(talentText)
         
-        sceneCharacters = findSceneCharacters(sceneText, characters)
+        if (isNoTalentScene) {
+          console.log('[handleGenerateSceneImage] No-talent scene detected — skipping character auto-detection')
+          sceneCharacters = []
+          promptData.characterSelectionExplicit = true  // Treat as explicit empty selection
+        } else {
+          const sceneText = [
+            scene.heading || '',
+            scene.action || '',
+            scene.visualDescription || '',
+            ...(scene.dialogue || []).map((d: any) => d.character || '')
+          ].join(' ')
+          
+          sceneCharacters = findSceneCharacters(sceneText, characters)
+        }
       }
       
       // DEBUG: Log character referenceImage status before sending to API
@@ -7195,7 +7207,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         characters: options?.excludeCharacters ? [] : sceneCharacters,  // Skip characters if excludeCharacters
         quality: imageQuality,
         // Scene reference mode: no people, focus on environment
-        excludeCharacters: options?.excludeCharacters || false
+        excludeCharacters: options?.excludeCharacters || false,
+        // Signal that character selection was explicit (from dialog or no-talent detection)
+        // When true, API will NOT auto-detect characters — empty array means "no characters wanted"
+        characterSelectionExplicit: promptData.characterSelectionExplicit || false
       }
       console.log('[handleGenerateSceneImage] Request body:', JSON.stringify(requestBody).substring(0, 500))
       

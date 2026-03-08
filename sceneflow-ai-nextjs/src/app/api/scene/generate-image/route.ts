@@ -234,6 +234,7 @@ export async function POST(req: NextRequest) {
       excludeCharacters = false,  // NEW: Generate scene reference only (no people) for production bible
       locationReferences = [],  // NEW: Location references for environment consistency
       skipObjectAutoDetection = false,  // NEW: Skip auto-detection of objects (for batch mode)
+      characterSelectionExplicit = false,  // NEW: Client explicitly chose characters (even if empty = no characters wanted)
     } = body
     
     // Handle both legacy (selectedCharacters) and new (characters) formats
@@ -312,35 +313,63 @@ export async function POST(req: NextRequest) {
         }
       } else if (projectId && typeof sceneIndex === 'number') {
         // AUTO-DETECT: If no characters provided, try to extract them from the scene
-        console.log('[Scene Image] No characterObjects provided, attempting to auto-detect from scene')
-        const scenes = project.metadata?.visionPhase?.script?.script?.scenes || []
-        const scene = scenes[sceneIndex]
-        
-        if (scene) {
-          // Extract character names from scene (heading, action, dialogue)
-          const sceneText = [
-            scene.heading || '',
-            scene.action || '',
-            scene.visualDescription || '',
-            ...(scene.dialogue || []).map((d: any) => d.character || '')
-          ].join(' ').toLowerCase()
+        // SKIP if client explicitly chose characters (characterSelectionExplicit=true means "I chose these, even if empty")
+        if (characterSelectionExplicit) {
+          console.log('[Scene Image] Character selection was explicit (from dialog or no-talent detection) — skipping auto-detect')
+          console.log('[Scene Image] Proceeding with 0 characters as intended by user')
+        } else {
+          console.log('[Scene Image] No characterObjects provided, attempting to auto-detect from scene')
+          const scenes = project.metadata?.visionPhase?.script?.script?.scenes || []
+          const scene = scenes[sceneIndex]
           
-          // Match character names from scene text
-          const detectedChars = allCharacters.filter((char: any) => {
-            if (!char.name) return false
-            // Check if character name appears in scene text (case-insensitive)
-            const charNameLower = char.name.toLowerCase()
-            return sceneText.includes(charNameLower) || 
-                   // Also check for partial matches (e.g., "Brian Anderson" matches "Brian")
-                   charNameLower.split(' ').some(part => part.length > 2 && sceneText.includes(part))
-          })
-          
-          if (detectedChars.length > 0) {
-            characterObjects = detectedChars
-            console.log(`[Scene Image] Auto-detected ${detectedChars.length} character(s) from scene:`, 
-              detectedChars.map((c: any) => c.name))
-          } else {
-            console.log('[Scene Image] No characters detected in scene text, proceeding without character references')
+          if (scene) {
+            // TALENT-AWARENESS: Check if this is a no-talent scene before auto-detecting
+            const talentText = [
+              scene.sceneDirection?.talent?.blocking || '',
+              scene.sceneDirection?.talent?.emotionalBeat || ''
+            ].join(' ')
+            const isNoTalentScene = /\b(n\/a|no\s+(live\s+)?actors?|no\s+talent|no\s+performers?)\b/i.test(talentText)
+            
+            if (isNoTalentScene) {
+              console.log('[Scene Image] No-talent scene detected (talent field says N/A) — skipping character auto-detection')
+            } else {
+              // Extract character names from scene (heading, action, dialogue)
+              const sceneText = [
+                scene.heading || '',
+                scene.action || '',
+                scene.visualDescription || '',
+                ...(scene.dialogue || []).map((d: any) => d.character || '')
+              ].join(' ').toLowerCase()
+              
+              // Match character names from scene text using STRICT matching:
+              // Require full name match OR full last-name word-boundary match (not 3-char fragments)
+              const detectedChars = allCharacters.filter((char: any) => {
+                if (!char.name) return false
+                const charNameLower = char.name.toLowerCase()
+                
+                // Strategy 1: Full name match (e.g., "Dr. Benjamin Anderson" in text)
+                if (sceneText.includes(charNameLower)) return true
+                
+                // Strategy 2: Word-boundary match on meaningful name parts (first name, last name)
+                // Skip titles (Dr., Mr., Mrs., etc.) and short words
+                const nameParts = charNameLower.split(/[\s.]+/).filter(part => 
+                  part.length >= 4 && !['dr', 'mr', 'mrs', 'ms', 'prof', 'sir'].includes(part)
+                )
+                return nameParts.some(part => {
+                  // Require full word boundary match — "Reed" matches "reed" but not "agreed" or "reeder"
+                  const wordBoundaryRegex = new RegExp(`\\b${part}\\b`)
+                  return wordBoundaryRegex.test(sceneText)
+                })
+              })
+              
+              if (detectedChars.length > 0) {
+                characterObjects = detectedChars
+                console.log(`[Scene Image] Auto-detected ${detectedChars.length} character(s) from scene:`, 
+                  detectedChars.map((c: any) => c.name))
+              } else {
+                console.log('[Scene Image] No characters detected in scene text, proceeding without character references')
+              }
+            }
           }
         }
       }
