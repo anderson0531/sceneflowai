@@ -13,6 +13,14 @@ import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
+import {
+  generateSceneImagePrompt,
+  detectSceneType,
+  extractDirectionMetadata,
+  type CharacterContext,
+  type PropContext,
+  type LocationContext,
+} from '@/lib/intelligence/scene-image-intelligence'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120  // Increased for new AI image models
@@ -235,6 +243,7 @@ export async function POST(req: NextRequest) {
       locationReferences = [],  // NEW: Location references for environment consistency
       skipObjectAutoDetection = false,  // NEW: Skip auto-detection of objects (for batch mode)
       characterSelectionExplicit = false,  // NEW: Client explicitly chose characters (even if empty = no characters wanted)
+      useAIPrompt = true,  // NEW: Use Gemini intelligence for prompt generation (default: true)
     } = body
     
     // Handle both legacy (selectedCharacters) and new (characters) formats
@@ -451,9 +460,10 @@ export async function POST(req: NextRequest) {
     // SKIP: When skipObjectAutoDetection=true (batch mode), don't auto-detect - use only what's passed
     let detectedObjectReferences = objectReferences
     
-    // Reference slot budget: Total 5 slots, reserve 3 for characters, 2 for objects
+    // Reference slot budget: Expanded for richer scene context
+    // Characters always have priority, objects fill remaining slots
     // alwaysInclude props bypass the budget (they're critical to the scene)
-    const MAX_OBJECT_REFERENCES = 2
+    const MAX_OBJECT_REFERENCES = 4
     const MAX_ALWAYS_INCLUDE = 3  // Safety cap for alwaysInclude to prevent abuse
     
     if (project && detectedObjectReferences.length === 0 && !skipObjectAutoDetection) {
@@ -767,68 +777,166 @@ export async function POST(req: NextRequest) {
       }
     })
     
-    // Build clean prompt from scene description with text-based character descriptions
-    // If customPrompt exists, it's already optimized/edited by user in Prompt Builder
-    // We still need to apply character references if not already included
+    // =========================================================================
+    // PROMPT GENERATION: AI Intelligence → Rules-based fallback
+    // =========================================================================
+    
     let optimizedPrompt: string
+    let usedAIIntelligence = false
+    
     if (customPrompt && customPrompt.trim()) {
       // User provided a custom prompt (likely from Prompt Builder, already optimized and possibly edited)
       // Only re-optimize if character references aren't already in the prompt
-      // Check for actual reference instruction patterns, not just character names
       const hasCharacterReferences = characterReferences.length > 0 && (() => {
-        // Check for reference instruction patterns that must be present
         const hasReferencePattern = 
-          // Pattern 1: "Character [NAME] appears in this scene"
           characterReferences.some((ref: { name: string }) => {
             const namePattern = new RegExp(`character\\s+${ref.name.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+appears`, 'i')
             return namePattern.test(customPrompt)
           }) &&
-          // Pattern 2: "MUST match their reference image"
           /must\s+match\s+their\s+reference\s+image/i.test(customPrompt)
-        
         return hasReferencePattern
       })()
       
       if (hasCharacterReferences || characterReferences.length === 0) {
-        // Character references already included or no references, use custom prompt as-is
         optimizedPrompt = customPrompt
         console.log('[Scene Image] Using custom prompt from Prompt Builder (preserving user edits)')
       } else {
-        // Need to add character references, but preserve user's edits
         optimizedPrompt = optimizePromptForImagen({
-          sceneAction: customPrompt,  // Use custom prompt as base (preserves user edits)
+          sceneAction: customPrompt,
           visualDescription: customPrompt,
           characterReferences: characterReferences,
           artStyle: artStyle || 'photorealistic',
-          objectReferences: detectedObjectReferences  // Include auto-detected object references
+          objectReferences: detectedObjectReferences
         })
         console.log('[Scene Image] Added character references to user-edited prompt (re-optimized)')
       }
     } else if (excludeCharacters) {
       // Scene reference mode: Focus on environment, props, lighting - no people
-      // Build an environment-focused prompt for scene consistency
       const sceneReferencePrefix = `Cinematic establishing shot, empty scene composition. Focus on environment details, lighting, atmosphere, and props. NO PEOPLE in the frame. `
       const sceneReferenceSuffix = ` The image should serve as a reference for scene consistency - capturing the location, time of day, lighting mood, and key props without any characters.`
       
       optimizedPrompt = optimizePromptForImagen({
         sceneAction: sceneReferencePrefix + fullSceneContext + sceneReferenceSuffix,
         visualDescription: fullSceneContext,
-        characterReferences: [],  // No characters
+        characterReferences: [],
         artStyle: artStyle || 'photorealistic',
         objectReferences: detectedObjectReferences
       })
-      
       console.log('[Scene Image] Building scene reference prompt (excludeCharacters=true)')
+    } else if (useAIPrompt && project && sceneData) {
+      // =====================================================================
+      // AI INTELLIGENCE PATH: Use Gemini to generate a smart, context-aware prompt
+      // =====================================================================
+      console.log('[Scene Image] Attempting AI-powered prompt intelligence...')
+      
+      // Detect scene type from heading
+      const scenes = project.metadata?.visionPhase?.script?.script?.scenes || []
+      const sceneType = detectSceneType(
+        sceneData.heading || '',
+        fullSceneContext,
+        (sceneIndex || 0) + 1,
+        scenes.length
+      )
+      
+      // Extract useful direction metadata (lighting, framing, mood)
+      const directionMetadata = extractDirectionMetadata(sceneData.sceneDirection)
+      
+      // Build film context from project metadata
+      const treatment = project.metadata?.visionPhase?.treatment || project.metadata?.treatmentPhase
+      const filmContext = {
+        title: project.metadata?.title || project.title || undefined,
+        logline: treatment?.logline || treatment?.synopsis || undefined,
+        genre: treatment?.genre ? (Array.isArray(treatment.genre) ? treatment.genre : [treatment.genre]) : undefined,
+        tone: treatment?.tone || undefined,
+        visualStyle: treatment?.visualStyle || undefined,
+      }
+      
+      // Build character contexts with resolved wardrobes
+      const characterContexts: CharacterContext[] = characterReferences.map((ref: any) => ({
+        name: ref.name,
+        linkingDescription: ref.linkingDescription,
+        appearanceDescription: ref.appearanceDescription,
+        wardrobeDescription: ref.defaultWardrobe,
+        wardrobeAccessories: ref.wardrobeAccessories,
+        hasReferenceImage: !!ref.referenceId,
+        referenceIndex: ref.referenceId,
+      }))
+      
+      // Build prop contexts
+      const propContexts: PropContext[] = detectedObjectReferences.map((obj: any) => ({
+        name: obj.name,
+        description: obj.description,
+        category: obj.category,
+        importance: obj.importance,
+        hasReferenceImage: !!obj.imageUrl,
+      }))
+      
+      // Build location context
+      const locationContext: LocationContext | undefined = matchedLocationReference ? {
+        name: matchedLocationReference.location || 'Unknown location',
+        hasReferenceImage: !!matchedLocationReference.imageUrl,
+      } : undefined
+      
+      // Count total reference images that will be sent
+      const totalRefImages = 
+        characterReferences.filter((r: any) => r.referenceId).length +
+        detectedObjectReferences.filter((o: any) => o.imageUrl).length +
+        (matchedLocationReference?.imageUrl ? 1 : 0)
+      
+      // Call Gemini intelligence
+      const aiResult = await generateSceneImagePrompt({
+        sceneHeading: sceneData.heading || '',
+        sceneAction: fullSceneContext,
+        sceneNumber: (sceneIndex || 0) + 1,
+        totalScenes: scenes.length,
+        filmContext,
+        sceneType,
+        directionMetadata,
+        characters: characterContexts,
+        props: propContexts,
+        location: locationContext,
+        artStyle: artStyle || 'photorealistic',
+        referenceImageCount: totalRefImages,
+      })
+      
+      if (aiResult.usedAI && aiResult.prompt) {
+        // AI intelligence succeeded — use the AI-generated prompt
+        // Wrap it with the linking template for reference image binding
+        const charactersWithRefs = characterReferences.filter((ref: any) => ref.referenceId)
+        
+        if (charactersWithRefs.length > 0) {
+          // Use Google's recommended template structure for subject customization
+          const subjectIntroductions = charactersWithRefs.map((ref: any) => ref.linkingDescription).join(' and ')
+          optimizedPrompt = `Create an image about ${subjectIntroductions} to match the description: ${aiResult.prompt}`
+        } else {
+          optimizedPrompt = aiResult.prompt
+        }
+        
+        usedAIIntelligence = true
+        console.log(`[Scene Image] ✓ AI intelligence generated prompt (${optimizedPrompt.length} chars, type: ${sceneType})`)
+        console.log(`[Scene Image] AI reasoning: ${aiResult.reasoning || 'none'}`)
+      } else {
+        // AI failed — fall back to rules-based optimizer
+        console.log(`[Scene Image] AI intelligence unavailable, falling back to rules-based optimizer`)
+        console.log(`[Scene Image] Fallback reason: ${aiResult.reasoning || 'unknown'}`)
+        optimizedPrompt = optimizePromptForImagen({
+          sceneAction: fullSceneContext,
+          visualDescription: fullSceneContext,
+          characterReferences: characterReferences,
+          artStyle: artStyle || 'photorealistic',
+          objectReferences: detectedObjectReferences
+        })
+      }
     } else {
-      // Use scene description and optimize
+      // Rules-based optimizer (no AI, no custom prompt)
       optimizedPrompt = optimizePromptForImagen({
         sceneAction: fullSceneContext,
         visualDescription: fullSceneContext,
         characterReferences: characterReferences,
         artStyle: artStyle || 'photorealistic',
-        objectReferences: detectedObjectReferences  // Include auto-detected object references
+        objectReferences: detectedObjectReferences
       })
-      console.log('[Scene Image] Optimized scene description prompt')
+      console.log('[Scene Image] Optimized scene description prompt (rules-based)')
       if (detectedObjectReferences.length > 0) {
         console.log('[Scene Image] Included', detectedObjectReferences.length, 'object reference(s) in prompt optimization')
       }
@@ -945,8 +1053,8 @@ export async function POST(req: NextRequest) {
     let base64Image: string | null = null
     let generationAttempt = 0
     const maxGenerationAttempts = 2
-    // Use Gemini Studio when we have ANY reference images (characters OR objects)
-    const useGeminiStudio = imageReferences.length > 0 || objectImageReferences.length > 0
+    // Use Gemini Studio when we have ANY reference images (characters, objects, OR location)
+    const useGeminiStudio = imageReferences.length > 0 || objectImageReferences.length > 0 || (matchedLocationReference && matchedLocationReference.imageUrl)
     
     while (generationAttempt < maxGenerationAttempts) {
       try {
@@ -959,49 +1067,92 @@ export async function POST(req: NextRequest) {
           console.log('[Scene Image] Using Gemini Studio (gemini-3-pro-image-preview) for character reference images')
           
           // Combine character, object, and location reference images
-          const allReferenceImages = [
-            ...imageReferences.map(ref => ({
+          // LABELED REFERENCES: Each image gets a descriptive role label so the model
+          // knows what each reference image represents (character vs prop vs location)
+          const allReferenceImages: Array<{imageUrl: string; name: string}> = []
+          let refImageIndex = 0
+          
+          // Characters first (highest priority)
+          imageReferences.forEach((ref: any) => {
+            refImageIndex++
+            // Find matching character reference for wardrobe info
+            const matchingCharRef = characterReferences.find((cr: any) => cr.name === ref.subjectDescription || cr.referenceId === ref.referenceId)
+            const wardrobeLabel = matchingCharRef?.defaultWardrobe ? ` wearing ${matchingCharRef.defaultWardrobe}` : ''
+            allReferenceImages.push({
               imageUrl: ref.imageUrl,
-              name: ref.subjectDescription || 'character'
-            })),
-            ...objectImageReferences,
-            // Add location reference if available
-            ...(matchedLocationReference && matchedLocationReference.imageUrl ? [{
+              name: `Character reference ${refImageIndex}: ${ref.subjectDescription || 'character'}${wardrobeLabel}`
+            })
+          })
+          
+          // Props/objects second
+          objectImageReferences.forEach((obj: any) => {
+            refImageIndex++
+            allReferenceImages.push({
+              imageUrl: obj.imageUrl,
+              name: `Prop reference ${refImageIndex}: ${obj.name}`
+            })
+          })
+          
+          // Location last
+          if (matchedLocationReference && matchedLocationReference.imageUrl) {
+            refImageIndex++
+            allReferenceImages.push({
               imageUrl: matchedLocationReference.imageUrl,
-              name: `location: ${matchedLocationReference.location}`
-            }] : [])
-          ]
-          
-          // Build multimodal prompt with character, object, and location instructions
-          let geminiPrompt = `Generate a cinematic scene image based on this description. `
-          
-          if (imageReferences.length > 0) {
-            geminiPrompt += `The scene should feature the person(s) shown in the reference image(s) provided. `
+              name: `Location reference ${refImageIndex}: ${matchedLocationReference.location}`
+            })
           }
           
+          console.log(`[Scene Image] Labeled reference images: ${allReferenceImages.map(r => r.name).join(', ')}`)
+          
+          // Build multimodal prompt with explicit per-image role instructions
+          let geminiPrompt = `Generate a cinematic scene image. The following reference images are provided:\n\n`
+          
+          // Character reference instructions with WARDROBE ANCHORING
+          if (imageReferences.length > 0) {
+            geminiPrompt += `CHARACTER REFERENCES (${imageReferences.length}):\n`
+            imageReferences.forEach((ref: any, idx: number) => {
+              const matchingCharRef = characterReferences.find((cr: any) => cr.referenceId === ref.referenceId)
+              geminiPrompt += `- Reference image ${idx + 1}: ${ref.subjectDescription || 'character'}`
+              
+              // WARDROBE ANCHORING: Include exact wardrobe in reference instructions
+              if (matchingCharRef?.defaultWardrobe) {
+                geminiPrompt += `\n  WARDROBE: MUST be wearing EXACTLY "${matchingCharRef.defaultWardrobe}"`
+                if (matchingCharRef.wardrobeAccessories) {
+                  geminiPrompt += ` with ${matchingCharRef.wardrobeAccessories}`
+                }
+                geminiPrompt += `. Do NOT change, simplify, or vary this outfit.`
+              }
+              geminiPrompt += '\n'
+            })
+            geminiPrompt += `The character(s) MUST match the reference image(s) exactly — same face, ethnicity, age, hair, and facial features.\n\n`
+          }
+          
+          // Object reference instructions
           if (objectImageReferences.length > 0) {
             const objectNames = objectImageReferences.map((o: any) => o.name).join(', ')
-            geminiPrompt += `Include these specific props/objects shown in reference images: ${objectNames}. `
+            geminiPrompt += `PROP REFERENCES: Include these specific props/objects matching their reference images: ${objectNames}.\n\n`
           }
           
-          // Add location reference instruction
+          // Location reference instructions
           if (matchedLocationReference && matchedLocationReference.imageUrl) {
-            geminiPrompt += `IMPORTANT: The environment/setting should match the location reference image provided. Use the same architectural style, color palette, lighting conditions, and spatial layout as shown in the "${matchedLocationReference.location}" reference. `
+            geminiPrompt += `LOCATION REFERENCE: The environment/setting MUST match the "${matchedLocationReference.location}" reference image — same architectural style, color palette, lighting conditions, and spatial layout.\n\n`
           }
           
-          geminiPrompt += `\n\n${optimizedPrompt}\n\n`
+          geminiPrompt += `SCENE PROMPT:\n${optimizedPrompt}\n\n`
           
+          geminiPrompt += `CRITICAL REQUIREMENTS:\n`
+          geminiPrompt += `- Preserve character identity from reference images exactly\n`
           if (imageReferences.length > 0) {
-            geminiPrompt += `IMPORTANT: The character(s) in the generated image MUST match the person(s) in the reference image(s) exactly - same ethnicity, facial features, hair color/style, and facial hair. Preserve their identity. `
+            // Add wardrobe consistency reminder
+            const wardrobeReminders = characterReferences
+              .filter((cr: any) => cr.referenceId && cr.defaultWardrobe)
+              .map((cr: any) => `${cr.name}: "${cr.defaultWardrobe}"`)
+            if (wardrobeReminders.length > 0) {
+              geminiPrompt += `- WARDROBE MUST BE EXACT: ${wardrobeReminders.join('; ')}\n`
+            }
           }
-          
-          if (objectImageReferences.length > 0) {
-            geminiPrompt += `The props/objects referenced should closely match their reference images. `
-          }
-          
-          if (matchedLocationReference && matchedLocationReference.imageUrl) {
-            geminiPrompt += `The environment should maintain visual consistency with the location reference.`
-          }
+          geminiPrompt += `- No dialogue captions, subtitles, or watermarks\n`
+          geminiPrompt += `- Match props and environment to their reference images\n`
           
           const result = await generateImageWithGeminiStudio({
             prompt: geminiPrompt,
@@ -1152,6 +1303,8 @@ export async function POST(req: NextRequest) {
       // Include hashes for workflow sync tracking
       basedOnDirectionHash,
       basedOnReferencesHash,
+      // AI intelligence info
+      usedAIIntelligence,
       // Credit info
       creditsCharged: CREDIT_COST,
       creditsBalance: newBalance
