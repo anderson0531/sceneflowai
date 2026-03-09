@@ -6947,6 +6947,39 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   /**
+   * Helper: persist location references to project metadata via API.
+   * Uses the same fetch pattern as handleBackdropGenerated / handleObjectGenerated.
+   */
+  const persistLocationReferences = async (updatedLocationRefs: LocationReference[]) => {
+    const existingMetadata = project?.metadata || {}
+    const existingVisionPhase = existingMetadata.visionPhase || {}
+
+    const payload = {
+      metadata: {
+        ...existingMetadata,
+        visionPhase: {
+          ...existingVisionPhase,
+          references: {
+            sceneReferences: sceneReferencesRef.current,
+            objectReferences: objectReferencesRef.current,
+            locationReferences: updatedLocationRefs
+          }
+        }
+      }
+    }
+
+    const response = await fetch(`/api/projects/${projectId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to persist location references')
+    }
+  }
+
+  /**
    * Pin a storyboard image as a location reference for visual consistency
    * across scenes at the same location.
    */
@@ -6976,21 +7009,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     
     const updatedLocationRefs = [...locationReferences, newLocationRef]
     setLocationReferences(updatedLocationRefs)
+    locationReferencesRef.current = updatedLocationRefs
     
     // Persist to project metadata
     try {
-      const updatedMetadata = {
-        ...project?.metadata,
-        visionPhase: {
-          ...project?.metadata?.visionPhase,
-          references: {
-            sceneReferences: sceneReferencesRef.current,
-            objectReferences: objectReferencesRef.current,
-            locationReferences: updatedLocationRefs
-          }
-        }
-      }
-      await updateProject(project!.id, { metadata: updatedMetadata })
+      await persistLocationReferences(updatedLocationRefs)
       try { const { toast } = require('sonner'); toast.success(`📍 Pinned ${location} as location reference`) } catch {}
     } catch (error) {
       console.error('[handlePinAsLocationReference] Failed to save:', error)
@@ -7007,21 +7030,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const refToRemove = locationReferences.find(ref => ref.id === locationId)
     const updatedLocationRefs = locationReferences.filter(ref => ref.id !== locationId)
     setLocationReferences(updatedLocationRefs)
+    locationReferencesRef.current = updatedLocationRefs
     
     // Persist to project metadata
     try {
-      const updatedMetadata = {
-        ...project?.metadata,
-        visionPhase: {
-          ...project?.metadata?.visionPhase,
-          references: {
-            sceneReferences: sceneReferencesRef.current,
-            objectReferences: objectReferencesRef.current,
-            locationReferences: updatedLocationRefs
-          }
-        }
-      }
-      await updateProject(project!.id, { metadata: updatedMetadata })
+      await persistLocationReferences(updatedLocationRefs)
       try { const { toast } = require('sonner'); toast.success(`Removed location reference for ${refToRemove?.location || 'location'}`) } catch {}
     } catch (error) {
       console.error('[handleRemoveLocationReference] Failed to save:', error)
@@ -7037,23 +7050,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const handleUpdateLocationReferences = async (updatedLocations: LocationReference[]) => {
     const prevLocations = locationReferences
     setLocationReferences(updatedLocations)
+    locationReferencesRef.current = updatedLocations
     
     try {
-      const updatedMetadata = {
-        ...project?.metadata,
-        visionPhase: {
-          ...project?.metadata?.visionPhase,
-          references: {
-            sceneReferences: sceneReferencesRef.current,
-            objectReferences: objectReferencesRef.current,
-            locationReferences: updatedLocations
-          }
-        }
-      }
-      await updateProject(project!.id, { metadata: updatedMetadata })
+      await persistLocationReferences(updatedLocations)
     } catch (error) {
       console.error('[handleUpdateLocationReferences] Failed to save:', error)
       setLocationReferences(prevLocations)
+      locationReferencesRef.current = prevLocations
       try { const { toast } = require('sonner'); toast.error('Failed to save location references') } catch {}
     }
   }
@@ -7100,20 +7104,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           : ref
       )
       setLocationReferences(updatedLocations)
+      locationReferencesRef.current = updatedLocations
       
       // Persist
-      const updatedMetadata = {
-        ...project?.metadata,
-        visionPhase: {
-          ...project?.metadata?.visionPhase,
-          references: {
-            sceneReferences: sceneReferencesRef.current,
-            objectReferences: objectReferencesRef.current,
-            locationReferences: updatedLocations
-          }
-        }
-      }
-      await updateProject(project!.id, { metadata: updatedMetadata })
+      await persistLocationReferences(updatedLocations)
       try { const { toast } = require('sonner'); toast.success(`Generated image for ${location.location}`) } catch {}
     } catch (error: any) {
       console.error('[handleGenerateLocationImage] Error:', error)
@@ -7150,20 +7144,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         ref.id === locationId ? { ...ref, imageUrl: url } : ref
       )
       setLocationReferences(updatedLocations)
+      locationReferencesRef.current = updatedLocations
       
       // Persist
-      const updatedMetadata = {
-        ...project?.metadata,
-        visionPhase: {
-          ...project?.metadata?.visionPhase,
-          references: {
-            sceneReferences: sceneReferencesRef.current,
-            objectReferences: objectReferencesRef.current,
-            locationReferences: updatedLocations
-          }
-        }
-      }
-      await updateProject(project!.id, { metadata: updatedMetadata })
+      await persistLocationReferences(updatedLocations)
       try { const { toast } = require('sonner'); toast.success(`Uploaded image for ${location.location}`) } catch {}
     } catch (error: any) {
       console.error('[handleUploadLocationImage] Error:', error)
