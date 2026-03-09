@@ -4389,6 +4389,15 @@ function SceneCard({
                           >
                             <Users className="w-3.5 h-3.5" />
                             <span className="tabular-nums">{scene.audienceAnalysis.score}</span>
+                            {/* Score delta indicator */}
+                            {scene.audienceAnalysis.previousScore !== undefined && scene.audienceAnalysis.previousScore !== scene.audienceAnalysis.score && (() => {
+                              const delta = scene.audienceAnalysis.score - scene.audienceAnalysis.previousScore!
+                              return (
+                                <span className={`text-[10px] font-bold tabular-nums ${delta > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                  {delta > 0 ? `▲+${delta}` : `▼${delta}`}
+                                </span>
+                              )
+                            })()}
                             {(scene.audienceAnalysis.recommendations?.length || 0) > 0 && (
                               <span className="flex items-center justify-center ml-0.5 h-4 min-w-4 px-1 text-[10px] font-bold bg-violet-500/40 text-violet-200 rounded-full">
                                 {scene.audienceAnalysis.recommendations.length}
@@ -4403,7 +4412,17 @@ function SceneCard({
                         </TooltipTrigger>
                         <TooltipContent className="bg-gray-900/95 backdrop-blur-sm text-white border border-gray-700/50 max-w-xs shadow-xl">
                           <div className="space-y-2 p-1">
-                            <p className="text-sm font-semibold">Audience Resonance: {scene.audienceAnalysis.score}/100</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-semibold">Audience Resonance: {scene.audienceAnalysis.score}/100</p>
+                              {scene.audienceAnalysis.previousScore !== undefined && scene.audienceAnalysis.previousScore !== scene.audienceAnalysis.score && (() => {
+                                const delta = scene.audienceAnalysis.score - scene.audienceAnalysis.previousScore!
+                                return (
+                                  <span className={`text-xs font-bold ${delta > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                    ({delta > 0 ? `+${delta}` : delta} from {scene.audienceAnalysis.previousScore})
+                                  </span>
+                                )
+                              })()}
+                            </div>
                             <div className="flex flex-wrap gap-1.5">
                               <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-700/50 text-gray-300">
                                 Pacing: {scene.audienceAnalysis.pacing}
@@ -4421,38 +4440,61 @@ function SceneCard({
                     {/* Optimize and Re-analyze buttons moved to expandable recommendations panel for cleaner header */}
                   </>
                 ) : (
-                  /* No analysis yet - show Analyze button */
-                  onAnalyzeScene && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              onAnalyzeScene(sceneIdx)
-                            }}
-                            disabled={analyzingSceneIndex === sceneIdx}
-                            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg font-medium border transition-all bg-indigo-500/20 text-indigo-300 border-indigo-400/50 hover:bg-indigo-500/30 hover:border-indigo-400/70 disabled:opacity-50 shadow-sm"
-                          >
-                            {analyzingSceneIndex === sceneIdx ? (
-                              <>
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                                <span>Analyzing...</span>
-                              </>
-                            ) : (
-                              <>
-                                <Users className="w-3 h-3" />
-                                <span>Analyze</span>
-                              </>
-                            )}
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-900 text-white border border-gray-700">
-                          <p className="text-xs">Analyze scene for audience resonance</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )
+                  /* No analysis yet - show Analyze and Edit buttons */
+                  <div className="flex items-center gap-1.5">
+                    {onAnalyzeScene && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onAnalyzeScene(sceneIdx)
+                              }}
+                              disabled={analyzingSceneIndex === sceneIdx}
+                              className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg font-medium border transition-all bg-indigo-500/20 text-indigo-300 border-indigo-400/50 hover:bg-indigo-500/30 hover:border-indigo-400/70 disabled:opacity-50 shadow-sm"
+                            >
+                              {analyzingSceneIndex === sceneIdx ? (
+                                <>
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                  <span>Analyzing...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Users className="w-3 h-3" />
+                                  <span>Analyze</span>
+                                </>
+                              )}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-900 text-white border border-gray-700">
+                            <p className="text-xs">Analyze scene for audience resonance</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    {onEditScene && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onEditScene(sceneIdx)
+                              }}
+                              className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg font-medium border transition-all bg-gray-700/40 text-gray-300 border-gray-600/50 hover:bg-gray-700/60 hover:border-gray-500/70 hover:text-white shadow-sm"
+                            >
+                              <Pencil className="w-3 h-3" />
+                              <span>Edit</span>
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-900 text-white border border-gray-700">
+                            <p className="text-xs">Edit scene with AI assistance</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
                 )}
               </div>
             )}
@@ -4640,12 +4682,34 @@ function SceneCard({
                     <ul className="space-y-2">
                       {scene.audienceAnalysis.recommendations.map((rec: string | { text: string; category?: string; impact?: string }, rIdx: number) => {
                         const recText = typeof rec === 'string' ? rec : rec?.text || String(rec)
+                        const recCategory = typeof rec === 'object' && rec?.category ? rec.category : null
+                        const recImpact = typeof rec === 'object' && rec?.impact ? rec.impact : null
                         return (
                           <li key={rIdx} className="text-xs text-gray-300 flex gap-3 p-2.5 bg-gray-800/40 rounded-lg border border-gray-700/30 hover:bg-gray-800/60 transition-colors">
-                            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 text-[10px] font-bold flex-shrink-0">
+                            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 text-[10px] font-bold flex-shrink-0 mt-0.5">
                               {rIdx + 1}
                             </span>
-                            <span className="leading-relaxed">{recText}</span>
+                            <div className="flex-1 min-w-0">
+                              <span className="leading-relaxed">{recText}</span>
+                              {(recCategory || recImpact) && (
+                                <div className="flex items-center gap-1.5 mt-1.5">
+                                  {recImpact && (
+                                    <span className={`inline-flex items-center text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider ${
+                                      recImpact === 'structural' 
+                                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' 
+                                        : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                    }`}>
+                                      {recImpact === 'structural' ? '🔧' : '✨'} {recImpact}
+                                    </span>
+                                  )}
+                                  {recCategory && (
+                                    <span className="inline-flex items-center text-[9px] font-medium px-1.5 py-0.5 rounded bg-gray-700/50 text-gray-400 border border-gray-600/30">
+                                      {recCategory}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </li>
                         )
                       })}
@@ -4668,8 +4732,21 @@ function SceneCard({
                       }}
                       className="h-8 text-xs bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-lg shadow-md"
                     >
-                      <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                      Apply Recommendations
+                      <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                      Edit & Apply
+                    </Button>
+                  )}
+                  {onEditScene && !(onEditSceneWithRecommendations && (scene.audienceAnalysis.recommendations?.length || 0) > 0) && (
+                    <Button
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onEditScene(sceneIdx)
+                      }}
+                      className="h-8 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
+                    >
+                      <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                      Edit Scene
                     </Button>
                   )}
                   {onAnalyzeScene && (

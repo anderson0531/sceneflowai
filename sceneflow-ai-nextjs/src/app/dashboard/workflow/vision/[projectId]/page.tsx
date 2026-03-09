@@ -187,7 +187,7 @@ interface Scene {
     characterDevelopment: 'minimal' | 'moderate' | 'strong'
     visualPotential: 'low' | 'medium' | 'high'
     notes: string
-    recommendations: string[]
+    recommendations: Array<string | { text: string; category?: string; targetElement?: string; impact?: 'structural' | 'polish' }>
     appliedRecommendationIds?: string[]
     analyzedAt: string
     optimizedAt?: string  // Track when scene was last optimized for sync CTA
@@ -4829,6 +4829,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     await execute(async () => {
       const scene = script.script.scenes[sceneIndex]
       
+      // Build previous analysis context for progressive recommendations
+      const previousAnalyses = scene.audienceAnalysis ? [{
+        sceneIndex: 0, // We're sending a single scene, so index is 0
+        score: scene.audienceAnalysis.score,
+        recommendations: scene.audienceAnalysis.recommendations || [],
+        analyzedAt: scene.audienceAnalysis.analyzedAt,
+        optimizedAt: scene.audienceAnalysis.optimizedAt,
+      }] : undefined
+      
       // Call the existing analyze-scenes API with just this one scene
       const response = await fetch('/api/vision/analyze-scenes', {
         method: 'POST',
@@ -4841,7 +4850,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             scenes: [scene],
             characters: script.script.characters
           },
-          sceneIndices: [sceneIndex]
+          sceneIndices: [sceneIndex],
+          ...(previousAnalyses && { previousAnalyses })
         })
       })
       

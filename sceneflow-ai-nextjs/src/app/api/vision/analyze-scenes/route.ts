@@ -39,11 +39,19 @@ interface AnalyzeScenesRequest {
     characters?: any[]
   }
   audienceReview?: AudienceReviewContext
+  /** Previous analysis for progressive recommendations (don't repeat old recs) */
+  previousAnalyses?: Array<{
+    sceneIndex: number
+    score: number
+    recommendations: Array<string | { text: string; category?: string }>
+    analyzedAt?: string
+    optimizedAt?: string
+  }>
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, script, audienceReview }: AnalyzeScenesRequest = await req.json()
+    const { projectId, script, audienceReview, previousAnalyses }: AnalyzeScenesRequest = await req.json()
 
     if (!projectId || !script?.scenes?.length) {
       return NextResponse.json(
@@ -53,9 +61,9 @@ export async function POST(req: NextRequest) {
     }
 
     const sceneCount = script.scenes.length
-    console.log(`[Scene Analysis] Analyzing ${sceneCount} scenes for project: ${projectId}`)
+    console.log(`[Scene Analysis] Analyzing ${sceneCount} scenes for project: ${projectId}${previousAnalyses?.length ? ' (progressive re-analysis)' : ''}`)
 
-    const sceneAnalysis = await generateSceneAnalysis(script, audienceReview)
+    const sceneAnalysis = await generateSceneAnalysis(script, audienceReview, previousAnalyses)
 
     console.log(`[Scene Analysis] Generated analysis for ${sceneAnalysis.length} scenes`)
 
@@ -74,11 +82,39 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function generateSceneAnalysis(script: any, audienceReview?: AudienceReviewContext): Promise<SceneAnalysis[]> {
+async function generateSceneAnalysis(script: any, audienceReview?: AudienceReviewContext, previousAnalyses?: AnalyzeScenesRequest['previousAnalyses']): Promise<SceneAnalysis[]> {
   const sceneCount = script.scenes?.length || 0
   
   if (sceneCount === 0) {
     return []
+  }
+
+  // Build progressive analysis context if re-analyzing
+  let progressiveContext = ''
+  if (previousAnalyses && previousAnalyses.length > 0) {
+    const prevEntries = previousAnalyses.map(pa => {
+      const prevRecs = (pa.recommendations || []).map(r => typeof r === 'string' ? r : r?.text || '').filter(Boolean)
+      const wasOptimized = pa.optimizedAt && pa.analyzedAt && new Date(pa.optimizedAt) > new Date(pa.analyzedAt)
+      return `Scene ${pa.sceneIndex + 1} (previous score: ${pa.score}${wasOptimized ? ', EDITED since last analysis' : ''}):
+  Previous recommendations already given:
+${prevRecs.map(r => `    - ${r}`).join('\n')}`
+    }).join('\n\n')
+
+    progressiveContext = `
+## PROGRESSIVE ANALYSIS — RE-ANALYSIS MODE
+This is a RE-ANALYSIS. The user has already received feedback and may have applied changes.
+
+${prevEntries}
+
+**CRITICAL PROGRESSIVE RULES:**
+1. DO NOT repeat any recommendation that was already given above — the user has seen them.
+2. If a scene was EDITED since last analysis, evaluate the CURRENT content freshly and acknowledge improvements.
+3. If improvements were made, the score MUST increase proportionally (a scene that fixed 2 of 3 structural issues should gain 5-10+ points).
+4. Focus on NEW issues, deeper refinements, or next-level polish opportunities.
+5. If a scene is now excellent, say so — scores CAN reach 90+ after successful edits.
+6. If the same problems persist (user didn't fix them), you may reference them briefly but frame as "still outstanding" rather than repeating the full recommendation.
+7. Provide DIFFERENT categories of feedback than previous rounds when possible (e.g., if previous focused on Dialogue, now look at Pacing or Visual).
+`
   }
 
   // Build detailed scene content for analysis
@@ -137,6 +173,7 @@ Script: ${script.title || 'Untitled Script'}
 Logline: ${script.logline || 'No logline provided'}
 Total Scenes: ${sceneCount}
 ${scriptContext}
+${progressiveContext}
 
 ${sceneDetails}
 
@@ -216,10 +253,9 @@ CRITICAL REMINDERS:
   console.log(`[Scene Analysis] Calling Gemini with ${tokenBudget} token budget for ${sceneCount} scenes`)
 
   const result = await generateText(prompt, {
-    model: 'gemini-2.5-flash',
-    temperature: 0.3, // Slightly creative for better recommendations
+    model: 'gemini-3.0-flash',
+    temperature: 0.3,
     maxOutputTokens: tokenBudget,
-    thinkingBudget: 0
   })
 
   if (!result.text) {
