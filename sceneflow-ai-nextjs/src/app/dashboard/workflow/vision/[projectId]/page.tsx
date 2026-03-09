@@ -41,9 +41,18 @@ const ScriptPanel = dynamic(
 import { SceneSelector } from '@/components/vision/SceneSelector'
 import { SceneProgressDashboard, type SceneProgressItem } from '@/components/vision/SceneProgressDashboard'
 import { ProductionOnboarding } from '@/components/vision/ProductionOnboarding'
-import { SceneGallery } from '@/components/vision/SceneGallery'
+// Dynamic import to break TDZ chain - SceneGallery → SceneProductionManager → SegmentStudio
+// shares scope-hoisted modules with ScriptPanel chunk causing 'Cannot access te before initialization'
+const SceneGallery = dynamic(
+  () => import('@/components/vision/SceneGallery').then(mod => ({ default: mod.SceneGallery })),
+  { ssr: false }
+)
 import { GenerationProgress } from '@/components/vision/GenerationProgress'
-import { ScreeningRoomV2 } from '@/components/vision/ScreeningRoomV2'
+// Dynamic import to break TDZ chain - ScreeningRoomV2 → FullscreenPlayer → audioTrackBuilder
+const ScreeningRoomV2 = dynamic(
+  () => import('@/components/vision/ScreeningRoomV2').then(mod => ({ default: mod.ScreeningRoomV2 })),
+  { ssr: false }
+)
 import { ImageQualitySelector } from '@/components/vision/ImageQualitySelector'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
 import { Button, buttonVariants } from '@/components/ui/Button'
@@ -88,7 +97,7 @@ import { ProductionBiblePanel } from '@/components/series/ProductionBiblePanel'
 import { VisualReference, VisualReferenceType, VisionReferencesPayload, LocationReference } from '@/types/visionReferences'
 import type { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production/types'
 import { applyIntelligentDefaults } from '@/lib/audio/anchoredTiming'
-import { buildAudioTracksForLanguage, buildAudioTracksWithBaselineTiming, determineBaselineLanguage, applySequentialAlignmentToScene } from '@/components/vision/scene-production/audioTrackBuilder'
+// audioTrackBuilder functions are imported dynamically inside callbacks to break TDZ scope-hoisting chain
 import { buildSceneReferencePrompt } from '@/lib/vision/sceneReferencePromptBuilder'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
@@ -3333,12 +3342,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Handle intelligent auto-alignment of keyframes to audio
   // This also adjusts segment count to match audio duration requirements
   const handleApplyIntelligentAlignment = useCallback(
-    (sceneId: string, language: string = 'en') => {
+    async (sceneId: string, language: string = 'en') => {
       // Get the scene to access its audio tracks
       const sceneIndex = scenes.findIndex((s, i) => getSceneProductionKey(s, i) === sceneId)
       if (sceneIndex === -1) return
       
       const scene = scenes[sceneIndex]
+      // Dynamic import to avoid TDZ scope-hoisting issues
+      const { determineBaselineLanguage, buildAudioTracksWithBaselineTiming } = await import('@/components/vision/scene-production/audioTrackBuilder')
       // Use baseline timing to ensure consistent positions across languages
       const baselineLanguage = determineBaselineLanguage(scene)
       const audioTracks = buildAudioTracksWithBaselineTiming(scene, language, baselineLanguage)
@@ -9386,6 +9397,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     try {
       const currentScene = script.script.scenes[sceneIndex]
       
+      // Dynamic import to avoid TDZ scope-hoisting issues
+      const { applySequentialAlignmentToScene } = await import('@/components/vision/scene-production/audioTrackBuilder')
       // Calculate proper sequential timing using the audio track builder
       const alignment = applySequentialAlignmentToScene(currentScene, language, new Set())
       
