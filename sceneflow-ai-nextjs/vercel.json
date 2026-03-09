@@ -72,6 +72,10 @@
     "src/app/api/series/[seriesId]/episodes/add/route.ts": {
       "maxDuration": 300,
       "memory": 2048
+    },
+    "src/app/api/vision/suggest-objects/route.ts": {
+      "maxDuration": 60,
+      "memory": 2048
     }
   },
   "crons": [

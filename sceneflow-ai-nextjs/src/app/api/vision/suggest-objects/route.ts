@@ -115,6 +115,9 @@ Respond with valid JSON only:
       temperature: 0.7,
       maxOutputTokens: 4096,
       responseMimeType: 'application/json',
+      thinkingBudget: 0,       // Disable thinking — structured JSON extraction, not reasoning
+      timeoutMs: 45000,        // 45s to stay within 60s maxDuration
+      maxRetries: 1,           // Single retry to avoid compounding timeouts
     })
 
     // Parse JSON from response using safe parser
