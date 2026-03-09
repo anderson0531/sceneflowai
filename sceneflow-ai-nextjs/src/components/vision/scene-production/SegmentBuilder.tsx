@@ -174,7 +174,7 @@ function SegmentDirectionCard({
         {/* Direction Details */}
         {isEditing ? (
           <div className="space-y-3" onClick={e => e.stopPropagation()}>
-            {/* Shot Type */}
+            {/* Shot Type / Camera / Angle Row */}
             <div className="grid grid-cols-3 gap-2">
               <div>
                 <label className="text-xs text-muted-foreground">Shot Type</label>
@@ -238,6 +238,50 @@ function SegmentDirectionCard({
                 </Select>
               </div>
             </div>
+
+            {/* Lens / Transition Row */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs text-muted-foreground">Lens / Focal Length</label>
+                <Select
+                  value={direction.lens || '50mm'}
+                  onValueChange={v => onEdit({ lens: v })}
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="24mm f/2.8">24mm f/2.8 — Wide, deep DOF</SelectItem>
+                    <SelectItem value="35mm f/1.8">35mm f/1.8 — Natural, moderate DOF</SelectItem>
+                    <SelectItem value="50mm">50mm — Standard</SelectItem>
+                    <SelectItem value="50mm f/1.4">50mm f/1.4 — Shallow DOF, natural</SelectItem>
+                    <SelectItem value="85mm f/1.2">85mm f/1.2 — Portrait, beautiful bokeh</SelectItem>
+                    <SelectItem value="135mm f/2.0">135mm f/2.0 — Compressed, dreamy</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Transition In</label>
+                <Select
+                  value={direction.transitionIn || 'cut'}
+                  onValueChange={v => onEdit({ transitionIn: v })}
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cut">Hard Cut</SelectItem>
+                    <SelectItem value="dissolve">Dissolve</SelectItem>
+                    <SelectItem value="match cut">Match Cut</SelectItem>
+                    <SelectItem value="j-cut">J-Cut (audio leads)</SelectItem>
+                    <SelectItem value="l-cut">L-Cut (audio trails)</SelectItem>
+                    <SelectItem value="whip pan">Whip Pan</SelectItem>
+                    <SelectItem value="fade from black">Fade from Black</SelectItem>
+                    <SelectItem value="smash cut">Smash Cut</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             
             {/* Talent Action */}
             <div>
@@ -257,6 +301,39 @@ function SegmentDirectionCard({
                 value={direction.emotionalBeat}
                 onChange={e => onEdit({ emotionalBeat: e.target.value })}
                 placeholder="e.g., Tension building, Moment of realization"
+                className="h-8 text-xs"
+              />
+            </div>
+
+            {/* Frame Descriptions */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs text-muted-foreground">Start Frame</label>
+                <Textarea
+                  value={direction.startFrameDescription || ''}
+                  onChange={e => onEdit({ startFrameDescription: e.target.value })}
+                  placeholder="Opening frame description for continuity..."
+                  className="h-14 text-xs resize-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">End Frame</label>
+                <Textarea
+                  value={direction.endFrameDescription || ''}
+                  onChange={e => onEdit({ endFrameDescription: e.target.value })}
+                  placeholder="Closing frame description for next segment..."
+                  className="h-14 text-xs resize-none"
+                />
+              </div>
+            </div>
+
+            {/* Continuity Notes */}
+            <div>
+              <label className="text-xs text-muted-foreground">Continuity Notes</label>
+              <Input
+                value={direction.continuityNotes || ''}
+                onChange={e => onEdit({ continuityNotes: e.target.value })}
+                placeholder="Wardrobe, props, lighting consistency notes..."
                 className="h-8 text-xs"
               />
             </div>
@@ -286,7 +363,21 @@ function SegmentDirectionCard({
               <span className="text-muted-foreground">{direction.cameraMovement}</span>
               <span className="text-muted-foreground">•</span>
               <span className="text-muted-foreground">{direction.cameraAngle}</span>
+              {direction.lens && (
+                <>
+                  <span className="text-muted-foreground">•</span>
+                  <span className="text-xs font-mono text-blue-400">{direction.lens}</span>
+                </>
+              )}
             </div>
+
+            {/* Transition */}
+            {direction.transitionIn && direction.transitionIn !== 'cut' && (
+              <div className="flex items-center gap-2 text-sm">
+                <ArrowRight className="w-3 h-3 text-purple-400" />
+                <span className="text-purple-300 text-xs capitalize">{direction.transitionIn}</span>
+              </div>
+            )}
             
             {/* Talent Action */}
             {direction.talentAction && (
@@ -312,6 +403,38 @@ function SegmentDirectionCard({
                     {char}
                   </Badge>
                 ))}
+              </div>
+            )}
+
+            {/* Frame Descriptions */}
+            {(direction.startFrameDescription || direction.endFrameDescription) && (
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {direction.startFrameDescription && (
+                  <div className="p-2 rounded bg-muted/30 border border-border/30">
+                    <div className="flex items-center gap-1 mb-0.5">
+                      <Play className="w-2.5 h-2.5 text-green-400" />
+                      <span className="text-[10px] font-medium text-green-400 uppercase tracking-wide">Start Frame</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-tight">{direction.startFrameDescription}</p>
+                  </div>
+                )}
+                {direction.endFrameDescription && (
+                  <div className="p-2 rounded bg-muted/30 border border-border/30">
+                    <div className="flex items-center gap-1 mb-0.5">
+                      <Lock className="w-2.5 h-2.5 text-orange-400" />
+                      <span className="text-[10px] font-medium text-orange-400 uppercase tracking-wide">End Frame</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-tight">{direction.endFrameDescription}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Continuity Notes */}
+            {direction.continuityNotes && (
+              <div className="flex items-start gap-2 text-sm">
+                <Eye className="w-3 h-3 text-cyan-400 mt-0.5" />
+                <span className="text-cyan-300 text-xs">{direction.continuityNotes}</span>
               </div>
             )}
             
@@ -1034,6 +1157,7 @@ export function SegmentBuilder({
         shotType: dir.shotType || 'Medium Shot',
         cameraMovement: dir.cameraMovement || 'Static',
         cameraAngle: dir.cameraAngle || 'Eye-Level',
+        lens: dir.lens || '50mm',
         talentAction: dir.talentAction || '',
         emotionalBeat: dir.emotionalBeat || '',
         characters: dir.characters || [],
@@ -1044,6 +1168,10 @@ export function SegmentBuilder({
         generationMethod: dir.generationMethod || 'T2V',
         triggerReason: dir.triggerReason || 'AI-determined cut point',
         confidence: dir.confidence || 75,
+        transitionIn: dir.transitionIn || 'cut',
+        startFrameDescription: dir.startFrameDescription || '',
+        endFrameDescription: dir.endFrameDescription || '',
+        continuityNotes: dir.continuityNotes || '',
         isApproved: false, // User must approve
         isUserEdited: false,
       }))
@@ -1090,6 +1218,7 @@ export function SegmentBuilder({
         shotType: dir.shotType,
         cameraMovement: dir.cameraMovement,
         cameraAngle: dir.cameraAngle,
+        lens: dir.lens,
         talentAction: dir.talentAction,
         emotionalBeat: dir.emotionalBeat,
         characters: dir.characters,
@@ -1102,6 +1231,10 @@ export function SegmentBuilder({
         generationMethod: dir.generationMethod,
         triggerReason: dir.triggerReason,
         confidence: dir.confidence,
+        transitionIn: dir.transitionIn,
+        startFrameDescription: dir.startFrameDescription,
+        endFrameDescription: dir.endFrameDescription,
+        continuityNotes: dir.continuityNotes,
       }))
 
       const response = await fetch(`/api/scenes/${sceneId}/generate-segments`, {

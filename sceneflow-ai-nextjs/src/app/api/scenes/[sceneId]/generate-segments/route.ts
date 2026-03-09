@@ -277,6 +277,7 @@ export async function POST(
         shotType: dir.shot_type || 'Medium Shot',
         cameraMovement: dir.camera_movement || 'Static',
         cameraAngle: dir.camera_angle || 'Eye-Level',
+        lens: dir.lens || '50mm',
         talentAction: dir.talent_action || '',
         emotionalBeat: dir.emotional_beat || '',
         characters: dir.characters || [],
@@ -289,6 +290,10 @@ export async function POST(
         generationMethod: dir.generation_method || 'T2V',
         triggerReason: dir.trigger_reason || 'AI-determined cut point',
         confidence: dir.confidence || 75,
+        transitionIn: dir.transition_in || 'cut',
+        startFrameDescription: dir.start_frame_description || '',
+        endFrameDescription: dir.end_frame_description || '',
+        continuityNotes: dir.continuity_notes || '',
       }))
       
       console.log(`[Scene Segmentation] Phase 1 complete: ${segmentDirections.length} directions generated`)
@@ -1380,6 +1385,7 @@ function generatePromptsFromDirectionsPrompt(
     shot_type: dir.shotType,
     camera_movement: dir.cameraMovement,
     camera_angle: dir.cameraAngle,
+    lens: (dir as any).lens || '50mm',
     talent_action: dir.talentAction,
     emotional_beat: dir.emotionalBeat,
     characters: dir.characters,
@@ -1387,15 +1393,20 @@ function generatePromptsFromDirectionsPrompt(
     lighting_mood: dir.lightingMood,
     dialogue_indices: dir.dialogueLineIds?.map(id => parseInt(id.replace('dialogue-', ''))) || [],
     generation_method: dir.generationMethod,
+    transition_in: (dir as any).transitionIn || 'cut',
+    start_frame_description: (dir as any).startFrameDescription || '',
+    end_frame_description: (dir as any).endFrameDescription || '',
+    continuity_notes: (dir as any).continuityNotes || '',
   }))
 
   return `
-**SYSTEM ROLE:** You are a Video Director generating cinematic video prompts based on PRE-APPROVED segment directions.
-The user has already reviewed and approved the shot breakdown. Your job is to write RICH VIDEO PROMPTS for each segment.
+**SYSTEM ROLE:** You are an expert Video Director and Cinematographer generating professional-grade video prompts for Veo 3.1.
+The user has APPROVED a shot breakdown. Your job is to write RICH, CINEMATIC VIDEO PROMPTS that will produce stunning results.
 
 **SCENE DATA:**
 Heading: ${sceneData.heading}
 Visual Description: ${sceneData.visualDescription}
+${sceneData.narration ? `Narration (voiceover — NOT in video): "${sceneData.narration}"` : ''}
 
 **CHARACTERS:**
 ${noTalentScene ? 'NO CHARACTERS - This is a no-talent scene' : characterDescriptions || 'None specified'}
@@ -1406,7 +1417,9 @@ ${noTalentScene ? 'NO DIALOGUE - Audio is voiceover only' : dialogueList || 'No 
 **DIRECTOR'S NOTES:**
 Camera: ${sceneData.sceneDirection.camera}
 Lighting: ${sceneData.sceneDirection.lighting}
+Scene: ${sceneData.sceneDirection.scene}
 Talent: ${sceneData.sceneDirection.talent}
+Audio: ${sceneData.sceneDirection.audio}
 
 **SCENE FRAME:** ${sceneData.sceneFrameUrl ? 'Available for I2V on Segment 1' : 'Not available'}
 
@@ -1414,16 +1427,32 @@ Talent: ${sceneData.sceneDirection.talent}
 ${JSON.stringify(directionsJson, null, 2)}
 
 **YOUR TASK:**
-For each approved direction, generate a rich cinematic video prompt (50-150 words) that:
-1. FOLLOWS the approved shot_type, camera_movement, camera_angle exactly
-2. INCLUDES the specified talent_action and emotional_beat
-3. FOR DIALOGUE segments: Include dialogue as "[Name] speaks, \\"[text]\\""
-4. FOR NO-TALENT segments: Focus on environment, VFX, atmosphere only
-5. ADD lens choice, lighting details, texture hints
-6. DESCRIBE end frame state for next segment continuity
+For each approved direction, generate a RICH cinematic video prompt (80-150 words) following this precise formula:
 
 **PROMPT FORMULA:**
-[Shot Type] + [Lens] + [Subject/Action] + [DIALOGUE if any] + [Camera Movement] + [Lighting] + [Technical Specs]
+[Shot Type] + [Lens/Focal Length] + [Subject with FULL visual description including face, hair, body, wardrobe] + [Specific Physical Action] + [DIALOGUE if any: Name speaks, "exact text"] + [Camera Movement with speed] + [Lighting setup with direction and quality] + [Depth of Field and focus target] + [Color palette/grading] + [Atmosphere/texture details]
+
+**CRITICAL RULES:**
+1. FOLLOW the approved shot_type, camera_movement, camera_angle, and lens EXACTLY
+2. INCLUDE the specified talent_action and emotional_beat
+3. FOR DIALOGUE: Include as "[Name] speaks, \\"[exact dialogue text]\\"" — Veo 3.1 generates speech from text
+4. FOR NO-TALENT: Focus on environment, VFX, atmosphere — no people
+5. EVERY character mentioned MUST have their FULL appearance description (face, hair, skin, build, wardrobe)
+6. Narration is a SEPARATE audio voiceover — NEVER include narration text in prompts
+7. Start frame description MUST logically follow previous segment's end frame for continuity
+8. Describe specific depth-of-field: what's in focus, what's bokeh
+9. Include color temperature and mood (warm amber, cool blue, desaturated, etc.)
+10. Minimum 80 words per prompt — more detail = better Veo 3.1 results
+
+**LENS/DOF GUIDELINES:**
+- 24mm f/2.8: Deep DOF, wide environment, slight barrel distortion at edges
+- 35mm f/1.8: Moderate DOF, group shots, natural perspective
+- 50mm f/1.4: Shallow DOF, subject isolation, natural eye perspective
+- 85mm f/1.2: Very shallow DOF, beautiful bokeh, subject pops from background
+- 135mm f/2.0: Extremely compressed background, maximum isolation, dreamy bokeh
+
+**EXAMPLE EXCELLENT PROMPT (92 words):**
+"Medium Close-Up, 85mm f/1.2 lens. ALEX ANDERSON, a young man with short brown hair, clean-shaven, wearing a charcoal suit with loosened blue tie, stares into the vanity mirror with hollow eyes. He adjusts his collar with trembling hands. Alex speaks, \\"I don't know if we're ready for this, Dad.\\" Rack focus from mirror reflection to actual face. Single motivated key light from fluorescent overhead creates harsh shadows under eyes. Background falls to creamy bokeh. Cool blue-gray color grade. Visible perspiration on forehead. 8K photorealistic."
 
 **OUTPUT FORMAT:**
 Return a JSON array with one object per segment:
@@ -1431,16 +1460,26 @@ Return a JSON array with one object per segment:
   {
     "sequence": 1,
     "estimated_duration": 6.0,
-    "video_generation_prompt": "[50-150 word rich cinematic prompt]",
+    "video_generation_prompt": "[80-150 word rich cinematic prompt]",
     "generation_method": "I2V",
-    "reference_strategy": { "use_scene_frame": true, "use_character_refs": ["CharName"] },
-    "end_frame_description": "Detailed end state for continuity",
-    "camera_notes": "Specific camera/lens notes",
+    "reference_strategy": { "use_scene_frame": true, "use_character_refs": ["CharName"], "start_frame_description": "Description of opening frame" },
+    "end_frame_description": "Detailed end state: character position, expression, camera angle, lighting",
+    "camera_notes": "85mm f/1.2, rack focus from mirror to face, static locked-off",
     "trigger_reason": "From approved direction",
     "emotional_beat": "From approved direction",
     "assigned_dialogue_indices": [0, 1]
   }
 ]
+
+**FINAL QUALITY CHECKLIST:**
+✅ Every prompt is 80-150 words with specific lens/DOF/lighting/color language
+✅ Every character has full appearance description (don't just use names)
+✅ Every dialogue line appears in exactly one segment as: [Name] speaks, "[text]"
+✅ End frame descriptions are detailed enough to generate the next segment's start frame
+✅ Camera notes include focal length, f-stop, and movement speed
+✅ Color palette and atmosphere are specified
+✅ Segment 1 uses I2V if scene frame is available
+✅ No narration text in prompts (it's a separate voiceover track)
 
 Return ONLY valid JSON array. No markdown, no explanation.
 `

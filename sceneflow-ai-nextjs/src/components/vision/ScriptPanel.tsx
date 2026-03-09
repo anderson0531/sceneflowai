@@ -18,6 +18,7 @@ import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, 
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
+import { SceneProductionDirector } from './scene-production/SceneProductionDirector'
 import { SegmentFrameTimeline } from './scene-production/SegmentFrameTimeline'
 import { AddSegmentDialog } from './scene-production/AddSegmentDialog'
 import { EditSegmentDialog } from './scene-production/EditSegmentDialog'
@@ -3747,25 +3748,18 @@ function SceneCard({
   const workflowCompletions = scene.workflowCompletions || {}
   
   // Helper: Check if all audio is complete for a specific language
-  // Script step auto-completes only when all required audio is generated for selected language
+  // Script step auto-completes when narration + dialogue audio are generated
+  // Note: "description audio" is NOT checked — it's not part of the standard audio generation workflow
   const isSceneAudioCompleteForLanguage = useMemo(() => {
     return (lang: string): boolean => {
       // Check if scene has any text that requires audio
       const hasNarrationText = !!scene.narration?.trim()
-      const hasDescriptionText = !!(scene.visualDescription?.trim() || scene.action?.trim())
       const dialogueLines = scene.dialogue || []
       const hasDialogueText = dialogueLines.length > 0
       
-      // If scene has no text at all, consider it complete
-      if (!hasNarrationText && !hasDescriptionText && !hasDialogueText) {
+      // If scene has no narration or dialogue, consider it complete
+      if (!hasNarrationText && !hasDialogueText) {
         return true
-      }
-      
-      // Check description audio (if scene has description text)
-      let hasDescriptionAudio = true
-      if (hasDescriptionText) {
-        const descUrl = scene.descriptionAudio?.[lang]?.url || (lang === 'en' ? scene.descriptionAudioUrl : undefined)
-        hasDescriptionAudio = !!descUrl
       }
       
       // Check narration audio (if scene has narration text)
@@ -3797,10 +3791,9 @@ function SceneCard({
         })
       }
       
-      return hasDescriptionAudio && hasNarrationAudio && hasAllDialogueAudio
+      return hasNarrationAudio && hasAllDialogueAudio
     }
-  }, [scene.narration, scene.visualDescription, scene.action, scene.dialogue, 
-      scene.descriptionAudio, scene.descriptionAudioUrl, 
+  }, [scene.narration, scene.dialogue, 
       scene.narrationAudio, scene.narrationAudioUrl, scene.dialogueAudio])
   
   // Completion status detection for workflow steps (combines auto-detection + manual overrides)
@@ -6424,24 +6417,46 @@ function SceneCard({
                   <SceneDirectionProvider direction={scene.detailedDirection || scene.sceneDirection}>
                   <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
                     {/* Audio Not Generated Warning — soft gate instead of tab lock */}
-                    {!stepCompletion.dialogueAction && (
-                      <div className="flex items-center gap-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                        <Volume2 className="w-5 h-5 text-blue-400 flex-shrink-0" />
-                        <div className="flex-1">
-                          <p className="text-sm text-blue-200">Audio not generated yet — your animatic and renders will be silent.</p>
-                          <p className="text-xs text-blue-200/60 mt-0.5">Generate audio in the Script tab first for the best production quality.</p>
+                    {!stepCompletion.dialogueAction && (() => {
+                      // Build specific list of missing audio
+                      const missing: string[] = []
+                      if (scene.narration?.trim()) {
+                        const narrUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
+                        if (!narrUrl) missing.push('Narration')
+                      }
+                      const dialogueLines = scene.dialogue || []
+                      if (dialogueLines.length > 0) {
+                        let dialogueAudioArray: any[] = []
+                        if (Array.isArray(scene.dialogueAudio)) {
+                          dialogueAudioArray = selectedLanguage === 'en' ? scene.dialogueAudio : []
+                        } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
+                          dialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
+                        }
+                        const missingCount = dialogueLines.filter((_: any, idx: number) => 
+                          !dialogueAudioArray.find((a: any) => a.dialogueIndex === idx && a.audioUrl)
+                        ).length
+                        if (missingCount > 0) missing.push(`${missingCount} dialogue line${missingCount > 1 ? 's' : ''}`)
+                      }
+                      const missingText = missing.length > 0 ? missing.join(' and ') : 'Audio'
+                      return (
+                        <div className="flex items-center gap-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                          <Volume2 className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                          <div className="flex-1">
+                            <p className="text-sm text-blue-200">{missingText} not generated yet — your animatic and renders will be silent.</p>
+                            <p className="text-xs text-blue-200/60 mt-0.5">Generate audio in the Script tab first for the best production quality.</p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setActiveWorkflowTab('dialogueAction')
+                            }}
+                            className="px-3 py-1.5 text-xs font-medium bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 rounded transition-colors whitespace-nowrap"
+                          >
+                            Go to Script
+                          </button>
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setActiveWorkflowTab('dialogueAction')
-                          }}
-                          className="px-3 py-1.5 text-xs font-medium bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 rounded transition-colors whitespace-nowrap"
-                        >
-                          Go to Script
-                        </button>
-                      </div>
-                    )}
+                      )
+                    })()}
                     {/* Scene Image Requirement Warning */}
                     {sceneImageWarning.show && (
                       <div className="flex items-center gap-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
@@ -6887,39 +6902,39 @@ function SceneCard({
                       </div>
                     )}
                     
-                    {/* Fallback: SceneProductionManager when no segments yet */}
+                    {/* Fallback: SceneProductionDirector when no segments yet */}
                     {!(sceneProductionData?.segments && sceneProductionData.segments.length > 0) && (
-                      <SceneProductionManager
+                      <SceneProductionDirector
                         sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
                         sceneNumber={sceneNumber}
-                        heading={scene.heading}
                         scene={scene}
-                        projectId={projectId}
+                        projectId={projectId || ''}
                         productionData={sceneProductionData || null}
                         references={sceneProductionReferences || {}}
-                        onInitialize={onInitializeSceneProduction || (async () => {})}
-                        onPromptChange={onSegmentPromptChange || (() => {})}
-                        onGenerate={onSegmentGenerate || (async () => {})}
-                        onUpload={onSegmentUpload || (async () => {})}
-                        audioTracks={sceneAudioTracks}
-                        onAddSegment={onAddSegment}
-                        onDeleteSegment={onDeleteSegment}
-                        onSegmentResize={onSegmentResize}
-                        onApplyIntelligentAlignment={onApplyIntelligentAlignment}
-                        onReorderSegments={onReorderSegments}
-                        onAudioClipChange={onAudioClipChange}
-                        onCleanupStaleAudioUrl={onCleanupStaleAudioUrl}
-                        onKeyframeChange={onSegmentKeyframeChange}
-                        onDialogueAssignmentChange={onSegmentDialogueAssignmentChange}
-                        onEditImage={onEditImage ? (imageUrl: string) => onEditImage(imageUrl, sceneIdx) : undefined}
-                        onAddEstablishingShot={onAddEstablishingShot}
-                        onEstablishingShotStyleChange={onEstablishingShotStyleChange}
-                        onBackdropVideoGenerated={onBackdropVideoGenerated}
-                        onGenerateEndFrame={onGenerateEndFrame}
-                        onEndFrameGenerated={onEndFrameGenerated}
-                        characters={characters}
-                        onSelectTake={onSelectTake ? (takeSceneId: string, segmentId: string, takeId: string, assetUrl: string) => onSelectTake(takeSceneId, segmentId, takeId, assetUrl) : undefined}
-                        onDeleteTake={onDeleteTake ? (takeSceneId: string, segmentId: string, takeId: string) => onDeleteTake(takeSceneId, segmentId, takeId) : undefined}
+                        hasSceneDirection={!!scene.sceneDirection || !!scene.detailedDirection}
+                        hasSceneImage={!!scene.imageUrl}
+                        hasAudio={stepCompletion.dialogueAction}
+                        onSegmentsCreated={async (segments) => {
+                          // Initialize production with the finalized segments
+                          if (onInitializeSceneProduction) {
+                            await onInitializeSceneProduction(
+                              scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                              { targetDuration: segments.reduce((sum, s) => sum + s.duration, 0), segments }
+                            )
+                          }
+                        }}
+                        onNavigateToDirection={() => {
+                          // Navigate to Directors Chair tab
+                          setActiveWorkflowTab('directorsChair')
+                        }}
+                        onNavigateToImage={() => {
+                          // Trigger scene image generation
+                          onGenerateImage?.(sceneIdx)
+                        }}
+                        onNavigateToAudio={() => {
+                          // Navigate to Script tab for audio generation
+                          setActiveWorkflowTab('dialogueAction')
+                        }}
                       />
                     )}
                   </div>

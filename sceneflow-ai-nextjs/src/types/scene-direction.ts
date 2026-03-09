@@ -156,6 +156,8 @@ export interface SegmentDirection {
   cameraMovement: string
   /** Camera angle (e.g., "Eye-Level", "Low Angle", "High Angle") */
   cameraAngle: string
+  /** Lens/focal length recommendation (e.g., '85mm f/1.2', '24mm f/2.8') */
+  lens?: string
   /** What talent does in this segment (e.g., "SARAH looks up from laptop, startled") */
   talentAction: string
   /** Emotional beat/tone (e.g., "Tension building", "Moment of realization") */
@@ -180,6 +182,14 @@ export interface SegmentDirection {
   triggerReason: string
   /** AI confidence in this direction (0-100) */
   confidence: number
+  /** Transition from previous segment (e.g., 'cut', 'dissolve', 'match cut') */
+  transitionIn?: string
+  /** Description of opening frame for continuity */
+  startFrameDescription?: string
+  /** Description of final frame for next segment continuity */
+  endFrameDescription?: string
+  /** Continuity notes (wardrobe, props, lighting consistency) */
+  continuityNotes?: string
 }
 
 /**

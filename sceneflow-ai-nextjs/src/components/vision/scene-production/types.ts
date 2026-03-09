@@ -1478,6 +1478,8 @@ export interface ProposedDirection {
   shotType: string
   cameraMovement: string
   cameraAngle: string
+  /** Lens/focal length recommendation (e.g., '85mm f/1.2', '24mm f/2.8') */
+  lens?: string
   talentAction: string
   emotionalBeat: string
   characters: string[]
@@ -1488,6 +1490,14 @@ export interface ProposedDirection {
   generationMethod: 'T2V' | 'I2V' | 'EXT' | 'FTV'
   triggerReason: string
   confidence: number
+  /** Transition from previous segment (e.g., 'cut', 'dissolve', 'match cut') */
+  transitionIn?: string
+  /** Description of opening frame for continuity */
+  startFrameDescription?: string
+  /** Description of final frame for next segment continuity */
+  endFrameDescription?: string
+  /** Continuity notes (wardrobe, props, lighting consistency) */
+  continuityNotes?: string
   // User review status
   isApproved: boolean
   isUserEdited: boolean

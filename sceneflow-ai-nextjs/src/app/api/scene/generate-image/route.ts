@@ -1047,7 +1047,7 @@ export async function POST(req: NextRequest) {
       
       return {
         referenceId: referenceId || 1, // Fallback to 1 if somehow missing
-        imageUrl: char.referenceImage,  // Blob URL - will be downloaded and encoded by generateImageWithGemini
+        imageUrl: matchingRef?.imageUrl || char.referenceImage,  // Costume ref URL (if available) or baseline ref URL
         subjectDescription: matchingRef?.subjectTextDescription || 'a person'  // TEXT description for API (not "person [1]")
       }
     })
