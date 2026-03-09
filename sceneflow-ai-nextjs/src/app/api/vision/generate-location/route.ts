@@ -10,10 +10,12 @@ export const runtime = 'nodejs'
 export const maxDuration = 120
 
 interface GenerateLocationImageRequest {
+  /** Project ID for blob storage organization */
+  projectId?: string
   /** Normalized location name (e.g., "PODCAST STUDIO") */
   locationName: string
   /** Full scene heading (e.g., "INT. PODCAST STUDIO - DAY") */
-  locationDisplay: string
+  locationDisplay?: string
   /** INT/EXT indicator */
   intExt?: string
   /** Time of day */
@@ -22,6 +24,13 @@ interface GenerateLocationImageRequest {
   description?: string
   /** Aspect ratio for the generated image */
   aspectRatio?: '1:1' | '4:3' | '3:4' | '16:9' | '9:16'
+  /** Screenplay context for richer prompt generation */
+  screenplayContext?: {
+    genre?: string
+    tone?: string
+    setting?: string
+    visualStyle?: string
+  }
 }
 
 /**
@@ -112,12 +121,14 @@ export async function POST(req: NextRequest) {
 
     const body: GenerateLocationImageRequest = await req.json()
     const {
+      projectId: reqProjectId,
       locationName,
       locationDisplay,
       intExt,
       timeOfDay,
       description,
-      aspectRatio = '16:9' // Widescreen is best for location establishing shots
+      aspectRatio = '16:9', // Widescreen is best for location establishing shots
+      screenplayContext
     } = body
 
     if (!locationName) {
@@ -134,15 +145,14 @@ export async function POST(req: NextRequest) {
     const prompt = buildLocationPrompt(locationName, intExt, timeOfDay, description)
     console.log(`[Location Generation] Prompt: ${prompt.substring(0, 200)}...`)
 
-    // Generate image
+    // Generate image — negativePrompt enforces no people in location shots
     const result = await generateImageWithGeminiStudio({
       prompt,
       aspectRatio,
-      numberOfImages: 1,
-      personGeneration: 'dont_allow' // No people in location shots
+      negativePrompt: 'people, persons, humans, actors, characters, figures, silhouettes, faces, crowds',
     })
 
-    if (!result.images || result.images.length === 0) {
+    if (!result.imageBase64) {
       return NextResponse.json(
         { error: 'No image generated. Try adjusting the description.' },
         { status: 500 }
@@ -150,9 +160,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Upload to blob storage
-    const imageData = result.images[0]
-    const fileName = `location-${locationName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.png`
-    const imageUrl = await uploadImageToBlob(imageData.base64, fileName, 'image/png')
+    const fileName = `scenes/location-${locationName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.png`
+    const imageUrl = await uploadImageToBlob(result.imageBase64, fileName, reqProjectId || 'default')
 
     // Deduct credits
     await CreditService.deductCredits(userId, CREDIT_COST, `Location reference: ${locationName}`)

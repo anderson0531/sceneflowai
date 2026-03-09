@@ -7064,13 +7064,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   /**
    * Generate a location reference image via AI
+   * Uses animated overlay to block UI during generation (~15-30s)
    */
   const handleGenerateLocationImage = async (location: LocationReference) => {
     if (!location?.id) return
     
     setGeneratingLocationId(location.id)
     
+    // Show animated overlay to prevent user disruption
+    const locationLabel = location.location || 'Location'
+    overlayStore.show(
+      `Generating ${locationLabel} reference image...`,
+      25, // estimated ~25 seconds
+      'image-generation'
+    )
+    
     try {
+      // Phase 1: Preparing prompt
+      overlayStore.setPhase(0)
+      overlayStore.setStatus(`Preparing prompt for ${locationLabel}...`)
+      
       const response = await fetch('/api/vision/generate-location', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -7089,12 +7102,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       })
       
+      // Phase 3: Rendering
+      overlayStore.setPhase(2)
+      overlayStore.setProgress(60)
+      overlayStore.setStatus('Rendering location image...')
+      
       if (!response.ok) {
         const error = await response.json()
         throw new Error(error.error || 'Failed to generate location image')
       }
       
       const result = await response.json()
+      
+      // Phase 4: Enhancing
+      overlayStore.setPhase(3)
+      overlayStore.setProgress(85)
+      overlayStore.setStatus('Saving location reference...')
       
       // Update location with the generated image
       const updatedLocations = locationReferences.map(ref =>
@@ -7107,11 +7130,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Persist
       await persistLocationReferences(updatedLocations)
-      try { const { toast } = require('sonner'); toast.success(`Generated image for ${location.location}`) } catch {}
+      
+      // Phase 5: Complete
+      overlayStore.setProgress(100)
+      overlayStore.setStatus(`${locationLabel} image generated!`)
+      
+      // Brief pause so user sees success state
+      await new Promise(resolve => setTimeout(resolve, 800))
+      
+      try { const { toast } = require('sonner'); toast.success(`Generated image for ${locationLabel}`) } catch {}
     } catch (error: any) {
       console.error('[handleGenerateLocationImage] Error:', error)
       try { const { toast } = require('sonner'); toast.error(error.message || 'Failed to generate location image') } catch {}
     } finally {
+      overlayStore.hide()
       setGeneratingLocationId(null)
     }
   }
