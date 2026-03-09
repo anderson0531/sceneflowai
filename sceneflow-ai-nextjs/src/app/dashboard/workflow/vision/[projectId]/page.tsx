@@ -7394,7 +7394,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         excludeCharacters: options?.excludeCharacters || false,
         // Signal that character selection was explicit (from dialog or no-talent detection)
         // When true, API will NOT auto-detect characters — empty array means "no characters wanted"
-        characterSelectionExplicit: promptData.characterSelectionExplicit || false
+        characterSelectionExplicit: promptData.characterSelectionExplicit || false,
+        // Wardrobe assignments — from prompt builder (explicit selection) or scene-level assignments (auto-fallback)
+        characterWardrobes: promptData.characterWardrobes || scene.characterWardrobes || [],
       }
       console.log('[handleGenerateSceneImage] Request body:', JSON.stringify(requestBody).substring(0, 500))
       

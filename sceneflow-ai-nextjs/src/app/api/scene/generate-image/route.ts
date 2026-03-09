@@ -651,6 +651,7 @@ export async function POST(req: NextRequest) {
       } else if (!sceneWardrobeOverride && char.wardrobes && Array.isArray(char.wardrobes) && char.wardrobes.length > 0) {
         // Auto-lookup: find wardrobe by scene number when no explicit override
         const sceneNum = sceneIndex !== undefined ? sceneIndex + 1 : undefined
+        let foundSceneMatch = false
         if (sceneNum) {
           const matchedWardrobe = char.wardrobes.find(
             (w: { sceneNumbers?: number[]; description: string; accessories?: string; name?: string }) =>
@@ -659,7 +660,21 @@ export async function POST(req: NextRequest) {
           if (matchedWardrobe) {
             effectiveWardrobe = matchedWardrobe.description
             effectiveAccessories = matchedWardrobe.accessories
+            foundSceneMatch = true
             console.log(`[Scene Image] Auto-matched wardrobe for ${char.name} in scene ${sceneNum}: "${matchedWardrobe.name}"`)
+          }
+        }
+        
+        // Fallback to isDefault wardrobe from collection — this uses the richer
+        // wardrobe description from the collection instead of the legacy defaultWardrobe string
+        if (!foundSceneMatch) {
+          const defaultWardrobe = char.wardrobes.find(
+            (w: { isDefault?: boolean; description: string; accessories?: string; name?: string }) => w.isDefault
+          )
+          if (defaultWardrobe && defaultWardrobe.description) {
+            effectiveWardrobe = defaultWardrobe.description
+            effectiveAccessories = defaultWardrobe.accessories
+            console.log(`[Scene Image] Using isDefault wardrobe from collection for ${char.name}: "${defaultWardrobe.name}" (description: ${defaultWardrobe.description.substring(0, 60)}...)`)
           }
         }
       }

@@ -801,6 +801,18 @@ export function ScenePromptBuilder({
     // Pass prompt builder selections to API
     // Send raw prompt as scenePrompt (API will handle optimization)
     const rawPrompt = getRawPrompt()
+    // Build characterWardrobes array for API — maps character IDs to selected wardrobe IDs
+    // Merges scene-level assignments with local prompt builder overrides (local takes priority)
+    const effectiveWardrobes = { ...sceneWardrobes, ...localWardrobes }
+    const characterWardrobesList = Object.entries(effectiveWardrobes)
+      .map(([charName, wardrobeId]) => {
+        const char = availableCharacters.find(c => c.name === charName)
+        // Resolve character ID (prefer .id if available, fallback to name)
+        const charId = (char as any)?.id || charName
+        return { characterId: charId, wardrobeId }
+      })
+      .filter(cw => cw.wardrobeId)  // Only include if a wardrobe was actually selected
+
     const promptData = {
       characters: selectedCharacterObjects,
       scenePrompt: rawPrompt,              // Raw prompt - API will optimize with character references
@@ -808,7 +820,9 @@ export function ScenePromptBuilder({
       shotType: structure.shotType,        // Camera framing
       cameraAngle: structure.cameraAngle,   // Camera angle
       lighting: structure.lighting,         // Lighting selection
-      // NEW: Include reference images for style matching
+      // Wardrobe selections from prompt builder (merged scene-level + local overrides)
+      characterWardrobes: characterWardrobesList,
+      // Include reference images for style matching
       sceneReferences: selectedSceneRefs.map(ref => ({
         id: ref.id,
         name: ref.name,

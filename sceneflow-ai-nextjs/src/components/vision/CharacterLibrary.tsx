@@ -572,6 +572,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   const [isGeneratingWardrobe, setIsGeneratingWardrobe] = useState(false)
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false)
   const [showAddWardrobeForm, setShowAddWardrobeForm] = useState(false) // Toggle for add new wardrobe form
+  const [enhancingWardrobeId, setEnhancingWardrobeId] = useState<string | null>(null) // Which wardrobe is being AI-enhanced
   
   // Script analysis for wardrobes state
   const [isAnalyzingScript, setIsAnalyzingScript] = useState(false)
@@ -870,6 +871,66 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
       wardrobeId,
       action: 'setDefault'
     })
+  }
+
+  // Handle AI enhancement of a wardrobe description
+  // Takes a vague description and generates a highly detailed, image-gen-optimized version
+  const handleEnhanceWardrobe = async (wardrobeId: string) => {
+    const wardrobe = wardrobes.find(w => w.id === wardrobeId)
+    if (!wardrobe) return
+
+    setEnhancingWardrobeId(wardrobeId)
+    try {
+      const response = await fetch('/api/character/enhance-wardrobe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          characterName: character.name,
+          characterRole: character.role,
+          appearanceDescription: character.appearanceDescription || generateFallbackDescription(character),
+          currentWardrobeDescription: wardrobe.description,
+          currentAccessories: wardrobe.accessories,
+          wardrobeName: wardrobe.name,
+          genre: screenplayContext?.genre,
+          tone: screenplayContext?.tone,
+          setting: screenplayContext?.setting,
+          visualStyle: screenplayContext?.visualStyle,
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to enhance wardrobe')
+      }
+
+      const { enhanced } = await response.json()
+
+      // Save the enhanced description directly
+      // The handler automatically syncs the legacy defaultWardrobe field
+      // when the updated wardrobe is the one marked isDefault
+      onUpdateWardrobe?.(characterId, {
+        defaultWardrobe: enhanced.description,
+        wardrobeAccessories: enhanced.accessories || wardrobe.accessories,
+        wardrobeId: wardrobeId,
+        action: 'update'
+      })
+
+      // Update expanded wardrobe dialog if it's showing this wardrobe
+      if (expandedWardrobe?.id === wardrobeId) {
+        setExpandedWardrobe({
+          ...expandedWardrobe,
+          description: enhanced.description,
+          accessories: enhanced.accessories || expandedWardrobe.accessories
+        })
+      }
+
+      toast.success('Wardrobe description enhanced with AI-level detail')
+    } catch (error) {
+      console.error('[Enhance Wardrobe] Error:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to enhance wardrobe')
+    } finally {
+      setEnhancingWardrobeId(null)
+    }
   }
 
   // Overlay store for enhance progress
@@ -1903,6 +1964,17 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
+                            handleEnhanceWardrobe(w.id)
+                          }}
+                          disabled={enhancingWardrobeId === w.id}
+                          className="p-1 text-gray-400 hover:text-purple-500 transition-colors disabled:opacity-50"
+                          title="Enhance with AI — generates a highly detailed description for better image consistency"
+                        >
+                          {enhancingWardrobeId === w.id ? <Loader className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
                             setEditingWardrobe(true)
                             setEditingWardrobeId(w.id)
                             setWardrobeText(w.description)
@@ -2214,9 +2286,33 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                 
                 {/* Description */}
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Outfit Description
-                  </h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Outfit Description
+                    </h4>
+                    <div className="flex items-center gap-2">
+                      <div className="group relative">
+                        <Info className="w-3.5 h-3.5 text-gray-400 cursor-help" />
+                        <div className="absolute right-0 bottom-full mb-1 w-56 p-2 bg-gray-900 text-gray-200 text-[10px] rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                          More detailed descriptions produce more consistent images across scenes. Use ✨ Enhance to automatically add specifics like exact colors, materials, fit, and footwear.
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleEnhanceWardrobe(expandedWardrobe.id)
+                        }}
+                        disabled={enhancingWardrobeId === expandedWardrobe.id}
+                        className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-800/40 disabled:opacity-50"
+                      >
+                        {enhancingWardrobeId === expandedWardrobe.id ? (
+                          <><Loader className="w-3 h-3 animate-spin" /> Enhancing...</>
+                        ) : (
+                          <><Wand2 className="w-3 h-3" /> Enhance</>
+                        )}
+                      </button>
+                    </div>
+                  </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
                     {expandedWardrobe.description}
                   </p>
