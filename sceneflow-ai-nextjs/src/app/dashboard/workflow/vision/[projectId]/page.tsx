@@ -7065,11 +7065,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   /**
    * Generate a location reference image via AI
    */
-  const handleGenerateLocationImage = async (locationId: string) => {
-    const location = locationReferences.find(ref => ref.id === locationId)
-    if (!location) return
+  const handleGenerateLocationImage = async (location: LocationReference) => {
+    if (!location?.id) return
     
-    setGeneratingLocationId(locationId)
+    setGeneratingLocationId(location.id)
     
     try {
       const response = await fetch('/api/vision/generate-location', {
@@ -7099,7 +7098,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Update location with the generated image
       const updatedLocations = locationReferences.map(ref =>
-        ref.id === locationId
+        ref.id === location.id
           ? { ...ref, imageUrl: result.imageUrl, generationPrompt: result.prompt }
           : ref
       )
