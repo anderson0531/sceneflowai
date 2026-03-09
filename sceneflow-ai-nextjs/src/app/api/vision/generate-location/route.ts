@@ -164,7 +164,11 @@ export async function POST(req: NextRequest) {
     const imageUrl = await uploadImageToBlob(result.imageBase64, fileName, reqProjectId || 'default')
 
     // Deduct credits
-    await CreditService.deductCredits(userId, CREDIT_COST, `Location reference: ${locationName}`)
+    await CreditService.charge(userId, CREDIT_COST, 'ai_usage', null, {
+      provider: 'gemini',
+      category: 'images',
+      operation: `Location reference: ${locationName}`
+    })
 
     console.log(`[Location Generation] Success: ${imageUrl}`)
 
