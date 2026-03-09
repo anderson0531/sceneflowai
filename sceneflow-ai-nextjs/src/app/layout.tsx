@@ -13,6 +13,7 @@ import { Toaster } from 'sonner'
 import AnimatedProcessingOverlay from '../components/AnimatedProcessingOverlay'
 import { CreditsProvider } from '@/contexts/CreditsContext'
 import { CookieConsent } from '@/components/ui/CookieConsent'
+import { GlobalErrorGuard } from '@/components/providers/GlobalErrorGuard'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -190,6 +191,7 @@ export default function RootLayout({
               />
               <AnimatedProcessingOverlay />
               <CookieConsent />
+              <GlobalErrorGuard />
             </CreditsProvider>
           </AuthSessionProvider>
         </ThemeProvider>

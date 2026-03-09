@@ -6954,16 +6954,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const existingMetadata = project?.metadata || {}
     const existingVisionPhase = existingMetadata.visionPhase || {}
 
+    const updatedReferences = {
+      sceneReferences: sceneReferencesRef.current,
+      objectReferences: objectReferencesRef.current,
+      locationReferences: updatedLocationRefs
+    }
+
     const payload = {
       metadata: {
         ...existingMetadata,
         visionPhase: {
           ...existingVisionPhase,
-          references: {
-            sceneReferences: sceneReferencesRef.current,
-            objectReferences: objectReferencesRef.current,
-            locationReferences: updatedLocationRefs
-          }
+          references: updatedReferences
         }
       }
     }
@@ -6977,6 +6979,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (!response.ok) {
       throw new Error('Failed to persist location references')
     }
+
+    // Keep project state in sync so subsequent saves (handleSaveProject) don't send stale references
+    setProject(prev => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        metadata: {
+          ...prev.metadata,
+          visionPhase: {
+            ...prev.metadata?.visionPhase,
+            references: updatedReferences
+          }
+        }
+      }
+    })
   }
 
   /**

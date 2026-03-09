@@ -375,20 +375,23 @@ export async function PUT(
           })
         }
         
-        // CRITICAL: Deep merge references (sceneReferences/backdrops and objectReferences/props)
+        // CRITICAL: Deep merge references (sceneReferences/backdrops, objectReferences/props, locationReferences)
         // This prevents accidental overwrite when other parts of the app save with stale reference data
         const existingReferences = existingMetadata.visionPhase?.references || {}
         const incomingReferences = body.metadata.visionPhase?.references
         
-        if (incomingReferences || existingReferences.sceneReferences || existingReferences.objectReferences) {
+        if (incomingReferences || existingReferences.sceneReferences || existingReferences.objectReferences || existingReferences.locationReferences) {
           const existingSceneRefs = existingReferences.sceneReferences || []
           const existingObjectRefs = existingReferences.objectReferences || []
+          const existingLocationRefs = existingReferences.locationReferences || []
           const incomingSceneRefs = incomingReferences?.sceneReferences || []
           const incomingObjectRefs = incomingReferences?.objectReferences || []
+          const incomingLocationRefs = incomingReferences?.locationReferences || []
           
           // Create maps for quick lookup by ID
           const existingSceneRefMap = new Map(existingSceneRefs.map((r: any) => [r.id, r]))
           const existingObjectRefMap = new Map(existingObjectRefs.map((r: any) => [r.id, r]))
+          const existingLocationRefMap = new Map(existingLocationRefs.map((r: any) => [r.id, r]))
           
           // Merge scene references (backdrops): incoming takes precedence, preserve existing not in incoming
           let mergedSceneRefs = incomingSceneRefs.map((incomingRef: any) => {
@@ -424,9 +427,27 @@ export async function PUT(
             mergedObjectRefs = [...mergedObjectRefs, ...preservedObjectRefs]
           }
           
+          // Merge location references: incoming takes precedence, preserve existing not in incoming
+          let mergedLocationRefs = incomingLocationRefs.map((incomingRef: any) => {
+            const existingRef = existingLocationRefMap.get(incomingRef.id)
+            if (existingRef) {
+              return { ...existingRef, ...incomingRef }
+            }
+            return incomingRef
+          })
+          
+          // Preserve existing location refs not in incoming
+          const incomingLocationRefIds = new Set(incomingLocationRefs.map((r: any) => r.id))
+          const preservedLocationRefs = existingLocationRefs.filter((r: any) => !incomingLocationRefIds.has(r.id))
+          if (preservedLocationRefs.length > 0) {
+            console.log('[Projects PUT] Preserving location references not in incoming:', preservedLocationRefs.length)
+            mergedLocationRefs = [...mergedLocationRefs, ...preservedLocationRefs]
+          }
+          
           mergedMetadata.visionPhase.references = {
             sceneReferences: mergedSceneRefs,
-            objectReferences: mergedObjectRefs
+            objectReferences: mergedObjectRefs,
+            locationReferences: mergedLocationRefs
           }
           
           console.log('[Projects PUT] Deep merged references:', {
@@ -435,7 +456,10 @@ export async function PUT(
             mergedSceneRefs: mergedSceneRefs.length,
             existingObjectRefs: existingObjectRefs.length,
             incomingObjectRefs: incomingObjectRefs.length,
-            mergedObjectRefs: mergedObjectRefs.length
+            mergedObjectRefs: mergedObjectRefs.length,
+            existingLocationRefs: existingLocationRefs.length,
+            incomingLocationRefs: incomingLocationRefs.length,
+            mergedLocationRefs: mergedLocationRefs.length
           })
         }
       }

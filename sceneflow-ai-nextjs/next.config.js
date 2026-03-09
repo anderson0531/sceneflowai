@@ -167,6 +167,10 @@ const withPWA = require('next-pwa')({
         },
       },
     },
+    // CRITICAL: API routes must NEVER be cached or timeout-killed by the service worker.
+    // NetworkFirst with a 10s timeout was causing CustomFetchError crashes when
+    // long-running operations (image generation, project saves) exceeded the timeout.
+    // API routes should always go straight to the server.
     {
       urlPattern: ({ url }) => {
         const isSameOrigin = self.origin === url.origin
@@ -175,15 +179,7 @@ const withPWA = require('next-pwa')({
         if (pathname.startsWith('/api/auth/')) return false
         return pathname.startsWith('/api/')
       },
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'apis',
-        networkTimeoutSeconds: 10,
-        expiration: {
-          maxEntries: 16,
-          maxAgeSeconds: 86400,
-        },
-      },
+      handler: 'NetworkOnly',
     },
     {
       urlPattern: ({ url }) => {
