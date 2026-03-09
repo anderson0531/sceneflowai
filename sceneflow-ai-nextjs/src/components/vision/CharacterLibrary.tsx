@@ -602,6 +602,9 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   const [generatingPreviewFor, setGeneratingPreviewFor] = useState<string | null>(null)
   const [isGeneratingAllPreviews, setIsGeneratingAllPreviews] = useState(false)
   
+  // Costume reference generation state (uses /api/image/edit to create character-in-outfit reference)
+  const [generatingCostumeRefFor, setGeneratingCostumeRefFor] = useState<string | null>(null)
+  
   // Get wardrobes collection (or migrate from legacy format)
   const wardrobes: CharacterWardrobe[] = character.wardrobes || (
     (character.defaultWardrobe || character.wardrobeAccessories) ? [{
@@ -1076,6 +1079,78 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
       toast.error(error instanceof Error ? error.message : 'Preview generation failed')
     } finally {
       setGeneratingPreviewFor(null)
+    }
+  }
+  
+  // Generate costume reference image using /api/image/edit
+  // This creates a character reference image wearing the specific outfit,
+  // which is then used as the character reference during scene image generation
+  // instead of text-based wardrobe descriptions
+  const handleGenerateCostumeReference = async (wardrobeId: string) => {
+    const wardrobe = wardrobes.find(w => w.id === wardrobeId)
+    if (!wardrobe) return
+    
+    if (!character.referenceImage) {
+      toast.error('Character reference image is required to generate a costume reference')
+      return
+    }
+    
+    if (!wardrobe.description) {
+      toast.error('Wardrobe needs a description first. Use ✨ Enhance to add details.')
+      return
+    }
+    
+    setGeneratingCostumeRefFor(wardrobeId)
+    try {
+      // Build an edit instruction that changes the outfit while preserving identity
+      const instruction = `Change this person's clothing to: ${wardrobe.description}${wardrobe.accessories ? `. Accessories: ${wardrobe.accessories}` : ''}. Keep the exact same person, face, expression, pose, and background. Only change the outfit.`
+      
+      const response = await fetch('/api/image/edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'instruction',
+          sourceImage: character.referenceImage,
+          instruction,
+          subjectReference: {
+            imageUrl: character.referenceImage,
+            description: character.appearanceDescription || character.name
+          },
+          saveToBlob: true,
+          blobPrefix: `costume-ref-${characterId}`,
+        }),
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Costume reference generation failed')
+      }
+      
+      const result = await response.json()
+      
+      // Save the costume reference URL to the wardrobe's fullBodyUrl field
+      onUpdateWardrobe?.(characterId, {
+        wardrobeId,
+        action: 'update',
+        defaultWardrobe: wardrobe.description,
+        wardrobeAccessories: wardrobe.accessories,
+        fullBodyUrl: result.imageUrl,
+      })
+      
+      // Update expanded wardrobe dialog if showing this wardrobe
+      if (expandedWardrobe?.id === wardrobeId) {
+        setExpandedWardrobe({
+          ...expandedWardrobe,
+          fullBodyUrl: result.imageUrl,
+        })
+      }
+      
+      toast.success('Costume reference created! This image will be used during scene generation.')
+    } catch (error) {
+      console.error('[Costume Reference] Error:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to generate costume reference')
+    } finally {
+      setGeneratingCostumeRefFor(null)
     }
   }
   
@@ -1964,6 +2039,17 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
+                            handleGenerateCostumeReference(w.id)
+                          }}
+                          disabled={generatingCostumeRefFor === w.id}
+                          className={`p-1 transition-colors disabled:opacity-50 ${w.fullBodyUrl ? 'text-green-500 hover:text-green-400' : 'text-gray-400 hover:text-green-500'}`}
+                          title={w.fullBodyUrl ? 'Regenerate costume reference — replaces the current in-costume image' : 'Generate costume reference — creates a character image wearing this outfit for scene generation'}
+                        >
+                          {generatingCostumeRefFor === w.id ? <Loader className="w-3 h-3 animate-spin" /> : <ImageIcon className="w-3 h-3" />}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
                             handleEnhanceWardrobe(w.id)
                           }}
                           disabled={enhancingWardrobeId === w.id}
@@ -2229,12 +2315,22 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
             
             {expandedWardrobe && (
               <div className="space-y-6 py-4">
-                {/* Full Body Studio Portrait */}
+                {/* Full Body Studio Portrait / Costume Reference */}
                 <div className="flex justify-center">
                   <div className="w-full max-w-sm space-y-2">
                     <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-                      <Shirt className="w-4 h-4" />
-                      Wardrobe Preview
+                      {expandedWardrobe.fullBodyUrl ? (
+                        <>
+                          <ImageIcon className="w-4 h-4 text-green-500" />
+                          <span className="text-green-600 dark:text-green-400">Costume Reference</span>
+                          <span className="text-[10px] px-1.5 py-0.5 bg-green-500/20 text-green-500 rounded-full">Used in generation</span>
+                        </>
+                      ) : (
+                        <>
+                          <Shirt className="w-4 h-4" />
+                          Wardrobe Preview
+                        </>
+                      )}
                     </div>
                     <div className="aspect-[9/16] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                       {(expandedWardrobe.fullBodyUrl || expandedWardrobe.previewImageUrl) ? (
@@ -2399,21 +2495,21 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                 variant="outline"
                 onClick={() => {
                   if (expandedWardrobe) {
-                    handleGenerateWardrobePreview(expandedWardrobe.id)
+                    handleGenerateCostumeReference(expandedWardrobe.id)
                   }
                 }}
-                disabled={generatingPreviewFor !== null}
-                className="border-purple-500/50 text-purple-600 dark:text-purple-400 hover:bg-purple-500/10"
+                disabled={generatingCostumeRefFor !== null}
+                className="border-green-500/50 text-green-600 dark:text-green-400 hover:bg-green-500/10"
               >
-                {generatingPreviewFor === expandedWardrobe?.id ? (
+                {generatingCostumeRefFor === expandedWardrobe?.id ? (
                   <>
                     <Loader className="w-4 h-4 mr-2 animate-spin" />
                     Generating...
                   </>
                 ) : (
                   <>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Regenerate (5 credits)
+                    <ImageIcon className="w-4 h-4 mr-2" />
+                    {expandedWardrobe?.fullBodyUrl ? 'Regenerate Costume Ref' : 'Generate Costume Ref'}
                   </>
                 )}
               </Button>

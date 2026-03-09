@@ -691,6 +691,39 @@ export async function POST(req: NextRequest) {
         }
       }
       
+      // COSTUME REFERENCE: Check if the resolved wardrobe has a fullBodyUrl (costume reference image)
+      // When present, we use this image AS the character reference instead of the baseline headshot,
+      // and we can reduce/skip wardrobe text in the prompt since the model sees the outfit directly
+      let effectiveReferenceImage = char.referenceImage
+      let hasCostumeReference = false
+      
+      // Look up the resolved wardrobe object to check for costume reference
+      if (char.wardrobes && Array.isArray(char.wardrobes)) {
+        // First check explicit scene-level override
+        let resolvedWardrobe = null
+        if (sceneWardrobeOverride) {
+          resolvedWardrobe = char.wardrobes.find(
+            (w: any) => w.id === sceneWardrobeOverride.wardrobeId
+          )
+        } else if (sceneIndex !== undefined) {
+          const sceneNum = sceneIndex + 1
+          resolvedWardrobe = char.wardrobes.find(
+            (w: any) => w.sceneNumbers && w.sceneNumbers.includes(sceneNum)
+          )
+        }
+        if (!resolvedWardrobe) {
+          resolvedWardrobe = char.wardrobes.find((w: any) => w.isDefault)
+        }
+        
+        // If the wardrobe has a costume reference (fullBodyUrl), use it
+        if (resolvedWardrobe?.fullBodyUrl) {
+          effectiveReferenceImage = resolvedWardrobe.fullBodyUrl
+          hasCostumeReference = true
+          console.log(`[Scene Image] ✓ Using COSTUME REFERENCE for ${char.name}: "${resolvedWardrobe.name}" (${resolvedWardrobe.fullBodyUrl.substring(0, 60)}...)`)
+          console.log(`[Scene Image]   Wardrobe text will be reduced in prompt (model sees outfit in image)`)
+        }
+      }
+      
       console.log(`[Scene Image] Using ${char.visionDescription ? 'Gemini Vision' : 'manual'} description for ${char.name}`)
       
       // Extract age and add explicit age clause
@@ -723,17 +756,23 @@ export async function POST(req: NextRequest) {
       console.log(`[Scene Image] Extracted key features for ${char.name}:`, keyFeatures)
       
       // Build wardrobe description if available (using effective wardrobe, which may be overridden)
+      // When a costume reference image exists, we minimize wardrobe text since the model sees it
       let wardrobeDescription = ''
-      if (effectiveWardrobe) {
+      if (effectiveWardrobe && !hasCostumeReference) {
+        // No costume reference — full wardrobe text in prompt (legacy behavior)
         wardrobeDescription = `, wearing ${effectiveWardrobe}`
         if (effectiveAccessories) {
           wardrobeDescription += `, ${effectiveAccessories}`
         }
-        console.log(`[Scene Image] ${char.name} wardrobe: ${wardrobeDescription}`)
+        console.log(`[Scene Image] ${char.name} wardrobe (text): ${wardrobeDescription}`)
+      } else if (effectiveWardrobe && hasCostumeReference) {
+        // Costume reference exists — use a brief label only (model sees the outfit in the image)
+        wardrobeDescription = ', wearing the outfit shown in their reference image'
+        console.log(`[Scene Image] ${char.name} wardrobe (costume ref): text minimized, model sees outfit in image`)
       }
       
       // Only assign referenceId if character has reference image (will be in referenceImages array)
-      const hasReferenceImage = !!char.referenceImage
+      const hasReferenceImage = !!effectiveReferenceImage
       const referenceId = hasReferenceImage ? ++gcsRefIndex : undefined
       
       // Generate linking description for text-matching mode
@@ -781,11 +820,12 @@ export async function POST(req: NextRequest) {
         referenceId,  // Only defined for characters with reference images
         name: char.name,
         description: `${description}${ageClause}${wardrobeDescription}`,
-        imageUrl: char.referenceImage,      // Blob URL for both prompt text and API call
+        imageUrl: effectiveReferenceImage,  // Costume ref URL or baseline ref URL
         ethnicity: char.ethnicity,           // For ethnicity injection in scene description
         keyFeatures: keyFeatures.length > 0 ? keyFeatures : undefined,  // Key physical characteristics
-        defaultWardrobe: effectiveWardrobe,  // Wardrobe for consistency (may be scene-overridden)
-        wardrobeAccessories: effectiveAccessories,  // Accessories for consistency (may be scene-overridden)
+        defaultWardrobe: hasCostumeReference ? undefined : effectiveWardrobe,  // Skip wardrobe text when costume ref exists
+        wardrobeAccessories: hasCostumeReference ? undefined : effectiveAccessories,
+        hasCostumeReference,  // Flag for prompt intelligence to skip wardrobe anchoring
         linkingDescription,  // For prompt text: "a Black man in his late 40s [1]"
         subjectTextDescription,  // For API subjectDescription: "a Black man in his late 40s" (no [N])
         appearanceDescription: char.appearanceDescription || char.visionDescription  // Physical appearance for prompt injection
@@ -875,6 +915,7 @@ export async function POST(req: NextRequest) {
         wardrobeAccessories: ref.wardrobeAccessories,
         hasReferenceImage: !!ref.referenceId,
         referenceIndex: ref.referenceId,
+        hasCostumeReference: !!ref.hasCostumeReference,
       }))
       
       // Build prop contexts
@@ -1092,7 +1133,10 @@ export async function POST(req: NextRequest) {
             refImageIndex++
             // Find matching character reference for wardrobe info
             const matchingCharRef = characterReferences.find((cr: any) => cr.name === ref.subjectDescription || cr.referenceId === ref.referenceId)
-            const wardrobeLabel = matchingCharRef?.defaultWardrobe ? ` wearing ${matchingCharRef.defaultWardrobe}` : ''
+            const isCostumeRef = matchingCharRef?.hasCostumeReference
+            const wardrobeLabel = isCostumeRef 
+              ? ' (COSTUME REFERENCE — wearing scene-specific outfit, preserve exactly)'
+              : matchingCharRef?.defaultWardrobe ? ` wearing ${matchingCharRef.defaultWardrobe}` : ''
             allReferenceImages.push({
               imageUrl: ref.imageUrl,
               name: `Character reference ${refImageIndex}: ${ref.subjectDescription || 'character'}${wardrobeLabel}`
@@ -1129,8 +1173,10 @@ export async function POST(req: NextRequest) {
               const matchingCharRef = characterReferences.find((cr: any) => cr.referenceId === ref.referenceId)
               geminiPrompt += `- Reference image ${idx + 1}: ${ref.subjectDescription || 'character'}`
               
-              // WARDROBE ANCHORING: Include exact wardrobe in reference instructions
-              if (matchingCharRef?.defaultWardrobe) {
+              // WARDROBE ANCHORING: Skip if character has costume reference (outfit visible in image)
+              if (matchingCharRef?.hasCostumeReference) {
+                geminiPrompt += `\n  COSTUME: Character is shown wearing their scene-specific outfit in the reference image. Preserve this outfit EXACTLY as shown.`
+              } else if (matchingCharRef?.defaultWardrobe) {
                 geminiPrompt += `\n  WARDROBE: MUST be wearing EXACTLY "${matchingCharRef.defaultWardrobe}"`
                 if (matchingCharRef.wardrobeAccessories) {
                   geminiPrompt += ` with ${matchingCharRef.wardrobeAccessories}`
@@ -1158,12 +1204,18 @@ export async function POST(req: NextRequest) {
           geminiPrompt += `CRITICAL REQUIREMENTS:\n`
           geminiPrompt += `- Preserve character identity from reference images exactly\n`
           if (imageReferences.length > 0) {
-            // Add wardrobe consistency reminder
+            // Add wardrobe consistency reminder (skip characters with costume references)
             const wardrobeReminders = characterReferences
-              .filter((cr: any) => cr.referenceId && cr.defaultWardrobe)
+              .filter((cr: any) => cr.referenceId && cr.defaultWardrobe && !cr.hasCostumeReference)
               .map((cr: any) => `${cr.name}: "${cr.defaultWardrobe}"`)
             if (wardrobeReminders.length > 0) {
               geminiPrompt += `- WARDROBE MUST BE EXACT: ${wardrobeReminders.join('; ')}\n`
+            }
+            const costumeRefNames = characterReferences
+              .filter((cr: any) => cr.referenceId && cr.hasCostumeReference)
+              .map((cr: any) => cr.name)
+            if (costumeRefNames.length > 0) {
+              geminiPrompt += `- COSTUME REFERENCE: ${costumeRefNames.join(', ')} — preserve outfit from reference image exactly\n`
             }
           }
           geminiPrompt += `- No dialogue captions, subtitles, or watermarks\n`

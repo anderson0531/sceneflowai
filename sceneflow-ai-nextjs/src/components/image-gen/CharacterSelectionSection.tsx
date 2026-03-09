@@ -114,9 +114,13 @@ export function CharacterSelectionSection({
                       <SelectContent>
                         {char.wardrobes!.map((w) => {
                           const isDefault = w.id === sceneDefaultWardrobeId
+                          const hasCostumeRef = !!(w as any).fullBodyUrl
                           return (
                             <SelectItem key={w.id} value={w.id}>
                               <span className="flex items-center gap-2">
+                                {hasCostumeRef && (
+                                  <span className="text-[10px] text-green-500" title="Costume reference image available">📷</span>
+                                )}
                                 {w.name}
                                 {isDefault && (
                                   <span className="text-[10px] text-purple-400 ml-1">(scene default)</span>

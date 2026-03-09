@@ -562,9 +562,14 @@ export function ScenePromptBuilder({
             if (character?.wardrobes) {
               const wardrobe = character.wardrobes.find(w => w.id === wardrobeId)
               if (wardrobe) {
-                // Use description if available, otherwise just name
-                const wardrobeText = wardrobe.description || wardrobe.name
-                wardrobeDescriptions.push(`${charName} wearing ${wardrobeText}`)
+                // Skip wardrobe text if costume reference exists (model sees outfit in image)
+                if (wardrobe.fullBodyUrl) {
+                  wardrobeDescriptions.push(`${charName} in their costume reference outfit`)
+                } else {
+                  // Use description if available, otherwise just name
+                  const wardrobeText = wardrobe.description || wardrobe.name
+                  wardrobeDescriptions.push(`${charName} wearing ${wardrobeText}`)
+                }
               }
             }
           }
@@ -809,7 +814,14 @@ export function ScenePromptBuilder({
         const char = availableCharacters.find(c => c.name === charName)
         // Resolve character ID (prefer .id if available, fallback to name)
         const charId = (char as any)?.id || charName
-        return { characterId: charId, wardrobeId }
+        // Look up the wardrobe object to include costume reference URL if available
+        const wardrobeObj = (char as any)?.wardrobes?.find((w: any) => w.id === wardrobeId)
+        return { 
+          characterId: charId, 
+          wardrobeId,
+          // Include costume reference URL so route.ts can use it without separate lookup
+          costumeReferenceUrl: wardrobeObj?.fullBodyUrl || undefined,
+        }
       })
       .filter(cw => cw.wardrobeId)  // Only include if a wardrobe was actually selected
 
@@ -970,6 +982,7 @@ export function ScenePromptBuilder({
                   id: w.id,
                   name: w.name,
                   description: w.description,
+                  fullBodyUrl: w.fullBodyUrl,  // Costume reference indicator
                 })),
               }))}
               selectedCharacterNames={structure.characters}

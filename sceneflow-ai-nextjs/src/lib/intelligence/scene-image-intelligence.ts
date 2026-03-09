@@ -62,6 +62,8 @@ export interface CharacterContext {
   hasReferenceImage: boolean
   /** Reference index (1-based) for characters with reference images */
   referenceIndex?: number
+  /** Whether the reference image is a costume reference (character wearing scene-specific outfit) */
+  hasCostumeReference?: boolean
 }
 
 export interface PropContext {
@@ -299,6 +301,9 @@ CRITICAL RULES:
    - If a character wears "a tailored navy suit with gold watch," the image must show EXACTLY that
    - Wardrobe descriptions override ANY clothing mentioned in the scene action text
    - Include the COMPLETE wardrobe description verbatim in the prompt
+   - COSTUME REFERENCE EXCEPTION: If a character has "COSTUME REFERENCE" noted, their reference image
+     already shows the correct outfit. Do NOT describe their clothing in text — just reference their
+     action, pose, and expression. The model will preserve the outfit from the reference image.
 
 5. SCENE DIRECTION CUES: Use the provided lighting, framing, and atmosphere metadata to inform the composition:
    - Lighting mood and color temperature → set the image's lighting
@@ -367,8 +372,10 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
         prompt += `   Appearance: ${char.appearanceDescription}\n`
       }
       
-      // WARDROBE — always include, this is critical for consistency
-      if (char.wardrobeDescription) {
+      // WARDROBE — handle costume reference vs text description
+      if (char.hasCostumeReference) {
+        prompt += `   WARDROBE: COSTUME REFERENCE — Character's reference image already shows the correct scene-specific outfit. Do NOT describe clothing in text. Focus on action, pose, and expression only.\n`
+      } else if (char.wardrobeDescription) {
         prompt += `   WARDROBE (MUST USE EXACTLY): ${char.wardrobeDescription}`
         if (char.wardrobeAccessories) {
           prompt += ` | Accessories: ${char.wardrobeAccessories}`
