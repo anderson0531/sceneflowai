@@ -16,6 +16,7 @@ import { VisualReference, VisualReferenceType, ObjectCategory, LocationReference
 import { BackdropGeneratorModal, SceneForBackdrop, CharacterForBackdrop } from './BackdropGeneratorModal'
 import { BackdropMode } from '@/lib/vision/backdropGenerator'
 import { ObjectSuggestionPanel } from './ObjectSuggestionPanel'
+import { LocationLibrary } from './LocationLibrary'
 import { ImageEditModal } from './ImageEditModal'
 import { ReadinessProgress, calculateProductionReadiness, ProductionReadinessState } from '@/components/ui/StatusBadge'
 import { SceneReferenceCard } from './SceneReferenceCard'
@@ -103,8 +104,16 @@ interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'comp
   isGeneratingAllSceneImages?: boolean
   /** Location references for environment consistency */
   locationReferences?: LocationReference[]
+  /** Callback to update all location references */
+  onUpdateLocationReferences?: (locations: LocationReference[]) => void
   /** Callback to remove a location reference */
   onRemoveLocationReference?: (locationId: string) => void
+  /** Callback to generate a location reference image */
+  onGenerateLocationImage?: (location: LocationReference) => void
+  /** Callback to upload a location reference image */
+  onUploadLocationImage?: (locationId: string, file: File) => void
+  /** ID of location currently generating an image */
+  generatingLocationId?: string | null
 }
 
 interface ReferenceSectionProps {
@@ -868,7 +877,11 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     isGeneratingAllSceneImages = false,
     // Location references
     locationReferences = [],
+    onUpdateLocationReferences,
     onRemoveLocationReference,
+    onGenerateLocationImage,
+    onUploadLocationImage,
+    generatingLocationId,
   } = props
 
   // Use new props if available, fall back to legacy props
@@ -1050,13 +1063,12 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
 
   const [castOpen, setCastOpen] = useState(false)
   const [showProTips, setShowProTips] = useState(false)
-  const [activeReferenceTab, setActiveReferenceTab] = useState<'cast' | 'scene' | 'object' | 'locations'>('cast')
+  const [activeReferenceTab, setActiveReferenceTab] = useState<'cast' | 'object' | 'locations'>('cast')
 
   // Reference tabs matching ScriptPanel folder tab style (Storyboard removed - handled in main panel)
   // Scene tab now shows allScenes count (per-scene references) instead of just manual sceneReferences
   const referenceTabs = [
     { key: 'cast' as const, label: 'Cast', icon: <Users className="w-3.5 h-3.5" />, count: characters.length },
-    { key: 'scene' as const, label: 'Scene', icon: <Images className="w-3.5 h-3.5" />, count: allScenes.length },
     { key: 'locations' as const, label: 'Locations', icon: <MapPin className="w-3.5 h-3.5" />, count: locationReferences.length },
     { key: 'object' as const, label: 'Props', icon: <Package className="w-3.5 h-3.5" />, count: objectReferences.length },
   ]
@@ -1166,172 +1178,17 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
             />
           )}
           
-          {/* Scene Tab Content - Per-Scene Reference Cards */}
-          {activeReferenceTab === 'scene' && (
-            <TooltipProvider>
-            <div className="space-y-3">
-              {/* Header with stats and Generate All button */}
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                  <span>{sceneReferenceStats.withDirection}/{sceneReferenceStats.total} with direction</span>
-                  <span className="text-gray-300 dark:text-gray-600">•</span>
-                  <span>{sceneReferenceStats.withRefImage}/{sceneReferenceStats.total} with image</span>
-                </div>
-                {handleGenerateAllRefs && allScenes.length > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleGenerateAllRefs}
-                    disabled={isGeneratingAll || !sceneReferenceStats.allHaveDirection}
-                    className="text-cyan-600 border-cyan-600/30 hover:bg-cyan-600/10 text-xs"
-                    title={!sceneReferenceStats.allHaveDirection ? 'Generate scene direction for all scenes first' : 'Generate all scene references'}
-                  >
-                    {isGeneratingAll ? (
-                      <>
-                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-3 h-3 mr-1" />
-                        Generate All ({sceneReferenceStats.withoutRefImage})
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
-              
-              {/* Scene Reference Cards Grid */}
-              {allScenes.length === 0 ? (
-                <div className="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg py-6 text-center">
-                  No scenes yet. Create a script to generate scene references.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-3">
-                  {allScenes.map((scene, idx) => {
-                    const sceneHeading = typeof scene.heading === 'string' 
-                      ? scene.heading 
-                      : scene.heading?.text || `Scene ${idx + 1}`
-                    
-                    return (
-                      <SceneReferenceCard
-                        key={scene.id || scene.sceneId || `scene-ref-${idx}`}
-                        scene={scene}
-                        sceneNumber={idx + 1}
-                        isGenerating={currentGeneratingScene === idx}
-                        isGeneratingDirection={generatingDirectionForScene === idx}
-                        onGenerate={() => handleGenerateSceneRef?.(idx)}
-                        onEdit={scene.sceneReferenceImageUrl
-                          ? () => handleEditSceneRef?.(idx, scene.sceneReferenceImageUrl || '')
-                          : undefined
-                        }
-                        onUpload={(file) => handleUploadSceneRef?.(idx, file)}
-                        onSaveToLibrary={
-                          scene.sceneReferenceImageUrl && onAddSceneReferenceToLibrary
-                            ? () => onAddSceneReferenceToLibrary(idx, scene.sceneReferenceImageUrl || '', sceneHeading)
-                            : scene.sceneReferenceImageUrl && onAddToReferenceLibrary
-                              ? () => onAddToReferenceLibrary(scene.sceneReferenceImageUrl || '', sceneHeading, idx + 1)
-                              : undefined
-                        }
-                        onGenerateDirection={onGenerateSceneDirection ? () => onGenerateSceneDirection(idx) : undefined}
-                      />
-                    )
-                  })}
-                </div>
-              )}
-              
-              {/* Legacy: Manual Add Reference button */}
-              <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleOpenDialog('scene')}
-                  className="w-full text-xs"
-                >
-                  <Plus className="w-3 h-3 mr-1" />
-                  Add Custom Reference
-                </Button>
-              </div>
-              
-              {/* Legacy scene references (manual additions) */}
-              {sceneReferences.length > 0 && (
-                <div className="space-y-2">
-                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Custom References
-                  </div>
-                  {sceneReferences.map((reference) => (
-                    <DraggableReferenceCard
-                      key={reference.id}
-                      reference={reference}
-                      onRemove={() => onRemoveReference('scene', reference.id)}
-                      scenes={scenes}
-                      onInsertBackdropSegment={onInsertBackdropSegment}
-                      onEditImage={handleEditReferenceImage}
-                      referenceType="scene"
-                      projectId={projectId}
-                      onImageUploaded={(refId, refType, imageUrl) => {
-                        if (onUpdateReferenceImage) {
-                          onUpdateReferenceImage(refType, refId, imageUrl)
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-            </TooltipProvider>
-          )}
-          
-          {/* Locations Tab Content */}
+          {/* Locations Tab Content - Intelligent Location Library */}
           {activeReferenceTab === 'locations' && (
-            <div className="space-y-3">
-              {locationReferences.length === 0 ? (
-                <div className="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg py-6 text-center">
-                  <MapPin className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-                  <p className="font-medium">No location references yet</p>
-                  <p className="text-xs mt-1">Pin storyboard images using the <MapPin className="w-3 h-3 inline" /> button</p>
-                  <p className="text-xs text-gray-400 mt-2">Location references ensure visual consistency<br />across scenes at the same location</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {locationReferences.map((locRef) => (
-                    <div 
-                      key={locRef.id}
-                      className="relative group rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 overflow-hidden"
-                    >
-                      {/* Location Image */}
-                      <div className="aspect-video relative">
-                        <img 
-                          src={locRef.imageUrl} 
-                          alt={locRef.location}
-                          className="w-full h-full object-cover"
-                        />
-                        {/* Remove button overlay */}
-                        {onRemoveLocationReference && (
-                          <button
-                            onClick={() => onRemoveLocationReference(locRef.id)}
-                            className="absolute top-2 right-2 p-1.5 bg-red-500/80 hover:bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                            title="Remove location reference"
-                          >
-                            <Trash2 className="w-3.5 h-3.5 text-white" />
-                          </button>
-                        )}
-                      </div>
-                      {/* Location Info */}
-                      <div className="p-2">
-                        <div className="flex items-center gap-1.5">
-                          <MapPin className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
-                          <span className="font-medium text-sm text-white truncate">{locRef.location}</span>
-                        </div>
-                        <p className="text-xs text-gray-400 mt-1 truncate" title={locRef.sourceSceneHeading}>
-                          From Scene {locRef.sourceSceneIndex + 1}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <LocationLibrary
+              locationReferences={locationReferences}
+              scenes={allScenes}
+              onUpdateLocations={(locations) => onUpdateLocationReferences?.(locations)}
+              onRemoveLocation={(id) => onRemoveLocationReference?.(id)}
+              onGenerateLocationImage={onGenerateLocationImage}
+              onUploadLocationImage={onUploadLocationImage}
+              generatingLocationId={generatingLocationId}
+            />
           )}
           
           {/* Object Tab Content */}

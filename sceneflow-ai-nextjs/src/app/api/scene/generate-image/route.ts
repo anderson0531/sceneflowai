@@ -638,6 +638,20 @@ export async function POST(req: NextRequest) {
           effectiveAccessories = selectedWardrobe.accessories
           console.log(`[Scene Image] Using scene-level wardrobe override for ${char.name}: "${selectedWardrobe.name}"`)
         }
+      } else if (!sceneWardrobeOverride && char.wardrobes && Array.isArray(char.wardrobes) && char.wardrobes.length > 0) {
+        // Auto-lookup: find wardrobe by scene number when no explicit override
+        const sceneNum = sceneIndex !== undefined ? sceneIndex + 1 : undefined
+        if (sceneNum) {
+          const matchedWardrobe = char.wardrobes.find(
+            (w: { sceneNumbers?: number[]; description: string; accessories?: string; name?: string }) =>
+              w.sceneNumbers && w.sceneNumbers.includes(sceneNum)
+          )
+          if (matchedWardrobe) {
+            effectiveWardrobe = matchedWardrobe.description
+            effectiveAccessories = matchedWardrobe.accessories
+            console.log(`[Scene Image] Auto-matched wardrobe for ${char.name} in scene ${sceneNum}: "${matchedWardrobe.name}"`)
+          }
+        }
       }
       
       // Strip clothing descriptors if explicit wardrobe is set to prevent conflicts

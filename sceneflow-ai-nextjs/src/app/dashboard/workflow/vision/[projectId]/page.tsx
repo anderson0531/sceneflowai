@@ -652,6 +652,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [sceneReferences, setSceneReferences] = useState<VisualReference[]>([])
   const [objectReferences, setObjectReferences] = useState<VisualReference[]>([])
   const [locationReferences, setLocationReferences] = useState<LocationReference[]>([])
+  const [generatingLocationId, setGeneratingLocationId] = useState<string | null>(null)
   const [sceneProductionState, setSceneProductionState] = useState<Record<string, SceneProductionData>>({})
   const [sceneBookmark, setSceneBookmark] = useState<SceneBookmark | null>(null)
   
@@ -7031,6 +7032,146 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   /**
+   * Batch update all location references (used by LocationLibrary for auto-extraction)
+   */
+  const handleUpdateLocationReferences = async (updatedLocations: LocationReference[]) => {
+    const prevLocations = locationReferences
+    setLocationReferences(updatedLocations)
+    
+    try {
+      const updatedMetadata = {
+        ...project?.metadata,
+        visionPhase: {
+          ...project?.metadata?.visionPhase,
+          references: {
+            sceneReferences: sceneReferencesRef.current,
+            objectReferences: objectReferencesRef.current,
+            locationReferences: updatedLocations
+          }
+        }
+      }
+      await updateProject(project!.id, { metadata: updatedMetadata })
+    } catch (error) {
+      console.error('[handleUpdateLocationReferences] Failed to save:', error)
+      setLocationReferences(prevLocations)
+      try { const { toast } = require('sonner'); toast.error('Failed to save location references') } catch {}
+    }
+  }
+
+  /**
+   * Generate a location reference image via AI
+   */
+  const handleGenerateLocationImage = async (locationId: string) => {
+    const location = locationReferences.find(ref => ref.id === locationId)
+    if (!location) return
+    
+    setGeneratingLocationId(locationId)
+    
+    try {
+      const response = await fetch('/api/vision/generate-location', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          locationName: location.location,
+          intExt: location.intExt,
+          timeOfDay: location.timeOfDay,
+          description: location.description,
+          screenplayContext: {
+            genre: project?.genre,
+            tone: project?.tone || project?.metadata?.filmTreatmentVariant?.tone_description,
+            setting: project?.metadata?.filmTreatmentVariant?.setting,
+            visualStyle: project?.metadata?.filmTreatmentVariant?.visual_style || project?.metadata?.filmTreatmentVariant?.style,
+          }
+        })
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to generate location image')
+      }
+      
+      const result = await response.json()
+      
+      // Update location with the generated image
+      const updatedLocations = locationReferences.map(ref =>
+        ref.id === locationId
+          ? { ...ref, imageUrl: result.imageUrl, generationPrompt: result.prompt }
+          : ref
+      )
+      setLocationReferences(updatedLocations)
+      
+      // Persist
+      const updatedMetadata = {
+        ...project?.metadata,
+        visionPhase: {
+          ...project?.metadata?.visionPhase,
+          references: {
+            sceneReferences: sceneReferencesRef.current,
+            objectReferences: objectReferencesRef.current,
+            locationReferences: updatedLocations
+          }
+        }
+      }
+      await updateProject(project!.id, { metadata: updatedMetadata })
+      try { const { toast } = require('sonner'); toast.success(`Generated image for ${location.location}`) } catch {}
+    } catch (error: any) {
+      console.error('[handleGenerateLocationImage] Error:', error)
+      try { const { toast } = require('sonner'); toast.error(error.message || 'Failed to generate location image') } catch {}
+    } finally {
+      setGeneratingLocationId(null)
+    }
+  }
+
+  /**
+   * Upload a location reference image
+   */
+  const handleUploadLocationImage = async (locationId: string, file: File) => {
+    const location = locationReferences.find(ref => ref.id === locationId)
+    if (!location) return
+    
+    try {
+      // Upload via the blob upload utility
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('projectId', projectId)
+      formData.append('type', 'location-reference')
+      
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+      
+      if (!uploadRes.ok) throw new Error('Upload failed')
+      const { url } = await uploadRes.json()
+      
+      // Update location with the uploaded image
+      const updatedLocations = locationReferences.map(ref =>
+        ref.id === locationId ? { ...ref, imageUrl: url } : ref
+      )
+      setLocationReferences(updatedLocations)
+      
+      // Persist
+      const updatedMetadata = {
+        ...project?.metadata,
+        visionPhase: {
+          ...project?.metadata?.visionPhase,
+          references: {
+            sceneReferences: sceneReferencesRef.current,
+            objectReferences: objectReferencesRef.current,
+            locationReferences: updatedLocations
+          }
+        }
+      }
+      await updateProject(project!.id, { metadata: updatedMetadata })
+      try { const { toast } = require('sonner'); toast.success(`Uploaded image for ${location.location}`) } catch {}
+    } catch (error: any) {
+      console.error('[handleUploadLocationImage] Error:', error)
+      try { const { toast } = require('sonner'); toast.error('Failed to upload location image') } catch {}
+    }
+  }
+
+  /**
    * Add scene reference to the Reference Library
    */
   const handleAddSceneReferenceToLibrary = (sceneIdx: number, imageUrl: string, name: string) => {
@@ -10042,6 +10183,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 // Location references for visual consistency
                 locationReferences={locationReferences}
                 onRemoveLocationReference={handleRemoveLocationReference}
+                onUpdateLocationReferences={handleUpdateLocationReferences}
+                onGenerateLocationImage={handleGenerateLocationImage}
+                onUploadLocationImage={handleUploadLocationImage}
+                generatingLocationId={generatingLocationId}
               />
             </div>
           </Panel>

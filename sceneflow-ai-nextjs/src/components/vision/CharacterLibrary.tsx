@@ -522,6 +522,26 @@ export function CharacterLibrary({ characters, scenes = [], onRegenerateCharacte
   )
 }
 
+// Format scene numbers into compact ranges: [1,2,3,5,7,8,9] → "1-3, 5, 7-9"
+function formatSceneRange(sceneNumbers: number[]): string {
+  if (!sceneNumbers || sceneNumbers.length === 0) return ''
+  const sorted = [...sceneNumbers].sort((a, b) => a - b)
+  const ranges: string[] = []
+  let start = sorted[0]
+  let end = sorted[0]
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] === end + 1) {
+      end = sorted[i]
+    } else {
+      ranges.push(start === end ? `${start}` : `${start}-${end}`)
+      start = sorted[i]
+      end = sorted[i]
+    }
+  }
+  ranges.push(start === end ? `${start}` : `${start}-${end}`)
+  return ranges.join(', ')
+}
+
 const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, isUploading = false, isOrphan = false, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateWardrobe, onBatchUpdateWardrobes, scenes = [], onRemove, onEditImage, ttsProvider, voiceSectionExpanded, onToggleVoiceSection, enableDrag = false, onOpenCharacterPrompt, screenplayContext }: CharacterCardProps) => {
   const [imageError, setImageError] = useState(false) // Track if image failed to load
   
@@ -1590,17 +1610,125 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
           
           {wardrobeSectionExpanded && (
             <div className="mt-3 space-y-3">
-              {/* AI Assist Section */}
+              {/* Primary CTA: Analyze Script for Outfits (Automate) */}
+              {scenes && scenes.length > 0 && wardrobes.length === 0 && !isAnalyzingScript && wardrobeSuggestions.length === 0 && (
+                <div className="text-center py-3">
+                  <p className="text-xs text-gray-400 mb-2">
+                    Analyze your script to determine which outfits {character.name} needs across scenes.
+                  </p>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleAnalyzeScriptForWardrobes()
+                    }}
+                    disabled={isAnalyzingScript}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                    title="Analyze script to determine wardrobes needed for each scene range"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>Analyze Script for Outfits</span>
+                    <span className="text-[10px] opacity-75">({scenes.length} scenes)</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Analyzing indicator */}
+              {isAnalyzingScript && (
+                <div className="flex items-center justify-center gap-2 py-4 text-amber-400">
+                  <Loader className="w-4 h-4 animate-spin" />
+                  <span className="text-xs">Analyzing {scenes?.length || 0} scenes...</span>
+                </div>
+              )}
+
+              {/* Wardrobe Suggestions from Script Analysis (Guide) */}
+              {wardrobeSuggestions.length > 0 && (
+                <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-amber-500" />
+                      <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                        Script Analysis Suggestions
+                      </span>
+                      <span className="text-[10px] px-1.5 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded">
+                        {wardrobeSuggestions.length}
+                      </span>
+                    </div>
+                    {wardrobeSuggestions.length > 1 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleAcceptAllSuggestions()
+                        }}
+                        className="text-[10px] px-2 py-1 bg-amber-500 text-white rounded hover:bg-amber-600"
+                      >
+                        Accept All
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {wardrobeSuggestions.map((suggestion, idx) => (
+                      <div 
+                        key={idx}
+                        className="p-2 bg-white dark:bg-gray-800 rounded border border-amber-200 dark:border-amber-700"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                {suggestion.name}
+                              </span>
+                              <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded">
+                                Scenes {suggestion.sceneNumbers.join(', ')}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-gray-600 dark:text-gray-400 line-clamp-2">
+                              {suggestion.description}
+                            </p>
+                            <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1 italic">
+                              {suggestion.reason}
+                            </p>
+                          </div>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleAcceptSuggestion(suggestion)
+                              }}
+                              className="p-1.5 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded transition-colors"
+                              title="Accept suggestion"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setWardrobeSuggestions(prev => prev.filter((_, i) => i !== idx))
+                              }}
+                              className="p-1.5 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+                              title="Dismiss suggestion"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Guided Edit Form — AI Assist or Manual (Control) */}
               {showAiAssist ? (
                 <div className="space-y-2 p-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg">
                   <div className="flex items-center gap-2 text-xs font-medium text-purple-700 dark:text-purple-300">
                     <Sparkles className="w-3.5 h-3.5" />
-                    AI Wardrobe Assistant
+                    Guided Wardrobe Edit
                   </div>
                   <textarea
                     value={aiPromptText}
                     onChange={(e) => setAiPromptText(e.target.value)}
-                    placeholder="Describe the look you want, e.g., 'Professional tech CEO, modern minimalist style' or 'Rugged adventurer, practical outdoor wear'"
+                    placeholder="Describe the wardrobe change, e.g., 'Make the suit navy instead of black' or 'Professional tech CEO, modern minimalist'"
                     className="w-full px-2 py-1.5 text-xs rounded border border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
                     rows={2}
                     onClick={(e) => e.stopPropagation()}
@@ -1610,7 +1738,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleGenerateWardrobe(false, true) // Add as new to collection
+                        handleGenerateWardrobe(false, true)
                       }}
                       disabled={isGeneratingWardrobe || !aiPromptText.trim()}
                       className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1639,9 +1767,6 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                       Cancel
                     </button>
                   </div>
-                  <p className="text-[10px] text-purple-600 dark:text-purple-400">
-                    AI will generate specific outfit and add it to the wardrobe collection
-                  </p>
                 </div>
               ) : (editingWardrobe || showAddWardrobeForm) ? (
                 <div className="space-y-2 p-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg">
@@ -1721,9 +1846,110 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                     </button>
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {/* Add New Wardrobe Button */}
+              ) : null}
+
+              {/* Compact Scene-Mapped Wardrobe List */}
+              {wardrobes.length > 0 && (
+                <div className="space-y-1.5">
+                  {wardrobes.map((w) => (
+                    <div 
+                      key={w.id}
+                      className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border transition-colors cursor-pointer group ${
+                        w.isDefault 
+                          ? 'bg-green-50 dark:bg-green-900/15 border-green-200 dark:border-green-700/50' 
+                          : 'bg-gray-50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700/50 hover:border-gray-300 dark:hover:border-gray-600'
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setExpandedWardrobe(w)
+                      }}
+                    >
+                      {/* Small preview thumbnail */}
+                      <div className="flex-shrink-0 w-9 h-9 rounded overflow-hidden bg-gray-200 dark:bg-gray-700">
+                        {(w.fullBodyUrl || w.headshotUrl || w.previewImageUrl) ? (
+                          <img 
+                            src={w.fullBodyUrl || w.headshotUrl || w.previewImageUrl} 
+                            alt={w.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Shirt className="w-4 h-4 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Name + scene range — compact layout */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
+                            {w.name}
+                          </span>
+                          {w.isDefault && (
+                            <span className="text-[9px] px-1 py-0 bg-green-500/20 text-green-500 rounded">
+                              default
+                            </span>
+                          )}
+                        </div>
+                        {w.sceneNumbers && w.sceneNumbers.length > 0 && (
+                          <span className="text-[10px] text-blue-400">
+                            Scenes {formatSceneRange(w.sceneNumbers)}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Compact actions — visible on hover */}
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditingWardrobe(true)
+                            setEditingWardrobeId(w.id)
+                            setWardrobeText(w.description)
+                            setAccessoriesText(w.accessories || '')
+                            setShowAddWardrobeForm(false)
+                          }}
+                          className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                          title="Edit wardrobe"
+                        >
+                          <Edit className="w-3 h-3" />
+                        </button>
+                        {wardrobes.length > 1 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteWardrobe(w.id)
+                            }}
+                            className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                            title="Delete wardrobe"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Bottom action row */}
+              {wardrobes.length > 0 && !editingWardrobe && !showAddWardrobeForm && !showAiAssist && (
+                <div className="flex gap-2">
+                  {/* Re-analyze button */}
+                  {scenes && scenes.length > 0 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleAnalyzeScriptForWardrobes()
+                      }}
+                      disabled={isAnalyzingScript}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] text-amber-500 border border-amber-500/30 rounded-lg hover:bg-amber-500/10 disabled:opacity-50"
+                    >
+                      {isAnalyzingScript ? <Loader className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                      Re-analyze
+                    </button>
+                  )}
+                  {/* Manual add */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
@@ -1732,297 +1958,47 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                       setAccessoriesText('')
                       setWardrobeName('')
                     }}
-                    className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded border border-blue-200 dark:border-blue-700 hover:bg-blue-200 dark:hover:bg-blue-800/40"
+                    className="flex items-center justify-center gap-1 px-2 py-1.5 text-[11px] text-gray-400 border border-gray-600/30 rounded-lg hover:bg-gray-700/30"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    Add Outfit
+                    <Plus className="w-3 h-3" />
+                    Add
                   </button>
-                  
-                  {/* Analyze Script Button - Full Width */}
-                  {scenes && scenes.length > 0 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleAnalyzeScriptForWardrobes()
-                      }}
-                      disabled={isAnalyzingScript}
-                      className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                      title="Analyze script to determine wardrobes needed for each scene range"
-                    >
-                      {isAnalyzingScript ? (
-                        <>
-                          <Loader className="w-4 h-4 animate-spin" />
-                          Analyzing Script...
-                        </>
-                      ) : (
-                        <>
-                          <FileText className="w-4 h-4" />
-                          <span>Generate Wardrobe</span>
-                          <span className="text-[10px] opacity-75">({scenes.length} scenes)</span>
-                        </>
-                      )}
-                    </button>
-                  )}
-                  
-                  {/* Wardrobe Suggestions from Script Analysis */}
-                  {wardrobeSuggestions.length > 0 && (
-                    <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Sparkles className="w-4 h-4 text-amber-500" />
-                          <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
-                            Script Analysis Suggestions
-                          </span>
-                          <span className="text-[10px] px-1.5 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded">
-                            {wardrobeSuggestions.length}
-                          </span>
-                        </div>
-                        {wardrobeSuggestions.length > 1 && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleAcceptAllSuggestions()
-                            }}
-                            className="text-[10px] px-2 py-1 bg-amber-500 text-white rounded hover:bg-amber-600"
-                          >
-                            Accept All
-                          </button>
-                        )}
-                      </div>
-                      
-                      <div className="space-y-2">
-                        {wardrobeSuggestions.map((suggestion, idx) => (
-                          <div 
-                            key={idx}
-                            className="p-2 bg-white dark:bg-gray-800 rounded border border-amber-200 dark:border-amber-700"
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                    {suggestion.name}
-                                  </span>
-                                  <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded">
-                                    Scenes {suggestion.sceneNumbers.length === 1 
-                                      ? suggestion.sceneNumbers[0]
-                                      : `${Math.min(...suggestion.sceneNumbers)}-${Math.max(...suggestion.sceneNumbers)}`
-                                    }
-                                  </span>
-                                </div>
-                                <p className="text-[11px] text-gray-600 dark:text-gray-400 line-clamp-2">
-                                  {suggestion.description}
-                                </p>
-                                <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1 italic">
-                                  {suggestion.reason}
-                                </p>
-                              </div>
-                              <div className="flex gap-1">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleAcceptSuggestion(suggestion)
-                                  }}
-                                  className="p-1.5 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded transition-colors"
-                                  title="Accept suggestion"
-                                >
-                                  <Check className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setWardrobeSuggestions(prev => prev.filter((_, i) => i !== idx))
-                                  }}
-                                  className="p-1.5 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
-                                  title="Dismiss suggestion"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Wardrobe Collection List */}
-                  {wardrobes.length > 0 ? (
-                    <div className="space-y-2">
-                      {/* Generate All Previews Button */}
-                      {wardrobes.some(w => !w.previewImageUrl && !w.fullBodyUrl) && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleGenerateAllPreviews()
-                          }}
-                          disabled={isGeneratingAllPreviews || generatingPreviewFor !== null}
-                          className="w-full flex items-center justify-center gap-1.5 px-2 py-2 text-xs bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {isGeneratingAllPreviews ? (
-                            <>
-                              <Loader className="w-3.5 h-3.5 animate-spin" />
-                              Generating Previews...
-                            </>
-                          ) : (
-                            <>
-                              <ImageIcon className="w-3.5 h-3.5" />
-                              Generate All Previews ({wardrobes.filter(w => !w.previewImageUrl && !w.fullBodyUrl).length} × 10 credits)
-                            </>
-                          )}
-                        </button>
-                      )}
-                      
-                      {wardrobes.map((w) => (
-                        <div 
-                          key={w.id}
-                          className={`p-2 rounded-lg border transition-colors cursor-pointer ${
-                            w.isDefault 
-                              ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700' 
-                              : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                          }`}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setExpandedWardrobe(w)
-                          }}
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            {/* Wardrobe Preview Thumbnail */}
-                            <div className="flex-shrink-0 w-14 h-14 rounded overflow-hidden bg-gray-200 dark:bg-gray-700">
-                              {(w.fullBodyUrl || w.previewImageUrl) ? (
-                                <>
-                                  <img 
-                                    src={w.fullBodyUrl || w.previewImageUrl} 
-                                    alt={`${w.name} preview`}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      // Hide broken image and show generate button
-                                      e.currentTarget.style.display = 'none'
-                                      e.currentTarget.nextElementSibling?.classList.remove('hidden')
-                                    }}
-                                  />
-                                  <button
-                                    className="hidden w-full h-full flex flex-col items-center justify-center gap-0.5 text-gray-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors disabled:opacity-50"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      handleGenerateWardrobePreview(w.id)
-                                    }}
-                                    disabled={generatingPreviewFor !== null || isGeneratingAllPreviews}
-                                    title="Generate preview (5 credits)"
-                                  >
-                                    <ImageIcon className="w-4 h-4" />
-                                    <span className="text-[8px]">Retry</span>
-                                  </button>
-                                </>
-                              ) : (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleGenerateWardrobePreview(w.id)
-                                  }}
-                                  disabled={generatingPreviewFor !== null || isGeneratingAllPreviews}
-                                  className="w-full h-full flex flex-col items-center justify-center gap-0.5 text-gray-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors disabled:opacity-50"
-                                  title="Generate preview (5 credits)"
-                                >
-                                  {generatingPreviewFor === w.id ? (
-                                    <Loader className="w-4 h-4 animate-spin" />
-                                  ) : (
-                                    <>
-                                      <ImageIcon className="w-4 h-4" />
-                                      <span className="text-[8px]">Preview</span>
-                                    </>
-                                  )}
-                                </button>
-                              )}
-                            </div>
-                            
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
-                                  {w.name}
-                                </span>
-                                {w.sceneNumbers && w.sceneNumbers.length > 0 && (
-                                  <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded">
-                                    {w.sceneNumbers.length === 1 
-                                      ? `Scene ${w.sceneNumbers[0]}`
-                                      : `Scenes ${Math.min(...w.sceneNumbers)}-${Math.max(...w.sceneNumbers)}`
-                                    }
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-[11px] text-gray-600 dark:text-gray-400 line-clamp-2 mt-0.5">
-                                {w.description}
-                              </p>
-                              {w.accessories && (
-                                <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-0.5">
-                                  Accessories: {w.accessories}
-                                </p>
-                              )}
-                            </div>
-                            <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                              {/* Expand button */}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setExpandedWardrobe(w)
-                                }}
-                                className="p-1 text-gray-400 hover:text-purple-500 transition-colors"
-                                title="View full details"
-                              >
-                                <Maximize2 className="w-3.5 h-3.5" />
-                              </button>
-                              {!w.isDefault && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleSetDefaultWardrobe(w.id)
-                                  }}
-                                  className="p-1 text-gray-400 hover:text-green-500 transition-colors"
-                                  title="Set as default"
-                                >
-                                  <Check className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setEditingWardrobe(true)
-                                  setEditingWardrobeId(w.id)
-                                  setWardrobeText(w.description)
-                                  setAccessoriesText(w.accessories || '')
-                                  setShowAddWardrobeForm(false)
-                                }}
-                                className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
-                                title="Edit wardrobe"
-                              >
-                                <Edit className="w-3.5 h-3.5" />
-                              </button>
-                              {wardrobes.length > 1 && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleDeleteWardrobe(w.id)
-                                  }}
-                                  className="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                                  title="Delete wardrobe"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-gray-400 italic text-center py-2">
-                      No wardrobes defined. Add an outfit or use Generate Wardrobe to analyze your script.
-                    </p>
-                  )}
-                  
-                  <p className="text-[10px] text-gray-500 dark:text-gray-500 text-center">
-                    Tip: Create multiple wardrobes for different scenes (office, casual, formal, etc.)
-                  </p>
+                  {/* AI Assist */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowAiAssist(true)
+                    }}
+                    className="flex items-center justify-center gap-1 px-2 py-1.5 text-[11px] text-purple-400 border border-purple-500/30 rounded-lg hover:bg-purple-500/10"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    AI
+                  </button>
                 </div>
+              )}
+
+              {/* Generate Previews — only when wardrobes exist */}
+              {wardrobes.length > 0 && wardrobes.some(w => !w.fullBodyUrl && !w.previewImageUrl) && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleGenerateAllPreviews()
+                  }}
+                  disabled={isGeneratingAllPreviews || generatingPreviewFor !== null}
+                  className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] text-purple-400 border border-purple-500/20 rounded-lg hover:bg-purple-500/10 disabled:opacity-50"
+                >
+                  {isGeneratingAllPreviews ? (
+                    <>
+                      <Loader className="w-3 h-3 animate-spin" />
+                      Generating Previews...
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="w-3 h-3" />
+                      Generate Previews ({wardrobes.filter(w => !w.fullBodyUrl && !w.previewImageUrl).length})
+                    </>
+                  )}
+                </button>
               )}
             </div>
           )}
@@ -2170,10 +2146,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                 {expandedWardrobe?.name || 'Wardrobe Details'}
                 {expandedWardrobe?.sceneNumbers && expandedWardrobe.sceneNumbers.length > 0 && (
                   <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded">
-                    {expandedWardrobe.sceneNumbers.length === 1 
-                      ? `Scene ${expandedWardrobe.sceneNumbers[0]}`
-                      : `Scenes ${Math.min(...expandedWardrobe.sceneNumbers)}-${Math.max(...expandedWardrobe.sceneNumbers)}`
-                    }
+                    Scenes {formatSceneRange(expandedWardrobe.sceneNumbers)}
                   </span>
                 )}
               </DialogTitle>
@@ -2296,6 +2269,21 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
             )}
             
             <DialogFooter className="flex gap-2">
+              {expandedWardrobe && !expandedWardrobe.isDefault && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (expandedWardrobe) {
+                      handleSetDefaultWardrobe(expandedWardrobe.id)
+                      setExpandedWardrobe(null)
+                    }
+                  }}
+                  className="border-green-500/50 text-green-600 dark:text-green-400 hover:bg-green-500/10"
+                >
+                  <Check className="w-4 h-4 mr-2" />
+                  Set as Default
+                </Button>
+              )}
               <Button
                 variant="outline"
                 onClick={() => {
