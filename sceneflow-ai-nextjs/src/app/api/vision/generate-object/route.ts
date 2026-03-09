@@ -104,12 +104,12 @@ export async function POST(req: NextRequest) {
     }
 
     const hasReference = !!(referenceImageUrl || referenceImageBase64)
-    console.log(`[Object Generation] Generating: ${name}`)
-    console.log(`[Object Generation] Category: ${category}, Has Reference: ${hasReference}`)
+    console.log(`[Key Props Generation] Generating: ${name}`)
+    console.log(`[Key Props Generation] Category: ${category}, Has Reference: ${hasReference}`)
 
     // Build optimized prompt
     const optimizedPrompt = buildReferenceImagePrompt(prompt, category, hasReference)
-    console.log(`[Object Generation] Optimized prompt: ${optimizedPrompt.substring(0, 200)}...`)
+    console.log(`[Key Props Generation] Optimized prompt: ${optimizedPrompt.substring(0, 200)}...`)
 
     // Build reference images array if provided
     const referenceImages = hasReference ? [{
@@ -127,14 +127,14 @@ export async function POST(req: NextRequest) {
       referenceImages
     })
 
-    console.log('[Object Generation] Image generated, uploading to storage...')
+    console.log('[Key Props Generation] Image generated, uploading to storage...')
 
     // Upload to blob storage
     const safeName = name.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 50)
     const filename = `objects/${category}/${safeName}-${Date.now()}.${result.mimeType === 'image/png' ? 'png' : 'jpg'}`
     const imageUrl = await uploadImageToBlob(result.imageBase64, filename)
 
-    console.log('[Object Generation] Upload complete:', imageUrl)
+    console.log('[Key Props Generation] Upload complete:', imageUrl)
 
     // Charge credits after successful generation
     let newBalance: number | undefined
@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
       const breakdown = await CreditService.getCreditBreakdown(userId)
       newBalance = breakdown.total_credits
     } catch (creditError) {
-      console.error('[Object Generation] Credit charge failed:', creditError)
+      console.error('[Key Props Generation] Credit charge failed:', creditError)
     }
 
     return NextResponse.json({
@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
     })
 
   } catch (error: any) {
-    console.error('[Object Generation] Error:', error)
+    console.error('[Key Props Generation] Error:', error)
     
     // Handle specific error types
     if (error.message?.includes('Rate limit')) {

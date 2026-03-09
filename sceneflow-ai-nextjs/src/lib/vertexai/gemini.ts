@@ -23,7 +23,8 @@ import {
 } from './safety'
 import { 
   getGeminiTextModel, 
-  buildThinkingConfig, 
+  buildThinkingConfig,
+  GEMINI_TEXT_MODELS_PREVIOUS,
   type GeminiThinkingLevel 
 } from '../config/modelConfig'
 
@@ -188,6 +189,19 @@ export async function generateText(
   
   if (!response.ok) {
     const errorText = await response.text()
+    
+    // Model fallback: if 404 (model not found) and using a Gemini 3 model,
+    // retry with the previous-generation model (gemini-2.5-flash)
+    if (response.status === 404 && isGemini3Model && !options._isFallbackAttempt) {
+      const fallbackModel = GEMINI_TEXT_MODELS_PREVIOUS.flash
+      console.warn(`[Vertex Gemini] Model "${model}" returned 404, falling back to "${fallbackModel}"`)
+      return generateText(prompt, {
+        ...options,
+        model: fallbackModel,
+        _isFallbackAttempt: true,
+      } as TextGenerationOptions & { _isFallbackAttempt?: boolean })
+    }
+    
     console.error('[Vertex Gemini] Error:', errorText)
     throw new Error(`Vertex AI Gemini error ${response.status}: ${errorText}`)
   }

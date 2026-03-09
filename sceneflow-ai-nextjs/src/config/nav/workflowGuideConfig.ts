@@ -69,12 +69,12 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
   },
   {
     id: 'create-objects',
-    title: 'Create Key Objects',
+    title: 'Key Props',
     icon: 'Box',
     iconColor: 'text-orange-500',
     steps: [
-      { id: 'create-suggested-objects', label: 'Create Suggested Objects', actionEventName: 'production:create-objects' },
-      { id: 'add-additional-objects', label: 'Add Additional Objects', actionEventName: 'production:add-objects' },
+      { id: 'create-suggested-objects', label: 'Get Key Props', actionEventName: 'production:create-objects' },
+      { id: 'add-additional-objects', label: 'Add Custom Props', actionEventName: 'production:add-objects' },
     ],
   },
   {

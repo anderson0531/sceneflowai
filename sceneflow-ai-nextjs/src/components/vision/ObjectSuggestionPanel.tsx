@@ -357,7 +357,7 @@ export function ObjectSuggestionPanel({
       {/* Processing Overlay for Props Generation */}
       <GeneratingOverlay
         visible={isBatchGenerating || generatingIds.size > 0}
-        title={isBatchGenerating ? 'Generating Props References' : 'Generating Reference Image'}
+        title={isBatchGenerating ? 'Generating Key Props' : 'Generating Reference Image'}
         progress={isBatchGenerating ? batchProgress : 50}
         subtext={
           isBatchGenerating 
@@ -376,7 +376,7 @@ export function ObjectSuggestionPanel({
         >
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-indigo-400" />
-            <span className="text-sm font-medium text-indigo-300">Object Suggestions</span>
+            <span className="text-sm font-medium text-indigo-300">Key Props</span>
             {suggestions.length > 0 && (
               <span className="text-xs px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400">
                 {suggestions.length}
@@ -392,7 +392,7 @@ export function ObjectSuggestionPanel({
           {!hasAnalyzed ? (
             <div className="text-center py-4">
               <p className="text-xs text-slate-400 mb-3">
-                Analyze your script to discover props, vehicles, and set pieces that need visual references.
+                Scan your script to identify key props, vehicles, and set pieces that recur across scenes.
               </p>
               <Button
                 onClick={analyzeScenesForObjects}
@@ -407,7 +407,7 @@ export function ObjectSuggestionPanel({
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 mr-2" />
-                    Suggest Objects from Script
+                    Get Key Props
                   </>
                 )}
               </Button>

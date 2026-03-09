@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    console.log(`[Object Suggestion] Analyzing ${scenes.length} scenes for significant objects`)
+    console.log(`[Key Props] Analyzing ${scenes.length} scenes for significant objects`)
 
     // Build scene context for AI analysis
     const sceneContext = scenes.map(s => {
@@ -132,8 +132,8 @@ Respond with valid JSON only:
         confidence: s.confidence || 0.7
       }))
     } catch (parseError) {
-      console.error('[Object Suggestion] Failed to parse AI response:', parseError)
-      console.error('[Object Suggestion] Raw response:', result.text)
+      console.error('[Key Props] Failed to parse AI response:', parseError)
+      console.error('[Key Props] Raw response:', result.text)
     }
 
     // Filter: Only show props that recur across 2+ scenes OR are critical importance
@@ -150,7 +150,7 @@ Respond with valid JSON only:
       return bScore - aScore
     })
 
-    console.log(`[Object Suggestion] Found ${suggestions.length} total, ${filteredSuggestions.length} recurring/critical props`)
+    console.log(`[Key Props] Found ${suggestions.length} total, ${filteredSuggestions.length} recurring/critical props`)
 
     return NextResponse.json({
       suggestions: filteredSuggestions,
@@ -160,7 +160,7 @@ Respond with valid JSON only:
     })
 
   } catch (error: any) {
-    console.error('[Object Suggestion] Error:', error)
+    console.error('[Key Props] Error:', error)
     return NextResponse.json(
       { error: error.message || 'Failed to analyze script for objects' },
       { status: 500 }
