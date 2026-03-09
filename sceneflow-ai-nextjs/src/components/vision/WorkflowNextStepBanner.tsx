@@ -166,8 +166,12 @@ export function WorkflowNextStepBanner({
   const nextStep = getNextStep(workflowState)
   if (!nextStep) return null
 
-  const colors = ACCENT_COLORS[nextStep.accentColor] || ACCENT_COLORS.purple
+  // Hide the banner when the user is already on the tab the next step would navigate to.
+  // They already see the relevant UI (e.g., SceneProductionDirector on Action tab).
   const isComplete = workflowState.hasRender
+  if (!isComplete && nextStep.targetTab && nextStep.targetTab === workflowState.activeTab) return null
+
+  const colors = ACCENT_COLORS[nextStep.accentColor] || ACCENT_COLORS.purple
 
   return (
     <div className={cn(
