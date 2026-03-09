@@ -320,6 +320,21 @@ export function SceneProductionManager({
   
   // Build audio tracks from scene data if not provided externally
   const [audioTracksState, setAudioTracksState] = useState<AudioTracksData>({})
+
+  // IMPORTANT: These useState declarations MUST be above handleCopyPrompt/handleProcessPastedResults
+  // useCallback hooks, because their dependency arrays are evaluated at render time.
+  // If declared after the useCallback, the const destructuring hits TDZ in production builds.
+  const [isInitializing, setIsInitializing] = useState(false)
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [showAudioAssetsDialog, setShowAudioAssetsDialog] = useState(false)
+  const [showPasteDialog, setShowPasteDialog] = useState(false)
+  const [pastedJson, setPastedJson] = useState('')
+  const [isProcessingPaste, setIsProcessingPaste] = useState(false)
+  const [copiedPrompt, setCopiedPrompt] = useState(false)
+  const [generationProgress, setGenerationProgress] = useState(0)
+  const [currentPlayingSegmentId, setCurrentPlayingSegmentId] = useState<string | null>(null)
+  const [isSidePanelVisible, setIsSidePanelVisible] = useState(true)
+
   useEffect(() => {
     if (productionData?.targetSegmentDuration) {
       setTargetDuration(productionData.targetSegmentDuration)
@@ -582,16 +597,6 @@ export function SceneProductionManager({
     })
   }, [audioTracks])
 
-  const [isInitializing, setIsInitializing] = useState(false)
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
-  const [showAudioAssetsDialog, setShowAudioAssetsDialog] = useState(false)
-  const [showPasteDialog, setShowPasteDialog] = useState(false)
-  const [pastedJson, setPastedJson] = useState('')
-  const [isProcessingPaste, setIsProcessingPaste] = useState(false)
-  const [copiedPrompt, setCopiedPrompt] = useState(false)
-  const [generationProgress, setGenerationProgress] = useState(0)
-  const [currentPlayingSegmentId, setCurrentPlayingSegmentId] = useState<string | null>(null)
-  const [isSidePanelVisible, setIsSidePanelVisible] = useState(true)
   const segments = productionData?.segments ?? []
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(segments[0]?.segmentId ?? null)
   
