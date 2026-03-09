@@ -8722,6 +8722,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     // Combine and dedupe URLs from both scenes
     const allDeletedUrls = [...new Set([...originalDeletedUrls, ...revisedDeletedUrls])]
     
+    // Preserve audienceAnalysis from original scene and mark as optimized
+    // so progressive analysis knows the scene was edited since last analysis
+    if (originalScene?.audienceAnalysis) {
+      cleanedScene.audienceAnalysis = {
+        ...originalScene.audienceAnalysis,
+        optimizedAt: new Date().toISOString()
+      }
+    }
+    
     updatedScenes[sceneIndex] = cleanedScene
 
     // Save to database FIRST
