@@ -482,10 +482,10 @@ FINAL CHECK before outputting:
   console.log(`[Audience Resonance] Token budget: ${reviewTokenBudget} (${sceneCount} scenes, ${sceneAnalysisTokens} for scene analysis)`)
   
   const result = await generateText(prompt, {
-    model: 'gemini-2.5-flash',
-    temperature: 0, // Deterministic scoring — same script should yield same scores
+    model: 'gemini-3.0-flash',
+    temperature: 0.1, // Near-deterministic with slight variance for nuanced analysis
     maxOutputTokens: reviewTokenBudget,
-    thinkingBudget: 0, // Disable thinking mode for faster, more direct responses
+    // Thinking enabled by default in 3.x — deeper reasoning for score calibration
     seed: contentSeed // Content-derived seed for reproducible output
   })
   
