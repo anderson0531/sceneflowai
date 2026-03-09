@@ -3719,6 +3719,7 @@ function SceneCard({
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null)
   const [editSegmentDialogOpen, setEditSegmentDialogOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [deleteSceneConfirmOpen, setDeleteSceneConfirmOpen] = useState(false)
   
   // Generate All Audio confirmation dialog
   const [generateAllAudioConfirmOpen, setGenerateAllAudioConfirmOpen] = useState(false)
@@ -4173,9 +4174,7 @@ function SceneCard({
                   <div
                     onClick={(e) => {
                       e.stopPropagation()
-                      if (confirm('Delete this scene? This cannot be undone.')) {
-                        onDeleteScene?.(sceneIdx)
-                      }
+                      setDeleteSceneConfirmOpen(true)
                     }}
                     className="p-1 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded transition-colors cursor-pointer"
                   >
@@ -7002,6 +7001,88 @@ function SceneCard({
                   className="px-4 py-2 bg-red-600 hover:bg-red-500 border border-red-500 rounded-lg text-white text-sm font-medium transition-colors"
                 >
                   Delete Segment
+                </button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          
+          {/* Delete Scene Confirmation Dialog */}
+          <Dialog open={deleteSceneConfirmOpen} onOpenChange={setDeleteSceneConfirmOpen}>
+            <DialogContent className="bg-slate-900 border border-red-500/30 max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-red-400 flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5" />
+                  Delete Scene {sceneNumber}
+                </DialogTitle>
+                <DialogDescription className="text-gray-400">
+                  This will permanently remove this scene and all associated assets.
+                </DialogDescription>
+              </DialogHeader>
+              
+              {/* Scene Preview */}
+              <div className="bg-slate-800/60 rounded-lg border border-slate-700/50 p-3 space-y-3">
+                <div className="flex items-start gap-3">
+                  {scene.imageUrl ? (
+                    <img
+                      src={scene.imageUrl}
+                      alt={`Scene ${sceneNumber}`}
+                      className="w-20 h-14 object-cover rounded-md border border-slate-600 flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-20 h-14 bg-slate-700/50 rounded-md border border-slate-600 flex-shrink-0 flex items-center justify-center">
+                      <Film className="w-5 h-5 text-slate-500" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white truncate">{formattedHeading}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Duration: {formatDuration(calculateSceneDuration(scene))}
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Assets that will be deleted */}
+                {(() => {
+                  const assets: string[] = []
+                  if (scene.imageUrl) assets.push('Scene image')
+                  if (scene.narrationAudioUrl || scene.narrationAudio) assets.push('Narration audio')
+                  if (scene.descriptionAudioUrl || scene.descriptionAudio) assets.push('Description audio')
+                  if (scene.dialogue?.some((d: any) => d?.audioUrl || d?.audio)) assets.push('Dialogue audio')
+                  if (scene.sceneDirection) assets.push('Scene direction')
+                  if (sceneProductionData?.segments?.length) assets.push(`${sceneProductionData.segments.length} segment${sceneProductionData.segments.length > 1 ? 's' : ''}`)
+                  if (scene.musicUrl || scene.musicAudio) assets.push('Music')
+                  
+                  return assets.length > 0 ? (
+                    <div className="border-t border-slate-700/50 pt-2">
+                      <p className="text-[11px] text-gray-500 uppercase tracking-wider mb-1.5">Assets that will be removed</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {assets.map((asset, i) => (
+                          <span key={i} className="px-2 py-0.5 text-[11px] bg-red-500/10 text-red-300 border border-red-500/20 rounded-full">
+                            {asset}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null
+                })()}
+              </div>
+              
+              <div className="flex justify-end gap-3 mt-2">
+                <button
+                  onClick={() => setDeleteSceneConfirmOpen(false)}
+                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg text-white text-sm font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    onDeleteScene?.(sceneIdx)
+                    setDeleteSceneConfirmOpen(false)
+                  }}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-500 border border-red-500 rounded-lg text-white text-sm font-medium transition-colors flex items-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Scene
                 </button>
               </div>
             </DialogContent>
