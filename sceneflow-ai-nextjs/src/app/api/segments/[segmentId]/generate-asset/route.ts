@@ -290,8 +290,14 @@ export async function POST(
       // - SFX/Ambience: Ambient: sound description
       let enhancedPrompt = sanitizedVideoPrompt
       if (guidePrompt && guidePrompt.trim()) {
-        // Append guidePrompt to visual prompt - Veo 3.1 will generate synchronized audio
-        enhancedPrompt = `${prompt}\n\n${guidePrompt}`
+        // Sanitize guidePrompt independently — it can contain dialogue/SFX cues with trigger words
+        // e.g. "explosion sound effect", "gunshot ambience", "nuclear alarm"
+        const { sanitizedPrompt: sanitizedGuide, wasModified: guideWasSanitized, changes: guideChanges } = autoSanitizePrompt(guidePrompt, { logChanges: true })
+        if (guideWasSanitized) {
+          console.log(`[Segment Asset Generation] Sanitized guidePrompt — ${guideChanges.length} trigger term(s):`, guideChanges.join(', '))
+        }
+        // IMPORTANT: Use sanitizedVideoPrompt (not original `prompt`) to preserve pre-flight sanitization
+        enhancedPrompt = `${sanitizedVideoPrompt}\n\n${sanitizedGuide}`
         console.log('[Segment Asset Generation] Enhanced prompt with guidePrompt for voice/SFX generation')
         console.log('[Segment Asset Generation] Guide prompt length:', guidePrompt.length, 'chars')
       }
@@ -316,7 +322,14 @@ export async function POST(
         }
         
         if (atmosphericGuidance.length > 0) {
-          enhancedPrompt = `${prompt}\n\n[Audio-Visual Sync Context]\n${atmosphericGuidance.join('\n')}`
+          // Sanitize the combined atmospheric text — narrationText and dialogueBeat can carry trigger words
+          const atmosphericText = `[Audio-Visual Sync Context]\n${atmosphericGuidance.join('\n')}`
+          const { sanitizedPrompt: sanitizedAtmospheric, wasModified: atmosphericWasSanitized, changes: atmosphericChanges } = autoSanitizePrompt(atmosphericText, { logChanges: true })
+          if (atmosphericWasSanitized) {
+            console.log(`[Segment Asset Generation] Sanitized audioContext — ${atmosphericChanges.length} trigger term(s):`, atmosphericChanges.join(', '))
+          }
+          // IMPORTANT: Build on top of enhancedPrompt (not original `prompt`) to preserve all prior sanitization
+          enhancedPrompt = `${enhancedPrompt}\n\n${sanitizedAtmospheric}`
           console.log('[Segment Asset Generation] Enhanced prompt with audio context')
         }
       }

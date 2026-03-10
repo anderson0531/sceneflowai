@@ -523,7 +523,17 @@ export async function checkVideoGenerationStatus(
     const data = await response.json()
     console.log('[Veo Video] Status check response:', JSON.stringify(data).substring(0, 500))
 
-    if (data.error) {
+    if (data.done) {
+      // Check for error in completed operation (e.g., content policy violation)
+      // Vertex AI returns { done: true, error: { code: 3, message: "..." } } for policy violations
+      if (data.error) {
+        return {
+          status: 'FAILED',
+          error: data.error.message || 'Generation failed'
+        }
+      }
+    } else if (data.error) {
+      // Error on an operation that hasn't completed yet (non-done error)
       return {
         status: 'FAILED',
         error: data.error.message || 'Generation failed'
@@ -531,13 +541,6 @@ export async function checkVideoGenerationStatus(
     }
 
     if (data.done) {
-      // Check for error in result
-      if (data.error) {
-        return {
-          status: 'FAILED',
-          error: data.error.message || 'Generation failed'
-        }
-      }
       
       // Check for RAI (Responsible AI) content filtering
       const raiFilteredCount = data.response?.raiMediaFilteredCount
