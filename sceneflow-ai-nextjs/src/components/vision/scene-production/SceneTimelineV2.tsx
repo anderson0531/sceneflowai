@@ -1526,7 +1526,7 @@ export function SceneTimelineV2({
       
       {/* Timeline tracks - horizontal scroll enabled */}
       <div ref={timelineRef} className="relative overflow-x-auto overflow-y-visible" onClick={handleTimelineClick}>
-        <div className={cn("min-w-[600px]", isTimelineWide && "min-w-[1000px]")} style={{ marginLeft: TRACK_LABEL_WIDTH }}>
+        <div className={cn("min-w-[600px]", isTimelineWide && "min-w-[800px]")} style={{ marginLeft: TRACK_LABEL_WIDTH }}>
         {/* Time ruler */}
         <div className="flex items-stretch h-6 border-b border-gray-200 dark:border-gray-700">
           <div 

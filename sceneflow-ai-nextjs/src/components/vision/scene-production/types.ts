@@ -1,4 +1,5 @@
 import type { VisualReference } from '@/types/visionReferences'
+import type { SegmentDirection } from '@/types/scene-direction'
 
 export type SceneSegmentStatus = 'DRAFT' | 'READY' | 'GENERATING' | 'COMPLETE' | 'UPLOADED' | 'ERROR'
 
@@ -503,6 +504,10 @@ export interface SceneSegment {
   userInstruction?: string
   // Error message - stored when generation fails for detailed display
   errorMessage?: string
+  
+  // Segment Direction - approved direction metadata from the AI segmentation phase
+  // Contains characters, isNoTalent, shotType, etc. from the user-approved direction
+  segmentDirection?: SegmentDirection | null
   
   // ============================================================================
   // Keyframe State Machine Fields

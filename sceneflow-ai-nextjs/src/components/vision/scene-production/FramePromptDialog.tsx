@@ -345,25 +345,64 @@ export function FramePromptDialog({
     }
     
     // Auto-detect characters from segment action text using intelligent matching
-    // CRITICAL: Skip character detection for no-talent scenes (title sequences, VFX-only, etc.)
+    // CRITICAL: Check SEGMENT-LEVEL character data first, then fall back to scene-level detection
+    // This ensures no-talent segments (title sequences, VFX-only, etc.) don't get characters injected
+    
+    // 1. Check segment-level character data (most authoritative — from approved segment direction)
+    const segmentHasCharacters = segment.characters && segment.characters.length > 0
+    const segmentCharacterNames = segment.characters?.map(c => c.name) || []
+    const segmentIsNoTalent = segment.characters?.length === 0 || 
+      segment.segmentDirection?.isNoTalent === true
+    
+    // 2. Check scene-level talent direction (fallback for older segments without direction data)
     const talentText = sceneDirection?.talent?.blocking || sceneDirection?.talent?.emotionalBeat || ''
     const isNoTalentScene = talentText.toLowerCase().match(/\b(n\/a|no\s+(live\s+)?actors?|no\s+talent|no\s+performers?)\b/)
     
-    if (!isNoTalentScene && characters.length > 0) {
-      const segmentText = segment.action || segment.subject || segment.actionPrompt || ''
-      const detected = findSceneCharacters(segmentText, characters.map(c => ({ name: c.name })))
-      const detectedNames = detected.map(c => c.name)
-      
-      if (detectedNames.length > 0) {
-        setSelectedCharacterNames(detectedNames)
+    // 3. Determine if this segment should have characters
+    const shouldSkipCharacters = segmentIsNoTalent || isNoTalentScene
+    
+    if (!shouldSkipCharacters && characters.length > 0) {
+      // If segment has explicit character assignments, use those
+      if (segmentHasCharacters && segmentCharacterNames.length > 0) {
+        // Match segment character names to available characters (case-insensitive)
+        const matched = characters
+          .filter(c => segmentCharacterNames.some(
+            sn => sn.toLowerCase() === c.name.toLowerCase()
+          ))
+          .map(c => c.name)
+        if (matched.length > 0) {
+          setSelectedCharacterNames(matched)
+        } else {
+          // Segment says characters exist but names don't match — use broader text detection
+          const segmentText = [
+            segment.action,
+            segment.subject,
+            segment.actionPrompt,
+            segment.generatedPrompt,
+            segment.emotionalBeat,
+            segment.endFrameDescription,
+          ].filter(Boolean).join(' ')
+          const detected = findSceneCharacters(segmentText, characters.map(c => ({ name: c.name })))
+          setSelectedCharacterNames(detected.map(c => c.name))
+          // NO FALLBACK — if nobody detected, nobody selected (matches ScenePromptBuilder behavior)
+        }
       } else {
-        // Fallback: select characters with reference images (max 3)
-        const withRefs = characters.filter(c => c.referenceImage).map(c => c.name)
-        setSelectedCharacterNames(withRefs.slice(0, 3))
+        // No explicit segment characters — detect from comprehensive text (matches ScenePromptBuilder approach)
+        const segmentText = [
+          segment.action,
+          segment.subject,
+          segment.actionPrompt,
+          segment.generatedPrompt,
+          segment.emotionalBeat,
+          segment.endFrameDescription,
+        ].filter(Boolean).join(' ')
+        const detected = findSceneCharacters(segmentText, characters.map(c => ({ name: c.name })))
+        setSelectedCharacterNames(detected.map(c => c.name))
+        // NO FALLBACK — if nobody detected, nobody selected (matches ScenePromptBuilder behavior)
       }
-    } else if (isNoTalentScene) {
+    } else if (shouldSkipCharacters) {
       setSelectedCharacterNames([])
-      console.log('[FramePromptDialog] No-talent scene detected — skipping character auto-selection')
+      console.log('[FramePromptDialog] No-talent segment detected — skipping character auto-selection')
     }
 
     // Auto-detect props/objects from segment text

@@ -1830,7 +1830,7 @@ Example format:
         </div>
 
         {/* Optimized Layout: Timeline (left) + Segment Studio Panel (right, toggleable) */}
-        <div className="flex gap-4 min-h-[750px] overflow-visible">
+        <div className="flex gap-4 min-h-[750px] overflow-hidden">
           {/* Main Area: Scene Timeline V2 with Video Player - Single Source of Truth */}
           <div className={cn("flex-1 min-w-0 flex flex-col", !isSidePanelVisible && "max-w-full")}>
             <SceneTimelineV2

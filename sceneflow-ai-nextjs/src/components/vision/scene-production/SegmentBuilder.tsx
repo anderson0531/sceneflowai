@@ -971,6 +971,10 @@ export function SegmentBuilder({
   // Generation options
   const [targetDuration, setTargetDuration] = useState(6) // 4-8 seconds
   const [narrationDriven, setNarrationDriven] = useState(false)
+  const [totalDurationTarget, setTotalDurationTarget] = useState<number | null>(null) // null = let AI decide
+  const [segmentCountTarget, setSegmentCountTarget] = useState<number | null>(null) // null = let AI decide
+  const [focusMode, setFocusMode] = useState<'balanced' | 'dialogue-focused' | 'action-focused'>('balanced')
+  const [customInstructions, setCustomInstructions] = useState('')
   
   // Regeneration dialog state
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false)
@@ -1131,12 +1135,16 @@ export function SegmentBuilder({
         body: JSON.stringify({
           preferredDuration: targetDuration,
           projectId,
-          focusMode: 'balanced',
+          focusMode,
           narrationDriven,
           narrationDurationSeconds: audioMetadata.narrationDurationSeconds,
           narrationText: audioMetadata.narrationText,
           narrationAudioUrl: audioMetadata.narrationAudioUrl,
           totalAudioDurationSeconds: audioMetadata.totalAudioDurationSeconds,
+          // Scope controls
+          totalDurationTarget: totalDurationTarget || undefined,
+          segmentCountTarget: segmentCountTarget || undefined,
+          customInstructions: customInstructions.trim() || undefined,
           // NEW: Request directions phase only
           phase: 'directions',
         }),
@@ -1196,7 +1204,7 @@ export function SegmentBuilder({
       setShowProductionOverlay(false)
       setProductionStage(0)
     }
-  }, [sceneId, projectId, targetDuration, narrationDriven, audioMetadata, sceneBible.contentHash, hasSceneDirection, runProductionAnimation])
+  }, [sceneId, projectId, targetDuration, narrationDriven, totalDurationTarget, segmentCountTarget, focusMode, customInstructions, audioMetadata, sceneBible.contentHash, hasSceneDirection, runProductionAnimation])
 
   // Phase 2: Generate prompts from approved directions
   const handleGeneratePrompts = useCallback(async () => {
@@ -1648,6 +1656,112 @@ export function SegmentBuilder({
                     >
                       {narrationDriven ? 'On' : 'Off'}
                     </Button>
+                  </div>
+
+                  {/* Total Scene Duration Target */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium">Total Scene Duration</label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs text-muted-foreground"
+                        onClick={() => setTotalDurationTarget(null)}
+                      >
+                        {totalDurationTarget ? 'Clear' : 'Auto'}
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="range"
+                        min={10}
+                        max={120}
+                        step={5}
+                        value={totalDurationTarget ?? 30}
+                        onChange={e => setTotalDurationTarget(parseInt(e.target.value))}
+                        className="flex-1"
+                      />
+                      <span className="text-sm font-mono w-16 text-right">
+                        {totalDurationTarget ? `~${totalDurationTarget}s` : 'Auto'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {totalDurationTarget
+                        ? `AI will target approximately ${totalDurationTarget}s total (may adjust ±10% for better cut points)`
+                        : 'Let AI determine total duration based on content'}
+                    </p>
+                  </div>
+
+                  {/* Segment Count Target */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium">Segment Count</label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs text-muted-foreground"
+                        onClick={() => setSegmentCountTarget(null)}
+                      >
+                        {segmentCountTarget ? 'Clear' : 'Auto'}
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="range"
+                        min={2}
+                        max={12}
+                        step={1}
+                        value={segmentCountTarget ?? 5}
+                        onChange={e => setSegmentCountTarget(parseInt(e.target.value))}
+                        className="flex-1"
+                      />
+                      <span className="text-sm font-mono w-16 text-right">
+                        {segmentCountTarget ? `${segmentCountTarget}` : 'Auto'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {segmentCountTarget
+                        ? `AI will aim for ${segmentCountTarget} segments`
+                        : 'Let AI determine optimal segment count'}
+                    </p>
+                  </div>
+
+                  {/* Focus Mode */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Focus Mode</label>
+                    <div className="grid grid-cols-3 gap-1">
+                      {(['balanced', 'dialogue-focused', 'action-focused'] as const).map(mode => (
+                        <Button
+                          key={mode}
+                          variant={focusMode === mode ? 'default' : 'outline'}
+                          size="sm"
+                          className="text-xs capitalize"
+                          onClick={() => setFocusMode(mode)}
+                        >
+                          {mode.replace('-', ' ')}
+                        </Button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {focusMode === 'balanced' && 'Balance dialogue and visual action in segments'}
+                      {focusMode === 'dialogue-focused' && 'Prioritize dialogue coverage — combine visual beats'}
+                      {focusMode === 'action-focused' && 'Prioritize visual action — combine dialogue lines'}
+                    </p>
+                  </div>
+
+                  {/* Custom Instructions */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Director Notes (Optional)</label>
+                    <textarea
+                      value={customInstructions}
+                      onChange={e => setCustomInstructions(e.target.value)}
+                      placeholder="e.g., 'Emphasize the opening reveal' or 'Keep the pacing tight'"
+                      className="w-full h-16 px-3 py-2 text-xs rounded-md border border-input bg-transparent resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+                      maxLength={300}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {customInstructions.length}/300 — Free-form direction for the AI
+                    </p>
                   </div>
 
                   {/* Scene Direction Requirement Warning */}

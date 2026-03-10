@@ -106,6 +106,9 @@ interface GenerateSegmentsRequest {
   phase?: 'directions' | 'prompts'
   // NEW: User-approved directions for phase 2
   approvedDirections?: SegmentDirection[]
+  // NEW: Scope controls
+  totalDurationTarget?: number    // Total scene duration target in seconds
+  segmentCountTarget?: number     // Target number of segments
 }
 
 // Enhanced segment structure for Veo 3.1 intelligent generation
@@ -158,6 +161,9 @@ export async function POST(
       totalAudioDurationSeconds,
       // NEW: Preview mode - returns proposals without committing to DB
       previewMode = false,
+      // NEW: Scope controls
+      totalDurationTarget,
+      segmentCountTarget,
       // NEW: Two-phase workflow
       phase = 'prompts', // Default to legacy behavior (full prompts)
       approvedDirections,
@@ -297,7 +303,12 @@ export async function POST(
       console.log(`[Scene Segmentation] Phase 1: Generating directions only for user review`)
       
       // Generate directions-only prompt (faster, smaller output)
-      const directionsPrompt = generateDirectionsOnlyPrompt(sceneData, preferredDuration, minimumSegmentsRequired)
+      const directionsPrompt = generateDirectionsOnlyPrompt(sceneData, preferredDuration, minimumSegmentsRequired, {
+        focusMode,
+        customInstructions,
+        totalDurationTarget,
+        segmentCountTarget,
+      })
       
       // Pre-screen content
       const moderationContext = await getUserModerationContext('anonymous', projectId)
@@ -1316,7 +1327,13 @@ function parseGeminiResponseText(text: string): IntelligentSegment[] {
 function generateDirectionsOnlyPrompt(
   sceneData: ComprehensiveSceneData,
   preferredDuration: number,
-  minimumSegmentsRequired: number
+  minimumSegmentsRequired: number,
+  scopeControls?: {
+    focusMode?: string
+    customInstructions?: string
+    totalDurationTarget?: number
+    segmentCountTarget?: number
+  }
 ): string {
   const noTalentScene = isNoTalentScene(sceneData.sceneDirection.talent, {
     dialogueCount: sceneData.dialogue.length,
@@ -1330,6 +1347,38 @@ function generateDirectionsOnlyPrompt(
   const characterList = noTalentScene
     ? 'NO CHARACTERS'
     : sceneData.characters.map(c => c.name).join(', ') || 'None specified'
+
+  // Build scope constraints based on user controls
+  const focusMode = scopeControls?.focusMode || 'balanced'
+  const totalDurationTarget = scopeControls?.totalDurationTarget
+  const segmentCountTarget = scopeControls?.segmentCountTarget
+  const customInstructions = scopeControls?.customInstructions
+
+  let scopeConstraints = `- Target ${preferredDuration}s per segment (8s max)\n`
+  scopeConstraints += `- Minimum ${minimumSegmentsRequired} segments required\n`
+  
+  if (totalDurationTarget) {
+    scopeConstraints += `- **TOTAL SCENE DURATION TARGET: ~${totalDurationTarget}s** (aim for approximately this total, may adjust ±10% for better cut points)\n`
+  }
+  if (segmentCountTarget) {
+    scopeConstraints += `- **TARGET SEGMENT COUNT: ${segmentCountTarget} segments** (aim for this count, adjust only if content absolutely requires it)\n`
+  }
+  
+  // Focus mode instructions
+  let focusInstructions = ''
+  if (focusMode === 'dialogue-focused') {
+    focusInstructions = '\n- **FOCUS: DIALOGUE** — Prioritize dialogue coverage. Combine visual-only beats into fewer segments. Ensure every line is covered with proper timing.'
+  } else if (focusMode === 'action-focused') {
+    focusInstructions = '\n- **FOCUS: ACTION** — Prioritize visual action beats. Combine consecutive dialogue lines into single segments where possible. Give each major visual moment its own segment.'
+  } else {
+    focusInstructions = '\n- **FOCUS: BALANCED** — Balance dialogue and visual action. Create segments that serve both narrative and visual storytelling.'
+  }
+  scopeConstraints += focusInstructions
+
+  // Custom instructions from the director
+  const directorNotes = customInstructions
+    ? `\n\n**DIRECTOR'S CUSTOM INSTRUCTIONS:**\n${customInstructions}`
+    : ''
 
   return `
 **SYSTEM ROLE:** You are a Video Director analyzing a scene to determine optimal segment cut points and directions.
@@ -1349,10 +1398,10 @@ ${dialogueList}
 Camera: ${sceneData.sceneDirection.camera}
 Lighting: ${sceneData.sceneDirection.lighting}
 Talent: ${sceneData.sceneDirection.talent}
+${directorNotes}
 
 **CONSTRAINTS:**
-- Target ${preferredDuration}s per segment (8s max)
-- Minimum ${minimumSegmentsRequired} segments required
+${scopeConstraints}
 ${noTalentScene ? '- NO ON-SCREEN TALENT: This is an abstract/title scene' : ''}
 
 **OUTPUT FORMAT:**

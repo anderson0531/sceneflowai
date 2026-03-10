@@ -2703,7 +2703,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       </div>
       
       {/* Script Content - scrollable area containing storyboard and scenes */}
-      <div className="flex-1 overflow-y-auto bg-slate-950/20">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-950/20">
         {/* Optional storyboard slot - now inside scrollable area */}
         {belowDashboardSlot && showStoryboard ? (
           <div className="px-6 pt-6">
