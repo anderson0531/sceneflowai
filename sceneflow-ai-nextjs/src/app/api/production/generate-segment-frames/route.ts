@@ -383,8 +383,26 @@ export async function POST(req: NextRequest) {
       // Collect all reference images: character portraits + scene image + prop references
       const allReferenceImages: Array<{ imageUrl: string; name: string }> = []
       
+      // CRITICAL: Detect no-talent scenes (title sequences, abstract visuals, VFX-only)
+      // When detected, skip character portrait references entirely — even with a correct
+      // text prompt, sending portrait photos causes the model to draw those people
+      const isNoTalentSegment = (() => {
+        if (!sceneDirection?.talent) return false
+        const talentStr = typeof sceneDirection.talent === 'string' 
+          ? sceneDirection.talent 
+          : (sceneDirection.talent.blocking || sceneDirection.talent.emotionalBeat || '')
+        const lower = talentStr.toLowerCase()
+        return ['n/a', 'no on-screen talent', 'no talent', 'no actors', 'no characters',
+                'no people', 'abstract', 'title sequence', 'text only', 'graphics only',
+                'vfx only', 'visual effects only', 'no performers'].some(x => lower.includes(x))
+      })()
+      
       // Add character portrait references (up to 3 to leave room for props)
-      const charRefs = characters.filter(c => c.referenceUrl).slice(0, 3)
+      // SKIP for no-talent scenes — portrait images override text prompt instructions
+      const charRefs = isNoTalentSegment ? [] : characters.filter(c => c.referenceUrl).slice(0, 3)
+      if (isNoTalentSegment) {
+        console.log('[Generate Frames] No-talent scene detected — skipping character portrait references')
+      }
       for (const c of charRefs) {
         allReferenceImages.push({
           imageUrl: c.referenceUrl!,
@@ -421,7 +439,7 @@ export async function POST(req: NextRequest) {
       
       if (!isPhotorealistic) {
         // Non-photorealistic: Style transformation is MANDATORY
-        if (charRefs.length > 0) {
+        if (charRefs.length > 0 && !isNoTalentSegment) {
           geminiPrompt = `MANDATORY ART STYLE: ${selectedStyle.name.toUpperCase()}
 Style specification: ${selectedStyle.promptSuffix}
 
@@ -453,7 +471,7 @@ Render this scene in ${selectedStyle.name} style.`
         }
       } else {
         // Photorealistic: Exact appearance matching is the priority
-        if (charRefs.length > 0) {
+        if (charRefs.length > 0 && !isNoTalentSegment) {
           geminiPrompt = `Generate a cinematic frame based on this description. The character(s) shown in the reference image(s) must appear in this scene with their exact appearance preserved.\n\n${startFramePrompt}\n\nIMPORTANT: Match the character's ethnicity, facial features, hair color/style, and facial hair exactly from the reference images.`
         } else if (referenceImageUrl) {
           geminiPrompt = `Generate a cinematic frame based on this description. Use the provided reference image for visual style and scene continuity.\n\n${startFramePrompt}`
