@@ -613,7 +613,10 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
   // Check if this is a no-talent scene (title sequence, abstract, etc.)
   const noTalentScene = isNoTalentScene(sceneDirection?.talent)
   
-  // 6. Character identities - SKIP if no-talent scene
+  // 6. Core action/visual content FIRST — image models weight early content most heavily
+  promptParts.push(actionPrompt.trim())
+  
+  // 7. Character identities (supporting context — reference images carry identity) - SKIP if no-talent scene
   if (!noTalentScene) {
     const characterBlock = buildCharacterBlock(characters)
     if (characterBlock) {
@@ -621,14 +624,11 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
     }
   }
   
-  // 7. Object/prop identities (auto-detected from segment text)
+  // 8. Object/prop identities (auto-detected from segment text)
   const objectBlock = buildObjectBlock(objectReferences)
   if (objectBlock) {
     promptParts.push(objectBlock)
   }
-  
-  // 8. Core action/visual content
-  promptParts.push(actionPrompt.trim())
   
   // 9. Talent/performance direction - SKIP if no-talent scene  
   if (!noTalentScene) {

@@ -188,6 +188,9 @@ export function FramePromptDialog({
   // Character selection state
   const [selectedCharacterNames, setSelectedCharacterNames] = useState<string[]>([])
   
+  // No-talent detection state — when true, Characters section is hidden
+  const [isNoTalentSegment, setIsNoTalentSegment] = useState(false)
+  
   // Object reference selection state
   const [selectedObjectRefIds, setSelectedObjectRefIds] = useState<string[]>([])
   
@@ -351,15 +354,25 @@ export function FramePromptDialog({
     // 1. Check segment-level character data (most authoritative — from approved segment direction)
     const segmentHasCharacters = segment.characters && segment.characters.length > 0
     const segmentCharacterNames = segment.characters?.map(c => c.name) || []
-    const segmentIsNoTalent = segment.characters?.length === 0 || 
+    const segmentIsNoTalent = (segment.characters !== undefined && segment.characters.length === 0) || 
       segment.segmentDirection?.isNoTalent === true
     
-    // 2. Check scene-level talent direction (fallback for older segments without direction data)
-    const talentText = sceneDirection?.talent?.blocking || sceneDirection?.talent?.emotionalBeat || ''
-    const isNoTalentScene = talentText.toLowerCase().match(/\b(n\/a|no\s+(live\s+)?actors?|no\s+talent|no\s+performers?)\b/)
+    // 2. Check scene-level talent direction with comprehensive detection
+    // Matches the indicators used by keyframe-prompt-builder.ts isNoTalentScene()
+    const talentText = typeof sceneDirection?.talent === 'string' 
+      ? sceneDirection.talent
+      : (sceneDirection?.talent?.blocking || sceneDirection?.talent?.emotionalBeat || '')
+    const talentLower = talentText.toLowerCase()
+    const noTalentIndicators = [
+      'n/a', 'no on-screen talent', 'no talent', 'no actors', 'no characters',
+      'no people', 'abstract', 'title sequence', 'text only', 'graphics only',
+      'vfx only', 'visual effects only', 'no performers'
+    ]
+    const isNoTalentScene = noTalentIndicators.some(ind => talentLower.includes(ind))
     
     // 3. Determine if this segment should have characters
     const shouldSkipCharacters = segmentIsNoTalent || isNoTalentScene
+    setIsNoTalentSegment(shouldSkipCharacters)
     
     if (!shouldSkipCharacters && characters.length > 0) {
       // If segment has explicit character assignments, use those
@@ -721,15 +734,17 @@ export function FramePromptDialog({
                   onVisualSetupChange={(update) => setVisualSetup(prev => ({ ...prev, ...update }))}
                 />
 
-                {/* Characters in Scene — Shared Component with wardrobe */}
-                <CharacterSelectionSection
-                  characters={characters}
-                  selectedCharacterNames={selectedCharacterNames}
-                  onSelectionChange={setSelectedCharacterNames}
-                  selectedWardrobes={selectedWardrobes}
-                  onWardrobeChange={(name, wardrobeId) => setSelectedWardrobes(prev => ({ ...prev, [name]: wardrobeId }))}
-                  hasCharacterReferences={hasCharacterReferences}
-                />
+                {/* Characters in Scene — Hidden for no-talent segments (title sequences, abstract, VFX-only) */}
+                {!isNoTalentSegment && (
+                  <CharacterSelectionSection
+                    characters={characters}
+                    selectedCharacterNames={selectedCharacterNames}
+                    onSelectionChange={setSelectedCharacterNames}
+                    selectedWardrobes={selectedWardrobes}
+                    onWardrobeChange={(name, wardrobeId) => setSelectedWardrobes(prev => ({ ...prev, [name]: wardrobeId }))}
+                    hasCharacterReferences={hasCharacterReferences}
+                  />
+                )}
 
                 {/* Props & Objects — Shared Component with auto-detection */}
                 <PropSelectionSection

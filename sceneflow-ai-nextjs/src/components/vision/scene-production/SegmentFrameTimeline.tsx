@@ -75,6 +75,8 @@ export interface SegmentFrameTimelineProps {
       imageUrl?: string
       description?: string
     }>
+    /** Scene direction for intelligent prompt building (avoids fallback to PromptEnhancer) */
+    sceneDirection?: DetailedSceneDirection | null
   }) => Promise<void>
   onGenerateAllFrames: () => Promise<void>
   onGenerateVideo: (segmentId: string) => void
@@ -273,17 +275,20 @@ export function SegmentFrameTimeline({
           negativePrompt: options.negativePrompt,
           usePreviousEndFrame: options.usePreviousEndFrame,
           previousEndFrameUrl: options.previousEndFrameUrl || undefined,
-          // NEW: Pass selected characters with reference images for identity lock
+          // Pass selected characters with reference images for identity lock
           selectedCharacters: options.selectedCharacters?.map(c => ({
             name: c.name,
             referenceImageUrl: c.referenceImageUrl,
           })),
-          // NEW: Pass visual setup for prompt construction
+          // Pass visual setup for prompt construction
           visualSetup: options.visualSetup,
-          // NEW: Pass art style for generation
+          // Pass art style for generation
           artStyle: options.artStyle,
-          // NEW: Pass selected object/prop references
+          // Pass selected object/prop references
           selectedObjectReferences: options.selectedObjectReferences,
+          // CRITICAL: Pass scene direction for intelligent prompt building
+          // Without this, the API falls back to PromptEnhancer which buries the action prompt
+          sceneDirection,
         })
       },
       {
@@ -292,7 +297,7 @@ export function SegmentFrameTimeline({
         operationType: 'keyframe-generation'
       }
     )
-  }, [onGenerateFrames, executeWithOverlay])
+  }, [onGenerateFrames, executeWithOverlay, sceneDirection])
   
   // Handle delete segment
   const handleDeleteClick = useCallback((segmentId: string, index: number) => {

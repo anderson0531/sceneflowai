@@ -194,28 +194,16 @@ export function enhancePrompt(
   
   const parts: string[] = []
   
-  // 1. Identity lock phrases (inversely proportional to action)
-  const identityIntensity = getIdentityLockIntensity(actionType)
-  const identityPhrases = IDENTITY_LOCK_PHRASES[identityIntensity]
-  if (identityPhrases.length > 0) {
-    // Pick 1-2 phrases based on intensity
-    const numPhrases = identityIntensity === 'extreme' ? 2 : 1
-    parts.push(identityPhrases.slice(0, numPhrases).join(', '))
-  }
+  // 1. Base prompt content FIRST — image models weight early content most heavily
+  parts.push(basePrompt)
   
-  // 2. Character descriptions
-  const characterBlock = buildCharacterBlock(characters)
-  if (characterBlock) {
-    parts.push(characterBlock)
-  }
-  
-  // 3. Scene context
+  // 2. Scene context
   const sceneBlock = buildSceneContextBlock(sceneContext)
   if (sceneBlock) {
     parts.push(sceneBlock)
   }
   
-  // 4. Frame-specific language
+  // 3. Frame-specific language
   if (framePosition === 'start') {
     parts.push('establishing frame')
   } else {
@@ -228,8 +216,20 @@ export function enhancePrompt(
     parts.push(`after ${actionDescription}`)
   }
   
-  // 5. Base prompt content
-  parts.push(basePrompt)
+  // 4. Character descriptions (supporting context — reference images carry identity)
+  const characterBlock = buildCharacterBlock(characters)
+  if (characterBlock) {
+    parts.push(characterBlock)
+  }
+  
+  // 5. Identity lock phrases (inversely proportional to action)
+  const identityIntensity = getIdentityLockIntensity(actionType)
+  const identityPhrases = IDENTITY_LOCK_PHRASES[identityIntensity]
+  if (identityPhrases.length > 0) {
+    // Pick 1-2 phrases based on intensity
+    const numPhrases = identityIntensity === 'extreme' ? 2 : 1
+    parts.push(identityPhrases.slice(0, numPhrases).join(', '))
+  }
   
   // 6. Quality modifiers
   parts.push('professional cinematography, 8K quality, film grain')

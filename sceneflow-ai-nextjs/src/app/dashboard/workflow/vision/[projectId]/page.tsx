@@ -1947,6 +1947,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         imageUrl?: string
         description?: string
       }>
+      /** Scene direction for intelligent prompt building (avoids fallback to PromptEnhancer) */
+      sceneDirection?: any
     }) => {
       const scene = script?.script?.scenes?.find((s: any) => 
         (s.id || s.sceneId || `scene-${script?.script?.scenes?.indexOf(s)}`) === sceneId
@@ -2005,8 +2007,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             usePreviousEndFrame: options?.usePreviousEndFrame,
             // NEW: Visual setup for prompt construction (from guided mode)
             visualSetup: options?.visualSetup,
-            // NEW: Art style for frame generation
+            // Art style for frame generation
             artStyle: options?.artStyle,
+            // CRITICAL: Pass scene direction for intelligent keyframe prompt building
+            // Without this, the API falls back to PromptEnhancer which prepends character
+            // identity text before the action prompt, burying the actual scene description
+            sceneDirection: options?.sceneDirection || productionData?.sceneDirection || null,
             // Enhanced character data with all fields for identity lock
             // When user has explicitly selected characters in the dialog, prioritize those
             // Otherwise, use priority: protagonist > main > supporting (sorted before API handles slicing)
