@@ -24,7 +24,6 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { SegmentPairCard } from './SegmentPairCard'
 import { FramePromptDialog, type FrameGenerationOptions } from './FramePromptDialog'
-import { KeyframeRegenerationDialog, type KeyframeGenerationConfig } from './KeyframeRegenerationDialog'
 import { DeleteSegmentDialog } from './DeleteSegmentDialog'
 import { AddSegmentTypeDialog, type SegmentPurpose, type AdjacentSceneContext } from './AddSegmentTypeDialog'
 import { AddSpecialSegmentDialog } from './AddSpecialSegmentDialog'
@@ -224,10 +223,6 @@ export function SegmentFrameTimeline({
   const [dialogFrameType, setDialogFrameType] = useState<'start' | 'end' | 'both'>('both')
   const [dialogPreviousEndFrame, setDialogPreviousEndFrame] = useState<string | null>(null)
   
-  // Keyframe regeneration dialog state
-  const [keyframeRegenDialogOpen, setKeyframeRegenDialogOpen] = useState(false)
-  const [isRegeneratingKeyframes, setIsRegeneratingKeyframes] = useState(false)
-  
   // Delete segment dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleteSegmentTarget, setDeleteSegmentTarget] = useState<{ segmentId: string; index: number } | null>(null)
@@ -387,18 +382,27 @@ export function SegmentFrameTimeline({
               </Badge>
             ) : null}
             
-            {/* Segments button - opens regeneration/configuration dialog */}
-            {stats.total > 0 && (onResegment || onResegmentWithConfig) && (
+            {/* Regenerate Segments button - clears all segments to re-enter SegmentBuilder */}
+            {stats.total > 0 && onDeleteSegment && (
               <Button
                 size="default"
                 variant="outline"
-                onClick={() => setKeyframeRegenDialogOpen(true)}
+                onClick={() => {
+                  const hasAssets = segments.some(s => s.activeAssetUrl || s.startFrameUrl || s.endFrameUrl || (s.takes && s.takes.length > 0))
+                  const msg = hasAssets
+                    ? `Delete all ${segments.length} segments and generated assets? You will be taken to the Segment Builder to start fresh.`
+                    : `Delete all ${segments.length} segments? You will be taken to the Segment Builder to regenerate.`
+                  if (window.confirm(msg)) {
+                    segments.forEach(s => onDeleteSegment(s.segmentId))
+                    toast.success('Segments cleared', { description: 'Use the Segment Builder to regenerate with new settings.' })
+                  }
+                }}
                 disabled={isGenerating}
                 className="h-10 px-5 text-sm font-semibold border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 hover:border-cyan-400 shadow-md hover:shadow-lg transition-all"
-                title="Regenerate or configure segments"
+                title="Clear all segments and regenerate with the Segment Builder"
               >
-                <Layers className="w-5 h-5 mr-2" />
-                Segments
+                <RefreshCw className="w-5 h-5 mr-2" />
+                Regenerate Segments
               </Button>
             )}
             
@@ -539,48 +543,6 @@ export function SegmentFrameTimeline({
         }))}
         objectReferences={objectReferences}
       />
-      
-      {/* Keyframe Regeneration Dialog */}
-      {sceneData && (
-        <KeyframeRegenerationDialog
-          open={keyframeRegenDialogOpen}
-          onOpenChange={setKeyframeRegenDialogOpen}
-          scene={sceneData}
-          existingSegments={segments}
-          characters={characters}
-          onGenerate={async (config) => {
-            setIsRegeneratingKeyframes(true)
-            try {
-              if (onResegmentWithConfig) {
-                await executeWithOverlay(
-                  async () => {
-                    await onResegmentWithConfig(config)
-                  },
-                  {
-                    message: 'Regenerating keyframe segments with your settings...',
-                    estimatedDuration: 20,
-                    operationType: 'scene-analysis'
-                  }
-                )
-              } else if (onResegment) {
-                await executeWithOverlay(
-                  async () => {
-                    await onResegment()
-                  },
-                  {
-                    message: 'Re-analyzing scene and generating segments...',
-                    estimatedDuration: 15,
-                    operationType: 'scene-analysis'
-                  }
-                )
-              }
-            } finally {
-              setIsRegeneratingKeyframes(false)
-            }
-          }}
-          isGenerating={isRegeneratingKeyframes}
-        />
-      )}
       
       {/* Delete Segment Confirmation Dialog */}
       {deleteSegmentInfo && (
