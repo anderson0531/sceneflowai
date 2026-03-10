@@ -872,7 +872,7 @@ interface PhaseIndicatorProps {
 
 function PhaseIndicator({ currentPhase, onPhaseClick, canAdvance }: PhaseIndicatorProps) {
   const phases: { id: BuilderPhase; label: string; icon: React.ReactNode }[] = [
-    { id: 'analyze', label: 'AI Analysis', icon: <Sparkles className="w-4 h-4" /> },
+    { id: 'analyze', label: 'Analysis', icon: <Sparkles className="w-4 h-4" /> },
     { id: 'directions', label: 'Review Directions', icon: <Eye className="w-4 h-4" /> },
     { id: 'review', label: 'Review Prompts', icon: <Edit3 className="w-4 h-4" /> },
     { id: 'finalize', label: 'Finalize', icon: <Check className="w-4 h-4" /> },
@@ -908,11 +908,11 @@ function PhaseIndicator({ currentPhase, onPhaseClick, canAdvance }: PhaseIndicat
               onClick={() => canClick && onPhaseClick(phase.id)}
               disabled={!canClick}
               className={cn(
-                'flex items-center gap-2 px-3 py-2 rounded-lg transition-all',
-                status === 'current' && 'bg-primary text-primary-foreground',
-                status === 'complete' && 'bg-green-500/20 text-green-500',
-                status === 'pending' && 'bg-muted text-muted-foreground',
-                canClick && status !== 'current' && 'hover:bg-muted/80 cursor-pointer',
+                'flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium',
+                status === 'current' && 'bg-cyan-600 text-white shadow-md shadow-cyan-500/20',
+                status === 'complete' && 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
+                status === 'pending' && 'text-gray-500',
+                canClick && status !== 'current' && 'hover:bg-gray-800 cursor-pointer',
                 !canClick && 'opacity-50 cursor-not-allowed'
               )}
             >
@@ -921,7 +921,7 @@ function PhaseIndicator({ currentPhase, onPhaseClick, canAdvance }: PhaseIndicat
               ) : (
                 phase.icon
               )}
-              <span className="text-sm font-medium">{phase.label}</span>
+              <span>{phase.label}</span>
             </button>
             {idx < phases.length - 1 && (
               <ChevronRight className="w-4 h-4 text-muted-foreground" />
@@ -1547,13 +1547,13 @@ export function SegmentBuilder({
       <ProductionOverlay isVisible={showProductionOverlay} currentStage={productionStage} />
       
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700/50 bg-gray-900/60">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Layers className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold">Segment Builder</h2>
+            <Layers className="w-5 h-5 text-cyan-400" />
+            <h2 className="text-lg font-semibold text-white">Segment Builder</h2>
           </div>
-          <Badge variant="outline">Scene {sceneNumber}</Badge>
+          <Badge variant="outline" className="border-gray-600 text-gray-400">Scene {sceneNumber}</Badge>
         </div>
         <PhaseIndicator
           currentPhase={phase}
@@ -1565,7 +1565,7 @@ export function SegmentBuilder({
       {/* Main Content */}
       <div className="flex flex-1 min-w-0 overflow-hidden">
         {/* Left Panel: Scene Bible (Read-Only) */}
-        <div className="w-64 flex-shrink-0 border-r border-border p-4 overflow-y-auto">
+        <div className="w-64 flex-shrink-0 border-r border-gray-700/50 bg-gray-900/40 p-4 overflow-y-auto">
           <SceneBiblePanel bible={sceneBible} />
         </div>
 
@@ -1574,13 +1574,13 @@ export function SegmentBuilder({
           {/* Phase: Analyze */}
           {phase === 'analyze' && (
             <div className="flex-1 flex items-center justify-center p-8">
-              <Card className="w-full max-w-md">
+              <Card className="w-full max-w-md bg-gray-900/60 border-gray-700/50">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-primary" />
-                    AI Scene Analysis
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <Sparkles className="w-5 h-5 text-cyan-400" />
+                    Scene Analysis
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-gray-400">
                     Generate intelligent segments based on scene content (narration, dialogue, and scene changes)
                   </CardDescription>
                 </CardHeader>
@@ -1607,7 +1607,7 @@ export function SegmentBuilder({
                             {existingSegments.length} Existing Segments
                             {existingSegmentsStale && " (Scene Changed)"}
                           </p>
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <p className="text-xs text-gray-500 mt-1">
                             {hasExistingVideoAssets ? (
                               <>
                                 <span className="text-red-400 font-medium">Warning:</span> Regenerating will discard {existingSegments.filter(s => s.activeAssetUrl || s.takes?.length).length} generated video assets.
@@ -1623,7 +1623,7 @@ export function SegmentBuilder({
 
                   {/* Duration Setting */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Target Segment Duration</label>
+                    <label className="text-sm font-medium text-gray-300">Target Segment Duration</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="range"
@@ -1636,7 +1636,7 @@ export function SegmentBuilder({
                       />
                       <span className="text-sm font-mono w-12">{targetDuration}s</span>
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-gray-500">
                       Segments will be up to {targetDuration} seconds (Veo 3.1 optimal range: 4-8s)
                     </p>
                   </div>
@@ -1644,14 +1644,15 @@ export function SegmentBuilder({
                   {/* Narration-Driven Toggle */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium">Narration-Driven</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm font-medium text-gray-300">Narration-Driven</p>
+                      <p className="text-xs text-gray-500">
                         Prioritize narration timing for segment boundaries
                       </p>
                     </div>
                     <Button
                       variant={narrationDriven ? 'default' : 'outline'}
                       size="sm"
+                      className={narrationDriven ? 'bg-cyan-600 text-white hover:bg-cyan-500' : 'border-gray-600 text-gray-400 hover:bg-gray-800'}
                       onClick={() => setNarrationDriven(!narrationDriven)}
                     >
                       {narrationDriven ? 'On' : 'Off'}
@@ -1661,11 +1662,11 @@ export function SegmentBuilder({
                   {/* Total Scene Duration Target */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium">Total Scene Duration</label>
+                      <label className="text-sm font-medium text-gray-300">Total Scene Duration</label>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 px-2 text-xs text-muted-foreground"
+                        className="h-6 px-2 text-xs text-gray-500 hover:text-gray-300"
                         onClick={() => setTotalDurationTarget(null)}
                       >
                         {totalDurationTarget ? 'Clear' : 'Auto'}
@@ -1685,7 +1686,7 @@ export function SegmentBuilder({
                         {totalDurationTarget ? `~${totalDurationTarget}s` : 'Auto'}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-gray-500">
                       {totalDurationTarget
                         ? `AI will target approximately ${totalDurationTarget}s total (may adjust ±10% for better cut points)`
                         : 'Let AI determine total duration based on content'}
@@ -1695,11 +1696,11 @@ export function SegmentBuilder({
                   {/* Segment Count Target */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium">Segment Count</label>
+                      <label className="text-sm font-medium text-gray-300">Segment Count</label>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 px-2 text-xs text-muted-foreground"
+                        className="h-6 px-2 text-xs text-gray-500 hover:text-gray-300"
                         onClick={() => setSegmentCountTarget(null)}
                       >
                         {segmentCountTarget ? 'Clear' : 'Auto'}
@@ -1719,7 +1720,7 @@ export function SegmentBuilder({
                         {segmentCountTarget ? `${segmentCountTarget}` : 'Auto'}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-gray-500">
                       {segmentCountTarget
                         ? `AI will aim for ${segmentCountTarget} segments`
                         : 'Let AI determine optimal segment count'}
@@ -1728,21 +1729,26 @@ export function SegmentBuilder({
 
                   {/* Focus Mode */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Focus Mode</label>
+                    <label className="text-sm font-medium text-gray-300">Focus Mode</label>
                     <div className="grid grid-cols-3 gap-1">
                       {(['balanced', 'dialogue-focused', 'action-focused'] as const).map(mode => (
                         <Button
                           key={mode}
                           variant={focusMode === mode ? 'default' : 'outline'}
                           size="sm"
-                          className="text-xs capitalize"
+                          className={cn(
+                            'text-xs capitalize',
+                            focusMode === mode
+                              ? 'bg-cyan-600 text-white hover:bg-cyan-500 border-cyan-600'
+                              : 'border-gray-600 text-gray-400 hover:bg-gray-800 hover:text-gray-300'
+                          )}
                           onClick={() => setFocusMode(mode)}
                         >
                           {mode.replace('-', ' ')}
                         </Button>
                       ))}
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-gray-500">
                       {focusMode === 'balanced' && 'Balance dialogue and visual action in segments'}
                       {focusMode === 'dialogue-focused' && 'Prioritize dialogue coverage — combine visual beats'}
                       {focusMode === 'action-focused' && 'Prioritize visual action — combine dialogue lines'}
@@ -1751,15 +1757,15 @@ export function SegmentBuilder({
 
                   {/* Custom Instructions */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Director Notes (Optional)</label>
+                    <label className="text-sm font-medium text-gray-300">Director Notes (Optional)</label>
                     <textarea
                       value={customInstructions}
                       onChange={e => setCustomInstructions(e.target.value)}
                       placeholder="e.g., 'Emphasize the opening reveal' or 'Keep the pacing tight'"
-                      className="w-full h-16 px-3 py-2 text-xs rounded-md border border-input bg-transparent resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+                      className="w-full h-16 px-3 py-2 text-xs rounded-md border border-gray-700/50 bg-gray-800/50 text-gray-200 resize-none focus:outline-none focus:ring-1 focus:ring-cyan-500/50 placeholder:text-gray-600"
                       maxLength={300}
                     />
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-gray-500">
                       {customInstructions.length}/300 — Free-form direction for the AI
                     </p>
                   </div>
@@ -1797,7 +1803,10 @@ export function SegmentBuilder({
                   <Button
                     onClick={handleAnalyze}
                     disabled={isAnalyzing || !hasSceneDirection}
-                    className="w-full"
+                    className={cn(
+                      'w-full',
+                      !hasExistingVideoAssets && 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/20'
+                    )}
                     size="lg"
                     variant={hasExistingVideoAssets ? 'destructive' : 'default'}
                     title={!hasSceneDirection ? 'Generate scene direction first' : undefined}
@@ -1828,14 +1837,14 @@ export function SegmentBuilder({
           {phase === 'directions' && (
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* Directions Header */}
-              <div className="px-4 py-3 border-b border-border bg-muted/30">
+              <div className="px-4 py-3 border-b border-gray-700/50 bg-gray-900/40">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-medium flex items-center gap-2">
+                    <h3 className="font-medium flex items-center gap-2 text-white">
                       <Eye className="w-4 h-4 text-cyan-400" />
                       Review Segment Directions
                     </h3>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-gray-400 mt-1">
                       Review and approve each segment's direction before generating video prompts
                     </p>
                   </div>
@@ -1914,7 +1923,7 @@ export function SegmentBuilder({
           {phase === 'review' && (
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* Timeline Preview */}
-              <div className="h-48 border-b border-border p-4">
+              <div className="h-48 border-b border-gray-700/50 p-4">
                 <SegmentPreviewTimeline
                   segments={proposedSegments}
                   sceneBible={sceneBible}
@@ -1935,23 +1944,23 @@ export function SegmentBuilder({
                     onPromptChange={handlePromptEdit}
                   />
                 ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                  <div className="flex items-center justify-center h-full text-gray-500">
                     <p>Select a segment to edit</p>
                   </div>
                 )}
               </div>
 
               {/* Action Bar */}
-              <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
+              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-700/50 bg-gray-900/40">
                 <div className="flex items-center gap-4">
                   <div className="text-sm">
-                    <span className="font-medium">{proposedSegments.length}</span>{' '}
-                    <span className="text-muted-foreground">segments</span>
+                    <span className="font-medium text-white">{proposedSegments.length}</span>{' '}
+                    <span className="text-gray-400">segments</span>
                   </div>
                   <div className="text-sm">
                     <Clock className="w-3 h-3 inline mr-1" />
-                    <span className="font-mono">{totalDuration.toFixed(1)}s</span>{' '}
-                    <span className="text-muted-foreground">total</span>
+                    <span className="font-mono text-white">{totalDuration.toFixed(1)}s</span>{' '}
+                    <span className="text-gray-400">total</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1973,6 +1982,7 @@ export function SegmentBuilder({
                   <Button
                     onClick={() => setPhase('finalize')}
                     disabled={!canAdvance.finalize}
+                    className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/20"
                   >
                     Continue to Finalize
                     <ArrowRight className="w-4 h-4 ml-2" />
@@ -1985,36 +1995,36 @@ export function SegmentBuilder({
           {/* Phase: Finalize */}
           {phase === 'finalize' && (
             <div className="flex-1 flex items-center justify-center p-8">
-              <Card className="w-full max-w-lg">
+              <Card className="w-full max-w-lg bg-gray-900/60 border-gray-700/50">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-green-500" />
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <Check className="w-5 h-5 text-emerald-400" />
                     Ready to Finalize
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-gray-400">
                     Review your segments before proceeding to Key Frame generation
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Summary */}
-                  <div className="bg-muted/30 rounded-lg p-4 space-y-2">
+                  <div className="bg-gray-800/50 rounded-lg p-4 space-y-2 border border-gray-700/30">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Total Segments:</span>
-                      <span className="font-medium">{proposedSegments.length}</span>
+                      <span className="text-gray-400">Total Segments:</span>
+                      <span className="font-medium text-white">{proposedSegments.length}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Total Duration:</span>
-                      <span className="font-medium font-mono">{totalDuration.toFixed(1)}s</span>
+                      <span className="text-gray-400">Total Duration:</span>
+                      <span className="font-medium font-mono text-white">{totalDuration.toFixed(1)}s</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Dialogue Lines Covered:</span>
-                      <span className="font-medium">
+                      <span className="text-gray-400">Dialogue Lines Covered:</span>
+                      <span className="font-medium text-white">
                         {new Set(proposedSegments.flatMap(s => s.dialogueLineIds)).size} / {sceneBible.dialogue.length}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">User Adjusted:</span>
-                      <span className="font-medium">
+                      <span className="text-gray-400">User Adjusted:</span>
+                      <span className="font-medium text-white">
                         {proposedSegments.filter(s => s.isAdjusted).length} segments
                       </span>
                     </div>
@@ -2041,14 +2051,14 @@ export function SegmentBuilder({
                     </Button>
                     <Button
                       onClick={handleFinalize}
-                      className="flex-1"
+                      className="flex-1 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/20"
                     >
                       <CheckCircle2 className="w-4 h-4 mr-2" />
                       Finalize & Proceed
                     </Button>
                   </div>
 
-                  <p className="text-xs text-center text-muted-foreground">
+                  <p className="text-xs text-center text-gray-500">
                     After finalizing, proceed to the Frame tab to generate key frames for each segment
                   </p>
                 </CardContent>
