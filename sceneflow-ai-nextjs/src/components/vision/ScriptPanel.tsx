@@ -2907,6 +2907,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       setImageEditModalOpen={setImageEditModalOpen}
                       sceneReferences={sceneReferences}
                       objectReferences={objectReferences}
+                      locationReferences={locationReferences}
                       getPlaybackOffsetForScene={getPlaybackOffsetForScene}
                       handlePlaybackOffsetChange={handlePlaybackOffsetChange}
                       getSuggestedOffsetForScene={getSuggestedOffsetForScene}
@@ -3549,6 +3550,8 @@ interface SceneCardProps {
   // Visual references for SegmentBuilder
   sceneReferences?: Array<{ id: string; name: string; description?: string; imageUrl?: string }>
   objectReferences?: Array<{ id: string; name: string; description?: string; imageUrl?: string }>
+  // Location references for environment consistency in keyframe generation
+  locationReferences?: Array<{ id: string; location: string; locationDisplay: string; imageUrl: string; description?: string; sceneNumbers?: number[] }>
   // Language playback offset for translated audio alignment
   getPlaybackOffsetForScene?: (sceneId: string, language: string) => number
   handlePlaybackOffsetChange?: (sceneId: string, sceneIdx: number, language: string, offset: number) => void
@@ -3692,6 +3695,7 @@ function SceneCard({
   onUpdateSceneWardrobe,
   sceneReferences = [],
   objectReferences = [],
+  locationReferences = [],
   getPlaybackOffsetForScene,
   handlePlaybackOffsetChange,
   getSuggestedOffsetForScene,
