@@ -1,25 +1,21 @@
 'use client'
 
 import React from 'react'
-import { Checkbox } from '@/components/ui/checkbox'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { Users, CheckCircle2, Shirt } from 'lucide-react'
+import { Users, Check, ChevronDown, ChevronUp, Shirt } from 'lucide-react'
 import type { CharacterSelectionProps } from './types'
 
 /**
- * Unified character selection section for image generation dialogs.
- * Features:
- * - Shadcn Checkbox cards with avatar thumbnails
- * - "Has reference image" indicator (emerald)
- * - Per-character wardrobe dropdown (purple-themed)
- * - Default wardrobe marking from scene-level assignments
+ * Unified character costume reference selection for image generation dialogs.
+ * 
+ * Displays a grid of costume reference image tiles (matching Location & Props pattern):
+ * - One tile per wardrobe that has a costume reference image (fullBodyUrl or headshotUrl)
+ * - One tile per character's base referenceImage if no wardrobes have images
+ * - Characters without any images get a fallback icon tile
+ * - Selection tracks both character name AND wardrobe ID for precise costume locking
+ * 
+ * Collapsible with header showing selected count badge when closed.
  */
 export function CharacterSelectionSection({
   characters,
@@ -28,116 +24,224 @@ export function CharacterSelectionSection({
   selectedWardrobes,
   onWardrobeChange,
   sceneWardrobes,
+  isCollapsed,
+  onToggleCollapsed,
   className,
 }: CharacterSelectionProps) {
   if (characters.length === 0) return null
 
-  const toggleCharacter = (name: string) => {
-    onSelectionChange(
-      selectedCharacterNames.includes(name)
-        ? selectedCharacterNames.filter(n => n !== name)
-        : [...selectedCharacterNames, name]
-    )
+  // Build a flat list of selectable "costume tiles"
+  // Each tile = one wardrobe with an image, OR a base character if no wardrobe images exist
+  interface CostumeTile {
+    characterName: string
+    wardrobeId?: string
+    wardrobeName?: string
+    imageUrl?: string
+    label: string
+    sublabel: string
+    isSceneDefault?: boolean
   }
+
+  const tiles: CostumeTile[] = []
+
+  for (const char of characters) {
+    const wardrobesWithImages = (char.wardrobes || []).filter(
+      (w) => (w as any).fullBodyUrl || (w as any).headshotUrl
+    )
+
+    if (wardrobesWithImages.length > 0) {
+      // One tile per wardrobe that has a costume image
+      for (const w of wardrobesWithImages) {
+        const imgUrl = (w as any).fullBodyUrl || (w as any).headshotUrl
+        tiles.push({
+          characterName: char.name,
+          wardrobeId: w.id,
+          wardrobeName: w.name,
+          imageUrl: imgUrl,
+          label: char.name,
+          sublabel: w.name,
+          isSceneDefault: sceneWardrobes?.[char.name] === w.id,
+        })
+      }
+      // Also add base portrait tile if it exists and is different from wardrobe images
+      if (char.referenceImage) {
+        const wardrobeImages = wardrobesWithImages.map((w) => (w as any).fullBodyUrl || (w as any).headshotUrl)
+        if (!wardrobeImages.includes(char.referenceImage)) {
+          tiles.push({
+            characterName: char.name,
+            wardrobeId: undefined,
+            wardrobeName: undefined,
+            imageUrl: char.referenceImage,
+            label: char.name,
+            sublabel: 'Base Portrait',
+          })
+        }
+      }
+    } else if (char.referenceImage) {
+      // No wardrobe images — show base portrait
+      tiles.push({
+        characterName: char.name,
+        wardrobeId: undefined,
+        wardrobeName: undefined,
+        imageUrl: char.referenceImage,
+        label: char.name,
+        sublabel: 'Reference',
+      })
+    } else {
+      // No images at all — fallback icon tile
+      tiles.push({
+        characterName: char.name,
+        wardrobeId: undefined,
+        wardrobeName: undefined,
+        imageUrl: undefined,
+        label: char.name,
+        sublabel: char.wardrobes?.length ? 'No costume images' : 'No reference',
+      })
+    }
+  }
+
+  // A tile is selected if the character name is selected AND
+  // (if wardrobeId exists) that specific wardrobe is the selected wardrobe for the character
+  const isTileSelected = (tile: CostumeTile): boolean => {
+    if (!selectedCharacterNames.includes(tile.characterName)) return false
+    if (tile.wardrobeId) {
+      return selectedWardrobes?.[tile.characterName] === tile.wardrobeId
+    }
+    // Base portrait / no wardrobe — selected if character is selected and no wardrobe chosen
+    return !selectedWardrobes?.[tile.characterName]
+  }
+
+  const handleTileClick = (tile: CostumeTile) => {
+    const isCurrentlySelected = isTileSelected(tile)
+
+    if (isCurrentlySelected) {
+      // Deselect this character entirely
+      onSelectionChange(selectedCharacterNames.filter(n => n !== tile.characterName))
+      if (onWardrobeChange && tile.wardrobeId) {
+        onWardrobeChange(tile.characterName, '')
+      }
+    } else {
+      // Select this character (and this specific wardrobe if applicable)
+      if (!selectedCharacterNames.includes(tile.characterName)) {
+        onSelectionChange([...selectedCharacterNames, tile.characterName])
+      }
+      if (onWardrobeChange && tile.wardrobeId) {
+        onWardrobeChange(tile.characterName, tile.wardrobeId)
+      } else if (onWardrobeChange) {
+        // Selecting base portrait — clear wardrobe
+        onWardrobeChange(tile.characterName, '')
+      }
+    }
+  }
+
+  const selectedCount = selectedCharacterNames.length
+  const isCollapsedState = isCollapsed ?? false
 
   return (
     <div className={cn('space-y-3 p-3 rounded border border-slate-700 bg-slate-800/50', className)}>
-      <h4 className="text-sm font-medium text-slate-200 flex items-center gap-2">
-        <Users className="w-4 h-4 text-cyan-400" />
-        Characters in Scene
-      </h4>
-      <p className="text-xs text-slate-400">Select characters to include for identity consistency</p>
-      <div className="space-y-2">
-        {characters.map((char) => {
-          const isSelected = selectedCharacterNames.includes(char.name)
-          const hasWardrobes = char.wardrobes && char.wardrobes.length > 0
-          const currentWardrobeId = selectedWardrobes?.[char.name] || ''
-          const sceneDefaultWardrobeId = sceneWardrobes?.[char.name] || ''
+      {/* Collapsible header */}
+      <button
+        type="button"
+        onClick={onToggleCollapsed}
+        className="flex items-center gap-2 w-full text-left"
+      >
+        <Shirt className="w-4 h-4 text-cyan-400" />
+        <h4 className="text-sm font-medium text-slate-200 flex-1">Talent Costume References</h4>
+        {selectedCount > 0 && (
+          <Badge variant="secondary" className="text-[10px] bg-cyan-500/20 text-cyan-300 border-0">
+            {selectedCount} selected
+          </Badge>
+        )}
+        {isCollapsedState ? (
+          <ChevronDown className="w-4 h-4 text-slate-400" />
+        ) : (
+          <ChevronUp className="w-4 h-4 text-slate-400" />
+        )}
+      </button>
 
-          return (
-            <div key={char.name} className="space-y-0">
-              {/* Character card */}
-              <div
-                className={cn(
-                  'flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-colors',
-                  isSelected
-                    ? 'border-cyan-500/50 bg-cyan-500/10'
-                    : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
-                )}
-                onClick={() => toggleCharacter(char.name)}
+      {!isCollapsedState && (
+        <>
+          <p className="text-xs text-slate-400">Select costume references to include for character identity & wardrobe consistency</p>
+
+          {/* Convenience buttons */}
+          {selectedCount > 0 && (
+            <div className="flex items-center gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  onSelectionChange([])
+                  // Clear all wardrobe selections too
+                  if (onWardrobeChange) {
+                    for (const name of selectedCharacterNames) {
+                      onWardrobeChange(name, '')
+                    }
+                  }
+                }}
+                className="h-6 text-[10px] text-slate-400 hover:text-slate-300 px-2 rounded"
               >
-                <Checkbox
-                  checked={isSelected}
-                  onCheckedChange={(checked) => {
-                    onSelectionChange(
-                      checked
-                        ? [...selectedCharacterNames, char.name]
-                        : selectedCharacterNames.filter(n => n !== char.name)
-                    )
-                  }}
-                />
-                {/* Avatar */}
-                {char.referenceImage ? (
-                  <img
-                    src={char.referenceImage}
-                    alt={char.name}
-                    className="w-10 h-10 rounded-full object-cover border-2 border-slate-600"
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
-                    <Users className="w-5 h-5 text-slate-500" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-200">{char.name}</p>
-                  {char.referenceImage && (
-                    <p className="text-xs text-emerald-400 flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" />
-                      Has reference image
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Wardrobe dropdown — only when selected and wardrobes exist */}
-              {isSelected && hasWardrobes && onWardrobeChange && (
-                <div className="ml-14 mt-1 mb-1">
-                  <div className="flex items-center gap-2 p-2 rounded-lg border border-purple-500/30 bg-purple-500/5">
-                    <Shirt className="w-4 h-4 text-purple-400 flex-shrink-0" />
-                    <Select
-                      value={currentWardrobeId || sceneDefaultWardrobeId || ''}
-                      onValueChange={(v) => onWardrobeChange(char.name, v)}
-                    >
-                      <SelectTrigger className="h-8 text-xs bg-slate-900 border-purple-500/30">
-                        <SelectValue placeholder="Select wardrobe..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {char.wardrobes!.map((w) => {
-                          const isDefault = w.id === sceneDefaultWardrobeId
-                          const hasCostumeRef = !!(w as any).fullBodyUrl
-                          return (
-                            <SelectItem key={w.id} value={w.id}>
-                              <span className="flex items-center gap-2">
-                                {hasCostumeRef && (
-                                  <span className="text-[10px] text-green-500" title="Costume reference image available">📷</span>
-                                )}
-                                {w.name}
-                                {isDefault && (
-                                  <span className="text-[10px] text-purple-400 ml-1">(scene default)</span>
-                                )}
-                              </span>
-                            </SelectItem>
-                          )
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              )}
+                Unselect All
+              </button>
             </div>
-          )
-        })}
-      </div>
+          )}
+
+          {/* Costume grid — matches Location & Props visual pattern */}
+          <div className="grid grid-cols-4 gap-2">
+            {tiles.map((tile, idx) => {
+              const isSelected = isTileSelected(tile)
+              return (
+                <button
+                  key={`${tile.characterName}-${tile.wardrobeId || 'base'}-${idx}`}
+                  type="button"
+                  onClick={() => handleTileClick(tile)}
+                  className={cn(
+                    'relative rounded-lg overflow-hidden border-2 transition-all aspect-[3/4]',
+                    isSelected
+                      ? 'border-cyan-500 ring-2 ring-cyan-500/30'
+                      : 'border-slate-700 hover:border-slate-500'
+                  )}
+                  title={`${tile.label}${tile.wardrobeName ? ` — ${tile.wardrobeName}` : ''}`}
+                >
+                  {tile.imageUrl ? (
+                    <img
+                      src={tile.imageUrl}
+                      alt={tile.label}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-slate-700 flex items-center justify-center">
+                      <Users className="w-8 h-8 text-slate-500" />
+                    </div>
+                  )}
+                  {/* Selection check */}
+                  {isSelected && (
+                    <div className="absolute top-1 right-1 w-5 h-5 bg-cyan-500 rounded-full flex items-center justify-center">
+                      <Check className="w-3 h-3 text-white" />
+                    </div>
+                  )}
+                  {/* Scene default badge */}
+                  {tile.isSceneDefault && (
+                    <div className="absolute top-1 left-1">
+                      <Badge variant="secondary" className="text-[8px] bg-purple-500/80 text-white border-0 px-1 py-0">
+                        Default
+                      </Badge>
+                    </div>
+                  )}
+                  {/* Name + wardrobe overlay */}
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 pt-4">
+                    <p className="text-[10px] text-white font-medium truncate">{tile.label}</p>
+                    {tile.sublabel && (
+                      <p className="text-[9px] text-slate-300 truncate">{tile.sublabel}</p>
+                    )}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+          <p className="text-[10px] text-slate-500">
+            Selected costumes will be included as reference images for character identity & wardrobe consistency.
+          </p>
+        </>
+      )}
     </div>
   )
 }

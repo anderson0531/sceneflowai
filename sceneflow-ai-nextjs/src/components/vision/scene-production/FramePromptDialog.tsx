@@ -268,6 +268,11 @@ export function FramePromptDialog({
   // Wardrobe selection per character (NEW — unified with ScenePromptBuilder)
   const [selectedWardrobes, setSelectedWardrobes] = useState<Record<string, string>>({})
   
+  // Collapsible section states for reference sections (all default closed)
+  const [talentSectionCollapsed, setTalentSectionCollapsed] = useState(true)
+  const [locationSectionCollapsed, setLocationSectionCollapsed] = useState(true)
+  const [propsSectionCollapsed, setPropsSectionCollapsed] = useState(true)
+  
   // Get selected characters with their reference images
   const selectedCharacters = useMemo(() => {
     return characters
@@ -484,13 +489,21 @@ export function FramePromptDialog({
       // Auto-select matched locations
       if (matchedIds.length > 0) {
         setSelectedLocationRefIds(matchedIds)
+        // Auto-expand location section when auto-matches found
+        setLocationSectionCollapsed(false)
       } else {
         setSelectedLocationRefIds([])
+        setLocationSectionCollapsed(true)
       }
     } else {
       setAutoMatchedLocationRefIds(new Set())
       setSelectedLocationRefIds([])
+      setLocationSectionCollapsed(true)
     }
+
+    // Reset collapse states on dialog open (default all closed)
+    setTalentSectionCollapsed(true)
+    setPropsSectionCollapsed(true)
 
     // Initialize talent direction from scene direction
     if (sceneDirection?.talent) {
@@ -827,14 +840,47 @@ export function FramePromptDialog({
                   onVisualSetupChange={(update) => setVisualSetup(prev => ({ ...prev, ...update }))}
                 />
 
-                {/* Location References — Select location images for environment consistency */}
+                {/* ===== TALENT COSTUME REFERENCES (moved above Location References) ===== */}
+                {/* Hidden for no-talent segments (title sequences, abstract, VFX-only) */}
+                {!isNoTalentSegment && (
+                  <CharacterSelectionSection
+                    characters={characters}
+                    selectedCharacterNames={selectedCharacterNames}
+                    onSelectionChange={setSelectedCharacterNames}
+                    selectedWardrobes={selectedWardrobes}
+                    onWardrobeChange={(name, wardrobeId) => setSelectedWardrobes(prev => ({ ...prev, [name]: wardrobeId }))}
+                    isCollapsed={talentSectionCollapsed}
+                    onToggleCollapsed={() => setTalentSectionCollapsed(prev => !prev)}
+                  />
+                )}
+
+                {/* ===== LOCATION REFERENCES (collapsible) ===== */}
                 {locationReferences.length > 0 && (
                   <div className="space-y-3 p-3 rounded border border-slate-700 bg-slate-800/50">
+                    {/* Collapsible header */}
+                    <button
+                      type="button"
+                      onClick={() => setLocationSectionCollapsed(prev => !prev)}
+                      className="flex items-center gap-2 w-full text-left"
+                    >
+                      <MapPin className="w-4 h-4 text-cyan-400" />
+                      <h4 className="text-sm font-medium text-slate-200 flex-1">Location References</h4>
+                      {selectedLocationRefIds.length > 0 && (
+                        <Badge variant="secondary" className="text-[10px] bg-cyan-500/20 text-cyan-300 border-0">
+                          {selectedLocationRefIds.length} selected
+                        </Badge>
+                      )}
+                      {locationSectionCollapsed ? (
+                        <ChevronDown className="w-4 h-4 text-slate-400" />
+                      ) : (
+                        <ChevronUp className="w-4 h-4 text-slate-400" />
+                      )}
+                    </button>
+
+                    {!locationSectionCollapsed && (
+                      <>
                     <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-medium text-slate-200 flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-cyan-400" />
-                        Location References
-                      </h4>
+                      <p className="text-xs text-slate-400">Select location images for environment/setting consistency</p>
                       <div className="flex items-center gap-2">
                         {autoMatchedLocationRefIds.size > 0 && (
                           <button
@@ -856,7 +902,6 @@ export function FramePromptDialog({
                         )}
                       </div>
                     </div>
-                    <p className="text-xs text-slate-400">Select location images for environment/setting consistency</p>
                     <div className="grid grid-cols-4 gap-2">
                       {locationReferences.map((loc) => {
                         const isSelected = selectedLocationRefIds.includes(loc.id)
@@ -905,27 +950,19 @@ export function FramePromptDialog({
                     <p className="text-[10px] text-slate-500">
                       Selected locations will be included as reference images for visual consistency.
                     </p>
+                      </>
+                    )}
                   </div>
                 )}
 
-                {/* Characters in Scene — Hidden for no-talent segments (title sequences, abstract, VFX-only) */}
-                {!isNoTalentSegment && (
-                  <CharacterSelectionSection
-                    characters={characters}
-                    selectedCharacterNames={selectedCharacterNames}
-                    onSelectionChange={setSelectedCharacterNames}
-                    selectedWardrobes={selectedWardrobes}
-                    onWardrobeChange={(name, wardrobeId) => setSelectedWardrobes(prev => ({ ...prev, [name]: wardrobeId }))}
-                    hasCharacterReferences={hasCharacterReferences}
-                  />
-                )}
-
-                {/* Props & Objects — Shared Component with auto-detection */}
+                {/* ===== PROPS & OBJECTS (collapsible) ===== */}
                 <PropSelectionSection
                   objectReferences={objectReferences}
                   selectedObjectIds={selectedObjectRefIds}
                   onSelectionChange={setSelectedObjectRefIds}
                   autoDetectedObjectIds={autoDetectedObjectIds}
+                  isCollapsed={propsSectionCollapsed}
+                  onToggleCollapsed={() => setPropsSectionCollapsed(prev => !prev)}
                 />
 
                 {/* Camera & Composition — Shared Component */}

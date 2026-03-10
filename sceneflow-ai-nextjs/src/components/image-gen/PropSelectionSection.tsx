@@ -4,7 +4,7 @@ import React from 'react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { Box, Check, AlertCircle } from 'lucide-react'
+import { Box, Check, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react'
 import type { PropSelectionProps } from './types'
 
 /**
@@ -15,12 +15,15 @@ import type { PropSelectionProps } from './types'
  * - Critical/secondary importance badges
  * - "Select Suggested" / "Unselect All" convenience buttons
  * - Warning when > 5 objects selected
+ * - Collapsible with header showing selected count badge when closed
  */
 export function PropSelectionSection({
   objectReferences,
   selectedObjectIds,
   onSelectionChange,
   autoDetectedObjectIds,
+  isCollapsed,
+  onToggleCollapsed,
   className,
 }: PropSelectionProps) {
   if (objectReferences.length === 0) return null
@@ -46,15 +49,35 @@ export function PropSelectionSection({
   }
 
   const hasSuggestions = autoDetectedObjectIds && autoDetectedObjectIds.size > 0
+  const isCollapsedState = isCollapsed ?? false
 
   return (
     <div className={cn('space-y-3 p-3 rounded border border-slate-700 bg-slate-800/50', className)}>
+      {/* Collapsible header */}
+      <button
+        type="button"
+        onClick={onToggleCollapsed}
+        className="flex items-center gap-2 w-full text-left"
+      >
+        <Box className="w-4 h-4 text-cyan-400" />
+        <h4 className="text-sm font-medium text-slate-200 flex-1">Props & Objects</h4>
+        {selectedObjectIds.length > 0 && (
+          <Badge variant="secondary" className="text-[10px] bg-cyan-500/20 text-cyan-300 border-0">
+            {selectedObjectIds.length} selected
+          </Badge>
+        )}
+        {isCollapsedState ? (
+          <ChevronDown className="w-4 h-4 text-slate-400" />
+        ) : (
+          <ChevronUp className="w-4 h-4 text-slate-400" />
+        )}
+      </button>
+
+      {!isCollapsedState && (
+        <>
+      {/* Convenience buttons */}
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-slate-200 flex items-center gap-2">
-          <Box className="w-4 h-4 text-cyan-400" />
-          Props & Objects
-        </h4>
-        {/* Convenience buttons */}
+        <p className="text-xs text-slate-400">Select objects to include for visual consistency</p>
         <div className="flex items-center gap-2">
           {hasSuggestions && (
             <Button
@@ -149,6 +172,8 @@ export function PropSelectionSection({
       <p className="text-[10px] text-slate-500">
         Selected objects will be included for visual consistency in the generated image.
       </p>
+        </>
+      )}
     </div>
   )
 }

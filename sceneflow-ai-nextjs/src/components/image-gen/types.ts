@@ -97,6 +97,9 @@ export interface CharacterSelectionProps extends SectionProps {
   sceneWardrobes?: Record<string, string>
   /** Show reference quality hints based on shot type */
   hasCharacterReferences?: boolean
+  /** Collapsible section state */
+  isCollapsed?: boolean
+  onToggleCollapsed?: () => void
 }
 
 /** Prop/object selection section props */
@@ -106,6 +109,9 @@ export interface PropSelectionProps extends SectionProps {
   onSelectionChange: (ids: string[]) => void
   /** Auto-detected object IDs from scene text (for suggestion badges) */
   autoDetectedObjectIds?: Set<string>
+  /** Collapsible section state */
+  isCollapsed?: boolean
+  onToggleCollapsed?: () => void
 }
 
 /** Camera & composition section props */
