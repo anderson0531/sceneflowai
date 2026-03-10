@@ -51,6 +51,8 @@ export interface SegmentFrameTimelineProps {
     negativePrompt?: string
     usePreviousEndFrame?: boolean
     previousEndFrameUrl?: string
+    /** Whether this came from the dialog (user made explicit selections) */
+    fromDialog?: boolean
     /** Selected characters with reference images for identity lock */
     selectedCharacters?: Array<{
       name: string
@@ -75,6 +77,13 @@ export interface SegmentFrameTimelineProps {
       imageUrl?: string
       description?: string
     }>
+    /** Selected location references with images */
+    selectedLocationReferences?: Array<{
+      id: string
+      name: string
+      imageUrl?: string
+      description?: string
+    }>
     /** Scene direction for intelligent prompt building (avoids fallback to PromptEnhancer) */
     sceneDirection?: DetailedSceneDirection | null
   }) => Promise<void>
@@ -92,6 +101,16 @@ export interface SegmentFrameTimelineProps {
     name: string
     appearance?: string
     referenceUrl?: string
+    ethnicity?: string
+    age?: string
+    wardrobe?: string
+    wardrobes?: Array<{
+      id: string
+      name: string
+      description: string
+      fullBodyUrl?: string
+      headshotUrl?: string
+    }>
   }>
   /** Object/prop references from the reference library for consistent image generation */
   objectReferences?: Array<{
@@ -101,6 +120,17 @@ export interface SegmentFrameTimelineProps {
     description?: string
     importance?: 'critical' | 'secondary'
   }>
+  /** Location references for environment/setting consistency */
+  locationReferences?: Array<{
+    id: string
+    location: string
+    locationDisplay: string
+    imageUrl: string
+    description?: string
+    sceneNumbers?: number[]
+  }>
+  /** Scene heading for location matching in the dialog */
+  sceneHeading?: string
   /** Scene direction for intelligent prompt building */
   sceneDirection?: DetailedSceneDirection | null
   /** Callback to trigger segment regeneration (returns Promise for overlay) */
@@ -202,6 +232,8 @@ export function SegmentFrameTimeline({
   generatingPhase,
   characters,
   objectReferences,
+  locationReferences,
+  sceneHeading,
   sceneDirection,
   onResegment,
   onResegmentWithConfig,
@@ -275,6 +307,9 @@ export function SegmentFrameTimeline({
           negativePrompt: options.negativePrompt,
           usePreviousEndFrame: options.usePreviousEndFrame,
           previousEndFrameUrl: options.previousEndFrameUrl || undefined,
+          // CRITICAL: fromDialog=true means user explicitly chose references.
+          // Empty arrays = user chose NONE. Prevents auto-population from overriding.
+          fromDialog: options.fromDialog,
           // Pass selected characters with reference images for identity lock
           selectedCharacters: options.selectedCharacters?.map(c => ({
             name: c.name,
@@ -286,6 +321,8 @@ export function SegmentFrameTimeline({
           artStyle: options.artStyle,
           // Pass selected object/prop references
           selectedObjectReferences: options.selectedObjectReferences,
+          // Pass selected location references
+          selectedLocationReferences: options.selectedLocationReferences,
           // CRITICAL: Pass scene direction for intelligent prompt building
           // Without this, the API falls back to PromptEnhancer which buries the action prompt
           sceneDirection,
@@ -538,10 +575,15 @@ export function SegmentFrameTimeline({
         characters={characters?.map(c => ({
           name: c.name,
           appearance: c.appearance,
-          // NEW: Pass reference image for character selection UI
           referenceImage: c.referenceUrl,
+          ethnicity: c.ethnicity,
+          age: c.age,
+          wardrobe: c.wardrobe,
+          wardrobes: c.wardrobes,
         }))}
         objectReferences={objectReferences}
+        locationReferences={locationReferences}
+        sceneHeading={sceneHeading}
       />
       
       {/* Regenerate All Segments Confirmation Dialog */}

@@ -44,6 +44,7 @@ import {
   Brush,
   Film,
   Brain,
+  MapPin,
 } from 'lucide-react'
 import type { SceneSegment, TransitionType, CharacterReference } from './types'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
@@ -93,7 +94,7 @@ export interface FramePromptDialogProps {
   isGenerating?: boolean
   /** Scene direction for intelligent prompt building */
   sceneDirection?: DetailedSceneDirection | null
-  /** Characters for identity context - ENHANCED: now includes referenceImage */
+  /** Characters for identity context - ENHANCED: now includes referenceImage + wardrobes */
   characters?: Array<{
     name: string
     referenceImage?: string
@@ -101,6 +102,13 @@ export interface FramePromptDialogProps {
     ethnicity?: string
     age?: string
     wardrobe?: string
+    wardrobes?: Array<{
+      id: string
+      name: string
+      description: string
+      fullBodyUrl?: string
+      headshotUrl?: string
+    }>
   }>
   /** Object/prop references from the reference library for consistent image generation */
   objectReferences?: Array<{
@@ -109,6 +117,15 @@ export interface FramePromptDialogProps {
     imageUrl: string
     description?: string
     importance?: 'critical' | 'secondary'
+  }>
+  /** Location references for environment/setting consistency */
+  locationReferences?: Array<{
+    id: string
+    location: string
+    locationDisplay: string
+    imageUrl: string
+    description?: string
+    sceneNumbers?: number[]
   }>
   /** Scene heading for location parsing */
   sceneHeading?: string
@@ -121,10 +138,21 @@ export interface FrameGenerationOptions {
   negativePrompt: string
   usePreviousEndFrame: boolean
   previousEndFrameUrl?: string | null
+  /** Indicates this came from the dialog (user made explicit selections).
+   *  When true, empty selectedCharacters/selectedObjectReferences means user chose NONE.
+   *  When false/absent, batch generation should auto-populate references. */
+  fromDialog?: boolean
   /** NEW: Selected characters with reference images for generation */
   selectedCharacters?: CharacterReference[]
   /** NEW: Selected object/prop references for consistent generation */
   selectedObjectReferences?: Array<{
+    id: string
+    name: string
+    imageUrl: string
+    description?: string
+  }>
+  /** NEW: Selected location references for environment consistency */
+  selectedLocationReferences?: Array<{
     id: string
     name: string
     imageUrl: string
@@ -165,6 +193,7 @@ export function FramePromptDialog({
   sceneDirection: propSceneDirection,
   characters = [],
   objectReferences = [],
+  locationReferences = [],
   sceneHeading,
 }: FramePromptDialogProps) {
   // Try to get scene direction from context if not passed as prop
@@ -193,6 +222,12 @@ export function FramePromptDialog({
   
   // Object reference selection state
   const [selectedObjectRefIds, setSelectedObjectRefIds] = useState<string[]>([])
+  
+  // Location reference selection state
+  const [selectedLocationRefIds, setSelectedLocationRefIds] = useState<string[]>([])
+  
+  // Auto-matched location ref IDs from scene heading
+  const [autoMatchedLocationRefIds, setAutoMatchedLocationRefIds] = useState<Set<string>>(new Set())
   
   // Art style state (default to photorealistic for backward compatibility)
   const [artStyle, setArtStyle] = useState<string>('photorealistic')
@@ -429,6 +464,34 @@ export function FramePromptDialog({
       setAutoDetectedObjectIds(new Set(detected.map(o => o.id)))
     }
 
+    // Auto-match location references from scene heading
+    if (locationReferences.length > 0 && sceneHeading) {
+      // Parse location from heading: "INT. LOCATION - TIME"
+      const headingStr = typeof sceneHeading === 'string' ? sceneHeading : ''
+      const headingLower = headingStr.toLowerCase()
+      const matchedIds: string[] = []
+      const matchedIdSet = new Set<string>()
+      
+      for (const loc of locationReferences) {
+        const locLower = loc.location.toLowerCase()
+        // Match if the heading contains the location name or vice versa
+        if (headingLower.includes(locLower) || locLower.includes(headingLower.replace(/^(int|ext)\.?\s*/i, '').replace(/\s*-\s*(day|night|dawn|dusk|evening|morning).*$/i, '').trim())) {
+          matchedIds.push(loc.id)
+          matchedIdSet.add(loc.id)
+        }
+      }
+      setAutoMatchedLocationRefIds(matchedIdSet)
+      // Auto-select matched locations
+      if (matchedIds.length > 0) {
+        setSelectedLocationRefIds(matchedIds)
+      } else {
+        setSelectedLocationRefIds([])
+      }
+    } else {
+      setAutoMatchedLocationRefIds(new Set())
+      setSelectedLocationRefIds([])
+    }
+
     // Initialize talent direction from scene direction
     if (sceneDirection?.talent) {
       setTalentDirection(prev => ({
@@ -437,7 +500,7 @@ export function FramePromptDialog({
         talentBlocking: sceneDirection.talent?.blocking || prev.talentBlocking,
       }))
     }
-  }, [segment, open, previousEndFrameUrl, frameType, sceneDirection, sceneHeading, characters])
+  }, [segment, open, previousEndFrameUrl, frameType, sceneDirection, sceneHeading, characters, locationReferences])
 
   // Build intelligent prompt using keyframe prompt builder
   // If pasted prompts exist (startFramePrompt/endFramePrompt), return those directly
@@ -588,6 +651,26 @@ export function FramePromptDialog({
 
     // Get selected object references
     const selectedObjectRefs = objectReferences.filter(obj => selectedObjectRefIds.includes(obj.id))
+    
+    // Get selected location references
+    const selectedLocationRefs = locationReferences.filter(loc => selectedLocationRefIds.includes(loc.id))
+
+    // Build selected characters with wardrobe-specific reference images
+    // When a wardrobe is selected and has a fullBody/headshot image, use that instead of the base portrait
+    const dialogSelectedCharacters = selectedCharacters.map(c => {
+      const charData = characters.find(ch => ch.name === c.name)
+      const selectedWardrobeId = selectedWardrobes[c.name]
+      const selectedWardrobe = selectedWardrobeId && charData?.wardrobes?.find(w => w.id === selectedWardrobeId)
+      
+      // Wardrobe image replaces base portrait (same character in correct outfit)
+      const wardrobeImageUrl = selectedWardrobe?.fullBodyUrl || selectedWardrobe?.headshotUrl
+      
+      return {
+        ...c,
+        referenceImageUrl: wardrobeImageUrl || c.referenceImageUrl,
+        wardrobe: selectedWardrobe?.description || c.wardrobe,
+      }
+    })
 
     const options: FrameGenerationOptions = {
       segmentId: segment.segmentId,
@@ -596,26 +679,36 @@ export function FramePromptDialog({
       negativePrompt: buildNegativePrompt(),
       usePreviousEndFrame,
       previousEndFrameUrl: usePreviousEndFrame ? previousEndFrameUrl : undefined,
-      // NEW: Pass selected characters with reference images
-      selectedCharacters: selectedCharacters.length > 0 ? selectedCharacters : undefined,
-      // NEW: Pass selected object references
-      selectedObjectReferences: selectedObjectRefs.length > 0 ? selectedObjectRefs.map(obj => ({
+      // CRITICAL: fromDialog=true means the user explicitly chose which references to include.
+      // Empty arrays = user chose NONE. This prevents auto-population from overriding selections.
+      fromDialog: true,
+      // Pass selected characters — empty array means user deselected all (send no char refs)
+      selectedCharacters: dialogSelectedCharacters,
+      // Pass selected object references — empty array means user deselected all
+      selectedObjectReferences: selectedObjectRefs.map(obj => ({
         id: obj.id,
         name: obj.name,
         imageUrl: obj.imageUrl,
         description: obj.description,
-      })) : undefined,
-      // NEW: Pass visual setup for prompt construction
+      })),
+      // Pass selected location references
+      selectedLocationReferences: selectedLocationRefs.map(loc => ({
+        id: loc.id,
+        name: loc.location,
+        imageUrl: loc.imageUrl,
+        description: loc.description,
+      })),
+      // Pass visual setup for prompt construction
       visualSetup: mode === 'guided' ? visualSetup : undefined,
-      // NEW: Pass art style for generation
+      // Pass art style for generation
       artStyle,
-      // NEW: Pass model tier and thinking level
+      // Pass model tier and thinking level
       modelTier,
       thinkingLevel,
     }
 
     onGenerate(options)
-  }, [segment, frameType, customPrompt, buildNegativePrompt, usePreviousEndFrame, previousEndFrameUrl, onGenerate, selectedCharacters, objectReferences, selectedObjectRefIds, mode, visualSetup, artStyle, modelTier, thinkingLevel])
+  }, [segment, frameType, customPrompt, buildNegativePrompt, usePreviousEndFrame, previousEndFrameUrl, onGenerate, selectedCharacters, characters, selectedWardrobes, objectReferences, selectedObjectRefIds, locationReferences, selectedLocationRefIds, mode, visualSetup, artStyle, modelTier, thinkingLevel])
 
   if (!segment) return null
 
@@ -733,6 +826,87 @@ export function FramePromptDialog({
                   visualSetup={visualSetup}
                   onVisualSetupChange={(update) => setVisualSetup(prev => ({ ...prev, ...update }))}
                 />
+
+                {/* Location References — Select location images for environment consistency */}
+                {locationReferences.length > 0 && (
+                  <div className="space-y-3 p-3 rounded border border-slate-700 bg-slate-800/50">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium text-slate-200 flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-cyan-400" />
+                        Location References
+                      </h4>
+                      <div className="flex items-center gap-2">
+                        {autoMatchedLocationRefIds.size > 0 && (
+                          <button
+                            onClick={() => setSelectedLocationRefIds(
+                              locationReferences.filter(l => autoMatchedLocationRefIds.has(l.id)).map(l => l.id)
+                            )}
+                            className="h-6 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 px-2 rounded"
+                          >
+                            Select Matched
+                          </button>
+                        )}
+                        {selectedLocationRefIds.length > 0 && (
+                          <button
+                            onClick={() => setSelectedLocationRefIds([])}
+                            className="h-6 text-[10px] text-slate-400 hover:text-slate-300 px-2 rounded"
+                          >
+                            Unselect All
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-400">Select location images for environment/setting consistency</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {locationReferences.map((loc) => {
+                        const isSelected = selectedLocationRefIds.includes(loc.id)
+                        const isMatched = autoMatchedLocationRefIds.has(loc.id)
+                        return (
+                          <button
+                            key={loc.id}
+                            onClick={() => {
+                              setSelectedLocationRefIds(prev =>
+                                prev.includes(loc.id)
+                                  ? prev.filter(id => id !== loc.id)
+                                  : [...prev, loc.id]
+                              )
+                            }}
+                            className={cn(
+                              'relative rounded-lg overflow-hidden border-2 transition-all aspect-video',
+                              isSelected
+                                ? 'border-cyan-500 ring-2 ring-cyan-500/30'
+                                : 'border-slate-700 hover:border-slate-500'
+                            )}
+                          >
+                            <img
+                              src={loc.imageUrl}
+                              alt={loc.location}
+                              className="w-full h-full object-cover"
+                            />
+                            {isSelected && (
+                              <div className="absolute top-1 right-1 w-5 h-5 bg-cyan-500 rounded-full flex items-center justify-center">
+                                <Check className="w-3 h-3 text-white" />
+                              </div>
+                            )}
+                            {isMatched && !isSelected && (
+                              <div className="absolute top-1 left-1">
+                                <Badge variant="secondary" className="text-[8px] bg-cyan-500/80 text-white border-0 px-1 py-0">
+                                  Match
+                                </Badge>
+                              </div>
+                            )}
+                            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-1.5">
+                              <p className="text-[10px] text-white font-medium truncate">{loc.location}</p>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <p className="text-[10px] text-slate-500">
+                      Selected locations will be included as reference images for visual consistency.
+                    </p>
+                  </div>
+                )}
 
                 {/* Characters in Scene — Hidden for no-talent segments (title sequences, abstract, VFX-only) */}
                 {!isNoTalentSegment && (

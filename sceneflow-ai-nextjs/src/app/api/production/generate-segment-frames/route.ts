@@ -97,6 +97,13 @@ interface FrameGenerationRequest {
     imageUrl?: string
   }>
   
+  // Location references for environment consistency (from dialog selection)
+  locationReferences?: Array<{
+    name: string
+    description?: string
+    imageUrl?: string
+  }>
+  
   // Art style for frame generation (default: photorealistic)
   artStyle?: string
   
@@ -172,6 +179,8 @@ export async function POST(req: NextRequest) {
       isPanTransition = false,
       // NEW: Object references for prop consistency
       objectReferences = [],
+      // NEW: Location references for environment consistency
+      locationReferences = [],
       // NEW: Art style for frame generation
       artStyle = 'photorealistic',
       // NEW: Model quality tier
@@ -397,9 +406,17 @@ export async function POST(req: NextRequest) {
                 'vfx only', 'visual effects only', 'no performers'].some(x => lower.includes(x))
       })()
       
-      // Add character portrait references (up to 3 to leave room for props)
+      // Determine reference image budget allocation:
+      // - Location references get 1 guaranteed slot (environment consistency is high-value)
+      // - Character portraits get up to 2 slots (reduced from 3 to accommodate location)
+      // - Scene/frame reference gets 1 slot
+      // - Props/objects fill remaining slots up to 5 total
+      const hasLocationRefs = locationReferences.filter(l => l.imageUrl).length > 0
+      const maxCharRefs = hasLocationRefs ? 2 : 3
+      
+      // Add character portrait references (up to maxCharRefs)
       // SKIP for no-talent scenes — portrait images override text prompt instructions
-      const charRefs = isNoTalentSegment ? [] : characters.filter(c => c.referenceUrl).slice(0, 3)
+      const charRefs = isNoTalentSegment ? [] : characters.filter(c => c.referenceUrl).slice(0, maxCharRefs)
       if (isNoTalentSegment) {
         console.log('[Generate Frames] No-talent scene detected — skipping character portrait references')
       }
@@ -408,6 +425,17 @@ export async function POST(req: NextRequest) {
           imageUrl: c.referenceUrl!,
           name: c.name
         })
+      }
+      
+      // Add location reference images (1 guaranteed slot)
+      const locationRefs = locationReferences.filter(l => l.imageUrl).slice(0, 1)
+      for (const loc of locationRefs) {
+        if (allReferenceImages.length < 5) {
+          allReferenceImages.push({
+            imageUrl: loc.imageUrl!,
+            name: `Location: ${loc.name}`
+          })
+        }
       }
       
       // Add scene/frame reference if available

@@ -1923,6 +1923,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       negativePrompt?: string
       usePreviousEndFrame?: boolean
       previousEndFrameUrl?: string
+      /** Whether this came from the dialog (user made explicit selections) */
+      fromDialog?: boolean
       /** Selected characters with reference images for identity lock */
       selectedCharacters?: Array<{
         name: string
@@ -1942,6 +1944,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       artStyle?: string
       /** Selected object/prop references with images */
       selectedObjectReferences?: Array<{
+        id: string
+        name: string
+        imageUrl?: string
+        description?: string
+      }>
+      /** Selected location references with images */
+      selectedLocationReferences?: Array<{
         id: string
         name: string
         imageUrl?: string
@@ -2013,12 +2022,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             // Without this, the API falls back to PromptEnhancer which prepends character
             // identity text before the action prompt, burying the actual scene description
             sceneDirection: options?.sceneDirection || productionData?.sceneDirection || null,
-            // Enhanced character data with all fields for identity lock
-            // When user has explicitly selected characters in the dialog, prioritize those
-            // Otherwise, use priority: protagonist > main > supporting (sorted before API handles slicing)
-            characters: options?.selectedCharacters?.length 
-              // User selected specific characters - map to full character data with priority
-              ? options.selectedCharacters.map(selected => {
+            // Character data for identity lock
+            // CRITICAL FIX: When fromDialog=true, the user explicitly chose which characters
+            // to include (even if none). Only auto-populate for batch generation (fromDialog=false).
+            characters: options?.fromDialog
+              // Dialog-driven: use EXACTLY what the user selected (empty = none)
+              ? (options.selectedCharacters || []).map(selected => {
                   const fullChar = characters.find(c => c.name === selected.name)
                   return {
                     name: selected.name,
@@ -2029,22 +2038,33 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     wardrobe: (fullChar as any)?.defaultWardrobe || (fullChar as any)?.wardrobe,
                   }
                 })
-              // No user selection - fall back to all characters sorted by role
-              : [...characters]
-                .filter(c => c.type === 'character' || !c.type) // Exclude narrator/description
-                .sort((a, b) => {
-                  const roleOrder: Record<string, number> = { protagonist: 0, main: 1, supporting: 2 }
-                  return (roleOrder[a.role || 'supporting'] || 2) - (roleOrder[b.role || 'supporting'] || 2)
-                })
-                .map(c => ({
-                  name: c.name,
-                  appearance: c.appearanceDescription || c.description,
-                  referenceUrl: c.referenceImage,
-                  // Additional fields for enhanced identity lock
-                  ethnicity: (c as any).ethnicity,
-                  age: (c as any).age,
-                  wardrobe: (c as any).defaultWardrobe || (c as any).wardrobe,
-                })),
+              // Batch generation: auto-populate with all characters sorted by role
+              : options?.selectedCharacters?.length 
+                ? options.selectedCharacters.map(selected => {
+                    const fullChar = characters.find(c => c.name === selected.name)
+                    return {
+                      name: selected.name,
+                      appearance: fullChar?.appearanceDescription || fullChar?.description,
+                      referenceUrl: selected.referenceImageUrl || fullChar?.referenceImage,
+                      ethnicity: (fullChar as any)?.ethnicity,
+                      age: (fullChar as any)?.age,
+                      wardrobe: (fullChar as any)?.defaultWardrobe || (fullChar as any)?.wardrobe,
+                    }
+                  })
+                : [...characters]
+                  .filter(c => c.type === 'character' || !c.type)
+                  .sort((a, b) => {
+                    const roleOrder: Record<string, number> = { protagonist: 0, main: 1, supporting: 2 }
+                    return (roleOrder[a.role || 'supporting'] || 2) - (roleOrder[b.role || 'supporting'] || 2)
+                  })
+                  .map(c => ({
+                    name: c.name,
+                    appearance: c.appearanceDescription || c.description,
+                    referenceUrl: c.referenceImage,
+                    ethnicity: (c as any).ethnicity,
+                    age: (c as any).age,
+                    wardrobe: (c as any).defaultWardrobe || (c as any).wardrobe,
+                  })),
             sceneContext: {
               heading: typeof scene?.heading === 'string' ? scene.heading : scene?.heading?.text,
               location: typeof scene?.heading === 'string' ? scene.heading : scene?.heading?.text,
@@ -2053,23 +2073,41 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 : undefined
             },
             // Object references for prop consistency
-            // When user has explicitly selected props in the dialog, prioritize those
-            // Otherwise, fall back to auto-detected objects from segment text
-            objectReferences: options?.selectedObjectReferences?.length
-              ? options.selectedObjectReferences.map(obj => ({
+            // CRITICAL FIX: When fromDialog=true, use EXACTLY what user selected (empty = none).
+            // Only auto-detect for batch generation (fromDialog=false).
+            objectReferences: options?.fromDialog
+              // Dialog-driven: use EXACTLY what the user selected (empty = none)
+              ? (options.selectedObjectReferences || []).map(obj => ({
                   name: obj.name,
                   description: obj.description,
                   category: 'prop' as const,
-                  importance: 'critical' as const, // User-selected = critical
+                  importance: 'critical' as const,
                   imageUrl: obj.imageUrl
                 }))
-              : detectedObjects.map(obj => ({
-                  name: obj.name,
-                  description: obj.description,
-                  category: obj.category,
-                  importance: obj.importance,
-                  imageUrl: obj.imageUrl
+              // Batch generation: auto-detect or use explicit selections
+              : options?.selectedObjectReferences?.length
+                ? options.selectedObjectReferences.map(obj => ({
+                    name: obj.name,
+                    description: obj.description,
+                    category: 'prop' as const,
+                    importance: 'critical' as const,
+                    imageUrl: obj.imageUrl
+                  }))
+                : detectedObjects.map(obj => ({
+                    name: obj.name,
+                    description: obj.description,
+                    category: obj.category,
+                    importance: obj.importance,
+                    imageUrl: obj.imageUrl
+                  })),
+            // Location references for environment consistency (from dialog selection)
+            locationReferences: options?.fromDialog
+              ? (options.selectedLocationReferences || []).map(loc => ({
+                  name: loc.name,
+                  description: loc.description,
+                  imageUrl: loc.imageUrl
                 }))
+              : undefined
           })
         })
 
@@ -10167,6 +10205,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   onDismissStaleWarning={handleDismissStaleWarning}
                 sceneReferences={sceneReferences}
                 objectReferences={objectReferences}
+                locationReferences={locationReferences}
                 showStoryboard={showSceneGallery}
                 onToggleStoryboard={() => setShowSceneGallery(!showSceneGallery)}
                 showDashboard={showDashboard}

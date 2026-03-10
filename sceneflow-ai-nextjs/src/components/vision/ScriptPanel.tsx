@@ -298,6 +298,8 @@ interface ScriptPanelProps {
   // Reference Library - scene backdrops and props/objects for Opening Frame builder
   sceneReferences?: Array<{ id: string; name: string; description?: string; imageUrl?: string }>
   objectReferences?: Array<{ id: string; name: string; description?: string; imageUrl?: string }>
+  // Location references for environment consistency in keyframe generation
+  locationReferences?: Array<{ id: string; location: string; locationDisplay: string; imageUrl: string; description?: string; sceneNumbers?: number[] }>
   // Take management
   onSelectTake?: (sceneId: string, segmentId: string, takeId: string, assetUrl: string) => void
   onDeleteTake?: (sceneId: string, segmentId: string, takeId: string) => void
@@ -559,7 +561,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -6263,7 +6265,17 @@ function SceneCard({
                         characters={characters?.map(c => ({
                           name: c.name,
                           appearance: c.appearance || c.description,
-                          referenceUrl: (c as any).referenceImage
+                          referenceUrl: (c as any).referenceImage,
+                          ethnicity: (c as any).ethnicity,
+                          age: (c as any).age,
+                          wardrobe: (c as any).defaultWardrobe || (c as any).wardrobe,
+                          wardrobes: (c as any).wardrobes?.map((w: any) => ({
+                            id: w.id,
+                            name: w.name,
+                            description: w.description,
+                            fullBodyUrl: w.fullBodyUrl,
+                            headshotUrl: w.headshotUrl,
+                          })),
                         }))}
                         objectReferences={objectReferences?.map(obj => ({
                           id: obj.id,
@@ -6271,6 +6283,8 @@ function SceneCard({
                           imageUrl: obj.imageUrl || '',
                           description: obj.description,
                         })) || []}
+                        locationReferences={locationReferences}
+                        sceneHeading={typeof scene.heading === 'string' ? scene.heading : scene.heading?.text}
                         sceneDirection={scene.detailedDirection || scene.sceneDirection}
                         sceneData={{
                           id: scene.id,
@@ -6653,7 +6667,17 @@ function SceneCard({
                           characters={characters?.map(c => ({
                             name: c.name,
                             appearance: c.appearance || c.description,
-                            referenceUrl: (c as any).referenceImage
+                            referenceUrl: (c as any).referenceImage,
+                            ethnicity: (c as any).ethnicity,
+                            age: (c as any).age,
+                            wardrobe: (c as any).defaultWardrobe || (c as any).wardrobe,
+                            wardrobes: (c as any).wardrobes?.map((w: any) => ({
+                              id: w.id,
+                              name: w.name,
+                              description: w.description,
+                              fullBodyUrl: w.fullBodyUrl,
+                              headshotUrl: w.headshotUrl,
+                            })),
                           }))}
                           objectReferences={objectReferences?.map(obj => ({
                             id: obj.id,
@@ -6661,6 +6685,8 @@ function SceneCard({
                             imageUrl: obj.imageUrl || '',
                             description: obj.description,
                           })) || []}
+                          locationReferences={locationReferences}
+                          sceneHeading={typeof scene.heading === 'string' ? scene.heading : scene.heading?.text}
                           sceneDirection={scene.detailedDirection || scene.sceneDirection}
                           sceneData={{
                             id: scene.id,
