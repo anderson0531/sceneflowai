@@ -18,12 +18,21 @@ function simpleHash(str: string): string {
 }
 
 /**
- * Detect if scene direction indicates no on-screen talent
- * Used to prevent character injection in title sequences, abstract scenes, etc.
+ * Detect if scene direction indicates no on-screen talent.
+ * Uses two-tier detection:
+ * 1. Explicit keywords: "no talent", "n/a", "abstract", etc.
+ * 2. Semantic heuristic: If talent text describes abstract mood/atmosphere
+ *    (e.g., "initial chaos and potential, sudden genesis") rather than
+ *    human performance, AND the scene has zero dialogue, treat as no-talent.
  */
-function isNoTalentScene(talent: string | undefined | null): boolean {
+function isNoTalentScene(
+  talent: string | undefined | null,
+  context?: { dialogueCount?: number; characterNames?: string[] }
+): boolean {
   if (!talent) return false
   const talentLower = talent.toLowerCase()
+  
+  // Tier 1: Explicit no-talent indicators
   const noTalentIndicators = [
     'n/a',
     'no on-screen talent',
@@ -39,7 +48,39 @@ function isNoTalentScene(talent: string | undefined | null): boolean {
     'vfx only',
     'visual effects only',
   ]
-  return noTalentIndicators.some(indicator => talentLower.includes(indicator))
+  if (noTalentIndicators.some(indicator => talentLower.includes(indicator))) {
+    return true
+  }
+  
+  // Tier 2: Semantic heuristic for abstract/atmospheric talent descriptions
+  // If there's no dialogue AND the talent text doesn't reference any known
+  // character names AND it reads like mood/atmosphere description, it's no-talent.
+  if (context) {
+    const hasDialogue = (context.dialogueCount ?? 0) > 0
+    if (!hasDialogue) {
+      // Check if talent text mentions any actual character names
+      const mentionsCharacter = (context.characterNames || []).some(name => 
+        talentLower.includes(name.toLowerCase())
+      )
+      if (!mentionsCharacter) {
+        // Atmospheric/abstract indicators — descriptions of mood, not human action
+        const abstractIndicators = [
+          'chaos', 'genesis', 'dissipation', 'particles', 'luminous',
+          'algorithmic', 'computational', 'vortex', 'convergence',
+          'contained power', 'immense', 'cosmic', 'ethereal',
+          'crystalline', 'fractal', 'nebula', 'dimensional',
+          'energy', 'formation', 'implosion', 'revelation',
+        ]
+        const matchCount = abstractIndicators.filter(w => talentLower.includes(w)).length
+        if (matchCount >= 2) {
+          console.log(`[isNoTalentScene] Semantic detection: talent text is abstract (${matchCount} indicators), no dialogue, no character names → treating as no-talent`)
+          return true
+        }
+      }
+    }
+  }
+  
+  return false
 }
 
 interface GenerateSegmentsRequest {
@@ -602,27 +643,46 @@ function buildComprehensiveSceneData(
   const sceneFrameUrl = scene.imageUrl || scene.thumbnailUrl || null
 
   // Extract relevant characters based on selection and scene mentions
-  const sceneText = `${heading} ${visualDescription} ${narration || ''} ${dialogue.map((d: any) => `${d.character} ${d.text}`).join(' ')}`.toLowerCase()
+  // CRITICAL: Skip character extraction for no-talent scenes to prevent injection
+  const allCharacterNames = characters.map((c: any) => c.name || '').filter(Boolean)
+  const sceneIsNoTalent = isNoTalentScene(sceneDirection.talent, {
+    dialogueCount: dialogue.length,
+    characterNames: allCharacterNames,
+  })
   
-  // Filter characters: prefer selected ones, fallback to scene mentions
-  const selectedIds = options?.selectedCharacterIds || []
-  const relevantCharacters = characters
-    .filter((c: any) => {
-      // If specific characters are selected, use those
-      if (selectedIds.length > 0) {
-        return selectedIds.includes(c.id)
-      }
-      // Otherwise, include characters mentioned in the scene
-      const charName = (c.name || '').toLowerCase()
-      return sceneText.includes(charName)
-    })
-    .map((c: any) => ({
-      name: c.name || 'Unknown',
-      description: c.appearanceDescription || c.description || '',
-      hasReferenceImage: !!(c.referenceImageUrl || c.imageUrl || c.referenceImage),
-      referenceImageUrl: c.referenceImageUrl || c.imageUrl || c.referenceImage || undefined,
-      wardrobe: c.defaultWardrobe || c.wardrobe || undefined
-    }))
+  let relevantCharacters: Array<{
+    name: string
+    description: string
+    hasReferenceImage: boolean
+    referenceImageUrl?: string
+    wardrobe?: string
+  }> = []
+  
+  if (!sceneIsNoTalent) {
+    const sceneText = `${heading} ${visualDescription} ${narration || ''} ${dialogue.map((d: any) => `${d.character} ${d.text}`).join(' ')}`.toLowerCase()
+    
+    // Filter characters: prefer selected ones, fallback to scene mentions
+    const selectedIds = options?.selectedCharacterIds || []
+    relevantCharacters = characters
+      .filter((c: any) => {
+        // If specific characters are selected, use those
+        if (selectedIds.length > 0) {
+          return selectedIds.includes(c.id)
+        }
+        // Otherwise, include characters mentioned in the scene
+        const charName = (c.name || '').toLowerCase()
+        return sceneText.includes(charName)
+      })
+      .map((c: any) => ({
+        name: c.name || 'Unknown',
+        description: c.appearanceDescription || c.description || '',
+        hasReferenceImage: !!(c.referenceImageUrl || c.imageUrl || c.referenceImage),
+        referenceImageUrl: c.referenceImageUrl || c.imageUrl || c.referenceImage || undefined,
+        wardrobe: c.defaultWardrobe || c.wardrobe || undefined
+      }))
+  } else {
+    console.log(`[buildComprehensiveSceneData] No-talent scene detected — suppressing character extraction`)
+  }
 
   // Estimate duration based on dialogue (approx 2.5 words per second) + action
   const dialogueWords = dialogue.reduce((acc: number, d: any) => acc + (d.text?.split(' ').length || 0), 0)
@@ -892,7 +952,10 @@ function generateIntelligentSegmentationPrompt(
   minimumSegmentsRequired: number = 1
 ): string {
   // CRITICAL: Check if this is a no-talent scene (title sequence, abstract, etc.)
-  const noTalentScene = isNoTalentScene(sceneData.sceneDirection.talent)
+  const noTalentScene = isNoTalentScene(sceneData.sceneDirection.talent, {
+    dialogueCount: sceneData.dialogue.length,
+    characterNames: sceneData.characters.map(c => c.name),
+  })
   
   // Enhanced character list with wardrobe and reference image info
   // SKIP character list entirely for no-talent scenes
@@ -1255,7 +1318,10 @@ function generateDirectionsOnlyPrompt(
   preferredDuration: number,
   minimumSegmentsRequired: number
 ): string {
-  const noTalentScene = isNoTalentScene(sceneData.sceneDirection.talent)
+  const noTalentScene = isNoTalentScene(sceneData.sceneDirection.talent, {
+    dialogueCount: sceneData.dialogue.length,
+    characterNames: sceneData.characters.map(c => c.name),
+  })
   
   const dialogueList = noTalentScene
     ? 'NO DIALOGUE - No on-screen talent'
@@ -1367,18 +1433,29 @@ function generatePromptsFromDirectionsPrompt(
   approvedDirections: SegmentDirection[],
   preferredDuration: number
 ): string {
-  const noTalentScene = isNoTalentScene(sceneData.sceneDirection.talent)
+  // Check scene-level no-talent with semantic context
+  const sceneLevelNoTalent = isNoTalentScene(sceneData.sceneDirection.talent, {
+    dialogueCount: sceneData.dialogue.length,
+    characterNames: sceneData.characters.map(c => c.name),
+  })
+  // Also check if ALL approved directions are marked no-talent
+  const allDirectionsNoTalent = approvedDirections.length > 0 && approvedDirections.every(d => d.isNoTalent)
+  const noTalentScene = sceneLevelNoTalent || allDirectionsNoTalent
   
-  const characterDescriptions = sceneData.characters.map(c => {
-    let desc = `- ${c.name}: ${c.description}`
-    if (c.wardrobe) desc += ` | Wardrobe: ${c.wardrobe}`
-    if (c.hasReferenceImage) desc += ' (✓ Reference available)'
-    return desc
-  }).join('\n')
+  const characterDescriptions = noTalentScene
+    ? ''
+    : sceneData.characters.map(c => {
+        let desc = `- ${c.name}: ${c.description}`
+        if (c.wardrobe) desc += ` | Wardrobe: ${c.wardrobe}`
+        if (c.hasReferenceImage) desc += ' (✓ Reference available)'
+        return desc
+      }).join('\n')
   
-  const dialogueList = sceneData.dialogue.map((d, idx) => 
-    `[${idx}] ${d.character}${d.emotion ? ` (${d.emotion})` : ''}: "${d.text}"`
-  ).join('\n')
+  const dialogueList = noTalentScene
+    ? ''
+    : sceneData.dialogue.map((d, idx) => 
+        `[${idx}] ${d.character}${d.emotion ? ` (${d.emotion})` : ''}: "${d.text}"`
+      ).join('\n')
   
   const directionsJson = approvedDirections.map((dir, idx) => ({
     sequence: idx + 1,
@@ -1436,8 +1513,8 @@ For each approved direction, generate a RICH cinematic video prompt (80-150 word
 1. FOLLOW the approved shot_type, camera_movement, camera_angle, and lens EXACTLY
 2. INCLUDE the specified talent_action and emotional_beat
 3. FOR DIALOGUE: Include as "[Name] speaks, \\"[exact dialogue text]\\"" — Veo 3.1 generates speech from text
-4. FOR NO-TALENT: Focus on environment, VFX, atmosphere — no people
-5. EVERY character mentioned MUST have their FULL appearance description (face, hair, skin, build, wardrobe)
+4. **PER-SEGMENT NO-TALENT ENFORCEMENT:** For ANY segment where \`is_no_talent: true\` in the approved directions, you MUST NOT include any people, characters, faces, human figures, or dialogue in that segment's prompt — regardless of the CHARACTERS or DIALOGUE sections above. Focus ONLY on environment, VFX, abstract visuals, text/graphics, and atmosphere for those segments.
+5. EVERY character mentioned in a talent segment MUST have their FULL appearance description (face, hair, skin, build, wardrobe)
 6. Narration is a SEPARATE audio voiceover — NEVER include narration text in prompts
 7. Start frame description MUST logically follow previous segment's end frame for continuity
 8. Describe specific depth-of-field: what's in focus, what's bokeh

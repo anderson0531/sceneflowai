@@ -207,46 +207,93 @@ function parsePromptComponents(prompt: string): Partial<PromptComponents> {
 }
 
 /**
- * Compile prompt components back into a full prompt
+ * Apply guided edits surgically to the AI-generated prompt.
+ * Instead of discarding the rich 80-150 word AI prompt and rebuilding from dropdowns
+ * (which produced generic 15-word prompts), we find and replace cinematography elements
+ * within the original prompt, preserving all the detailed description, dialogue, lighting,
+ * color grading, and atmosphere that Gemini generated.
  */
 function compilePrompt(
   lockedContent: Partial<PromptComponents>,
   editableContent: Partial<PromptComponents>,
   originalPrompt: string
 ): string {
-  const parts: string[] = []
-
-  // Setting context (from locked content)
-  if (lockedContent.setting) {
-    parts.push(`Setting: ${lockedContent.setting}.`)
+  if (!originalPrompt.trim()) {
+    // Fallback: if no original prompt, build a basic one
+    const parts: string[] = []
+    if (lockedContent.setting) parts.push(`Setting: ${lockedContent.setting}.`)
+    const shotLabel = SHOT_TYPES.find(s => s.value === editableContent.shotType)?.label || 'Medium Shot'
+    const angleLabel = CAMERA_ANGLES.find(a => a.value === editableContent.cameraAngle)?.label || 'Eye Level'
+    const movementLabel = CAMERA_MOVEMENTS.find(m => m.value === editableContent.cameraMovement)?.label || 'Static'
+    parts.push(`${shotLabel}, ${angleLabel.toLowerCase()}, ${movementLabel.toLowerCase()}.`)
+    const lightingLabel = LIGHTING_STYLES.find(l => l.value === editableContent.lighting)?.label || 'Natural Light'
+    parts.push(`${lightingLabel}.`)
+    if (editableContent.additionalDirection) parts.push(editableContent.additionalDirection)
+    return parts.join(' ').trim()
   }
 
-  // Camera direction (editable)
-  const shotLabel = SHOT_TYPES.find(s => s.value === editableContent.shotType)?.label || 'Medium Shot'
-  const angleLabel = CAMERA_ANGLES.find(a => a.value === editableContent.cameraAngle)?.label || 'Eye Level'
-  const movementLabel = CAMERA_MOVEMENTS.find(m => m.value === editableContent.cameraMovement)?.label || 'Static'
-  
-  parts.push(`${shotLabel}, ${angleLabel.toLowerCase()}, ${movementLabel.toLowerCase()}.`)
+  let result = originalPrompt
 
-  // Lighting and mood (editable)
-  const lightingLabel = LIGHTING_STYLES.find(l => l.value === editableContent.lighting)?.label || 'Natural Light'
-  const moodLabel = MOOD_OPTIONS.find(m => m.value === editableContent.mood)?.label || 'Moderate'
-  
-  parts.push(`${lightingLabel}, ${moodLabel.toLowerCase()} atmosphere.`)
-
-  // Characters and action (from original AI prompt, not editable)
-  // We preserve the AI's character description and action since those are scene bible derived
-  const actionMatch = originalPrompt.match(/(?:action|movement|expression|gesture)[:\s]+([^.]+)/i)
-  if (actionMatch) {
-    parts.push(actionMatch[1].trim() + '.')
+  // 1. Replace shot type — typically appears at the start: "Wide Shot", "Medium Close-Up", etc.
+  const shotLabel = SHOT_TYPES.find(s => s.value === editableContent.shotType)?.label
+  if (shotLabel) {
+    const shotPatterns = SHOT_TYPES.map(s => s.label).sort((a, b) => b.length - a.length)
+    for (const pattern of shotPatterns) {
+      const regex = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+      if (regex.test(result)) {
+        result = result.replace(regex, shotLabel)
+        break
+      }
+    }
   }
 
-  // Additional direction (editable)
-  if (editableContent.additionalDirection) {
-    parts.push(editableContent.additionalDirection)
+  // 2. Replace camera angle — "eye level", "low angle", etc.
+  const angleLabel = CAMERA_ANGLES.find(a => a.value === editableContent.cameraAngle)?.label
+  if (angleLabel) {
+    const anglePatterns = CAMERA_ANGLES.map(a => a.label).sort((a, b) => b.length - a.length)
+    for (const pattern of anglePatterns) {
+      const regex = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+      if (regex.test(result)) {
+        result = result.replace(regex, angleLabel.toLowerCase())
+        break
+      }
+    }
   }
 
-  return parts.join(' ').trim()
+  // 3. Replace camera movement — "static", "slow push in", "tracking shot", etc.
+  const movementLabel = CAMERA_MOVEMENTS.find(m => m.value === editableContent.cameraMovement)?.label
+  if (movementLabel) {
+    const movementPatterns = CAMERA_MOVEMENTS.map(m => m.label).sort((a, b) => b.length - a.length)
+    for (const pattern of movementPatterns) {
+      const regex = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+      if (regex.test(result)) {
+        result = result.replace(regex, movementLabel.toLowerCase())
+        break
+      }
+    }
+  }
+
+  // 4. Replace lighting style — "natural light", "dramatic shadows", etc.
+  const lightingLabel = LIGHTING_STYLES.find(l => l.value === editableContent.lighting)?.label
+  if (lightingLabel) {
+    const lightingPatterns = LIGHTING_STYLES.map(l => l.label).sort((a, b) => b.length - a.length)
+    for (const pattern of lightingPatterns) {
+      const regex = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+      if (regex.test(result)) {
+        result = result.replace(regex, lightingLabel.toLowerCase())
+        break
+      }
+    }
+  }
+
+  // 5. Append additional direction if provided
+  if (editableContent.additionalDirection?.trim()) {
+    // Remove any previous additional direction marker and re-append
+    result = result.replace(/\s*\[Additional:\s*[^\]]*\]\s*$/, '')
+    result = result.trim() + ` ${editableContent.additionalDirection.trim()}`
+  }
+
+  return result.trim()
 }
 
 // ============================================================================
@@ -602,10 +649,20 @@ export function SegmentPromptEditor({
 
             {/* Preview */}
             <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Compiled Prompt Preview</Label>
-              <div className="bg-muted/30 rounded p-2 text-xs text-foreground/80 max-h-20 overflow-y-auto">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs text-muted-foreground">Prompt Preview</Label>
+                {compiledPrompt !== segment.generatedPrompt && (
+                  <Badge variant="outline" className="text-[9px] text-cyan-400 border-cyan-500/30">
+                    Modified
+                  </Badge>
+                )}
+              </div>
+              <div className="bg-muted/30 rounded p-2 text-xs text-foreground/80 max-h-32 overflow-y-auto font-mono leading-relaxed">
                 {compiledPrompt}
               </div>
+              <p className="text-[10px] text-muted-foreground">
+                Cinematography edits are applied to the AI-generated prompt. Original content preserved.
+              </p>
             </div>
 
             {/* Apply Button */}

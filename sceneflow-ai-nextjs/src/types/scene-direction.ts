@@ -234,6 +234,8 @@ export function detectNoTalentSegment(
     : talentDirection.blocking || talentDirection.emotionalBeat || ''
   
   const talentLower = talentText.toLowerCase()
+  
+  // Tier 1: Explicit no-talent indicators
   const noTalentIndicators = [
     'n/a',
     'no on-screen talent',
@@ -251,7 +253,24 @@ export function detectNoTalentSegment(
     'establishing shot',
     'location only',
   ]
+  if (noTalentIndicators.some(indicator => talentLower.includes(indicator))) {
+    return true
+  }
   
-  return noTalentIndicators.some(indicator => talentLower.includes(indicator))
+  // Tier 2: Atmospheric/abstract description patterns
+  // Talent text that describes mood/atmosphere rather than human performance
+  const abstractIndicators = [
+    'chaos', 'genesis', 'dissipation', 'particles', 'luminous',
+    'algorithmic', 'computational', 'vortex', 'convergence',
+    'contained power', 'immense', 'cosmic', 'ethereal',
+    'crystalline', 'fractal', 'nebula', 'dimensional',
+    'energy', 'formation', 'implosion', 'revelation',
+  ]
+  const matchCount = abstractIndicators.filter(w => talentLower.includes(w)).length
+  if (matchCount >= 2) {
+    return true
+  }
+  
+  return false
 }
 
