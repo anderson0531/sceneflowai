@@ -376,8 +376,8 @@ export function SegmentFrameTimeline({
                 disabled={isGenerating}
                 className="h-10 px-5 text-sm font-semibold bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/40 transition-all"
               >
-                <Wand2 className="w-5 h-5 mr-2" />
-                Keyframes
+                <ImageIcon className="w-5 h-5 mr-2" />
+                Generate
               </Button>
             ) : stats.fullyAnchored === stats.total && stats.total > 0 ? (
               <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 h-10 px-4 text-sm font-semibold flex items-center">
@@ -396,8 +396,8 @@ export function SegmentFrameTimeline({
                 className="h-10 px-5 text-sm font-semibold border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 hover:border-cyan-400 shadow-md hover:shadow-lg transition-all"
                 title="Clear all segments and regenerate with the Segment Builder"
               >
-                <RefreshCw className="w-5 h-5 mr-2" />
-                Regenerate Segments
+                <Layers className="w-5 h-5 mr-2" />
+                Regenerate
               </Button>
             )}
             
@@ -412,7 +412,7 @@ export function SegmentFrameTimeline({
                 title="Add a keyframe-based segment"
               >
                 <Plus className="w-5 h-5 mr-2" />
-                Add Segment
+                Segments
               </Button>
             )}
           </div>
