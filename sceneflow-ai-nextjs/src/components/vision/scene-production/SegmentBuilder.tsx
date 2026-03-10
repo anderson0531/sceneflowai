@@ -1450,6 +1450,16 @@ export function SegmentBuilder({
     setShowRegenerateDialog(true)
   }, [targetDuration, narrationDriven])
   
+  // Unified reset — clears all builder state back to analyze phase
+  const resetToAnalyze = useCallback(() => {
+    setPhase('analyze')
+    setError(null)
+    setProposedDirections([])
+    setProposedSegments([])
+    setSelectedSegmentId(null)
+    setSelectedDirectionId(null)
+  }, [])
+
   // Confirm regeneration from dialog
   const handleConfirmRegenerate = useCallback(() => {
     // Apply config to generation options
@@ -1463,21 +1473,17 @@ export function SegmentBuilder({
           .map(s => ({ sequenceIndex: s.sequenceIndex, prompt: s.userEditedPrompt }))
       : []
     
-    // Reset state for new generation
-    setPhase('analyze')
-    setProposedSegments([])
-    setSelectedSegmentId(null)
+    // Reset state for new generation (uses unified reset + dialog dismiss)
+    resetToAnalyze()
     setShowRegenerateDialog(false)
     
     toast.info('Ready for regeneration - click Generate Segments')
-  }, [regenerationConfig, proposedSegments])
+  }, [regenerationConfig, proposedSegments, resetToAnalyze])
   
   // Quick regenerate (no dialog, same settings)
   const handleQuickRegenerate = useCallback(() => {
-    setPhase('analyze')
-    setProposedSegments([])
-    setSelectedSegmentId(null)
-  }, [])
+    resetToAnalyze()
+  }, [resetToAnalyze])
 
   const handleFinalize = useCallback(() => {
     // Transform ProposedSegments to SceneSegments
@@ -1656,10 +1662,21 @@ export function SegmentBuilder({
 
                   {/* Error Display */}
                   {error && (
-                    <Alert variant="destructive">
-                      <AlertCircle className="w-4 h-4" />
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
+                    <div className="space-y-2">
+                      <Alert variant="destructive">
+                        <AlertCircle className="w-4 h-4" />
+                        <AlertDescription>{error}</AlertDescription>
+                      </Alert>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={resetToAnalyze}
+                        className="w-full"
+                      >
+                        <RefreshCw className="w-3 h-3 mr-2" />
+                        Clear Error & Try Again
+                      </Button>
+                    </div>
                   )}
 
                   {/* Generate Button */}
@@ -1752,10 +1769,7 @@ export function SegmentBuilder({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      setPhase('analyze')
-                      setProposedDirections([])
-                    }}
+                    onClick={resetToAnalyze}
                   >
                     <RefreshCw className="w-3 h-3 mr-1" />
                     Start Over

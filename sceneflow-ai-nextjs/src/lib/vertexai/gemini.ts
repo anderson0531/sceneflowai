@@ -195,8 +195,23 @@ export async function generateText(
     if (response.status === 404 && isGemini3Model && !options._isFallbackAttempt) {
       const fallbackModel = GEMINI_TEXT_MODELS_PREVIOUS.flash
       console.warn(`[Vertex Gemini] Model "${model}" returned 404, falling back to "${fallbackModel}"`)
+      
+      // Translate 3.0 thinkingLevel → 2.5 thinkingBudget to prevent unrestricted thinking OOM
+      const thinkingLevelToBudget: Record<GeminiThinkingLevel, number> = {
+        minimal: 0,
+        low: 1024,
+        medium: 8192,
+        high: 24576,
+      }
+      const fallbackOptions = { ...options }
+      if (fallbackOptions.thinkingLevel) {
+        fallbackOptions.thinkingBudget = thinkingLevelToBudget[fallbackOptions.thinkingLevel]
+        delete fallbackOptions.thinkingLevel
+        console.warn(`[Vertex Gemini] Translated thinkingLevel "${options.thinkingLevel}" → thinkingBudget ${fallbackOptions.thinkingBudget} for ${fallbackModel}`)
+      }
+      
       return generateText(prompt, {
-        ...options,
+        ...fallbackOptions,
         model: fallbackModel,
         _isFallbackAttempt: true,
       } as TextGenerationOptions & { _isFallbackAttempt?: boolean })
