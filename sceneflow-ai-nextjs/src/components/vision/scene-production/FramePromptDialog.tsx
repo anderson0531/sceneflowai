@@ -455,7 +455,9 @@ export function FramePromptDialog({
       }
     } else if (shouldSkipCharacters) {
       setSelectedCharacterNames([])
-      console.log('[FramePromptDialog] No-talent segment detected — skipping character auto-selection')
+      // Keep talent section collapsed for no-talent segments but still visible
+      setTalentSectionCollapsed(true)
+      console.log('[FramePromptDialog] No-talent segment detected — section visible but collapsed, no auto-selection')
     }
 
     // Auto-detect props/objects from segment text
@@ -841,18 +843,18 @@ export function FramePromptDialog({
                 />
 
                 {/* ===== TALENT COSTUME REFERENCES (moved above Location References) ===== */}
-                {/* Hidden for no-talent segments (title sequences, abstract, VFX-only) */}
-                {!isNoTalentSegment && (
-                  <CharacterSelectionSection
-                    characters={characters}
-                    selectedCharacterNames={selectedCharacterNames}
-                    onSelectionChange={setSelectedCharacterNames}
-                    selectedWardrobes={selectedWardrobes}
-                    onWardrobeChange={(name, wardrobeId) => setSelectedWardrobes(prev => ({ ...prev, [name]: wardrobeId }))}
-                    isCollapsed={talentSectionCollapsed}
-                    onToggleCollapsed={() => setTalentSectionCollapsed(prev => !prev)}
-                  />
-                )}
+                {/* Always shown when project has characters — collapsed with hint for no-talent segments */}
+                {/* Users can still manually attach costume refs to title sequences if desired */}
+                <CharacterSelectionSection
+                  characters={characters}
+                  selectedCharacterNames={selectedCharacterNames}
+                  onSelectionChange={setSelectedCharacterNames}
+                  selectedWardrobes={selectedWardrobes}
+                  onWardrobeChange={(name, wardrobeId) => setSelectedWardrobes(prev => ({ ...prev, [name]: wardrobeId }))}
+                  isCollapsed={talentSectionCollapsed}
+                  onToggleCollapsed={() => setTalentSectionCollapsed(prev => !prev)}
+                  noTalentHint={isNoTalentSegment}
+                />
 
                 {/* ===== LOCATION REFERENCES (collapsible) ===== */}
                 {locationReferences.length > 0 && (

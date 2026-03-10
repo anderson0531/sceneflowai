@@ -3,7 +3,7 @@
 import React from 'react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { Users, Check, ChevronDown, ChevronUp, Shirt } from 'lucide-react'
+import { Users, Check, ChevronDown, ChevronUp, Shirt, Info } from 'lucide-react'
 import type { CharacterSelectionProps } from './types'
 
 /**
@@ -26,6 +26,7 @@ export function CharacterSelectionSection({
   sceneWardrobes,
   isCollapsed,
   onToggleCollapsed,
+  noTalentHint,
   className,
 }: CharacterSelectionProps) {
   if (characters.length === 0) return null
@@ -162,6 +163,16 @@ export function CharacterSelectionSection({
       {!isCollapsedState && (
         <>
           <p className="text-xs text-slate-400">Select costume references to include for character identity & wardrobe consistency</p>
+
+          {/* No-talent hint for title sequences, VFX-only, etc. */}
+          {noTalentHint && (
+            <div className="flex items-start gap-2 px-2 py-1.5 rounded bg-amber-500/10 border border-amber-500/20">
+              <Info className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
+              <p className="text-[11px] text-amber-300/90">
+                No characters detected for this segment. You can still select costume references manually if characters appear in the frame.
+              </p>
+            </div>
+          )}
 
           {/* Convenience buttons */}
           {selectedCount > 0 && (

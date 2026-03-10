@@ -97,6 +97,8 @@ export interface CharacterSelectionProps extends SectionProps {
   sceneWardrobes?: Record<string, string>
   /** Show reference quality hints based on shot type */
   hasCharacterReferences?: boolean
+  /** Hint that this is a no-talent segment (shows info text but still allows selection) */
+  noTalentHint?: boolean
   /** Collapsible section state */
   isCollapsed?: boolean
   onToggleCollapsed?: () => void
