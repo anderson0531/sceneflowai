@@ -4154,14 +4154,6 @@ export function SceneProductionMixer({
             
             {/* Render Button */}
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              {/* Credit Cost Indicator */}
-              {!isRendering && renderStrategy.estimatedCredits && renderStrategy.estimatedCredits > 0 && selectedRenderMode !== 'local' && (
-                <div className="flex items-center gap-1 text-xs text-amber-400 bg-amber-500/10 px-2 py-1 rounded">
-                  <Coins className="w-3 h-3" />
-                  <span>~{renderStrategy.estimatedCredits} credits</span>
-                </div>
-              )}
-              
               {/* Render Mode Selector */}
               <Select
                 value={selectedRenderMode}
@@ -4258,7 +4250,7 @@ export function SceneProductionMixer({
                     <div className="flex items-center gap-1">
                       <Video className="w-3 h-3 text-purple-400" />
                       <span className="text-purple-300">Final Render (FFmpeg):</span>
-                      <span>Cloud server • MP4 (H.264) • {renderStrategy.estimatedCredits || 5} credits/min</span>
+                      <span>Cloud server • MP4 (H.264)</span>
                     </div>
                     <div className="flex items-center gap-1 text-gray-400">
                       <span>Best for: Final delivery, universal compatibility</span>

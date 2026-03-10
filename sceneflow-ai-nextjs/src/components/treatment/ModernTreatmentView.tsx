@@ -213,12 +213,6 @@ export function ModernTreatmentView({
           </div>
           
           <div className="flex items-center gap-2">
-            {/* Credit estimate */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-700/50 text-xs">
-              <Coins className="w-3.5 h-3.5 text-amber-400" />
-              <span className="text-slate-400">~{estimatedCredits} credits</span>
-            </div>
-            
             {/* Mood toggle */}
             <Button
               variant="ghost"
