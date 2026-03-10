@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils'
 import { SegmentPairCard } from './SegmentPairCard'
 import { FramePromptDialog, type FrameGenerationOptions } from './FramePromptDialog'
 import { DeleteSegmentDialog } from './DeleteSegmentDialog'
+import { RegenerateSegmentsDialog } from './RegenerateSegmentsDialog'
 import { AddSegmentTypeDialog, type SegmentPurpose, type AdjacentSceneContext } from './AddSegmentTypeDialog'
 import { AddSpecialSegmentDialog } from './AddSpecialSegmentDialog'
 import type { 
@@ -223,6 +224,9 @@ export function SegmentFrameTimeline({
   const [dialogFrameType, setDialogFrameType] = useState<'start' | 'end' | 'both'>('both')
   const [dialogPreviousEndFrame, setDialogPreviousEndFrame] = useState<string | null>(null)
   
+  // Regenerate all segments dialog state
+  const [regenerateDialogOpen, setRegenerateDialogOpen] = useState(false)
+  
   // Delete segment dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleteSegmentTarget, setDeleteSegmentTarget] = useState<{ segmentId: string; index: number } | null>(null)
@@ -382,21 +386,12 @@ export function SegmentFrameTimeline({
               </Badge>
             ) : null}
             
-            {/* Regenerate Segments button - clears all segments to re-enter SegmentBuilder */}
+            {/* Regenerate Segments button - opens confirmation dialog */}
             {stats.total > 0 && onDeleteSegment && (
               <Button
                 size="default"
                 variant="outline"
-                onClick={() => {
-                  const hasAssets = segments.some(s => s.activeAssetUrl || s.startFrameUrl || s.endFrameUrl || (s.takes && s.takes.length > 0))
-                  const msg = hasAssets
-                    ? `Delete all ${segments.length} segments and generated assets? You will be taken to the Segment Builder to start fresh.`
-                    : `Delete all ${segments.length} segments? You will be taken to the Segment Builder to regenerate.`
-                  if (window.confirm(msg)) {
-                    segments.forEach(s => onDeleteSegment(s.segmentId))
-                    toast.success('Segments cleared', { description: 'Use the Segment Builder to regenerate with new settings.' })
-                  }
-                }}
+                onClick={() => setRegenerateDialogOpen(true)}
                 disabled={isGenerating}
                 className="h-10 px-5 text-sm font-semibold border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 hover:border-cyan-400 shadow-md hover:shadow-lg transition-all"
                 title="Clear all segments and regenerate with the Segment Builder"
@@ -542,6 +537,22 @@ export function SegmentFrameTimeline({
           referenceImage: c.referenceUrl,
         }))}
         objectReferences={objectReferences}
+      />
+      
+      {/* Regenerate All Segments Confirmation Dialog */}
+      <RegenerateSegmentsDialog
+        open={regenerateDialogOpen}
+        onOpenChange={setRegenerateDialogOpen}
+        totalSegments={stats.total}
+        totalDuration={stats.totalDuration}
+        anchoredCount={stats.fullyAnchored}
+        hasGeneratedAssets={segments.some(s => s.activeAssetUrl || s.startFrameUrl || s.endFrameUrl || (s.takes && s.takes.length > 0))}
+        onConfirm={() => {
+          if (onDeleteSegment) {
+            segments.forEach(s => onDeleteSegment(s.segmentId))
+            toast.success('Segments cleared', { description: 'Use the Segment Builder to regenerate with new settings.' })
+          }
+        }}
       />
       
       {/* Delete Segment Confirmation Dialog */}
