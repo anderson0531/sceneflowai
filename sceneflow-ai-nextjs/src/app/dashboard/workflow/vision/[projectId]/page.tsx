@@ -3762,6 +3762,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Scene direction generation state
   const [generatingDirectionFor, setGeneratingDirectionFor] = useState<number | null>(null)
+  // Track background direction generation to prevent duplicate concurrent calls
+  const backgroundDirectionInFlight = useRef<Set<number>>(new Set())
   const [generationProgress, setGenerationProgress] = useState({
     script: { 
       complete: false, 
@@ -4957,6 +4959,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               }
             })
           })
+          
+          // Auto-regenerate scene direction in background after optimization
+          console.log(`[AutoDirection] Scene ${sceneIndex + 1} optimized - triggering background direction regeneration`)
+          handleBackgroundDirectionGeneration(sceneIndex)
         } catch (saveError) {
           console.error('[handleOptimizeScene] Failed to save:', saveError)
         }
@@ -5766,9 +5772,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 
                 // Reload project data from database with retry
                 let retries = 3
+                let reloadSucceeded = false
                 while (retries > 0) {
                   try {
                     await loadProject()
+                    reloadSucceeded = true
                     break
                   } catch (error) {
                     retries--
@@ -5782,6 +5790,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 }
               }
             }
+                
+                // Auto-generate scene directions for all new scenes
+                // Run in background after script generation completes
+                if (reloadSucceeded && data.totalScenes > 0) {
+                  console.log(`[AutoDirection] Script generation complete - auto-generating direction for ${data.totalScenes} scenes`)
+                  try { const { toast } = require('sonner'); toast.info('Generating scene directions for new script...', { duration: 5000 }) } catch {}
+                  for (let i = 0; i < data.totalScenes; i++) {
+                    // Stagger calls to avoid overwhelming the API
+                    setTimeout(() => {
+                      handleBackgroundDirectionGeneration(i)
+                    }, i * 2000) // 2 second stagger between scenes
+                  }
+                }
                 
                 // Return empty scriptData - not used anymore
                 scriptData = { characters: [], scenes: [] }
@@ -7703,6 +7724,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       try { const { toast } = require('sonner'); toast.success('Scene direction generated!') } catch {}
+      
+      // Auto-run score analysis after direction generation (background, non-blocking)
+      console.log(`[AutoScore] Triggering score analysis for Scene ${sceneIdx + 1} after direction update`)
+      handleGenerateSceneScore(sceneIdx).catch(err => {
+        console.warn(`[AutoScore] Background score analysis failed for Scene ${sceneIdx + 1}:`, err)
+      })
       } catch (error: any) {
         console.error('Failed to generate scene direction:', error)
         try { const { toast } = require('sonner'); toast.error(`Failed to generate scene direction: ${error.message}`) } catch {}
@@ -7714,6 +7741,100 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }).finally(() => {
       setGeneratingDirectionFor(null)
     })
+  }
+
+  // Background direction generator - runs silently after scene edits/optimization
+  // Does NOT use the blocking overlay, just shows toast notifications
+  const handleBackgroundDirectionGeneration = async (sceneIdx: number) => {
+    // Guard: skip if already generating direction for this scene
+    if (backgroundDirectionInFlight.current.has(sceneIdx) || generatingDirectionFor === sceneIdx) {
+      console.log(`[AutoDirection] Skipping Scene ${sceneIdx + 1} - already generating`)
+      return
+    }
+    
+    const scene = script?.script?.scenes?.[sceneIdx]
+    if (!scene) return
+    
+    backgroundDirectionInFlight.current.add(sceneIdx)
+    
+    try {
+      console.log(`[AutoDirection] Auto-generating direction for Scene ${sceneIdx + 1}...`)
+      try { const { toast } = require('sonner'); toast.info(`Updating Scene ${sceneIdx + 1} direction...`, { duration: 3000 }) } catch {}
+      
+      const directionResponse = await fetch('/api/scene/generate-direction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex: sceneIdx,
+          scene: {
+            heading: scene.heading,
+            action: scene.action,
+            visualDescription: scene.visualDescription,
+            narration: scene.narration,
+            dialogue: scene.dialogue,
+            characters: scene.characters
+          }
+        })
+      })
+
+      if (!directionResponse.ok) {
+        const errorData = await directionResponse.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error || 'Failed to generate scene direction')
+      }
+
+      const data = await directionResponse.json()
+      
+      if (!data.success || !data.sceneDirection) {
+        throw new Error(data.error || 'Failed to generate scene direction')
+      }
+
+      // Re-read current script state (may have changed during async operation)
+      setScript((currentScript: any) => {
+        if (!currentScript?.script?.scenes) return currentScript
+        const updatedScenes = [...currentScript.script.scenes]
+        updatedScenes[sceneIdx] = {
+          ...updatedScenes[sceneIdx],
+          sceneDirection: data.sceneDirection
+        }
+        const updatedScript = {
+          ...currentScript,
+          script: { ...currentScript.script, scenes: updatedScenes }
+        }
+        
+        // Persist to database in background
+        if (project) {
+          const updatedMetadata = {
+            ...project.metadata,
+            visionPhase: {
+              ...project.metadata?.visionPhase,
+              script: updatedScript
+            }
+          }
+          setProject((p: any) => p ? { ...p, metadata: updatedMetadata } : p)
+          fetch(`/api/projects/${project.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ metadata: updatedMetadata })
+          }).catch(err => console.error('[AutoDirection] DB save failed:', err))
+        }
+        
+        return updatedScript
+      })
+
+      console.log(`[AutoDirection] Scene ${sceneIdx + 1} direction updated successfully`)
+      try { const { toast } = require('sonner'); toast.success(`Scene ${sceneIdx + 1} direction updated`) } catch {}
+      
+      // Auto-run score analysis after direction update
+      handleGenerateSceneScore(sceneIdx).catch(err => {
+        console.warn(`[AutoScore] Background score failed for Scene ${sceneIdx + 1}:`, err)
+      })
+    } catch (error: any) {
+      console.error(`[AutoDirection] Failed for Scene ${sceneIdx + 1}:`, error)
+      try { const { toast } = require('sonner'); toast.error(`Failed to update Scene ${sceneIdx + 1} direction`) } catch {}
+    } finally {
+      backgroundDirectionInFlight.current.delete(sceneIdx)
+    }
   }
 
   // Handle generate all audio - supports multi-language via translation
@@ -8776,6 +8897,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const { toast } = require('sonner')
         toast.success('Scene changes applied - use Update Audio to regenerate audio')
       } catch {}
+      
+      // Auto-regenerate scene direction in background (non-blocking)
+      // Scene content changed, so direction needs to be updated
+      console.log(`[AutoDirection] Scene ${sceneIndex + 1} edited - triggering background direction regeneration`)
+      handleBackgroundDirectionGeneration(sceneIndex)
       
       // NOTE: Removed loadProject() call - it was causing race condition
       // where stale data would be reloaded before DB write completed.
@@ -10347,6 +10473,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             } catch (error) {
               console.error('[ScriptReview] Failed to save optimized script:', error)
               toast.error('Script revised but failed to save to database')
+            }
+            
+            // Auto-regenerate direction for all scenes after full script optimization
+            console.log(`[AutoDirection] Full script optimized - regenerating direction for ${optimizedScript.scenes.length} scenes`)
+            toast.info('Updating scene directions for optimized script...', { duration: 4000 })
+            for (let i = 0; i < optimizedScript.scenes.length; i++) {
+              // Stagger to avoid overwhelming the API
+              setTimeout(() => {
+                handleBackgroundDirectionGeneration(i)
+              }, i * 2000) // 2 second stagger between scenes
             }
           }
         }}
