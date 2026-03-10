@@ -18,6 +18,7 @@ import {
   MethodSelectionResult
 } from '@/lib/vision/intelligentMethodSelection'
 import { getQualityForMethod } from '@/lib/config/modelConfig'
+import { autoSanitizePrompt } from '@/utils/promptModerator'
 
 export const maxDuration = 300 // 5 minutes for video generation
 export const runtime = 'nodejs'
@@ -274,12 +275,20 @@ export async function POST(
         // If user wants I2V with character consistency, they should use I2V mode without referenceImages
       }
       
+      // PRE-FLIGHT SANITIZATION: Auto-replace known trigger words before sending to Veo
+      // This runs server-side to catch triggers the client may have missed
+      // or that were introduced by AI-generated prompts (narration beat analyzer, etc.)
+      const { sanitizedPrompt: sanitizedVideoPrompt, wasModified: promptWasSanitized, changes: sanitizationChanges } = autoSanitizePrompt(prompt, { logChanges: true })
+      if (promptWasSanitized) {
+        console.log(`[Segment Asset Generation] Pre-flight sanitized ${sanitizationChanges.length} trigger term(s):`, sanitizationChanges.join(', '))
+      }
+
       // Enhance prompt with guidePrompt for Veo 3.1 native voice/dialogue/SFX generation
       // The guidePrompt contains properly formatted audio cues from GuidePromptEditor:
       // - Dialogue with voice anchors: CHARACTER says with [voice type]: "dialogue text"
       // - Narration with voice anchors: Narrator in [voice type] says: "narration text"
       // - SFX/Ambience: Ambient: sound description
-      let enhancedPrompt = prompt
+      let enhancedPrompt = sanitizedVideoPrompt
       if (guidePrompt && guidePrompt.trim()) {
         // Append guidePrompt to visual prompt - Veo 3.1 will generate synchronized audio
         enhancedPrompt = `${prompt}\n\n${guidePrompt}`

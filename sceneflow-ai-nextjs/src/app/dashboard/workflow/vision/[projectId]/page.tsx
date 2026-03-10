@@ -2728,9 +2728,36 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       toast.dismiss('retry-sanitized')
                       if (retryResponse.ok) {
                         const retryData = await retryResponse.json()
-                        if (retryData.success) {
-                          toast.success('Video generation started with sanitized prompt')
-                          // Update segment status
+                        if (retryData.success && retryData.status === 'COMPLETE') {
+                          toast.success('Video generated successfully with sanitized prompt')
+                          // Update segment with the completed asset
+                          applySceneProductionUpdate(sceneId, (current) => {
+                            if (!current) return current
+                            const segments = current.segments.map((seg) => {
+                              if (seg.segmentId !== segmentId) return seg
+                              const newTake = {
+                                id: `${segmentId}-take-${Date.now()}`,
+                                createdAt: new Date().toISOString(),
+                                assetUrl: retryData.assetUrl,
+                                thumbnailUrl: retryData.assetType === 'image' ? retryData.assetUrl : (retryData.lastFrameUrl || undefined),
+                                status: 'COMPLETE' as const,
+                                durationSec: seg.endTime - seg.startTime,
+                                veoVideoRef: retryData.veoVideoRef,
+                              }
+                              return {
+                                ...seg,
+                                status: 'COMPLETE' as const,
+                                assetType: retryData.assetType,
+                                activeAssetUrl: retryData.assetUrl,
+                                takes: [newTake, ...(seg.takes || [])],
+                                errorMessage: undefined,
+                              }
+                            })
+                            return { ...current, segments }
+                          })
+                        } else if (retryData.success) {
+                          // API accepted but video not complete yet
+                          toast.info('Retry accepted \u2014 video is being generated with sanitized prompt')
                           applySceneProductionUpdate(sceneId, (current) => {
                             if (!current) return current
                             const segments = current.segments.map((seg) =>
@@ -2741,15 +2768,60 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             return { ...current, segments }
                           })
                         } else {
-                          toast.error(retryData.error || 'Retry failed')
+                          // API returned success:false \u2014 real error
+                          const isContentError = retryData.error?.includes('Content') || retryData.error?.includes('safety') || retryData.error?.includes('filtered')
+                          if (isContentError) {
+                            toast.error('Sanitized prompt was still flagged by safety filters', {
+                              description: 'Try manually editing the prompt to remove dramatic/violent/medical terms.',
+                              duration: 10000
+                            })
+                          } else {
+                            toast.error(retryData.error || 'Retry failed')
+                          }
+                          applySceneProductionUpdate(sceneId, (current) => {
+                            if (!current) return current
+                            const segments = current.segments.map((seg) =>
+                              seg.segmentId === segmentId 
+                                ? { ...seg, status: 'ERROR' as const, errorMessage: retryData.error || 'Retry failed' } 
+                                : seg
+                            )
+                            return { ...current, segments }
+                          })
                         }
                       } else {
                         const errorData = await retryResponse.json().catch(() => ({ error: 'Retry failed' }))
-                        toast.error(errorData.error || 'Retry failed')
+                        const errorMsg = errorData.error || 'Retry failed'
+                        const isContentError = errorMsg.includes('Content') || errorMsg.includes('safety') || errorMsg.includes('filtered')
+                        if (isContentError) {
+                          toast.error('Sanitized prompt was still flagged', {
+                            description: 'The auto-fix wasn\'t enough. Try manually editing the prompt with more neutral cinematic language.',
+                            duration: 10000
+                          })
+                        } else {
+                          toast.error(errorMsg)
+                        }
+                        applySceneProductionUpdate(sceneId, (current) => {
+                          if (!current) return current
+                          const segments = current.segments.map((seg) =>
+                            seg.segmentId === segmentId 
+                              ? { ...seg, status: 'ERROR' as const, errorMessage: errorMsg } 
+                              : seg
+                          )
+                          return { ...current, segments }
+                        })
                       }
                     }).catch(() => {
                       toast.dismiss('retry-sanitized')
-                      toast.error('Retry failed - please try again')
+                      toast.error('Retry failed \u2014 please try again')
+                      applySceneProductionUpdate(sceneId, (current) => {
+                        if (!current) return current
+                        const segments = current.segments.map((seg) =>
+                          seg.segmentId === segmentId 
+                            ? { ...seg, status: 'ERROR' as const, errorMessage: 'Retry failed' } 
+                            : seg
+                        )
+                        return { ...current, segments }
+                      })
                     })
                   } else {
                     // Prompt moderator didn't find known trigger words - suggest AI rephrase
