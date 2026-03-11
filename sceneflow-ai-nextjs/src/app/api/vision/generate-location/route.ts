@@ -31,6 +31,20 @@ interface GenerateLocationImageRequest {
     setting?: string
     visualStyle?: string
   }
+  /** Pre-composed prompt from LocationPromptBuilder (overrides server-side composition) */
+  locationPrompt?: string
+  /** Art style selected in prompt builder */
+  artStyle?: string
+  /** Shot type from prompt builder */
+  shotType?: string
+  /** Camera angle from prompt builder */
+  cameraAngle?: string
+  /** Lighting preset from prompt builder */
+  lighting?: string
+  /** Additional details from prompt builder */
+  additionalDetails?: string
+  /** Whether the prompt was composed in advanced/raw mode */
+  rawMode?: boolean
 }
 
 /**
@@ -128,7 +142,14 @@ export async function POST(req: NextRequest) {
       timeOfDay,
       description,
       aspectRatio = '16:9', // Widescreen is best for location establishing shots
-      screenplayContext
+      screenplayContext,
+      locationPrompt,
+      artStyle,
+      shotType,
+      cameraAngle,
+      lighting,
+      additionalDetails,
+      rawMode
     } = body
 
     if (!locationName) {
@@ -141,8 +162,16 @@ export async function POST(req: NextRequest) {
     console.log(`[Location Generation] Generating: ${locationName}`)
     console.log(`[Location Generation] INT/EXT: ${intExt || 'N/A'}, Time: ${timeOfDay || 'N/A'}`)
 
-    // Build optimized prompt
-    const prompt = buildLocationPrompt(locationName, intExt, timeOfDay, description)
+    // Build optimized prompt — use pre-composed prompt from LocationPromptBuilder if provided
+    let prompt: string
+    if (locationPrompt && locationPrompt.trim()) {
+      // LocationPromptBuilder already composed the prompt (Guided or Advanced mode)
+      prompt = locationPrompt
+      console.log(`[Location Generation] Using prompt builder prompt (rawMode=${rawMode})`)
+    } else {
+      // Legacy path: server-side composition from metadata fields
+      prompt = buildLocationPrompt(locationName, intExt, timeOfDay, description)
+    }
     console.log(`[Location Generation] Prompt: ${prompt.substring(0, 200)}...`)
 
     // Generate image — negativePrompt enforces no people in location shots

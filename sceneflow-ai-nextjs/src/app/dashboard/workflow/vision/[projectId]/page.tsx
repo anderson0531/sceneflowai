@@ -7387,6 +7387,101 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   /**
+   * Generate a location reference image via AI with LocationPromptBuilder payload.
+   * Forwards the user-composed prompt, art style, camera settings to the API.
+   */
+  const handleGenerateLocationImageWithPrompt = async (payload: {
+    location: LocationReference
+    locationPrompt: string
+    artStyle?: string
+    shotType?: string
+    cameraAngle?: string
+    lighting?: string
+    additionalDetails?: string
+    rawMode?: boolean
+  }) => {
+    const { location } = payload
+    if (!location?.id) return
+    
+    setGeneratingLocationId(location.id)
+    
+    const locationLabel = location.location || 'Location'
+    overlayStore.show(
+      `Generating ${locationLabel} reference image...`,
+      25,
+      'image-generation'
+    )
+    
+    try {
+      overlayStore.setPhase(0)
+      overlayStore.setStatus(`Preparing prompt for ${locationLabel}...`)
+      
+      const response = await fetch('/api/vision/generate-location', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          locationName: location.location,
+          intExt: location.intExt,
+          timeOfDay: location.timeOfDay,
+          description: location.description,
+          locationPrompt: payload.locationPrompt,
+          artStyle: payload.artStyle,
+          shotType: payload.shotType,
+          cameraAngle: payload.cameraAngle,
+          lighting: payload.lighting,
+          additionalDetails: payload.additionalDetails,
+          rawMode: payload.rawMode,
+          screenplayContext: {
+            genre: project?.genre,
+            tone: project?.tone || project?.metadata?.filmTreatmentVariant?.tone_description,
+            setting: project?.metadata?.filmTreatmentVariant?.setting,
+            visualStyle: project?.metadata?.filmTreatmentVariant?.visual_style || project?.metadata?.filmTreatmentVariant?.style,
+          }
+        })
+      })
+      
+      overlayStore.setPhase(2)
+      overlayStore.setProgress(60)
+      overlayStore.setStatus('Rendering location image...')
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to generate location image')
+      }
+      
+      const result = await response.json()
+      
+      overlayStore.setPhase(3)
+      overlayStore.setProgress(85)
+      overlayStore.setStatus('Saving location reference...')
+      
+      const updatedLocations = locationReferences.map(ref =>
+        ref.id === location.id
+          ? { ...ref, imageUrl: result.imageUrl, generationPrompt: result.prompt }
+          : ref
+      )
+      setLocationReferences(updatedLocations)
+      locationReferencesRef.current = updatedLocations
+      
+      await persistLocationReferences(updatedLocations)
+      
+      overlayStore.setProgress(100)
+      overlayStore.setStatus(`${locationLabel} image generated!`)
+      
+      await new Promise(resolve => setTimeout(resolve, 800))
+      
+      try { const { toast } = require('sonner'); toast.success(`Generated image for ${locationLabel}`) } catch {}
+    } catch (error: any) {
+      console.error('[handleGenerateLocationImageWithPrompt] Error:', error)
+      try { const { toast } = require('sonner'); toast.error(error.message || 'Failed to generate location image') } catch {}
+    } finally {
+      overlayStore.hide()
+      setGeneratingLocationId(null)
+    }
+  }
+
+  /**
    * Upload a location reference image
    */
   const handleUploadLocationImage = async (locationId: string, file: File) => {
@@ -10564,6 +10659,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onRemoveLocationReference={handleRemoveLocationReference}
                 onUpdateLocationReferences={handleUpdateLocationReferences}
                 onGenerateLocationImage={handleGenerateLocationImage}
+                onGenerateLocationImageWithPrompt={handleGenerateLocationImageWithPrompt}
                 onUploadLocationImage={handleUploadLocationImage}
                 generatingLocationId={generatingLocationId}
               />

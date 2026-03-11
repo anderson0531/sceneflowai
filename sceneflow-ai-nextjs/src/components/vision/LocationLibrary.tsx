@@ -25,6 +25,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { toast } from 'sonner'
 import { LocationReference } from '@/types/visionReferences'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
+import { LocationPromptBuilder, LocationPromptPayload } from './LocationPromptBuilder'
 
 // Scene heading regex for INT/EXT extraction
 const SCENE_CODE_REGEX = /^(INT\.\/EXT\.|EXT\.\/INT\.|INT\.\/EXT|EXT\.\/INT|INT\. |EXT\. |INT\/EXT|EXT\/INT|INT\.|EXT\.|INT|EXT)\s*(.*)$/i
@@ -54,12 +55,23 @@ interface LocationLibraryProps {
   onUpdateLocations: (locations: LocationReference[]) => void
   /** Callback to remove a location reference */
   onRemoveLocation: (locationId: string) => void
-  /** Callback to generate location reference image */
+  /** Callback to generate location reference image (legacy — simple) */
   onGenerateLocationImage?: (location: LocationReference) => void
+  /** Callback to generate location reference image with prompt builder payload */
+  onGenerateLocationImageWithPrompt?: (payload: LocationPromptPayload) => void
+  /** Callback to open edit modal for existing location image */
+  onEditLocationImage?: (locationId: string, imageUrl: string) => void
   /** Callback to upload location reference image */
   onUploadLocationImage?: (locationId: string, file: File) => void
   /** Whether a location image is currently generating */
   generatingLocationId?: string | null
+  /** Screenplay context for prompt builder enrichment */
+  screenplayContext?: {
+    genre?: string
+    tone?: string
+    setting?: string
+    visualStyle?: string
+  }
 }
 
 /**
@@ -111,8 +123,11 @@ export function LocationLibrary({
   onUpdateLocations,
   onRemoveLocation,
   onGenerateLocationImage,
+  onGenerateLocationImageWithPrompt,
+  onEditLocationImage,
   onUploadLocationImage,
-  generatingLocationId
+  generatingLocationId,
+  screenplayContext
 }: LocationLibraryProps) {
   const [expandedLocationId, setExpandedLocationId] = useState<string | null>(null)
   const [editingDescriptionId, setEditingDescriptionId] = useState<string | null>(null)
@@ -121,6 +136,7 @@ export function LocationLibrary({
   const [expandedImageName, setExpandedImageName] = useState<string>('')
   const [isExtracting, setIsExtracting] = useState(false)
   const [uploadingForId, setUploadingForId] = useState<string | null>(null)
+  const [promptBuilderOpenFor, setPromptBuilderOpenFor] = useState<string | null>(null)
 
   /**
    * Extract unique locations from all scene headings.
@@ -446,19 +462,29 @@ export function LocationLibrary({
                           >
                             <Maximize2 className="w-4 h-4" />
                           </button>
-                          {onGenerateLocationImage && (
+                          {onEditLocationImage && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                onGenerateLocationImage(loc)
+                                onEditLocationImage(loc.id, loc.imageUrl)
                               }}
-                              disabled={isGenerating}
-                              className="p-2 rounded-lg bg-cyan-500/90 text-white hover:bg-cyan-600 transition-colors shadow-sm disabled:opacity-50"
-                              title="Regenerate image"
+                              className="p-2 rounded-lg bg-purple-500/90 text-white hover:bg-purple-600 transition-colors shadow-sm"
+                              title="Edit image"
                             >
-                              {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+                              <Edit className="w-4 h-4" />
                             </button>
                           )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setPromptBuilderOpenFor(loc.id)
+                            }}
+                            disabled={isGenerating}
+                            className="p-2 rounded-lg bg-cyan-500/90 text-white hover:bg-cyan-600 transition-colors shadow-sm disabled:opacity-50"
+                            title="Regenerate with Prompt Builder"
+                          >
+                            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+                          </button>
                           <label className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 hover:bg-white transition-colors shadow-sm cursor-pointer">
                             <Upload className="w-4 h-4" />
                             <input
@@ -481,19 +507,17 @@ export function LocationLibrary({
                           <>
                             <ImageIcon className="w-8 h-8 text-gray-400" />
                             <div className="flex gap-2">
-                              {onGenerateLocationImage && (
-                                <Button
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    onGenerateLocationImage(loc)
-                                  }}
-                                  className="bg-cyan-600 hover:bg-cyan-700 text-white border-0 text-xs"
-                                >
-                                  <Sparkles className="w-3 h-3 mr-1" />
-                                  Generate
-                                </Button>
-                              )}
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setPromptBuilderOpenFor(loc.id)
+                                }}
+                                className="bg-cyan-600 hover:bg-cyan-700 text-white border-0 text-xs"
+                              >
+                                <Sparkles className="w-3 h-3 mr-1" />
+                                Generate
+                              </Button>
                               <label>
                                 <Button
                                   size="sm"
@@ -538,6 +562,26 @@ export function LocationLibrary({
             )
           })}
         </div>
+      )}
+
+      {/* Location Prompt Builder Dialog */}
+      {promptBuilderOpenFor && (
+        <LocationPromptBuilder
+          open={!!promptBuilderOpenFor}
+          onClose={() => setPromptBuilderOpenFor(null)}
+          location={mergedLocations.find(l => l.id === promptBuilderOpenFor) || null}
+          isGenerating={generatingLocationId === promptBuilderOpenFor}
+          screenplayContext={screenplayContext}
+          onGenerateImage={(payload) => {
+            setPromptBuilderOpenFor(null)
+            if (onGenerateLocationImageWithPrompt) {
+              onGenerateLocationImageWithPrompt(payload)
+            } else if (onGenerateLocationImage) {
+              // Fallback to legacy handler
+              onGenerateLocationImage(payload.location)
+            }
+          }}
+        />
       )}
 
       {/* Expanded Image Dialog */}

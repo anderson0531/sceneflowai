@@ -17,6 +17,7 @@ import { BackdropGeneratorModal, SceneForBackdrop, CharacterForBackdrop } from '
 import { BackdropMode } from '@/lib/vision/backdropGenerator'
 import { ObjectSuggestionPanel } from './ObjectSuggestionPanel'
 import { LocationLibrary } from './LocationLibrary'
+import { LocationPromptPayload } from './LocationPromptBuilder'
 import { ImageEditModal } from './ImageEditModal'
 import { ReadinessProgress, calculateProductionReadiness, ProductionReadinessState } from '@/components/ui/StatusBadge'
 import { SceneReferenceCard } from './SceneReferenceCard'
@@ -110,6 +111,8 @@ interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'comp
   onRemoveLocationReference?: (locationId: string) => void
   /** Callback to generate a location reference image */
   onGenerateLocationImage?: (location: LocationReference) => void
+  /** Callback to generate a location image with prompt builder payload */
+  onGenerateLocationImageWithPrompt?: (payload: LocationPromptPayload) => void
   /** Callback to upload a location reference image */
   onUploadLocationImage?: (locationId: string, file: File) => void
   /** ID of location currently generating an image */
@@ -880,6 +883,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onUpdateLocationReferences,
     onRemoveLocationReference,
     onGenerateLocationImage,
+    onGenerateLocationImageWithPrompt,
     onUploadLocationImage,
     generatingLocationId,
   } = props
@@ -932,8 +936,9 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   const [editingImageData, setEditingImageData] = useState<{
     url: string
     referenceId: string
-    type: 'scene' | 'object' | 'character'
+    type: 'scene' | 'object' | 'character' | 'location'
     characterId?: string
+    locationId?: string
   } | null>(null)
 
   // Handler for opening image edit modal
@@ -948,12 +953,24 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     setImageEditModalOpen(true)
   }
 
+  // Handler for location image edit (triggered from LocationLibrary)
+  const handleEditLocationImage = (locationId: string, imageUrl: string) => {
+    setEditingImageData({ url: imageUrl, referenceId: locationId, type: 'location', locationId })
+    setImageEditModalOpen(true)
+  }
+
   // Handler for saving edited image
   const handleSaveEditedImage = async (newImageUrl: string) => {
     if (!editingImageData) return
 
     if (editingImageData.type === 'character' && editingImageData.characterId && onEditCharacterImage) {
       onEditCharacterImage(editingImageData.characterId, newImageUrl)
+    } else if (editingImageData.type === 'location' && editingImageData.locationId && onUpdateLocationReferences) {
+      // Update the location reference with the new edited image
+      const updatedLocations = (locationReferences || []).map(loc =>
+        loc.id === editingImageData.locationId ? { ...loc, imageUrl: newImageUrl } : loc
+      )
+      onUpdateLocationReferences(updatedLocations)
     } else if ((editingImageData.type === 'scene' || editingImageData.type === 'object') && onUpdateReferenceImage) {
       onUpdateReferenceImage(editingImageData.type, editingImageData.referenceId, newImageUrl)
     }
@@ -1186,8 +1203,11 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               onUpdateLocations={(locations) => onUpdateLocationReferences?.(locations)}
               onRemoveLocation={(id) => onRemoveLocationReference?.(id)}
               onGenerateLocationImage={onGenerateLocationImage}
+              onGenerateLocationImageWithPrompt={onGenerateLocationImageWithPrompt}
+              onEditLocationImage={handleEditLocationImage}
               onUploadLocationImage={onUploadLocationImage}
               generatingLocationId={generatingLocationId}
+              screenplayContext={screenplayContext}
             />
           )}
           
@@ -1267,9 +1287,9 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
             if (!open) setEditingImageData(null)
           }}
           imageUrl={editingImageData.url}
-          imageType={editingImageData.type === 'character' ? 'character' : editingImageData.type}
+          imageType={editingImageData.type === 'character' ? 'character' : editingImageData.type === 'location' ? 'scene' : editingImageData.type}
           onSave={handleSaveEditedImage}
-          title={`Edit ${editingImageData.type.charAt(0).toUpperCase() + editingImageData.type.slice(1)} Image`}
+          title={`Edit ${editingImageData.type === 'location' ? 'Location' : editingImageData.type.charAt(0).toUpperCase() + editingImageData.type.slice(1)} Image`}
           // For character edits, pass the character's image as subject reference for identity preservation
           subjectReference={editingImageData.type === 'character' && editingImageData.characterId ? (() => {
             const character = characters.find(c => c.id === editingImageData.characterId)
