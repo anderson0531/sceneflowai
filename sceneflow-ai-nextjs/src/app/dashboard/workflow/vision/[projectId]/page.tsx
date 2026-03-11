@@ -8866,12 +8866,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return
     }
     
-    // DEBUG: Log assets before deletion
-    console.log('[handleDeleteScene] Assets BEFORE:', currentScenes.slice(0, 3).map((s: any) => ({
-      sceneNumber: s.sceneNumber,
-      hasImage: !!s.imageUrl,
-      imageUrl: s.imageUrl?.substring(0, 100)
-    })))
+    // Capture the deleted scene's ID BEFORE filtering so the server knows
+    // this deletion was intentional and won't re-add the scene via its
+    // preservation logic.
+    const deletedScene = currentScenes[sceneIndex]
+    const deletedSceneId = deletedScene?.id || deletedScene?.sceneId
+    
+    console.log('[handleDeleteScene] Deleting scene:', {
+      sceneIndex,
+      deletedSceneId,
+      heading: deletedScene?.heading,
+      cinematicType: deletedScene?.cinematicType,
+    })
     
     // Use shallow copy to preserve object references and avoid breaking ORM
     const updatedScenes = currentScenes.filter((_: any, idx: number) => idx !== sceneIndex)
@@ -8881,16 +8887,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       scene.sceneNumber = idx + 1
     })
     
-    // DEBUG: Log assets after deletion and renumbering
-    console.log('[handleDeleteScene] Assets AFTER:', updatedScenes.slice(0, 3).map((s: any) => ({
-      sceneNumber: s.sceneNumber,
-      hasImage: !!s.imageUrl,
-      imageUrl: s.imageUrl?.substring(0, 100)
-    })))
-    
     try {
-      // Save to database FIRST
-      await saveScenesToDatabase(updatedScenes)
+      // Save to database — pass deletedSceneIds so server won't re-add the scene
+      await saveScenesToDatabase(updatedScenes, deletedSceneId ? [deletedSceneId] : [])
       
       // Reload project from database to ensure UI matches database state
       await loadProject()
@@ -9959,12 +9958,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     }
   }
-  const saveScenesToDatabase = async (updatedScenes: any[]) => {
+  const saveScenesToDatabase = async (updatedScenes: any[], deletedSceneIds?: string[]) => {
     try {
       const existingMetadata = project?.metadata || {}
       const existingVisionPhase = existingMetadata.visionPhase || {}
       
-      const payload = {
+      const payload: Record<string, any> = {
         metadata: {
           ...existingMetadata,
           visionPhase: {
@@ -9978,7 +9977,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             },
             scenes: updatedScenes
           }
-        }
+        },
+      }
+      
+      // Signal to the server which scenes were intentionally deleted.
+      // Without this, the server's preservation logic re-adds any scene
+      // whose ID is missing from the incoming payload.
+      if (deletedSceneIds && deletedSceneIds.length > 0) {
+        payload.deletedSceneIds = deletedSceneIds
+        console.log('[saveScenesToDatabase] Including deletedSceneIds:', deletedSceneIds)
       }
       
       const response = await fetch(`/api/projects/${projectId}`, {

@@ -286,8 +286,11 @@ export async function PUT(
                 }
               })
               
-              // CRITICAL FIX: Also preserve existing scenes that are NOT in the incoming payload
-              // This prevents cinematic scenes (or any scenes with IDs) from being deleted by stale client state
+              // Preserve existing scenes NOT in incoming payload — UNLESS explicitly deleted.
+              // The client sends body.deletedSceneIds[] when a user intentionally removes a scene.
+              // Without this check, the preservation logic re-adds every scene the client removed.
+              const deletedSceneIds = new Set<string>(body.deletedSceneIds || [])
+              
               const incomingScenesById = new Map(
                 incomingScenes
                   .filter((s: any) => s.id || s.sceneId)
@@ -296,8 +299,14 @@ export async function PUT(
               
               const preservedScenes = existingScenes.filter((existingScene: any) => {
                 const existingId = existingScene.id || existingScene.sceneId
-                // Preserve scenes with IDs that aren't in the incoming payload
-                return existingId && !incomingScenesById.has(existingId)
+                if (!existingId) return false
+                // Don't preserve scenes the user explicitly deleted
+                if (deletedSceneIds.has(existingId)) {
+                  console.log('[Projects PUT] Scene explicitly deleted by user, skipping preservation:', existingId)
+                  return false
+                }
+                // Preserve scenes with IDs that aren't in the incoming payload (stale client protection)
+                return !incomingScenesById.has(existingId)
               })
               
               if (preservedScenes.length > 0) {
