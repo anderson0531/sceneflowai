@@ -7,11 +7,13 @@ import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Copy, Check, Sparkles, Info, Loader2, Video, Image as ImageIcon, Clock, ArrowRight, Film, Link as LinkIcon, Upload, Camera, Wand2, Library, Users, Box, Clapperboard, X, Plus, MessageSquare, AlertCircle, RotateCcw, Eye, Type, Scissors, MapPin, Coffee, CreditCard } from 'lucide-react'
+import { Copy, Check, Sparkles, Info, Loader2, Video, Image as ImageIcon, Clock, ArrowRight, Film, Link as LinkIcon, Upload, Camera, Wand2, Library, Users, Box, Clapperboard, X, Plus, MessageSquare, AlertCircle, RotateCcw, Eye, Type, Scissors, MapPin, Coffee, CreditCard, ShieldAlert } from 'lucide-react'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { SceneSegment, SceneSegmentTake } from './types'
 import { VisualReference } from '@/types/visionReferences'
 import { cn } from '@/lib/utils'
+import { ContentPolicyAlert, PolicyFixedBanner } from './ContentPolicyAlert'
+import { moderatePrompt, type ModerationResult } from '@/utils/promptModerator'
 import { 
   CINEMATIC_ELEMENT_TYPES, 
   type SpecialSegmentType, 
@@ -162,6 +164,11 @@ export function SegmentPromptBuilder({
   const [generationStarted, setGenerationStarted] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
   
+  // Content policy moderation state
+  const [postFailureModerationResult, setPostFailureModerationResult] = useState<ModerationResult | null>(null)
+  const [preflightModerationResult, setPreflightModerationResult] = useState<ModerationResult | null>(null)
+  const [promptFixApplied, setPromptFixApplied] = useState(false)
+  
   // Video generation method (only for video mode)
   const [generationMethod, setGenerationMethod] = useState<VideoGenerationMethod>('T2V')
   const [startFrameUrl, setStartFrameUrl] = useState<string | null>(null)
@@ -202,7 +209,35 @@ export function SegmentPromptBuilder({
     // If generation failed, show the error but keep dialog open
     if (segment.status === 'ERROR') {
       setGenerationStarted(false)
-      setLocalError(segment.errorMessage || 'Generation failed. Please try again.')
+      const errMsg = segment.errorMessage || 'Generation failed. Please try again.'
+      setLocalError(errMsg)
+      
+      // If this is a content policy error, run moderator to provide actionable UI
+      const isContentPolicy = errMsg.includes('Content Policy') ||
+        errMsg.includes('safety filter') ||
+        errMsg.includes('violat') ||
+        errMsg.includes('usage guidelines')
+      if (isContentPolicy) {
+        const currentPrompt = getRawPrompt()
+        if (currentPrompt) {
+          const modResult = moderatePrompt(currentPrompt)
+          // Even if moderator finds nothing (Vertex flagged something we don't know about),
+          // create a synthetic result so ContentPolicyAlert can show with AI Rephrase option
+          if (modResult.isClean) {
+            setPostFailureModerationResult({
+              isClean: false,
+              severity: 'medium',
+              flaggedTerms: [],
+              suggestedPrompt: currentPrompt,
+              warnings: ['Vertex AI rejected this prompt but no specific trigger words were found. Try using AI Rephrase for a complete rewrite.']
+            })
+          } else {
+            setPostFailureModerationResult(modResult)
+          }
+        }
+      } else {
+        setPostFailureModerationResult(null)
+      }
     }
   }, [segment.status, segment.errorMessage, generationStarted])
   
@@ -211,6 +246,9 @@ export function SegmentPromptBuilder({
     if (!open) {
       setGenerationStarted(false)
       setLocalError(null)
+      setPostFailureModerationResult(null)
+      setPreflightModerationResult(null)
+      setPromptFixApplied(false)
     }
   }, [open])
   
@@ -707,8 +745,61 @@ export function SegmentPromptBuilder({
     return activeTab === 'advanced' ? advancedPrompt : constructPrompt()
   }
 
-  const handleGenerate = () => {
+  // AI Rephrase handler for ContentPolicyAlert
+  const handleAIRephrase = useCallback(async (originalPrompt: string): Promise<string> => {
+    const response = await fetch('/api/prompt/rephrase', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: originalPrompt,
+        flaggedTerms: (postFailureModerationResult || preflightModerationResult)?.flaggedTerms.map(ft => ft.term) || []
+      })
+    })
+    if (!response.ok) {
+      throw new Error('Failed to rephrase prompt')
+    }
+    const data = await response.json()
+    return data.rephrasedPrompt || data.prompt || originalPrompt
+  }, [postFailureModerationResult, preflightModerationResult])
+
+  // Apply fix from ContentPolicyAlert — updates the prompt in the builder
+  const handleApplyContentFix = useCallback((fixedPrompt: string) => {
+    if (activeTab === 'advanced') {
+      setAdvancedPrompt(fixedPrompt)
+    } else {
+      // For guided mode, switch to advanced tab with the fixed prompt
+      setAdvancedPrompt(fixedPrompt)
+      setActiveTab('advanced')
+    }
+    setPostFailureModerationResult(null)
+    setPreflightModerationResult(null)
+    setLocalError(null)
+    setPromptFixApplied(true)
+    // Auto-dismiss success banner after 5s
+    setTimeout(() => setPromptFixApplied(false), 5000)
+  }, [activeTab])
+
+  const handleGenerate = (forceOverride = false) => {
     const rawPrompt = getRawPrompt()
+    
+    // Pre-flight content policy check (skip if user clicked "Generate Anyway")
+    if (!forceOverride) {
+      const modResult = moderatePrompt(rawPrompt)
+      if (!modResult.isClean) {
+        if (modResult.severity === 'medium' || modResult.severity === 'high') {
+          // Block generation and show ContentPolicyAlert for medium/high severity
+          setPreflightModerationResult(modResult)
+          return
+        } else if (modResult.severity === 'low') {
+          // Show warning but allow override for low severity
+          setPreflightModerationResult(modResult)
+          return
+        }
+      }
+    }
+    
+    // Clear preflight warning since we're proceeding
+    setPreflightModerationResult(null)
     
     const promptData: GeneratePromptData = {
       prompt: rawPrompt,
@@ -851,23 +942,81 @@ export function SegmentPromptBuilder({
           </DialogTitle>
         </DialogHeader>
 
-        {/* Error Banner - Show when generation fails */}
-        {localError && (
-          <div className="flex-shrink-0 mx-6 mt-2 p-3 rounded-lg bg-red-900/30 border border-red-700 max-h-[200px] overflow-y-auto">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <pre className="text-xs text-red-200 whitespace-pre-wrap font-sans leading-relaxed">
-                  {localError}
-                </pre>
+        {/* Prompt Fix Applied Success Banner */}
+        {promptFixApplied && (
+          <div className="flex-shrink-0 mx-6 mt-2">
+            <PolicyFixedBanner onDismiss={() => setPromptFixApplied(false)} />
+          </div>
+        )}
+
+        {/* Pre-flight Content Policy Warning - shown before generation */}
+        {preflightModerationResult && !preflightModerationResult.isClean && (
+          <div className="flex-shrink-0 mx-6 mt-2">
+            <ContentPolicyAlert
+              moderationResult={preflightModerationResult}
+              onApplyFix={handleApplyContentFix}
+              onDismiss={() => setPreflightModerationResult(null)}
+              enableAIRegeneration={true}
+              onRegenerateWithAI={handleAIRephrase}
+            />
+            {/* Generate Anyway override for low severity */}
+            {preflightModerationResult.severity === 'low' && (
+              <div className="flex justify-end mt-2">
                 <button
-                  onClick={() => setLocalError(null)}
-                  className="mt-2 text-xs text-red-400 hover:text-red-300 underline"
+                  onClick={() => handleGenerate(true)}
+                  className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1 px-2 py-1 rounded border border-amber-700/50 hover:border-amber-600 transition-colors"
                 >
-                  Dismiss
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  Generate Anyway
                 </button>
               </div>
-            </div>
+            )}
+          </div>
+        )}
+
+        {/* Post-failure Error Banner - content policy errors use ContentPolicyAlert */}
+        {localError && (
+          <div className="flex-shrink-0 mx-6 mt-2">
+            {postFailureModerationResult ? (
+              <div className="space-y-2">
+                {/* Vertex AI error message */}
+                <div className="p-3 rounded-lg bg-red-900/30 border border-red-700">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-red-200 mb-1">Video Prompt Rejected</p>
+                      <p className="text-xs text-red-300/80">The video prompt was rejected by Vertex AI&apos;s safety filters. Use Auto-Fix for quick replacements or AI Rephrase for a complete rewrite.</p>
+                    </div>
+                  </div>
+                </div>
+                {/* Actionable ContentPolicyAlert with Auto-Fix and AI Rephrase */}
+                <ContentPolicyAlert
+                  moderationResult={postFailureModerationResult}
+                  onApplyFix={handleApplyContentFix}
+                  onDismiss={() => { setLocalError(null); setPostFailureModerationResult(null) }}
+                  enableAIRegeneration={true}
+                  onRegenerateWithAI={handleAIRephrase}
+                />
+              </div>
+            ) : (
+              /* Generic error banner for non-content-policy errors */
+              <div className="p-3 rounded-lg bg-red-900/30 border border-red-700 max-h-[200px] overflow-y-auto">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <pre className="text-xs text-red-200 whitespace-pre-wrap font-sans leading-relaxed">
+                      {localError}
+                    </pre>
+                    <button
+                      onClick={() => setLocalError(null)}
+                      className="mt-2 text-xs text-red-400 hover:text-red-300 underline"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -1836,7 +1985,7 @@ export function SegmentPromptBuilder({
           </div>
           <div className="flex gap-2 mt-2">
             <Button 
-              onClick={handleGenerate} 
+              onClick={() => handleGenerate()} 
               disabled={isGenerating}
               className={cn(
                 "flex-1 disabled:opacity-50 disabled:cursor-not-allowed",

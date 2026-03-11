@@ -564,6 +564,7 @@ export async function POST(
     }
     
     // Handle common error types with user-friendly messages
+    const originalErrorMessage = errorMessage // Preserve original for details
     if (errorMessage.includes('Content Safety Filter') || 
         errorMessage.includes('filtered') || 
         errorMessage.includes('violate') ||
@@ -583,6 +584,8 @@ export async function POST(
         error: errorMessage,
         retryAfter,
         isRateLimited: statusCode === 429,
+        // Include original Vertex AI error details (with support codes) for content policy violations
+        vertexDetails: statusCode === 422 ? originalErrorMessage : undefined,
         details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined,
       },
       { status: statusCode }

@@ -2590,8 +2590,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             throw new Error('You do not have permission to generate assets.')
           }
           if (response.status === 422) {
-            // Content policy violation — throw clean message for the catch block's auto-fix flow
-            throw new Error(errorMessage)
+            // Content policy violation — include vertexDetails for full error context
+            const vertexDetails = errorData?.vertexDetails
+            const enrichedMessage = vertexDetails 
+              ? `${errorMessage}\n\nVertex AI Details: ${vertexDetails}`
+              : errorMessage
+            throw new Error(enrichedMessage)
           }
           if (response.status === 429) {
             throw new Error('Rate limit exceeded. Please wait a moment and try again.')
