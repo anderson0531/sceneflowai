@@ -6592,9 +6592,9 @@ function SceneCard({
                             <div className="flex items-center justify-center w-5 h-5 rounded bg-cyan-500/20 text-cyan-300 text-[10px] font-bold flex-shrink-0">1</div>
                             <Layers className="w-4 h-4 text-cyan-400 flex-shrink-0" />
                             <div className="text-left">
-                              <p className="text-cyan-300 font-medium">Storyboard Builder</p>
+                              <p className="text-cyan-300 font-medium">Keyframe Builder</p>
                             </div>
-                            <span className="text-cyan-400/70 text-sm ml-auto hidden sm:inline">Build keyframes and preview your storyboard</span>
+                            <span className="text-cyan-400/70 text-sm ml-auto hidden sm:inline">Build keyframes and preview your Animatic</span>
                           </div>
                         </button>
                         
@@ -6854,11 +6854,11 @@ function SceneCard({
                                 setAudioTimelineCollapsed(!audioTimelineCollapsed)
                               }}
                               className="flex items-center gap-3 transition-colors group"
-                              title={audioTimelineCollapsed ? 'Show storyboard editor' : 'Hide storyboard editor'}
+                              title={audioTimelineCollapsed ? 'Show animatic editor' : 'Hide animatic editor'}
                             >
                               {audioTimelineCollapsed ? <ChevronRight className="w-4 h-4 text-cyan-400 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-cyan-400 flex-shrink-0" />}
                               <Layers className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-                              <span className="text-cyan-300 font-medium">Storyboard Editor</span>
+                              <span className="text-cyan-300 font-medium">Animatic Editor</span>
                             </button>
                             <span className="text-cyan-400/70 text-sm ml-auto">{sceneDuration.toFixed(1)}s total</span>
                           </div>
