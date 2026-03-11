@@ -1958,6 +1958,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }>
       /** Scene direction for intelligent prompt building (avoids fallback to PromptEnhancer) */
       sceneDirection?: any
+      /** Model quality tier: 'eco' (Draft) or 'designer' (Final) */
+      modelTier?: 'eco' | 'designer' | 'director'
+      /** Thinking level for prompt complexity */
+      thinkingLevel?: 'low' | 'high'
     }) => {
       const scene = script?.script?.scenes?.find((s: any) => 
         (s.id || s.sceneId || `scene-${script?.script?.scenes?.indexOf(s)}`) === sceneId
@@ -2018,6 +2022,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             visualSetup: options?.visualSetup,
             // Art style for frame generation
             artStyle: options?.artStyle,
+            // Model quality tier for image generation cost control
+            modelTier: options?.modelTier || 'eco',
+            // Thinking level for prompt complexity
+            thinkingLevel: options?.thinkingLevel || 'low',
             // CRITICAL: Pass scene direction for intelligent keyframe prompt building
             // Without this, the API falls back to PromptEnhancer which prepends character
             // identity text before the action prompt, burying the actual scene description
@@ -2232,6 +2240,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
         await handleGenerateSegmentFrames(sceneId, segment.segmentId, frameType, {
           selectedCharacters: segmentCharacters,
+          // Use eco (Draft) for batch generation to minimize costs
+          // Users can regenerate individual frames at Final quality from the dialog
+          modelTier: 'eco',
+          thinkingLevel: 'low',
         })
         
         // Small delay between generations to avoid rate limiting

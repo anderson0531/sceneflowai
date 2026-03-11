@@ -233,8 +233,9 @@ export function FramePromptDialog({
   const [artStyle, setArtStyle] = useState<string>('photorealistic')
   
   // Model quality tier and thinking level state
-  const [modelTier, setModelTier] = useState<ModelTier>('designer')
-  const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>('high')
+  // Default to 'eco' (Draft) for cost-optimized iteration — users upgrade to 'designer' (Final) when ready
+  const [modelTier, setModelTier] = useState<ModelTier>('eco')
+  const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>('low')
   
   // State - Initialize customPrompt from segment data immediately to prevent race conditions
   const initialPrompt = useMemo(() => {

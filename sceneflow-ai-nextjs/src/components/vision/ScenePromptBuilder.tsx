@@ -162,8 +162,10 @@ export function ScenePromptBuilder({
   isGenerating = false
 }: ScenePromptBuilderProps) {
   const [mode, setMode] = useState<'guided' | 'advanced'>('guided')
-  const [modelTier, setModelTier] = useState<ModelTier>('designer')
-  const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>('high')
+  // Default to 'eco' (Draft) — scene images are visual-only storyboard previews, not reference images
+  // Users can select 'designer' (Final) for production-quality scene visuals
+  const [modelTier, setModelTier] = useState<ModelTier>('eco')
+  const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>('low')
   
   // Reference Library state
   const [selectedSceneRefIds, setSelectedSceneRefIds] = useState<string[]>([])
@@ -850,7 +852,10 @@ export function ScenePromptBuilder({
         type: 'object' as const,
         category: ref.category,      // prop, vehicle, set-piece, etc.
         importance: ref.importance   // critical, important, background
-      }))
+      })),
+      // Quality tier selection — eco (Draft) = fast/cheap, designer (Final) = production quality
+      modelTier,
+      thinkingLevel,
     }
     
     // Call parent handler - it will update isGenerating prop

@@ -183,10 +183,10 @@ export async function POST(req: NextRequest) {
       locationReferences = [],
       // NEW: Art style for frame generation
       artStyle = 'photorealistic',
-      // NEW: Model quality tier
-      modelTier = 'designer',
-      // NEW: Thinking level
-      thinkingLevel = 'high'
+      // Model quality tier: 'eco' (Draft) for cost-optimized iteration, 'designer' (Final) for production
+      modelTier = 'eco',
+      // Thinking level: 'low' for fast iteration, 'high' for complex multi-character scenes
+      thinkingLevel = 'low'
     } = body
     
     // Use custom prompt if provided, otherwise fall back to action prompt

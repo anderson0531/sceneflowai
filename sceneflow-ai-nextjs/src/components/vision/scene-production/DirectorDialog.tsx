@@ -137,10 +137,9 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   
   // FTV prompt options
   const [skipAnchoringPhrase, setSkipAnchoringPhrase] = useState(false)
-  // Quality tier state - FTV defaults to premium for better interpolation
-  const [qualityTier, setQualityTier] = useState<'fast' | 'premium'>(
-    mode === 'FRAME_TO_VIDEO' ? 'premium' : 'fast'
-  )
+  // Quality tier state - default to 'fast' for all modes (cost-optimized)
+  // Users can manually select 'premium' when higher quality is needed
+  const [qualityTier, setQualityTier] = useState<'fast' | 'premium'>('fast')
   
   // Intelligent prompt modification handler
   const handleModifyPrompt = useCallback(async () => {
@@ -305,12 +304,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     }
   }, [mode, motionPrompt, visualPrompt])
   
-  // Auto-switch quality tier when mode changes to FTV (premium recommended)
-  useEffect(() => {
-    if (mode === 'FRAME_TO_VIDEO') {
-      setQualityTier('premium')
-    }
-  }, [mode])
+  // Note: FTV no longer auto-switches to premium for cost optimization.
+  // The UI shows "Premium recommended for FTV" hint to let users choose.
   
   // Auto-optimize prompt when mode changes
   const handleModeChange = useCallback((newMode: string) => {
