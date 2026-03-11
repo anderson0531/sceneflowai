@@ -3134,6 +3134,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           }))}
           sceneReferences={sceneReferences}
           objectReferences={objectReferences}
+          locationReferences={locationReferences}
           sceneWardrobes={(() => {
             // Build wardrobes map from scene's characterWardrobes array
             const scene = scenes[sceneBuilderIdx]

@@ -7,12 +7,12 @@ import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Copy, Check, Sparkles, Info, Loader2, ChevronDown, ChevronUp, Image as ImageIcon, Box, Wand2, Shirt } from 'lucide-react'
+import { Copy, Check, Sparkles, Info, Loader2, ChevronDown, ChevronUp, Image as ImageIcon, Box, Wand2, Shirt, MapPin } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { findSceneCharacters, findSceneObjects } from '../../lib/character/matching'
 import { DetailedSceneDirection } from '@/types/scene-direction'
-import { VisualReference } from '@/types/visionReferences'
+import { VisualReference, LocationReference } from '@/types/visionReferences'
 import { cn } from '@/lib/utils'
 import {
   LocationSettingSection,
@@ -67,6 +67,8 @@ interface ScenePromptBuilderProps {
   sceneReferences?: VisualReference[]
   /** Prop/object references from the Reference Library */
   objectReferences?: VisualReference[]
+  /** Location references for environment/setting consistency */
+  locationReferences?: LocationReference[]
   /** Wardrobe assignments for this scene { characterName: wardrobeId } */
   sceneWardrobes?: Record<string, string>
   onGenerateImage: (selectedCharacters: any[] | any) => void
@@ -157,6 +159,7 @@ export function ScenePromptBuilder({
   availableCharacters = [],
   sceneReferences = [],
   objectReferences = [],
+  locationReferences = [],
   sceneWardrobes = {},
   onGenerateImage,
   isGenerating = false
@@ -172,6 +175,11 @@ export function ScenePromptBuilder({
   const [selectedObjectRefIds, setSelectedObjectRefIds] = useState<string[]>([])
   const [autoDetectedObjectIds, setAutoDetectedObjectIds] = useState<string[]>([])  // Track auto-detected objects
   const [referenceLibraryOpen, setReferenceLibraryOpen] = useState(false)
+  
+  // Location reference state
+  const [selectedLocationRefIds, setSelectedLocationRefIds] = useState<string[]>([])
+  const [autoMatchedLocationRefIds, setAutoMatchedLocationRefIds] = useState<Set<string>>(new Set())
+  const [locationSectionCollapsed, setLocationSectionCollapsed] = useState(true)
   
   // Local wardrobe selections (can override sceneWardrobes prop)
   const [localWardrobes, setLocalWardrobes] = useState<Record<string, string>>({})
@@ -507,7 +515,40 @@ export function ScenePromptBuilder({
     }
     
     setStructure(prev => ({ ...prev, ...updates }))
-  }, [open, scene, availableCharacters, objectReferences])
+    
+    // Auto-match location references from scene heading
+    if (locationReferences.length > 0 && scene?.heading) {
+      const headingStr = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text || ''
+      const headingLower = headingStr.toLowerCase()
+      const matchedIds: string[] = []
+      const matchedIdSet = new Set<string>()
+      
+      for (const loc of locationReferences) {
+        if (!loc.imageUrl) continue
+        const locLower = loc.location.toLowerCase()
+        const strippedHeading = headingLower
+          .replace(/^(int|ext)\.?\s*/i, '')
+          .replace(/\s*-\s*(day|night|dawn|dusk|evening|morning).*$/i, '')
+          .trim()
+        if (headingLower.includes(locLower) || locLower.includes(strippedHeading)) {
+          matchedIds.push(loc.id)
+          matchedIdSet.add(loc.id)
+        }
+      }
+      setAutoMatchedLocationRefIds(matchedIdSet)
+      if (matchedIds.length > 0) {
+        setSelectedLocationRefIds(matchedIds)
+        setLocationSectionCollapsed(false)
+      } else {
+        setSelectedLocationRefIds([])
+        setLocationSectionCollapsed(true)
+      }
+    } else {
+      setAutoMatchedLocationRefIds(new Set())
+      setSelectedLocationRefIds([])
+      setLocationSectionCollapsed(true)
+    }
+  }, [open, scene, availableCharacters, objectReferences, locationReferences])
 
   // Sync to advanced mode when switching
   useEffect(() => {
@@ -801,9 +842,10 @@ export function ScenePromptBuilder({
       })
       .filter(Boolean)
     
-    // Collect selected scene/object references for style matching
+    // Collect selected scene/object/location references for style matching
     const selectedSceneRefs = sceneReferences.filter(r => selectedSceneRefIds.includes(r.id))
     const selectedObjectRefs = objectReferences.filter(r => selectedObjectRefIds.includes(r.id))
+    const selectedLocationRefs = locationReferences.filter(r => selectedLocationRefIds.includes(r.id))
     
     // Pass prompt builder selections to API
     // Send raw prompt as scenePrompt (API will handle optimization)
@@ -852,6 +894,14 @@ export function ScenePromptBuilder({
         type: 'object' as const,
         category: ref.category,      // prop, vehicle, set-piece, etc.
         importance: ref.importance   // critical, important, background
+      })),
+      // Location references for environment/setting consistency
+      locationReferences: selectedLocationRefs.map(ref => ({
+        id: ref.id,
+        location: ref.location,
+        locationDisplay: ref.locationDisplay,
+        imageUrl: ref.imageUrl,
+        description: ref.description,
       })),
       // Quality tier selection — eco (Draft) = fast/cheap, designer (Final) = production quality
       modelTier,
@@ -921,7 +971,7 @@ export function ScenePromptBuilder({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl h-[85vh] bg-slate-900 text-white border-slate-700 flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="text-white">Opening Frame — {scene?.heading || `Scene ${scene?.sceneNumber || ''}`}</DialogTitle>
+          <DialogTitle className="text-white">Scene Image — {scene?.heading || `Scene ${scene?.sceneNumber || ''}`}</DialogTitle>
         </DialogHeader>
 
         {/* Scrollable Content Area */}
@@ -1011,6 +1061,106 @@ export function ScenePromptBuilder({
                   placeholder="walking along the shore, engaged in conversation"
                   className="bg-slate-900 border-slate-700 text-sm"
                 />
+              </div>
+            )}
+
+            {/* Location References — visual selector for environment consistency */}
+            {locationReferences.filter(l => l.imageUrl).length > 0 && (
+              <div className="space-y-3 p-3 rounded-lg border border-slate-700 bg-slate-800/50">
+                <button
+                  type="button"
+                  onClick={() => setLocationSectionCollapsed(prev => !prev)}
+                  className="flex items-center gap-2 w-full text-left"
+                >
+                  <MapPin className="w-4 h-4 text-cyan-400" />
+                  <h4 className="text-sm font-medium text-slate-200 flex-1">Location References</h4>
+                  {selectedLocationRefIds.length > 0 && (
+                    <span className="text-xs bg-cyan-500/20 text-cyan-200 px-2 py-0.5 rounded-full font-normal">
+                      {selectedLocationRefIds.length} selected
+                    </span>
+                  )}
+                  {locationSectionCollapsed ? (
+                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                  ) : (
+                    <ChevronUp className="w-4 h-4 text-slate-400" />
+                  )}
+                </button>
+
+                {!locationSectionCollapsed && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-slate-400">Select location images for environment/setting consistency</p>
+                      <div className="flex items-center gap-2">
+                        {autoMatchedLocationRefIds.size > 0 && (
+                          <button
+                            onClick={() => setSelectedLocationRefIds(
+                              locationReferences.filter(l => autoMatchedLocationRefIds.has(l.id)).map(l => l.id)
+                            )}
+                            className="h-6 text-[10px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 px-2 rounded"
+                          >
+                            Select Matched
+                          </button>
+                        )}
+                        {selectedLocationRefIds.length > 0 && (
+                          <button
+                            onClick={() => setSelectedLocationRefIds([])}
+                            className="h-6 text-[10px] text-slate-400 hover:text-slate-300 px-2 rounded"
+                          >
+                            Unselect All
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 gap-2">
+                      {locationReferences.filter(l => l.imageUrl).map((loc) => {
+                        const isSelected = selectedLocationRefIds.includes(loc.id)
+                        const isMatched = autoMatchedLocationRefIds.has(loc.id)
+                        return (
+                          <button
+                            key={loc.id}
+                            onClick={() => {
+                              setSelectedLocationRefIds(prev =>
+                                prev.includes(loc.id)
+                                  ? prev.filter(id => id !== loc.id)
+                                  : [...prev, loc.id]
+                              )
+                            }}
+                            className={cn(
+                              'relative rounded-lg overflow-hidden border-2 transition-all aspect-video',
+                              isSelected
+                                ? 'border-cyan-500 ring-2 ring-cyan-500/30'
+                                : 'border-slate-700 hover:border-slate-500'
+                            )}
+                          >
+                            <img
+                              src={loc.imageUrl}
+                              alt={loc.location}
+                              className="w-full h-full object-cover"
+                            />
+                            {isSelected && (
+                              <div className="absolute top-1 right-1 w-5 h-5 bg-cyan-500 rounded-full flex items-center justify-center">
+                                <Check className="w-3 h-3 text-white" />
+                              </div>
+                            )}
+                            {isMatched && !isSelected && (
+                              <div className="absolute top-1 left-1">
+                                <span className="text-[8px] bg-cyan-500/80 text-white px-1 py-0 rounded">
+                                  Match
+                                </span>
+                              </div>
+                            )}
+                            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-1.5">
+                              <p className="text-[10px] text-white font-medium truncate">{loc.location}</p>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <p className="text-[10px] text-slate-500">
+                      Selected locations will be included as reference images for visual consistency.
+                    </p>
+                  </>
+                )}
               </div>
             )}
 
