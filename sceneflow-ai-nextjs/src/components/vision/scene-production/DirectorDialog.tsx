@@ -62,6 +62,7 @@ import {
   Users,
   X,
   Plus,
+  ShieldAlert,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -72,6 +73,8 @@ import { useSegmentConfig } from '@/hooks/useSegmentConfig'
 import { GuidePromptEditor, type SceneAudioData } from './GuidePromptEditor'
 import { DirectionDialog } from './DirectionDialog'
 import { cn } from '@/lib/utils'
+import { ContentPolicyAlert, PolicyFixedBanner } from './ContentPolicyAlert'
+import { moderatePrompt, type ModerationResult } from '@/utils/promptModerator'
 
 interface DirectorDialogProps {
   segment: SceneSegment
@@ -134,6 +137,12 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   
   // Direction Dialog state
   const [isDirectionDialogOpen, setIsDirectionDialogOpen] = useState(false)
+  
+  // Content policy pre-flight & post-failure state
+  const [preflightModerationResult, setPreflightModerationResult] = useState<ModerationResult | null>(null)
+  const [postFailureModerationResult, setPostFailureModerationResult] = useState<ModerationResult | null>(null)
+  const [promptFixApplied, setPromptFixApplied] = useState(false)
+  const [localError, setLocalError] = useState<string | null>(null)
   
   // FTV prompt options
   const [skipAnchoringPhrase, setSkipAnchoringPhrase] = useState(false)
@@ -385,8 +394,50 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       setAspectRatio(autoConfig.aspectRatio)
       setResolution(autoConfig.resolution)
       setDuration(autoConfig.duration)
+      // Reset content policy state on open
+      setPreflightModerationResult(null)
+      setPostFailureModerationResult(null)
+      setPromptFixApplied(false)
+      setLocalError(null)
     }
   }, [isOpen, autoConfig])
+
+  // Detect post-failure content policy errors when segment status changes
+  useEffect(() => {
+    if (segment.status === 'ERROR' && segment.errorMessage) {
+      const errMsg = segment.errorMessage
+      setLocalError(errMsg)
+
+      const isContentPolicy = errMsg.includes('Content Policy') ||
+        errMsg.includes('safety filter') ||
+        errMsg.includes('violat') ||
+        errMsg.includes('usage guidelines')
+
+      if (isContentPolicy) {
+        const currentPrompt = mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt
+        if (currentPrompt) {
+          const modResult = moderatePrompt(currentPrompt)
+          if (modResult.isClean) {
+            // Vertex rejected it but our local moderator found nothing — provide guidance
+            setPostFailureModerationResult({
+              isClean: false,
+              severity: 'medium',
+              flaggedTerms: [],
+              suggestedPrompt: currentPrompt,
+              warnings: ['Vertex AI rejected this prompt but no specific trigger words were found locally. Try AI Rephrase for a complete rewrite.']
+            })
+          } else {
+            setPostFailureModerationResult(modResult)
+          }
+        }
+      } else {
+        setPostFailureModerationResult(null)
+      }
+    } else if (segment.status === 'COMPLETE' || segment.status === 'GENERATING') {
+      setLocalError(null)
+      setPostFailureModerationResult(null)
+    }
+  }, [segment.status, segment.errorMessage, mode, motionPrompt, visualPrompt])
   
   const handleSave = () => {
     const method = modeToMethod[mode]
@@ -419,14 +470,55 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     onSaveConfig(savedConfig)
   }
   
+  // AI Rephrase handler for ContentPolicyAlert
+  const handleAIRephrase = useCallback(async (originalPrompt: string): Promise<string> => {
+    const response = await fetch('/api/prompt/rephrase', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: originalPrompt,
+        flaggedTerms: (postFailureModerationResult || preflightModerationResult)?.flaggedTerms.map(ft => ft.term) || []
+      })
+    })
+    if (!response.ok) throw new Error('Failed to rephrase prompt')
+    const data = await response.json()
+    return data.rephrasedPrompt || data.prompt || originalPrompt
+  }, [postFailureModerationResult, preflightModerationResult])
+
+  // Apply content policy fix — updates the active prompt
+  const handleApplyContentFix = useCallback((fixedPrompt: string) => {
+    if (mode === 'FRAME_TO_VIDEO') {
+      setMotionPrompt(fixedPrompt)
+    } else {
+      setVisualPrompt(fixedPrompt)
+    }
+    setPreflightModerationResult(null)
+    setPostFailureModerationResult(null)
+    setLocalError(null)
+    setPromptFixApplied(true)
+    setTimeout(() => setPromptFixApplied(false), 5000)
+  }, [mode])
+
   // Handle generate - saves config AND triggers generation
-  const handleGenerate = () => {
+  const handleGenerate = (forceOverride = false) => {
     const method = modeToMethod[mode]
+    const finalPrompt = method === 'FTV' ? motionPrompt : visualPrompt
+
+    // Pre-flight content policy check (skip if user clicked "Generate Anyway")
+    if (!forceOverride && finalPrompt) {
+      const modResult = moderatePrompt(finalPrompt)
+      if (!modResult.isClean) {
+        setPreflightModerationResult(modResult)
+        return // Block generation — show ContentPolicyAlert
+      }
+    }
+
+    // Clear any prior preflight warning since we're proceeding
+    setPreflightModerationResult(null)
+
     // Use directly resolved frame URLs (not from autoConfig which may be stale)
     const resolvedStartFrameUrl = segment.startFrameUrl || segment.references?.startFrameUrl || null
     const resolvedEndFrameUrl = segment.endFrameUrl || segment.references?.endFrameUrl || null
-    
-    const finalPrompt = method === 'FTV' ? motionPrompt : visualPrompt
     
     const savedConfig: VideoGenerationConfig = {
       mode: method,
@@ -895,6 +987,76 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               </AccordionItem>
             </Accordion>
 
+            {/* Content Policy Alerts */}
+
+            {/* Success banner after fix applied */}
+            {promptFixApplied && (
+              <div className="mt-3">
+                <PolicyFixedBanner onDismiss={() => setPromptFixApplied(false)} />
+              </div>
+            )}
+
+            {/* Pre-flight Content Policy Warning */}
+            {preflightModerationResult && !preflightModerationResult.isClean && (
+              <div className="mt-3 space-y-2">
+                <ContentPolicyAlert
+                  moderationResult={preflightModerationResult}
+                  onApplyFix={handleApplyContentFix}
+                  onDismiss={() => setPreflightModerationResult(null)}
+                  enableAIRegeneration={true}
+                  onRegenerateWithAI={handleAIRephrase}
+                />
+                {preflightModerationResult.severity === 'low' && (
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => handleGenerate(true)}
+                      className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1 px-2 py-1 rounded border border-amber-700/50 hover:border-amber-600 transition-colors"
+                    >
+                      <ShieldAlert className="w-3.5 h-3.5" />
+                      Generate Anyway
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Post-failure Error Banner */}
+            {localError && (
+              <div className="mt-3">
+                {postFailureModerationResult ? (
+                  <div className="space-y-2">
+                    <div className="p-3 rounded-lg bg-red-900/30 border border-red-700">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-red-200 mb-1">Video Prompt Rejected</p>
+                          <p className="text-xs text-red-300/80">Vertex AI&apos;s safety filters rejected this prompt. Use Auto-Fix or AI Rephrase below.</p>
+                        </div>
+                        <button onClick={() => { setLocalError(null); setPostFailureModerationResult(null) }} className="text-red-400 hover:text-red-300"><X className="w-4 h-4" /></button>
+                      </div>
+                    </div>
+                    <ContentPolicyAlert
+                      moderationResult={postFailureModerationResult}
+                      onApplyFix={handleApplyContentFix}
+                      onDismiss={() => { setLocalError(null); setPostFailureModerationResult(null) }}
+                      enableAIRegeneration={true}
+                      onRegenerateWithAI={handleAIRephrase}
+                    />
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-lg bg-red-900/30 border border-red-700">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <pre className="text-xs text-red-200 whitespace-pre-wrap font-sans leading-relaxed">{localError}</pre>
+                      </div>
+                      <button onClick={() => setLocalError(null)} className="text-red-400 hover:text-red-300"><X className="w-4 h-4" /></button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Footer Actions */}
             <div className="mt-auto flex gap-3 pt-4">
               <Button 
@@ -906,7 +1068,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               </Button>
               <Button 
                 className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
-                onClick={handleGenerate}
+                onClick={() => handleGenerate()}
               >
                 <Play className="w-4 h-4 mr-2" />
                 Generate
