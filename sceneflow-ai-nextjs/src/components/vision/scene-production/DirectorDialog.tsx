@@ -63,6 +63,7 @@ import {
   X,
   Plus,
   ShieldAlert,
+  ImageOff,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -143,6 +144,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const [postFailureModerationResult, setPostFailureModerationResult] = useState<ModerationResult | null>(null)
   const [promptFixApplied, setPromptFixApplied] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
+  const [imageTriggered, setImageTriggered] = useState(false)
   
   // FTV prompt options
   const [skipAnchoringPhrase, setSkipAnchoringPhrase] = useState(false)
@@ -399,6 +401,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       setPostFailureModerationResult(null)
       setPromptFixApplied(false)
       setLocalError(null)
+      setImageTriggered(false)
     }
   }, [isOpen, autoConfig])
 
@@ -415,10 +418,26 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
 
       if (isContentPolicy) {
         const currentPrompt = mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt
+        const isImageBasedMethod = mode === 'FRAME_TO_VIDEO' || mode === 'IMAGE_TO_VIDEO' || mode === 'REFERENCE_IMAGES'
+        
         if (currentPrompt) {
           const modResult = moderatePrompt(currentPrompt)
-          if (modResult.isClean) {
-            // Vertex rejected it but our local moderator found nothing — provide guidance
+          if (modResult.isClean && isImageBasedMethod) {
+            // Prompt is clean + image-based method = IMAGE likely triggered the violation
+            setImageTriggered(true)
+            setPostFailureModerationResult({
+              isClean: false,
+              severity: 'medium',
+              flaggedTerms: [],
+              suggestedPrompt: currentPrompt,
+              warnings: [
+                'Your prompt passed local moderation, but Vertex AI rejected the request. ' +
+                'Since this used an image-based method (FTV/I2V), the reference image likely triggered the safety filter. ' +
+                'Try "Retry as Text-to-Video" below to generate without the reference image.'
+              ]
+            })
+          } else if (modResult.isClean) {
+            setImageTriggered(false)
             setPostFailureModerationResult({
               isClean: false,
               severity: 'medium',
@@ -427,6 +446,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               warnings: ['Vertex AI rejected this prompt but no specific trigger words were found locally. Try AI Rephrase for a complete rewrite.']
             })
           } else {
+            setImageTriggered(false)
             setPostFailureModerationResult(modResult)
           }
         }
@@ -436,6 +456,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     } else if (segment.status === 'COMPLETE' || segment.status === 'GENERATING') {
       setLocalError(null)
       setPostFailureModerationResult(null)
+      setImageTriggered(false)
     }
   }, [segment.status, segment.errorMessage, mode, motionPrompt, visualPrompt])
   
@@ -495,9 +516,49 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     setPreflightModerationResult(null)
     setPostFailureModerationResult(null)
     setLocalError(null)
+    setImageTriggered(false)
     setPromptFixApplied(true)
     setTimeout(() => setPromptFixApplied(false), 5000)
   }, [mode])
+
+  // Retry as T2V — fallback when reference image triggers content policy
+  const handleRetryAsT2V = useCallback(() => {
+    setMode('TEXT_TO_VIDEO')
+    setLocalError(null)
+    setPostFailureModerationResult(null)
+    setImageTriggered(false)
+    setPromptFixApplied(false)
+    
+    const currentPrompt = mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt
+    if (currentPrompt) {
+      setVisualPrompt(currentPrompt)
+    }
+    
+    // Build T2V config without reference images and generate
+    const t2vConfig: VideoGenerationConfig = {
+      mode: 'T2V',
+      prompt: currentPrompt || visualPrompt,
+      motionPrompt,
+      visualPrompt: currentPrompt || visualPrompt,
+      negativePrompt,
+      guidePrompt: guidePrompt || undefined,
+      aspectRatio,
+      resolution,
+      duration,
+      startFrameUrl: null,
+      endFrameUrl: null,
+      sourceVideoUrl: null,
+      approvalStatus: 'auto-ready',
+      confidence: autoConfig.confidence,
+      qualityTier,
+    }
+    
+    onSaveConfig(t2vConfig)
+    if (onGenerate) {
+      onGenerate(segment.segmentId, t2vConfig)
+    }
+    onClose()
+  }, [mode, motionPrompt, visualPrompt, negativePrompt, guidePrompt, aspectRatio, resolution, duration, autoConfig.confidence, qualityTier, onSaveConfig, onGenerate, segment.segmentId, onClose])
 
   // Handle generate - saves config AND triggers generation
   const handleGenerate = (forceOverride = false) => {
@@ -1025,23 +1086,49 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               <div className="mt-3">
                 {postFailureModerationResult ? (
                   <div className="space-y-2">
-                    <div className="p-3 rounded-lg bg-red-900/30 border border-red-700">
+                    <div className={`p-3 rounded-lg border ${imageTriggered ? 'bg-amber-900/30 border-amber-700' : 'bg-red-900/30 border-red-700'}`}>
                       <div className="flex items-start gap-2">
-                        <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                        {imageTriggered ? (
+                          <ImageOff className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                        )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-red-200 mb-1">Video Prompt Rejected</p>
-                          <p className="text-xs text-red-300/80">Vertex AI&apos;s safety filters rejected this prompt. Use Auto-Fix or AI Rephrase below.</p>
+                          {imageTriggered ? (
+                            <>
+                              <p className="text-sm font-medium text-amber-200 mb-1">Reference Image Flagged</p>
+                              <p className="text-xs text-amber-300/80">Your prompt is clean, but the reference image appears to have triggered Vertex AI&apos;s safety filters. This can happen with dramatic visual effects like explosions, supernovae, or intense lighting — even when the image was generated by Vertex AI itself.</p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-sm font-medium text-red-200 mb-1">Video Prompt Rejected</p>
+                              <p className="text-xs text-red-300/80">Vertex AI&apos;s safety filters rejected this prompt. Use Auto-Fix or AI Rephrase below.</p>
+                            </>
+                          )}
                         </div>
-                        <button onClick={() => { setLocalError(null); setPostFailureModerationResult(null) }} className="text-red-400 hover:text-red-300"><X className="w-4 h-4" /></button>
+                        <button onClick={() => { setLocalError(null); setPostFailureModerationResult(null); setImageTriggered(false) }} className={imageTriggered ? 'text-amber-400 hover:text-amber-300' : 'text-red-400 hover:text-red-300'}><X className="w-4 h-4" /></button>
                       </div>
                     </div>
-                    <ContentPolicyAlert
-                      moderationResult={postFailureModerationResult}
-                      onApplyFix={handleApplyContentFix}
-                      onDismiss={() => { setLocalError(null); setPostFailureModerationResult(null) }}
-                      enableAIRegeneration={true}
-                      onRegenerateWithAI={handleAIRephrase}
-                    />
+                    {imageTriggered ? (
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={handleRetryAsT2V}
+                          className="w-full py-2.5 px-4 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                        >
+                          <Type className="w-4 h-4" />
+                          Retry as Text-to-Video (without reference images)
+                        </button>
+                        <p className="text-[11px] text-slate-400 text-center">Generates using only the text prompt, bypassing the flagged reference image.</p>
+                      </div>
+                    ) : (
+                      <ContentPolicyAlert
+                        moderationResult={postFailureModerationResult}
+                        onApplyFix={handleApplyContentFix}
+                        onDismiss={() => { setLocalError(null); setPostFailureModerationResult(null) }}
+                        enableAIRegeneration={true}
+                        onRegenerateWithAI={handleAIRephrase}
+                      />
+                    )}
                   </div>
                 ) : (
                   <div className="p-3 rounded-lg bg-red-900/30 border border-red-700">
