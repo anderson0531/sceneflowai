@@ -118,6 +118,13 @@ export async function POST(req: NextRequest) {
     const hasNestedStructure = !!visionPhase.script?.script?.scenes?.length
     let scenes = visionPhase.script?.script?.scenes || visionPhase.script?.scenes || []
 
+    // Load stored translations for non-English audio generation
+    // User-imported translations take priority over machine translation
+    const storedTranslations = (language !== 'en' && visionPhase.translations?.[language]) || {} as Record<number, { narration?: string; dialogue?: string[] }>
+    if (language !== 'en' && Object.keys(storedTranslations).length > 0) {
+      console.log(`[Batch Audio] Found stored ${language} translations for ${Object.keys(storedTranslations).length} scenes`)
+    }
+
     if (!narrationVoice) {
       return NextResponse.json({ error: 'Narration voice not configured' }, { status: 400 })                                                                    
     }
@@ -352,8 +359,17 @@ export async function POST(req: NextRequest) {
             if (scene.narration) {
               console.log(`[Batch Audio] Generating narration for scene ${i + 1}`)                                                                              
               
+              // Check stored translations first (user imports > machine translation)
+              const sceneTranslation = (storedTranslations as any)[i] as { narration?: string; dialogue?: string[] } | undefined
+              const storedNarration = sceneTranslation?.narration
+              const narrationText = storedNarration || scene.narration
+              const narrationIsPreTranslated = !!storedNarration
+              if (storedNarration) {
+                console.log(`[Batch Audio] Using stored ${language} translation for narration in scene ${i + 1}`)
+              }
+              
               // Optimize narration text
-              const optimizedNarration = optimizeTextForTTS(scene.narration)
+              const optimizedNarration = optimizeTextForTTS(narrationText)
               
               const narrationResult = await fetch(`${baseUrl}/api/vision/generate-scene-audio`, {                                                               
                 method: 'POST',
@@ -365,6 +381,7 @@ export async function POST(req: NextRequest) {
                   text: optimizedNarration.text,
                   voiceConfig: narrationVoice,
                   language, // Pass language for translation support
+                  skipTranslation: narrationIsPreTranslated, // Don't re-translate stored translations
                 }),
               })
               const narrationData = await narrationResult.json()
@@ -463,8 +480,16 @@ export async function POST(req: NextRequest) {
                 // CRITICAL: Use character.voiceConfig, NOT narrationVoice
                 console.log(`[Batch Audio] Generating dialogue with voice:`, character.voiceConfig)                                                             
                 
+                // Check stored translations first (user imports > machine translation)
+                const storedDialogueLine = sceneTranslation?.dialogue?.[dialogueIndex]
+                const dialogueText = storedDialogueLine || dialogueLine.line
+                const dialogueIsPreTranslated = !!storedDialogueLine
+                if (storedDialogueLine) {
+                  console.log(`[Batch Audio] Using stored ${language} translation for dialogue ${dialogueIndex + 1} in scene ${i + 1}`)
+                }
+                
                 // Optimize dialogue text for TTS
-                const optimizedDialogue = optimizeTextForTTS(dialogueLine.line)
+                const optimizedDialogue = optimizeTextForTTS(dialogueText)
                 
                 const dialogueResult = await fetch(`${baseUrl}/api/vision/generate-scene-audio`, {                                                              
                   method: 'POST',
@@ -478,6 +503,7 @@ export async function POST(req: NextRequest) {
                     characterName: dialogueLine.character,
                     dialogueIndex,
                     language, // Pass language for translation support
+                    skipTranslation: dialogueIsPreTranslated, // Don't re-translate stored translations
                   }),
                 })
                 const dialogueData = await dialogueResult.json()

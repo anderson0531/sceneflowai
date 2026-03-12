@@ -399,7 +399,7 @@ export function SegmentPreviewTimeline({
   }, [segments])
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-w-0 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
@@ -420,7 +420,7 @@ export function SegmentPreviewTimeline({
       {/* Timeline Container */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-x-auto relative bg-background rounded border border-border"
+        className="flex-1 overflow-x-auto relative bg-background rounded border border-border min-w-0"
         onMouseMove={dragState ? handleMouseMove : undefined}
         onMouseUp={dragState ? handleMouseUp : undefined}
         onMouseLeave={dragState ? handleMouseUp : undefined}

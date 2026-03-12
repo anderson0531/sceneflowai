@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Copy, Check, Sparkles, Info, Loader2, Video, Image as ImageIcon, Clock, ArrowRight, Film, Link as LinkIcon, Upload, Camera, Wand2, Library, Users, Box, Clapperboard, X, Plus, MessageSquare, AlertCircle, RotateCcw, Eye, Type, Scissors, MapPin, Coffee, CreditCard, ShieldAlert } from 'lucide-react'
+import { Copy, Check, Sparkles, Info, Loader2, Video, Image as ImageIcon, Clock, ArrowRight, Film, Link as LinkIcon, Upload, Camera, Wand2, Library, Users, Box, Clapperboard, X, Plus, MessageSquare, AlertCircle, RotateCcw, Eye, Type, Scissors, MapPin, Coffee, CreditCard, ShieldAlert, RefreshCw } from 'lucide-react'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { SceneSegment, SceneSegmentTake } from './types'
 import { VisualReference } from '@/types/visionReferences'
@@ -193,6 +193,9 @@ export function SegmentPromptBuilder({
   const [isGeneratingCinematicPrompt, setIsGeneratingCinematicPrompt] = useState(false)
   const [cinematicDuration, setCinematicDuration] = useState(4)
   
+  // Track if the last content policy failure was FTV-related
+  const [isFTVContentPolicyFailure, setIsFTVContentPolicyFailure] = useState(false)
+  
   // Watch for segment status changes after generation starts
   // Note: We don't auto-close on success - user may want to generate multiple takes
   useEffect(() => {
@@ -203,6 +206,7 @@ export function SegmentPromptBuilder({
     if (segment.status === 'COMPLETE' || segment.status === 'UPLOADED') {
       setGenerationStarted(false)
       setLocalError(null)
+      setIsFTVContentPolicyFailure(false)
       // Don't auto-close - user controls when to close
     }
     
@@ -211,6 +215,16 @@ export function SegmentPromptBuilder({
       setGenerationStarted(false)
       const errMsg = segment.errorMessage || 'Generation failed. Please try again.'
       setLocalError(errMsg)
+      
+      // Check if this is an FTV-related content policy failure
+      const lastCPF = (segment as any).lastContentPolicyFailure
+      const isFTVRelated = lastCPF?.isFTVRelated === true
+      setIsFTVContentPolicyFailure(isFTVRelated)
+      
+      // If FTV-related, auto-switch the method selector to I2V as a recommendation
+      if (isFTVRelated && generationMethod === 'FTV') {
+        setGenerationMethod('I2V')
+      }
       
       // If this is a content policy error, run moderator to provide actionable UI
       const isContentPolicy = errMsg.includes('Content Policy') ||
@@ -229,7 +243,9 @@ export function SegmentPromptBuilder({
               severity: 'medium',
               flaggedTerms: [],
               suggestedPrompt: currentPrompt,
-              warnings: ['Vertex AI rejected this prompt but no specific trigger words were found. Try using AI Rephrase for a complete rewrite.']
+              warnings: isFTVRelated 
+                ? ['FTV interpolation between two frames triggered a safety rejection. This is a known false-positive pattern. Retry with I2V (Image-to-Video) using your start frame — your prompt and keyframe are preserved.']
+                : ['Vertex AI rejected this prompt but no specific trigger words were found. Try using AI Rephrase for a complete rewrite.']
             })
           } else {
             setPostFailureModerationResult(modResult)
@@ -984,16 +1000,50 @@ export function SegmentPromptBuilder({
                   <div className="flex items-start gap-2">
                     <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-red-200 mb-1">Video Prompt Rejected</p>
-                      <p className="text-xs text-red-300/80">The video prompt was rejected by Vertex AI&apos;s safety filters. Use Auto-Fix for quick replacements or AI Rephrase for a complete rewrite.</p>
+                      <p className="text-sm font-medium text-red-200 mb-1">
+                        {isFTVContentPolicyFailure ? 'FTV Interpolation Rejected' : 'Video Prompt Rejected'}
+                      </p>
+                      <p className="text-xs text-red-300/80">
+                        {isFTVContentPolicyFailure
+                          ? 'Frame-to-Video (FTV) interpolation between two images triggered a content policy violation. This is a common false positive — the AI model interprets the transition between frames as potentially sensitive. Retry with Image-to-Video (I2V) using just your start frame.'
+                          : 'The video prompt was rejected by Vertex AI\u0027s safety filters. Use Auto-Fix for quick replacements or AI Rephrase for a complete rewrite.'}
+                      </p>
                     </div>
                   </div>
                 </div>
+                {/* FTV-specific: Prominent "Retry with I2V" button */}
+                {isFTVContentPolicyFailure && startFrameUrl && (
+                  <div className="p-3 rounded-lg bg-blue-900/30 border border-blue-600">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-blue-200">Recommended: Retry with I2V</p>
+                        <p className="text-xs text-blue-300/70 mt-0.5">
+                          Uses your start frame + same prompt. No end frame = no hallucination trigger.
+                          Method has been auto-switched to I2V.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          // Method already switched to I2V by the status watcher
+                          // Clear error state and trigger regeneration
+                          setLocalError(null)
+                          setPostFailureModerationResult(null)
+                          setIsFTVContentPolicyFailure(false)
+                          handleGenerate()
+                        }}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                        Retry with I2V
+                      </button>
+                    </div>
+                  </div>
+                )}
                 {/* Actionable ContentPolicyAlert with Auto-Fix and AI Rephrase */}
                 <ContentPolicyAlert
                   moderationResult={postFailureModerationResult}
                   onApplyFix={handleApplyContentFix}
-                  onDismiss={() => { setLocalError(null); setPostFailureModerationResult(null) }}
+                  onDismiss={() => { setLocalError(null); setPostFailureModerationResult(null); setIsFTVContentPolicyFailure(false) }}
                   enableAIRegeneration={true}
                   onRegenerateWithAI={handleAIRephrase}
                 />
@@ -1029,24 +1079,37 @@ export function SegmentPromptBuilder({
                 Generation Method
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {(Object.keys(methodLabels) as VideoGenerationMethod[]).map((method) => (
+                {(Object.keys(methodLabels) as VideoGenerationMethod[]).map((method) => {
+                  // Check if FTV had a content policy failure on this segment
+                  const hasFTVWarning = method === 'FTV' && (segment as any).lastContentPolicyFailure?.isFTVRelated
+                  return (
                   <button
                     key={method}
                     onClick={() => setGenerationMethod(method)}
                     className={cn(
-                      'p-3 rounded-lg border transition-all text-left',
+                      'p-3 rounded-lg border transition-all text-left relative',
                       generationMethod === method
                         ? 'border-blue-500 bg-blue-500/20 ring-2 ring-blue-500'
-                        : 'border-gray-700 hover:border-gray-600'
+                        : hasFTVWarning
+                          ? 'border-amber-600/50 hover:border-amber-500'
+                          : 'border-gray-700 hover:border-gray-600'
                     )}
                   >
+                    {hasFTVWarning && (
+                      <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-4 h-4 rounded-full bg-amber-500 text-[8px] text-white font-bold" title="Previously rejected by content policy">!</span>
+                    )}
                     <div className="flex items-center gap-2 mb-1">
                       {methodLabels[method].icon}
                       <span className="text-sm font-medium">{methodLabels[method].label}</span>
                     </div>
-                    <div className="text-[10px] text-gray-400">{methodLabels[method].description}</div>
+                    <div className="text-[10px] text-gray-400">
+                      {hasFTVWarning 
+                        ? 'Previously rejected — try I2V instead' 
+                        : methodLabels[method].description}
+                    </div>
                   </button>
-                ))}
+                  )
+                })}
               </div>
               
               {/* Frame Selectors based on method */}

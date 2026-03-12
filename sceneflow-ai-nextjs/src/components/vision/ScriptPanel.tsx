@@ -562,6 +562,8 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
 export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false }: ScriptPanelProps) {
+
+
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -5068,14 +5070,14 @@ function SceneCard({
                                   // Now generate all audio fresh
                                   // Generate narration
                                   if (scene.narration && onGenerateSceneAudio) {
-                                    await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined)
+                                    await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined, selectedLanguage)
                                   }
                                   // Generate all dialogues
                                   if (scene.dialogue && onGenerateSceneAudio) {
                                     for (let i = 0; i < scene.dialogue.length; i++) {
                                       const d = scene.dialogue[i]
                                       if (d.line && d.character) {
-                                        await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i)
+                                        await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i, selectedLanguage)
                                       }
                                     }
                                   }
@@ -7002,6 +7004,10 @@ function SceneCard({
                             onLockSegment={onLockSegment ? (segmentId, locked) => onLockSegment(scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId, locked) : undefined}
                             onRenderedSceneUrlChange={onRenderedSceneUrlChange ? (url) => onRenderedSceneUrlChange(scene.sceneId || scene.id || `scene-${sceneIdx}`, url) : undefined}
                             onProductionDataChange={onProductionDataChange ? (data) => onProductionDataChange(scene.sceneId || scene.id || `scene-${sceneIdx}`, data) : undefined}
+                            sceneIndex={sceneIdx}
+                            onGenerateSceneAudio={onGenerateSceneAudio ? (idx, audioType, characterName, dialogueIndex, language) => onGenerateSceneAudio(idx, audioType, characterName, dialogueIndex, language) : undefined}
+                            onGenerateAllAudio={(arguments[0] as ScriptPanelProps).onGenerateAllAudio ? (language: string) => (arguments[0] as ScriptPanelProps).onGenerateAllAudio!(language) : undefined}
+                            isGeneratingAudio={(arguments[0] as ScriptPanelProps).isGeneratingAudio ?? false}
                           />
                         </div>
                         </motion.div>

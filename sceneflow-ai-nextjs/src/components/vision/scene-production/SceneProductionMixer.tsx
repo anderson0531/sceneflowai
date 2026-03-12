@@ -49,6 +49,10 @@ import {
   Minimize2,
   Video,
   Coins,
+  PanelRightClose,
+  PanelRightOpen,
+  Languages,
+  RefreshCw,
 } from 'lucide-react'
 import { upload } from '@vercel/blob/client'
 import { Button } from '@/components/ui/Button'
@@ -330,6 +334,14 @@ interface SceneProductionMixerProps {
   userTier?: 'trial' | 'starter' | 'pro' | 'studio' | 'enterprise'
   /** Remaining server renders this month (for trial/starter tiers) */
   remainingServerRenders?: number
+  /** Scene index (0-based) for audio generation API calls */
+  sceneIndex?: number
+  /** Generate audio for a specific scene, audio type, and language */
+  onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number, language?: string) => void | Promise<void>
+  /** Generate all audio for all scenes in a given language */
+  onGenerateAllAudio?: (language: string) => void | Promise<void>
+  /** Whether audio generation is in progress */
+  isGeneratingAudio?: boolean
 }
 
 // ============================================================================
@@ -410,18 +422,26 @@ function parseTime(input: string): number {
 
 /**
  * ProductionStreamSelector - Language selection for the active mix
+ * Shows all supported languages with audio availability status.
+ * Languages without audio show a generation CTA.
  */
 function ProductionStreamSelector({
   selectedLanguage,
   onLanguageChange,
   availableLanguages,
   disabled,
+  onGenerateAudioForLanguage,
+  isGeneratingAudio,
 }: {
   selectedLanguage: string
   onLanguageChange: (lang: string) => void
   availableLanguages: string[]
   disabled?: boolean
+  onGenerateAudioForLanguage?: (lang: string) => void
+  isGeneratingAudio?: boolean
 }) {
+  const hasAudioForSelected = availableLanguages.includes(selectedLanguage)
+  
   return (
     <div className="flex items-center gap-2">
       <Globe className="w-4 h-4 text-purple-400" />
@@ -431,19 +451,41 @@ function ProductionStreamSelector({
           <SelectValue />
         </SelectTrigger>
         <SelectContent className="bg-gray-900 border-gray-700">
-          {SUPPORTED_LANGUAGES.filter(l => 
-            availableLanguages.length === 0 || availableLanguages.includes(l.code)
-          ).map(lang => (
-            <SelectItem key={lang.code} value={lang.code} className="text-gray-200">
-              <span className="flex items-center gap-2">
-                <span>{FLAG_EMOJIS[lang.code] || '🌐'}</span>
-                <span>{lang.name}</span>
-                {lang.code === 'en' && <span className="text-xs text-gray-500">(Default)</span>}
-              </span>
-            </SelectItem>
-          ))}
+          {SUPPORTED_LANGUAGES.map(lang => {
+            const hasAudio = availableLanguages.includes(lang.code)
+            return (
+              <SelectItem key={lang.code} value={lang.code} className="text-gray-200">
+                <span className="flex items-center gap-2">
+                  <span>{FLAG_EMOJIS[lang.code] || '🌐'}</span>
+                  <span>{lang.name}</span>
+                  {lang.code === 'en' && <span className="text-xs text-gray-500">(Default)</span>}
+                  {hasAudio ? (
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400" title="Audio ready" />
+                  ) : (
+                    <span className="w-1.5 h-1.5 rounded-full bg-gray-600" title="No audio" />
+                  )}
+                </span>
+              </SelectItem>
+            )
+          })}
         </SelectContent>
       </Select>
+      {/* Generate Audio CTA for languages without audio */}
+      {!hasAudioForSelected && selectedLanguage !== 'en' && onGenerateAudioForLanguage && (
+        <button
+          onClick={() => onGenerateAudioForLanguage(selectedLanguage)}
+          disabled={disabled || isGeneratingAudio}
+          className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 transition-colors disabled:opacity-50"
+          title={`Translate & generate audio in ${SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name}`}
+        >
+          {isGeneratingAudio ? (
+            <Loader2 className="w-3 h-3 animate-spin" />
+          ) : (
+            <Zap className="w-3 h-3" />
+          )}
+          <span className="hidden sm:inline">{isGeneratingAudio ? 'Generating...' : 'Generate'}</span>
+        </button>
+      )}
     </div>
   )
 }
@@ -527,6 +569,21 @@ function ScenePreviewPlayer({
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0)
   const [isVideoFrozen, setIsVideoFrozen] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  
+  // Track container width for proportional overlay scaling
+  // Text overlays use vh units (viewport-relative) but need to be scaled
+  // proportionally to the player width so they match the rendered output.
+  const [containerWidth, setContainerWidth] = useState(0)
+  
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([entry]) => {
+      setContainerWidth(entry.contentRect.width)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
   
   // Track loaded video URL to prevent duplicate loads
   const loadedVideoUrlRef = useRef<string | null>(null)
@@ -987,13 +1044,22 @@ function ScenePreviewPlayer({
             }
           }
           
+          // Calculate proportional font size based on container height
+          // Overlays use fontSize as a percentage of video height (like vh units).
+          // In fullscreen, the container IS the viewport, so vh works naturally.
+          // In normal/theater mode, we compute pixels from the container's actual height.
+          const playerHeight = containerWidth * (9 / 16) // 16:9 aspect ratio
+          const computedFontSize = isFullscreen 
+            ? `${overlay.style.fontSize}vh`
+            : `${(overlay.style.fontSize / 100) * playerHeight}px`
+          
           return (
             <div
               key={overlay.id}
               style={{
                 ...getPositionStyles(),
                 fontFamily: getFontFamily(overlay.style.fontFamily),
-                fontSize: `${overlay.style.fontSize}vh`,
+                fontSize: computedFontSize,
                 fontWeight: overlay.style.fontWeight as number,
                 color: overlay.style.color,
                 backgroundColor: overlay.style.backgroundColor && (overlay.style.backgroundOpacity ?? 0) > 0
@@ -1073,7 +1139,9 @@ function ScenePreviewPlayer({
               <span
                 style={{
                   fontFamily: watermarkConfig.textStyle?.fontFamily || 'Inter, sans-serif',
-                  fontSize: `${watermarkConfig.textStyle?.fontSize ?? 2.5}vh`,
+                  fontSize: isFullscreen 
+                    ? `${watermarkConfig.textStyle?.fontSize ?? 2.5}vh`
+                    : `${((watermarkConfig.textStyle?.fontSize ?? 2.5) / 100) * (containerWidth * 9 / 16)}px`,
                   fontWeight: watermarkConfig.textStyle?.fontWeight || 500,
                   color: watermarkConfig.textStyle?.color || '#FFFFFF',
                   opacity: watermarkConfig.textStyle?.opacity ?? 0.6,
@@ -1237,6 +1305,8 @@ function AudioTrackRow({
   showMusicDuration,
   isCollapsed = false,
   onToggleCollapse,
+  onRegenerate,
+  isRegenerating,
 }: {
   type: 'narration' | 'dialogue' | 'music' | 'sfx'
   label: string
@@ -1264,6 +1334,8 @@ function AudioTrackRow({
   showMusicDuration?: boolean
   isCollapsed?: boolean
   onToggleCollapse?: () => void
+  onRegenerate?: () => void
+  isRegenerating?: boolean
 }) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPreviewPlaying, setIsPreviewPlaying] = useState(false)
@@ -1325,8 +1397,8 @@ function AudioTrackRow({
         </div>
         
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className={`font-medium ${config.enabled ? 'text-white' : 'text-gray-400'}`}>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`font-medium whitespace-nowrap ${config.enabled ? 'text-white' : 'text-gray-400'}`}>
               {label}
             </span>
             {hasAudio ? (
@@ -1349,8 +1421,8 @@ function AudioTrackRow({
               </span>
             )}
             {timeDelta > 0 && (
-              <Badge variant="outline" className="text-[10px] text-amber-400 border-amber-500/30 bg-amber-500/10 flex items-center gap-1">
-                <AlertTriangle className="w-3 h-3" />
+              <Badge variant="outline" className="text-[10px] text-amber-400 border-amber-500/30 bg-amber-500/10 flex items-center gap-1 whitespace-nowrap">
+                <AlertTriangle className="w-3 h-3 flex-shrink-0" />
                 +{timeDelta.toFixed(1)}s extended
               </Badge>
             )}
@@ -1364,6 +1436,18 @@ function AudioTrackRow({
             </p>
           )}
         </div>
+        
+        {/* Regenerate Button */}
+        {onRegenerate && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
+            disabled={disabled || isRegenerating}
+            className="p-2 rounded-lg transition-colors bg-gray-700/50 text-gray-400 hover:bg-gray-600 hover:text-white disabled:opacity-40"
+            title={`Regenerate ${label} audio`}
+          >
+            {isRegenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+          </button>
+        )}
         
         {/* Preview Button */}
         {hasAudio && audioUrl && (
@@ -2010,10 +2094,20 @@ export function SceneProductionMixer({
   isGeneratingSegments,
   userTier = 'pro',
   remainingServerRenders = Infinity,
+  sceneIndex,
+  onGenerateSceneAudio,
+  onGenerateAllAudio,
+  isGeneratingAudio,
 }: SceneProductionMixerProps) {
   // === Language/Stream State ===
   const [selectedLanguage, setSelectedLanguage] = useState('en')
+  const [isGeneratingLanguageAudio, setIsGeneratingLanguageAudio] = useState(false)
   const [resolution, setResolution] = useState<'720p' | '1080p' | '4K'>('1080p')
+  
+  // === Theater Mode State ===
+  // Theater mode collapses the right sidebar and expands video+timeline to full width,
+  // giving accurate text overlay placement preview and a practical timeline for long scenes.
+  const [theaterMode, setTheaterMode] = useState(false)
   
   // === Text Overlay State ===
   const [textOverlays, setTextOverlays] = useState<TextOverlay[]>(externalTextOverlays || [])
@@ -2414,6 +2508,44 @@ export function SceneProductionMixer({
   const languageLabel = useMemo(() => {
     return SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name || selectedLanguage.toUpperCase()
   }, [selectedLanguage])
+  
+  // Derive sceneIdx from sceneIndex prop or sceneNumber (1-based → 0-based)
+  const effectiveSceneIdx = sceneIndex ?? (sceneNumber - 1)
+  
+  // === Language Audio Generation Handler ===
+  // Generates narration + dialogue audio for the current scene in a specific language
+  const handleGenerateLanguageAudio = useCallback(async (language: string) => {
+    if (!onGenerateSceneAudio) return
+    
+    setIsGeneratingLanguageAudio(true)
+    const langName = SUPPORTED_LANGUAGES.find(l => l.code === language)?.name || language
+    
+    try {
+      toast.info(`⚡ Translating & generating ${langName} audio...`, { duration: 4000 })
+      
+      // Generate narration audio for this scene in the target language
+      if (audioAssets.narration) {
+        await onGenerateSceneAudio(effectiveSceneIdx, 'narration', undefined, undefined, language)
+      }
+      
+      // Generate dialogue audio for each line
+      const dialogueLines = audioAssets.dialogue || []
+      for (let i = 0; i < dialogueLines.length; i++) {
+        const line = dialogueLines[i]
+        const characterName = line.character || line.text?.split(':')?.[0]
+        if (characterName) {
+          await onGenerateSceneAudio(effectiveSceneIdx, 'dialogue', characterName, i, language)
+        }
+      }
+      
+      toast.success(`✅ ${langName} audio generated for Scene ${sceneNumber}`)
+    } catch (err) {
+      console.error('[SceneProductionMixer] Language audio generation error:', err)
+      toast.error(`Failed to generate ${langName} audio: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    } finally {
+      setIsGeneratingLanguageAudio(false)
+    }
+  }, [onGenerateSceneAudio, effectiveSceneIdx, audioAssets, sceneNumber])
   
   // === Handlers ===
   
@@ -3242,11 +3374,28 @@ export function SceneProductionMixer({
         </div>
         
         <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+          {/* Theater Mode Toggle */}
+          {hasRenderedSegments && (
+            <button
+              onClick={() => setTheaterMode(prev => !prev)}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+                theaterMode
+                  ? 'bg-purple-600/30 border-purple-500/50 text-purple-300'
+                  : 'bg-transparent border-gray-600/50 text-gray-500 hover:text-gray-300 hover:border-gray-500 hover:bg-gray-800/40'
+              }`}
+              title={theaterMode ? 'Exit Theater Mode' : 'Theater Mode — expand video + timeline for accurate overlay placement and long-scene editing'}
+            >
+              {theaterMode ? <PanelRightOpen className="w-3.5 h-3.5" /> : <PanelRightClose className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline">{theaterMode ? 'Show Panel' : 'Theater'}</span>
+            </button>
+          )}
           <ProductionStreamSelector
             selectedLanguage={selectedLanguage}
             onLanguageChange={setSelectedLanguage}
             availableLanguages={availableLanguages}
             disabled={isRendering}
+            onGenerateAudioForLanguage={onGenerateSceneAudio ? handleGenerateLanguageAudio : undefined}
+            isGeneratingAudio={isGeneratingAudio || isGeneratingLanguageAudio}
           />
           <ResolutionSelector
             resolution={resolution}
@@ -3259,9 +3408,13 @@ export function SceneProductionMixer({
       {/* Main Content */}
       <div className="p-4 sm:p-5">
         {hasRenderedSegments ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            {/* Left Column: Preview Player */}
-            <div className="space-y-4">
+          <div className={`grid gap-4 sm:gap-6 transition-all duration-300 ${
+            theaterMode 
+              ? 'grid-cols-1' 
+              : 'grid-cols-1 lg:grid-cols-[1fr,460px] xl:grid-cols-[1fr,500px]'
+          }`}>
+            {/* Left Column: Video Preview + Timeline */}
+            <div className="space-y-4 min-w-0">
               <ScenePreviewPlayer
                 segments={renderedSegments}
                 audioTracks={audioTracks}
@@ -3280,6 +3433,48 @@ export function SceneProductionMixer({
                 onDeleteOverlay={deleteOverlay}
               />
               
+              {/* Timeline Overview - directly under video for spatial continuity */}
+              <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg">
+                <div 
+                  className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/5"
+                  onClick={() => toggleSection('timeline')}
+                >
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toggleSection('timeline'); }}
+                      className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                    >
+                      {collapsedSections.timeline ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                    </button>
+                    <Clock className="w-4 h-4 text-blue-400" />
+                    <span className="text-sm font-medium text-white">Timeline</span>
+                    <span className="text-xs text-gray-500">Video: {formatTime(videoTotalDuration)} | Total: {formatTime(totalDuration)}</span>
+                  </div>
+                </div>
+                {!collapsedSections.timeline && (
+                  <div className="px-3 pb-3">
+                    <MixerTimeline
+                      segments={renderedSegments}
+                      currentPlaybackTime={0}
+                      audioTracks={audioTracks}
+                      onTrackChange={updateTrackConfig}
+                      videoTotalDuration={videoTotalDuration}
+                      narrationDuration={currentAudioUrls.narrationDuration}
+                      dialogueDuration={currentAudioUrls.dialogue.reduce((sum, d) => sum + ((d as { duration?: number }).duration || 3), 0)}
+                      musicDuration={audioTracks.music.duration ?? videoTotalDuration}
+                      sfxDuration={currentAudioUrls.sfx.reduce((sum, s) => sum + (s.duration || 2), 0)}
+                      textOverlays={textOverlays}
+                      onTextOverlayChange={updateOverlay}
+                      disabled={isRendering}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Right Column: Controls Panel — collapses in Theater Mode */}
+            {!theaterMode && (
+            <div className="space-y-3">
               {/* Text Overlay Controls */}
               <div className="bg-gray-800/50 border border-gray-700 rounded-lg">
                 <div 
@@ -3293,38 +3488,38 @@ export function SceneProductionMixer({
                     >
                       {collapsedSections.textOverlays ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
                     </button>
-                    <Type className="w-4 h-4 text-amber-400" />
-                    <span className="text-sm font-medium text-white">Text Overlays</span>
+                    <Type className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                    <span className="text-sm font-medium text-white whitespace-nowrap">Text Overlays</span>
                     {textOverlays.length > 0 && (
                       <Badge variant="outline" className="text-xs bg-amber-500/20 border-amber-500/50 text-amber-300">
                         {textOverlays.length}
                       </Badge>
                     )}
                   </div>
-                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-1.5 flex-wrap" onClick={(e) => e.stopPropagation()}>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => addTextOverlay('title')}
-                      className="h-7 text-xs bg-gray-700/50 border-gray-600 hover:bg-gray-700"
+                      className="h-6 text-[11px] px-2 bg-gray-700/50 border-gray-600 hover:bg-gray-700"
                     >
-                      <Plus className="w-3 h-3 mr-1" />
+                      <Plus className="w-3 h-3 mr-0.5" />
                       Title
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => addTextOverlay('lower-third')}
-                      className="h-7 text-xs bg-gray-700/50 border-gray-600 hover:bg-gray-700"
+                      className="h-6 text-[11px] px-2 bg-gray-700/50 border-gray-600 hover:bg-gray-700"
                     >
-                      <Plus className="w-3 h-3 mr-1" />
+                      <Plus className="w-3 h-3 mr-0.5" />
                       Lower Third
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => addTextOverlay('subtitle')}
-                      className="h-7 text-xs bg-gray-700/50 border-gray-600 hover:bg-gray-700"
+                      className="h-6 text-[11px] px-2 bg-gray-700/50 border-gray-600 hover:bg-gray-700"
                     >
                       <Plus className="w-3 h-3 mr-1" />
                       Subtitle
@@ -3969,10 +4164,63 @@ export function SceneProductionMixer({
                 isCollapsed={collapsedSections.segmentAudio}
                 onToggleCollapse={() => toggleSection('segmentAudio')}
               />
-            </div>
-            
-            {/* Right Column: Audio Track Controls */}
-            <div className="space-y-3">
+              
+              {/* Language Streams Status — shows available languages and their audio status */}
+              {availableLanguages.length > 1 && (
+                <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg">
+                  <div className="flex items-center justify-between p-3">
+                    <div className="flex items-center gap-2">
+                      <Languages className="w-4 h-4 text-purple-400" />
+                      <span className="text-sm font-medium text-white">Language Streams</span>
+                      <Badge variant="outline" className="text-[10px] text-purple-300 border-purple-500/30">
+                        {availableLanguages.length}
+                      </Badge>
+                    </div>
+                    {onGenerateAllAudio && (
+                      <button
+                        onClick={() => {
+                          const lang = selectedLanguage === 'en' ? 'es' : selectedLanguage
+                          onGenerateAllAudio(lang)
+                        }}
+                        disabled={isRendering || isGeneratingAudio || isGeneratingLanguageAudio}
+                        className="text-[11px] text-purple-400 hover:text-purple-300 disabled:opacity-50"
+                        title="Generate audio for all scenes in a new language"
+                      >
+                        + Add Language
+                      </button>
+                    )}
+                  </div>
+                  <div className="px-3 pb-3 flex flex-wrap gap-1.5">
+                    {availableLanguages.map(langCode => {
+                      const langInfo = SUPPORTED_LANGUAGES.find(l => l.code === langCode)
+                      const isActive = langCode === selectedLanguage
+                      const hasNarration = !!audioAssets.narrationAudio?.[langCode]?.url
+                      const hasDialogue = (audioAssets.dialogueAudio?.[langCode]?.length || 0) > 0
+                      
+                      return (
+                        <button
+                          key={langCode}
+                          onClick={() => setSelectedLanguage(langCode)}
+                          className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-all border ${
+                            isActive
+                              ? 'bg-purple-600/30 border-purple-500/50 text-purple-200'
+                              : 'bg-gray-700/30 border-gray-600/40 text-gray-400 hover:text-gray-200 hover:border-gray-500'
+                          }`}
+                        >
+                          <span>{FLAG_EMOJIS[langCode] || '🌐'}</span>
+                          <span>{langInfo?.name || langCode}</span>
+                          <div className="flex gap-0.5 ml-0.5">
+                            <span className={`w-1.5 h-1.5 rounded-full ${hasNarration ? 'bg-purple-400' : 'bg-gray-600'}`} title={hasNarration ? 'Narration ready' : 'No narration'} />
+                            <span className={`w-1.5 h-1.5 rounded-full ${hasDialogue ? 'bg-blue-400' : 'bg-gray-600'}`} title={hasDialogue ? 'Dialogue ready' : 'No dialogue'} />
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+              
+              {/* Audio Track Controls */}
               <AudioTrackRow
                 type="narration"
                 label="Narration"
@@ -3988,6 +4236,8 @@ export function SceneProductionMixer({
                 disabled={isRendering}
                 isCollapsed={collapsedSections.narration}
                 onToggleCollapse={() => toggleSection('narration')}
+                onRegenerate={onGenerateSceneAudio ? () => onGenerateSceneAudio(effectiveSceneIdx, 'narration', undefined, undefined, selectedLanguage) : undefined}
+                isRegenerating={isGeneratingAudio || isGeneratingLanguageAudio}
               />
               
               <AudioTrackRow
@@ -4011,6 +4261,8 @@ export function SceneProductionMixer({
                 onDialogueClipConfigChange={setDialogueClipConfigs}
                 isCollapsed={collapsedSections.dialogue}
                 onToggleCollapse={() => toggleSection('dialogue')}
+                onRegenerate={onGenerateSceneAudio ? () => handleGenerateLanguageAudio(selectedLanguage) : undefined}
+                isRegenerating={isGeneratingAudio || isGeneratingLanguageAudio}
               />
               
               <AudioTrackRow
@@ -4052,45 +4304,8 @@ export function SceneProductionMixer({
                 isCollapsed={collapsedSections.music}
                 onToggleCollapse={() => toggleSection('music')}
               />
-              
-              {/* Timeline Overview - Visual representation of all tracks */}
-              <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg mt-4">
-                <div 
-                  className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/5"
-                  onClick={() => toggleSection('timeline')}
-                >
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); toggleSection('timeline'); }}
-                      className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
-                    >
-                      {collapsedSections.timeline ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-                    </button>
-                    <Clock className="w-4 h-4 text-blue-400" />
-                    <span className="text-sm font-medium text-white">Timeline</span>
-                    <span className="text-xs text-gray-500">Video: {formatTime(videoTotalDuration)} | Total: {formatTime(totalDuration)}</span>
-                  </div>
-                </div>
-                {!collapsedSections.timeline && (
-                  <div className="px-3 pb-3">
-                    <MixerTimeline
-                      segments={renderedSegments}
-                      currentPlaybackTime={0}
-                      audioTracks={audioTracks}
-                      onTrackChange={updateTrackConfig}
-                      videoTotalDuration={videoTotalDuration}
-                      narrationDuration={currentAudioUrls.narrationDuration}
-                      dialogueDuration={currentAudioUrls.dialogue.reduce((sum, d) => sum + ((d as { duration?: number }).duration || 3), 0)}
-                      musicDuration={audioTracks.music.duration ?? videoTotalDuration}
-                      sfxDuration={currentAudioUrls.sfx.reduce((sum, s) => sum + (s.duration || 2), 0)}
-                      textOverlays={textOverlays}
-                      onTextOverlayChange={updateOverlay}
-                      disabled={isRendering}
-                    />
-                  </div>
-                )}
-              </div>
             </div>
+            )}
           </div>
         ) : (
           /* Empty State */

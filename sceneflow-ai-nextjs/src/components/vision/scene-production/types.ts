@@ -1503,6 +1503,17 @@ export interface ProposedDirection {
   endFrameDescription?: string
   /** Continuity notes (wardrobe, props, lighting consistency) */
   continuityNotes?: string
+  // Keyframe-specific direction (Phase 8: Segment Intelligence Overhaul)
+  /** Detailed keyframe start frame description for Imagen generation */
+  keyframeStartDescription?: string
+  /** Detailed keyframe end frame description for Imagen generation */
+  keyframeEndDescription?: string
+  /** Environment/backdrop description for no-talent or establishing shots */
+  environmentDescription?: string
+  /** Specific color palette for visual consistency */
+  colorPalette?: string
+  /** Depth of field specification */
+  depthOfField?: string
   // User review status
   isApproved: boolean
   isUserEdited: boolean

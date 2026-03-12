@@ -107,6 +107,21 @@ interface FrameGenerationRequest {
   // Art style for frame generation (default: photorealistic)
   artStyle?: string
   
+  // Phase 8: Per-segment direction with keyframe-specific descriptions
+  segmentDirection?: {
+    keyframeStartDescription?: string
+    keyframeEndDescription?: string
+    environmentDescription?: string
+    colorPalette?: string
+    depthOfField?: string
+    shotType?: string
+    cameraMovement?: string
+    emotionalBeat?: string
+    lightingMood?: string
+    isNoTalent?: boolean
+    talentAction?: string
+  } | null
+  
   // Model quality tier for generation
   modelTier?: 'eco' | 'designer' | 'director'
   
@@ -177,6 +192,8 @@ export async function POST(req: NextRequest) {
       sceneDirection,
       previousShotType,
       isPanTransition = false,
+      // Phase 8: Per-segment direction
+      segmentDirection: segmentDir,
       // NEW: Object references for prop consistency
       objectReferences = [],
       // NEW: Location references for environment consistency
@@ -269,7 +286,20 @@ export async function POST(req: NextRequest) {
           console.log('[Generate Frames] Using scene image for new shot')
         }
         
-        // Build enhanced start frame prompt using intelligent keyframe builder if scene direction available
+        // Phase 8: If segment direction has keyframe-specific descriptions, use them directly
+        // These are rich, AI-generated descriptions specifically designed for keyframe generation
+        if (!customPrompt && segmentDir?.keyframeStartDescription && segmentDir.keyframeStartDescription.trim().length > 20) {
+          let keyframePrompt = segmentDir.keyframeStartDescription.trim()
+          // Enrich with color palette and DOF if not already present
+          if (segmentDir.colorPalette && !keyframePrompt.toLowerCase().includes('color palette')) {
+            keyframePrompt += ` Color palette: ${segmentDir.colorPalette}.`
+          }
+          if (segmentDir.depthOfField && !keyframePrompt.toLowerCase().includes('dof') && !keyframePrompt.toLowerCase().includes('depth of field')) {
+            keyframePrompt += ` ${segmentDir.depthOfField}.`
+          }
+          startFramePrompt = keyframePrompt
+          console.log('[Generate Frames] Using segment direction keyframe start description (Phase 8)')
+        } else         // Build enhanced start frame prompt using intelligent keyframe builder if scene direction available
         if (sceneDirection && !customPrompt) {
           // Use intelligent keyframe prompt builder
           const keyframeContext: KeyframeContext = {
@@ -544,8 +574,18 @@ Render this scene in ${selectedStyle.name} style.`
       }
       
       // Build enhanced end frame prompt using intelligence library
-      // Use intelligent keyframe builder if scene direction is available
-      if (sceneDirection) {
+      // Phase 8: Use segment direction keyframe end description if available
+      if (!customPrompt && segmentDir?.keyframeEndDescription && segmentDir.keyframeEndDescription.trim().length > 20) {
+        let keyframePrompt = segmentDir.keyframeEndDescription.trim()
+        if (segmentDir.colorPalette && !keyframePrompt.toLowerCase().includes('color palette')) {
+          keyframePrompt += ` Color palette: ${segmentDir.colorPalette}.`
+        }
+        if (segmentDir.depthOfField && !keyframePrompt.toLowerCase().includes('dof') && !keyframePrompt.toLowerCase().includes('depth of field')) {
+          keyframePrompt += ` ${segmentDir.depthOfField}.`
+        }
+        endFramePrompt = keyframePrompt
+        console.log('[Generate Frames] Using segment direction keyframe end description (Phase 8)')
+      } else if (sceneDirection) {
         const keyframeContext: KeyframeContext = {
           segmentIndex,
           transitionType,

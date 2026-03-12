@@ -5,6 +5,7 @@ import { sequelize } from '../../../../config/database'
 import { optimizeTextForTTS } from '../../../../lib/tts/textOptimizer'
 import { getAudioDurationFromBuffer } from '../../../../lib/audio/serverAudioDuration'
 import { getElevenLabsVoiceForLanguage } from '../../../../lib/audio/elevenlabsVoices'
+import { translateWithVertexAI } from '../../../../lib/vertexai/translate'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -27,11 +28,12 @@ interface AudioGenerationRequest {
   characterName?: string // For dialogue
   dialogueIndex?: number // For dialogue - index of the dialog line in the scene
   language?: string // Target language for TTS (default: 'en')
+  skipTranslation?: boolean // Skip server-side translation (text is already translated)
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, sceneIndex, audioType, text, voiceConfig, characterName, dialogueIndex, language: requestedLanguage }: AudioGenerationRequest & { text: string } = await req.json()
+    const { projectId, sceneIndex, audioType, text, voiceConfig, characterName, dialogueIndex, language: requestedLanguage, skipTranslation }: AudioGenerationRequest & { text: string } = await req.json()
 
     // Log the request for debugging
     console.log('[Scene Audio] Request:', { 
@@ -81,39 +83,30 @@ export async function POST(req: NextRequest) {
     let textToGenerate = text
 
     // Translate text if non-English language is requested
-    // Uses Vertex AI Translation API (service account auth) to avoid API key rate limits
-    if (language !== 'en') {
+    // skipTranslation=true when the client already sent pre-translated text (from stored translations)
+    // Uses direct Vertex AI library call (not HTTP fetch) to avoid self-referential URL issues
+    if (language !== 'en' && !skipTranslation) {
       try {
-        console.log(`[Scene Audio] Translating text to ${language}...`)
-        // Use VERCEL_URL for server-side fetch in production, fallback to NEXT_PUBLIC_BASE_URL or localhost
-        const baseUrl = process.env.VERCEL_URL 
-          ? `https://${process.env.VERCEL_URL}` 
-          : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
-        const translateResponse = await fetch(`${baseUrl}/api/translate/vertex`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: textToGenerate,
-            targetLanguage: language,
-            sourceLanguage: 'en'
-          })
+        console.log(`[Scene Audio] Translating text to ${language} via Vertex AI (direct)...`)
+        const result = await translateWithVertexAI({
+          text: textToGenerate,
+          targetLanguage: language,
+          sourceLanguage: 'en'
         })
-        
-        if (translateResponse.ok) {
-          const translateData = await translateResponse.json()
-          if (translateData.translatedText) {
-            console.log(`[Scene Audio] Translation successful:`, {
-              original: textToGenerate.substring(0, 50),
-              translated: translateData.translatedText.substring(0, 50)
-            })
-            textToGenerate = translateData.translatedText
-          }
-        } else {
-          console.warn(`[Scene Audio] Translation failed, using original text:`, await translateResponse.text())
+        if (result.translatedText) {
+          console.log(`[Scene Audio] Translation successful:`, {
+            original: textToGenerate.substring(0, 50),
+            translated: result.translatedText.substring(0, 50)
+          })
+          textToGenerate = result.translatedText
         }
-      } catch (translateError) {
-        console.error(`[Scene Audio] Translation error, using original text:`, translateError)
+      } catch (translateError: any) {
+        // CRITICAL: Do NOT silently fall back to English — log prominently and still attempt TTS
+        // The ElevenLabs multilingual models can sometimes handle English text with language hints
+        console.error(`[Scene Audio] ⚠️ Translation FAILED for ${language}, TTS will use English text:`, translateError?.message || translateError)
       }
+    } else if (language !== 'en' && skipTranslation) {
+      console.log(`[Scene Audio] Skipping translation — text already in ${language} (from stored translations)`)
     }
 
     // Step 2: Optimize text for TTS (remove stage directions, clean up)

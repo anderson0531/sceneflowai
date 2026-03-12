@@ -2026,6 +2026,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             modelTier: options?.modelTier || 'eco',
             // Thinking level for prompt complexity
             thinkingLevel: options?.thinkingLevel || 'low',
+            // Phase 8: Per-segment direction with keyframe-specific descriptions
+            segmentDirection: segment.segmentDirection || null,
             // CRITICAL: Pass scene direction for intelligent keyframe prompt building
             // Without this, the API falls back to PromptEnhancer which prepends character
             // identity text before the action prompt, burying the actual scene description
@@ -2595,7 +2597,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             const enrichedMessage = vertexDetails 
               ? `${errorMessage}\n\nVertex AI Details: ${vertexDetails}`
               : errorMessage
-            throw new Error(enrichedMessage)
+            // Attach structured error data for the catch handler to use
+            const err = new Error(enrichedMessage) as any
+            err.contentPolicyData = {
+              code: errorData?.code || 'CONTENT_POLICY_VIOLATION',
+              generationMethod: errorData?.generationMethod,
+              isFTVRelated: errorData?.isFTVRelated || false,
+              suggestion: errorData?.suggestion || 'REPHRASE_PROMPT',
+              retryI2VData: errorData?.retryI2VData,
+            }
+            throw err
           }
           if (response.status === 429) {
             throw new Error('Rate limit exceeded. Please wait a moment and try again.')
@@ -2668,16 +2679,95 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         try {
           const { toast } = require('sonner')
           toast.success(`Asset generated successfully for segment ${segmentId.slice(0, 6)}`)
+          
+          // After successful I2V/FTV generation, check if the next segment's start frame
+          // was linked to this segment's end frame. If so, offer to update it with the 
+          // actual video's last frame (especially important after I2V retries where
+          // the end frame no longer matches the pre-generated keyframe).
+          if (lastFrameUrl && data.assetType === 'video') {
+            const currentProduction = sceneProductionState[sceneId]
+            if (currentProduction?.segments) {
+              const currentSegmentIndex = currentProduction.segments.findIndex(
+                (s: any) => s.segmentId === segmentId
+              )
+              const nextSegment = currentSegmentIndex >= 0 
+                ? currentProduction.segments[currentSegmentIndex + 1] 
+                : null
+              
+              if (nextSegment) {
+                // Check if next segment was using previous segment's end frame as its start frame
+                const nextStartFrame = nextSegment.references?.startFrameUrl
+                const currentEndFrame = currentProduction.segments[currentSegmentIndex]?.references?.endFrameUrl
+                const wasLinked = nextStartFrame && currentEndFrame && nextStartFrame === currentEndFrame
+                // Also offer update if the generation method was I2V (likely a retry from FTV)
+                // since the video end frame will differ from the pre-generated keyframe
+                const wasI2VRetry = options?.generationMethod === 'I2V' && nextStartFrame
+                
+                if (wasLinked || wasI2VRetry) {
+                  const nextSegIdx = currentSegmentIndex + 2 // 1-based display
+                  toast.info(`Segment ${nextSegIdx} start frame may be out of sync`, {
+                    description: 'This video\'s end frame differs from the next segment\'s start keyframe. Update it for visual continuity.',
+                    duration: 15000,
+                    action: {
+                      label: 'Update Next Start Frame',
+                      onClick: () => {
+                        applySceneProductionUpdate(sceneId, (current) => {
+                          if (!current) return current
+                          const segments = current.segments.map((seg, idx) => {
+                            if (idx !== currentSegmentIndex + 1) return seg
+                            return {
+                              ...seg,
+                              references: {
+                                ...seg.references,
+                                startFrameUrl: lastFrameUrl,
+                              },
+                              // Clear any cached start frame anchor since it's now stale
+                              ...(seg.references?.startFrameAnchor && {
+                                references: {
+                                  ...seg.references,
+                                  startFrameUrl: lastFrameUrl,
+                                  startFrameAnchor: {
+                                    ...seg.references.startFrameAnchor,
+                                    status: 'stale' as any,
+                                  },
+                                },
+                              }),
+                            }
+                          })
+                          return { ...current, segments }
+                        })
+                        toast.success(`Updated Segment ${nextSegIdx} start frame with this video's end frame`)
+                      }
+                    }
+                  })
+                }
+              }
+            }
+          }
         } catch {}
       } catch (error) {
         console.error('[Segment Generate] Error:', error)
         const errorMessage = error instanceof Error ? error.message : 'Failed to generate asset'
+        // Extract structured content policy data if available
+        const contentPolicyData = (error as any)?.contentPolicyData
         
-        // Update status to ERROR and store error message
+        // Update status to ERROR and store error message + content policy metadata
         applySceneProductionUpdate(sceneId, (current) => {
           if (!current) return current
           const segments = current.segments.map((segment) =>
-            segment.segmentId === segmentId ? { ...segment, status: 'ERROR', errorMessage } : segment
+            segment.segmentId === segmentId ? { 
+              ...segment, 
+              status: 'ERROR', 
+              errorMessage,
+              // Store content policy failure metadata for UI recovery and FTV deprioritization
+              ...(contentPolicyData && {
+                lastContentPolicyFailure: {
+                  method: contentPolicyData.generationMethod,
+                  isFTVRelated: contentPolicyData.isFTVRelated,
+                  timestamp: new Date().toISOString(),
+                }
+              }),
+            } : segment
           )
           return { ...current, segments }
         })
@@ -2698,6 +2788,166 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             const segment = sceneState?.segments?.find((s: any) => s.segmentId === segmentId)
             const currentPrompt = options?.prompt || segment?.userEditedPrompt || segment?.generatedPrompt || ''
             
+            // FTV-related content policy violation — suggest I2V retry first
+            if (contentPolicyData?.isFTVRelated && (contentPolicyData?.retryI2VData?.startFrameUrl || options?.startFrameUrl)) {
+              const i2vStartFrame = contentPolicyData?.retryI2VData?.startFrameUrl || options?.startFrameUrl
+              
+              toast.error('FTV Content Policy Violation', {
+                description: 'Frame-to-Video interpolation between two images often triggers false-positive safety rejections. Retry with Image-to-Video (I2V) using your start frame — this preserves your prompt and starting frame.',
+                duration: 20000,
+                action: {
+                  label: '⟳ Retry with I2V',
+                  onClick: () => {
+                    console.log('[I2V Retry] Retrying FTV content policy failure with I2V mode')
+                    console.log('[I2V Retry] Start frame:', i2vStartFrame)
+                    
+                    // Reset segment status before retry
+                    applySceneProductionUpdate(sceneId, (current) => {
+                      if (!current) return current
+                      const segments = current.segments.map((seg) =>
+                        seg.segmentId === segmentId 
+                          ? { ...seg, status: 'IDLE' as const, errorMessage: undefined }
+                          : seg
+                      )
+                      return { ...current, segments }
+                    })
+                    
+                    toast.loading('Retrying with I2V (start frame only)...', { id: 'retry-i2v' })
+                    
+                    // Retry with I2V: same prompt, same start frame, no end frame
+                    // Use direct fetch (matching Auto-Fix & Retry pattern) to avoid useCallback circular reference
+                    fetch(`/api/segments/${encodeURIComponent(segmentId)}/generate-asset`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      credentials: 'include',
+                      body: JSON.stringify({
+                        prompt: currentPrompt,
+                        genType: 'I2V',
+                        startFrameUrl: i2vStartFrame,
+                        // No endFrameUrl — this is the key difference from FTV
+                        generationMethod: 'I2V',
+                        sceneId,
+                        projectId: project?.id,
+                        negativePrompt: options?.negativePrompt,
+                        duration: options?.duration,
+                        aspectRatio: options?.aspectRatio,
+                        resolution: options?.resolution,
+                        guidePrompt: options?.guidePrompt,
+                      }),
+                    }).then(async (retryResponse) => {
+                      toast.dismiss('retry-i2v')
+                      if (retryResponse.ok) {
+                        const retryData = await retryResponse.json()
+                        if (retryData.success && retryData.status === 'COMPLETE') {
+                          toast.success('Video generated successfully with I2V (start frame only)')
+                          // Update segment with the completed asset
+                          applySceneProductionUpdate(sceneId, (current) => {
+                            if (!current) return current
+                            const segments = current.segments.map((seg) => {
+                              if (seg.segmentId !== segmentId) return seg
+                              const newTake = {
+                                id: `${segmentId}-take-${Date.now()}`,
+                                createdAt: new Date().toISOString(),
+                                assetUrl: retryData.assetUrl,
+                                thumbnailUrl: retryData.assetType === 'image' ? retryData.assetUrl : (retryData.lastFrameUrl || undefined),
+                                status: 'COMPLETE' as const,
+                                durationSec: seg.endTime - seg.startTime,
+                                veoVideoRef: retryData.veoVideoRef,
+                              }
+                              return {
+                                ...seg,
+                                status: 'COMPLETE' as const,
+                                assetType: retryData.assetType,
+                                activeAssetUrl: retryData.assetUrl,
+                                takes: [newTake, ...(seg.takes || [])],
+                                errorMessage: undefined,
+                                lastContentPolicyFailure: undefined, // Clear failure flag on success
+                                references: {
+                                  ...seg.references,
+                                  endFrameUrl: retryData.lastFrameUrl || seg.references?.endFrameUrl,
+                                },
+                              }
+                            })
+                            return { ...current, segments }
+                          })
+                          
+                          // After successful I2V retry, offer to update next segment's start frame
+                          if (retryData.lastFrameUrl) {
+                            const currentProduction = sceneProductionState[sceneId]
+                            if (currentProduction?.segments) {
+                              const currentSegmentIndex = currentProduction.segments.findIndex(
+                                (s: any) => s.segmentId === segmentId
+                              )
+                              const nextSegment = currentSegmentIndex >= 0 
+                                ? currentProduction.segments[currentSegmentIndex + 1] 
+                                : null
+                              if (nextSegment?.references?.startFrameUrl) {
+                                const nextSegIdx = currentSegmentIndex + 2
+                                toast.info(`Update Segment ${nextSegIdx} start frame?`, {
+                                  description: 'I2V video end frame differs from the next segment\'s start keyframe. Update for visual continuity.',
+                                  duration: 15000,
+                                  action: {
+                                    label: 'Update Start Frame',
+                                    onClick: () => {
+                                      applySceneProductionUpdate(sceneId, (current) => {
+                                        if (!current) return current
+                                        const segments = current.segments.map((seg, idx) => {
+                                          if (idx !== currentSegmentIndex + 1) return seg
+                                          return {
+                                            ...seg,
+                                            references: {
+                                              ...seg.references,
+                                              startFrameUrl: retryData.lastFrameUrl,
+                                            },
+                                          }
+                                        })
+                                        return { ...current, segments }
+                                      })
+                                      toast.success(`Updated Segment ${nextSegIdx} start frame`)
+                                    }
+                                  }
+                                })
+                              }
+                            }
+                          }
+                        } else {
+                          toast.info('I2V retry accepted — video is being generated')
+                          applySceneProductionUpdate(sceneId, (current) => {
+                            if (!current) return current
+                            const segments = current.segments.map((seg) =>
+                              seg.segmentId === segmentId 
+                                ? { ...seg, status: 'GENERATING' as const, errorMessage: undefined }
+                                : seg
+                            )
+                            return { ...current, segments }
+                          })
+                        }
+                      } else {
+                        const errorData = await retryResponse.json().catch(() => ({ error: 'I2V retry failed' }))
+                        toast.error('I2V retry failed', {
+                          description: errorData.error || 'Please try editing the prompt manually.',
+                          duration: 10000,
+                        })
+                        applySceneProductionUpdate(sceneId, (current) => {
+                          if (!current) return current
+                          const segments = current.segments.map((seg) =>
+                            seg.segmentId === segmentId 
+                              ? { ...seg, status: 'ERROR' as const, errorMessage: errorData.error || 'I2V retry failed' }
+                              : seg
+                          )
+                          return { ...current, segments }
+                        })
+                      }
+                    }).catch(() => {
+                      toast.dismiss('retry-i2v')
+                      toast.error('I2V retry failed — please try again')
+                    })
+                  }
+                }
+              })
+              return // Skip the standard content policy toast below
+            }
+
             toast.error('Content policy violation', {
               description: 'Your prompt was flagged by safety filters. Auto-fix replaces sensitive terms with cinematic alternatives.',
               duration: 15000, // Keep visible longer for user to decide
@@ -8337,10 +8587,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       
       let text: string | undefined
+      let isPreTranslated = false // Track if we're sending pre-translated text (skip server translation)
       const targetLanguage = language || 'en'
       
       // PRIORITY: Check stored translations first for non-English languages
       // This allows audio generation to use imported translations (via ScriptPanel)
+      // When found, we set isPreTranslated=true so the server doesn't double-translate
       const sceneTranslation = storedTranslations?.[targetLanguage]?.[sceneIdx]
       const useStoredTranslation = targetLanguage !== 'en' && sceneTranslation
       
@@ -8348,6 +8600,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // Use stored translation if available, otherwise fall back to English
         if (useStoredTranslation && sceneTranslation?.narration) {
           text = sceneTranslation.narration
+          isPreTranslated = true
           console.log('[Generate Scene Audio] Using stored translation for narration:', {
             language: targetLanguage,
             sceneIdx,
@@ -8356,7 +8609,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         } else {
           text = scene.narration || scene.action
           if (targetLanguage !== 'en') {
-            console.warn('[Generate Scene Audio] No stored translation found for narration, falling back to English:', {
+            console.log('[Generate Scene Audio] No stored translation for narration — server will translate via Vertex AI:', {
               language: targetLanguage,
               sceneIdx,
               hasStoredTranslations: !!storedTranslations,
@@ -8373,6 +8626,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const translatedLine = sceneTranslation.dialogue[dialogueIndex]
           if (translatedLine) {
             text = translatedLine
+            isPreTranslated = true
             console.log('[Generate Scene Audio] Using stored translation for dialogue:', {
               language: targetLanguage,
               sceneIdx,
@@ -8391,7 +8645,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         } else {
           text = dialogueLine?.line
           if (targetLanguage !== 'en') {
-            console.warn('[Generate Scene Audio] No stored translation for dialogue, falling back to English')
+            console.log('[Generate Scene Audio] No stored translation for dialogue — server will translate via Vertex AI')
           }
         }
       }
@@ -8519,7 +8773,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           voiceConfig,
           characterName,
           dialogueIndex,
-          language: language || 'en'
+          language: language || 'en',
+          // Skip server-side translation if we already have pre-translated text from stored translations
+          // This prevents double-translation (translating already-translated text)
+          skipTranslation: isPreTranslated,
         }),
       })
 

@@ -190,6 +190,53 @@ export interface SegmentDirection {
   endFrameDescription?: string
   /** Continuity notes (wardrobe, props, lighting consistency) */
   continuityNotes?: string
+  
+  // =========================================================================
+  // Keyframe-Specific Direction (Phase 8: Segment Intelligence Overhaul)
+  // =========================================================================
+  
+  /** 
+   * Detailed keyframe start frame description for Imagen generation.
+   * Must include: subject position, expression, body language, lighting specifics,
+   * depth of field, color palette, and environment details.
+   * Example: "Medium close-up of SARAH, 30s Latina with dark curly hair pulled back,
+   * wearing cream silk blouse, eyes wide with recognition, left hand frozen mid-reach
+   * toward manila envelope on mahogany desk. Warm tungsten key light from desk lamp
+   * camera-left, cool blue fill from laptop screen, shallow DOF 85mm f/1.2, 
+   * background soft bokeh of rain-streaked window."
+   */
+  keyframeStartDescription?: string
+  
+  /** 
+   * Detailed keyframe end frame description for Imagen generation.
+   * Shows the END STATE after the segment action completes.
+   * Must describe exactly how the scene has changed from the start frame.
+   * Example: "Same composition, SARAH now clutching envelope to chest, eyes closed,
+   * single tear on left cheek, body turned 15 degrees away from desk. Desk lamp flickers.
+   * Same warm/cool lighting but shadows deepen. 85mm f/1.2 shallow DOF."
+   */
+  keyframeEndDescription?: string
+  
+  /**
+   * Environment/backdrop description for no-talent scenes or establishing shots.
+   * Detailed enough for standalone image generation without character context.
+   * Example: "Aerial drone shot of rain-soaked Manhattan at twilight, neon signs
+   * reflecting in puddles, yellow taxis streaking through Times Square, steam rising
+   * from subway grates, 24mm f/2.8 deep focus, cyan-orange color grade."
+   */
+  environmentDescription?: string
+  
+  /**
+   * Specific color palette for visual consistency across keyframes.
+   * Example: "Warm amber highlights, deep navy shadows, desaturated midtones"
+   */
+  colorPalette?: string
+  
+  /**
+   * Depth of field specification for keyframe generation.
+   * Example: "Shallow DOF f/1.4 - subject tack sharp, background creamy bokeh"
+   */
+  depthOfField?: string
 }
 
 /**

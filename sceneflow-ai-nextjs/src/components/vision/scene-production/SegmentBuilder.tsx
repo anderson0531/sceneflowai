@@ -46,6 +46,11 @@ import {
   Clapperboard,
   Camera,
   Video,
+  Plus,
+  GripVertical,
+  Mic,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 import {
   SceneSegment,
@@ -115,47 +120,75 @@ function SegmentDirectionCard({
   const segmentDialogue = dialogueLines.filter(d => 
     direction.dialogueLineIds.includes(d.id)
   )
+
+  // Detect narration lines (voiceover indices)
+  const hasNarrationLines = direction.dialogueLineIds.some(id => {
+    const idx = parseInt(id.replace('dialogue-', ''))
+    // Narration lines are typically lower indices added before dialogue
+    return !dialogueLines.find(d => d.id === id)
+  })
   
   const methodColors: Record<string, string> = {
-    'I2V': 'bg-green-500/20 text-green-400 border-green-500/30',
-    'T2V': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    'EXT': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-    'FTV': 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+    'I2V': 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+    'T2V': 'bg-blue-500/20 text-blue-300 border-blue-500/40',
+    'EXT': 'bg-purple-500/20 text-purple-300 border-purple-500/40',
+    'FTV': 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+  }
+
+  const methodIcons: Record<string, string> = {
+    'I2V': '🖼️',
+    'T2V': '✏️',
+    'EXT': '➡️',
+    'FTV': '🎬',
   }
   
   const confidenceColor = direction.confidence >= 80 
-    ? 'text-green-400' 
+    ? 'text-emerald-400' 
     : direction.confidence >= 60 
     ? 'text-amber-400' 
     : 'text-red-400'
+
+  // Card border accent color based on state
+  const cardBorderClass = direction.isApproved
+    ? 'border-emerald-500/60 shadow-[0_0_12px_rgba(16,185,129,0.08)]'
+    : direction.isNoTalent
+    ? 'border-indigo-500/40'
+    : isSelected
+    ? 'border-sf-primary/60'
+    : 'border-sf-border hover:border-sf-border-strong'
   
   return (
     <Card 
       className={cn(
-        "transition-all cursor-pointer",
-        isSelected && "ring-2 ring-primary",
-        direction.isApproved && "border-green-500/50 bg-green-950/10",
-        direction.isNoTalent && "border-cyan-500/30"
+        "transition-all duration-200 cursor-pointer bg-sf-surface",
+        cardBorderClass,
+        isSelected && "ring-2 ring-sf-primary/40",
+        direction.isApproved && "bg-emerald-950/15",
       )}
       onClick={onSelect}
     >
-      <CardContent className="p-4">
-        {/* Header Row */}
-        <div className="flex items-start justify-between mb-3">
+      <CardContent className="p-0">
+        {/* Header Row — Colored top bar */}
+        <div className={cn(
+          "flex items-start justify-between px-4 py-3 rounded-t-lg border-b",
+          direction.isApproved
+            ? 'bg-emerald-950/30 border-emerald-500/20'
+            : 'bg-sf-surface-light/60 border-sf-border/50'
+        )}>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="font-mono">
+            <Badge variant="outline" className="font-mono bg-sf-background/50 border-sf-border-strong text-sf-text-primary">
               {index + 1}
             </Badge>
-            <Badge className={methodColors[direction.generationMethod] || ''}>
-              {direction.generationMethod}
+            <Badge className={cn('border', methodColors[direction.generationMethod] || '')}>
+              {methodIcons[direction.generationMethod] || ''} {direction.generationMethod}
             </Badge>
             {direction.isNoTalent && (
-              <Badge variant="outline" className="text-cyan-400 border-cyan-500/30">
+              <Badge variant="outline" className="text-indigo-300 border-indigo-500/40 bg-indigo-500/10">
                 No Talent
               </Badge>
             )}
             {direction.isUserEdited && (
-              <Badge variant="outline" className="text-amber-400 border-amber-500/30">
+              <Badge variant="outline" className="text-amber-300 border-amber-500/40 bg-amber-500/10">
                 <Edit3 className="w-3 h-3 mr-1" />
                 Edited
               </Badge>
@@ -165,11 +198,14 @@ function SegmentDirectionCard({
             <span className={cn("text-xs font-mono", confidenceColor)}>
               {direction.confidence}% conf
             </span>
-            <Badge variant="outline" className="font-mono text-xs">
+            <Badge variant="outline" className="font-mono text-xs bg-sf-background/50 border-sf-border">
               ~{direction.estimatedDuration}s
             </Badge>
           </div>
         </div>
+
+        {/* Card Body */}
+        <div className="px-4 py-3">
         
         {/* Direction Details */}
         {isEditing ? (
@@ -305,24 +341,28 @@ function SegmentDirectionCard({
               />
             </div>
 
-            {/* Frame Descriptions */}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-xs text-muted-foreground">Start Frame</label>
+            {/* Frame Descriptions — Colorized edit areas */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-emerald-400 flex items-center gap-1">
+                  <Play className="w-3 h-3" /> Start Frame
+                </label>
                 <Textarea
                   value={direction.startFrameDescription || ''}
                   onChange={e => onEdit({ startFrameDescription: e.target.value })}
                   placeholder="Opening frame description for continuity..."
-                  className="h-14 text-xs resize-none"
+                  className="h-24 text-sm resize-none bg-emerald-950/15 border-emerald-500/30 focus:border-emerald-500/60 placeholder:text-emerald-900/50"
                 />
               </div>
-              <div>
-                <label className="text-xs text-muted-foreground">End Frame</label>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-rose-400 flex items-center gap-1">
+                  <Lock className="w-3 h-3" /> End Frame
+                </label>
                 <Textarea
                   value={direction.endFrameDescription || ''}
                   onChange={e => onEdit({ endFrameDescription: e.target.value })}
                   placeholder="Closing frame description for next segment..."
-                  className="h-14 text-xs resize-none"
+                  className="h-24 text-sm resize-none bg-rose-950/15 border-rose-500/30 focus:border-rose-500/60 placeholder:text-rose-900/50"
                 />
               </div>
             </div>
@@ -354,18 +394,18 @@ function SegmentDirectionCard({
             </div>
           </div>
         ) : (
-          <div className="space-y-2">
-            {/* Shot Info Row */}
-            <div className="flex items-center gap-2 text-sm">
-              <Camera className="w-3 h-3 text-muted-foreground" />
-              <span className="font-medium">{direction.shotType}</span>
-              <span className="text-muted-foreground">•</span>
-              <span className="text-muted-foreground">{direction.cameraMovement}</span>
-              <span className="text-muted-foreground">•</span>
-              <span className="text-muted-foreground">{direction.cameraAngle}</span>
+          <div className="space-y-0">
+            {/* Section 1: Camera & Shot Info — Blue accent */}
+            <div className="flex items-center gap-2 text-sm py-2">
+              <Camera className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+              <span className="font-medium text-sf-text-primary">{direction.shotType}</span>
+              <span className="text-sf-text-disabled">•</span>
+              <span className="text-sf-text-secondary">{direction.cameraMovement}</span>
+              <span className="text-sf-text-disabled">•</span>
+              <span className="text-sf-text-secondary">{direction.cameraAngle}</span>
               {direction.lens && (
                 <>
-                  <span className="text-muted-foreground">•</span>
+                  <span className="text-sf-text-disabled">•</span>
                   <span className="text-xs font-mono text-blue-400">{direction.lens}</span>
                 </>
               )}
@@ -373,105 +413,123 @@ function SegmentDirectionCard({
 
             {/* Transition */}
             {direction.transitionIn && direction.transitionIn !== 'cut' && (
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center gap-2 text-sm pb-2">
                 <ArrowRight className="w-3 h-3 text-purple-400" />
                 <span className="text-purple-300 text-xs capitalize">{direction.transitionIn}</span>
               </div>
             )}
-            
-            {/* Talent Action */}
+
+            {/* Section 2: Talent Action — Separated with border */}
             {direction.talentAction && (
-              <div className="flex items-start gap-2 text-sm">
-                <Users className="w-3 h-3 text-muted-foreground mt-0.5" />
-                <span className="text-muted-foreground">{direction.talentAction}</span>
-              </div>
-            )}
-            
-            {/* Emotional Beat */}
-            {direction.emotionalBeat && (
-              <div className="flex items-center gap-2 text-sm">
-                <Sparkles className="w-3 h-3 text-amber-400" />
-                <span className="text-amber-300 text-xs">{direction.emotionalBeat}</span>
-              </div>
-            )}
-            
-            {/* Characters */}
-            {direction.characters.length > 0 && (
-              <div className="flex items-center gap-1 flex-wrap">
-                {direction.characters.map(char => (
-                  <Badge key={char} variant="secondary" className="text-xs">
-                    {char}
-                  </Badge>
-                ))}
-              </div>
-            )}
-
-            {/* Frame Descriptions */}
-            {(direction.startFrameDescription || direction.endFrameDescription) && (
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {direction.startFrameDescription && (
-                  <div className="p-2 rounded bg-muted/30 border border-border/30">
-                    <div className="flex items-center gap-1 mb-0.5">
-                      <Play className="w-2.5 h-2.5 text-green-400" />
-                      <span className="text-[10px] font-medium text-green-400 uppercase tracking-wide">Start Frame</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground leading-tight">{direction.startFrameDescription}</p>
-                  </div>
-                )}
-                {direction.endFrameDescription && (
-                  <div className="p-2 rounded bg-muted/30 border border-border/30">
-                    <div className="flex items-center gap-1 mb-0.5">
-                      <Lock className="w-2.5 h-2.5 text-orange-400" />
-                      <span className="text-[10px] font-medium text-orange-400 uppercase tracking-wide">End Frame</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground leading-tight">{direction.endFrameDescription}</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Continuity Notes */}
-            {direction.continuityNotes && (
-              <div className="flex items-start gap-2 text-sm">
-                <Eye className="w-3 h-3 text-cyan-400 mt-0.5" />
-                <span className="text-cyan-300 text-xs">{direction.continuityNotes}</span>
-              </div>
-            )}
-            
-            {/* Dialogue Preview */}
-            {segmentDialogue.length > 0 && (
-              <div className="mt-2 p-2 rounded bg-muted/50 border border-border/50">
-                <div className="flex items-center gap-1 mb-1">
-                  <MessageSquare className="w-3 h-3 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">
-                    {segmentDialogue.length} dialogue line{segmentDialogue.length > 1 ? 's' : ''}
-                  </span>
+              <div className="border-t border-sf-border/40 py-2.5">
+                <div className="flex items-start gap-2">
+                  <Users className="w-3.5 h-3.5 text-sf-text-secondary mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-sf-text-secondary leading-relaxed">{direction.talentAction}</p>
                 </div>
-                {segmentDialogue.slice(0, 2).map((d, i) => (
-                  <p key={i} className="text-xs text-muted-foreground truncate">
-                    <span className="font-medium text-foreground">{d.character}:</span> "{d.text.substring(0, 40)}..."
-                  </p>
-                ))}
-                {segmentDialogue.length > 2 && (
-                  <p className="text-xs text-muted-foreground">+{segmentDialogue.length - 2} more</p>
-                )}
               </div>
             )}
             
-            {/* Trigger Reason */}
-            <p className="text-xs text-muted-foreground italic">
-              Cut: {direction.triggerReason}
-            </p>
+            {/* Section 3: Emotional Beat — Amber accent */}
+            {direction.emotionalBeat && (
+              <div className="border-t border-sf-border/40 py-2.5">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                  <span className="text-sm text-amber-300">{direction.emotionalBeat}</span>
+                </div>
+              </div>
+            )}
+            
+            {/* Section 4: Characters */}
+            {direction.characters.length > 0 && (
+              <div className="border-t border-sf-border/40 py-2.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Users className="w-3 h-3 text-sf-text-disabled flex-shrink-0" />
+                  {direction.characters.map(char => (
+                    <Badge key={char} variant="secondary" className="text-xs bg-sf-surface-light border-sf-border">
+                      {char}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Section 5: Frame Descriptions — Colorized with stronger backgrounds */}
+            {(direction.startFrameDescription || direction.endFrameDescription) && (
+              <div className="border-t border-sf-border/40 pt-3 pb-2">
+                <div className="grid grid-cols-2 gap-3">
+                  {direction.startFrameDescription && (
+                    <div className="p-3 rounded-lg bg-emerald-950/25 border border-emerald-500/30">
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <Play className="w-3 h-3 text-emerald-400" />
+                        <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Start Frame</span>
+                      </div>
+                      <p className="text-sm text-emerald-100/80 leading-relaxed">{direction.startFrameDescription}</p>
+                    </div>
+                  )}
+                  {direction.endFrameDescription && (
+                    <div className="p-3 rounded-lg bg-rose-950/25 border border-rose-500/30">
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <Lock className="w-3 h-3 text-rose-400" />
+                        <span className="text-xs font-semibold text-rose-400 uppercase tracking-wider">End Frame</span>
+                      </div>
+                      <p className="text-sm text-rose-100/80 leading-relaxed">{direction.endFrameDescription}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Section 6: Continuity Notes — Cyan accent */}
+            {direction.continuityNotes && (
+              <div className="border-t border-sf-border/40 py-2.5">
+                <div className="flex items-start gap-2 p-2.5 rounded-md bg-cyan-950/20 border border-cyan-500/20">
+                  <Eye className="w-3.5 h-3.5 text-cyan-400 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-cyan-200/80">{direction.continuityNotes}</span>
+                </div>
+              </div>
+            )}
+            
+            {/* Section 7: Dialogue Preview — Distinct panel */}
+            {segmentDialogue.length > 0 && (
+              <div className="border-t border-sf-border/40 py-2.5">
+                <div className="p-3 rounded-lg bg-sf-surface-light/50 border border-sf-border">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <MessageSquare className="w-3.5 h-3.5 text-sf-primary" />
+                    <span className="text-xs font-medium text-sf-text-secondary">
+                      {segmentDialogue.length} dialogue line{segmentDialogue.length > 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    {segmentDialogue.slice(0, 3).map((d, i) => (
+                      <p key={i} className="text-sm text-sf-text-secondary">
+                        <span className="font-semibold text-sf-text-primary">{d.character}:</span>{' '}
+                        <span className="italic">"{d.text.substring(0, 60)}{d.text.length > 60 ? '...' : ''}"</span>
+                      </p>
+                    ))}
+                    {segmentDialogue.length > 3 && (
+                      <p className="text-xs text-sf-text-disabled">+{segmentDialogue.length - 3} more</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Section 8: Trigger Reason — Subtle footer */}
+            <div className="border-t border-sf-border/40 pt-2.5">
+              <p className="text-xs text-sf-text-disabled italic">
+                <span className="text-sf-text-secondary not-italic">Cut:</span> {direction.triggerReason}
+              </p>
+            </div>
           </div>
         )}
         
-        {/* Action Buttons */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50" onClick={e => e.stopPropagation()}>
+        {/* Action Buttons — Clean bottom bar */}
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-sf-border/50" onClick={e => e.stopPropagation()}>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setIsEditing(!isEditing)}
-            className="h-7 text-xs"
+            className="h-7 text-xs text-sf-text-secondary hover:text-sf-text-primary"
           >
             <Edit3 className="w-3 h-3 mr-1" />
             {isEditing ? 'Done' : 'Edit'}
@@ -482,8 +540,10 @@ function SegmentDirectionCard({
               size="sm"
               onClick={onApprove}
               className={cn(
-                "h-7 text-xs",
-                direction.isApproved && "bg-green-600 hover:bg-green-700"
+                "h-7 text-xs transition-all",
+                direction.isApproved 
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-500/20" 
+                  : "border-sf-border hover:border-emerald-500/50 hover:text-emerald-400"
               )}
             >
               <Check className="w-3 h-3 mr-1" />
@@ -491,6 +551,7 @@ function SegmentDirectionCard({
             </Button>
           </div>
         </div>
+        </div>{/* End card body */}
       </CardContent>
     </Card>
   )
@@ -909,10 +970,10 @@ function PhaseIndicator({ currentPhase, onPhaseClick, canAdvance }: PhaseIndicat
               disabled={!canClick}
               className={cn(
                 'flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium',
-                status === 'current' && 'bg-cyan-600 text-white shadow-md shadow-cyan-500/20',
+                status === 'current' && 'bg-sf-primary text-white shadow-md shadow-sf-primary/20',
                 status === 'complete' && 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
-                status === 'pending' && 'text-gray-500',
-                canClick && status !== 'current' && 'hover:bg-gray-800 cursor-pointer',
+                status === 'pending' && 'text-sf-text-disabled',
+                canClick && status !== 'current' && 'hover:bg-sf-surface-light cursor-pointer',
                 !canClick && 'opacity-50 cursor-not-allowed'
               )}
             >
@@ -983,6 +1044,15 @@ export function SegmentBuilder({
     narrationDriven: false,
     preserveManualEdits: false,
   })
+  
+  // Add Segment dialog state
+  const [showAddSegmentDialog, setShowAddSegmentDialog] = useState(false)
+  const [addSegmentType, setAddSegmentType] = useState<'narration' | 'dialogue' | 'custom'>('narration')
+  const [addSegmentPosition, setAddSegmentPosition] = useState<number>(0) // Insert after this index
+  
+  // Drag-to-reorder state
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   
   // Track scene bible hash for staleness
   const [lastGeneratedHash, setLastGeneratedHash] = useState<string | null>(null)
@@ -1096,6 +1166,49 @@ export function SegmentBuilder({
   }, [hasExistingSegments, existingSegments, sceneBible.contentHash])
 
   // -------------------------------------------------------------------------
+  // Narration Coverage Validation
+  // -------------------------------------------------------------------------
+  
+  // Check if narration lines are properly covered by segments
+  const narrationCoverage = useMemo(() => {
+    if (!sceneBible.narration || !narrationDriven) return null
+    
+    // Split narration into sentences to count expected coverage
+    const narrationSentences = sceneBible.narration
+      .split(/(?<=[.!?])\s+/)
+      .map(s => s.trim())
+      .filter(s => s.length > 0)
+    
+    if (narrationSentences.length === 0) return null
+    
+    // Check which audio timeline indices are narration-type
+    // Narration lines are at the beginning of dialogueLineIds (dialogue-0, dialogue-1, etc.)
+    // but they don't appear in sceneBible.dialogue (which only has actual dialogue)
+    const allAssignedIds = new Set(proposedDirections.flatMap(d => d.dialogueLineIds))
+    
+    // Count how many narration-range IDs are assigned
+    const totalAudioLines = narrationSentences.length + sceneBible.dialogue.length
+    const narrationLineIds = narrationSentences.map((_, idx) => `dialogue-${idx}`)
+    const coveredNarrationIds = narrationLineIds.filter(id => allAssignedIds.has(id))
+    
+    // Also check if any directions mention narration/voiceover context
+    const directionsWithNarration = proposedDirections.filter(d => 
+      d.dialogueLineIds.some(id => {
+        const idx = parseInt(id.replace('dialogue-', ''))
+        return idx < narrationSentences.length
+      })
+    )
+    
+    return {
+      totalNarrationSentences: narrationSentences.length,
+      coveredCount: coveredNarrationIds.length,
+      uncoveredIds: narrationLineIds.filter(id => !allAssignedIds.has(id)),
+      isFullyCovered: coveredNarrationIds.length >= narrationSentences.length,
+      directionsWithNarration: directionsWithNarration.length,
+    }
+  }, [sceneBible.narration, sceneBible.dialogue, narrationDriven, proposedDirections])
+
+  // -------------------------------------------------------------------------
   // Handlers
   // -------------------------------------------------------------------------
 
@@ -1173,13 +1286,19 @@ export function SegmentBuilder({
         lightingMood: dir.lightingMood,
         keyProps: dir.keyProps || [],
         dialogueLineIds: dir.dialogueLineIds || [],
-        generationMethod: dir.generationMethod || 'T2V',
+        generationMethod: dir.generationMethod || 'FTV',
         triggerReason: dir.triggerReason || 'AI-determined cut point',
         confidence: dir.confidence || 75,
         transitionIn: dir.transitionIn || 'cut',
         startFrameDescription: dir.startFrameDescription || '',
         endFrameDescription: dir.endFrameDescription || '',
         continuityNotes: dir.continuityNotes || '',
+        // Phase 8: Keyframe-specific direction fields
+        keyframeStartDescription: dir.keyframeStartDescription || '',
+        keyframeEndDescription: dir.keyframeEndDescription || '',
+        environmentDescription: dir.environmentDescription || '',
+        colorPalette: dir.colorPalette || '',
+        depthOfField: dir.depthOfField || '',
         isApproved: false, // User must approve
         isUserEdited: false,
       }))
@@ -1278,7 +1397,7 @@ export function SegmentBuilder({
         endTime: seg.endTime,
         duration: seg.endTime - seg.startTime,
         triggerReason: seg.triggerReason || 'AI-determined cut point',
-        generationMethod: seg.generationMethod || 'T2V',
+        generationMethod: seg.generationMethod || 'FTV',
         generatedPrompt: seg.generatedPrompt || '',
         emotionalBeat: seg.emotionalBeat || '',
         dialogueLineIds: seg.dialogueLineIds || [],
@@ -1384,7 +1503,7 @@ export function SegmentBuilder({
         endTime: seg.endTime,
         duration: seg.endTime - seg.startTime,
         triggerReason: seg.triggerReason || 'AI-determined cut point',
-        generationMethod: seg.generationMethod || 'T2V',
+        generationMethod: seg.generationMethod || 'FTV',
         generatedPrompt: seg.generatedPrompt || '',
         emotionalBeat: seg.emotionalBeat || '',
         dialogueLineIds: seg.dialogueLineIds || [],
@@ -1493,6 +1612,121 @@ export function SegmentBuilder({
     resetToAnalyze()
   }, [resetToAnalyze])
 
+  // -------------------------------------------------------------------------
+  // Add Segment Handlers
+  // -------------------------------------------------------------------------
+  
+  const handleOpenAddSegment = useCallback((insertAfterIndex?: number) => {
+    setAddSegmentPosition(insertAfterIndex ?? proposedDirections.length - 1)
+    setAddSegmentType(sceneBible.narration ? 'narration' : 'dialogue')
+    setShowAddSegmentDialog(true)
+  }, [proposedDirections.length, sceneBible.narration])
+
+  const handleAddSegment = useCallback(() => {
+    const insertIdx = addSegmentPosition + 1
+
+    // Build narration text preview for narration segments
+    const narrationPreview = sceneBible.narration
+      ? sceneBible.narration.split(/(?<=[.!?])\s+/).slice(0, 2).join(' ').substring(0, 100)
+      : ''
+
+    const newDirection: ProposedDirection = {
+      id: `dir_${sceneId}_added_${Date.now()}`,
+      sequenceIndex: insertIdx,
+      estimatedDuration: targetDuration,
+      shotType: addSegmentType === 'narration' ? 'Wide Shot' : 'Medium Shot',
+      cameraMovement: addSegmentType === 'narration' ? 'Slow dolly in' : 'Static',
+      cameraAngle: 'Eye-Level',
+      lens: addSegmentType === 'narration' ? '24mm f/2.8' : '50mm f/1.4',
+      talentAction: addSegmentType === 'narration' 
+        ? `Atmospheric backdrop visuals illustrating: "${narrationPreview}..."`
+        : '',
+      emotionalBeat: addSegmentType === 'narration' ? 'Contemplative, atmospheric' : '',
+      characters: addSegmentType === 'dialogue' 
+        ? sceneBible.characters.slice(0, 1).map(c => c.name) 
+        : [],
+      isNoTalent: addSegmentType === 'narration',
+      lightingMood: undefined,
+      keyProps: [],
+      dialogueLineIds: [],
+      generationMethod: 'FTV',
+      triggerReason: addSegmentType === 'narration' 
+        ? 'User-added narration visual segment' 
+        : addSegmentType === 'dialogue'
+        ? 'User-added dialogue segment'
+        : 'User-added custom segment',
+      confidence: 100,
+      transitionIn: insertIdx === 0 ? 'cut' : 'dissolve',
+      startFrameDescription: addSegmentType === 'narration'
+        ? `Establishing wide shot of ${sceneBible.location || sceneBible.heading}. Cinematic atmosphere.`
+        : '',
+      endFrameDescription: '',
+      continuityNotes: '',
+      isApproved: false,
+      isUserEdited: true,
+    }
+
+    // Insert at position and re-index
+    setProposedDirections(prev => {
+      const updated = [...prev]
+      updated.splice(insertIdx, 0, newDirection)
+      // Re-index sequenceIndex
+      return updated.map((d, idx) => ({ ...d, sequenceIndex: idx }))
+    })
+
+    setSelectedDirectionId(newDirection.id)
+    setShowAddSegmentDialog(false)
+    toast.success(`Added ${addSegmentType} segment at position ${insertIdx + 1}`)
+  }, [addSegmentPosition, addSegmentType, sceneId, targetDuration, sceneBible])
+
+  // -------------------------------------------------------------------------
+  // Drag-to-Reorder Handlers
+  // -------------------------------------------------------------------------
+  
+  const handleDragStart = useCallback((index: number) => {
+    setDraggedIndex(index)
+  }, [])
+
+  const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    setDragOverIndex(index)
+  }, [])
+
+  const handleDragEnd = useCallback(() => {
+    if (draggedIndex !== null && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
+      setProposedDirections(prev => {
+        const updated = [...prev]
+        const [removed] = updated.splice(draggedIndex, 1)
+        updated.splice(dragOverIndex, 0, removed)
+        // Re-index sequenceIndex
+        return updated.map((d, idx) => ({ ...d, sequenceIndex: idx, isUserEdited: true }))
+      })
+      toast.success(`Moved segment ${draggedIndex + 1} to position ${dragOverIndex + 1}`)
+    }
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }, [draggedIndex, dragOverIndex])
+
+  const handleMoveDirection = useCallback((fromIndex: number, direction: 'up' | 'down') => {
+    const toIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1
+    if (toIndex < 0 || toIndex >= proposedDirections.length) return
+    
+    setProposedDirections(prev => {
+      const updated = [...prev]
+      const [removed] = updated.splice(fromIndex, 1)
+      updated.splice(toIndex, 0, removed)
+      return updated.map((d, idx) => ({ ...d, sequenceIndex: idx }))
+    })
+  }, [proposedDirections.length])
+
+  const handleDeleteDirection = useCallback((directionId: string) => {
+    setProposedDirections(prev => {
+      const updated = prev.filter(d => d.id !== directionId)
+      return updated.map((d, idx) => ({ ...d, sequenceIndex: idx }))
+    })
+    toast.success('Segment removed')
+  }, [])
+
   const handleFinalize = useCallback(() => {
     // Transform ProposedSegments to SceneSegments
     const finalSegments: SceneSegment[] = proposedSegments.map(seg => ({
@@ -1542,7 +1776,7 @@ export function SegmentBuilder({
   // -------------------------------------------------------------------------
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full bg-background overflow-hidden">
       {/* Production Overlay */}
       <ProductionOverlay isVisible={showProductionOverlay} currentStage={productionStage} />
       
@@ -1833,58 +2067,131 @@ export function SegmentBuilder({
             </div>
           )}
 
-          {/* Phase: Directions Review (NEW) */}
+          {/* Phase: Directions Review */}
           {phase === 'directions' && (
             <div className="flex-1 flex flex-col overflow-hidden">
-              {/* Directions Header */}
-              <div className="px-4 py-3 border-b border-gray-700/50 bg-gray-900/40">
+              {/* Directions Header \u2014 Design-token aligned */}
+              <div className="px-4 py-3 border-b border-sf-border bg-sf-surface/80">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-medium flex items-center gap-2 text-white">
-                      <Eye className="w-4 h-4 text-cyan-400" />
+                    <h3 className="font-medium flex items-center gap-2 text-sf-text-primary">
+                      <Eye className="w-4 h-4 text-sf-primary" />
                       Review Segment Directions
                     </h3>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-sf-text-secondary mt-1">
                       Review and approve each segment's direction before generating video prompts
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-cyan-400 border-cyan-400/30">
+                    <Badge variant="outline" className="text-sf-primary border-sf-primary/30 bg-sf-primary/5">
                       {approvedDirectionCount}/{proposedDirections.length} Approved
                     </Badge>
-                    <Badge variant="outline">
+                    <Badge variant="outline" className="border-sf-border text-sf-text-secondary bg-sf-surface-light/30">
                       ~{Math.round(totalDirectionsDuration)}s total
                     </Badge>
                   </div>
                 </div>
               </div>
 
-              {/* Directions List */}
+              {/* Narration Coverage Warning */}
+              {narrationCoverage && !narrationCoverage.isFullyCovered && (
+                <div className="mx-4 mt-3">
+                  <Alert className="border-amber-500/50 bg-amber-950/20">
+                    <div className="flex items-start gap-2">
+                      <Mic className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-amber-300">
+                          Narration Not Fully Covered
+                        </p>
+                        <p className="text-xs text-amber-200/70 mt-1">
+                          {narrationCoverage.coveredCount} of {narrationCoverage.totalNarrationSentences} narration sentences 
+                          are assigned to segments. {narrationCoverage.uncoveredIds.length} sentence{narrationCoverage.uncoveredIds.length > 1 ? 's' : ''} may 
+                          not have visual accompaniment.
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-2 h-7 text-xs border-amber-500/40 text-amber-300 hover:bg-amber-500/10"
+                          onClick={() => handleOpenAddSegment(proposedDirections.length - 1)}
+                        >
+                          <Plus className="w-3 h-3 mr-1" />
+                          Add Narration Segment
+                        </Button>
+                      </div>
+                    </div>
+                  </Alert>
+                </div>
+              )}
+
+              {/* Directions List with drag-to-reorder */}
               <ScrollArea className="flex-1">
                 <div className="p-4 space-y-3">
                   {proposedDirections.map((direction, idx) => (
-                    <SegmentDirectionCard
+                    <div 
                       key={direction.id}
-                      direction={direction}
-                      index={idx}
-                      dialogueLines={sceneBible.dialogue}
-                      isSelected={selectedDirectionId === direction.id}
-                      onSelect={() => setSelectedDirectionId(direction.id)}
-                      onEdit={(updates) => handleDirectionEdit(direction.id, updates)}
-                      onApprove={() => handleDirectionApprove(direction.id)}
-                      onGeneratePrompt={() => handleGenerateSinglePrompt(direction.id)}
-                    />
+                      draggable
+                      onDragStart={() => handleDragStart(idx)}
+                      onDragOver={(e) => handleDragOver(e, idx)}
+                      onDragEnd={handleDragEnd}
+                      className={cn(
+                        "relative group",
+                        dragOverIndex === idx && draggedIndex !== idx && "before:absolute before:inset-x-0 before:top-0 before:h-0.5 before:bg-sf-primary before:rounded-full before:z-10"
+                      )}
+                    >
+                      {/* Drag handle + reorder controls */}
+                      <div className="absolute -left-0 top-3 z-10 flex flex-col items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleMoveDirection(idx, 'up') }}
+                          disabled={idx === 0}
+                          className="p-0.5 text-sf-text-disabled hover:text-sf-text-secondary disabled:opacity-30"
+                          title="Move up"
+                        >
+                          <ChevronUp className="w-3 h-3" />
+                        </button>
+                        <GripVertical className="w-3.5 h-3.5 text-sf-text-disabled cursor-grab active:cursor-grabbing" />
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleMoveDirection(idx, 'down') }}
+                          disabled={idx === proposedDirections.length - 1}
+                          className="p-0.5 text-sf-text-disabled hover:text-sf-text-secondary disabled:opacity-30"
+                          title="Move down"
+                        >
+                          <ChevronDown className="w-3 h-3" />
+                        </button>
+                      </div>
+                      <div className="ml-5">
+                        <SegmentDirectionCard
+                          direction={direction}
+                          index={idx}
+                          dialogueLines={sceneBible.dialogue}
+                          isSelected={selectedDirectionId === direction.id}
+                          onSelect={() => setSelectedDirectionId(direction.id)}
+                          onEdit={(updates) => handleDirectionEdit(direction.id, updates)}
+                          onApprove={() => handleDirectionApprove(direction.id)}
+                          onGeneratePrompt={() => handleGenerateSinglePrompt(direction.id)}
+                        />
+                      </div>
+                    </div>
                   ))}
+
+                  {/* Add Segment Button at bottom */}
+                  <button
+                    onClick={() => handleOpenAddSegment(proposedDirections.length - 1)}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg border-2 border-dashed border-sf-border hover:border-sf-primary/50 hover:bg-sf-surface-light/30 text-sf-text-disabled hover:text-sf-primary transition-all"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span className="text-sm font-medium">Add Segment</span>
+                  </button>
                 </div>
               </ScrollArea>
 
-              {/* Actions Bar */}
-              <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
+              {/* Actions Bar \u2014 Design-token aligned */}
+              <div className="flex items-center justify-between px-4 py-3 border-t border-sf-border bg-sf-surface/80">
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={handleApproveAll}
+                    className="border-sf-border hover:border-emerald-500/50"
                   >
                     <Check className="w-3 h-3 mr-1" />
                     Approve All
@@ -1893,6 +2200,7 @@ export function SegmentBuilder({
                     variant="ghost"
                     size="sm"
                     onClick={resetToAnalyze}
+                    className="text-sf-text-secondary hover:text-sf-text-primary"
                   >
                     <RefreshCw className="w-3 h-3 mr-1" />
                     Start Over
@@ -1902,6 +2210,7 @@ export function SegmentBuilder({
                   onClick={handleGeneratePrompts}
                   disabled={approvedDirectionCount === 0 || isGeneratingPrompts}
                   size="lg"
+                  className="bg-gradient-to-r from-sf-primary to-sf-accent hover:from-sf-primary-dark hover:to-sf-accent text-white shadow-lg shadow-sf-primary/20"
                 >
                   {isGeneratingPrompts ? (
                     <>
@@ -1923,7 +2232,7 @@ export function SegmentBuilder({
           {phase === 'review' && (
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* Timeline Preview */}
-              <div className="h-48 border-b border-gray-700/50 p-4">
+              <div className="h-48 border-b border-gray-700/50 p-4 overflow-hidden">
                 <SegmentPreviewTimeline
                   segments={proposedSegments}
                   sceneBible={sceneBible}
@@ -2172,6 +2481,134 @@ export function SegmentBuilder({
             <Button onClick={handleConfirmRegenerate}>
               <RefreshCw className="w-4 h-4 mr-2" />
               Regenerate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Segment Dialog */}
+      <Dialog open={showAddSegmentDialog} onOpenChange={setShowAddSegmentDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="w-5 h-5 text-sf-primary" />
+              Add Segment
+            </DialogTitle>
+            <DialogDescription>
+              Add a new segment direction. Choose a preset type or create a custom one.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Segment Type Selection */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-sf-text-primary">Segment Type</label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => setAddSegmentType('narration')}
+                  className={cn(
+                    'flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all text-center',
+                    addSegmentType === 'narration'
+                      ? 'border-indigo-500 bg-indigo-500/10 text-indigo-300'
+                      : 'border-sf-border hover:border-sf-border-strong text-sf-text-secondary'
+                  )}
+                >
+                  <Mic className="w-5 h-5" />
+                  <span className="text-sm font-medium">Narration Visual</span>
+                  <span className="text-xs opacity-70">Backdrop for voiceover</span>
+                </button>
+                <button
+                  onClick={() => setAddSegmentType('dialogue')}
+                  className={cn(
+                    'flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all text-center',
+                    addSegmentType === 'dialogue'
+                      ? 'border-blue-500 bg-blue-500/10 text-blue-300'
+                      : 'border-sf-border hover:border-sf-border-strong text-sf-text-secondary'
+                  )}
+                >
+                  <MessageSquare className="w-5 h-5" />
+                  <span className="text-sm font-medium">Dialogue</span>
+                  <span className="text-xs opacity-70">Character speaking</span>
+                </button>
+                <button
+                  onClick={() => setAddSegmentType('custom')}
+                  className={cn(
+                    'flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all text-center',
+                    addSegmentType === 'custom'
+                      ? 'border-amber-500 bg-amber-500/10 text-amber-300'
+                      : 'border-sf-border hover:border-sf-border-strong text-sf-text-secondary'
+                  )}
+                >
+                  <Film className="w-5 h-5" />
+                  <span className="text-sm font-medium">Custom</span>
+                  <span className="text-xs opacity-70">B-roll, title, etc.</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Insert Position */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-sf-text-primary">Insert After</label>
+              <Select
+                value={addSegmentPosition.toString()}
+                onValueChange={v => setAddSegmentPosition(parseInt(v))}
+              >
+                <SelectTrigger className="h-9 text-sm bg-sf-surface border-sf-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="-1">At the beginning</SelectItem>
+                  {proposedDirections.map((d, idx) => (
+                    <SelectItem key={d.id} value={idx.toString()}>
+                      Segment {idx + 1}: {d.shotType} — {d.triggerReason.substring(0, 40)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Narration Preview (if narration type selected) */}
+            {addSegmentType === 'narration' && sceneBible.narration && (
+              <div className="p-3 rounded-lg bg-indigo-950/20 border border-indigo-500/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <Volume2 className="w-3.5 h-3.5 text-indigo-400" />
+                  <span className="text-xs font-medium text-indigo-300 uppercase tracking-wider">Scene Narration</span>
+                </div>
+                <p className="text-sm text-indigo-200/80 italic leading-relaxed">
+                  &ldquo;{sceneBible.narration.substring(0, 200)}{sceneBible.narration.length > 200 ? '...' : ''}&rdquo;
+                </p>
+                <p className="text-xs text-indigo-400/60 mt-2">
+                  The AI will generate atmospheric backdrop visuals to illustrate this narration.
+                </p>
+              </div>
+            )}
+
+            {/* Info about what gets created */}
+            <div className="p-3 rounded-lg bg-sf-surface-light border border-sf-border">
+              <p className="text-xs text-sf-text-secondary">
+                {addSegmentType === 'narration' && (
+                  <>A <strong>no-talent backdrop segment</strong> will be created with wide-shot establishing visuals. You can edit the direction after adding it.</>
+                )}
+                {addSegmentType === 'dialogue' && (
+                  <>A <strong>dialogue segment</strong> will be created. Edit it to assign specific dialogue lines and set the speaking character.</>
+                )}
+                {addSegmentType === 'custom' && (
+                  <>A <strong>blank segment</strong> will be created. Fill in all direction fields manually for full control.</>
+                )}
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowAddSegmentDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleAddSegment}
+              className="bg-sf-primary hover:bg-sf-primary-dark text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Segment
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -147,6 +147,14 @@ interface DirectorConsoleProps {
   onRenderedSceneUrlChange?: (url: string | null) => void
   /** Persist production data (including production streams) to database */
   onProductionDataChange?: (data: SceneProductionData) => void
+  /** Scene index (0-based) for audio generation API calls */
+  sceneIndex?: number
+  /** Generate audio for a specific scene, audio type, and language */
+  onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number, language?: string) => void | Promise<void>
+  /** Generate all audio for all scenes in a given language */
+  onGenerateAllAudio?: (language: string) => void | Promise<void>
+  /** Whether audio generation is in progress */
+  isGeneratingAudio?: boolean
 }
 
 // Method badge colors and labels
@@ -180,6 +188,10 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   onLockSegment,
   onRenderedSceneUrlChange,
   onProductionDataChange,
+  sceneIndex,
+  onGenerateSceneAudio,
+  onGenerateAllAudio,
+  isGeneratingAudio,
 }) => {
   // Use stable EMPTY_SEGMENTS constant to prevent TDZ render loops
   // productionData?.segments || [] creates a new array reference each render
@@ -1060,6 +1072,10 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           }}
           textOverlays={textOverlays}
           onTextOverlaysChange={handleTextOverlaysChange}
+          sceneIndex={sceneIndex}
+          onGenerateSceneAudio={onGenerateSceneAudio}
+          onGenerateAllAudio={onGenerateAllAudio}
+          isGeneratingAudio={isGeneratingAudio}
           onRenderComplete={(downloadUrl, language) => {
             // Update the rendered scene URL
             setRenderedSceneUrl(downloadUrl)

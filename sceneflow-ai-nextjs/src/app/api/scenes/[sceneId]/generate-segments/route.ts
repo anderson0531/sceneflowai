@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
 import { moderatePrompt, getUserModerationContext, createBlockedResponse } from '@/lib/moderation'
 import { SegmentDirection, detectNoTalentSegment } from '@/types/scene-direction'
+import { analyzeNarrationBeats as analyzeNarrationBeatsWithAI, type NarrationBeatAnalysis } from '@/lib/ai/narrationBeatAnalyzer'
 
 export const maxDuration = 120
 export const runtime = 'nodejs'
@@ -73,7 +74,7 @@ function isNoTalentScene(
         ]
         const matchCount = abstractIndicators.filter(w => talentLower.includes(w)).length
         if (matchCount >= 2) {
-          console.log(`[isNoTalentScene] Semantic detection: talent text is abstract (${matchCount} indicators), no dialogue, no character names → treating as no-talent`)
+          console.log(`[isNoTalentScene] Semantic detection: talent text is abstract (${matchCount} indicators), no dialogue, no character names -> treating as no-talent`)
           return true
         }
       }
@@ -302,13 +303,36 @@ export async function POST(
     if (phase === 'directions') {
       console.log(`[Scene Segmentation] Phase 1: Generating directions only for user review`)
       
+      // If narration-driven, use AI-powered NarrationBeatAnalyzer for richer beat analysis
+      let aiBeatAnalysis: NarrationBeatAnalysis | undefined
+      if (sceneData.narrationDriven && sceneData.narrationText) {
+        try {
+          console.log(`[Scene Segmentation] Running AI NarrationBeatAnalyzer for narration-driven scene...`)
+          aiBeatAnalysis = await analyzeNarrationBeatsWithAI({
+            narrationText: sceneData.narrationText,
+            sceneHeading: sceneData.heading,
+            sceneDescription: sceneData.visualDescription,
+            estimatedDuration: sceneData.narrationDurationSeconds || sceneData.estimatedTotalDuration,
+            mode: 'beat-matched',
+            characterDescriptions: sceneData.characters.reduce((acc, c) => {
+              acc[c.name] = c.description
+              return acc
+            }, {} as Record<string, string>),
+          })
+          console.log(`[Scene Segmentation] AI beat analysis: ${aiBeatAnalysis.totalBeats} beats identified (mode: ${aiBeatAnalysis.mode})`)
+        } catch (err) {
+          console.warn(`[Scene Segmentation] AI beat analysis failed, falling back to rule-based beats:`, err)
+          aiBeatAnalysis = undefined
+        }
+      }
+      
       // Generate directions-only prompt (faster, smaller output)
       const directionsPrompt = generateDirectionsOnlyPrompt(sceneData, preferredDuration, minimumSegmentsRequired, {
         focusMode,
         customInstructions,
         totalDurationTarget,
         segmentCountTarget,
-      })
+      }, aiBeatAnalysis)
       
       // Pre-screen content
       const moderationContext = await getUserModerationContext('anonymous', projectId)
@@ -339,16 +363,39 @@ export async function POST(
         dialogueLineIds: (dir.dialogue_indices || []).map((i: number) => `dialogue-${i}`),
         isApproved: false,
         isUserEdited: false,
-        generationMethod: dir.generation_method || 'T2V',
+        generationMethod: dir.generation_method || 'FTV',
         triggerReason: dir.trigger_reason || 'AI-determined cut point',
         confidence: dir.confidence || 75,
         transitionIn: dir.transition_in || 'cut',
         startFrameDescription: dir.start_frame_description || '',
         endFrameDescription: dir.end_frame_description || '',
         continuityNotes: dir.continuity_notes || '',
+        // Phase 8: Keyframe-specific direction fields
+        keyframeStartDescription: dir.keyframe_start_description || '',
+        keyframeEndDescription: dir.keyframe_end_description || '',
+        environmentDescription: dir.environment_description || '',
+        colorPalette: dir.color_palette || '',
+        depthOfField: dir.depth_of_field || '',
       }))
       
       console.log(`[Scene Segmentation] Phase 1 complete: ${segmentDirections.length} directions generated`)
+      
+      // Post-generation narration coverage validation
+      const narrationLineIndices = sceneData.combinedAudioTimeline
+        .filter(l => l.type === 'narration')
+        .map(l => l.index)
+      
+      const allAssignedIndices = new Set(
+        segmentDirections.flatMap(d => 
+          (d.dialogueLineIds || []).map((id: string) => parseInt(id.replace('dialogue-', '')))
+        )
+      )
+      
+      const uncoveredNarrationIndices = narrationLineIndices.filter(idx => !allAssignedIndices.has(idx))
+      
+      if (uncoveredNarrationIndices.length > 0) {
+        console.warn(`[Scene Segmentation] ⚠️ Narration coverage gap: ${uncoveredNarrationIndices.length} narration lines not assigned to any segment: [${uncoveredNarrationIndices.join(', ')}]`)
+      }
       
       return NextResponse.json({
         success: true,
@@ -362,6 +409,24 @@ export async function POST(
           estimatedDuration: sceneData.estimatedTotalDuration,
           hasSceneFrame: !!sceneData.sceneFrameUrl,
         },
+        // Narration coverage report
+        narrationCoverage: narrationLineIndices.length > 0 ? {
+          totalNarrationLines: narrationLineIndices.length,
+          coveredLines: narrationLineIndices.length - uncoveredNarrationIndices.length,
+          uncoveredLineIndices: uncoveredNarrationIndices,
+          isFullyCovered: uncoveredNarrationIndices.length === 0,
+        } : null,
+        // AI beat analysis (for client-side display/reference)
+        aiBeatAnalysis: aiBeatAnalysis ? {
+          totalBeats: aiBeatAnalysis.totalBeats,
+          mode: aiBeatAnalysis.mode,
+          beats: aiBeatAnalysis.beats.map(b => ({
+            beatNumber: b.beatNumber,
+            narrationText: b.narrationText,
+            visualFocus: b.visualFocus,
+            shotType: b.shotType,
+          })),
+        } : null,
       })
     }
     
@@ -468,14 +533,14 @@ export async function POST(
 
       // Build generation plan with prerequisites
       const hasSceneFrame = !!sceneData.sceneFrameUrl
-      const generatedMethod = methodMap[seg.generation_method] || 'T2V'
+      const generatedMethod = methodMap[seg.generation_method] || 'FTV'
       
       const generationPlan = {
         recommendedMethod: generatedMethod,
         confidence: seg.generation_plan?.confidence || (isFirstSegment && hasSceneFrame ? 90 : 70),
         reasoning: seg.generation_plan?.reasoning || seg.trigger_reason || 'AI-recommended method based on segment context',
-        fallbackMethod: seg.generation_plan?.fallback_method || (generatedMethod === 'I2V' ? 'T2V' : undefined),
-        fallbackReason: generatedMethod === 'I2V' ? 'Use T2V if I2V produces unwanted motion' : undefined,
+        fallbackMethod: seg.generation_plan?.fallback_method || (generatedMethod === 'I2V' ? 'FTV' : undefined),
+        fallbackReason: generatedMethod === 'I2V' ? 'Use FTV if I2V produces unwanted motion' : undefined,
         prerequisites: [
           {
             type: 'scene-image',
@@ -604,6 +669,16 @@ interface ComprehensiveSceneData {
     visualSuggestion: string
     emotionalTone: string
   }>
+  // Unified audio timeline: narration + dialogue merged as indexed audio lines
+  combinedAudioTimeline: Array<{
+    index: number
+    type: 'narration' | 'dialogue'
+    character: string
+    text: string
+    emotion?: string
+    estimatedDuration: number
+    visualNote?: string // For narration: what visuals to show
+  }>
 }
 
 function buildComprehensiveSceneData(
@@ -700,16 +775,75 @@ function buildComprehensiveSceneData(
   const dialogueDuration = dialogueWords / 2.5
   const actionDuration = Math.max(5, visualDescription.split(' ').length / 5) // Rough estimate
   
-  // NEW: Use narration duration if narration-driven mode is enabled
+  // Use the LONGEST audio source as the authoritative duration:
+  // 1. Total audio duration (includes both narration and dialogue) - sent from client
+  // 2. Narration duration (if narration-driven mode) - narration is the primary audio
+  // 3. Estimated from dialogue words + action description - fallback calculation
   let estimatedTotalDuration = Math.max(dialogueDuration, actionDuration) + 2 // Buffer
-  if (options?.narrationDriven && options.narrationDurationSeconds) {
-    estimatedTotalDuration = options.narrationDurationSeconds
+  
+  // If total audio duration is provided (from actual audio files), use it as the floor
+  if (options?.totalAudioDurationSeconds && options.totalAudioDurationSeconds > estimatedTotalDuration) {
+    estimatedTotalDuration = options.totalAudioDurationSeconds
+    console.log(`[buildComprehensiveSceneData] Using totalAudioDuration: ${estimatedTotalDuration}s (overrides estimate of ${Math.max(dialogueDuration, actionDuration) + 2}s)`)
   }
   
+  // Narration duration takes highest priority when narration-driven
+  if (options?.narrationDriven && options.narrationDurationSeconds) {
+    estimatedTotalDuration = Math.max(estimatedTotalDuration, options.narrationDurationSeconds)
+    console.log(`[buildComprehensiveSceneData] Narration-driven mode: duration = ${estimatedTotalDuration}s`)
+  }
   // NEW: Analyze narration beats for segment alignment
   const narrationBeats = options?.narrationDriven && (options.narrationText || narration)
     ? analyzeNarrationBeats(options.narrationText || narration || '', estimatedTotalDuration)
     : undefined
+
+  // Build combined audio timeline: merge narration sentences + dialogue into one indexed list
+  // This is the PRIMARY input for Gemini segmentation — it sees ONE unified audio track
+  const combinedAudioTimeline: ComprehensiveSceneData['combinedAudioTimeline'] = []
+  
+  const narrationTextForTimeline = options?.narrationText || narration || ''
+  if (narrationTextForTimeline.trim()) {
+    // Split narration into sentences
+    const narrationSentences = narrationTextForTimeline
+      .split(/(?<=[.!?])\s+/)
+      .map(s => s.trim())
+      .filter(s => s.length > 0)
+    
+    // Calculate narration duration per sentence
+    const narrationTotalWords = narrationSentences.reduce((acc, s) => acc + s.split(/\s+/).length, 0)
+    const narrationDur = options?.narrationDurationSeconds || estimatedTotalDuration
+    
+    for (const sentence of narrationSentences) {
+      const wordCount = sentence.split(/\s+/).length
+      const sentenceDuration = narrationTotalWords > 0 
+        ? (wordCount / narrationTotalWords) * narrationDur 
+        : wordCount / 2.5
+      
+      combinedAudioTimeline.push({
+        index: combinedAudioTimeline.length,
+        type: 'narration',
+        character: 'NARRATOR',
+        text: sentence,
+        estimatedDuration: Math.round(sentenceDuration * 10) / 10,
+        visualNote: 'Cinematic backdrop visuals — voiceover audio, NOT lip-sync',
+      })
+    }
+  }
+  
+  // Interleave dialogue lines after narration
+  // In most scenes, narration plays OVER the scene while dialogue is interspersed
+  for (const d of dialogue) {
+    combinedAudioTimeline.push({
+      index: combinedAudioTimeline.length,
+      type: 'dialogue',
+      character: d.character,
+      text: d.text,
+      emotion: d.emotion || undefined,
+      estimatedDuration: Math.round((d.text.split(/\s+/).length / 2.5) * 10) / 10,
+    })
+  }
+  
+  console.log(`[buildComprehensiveSceneData] Combined audio timeline: ${combinedAudioTimeline.length} lines (${combinedAudioTimeline.filter(l => l.type === 'narration').length} narration, ${combinedAudioTimeline.filter(l => l.type === 'dialogue').length} dialogue)`)
 
   return {
     heading,
@@ -727,7 +861,8 @@ function buildComprehensiveSceneData(
     narrationDurationSeconds: options?.narrationDurationSeconds,
     narrationText: options?.narrationText || narration,
     narrationAudioUrl: options?.narrationAudioUrl,
-    narrationBeats
+    narrationBeats,
+    combinedAudioTimeline,
   }
 }
 
@@ -981,12 +1116,21 @@ function generateIntelligentSegmentationPrompt(
         }).join('\n')
       : '- No specific character references available'
 
-  // SKIP dialogue for no-talent scenes (it's likely narration/voiceover, not on-screen speech)
-  const dialogueText = noTalentScene
-    ? 'NO DIALOGUE - This scene has no on-screen talent. Any audio is voiceover/narration (separate audio track, NOT in video).'
-    : sceneData.dialogue.length > 0
-      ? sceneData.dialogue.map((d, idx) => `[${idx}] ${d.character}${d.emotion ? ` (${d.emotion})` : ''}: "${d.text}"`).join('\n')
-      : 'No dialogue in this scene.'
+  // Build UNIFIED AUDIO TIMELINE for Phase 2 (same as Phase 1)
+  const p2HasNarration = sceneData.combinedAudioTimeline.some(l => l.type === 'narration')
+  const p2HasDialogue = sceneData.combinedAudioTimeline.some(l => l.type === 'dialogue')
+  const p2TotalTimelineDuration = sceneData.combinedAudioTimeline.reduce((acc, l) => acc + l.estimatedDuration, 0)
+  
+  const audioTimelineText = noTalentScene && !p2HasNarration && !p2HasDialogue
+    ? 'NO AUDIO LINES - No on-screen talent or narration'
+    : sceneData.combinedAudioTimeline.map(line => {
+        const typeTag = line.type === 'narration' ? '🎙️ VOICEOVER' : '🗣️ DIALOGUE'
+        const emotionTag = line.emotion ? ` (${line.emotion})` : ''
+        const visualTag = line.type === 'narration' 
+          ? ' → [Backdrop visuals — NOT lip-synced]' 
+          : ' → [Character lip-sync on screen]'
+        return `[${line.index}] ${typeTag} | ${line.character}${emotionTag}: "${line.text}" (~${line.estimatedDuration}s)${visualTag}`
+      }).join('\n')
 
   // Build minimum segment constraint instruction
   const minimumSegmentInstruction = minimumSegmentsRequired > 1
@@ -1048,36 +1192,20 @@ This means:
 `
     : ''
 
-  // NEW: Narration-driven segmentation instructions
-  const narrationInstructions = sceneData.narrationDriven
-    ? `
-**NARRATION-DRIVEN SEGMENTATION (ENABLED):**
-This scene has narration that will be played as a cinematic voiceover. Your segments MUST:
-1. **ALIGN with narration timing**: Total segment duration must match narration duration (${sceneData.narrationDurationSeconds || sceneData.estimatedTotalDuration} seconds)
-2. **ILLUSTRATE the narration**: Each segment's visuals should be an effective BACKDROP to the narration being spoken
-3. **DO NOT include narration text in video prompts**: The narration is a separate audio track, not in-video speech
-4. **Create EVOCATIVE visuals**: Focus on cinematic imagery that enhances the emotional impact of the narration
-5. **Use atmospheric shots**: Wide establishing shots, detail inserts, and mood-setting visuals work well for narration
-6. **Match emotional beats**: Segment visuals should match the emotional tone of the corresponding narration section
-
-**NARRATION BEATS TO ILLUSTRATE:**
-${sceneData.narrationBeats?.map((beat, idx) => 
-  `Beat ${idx + 1} (~${beat.estimatedDuration.toFixed(1)}s): "${beat.text.substring(0, 100)}${beat.text.length > 100 ? '...' : ''}"
-   - Suggested visual: ${beat.visualSuggestion}
-   - Emotional tone: ${beat.emotionalTone}`
-).join('\n\n') || 'Analyze narration and create segments that effectively illustrate the story.'}
-`
+  // Voiceover note for Phase 2 (if scene has narration in timeline)
+  const p2VoiceoverNote = p2HasNarration
+    ? `\n**VOICEOVER AUDIO LINES:** This scene has narration (🎙️ lines in the audio timeline). The narration is a SEPARATE audio track — do NOT include narration text as spoken dialogue in video_generation_prompt. Create evocative BACKDROP visuals that ILLUSTRATE the narration content.\n`
     : ''
 
   return `
 **SYSTEM ROLE:** You are an AI Video Director and Editor optimized for Veo 3.1 generation workflows. Your goal is to translate a linear script and scene description into distinct, generation-ready video segments with RICH CINEMATIC PROMPTS.
-${noTalentInstructions}${referenceInstructions}${transitionInstructions}${narrationInstructions}${minimumSegmentInstruction}
+${noTalentInstructions}${referenceInstructions}${transitionInstructions}${p2VoiceoverNote}${minimumSegmentInstruction}
 **OPERATIONAL CONSTRAINTS:**
 1. **Duration:** Target ${preferredDuration} seconds per segment (8 seconds absolute max for Veo 3.1). **MINIMUM 4 seconds per segment** unless absolutely necessary for a dramatic cut.
 2. **Continuity:** You must utilize specific **Methods** to ensure consistency (matching lighting, character appearance, and room tone).
 3. **Lookahead:** Each segment must define the "End Frame State" to prepare for the *next* segment's generation method.
-4. **Dialogue Integration:** Veo 3.1 generates speech from text. You MUST include character dialogue directly in prompts.
-5. **SEGMENT EFFICIENCY:** Create as FEW segments as possible while respecting the duration limit. **Combine multiple dialogue lines into a single segment** when they occur in the same shot/angle or in a two-shot conversation. A segment with 2-4 lines of back-and-forth dialogue is PREFERRED over creating a new segment for each line.${minimumSegmentsRequired > 1 ? `\n6. **MINIMUM SEGMENTS:** You MUST create at least ${minimumSegmentsRequired} segments to cover the audio duration.` : ''}
+4. **Audio Integration:** Veo 3.1 generates speech from text. For 🗣️ DIALOGUE lines, include character dialogue directly in prompts as: Character speaks, "text". For 🎙️ VOICEOVER lines, create backdrop visuals (do NOT include narration text in video prompts).
+5. **SEGMENT EFFICIENCY:** Create as FEW segments as possible while respecting the duration limit. **Combine multiple audio lines into a single segment** when they occur in the same visual setup. A segment with 2-4 adjacent audio lines is PREFERRED over creating a new segment for each line.${minimumSegmentsRequired > 1 ? `\n6. **MINIMUM SEGMENTS:** You MUST create at least ${minimumSegmentsRequired} segments to cover the audio duration.` : ''}
 
 **INPUT DATA:**
 
@@ -1087,10 +1215,16 @@ ${sceneData.heading}
 ## Visual Description / Action
 ${sceneData.visualDescription}
 
-${sceneData.narration ? `## Narration (Audio Voiceover - NOT in video prompts)\n${sceneData.narration}` : ''}
+## Audio Timeline (${sceneData.combinedAudioTimeline.length} lines, ~${Math.round(p2TotalTimelineDuration)}s total)
+${audioTimelineText}
 
-## Dialogue (MUST BE INCLUDED IN PROMPTS for Veo 3.1 speech generation)
-${dialogueText}
+## Audio Timeline Rules
+- 🎙️ VOICEOVER lines: Narration audio track. Video shows BACKDROP visuals. Do NOT include narration text as spoken words in video_generation_prompt.
+- 🗣️ DIALOGUE lines: Character speaks on screen with lip-sync. Include dialogue in video_generation_prompt as: Character speaks, "text"
+- "assigned_dialogue_indices" references indices [0], [1], [2]... from the Audio Timeline
+- EVERY audio line index MUST appear in exactly ONE segment — **including ALL 🎙️ VOICEOVER lines**
+- Segment duration ≈ sum of its assigned audio line durations
+- **NARRATION COVERAGE (MANDATORY):** Every 🎙️ VOICEOVER line MUST be covered by at least one segment with atmospheric backdrop visuals. Do NOT skip narration lines. If the scene has narration, at least one segment MUST be a narration-backdrop segment with is_no_talent markers.
 
 ## Director's Chair Notes
 **Camera:** ${sceneData.sceneDirection.camera}
@@ -1103,7 +1237,7 @@ ${dialogueText}
 ${characterList}
 
 ## Scene Frame Available
-${sceneData.sceneFrameUrl ? 'Yes - Master scene frame is available for I2V on Segment 1' : 'No - Use T2V with detailed prompts'}
+${sceneData.sceneFrameUrl ? 'Yes - Master scene frame is available for I2V on Segment 1' : 'No - Use FTV with detailed keyframe descriptions'}
 
 ## Estimated Scene Duration
 ${Math.round(sceneData.estimatedTotalDuration)} seconds total
@@ -1114,11 +1248,11 @@ ${Math.round(sceneData.estimatedTotalDuration)} seconds total
 1. **Analyze Triggers:** Scan script for MAJOR changes in Action, Location, or dramatic emotional shift. These are your "Cut Points." **DO NOT create a new segment just because the speaker changes** - dialogue between characters in the same location should be combined into one segment when possible.
 2. **Estimate Timing:** Assign estimated seconds to dialogue (approx. 2.5 words/sec) and action. **Combine short dialogue lines (under 3 seconds each) with adjacent dialogue in the same segment.** Only split into Part A and Part B if the combined duration exceeds ${preferredDuration} seconds.
 3. **Aim for Efficiency:** Target 3-6 segments for most scenes. If you have more than 8 segments, reconsider whether some can be combined.
-4. **Select Method:
+4. **Select Method:**
+   - **FTV (Frame-to-Video):** DEFAULT method. Uses start and end keyframe images to generate video between them. Use for ALL segments except segment 1 with scene frame.
    - **I2V (Image-to-Video):** STRICTLY for Segment 1 (using the Master Scene Frame) or static establishing shots.
    - **EXT (Extend):** Use ONLY when camera angle remains IDENTICAL and action simply continues (e.g., uninterrupted monologue from same angle, continuous walk). NEVER use when cutting between different characters.
-   - **T2V (Text-to-Video with References):** Use for ALL angle changes (Wide to Close-Up, cutting from Character A to Character B). Reference Scene Frame + Character Reference images.
-   - **FTV (Frame-to-Video):** When transitioning from a specific end frame.
+   - **T2V (Text-to-Video):** FALLBACK ONLY — use when keyframes cannot be generated (pure VFX, abstract motion graphics). Never use as default.
 
 **CRITICAL PROMPT CONSTRUCTION RULES:**
 Your video_generation_prompt field MUST follow this formula:
@@ -1136,10 +1270,10 @@ For a scene with dialogue between Alex (anxious, pacing) and Ben (calm, authorit
 Segment 1 (Establishing - I2V):
 "Cinematic Wide Shot of Upscale TV Studio Green Room, high-end beige box. Alex Anderson is pacing nervously from left to right, checking his watch and smoothing his suit. Ben Anderson sits perfectly still on the leather sofa, swiping a tablet with minimal movement. Atmosphere is cold, sterile, and pressurized. Anamorphic 35mm lens, visible condensation on fruit basket in foreground. 8k, photorealistic."
 
-Segment 2 (Character dialogue - T2V):
+Segment 2 (Character dialogue - FTV):
 "Medium Shot, reflection in vanity mirror. Alex Anderson stares into the mirror, adjusting his tie with trembling hands. Alex speaks with rapid breathing, 'I don't know if we're ready for this, Dad. Vance has the entire board in her pocket.' Lighting is clinical with a soft top-light. Rack focus from reflection to actual face. High contrast, sweaty skin texture."
 
-Segment 3 (Reverse angle, new speaker - T2V):
+Segment 3 (Reverse angle, new speaker - FTV):
 "Low Angle Medium Close-Up on Ben Anderson sitting on the sofa. He looks up from his tablet slowly, authoritative and calm. Ben speaks, 'We have the files, Alex. That's all that matters.' Rigid, locked-off camera. Background is out of focus beige walls. OLED screen pulsing blue in background. 85mm lens."
 
 **LENS LANGUAGE GUIDELINES:**
@@ -1172,7 +1306,7 @@ Return a JSON array. Each segment object MUST have these fields:
     "generation_plan": {
       "confidence": 90,
       "reasoning": "I2V recommended for segment 1 with available scene frame - provides best visual continuity",
-      "fallback_method": "T2V",
+      "fallback_method": "FTV",
       "warnings": []
     }
   }
@@ -1181,28 +1315,29 @@ Return a JSON array. Each segment object MUST have these fields:
 **GENERATION PLAN RULES:**
 - Include "generation_plan" object with your confidence (0-100) and reasoning for the recommended method
 - Explain WHY this method is best for this specific segment (continuity, angle change, dialogue, etc.)
-- Include fallback_method if the primary method might not work (e.g., "T2V" if I2V fails)
-- Add warnings for potential issues (e.g., "Speaker change may require T2V instead of EXT")
+- Include fallback_method if the primary method might not work (e.g., "FTV" if I2V fails)
+- Add warnings for potential issues (e.g., "Speaker change may require FTV instead of EXT")
 - Higher confidence (80+) for segments with clear method requirements
 - Lower confidence (50-70) for ambiguous cases
 
-**DIALOGUE ASSIGNMENT RULES:**
-- Include "assigned_dialogue_indices" array with 0-based indices of dialogue lines covered by this segment
-- Dialogue lines are numbered [0], [1], [2], etc. in the input
-- Each dialogue line should appear in EXACTLY ONE segment
-- If dialogue [0] and [1] are spoken in segment 1, include "assigned_dialogue_indices": [0, 1]
-- Empty segments (establishing shots, reactions) should have "assigned_dialogue_indices": []
+**AUDIO LINE ASSIGNMENT RULES:**
+- Include "assigned_dialogue_indices" array with 0-based indices from the AUDIO TIMELINE (both 🎙️ voiceover and 🗣️ dialogue lines)
+- Audio lines are numbered [0], [1], [2], etc. in the Audio Timeline input
+- Each audio line should appear in EXACTLY ONE segment
+- If audio lines [0] and [1] are covered by segment 1, include "assigned_dialogue_indices": [0, 1]
+- For 🗣️ DIALOGUE lines: include the character's spoken text in video_generation_prompt
+- For 🎙️ VOICEOVER lines: do NOT include narration text in video_generation_prompt — create backdrop visuals instead
 
 **FINAL CHECKLIST:**
-✅ Every line of dialogue from the script appears in a segment prompt
-✅ Each dialogue line is assigned to exactly one segment via assigned_dialogue_indices
-✅ Dialogue is formatted as: [Name] speaks, "[text]"
+✅ Every audio line from the Audio Timeline appears in a segment via assigned_dialogue_indices
+✅ Each audio line is assigned to exactly one segment
+✅ 🗣️ Dialogue is formatted as: [Name] speaks, "[text]" in video_generation_prompt
+✅ 🎙️ Voiceover lines are NOT included as spoken text — backdrop visuals only
 ✅ Each prompt is 50-150 words with specific lens/camera language
-✅ Segment 1 uses I2V if scene frame available
+✅ Segment 1 uses I2V if scene frame available, otherwise FTV
 ✅ NEVER use EXT when cutting between characters or changing angles
 ✅ End frame descriptions set up the next segment
 ✅ Trigger reasons explain WHY we cut here
-✅ Narration is NOT included in prompts (it's a separate audio voiceover)
 
 Return ONLY valid JSON array. No markdown code blocks, no explanatory text.
 `
@@ -1280,7 +1415,7 @@ function parseGeminiResponseText(text: string): IntelligentSegment[] {
     
     // Normalize generation method
     if (!seg.generation_method || !validMethods.includes(seg.generation_method)) {
-      seg.generation_method = 'T2V' // Default to T2V
+      seg.generation_method = 'FTV' // Default to FTV (Frame-to-Video)
     }
     
     // Ensure reference_strategy exists
@@ -1333,105 +1468,266 @@ function generateDirectionsOnlyPrompt(
     customInstructions?: string
     totalDurationTarget?: number
     segmentCountTarget?: number
-  }
+  },
+  aiBeatAnalysis?: NarrationBeatAnalysis
 ): string {
   const noTalentScene = isNoTalentScene(sceneData.sceneDirection.talent, {
     dialogueCount: sceneData.dialogue.length,
     characterNames: sceneData.characters.map(c => c.name),
   })
   
-  const dialogueList = noTalentScene
-    ? 'NO DIALOGUE - No on-screen talent'
-    : sceneData.dialogue.map((d, idx) => `[${idx}] ${d.character}: "${d.text.substring(0, 50)}${d.text.length > 50 ? '...' : ''}"`).join('\n')
+  // Build UNIFIED AUDIO TIMELINE — merges narration + dialogue as indexed audio lines
+  // This is the PRIMARY input for Gemini — it sees ONE timeline, not two separate blocks
+  const hasNarration = sceneData.combinedAudioTimeline.some(l => l.type === 'narration')
+  const hasDialogue = sceneData.combinedAudioTimeline.some(l => l.type === 'dialogue')
+  const totalTimelineDuration = sceneData.combinedAudioTimeline.reduce((acc, l) => acc + l.estimatedDuration, 0)
   
+  const audioTimelineList = noTalentScene && !hasNarration && !hasDialogue
+    ? 'NO AUDIO LINES - No on-screen talent or narration'
+    : sceneData.combinedAudioTimeline.map(line => {
+        const typeTag = line.type === 'narration' 
+          ? '🎙️ VOICEOVER' 
+          : '🗣️ DIALOGUE'
+        const emotionTag = line.emotion ? ` (${line.emotion})` : ''
+        const visualTag = line.type === 'narration' 
+          ? ' → [Backdrop visuals — NOT lip-synced]' 
+          : ' → [Character lip-sync on screen]'
+        return `[${line.index}] ${typeTag} | ${line.character}${emotionTag}: "${line.text}" (~${line.estimatedDuration}s)${visualTag}`
+      }).join('\n')
+    
+  // Build detailed character descriptions
   const characterList = noTalentScene
     ? 'NO CHARACTERS'
-    : sceneData.characters.map(c => c.name).join(', ') || 'None specified'
+    : sceneData.characters.length > 0
+      ? sceneData.characters.map(c => {
+          let desc = `- ${c.name}: ${c.description}`
+          if (c.wardrobe) desc += ` | Wardrobe: ${c.wardrobe}`
+          if (c.hasReferenceImage) desc += ' (Reference image available)'
+          return desc
+        }).join('\n')
+      : 'None specified'
 
-  // Build scope constraints based on user controls
+  // Build scope constraints
   const focusMode = scopeControls?.focusMode || 'balanced'
   const totalDurationTarget = scopeControls?.totalDurationTarget
   const segmentCountTarget = scopeControls?.segmentCountTarget
   const customInstructions = scopeControls?.customInstructions
 
-  let scopeConstraints = `- Target ${preferredDuration}s per segment (8s max)\n`
-  scopeConstraints += `- Minimum ${minimumSegmentsRequired} segments required\n`
+  // Calculate the authoritative duration — narration/audio duration is the hard ceiling
+  const authoritativeDuration = totalDurationTarget || sceneData.narrationDurationSeconds || sceneData.estimatedTotalDuration
   
-  if (totalDurationTarget) {
-    scopeConstraints += `- **TOTAL SCENE DURATION TARGET: ~${totalDurationTarget}s** (aim for approximately this total, may adjust ±10% for better cut points)\n`
-  }
+  let scopeConstraints = `- Target ${preferredDuration}s per segment (8s absolute max for Veo 3.1)\n`
+  scopeConstraints += `- **HARD CONSTRAINT: Total segment durations MUST sum to exactly ~${authoritativeDuration}s (narration/audio duration)**\n`
+  scopeConstraints += `- **REQUIRED SEGMENT COUNT: exactly ${minimumSegmentsRequired} segments** (${authoritativeDuration}s ÷ ${8}s max = ${minimumSegmentsRequired} segments)\n`
+  scopeConstraints += `- DO NOT create more segments than required. DO NOT exceed ${authoritativeDuration}s total duration.\n`
+  
   if (segmentCountTarget) {
-    scopeConstraints += `- **TARGET SEGMENT COUNT: ${segmentCountTarget} segments** (aim for this count, adjust only if content absolutely requires it)\n`
+    scopeConstraints += `- **OVERRIDE SEGMENT COUNT: ${segmentCountTarget} segments**\n`
   }
   
-  // Focus mode instructions
-  let focusInstructions = ''
+  // Focus mode instructions  
   if (focusMode === 'dialogue-focused') {
-    focusInstructions = '\n- **FOCUS: DIALOGUE** — Prioritize dialogue coverage. Combine visual-only beats into fewer segments. Ensure every line is covered with proper timing.'
+    scopeConstraints += '- **FOCUS: DIALOGUE** — Prioritize dialogue coverage\n'
   } else if (focusMode === 'action-focused') {
-    focusInstructions = '\n- **FOCUS: ACTION** — Prioritize visual action beats. Combine consecutive dialogue lines into single segments where possible. Give each major visual moment its own segment.'
+    scopeConstraints += '- **FOCUS: ACTION** — Prioritize visual action beats\n'
   } else {
-    focusInstructions = '\n- **FOCUS: BALANCED** — Balance dialogue and visual action. Create segments that serve both narrative and visual storytelling.'
+    scopeConstraints += '- **FOCUS: BALANCED** — Balance dialogue and visual action\n'
   }
-  scopeConstraints += focusInstructions
 
-  // Custom instructions from the director
   const directorNotes = customInstructions
-    ? `\n\n**DIRECTOR'S CUSTOM INSTRUCTIONS:**\n${customInstructions}`
+    ? `\n**DIRECTOR'S CUSTOM INSTRUCTIONS:**\n${customInstructions}`
+    : ''
+
+  // Voiceover note (if scene has narration)
+  const voiceoverNote = hasNarration
+    ? `\n**VOICEOVER NOTE:** This scene has narration (🎙️ lines above). The narration audio is a SEPARATE track — do NOT include narration text in video prompts. Create evocative BACKDROP visuals that illustrate the narration emotional content.\n`
+    : ''
+
+  // AI-analyzed visual beats section (from NarrationBeatAnalyzer)
+  const aiBeatSection = aiBeatAnalysis && aiBeatAnalysis.beats.length > 0
+    ? `
+**🎬 PRE-ANALYZED VISUAL BEATS (AI Cinematographer Guidance):**
+The following visual beats were identified by an AI cinematographer analyzing the narration. Use these as STRONG GUIDANCE for your segment directions — each beat suggests a distinct visual concept, shot type, and camera motion that illustrates the narration.
+
+${aiBeatAnalysis.beats.map((beat, idx) => {
+  return `Beat ${beat.beatNumber} (${beat.startPercent}%-${beat.endPercent}%):
+  - Narration: "${beat.narrationText}"
+  - Visual Focus: ${beat.visualFocus}
+  - Suggested Shot: ${beat.shotType}
+  - Camera Motion: ${beat.cameraMotion} (${beat.motionIntensity})
+  - Video Concept: ${beat.videoPrompt}`
+}).join('\n\n')}
+
+**BEAT USAGE RULES:**
+- Map each beat to one or more segments (beats and segments may not be 1:1 if beat count differs from required segment count)
+- Preserve the VISUAL VARIETY suggested by the beats — do NOT collapse distinct visual concepts into similar shots
+- The shot types and camera motions are cinematographer-curated suggestions; follow them unless you have a strong artistic reason to deviate
+- Each segment's keyframe descriptions should reflect the visual focus and shot type from the corresponding beat(s)
+`
     : ''
 
   return `
-**SYSTEM ROLE:** You are a Video Director analyzing a scene to determine optimal segment cut points and directions.
-Your job is to OUTPUT DIRECTIONS ONLY - not full video prompts. This allows the user to review and adjust before prompt generation.
+**SYSTEM ROLE:** You are an expert AI Cinematographer and Director of Photography.
+Your job is to analyze a scene and produce PRECISE, SPECIFIC segment directions that will guide both KEYFRAME IMAGE generation (Imagen 3) and VIDEO generation (Veo 3.1).
+
+**YOUR DIRECTIONS MUST BE SPECIFIC ENOUGH TO:**
+1. Generate a photorealistic START KEYFRAME image (via Imagen 3) for each segment
+2. Generate a photorealistic END KEYFRAME image for each segment
+3. Generate a video clip (via Veo 3.1) that animates from start to end keyframe
+4. Maintain visual continuity across all segments
+
+**ANTI-VAGUENESS RULES — CRITICAL:**
+- ❌ NEVER write vague directions like "Nervous, tense" or "Character reacts"
+- ❌ NEVER write "emotional moment" without specifying WHAT emotion and HOW it manifests
+- ✅ ALWAYS specify: WHO (full appearance), WHERE (exact position in frame), WHAT (specific physical action), HOW (camera settings, lighting)
+- ✅ Every talent_action must describe a VISIBLE, FILMABLE action with character positioning
+- ✅ Every keyframe description must be a complete image generation prompt (50+ words)
+
+${noTalentScene ? `
+**NO ON-SCREEN TALENT SCENE 🚫**
+Talent direction: "${sceneData.sceneDirection.talent}"
+- DO NOT include any people, characters, faces, or human figures
+- Focus on environment, VFX, motion graphics, atmospheric visuals
+- Use environment_description instead of talent directions
+` : ''}
 
 **SCENE DATA:**
 Heading: ${sceneData.heading}
 Visual Description: ${sceneData.visualDescription}
 Estimated Duration: ${Math.round(sceneData.estimatedTotalDuration)}s
+${voiceoverNote}
+**AUDIO TIMELINE (${sceneData.combinedAudioTimeline.length} lines, ~${Math.round(totalTimelineDuration)}s total):**
+${audioTimelineList}
 
-**DIALOGUE:**
-${dialogueList}
-
-**CHARACTERS:** ${characterList}
+**AUDIO TIMELINE RULES:**
+- 🎙️ VOICEOVER lines: Narration plays as a separate audio track. Video should show BACKDROP visuals (environments, atmospheric shots, detail inserts) that ILLUSTRATE the narration. Do NOT show a character speaking these words.
+- 🗣️ DIALOGUE lines: Character speaks on screen with lip-sync. Video MUST show the character and include their speaking action.
+- The "dialogue_indices" field in your output references indices [0], [1], [2]... from this AUDIO TIMELINE (both narration AND dialogue lines)
+- EVERY audio line index MUST appear in exactly ONE segment's dialogue_indices
+- Segments must be sized to FIT the audio lines assigned to them (sum of their durations)
+${aiBeatSection}
+**CHARACTERS:**
+${characterList}
 
 **DIRECTOR'S NOTES:**
 Camera: ${sceneData.sceneDirection.camera}
 Lighting: ${sceneData.sceneDirection.lighting}
+Scene: ${sceneData.sceneDirection.scene}
 Talent: ${sceneData.sceneDirection.talent}
+Audio: ${sceneData.sceneDirection.audio}
 ${directorNotes}
 
 **CONSTRAINTS:**
 ${scopeConstraints}
-${noTalentScene ? '- NO ON-SCREEN TALENT: This is an abstract/title scene' : ''}
 
 **OUTPUT FORMAT:**
-Return a JSON array of segment directions. Each object:
-{
-  "sequence": 1,
-  "estimated_duration": 6.0,
-  "shot_type": "Medium Shot",
-  "camera_movement": "Static",
-  "camera_angle": "Eye-Level",
-  "talent_action": "SARAH looks up from laptop",
-  "emotional_beat": "Tension building",
-  "characters": ["SARAH"],
-  "is_no_talent": false,
-  "lighting_mood": "Low-key dramatic",
-  "key_props": ["laptop", "coffee cup"],
-  "dialogue_indices": [0, 1],
-  "generation_method": "T2V",
-  "trigger_reason": "Angle change to close-up",
-  "confidence": 85
-}
+Return a JSON array. Each segment direction object MUST have ALL these fields:
+
+[
+  {
+    "sequence": 1,
+    "estimated_duration": 6.0,
+    "shot_type": "Medium Close-Up",
+    "camera_movement": "Slow dolly in",
+    "camera_angle": "Eye-Level, slightly camera-left",
+    "lens": "85mm f/1.2",
+    "talent_action": "SARAH (30s Latina, dark curly hair in low bun, cream silk blouse) sits at mahogany desk, left hand reaching toward manila envelope, eyes widening with recognition. Her right hand grips the desk edge, knuckles whitening.",
+    "emotional_beat": "Shock of recognition — jaw drops slightly, breath catches, pupils dilate",
+    "characters": ["SARAH"],
+    "is_no_talent": false,
+    "lighting_mood": "Warm tungsten key from desk lamp camera-left, cool blue fill from laptop screen, rim light from window behind",
+    "key_props": ["manila envelope", "mahogany desk", "desk lamp", "laptop"],
+    "dialogue_indices": [0, 1],
+    "generation_method": "FTV",
+    "trigger_reason": "Opening shot — establishes SARAH discovering the envelope",
+    "confidence": 90,
+    "transition_in": "cut",
+    "start_frame_description": "Wide shot of SARAH at desk viewed from door frame",
+    "end_frame_description": "MCU of SARAH clutching envelope to chest, eyes closed, single tear on left cheek",
+    "continuity_notes": "Cream blouse, low bun hairstyle, desk lamp warm glow consistent",
+    "keyframe_start_description": "Medium close-up of SARAH, 30s Latina woman with dark curly hair pulled back in a low bun, wearing a cream silk blouse with pearl buttons. She sits at a mahogany desk, her left hand frozen mid-reach toward a thick manila envelope. Her brown eyes are wide with recognition, lips slightly parted. Warm tungsten key light from brass desk lamp camera-left casts golden highlights on her cheekbone. Cool blue fill from laptop screen camera-right. Background: rain-streaked window with city lights in soft bokeh. 85mm f/1.2, shallow depth of field, subject tack-sharp. Warm amber and cool blue color palette. 8K photorealistic, cinematic film grain.",
+    "keyframe_end_description": "Same medium close-up composition. SARAH now clutches the manila envelope against her chest with both hands, eyes squeezed shut, a single tear tracking down her left cheek. Her body has turned 15 degrees away from the desk. The desk lamp flickers. Same warm tungsten and cool blue lighting but shadows have deepened. 85mm f/1.2 shallow DOF. Warm amber tones shift slightly cooler. 8K photorealistic.",
+    "environment_description": "Upscale home office: mahogany desk with brass desk lamp, open laptop, scattered papers, half-empty coffee cup. Rain streaks on floor-to-ceiling window behind desk. City lights visible through rain. Hardwood floors, built-in bookshelves camera-right.",
+    "color_palette": "Warm amber highlights from desk lamp, cool blue accents from laptop, deep mahogany shadows",
+    "depth_of_field": "Shallow DOF f/1.2 — subject tack sharp, background and foreground in creamy bokeh"
+  }
+]
+
+**FIELD REQUIREMENTS:**
+
+1. **talent_action** (CRITICAL): Must be a SPECIFIC, FILMABLE action description including:
+   - Character name and brief appearance reminder (hair, wardrobe)
+   - Exact body position and posture
+   - Specific physical action (not just emotion)
+   - What their hands are doing
+   - Where they are looking
+
+2. **keyframe_start_description** (NEW — CRITICAL): A complete 50-80 word image generation prompt describing the OPENING FRAME:
+   - Shot type and lens
+   - Subject with full appearance (face, hair, skin, build, wardrobe)
+   - Exact pose, expression, hand position
+   - Lighting setup with direction and quality
+   - Background elements with DOF treatment
+   - Color palette
+   - Technical: "8K photorealistic, cinematic"
+
+3. **keyframe_end_description** (NEW — CRITICAL): A complete 50-80 word image generation prompt describing the CLOSING FRAME:
+   - What has CHANGED from the start frame
+   - New pose, expression, position
+   - Same lighting setup (unless dramatically motivated change)
+   - Same technical specs
+
+4. **environment_description** (NEW): Detailed backdrop description usable independently:
+   - Location details (furniture, props, architecture)
+   - Atmosphere (weather, particles, haze)
+   - Practical light sources
+   - Key set dressing elements
+
+5. **color_palette** (NEW): Specific color language for consistency:
+   - Highlight color and source
+   - Shadow color and depth
+   - Accent colors
+   - Overall grade direction
+
+6. **depth_of_field** (NEW): Camera optical specifications:
+   - F-stop
+   - What is in focus
+   - What is in bokeh
+   - Any rack focus directions
 
 **RULES:**
-1. Split at MAJOR changes only (angle, location, emotional shift)
-2. Combine consecutive dialogue lines in same shot
-3. Each dialogue index appears in exactly ONE segment
-4. is_no_talent=true means NO characters/dialogue in that segment
-5. confidence: 80+ for clear cuts, 50-70 for ambiguous
+1. Split at MAJOR visual changes only (angle, location, emotional shift)
+2. Combine consecutive audio lines in same shot setup — especially adjacent narration sentences
+3. Each audio timeline index (dialogue_indices) appears in exactly ONE segment
+4. **DURATION RULE (CRITICAL):** Total segment durations MUST sum to EXACTLY the audio timeline duration (~${Math.round(totalTimelineDuration)}s). Do NOT exceed this. Each segment should be 5-8 seconds (8s max).
+5. **SEGMENT COUNT RULE:** Create exactly ${minimumSegmentsRequired} segments — no more, no fewer (unless overridden above).
+6. keyframe_start_description and keyframe_end_description are MANDATORY for every segment
+7. **VOICEOVER SEGMENTS:** When a segment covers 🎙️ VOICEOVER lines, the talent_action should describe atmospheric/environmental action — NOT a character speaking. Show backdrop visuals. Set is_no_talent: true for pure voiceover backdrop segments.
+8. **DIALOGUE SEGMENTS:** When a segment covers 🗣️ DIALOGUE lines, the talent_action MUST show the character speaking with lip-sync action.
+9. **MIXED SEGMENTS:** When a segment covers both voiceover AND dialogue lines, prioritize the DIALOGUE character as the visual focus, with backdrop elements that complement the narration.
 
-Return ONLY valid JSON array. No markdown, no explanation.
+**🎙️ NARRATION COVERAGE — MANDATORY (DO NOT SKIP):**
+${hasNarration ? `
+10. **EVERY 🎙️ VOICEOVER line in the Audio Timeline MUST be assigned to exactly one segment via dialogue_indices.** Do NOT skip any narration lines.
+11. Voiceover segments should have evocative, cinematic BACKDROP visuals that ILLUSTRATE the narration's emotional content and imagery. Think: establishing shots, environmental details, atmospheric footage, close-ups of objects mentioned.
+12. If the scene has BOTH narration and dialogue, create SEPARATE segments for narration (backdrop visuals) and dialogue (character lip-sync) unless they naturally overlap.
+13. For narration-only scenes (no dialogue), you MUST create at least one segment per 8 seconds of narration. Each segment should show different visual content that progresses through the narration's story.
+14. **VALIDATION:** Count all 🎙️ lines. Count all your dialogue_indices referencing 🎙️ lines. These counts MUST match — every narration line must be covered.
+` : '(No narration lines in this scene — skip narration rules)'}
+
+**CONTINUITY RULES (CRITICAL FOR VISUAL FLOW):**
+15. For segments 2+, the keyframe_start_description MUST describe the SAME visual state as the previous segment's keyframe_end_description (same character pose, position, expression, lighting, wardrobe)
+16. Default transition_in to "continue" for consecutive segments in the same location/angle. Only use "cut" when the camera angle or location changes dramatically.
+17. continuity_notes MUST list all visual elements that carry over: wardrobe, hair, props held, lighting setup, background elements
+18. When dialogue spans across segments, the character's position and state at the end of segment N must match their position and state at the start of segment N+1
+
+**GENERATION METHOD RULES:**
+19. Default generation_method is "FTV" (Frame-to-Video) — generates video between start and end keyframes
+20. Use "I2V" (Image-to-Video) ONLY for segment 1 when a scene frame exists as the source image
+21. Use "T2V" (Text-to-Video) ONLY as a fallback when keyframes cannot be generated (e.g., pure VFX shots)
+22. NEVER use "T2V" as the default — "FTV" is the primary production method
+
+Return ONLY valid JSON array. No markdown code blocks, no explanatory text.
 `
 }
 
@@ -1443,7 +1739,7 @@ async function callGeminiForSegmentDirections(prompt: string): Promise<any[]> {
     temperature: 0.5, // Lower temperature for more consistent structure
     maxOutputTokens: 8192, // Directions are much smaller than full prompts
     responseMimeType: 'application/json',
-    timeoutMs: 55000, // 55s — allows headroom for model fallback (3.0→2.5) within Vercel 60s limit
+    timeoutMs: 55000, // 55s — allows headroom for model fallback (3.0->2.5) within Vercel 60s limit
     thinkingLevel: 'minimal',
   })
   return parseDirectionsResponse(result.text)
@@ -1500,11 +1796,17 @@ function generatePromptsFromDirectionsPrompt(
         return desc
       }).join('\n')
   
-  const dialogueList = noTalentScene
+  // Build UNIFIED AUDIO TIMELINE for Phase 2 prompts-from-directions
+  const p2dHasNarration = sceneData.combinedAudioTimeline.some(l => l.type === 'narration')
+  const p2dTotalDuration = sceneData.combinedAudioTimeline.reduce((acc, l) => acc + l.estimatedDuration, 0)
+  
+  const p2dAudioTimeline = noTalentScene && sceneData.combinedAudioTimeline.length === 0
     ? ''
-    : sceneData.dialogue.map((d, idx) => 
-        `[${idx}] ${d.character}${d.emotion ? ` (${d.emotion})` : ''}: "${d.text}"`
-      ).join('\n')
+    : sceneData.combinedAudioTimeline.map(line => {
+        const typeTag = line.type === 'narration' ? '🎙️ VO' : '🗣️ DLG'
+        const emotionTag = line.emotion ? ` (${line.emotion})` : ''
+        return `[${line.index}] ${typeTag} | ${line.character}${emotionTag}: "${line.text}" (~${line.estimatedDuration}s)`
+      }).join('\n')
   
   const directionsJson = approvedDirections.map((dir, idx) => ({
     sequence: idx + 1,
@@ -1523,6 +1825,12 @@ function generatePromptsFromDirectionsPrompt(
     start_frame_description: (dir as any).startFrameDescription || '',
     end_frame_description: (dir as any).endFrameDescription || '',
     continuity_notes: (dir as any).continuityNotes || '',
+    // Phase 8: Pass keyframe descriptions to Phase 2 for prompt enrichment
+    keyframe_start_description: (dir as any).keyframeStartDescription || '',
+    keyframe_end_description: (dir as any).keyframeEndDescription || '',
+    environment_description: (dir as any).environmentDescription || '',
+    color_palette: (dir as any).colorPalette || '',
+    depth_of_field: (dir as any).depthOfField || '',
   }))
 
   return `
@@ -1532,13 +1840,18 @@ The user has APPROVED a shot breakdown. Your job is to write RICH, CINEMATIC VID
 **SCENE DATA:**
 Heading: ${sceneData.heading}
 Visual Description: ${sceneData.visualDescription}
-${sceneData.narration ? `Narration (voiceover — NOT in video): "${sceneData.narration}"` : ''}
+${p2dHasNarration ? `Narration: Present as 🎙️ VO lines in audio timeline — voiceover audio, NOT in video prompts` : ''}
 
 **CHARACTERS:**
 ${noTalentScene ? 'NO CHARACTERS - This is a no-talent scene' : characterDescriptions || 'None specified'}
 
-**DIALOGUE:**
-${noTalentScene ? 'NO DIALOGUE - Audio is voiceover only' : dialogueList || 'No dialogue'}
+**AUDIO TIMELINE (${sceneData.combinedAudioTimeline.length} lines, ~${Math.round(p2dTotalDuration)}s):**
+${noTalentScene && !p2dAudioTimeline ? 'NO AUDIO - voiceover only' : p2dAudioTimeline || 'No audio lines'}
+
+**AUDIO LINE RULES:**
+- 🗣️ DLG lines: Include character dialogue in video_generation_prompt as: Character speaks, "text"
+- 🎙️ VO lines: Do NOT include narration text in video_generation_prompt — create backdrop visuals
+- dialogue_indices reference the [index] numbers from the Audio Timeline above
 
 **DIRECTOR'S NOTES:**
 Camera: ${sceneData.sceneDirection.camera}
@@ -1561,7 +1874,7 @@ For each approved direction, generate a RICH cinematic video prompt (80-150 word
 **CRITICAL RULES:**
 1. FOLLOW the approved shot_type, camera_movement, camera_angle, and lens EXACTLY
 2. INCLUDE the specified talent_action and emotional_beat
-3. FOR DIALOGUE: Include as "[Name] speaks, \\"[exact dialogue text]\\"" — Veo 3.1 generates speech from text
+3. FOR 🗣️ DIALOGUE LINES: Include as "[Name] speaks, \\"[exact dialogue text]\\"" — Veo 3.1 generates speech from text. FOR 🎙️ VOICEOVER LINES: Do NOT include narration text — create atmospheric backdrop visuals instead.
 4. **PER-SEGMENT NO-TALENT ENFORCEMENT:** For ANY segment where \`is_no_talent: true\` in the approved directions, you MUST NOT include any people, characters, faces, human figures, or dialogue in that segment's prompt — regardless of the CHARACTERS or DIALOGUE sections above. Focus ONLY on environment, VFX, abstract visuals, text/graphics, and atmosphere for those segments.
 5. EVERY character mentioned in a talent segment MUST have their FULL appearance description (face, hair, skin, build, wardrobe)
 6. Narration is a SEPARATE audio voiceover — NEVER include narration text in prompts
@@ -1600,11 +1913,12 @@ Return a JSON array with one object per segment:
 **FINAL QUALITY CHECKLIST:**
 ✅ Every prompt is 80-150 words with specific lens/DOF/lighting/color language
 ✅ Every character has full appearance description (don't just use names)
-✅ Every dialogue line appears in exactly one segment as: [Name] speaks, "[text]"
+✅ Every 🗣️ dialogue line appears in exactly one segment as: [Name] speaks, "[text]"
+✅ Every 🎙️ voiceover line is assigned via assigned_dialogue_indices but NOT included as spoken text
 ✅ End frame descriptions are detailed enough to generate the next segment's start frame
 ✅ Camera notes include focal length, f-stop, and movement speed
 ✅ Color palette and atmosphere are specified
-✅ Segment 1 uses I2V if scene frame is available
+✅ Segment 1 uses I2V if scene frame is available, otherwise FTV
 ✅ No narration text in prompts (it's a separate voiceover track)
 
 Return ONLY valid JSON array. No markdown, no explanation.
@@ -1653,7 +1967,7 @@ function transformSegmentsToOutput(
     const visualDescriptionHash = simpleHash(sceneData.visualDescription || '')
 
     const hasSceneFrame = !!sceneData.sceneFrameUrl
-    const generatedMethod = methodMap[seg.generation_method] || 'T2V'
+    const generatedMethod = methodMap[seg.generation_method] || 'FTV'
     
     // Include approved direction metadata if available
     const approvedDir = approvedDirections?.[idx]
@@ -1662,8 +1976,8 @@ function transformSegmentsToOutput(
       recommendedMethod: generatedMethod,
       confidence: seg.generation_plan?.confidence || (isFirstSegment && hasSceneFrame ? 90 : 70),
       reasoning: seg.generation_plan?.reasoning || seg.trigger_reason || 'AI-recommended method',
-      fallbackMethod: seg.generation_plan?.fallback_method || (generatedMethod === 'I2V' ? 'T2V' : undefined),
-      fallbackReason: generatedMethod === 'I2V' ? 'Use T2V if I2V produces unwanted motion' : undefined,
+      fallbackMethod: seg.generation_plan?.fallback_method || (generatedMethod === 'I2V' ? 'FTV' : undefined),
+      fallbackReason: generatedMethod === 'I2V' ? 'Use FTV if I2V produces unwanted motion' : undefined,
       prerequisites: [
         { type: 'scene-image', label: 'Scene keyframe image', met: hasSceneFrame, required: isFirstSegment, assetUrl: sceneData.sceneFrameUrl || undefined },
         ...(idx > 0 ? [{ type: 'previous-frame', label: 'Previous segment last frame', met: false, required: false }] : []),

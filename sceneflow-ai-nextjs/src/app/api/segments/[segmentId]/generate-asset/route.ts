@@ -565,12 +565,25 @@ export async function POST(
     
     // Handle common error types with user-friendly messages
     const originalErrorMessage = errorMessage // Preserve original for details
+    // Determine the effective generation method for error context
+    const effectiveGenerationMethod = generationMethod || genType
+    const isFTVMethod = effectiveGenerationMethod === 'FTV'
+    const hasMultipleFrames = !!(startFrameUrl && endFrameUrl)
+    
     if (errorMessage.includes('Content Safety Filter') || 
         errorMessage.includes('filtered') || 
         errorMessage.includes('violate') ||
         errorMessage.includes('usage guidelines')) {
       statusCode = 422 // Unprocessable Entity - indicates content issue, not server error
-      errorMessage = 'Content Policy Violation: Your prompt was flagged by Google\'s safety filters. This often happens with medical, violent, or graphic terms. Use the "Auto-Fix" button in the editor to rephrase with cinematic alternatives, or try the "AI Rephrase" feature for a complete rewrite.'
+      
+      // FTV (two-image interpolation) is prone to false-positive content policy violations
+      // because the model hallucinates worst-case transitions between the two frames.
+      // Suggest I2V retry which uses only the start frame and avoids this issue.
+      if (isFTVMethod || hasMultipleFrames) {
+        errorMessage = 'Content Policy Violation: Frame-to-Video (FTV) interpolation was rejected by safety filters. This commonly happens when the AI model interprets the transition between two frames as potentially sensitive content. Try regenerating with Image-to-Video (I2V) mode using just your start frame — this preserves your prompt direction while avoiding the two-frame hallucination trigger.'
+      } else {
+        errorMessage = 'Content Policy Violation: Your prompt was flagged by Google\'s safety filters. This often happens with medical, violent, or graphic terms. Use the "Auto-Fix" button in the editor to rephrase with cinematic alternatives, or try the "AI Rephrase" feature for a complete rewrite.'
+      }
     } else if (errorMessage.includes('Invalid JSON payload') || errorMessage.includes('INVALID_ARGUMENT')) {
       errorMessage = 'API Error: Invalid request format. Please try a different generation method.'
     } else if (errorMessage.includes('quota') || errorMessage.includes('RESOURCE_EXHAUSTED')) {
@@ -584,6 +597,17 @@ export async function POST(
         error: errorMessage,
         retryAfter,
         isRateLimited: statusCode === 429,
+        // Structured content policy violation data for client-side recovery UI
+        ...(statusCode === 422 && {
+          code: 'CONTENT_POLICY_VIOLATION',
+          generationMethod: effectiveGenerationMethod,
+          isFTVRelated: isFTVMethod || hasMultipleFrames,
+          suggestion: (isFTVMethod || hasMultipleFrames) ? 'RETRY_I2V' : 'REPHRASE_PROMPT',
+          retryI2VData: (isFTVMethod || hasMultipleFrames) && startFrameUrl ? {
+            startFrameUrl,
+            prompt: prompt, // Original prompt (pre-sanitization) for user review
+          } : undefined,
+        }),
         // Include original Vertex AI error details (with support codes) for content policy violations
         vertexDetails: statusCode === 422 ? originalErrorMessage : undefined,
         details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined,

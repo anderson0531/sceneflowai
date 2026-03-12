@@ -197,7 +197,7 @@ export function SceneProductionDirector({
         </div>
 
         {/* Inline Segment Builder */}
-        <div className="border border-indigo-500/20 rounded-lg overflow-hidden bg-background">
+        <div className="border border-indigo-500/20 rounded-lg overflow-hidden bg-background min-w-0 max-w-full">
           <SegmentBuilder
             sceneId={sceneId}
             sceneNumber={sceneNumber}

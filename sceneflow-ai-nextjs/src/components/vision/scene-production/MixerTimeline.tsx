@@ -115,9 +115,14 @@ export function MixerTimeline({
   const [draggingTextId, setDraggingTextId] = useState<string | null>(null)
   
   // Zoom state: pixels per second (higher = more zoomed in)
-  const [pixelsPerSecond, setPixelsPerSecond] = useState(30)
-  const MIN_PPS = 10  // Minimum zoom (zoomed out)
-  const MAX_PPS = 100 // Maximum zoom (zoomed in)
+  const MIN_PPS = 5   // Minimum zoom (zoomed out — good for 60s+ scenes)
+  const MAX_PPS = 150 // Maximum zoom (zoomed in — frame-level precision)
+  const [pixelsPerSecond, setPixelsPerSecond] = useState(() => {
+    // Auto-fit: start with a reasonable zoom based on duration
+    // Aim for ~600px visible timeline on first render
+    const idealPPS = 600 / Math.max(videoTotalDuration, 5)
+    return Math.max(MIN_PPS, Math.min(MAX_PPS, Math.round(idealPPS)))
+  })
 
   // Duration map
   const durations: Record<keyof MixerAudioTracks, number> = {
@@ -301,7 +306,7 @@ export function MixerTimeline({
         </div>
         
         {/* Zoom Controls */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <Button
             variant="ghost"
             size="sm"
@@ -312,7 +317,16 @@ export function MixerTimeline({
           >
             <ZoomOut className="w-3.5 h-3.5" />
           </Button>
-          <span className="text-[10px] text-gray-500 w-10 text-center">{pixelsPerSecond}px/s</span>
+          {/* Zoom Slider */}
+          <input
+            type="range"
+            min={MIN_PPS}
+            max={MAX_PPS}
+            value={pixelsPerSecond}
+            onChange={(e) => setPixelsPerSecond(Number(e.target.value))}
+            className="w-16 sm:w-24 h-1 appearance-none bg-gray-700 rounded-full cursor-pointer accent-purple-500"
+            title={`Zoom: ${pixelsPerSecond}px/s`}
+          />
           <Button
             variant="ghost"
             size="sm"
@@ -323,14 +337,16 @@ export function MixerTimeline({
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </Button>
+          <div className="w-px h-4 bg-gray-700 mx-0.5" />
           <Button
             variant="ghost"
             size="sm"
             onClick={handleZoomFit}
-            className="h-6 w-6 p-0 text-gray-400 hover:text-white"
-            title="Fit to view"
+            className="h-6 px-1.5 text-[10px] text-gray-400 hover:text-white"
+            title="Fit timeline to view"
           >
-            <Maximize2 className="w-3.5 h-3.5" />
+            <Maximize2 className="w-3 h-3 mr-0.5" />
+            Fit
           </Button>
         </div>
       </div>
