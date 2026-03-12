@@ -51,6 +51,7 @@ import {
   Mic,
   ChevronDown,
   ChevronUp,
+  Trash2,
 } from 'lucide-react'
 import {
   SceneSegment,
@@ -101,6 +102,10 @@ interface SegmentDirectionCardProps {
   onSelect: () => void
   onEdit: (updates: Partial<ProposedDirection>) => void
   onApprove: () => void
+  onDelete: () => void
+  onAiAssist?: (instruction: string) => void
+  isAiAssistLoading?: boolean
+  narrationText?: string
   onGeneratePrompt: () => void
 }
 
@@ -112,9 +117,14 @@ function SegmentDirectionCard({
   onSelect,
   onEdit,
   onApprove,
+  onDelete,
+  onAiAssist,
+  isAiAssistLoading,
+  narrationText,
   onGeneratePrompt,
 }: SegmentDirectionCardProps) {
   const [isEditing, setIsEditing] = useState(false)
+  const [aiInstruction, setAiInstruction] = useState('')
   
   // Get dialogue lines for this segment
   const segmentDialogue = dialogueLines.filter(d => 
@@ -392,6 +402,74 @@ function SegmentDirectionCard({
                 (for abstract/title/establishing shots)
               </span>
             </div>
+
+            {/* AI Direction Assistant */}
+            <div className="border-t border-sf-border/40 pt-3 mt-1">
+              <div className="flex items-center gap-2 mb-2">
+                <Wand2 className="w-3.5 h-3.5 text-sf-accent" />
+                <span className="text-xs font-medium text-sf-text-secondary">AI Direction Assistant</span>
+              </div>
+              
+              {/* Assigned audio lines preview */}
+              <div className="mb-2">
+                <p className="text-[10px] text-sf-text-disabled mb-1">Assigned Audio Lines ({direction.dialogueLineIds.length})</p>
+                <div className="flex flex-wrap gap-1">
+                  {direction.dialogueLineIds.length > 0 ? direction.dialogueLineIds.map(id => {
+                    const idx = parseInt(id.replace('dialogue-', ''))
+                    const narrationSentences = narrationText
+                      ?.split(/(?<=[.!?])\s+/)
+                      .map(s => s.trim())
+                      .filter(s => s.length > 0) || []
+                    const isNarration = idx < narrationSentences.length
+                    const lineText = isNarration 
+                      ? narrationSentences[idx]?.substring(0, 40) + '...'
+                      : dialogueLines.find(d => d.id === id)?.text?.substring(0, 40) || `Line ${idx}`
+                    return (
+                      <Badge key={id} variant="outline" className={cn(
+                        "text-[10px] h-5 max-w-[200px] truncate",
+                        isNarration ? "border-amber-500/40 text-amber-300" : "border-blue-500/40 text-blue-300"
+                      )}>
+                        {isNarration ? '🎙️' : '🗣️'} #{idx}: {lineText}
+                      </Badge>
+                    )
+                  }) : (
+                    <span className="text-[10px] text-amber-400">No audio lines assigned</span>
+                  )}
+                </div>
+              </div>
+              
+              {/* AI instruction input */}
+              <div className="flex gap-2">
+                <Input
+                  value={aiInstruction}
+                  onChange={e => setAiInstruction(e.target.value)}
+                  placeholder="e.g., 'Make it more dramatic' or 'Focus on the gym environment'"
+                  className="h-8 text-xs bg-sf-surface border-sf-border/50"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && aiInstruction.trim() && onAiAssist) {
+                      onAiAssist(aiInstruction)
+                      setAiInstruction('')
+                    }
+                  }}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs border-sf-accent/40 text-sf-accent hover:bg-sf-accent/10 whitespace-nowrap"
+                  disabled={isAiAssistLoading || !aiInstruction.trim()}
+                  onClick={() => {
+                    if (aiInstruction.trim() && onAiAssist) {
+                      onAiAssist(aiInstruction)
+                      setAiInstruction('')
+                    }
+                  }}
+                >
+                  {isAiAssistLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3 mr-1" />}
+                  {isAiAssistLoading ? 'Generating...' : 'Generate'}
+                </Button>
+              </div>
+              <p className="text-[10px] text-sf-text-disabled mt-1">Describe what you want — AI will generate talent action, frames, and cinematography</p>
+            </div>
           </div>
         ) : (
           <div className="space-y-0">
@@ -535,6 +613,15 @@ function SegmentDirectionCard({
             {isEditing ? 'Done' : 'Edit'}
           </Button>
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => { e.stopPropagation(); onDelete() }}
+              className="h-7 text-xs text-red-400/60 hover:text-red-400 hover:bg-red-500/10"
+              title="Delete segment"
+            >
+              <Trash2 className="w-3 h-3" />
+            </Button>
             <Button
               variant={direction.isApproved ? "default" : "outline"}
               size="sm"
@@ -1053,6 +1140,9 @@ export function SegmentBuilder({
   // Drag-to-reorder state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+  
+  // AI assist state
+  const [aiAssistLoading, setAiAssistLoading] = useState<string | null>(null)
   
   // Track scene bible hash for staleness
   const [lastGeneratedHash, setLastGeneratedHash] = useState<string | null>(null)
@@ -1727,6 +1817,70 @@ export function SegmentBuilder({
     toast.success('Segment removed')
   }, [])
 
+  // AI-assisted direction editing
+  const handleAiAssistDirection = useCallback(async (directionId: string, instruction: string) => {
+    const direction = proposedDirections.find(d => d.id === directionId)
+    if (!direction) return
+
+    setAiAssistLoading(directionId)
+    try {
+      // Build context from assigned audio lines
+      const narrationSentences = sceneBible.narration
+        ?.split(/(?<=[.!?])\s+/)
+        .map((s: string) => s.trim())
+        .filter((s: string) => s.length > 0) || []
+
+      const assignedAudioText = direction.dialogueLineIds.map(id => {
+        const idx = parseInt(id.replace('dialogue-', ''))
+        if (idx < narrationSentences.length) {
+          return `[Narration] ${narrationSentences[idx]}`
+        }
+        const dialogueIdx = idx - narrationSentences.length
+        const dialogueLine = sceneBible.dialogue[dialogueIdx]
+        if (dialogueLine) {
+          return `[${dialogueLine.character}] ${dialogueLine.text}`
+        }
+        return null
+      }).filter(Boolean).join('\n')
+
+      const response = await fetch(`/api/scenes/${sceneId}/generate-segments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          preferredDuration: targetDuration,
+          phase: 'assist-direction',
+          directionContext: {
+            currentDirection: direction,
+            assignedAudioText,
+            instruction,
+            sceneHeading: sceneBible.heading,
+            sceneDescription: sceneBible.visualDescription,
+            characters: sceneBible.characters.map(c => c.name),
+          },
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('AI assist failed')
+      }
+
+      const data = await response.json()
+      if (data.direction) {
+        handleDirectionEdit(directionId, {
+          ...data.direction,
+          isUserEdited: true,
+        })
+        toast.success('AI updated segment direction')
+      }
+    } catch (err) {
+      console.error('[SegmentBuilder] AI assist error:', err)
+      toast.error('AI assist failed — try again')
+    } finally {
+      setAiAssistLoading(null)
+    }
+  }, [proposedDirections, sceneBible, sceneId, projectId, targetDuration, handleDirectionEdit])
+
   const handleFinalize = useCallback(() => {
     // Transform ProposedSegments to SceneSegments
     const finalSegments: SceneSegment[] = proposedSegments.map(seg => ({
@@ -2167,6 +2321,10 @@ export function SegmentBuilder({
                           onSelect={() => setSelectedDirectionId(direction.id)}
                           onEdit={(updates) => handleDirectionEdit(direction.id, updates)}
                           onApprove={() => handleDirectionApprove(direction.id)}
+                          onDelete={() => handleDeleteDirection(direction.id)}
+                          onAiAssist={(instruction) => handleAiAssistDirection(direction.id, instruction)}
+                          isAiAssistLoading={aiAssistLoading === direction.id}
+                          narrationText={sceneBible.narration || undefined}
                           onGeneratePrompt={() => handleGenerateSinglePrompt(direction.id)}
                         />
                       </div>

@@ -292,7 +292,8 @@ export async function POST(
     // Each segment can be max 8 seconds (Veo 3.1 constraint)
     const MAX_SEGMENT_SECONDS = 8
     const effectiveAudioDuration = totalAudioDurationSeconds || sceneData.estimatedTotalDuration
-    const minimumSegmentsRequired = Math.ceil(effectiveAudioDuration / MAX_SEGMENT_SECONDS)
+    // Floor at 2 segments minimum — a single segment produces poor visual variety
+    const minimumSegmentsRequired = Math.max(2, Math.ceil(effectiveAudioDuration / MAX_SEGMENT_SECONDS))
     
     console.log(`[Scene Segmentation] Audio duration: ${effectiveAudioDuration}s, min segments required: ${minimumSegmentsRequired}, phase: ${phase}`)
     
@@ -350,6 +351,7 @@ export async function POST(
       
       // Transform to SegmentDirection objects
       const segmentDirections: SegmentDirection[] = directions.map((dir: any, idx: number) => ({
+        estimatedDuration: dir.estimated_duration || preferredDuration,
         shotType: dir.shot_type || 'Medium Shot',
         cameraMovement: dir.camera_movement || 'Static',
         cameraAngle: dir.camera_angle || 'Eye-Level',
@@ -430,6 +432,72 @@ export async function POST(
       })
     }
     
+    // ============================================================================
+    // PHASE: AI ASSIST — Generate/refine a single direction with user instruction
+    // ============================================================================
+    if (phase === 'assist-direction') {
+      const { directionContext } = body
+      if (!directionContext) {
+        return NextResponse.json({ error: 'Missing directionContext' }, { status: 400 })
+      }
+
+      console.log(`[Scene Segmentation] AI Assist: Refining direction with instruction: "${directionContext.instruction}"`)
+
+      const assistPrompt = `You are an expert AI Cinematographer. Refine this segment direction based on the user's instruction.
+
+**Scene:** ${directionContext.sceneHeading || 'Unknown'}
+**Description:** ${directionContext.sceneDescription || 'N/A'}
+**Characters:** ${(directionContext.characters || []).join(', ') || 'None'}
+
+**Assigned Audio Lines:**
+${directionContext.assignedAudioText || 'None assigned'}
+
+**Current Direction:**
+- Shot: ${directionContext.currentDirection?.shotType || 'Medium Shot'} • ${directionContext.currentDirection?.cameraMovement || 'Static'}
+- Talent Action: ${directionContext.currentDirection?.talentAction || 'None'}
+- Start Frame: ${directionContext.currentDirection?.startFrameDescription || 'None'}
+- End Frame: ${directionContext.currentDirection?.endFrameDescription || 'None'}
+
+**User Instruction:** "${directionContext.instruction}"
+
+Return a JSON object with ONLY the fields to update. Always include:
+- talentAction (specific, filmable action — WHO does WHAT WHERE with WHAT body position)
+- emotionalBeat
+- startFrameDescription (50+ word image generation prompt describing opening frame — include shot type, subject, appearance, lighting, background, DOF, color palette, "8K photorealistic")
+- endFrameDescription (50+ word image generation prompt describing closing frame — show what CHANGED from start frame)
+- shotType, cameraMovement, cameraAngle, lens (if the instruction implies changes)
+- environmentDescription, colorPalette (if relevant)
+
+Use camelCase field names. Return ONLY valid JSON, no markdown.`
+
+      try {
+        const result = await generateText(assistPrompt, {
+          model: 'gemini-3.0-flash',
+          temperature: 0.4,
+          maxOutputTokens: 4096,
+          thinkingLevel: 'minimal',
+          timeoutMs: 30000,
+          responseMimeType: 'application/json',
+        })
+
+        let parsed
+        try {
+          let jsonText = result.text.trim()
+          const codeBlock = jsonText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
+          if (codeBlock) jsonText = codeBlock[1]
+          parsed = JSON.parse(jsonText)
+        } catch {
+          console.error('[Scene Segmentation] AI assist parse error:', result.text.substring(0, 200))
+          return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 })
+        }
+
+        return NextResponse.json({ success: true, direction: parsed })
+      } catch (err: any) {
+        console.error('[Scene Segmentation] AI assist error:', err)
+        return NextResponse.json({ error: err.message || 'AI assist failed' }, { status: 500 })
+      }
+    }
+
     // ============================================================================
     // PHASE 2: PROMPTS FROM APPROVED DIRECTIONS
     // Generates full video prompts using user-approved directions
@@ -1600,11 +1668,13 @@ ${voiceoverNote}
 ${audioTimelineList}
 
 **AUDIO TIMELINE RULES:**
-- 🎙️ VOICEOVER lines: Narration plays as a separate audio track. Video should show BACKDROP visuals (environments, atmospheric shots, detail inserts) that ILLUSTRATE the narration. Do NOT show a character speaking these words.
-- 🗣️ DIALOGUE lines: Character speaks on screen with lip-sync. Video MUST show the character and include their speaking action.
-- The "dialogue_indices" field in your output references indices [0], [1], [2]... from this AUDIO TIMELINE (both narration AND dialogue lines)
-- EVERY audio line index MUST appear in exactly ONE segment's dialogue_indices
+- Both 🎙️ VOICEOVER and 🗣️ DIALOGUE lines are entries in a SINGLE unified audio track. Treat them equally — both need visual segments.
+- 🎙️ VOICEOVER lines: Narration plays as audio. Video shows cinematic visuals that ILLUSTRATE the narration — environments, character actions, atmospheric shots, close-ups of relevant details.
+- 🗣️ DIALOGUE lines: Character speaks on screen with lip-sync. Video shows the speaking character.
+- The "dialogue_indices" field references indices [0], [1], [2]... from this AUDIO TIMELINE
+- **EVERY audio line index MUST appear in exactly ONE segment's dialogue_indices — no line may be skipped**
 - Segments must be sized to FIT the audio lines assigned to them (sum of their durations)
+- **keyframe_start_description AND keyframe_end_description are MANDATORY for EVERY segment — never leave end frames empty**
 ${aiBeatSection}
 **CHARACTERS:**
 ${characterList}
@@ -1702,30 +1772,27 @@ Return a JSON array. Each segment direction object MUST have ALL these fields:
 4. **DURATION RULE (CRITICAL):** Total segment durations MUST sum to EXACTLY the audio timeline duration (~${Math.round(totalTimelineDuration)}s). Do NOT exceed this. Each segment should be 5-8 seconds (8s max).
 5. **SEGMENT COUNT RULE:** Create exactly ${minimumSegmentsRequired} segments — no more, no fewer (unless overridden above).
 6. keyframe_start_description and keyframe_end_description are MANDATORY for every segment
-7. **VOICEOVER SEGMENTS:** When a segment covers 🎙️ VOICEOVER lines, the talent_action should describe atmospheric/environmental action — NOT a character speaking. Show backdrop visuals. Set is_no_talent: true for pure voiceover backdrop segments.
-8. **DIALOGUE SEGMENTS:** When a segment covers 🗣️ DIALOGUE lines, the talent_action MUST show the character speaking with lip-sync action.
-9. **MIXED SEGMENTS:** When a segment covers both voiceover AND dialogue lines, prioritize the DIALOGUE character as the visual focus, with backdrop elements that complement the narration.
+7. **ALL SEGMENTS require both keyframe_start_description AND keyframe_end_description.** These describe the opening and closing visual frames. NEVER leave end frames empty — they are critical for FTV video generation.
+8. **DIALOGUE SEGMENTS:** When a segment covers 🗣️ DIALOGUE lines, talent_action MUST show the character speaking.
+9. **VOICEOVER SEGMENTS:** When a segment covers 🎙️ VOICEOVER lines, talent_action describes cinematic visuals illustrating the narration — environments, character actions (not speaking), atmospheric moments, detail shots.
+10. **MIXED SEGMENTS:** When both voiceover AND dialogue lines are in one segment, show the dialogue character speaking with narration providing thematic context.
 
-**🎙️ NARRATION COVERAGE — MANDATORY (DO NOT SKIP):**
-${hasNarration ? `
-10. **EVERY 🎙️ VOICEOVER line in the Audio Timeline MUST be assigned to exactly one segment via dialogue_indices.** Do NOT skip any narration lines.
-11. Voiceover segments should have evocative, cinematic BACKDROP visuals that ILLUSTRATE the narration's emotional content and imagery. Think: establishing shots, environmental details, atmospheric footage, close-ups of objects mentioned.
-12. If the scene has BOTH narration and dialogue, create SEPARATE segments for narration (backdrop visuals) and dialogue (character lip-sync) unless they naturally overlap.
-13. For narration-only scenes (no dialogue), you MUST create at least one segment per 8 seconds of narration. Each segment should show different visual content that progresses through the narration's story.
-14. **VALIDATION:** Count all 🎙️ lines. Count all your dialogue_indices referencing 🎙️ lines. These counts MUST match — every narration line must be covered.
-` : '(No narration lines in this scene — skip narration rules)'}
+**AUDIO COVERAGE — MANDATORY (DO NOT SKIP):**
+11. **EVERY audio line (both 🎙️ and 🗣️) MUST be assigned to exactly one segment via dialogue_indices.** Count ALL lines. Count ALL your assigned indices. These MUST match — no line may be skipped.
+12. Narration and dialogue are equally important audio lines — both require visual segments with full start AND end frame descriptions.
+13. For scenes with narration, create visually varied segments that progress through the narrative — use different angles, focal points, and compositions for each segment.
 
 **CONTINUITY RULES (CRITICAL FOR VISUAL FLOW):**
-15. For segments 2+, the keyframe_start_description MUST describe the SAME visual state as the previous segment's keyframe_end_description (same character pose, position, expression, lighting, wardrobe)
-16. Default transition_in to "continue" for consecutive segments in the same location/angle. Only use "cut" when the camera angle or location changes dramatically.
-17. continuity_notes MUST list all visual elements that carry over: wardrobe, hair, props held, lighting setup, background elements
-18. When dialogue spans across segments, the character's position and state at the end of segment N must match their position and state at the start of segment N+1
+14. For segments 2+, the keyframe_start_description MUST describe the SAME visual state as the previous segment's keyframe_end_description (same character pose, position, expression, lighting, wardrobe)
+15. Default transition_in to "continue" for consecutive segments in the same location/angle. Only use "cut" when the camera angle or location changes dramatically.
+16. continuity_notes MUST list all visual elements that carry over: wardrobe, hair, props held, lighting setup, background elements
+17. When dialogue spans across segments, the character's position and state at the end of segment N must match their position and state at the start of segment N+1
 
 **GENERATION METHOD RULES:**
-19. Default generation_method is "FTV" (Frame-to-Video) — generates video between start and end keyframes
-20. Use "I2V" (Image-to-Video) ONLY for segment 1 when a scene frame exists as the source image
-21. Use "T2V" (Text-to-Video) ONLY as a fallback when keyframes cannot be generated (e.g., pure VFX shots)
-22. NEVER use "T2V" as the default — "FTV" is the primary production method
+18. Default generation_method is "FTV" (Frame-to-Video) — generates video between start and end keyframes
+19. Use "I2V" (Image-to-Video) ONLY for segment 1 when a scene frame exists as the source image
+20. Use "T2V" (Text-to-Video) ONLY as a fallback when keyframes cannot be generated (e.g., pure VFX shots)
+21. NEVER use "T2V" as the default — "FTV" is the primary production method
 
 Return ONLY valid JSON array. No markdown code blocks, no explanatory text.
 `

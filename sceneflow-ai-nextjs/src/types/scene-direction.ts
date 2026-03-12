@@ -150,6 +150,8 @@ export interface DetailedSceneDirection {
  * Allows users to review and edit direction BEFORE generating video prompts.
  */
 export interface SegmentDirection {
+  /** Estimated duration of this segment in seconds */
+  estimatedDuration?: number
   /** Shot type for this segment (e.g., "Wide Shot", "Close-Up", "Medium Shot") */
   shotType: string
   /** Camera movement for this segment (e.g., "Static", "Dolly In", "Pan Right") */
