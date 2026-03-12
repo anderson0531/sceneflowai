@@ -4965,7 +4965,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (scriptUnchanged && currentAudienceReview?.overallScore) {
           console.log('[Script Review] Script unchanged (client-side check) — using cached analysis, score:', currentAudienceReview.overallScore)
           // Clear score outdated flag since we're confirming the score is still valid
-          setScoreOutdated(false)
+          setReviewsOutdated(false)
           toast.info('Script unchanged — showing previous analysis', {
             description: `Score: ${currentAudienceReview.overallScore}`,
             duration: 3000
@@ -5042,7 +5042,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             console.log('[Script Review] Using cached analysis - script unchanged')
             setAudienceReview(audienceData)
             // Clear score outdated flag since we're showing a valid cached score
-            setScoreOutdated(false)
+            setReviewsOutdated(false)
             toast.info('Script unchanged — returning cached analysis', {
               description: `Score: ${audienceData?.overallScore}`,
               duration: 3000
