@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/auth'
 import { CreditService } from '@/services/CreditService'
 import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 
-export const maxDuration = 60
+export const maxDuration = 180
 export const runtime = 'nodejs'
 
 const AUDIENCE_RESONANCE_CREDIT_COST = BLUEPRINT_CREDITS.AUDIENCE_RESONANCE_ANALYSIS // 25 credits
@@ -485,7 +485,9 @@ FINAL CHECK before outputting:
     model: 'gemini-3.0-flash',
     temperature: 0.1, // Near-deterministic with slight variance for nuanced analysis
     maxOutputTokens: reviewTokenBudget,
-    // Thinking enabled by default in 3.x — deeper reasoning for score calibration
+    thinkingLevel: 'low', // Cap thinking to avoid excessive latency on large scripts
+    timeoutMs: 150000, // 150s — within 180s Vercel limit with headroom
+    maxRetries: 1, // Single retry only — each attempt can take 60-90s with thinking
     seed: contentSeed // Content-derived seed for reproducible output
   })
   

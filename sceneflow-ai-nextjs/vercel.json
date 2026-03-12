@@ -76,6 +76,10 @@
     "src/app/api/vision/suggest-objects/route.ts": {
       "maxDuration": 60,
       "memory": 2048
+    },
+    "src/app/api/vision/review-script/route.ts": {
+      "maxDuration": 180,
+      "memory": 3008
     }
   },
   "crons": [
