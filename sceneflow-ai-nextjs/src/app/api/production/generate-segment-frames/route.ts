@@ -127,6 +127,26 @@ interface FrameGenerationRequest {
   
   // Thinking level for complex prompts
   thinkingLevel?: 'low' | 'high'
+  
+  // Phase 11: Segment content context for intelligent end frames
+  segmentContent?: {
+    /** Dialogue lines spoken during this segment */
+    dialogueLines?: Array<{ character: string; text: string; emotion?: string }>
+    /** Narration text playing over this segment */
+    narrationText?: string
+    /** Emotional arc: start → end */
+    emotionalArc?: { start: string; end: string }
+    /** Camera movement during segment */
+    cameraMovement?: string
+    /** Talent action during this segment */
+    talentAction?: string
+    /** Start frame description for explicit delta */
+    startFrameDescription?: string
+  }
+  
+  // Phase 11: Previous segment's end frame URL for continuity chain
+  // When generating start frame of segment N, use segment N-1's end frame
+  previousSegmentEndFrameUrl?: string | null
 }
 
 interface FrameGenerationResponse {
@@ -149,6 +169,77 @@ interface FrameGenerationResponse {
   guidanceScale?: number
   
   error?: string
+}
+
+/**
+ * Phase 11: Build a content delta string from segment content
+ * Describes what CHANGED during the segment for end frame generation
+ */
+function buildContentDelta(
+  content: FrameGenerationRequest['segmentContent'],
+  duration: number
+): string {
+  if (!content) return ''
+  
+  const parts: string[] = []
+  
+  // Dialogue-driven changes
+  if (content.dialogueLines?.length) {
+    const lastLine = content.dialogueLines[content.dialogueLines.length - 1]
+    if (content.dialogueLines.length === 1) {
+      parts.push(`After ${lastLine.character} says: "${lastLine.text.substring(0, 70)}"${lastLine.emotion ? ` (${lastLine.emotion})` : ''}`)
+    } else {
+      const speakers = [...new Set(content.dialogueLines.map(d => d.character))]
+      parts.push(`After exchange between ${speakers.join(' and ')}, ending with ${lastLine.character}: "${lastLine.text.substring(0, 50)}"`)
+    }
+  }
+  
+  // Narration context
+  if (content.narrationText) {
+    const hint = content.narrationText.length > 80 
+      ? content.narrationText.substring(0, 80) + '...' 
+      : content.narrationText
+    parts.push(`Narration context: "${hint}"`)
+  }
+  
+  // Talent action
+  if (content.talentAction) {
+    parts.push(`Action: ${content.talentAction}`)
+  }
+  
+  // Emotional arc
+  if (content.emotionalArc?.end) {
+    parts.push(`Expression: ${content.emotionalArc.end}`)
+  }
+  
+  // Camera movement end state
+  if (content.cameraMovement && content.cameraMovement !== 'Static') {
+    const m = content.cameraMovement.toLowerCase()
+    if (m.includes('dolly in') || m.includes('push in')) {
+      parts.push('Camera closer — tighter framing')
+    } else if (m.includes('pull back') || m.includes('dolly out')) {
+      parts.push('Camera pulled back — wider framing')
+    } else if (m.includes('pan')) {
+      parts.push('Camera panned — shifted composition')
+    }
+  }
+  
+  return parts.length > 0 ? `[Content delta: ${parts.join('. ')}]` : ''
+}
+
+/**
+ * Phase 11: Determine if camera movement is "static-ish" (end frame should
+ * preserve start frame composition closely) or "dynamic" (end frame can 
+ * differ more in composition).
+ * 
+ * Used to choose SUBJECT (strict) vs STYLE (loose) reference type.
+ */
+function isStaticCamera(cameraMovement?: string): boolean {
+  if (!cameraMovement) return true
+  const m = cameraMovement.toLowerCase()
+  // Static or very subtle movements = strict reference
+  return m === 'static' || m.includes('locked') || m.includes('tripod') || 
+    m.includes('subtle') || m.includes('steady') || m === ''
 }
 
 /**
@@ -203,7 +294,11 @@ export async function POST(req: NextRequest) {
       // Model quality tier: 'eco' (Draft) for cost-optimized iteration, 'designer' (Final) for production
       modelTier = 'eco',
       // Thinking level: 'low' for fast iteration, 'high' for complex multi-character scenes
-      thinkingLevel = 'low'
+      thinkingLevel = 'low',
+      // Phase 11: Segment content context for intelligent end frames
+      segmentContent,
+      // Phase 11: Previous segment end frame for continuity chain
+      previousSegmentEndFrameUrl,
     } = body
     
     // Use custom prompt if provided, otherwise fall back to action prompt
@@ -575,6 +670,7 @@ Render this scene in ${selectedStyle.name} style.`
       
       // Build enhanced end frame prompt using intelligence library
       // Phase 8: Use segment direction keyframe end description if available
+      // Phase 11: Enrich with segment content context (dialogue, narration, action)
       if (!customPrompt && segmentDir?.keyframeEndDescription && segmentDir.keyframeEndDescription.trim().length > 20) {
         let keyframePrompt = segmentDir.keyframeEndDescription.trim()
         if (segmentDir.colorPalette && !keyframePrompt.toLowerCase().includes('color palette')) {
@@ -583,8 +679,15 @@ Render this scene in ${selectedStyle.name} style.`
         if (segmentDir.depthOfField && !keyframePrompt.toLowerCase().includes('dof') && !keyframePrompt.toLowerCase().includes('depth of field')) {
           keyframePrompt += ` ${segmentDir.depthOfField}.`
         }
+        // Phase 11: Append content-aware delta to the keyframe description
+        if (segmentContent) {
+          const contentDelta = buildContentDelta(segmentContent, duration)
+          if (contentDelta) {
+            keyframePrompt += ` ${contentDelta}`
+          }
+        }
         endFramePrompt = keyframePrompt
-        console.log('[Generate Frames] Using segment direction keyframe end description (Phase 8)')
+        console.log('[Generate Frames] Using segment direction keyframe end description (Phase 8+11)')
       } else if (sceneDirection) {
         const keyframeContext: KeyframeContext = {
           segmentIndex,
@@ -616,6 +719,11 @@ Render this scene in ${selectedStyle.name} style.`
           })),
           previousFrameDescription: `Opening frame showing: ${actionPrompt}`,
           artStyle,
+          // Phase 11: Pass segment content for content-aware end frames
+          segmentContent: segmentContent ? {
+            ...segmentContent,
+            startFrameDescription: segmentDir?.keyframeStartDescription || startFramePrompt || actionPrompt,
+          } : undefined,
         })
         
         endFramePrompt = enhancedFrame.prompt
@@ -668,11 +776,18 @@ Render this scene in ${selectedStyle.name} style.`
       // Prepare reference images for end frame
       // The start frame already contains characters in context - use it as the SINGLE reference
       // Adding separate character portrait refs is redundant and exceeds the 2-ref limit for 16:9
-      // Build reference images for end frame - start frame as primary reference
+      // Build reference images for end frame - start frame as primary SUBJECT reference
+      // Phase 11: Use start frame as SUBJECT reference (strict composition preservation)
+      // for static cameras, STYLE reference for dynamic cameras
+      const cameraMovement = segmentContent?.cameraMovement || segmentDir?.cameraMovement || 'Static'
+      const useStrictRef = isStaticCamera(cameraMovement)
+      
       const endReferenceImages: Array<{ imageUrl: string; name: string }> = [
         {
           imageUrl: startFrameReference,
-          name: 'Start Frame - EXACT character appearance must be preserved'
+          name: useStrictRef
+            ? 'Start Frame — SAME composition, SAME person, SAME scene. This is the SUBJECT to preserve.'
+            : 'Start Frame — SAME person and scene, but camera has moved. Match identity, allow composition shift.'
         }
       ]
       
@@ -696,42 +811,43 @@ Render this scene in ${selectedStyle.name} style.`
       let geminiEndPrompt: string
       
       if (!isPhotorealistic) {
-        // Non-photorealistic: Style transformation is MANDATORY
+        // Non-photorealistic: Style transformation + content-aware transition
         geminiEndPrompt = `MANDATORY ART STYLE: ${selectedStyle.name.toUpperCase()}
 Style specification: ${selectedStyle.promptSuffix}
 
-Generate the ENDING frame for this scene segment in ${selectedStyle.name} style.
+Generate the ENDING frame for a ${duration}-second segment in ${selectedStyle.name} style.
 
 CHARACTER CONTINUITY:
 - The character(s) in the start frame reference must appear in this end frame
 - Preserve character IDENTITY: face shape, ethnicity, age, distinguishing features
 - Maintain the SAME ${selectedStyle.name} artistic rendering as the start frame
 
-SCENE PROGRESSION:
+WHAT HAS CHANGED (${duration}s of action):
 ${endFramePrompt}
-
-This is the END of the action - show the final state after the action completes.
 
 CRITICAL REQUIREMENTS:
 - Output MUST be ${selectedStyle.name} style: ${selectedStyle.promptSuffix}
+- Show DELIBERATE differences from start frame reflecting the action
 - Match the artistic style of the start frame reference
-- Preserve character identity while maintaining ${selectedStyle.name} aesthetic
 - Do NOT output photorealistic images`
       } else {
-        // Photorealistic: Exact appearance matching is the priority
-        geminiEndPrompt = `Generate the ending frame for this scene segment.
+        // Photorealistic: Exact appearance matching + content-aware transition
+        geminiEndPrompt = `Generate the ending frame for a ${duration}-second scene segment.
 
-CRITICAL REFERENCE REQUIREMENTS:
-- The character(s) in the provided reference image MUST appear with IDENTICAL appearance
-- Preserve EXACT: face structure, skin tone, hair color/style, eye color, facial hair, clothing
-- The person in the end frame must be RECOGNIZABLY THE SAME PERSON as in the start frame
-- Do NOT change the character's ethnicity, age, or physical features
+CRITICAL — THIS IS THE SAME SCENE, SAME MOMENT:
+- The reference image is the START of this ${duration}s segment
+- You are generating what the scene looks like at the END
+- The person(s) MUST be the SAME PERSON(S) — identical face, skin tone, hair, clothing
+- The environment MUST be the SAME LOCATION with the SAME lighting
 
-SCENE PROGRESSION:
+WHAT HAS CHANGED (the ${duration}s of action):
 ${endFramePrompt}
 
-This is the END of the action - show the final state after the action completes.
-The reference image shows the START of this segment - maintain perfect character continuity.`
+REQUIREMENTS:
+- Preserve EXACT character identity: face structure, ethnicity, hair color/style, clothing
+- Show DELIBERATE, VISIBLE differences from the start frame that reflect the action
+- Maintain consistent camera angle and composition unless the action requires movement
+- Same color grading and visual style as the start frame`
       }
       
       // Generate end frame using Gemini Studio

@@ -79,6 +79,25 @@ export interface FramePromptRequest {
   
   /** Art style for generation (default: photorealistic) */
   artStyle?: string
+  
+  /** 
+   * Segment content context — what happens DURING this segment.
+   * Used to build intelligent end frames that show the RESULT of the action.
+   */
+  segmentContent?: {
+    /** Dialogue lines spoken during this segment */
+    dialogueLines?: Array<{ character: string; text: string; emotion?: string }>
+    /** Narration text playing over this segment */
+    narrationText?: string
+    /** The emotional arc: starting emotion → ending emotion */
+    emotionalArc?: { start: string; end: string }
+    /** Camera movement during segment (affects end frame composition) */
+    cameraMovement?: string
+    /** What the talent does during this segment */
+    talentAction?: string
+    /** Start frame description (for explicit delta) */
+    startFrameDescription?: string
+  }
 }
 
 export interface EnhancedFramePrompt {
@@ -557,6 +576,7 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
     characters,
     objectReferences,
     previousFrameDescription,
+    segmentContent,
     artStyle = 'photorealistic' // Default to photorealistic for backward compatibility
   } = request
   
@@ -577,16 +597,74 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
       promptParts.push(buildCutFrameIntro(shotType))
     }
   } else {
-    // End frame - CRITICAL: Describe the RESULT of the action to show progression
-    const temporalContext = duration <= 3 
-      ? 'Moments later' 
-      : duration <= 5 
-      ? 'Shortly after' 
-      : 'After the action'
+    // End frame - CONTENT-AWARE: Use dialogue, narration, and action to show
+    // what the scene looks like AFTER this segment's content plays out
     
-    // Build a prompt that clearly shows something CHANGED
-    promptParts.push(`${temporalContext}: The result of "${actionPrompt.substring(0, 100)}" is now visible. `)
-    promptParts.push('Show the END STATE of this action - positions, expressions, and environment should reflect the completed action. ')
+    // Build specific changes that occurred during this segment
+    const changes: string[] = []
+    
+    // Dialogue-driven changes: if someone spoke, show the reaction/result
+    if (segmentContent?.dialogueLines?.length) {
+      const lastLine = segmentContent.dialogueLines[segmentContent.dialogueLines.length - 1]
+      if (segmentContent.dialogueLines.length === 1) {
+        changes.push(`${lastLine.character} has just said: "${lastLine.text.substring(0, 80)}"${lastLine.emotion ? ` (${lastLine.emotion})` : ''}`)
+      } else {
+        const speakers = [...new Set(segmentContent.dialogueLines.map(d => d.character))]
+        changes.push(`After dialogue between ${speakers.join(' and ')}, ending with ${lastLine.character}: "${lastLine.text.substring(0, 60)}"`)
+      }
+    }
+    
+    // Narration-driven changes: narration describes what happened
+    if (segmentContent?.narrationText) {
+      const narrationHint = segmentContent.narrationText.length > 100
+        ? segmentContent.narrationText.substring(0, 100) + '...'
+        : segmentContent.narrationText
+      changes.push(`Scene reflects narration: "${narrationHint}"`)
+    }
+    
+    // Talent action: what physically changed
+    if (segmentContent?.talentAction) {
+      changes.push(`Action completed: ${segmentContent.talentAction}`)
+    }
+    
+    // Emotional arc: show the ending emotion
+    if (segmentContent?.emotionalArc?.end) {
+      changes.push(`Expression now shows: ${segmentContent.emotionalArc.end}`)
+    }
+    
+    // Camera movement end state
+    if (segmentContent?.cameraMovement && segmentContent.cameraMovement !== 'Static') {
+      const movement = segmentContent.cameraMovement.toLowerCase()
+      if (movement.includes('dolly in') || movement.includes('push in') || movement.includes('zoom in')) {
+        changes.push('Camera has moved CLOSER — tighter framing than start frame')
+      } else if (movement.includes('pull back') || movement.includes('dolly out') || movement.includes('zoom out')) {
+        changes.push('Camera has pulled BACK — wider framing than start frame')
+      } else if (movement.includes('pan')) {
+        changes.push(`Camera has panned — composition shifted from start frame`)
+      } else if (movement.includes('tilt')) {
+        changes.push('Camera has tilted — vertical angle changed from start frame')
+      }
+    }
+    
+    if (changes.length > 0) {
+      // Content-aware end frame: specific, deliberate changes
+      promptParts.push(`END FRAME after ${duration}s segment. `)
+      if (segmentContent?.startFrameDescription) {
+        promptParts.push(`The START frame showed: ${segmentContent.startFrameDescription.substring(0, 120)}. `)
+      }
+      promptParts.push(`What has CHANGED: ${changes.join('. ')}. `)
+      promptParts.push('Show the RESULT of these changes — same scene, same characters, but with deliberate visible differences reflecting the action. ')
+    } else {
+      // Fallback: generic progression (original behavior)
+      const temporalContext = duration <= 3 
+        ? 'Moments later' 
+        : duration <= 5 
+        ? 'Shortly after' 
+        : 'After the action'
+      
+      promptParts.push(`${temporalContext}: The result of "${actionPrompt.substring(0, 100)}" is now visible. `)
+      promptParts.push('Show the END STATE of this action - positions, expressions, and environment should reflect the completed action. ')
+    }
   }
   
   // 2. Pan transition handling

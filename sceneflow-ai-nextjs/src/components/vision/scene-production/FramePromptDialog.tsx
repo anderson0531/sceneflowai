@@ -606,6 +606,20 @@ export function FramePromptDialog({
     }
     
     try {
+      // Phase 11: Build segment content for end frame intelligence
+      const segDir = segment.segmentDirection
+      const contentForEnd = (frameType === 'end' || frameType === 'both') ? {
+        dialogueLines: segment.dialogueLines
+          ?.filter(d => d.covered !== false)
+          ?.map(d => ({ character: d.character || 'Unknown', text: d.text || '', emotion: d.emotion })),
+        cameraMovement: segDir?.cameraMovement || segment.cameraMovement || undefined,
+        talentAction: segDir?.talentAction || undefined,
+        emotionalArc: segDir?.emotionalBeat 
+          ? { start: segDir.emotionalBeat, end: segDir.emotionalBeat }
+          : undefined,
+        startFrameDescription: segDir?.keyframeStartDescription || undefined,
+      } : undefined
+      
       return buildKeyframePrompt({
         actionPrompt: segment.actionPrompt || segment.generatedPrompt || '',
         framePosition: frameType === 'both' ? 'start' : frameType,
@@ -614,6 +628,7 @@ export function FramePromptDialog({
         keyframeContext,
         characters: characters.length > 0 ? characters : undefined,
         previousFrameDescription: segment.references?.startFrameDescription || undefined,
+        segmentContent: contentForEnd,
       })
     } catch (err) {
       console.error('[FramePromptDialog] Error building intelligent prompt:', err)
@@ -828,7 +843,7 @@ export function FramePromptDialog({
                   <p className="font-medium mb-1">Character References Active</p>
                   <p className="text-blue-400/80">
                     For best results with character references, use <span className="font-medium">Close-Up</span> or{' '}
-                    <span className="font-medium">Medium Shot</span> framing. Wide shots make characters too small 
+                    <span className="font-medium">Medium Shot</span> framing. Wide shots make characters too small
                     for facial recognition.
                   </p>
                 </div>
@@ -836,7 +851,22 @@ export function FramePromptDialog({
             </div>
           )}
 
-          {/* Visual Setup Tab */}
+          {/* End Frame Content Context Banner */}
+          {(frameType === 'end' || frameType === 'both') && segment?.dialogueLines?.length ? (
+            <div className="mt-4 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg flex-shrink-0">
+              <div className="flex items-start gap-2">
+                <Film className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                <div className="text-xs text-purple-300">
+                  <p className="font-medium mb-1">Content-Aware End Frame</p>
+                  <p className="text-purple-400/80">
+                    The end frame will reflect {segment.dialogueLines.filter(d => d.covered !== false).length} dialogue line{segment.dialogueLines.filter(d => d.covered !== false).length !== 1 ? 's' : ''} spoken during this segment
+                    {segment.segmentDirection?.talentAction ? ` and action: "${segment.segmentDirection.talentAction.substring(0, 60)}"` : ''}.
+                    Characters will show appropriate reactions and expressions.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}          {/* Visual Setup Tab */}
           <TabsContent value="guided" className="flex-1 overflow-auto">
             <ScrollArea className="h-full pr-4">
               <div className="space-y-6 py-4">

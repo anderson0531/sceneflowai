@@ -202,40 +202,33 @@ export async function POST(
  * 1. Reference the starting frame for character/scene consistency
  * 2. Describe the END STATE after the segment's action occurs
  * 3. Emphasize maintaining character appearance
+ * 4. Phase 11: Show DELIBERATE, SPECIFIC changes from start frame
  */
 function buildEndFramePrompt(segmentPrompt: string, durationSeconds: number): string {
-  // Extract action/dialogue from the segment prompt
-  // The segment prompt typically describes what happens in the segment
-  
   const prompt = `Generate the FINAL FRAME of a ${durationSeconds}-second video segment.
 
-REFERENCE: Use the attached starting frame image as the primary reference.
+REFERENCE: The attached image is the START of this ${durationSeconds}s segment. 
+Generate what the scene looks like at the END.
 
 SEGMENT ACTION: ${segmentPrompt}
 
-CRITICAL REQUIREMENTS:
-1. IDENTICAL CHARACTERS - The characters must have the exact same:
-   - Facial features, skin tone, hair style and color
-   - Costumes, clothing details, accessories
-   - Body proportions and build
+CRITICAL — SAME SCENE, SAME MOMENT:
+1. IDENTICAL CHARACTERS — The characters must be RECOGNIZABLY THE SAME PERSON:
+   - Identical facial features, skin tone, hair style and color
+   - Same costumes, clothing details, accessories
+   - Same body proportions and build
    
-2. CONSISTENT ENVIRONMENT - Maintain:
-   - Same location and background
-   - Same lighting conditions and time of day
-   - Same color grading and visual style
+2. CONSISTENT ENVIRONMENT — Same location, lighting, color grading
    
-3. END STATE - Show what the scene looks like AFTER ${durationSeconds} seconds of the described action:
-   - Characters may have moved positions
-   - Expressions may have changed based on dialogue/action
-   - Any described physical actions should be complete or in progress
+3. DELIBERATE CHANGES — Show what SPECIFICALLY changed after ${durationSeconds}s:
+   - Characters may have moved positions or shifted body language
+   - Expressions should reflect the emotional result of the action/dialogue
+   - Any described physical actions should be visible in their completed state
    
-4. CAMERA CONTINUITY - Unless the action requires it:
-   - Maintain similar camera angle and framing
-   - Keep the same focal distance and depth of field
-   
-5. CINEMATIC QUALITY - High-resolution, professional film still quality
+4. CAMERA CONTINUITY — Maintain similar camera angle and framing
+   unless the action explicitly involves camera movement
 
-The generated image must look like it belongs to the SAME SCENE as the reference image.`
+The generated image must look like the LAST FRAME of a video that STARTED with the reference image.`
 
   return prompt
 }

@@ -2032,6 +2032,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             thinkingLevel: options?.thinkingLevel || 'low',
             // Phase 8: Per-segment direction with keyframe-specific descriptions
             segmentDirection: segment.segmentDirection || null,
+            // Phase 11: Build segment content context for intelligent end frames
+            segmentContent: (() => {
+              const segDir = segment.segmentDirection
+              const dialogueLines = segment.dialogueLines
+                ?.filter(d => d.covered !== false)
+                ?.map(d => ({ character: d.character || 'Unknown', text: d.text || '', emotion: d.emotion }))
+                || []
+              
+              // Get narration text from scene if narration-driven
+              const narrationText = scene?.narration || undefined
+              
+              return {
+                dialogueLines: dialogueLines.length > 0 ? dialogueLines : undefined,
+                narrationText: narrationText || undefined,
+                emotionalArc: segDir?.emotionalBeat 
+                  ? { start: segDir.emotionalBeat, end: segDir.emotionalBeat }
+                  : undefined,
+                cameraMovement: segDir?.cameraMovement || segment.cameraMovement || undefined,
+                talentAction: segDir?.talentAction || undefined,
+                startFrameDescription: segDir?.keyframeStartDescription || undefined,
+              }
+            })(),
             // CRITICAL: Pass scene direction for intelligent keyframe prompt building
             // Without this, the API falls back to PromptEnhancer which prepends character
             // identity text before the action prompt, burying the actual scene description
