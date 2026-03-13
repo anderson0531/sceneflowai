@@ -3,6 +3,7 @@ import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { SubscriptionService } from '../../../../services/SubscriptionService'
 import { generateText } from '@/lib/vertexai/gemini'
+import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -163,6 +164,20 @@ CRITICAL: Return ONLY the JSON array, no other text.`
       calculatedDefault: Math.ceil(targetDuration / 8)
     })
 
+    // Load series continuity context if this project belongs to a series
+    let seriesContinuityBlock = ''
+    if (project.series_id) {
+      try {
+        const continuityCtx = await loadContinuityContextForProject(project)
+        if (continuityCtx) {
+          seriesContinuityBlock = continuityCtx.continuityPromptBlock
+          console.log(`[Script Gen] Series continuity loaded: Ep ${continuityCtx.currentEpisodeNumber}/${continuityCtx.totalEpisodes}, ${continuityCtx.activeStoryThreads.length} active threads, ${continuityCtx.keyEvents.length} key events`)
+        }
+      } catch (err) {
+        console.warn('[Script Gen] Failed to load series continuity context:', err)
+      }
+    }
+
     // Calculate scenes per beat based on duration (industry standard: 3-7 scenes per beat)
     const beatsCount = Array.isArray(beatSheet) ? beatSheet.length : Math.ceil(targetDuration / 600)
     const targetScenesPerBeat = Math.ceil(targetDuration / 60 / beatsCount) // Minutes per beat determines scenes
@@ -249,7 +264,7 @@ ${Array.isArray(beatSheet) && beatSheet.length > 0 ?
 CHARACTERS (USE THESE EXACT NAMES IN DIALOGUE):
 ${characters.map((c: any) => `${c.name} (${c.role}): ${c.description || ''}`).join('\n') || 'Extract characters from story'}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
+${seriesContinuityBlock ? `\n${seriesContinuityBlock}` : ''}
 CRITICAL DIALOGUE RULES:
 - Use ONLY the EXACT character names from the list above
 - DO NOT abbreviate, modify, or create variations of character names
@@ -397,6 +412,7 @@ ${batchBeats.map((b: any) => `"${b.title}" - ${b.intent}`).join('\n')}
 CHARACTERS:
 ${characters.map((c: any) => `${c.name} (${c.role}): ${c.description}`).join('\n')}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${seriesContinuityBlock ? `\n${seriesContinuityBlock}` : ''}
 ${previousScenesSummary}
 
 Generate scenes ${startScene}-${endScene} (${scenesInBatch} scenes total).

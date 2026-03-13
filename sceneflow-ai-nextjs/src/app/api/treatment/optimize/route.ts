@@ -5,6 +5,7 @@ import { CreditService } from '@/services/CreditService'
 import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 import { strictJsonPromptSuffix, safeParseJsonFromText } from '@/lib/safeJson'
 import { generateText } from '@/lib/vertexai/gemini'
+import { loadSeriesContinuityContext } from '@/lib/series/continuityContext'
 import type { AudienceResonanceAnalysis } from '@/lib/types/audienceResonance'
 
 const BLUEPRINT_OPTIMIZE_CREDIT_COST = BLUEPRINT_CREDITS.BLUEPRINT_OPTIMIZE // 15 credits
@@ -20,6 +21,10 @@ interface OptimizeRequest {
   variant: Record<string, unknown>
   previousAnalysis?: AudienceResonanceAnalysis | null
   focusAreas?: ('clarity' | 'pacing' | 'character' | 'tone' | 'commercial')[]
+  /** Series ID if this treatment belongs to a series episode */
+  seriesId?: string
+  /** Episode number within the series */
+  episodeNumber?: number
 }
 
 interface OptimizedSection {
@@ -50,13 +55,27 @@ export async function POST(request: NextRequest) {
     }
 
     const body: OptimizeRequest = await request.json()
-    const { variant, previousAnalysis, focusAreas = ['clarity', 'pacing', 'character'] } = body
+    const { variant, previousAnalysis, focusAreas = ['clarity', 'pacing', 'character'], seriesId, episodeNumber } = body
 
     if (!variant) {
       return NextResponse.json(
         { success: false, message: 'variant is required' },
         { status: 400 }
       )
+    }
+
+    // Load series continuity context if this is a series episode
+    let seriesContinuityBlock = ''
+    if (seriesId && episodeNumber) {
+      try {
+        const continuityCtx = await loadSeriesContinuityContext(seriesId, episodeNumber)
+        if (continuityCtx) {
+          seriesContinuityBlock = continuityCtx.continuityPromptBlock
+          console.log(`[Optimize Blueprint] Series continuity loaded: Ep ${episodeNumber}, ${continuityCtx.activeStoryThreads.length} threads`)
+        }
+      } catch (err) {
+        console.warn('[Optimize Blueprint] Failed to load series continuity:', err)
+      }
     }
 
     // Check credits before AI generation
@@ -140,7 +159,9 @@ ${focusInstructions}
 
 ${analysisContext}
 
-CURRENT TREATMENT:
+${seriesContinuityBlock ? `SERIES CONTINUITY CONTEXT (preserve consistency with previous episodes):
+${seriesContinuityBlock}
+` : ''}CURRENT TREATMENT:
 ${JSON.stringify(currentData, null, 2)}
 
 YOUR TASK:

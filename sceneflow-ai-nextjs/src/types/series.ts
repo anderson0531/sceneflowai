@@ -43,6 +43,95 @@ export interface StoryThread {
   type: 'main' | 'subplot' | 'character' | 'mystery' | 'romance'
   status: 'introduced' | 'developing' | 'climax' | 'resolved'
   description?: string
+  /** Episode where this thread was first introduced */
+  introducedInEpisode?: number
+  /** Episode where this thread was resolved (if resolved) */
+  resolvedInEpisode?: number
+}
+
+/**
+ * Key Event — canonical story event that constrains future episodes
+ * Examples: character death, relocation, reveal, relationship change, acquisition
+ */
+export type KeyEventType = 'death' | 'relocation' | 'reveal' | 'relationship_change' | 'acquisition' | 'injury' | 'transformation' | 'departure' | 'arrival' | 'conflict_resolution' | 'betrayal' | 'other'
+
+export interface KeyEvent {
+  id: string
+  episodeNumber: number
+  type: KeyEventType
+  description: string
+  /** Characters affected by this event */
+  affectedCharacterIds: string[]
+  /** Locations affected (e.g., a location destroyed, or character moved to) */
+  affectedLocationIds?: string[]
+  /** If true, this event cannot be contradicted (e.g., death, permanent departure) */
+  irreversible: boolean
+  /** When this event was recorded */
+  createdAt: string
+}
+
+/**
+ * Series Prop — named objects with continuity importance across episodes
+ */
+export interface SeriesProp {
+  id: string
+  name: string
+  description: string
+  /** Which character typically possesses this prop */
+  ownerCharacterId?: string
+  referenceImageUrl?: string
+  lockedPromptTokens?: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * Episode Summary — canonical one-paragraph summary of a completed episode
+ * Used for building continuity context for future episodes
+ */
+export interface EpisodeSummary {
+  episodeNumber: number
+  title: string
+  summary: string
+  /** IDs of key events that occurred in this episode */
+  keyEventIds: string[]
+  /** Character status changes at end of episode (e.g., "in Houston", "deceased") */
+  characterStatuses?: Record<string, string>
+  /** When this summary was created/approved */
+  createdAt: string
+}
+
+/**
+ * The continuity context block assembled from series data,
+ * ready to inject into AI generation/editing prompts.
+ * Returned by gatherSeriesContinuityContext().
+ */
+export interface SeriesContinuityContext {
+  seriesTitle: string
+  seriesLogline: string
+  currentEpisodeNumber: number
+  totalEpisodes: number
+  setting: string
+  protagonist: { name: string; goal: string; flaw?: string }
+  antagonistConflict: { type: string; description: string }
+  /** One-paragraph summaries of previous episodes */
+  episodeSummaries: EpisodeSummary[]
+  /** Active (unresolved) story threads */
+  activeStoryThreads: StoryThread[]
+  /** All key events from previous episodes (sorted chronologically) */
+  keyEvents: KeyEvent[]
+  /** Character current statuses derived from key events */
+  characterStatuses: Record<string, string>
+  /** Consistency rules from the production bible */
+  consistencyRules: string[]
+  /** World-building notes from the production bible */
+  worldBuildingNotes: string[]
+  /** Tone, visual, audio guidelines */
+  toneGuidelines?: string
+  visualGuidelines?: string
+  audioGuidelines?: string
+  /** Pre-formatted prompt block ready for injection */
+  continuityPromptBlock: string
 }
 
 /**
@@ -144,6 +233,18 @@ export interface SeriesProductionBible {
   audioGuidelines?: string
   consistencyRules?: string[]
   worldBuildingNotes?: string[]
+  
+  // === Storyline Continuity (new) ===
+  /** Aggregated story threads across all episodes */
+  storyThreads?: StoryThread[]
+  /** Canonical key events that constrain future episodes */
+  keyEvents?: KeyEvent[]
+  /** Named props with cross-episode continuity importance */
+  props?: SeriesProp[]
+  /** Canonical summaries of completed episodes */
+  episodeSummaries?: EpisodeSummary[]
+  /** Open questions or cliffhangers that need resolution */
+  unresolvedHooks?: string[]
 }
 
 /**
@@ -234,7 +335,7 @@ export interface GenerateSeriesRequest {
  */
 export interface BibleSyncRequest {
   projectId: string
-  syncFields: Array<'characters' | 'locations' | 'aesthetic' | 'all'>
+  syncFields: Array<'characters' | 'locations' | 'aesthetic' | 'storyline' | 'all'>
   preview?: boolean
   mergeStrategy?: 'replace' | 'merge' | 'add_new_only'
 }

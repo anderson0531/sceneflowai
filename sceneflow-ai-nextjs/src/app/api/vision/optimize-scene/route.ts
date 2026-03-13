@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
+import Project from '@/models/Project'
+import { sequelize } from '@/config/database'
+import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
 
 export const maxDuration = 300 // Increased for complex optimization
 export const runtime = 'nodejs'
@@ -33,8 +36,24 @@ export async function POST(req: NextRequest) {
 
     console.log('[Scene Optimization] Optimizing scene for project:', projectId)
 
+    // Load series continuity context if project belongs to a series
+    let seriesContinuityBlock = ''
+    try {
+      await sequelize.authenticate()
+      const project = await Project.findByPk(projectId, { attributes: ['id', 'series_id', 'episode_number', 'metadata'] })
+      if (project?.series_id) {
+        const continuityCtx = await loadContinuityContextForProject(project)
+        if (continuityCtx) {
+          seriesContinuityBlock = continuityCtx.continuityPromptBlock
+          console.log(`[Scene Optimization] Series continuity loaded for Ep ${continuityCtx.currentEpisodeNumber}`)
+        }
+      }
+    } catch (err) {
+      console.warn('[Scene Optimization] Failed to load series continuity:', err)
+    }
+
     // Generate holistic optimization
-    const result = await optimizeScene(scene, context)
+    const result = await optimizeScene(scene, context, seriesContinuityBlock)
 
     return NextResponse.json({
       success: true,
@@ -50,7 +69,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function optimizeScene(scene: any, context: any) {
+async function optimizeScene(scene: any, context: any, seriesContinuityBlock: string = '') {
   const dialogueText = scene.dialogue?.map((d: any) => `${d.character}: ${d.text}`).join('\n') || 'No dialogue'
   const previousSceneText = context.previousScene ? 
     `Previous: ${context.previousScene.heading || 'Untitled'} - ${context.previousScene.action?.substring(0, 100) || 'No action'}...` : 
@@ -65,7 +84,7 @@ async function optimizeScene(scene: any, context: any) {
   for (const model of MODEL_SEQUENCE) {
     try {
       console.log(`[Scene Optimization] Trying model: ${model}`)
-      const result = await tryOptimizeWithModel(model, scene, context, dialogueText, previousSceneText, nextSceneText)
+      const result = await tryOptimizeWithModel(model, scene, context, dialogueText, previousSceneText, nextSceneText, seriesContinuityBlock)
       console.log(`[Scene Optimization] Success with model: ${model}`)
       return result
     } catch (error: any) {
@@ -85,10 +104,11 @@ async function tryOptimizeWithModel(
   context: any,
   dialogueText: string,
   previousSceneText: string,
-  nextSceneText: string
+  nextSceneText: string,
+  seriesContinuityBlock: string = ''
 ) {
   const prompt = `You are an expert film director and screenwriting consultant. REWRITE this scene with SUBSTANTIVE improvements—not cosmetic polishing.
-
+${seriesContinuityBlock ? `\n${seriesContinuityBlock}\nIMPORTANT: Do NOT contradict any irreversible canon events listed above. Maintain character statuses and story thread continuity.\n` : ''}
 SCENE TO REWRITE:
 Heading: ${scene.heading || 'Untitled Scene'}
 Scene Description: ${scene.visualDescription || 'No dedicated scene description'}

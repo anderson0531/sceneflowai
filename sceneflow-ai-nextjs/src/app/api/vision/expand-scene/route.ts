@@ -5,6 +5,7 @@ import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen } from '@/lib/imagen/promptOptimizer'
 import { generateText } from '@/lib/vertexai/gemini'
+import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -79,6 +80,20 @@ export async function POST(request: NextRequest) {
 
     console.log(`[Expand Scene] Expanding scene ${sceneNumber} with full story bible...`)
 
+    // Load series continuity context if this project belongs to a series
+    let seriesContinuityBlock = ''
+    if (project.series_id) {
+      try {
+        const continuityCtx = await loadContinuityContextForProject(project)
+        if (continuityCtx) {
+          seriesContinuityBlock = continuityCtx.continuityPromptBlock
+          console.log(`[Expand Scene] Series continuity loaded for Ep ${continuityCtx.currentEpisodeNumber}`)
+        }
+      } catch (err) {
+        console.warn('[Expand Scene] Failed to load series continuity:', err)
+      }
+    }
+
     // Expand the scene using Gemini with story bible context
     const expandedScene = await expandScene(
       apiKey,
@@ -89,7 +104,8 @@ export async function POST(request: NextRequest) {
       sceneNumber,
       storyBible,
       previousScenes,
-      currentBeat
+      currentBeat,
+      seriesContinuityBlock
     )
 
     // Save expanded scene immediately without waiting for image
@@ -152,7 +168,8 @@ async function expandScene(
   sceneNumber: number,
   storyBible: any = {},
   previousScenes: string[] = [],
-  currentBeat: any = null
+  currentBeat: any = null,
+  seriesContinuityBlock: string = ''
 ): Promise<any> {
   
   // Build character bible
@@ -169,10 +186,16 @@ async function expandScene(
   const beatContext = currentBeat
     ? `\n\nCURRENT STORY BEAT:\nBeat: "${currentBeat.title}"\nIntent: ${currentBeat.intent}`
     : ''
+
+  // Build series continuity context
+  const seriesContext = seriesContinuityBlock
+    ? `\n\n${seriesContinuityBlock}\nIMPORTANT: This scene is part of a series episode. Do NOT contradict any irreversible canon events, character statuses, or story thread progression listed above.`
+    : ''
   
   const prompt = `You are a professional screenwriter working on a specific production. You MUST stay faithful to the approved film treatment and story bible.
 
 CRITICAL: This scene is part of a larger narrative. DO NOT invent new storylines or contradict the treatment.
+${seriesContext}
 
 STORY BIBLE (APPROVED TREATMENT):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
 import { safeParseJsonFromText } from '@/lib/safeJson'
+import Project from '@/models/Project'
+import { sequelize } from '@/config/database'
+import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
 
 export const maxDuration = 600 // 10min for large scripts with retries + parallel batches
 export const runtime = 'nodejs'
@@ -98,15 +101,31 @@ export async function POST(req: NextRequest) {
     console.log('[Script Optimization] Scene count:', script.scenes?.length || 0)
     console.log('[Script Optimization] Has reviews:', { director: !!directorReview, audience: !!audienceReview })
     
+    // Load series continuity context if project belongs to a series
+    let seriesContinuityBlock = ''
+    try {
+      await sequelize.authenticate()
+      const project = await Project.findByPk(projectId, { attributes: ['id', 'series_id', 'episode_number', 'metadata'] })
+      if (project?.series_id) {
+        const continuityCtx = await loadContinuityContextForProject(project)
+        if (continuityCtx) {
+          seriesContinuityBlock = continuityCtx.continuityPromptBlock
+          console.log(`[Script Optimization] Series continuity loaded for Ep ${continuityCtx.currentEpisodeNumber}`)
+        }
+      }
+    } catch (err) {
+      console.warn('[Script Optimization] Failed to load series continuity:', err)
+    }
+    
     let result: any
     try {
-      result = await optimizeScript(script, instruction, characters, !!compact, directorReview, audienceReview)
+      result = await optimizeScript(script, instruction, characters, !!compact, directorReview, audienceReview, seriesContinuityBlock)
     } catch (e: any) {
       const msg = String(e?.message || '')
       const parseErr = msg.includes('Failed to parse optimization response') || msg.includes('no JSON found')
       if (parseErr && !compact) {
         console.warn('[Script Optimization] Parse failed. Retrying compact...')
-        result = await optimizeScript(script, instruction, characters, true, directorReview, audienceReview)
+        result = await optimizeScript(script, instruction, characters, true, directorReview, audienceReview, seriesContinuityBlock)
       } else {
         throw e
       }
@@ -136,7 +155,8 @@ async function optimizeScript(
   characters: any[], 
   compact: boolean,
   directorReview?: Review | null,
-  audienceReview?: Review | null
+  audienceReview?: Review | null,
+  seriesContinuityBlock: string = ''
 ) {
   // Global deadline: 540s hard limit (60s safety margin before Vercel's 600s kill)
   const globalStartTime = Date.now()
@@ -164,7 +184,7 @@ async function optimizeScript(
   }
   
   // Build shared context once (now includes voice profiles)
-  const sharedContext = buildSharedContext(script, instruction, characters, compact, directorReview, audienceReview, voiceProfiles)
+  const sharedContext = buildSharedContext(script, instruction, characters, compact, directorReview, audienceReview, voiceProfiles, seriesContinuityBlock)
   
   // Extract per-scene analysis data from audience review (if available)
   const sceneAnalysis: SceneAnalysis[] = (audienceReview as any)?.sceneAnalysis || []
@@ -308,7 +328,8 @@ function buildSharedContext(
   compact: boolean,
   directorReview?: Review | null,
   audienceReview?: Review | null,
-  voiceProfiles?: Record<string, CharacterVoiceProfile>
+  voiceProfiles?: Record<string, CharacterVoiceProfile>,
+  seriesContinuityBlock?: string
 ): string {
   // CREATIVE REWRITE MODE: Give the model permission to make substantial changes
   // The previous approach was too conservative, resulting in minimal dialogue changes
@@ -320,7 +341,7 @@ function buildSharedContext(
     .join('\n') || 'Improve clarity, pacing, character depth, and visual storytelling.'
   
   return `You are a SCREENPLAY DOCTOR performing substantive rewrites to improve this script's Audience Resonance score.
-
+${seriesContinuityBlock ? `\n${seriesContinuityBlock}\nIMPORTANT: All rewrites must maintain series continuity. Do NOT contradict irreversible canon events, character statuses, or active story threads listed above.\n` : ''}
 === RECOMMENDATIONS TO IMPLEMENT ===
 ${normalizedInstruction}
 

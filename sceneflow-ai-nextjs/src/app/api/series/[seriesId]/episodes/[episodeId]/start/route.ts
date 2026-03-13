@@ -202,7 +202,16 @@ function buildTreatmentFromEpisode(episode: any, bible: any, series: any) {
       seriesLogline: series.logline,
       setting: bible.setting,
       protagonist: bible.protagonist,
-      antagonistConflict: bible.antagonistConflict
+      antagonistConflict: bible.antagonistConflict,
+      // Storyline continuity data
+      storyThreads: (bible.storyThreads || []).filter((t: any) => t.status !== 'resolved'),
+      keyEvents: bible.keyEvents || [],
+      episodeSummaries: bible.episodeSummaries || [],
+      consistencyRules: bible.consistencyRules || [],
+      worldBuildingNotes: bible.worldBuildingNotes || [],
+      unresolvedHooks: bible.unresolvedHooks || [],
+      toneGuidelines: bible.toneGuidelines,
+      visualGuidelines: bible.visualGuidelines,
     }
   }
 }
@@ -346,6 +355,46 @@ function buildBlueprintPrimeInput(episode: any, bible: any, series: any): string
       if (beat.description) {
         lines.push(`  ${beat.description}`)
       }
+    })
+    lines.push('')
+  }
+  
+  // Continuity from previous episodes (from production bible)
+  const episodeSummaries = bible.episodeSummaries || []
+  const previousSummaries = episodeSummaries.filter((s: any) => s.episodeNumber < episode.episodeNumber)
+  if (previousSummaries.length > 0) {
+    lines.push('Continuity from previous episodes:')
+    previousSummaries.forEach((s: any) => {
+      lines.push(`- Ep ${s.episodeNumber} "${s.title}": ${s.summary}`)
+    })
+    lines.push('')
+  }
+  
+  // Active story threads
+  const activeThreads = (bible.storyThreads || []).filter((t: any) => t.status !== 'resolved')
+  if (activeThreads.length > 0) {
+    lines.push('Active story threads to continue:')
+    activeThreads.forEach((t: any) => {
+      lines.push(`- ${t.name} (${t.type}, ${t.status}): ${t.description || ''}`)
+    })
+    lines.push('')
+  }
+  
+  // Key events / canon constraints
+  const keyEvents = (bible.keyEvents || []).filter((e: any) => e.episodeNumber < episode.episodeNumber)
+  if (keyEvents.length > 0) {
+    lines.push('Key canon events (do not contradict):')
+    keyEvents.forEach((e: any) => {
+      lines.push(`- [Ep ${e.episodeNumber}] ${e.type}: ${e.description}${e.irreversible ? ' (IRREVERSIBLE)' : ''}`)
+    })
+    lines.push('')
+  }
+  
+  // Unresolved hooks
+  if (bible.unresolvedHooks?.length > 0) {
+    lines.push('Unresolved hooks to address:')
+    bible.unresolvedHooks.forEach((hook: any) => {
+      lines.push(`- ${hook}`)
     })
   }
   
