@@ -68,14 +68,6 @@ interface ScriptReviewRequest {
     overallScore: number
     categories: { name: string; score: number; weight: number }[]
   }
-  /** Full previous analysis for caching and context injection */
-  previousAnalysis?: AudienceResonanceReview
-  /** Hash of the script content — if unchanged from last analysis, return cached result */
-  scriptHash?: string
-  /** Hash from the previous analysis — compared to scriptHash to detect changes */
-  previousScriptHash?: string
-  /** When true, bypass server-side cache and force a fresh Gemini analysis */
-  forceRefresh?: boolean
 }
 
 // Calculate Show vs Tell ratio from script content
@@ -117,7 +109,7 @@ export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions)
     const userId = session?.user?.id
 
-    const { projectId, script, previousScores, previousAnalysis, scriptHash, previousScriptHash, forceRefresh }: ScriptReviewRequest = await req.json()
+    const { projectId, script, previousScores }: ScriptReviewRequest = await req.json()
 
     if (!projectId || !script) {
       return NextResponse.json(
@@ -127,69 +119,20 @@ export async function POST(req: NextRequest) {
     }
 
     console.log('[Script Review] Generating Audience Resonance review for project:', projectId)
-    
-    // Detect if script has changed since last analysis
-    const scriptUnchanged = scriptHash && previousScriptHash && scriptHash === previousScriptHash
-    
-    // Log hash comparison for debugging
-    console.log('[Script Review] Hash comparison:', {
-      currentHash: scriptHash?.substring(0, 8) || 'none',
-      previousHash: previousScriptHash?.substring(0, 8) || 'none',
-      unchanged: scriptUnchanged,
-      hasPreviousAnalysis: !!previousAnalysis,
-      previousScore: previousAnalysis?.overallScore,
-      forceRefresh: !!forceRefresh
-    })
-    
-    // =========================================================================
-    // CACHING: Return cached analysis when script is unchanged
-    // This eliminates score variance entirely for repeated analysis of same script.
-    // Users see consistent scores, building confidence in the analysis system.
-    // BYPASS: When forceRefresh=true (post-revision), always run fresh analysis
-    // even if hashes match — the client has already updated the script state.
-    // =========================================================================
-    if (scriptUnchanged && previousAnalysis && !forceRefresh) {
-      console.log('[Script Review] Script unchanged — returning cached analysis (score:', previousAnalysis.overallScore, ')')
-      return NextResponse.json({
-        success: true,
-        audienceResonance: {
-          ...previousAnalysis,
-          // Update timestamp to show it was retrieved, but mark as cached
-          generatedAt: previousAnalysis.generatedAt, // Keep original timestamp
-          cachedAt: new Date().toISOString()
-        },
-        audience: {
-          overallScore: previousAnalysis.overallScore,
-          categories: previousAnalysis.categories,
-          analysis: previousAnalysis.analysis,
-          strengths: previousAnalysis.strengths,
-          improvements: previousAnalysis.improvements,
-          recommendations: previousAnalysis.recommendations,
-          generatedAt: previousAnalysis.generatedAt
-        },
-        director: null,
-        generatedAt: previousAnalysis.generatedAt,
-        cached: true // Flag for frontend to indicate cached result
-      })
-    }
-    
-    if (scriptUnchanged) {
-      console.log('[Script Review] Script unchanged but no cached analysis available — will generate with strong anchoring')
-    }
 
     // Pre-calculate Show vs Tell ratio
     const showVsTellMetrics = calculateShowVsTellRatio(script.scenes || [])
     console.log('[Script Review] Show vs Tell metrics:', showVsTellMetrics)
     
-    // Generate deterministic seed from scriptHash (covers scene content) for reproducible scoring
-    const seedContent = scriptHash || JSON.stringify({ title: script.title, logline: script.logline, sceneCount: script.scenes?.length })
+    // Generate deterministic seed from script content for reproducible scoring
+    const seedContent = JSON.stringify({ title: script.title, logline: script.logline, sceneCount: script.scenes?.length })
     let contentSeed = 0
     for (let i = 0; i < seedContent.length; i++) {
       contentSeed = ((contentSeed << 5) - contentSeed) + seedContent.charCodeAt(i)
       contentSeed = contentSeed & contentSeed
     }
     contentSeed = Math.abs(contentSeed)
-    console.log('[Script Review] Content seed:', contentSeed, '| from scriptHash:', !!scriptHash, '| scriptUnchanged:', scriptUnchanged)
+    console.log('[Script Review] Content seed:', contentSeed)
 
     // =========================================================================
     // CREDIT CHECK: Verify user has sufficient credits before AI generation
@@ -211,7 +154,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Generate Audience Resonance review (replaces both director and audience)
-    const audienceResonance = await generateAudienceResonance(script, showVsTellMetrics, contentSeed, previousScores, scriptUnchanged, previousAnalysis)
+    const audienceResonance = await generateAudienceResonance(script, showVsTellMetrics, contentSeed, previousScores)
 
     // =========================================================================
     // CREDIT CHARGE: Deduct credits after successful AI generation
@@ -263,9 +206,7 @@ async function generateAudienceResonance(
   script: any, 
   showVsTellMetrics: { ratio: number; narrationWords: number; actionWords: number; dialogueWords: number },
   contentSeed: number,
-  previousScores?: ScriptReviewRequest['previousScores'],
-  scriptUnchanged?: boolean,
-  previousAnalysis?: AudienceResonanceReview
+  previousScores?: ScriptReviewRequest['previousScores']
 ): Promise<AudienceResonanceReview> {
   const sceneCount = script.scenes?.length || 0
   const characterCount = script.characters?.length || 0
@@ -317,29 +258,6 @@ PRE-CALCULATED METRICS:
 - Action Words: ${showVsTellMetrics.actionWords}  
 - Dialogue Words: ${showVsTellMetrics.dialogueWords}
 ${autoCapReason ? `- AUTO CAP: ${autoCapReason}` : ''}
-
-${previousAnalysis ? `
-## PREVIOUS ANALYSIS CONTEXT (Script has been revised)
-
-The writer has revised their script since the last analysis. Use this context to provide progression-aware feedback.
-
-**Previous Overall Score**: ${previousAnalysis.overallScore}
-**Previous Dimensional Scores**:
-${previousAnalysis.categories?.map((c: any) => `- ${c.name}: ${c.score}`).join('\n') || 'N/A'}
-
-**Previous Key Issues Identified**:
-${previousAnalysis.deductions?.slice(0, 5).map((d: any) => `- [${d.category}] ${d.reason} (-${d.points} pts)`).join('\n') || 'N/A'}
-
-**Previous Recommendations**:
-${previousAnalysis.recommendations?.slice(0, 5).map((r: any) => `- ${typeof r === 'string' ? r : r.text}`).join('\n') || 'N/A'}
-
-IMPORTANT GUIDANCE FOR RE-ANALYSIS:
-1. Compare the current script against these previous issues - note which have been addressed
-2. If an issue from the previous analysis has been fixed, do NOT deduct for it again
-3. If new issues have been introduced, identify them clearly as "New issue:"
-4. Score should reflect actual improvement - if the script is better, the score should be higher
-5. Be specific about what changed: "Previously X, now Y - improved/regression"
-` : ''}
 
 ## CONDITIONAL DEDUCTIONS (Apply only if metrics warrant)
 
@@ -552,16 +470,13 @@ FINAL CHECK before outputting:
   // This eliminates the "slot machine" effect where repeated analysis of the
   // same script produces swinging scores (e.g., 73 → 77 → 73).
   //
-  // Strategy:
-  // - Script unchanged: 60% previous + 40% new (strong anchoring)
-  // - Script changed: 30% previous + 70% new (moderate anchoring, max ±10 points)
-  //   This prevents score regression when optimizations are applied — the score
-  //   can improve but won't suddenly drop by 20 points due to evaluation variance.
+  // Strategy: 30% previous + 70% new with max ±10 point delta.
+  // This prevents score regression when optimizations are applied — the score
+  // can improve but won't suddenly drop by 20 points due to evaluation variance.
   // =========================================================================
   if (previousScores?.categories && categories.length > 0) {
-    // Strong anchoring for unchanged scripts, moderate for changed scripts
-    const anchorStrength = scriptUnchanged ? 0.6 : 0.3
-    const maxDelta = scriptUnchanged ? Infinity : 10 // Max ±10 points when script changed
+    const anchorStrength = 0.3
+    const maxDelta = 10 // Max ±10 points per dimension
     
     // Build lookup of previous dimensional scores
     const prevScoreLookup: Record<string, number> = {}
@@ -578,19 +493,16 @@ FINAL CHECK before outputting:
         // Calculate anchored score
         let anchoredScore = Math.round(prevScore * anchorStrength + rawScore * (1 - anchorStrength))
         
-        // For changed scripts, also enforce max delta cap to prevent regression
-        if (!scriptUnchanged && maxDelta < Infinity) {
-          const delta = anchoredScore - prevScore
-          if (Math.abs(delta) > maxDelta) {
-            // Clamp to max delta
-            anchoredScore = prevScore + (delta > 0 ? maxDelta : -maxDelta)
-            console.log(`[Audience Resonance] Delta clamped: ${cat.name}: raw ${rawScore} → anchored ${anchoredScore} (prev ${prevScore}, max delta ±${maxDelta})`)
-          }
+        // Enforce max delta cap to prevent wild swings
+        const delta = anchoredScore - prevScore
+        if (Math.abs(delta) > maxDelta) {
+          anchoredScore = prevScore + (delta > 0 ? maxDelta : -maxDelta)
+          console.log(`[Audience Resonance] Delta clamped: ${cat.name}: raw ${rawScore} → anchored ${anchoredScore} (prev ${prevScore}, max delta ±${maxDelta})`)
         }
         
         cat.score = anchoredScore
         if (rawScore !== cat.score) {
-          console.log(`[Audience Resonance] Hysteresis: ${cat.name}: ${rawScore} → ${cat.score} (anchored to prev ${prevScore}, scriptChanged: ${!scriptUnchanged})`)
+          console.log(`[Audience Resonance] Hysteresis: ${cat.name}: ${rawScore} → ${cat.score} (anchored to prev ${prevScore})`)
         }
       }
     }

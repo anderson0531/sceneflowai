@@ -670,7 +670,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const objectReferencesRef = useRef<VisualReference[]>([])
   const locationReferencesRef = useRef<LocationReference[]>([])
   const scriptRef = useRef<any>(null)
-  const reviewsOutdatedRef = useRef<boolean>(false)
   
   // Keep refs in sync with state (refs for sceneReferences/objectReferences/locationReferences)
   useEffect(() => { sceneReferencesRef.current = sceneReferences }, [sceneReferences])
@@ -684,9 +683,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [isGeneratingReviews, setIsGeneratingReviews] = useState(false)
   const [reviewsOutdated, setReviewsOutdated] = useState(false)
   
-  // Keep script and reviewsOutdated refs in sync (declared after their state variables)
+  // Keep script ref in sync (declared after state variable)
   useEffect(() => { scriptRef.current = script }, [script])
-  useEffect(() => { reviewsOutdatedRef.current = reviewsOutdated }, [reviewsOutdated])
   
   // Collapsible sidebar sections
   const [sectionsOpen, setSectionsOpen] = useState({
@@ -4953,10 +4951,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   // Script review functions
   const handleGenerateReviews = async () => {
-    // Use refs to read latest state — avoids stale closures when called
+    // Use ref to read latest script state — avoids stale closures when called
     // immediately after setScript() (e.g. auto re-analyze after revision)
     const currentScript = scriptRef.current || script
-    const isOutdated = reviewsOutdatedRef.current || reviewsOutdated
     
     if (!currentScript || !projectId) return
     
@@ -4964,63 +4961,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     useStore.getState().setIsGeneratingReviews(true)
     try {
       await execute(async () => {
-        // Compute script hash for change detection
-        const currentScriptHash = generateScriptHash(currentScript)
-        const previousScriptHash = project?.metadata?.visionPhase?.reviews?.scriptHash
-        
-        // CLIENT-SIDE CACHING: If script unchanged and we have previous analysis, skip API call entirely
-        // This eliminates score variance and saves API costs
-        // BYPASS: When reviewsOutdated is true (post-revision), always force a fresh analysis
-        const scriptUnchanged = currentScriptHash && previousScriptHash && currentScriptHash === previousScriptHash
         const currentAudienceReview = audienceReview
         
-        if (scriptUnchanged && currentAudienceReview?.overallScore && !isOutdated) {
-          console.log('[Script Review] Script unchanged (client-side check) — using cached analysis, score:', currentAudienceReview.overallScore)
-          // Clear score outdated flag since we're confirming the score is still valid
-          setReviewsOutdated(false)
-          toast.info('Script unchanged — showing previous analysis', {
-            description: `Score: ${currentAudienceReview.overallScore}`,
-            duration: 3000
-          })
-          return 'Script unchanged - using cached analysis'
-        }
-        
-        if (isOutdated) {
-          console.log('[Script Review] Reviews outdated — forcing fresh analysis (bypassing cache)')
-        }
-        
-        console.log('[Script Review] Hash comparison:', {
-          currentHash: currentScriptHash?.substring(0, 8),
-          previousHash: previousScriptHash?.substring(0, 8),
-          unchanged: scriptUnchanged,
-          hasPreviousAnalysis: !!currentAudienceReview,
-          forceRefresh: isOutdated
-        })
-        
-        // Build previous scores for hysteresis smoothing
-        // When force-refreshing after revision, don't send previous scores —
-        // the script has changed and we want a clean baseline score
-        const previousScoresPayload = (!isOutdated && currentAudienceReview?.overallScore) ? {
+        // Build previous scores for hysteresis smoothing (stabilizes scores across re-analyses)
+        const previousScoresPayload = currentAudienceReview?.overallScore ? {
           overallScore: currentAudienceReview.overallScore,
           categories: currentAudienceReview.categories || []
-        } : undefined
-        
-        // Pass full previous analysis for caching (when unchanged) and context (when changed)
-        // When force-refreshing, don't send previous analysis — prevents server from returning stale data
-        const previousAnalysisPayload = (!isOutdated && currentAudienceReview) ? {
-          overallScore: currentAudienceReview.overallScore,
-          categories: currentAudienceReview.categories || [],
-          deductions: currentAudienceReview.deductions || [],
-          recommendations: currentAudienceReview.recommendations || [],
-          analysis: currentAudienceReview.analysis,
-          strengths: currentAudienceReview.strengths || [],
-          improvements: currentAudienceReview.improvements || [],
-          sceneAnalysis: currentAudienceReview.sceneAnalysis || [],
-          showVsTellRatio: currentAudienceReview.showVsTellRatio,
-          targetDemographic: currentAudienceReview.targetDemographic,
-          emotionalImpact: currentAudienceReview.emotionalImpact,
-          generatedAt: currentAudienceReview.generatedAt,
-          baseScore: currentAudienceReview.baseScore || 100
         } : undefined
         
         const response = await fetch('/api/vision/review-script', {
@@ -5034,11 +4980,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               scenes: currentScript.script?.scenes || [],
               characters: characters
             },
-            previousScores: previousScoresPayload,
-            previousAnalysis: previousAnalysisPayload,
-            scriptHash: currentScriptHash,
-            previousScriptHash: previousScriptHash,
-            forceRefresh: isOutdated
+            previousScores: previousScoresPayload
           })
         })
 
@@ -5057,19 +4999,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             deductionsCount: audienceData?.deductions?.length || 0,
             cached: isCached
           })
-          
-          // If cached, skip saving to database (already saved) and just update local state
-          if (isCached) {
-            console.log('[Script Review] Using cached analysis - script unchanged')
-            setAudienceReview(audienceData)
-            // Clear score outdated flag since we're showing a valid cached score
-            setReviewsOutdated(false)
-            toast.info('Script unchanged — returning cached analysis', {
-              description: `Score: ${audienceData?.overallScore}`,
-              duration: 3000
-            })
-            return 'Script unchanged - showing previous analysis'
-          }
           
           // Save reviews to project metadata BEFORE updating local state
           if (project) {
@@ -5100,9 +5029,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 ...project.metadata?.visionPhase,
                 reviews: {
                   director: data.director,
-                  audience: fullAudienceData,  // Save full audienceResonance data
-                  lastUpdated: data.generatedAt,
-                  scriptHash: generateScriptHash(currentScript)
+                  audience: fullAudienceData,
+                  lastUpdated: data.generatedAt
                 },
                 reviewHistory: updatedHistory,
                 script: currentScript,
@@ -5113,8 +5041,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
             
             console.log('[Script Review] Saving reviews to database...', {
-              audienceScore: fullAudienceData?.overallScore,
-              scriptHash: generateScriptHash(currentScript)?.substring(0, 8)
+              audienceScore: fullAudienceData?.overallScore
             })
             
             const saveResponse = await fetch(`/api/projects/${projectId}`, {
@@ -5572,29 +5499,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('production:storyboard-state', { detail: { open: showSceneGallery } }))
   }, [showSceneGallery])
-
-  const generateScriptHash = (script: any): string => {
-    // Simple hash based on script content for change detection
-    const content = JSON.stringify({
-      title: script?.title,
-      logline: script?.logline,
-      scenes: script?.script?.scenes?.map((s: any) => ({
-        heading: s.heading,
-        action: s.action,
-        narration: s.narration,
-        dialogue: s.dialogue
-      }))
-    })
-    
-    // Simple string hash function that works with Unicode
-    let hash = 0
-    for (let i = 0; i < content.length; i++) {
-      const char = content.charCodeAt(i)
-      hash = ((hash << 5) - hash) + char
-      hash = hash & hash // Convert to 32bit integer
-    }
-    return Math.abs(hash).toString(36).slice(0, 16)
-  }
 
   const loadProject = async (skipAutoGeneration: boolean = false) => {
     try {
