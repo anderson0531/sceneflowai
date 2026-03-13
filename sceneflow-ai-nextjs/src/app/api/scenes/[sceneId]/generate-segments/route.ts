@@ -195,21 +195,27 @@ export async function POST(
     const project = responseData.project || responseData
 
     // Extract scene data from both possible locations
+    // Priority: script.script.scenes is the canonical source (contains cinematic scenes, renumbered scenes, etc.)
+    // visionPhase.scenes is a legacy/direct location that may be stale
     const visionPhase = project.metadata?.visionPhase || {}
     const scenesFromDirect = visionPhase.scenes || []
-    const scenesFromScript = visionPhase.script?.script?.scenes || []
+    const scenesFromScript = visionPhase.script?.script?.scenes || visionPhase.script?.scenes || []
     
-    // Combine scenes
-    const allScenes = [...scenesFromDirect]
-    scenesFromScript.forEach((s: any) => {
-      const existingIndex = allScenes.findIndex((existing: any) => 
-        existing.id === s.id || 
-        (existing.sceneNumber && s.sceneNumber && existing.sceneNumber === s.sceneNumber)
-      )
-      if (existingIndex === -1) {
-        allScenes.push(s)
-      }
-    })
+    // Use script scenes as primary source if available (they include cinematic scenes)
+    // Only fall back to direct scenes if script scenes are empty
+    let allScenes: any[]
+    if (scenesFromScript.length > 0) {
+      // Start with script scenes (canonical), then add any direct-only scenes by unique ID
+      allScenes = [...scenesFromScript]
+      const scriptIds = new Set(scenesFromScript.map((s: any) => s.id).filter(Boolean))
+      scenesFromDirect.forEach((s: any) => {
+        if (s.id && !scriptIds.has(s.id)) {
+          allScenes.push(s)
+        }
+      })
+    } else {
+      allScenes = [...scenesFromDirect]
+    }
     
     // Debug logging for cinematic scenes
     console.log('[Scene Segmentation] Found scenes:', allScenes.length)
