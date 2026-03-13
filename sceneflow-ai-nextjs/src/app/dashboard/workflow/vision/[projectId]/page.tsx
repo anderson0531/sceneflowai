@@ -672,12 +672,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const scriptRef = useRef<any>(null)
   const reviewsOutdatedRef = useRef<boolean>(false)
   
-  // Keep refs in sync with state
+  // Keep refs in sync with state (refs for sceneReferences/objectReferences/locationReferences)
   useEffect(() => { sceneReferencesRef.current = sceneReferences }, [sceneReferences])
   useEffect(() => { objectReferencesRef.current = objectReferences }, [objectReferences])
   useEffect(() => { locationReferencesRef.current = locationReferences }, [locationReferences])
-  useEffect(() => { scriptRef.current = script }, [script])
-  useEffect(() => { reviewsOutdatedRef.current = reviewsOutdated }, [reviewsOutdated])
   
   // Script Review state - for Director and Audience review scoring
   const [directorReview, setDirectorReview] = useState<any>(null)
@@ -685,6 +683,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [isGeneratingReviews, setIsGeneratingReviews] = useState(false)
   const [reviewsOutdated, setReviewsOutdated] = useState(false)
+  
+  // Keep script and reviewsOutdated refs in sync (declared after their state variables)
+  useEffect(() => { scriptRef.current = script }, [script])
+  useEffect(() => { reviewsOutdatedRef.current = reviewsOutdated }, [reviewsOutdated])
   
   // Collapsible sidebar sections
   const [sectionsOpen, setSectionsOpen] = useState({
