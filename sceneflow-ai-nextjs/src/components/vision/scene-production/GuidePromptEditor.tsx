@@ -329,9 +329,15 @@ export const VIDEO_NEGATIVE_PROMPT_PRESETS = [
     description: 'Avoid speech artifacts',
     value: 'bad lip sync, mouth not matching audio, frozen mouth, exaggerated mouth movements, no mouth movement when speaking',
   },
+  {
+    id: 'text-overlay',
+    label: 'No Text Overlay',
+    description: 'Avoid burned-in text/titles',
+    value: 'text overlay, burned-in text, subtitles, captions, title cards, watermark, on-screen text, floating text, text graphics, lower third',
+  },
 ] as const
 
-const DEFAULT_VIDEO_NEGATIVE_PRESETS = ['unnatural-motion', 'face-distortion', 'hand-artifacts']
+const DEFAULT_VIDEO_NEGATIVE_PRESETS = ['unnatural-motion', 'face-distortion', 'hand-artifacts', 'text-overlay']
 
 /**
  * Auto-generate voice anchor from character demographics
@@ -1232,7 +1238,6 @@ export function GuidePromptEditor({
                   {elements.map((element) => {
                     const Icon = getTypeIcon(element.type)
                     const colorClass = getTypeColor(element.type)
-                    const isMusic = element.type === 'music'
                     const showPortion = needsPortionSelector(element) && element.selected
                     const portionText = getTextPortion(element.content, element.portionStart, element.portionEnd)
                     const estimatedDuration = estimateSpeakingDuration(portionText)
@@ -1244,20 +1249,18 @@ export function GuidePromptEditor({
                           "p-3 rounded-lg border transition-colors",
                           element.selected
                             ? "bg-slate-800 border-slate-600"
-                            : "bg-slate-800/30 border-slate-700/50 opacity-60",
-                          isMusic && "border-amber-500/30"
+                            : "bg-slate-800/30 border-slate-700/50 opacity-60"
                         )}
                       >
                         <div 
                           className="flex items-start gap-3 cursor-pointer"
-                          onClick={() => !isMusic && toggleElement(element.id)}
+                          onClick={() => toggleElement(element.id)}
                         >
                           {/* Checkbox */}
                           <Checkbox
                             checked={element.selected}
-                            onCheckedChange={() => !isMusic && toggleElement(element.id)}
-                            disabled={isMusic}
-                            className={cn("mt-0.5", isMusic && "opacity-50")}
+                            onCheckedChange={() => toggleElement(element.id)}
+                            className="mt-0.5"
                             onClick={(e) => e.stopPropagation()}
                           />
                           
@@ -1276,7 +1279,7 @@ export function GuidePromptEditor({
                               >
                                 {element.type}
                               </Badge>
-                              {element.type === 'sfx' && (
+                              {(element.type === 'sfx' || element.type === 'music') && (
                                 <Badge variant="secondary" className="text-[10px] bg-green-500/20 text-green-300">
                                   Veo Native
                                 </Badge>
@@ -1285,14 +1288,6 @@ export function GuidePromptEditor({
                             <p className="text-xs text-slate-400 whitespace-pre-wrap break-words select-text cursor-text">
                               {element.content}
                             </p>
-                            
-                            {/* Music Warning */}
-                            {isMusic && (
-                              <div className="mt-2 flex items-center gap-2 px-2 py-1.5 bg-amber-500/10 rounded text-xs text-amber-300">
-                                <AlertCircle className="w-3 h-3 flex-shrink-0" />
-                                <span>Music must be added as MP3 overlay in post-production</span>
-                              </div>
-                            )}
                           </div>
                           
                           {/* Audio Preview Button */}
