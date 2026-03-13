@@ -588,6 +588,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [translationImportOpen, setTranslationImportOpen] = useState(false)
   const [importText, setImportText] = useState('')
   
+  // Regenerate Script confirmation dialog state
+  const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false)
+  
   // Collapsible UI state with localStorage persistence
   const [sceneNavigationCollapsed, setSceneNavigationCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -2587,6 +2590,25 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               </Button>
             )}
 
+            {/* Regenerate Script Button - always visible when scenes exist */}
+            {onRegenerateScript && scenes.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowRegenerateConfirm(true)}
+                disabled={isRegeneratingScript || isGenerating}
+                className="flex items-center gap-2 border-red-500/30 hover:border-red-500/50 hover:bg-red-500/10"
+                title="Regenerate script from blueprint - this will replace all existing scenes"
+              >
+                {isRegeneratingScript ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-red-400" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 text-red-400" />
+                )}
+                <span className="text-sm hidden sm:inline">Reset Script</span>
+              </Button>
+            )}
+
             {/* Language Selector */}
             <div className="w-[120px]">
               <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
@@ -3247,6 +3269,50 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             >
               <Upload className="w-4 h-4 mr-2" />
               Import Translation
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Regenerate Script Confirmation Dialog */}
+      <Dialog open={showRegenerateConfirm} onOpenChange={setShowRegenerateConfirm}>
+        <DialogContent className="max-w-md bg-gray-900 border-red-500/30">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-red-400" />
+              Regenerate Script?
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              This is a destructive action that will replace your current script with a fresh generation from your blueprint.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="my-4 p-3 bg-red-950/30 border border-red-500/20 rounded-lg">
+            <p className="text-sm text-red-300 font-medium mb-2">The following will be permanently lost:</p>
+            <ul className="text-sm text-red-200/70 space-y-1 list-disc list-inside">
+              <li>All {scenes.length} existing scene{scenes.length !== 1 ? 's' : ''} and their content</li>
+              <li>Generated audio (narration, dialogue, music, SFX)</li>
+              <li>Scene images and direction notes</li>
+              <li>Segment configurations and keyframes</li>
+            </ul>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowRegenerateConfirm(false)}
+              className="border-slate-600 hover:bg-slate-800"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setShowRegenerateConfirm(false)
+                onRegenerateScript?.()
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Regenerate Script
             </Button>
           </div>
         </DialogContent>

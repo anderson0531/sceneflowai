@@ -201,15 +201,26 @@ export async function PUT(
         const existingSceneCount = existingScript?.script?.scenes?.length || 0
         const incomingSceneCount = incomingScript?.script?.scenes?.length || 0
         
-        // Case 1: Incoming has no script at all - preserve existing
-        if (existingSceneCount > 0 && !incomingScript) {
+        // Track whether safeguard triggered to skip deep-merge
+        let scriptSafeguardTriggered = false
+        
+        // Case 1: Incoming explicitly sets script to null — intentional clear for regeneration
+        if (body.metadata.visionPhase.script === null) {
+          console.log('[Projects PUT] Script explicitly set to null (intentional clear for regeneration)')
+          // Allow it — don't preserve. The generate-script-v2 endpoint will write new script.
+          mergedMetadata.visionPhase.script = null
+          scriptSafeguardTriggered = true
+        }
+        // Case 2: Incoming has no script at all - preserve existing
+        else if (existingSceneCount > 0 && !incomingScript) {
           console.warn('[Projects PUT] PREVENTED SCRIPT DELETION (no incoming script):', {
             existingSceneCount,
             preservingExistingScript: true
           })
           mergedMetadata.visionPhase.script = existingScript
+          scriptSafeguardTriggered = true
         }
-        // Case 2: Incoming has script but with 0 scenes when existing has scenes
+        // Case 3: Incoming has script but with 0 scenes when existing has scenes
         // This could be a stale client state - preserve existing
         else if (existingSceneCount > 0 && incomingSceneCount === 0) {
           console.warn('[Projects PUT] PREVENTED SCRIPT DELETION (incoming has 0 scenes):', {
@@ -218,10 +229,11 @@ export async function PUT(
             preservingExistingScript: true
           })
           mergedMetadata.visionPhase.script = existingScript
+          scriptSafeguardTriggered = true
         }
         
-        // Deep merge script if it exists in both
-        if (body.metadata.visionPhase.script && existingMetadata.visionPhase.script) {
+        // Deep merge script if it exists in both — but ONLY if safeguard didn't trigger
+        if (!scriptSafeguardTriggered && body.metadata.visionPhase.script && existingMetadata.visionPhase.script) {
           const incomingScript = body.metadata.visionPhase.script
           const existingScript = existingMetadata.visionPhase.script
           

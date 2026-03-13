@@ -6013,6 +6013,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const visionPhase = metadata.visionPhase || {}
       
       // Clear scriptGenerated flag to allow regeneration
+      // Use script: null (explicit clear) — server recognizes this as intentional
+      // and won't trigger the stale-data safeguard that preserves existing script
       await fetch(`/api/projects/${projectId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -6022,8 +6024,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             visionPhase: {
               ...visionPhase,
               scriptGenerated: false,
-              // Clear stale script data
-              script: undefined
+              script: null
             }
           }
         })
@@ -10315,6 +10316,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
   const saveScenesToDatabase = async (updatedScenes: any[], deletedSceneIds?: string[]) => {
+    // Guard: refuse to save if script state is null/stale — spreading null produces
+    // { script: { scenes: [...] } } which loses title, format, metadata, etc.
+    if (!script) {
+      console.error('[saveScenesToDatabase] BLOCKED: script state is null — would cause data loss. Skipping save.')
+      try {
+        const { toast } = require('sonner')
+        toast.error('Cannot save: script data not loaded. Try refreshing the page.')
+      } catch {}
+      return
+    }
+    
     try {
       const existingMetadata = project?.metadata || {}
       const existingVisionPhase = existingMetadata.visionPhase || {}
