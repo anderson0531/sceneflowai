@@ -1269,7 +1269,7 @@ function ScenePreviewPlayer({
         <audio ref={musicRef} src={currentAudioUrls.music} preload="auto" loop />
       )}
       {/* Dialogue audio elements - one per clip */}
-      {currentAudioUrls.dialogue.map((clip, idx) => clip.audioUrl && (
+      {currentAudioUrls.dialogue.map((clip, idx) => clip?.audioUrl && (
         <audio 
           key={idx} 
           ref={el => { dialogueRefs.current[idx] = el }} 
@@ -2366,13 +2366,13 @@ export function SceneProductionMixer({
       || audioAssets.narrationAudio?.en?.url 
       || audioAssets.narrationAudioUrl
     
-    const dialogueEntries = audioAssets.dialogueAudio?.[selectedLanguage] 
+    const dialogueEntries = (audioAssets.dialogueAudio?.[selectedLanguage] 
       || audioAssets.dialogueAudio?.en 
-      || []
+      || []).filter(Boolean)
     
     const musicUrl = audioAssets.musicAudio
     
-    const sfxEntries = audioAssets.sfx?.filter(s => s.audioUrl) || []
+    const sfxEntries = audioAssets.sfx?.filter(s => s?.audioUrl) || []
     
     return {
       narration: narrationUrl,
@@ -2604,7 +2604,7 @@ export function SceneProductionMixer({
       
       if (audioTracks.dialogue.enabled && currentAudioUrls.dialogue.length > 0) {
         audioTracksPayload.dialogue = currentAudioUrls.dialogue
-          .filter(d => d.audioUrl)
+          .filter(d => d?.audioUrl)
           .map((d, i) => ({
             url: d.audioUrl!,
             startTime: audioTracks.dialogue.startOffset + (i * 2),
@@ -2624,7 +2624,7 @@ export function SceneProductionMixer({
       }
       
       if (audioTracks.sfx.enabled && currentAudioUrls.sfx.length > 0) {
-        audioTracksPayload.sfx = currentAudioUrls.sfx.map(s => ({
+        audioTracksPayload.sfx = currentAudioUrls.sfx.filter(s => s?.audioUrl).map(s => ({
           url: s.audioUrl!,
           startTime: audioTracks.sfx.startOffset + (s.startTime || 0),
           duration: s.duration || 5,

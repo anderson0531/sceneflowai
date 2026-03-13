@@ -223,7 +223,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
       })
     }
     if (dialogueConfig.enabled && audioData?.dialogueEntries) {
-      audioData.dialogueEntries.filter(d => d.audioUrl).forEach(d => {
+      audioData.dialogueEntries.filter(d => d?.audioUrl).forEach(d => {
         audioClips.push({
           url: d.audioUrl!,
           startTime: dialogueConfig.startOffset,
@@ -320,7 +320,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
 
       if (dialogueConfig.enabled && audioData?.dialogueEntries) {
         const dialogueClips = audioData.dialogueEntries
-          .filter(d => d.audioUrl)
+          .filter(d => d?.audioUrl)
           .map((d) => ({
             url: d.audioUrl!,
             startTime: dialogueConfig.startOffset,
@@ -740,10 +740,10 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
               <AudioTrackCard
                 icon={<MessageSquare className="w-4 h-4" />}
                 name="Dialogue"
-                clipCount={audioData?.dialogueEntries?.filter(d => d.audioUrl).length}
+                clipCount={audioData?.dialogueEntries?.filter(d => d?.audioUrl).length}
                 config={dialogueConfig}
                 setConfig={setDialogueConfig}
-                disabled={!audioData?.dialogueEntries?.some(d => d.audioUrl)}
+                disabled={!audioData?.dialogueEntries?.some(d => d?.audioUrl)}
                 iconColor="text-green-400"
                 accentColor="border-green-500/30"
               />

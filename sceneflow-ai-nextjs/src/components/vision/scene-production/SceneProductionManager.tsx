@@ -284,7 +284,7 @@ export function SceneProductionManager({
     
     // Calculate dialogue duration
     let dialogueDuration = 0
-    const dialogueAudio = scene?.dialogueAudio?.en || scene?.dialogueAudio || []
+    const dialogueAudio = (scene?.dialogueAudio?.en || scene?.dialogueAudio || []).filter?.(Boolean) || []
     if (Array.isArray(dialogueAudio)) {
       dialogueDuration = dialogueAudio.reduce((acc: number, d: any) => {
         return acc + (d.duration || 3) // Default 3s per line
@@ -374,21 +374,21 @@ export function SceneProductionManager({
     if (sceneData.dialogueAudio) {
       if (sceneData.dialogueAudio.en && Array.isArray(sceneData.dialogueAudio.en)) {
         // Multi-language structure: dialogueAudio: { en: [...], es: [...] }
-        dialogueArray = sceneData.dialogueAudio.en
+        dialogueArray = sceneData.dialogueAudio.en.filter(Boolean)
       } else if (Array.isArray(sceneData.dialogueAudio)) {
         // Legacy structure: dialogueAudio: [...]
-        dialogueArray = sceneData.dialogueAudio
+        dialogueArray = sceneData.dialogueAudio.filter(Boolean)
       }
     } else if (sceneData.dialogue && Array.isArray(sceneData.dialogue)) {
       // Fallback to scene.dialogue with audioUrl property
-      dialogueArray = sceneData.dialogue.filter((d: any) => d.audioUrl || d.url)
+      dialogueArray = sceneData.dialogue.filter((d: any) => d?.audioUrl || d?.url)
     }
     
     if (dialogueArray.length > 0) {
       const dialogueClips: AudioTracksData['dialogue'] = []
       let currentTime = 0
       dialogueArray.forEach((d: any, idx: number) => {
-        const url = d.audioUrl || d.url
+        const url = d?.audioUrl || d?.url
         if (url) {
           const dur = d.duration || 3
           dialogueClips.push({
@@ -448,7 +448,7 @@ export function SceneProductionManager({
   // Create a stable key for dialogue audio URLs to detect when audio is added/removed
   const dialogueAudioKey = useMemo(() => {
     if (!scene?.dialogue || !Array.isArray(scene.dialogue)) return ''
-    return scene.dialogue.map((d: any) => d.audioUrl || d.url || '').join('|')
+    return scene.dialogue.map((d: any) => d?.audioUrl || d?.url || '').join('|')
   }, [scene?.dialogue])
   
   useEffect(() => {
@@ -1153,10 +1153,10 @@ export function SceneProductionManager({
     }
     
     // Add dialogue from scene
-    const dialogueArray = scene?.dialogueAudio || scene?.dialogue || []
+    const dialogueArray = (scene?.dialogueAudio || scene?.dialogue || []).filter?.(Boolean) || []
     if (Array.isArray(dialogueArray)) {
       dialogueArray.forEach((d: any, idx: number) => {
-        const url = d.audioUrl || d.url
+        const url = d?.audioUrl || d?.url
         if (url) {
           assets.push({
             id: `scene-dialogue-${idx}`,

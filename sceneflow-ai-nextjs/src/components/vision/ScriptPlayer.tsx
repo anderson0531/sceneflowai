@@ -266,8 +266,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
   const audioFingerprint = React.useMemo(() => {
     return scenes.map((s: any, i: number) => {
       // Dialogue: get URLs from multi-language or legacy array format, include count
-      const dialogueArray = s.dialogueAudio?.en || (Array.isArray(s.dialogueAudio) ? s.dialogueAudio : [])
-      const dialogueUrls = dialogueArray.map((d: any) => d.audioUrl || '').filter(Boolean).join(',')
+      const dialogueArray = (s.dialogueAudio?.en || (Array.isArray(s.dialogueAudio) ? s.dialogueAudio : [])).filter(Boolean)
+      const dialogueUrls = dialogueArray.map((d: any) => d?.audioUrl || '').filter(Boolean).join(',')
       const dialogueCount = dialogueArray.length
       
       // SFX: properly handle array format (NOT sfxAudioUrl singular)
@@ -814,8 +814,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
     const targetNarrationUrl = getAudioForLanguage(scene, selectedLanguage, 'narration')
     const narrationUrl = targetNarrationUrl || baselineNarrationUrl // Fallback to baseline if target missing
     
-    const baselineDialogueArray = scene.dialogueAudio?.[baselineLanguage] || (baselineLanguage === 'en' ? scene.dialogueAudio : null)
-    const targetDialogueArray = scene.dialogueAudio?.[selectedLanguage] || (selectedLanguage === 'en' ? scene.dialogueAudio : null)
+    const baselineDialogueArray = (scene.dialogueAudio?.[baselineLanguage] || (baselineLanguage === 'en' ? scene.dialogueAudio : null))?.filter?.(Boolean) || null
+    const targetDialogueArray = (scene.dialogueAudio?.[selectedLanguage] || (selectedLanguage === 'en' ? scene.dialogueAudio : null))?.filter?.(Boolean) || null
     
     // ========================================================================
     // STEP 1: Build AlignmentClip arrays using BASELINE language for timing
@@ -876,7 +876,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       
       // Sort baseline audio entries by timestamp (generation order)
       const sortedByTimestamp = [...dialogueArrayForTiming]
-        .filter((d: any) => d.audioUrl)
+        .filter((d: any) => d?.audioUrl)
         .sort((a: any, b: any) => {
           const tsA = getUrlTimestamp(a.audioUrl)
           const tsB = getUrlTimestamp(b.audioUrl)
@@ -911,7 +911,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
         return match ? parseInt(match[1], 10) : 0
       }
       const sortedTarget = [...targetDialogueArray]
-        .filter((d: any) => d.audioUrl)
+        .filter((d: any) => d?.audioUrl)
         .sort((a: any, b: any) => getUrlTimestamp(a.audioUrl) - getUrlTimestamp(b.audioUrl))
         .slice(0, scriptDialogue.length)
       
@@ -1057,9 +1057,9 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       // We still check for other audio types but exclude description from playback
       
       // Check dialogue audio for selected language
-      const dialogueArray = scene.dialogueAudio?.[selectedLanguage] || (selectedLanguage === 'en' ? scene.dialogueAudio : null)
+      const dialogueArray = (scene.dialogueAudio?.[selectedLanguage] || (selectedLanguage === 'en' ? scene.dialogueAudio : null))?.filter?.(Boolean) || null
       const hasValidDialogue = Array.isArray(dialogueArray) && dialogueArray.length > 0 &&
-                              dialogueArray.some((d: any) => d.audioUrl && 
+                              dialogueArray.some((d: any) => d?.audioUrl && 
                                 (d.audioUrl.startsWith('http://') || d.audioUrl.startsWith('https://')))
       
       const hasValidMusic = scene.musicAudio && 

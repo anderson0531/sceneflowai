@@ -106,9 +106,9 @@ export function GenerateAudioDialog({
       if (scene.narrationAudioUrl || scene.narrationAudio?.en?.url) narrationCount++
 
       // Check dialogue
-      const dialogueArray = scene.dialogueAudio?.en || scene.dialogueAudio
+      const dialogueArray = (scene.dialogueAudio?.en || scene.dialogueAudio || []).filter?.(Boolean) || []
       if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
-        dialogueCount += dialogueArray.filter((d: any) => d.audioUrl).length
+        dialogueCount += dialogueArray.filter((d: any) => d?.audioUrl).length
       }
 
       // Check music - use musicAudio (primary) or music.url (legacy)
@@ -119,7 +119,7 @@ export function GenerateAudioDialog({
         sfxCount += scene.sfxAudio.filter((url: any) => !!url).length
       } else if (Array.isArray(scene.sfx)) {
         sfxCount += scene.sfx.filter((sfx: any) => 
-          (typeof sfx === 'object' && (sfx.audioUrl || sfx.url))
+          (typeof sfx === 'object' && sfx && (sfx.audioUrl || sfx.url))
         ).length
       }
     })

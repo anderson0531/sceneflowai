@@ -1183,9 +1183,9 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           narrationUrl: scene?.narrationAudioUrl,
           musicUrl: scene?.musicAudio,
           // Collect dialogue audio URLs
-          dialogueUrls: scene?.dialogueAudio?.en?.map(d => d.audioUrl) || [],
+          dialogueUrls: scene?.dialogueAudio?.en?.map(d => d?.audioUrl).filter(Boolean) || [],
           // Collect SFX audio URLs
-          sfxUrls: scene?.sfx?.filter(s => s.audioUrl).map(s => s.audioUrl!) || [],
+          sfxUrls: scene?.sfx?.filter(s => s?.audioUrl).map(s => s.audioUrl!) || [],
         }}
         audioConfig={{
           narration: scene?.narrationAudioUrl ? {
@@ -1201,13 +1201,13 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
             volume: 0.5,
             loop: false,
           } : undefined,
-          dialogue: scene?.dialogueAudio?.en?.map((d, i) => ({
-            url: d.audioUrl,
+          dialogue: scene?.dialogueAudio?.en?.filter(d => d?.audioUrl).map((d, i) => ({
+            url: d.audioUrl!,
             startTime: audioTrackTiming.dialogue.startTime + (i * 2), // Stagger dialogue lines
             duration: audioTrackTiming.dialogue.duration,
             volume: 0.9,
           })),
-          sfx: scene?.sfx?.filter(s => s.audioUrl).map((s, i) => ({
+          sfx: scene?.sfx?.filter(s => s?.audioUrl).map((s, i) => ({
             url: s.audioUrl!,
             startTime: audioTrackTiming.sfx.startTime + (i * 1), // Stagger SFX
             duration: audioTrackTiming.sfx.duration,
@@ -1266,7 +1266,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           narrationUrl: scene?.narrationAudioUrl || scene?.narrationAudio?.en?.url,
           narrationDuration: 30, // TODO: Calculate from audio file
           dialogueEntries: scene?.dialogueAudio?.en?.map(d => ({
-            audioUrl: d.audioUrl,
+            audioUrl: d?.audioUrl,
             duration: 3, // TODO: Calculate from audio file
             character: d.character,
           })),

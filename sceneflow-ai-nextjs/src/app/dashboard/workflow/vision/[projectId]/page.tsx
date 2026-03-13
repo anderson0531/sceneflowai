@@ -714,7 +714,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const scenesWithImages = allScenes.filter((s: any) => s.imageUrl).length
     const scenesWithAudio = allScenes.filter((s: any) => 
       s.narrationAudioUrl || 
-      (s.dialogue?.some((d: any) => d.audioUrl))
+      (s.dialogue?.some((d: any) => d?.audioUrl))
     ).length
     
     return {
@@ -9569,7 +9569,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         updatedScenes[sceneIndex] = {
           ...updatedScenes[sceneIndex],
           sfx: updatedSfx,
-          sfxAudio: updatedSfx.map((s: any) => typeof s === 'string' ? null : s.audioUrl).filter(Boolean)
+          sfxAudio: updatedSfx.map((s: any) => typeof s === 'string' ? null : s?.audioUrl).filter(Boolean)
         }
       }
       

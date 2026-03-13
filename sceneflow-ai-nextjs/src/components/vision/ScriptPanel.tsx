@@ -1537,9 +1537,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     // Get language-specific audio URLs
     const narrationUrl = getAudioUrl(scene, selectedLanguage, 'narration')
     const descriptionUrl = getAudioUrl(scene, selectedLanguage, 'description')
-    const dialogueArray = scene.dialogueAudio?.[selectedLanguage] || 
+    const dialogueArray = (scene.dialogueAudio?.[selectedLanguage] || 
                           (selectedLanguage === 'en' ? scene.dialogueAudio?.en : null) ||
-                          (Array.isArray(scene.dialogueAudio) ? scene.dialogueAudio : null)
+                          (Array.isArray(scene.dialogueAudio) ? scene.dialogueAudio : null) || []).filter(Boolean)
     
     // Music starts at scene beginning (concurrent with everything, loops)
     // Check both musicAudio (new format) and music.url (legacy format)
@@ -1601,8 +1601,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       
       // Sort dialogue by URL timestamp (oldest first = correct generation order)
       const sortedDialogue = [...dialogueArray].sort((a, b) => {
-        const urlA = a.audioUrl || a.url || ''
-        const urlB = b.audioUrl || b.url || ''
+        const urlA = a?.audioUrl || a?.url || ''
+        const urlB = b?.audioUrl || b?.url || ''
         const tsA = getUrlTimestamp(urlA)
         const tsB = getUrlTimestamp(urlB)
         return tsA - tsB  // Ascending order - oldest first
@@ -1610,10 +1610,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       
       console.log('[ScriptPanel] 🔊🔊🔊 TIMESTAMP SORTING ACTIVE - Dialogue sorted by URL timestamp')
       console.log('[ScriptPanel] Dialogue count:', dialogueArray.length)
-      console.log('[ScriptPanel] Sorted order:', sortedDialogue.map((d: any) => (d.audioUrl || d.url || '').split('/').pop()))
+      console.log('[ScriptPanel] Sorted order:', sortedDialogue.map((d: any) => (d?.audioUrl || d?.url || '').split('/').pop()))
       
       for (const dialogue of sortedDialogue) {
-        const audioUrl = dialogue.audioUrl || dialogue.url
+        const audioUrl = dialogue?.audioUrl || dialogue?.url
         if (audioUrl) {
           // Check for custom startTime on this dialogue entry
           const customDialogueStartTime = dialogue.startTime
@@ -1688,10 +1688,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     
     // Check if we have any pre-generated audio
     const narrationUrl = getAudioUrl(scene, selectedLanguage, 'narration')
-    const dialogueArray = scene.dialogueAudio?.[selectedLanguage] || 
+    const dialogueArray = (scene.dialogueAudio?.[selectedLanguage] || 
                           (selectedLanguage === 'en' ? scene.dialogueAudio?.en : null) ||
-                          (Array.isArray(scene.dialogueAudio) ? scene.dialogueAudio : null)
-    const hasDialogue = Array.isArray(dialogueArray) && dialogueArray.some((d: any) => d.audioUrl || d.url)
+                          (Array.isArray(scene.dialogueAudio) ? scene.dialogueAudio : null) || []).filter(Boolean)
+    const hasDialogue = Array.isArray(dialogueArray) && dialogueArray.some((d: any) => d?.audioUrl || d?.url)
     const hasMusic = !!(scene.musicAudio || scene.music?.url)
     const hasSFX = !!(scene.sfxAudio && scene.sfxAudio.length > 0)
     
@@ -2425,11 +2425,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
   const exportScenes = useMemo(() => {
     return scenes.map((scene: any, index: number) => {
-      const dialogueCandidates = Array.isArray(scene?.dialogueAudio?.en)
+      const dialogueCandidates = (Array.isArray(scene?.dialogueAudio?.en)
         ? scene.dialogueAudio.en
         : Array.isArray(scene?.dialogueAudio)
           ? scene.dialogueAudio
-          : []
+          : []).filter(Boolean)
 
       const dialogue = dialogueCandidates
         .filter((entry: any) => entry?.audioUrl)
@@ -3062,9 +3062,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         // Build audio data from scene
         const narrationUrl = scene?.narrationAudio?.[selectedLanguage]?.url || scene?.narrationAudioUrl
         const narrationDuration = scene?.narrationAudio?.[selectedLanguage]?.duration
-        const dialogueAudioArray = Array.isArray(scene?.dialogueAudio) 
+        const dialogueAudioArray = (Array.isArray(scene?.dialogueAudio) 
           ? scene.dialogueAudio 
-          : scene?.dialogueAudio?.[selectedLanguage] || []
+          : scene?.dialogueAudio?.[selectedLanguage] || []).filter(Boolean)
         
         return (
           <SceneRenderDialog
@@ -3785,16 +3785,16 @@ function SceneCard({
         let dialogueAudioArray: any[] = []
         if (Array.isArray(scene.dialogueAudio)) {
           // Old format: array (treat as 'en')
-          dialogueAudioArray = lang === 'en' ? scene.dialogueAudio : []
+          dialogueAudioArray = (lang === 'en' ? scene.dialogueAudio : []).filter(Boolean)
         } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
           // New format: object keyed by language
-          dialogueAudioArray = scene.dialogueAudio[lang] || []
+          dialogueAudioArray = (scene.dialogueAudio[lang] || []).filter(Boolean)
         }
         
         // Each dialogue line should have a matching audio entry
         hasAllDialogueAudio = dialogueLines.every((d: any, idx: number) => {
           const audioEntry = dialogueAudioArray.find((a: any) => 
-            a.dialogueIndex === idx && a.audioUrl
+            a?.dialogueIndex === idx && a?.audioUrl
           )
           return !!audioEntry
         })
@@ -6531,7 +6531,7 @@ function SceneCard({
                           dialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
                         }
                         const missingCount = dialogueLines.filter((_: any, idx: number) => 
-                          !dialogueAudioArray.find((a: any) => a.dialogueIndex === idx && a.audioUrl)
+                          !dialogueAudioArray.find((a: any) => a?.dialogueIndex === idx && a?.audioUrl)
                         ).length
                         if (missingCount > 0) missing.push(`${missingCount} dialogue line${missingCount > 1 ? 's' : ''}`)
                       }
@@ -6811,7 +6811,7 @@ function SceneCard({
                         
                         for (let idx = 0; idx < maxLength; idx++) {
                           const sfxDef = sfxList[idx] || {}
-                          const url = sfxAudioList[idx] || (typeof sfxDef !== 'string' && sfxDef.audioUrl)
+                          const url = sfxAudioList[idx] || (typeof sfxDef !== 'string' && sfxDef?.audioUrl)
                           
                           if (!url) continue
                           
