@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/Input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { VoiceSelectorDialog } from '@/components/tts/VoiceSelectorDialog'
 import { OptimizeSceneDialog } from '@/components/vision/OptimizeSceneDialog'
+import { AnimatedScore, AnimatedProgressBar } from '@/components/ui/AnimatedScore'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { toast } from 'sonner'
@@ -238,16 +239,30 @@ function RadarChart({ categories }: { categories: { name: string; score: number;
           )
         })}
 
-        {/* Data polygon */}
+        {/* Data polygon — animated reveal */}
         <polygon
           points={dataPolygon}
           fill={fillColor}
           fillOpacity={0.25}
           stroke={fillColor}
           strokeWidth={2}
+          style={{
+            transformOrigin: `${center}px ${center}px`,
+            animation: 'radarReveal 0.8s cubic-bezier(0.33, 1, 0.68, 1) 0.3s both',
+          }}
         />
+        <style>{`
+          @keyframes radarReveal {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+          }
+          @keyframes dotReveal {
+            from { r: 0; opacity: 0; }
+            to { opacity: 1; }
+          }
+        `}</style>
 
-        {/* Data points */}
+        {/* Data points — staggered reveal */}
         {dataPoints.map((point, i) => (
           <circle
             key={i}
@@ -255,6 +270,9 @@ function RadarChart({ categories }: { categories: { name: string; score: number;
             cy={point.y}
             r={4}
             fill={fillColor}
+            style={{
+              animation: `dotReveal 0.4s cubic-bezier(0.33, 1, 0.68, 1) ${0.5 + i * 0.08}s both`,
+            }}
           />
         ))}
 
