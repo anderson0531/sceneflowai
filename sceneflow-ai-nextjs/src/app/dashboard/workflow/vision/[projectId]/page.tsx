@@ -10996,16 +10996,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         onScriptOptimized={async (optimizedScript) => {
           // Apply the optimized script directly
           if (optimizedScript?.scenes) {
+            // Strip stale per-scene audienceAnalysis from previous review cycle
+            // so scene cards and scene editor don't show outdated recommendations
+            const cleanedScenes = optimizedScript.scenes.map((scene: any) => {
+              const { audienceAnalysis, ...rest } = scene || {}
+              return rest
+            })
+            
             const updatedScript = {
               ...script,
               script: {
                 ...script?.script,
-                scenes: optimizedScript.scenes
+                scenes: cleanedScenes
               }
             }
             setScript(updatedScript)
             
-            // Mark score as outdated since script has changed
+            // Clear stale review data — prevents old recommendations from being
+            // re-displayed or re-applied before re-analysis completes
+            setAudienceReview(null)
+            setDirectorReview(null)
             setReviewsOutdated(true)
             
             // Persist to database
@@ -11013,7 +11023,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               const existingMetadata = project?.metadata || {}
               const existingVisionPhase = existingMetadata.visionPhase || {}
               
-              await fetch(`/api/projects/${projectId}`, {
+              const saveResponse = await fetch(`/api/projects/${projectId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -11026,15 +11036,32 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   }
                 })
               })
+              
+              // Update project state to prevent stale metadata overwrites
+              if (saveResponse.ok) {
+                setProject(prev => {
+                  if (!prev) return prev
+                  return {
+                    ...prev,
+                    metadata: {
+                      ...prev.metadata,
+                      visionPhase: {
+                        ...prev.metadata?.visionPhase,
+                        script: updatedScript
+                      }
+                    }
+                  }
+                })
+              }
             } catch (error) {
               console.error('[ScriptReview] Failed to save optimized script:', error)
               toast.error('Script revised but failed to save to database')
             }
             
             // Auto-regenerate direction for all scenes after full script optimization
-            console.log(`[AutoDirection] Full script optimized - regenerating direction for ${optimizedScript.scenes.length} scenes`)
+            console.log(`[AutoDirection] Full script optimized - regenerating direction for ${cleanedScenes.length} scenes`)
             toast.info('Updating scene directions for optimized script...', { duration: 4000 })
-            for (let i = 0; i < optimizedScript.scenes.length; i++) {
+            for (let i = 0; i < cleanedScenes.length; i++) {
               // Stagger to avoid overwhelming the API
               setTimeout(() => {
                 handleBackgroundDirectionGeneration(i)

@@ -309,14 +309,14 @@ interface ScriptReviewModalProps {
   onClose: () => void
   directorReview: Review | null // Deprecated, kept for compatibility
   audienceReview: AudienceResonanceReview | Review | null
-  onRegenerate: () => void
+  onRegenerate: () => Promise<void>
   isGenerating: boolean
   onReviseScript?: (recommendations: string[]) => void
   // New props for inline revision
   projectId?: string
   script?: any
   characters?: any[]
-  onScriptOptimized?: (optimizedScript: any) => void
+  onScriptOptimized?: (optimizedScript: any) => Promise<void> | void
   // Score outdated indicator
   scoreOutdated?: boolean
   // Review history for score trend
@@ -874,17 +874,19 @@ export default function ScriptReviewModal({
         const data = await response.json()
         
         if (data.optimizedScript) {
-          onScriptOptimized(data.optimizedScript)
-          toast.success('Script revised with your custom direction! Click Re-analyze to see your new score.')
+          // Await so the processing overlay stays visible until DB write completes
+          await onScriptOptimized(data.optimizedScript)
+          toast.success('Script revised with your custom direction! Re-analyzing...')
           // Reset You Direct state after success
           setSelectedOptimizations([])
           setCustomInstruction('')
-          // Stay on Overview tab to prompt re-analyze
+          // Auto-trigger re-analysis so user sees fresh scores
+          await onRegenerate()
           setActiveTab('overview')
         } else {
           toast.message('No changes returned for the current instruction.')
         }
-      }, { message: 'Revising your script with custom direction...', estimatedDuration: 25, operationType: 'script-optimization' })
+      }, { message: 'Revising your script with custom direction...', estimatedDuration: 55, operationType: 'script-optimization' })
     } catch (error: any) {
       console.error('[You Direct] Error:', error)
       toast.error(error.message || 'Failed to revise script')
@@ -994,11 +996,14 @@ export default function ScriptReviewModal({
         const data = await response.json()
         
         if (data.optimizedScript) {
-          // Apply the optimized script
-          onScriptOptimized(data.optimizedScript)
-          toast.success(`Script revised with ${selectedRecs.length} recommendation${selectedRecs.length > 1 ? 's' : ''}! Click Re-analyze to see your new score.`)
-          // Clear selections and switch to Overview to prompt re-analyze
+          // Await so the processing overlay stays visible until DB write completes
+          await onScriptOptimized(data.optimizedScript)
+          toast.success(`Script revised with ${selectedRecs.length} recommendation${selectedRecs.length > 1 ? 's' : ''}! Re-analyzing...`)
+          // Clear selections
           setSelectedRecommendationIndices(new Set())
+          // Auto-trigger re-analysis so the user sees fresh recommendations
+          // The overlay continues showing through the re-analyze cycle
+          await onRegenerate()
           setActiveTab('overview')
         } else {
           throw new Error('No optimized script returned')
@@ -1008,7 +1013,8 @@ export default function ScriptReviewModal({
         // Structural pre-pass (~20s) + batched optimization: ~4 scenes/batch, 2 parallel, ~25s/wave + overhead
         // e.g. 17 scenes = 20s structural + 5 batches → 3 waves × 25s = 75s + 15s overhead = 110s
         // With MAX_TOKENS retries possible, allow up to 300s
-        estimatedDuration: Math.min(300, Math.max(60, Math.ceil(Math.ceil((script?.scenes?.length || 10) / 4) / 2) * 25 + 35)),
+        // + 30s for auto re-analysis
+        estimatedDuration: Math.min(330, Math.max(90, Math.ceil(Math.ceil((script?.scenes?.length || 10) / 4) / 2) * 25 + 65)),
         operationType: 'script-optimization'
       })
     } catch (err: any) {
@@ -1156,8 +1162,8 @@ export default function ScriptReviewModal({
         updatedScenes[sceneIndex] = data.revisedScene
         const updatedScript = { ...script, scenes: updatedScenes }
 
-        // Notify parent of the updated script
-        onScriptOptimized(updatedScript)
+        // Await so the DB write completes before showing success
+        await onScriptOptimized(updatedScript)
 
         // Mark scene as fixed
         setFixedScenes(prev => new Set(prev).add(sceneAnalysisItem.sceneNumber))
@@ -1248,10 +1254,10 @@ export default function ScriptReviewModal({
           updatedScenes[sceneIndex] = data.revisedScene
           const updatedScript = { ...script, scenes: updatedScenes }
 
-          onScriptOptimized(updatedScript)
+          await onScriptOptimized(updatedScript)
           setFixedScenes(prev => new Set(prev).add(sceneNumber))
           setOptimizeDialogScene(null)
-          return `Scene ${sceneNumber} rewritten! Re-analyze to see updated score.`
+          return `Scene ${sceneNumber} rewritten successfully!`
         } else {
           throw new Error('No optimized scene returned')
         }
