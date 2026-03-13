@@ -74,6 +74,8 @@ interface ScriptReviewRequest {
   scriptHash?: string
   /** Hash from the previous analysis — compared to scriptHash to detect changes */
   previousScriptHash?: string
+  /** When true, bypass server-side cache and force a fresh Gemini analysis */
+  forceRefresh?: boolean
 }
 
 // Calculate Show vs Tell ratio from script content
@@ -115,7 +117,7 @@ export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions)
     const userId = session?.user?.id
 
-    const { projectId, script, previousScores, previousAnalysis, scriptHash, previousScriptHash }: ScriptReviewRequest = await req.json()
+    const { projectId, script, previousScores, previousAnalysis, scriptHash, previousScriptHash, forceRefresh }: ScriptReviewRequest = await req.json()
 
     if (!projectId || !script) {
       return NextResponse.json(
@@ -135,15 +137,18 @@ export async function POST(req: NextRequest) {
       previousHash: previousScriptHash?.substring(0, 8) || 'none',
       unchanged: scriptUnchanged,
       hasPreviousAnalysis: !!previousAnalysis,
-      previousScore: previousAnalysis?.overallScore
+      previousScore: previousAnalysis?.overallScore,
+      forceRefresh: !!forceRefresh
     })
     
     // =========================================================================
     // CACHING: Return cached analysis when script is unchanged
     // This eliminates score variance entirely for repeated analysis of same script.
     // Users see consistent scores, building confidence in the analysis system.
+    // BYPASS: When forceRefresh=true (post-revision), always run fresh analysis
+    // even if hashes match — the client has already updated the script state.
     // =========================================================================
-    if (scriptUnchanged && previousAnalysis) {
+    if (scriptUnchanged && previousAnalysis && !forceRefresh) {
       console.log('[Script Review] Script unchanged — returning cached analysis (score:', previousAnalysis.overallScore, ')')
       return NextResponse.json({
         success: true,

@@ -669,11 +669,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const sceneReferencesRef = useRef<VisualReference[]>([])
   const objectReferencesRef = useRef<VisualReference[]>([])
   const locationReferencesRef = useRef<LocationReference[]>([])
+  const scriptRef = useRef<any>(null)
+  const reviewsOutdatedRef = useRef<boolean>(false)
   
   // Keep refs in sync with state
   useEffect(() => { sceneReferencesRef.current = sceneReferences }, [sceneReferences])
   useEffect(() => { objectReferencesRef.current = objectReferences }, [objectReferences])
   useEffect(() => { locationReferencesRef.current = locationReferences }, [locationReferences])
+  useEffect(() => { scriptRef.current = script }, [script])
+  useEffect(() => { reviewsOutdatedRef.current = reviewsOutdated }, [reviewsOutdated])
   
   // Script Review state - for Director and Audience review scoring
   const [directorReview, setDirectorReview] = useState<any>(null)
@@ -4947,22 +4951,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   // Script review functions
   const handleGenerateReviews = async () => {
-    if (!script || !projectId) return
+    // Use refs to read latest state — avoids stale closures when called
+    // immediately after setScript() (e.g. auto re-analyze after revision)
+    const currentScript = scriptRef.current || script
+    const isOutdated = reviewsOutdatedRef.current || reviewsOutdated
+    
+    if (!currentScript || !projectId) return
     
     setIsGeneratingReviews(true)
     useStore.getState().setIsGeneratingReviews(true)
     try {
       await execute(async () => {
         // Compute script hash for change detection
-        const currentScriptHash = generateScriptHash(script)
+        const currentScriptHash = generateScriptHash(currentScript)
         const previousScriptHash = project?.metadata?.visionPhase?.reviews?.scriptHash
         
         // CLIENT-SIDE CACHING: If script unchanged and we have previous analysis, skip API call entirely
         // This eliminates score variance and saves API costs
+        // BYPASS: When reviewsOutdated is true (post-revision), always force a fresh analysis
         const scriptUnchanged = currentScriptHash && previousScriptHash && currentScriptHash === previousScriptHash
         const currentAudienceReview = audienceReview
         
-        if (scriptUnchanged && currentAudienceReview?.overallScore) {
+        if (scriptUnchanged && currentAudienceReview?.overallScore && !isOutdated) {
           console.log('[Script Review] Script unchanged (client-side check) — using cached analysis, score:', currentAudienceReview.overallScore)
           // Clear score outdated flag since we're confirming the score is still valid
           setReviewsOutdated(false)
@@ -4973,21 +4983,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           return 'Script unchanged - using cached analysis'
         }
         
+        if (isOutdated) {
+          console.log('[Script Review] Reviews outdated — forcing fresh analysis (bypassing cache)')
+        }
+        
         console.log('[Script Review] Hash comparison:', {
           currentHash: currentScriptHash?.substring(0, 8),
           previousHash: previousScriptHash?.substring(0, 8),
           unchanged: scriptUnchanged,
-          hasPreviousAnalysis: !!currentAudienceReview
+          hasPreviousAnalysis: !!currentAudienceReview,
+          forceRefresh: isOutdated
         })
         
         // Build previous scores for hysteresis smoothing
-        const previousScoresPayload = currentAudienceReview?.overallScore ? {
+        // When force-refreshing after revision, don't send previous scores —
+        // the script has changed and we want a clean baseline score
+        const previousScoresPayload = (!isOutdated && currentAudienceReview?.overallScore) ? {
           overallScore: currentAudienceReview.overallScore,
           categories: currentAudienceReview.categories || []
         } : undefined
         
         // Pass full previous analysis for caching (when unchanged) and context (when changed)
-        const previousAnalysisPayload = currentAudienceReview ? {
+        // When force-refreshing, don't send previous analysis — prevents server from returning stale data
+        const previousAnalysisPayload = (!isOutdated && currentAudienceReview) ? {
           overallScore: currentAudienceReview.overallScore,
           categories: currentAudienceReview.categories || [],
           deductions: currentAudienceReview.deductions || [],
@@ -5009,15 +5027,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           body: JSON.stringify({
             projectId,
             script: {
-              title: script.title,
-              logline: script.logline,
-              scenes: script.script?.scenes || [],
+              title: currentScript.title,
+              logline: currentScript.logline,
+              scenes: currentScript.script?.scenes || [],
               characters: characters
             },
             previousScores: previousScoresPayload,
             previousAnalysis: previousAnalysisPayload,
             scriptHash: currentScriptHash,
-            previousScriptHash: previousScriptHash
+            previousScriptHash: previousScriptHash,
+            forceRefresh: isOutdated
           })
         })
 
@@ -5081,10 +5100,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   director: data.director,
                   audience: fullAudienceData,  // Save full audienceResonance data
                   lastUpdated: data.generatedAt,
-                  scriptHash: generateScriptHash(script)
+                  scriptHash: generateScriptHash(currentScript)
                 },
                 reviewHistory: updatedHistory,
-                script: script,
+                script: currentScript,
                 scenes: scenes,
                 characters: characters,
                 narrationVoice: narrationVoice
@@ -5093,7 +5112,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             
             console.log('[Script Review] Saving reviews to database...', {
               audienceScore: fullAudienceData?.overallScore,
-              scriptHash: generateScriptHash(script)?.substring(0, 8)
+              scriptHash: generateScriptHash(currentScript)?.substring(0, 8)
             })
             
             const saveResponse = await fetch(`/api/projects/${projectId}`, {
