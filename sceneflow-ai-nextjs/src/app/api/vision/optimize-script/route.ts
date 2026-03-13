@@ -1076,7 +1076,7 @@ Return ONLY valid JSON (no markdown):
     {
       "heading": "INT. LOCATION - TIME",
       "action": "Physical actions and visual descriptions",
-      "narration": "Brief narration (1 sentence, no emotional adjectives)",
+      "narration": "Brief narration (1 sentence max) or empty string \"\" if scene works without it",
       "dialogue": [
         { "character": "NAME", "line": "[emotion] Dialogue text" }
       ],
@@ -1095,7 +1095,7 @@ RULES:
 • Duration may INCREASE for expanded scenes (add 5-15s per added beat)
 • All dialogue needs [emotion] tags
 • Escape quotes in JSON
-• Narration: 1 sentence max, never empty
+• Narration: 1 sentence max, or empty string "" if the scene works without it. Prefer showing through action over telling through narration
 • REWRITE dialogue substantially — don't just change emotion tags`
 
   // Token budget: 3500 per scene + 5000 base
@@ -1501,17 +1501,18 @@ function normalizeForJson(input: string): string {
   return out
 }
 
-function coerceNarration(candidate: any, original: any, fallbackSource?: any): string {
+function coerceNarration(candidate: any, original: any, _fallbackSource?: any): string {
+  // If the AI returned valid narration, use it
   const val = String(candidate ?? '').trim()
   if (val && val.toLowerCase() !== 'none' && val !== 'null' && val !== 'undefined') return val
+  // If the AI explicitly returned empty/none/null, respect the removal —
+  // do NOT fall back to original narration or manufacture it from action text.
+  // This allows scenes to genuinely have no narration.
+  if (candidate !== undefined) return ''
+  // If the AI omitted the field entirely, preserve original (backwards compat)
   const orig = String(original ?? '').trim()
-  if (orig) return orig
-  const action = String(fallbackSource ?? '').trim()
-  if (!action) return ''
-  // Use first sentence or truncate
-  const firstSentenceMatch = action.match(/[^.!?]*[.!?]/)
-  const sentence = (firstSentenceMatch?.[0] || action).replace(/\s+/g, ' ').trim()
-  return sentence.length > 220 ? sentence.slice(0, 217) + '...' : sentence
+  if (orig && orig.toLowerCase() !== 'none' && orig !== 'null') return orig
+  return ''
 }
 
 function extractBalancedJson(text: string): string | '' {

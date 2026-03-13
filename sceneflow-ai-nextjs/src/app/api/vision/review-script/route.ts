@@ -120,8 +120,21 @@ export async function POST(req: NextRequest) {
 
     console.log('[Script Review] Generating Audience Resonance review for project:', projectId)
 
-    // Pre-calculate Show vs Tell ratio
-    const showVsTellMetrics = calculateShowVsTellRatio(script.scenes || [])
+    // Clean empty/trivial narration before analysis — scenes may carry empty
+    // narration fields from optimization cycles that should not appear in the
+    // analysis prompt or inflate the Show vs Tell ratio
+    const cleanedScenes = (script.scenes || []).map((scene: any) => {
+      const rawNarration = (scene.narration || '').trim()
+      if (!rawNarration || rawNarration.toLowerCase() === 'none' || rawNarration === 'null') {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { narration: _removed, ...rest } = scene
+        return rest
+      }
+      return scene
+    })
+
+    // Pre-calculate Show vs Tell ratio from cleaned scenes
+    const showVsTellMetrics = calculateShowVsTellRatio(cleanedScenes)
     console.log('[Script Review] Show vs Tell metrics:', showVsTellMetrics)
     
     // Generate deterministic seed from script content for reproducible scoring
@@ -154,7 +167,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Generate Audience Resonance review (replaces both director and audience)
-    const audienceResonance = await generateAudienceResonance(script, showVsTellMetrics, contentSeed, previousScores)
+    const audienceResonance = await generateAudienceResonance(script, showVsTellMetrics, contentSeed, previousScores, cleanedScenes)
 
     // =========================================================================
     // CREDIT CHARGE: Deduct credits after successful AI generation
@@ -206,13 +219,17 @@ async function generateAudienceResonance(
   script: any, 
   showVsTellMetrics: { ratio: number; narrationWords: number; actionWords: number; dialogueWords: number },
   contentSeed: number,
-  previousScores?: ScriptReviewRequest['previousScores']
+  previousScores?: ScriptReviewRequest['previousScores'],
+  cleanedScenes?: any[]
 ): Promise<AudienceResonanceReview> {
   const sceneCount = script.scenes?.length || 0
   const characterCount = script.characters?.length || 0
   
-  // Extract full scene content for analysis
-  const sceneSummaries = script.scenes?.map((scene: any, idx: number) => {
+  // Use cleaned scenes (empty narration stripped) or fall back to raw scenes
+  const scenesForAnalysis = cleanedScenes || script.scenes || []
+  
+  // Extract full scene content for analysis (use cleaned scenes — empty narration already stripped)
+  const sceneSummaries = scenesForAnalysis.map((scene: any, idx: number) => {
     const heading = scene.heading || 'Untitled'
     const action = scene.action || 'No action'
     const narration = scene.narration || ''

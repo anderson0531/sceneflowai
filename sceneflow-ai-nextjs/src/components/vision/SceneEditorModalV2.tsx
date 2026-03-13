@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Loader, Eye, Check, Undo, Redo, Sparkles, Mic, MicOff } from 'lucide-react'
+import { Loader, Eye, Check, Undo, Redo, Sparkles, Mic, MicOff, Volume2, X } from 'lucide-react'
 import { InstructionsPanel } from './InstructionsPanel'
 import { PreviewPanel } from './PreviewPanel'
 import { CurrentScenePanel } from './CurrentScenePanel'
@@ -61,6 +61,7 @@ export function SceneEditorModal({
   const [changesSummary, setChangesSummary] = useState<any[]>([])
   const [showComparison, setShowComparison] = useState(false)
   const [sceneDescription, setSceneDescription] = useState(scene?.visualDescription || '')
+  const [narrationText, setNarrationText] = useState(scene?.narration || '')
   
   // Applied recommendations tracking (for instruction panel)
   const [appliedRecommendationIds, setAppliedRecommendationIds] = useState<string[]>([])
@@ -115,6 +116,10 @@ export function SceneEditorModal({
     if (candidate && typeof candidate.visualDescription === 'string') {
       setSceneDescription(candidate.visualDescription)
     }
+    // Also sync narration when AI revision returns a scene
+    if (candidate && typeof candidate.narration === 'string') {
+      setNarrationText(candidate.narration)
+    }
   }, [])
 
   // Initialize when modal opens
@@ -124,6 +129,7 @@ export function SceneEditorModal({
       setCurrentHistoryIndex(0)
       setShowPreview(false)
       setSceneDescription(scene.visualDescription || '')
+      setNarrationText(scene.narration || '')
       // Set initial instructions if provided (from Apply Recommendations)
       setCustomInstruction(initialInstructions || '')
       setAppliedRecommendationIds([])
@@ -226,11 +232,13 @@ export function SceneEditorModal({
     if (!sourceScene) return
 
     const cleanedDescription = sceneDescription?.trim() || ''
+    const cleanedNarration = narrationText?.trim() || ''
 
     // Simplified scene metadata (scores removed)
     const revisedSceneWithMetadata = {
       ...sourceScene,
-      visualDescription: cleanedDescription
+      visualDescription: cleanedDescription,
+      narration: cleanedNarration
     }
 
     const newHistory = [...revisionHistory.slice(0, currentHistoryIndex + 1), revisedSceneWithMetadata]
@@ -263,11 +271,16 @@ export function SceneEditorModal({
 
   const normalizeDescription = (value?: string | null) => (value ?? '').trim()
   const descriptionChanged = normalizeDescription(scene.visualDescription) !== normalizeDescription(sceneDescription)
+  const narrationChanged = normalizeDescription(scene.narration) !== normalizeDescription(narrationText)
   const hasAIChanges = customInstruction.trim().length > 0
   const changeStatusMessage = hasAIChanges
     ? 'Custom instruction ready'
-    : descriptionChanged
-      ? 'Scene description updated'
+    : descriptionChanged || narrationChanged
+      ? narrationChanged && descriptionChanged
+        ? 'Scene description & narration updated'
+        : narrationChanged
+          ? 'Narration updated'
+          : 'Scene description updated'
       : 'No changes'
 
   // Extract recommendations from scene's audienceAnalysis (from scene card analysis)
@@ -329,6 +342,35 @@ export function SceneEditorModal({
                   This text plays before narration and powers storyboard/image prompts.
                 </p>
               </div>
+              
+              {/* Narration Text — editable so users can remove/edit phantom narration */}
+              <div className="mb-6">
+                <label className="text-sm font-medium text-gray-500 mb-2 flex items-center gap-1.5">
+                  <Volume2 className="w-3.5 h-3.5" />
+                  Narration
+                  {narrationText && (
+                    <button
+                      type="button"
+                      onClick={() => setNarrationText('')}
+                      className="ml-auto text-xs text-red-500 hover:text-red-700 flex items-center gap-1"
+                      title="Remove narration"
+                    >
+                      <X className="w-3 h-3" />
+                      Remove
+                    </button>
+                  )}
+                </label>
+                <Textarea
+                  value={narrationText}
+                  onChange={(event) => setNarrationText(event.target.value)}
+                  placeholder="Optional narration voiceover text. Leave empty for no narration."
+                  className="min-h-[80px]"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Voiceover text for the scene. Clear this field to remove narration entirely.
+                </p>
+              </div>
+
               <CurrentScenePanel scene={scene} />
             </div>
             
@@ -513,11 +555,11 @@ export function SceneEditorModal({
                   ) : (
                     <Button
                       onClick={handleApplyChanges}
-                      disabled={!descriptionChanged}
+                      disabled={!descriptionChanged && !narrationChanged}
                       className="bg-sf-primary"
                     >
                       <Check className="w-4 h-4 mr-2" />
-                      Save Description
+                      Save Changes
                     </Button>
                   )}
                 </>
@@ -525,7 +567,7 @@ export function SceneEditorModal({
                 <>
                   <Button
                     onClick={handleApplyChanges}
-                    disabled={(!previewScene && !descriptionChanged) || isGenerating}
+                    disabled={(!previewScene && !descriptionChanged && !narrationChanged) || isGenerating}
                     className="bg-sf-primary"
                   >
                     <Check className="w-4 h-4 mr-2" />

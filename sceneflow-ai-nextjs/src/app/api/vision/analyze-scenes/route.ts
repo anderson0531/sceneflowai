@@ -118,10 +118,12 @@ ${prevEntries}
   }
 
   // Build detailed scene content for analysis
+  // Strip empty/trivial narration so the AI doesn't recommend removing narration that doesn't exist
   const sceneDetails = script.scenes.map((scene: any, idx: number) => {
     const heading = scene.heading || 'Untitled'
     const action = scene.action || 'No action'
-    const narration = scene.narration || ''
+    const rawNarration = (scene.narration || '').trim()
+    const narration = (rawNarration && rawNarration.toLowerCase() !== 'none' && rawNarration !== 'null') ? rawNarration : ''
     const dialogueLines = (scene.dialogue || []).map((d: any) => 
       `    ${d.character || 'UNKNOWN'}: ${d.line || ''}`
     ).join('\n')
