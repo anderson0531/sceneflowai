@@ -124,6 +124,7 @@ function SegmentDirectionCard({
   onGeneratePrompt,
 }: SegmentDirectionCardProps) {
   const [isEditing, setIsEditing] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
   const [aiInstruction, setAiInstruction] = useState('')
   
   // Get dialogue lines for this segment
@@ -211,10 +212,45 @@ function SegmentDirectionCard({
             <Badge variant="outline" className="font-mono text-xs bg-sf-background/50 border-sf-border">
               ~{direction.estimatedDuration}s
             </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 text-sf-text-secondary hover:text-sf-text-primary"
+              onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded) }}
+              title={isExpanded ? 'Collapse' : 'Expand'}
+            >
+              {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </Button>
           </div>
         </div>
 
-        {/* Card Body */}
+        {/* Collapsed summary — show key info inline when card is collapsed */}
+        {!isExpanded && !isEditing && (
+          <div className="px-4 py-2 space-y-1">
+            <div className="flex items-center gap-2 text-sm">
+              <Camera className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+              <span className="font-medium text-sf-text-primary">{direction.shotType}</span>
+              <span className="text-sf-text-disabled">•</span>
+              <span className="text-sf-text-secondary">{direction.cameraMovement}</span>
+              <span className="text-sf-text-disabled">•</span>
+              <span className="text-sf-text-secondary">{direction.cameraAngle}</span>
+              {direction.lens && (
+                <>
+                  <span className="text-sf-text-disabled">•</span>
+                  <span className="text-xs font-mono text-blue-400">{direction.lens}</span>
+                </>
+              )}
+            </div>
+            {direction.talentAction && (
+              <p className="text-xs text-sf-text-disabled truncate pl-5">
+                {direction.talentAction.substring(0, 100)}{direction.talentAction.length > 100 ? '...' : ''}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Card Body — Expanded or Editing */}
+        {(isExpanded || isEditing) && (
         <div className="px-4 py-3">
         
         {/* Direction Details */}
@@ -601,12 +637,15 @@ function SegmentDirectionCard({
           </div>
         )}
         
+        </div>
+        )}
+
         {/* Action Buttons — Clean bottom bar */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-sf-border/50" onClick={e => e.stopPropagation()}>
+        <div className={cn("flex items-center justify-between pt-3 border-t border-sf-border/50 px-4 pb-3", isExpanded && "mt-3")} onClick={e => e.stopPropagation()}>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setIsEditing(!isEditing)}
+            onClick={() => { setIsEditing(!isEditing); if (!isEditing) setIsExpanded(true) }}
             className="h-7 text-xs text-sf-text-secondary hover:text-sf-text-primary"
           >
             <Edit3 className="w-3 h-3 mr-1" />
@@ -638,7 +677,6 @@ function SegmentDirectionCard({
             </Button>
           </div>
         </div>
-        </div>{/* End card body */}
       </CardContent>
     </Card>
   )
