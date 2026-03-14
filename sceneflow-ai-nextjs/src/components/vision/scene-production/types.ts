@@ -593,6 +593,19 @@ export interface SceneSegment {
   
   // Flag indicating this segment contains a user-uploaded video (vs AI-generated)
   isUserUpload?: boolean
+
+  // ===========================================================================
+  // Lean Multi-Language (LML) Elastic Segment Fields
+  // ===========================================================================
+  
+  // LML extension mode for this segment (calculated, not persisted)
+  lmlMode?: SegmentDynamicsMode
+  
+  // Freeze-frame extension duration in seconds (calculated)
+  freezeExtension?: number
+  
+  // Audio overrun amount in seconds (how much audio exceeds video)
+  audioOverrun?: number
 }
 
 // Character presence in a segment
@@ -1547,3 +1560,98 @@ export interface ProposedSegment {
  * Workflow phase for the builder
  */
 export type BuilderPhase = 'analyze' | 'directions' | 'review' | 'finalize'
+
+// ============================================================================
+// Lean Multi-Language (LML) Elastic Segment Types
+// ============================================================================
+
+/**
+ * LML extension mode for a segment
+ * - EXACT: Audio ≤ video duration — no visual extension needed
+ * - SMART_PAD: Audio overruns by ≤ threshold — minor visual hold, no Ken Burns
+ * - FREEZE_EXTEND: Audio overruns by > threshold — freeze last frame + Ken Burns micro-zoom
+ */
+export type SegmentDynamicsMode = 'EXACT' | 'SMART_PAD' | 'FREEZE_EXTEND'
+
+/**
+ * Ken Burns visual effect configuration for freeze-frame extension
+ */
+export interface LMLVisualEffect {
+  type: 'none' | 'kenburns'
+  /** Scale range: [startScale, endScale] — e.g. [1.0, 1.01] for micro-zoom */
+  scale: [number, number]
+  /** Duration of the visual effect in seconds */
+  duration: number
+}
+
+/**
+ * Result of calculateSegmentDynamics() — the core LML decision per segment
+ */
+export interface SegmentDynamicsResult {
+  /** Segment index in the production */
+  segmentIndex: number
+  /** Which extension mode applies */
+  mode: SegmentDynamicsMode
+  /** Seconds of visual extension needed (0 for EXACT) */
+  extension: number
+  /** Cumulative offset for downstream segments (sum of all previous extensions) */
+  cumulativeOffset: number
+  /** Visual effect to apply during the extension period */
+  visualEffect: LMLVisualEffect
+  /** Base video duration (from segment endTime - startTime) */
+  baseDuration: number
+  /** Effective display duration (baseDuration + extension) */
+  displayDuration: number
+  /** Audio overrun amount (negative = audio shorter than video) */
+  audioOverrun: number
+  /** 50ms gain ramp-down flag for clean anchor transitions */
+  applyGainRampDown: boolean
+}
+
+/**
+ * LML configuration constants — tunable thresholds
+ * Exposed as constants so they can be overridden per-production in the future
+ */
+export interface LMLConfig {
+  /** Threshold in seconds: overruns ≤ this are SMART_PAD, > are FREEZE_EXTEND */
+  smartPadThreshold: number
+  /** Ken Burns micro-zoom end scale (start is always 1.0) */
+  kenBurnsEndScale: number
+  /** Gain ramp-down duration in seconds at segment transitions */
+  gainRampDownDuration: number
+  /** Maximum allowed extension per segment (safety cap) */
+  maxExtensionPerSegment: number
+}
+
+/**
+ * Default LML configuration
+ */
+export const DEFAULT_LML_CONFIG: LMLConfig = {
+  smartPadThreshold: 0.3,
+  kenBurnsEndScale: 1.01,
+  gainRampDownDuration: 0.05,
+  maxExtensionPerSegment: 8.0,
+}
+
+/**
+ * Sync status for a segment — used by the Sync-Status Bar UI
+ */
+export type SegmentSyncStatus = 'base' | 'smart-pad' | 'freeze-extend'
+
+/**
+ * Complete LML timing analysis for an entire scene across a language
+ */
+export interface SceneLMLAnalysis {
+  /** Language code this analysis applies to */
+  language: string
+  /** Per-segment dynamics results */
+  segmentDynamics: SegmentDynamicsResult[]
+  /** Total scene duration with all extensions applied */
+  totalDuration: number
+  /** Total extension time added across all segments */
+  totalExtension: number
+  /** Number of segments in each mode */
+  modeCounts: Record<SegmentDynamicsMode, number>
+  /** Whether any segment requires freeze-frame extension */
+  hasFreeze: boolean
+}

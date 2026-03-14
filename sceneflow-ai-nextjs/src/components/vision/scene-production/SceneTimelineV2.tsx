@@ -38,7 +38,9 @@ import {
   hashAudioUrls,
   flattenAudioTracks,
   hasAudioForLanguage,
+  analyzeSceneLML,
 } from './audioTrackBuilder'
+import { SegmentSyncStatusBar } from './SegmentSyncStatusBar'
 import {
   getAlternatingDirection,
   KenBurnsDirection,
@@ -461,6 +463,12 @@ export function SceneTimelineV2({
   // ============================================================================
   // Visual Clips (from segments)
   // ============================================================================
+  
+  // LML Analysis: Calculate per-segment elastic dynamics
+  const lmlAnalysis = useMemo(() => {
+    if (!scene || selectedLanguage === baselineLanguage) return null
+    return analyzeSceneLML(scene, segments, selectedLanguage, baselineLanguage)
+  }, [scene, segments, selectedLanguage, baselineLanguage])
   
   const visualClips = useMemo<VisualClip[]>(() => {
     // Apply playback offset for non-baseline languages
@@ -1616,6 +1624,17 @@ export function SceneTimelineV2({
             </div>
           </div>
         </DndContext>
+        
+        {/* LML Sync Status Bar - Shows elastic segment status per language */}
+        {lmlAnalysis && (
+          <div className="mt-1 mb-1">
+            <SegmentSyncStatusBar
+              lmlAnalysis={lmlAnalysis}
+              pixelsPerSecond={pixelsPerSecond}
+              compact={!isTimelineWide}
+            />
+          </div>
+        )}
         
         {/* Audio tracks - show based on original data, render valid clips only */}
         {/* Track rows stay visible even if audio 404'd, showing "file missing" state */}

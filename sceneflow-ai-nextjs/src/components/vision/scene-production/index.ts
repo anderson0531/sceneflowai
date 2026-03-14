@@ -24,6 +24,9 @@ export { SegmentFrameTimeline } from './SegmentFrameTimeline'
 // NOTE: DirectorConsole MUST be imported dynamically to avoid TDZ errors:
 //   const DirectorConsole = dynamic(() => import('./scene-production/DirectorConsole').then(mod => ({ default: mod.DirectorConsole })), { ssr: false })
 export { GuidePromptEditor } from './GuidePromptEditor'
+
+// LML Elastic Segment Components
+export { SegmentSyncStatusBar, SegmentSyncBadge } from './SegmentSyncStatusBar'
 export type { SceneAudioData, GuidePromptEditorProps } from './GuidePromptEditor'
 
 // Segment Builder Components (Intelligent Segmentation)

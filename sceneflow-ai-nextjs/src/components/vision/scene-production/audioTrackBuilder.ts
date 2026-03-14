@@ -8,6 +8,12 @@
  */
 
 import {
+  SegmentDynamicsMode,
+  SegmentDynamicsResult,
+  LMLVisualEffect,
+  LMLConfig,
+  DEFAULT_LML_CONFIG,
+  SceneLMLAnalysis,
   AudioTrackClipV2,
   AudioTracksDataV2,
   MultiLanguageAudioTracks,
@@ -472,6 +478,12 @@ export interface SegmentTimingResult {
   displayDuration: number   // Actual display duration (may be extended)
   isExtended: boolean       // True if segment was extended for longer audio
   extensionReason?: 'narration' | 'dialogue'
+  // LML Elastic Segment Fields
+  lmlMode?: SegmentDynamicsMode
+  lmlExtension?: number           // Extension seconds for this segment
+  cumulativeOffset?: number       // Cumulative offset from all prior extensions
+  visualEffect?: LMLVisualEffect  // Visual effect during extension
+  audioOverrun?: number           // How much audio exceeds base video duration
 }
 
 /**
@@ -1071,4 +1083,245 @@ export function applySequentialAlignmentToScene(
     musicDuration: alignment.musicDuration,
     totalDuration: alignment.totalDuration,
   }
+}
+
+// ============================================================================
+// LEAN MULTI-LANGUAGE (LML) ELASTIC SEGMENT SYSTEM
+// ============================================================================
+
+/**
+ * Calculate segment dynamics for a single segment.
+ * 
+ * Core LML decision function that classifies a segment as:
+ * - EXACT: Audio fits within video duration (no extension needed)
+ * - SMART_PAD: Audio overruns by ≤ threshold (minor visual hold, no effects)
+ * - FREEZE_EXTEND: Audio overruns by > threshold (freeze last frame + Ken Burns)
+ * 
+ * @param videoDuration - Base video segment duration in seconds
+ * @param audioDuration - Actual audio duration for this segment in seconds
+ * @param config - LML configuration (thresholds, scales, limits)
+ * @returns SegmentDynamicsResult with mode, extension, and visual effect
+ */
+export function calculateSegmentDynamics(
+  videoDuration: number,
+  audioDuration: number,
+  segmentIndex: number = 0,
+  cumulativeOffset: number = 0,
+  config: LMLConfig = DEFAULT_LML_CONFIG
+): SegmentDynamicsResult {
+  const audioOverrun = audioDuration - videoDuration
+  
+  // EXACT: Audio fits within video (or is shorter)
+  if (audioOverrun <= 0) {
+    return {
+      segmentIndex,
+      mode: 'EXACT',
+      extension: 0,
+      cumulativeOffset,
+      visualEffect: { type: 'none', scale: [1.0, 1.0], duration: 0 },
+      baseDuration: videoDuration,
+      displayDuration: videoDuration,
+      audioOverrun,
+      applyGainRampDown: false,
+    }
+  }
+  
+  // Cap extension at max allowed
+  const cappedExtension = Math.min(audioOverrun, config.maxExtensionPerSegment)
+  
+  // SMART_PAD: Minor overrun ≤ threshold — just hold, no visual effect
+  if (audioOverrun <= config.smartPadThreshold) {
+    return {
+      segmentIndex,
+      mode: 'SMART_PAD',
+      extension: cappedExtension,
+      cumulativeOffset,
+      visualEffect: { type: 'none', scale: [1.0, 1.0], duration: cappedExtension },
+      baseDuration: videoDuration,
+      displayDuration: videoDuration + cappedExtension,
+      audioOverrun,
+      applyGainRampDown: true,
+    }
+  }
+  
+  // FREEZE_EXTEND: Significant overrun — freeze last frame + Ken Burns micro-zoom
+  return {
+    segmentIndex,
+    mode: 'FREEZE_EXTEND',
+    extension: cappedExtension,
+    cumulativeOffset,
+    visualEffect: {
+      type: 'kenburns',
+      scale: [1.0, config.kenBurnsEndScale],
+      duration: cappedExtension,
+    },
+    baseDuration: videoDuration,
+    displayDuration: videoDuration + cappedExtension,
+    audioOverrun,
+    applyGainRampDown: true,
+  }
+}
+
+/**
+ * Analyze an entire scene's LML dynamics for a specific language.
+ * 
+ * Builds audio tracks with baseline timing, then calculates per-segment
+ * dynamics with cumulative offsets for the anchor point matrix.
+ * 
+ * Anchor Point Formula: T = (SegmentIndex × BaseDuration) + Σ(PreviousExtensions)
+ * 
+ * @param scene - Scene object with audio data
+ * @param segments - Array of scene segments with timing
+ * @param targetLanguage - Language to analyze
+ * @param baselineLanguage - Reference language (default: auto-detect)
+ * @param config - LML configuration
+ * @returns Complete scene LML analysis
+ */
+export function analyzeSceneLML(
+  scene: any,
+  segments: Array<{ segmentId?: string; startTime: number; endTime: number; sequenceIndex?: number }>,
+  targetLanguage: string,
+  baselineLanguage?: string,
+  config: LMLConfig = DEFAULT_LML_CONFIG
+): SceneLMLAnalysis {
+  const effectiveBaseline = baselineLanguage || determineBaselineLanguage(scene)
+  
+  // Build audio tracks with baseline timing to get duration deltas
+  const audioTracks = buildAudioTracksWithBaselineTiming(
+    scene, targetLanguage, effectiveBaseline
+  )
+  
+  // Calculate segment timing (existing function) to get extension info
+  const segmentInputs = segments.map((seg, idx) => ({
+    duration: seg.endTime - seg.startTime,
+    segmentIndex: seg.sequenceIndex ?? idx,
+  }))
+  
+  const timingResults = calculateSegmentTimingForLanguage(segmentInputs, audioTracks)
+  
+  // Now calculate LML dynamics per segment with cumulative offsets
+  const segmentDynamics: SegmentDynamicsResult[] = []
+  let cumulativeOffset = 0
+  let totalExtension = 0
+  const modeCounts: Record<SegmentDynamicsMode, number> = {
+    'EXACT': 0,
+    'SMART_PAD': 0,
+    'FREEZE_EXTEND': 0,
+  }
+  
+  segments.forEach((seg, idx) => {
+    const baseDuration = seg.endTime - seg.startTime
+    const timingResult = timingResults[idx]
+    
+    // The audio overrun for this segment comes from the timing result
+    const audioOverrun = timingResult
+      ? timingResult.displayDuration - timingResult.baseDuration
+      : 0
+    
+    // The effective audio duration is baseDuration + audioOverrun
+    const effectiveAudioDuration = baseDuration + audioOverrun
+    
+    const dynamics = calculateSegmentDynamics(
+      baseDuration,
+      effectiveAudioDuration,
+      seg.sequenceIndex ?? idx,
+      cumulativeOffset,
+      config
+    )
+    
+    // Update cumulative offset for next segment's anchor point
+    cumulativeOffset += dynamics.extension
+    totalExtension += dynamics.extension
+    modeCounts[dynamics.mode]++
+    
+    segmentDynamics.push(dynamics)
+  })
+  
+  // Calculate total scene duration with all extensions
+  const baseTotalDuration = segments.reduce(
+    (sum, seg) => sum + (seg.endTime - seg.startTime), 0
+  )
+  
+  return {
+    language: targetLanguage,
+    segmentDynamics,
+    totalDuration: baseTotalDuration + totalExtension,
+    totalExtension,
+    modeCounts,
+    hasFreeze: modeCounts['FREEZE_EXTEND'] > 0,
+  }
+}
+
+/**
+ * Enhance SegmentTimingResults with LML dynamics data.
+ * 
+ * Takes existing timing results from calculateSegmentTimingForLanguage
+ * and augments them with LML mode, visual effects, and cumulative offsets.
+ * 
+ * @param timingResults - Results from calculateSegmentTimingForLanguage
+ * @param config - LML configuration
+ * @returns Enhanced timing results with LML fields populated
+ */
+export function enhanceTimingWithLML(
+  timingResults: SegmentTimingResult[],
+  config: LMLConfig = DEFAULT_LML_CONFIG
+): SegmentTimingResult[] {
+  let cumulativeOffset = 0
+  
+  return timingResults.map(result => {
+    const audioOverrun = result.displayDuration - result.baseDuration
+    
+    let lmlMode: SegmentDynamicsMode = 'EXACT'
+    let visualEffect: LMLVisualEffect = { type: 'none', scale: [1.0, 1.0], duration: 0 }
+    
+    if (audioOverrun > config.smartPadThreshold) {
+      lmlMode = 'FREEZE_EXTEND'
+      visualEffect = {
+        type: 'kenburns',
+        scale: [1.0, config.kenBurnsEndScale],
+        duration: audioOverrun,
+      }
+    } else if (audioOverrun > 0) {
+      lmlMode = 'SMART_PAD'
+      visualEffect = { type: 'none', scale: [1.0, 1.0], duration: audioOverrun }
+    }
+    
+    const enhanced: SegmentTimingResult = {
+      ...result,
+      lmlMode,
+      lmlExtension: audioOverrun > 0 ? audioOverrun : 0,
+      cumulativeOffset,
+      visualEffect,
+      audioOverrun,
+    }
+    
+    cumulativeOffset += (audioOverrun > 0 ? audioOverrun : 0)
+    
+    return enhanced
+  })
+}
+
+/**
+ * Get the anchor point (absolute start time) for a segment in a specific language.
+ * 
+ * Formula: T = (SegmentIndex × BaseDuration) + Σ(PreviousExtensions)
+ * 
+ * This is the hard anchor that ensures each segment starts at exactly
+ * the right time regardless of previous segment extensions.
+ * 
+ * @param segmentIndex - Index of the segment
+ * @param segmentDynamics - Array of all segment dynamics for this language
+ * @returns Absolute start time in seconds
+ */
+export function getSegmentAnchorPoint(
+  segmentIndex: number,
+  segmentDynamics: SegmentDynamicsResult[]
+): number {
+  let anchorTime = 0
+  
+  for (let i = 0; i < segmentIndex && i < segmentDynamics.length; i++) {
+    anchorTime += segmentDynamics[i].displayDuration
+  }
+  
+  return anchorTime
 }

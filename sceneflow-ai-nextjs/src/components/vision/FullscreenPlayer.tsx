@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { SegmentData } from '@/types/screenplay'
-import { buildAudioTracksForLanguage, buildAudioTracksWithBaselineTiming, determineBaselineLanguage, flattenAudioTracks, type AudioTrackClipV2 } from '@/components/vision/scene-production/audioTrackBuilder'
+import { buildAudioTracksForLanguage, buildAudioTracksWithBaselineTiming, determineBaselineLanguage, flattenAudioTracks, analyzeSceneLML, type AudioTrackClipV2 } from '@/components/vision/scene-production/audioTrackBuilder'
 import { getAvailableLanguages } from '@/lib/audio/languageDetection'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 // Audience Feedback Components
@@ -113,8 +113,11 @@ interface VisualClip {
   endThumbnailUrl?: string
   startTime: number
   duration: number
+  // LML Elastic Segment Fields
+  lmlMode?: 'EXACT' | 'SMART_PAD' | 'FREEZE_EXTEND'
+  lmlExtension?: number
+  kenBurnsScale?: [number, number]
 }
-
 interface FullscreenPlayerProps {
   segments: SegmentData[]
   scene: any
@@ -377,21 +380,52 @@ export function FullscreenPlayer({
   
   // ============================================================================
   // Build Visual Clips from Segments
-  // Apply playback offset for translated audio alignment
-  // ============================================================================
+  // Apply LML elastic segment timing for translated audio alignment
+  // =============================================================================
+  
+  // LML Analysis: Calculate per-segment dynamics with intelligent freeze-frame detection
+  const lmlAnalysis = useMemo(() => {
+    if (!scene || selectedLanguage === baselineLanguage) return null
+    return analyzeSceneLML(scene, segments, selectedLanguage, baselineLanguage)
+  }, [scene, segments, selectedLanguage, baselineLanguage])
+  
   const visualClips = useMemo<VisualClip[]>(() => {
-    // Determine effective offset (only for non-baseline languages)
-    const effectiveOffset = selectedLanguage !== baselineLanguage ? playbackOffset : 0
-    
     // Filter out any undefined or invalid segments first
     const validSegments = segments.filter((seg): seg is SegmentData => 
       seg != null && typeof seg.segmentId === 'string'
     )
     
+    // If LML analysis available, use per-segment elastic timing
+    // Otherwise fall back to flat playback offset
+    if (lmlAnalysis && lmlAnalysis.segmentDynamics.length === validSegments.length) {
+      let cumulativeStart = 0
+      return validSegments.map((seg, idx) => {
+        const dynamics = lmlAnalysis.segmentDynamics[idx]
+        const clip: VisualClip = {
+          id: seg.segmentId,
+          segmentId: seg.segmentId,
+          thumbnailUrl: seg.references?.startFrameUrl || seg.activeAssetUrl || undefined,
+          endThumbnailUrl: seg.references?.endFrameUrl || seg.endFrameUrl || undefined,
+          startTime: cumulativeStart,
+          duration: dynamics.displayDuration,
+          // LML fields for Ken Burns effect during freeze extension
+          lmlMode: dynamics.mode,
+          lmlExtension: dynamics.extension,
+          kenBurnsScale: dynamics.visualEffect.type === 'kenburns' 
+            ? dynamics.visualEffect.scale as [number, number]
+            : undefined,
+        }
+        cumulativeStart += dynamics.displayDuration
+        return clip
+      })
+    }
+    
+    // Fallback: flat playback offset (legacy behavior)
+    const effectiveOffset = selectedLanguage !== baselineLanguage ? playbackOffset : 0
     let cumulativeOffset = 0
     return validSegments.map(seg => {
       const baseDuration = seg.endTime - seg.startTime
-      const clip = {
+      const clip: VisualClip = {
         id: seg.segmentId,
         segmentId: seg.segmentId,
         thumbnailUrl: seg.references?.startFrameUrl || seg.activeAssetUrl || undefined,
@@ -399,11 +433,10 @@ export function FullscreenPlayer({
         startTime: seg.startTime + cumulativeOffset,
         duration: baseDuration + effectiveOffset,
       }
-      // Accumulate offset for subsequent segments
       cumulativeOffset += effectiveOffset
       return clip
     })
-  }, [segments, playbackOffset, selectedLanguage, baselineLanguage])
+  }, [segments, playbackOffset, selectedLanguage, baselineLanguage, lmlAnalysis])
   
   const audioTracks = useMemo(() => {
     if (!scene) return null
@@ -498,6 +531,33 @@ export function FullscreenPlayer({
   // ============================================================================
   const currentClip = getCurrentVisualClip(currentTime)
   const currentClipIndex = visualClips.findIndex(c => c.id === currentClip?.id)
+  
+  // LML: Determine if we're in the freeze-extension portion of the current segment
+  const isInFreezeExtension = useMemo(() => {
+    if (!currentClip || !currentClip.lmlMode || currentClip.lmlMode === 'EXACT') return false
+    if (!currentClip.lmlExtension || currentClip.lmlExtension <= 0) return false
+    
+    // We're in the freeze zone if current time is past the base video duration
+    const positionInClip = currentTime - currentClip.startTime
+    const baseDuration = currentClip.duration - currentClip.lmlExtension
+    return positionInClip >= baseDuration
+  }, [currentClip, currentTime])
+  
+  // LML: Get the Ken Burns micro-zoom progress (0-1) during freeze extension
+  const freezeZoomProgress = useMemo(() => {
+    if (!isInFreezeExtension || !currentClip?.lmlExtension) return 0
+    const positionInClip = currentTime - currentClip.startTime
+    const baseDuration = currentClip.duration - currentClip.lmlExtension
+    const extensionElapsed = positionInClip - baseDuration
+    return Math.min(1, extensionElapsed / currentClip.lmlExtension)
+  }, [isInFreezeExtension, currentClip, currentTime])
+  
+  // LML: Calculate dynamic scale for freeze-frame Ken Burns micro-zoom
+  const freezeKenBurnsScale = useMemo(() => {
+    if (!isInFreezeExtension || !currentClip?.kenBurnsScale) return 1.0
+    const [startScale, endScale] = currentClip.kenBurnsScale
+    return startScale + (endScale - startScale) * freezeZoomProgress
+  }, [isInFreezeExtension, currentClip, freezeZoomProgress])
   
   // ============================================================================
   // Audio Element Management
@@ -870,13 +930,26 @@ export function FullscreenPlayer({
         }
       `}</style>
       
+      {/* LML Freeze-Frame Extension Indicator */}
+      {isInFreezeExtension && currentClip?.lmlMode === 'FREEZE_EXTEND' && (
+        <div className="absolute top-4 right-4 z-[110] flex items-center gap-2 px-3 py-1.5 rounded-full bg-yellow-500/80 text-black text-xs font-medium backdrop-blur-sm">
+          <div className="w-2 h-2 rounded-full bg-black animate-pulse" />
+          Freeze Extension +{currentClip.lmlExtension?.toFixed(1)}s
+        </div>
+      )}
+      
       {/* Image Display - Full Screen with Ken Burns */}
       <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
         {currentClip?.thumbnailUrl ? (
           <img
             src={currentClip.thumbnailUrl}
             alt={`Segment ${currentClipIndex + 1}`}
-            className={`w-full h-full object-cover ${panIntensity !== 'off' ? 'kenburns-animated' : ''}`}
+            className={`w-full h-full object-cover ${panIntensity !== 'off' && !isInFreezeExtension ? 'kenburns-animated' : ''}`}
+            style={isInFreezeExtension ? {
+              transform: `scale(${freezeKenBurnsScale})`,
+              transformOrigin: 'center center',
+              transition: 'transform 0.1s linear',
+            } : undefined}
             draggable={false}
           />
         ) : (
