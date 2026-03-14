@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
@@ -73,11 +73,21 @@ export function OptimizeSceneDialog({
   }, [isOpen, sceneNumber, sceneAnalysis])
 
   // Update custom instruction with speech transcript
+  // The hook accumulates finalized text across utterances, so micTranscript
+  // contains the full cumulative voice input — just use it directly.
+  const baseInstructionRef = useRef('')
+  
   useEffect(() => {
-    if (isMicRecording && micTranscript) {
-      setCustomInstruction(prev => prev ? `${prev} ${micTranscript}` : micTranscript)
+    if (isMicRecording && !baseInstructionRef.current) {
+      baseInstructionRef.current = customInstruction
     }
-  }, [isMicRecording, micTranscript])
+  }, [isMicRecording])
+  
+  useEffect(() => {
+    if (!micTranscript) return
+    const base = baseInstructionRef.current.trim()
+    setCustomInstruction(base ? `${base} ${micTranscript}` : micTranscript)
+  }, [micTranscript])
 
   const handleVoiceToggle = () => {
     if (!sttSupported || !sttSecure) {
@@ -86,8 +96,10 @@ export function OptimizeSceneDialog({
     }
     if (isMicRecording) {
       stopMic()
+      baseInstructionRef.current = customInstruction
       setMicTranscript('')
     } else {
+      baseInstructionRef.current = customInstruction
       setMicTranscript('')
       startMic()
     }

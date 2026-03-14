@@ -446,9 +446,10 @@ export default function ScriptReviewModal({
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en') // Keep for TTS playback
   const [playingSection, setPlayingSection] = useState<string | null>(null)
   const [loadingSection, setLoadingSection] = useState<string | null>(null)
-  const [showDeductions, setShowDeductions] = useState(false)
-  const [showSceneAnalysis, setShowSceneAnalysis] = useState(false)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+    const [showDeductions, setShowDeductions] = useState(false)
+    const [showSceneAnalysis, setShowSceneAnalysis] = useState(false)
+    const [scenePromptDismissed, setScenePromptDismissed] = useState(false)
+    const audioRef = useRef<HTMLAudioElement | null>(null)
   const audioCacheRef = useRef<Map<string, { url: string; voiceId: string; textHash: string; language: string }>>(new Map())
   
   // Guard ref to prevent re-persisting the same analysis data (prevents infinite loops)
@@ -810,25 +811,24 @@ export default function ScriptReviewModal({
     }
   }, [selectedOptimizations])
 
-  // When recording starts, save the current instruction as base
-  useEffect(() => {
-    if (isMicRecording) {
-      baseInstructionRef.current = customInstruction
-    }
-  }, [isMicRecording, customInstruction])
-  
-  // Update instruction with voice transcript
-  useEffect(() => {
-    if (!isMicRecording) return
-    if (!micTranscript) return
+    // When recording starts, save the current instruction as base
+    useEffect(() => {
+      if (isMicRecording) {
+        baseInstructionRef.current = customInstruction
+      }
+    }, [isMicRecording])
     
-    // Combine base instruction with current transcript
-    const base = baseInstructionRef.current.trim()
-    const newInstruction = base ? `${base} ${micTranscript}` : micTranscript
-    setCustomInstruction(newInstruction)
-  }, [isMicRecording, micTranscript])
-
-  // Voice input toggle handler
+    // Update instruction with voice transcript
+    // The hook accumulates finalized text across utterances, so micTranscript
+    // grows with each pause. We combine it with whatever was typed before voice.
+    useEffect(() => {
+      if (!micTranscript) return
+      
+      // Combine base instruction with current transcript
+      const base = baseInstructionRef.current.trim()
+      const newInstruction = base ? `${base} ${micTranscript}` : micTranscript
+      setCustomInstruction(newInstruction)
+    }, [micTranscript])  // Voice input toggle handler
   const handleVoiceToggle = () => {
     if (!sttSupported || !sttSecure) return
     if (isMicRecording) {
@@ -1418,14 +1418,16 @@ export default function ScriptReviewModal({
                 </Tooltip>
               </TooltipProvider>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => {
                   stopPlayback()
                   onClose()
                 }}
+                className="flex items-center gap-1.5"
               >
                 <X className="w-4 h-4" />
+                Close
               </Button>
             </div>
           </div>
@@ -1698,30 +1700,89 @@ export default function ScriptReviewModal({
 
               {/* Target Audience & Emotional Impact */}
               {(review.targetDemographic || review.emotionalImpact) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {review.targetDemographic && (
-                    <Card className="bg-purple-50 dark:bg-purple-900/20">
-                      <CardContent className="pt-4">
-                        <div className="text-sm font-medium text-purple-700 dark:text-purple-300">Target Demographic</div>
-                        <div className="text-sm mt-1">{review.targetDemographic}</div>
-                      </CardContent>
-                    </Card>
-                  )}
-                  {review.emotionalImpact && (
-                    <Card className="bg-blue-50 dark:bg-blue-900/20">
-                      <CardContent className="pt-4">
-                        <div className="text-sm font-medium text-blue-700 dark:text-blue-300">Expected Emotional Impact</div>
-                        <div className="text-sm mt-1">{review.emotionalImpact}</div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {review.targetDemographic && (
+                      <Card className="bg-purple-50 dark:bg-purple-900/20">
+                        <CardContent className="pt-4">
+                          <div className="text-sm font-medium text-purple-700 dark:text-purple-300">Target Demographic</div>
+                          <div className="text-sm mt-1">{review.targetDemographic}</div>
+                        </CardContent>
+                      </Card>
+                    )}
+                    {review.emotionalImpact && (
+                      <Card className="bg-blue-50 dark:bg-blue-900/20">
+                        <CardContent className="pt-4">
+                          <div className="text-sm font-medium text-blue-700 dark:text-blue-300">Expected Emotional Impact</div>
+                          <div className="text-sm mt-1">{review.emotionalImpact}</div>
+                        </CardContent>
+                      </Card>
+                    )}
                   </div>
                 )}
 
-                {/* Analysis Tab */}
-                {activeTab === 'analysis' && (
+                {/* Go to Scenes Prompt — shown when score >= 80, dismissible */}
+                {review.overallScore >= 80 && !scenePromptDismissed && (
+                  <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-blue-200 dark:border-blue-800">
+                    <CardContent className="pt-4 pb-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3 flex-1">
+                          <div className="mt-0.5 p-1.5 rounded-full bg-blue-100 dark:bg-blue-900/40">
+                            <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-sm font-semibold text-blue-800 dark:text-blue-200">
+                              Ready for scene-level optimization
+                            </div>
+                            <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                              Your script scored <strong>{review.overallScore}</strong> overall. For further refinement, use <strong>Go to Scenes</strong> to analyze and optimize individual scenes with targeted resonance feedback.
+                            </p>
+                            {sceneAnalysis.length > 0 && (
+                              <div className="flex items-center gap-3 mt-2 text-xs">
+                                <span className="text-gray-600 dark:text-gray-400">{sceneAnalysis.length} scenes</span>
+                                <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  {sceneAnalysis.filter(s => s.score >= 80).length} ready
+                                </span>
+                                {sceneAnalysis.filter(s => s.score < 80).length > 0 && (
+                                  <span className="text-amber-600 dark:text-amber-400">
+                                    {sceneAnalysis.filter(s => s.score < 80).length} to optimize
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            <div className="mt-3">
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  stopPlayback()
+                                  onClose()
+                                }}
+                                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                              >
+                                <Film className="w-4 h-4 mr-1.5" />
+                                Go to Scenes
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setScenePromptDismissed(true)}
+                          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 shrink-0 h-7 w-7 p-0"
+                          aria-label="Dismiss scene optimization prompt"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+                    </div>
+                  )}
+
+                  {/* Analysis Tab */}
+                  {activeTab === 'analysis' && (
                   <div className="space-y-6">
                     {/* Analysis */}
                     <Card>

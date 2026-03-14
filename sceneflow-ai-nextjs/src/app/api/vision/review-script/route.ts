@@ -242,20 +242,20 @@ async function generateAudienceResonance(
   }).join('\n---\n') || 'No scenes available'
 
   // Determine automatic score guidance based on narration ratio (soft caps, not hard limits)
-  let autoScoreCap = 100
-  let autoCapReason = ''
-  if (showVsTellMetrics.ratio > 40) {
-    autoScoreCap = 75
-    autoCapReason = `Narration comprises ${showVsTellMetrics.ratio.toFixed(1)}% of content (>40%). Consider reducing narration.`
-  } else if (showVsTellMetrics.ratio > 30) {
-    autoScoreCap = 85
-    autoCapReason = `Narration comprises ${showVsTellMetrics.ratio.toFixed(1)}% of content (>30%). Some narration reduction recommended.`
-  } else if (showVsTellMetrics.ratio > 20) {
-    autoScoreCap = 90
-    autoCapReason = `Narration comprises ${showVsTellMetrics.ratio.toFixed(1)}% of content (>20%). Minor narration adjustment may help.`
-  }
-
-  const prompt = `You are an expert screenplay analyst using a DEDUCTION-BASED RUBRIC system. Your job is to provide fair, constructive feedback that helps writers improve their scripts.
+    // Relaxed caps: narration ratio influences ceiling but doesn't hard-block quality scripts
+    // from reaching 90+ when other dimensions are strong. Deductions still penalize narration.
+    let autoScoreCap = 100
+    let autoCapReason = ''
+    if (showVsTellMetrics.ratio > 40) {
+      autoScoreCap = 82
+      autoCapReason = `Narration comprises ${showVsTellMetrics.ratio.toFixed(1)}% of content (>40%). Consider reducing narration.`
+    } else if (showVsTellMetrics.ratio > 30) {
+      autoScoreCap = 92
+      autoCapReason = `Narration comprises ${showVsTellMetrics.ratio.toFixed(1)}% of content (>30%). Some narration reduction recommended.`
+    } else if (showVsTellMetrics.ratio > 20) {
+      autoScoreCap = 95
+      autoCapReason = `Narration comprises ${showVsTellMetrics.ratio.toFixed(1)}% of content (>20%). Minor narration adjustment may help.`
+    }  const prompt = `You are an expert screenplay analyst using a DEDUCTION-BASED RUBRIC system. Your job is to provide fair, constructive feedback that helps writers improve their scripts.
 
 SCORING RULES:
 1. Start at 100 and deduct points for genuine craft issues
@@ -481,21 +481,19 @@ FINAL CHECK before outputting:
     'Show vs Tell Ratio': 10
   }
   
-  // =========================================================================
-  // HYSTERESIS SMOOTHING: Prevent score volatility on re-analysis
-  // When the script hasn't changed, anchor new scores toward previous scores.
-  // This eliminates the "slot machine" effect where repeated analysis of the
-  // same script produces swinging scores (e.g., 73 → 77 → 73).
-  //
-  // Strategy: 30% previous + 70% new with max ±10 point delta.
-  // This prevents score regression when optimizations are applied — the score
-  // can improve but won't suddenly drop by 20 points due to evaluation variance.
-  // =========================================================================
-  if (previousScores?.categories && categories.length > 0) {
-    const anchorStrength = 0.3
-    const maxDelta = 10 // Max ±10 points per dimension
-    
-    // Build lookup of previous dimensional scores
+    // =========================================================================
+    // HYSTERESIS SMOOTHING: Prevent score volatility on re-analysis
+    // When the script hasn't changed, anchor new scores toward previous scores.
+    // This eliminates the "slot machine" effect where repeated analysis of the
+    // same script produces swinging scores (e.g., 73 → 77 → 73).
+    //
+    // Strategy: 20% previous + 80% new with max ±15 point delta.
+    // Light anchoring keeps stability while allowing faster convergence
+    // toward the AI's true assessment after script optimization.
+    // =========================================================================
+    if (previousScores?.categories && categories.length > 0) {
+      const anchorStrength = 0.2
+      const maxDelta = 15 // Max ±15 points per dimension — allows faster convergence    // Build lookup of previous dimensional scores
     const prevScoreLookup: Record<string, number> = {}
     for (const prevCat of previousScores.categories) {
       prevScoreLookup[prevCat.name] = prevCat.score

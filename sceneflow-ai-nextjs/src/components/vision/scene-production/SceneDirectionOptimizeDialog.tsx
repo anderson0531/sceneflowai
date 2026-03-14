@@ -307,11 +307,21 @@ export function SceneDirectionOptimizeDialog({
   }, [isOpen, sceneNumber])
   
   // Update custom instruction with speech transcript
+  // The hook accumulates finalized text across utterances, so micTranscript
+  // contains the full cumulative voice input.
+  const baseVoiceInstructionRef = useRef('')
+  
   useEffect(() => {
-    if (isMicRecording && micTranscript) {
-      setCustomInstruction(prev => prev ? `${prev} ${micTranscript}` : micTranscript)
+    if (isMicRecording && !baseVoiceInstructionRef.current) {
+      baseVoiceInstructionRef.current = customInstruction
     }
-  }, [isMicRecording, micTranscript])
+  }, [isMicRecording])
+  
+  useEffect(() => {
+    if (!micTranscript) return
+    const base = baseVoiceInstructionRef.current.trim()
+    setCustomInstruction(base ? `${base} ${micTranscript}` : micTranscript)
+  }, [micTranscript])
   
   // Get scene heading text
   const sceneHeading = typeof scene.heading === 'string' 
@@ -363,8 +373,10 @@ export function SceneDirectionOptimizeDialog({
     }
     if (isMicRecording) {
       stopMic()
+      baseVoiceInstructionRef.current = customInstruction
       setMicTranscript('')
     } else {
+      baseVoiceInstructionRef.current = customInstruction
       setMicTranscript('')
       startMic()
     }
