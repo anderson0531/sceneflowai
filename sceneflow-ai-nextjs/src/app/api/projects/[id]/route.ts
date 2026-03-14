@@ -194,7 +194,7 @@ export async function PUT(
           ...body.metadata.visionPhase
         }
         
-        // CRITICAL SAFEGUARD: Prevent accidental script deletion
+        // CRITICAL SAFEGUARD: Prevent accidental script deletion AND stale overwrites
         // If existing has script with scenes but incoming has fewer/no scenes, preserve existing
         const existingScript = existingMetadata.visionPhase?.script
         const incomingScript = body.metadata.visionPhase?.script
@@ -203,6 +203,33 @@ export async function PUT(
         
         // Track whether safeguard triggered to skip deep-merge
         let scriptSafeguardTriggered = false
+        
+        // RACE CONDITION GUARD: Timestamp-based stale write prevention
+        // If the DB has a newer scriptUpdatedAt than the incoming payload,
+        // the incoming script data is stale (e.g. from a concurrent onRegenerate call)
+        // and should be ignored to prevent reverting a freshly-saved optimization.
+        const existingScriptTimestamp = existingMetadata.visionPhase?.scriptUpdatedAt
+        const incomingScriptTimestamp = body.metadata.visionPhase?.scriptUpdatedAt
+        if (existingScriptTimestamp && incomingScriptTimestamp && incomingScript) {
+          const existingTime = new Date(existingScriptTimestamp).getTime()
+          const incomingTime = new Date(incomingScriptTimestamp).getTime()
+          if (incomingTime < existingTime) {
+            console.warn('[Projects PUT] STALE SCRIPT WRITE BLOCKED:', {
+              existingTimestamp: existingScriptTimestamp,
+              incomingTimestamp: incomingScriptTimestamp,
+              deltaMs: existingTime - incomingTime,
+              preservingNewerScript: true
+            })
+            // Preserve existing script but allow other visionPhase fields (like reviews) to merge
+            mergedMetadata.visionPhase.script = existingScript
+            mergedMetadata.visionPhase.scriptUpdatedAt = existingScriptTimestamp
+            scriptSafeguardTriggered = true
+          }
+        }
+        // Also preserve scriptUpdatedAt from incoming if it's newer
+        if (incomingScriptTimestamp && !scriptSafeguardTriggered) {
+          mergedMetadata.visionPhase.scriptUpdatedAt = incomingScriptTimestamp
+        }
         
         // Case 1: Incoming explicitly sets script to null — intentional clear for regeneration
         if (body.metadata.visionPhase.script === null) {

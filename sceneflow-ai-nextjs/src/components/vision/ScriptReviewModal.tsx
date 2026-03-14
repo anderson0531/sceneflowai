@@ -898,7 +898,12 @@ export default function ScriptReviewModal({
           // Reset You Direct state after success
           setSelectedOptimizations([])
           setCustomInstruction('')
-          // Auto-trigger re-analysis so user sees fresh scores
+          // RACE CONDITION FIX: Defer re-analysis to allow React to commit state updates
+          // from onScriptOptimized before onRegenerate reads project/script state.
+          // Without this delay, onRegenerate captures stale pre-optimization state.
+          await new Promise<void>(resolve => {
+            requestAnimationFrame(() => setTimeout(resolve, 50))
+          })
           await onRegenerate()
           setActiveTab('overview')
         } else {
@@ -1019,8 +1024,12 @@ export default function ScriptReviewModal({
           toast.success(`Script revised with ${selectedRecs.length} recommendation${selectedRecs.length > 1 ? 's' : ''}! Re-analyzing...`)
           // Clear selections
           setSelectedRecommendationIndices(new Set())
-          // Auto-trigger re-analysis so the user sees fresh recommendations
-          // The overlay continues showing through the re-analyze cycle
+          // RACE CONDITION FIX: Defer re-analysis to allow React to commit state updates
+          // from onScriptOptimized before onRegenerate reads project/script state.
+          // Without this delay, onRegenerate captures stale pre-optimization state.
+          await new Promise<void>(resolve => {
+            requestAnimationFrame(() => setTimeout(resolve, 50))
+          })
           await onRegenerate()
           setActiveTab('overview')
         } else {

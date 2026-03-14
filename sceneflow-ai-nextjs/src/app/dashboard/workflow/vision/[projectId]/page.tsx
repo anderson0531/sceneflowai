@@ -670,6 +670,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const objectReferencesRef = useRef<VisualReference[]>([])
   const locationReferencesRef = useRef<LocationReference[]>([])
   const scriptRef = useRef<any>(null)
+  const projectRef = useRef<any>(null)
   
   // Keep refs in sync with state (refs for sceneReferences/objectReferences/locationReferences)
   useEffect(() => { sceneReferencesRef.current = sceneReferences }, [sceneReferences])
@@ -683,8 +684,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [isGeneratingReviews, setIsGeneratingReviews] = useState(false)
   const [reviewsOutdated, setReviewsOutdated] = useState(false)
   
-  // Keep script ref in sync (declared after state variable)
+  // Keep script and project refs in sync (avoids stale closures in async operations)
   useEffect(() => { scriptRef.current = script }, [script])
+  useEffect(() => { projectRef.current = project }, [project])
   
   // Collapsible sidebar sections
   const [sectionsOpen, setSectionsOpen] = useState({
@@ -786,11 +788,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
     
     // Save to database
+    // RACE CONDITION FIX: Use projectRef for latest metadata instead of stale closure
     const updatedScenes = updatedScript?.script?.scenes || []
-    if (updatedScenes.length > 0 && project) {
+    const currentProject = projectRef.current || project
+    if (updatedScenes.length > 0 && currentProject) {
       try {
-        const existingMetadata = project?.metadata || {}
+        const existingMetadata = currentProject?.metadata || {}
         const existingVisionPhase = existingMetadata.visionPhase || {}
+        const scriptUpdatedAt = new Date().toISOString()
         
         const payload = {
           metadata: {
@@ -798,7 +803,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             visionPhase: {
               ...existingVisionPhase,
               script: updatedScript,
-              scenes: updatedScenes
+              scenes: updatedScenes,
+              scriptUpdatedAt
             }
           }
         }
@@ -826,7 +832,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         } catch {}
       }
     }
-  }, [project, projectId])
+  }, [projectId])
 
   // Handle openPlayer query param from Screening Room dashboard
   const searchParams = useSearchParams()
@@ -5045,32 +5051,41 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             // This ensures all fields including deductions, scriptHash, etc are persisted
             const fullAudienceData = data.audienceResonance || data.audience
             
-            const updatedMetadata = {
-              ...project.metadata,
+            // RACE CONDITION FIX: Only send review-specific fields to the PUT endpoint.
+            // Previously, this spread the ENTIRE visionPhase (including `script`, `scenes`, 
+            // `characters`) from stale closure state, which overwrote freshly-saved script data.
+            // Now we isolate the review save to ONLY update review-related fields.
+            const currentProject = projectRef.current || project
+            const currentProjectMetadata = currentProject?.metadata || {}
+            const currentVisionPhase = currentProjectMetadata.visionPhase || {}
+            
+            // Build metadata that ONLY updates review fields — does NOT touch script/scenes/characters
+            const reviewOnlyMetadata = {
+              ...currentProjectMetadata,
               visionPhase: {
-                ...project.metadata?.visionPhase,
+                ...currentVisionPhase,
                 reviews: {
                   director: data.director,
                   audience: fullAudienceData,
                   lastUpdated: data.generatedAt
                 },
-                reviewHistory: updatedHistory,
-                script: currentScript,
-                scenes: scenes,
-                characters: characters,
-                narrationVoice: narrationVoice
+                reviewHistory: updatedHistory
+                // INTENTIONALLY OMITTED: script, scenes, characters, narrationVoice
+                // These are NOT being changed by review generation, so don't send them
+                // Sending them with stale data was the root cause of the script reversion bug
               }
             }
             
-            console.log('[Script Review] Saving reviews to database...', {
-              audienceScore: fullAudienceData?.overallScore
+            console.log('[Script Review] Saving reviews to database (review-only payload)...', {
+              audienceScore: fullAudienceData?.overallScore,
+              reviewOnlyFields: ['reviews', 'reviewHistory']
             })
             
             const saveResponse = await fetch(`/api/projects/${projectId}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                metadata: updatedMetadata
+                metadata: reviewOnlyMetadata
               })
             })
             
@@ -5083,14 +5098,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             const saveData = await saveResponse.json()
             console.log('[Script Review] Reviews saved successfully to database')
             
-            // CRITICAL: Update project state with the new reviews
-            // This prevents race conditions where other components save stale project state
+            // CRITICAL: Update project state with the new reviews using functional update
+            // This reads the LATEST project state (not stale closure) and only patches review fields
             setProject(prev => {
               if (!prev) return prev
-              return {
+              const updated = {
                 ...prev,
-                metadata: updatedMetadata
+                metadata: {
+                  ...prev.metadata,
+                  visionPhase: {
+                    ...prev.metadata?.visionPhase,
+                    reviews: {
+                      director: data.director,
+                      audience: fullAudienceData,
+                      lastUpdated: data.generatedAt
+                    },
+                    reviewHistory: updatedHistory
+                  }
+                }
               }
+              // Sync ref so concurrent operations see fresh state
+              projectRef.current = updated
+              return updated
             })
             
             // Update local state only after successful save
@@ -5221,7 +5250,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       setScript(updatedScript)
       
       // Auto-save scene analysis to database with debounce (no toast - silent save)
-      debouncedSaveSceneAnalysis(updatedScript, project?.metadata, projectId)
+      debouncedSaveSceneAnalysis(updatedScript, (projectRef.current || project)?.metadata, projectId)
     }
   }, [script, projectId, project?.metadata, debouncedSaveSceneAnalysis])
 
@@ -8325,20 +8354,31 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
         
         // Persist to database in background
-        if (project) {
-          const updatedMetadata = {
-            ...project.metadata,
-            visionPhase: {
-              ...project.metadata?.visionPhase,
-              script: updatedScript
+        // RACE CONDITION FIX: Use projectRef (latest state) instead of stale closure `project`
+        // Also use functional setProject to build metadata from fresh state
+        const currentProject = projectRef.current || project
+        if (currentProject) {
+          // Build metadata from latest project state, only updating the script field
+          setProject((p: any) => {
+            if (!p) return p
+            const freshMeta = {
+              ...p.metadata,
+              visionPhase: {
+                ...p.metadata?.visionPhase,
+                script: updatedScript
+              }
             }
-          }
-          setProject((p: any) => p ? { ...p, metadata: updatedMetadata } : p)
-          fetch(`/api/projects/${project.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ metadata: updatedMetadata })
-          }).catch(err => console.error('[AutoDirection] DB save failed:', err))
+            // Persist to DB using the freshly-built metadata
+            fetch(`/api/projects/${p.id || projectId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ metadata: freshMeta })
+            }).catch(err => console.error('[AutoDirection] DB save failed:', err))
+            
+            const updated = { ...p, metadata: freshMeta }
+            projectRef.current = updated
+            return updated
+          })
         }
         
         return updatedScript
@@ -10321,22 +10361,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
     
     try {
-      const existingMetadata = project?.metadata || {}
+      // RACE CONDITION FIX: Use refs for latest state instead of stale closures
+      const currentProject = projectRef.current || project
+      const currentScript = scriptRef.current || script
+      const existingMetadata = currentProject?.metadata || {}
       const existingVisionPhase = existingMetadata.visionPhase || {}
       
+      const scriptUpdatedAt = new Date().toISOString()
       const payload: Record<string, any> = {
         metadata: {
           ...existingMetadata,
           visionPhase: {
             ...existingVisionPhase,
             script: {
-              ...script,
+              ...currentScript,
               script: {
-                ...script?.script,
+                ...currentScript?.script,
                 scenes: updatedScenes
               }
             },
-            scenes: updatedScenes
+            scenes: updatedScenes,
+            scriptUpdatedAt
           }
         },
       }
@@ -10996,14 +11041,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               return rest
             })
             
+            // RACE CONDITION FIX: Use scriptRef (latest state) instead of stale closure `script`
+            const currentScript = scriptRef.current || script
             const updatedScript = {
-              ...script,
+              ...currentScript,
               script: {
-                ...script?.script,
+                ...currentScript?.script,
                 scenes: cleanedScenes
               }
             }
             setScript(updatedScript)
+            // Immediately sync ref so downstream callers (e.g. onRegenerate) read the new script
+            scriptRef.current = updatedScript
             
             // Clear stale review data — prevents old recommendations from being
             // re-displayed or re-applied before re-analysis completes
@@ -11012,19 +11061,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             setReviewsOutdated(true)
             
             // Persist to database
+            // RACE CONDITION FIX: Use functional setProject to read latest project state
+            // instead of stale closure `project`, and include scriptUpdatedAt timestamp
+            // so the PUT endpoint can reject stale overwrites
             try {
-              const existingMetadata = project?.metadata || {}
-              const existingVisionPhase = existingMetadata.visionPhase || {}
+              const scriptUpdatedAt = new Date().toISOString()
+              
+              // Build save payload from latest project state (via ref, not closure)
+              const currentProject = projectRef.current || project
+              const freshMetadata = currentProject?.metadata || {}
+              const freshVisionPhase = freshMetadata.visionPhase || {}
               
               const saveResponse = await fetch(`/api/projects/${projectId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   metadata: {
-                    ...existingMetadata,
+                    ...freshMetadata,
                     visionPhase: {
-                      ...existingVisionPhase,
-                      script: updatedScript
+                      ...freshVisionPhase,
+                      script: updatedScript,
+                      scriptUpdatedAt
                     }
                   }
                 })
@@ -11034,16 +11091,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               if (saveResponse.ok) {
                 setProject(prev => {
                   if (!prev) return prev
-                  return {
+                  const updated = {
                     ...prev,
                     metadata: {
                       ...prev.metadata,
                       visionPhase: {
                         ...prev.metadata?.visionPhase,
-                        script: updatedScript
+                        script: updatedScript,
+                        scriptUpdatedAt
                       }
                     }
                   }
+                  // Sync ref immediately so concurrent operations see fresh state
+                  projectRef.current = updated
+                  return updated
                 })
               }
             } catch (error) {
