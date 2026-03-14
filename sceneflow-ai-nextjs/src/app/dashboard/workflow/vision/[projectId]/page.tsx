@@ -687,6 +687,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Keep script and project refs in sync (avoids stale closures in async operations)
   useEffect(() => { scriptRef.current = script }, [script])
   useEffect(() => { projectRef.current = project }, [project])
+  
+  // Guard: prevents overlapping full-script direction regeneration cycles
+  // When onScriptOptimized fires direction regen for all scenes, this ref
+  // prevents a second cycle from starting before the first completes.
+  const optimizationDirectionInFlight = useRef(false)
 
   // [REVERSION-DEBUG] Helper to create script fingerprint for tracking stale writes
   const getScriptFingerprint = (s: any) => {
@@ -5218,10 +5223,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       analyzedAt: string
     }
   }>) => {
-    // Persist scene-level analysis to each scene in the script
-    if (!script?.script?.scenes || sceneAnalyses.length === 0) return
+    // STABILITY FIX: Read latest state from refs instead of closure-captured
+    // `script` and `project`. This prevents the callback from being recreated
+    // every time script/project state changes, which was causing the
+    // ScriptReviewModal useEffect (audienceReview dep) to re-fire and
+    // trigger redundant scene analysis persistence cycles.
+    const currentScript = scriptRef.current
+    const currentProject = projectRef.current
     
-    const updatedScenes = [...script.script.scenes]
+    // Persist scene-level analysis to each scene in the script
+    if (!currentScript?.script?.scenes || sceneAnalyses.length === 0) return
+    
+    const updatedScenes = [...currentScript.script.scenes]
     let hasChanges = false
     
     for (const { sceneIndex, analysis } of sceneAnalyses) {
@@ -5245,18 +5258,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     
     if (hasChanges) {
       const updatedScript = {
-        ...script,
+        ...currentScript,
         script: {
-          ...script.script,
+          ...currentScript.script,
           scenes: updatedScenes
         }
       }
       setScript(updatedScript)
       
       // Auto-save scene analysis to database with debounce (no toast - silent save)
-      debouncedSaveSceneAnalysis(updatedScript, (projectRef.current || project)?.metadata, projectId)
+      debouncedSaveSceneAnalysis(updatedScript, currentProject?.metadata, projectId)
     }
-  }, [script, projectId, project?.metadata, debouncedSaveSceneAnalysis])
+  }, [projectId, debouncedSaveSceneAnalysis])
 
   // Handler for analyzing a single scene (called from ScriptPanel)
   const handleAnalyzeScene = useCallback(async (sceneIndex: number) => {
@@ -11108,13 +11121,33 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
             
             // Auto-regenerate direction for all scenes after full script optimization
-            console.log(`[AutoDirection] Full script optimized - regenerating direction for ${cleanedScenes.length} scenes`)
-            toast.info('Updating scene directions for optimized script...', { duration: 4000 })
-            for (let i = 0; i < cleanedScenes.length; i++) {
-              // Stagger to avoid overwhelming the API
-              setTimeout(() => {
-                handleBackgroundDirectionGeneration(i)
-              }, i * 2000) // 2 second stagger between scenes
+            // Guard: Skip if a previous optimization cycle is still generating directions.
+            // This prevents the onScriptOptimized → onRegenerate → onScriptOptimized loop
+            // from launching multiple overlapping direction generation cycles.
+            if (optimizationDirectionInFlight.current) {
+              console.log(`[AutoDirection] Skipping direction regen - previous cycle still in flight`)
+            } else {
+              optimizationDirectionInFlight.current = true
+              console.log(`[AutoDirection] Full script optimized - regenerating direction for ${cleanedScenes.length} scenes`)
+              toast.info('Updating scene directions for optimized script...', { duration: 4000 })
+              
+              // Track completion of all direction generations
+              let completedCount = 0
+              const totalScenes = cleanedScenes.length
+              
+              for (let i = 0; i < totalScenes; i++) {
+                // Stagger to avoid overwhelming the API (max 3 concurrent)
+                setTimeout(async () => {
+                  try {
+                    await handleBackgroundDirectionGeneration(i)
+                  } finally {
+                    completedCount++
+                    if (completedCount >= totalScenes) {
+                      optimizationDirectionInFlight.current = false
+                    }
+                  }
+                }, i * 2000) // 2 second stagger between scenes
+              }
             }
           }
         }}

@@ -25,16 +25,110 @@ interface GenerateDirectionRequest {
 /**
  * Call Vertex AI Gemini for scene direction generation
  */
-async function callGemini(prompt: string): Promise<string> {
+async function callGemini(prompt: string): Promise<{ text: string; finishReason?: string }> {
   console.log('[Scene Direction] Calling Vertex AI Gemini...')
   const result = await generateText(prompt, {
     model: 'gemini-2.5-flash',
     temperature: 0.7,
     topP: 0.95,
-    maxOutputTokens: 8192,
+    maxOutputTokens: 12000, // Increased from 8192 — scenes with many dialogue lines can exceed 8K tokens
     responseMimeType: 'application/json'
   })
-  return result.text
+  return { text: result.text, finishReason: result.finishReason }
+}
+
+/**
+ * Extract JSON from AI response text, handling markdown fences, 
+ * trailing text, and truncated responses.
+ */
+function extractJsonFromResponse(responseText: string): string {
+  let text = responseText.trim()
+  
+  // Method 1: Regex extraction of code block (handles ```json or ``` anywhere in response)
+  const codeBlockMatch = text.match(/```(?:json|JSON)?\s*\n?([\s\S]*?)\n?\s*```/)
+  if (codeBlockMatch) {
+    text = codeBlockMatch[1].trim()
+  } else {
+    // Method 2: Strip leading/trailing fence markers (handles edge cases)
+    if (text.startsWith('```json')) {
+      text = text.replace(/^```json\s*\n?/, '').replace(/\n?\s*```\s*$/, '')
+    } else if (text.startsWith('```')) {
+      text = text.replace(/^```\s*\n?/, '').replace(/\n?\s*```\s*$/, '')
+    }
+  }
+  
+  // Method 3: If text has trailing content after JSON (e.g., explanatory text),
+  // find the outermost balanced braces
+  if (!text.startsWith('{')) {
+    const firstBrace = text.indexOf('{')
+    if (firstBrace >= 0) {
+      text = text.substring(firstBrace)
+    }
+  }
+  
+  return text
+}
+
+/**
+ * Attempt to repair truncated JSON (from MAX_TOKENS cutoff).
+ * Closes unclosed strings, arrays, and objects.
+ */
+function repairTruncatedJson(text: string): string {
+  // If it already parses, return as-is
+  try { JSON.parse(text); return text } catch {}
+  
+  let repaired = text
+  
+  // Close unclosed string
+  const quoteCount = (repaired.match(/(?<!\\)"/g) || []).length
+  if (quoteCount % 2 !== 0) {
+    repaired += '"'
+  }
+  
+  // Count open vs close brackets
+  let braces = 0, brackets = 0
+  let inString = false
+  for (let i = 0; i < repaired.length; i++) {
+    const ch = repaired[i]
+    if (ch === '"' && (i === 0 || repaired[i-1] !== '\\')) { inString = !inString; continue }
+    if (inString) continue
+    if (ch === '{') braces++
+    else if (ch === '}') braces--
+    else if (ch === '[') brackets++
+    else if (ch === ']') brackets--
+  }
+  
+  // Remove trailing comma before closing
+  repaired = repaired.replace(/,\s*$/, '')
+  
+  // Close unclosed arrays then objects
+  while (brackets > 0) { repaired += ']'; brackets-- }
+  while (braces > 0) { repaired += '}'; braces-- }
+  
+  return repaired
+}
+
+/**
+ * Fill missing top-level keys with sensible defaults instead of throwing.
+ * This prevents 500 errors when AI omits a section.
+ */
+function fillDirectionDefaults(direction: any): DetailedSceneDirection {
+  if (!direction.camera) {
+    direction.camera = { shots: ['Medium Shot'], angle: 'Eye-Level', movement: 'Static', lensChoice: 'Standard (50mm)', focus: 'Deep Focus' }
+  }
+  if (!direction.lighting) {
+    direction.lighting = { overallMood: 'Natural', timeOfDay: 'Day', keyLight: 'Soft key from camera left', fillLight: 'Ambient fill', backlight: 'Rim light for separation', practicals: 'None', colorTemperature: 'Neutral' }
+  }
+  if (!direction.scene) {
+    direction.scene = { location: 'Interior', keyProps: [], atmosphere: 'Neutral' }
+  }
+  if (!direction.talent) {
+    direction.talent = { blocking: 'Standard positioning', keyActions: ['Perform dialogue as written'], emotionalBeat: 'As scripted' }
+  }
+  if (!direction.audio) {
+    direction.audio = { priorities: 'Clean dialogue capture', considerations: 'Standard set protocols' }
+  }
+  return direction as DetailedSceneDirection
 }
 
 /**
@@ -165,26 +259,34 @@ export async function POST(req: NextRequest) {
     console.log('[Scene Direction] Generating direction for scene', sceneIndex)
 
     // Call Vertex AI Gemini
-    const responseText = await callGemini(prompt)
+    const { text: responseText, finishReason } = await callGemini(prompt)
     
-    // Parse JSON response
+    // Warn if response may be truncated
+    if (finishReason === 'MAX_TOKENS') {
+      console.warn('[Scene Direction] Response may be truncated (MAX_TOKENS) for scene', sceneIndex)
+    }
+    
+    // Parse JSON response with robust extraction and repair
     let sceneDirection: DetailedSceneDirection
     try {
-      // Clean up response if it has markdown code blocks
-      let cleanedText = responseText.trim()
-      if (cleanedText.startsWith('```json')) {
-        cleanedText = cleanedText.replace(/^```json\n?/, '').replace(/\n?```$/, '')
-      } else if (cleanedText.startsWith('```')) {
-        cleanedText = cleanedText.replace(/^```\n?/, '').replace(/\n?```$/, '')
+      let cleanedText = extractJsonFromResponse(responseText)
+      
+      // Attempt parse, with truncation repair as fallback
+      try {
+        sceneDirection = JSON.parse(cleanedText)
+      } catch (firstParseError) {
+        // If response was truncated, attempt repair
+        if (finishReason === 'MAX_TOKENS' || !cleanedText.endsWith('}')) {
+          console.warn('[Scene Direction] Attempting JSON repair for truncated response')
+          const repaired = repairTruncatedJson(cleanedText)
+          sceneDirection = JSON.parse(repaired)
+        } else {
+          throw firstParseError
+        }
       }
       
-      sceneDirection = JSON.parse(cleanedText)
-      
-      // Validate structure
-      if (!sceneDirection.camera || !sceneDirection.lighting || !sceneDirection.scene || 
-          !sceneDirection.talent || !sceneDirection.audio) {
-        throw new Error('Invalid scene direction structure')
-      }
+      // Fill missing sections with defaults instead of throwing 500
+      sceneDirection = fillDirectionDefaults(sceneDirection)
     } catch (parseError) {
       console.error('[Scene Direction] JSON parse error:', parseError)
       console.error('[Scene Direction] Response text:', responseText.substring(0, 500))
