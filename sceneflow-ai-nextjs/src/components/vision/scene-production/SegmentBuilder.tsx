@@ -39,9 +39,7 @@ import {
   Edit3,
   AlertTriangle,
   Users,
-  MapPin,
   FileText,
-  Volume2,
   CheckCircle2,
   Clapperboard,
   Camera,
@@ -745,120 +743,6 @@ function extractAudioMetadata(scene: any, selectedLanguage = 'en-US'): {
 }
 
 // ============================================================================
-// Scene Bible Panel Component
-// ============================================================================
-
-interface SceneBiblePanelProps {
-  bible: SceneBible
-}
-
-function SceneBiblePanel({ bible }: SceneBiblePanelProps) {
-  return (
-    <Card className="border-amber-500/30 bg-amber-950/20">
-      <CardHeader className="pb-3">
-        <div className="flex items-center gap-2">
-          <Lock className="w-4 h-4 text-amber-500" />
-          <CardTitle className="text-sm text-amber-500">Scene Bible</CardTitle>
-          <Badge variant="outline" className="text-[10px] border-amber-500/50 text-amber-400">
-            Read-Only During Segmentation
-          </Badge>
-        </div>
-        <CardDescription className="text-xs text-muted-foreground">
-          Edit the scene in the Script tab if changes are needed
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Heading */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <MapPin className="w-3 h-3 text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground">Scene Heading</span>
-          </div>
-          <p className="text-sm font-mono bg-background/50 px-2 py-1 rounded border border-border/50">
-            {bible.heading}
-          </p>
-        </div>
-
-        {/* Visual Description */}
-        {bible.visualDescription && (
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Eye className="w-3 h-3 text-muted-foreground" />
-              <span className="text-xs font-medium text-muted-foreground">Visual Description</span>
-            </div>
-            <ScrollArea className="h-20">
-              <p className="text-xs text-foreground/80 bg-background/50 px-2 py-1 rounded border border-border/50">
-                {bible.visualDescription}
-              </p>
-            </ScrollArea>
-          </div>
-        )}
-
-        {/* Narration */}
-        {bible.narration && (
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Volume2 className="w-3 h-3 text-muted-foreground" />
-              <span className="text-xs font-medium text-muted-foreground">Narration</span>
-            </div>
-            <ScrollArea className="h-16">
-              <p className="text-xs italic text-foreground/80 bg-background/50 px-2 py-1 rounded border border-border/50">
-                "{bible.narration}"
-              </p>
-            </ScrollArea>
-          </div>
-        )}
-
-        {/* Dialogue */}
-        {bible.dialogue.length > 0 && (
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="w-3 h-3 text-muted-foreground" />
-              <span className="text-xs font-medium text-muted-foreground">
-                Dialogue ({bible.dialogue.length} lines)
-              </span>
-            </div>
-            <ScrollArea className="h-24">
-              <div className="space-y-1">
-                {bible.dialogue.map((line, idx) => (
-                  <div
-                    key={line.id}
-                    className="text-xs bg-background/50 px-2 py-1 rounded border border-border/50"
-                  >
-                    <span className="font-semibold text-primary">{line.character}:</span>{' '}
-                    <span className="text-foreground/80">"{line.text}"</span>
-                    {line.emotion && (
-                      <span className="text-muted-foreground ml-1">({line.emotion})</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </div>
-        )}
-
-        {/* Characters */}
-        {bible.characters.length > 0 && (
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Users className="w-3 h-3 text-muted-foreground" />
-              <span className="text-xs font-medium text-muted-foreground">
-                Characters ({bible.characters.length})
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {bible.characters.map(char => (
-                <Badge key={char.id} variant="secondary" className="text-[10px]">
-                  {char.name}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
 
 // ============================================================================
 // Workflow Phase Indicator
@@ -1523,26 +1407,6 @@ export function SegmentBuilder({
     }))
   }, [])
 
-  const handleSegmentAdjust = useCallback((
-    segmentId: string,
-    changes: Partial<Pick<ProposedSegment, 'startTime' | 'endTime' | 'duration'>>
-  ) => {
-    setProposedSegments(prev => prev.map(seg => {
-      if (seg.id !== segmentId) return seg
-      
-      const newStartTime = changes.startTime ?? seg.startTime
-      const newEndTime = changes.endTime ?? seg.endTime
-      const newDuration = newEndTime - newStartTime
-      
-      return {
-        ...seg,
-        startTime: newStartTime,
-        endTime: newEndTime,
-        duration: newDuration,
-        isAdjusted: true,
-      }
-    }))
-  }, [])
 
   // Open regeneration dialog with current settings
   const handleOpenRegenerateDialog = useCallback(() => {
@@ -1583,11 +1447,6 @@ export function SegmentBuilder({
     
     toast.info('Ready for regeneration - click Generate Segments')
   }, [regenerationConfig, proposedSegments, resetToAnalyze])
-  
-  // Quick regenerate (no dialog, same settings)
-  const handleQuickRegenerate = useCallback(() => {
-    resetToAnalyze()
-  }, [resetToAnalyze])
 
   const handleFinalize = useCallback(() => {
     // Transform ProposedSegments to SceneSegments
@@ -1660,10 +1519,6 @@ export function SegmentBuilder({
 
       {/* Main Content */}
       <div className="flex flex-1 min-w-0 overflow-hidden">
-        {/* Left Panel: Scene Bible (Read-Only) */}
-        <div className="w-64 flex-shrink-0 border-r border-gray-700/50 bg-gray-900/40 p-4 overflow-y-auto">
-          <SceneBiblePanel bible={sceneBible} />
-        </div>
 
         {/* Center Panel: Timeline & Segments */}
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
@@ -2019,13 +1874,11 @@ export function SegmentBuilder({
           {phase === 'review' && (
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* Timeline Preview */}
-              <div className="h-48 border-b border-gray-700/50 p-4 overflow-x-auto">
+              <div className="border-b border-gray-700/50 px-4 py-3">
                 <SegmentPreviewTimeline
                   segments={proposedSegments}
-                  sceneBible={sceneBible}
                   selectedSegmentId={selectedSegmentId}
                   onSelectSegment={setSelectedSegmentId}
-                  onAdjustSegment={handleSegmentAdjust}
                   totalDuration={totalDuration}
                 />
               </div>
@@ -2084,10 +1937,6 @@ export function SegmentBuilder({
                       Scene Changed
                     </Badge>
                   )}
-                  <Button variant="outline" size="sm" onClick={handleQuickRegenerate}>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Quick Regen
-                  </Button>
                   <Button variant="outline" onClick={handleOpenRegenerateDialog}>
                     <Settings2 className="w-4 h-4 mr-2" />
                     Regenerate...

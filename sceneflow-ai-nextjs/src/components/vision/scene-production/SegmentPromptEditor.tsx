@@ -51,7 +51,7 @@ interface SegmentPromptEditorProps {
  * Prompt structure for guided editing
  */
 interface PromptComponents {
-  // Locked (from Scene Bible) - user cannot edit
+  // Locked (from Scene Content) - user cannot edit
   setting: string      // Location, time of day
   characters: string   // Who is present
   dialogue: string     // Lines covered by this segment
@@ -469,7 +469,7 @@ export function SegmentPromptEditor({
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Lock className="w-4 h-4 text-amber-500" />
-                <span className="text-sm font-medium text-amber-500">Scene Bible (Read-Only)</span>
+                <span className="text-sm font-medium text-amber-500">Scene Content (Read-Only)</span>
               </div>
               <div className="grid gap-2 p-3 bg-amber-950/10 rounded-lg border border-amber-500/20">
                 <LockedContent
@@ -689,11 +689,11 @@ export function SegmentPromptEditor({
               </Alert>
             )}
 
-            {/* Scene Bible Reference */}
+            {/* Scene Content Reference */}
             <div className="p-2 bg-amber-950/10 rounded border border-amber-500/20">
               <div className="flex items-center gap-1 mb-1">
                 <Info className="w-3 h-3 text-amber-500" />
-                <span className="text-[10px] text-amber-500 font-medium">Scene Bible Reference</span>
+                <span className="text-[10px] text-amber-500 font-medium">Scene Content Reference</span>
               </div>
               <p className="text-[10px] text-muted-foreground">
                 <strong>Location:</strong> {sceneBible.location} • <strong>Time:</strong> {sceneBible.timeOfDay}
