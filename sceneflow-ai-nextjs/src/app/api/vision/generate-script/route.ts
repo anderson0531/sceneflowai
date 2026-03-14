@@ -80,14 +80,51 @@ async function generateScriptInternal(projectId: string, sendProgress: ((data: a
     await sequelize.authenticate()
 
     // Load project to get Film Treatment variant data
-    const project = await Project.findByPk(projectId)
+    let project = await Project.findByPk(projectId)
     if (!project) {
       throw new Error('Project not found')
     }
 
-    const filmTreatmentVariant = project.metadata?.filmTreatmentVariant
+    // Retry logic for intermittent cold-start issues where metadata may not
+    // be fully hydrated on first load (Vercel serverless connection pool timing)
+    let filmTreatmentVariant = project.metadata?.filmTreatmentVariant
     if (!filmTreatmentVariant) {
-      throw new Error('No Film Treatment variant found in project')
+      console.warn('[Script Gen V1] Film treatment not found on first load, retrying...', {
+        projectId,
+        hasMetadata: !!project.metadata,
+        metadataKeys: project.metadata ? Object.keys(project.metadata) : [],
+      })
+      
+      // Retry up to 2 times with increasing delay
+      for (let retry = 1; retry <= 2; retry++) {
+        await new Promise(resolve => setTimeout(resolve, retry * 1000))
+        
+        // Force fresh DB read
+        project = await Project.findByPk(projectId, {
+          rejectOnEmpty: false,
+        })
+        
+        filmTreatmentVariant = project?.metadata?.filmTreatmentVariant
+        if (filmTreatmentVariant) {
+          console.log(`[Script Gen V1] Film treatment found on retry ${retry}`)
+          break
+        }
+        console.warn(`[Script Gen V1] Retry ${retry}/2: still no film treatment`)
+      }
+      
+      if (!filmTreatmentVariant) {
+        console.error('[Script Gen V1] Film treatment not found after 2 retries', {
+          projectId,
+          hasMetadata: !!project?.metadata,
+          metadataKeys: project?.metadata ? Object.keys(project.metadata) : [],
+        })
+        throw new Error('No Film Treatment variant found in project. Please generate a Film Treatment in Blueprint first.')
+      }
+    } else {
+      console.log('[Script Gen V1] Film treatment found on first load', {
+        projectId,
+        treatmentTitle: filmTreatmentVariant.title,
+      })
     }
 
     // Use project duration or parse from variant

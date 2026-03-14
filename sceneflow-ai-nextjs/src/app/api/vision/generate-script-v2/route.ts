@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
         }
 
         await sequelize.authenticate()
-        const project = await Project.findByPk(projectId)
+        let project = await Project.findByPk(projectId)
         
         if (!project) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
@@ -40,14 +40,59 @@ export async function POST(request: NextRequest) {
           return
         }
 
-        const treatment = project.metadata?.filmTreatmentVariant
+        // Retry logic for intermittent cold-start issues where metadata may not
+        // be fully hydrated on first load (Vercel serverless connection pool timing)
+        let treatment = project.metadata?.filmTreatmentVariant
         if (!treatment) {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-            type: 'error', 
-            error: 'No film treatment found' 
-          })}\n\n`))
-          controller.close()
-          return
+          console.warn('[Script Gen V2] Film treatment not found on first load, retrying...', {
+            projectId,
+            hasMetadata: !!project.metadata,
+            metadataKeys: project.metadata ? Object.keys(project.metadata) : [],
+            hasVisionPhase: !!project.metadata?.visionPhase,
+          })
+          
+          // Retry up to 2 times with increasing delay
+          for (let retry = 1; retry <= 2; retry++) {
+            await new Promise(resolve => setTimeout(resolve, retry * 1000))
+            
+            // Force fresh DB read
+            project = await Project.findByPk(projectId, {
+              rejectOnEmpty: false,
+            })
+            
+            treatment = project?.metadata?.filmTreatmentVariant
+            if (treatment) {
+              console.log(`[Script Gen V2] Film treatment found on retry ${retry}`)
+              break
+            }
+            console.warn(`[Script Gen V2] Retry ${retry}/2: still no film treatment`, {
+              hasMetadata: !!project?.metadata,
+              metadataKeys: project?.metadata ? Object.keys(project.metadata) : [],
+            })
+          }
+          
+          if (!treatment) {
+            console.error('[Script Gen V2] Film treatment not found after 2 retries', {
+              projectId,
+              hasMetadata: !!project?.metadata,
+              metadataKeys: project?.metadata ? Object.keys(project.metadata) : [],
+              hasFilmTreatment: !!project?.metadata?.filmTreatment,
+              hasVisionPhase: !!project?.metadata?.visionPhase,
+            })
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+              type: 'error', 
+              error: 'No film treatment found. Please go back to Blueprint and generate a Film Treatment first, then return to Production.' 
+            })}\n\n`))
+            controller.close()
+            return
+          }
+        } else {
+          console.log('[Script Gen V2] Film treatment found on first load', {
+            projectId,
+            treatmentTitle: treatment.title,
+            hasSynopsis: !!treatment.synopsis,
+            hasBeats: !!treatment.beats || !!treatment.story_beats,
+          })
         }
 
         // Simple duration-based safety cap (no scene-count prescriptions)

@@ -5930,13 +5930,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // Check if generation is complete (skip if explicitly requested)
         if (!skipAutoGeneration && (!visionPhase.scriptGenerated || !visionPhase.charactersGenerated || !visionPhase.scenesGenerated)) {
           // Defer generation until after hydration to prevent hydration mismatch
-          setTimeout(() => initiateGeneration(proj), 100)
+          // Use 500ms delay to allow Vercel serverless DB connection pool to warm up
+          setTimeout(() => initiateGeneration(proj), 500)
         }
       } else {
         // No Vision data yet, start generation (skip if explicitly requested)
         if (!skipAutoGeneration) {
           // Defer generation until after hydration to prevent hydration mismatch
-          setTimeout(() => initiateGeneration(proj), 100)
+          // Use 500ms delay to allow Vercel serverless DB connection pool to warm up
+          setTimeout(() => initiateGeneration(proj), 500)
         }
       }
     } catch (error) {
@@ -6041,7 +6043,36 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }))
     } catch (error) {
       console.error('[Vision] Generation error:', error)
-      try { const { toast } = require('sonner'); toast.error('Generation failed: ' + (error as Error).message) } catch {}
+      const errorMsg = (error as Error).message || 'Unknown error'
+      const isFilmTreatmentError = errorMsg.toLowerCase().includes('film treatment') || errorMsg.toLowerCase().includes('no film treatment')
+      
+      try {
+        const { toast } = require('sonner')
+        if (isFilmTreatmentError) {
+          // Specific handling for intermittent "No film treatment found" error
+          toast.error('Film treatment not found — this may be a temporary issue.', {
+            duration: 15000,
+            action: {
+              label: 'Retry',
+              onClick: () => {
+                // Reload project data and retry generation
+                loadProject()
+              }
+            },
+            description: 'Click Retry to reload project data and try again.'
+          })
+        } else {
+          toast.error('Generation failed: ' + errorMsg, {
+            duration: 10000,
+            action: {
+              label: 'Retry',
+              onClick: () => {
+                loadProject()
+              }
+            }
+          })
+        }
+      } catch {}
     } finally {
       setIsGenerating(false)
     }
@@ -6192,6 +6223,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               }
             } catch (e) {
               console.error('[Vision] Parse error:', e)
+              // If the parse error contains a film treatment error, surface it to the user
+              const parseErrorMsg = e instanceof Error ? e.message : String(e)
+              if (parseErrorMsg.toLowerCase().includes('film treatment')) {
+                try {
+                  const { toast } = require('sonner')
+                  toast.error('Film treatment data temporarily unavailable.', {
+                    duration: 12000,
+                    action: {
+                      label: 'Reload & Retry',
+                      onClick: () => loadProject()
+                    },
+                    description: 'This is usually a temporary issue. Click to reload and retry.'
+                  })
+                } catch {}
+              }
             }
           }
         }
