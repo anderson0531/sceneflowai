@@ -8209,15 +8209,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       setScript(updatedScript)
 
       // Update project metadata and persist to DB
-      if (project) {
-        const updatedMetadata = {
-          ...project.metadata,
-          visionPhase: {
-            ...project.metadata?.visionPhase,
-            script: updatedScript
-          }
-        }
-        
+      // RACE CONDITION FIX: Use functional setProject and projectRef instead of stale closure
+      const currentProject = projectRef.current || project
+      if (currentProject) {
         console.log('[SceneDirection] Saving to DB:', {
           sceneIdx,
           hasSceneDirection: !!updatedScenes[sceneIdx]?.sceneDirection,
@@ -8225,19 +8219,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           updatedMetadataPath: 'metadata.visionPhase.script.script.scenes[' + sceneIdx + '].sceneDirection'
         })
         
-        setProject({
-          ...project,
-          metadata: updatedMetadata
+        // Build metadata from latest project state via ref
+        const updatedMetadata = {
+          ...currentProject.metadata,
+          visionPhase: {
+            ...currentProject.metadata?.visionPhase,
+            script: updatedScript
+          }
+        }
+        
+        // Use functional setProject to avoid stale closure overwrites
+        setProject((prev: any) => {
+          if (!prev) return prev
+          const updated = { ...prev, metadata: updatedMetadata }
+          projectRef.current = updated
+          return updated
         })
 
-        // Persist to database
-        const saveResponse = await fetch(`/api/projects/${project.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            metadata: updatedMetadata
-          })
-        })
+        // Persist to database using serialized save queue
+        const saveResponse = await serializedProjectSave({
+          metadata: updatedMetadata
+        }, 'handleGenerateSceneDirection')
         
         if (!saveResponse.ok) {
           const errorText = await saveResponse.text()
@@ -8250,11 +8252,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       try { const { toast } = require('sonner'); toast.success('Scene direction generated!') } catch {}
       
-      // Auto-run score analysis after direction generation (background, non-blocking)
-      console.log(`[AutoScore] Triggering score analysis for Scene ${sceneIdx + 1} after direction update`)
-      handleGenerateSceneScore(sceneIdx).catch(err => {
-        console.warn(`[AutoScore] Background score analysis failed for Scene ${sceneIdx + 1}:`, err)
-      })
+      // NOTE: Removed auto handleGenerateSceneScore() call to prevent stale-closure
+      // overwrites. Score analysis is now triggered manually via the Analyze button.
       } catch (error: any) {
         console.error('Failed to generate scene direction:', error)
         try { const { toast } = require('sonner'); toast.error(`Failed to generate scene direction: ${error.message}`) } catch {}
@@ -8315,6 +8314,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       // Re-read current script state (may have changed during async operation)
+      // LOCAL STATE ONLY — the API route (/api/scene/generate-direction) already
+      // saved the direction to DB server-side via project.update(). No client DB
+      // write needed here, which eliminates the double-save race condition that was
+      // causing ghost script reversions.
       setScript((currentScript: any) => {
         if (!currentScript?.script?.scenes) return currentScript
         const updatedScenes = [...currentScript.script.scenes]
@@ -8327,30 +8330,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           script: { ...currentScript.script, scenes: updatedScenes }
         }
         
-        // Persist to database in background
-        // RACE CONDITION FIX: Use projectRef (latest state) instead of stale closure `project`
-        // Also use functional setProject to build metadata from fresh state
-        const currentProject = projectRef.current || project
-        if (currentProject) {
-          // Build metadata from latest project state, only updating the script field
-          setProject((p: any) => {
-            if (!p) return p
-            const freshMeta = {
+        // Update project state with the new direction (local only, no DB write)
+        // Use functional setProject to read latest state, preventing stale closure
+        setProject((p: any) => {
+          if (!p) return p
+          const updated = {
+            ...p,
+            metadata: {
               ...p.metadata,
               visionPhase: {
                 ...p.metadata?.visionPhase,
                 script: updatedScript
               }
             }
-            // Persist to DB using the freshly-built metadata
-            serializedProjectSave({ metadata: freshMeta }, 'handleBackgroundDirectionGeneration')
-              .catch(err => console.error('[AutoDirection] DB save failed:', err))
-            
-            const updated = { ...p, metadata: freshMeta }
-            projectRef.current = updated
-            return updated
-          })
-        }
+          }
+          projectRef.current = updated
+          return updated
+        })
         
         return updatedScript
       })
@@ -8358,10 +8354,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       console.log(`[AutoDirection] Scene ${sceneIdx + 1} direction updated successfully`)
       try { const { toast } = require('sonner'); toast.success(`Scene ${sceneIdx + 1} direction updated`) } catch {}
       
-      // Auto-run score analysis after direction update
-      handleGenerateSceneScore(sceneIdx).catch(err => {
-        console.warn(`[AutoScore] Background score failed for Scene ${sceneIdx + 1}:`, err)
-      })
+      // NOTE: Removed auto handleGenerateSceneScore() call.
+      // It was reading `script` from a stale closure, building updatedScenes from
+      // pre-edit data, and saving that to DB via saveScenesToDatabase — overwriting
+      // the user's edit (ghost reversion bug). Score analysis should be triggered
+      // manually by the user via the Analyze button, not automatically after every
+      // background direction update.
     } catch (error: any) {
       console.error(`[AutoDirection] Failed for Scene ${sceneIdx + 1}:`, error)
       try { const { toast } = require('sonner'); toast.error(`Failed to update Scene ${sceneIdx + 1} direction`) } catch {}
@@ -9416,12 +9414,33 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       
       // Then update local state
-      setScript({
+      const updatedScript = {
         ...script,
         script: {
           ...script.script,
           scenes: updatedScenes
         }
+      }
+      setScript(updatedScript)
+      
+      // CRITICAL: Sync project state so subsequent saves don't overwrite with stale metadata.
+      // Without this, handleBackgroundDirectionGeneration (and any save triggered after)
+      // would spread project.metadata containing the OLD scenes, reverting the edit.
+      setProject((prev: any) => {
+        if (!prev) return prev
+        const updated = {
+          ...prev,
+          metadata: {
+            ...prev.metadata,
+            visionPhase: {
+              ...prev.metadata?.visionPhase,
+              script: updatedScript,
+              scenes: updatedScenes
+            }
+          }
+        }
+        projectRef.current = updated
+        return updated
       })
       
       // Update script edit timestamp to force cache clear in ScreeningRoom
@@ -9439,6 +9458,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Auto-regenerate scene direction in background (non-blocking)
       // Scene content changed, so direction needs to be updated
+      // NOTE: The direction API saves server-side, so no client DB write races with us.
       console.log(`[AutoDirection] Scene ${sceneIndex + 1} edited - triggering background direction regeneration`)
       handleBackgroundDirectionGeneration(sceneIndex)
       
@@ -10183,11 +10203,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   // Scene score generation handler
   const handleGenerateSceneScore = async (sceneIndex: number) => {
-    if (!script || !script.script?.scenes) return
+    // RACE CONDITION FIX: Use scriptRef.current instead of stale closure-captured `script`.
+    // When called from handleBackgroundDirectionGeneration, the closure `script` may
+    // contain pre-edit scene data, causing saveScenesToDatabase to overwrite the DB
+    // with old scenes (ghost reversion bug).
+    const currentScript = scriptRef.current || script
+    if (!currentScript || !currentScript.script?.scenes) return
     
     setGeneratingScoreFor(sceneIndex)
     try {
-      const scene = script.script.scenes[sceneIndex]
+      const scene = currentScript.script.scenes[sceneIndex]
+      if (!scene) {
+        console.warn(`[handleGenerateSceneScore] Scene ${sceneIndex} not found in current script`)
+        return
+      }
       
       // Score stabilization: Get previous analysis with iteration tracking
       const currentIteration = scene.analysisIterationCount || scene.scoreAnalysis?.iterationCount || 0
@@ -10217,8 +10246,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           sceneIndex,
           scene,
           context: {
-            previousScene: script.script.scenes[sceneIndex - 1],
-            nextScene: script.script.scenes[sceneIndex + 1],
+            previousScene: currentScript.script.scenes[sceneIndex - 1],
+            nextScene: currentScript.script.scenes[sceneIndex + 1],
             characters,
             previousAnalysis  // Pass previous analysis context with iteration tracking
           }
@@ -10231,10 +10260,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       const data = await response.json()
       
-      // Update scene with score and increment iteration count
-      const updatedScenes = [...script.script.scenes]
+      // Re-read latest script from ref (may have changed during async API call)
+      const latestScript = scriptRef.current || currentScript
+      const updatedScenes = [...latestScript.script.scenes]
       updatedScenes[sceneIndex] = {
-        ...scene,
+        ...updatedScenes[sceneIndex],  // Use latest scene data, not stale `scene`
         scoreAnalysis: {
           overallScore: data.analysis.overallScore,
           directorScore: data.analysis.directorScore || data.analysis.overallScore,
@@ -10253,12 +10283,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Save to database
       await saveScenesToDatabase(updatedScenes)
       
-      // Update local state
-      setScript({
-        ...script,
-        script: {
-          ...script.script,
-          scenes: updatedScenes
+      // Update local state using functional updater to avoid overwriting concurrent changes
+      setScript((prev: any) => {
+        if (!prev?.script?.scenes) return prev
+        const freshScenes = [...prev.script.scenes]
+        freshScenes[sceneIndex] = {
+          ...freshScenes[sceneIndex],
+          scoreAnalysis: updatedScenes[sceneIndex].scoreAnalysis,
+          analysisIterationCount: updatedScenes[sceneIndex].analysisIterationCount
+        }
+        return {
+          ...prev,
+          script: { ...prev.script, scenes: freshScenes }
         }
       })
       
