@@ -393,7 +393,13 @@ export async function POST(
       }
       
       // Call Gemini with approved directions to generate full prompts
-      const segments = await callGeminiForPromptsFromDirections(promptsFromDirections)
+      const rawSegments = await callGeminiForPromptsFromDirections(promptsFromDirections)
+      
+      // Post-LLM enforcement: split any segments exceeding max duration
+      const segments = enforceMaxSegmentDuration(rawSegments, MAX_SEGMENT_SECONDS, sceneData)
+      if (segments.length !== rawSegments.length) {
+        console.log(`[Scene Segmentation] Post-LLM split: ${rawSegments.length} → ${segments.length} segments`)
+      }
       
       // Transform to full segment structure (same as legacy flow)
       const transformedSegments = transformSegmentsToOutput(segments, sceneData, sceneId, scene, approvedDirections)
@@ -436,7 +442,13 @@ export async function POST(
     }
 
     // Call Gemini for intelligent segmentation
-    const segments = await callGeminiForIntelligentSegmentation(prompt)
+    const rawSegments = await callGeminiForIntelligentSegmentation(prompt)
+
+    // Post-LLM enforcement: split any segments exceeding max duration
+    const segments = enforceMaxSegmentDuration(rawSegments, MAX_SEGMENT_SECONDS, sceneData)
+    if (segments.length !== rawSegments.length) {
+      console.log(`[Scene Segmentation] Post-LLM split: ${rawSegments.length} → ${segments.length} segments`)
+    }
 
     // Transform segments to match our enhanced data structure
     const transformedSegments = segments.map((seg: IntelligentSegment, idx: number) => {
@@ -1844,6 +1856,134 @@ async function callGeminiForPromptsFromDirections(prompt: string): Promise<Intel
     thinkingLevel: 'minimal',
   })
   return parseGeminiResponseText(result.text)
+}
+
+// ============================================================================
+// VEO DURATION QUANTIZATION — valid Veo 3.1 durations
+// ============================================================================
+
+const VEO_VALID_DURATIONS = [4, 6, 8] as const
+
+/**
+ * Snap a duration to the nearest valid Veo 3.1 duration (4, 6, or 8 seconds).
+ * Always rounds down to stay within limits, with a floor of 4s.
+ */
+function snapToVeoDuration(duration: number): number {
+  if (duration <= 5) return 4
+  if (duration <= 7) return 6
+  return 8
+}
+
+// ============================================================================
+// POST-LLM SEGMENT ENFORCEMENT — split oversized segments
+// ============================================================================
+
+/**
+ * Enforce MAX_SEGMENT_SECONDS on AI-generated segments.
+ * If any segment exceeds the limit, it is split into sub-segments that each
+ * snap to a valid Veo duration. Dialogue indices are distributed across the
+ * resulting sub-segments proportionally.
+ *
+ * This runs BEFORE transformSegmentsToOutput so it operates on IntelligentSegment[].
+ */
+function enforceMaxSegmentDuration(
+  segments: IntelligentSegment[],
+  maxDuration: number = 8,
+  sceneData: ComprehensiveSceneData
+): IntelligentSegment[] {
+  const result: IntelligentSegment[] = []
+
+  for (const seg of segments) {
+    if (seg.estimated_duration <= maxDuration) {
+      result.push(seg)
+      continue
+    }
+
+    // --- Split required ---
+    const originalDuration = seg.estimated_duration
+    const dialogueIndices = seg.assigned_dialogue_indices || []
+
+    // Decide how many sub-segments we need (snap each to valid Veo durations)
+    const numParts = Math.ceil(originalDuration / maxDuration)
+
+    // Build sub-segment durations that sum to originalDuration, each ≤ maxDuration
+    // Strategy: distribute evenly, then snap each to a Veo-valid duration
+    const rawPartDuration = originalDuration / numParts
+    const subDurations: number[] = []
+    let remaining = originalDuration
+    for (let i = 0; i < numParts; i++) {
+      if (i === numParts - 1) {
+        // Last part gets whatever's left, snapped to Veo
+        subDurations.push(snapToVeoDuration(remaining))
+      } else {
+        const snapped = snapToVeoDuration(rawPartDuration)
+        subDurations.push(snapped)
+        remaining -= snapped
+      }
+    }
+
+    // Distribute dialogue indices across sub-segments proportionally
+    const dialoguePerPart = Math.ceil(dialogueIndices.length / numParts)
+
+    console.log(
+      `[Segment Split] Splitting segment seq=${seg.sequence} ` +
+      `(${originalDuration.toFixed(1)}s) into ${numParts} parts: ` +
+      `[${subDurations.map(d => `${d}s`).join(', ')}], ` +
+      `distributing ${dialogueIndices.length} dialogue line(s)`
+    )
+
+    for (let i = 0; i < numParts; i++) {
+      const partDialogue = dialogueIndices.slice(
+        i * dialoguePerPart,
+        (i + 1) * dialoguePerPart
+      )
+
+      // Build dialogue context for the prompt suffix
+      const partDialogueTexts = partDialogue
+        .map(idx => sceneData.dialogue[idx])
+        .filter(Boolean)
+        .map(d => `${d.character}: "${d.text}"`)
+
+      const isFirstPart = i === 0
+      const isLastPart = i === numParts - 1
+
+      // Build a refined prompt that specifies which portion this covers
+      const splitPromptSuffix = partDialogueTexts.length > 0
+        ? `\n\n[This segment covers the following dialogue: ${partDialogueTexts.join(' / ')}]`
+        : ''
+
+      const partTriggerReason = isFirstPart
+        ? seg.trigger_reason
+        : `Continuation of split segment (part ${i + 1}/${numParts}) — ${seg.trigger_reason}`
+
+      result.push({
+        ...seg,
+        sequence: 0, // Will be re-sequenced below
+        estimated_duration: subDurations[i],
+        trigger_reason: partTriggerReason,
+        video_generation_prompt: seg.video_generation_prompt + splitPromptSuffix,
+        assigned_dialogue_indices: partDialogue,
+        emotional_beat: isFirstPart
+          ? seg.emotional_beat
+          : `${seg.emotional_beat} (continued)`,
+        end_frame_description: isLastPart
+          ? seg.end_frame_description
+          : `Transition point within split segment — visual continuity maintained`,
+        reference_strategy: {
+          ...seg.reference_strategy,
+          // Only the first part of a split should use the scene frame
+          use_scene_frame: isFirstPart ? seg.reference_strategy.use_scene_frame : false,
+        },
+      })
+    }
+  }
+
+  // Re-sequence all segments
+  result.forEach((seg, idx) => {
+    seg.sequence = idx + 1
+  })
+
+  return result
 }
 
 /**

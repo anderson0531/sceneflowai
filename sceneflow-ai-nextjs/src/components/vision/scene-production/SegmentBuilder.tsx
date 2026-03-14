@@ -934,6 +934,82 @@ function PhaseIndicator({ currentPhase, onPhaseClick, canAdvance }: PhaseIndicat
 }
 
 // ============================================================================
+// Client-Side Segment Duration Enforcement (Safety Net)
+// ============================================================================
+
+const CLIENT_MAX_SEGMENT_DURATION = 8 // Veo 3.1 max
+
+/**
+ * Snap a duration to the nearest valid Veo 3.1 duration (4, 6, or 8 seconds).
+ */
+function snapToVeoDuration(duration: number): number {
+  if (duration <= 5) return 4
+  if (duration <= 7) return 6
+  return 8
+}
+
+/**
+ * Client-side safety net: split any ProposedSegments that exceed the max duration.
+ * This runs after API response in case the server-side enforcement was bypassed.
+ */
+function enforceClientMaxDuration(segments: ProposedSegment[]): ProposedSegment[] {
+  const needsSplit = segments.some(s => s.duration > CLIENT_MAX_SEGMENT_DURATION)
+  if (!needsSplit) return segments
+
+  const result: ProposedSegment[] = []
+  let globalIndex = 0
+
+  for (const seg of segments) {
+    if (seg.duration <= CLIENT_MAX_SEGMENT_DURATION) {
+      result.push({ ...seg, sequenceIndex: globalIndex })
+      globalIndex++
+      continue
+    }
+
+    // Split oversized segment
+    const numParts = Math.ceil(seg.duration / CLIENT_MAX_SEGMENT_DURATION)
+    const rawPartDuration = seg.duration / numParts
+    let currentStart = seg.startTime
+    const dialoguePerPart = Math.ceil(seg.dialogueLineIds.length / numParts)
+
+    console.log(
+      `[Client Split] Segment ${seg.id} (${seg.duration.toFixed(1)}s) → ${numParts} parts`
+    )
+
+    for (let i = 0; i < numParts; i++) {
+      const partDuration = i === numParts - 1
+        ? snapToVeoDuration(seg.endTime - currentStart)
+        : snapToVeoDuration(rawPartDuration)
+      const partEnd = currentStart + partDuration
+      const partDialogue = seg.dialogueLineIds.slice(
+        i * dialoguePerPart,
+        (i + 1) * dialoguePerPart
+      )
+
+      result.push({
+        ...seg,
+        id: i === 0 ? seg.id : `${seg.id}_split${i}`,
+        sequenceIndex: globalIndex,
+        startTime: currentStart,
+        endTime: partEnd,
+        duration: partDuration,
+        dialogueLineIds: partDialogue,
+        triggerReason: i === 0
+          ? seg.triggerReason
+          : `Split from oversized segment (part ${i + 1}/${numParts})`,
+        isAdjusted: false,
+        userEditedPrompt: null,
+      })
+
+      currentStart = partEnd
+      globalIndex++
+    }
+  }
+
+  return result
+}
+
+// ============================================================================
 // Main Component
 // ============================================================================
 
@@ -1294,14 +1370,21 @@ export function SegmentBuilder({
         directionId: approvedDirs[idx]?.id,
       }))
 
-      setProposedSegments(proposed)
-      setPhase('review')
-      
-      if (proposed.length > 0) {
-        setSelectedSegmentId(proposed[0].id)
+      // Client-side safety net: split any segments exceeding Veo max duration
+      const safeProposed = enforceClientMaxDuration(proposed)
+      if (safeProposed.length !== proposed.length) {
+        console.log(`[SegmentBuilder] Client-side split: ${proposed.length} → ${safeProposed.length} segments`)
+        toast.info(`Split ${proposed.length - safeProposed.length + (safeProposed.length - proposed.length)} oversized segment(s) to fit Veo 3.1 limits`)
       }
 
-      toast.success(`Generated ${proposed.length} segment prompts`)
+      setProposedSegments(safeProposed)
+      setPhase('review')
+      
+      if (safeProposed.length > 0) {
+        setSelectedSegmentId(safeProposed[0].id)
+      }
+
+      toast.success(`Generated ${safeProposed.length} segment prompts`)
     } catch (err: any) {
       console.error('[SegmentBuilder] Prompt generation error:', err)
       setError(err.message || 'Failed to generate prompts')
@@ -1399,18 +1482,25 @@ export function SegmentBuilder({
         userEditedPrompt: null,
       }))
 
-      setProposedSegments(proposed)
+      // Client-side safety net: split any segments exceeding Veo max duration
+      const safeProposed = enforceClientMaxDuration(proposed)
+      if (safeProposed.length !== proposed.length) {
+        console.log(`[SegmentBuilder] Client-side split: ${proposed.length} → ${safeProposed.length} segments`)
+        toast.info(`Split oversized segment(s) to fit Veo 3.1 max duration`)
+      }
+
+      setProposedSegments(safeProposed)
       setPhase('review')
       
       // Save the content hash for staleness detection
       setLastGeneratedHash(sceneBible.contentHash)
       
       // Select first segment
-      if (proposed.length > 0) {
-        setSelectedSegmentId(proposed[0].id)
+      if (safeProposed.length > 0) {
+        setSelectedSegmentId(safeProposed[0].id)
       }
 
-      toast.success(`AI generated ${proposed.length} segments`)
+      toast.success(`AI generated ${safeProposed.length} segments`)
     } catch (err: any) {
       console.error('[SegmentBuilder] Analysis error:', err)
       setError(err.message || 'Failed to analyze scene')
@@ -1929,7 +2019,7 @@ export function SegmentBuilder({
           {phase === 'review' && (
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* Timeline Preview */}
-              <div className="h-48 border-b border-gray-700/50 p-4 overflow-hidden">
+              <div className="h-48 border-b border-gray-700/50 p-4 overflow-x-auto">
                 <SegmentPreviewTimeline
                   segments={proposedSegments}
                   sceneBible={sceneBible}
@@ -1955,6 +2045,23 @@ export function SegmentBuilder({
                   </div>
                 )}
               </div>
+
+              {/* Validation Issues Banner */}
+              {allValidations.some(v => !v.validation.isValid) && (
+                <div className="mx-4 my-2 px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-3">
+                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                  <div className="flex-1 text-sm">
+                    <span className="text-red-300 font-medium">
+                      {allValidations.filter(v => !v.validation.isValid).length} segment(s) have issues
+                    </span>
+                    {allValidations.some(v => v.validation.issues.some(i => i.code === 'DURATION_TOO_LONG')) && (
+                      <span className="text-red-400/80 ml-2">
+                        — segments exceed {8}s max duration. Adjust boundaries or regenerate.
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Action Bar */}
               <div className="flex items-center justify-between px-4 py-3 border-t border-gray-700/50 bg-gray-900/40">
@@ -1988,6 +2095,9 @@ export function SegmentBuilder({
                   <Button
                     onClick={() => setPhase('finalize')}
                     disabled={!canAdvance.finalize}
+                    title={!canAdvance.finalize 
+                      ? 'Fix validation issues before finalizing (e.g. segments exceeding 8s max duration)' 
+                      : 'Proceed to finalize segments'}
                     className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/20"
                   >
                     Continue to Finalize

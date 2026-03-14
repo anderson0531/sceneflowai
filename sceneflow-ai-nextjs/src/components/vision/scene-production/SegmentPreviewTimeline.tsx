@@ -47,8 +47,19 @@ interface AudioBeat {
 
 const MIN_SEGMENT_DURATION = 2 // seconds
 const MAX_SEGMENT_DURATION = 8 // seconds
-const PIXELS_PER_SECOND = 60 // Timeline scale
+const DEFAULT_PIXELS_PER_SECOND = 60 // Baseline timeline scale
 const SNAP_THRESHOLD = 0.15 // seconds - snap to audio boundaries
+
+/**
+ * Dynamically scale pixels-per-second for longer scenes to prevent
+ * the timeline from expanding far beyond the viewport width.
+ * Scales: ≤15s → 60px/s, 15–30s → 40px/s, >30s → 25px/s
+ */
+function getPixelsPerSecond(totalDuration: number): number {
+  if (totalDuration > 30) return 25
+  if (totalDuration > 15) return 40
+  return DEFAULT_PIXELS_PER_SECOND
+}
 
 // ============================================================================
 // Helper Functions
@@ -173,7 +184,12 @@ function SegmentBlock({
               <span className="text-[10px] font-medium text-foreground">
                 S{segment.sequenceIndex + 1}
               </span>
-              <span className="text-[9px] text-muted-foreground">
+              <span className={cn(
+                "text-[9px]",
+                segment.duration > MAX_SEGMENT_DURATION 
+                  ? "text-red-400 font-medium" 
+                  : "text-muted-foreground"
+              )}>
                 {segment.duration.toFixed(1)}s
               </span>
             </div>
@@ -190,6 +206,14 @@ function SegmentBlock({
             </div>
 
             {/* Status indicators */}
+            {segment.duration > MAX_SEGMENT_DURATION && (
+              <div className="absolute top-0.5 left-1/2 -translate-x-1/2">
+                <Badge variant="outline" className="text-[8px] px-1 py-0 bg-red-500/30 border-red-500/60 text-red-300 gap-0.5">
+                  <AlertTriangle className="w-2 h-2" />
+                  {segment.duration.toFixed(1)}s
+                </Badge>
+              </div>
+            )}
             {segment.isAdjusted && (
               <div className="absolute top-1 right-1">
                 <Badge variant="outline" className="text-[8px] px-1 py-0 bg-yellow-500/20 border-yellow-500/50">
@@ -262,9 +286,9 @@ function AudioBeatTrack({ beats, pixelsPerSecond, type }: AudioBeatTrackProps) {
                     )}
                     style={{ left, width }}
                   >
-                    <span className="text-[9px] text-foreground/80 truncate">
+                    <span className="text-[9px] text-foreground/80 truncate block w-full">
                       {beat.characterName ? `${beat.characterName}: ` : ''}
-                      {beat.text.substring(0, 30)}...
+                      {beat.text}
                     </span>
                   </div>
                 </TooltipTrigger>
@@ -310,6 +334,9 @@ export function SegmentPreviewTimeline({
   // Generate audio beats from scene bible
   const audioBeats = useMemo(() => generateAudioBeats(sceneBible), [sceneBible])
 
+  // Dynamic pixels-per-second scaling to prevent timeline overflow
+  const PIXELS_PER_SECOND = useMemo(() => getPixelsPerSecond(totalDuration), [totalDuration])
+
   // Calculate timeline width based on content
   const timelineWidth = useMemo(() => {
     const contentDuration = Math.max(
@@ -319,7 +346,7 @@ export function SegmentPreviewTimeline({
         : 0
     )
     return Math.max(600, contentDuration * PIXELS_PER_SECOND + 100)
-  }, [totalDuration, audioBeats])
+  }, [totalDuration, audioBeats, PIXELS_PER_SECOND])
 
   // Time markers
   const timeMarkers = useMemo(() => {
@@ -329,7 +356,7 @@ export function SegmentPreviewTimeline({
       markers.push(t)
     }
     return markers
-  }, [timelineWidth])
+  }, [timelineWidth, PIXELS_PER_SECOND])
 
   // Handle drag to resize segments
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
