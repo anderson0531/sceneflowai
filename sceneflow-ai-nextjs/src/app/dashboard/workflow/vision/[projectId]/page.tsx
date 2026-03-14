@@ -687,6 +687,48 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Keep script and project refs in sync (avoids stale closures in async operations)
   useEffect(() => { scriptRef.current = script }, [script])
   useEffect(() => { projectRef.current = project }, [project])
+
+  // [REVERSION-DEBUG] Helper to create script fingerprint for tracking stale writes
+  const getScriptFingerprint = (s: any) => {
+    if (!s) return 'null'
+    const sceneCount = s?.script?.scenes?.length || 0
+    const totalChars = JSON.stringify(s?.script?.scenes || []).length
+    const firstScene = s?.script?.scenes?.[0]?.narration?.substring(0, 40) || 'none'
+    return `scenes=${sceneCount},chars=${totalChars},first="${firstScene}"`
+  }
+
+  // ─── WRITE SERIALIZATION ────────────────────────────────────────────
+  // All project PUT requests are funneled through this queue to prevent
+  // concurrent writes from racing each other and causing data loss.
+  // Each call waits for the previous save to finish before executing.
+  const saveQueueRef = useRef<Promise<Response | null>>(Promise.resolve(null))
+
+  const serializedProjectSave = useCallback(async (
+    body: Record<string, any>,
+    debugLabel?: string
+  ): Promise<Response> => {
+    // Chain onto the previous save so writes are sequential
+    const resultPromise = saveQueueRef.current.then(async () => {
+      const label = debugLabel || 'unknown'
+      console.log(`[SAVE-QUEUE] Starting save: ${label}`)
+      try {
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        })
+        console.log(`[SAVE-QUEUE] Completed save: ${label}, status=${response.status}`)
+        return response
+      } catch (error) {
+        console.error(`[SAVE-QUEUE] Failed save: ${label}`, error)
+        throw error
+      }
+    })
+    // Update the queue head (swallow rejections so the queue keeps moving)
+    saveQueueRef.current = resultPromise.catch(() => null)
+    return resultPromise
+  }, [projectId])
+
   
   // Collapsible sidebar sections
   const [sectionsOpen, setSectionsOpen] = useState({
@@ -809,11 +851,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }
         }
         
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        })
+        const response = await serializedProjectSave(payload, 'handleScriptChange')
         
         if (!response.ok) {
           console.error('[handleScriptChange] Failed to save script to database')
@@ -4316,11 +4354,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const updatedProject = {
         ...project,
         metadata: {
-          ...project.metadata,
+          ...(projectRef.current || project).metadata,
           imageQuality: quality,
           visionPhase: {
-            ...project.metadata?.visionPhase,
-            script: script,
+            ...(projectRef.current || project)?.metadata?.visionPhase,
+            script: scriptRef.current || script,
             characters: characters,
             scenes: scenes,
             narrationVoice: narrationVoice,
@@ -4332,13 +4370,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Save to database
       try {
-        await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        console.log('[REVERSION-DEBUG][Quality] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
+        await serializedProjectSave({
             metadata: updatedProject.metadata
-          })
-        })
+          }, 'handleQualityChange')
         console.log(`[Quality] Updated to ${quality} quality`)
       } catch (error) {
         console.error('[Quality] Failed to save quality setting:', error)
@@ -4366,12 +4401,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const updatedProject = {
         ...project,
         metadata: {
-          ...project.metadata,
+          ...(projectRef.current || project).metadata,
           visionPhase: {
-            ...project.metadata?.visionPhase,
+            ...(projectRef.current || project)?.metadata?.visionPhase,
             narrationVoice: voiceConfig,
             characters: updatedCharacters,
-            script: script,
+            script: scriptRef.current || script,
             scenes: scenes,
             descriptionVoice: descriptionVoice
           }
@@ -4381,13 +4416,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Save to database
       try {
-        await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        console.log('[REVERSION-DEBUG][NarrationVoice] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
+        await serializedProjectSave({
             metadata: updatedProject.metadata
-          })
-        })
+          }, 'handleNarrationVoiceChange')
         console.log('[Narration Voice] Updated narration voice:', voiceConfig)
       } catch (error) {
         console.error('[Narration Voice] Failed to save narration voice:', error)
@@ -4437,11 +4469,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const updatedProject = {
         ...project,
         metadata: {
-          ...project.metadata,
+          ...(projectRef.current || project).metadata,
           visionPhase: {
-            ...project.metadata?.visionPhase,
+            ...(projectRef.current || project)?.metadata?.visionPhase,
             characters: updatedCharacters,
-            script: script,
+            script: scriptRef.current || script,
             scenes: scenes,
             narrationVoice: updatedCharacter.type === 'narrator' ? voiceConfig : narrationVoice,
             descriptionVoice: updatedCharacter.type === 'description' ? voiceConfig : descriptionVoice
@@ -4452,13 +4484,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Save to database
       try {
-        await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        console.log('[REVERSION-DEBUG][CharacterVoice] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
+        await serializedProjectSave({
             metadata: updatedProject.metadata
-          })
-        })
+          }, 'handleUpdateCharacterVoice')
         console.log('[Character Voice] Updated character voice:', characterId, voiceConfig)
         
         // Add success toast
@@ -4493,23 +4522,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Save to database using existing projects API
       if (project) {
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        console.log('[REVERSION-DEBUG][Appearance] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
+        const response = await serializedProjectSave({
             metadata: {
-              ...project.metadata,
+              ...(projectRef.current || project).metadata,
               visionPhase: {
-                ...project.metadata?.visionPhase,
+                ...(projectRef.current || project)?.metadata?.visionPhase,
                 characters: updatedCharacters,
-                script: script,
+                script: scriptRef.current || script,
                 scenes: scenes,
                 narrationVoice: narrationVoice,
                 descriptionVoice: descriptionVoice
               }
             }
-          })
-        })
+          }, 'handleUpdateCharacterAppearance')
         
         if (!response.ok) throw new Error('Failed to update appearance')
         
@@ -4542,23 +4568,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Save to database using existing projects API
       if (project) {
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        console.log('[REVERSION-DEBUG][CharName] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
+        const response = await serializedProjectSave({
             metadata: {
-              ...project.metadata,
+              ...(projectRef.current || project).metadata,
               visionPhase: {
-                ...project.metadata?.visionPhase,
+                ...(projectRef.current || project)?.metadata?.visionPhase,
                 characters: updatedCharacters,
-                script: script,
+                script: scriptRef.current || script,
                 scenes: scenes,
                 narrationVoice: narrationVoice,
                 descriptionVoice: descriptionVoice
               }
             }
-          })
-        })
+          }, 'handleUpdateCharacterName')
         
         if (!response.ok) throw new Error('Failed to update name')
         
@@ -4591,23 +4614,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Save to database using existing projects API
       if (project) {
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        console.log('[REVERSION-DEBUG][CharRole] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
+        const response = await serializedProjectSave({
             metadata: {
-              ...project.metadata,
+              ...(projectRef.current || project).metadata,
               visionPhase: {
-                ...project.metadata?.visionPhase,
+                ...(projectRef.current || project)?.metadata?.visionPhase,
                 characters: updatedCharacters,
-                script: script,
+                script: scriptRef.current || script,
                 scenes: scenes,
                 narrationVoice: narrationVoice,
                 descriptionVoice: descriptionVoice
               }
             }
-          })
-        })
+          }, 'handleUpdateCharacterRole')
         
         if (!response.ok) throw new Error('Failed to update role')
         
@@ -4746,26 +4766,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (project) {
         // Build updated metadata with new character wardrobe
         const updatedVisionPhase = {
-          ...project.metadata?.visionPhase,
+          ...(projectRef.current || project)?.metadata?.visionPhase,
           characters: updatedCharacters,
-          script: script,
+          script: scriptRef.current || script,
           scenes: scenes,
           narrationVoice: narrationVoice,
           descriptionVoice: descriptionVoice
         }
         
         const updatedMetadata = {
-          ...project.metadata,
+          ...(projectRef.current || project).metadata,
           visionPhase: updatedVisionPhase
         }
         
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        console.log('[REVERSION-DEBUG][Wardrobe] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
+        const response = await serializedProjectSave({
             metadata: updatedMetadata
-          })
-        })
+          }, 'handleUpdateWardrobe')
         
         if (!response.ok) throw new Error('Failed to update wardrobe')
         
@@ -4829,26 +4846,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Save to database
       if (project) {
         const updatedVisionPhase = {
-          ...project.metadata?.visionPhase,
+          ...(projectRef.current || project)?.metadata?.visionPhase,
           characters: updatedCharacters,
-          script: script,
+          script: scriptRef.current || script,
           scenes: scenes,
           narrationVoice: narrationVoice,
           descriptionVoice: descriptionVoice
         }
         
         const updatedMetadata = {
-          ...project.metadata,
+          ...(projectRef.current || project).metadata,
           visionPhase: updatedVisionPhase
         }
         
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        console.log('[REVERSION-DEBUG][BatchWardrobe] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
+        const response = await serializedProjectSave({
             metadata: updatedMetadata
-          })
-        })
+          }, 'handleBatchUpdateWardrobes')
         
         if (!response.ok) throw new Error('Failed to batch update wardrobes')
         
@@ -4903,13 +4917,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Save to database
       if (project) {
+        const currentProject = projectRef.current || project
+        const currentScript = scriptRef.current || script
         const updatedVisionPhase = {
-          ...project.metadata?.visionPhase,
+          ...currentProject.metadata?.visionPhase,
           characters,
           script: {
-            ...script,
+            ...currentScript,
             script: {
-              ...(script?.script || {}),
+              ...(currentScript?.script || {}),
               scenes: updatedScenes
             },
             scenes: updatedScenes
@@ -4920,22 +4936,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
         
         const updatedMetadata = {
-          ...project.metadata,
+          ...currentProject.metadata,
           visionPhase: updatedVisionPhase
         }
         
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            metadata: updatedMetadata
-          })
-        })
+        const response = await serializedProjectSave({
+          metadata: updatedMetadata
+        }, 'handleUpdateSceneWardrobe')
         
         if (!response.ok) throw new Error('Failed to update scene wardrobe')
         
         setProject({
-          ...project,
+          ...currentProject,
           metadata: updatedMetadata
         })
         
@@ -5081,13 +5093,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               reviewOnlyFields: ['reviews', 'reviewHistory']
             })
             
-            const saveResponse = await fetch(`/api/projects/${projectId}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
+            const saveResponse = await serializedProjectSave({
                 metadata: reviewOnlyMetadata
-              })
-            })
+              }, 'handleGenerateReviews')
             
             if (!saveResponse.ok) {
               const errorText = await saveResponse.text()
@@ -5168,10 +5176,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       
       try {
-        await fetch(`/api/projects/${projId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        await serializedProjectSave({
             metadata: {
               ...metadata,
               visionPhase: {
@@ -5179,13 +5184,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 script: scriptData
               }
             }
-          })
-        })
+          }, 'debouncedSaveSceneAnalysis')
       } catch (err) {
         console.error('[SceneAnalysis] Failed to persist scene analysis:', err)
       }
     }, 1000), // 1 second debounce
-    []
+    [serializedProjectSave]
   )
   
   // Cleanup debounced saves on unmount to prevent race conditions
@@ -5378,19 +5382,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         
         // Save to database
         try {
-          await fetch(`/api/projects/${projectId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+          console.log('[REVERSION-DEBUG][OptimizeScene] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
+          await serializedProjectSave({
               metadata: {
-                ...project?.metadata,
+                ...(projectRef.current || project)?.metadata,
                 visionPhase: {
-                  ...project?.metadata?.visionPhase,
+                  ...(projectRef.current || project)?.metadata?.visionPhase,
                   script: updatedScript
                 }
               }
-            })
-          })
+            }, 'handleOptimizeScene')
           
           // Auto-regenerate scene direction in background after optimization
           console.log(`[AutoDirection] Scene ${sceneIndex + 1} optimized - triggering background direction regeneration`)
@@ -6514,7 +6515,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         
         // Persist to project metadata
         try {
-          const existingMetadata = project?.metadata || {}
+          const existingMetadata = (projectRef.current || project)?.metadata || {}
           const existingVisionPhase = existingMetadata.visionPhase || {}
           
           console.log('[Character Upload] Saving to project:', projectId)
@@ -6524,21 +6525,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             refImageUrl: c.referenceImage?.substring(0, 50)
           })))
           
-          const saveResponse = await fetch(`/api/projects/${projectId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+          console.log('[REVERSION-DEBUG][CharUpload] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
+          const saveResponse = await serializedProjectSave({
               metadata: {
                 ...existingMetadata,
                 visionPhase: {
                   ...existingVisionPhase,
-                  script: script,
+                  script: scriptRef.current || script,
                   scenes: scenes,
                   characters: updatedCharacters
                 }
               }
-            })
-          })
+            }, 'handleCharacterUpload')
           
           if (!saveResponse.ok) {
             const errorText = await saveResponse.text()
@@ -6582,24 +6580,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Persist to project metadata
       try {
-        const existingMetadata = project?.metadata || {}
+        const existingMetadata = (projectRef.current || project)?.metadata || {}
         const existingVisionPhase = existingMetadata.visionPhase || {}
         
-        await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        console.log('[REVERSION-DEBUG][ApproveChar] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
+        await serializedProjectSave({
             metadata: {
               ...existingMetadata,
               visionPhase: {
                 ...existingVisionPhase,
-                script: script,
+                script: scriptRef.current || script,
                 scenes: scenes,
                 characters: updatedCharacters
               }
             }
-          })
-        })
+          }, 'handleApproveCharacter')
         
         const char = updatedCharacters.find(c => (c.id || characters.indexOf(c).toString()) === characterId)
         const msg = char?.imageApproved ? 'Character image approved!' : 'Character image unlocked for editing'
@@ -6657,24 +6652,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             imageUrl: json.imageUrl?.substring(0, 50)
           })
           
-          const existingMetadata = project?.metadata || {}
+          const existingMetadata = (projectRef.current || project)?.metadata || {}
           const existingVisionPhase = existingMetadata.visionPhase || {}
           
-          const saveResponse = await fetch(`/api/projects/${projectId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+          console.log('[REVERSION-DEBUG][GenerateChar] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
+          const saveResponse = await serializedProjectSave({
               metadata: {
                 ...existingMetadata,
                 visionPhase: {
                   ...existingVisionPhase,
-                  script: script,
+                  script: scriptRef.current || script,
                   scenes: scenes,
                   characters: updatedCharacters
                 }
               }
-            })
-          })
+            }, 'handleGenerateCharacter')
           
           if (!saveResponse.ok) {
             const errorText = await saveResponse.text()
@@ -6750,26 +6742,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         await new Promise(resolve => setTimeout(resolve, 50))
         
         try {
-          const existingMetadata = project?.metadata || {}
-          const existingVisionPhase = existingMetadata.visionPhase || {}
-          
           if (updatedScriptForSave) {
-            await fetch(`/api/projects/${projectId}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                metadata: {
-                  ...existingMetadata,
-                  visionPhase: {
-                    ...existingVisionPhase,
-                    script: updatedScriptForSave,
-                    characters: characters,
-                    narrationVoice: narrationVoice,
-                    descriptionVoice: descriptionVoice
-                  }
+            const currentMetadata = (projectRef.current || project)?.metadata || {}
+            const currentVisionPhase = currentMetadata.visionPhase || {}
+            await serializedProjectSave({
+              metadata: {
+                ...currentMetadata,
+                visionPhase: {
+                  ...currentVisionPhase,
+                  script: updatedScriptForSave,
+                  characters: characters,
+                  narrationVoice: narrationVoice,
+                  descriptionVoice: descriptionVoice
                 }
-              })
-            })
+              }
+            }, 'handleGenerateScene')
           }
         } catch (saveError) {
           console.error('Failed to save scene to project:', saveError)
@@ -6868,29 +6855,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     
     // Persist to database
     try {
-      const existingMetadata = project?.metadata || {}
-      const existingVisionPhase = existingMetadata.visionPhase || {}
+      const currentMetadata = (projectRef.current || project)?.metadata || {}
+      const currentVisionPhase = currentMetadata.visionPhase || {}
+      const currentScript = scriptRef.current || script
       
-      await fetch(`/api/projects/${projectId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          metadata: {
-            ...existingMetadata,
-            visionPhase: {
-              ...existingVisionPhase,
+      await serializedProjectSave({
+        metadata: {
+          ...currentMetadata,
+          visionPhase: {
+            ...currentVisionPhase,
+            script: {
+              ...currentScript,
               script: {
-                ...script,
-                script: {
-                  ...script.script,
-                  scenes: updatedScenes
-                }
-              },
-              characters: characters
-            }
+                ...currentScript.script,
+                scenes: updatedScenes
+              }
+            },
+            characters: characters
           }
-        })
-      })
+        }
+      }, 'handleSaveEditedScene')
       console.log('[handleSaveEditedScene] Successfully saved to database')
       try { const { toast } = require('sonner'); toast.success('Scene image updated') } catch {}
     } catch (saveError) {
@@ -7117,7 +7101,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
         
         // Update all dialogue references
-        const updatedScenes = script.script.scenes.map((scene: any) => ({
+        const currentScriptR = scriptRef.current || script
+        const updatedScenes = currentScriptR.script.scenes.map((scene: any) => ({
           ...scene,
           dialogue: scene.dialogue?.map((d: any) => 
             d.characterId === characterId 
@@ -7127,20 +7112,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }))
         
         // Save updated scenes
-        await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            metadata: {
-              ...project?.metadata,
-              visionPhase: {
-                ...project?.metadata?.visionPhase,
-                scenes: updatedScenes,
-                script: { ...script.script, scenes: updatedScenes }
-              }
+        const currentMetadata1 = (projectRef.current || project)?.metadata || {}
+        await serializedProjectSave({
+          metadata: {
+            ...currentMetadata1,
+            visionPhase: {
+              ...currentMetadata1?.visionPhase,
+              scenes: updatedScenes,
+              script: { ...(scriptRef.current || script).script, scenes: updatedScenes }
             }
-          })
-        })
+          }
+        }, 'performCharacterDeletion-reassign')
           
           // Update local state
           setScript((prev: any) => ({
@@ -7149,7 +7131,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }))
       } else if (action === 'clear') {
         // Clear characterId from affected dialogue lines
-        const updatedScenes = script.script.scenes.map((scene: any) => ({
+        const currentScriptC = scriptRef.current || script
+        const updatedScenes = currentScriptC.script.scenes.map((scene: any) => ({
           ...scene,
           dialogue: scene.dialogue?.map((d: any) => 
             d.characterId === characterId 
@@ -7159,20 +7142,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }))
         
         // Save updated scenes
-        await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            metadata: {
-              ...project?.metadata,
-              visionPhase: {
-                ...project?.metadata?.visionPhase,
-                scenes: updatedScenes,
-                script: { ...script.script, scenes: updatedScenes }
-              }
+        const currentMetadata2 = (projectRef.current || project)?.metadata || {}
+        await serializedProjectSave({
+          metadata: {
+            ...currentMetadata2,
+            visionPhase: {
+              ...currentMetadata2?.visionPhase,
+              scenes: updatedScenes,
+              script: { ...(scriptRef.current || script).script, scenes: updatedScenes }
             }
-          })
-        })
+          }
+        }, 'performCharacterDeletion-clear')
           
           // Update local state
           setScript((prev: any) => ({
@@ -7289,21 +7269,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       )
       
       // Save to project
-      await fetch(`/api/projects/${projectId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          metadata: {
-            ...project?.metadata,
-            visionPhase: {
-              ...project?.metadata?.visionPhase,
-              characters: updatedCharacters,
-              scenes: updatedScenes,
-              script: { ...script.script, scenes: updatedScenes }
-            }
+      const currentMetadata = (projectRef.current || project)?.metadata || {}
+      await serializedProjectSave({
+        metadata: {
+          ...currentMetadata,
+          visionPhase: {
+            ...currentMetadata?.visionPhase,
+            characters: updatedCharacters,
+            scenes: updatedScenes,
+            script: { ...(scriptRef.current || script).script, scenes: updatedScenes }
           }
-        })
-      })
+        }
+      }, 'handleMergeCharacters')
         
       // Update local state
       setCharacters(updatedCharacters)
@@ -8140,21 +8117,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       const payload = {
         metadata: {
-          ...project.metadata,
+          ...(projectRef.current || project).metadata,
           visionPhase: {
-            ...project.metadata?.visionPhase,
-            script: script,
+            ...(projectRef.current || project)?.metadata?.visionPhase,
+            script: scriptRef.current || script,
             characters: characters,
             scenes: currentScenes
           }
         }
       }
 
-      const response = await fetch(`/api/projects/${projectId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
+      console.log('[REVERSION-DEBUG][SaveProject] Saving script:', getScriptFingerprint(scriptRef.current || script), 'refFP:', getScriptFingerprint(scriptRef.current), 'closureFP:', getScriptFingerprint(script))
+      const response = await serializedProjectSave(payload, 'handleSaveProject')
 
       if (!response.ok) {
         const errorText = await response.text()
@@ -8369,11 +8343,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               }
             }
             // Persist to DB using the freshly-built metadata
-            fetch(`/api/projects/${p.id || projectId}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ metadata: freshMeta })
-            }).catch(err => console.error('[AutoDirection] DB save failed:', err))
+            serializedProjectSave({ metadata: freshMeta }, 'handleBackgroundDirectionGeneration')
+              .catch(err => console.error('[AutoDirection] DB save failed:', err))
             
             const updated = { ...p, metadata: freshMeta }
             projectRef.current = updated
@@ -9980,22 +9951,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
         // Persist to database
         try {
-          const existingMetadata = project?.metadata || {}
-          const existingVisionPhase = existingMetadata.visionPhase || {}
+          const currentMetadata = (projectRef.current || project)?.metadata || {}
+          const currentVisionPhase = currentMetadata.visionPhase || {}
           
-          await fetch(`/api/projects/${projectId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              metadata: {
-                ...existingMetadata,
-                visionPhase: {
-                  ...existingVisionPhase,
-                  script: updatedScript
-                }
+          await serializedProjectSave({
+            metadata: {
+              ...currentMetadata,
+              visionPhase: {
+                ...currentVisionPhase,
+                script: updatedScript
               }
-            }),
-          })
+            }
+          }, 'handleEnhanceSceneContext')
           
           console.log(`[Enhance Scene Context] Saved enhanced context for Scene ${sceneIndex + 1}`)
           toast.success('Scene details enhanced and saved')
@@ -10394,11 +10361,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         console.log('[saveScenesToDatabase] Including deletedSceneIds:', deletedSceneIds)
       }
       
-      const response = await fetch(`/api/projects/${projectId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
+      const response = await serializedProjectSave(payload, 'saveScenesToDatabase')
       
       if (!response.ok) {
         const errorText = await response.text()
@@ -11072,10 +11035,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               const freshMetadata = currentProject?.metadata || {}
               const freshVisionPhase = freshMetadata.visionPhase || {}
               
-              const saveResponse = await fetch(`/api/projects/${projectId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+              const saveResponse = await serializedProjectSave({
                   metadata: {
                     ...freshMetadata,
                     visionPhase: {
@@ -11084,8 +11044,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       scriptUpdatedAt
                     }
                   }
-                })
-              })
+                }, 'onScriptOptimized')
               
               // Update project state to prevent stale metadata overwrites
               if (saveResponse.ok) {
@@ -11243,10 +11202,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }))
           
           // Update script state
+          const currentScript = scriptRef.current || script
           const updatedScript = {
-            ...script,
+            ...currentScript,
             script: {
-              ...script?.script,
+              ...currentScript?.script,
               scenes: allScenes
             }
           }
@@ -11254,7 +11214,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           
           // Persist to database
           try {
-            const existingMetadata = project?.metadata || {}
+            const existingMetadata = (projectRef.current || project)?.metadata || {}
             const existingVisionPhase = existingMetadata.visionPhase || {}
             
             console.log('[Cinematic] Saving cinematic scenes:', {
@@ -11263,20 +11223,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               cinematicTypes: newScenes.map(s => s.cinematicType)
             })
             
-            const response = await fetch(`/api/projects/${projectId}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                metadata: {
-                  ...existingMetadata,
-                  visionPhase: {
-                    ...existingVisionPhase,
-                    script: updatedScript,
-                    cinematicScenes: cinematicScenes // Also store the plans for reference
-                  }
+            const response = await serializedProjectSave({
+              metadata: {
+                ...existingMetadata,
+                visionPhase: {
+                  ...existingVisionPhase,
+                  script: updatedScript,
+                  cinematicScenes: cinematicScenes // Also store the plans for reference
                 }
-              })
-            })
+              }
+            }, 'onCinematicScenesApply')
             
             if (!response.ok) {
               const errorText = await response.text()

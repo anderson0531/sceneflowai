@@ -201,6 +201,18 @@ export async function PUT(
         const existingSceneCount = existingScript?.script?.scenes?.length || 0
         const incomingSceneCount = incomingScript?.script?.scenes?.length || 0
         
+        // [REVERSION-DEBUG] Log script comparison for every PUT with visionPhase script
+        const existingChars = JSON.stringify(existingScript?.script?.scenes || []).length
+        const incomingChars = JSON.stringify(incomingScript?.script?.scenes || []).length
+        console.log('[REVERSION-DEBUG][API PUT] Script comparison:', {
+          existingScenes: existingSceneCount,
+          incomingScenes: incomingSceneCount,
+          existingChars,
+          incomingChars,
+          hasTimestampGuard: !!(body.metadata.visionPhase?.scriptUpdatedAt),
+          scriptChanged: existingChars !== incomingChars
+        })
+        
         // Track whether safeguard triggered to skip deep-merge
         let scriptSafeguardTriggered = false
         
