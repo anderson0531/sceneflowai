@@ -31,14 +31,16 @@ const TRAINING_SCRIPTS = [
   },
 ]
 
-type InputMode = 'upload' | 'record'
+type InputMode = 'upload' | 'record' | 'character-sample'
 
 interface VoiceClonePanelProps {
   onVoiceCreated: (voiceId: string, voiceName: string) => void
   characterName?: string
+  /** URL to character's stored voice training audio sample */
+  characterAudioSampleUrl?: string
 }
 
-export function VoiceClonePanel({ onVoiceCreated, characterName }: VoiceClonePanelProps) {
+export function VoiceClonePanel({ onVoiceCreated, characterName, characterAudioSampleUrl }: VoiceClonePanelProps) {
   const [voiceName, setVoiceName] = useState(characterName ? `${characterName}'s Voice` : '')
   const [description, setDescription] = useState('')
   const [files, setFiles] = useState<File[]>([])
@@ -385,29 +387,42 @@ export function VoiceClonePanel({ onVoiceCreated, characterName }: VoiceClonePan
       {/* Input Mode Toggle */}
       <div className="space-y-1.5">
         <label className="text-[13px] font-medium text-gray-300">Audio Samples</label>
-        <div className="flex gap-2 p-1 bg-gray-800/50 rounded-lg">
+        <div className={`grid gap-2 p-1 bg-gray-800/50 rounded-lg ${characterAudioSampleUrl ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <button
             onClick={() => setInputMode('upload')}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-[13px] font-medium transition-colors ${
+            className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-[12px] font-medium transition-colors ${
               inputMode === 'upload'
                 ? 'bg-blue-600 text-white'
                 : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
             }`}
           >
-            <Upload className="w-4 h-4" />
-            Upload Files
+            <Upload className="w-3.5 h-3.5" />
+            Upload
           </button>
           <button
             onClick={() => setInputMode('record')}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-[13px] font-medium transition-colors ${
+            className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-[12px] font-medium transition-colors ${
               inputMode === 'record'
                 ? 'bg-blue-600 text-white'
                 : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
             }`}
           >
-            <Mic className="w-4 h-4" />
-            Record Voice
+            <Mic className="w-3.5 h-3.5" />
+            Record
           </button>
+          {characterAudioSampleUrl && (
+            <button
+              onClick={() => setInputMode('character-sample')}
+              className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-[12px] font-medium transition-colors ${
+                inputMode === 'character-sample'
+                  ? 'bg-purple-600 text-white'
+                  : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
+              }`}
+            >
+              <FileAudio className="w-3.5 h-3.5" />
+              Character
+            </button>
+          )}
         </div>
       </div>
 
@@ -441,6 +456,62 @@ export function VoiceClonePanel({ onVoiceCreated, characterName }: VoiceClonePan
             onChange={handleFileSelect}
             className="hidden"
           />
+        </div>
+      )}
+
+      {/* Character Audio Sample Mode */}
+      {inputMode === 'character-sample' && characterAudioSampleUrl && (
+        <div className="space-y-3">
+          <div className="flex items-start gap-2.5 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+            <FileAudio className="w-4 h-4 text-purple-400 mt-0.5 shrink-0" />
+            <div className="text-[13px] text-purple-300">
+              <p className="font-medium mb-0.5">Character Voice Sample</p>
+              <p className="text-[12px] text-purple-400/80">
+                Use the stored voice training audio from this character. This sample was generated when the character&apos;s voice was created.
+              </p>
+            </div>
+          </div>
+
+          {/* Audio Player */}
+          <div className="p-3 bg-gray-800/50 border border-gray-700 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <FileAudio className="w-4 h-4 text-green-400" />
+              <span className="text-[13px] text-gray-300 font-medium">
+                {characterName ? `${characterName}'s Voice Training Sample` : 'Voice Training Sample'}
+              </span>
+            </div>
+            <audio
+              src={characterAudioSampleUrl}
+              controls
+              className="w-full h-8"
+            />
+          </div>
+
+          {/* Use Sample Button */}
+          <button
+            onClick={async () => {
+              try {
+                const response = await fetch(characterAudioSampleUrl)
+                if (!response.ok) throw new Error('Failed to fetch audio sample')
+                const blob = await response.blob()
+                const file = new File(
+                  [blob],
+                  `${characterName?.replace(/\s+/g, '-').toLowerCase() || 'character'}-training-sample.mp3`,
+                  { type: 'audio/mpeg' }
+                )
+                setFiles(prev => [...prev, file].slice(0, 25))
+                setInputMode('upload')
+                toast.success('Character audio sample added to files')
+              } catch (error) {
+                console.error('[VoiceClonePanel] Error loading character sample:', error)
+                toast.error('Failed to load character audio sample')
+              }
+            }}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-[13px] font-medium transition-colors"
+          >
+            <CheckCircle className="w-4 h-4" />
+            Use This Sample
+          </button>
         </div>
       )}
 

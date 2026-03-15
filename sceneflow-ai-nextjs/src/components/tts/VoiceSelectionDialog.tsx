@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { Search, RefreshCw, Play, Check, Sparkles, Star, Wand2, Mic, X, Volume2, Heart } from 'lucide-react'
+import { Search, RefreshCw, Play, Check, Sparkles, Star, Wand2, Mic, X, Volume2, Heart, Loader, FileAudio, Save } from 'lucide-react'
 import { VoiceDesignPanel } from './VoiceDesignPanel'
 import { VoiceClonePanel } from './VoiceClonePanel'
+import { toast } from 'sonner'
 import { 
   getCharacterVoiceRecommendations, 
   searchVoicesIntelligently,
@@ -95,6 +96,12 @@ interface VoiceSelectionDialogProps {
   apiKey?: string
   /** Default use case filter (e.g., 'narrative', 'conversational', 'characters') */
   defaultUseCaseFilter?: string
+  /** Callback to persist AI-generated voice description to character */
+  onVoiceDescriptionGenerated?: (description: string) => void
+  /** URL to character's stored voice training audio sample */
+  characterAudioSampleUrl?: string
+  /** Callback to save generated voice training audio URL to character */
+  onVoiceTrainingAudioSaved?: (audioUrl: string) => void
 }
 
 // ================================================================================
@@ -111,7 +118,10 @@ export function VoiceSelectionDialog({
   characterContext,
   screenplayContext,
   apiKey,
-  defaultUseCaseFilter = 'all'
+  defaultUseCaseFilter = 'all',
+  onVoiceDescriptionGenerated,
+  characterAudioSampleUrl,
+  onVoiceTrainingAudioSaved
 }: VoiceSelectionDialogProps) {
   const [activeTab, setActiveTab] = useState<'browse' | 'create'>('browse')
   const [createTab, setCreateTab] = useState<'design' | 'clone'>('design')
@@ -307,9 +317,81 @@ export function VoiceSelectionDialog({
     onOpenChange(false)
   }
 
+  // State for voice sample generation after voice creation
+  const [isSavingVoiceSample, setIsSavingVoiceSample] = useState(false)
+  const [showSaveVoiceSample, setShowSaveVoiceSample] = useState(false)
+  const [createdVoiceInfo, setCreatedVoiceInfo] = useState<{ voiceId: string; voiceName: string } | null>(null)
+
   const handleVoiceCreated = (voiceId: string, voiceName: string) => {
     fetchVoices()
-    onSelectVoice(voiceId, voiceName)
+    
+    // If we have a character context and the onVoiceTrainingAudioSaved callback,
+    // offer to save a voice training sample
+    if (characterContext?.name && onVoiceTrainingAudioSaved) {
+      setCreatedVoiceInfo({ voiceId, voiceName })
+      setShowSaveVoiceSample(true)
+      // Still select the voice immediately
+      onSelectVoice(voiceId, voiceName)
+    } else {
+      onSelectVoice(voiceId, voiceName)
+      onOpenChange(false)
+    }
+  }
+
+  // Generate and save voice training audio sample using the created voice
+  const handleSaveVoiceSample = async () => {
+    if (!createdVoiceInfo) return
+
+    setIsSavingVoiceSample(true)
+    try {
+      // Concatenate all training scripts for comprehensive sample (~90 seconds)
+      const trainingText = [
+        'The rainbow is a division of white light into many beautiful colors. These take the shape of a long round arch, with its path high above, and its two ends apparently beyond the horizon. There is, according to legend, a boiling pot of gold at one end. People look, but no one ever finds it. When a man looks for something beyond his reach, his friends say he is looking for the pot of gold at the end of the rainbow.',
+        'In the depths of winter, I finally learned that within me there lay an invincible summer. The storm may rage outside, thunder crashing against the sky, lightning illuminating the darkness for brief moments of clarity. Yet here I stand, unwavering. For I have discovered that courage is not the absence of fear, but rather the judgment that something else is more important than fear. The brave may not live forever, but the cautious do not live at all.',
+        'So here\'s the thing about cooking - it\'s really not as complicated as people make it out to be. You just need to trust your instincts, you know? Start with good ingredients, keep things simple, and don\'t be afraid to make mistakes. I\'ve burned more dishes than I can count, but each one taught me something new. The key is to taste as you go, adjust the seasonings, and most importantly, have fun with it. That\'s what makes a meal memorable.'
+      ].join('\n\n')
+
+      // Use the existing ElevenLabs TTS API with saveToBlob to generate and store the sample
+      const response = await fetch('/api/tts/elevenlabs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: trainingText,
+          voiceId: createdVoiceInfo.voiceId,
+          voiceName: createdVoiceInfo.voiceName,
+          saveToBlob: true,
+          audioType: 'voice-training',
+          projectId: 'voice-samples',
+          sceneId: `${characterContext?.name?.replace(/\s+/g, '-').toLowerCase() || 'character'}-training`,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate voice training sample')
+      }
+
+      // Save the blob URL to the character
+      if (data.url && onVoiceTrainingAudioSaved) {
+        onVoiceTrainingAudioSaved(data.url)
+      }
+
+      toast.success('Voice training sample saved to character!')
+      setShowSaveVoiceSample(false)
+      setCreatedVoiceInfo(null)
+      onOpenChange(false)
+    } catch (error) {
+      console.error('[VoiceSelectionDialog] Error saving voice sample:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to save voice training sample')
+    } finally {
+      setIsSavingVoiceSample(false)
+    }
+  }
+
+  const handleSkipVoiceSample = () => {
+    setShowSaveVoiceSample(false)
+    setCreatedVoiceInfo(null)
     onOpenChange(false)
   }
 
@@ -422,6 +504,7 @@ export function VoiceSelectionDialog({
                     onVoiceCreated={handleVoiceCreated}
                     characterContext={characterContext}
                     screenplayContext={screenplayContext}
+                    onVoiceDescriptionGenerated={onVoiceDescriptionGenerated}
                   />
                 </TabsContent>
 
@@ -429,6 +512,7 @@ export function VoiceSelectionDialog({
                   <VoiceClonePanel
                     onVoiceCreated={handleVoiceCreated}
                     characterName={characterContext?.name}
+                    characterAudioSampleUrl={characterAudioSampleUrl}
                   />
                 </TabsContent>
               </Tabs>
@@ -463,6 +547,54 @@ export function VoiceSelectionDialog({
               onSelect={handleSelectVoice}
               onRefresh={fetchVoices}
             />
+          </div>
+        )}
+        {/* Save Voice Sample Overlay */}
+        {showSaveVoiceSample && createdVoiceInfo && (
+          <div className="absolute inset-0 bg-gray-950/95 z-50 flex flex-col items-center justify-center p-8 rounded-lg">
+            <div className="text-center space-y-4 max-w-md">
+              <div className="w-12 h-12 mx-auto bg-green-500/20 rounded-full flex items-center justify-center">
+                <Check className="w-6 h-6 text-green-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white">
+                Voice &ldquo;{createdVoiceInfo.voiceName}&rdquo; Created!
+              </h3>
+              <p className="text-[13px] text-gray-400">
+                Would you like to save a voice training audio sample with this character? 
+                This generates an MP3 using the new voice that can be used later for voice cloning.
+              </p>
+              <div className="flex gap-3 justify-center pt-2">
+                <button
+                  onClick={handleSkipVoiceSample}
+                  disabled={isSavingVoiceSample}
+                  className="px-4 py-2 text-[13px] text-gray-400 hover:text-gray-200 border border-gray-700 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
+                >
+                  Skip
+                </button>
+                <button
+                  onClick={handleSaveVoiceSample}
+                  disabled={isSavingVoiceSample}
+                  className="px-4 py-2 text-[13px] text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isSavingVoiceSample ? (
+                    <>
+                      <Loader className="w-4 h-4 animate-spin" />
+                      Generating sample...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      Save Voice Sample
+                    </>
+                  )}
+                </button>
+              </div>
+              {isSavingVoiceSample && (
+                <p className="text-[11px] text-gray-500">
+                  Generating ~90 seconds of training audio with phonetically diverse text...
+                </p>
+              )}
+            </div>
           </div>
         )}
       </DialogContent>

@@ -32,6 +32,10 @@ export interface CharacterContext {
   ethnicity?: string
   personality?: string
   description?: string
+  /** URL to the character's reference image for AI voice profile generation */
+  referenceImage?: string
+  /** Cached AI-generated voice description for this character */
+  voiceDescription?: string
 }
 
 export interface ScreenplayContext {

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import { Wand2, Play, Pause, Loader, Sparkles, RefreshCw, Check, Volume2 } from 'lucide-react'
+import { Wand2, Play, Pause, Loader, Sparkles, RefreshCw, Check, Volume2, Brain, ImageIcon } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { toast } from 'sonner'
 import { generateVoiceDesignPrompt, CharacterContext, ScreenplayContext } from '@/lib/voiceRecommendation'
@@ -15,30 +15,97 @@ interface VoiceDesignPanelProps {
   onVoiceCreated: (voiceId: string, voiceName: string) => void
   characterContext?: CharacterContext
   screenplayContext?: ScreenplayContext
+  /** Callback to persist AI-generated voice description to character */
+  onVoiceDescriptionGenerated?: (description: string) => void
 }
 
 export function VoiceDesignPanel({ 
   onVoiceCreated, 
   characterContext,
-  screenplayContext 
+  screenplayContext,
+  onVoiceDescriptionGenerated
 }: VoiceDesignPanelProps) {
   const [voiceDescription, setVoiceDescription] = useState('')
   const [voiceName, setVoiceName] = useState(characterContext?.name ? `${characterContext.name}'s Voice` : '')
   const [previewText, setPreviewText] = useState("Hello, this is a preview of my voice. I'm excited to be part of your project!")
   const [isGenerating, setIsGenerating] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
+  const [isGeneratingProfile, setIsGeneratingProfile] = useState(false)
   const [previews, setPreviews] = useState<VoicePreview[]>([])
   const [selectedPreview, setSelectedPreview] = useState<string | null>(null)
   const [playingPreview, setPlayingPreview] = useState<string | null>(null)
+  const [aiProfileGenerated, setAiProfileGenerated] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
-  // Auto-generate description from character context
+  // Auto-populate cached voice description OR fall back to simple prompt
   useEffect(() => {
     if (characterContext && !voiceDescription) {
-      const autoDescription = generateVoiceDesignPrompt(characterContext, screenplayContext)
-      setVoiceDescription(autoDescription)
+      if (characterContext.voiceDescription) {
+        // Use cached AI-generated description
+        setVoiceDescription(characterContext.voiceDescription)
+        setAiProfileGenerated(true)
+      } else {
+        // Fall back to simple concatenation
+        const autoDescription = generateVoiceDesignPrompt(characterContext, screenplayContext)
+        setVoiceDescription(autoDescription)
+      }
     }
   }, [characterContext, screenplayContext])
+
+  // Generate AI voice profile via Gemini
+  const handleGenerateAIProfile = async () => {
+    if (!characterContext) {
+      toast.error('No character context available')
+      return
+    }
+
+    setIsGeneratingProfile(true)
+
+    try {
+      const response = await fetch('/api/tts/voice-profile/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          characterName: characterContext.name,
+          characterContext: {
+            role: characterContext.role,
+            gender: characterContext.gender,
+            age: characterContext.age,
+            ethnicity: characterContext.ethnicity,
+            personality: characterContext.personality,
+            description: characterContext.description,
+          },
+          referenceImageUrl: characterContext.referenceImage,
+          screenplayContext,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate voice profile')
+      }
+
+      setVoiceDescription(data.voiceDescription)
+      setAiProfileGenerated(true)
+      
+      // Persist to character via callback
+      if (onVoiceDescriptionGenerated) {
+        onVoiceDescriptionGenerated(data.voiceDescription)
+      }
+      
+      toast.success(
+        data.usedVision 
+          ? `AI voice profile generated from character image & context!`
+          : `AI voice profile generated from character context!`
+      )
+    } catch (error) {
+      console.error('[Voice Design] AI profile error:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to generate AI voice profile')
+    } finally {
+      setIsGeneratingProfile(false)
+    }
+  }
 
   const handleGeneratePreviews = async () => {
     if (!voiceDescription.trim()) {
@@ -165,6 +232,8 @@ export function VoiceDesignPanel({
     }
   }, [])
 
+  const hasReferenceImage = !!characterContext?.referenceImage
+
   return (
     <div className="space-y-4">
       {/* Info Banner */}
@@ -177,6 +246,51 @@ export function VoiceDesignPanel({
           </p>
         </div>
       </div>
+
+      {/* AI Voice Profile Generator — visible styled button */}
+      {characterContext && (
+        <div className="space-y-2">
+          <Button
+            onClick={handleGenerateAIProfile}
+            disabled={isGeneratingProfile}
+            variant="outline"
+            className={`w-full border-purple-500/40 hover:border-purple-400 hover:bg-purple-500/10 text-purple-300 hover:text-purple-200 ${
+              aiProfileGenerated ? 'border-green-500/40 text-green-300' : ''
+            }`}
+          >
+            {isGeneratingProfile ? (
+              <>
+                <Loader className="w-4 h-4 mr-2 animate-spin" />
+                Analyzing character{hasReferenceImage ? ' image' : ''}...
+              </>
+            ) : aiProfileGenerated ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Regenerate AI Voice Profile
+              </>
+            ) : (
+              <>
+                <Brain className="w-4 h-4 mr-2" />
+                Generate AI Voice Profile
+                {hasReferenceImage && (
+                  <span className="ml-1.5 inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-purple-500/20 rounded text-[10px] text-purple-300">
+                    <ImageIcon className="w-2.5 h-2.5" />
+                    + Photo
+                  </span>
+                )}
+              </>
+            )}
+          </Button>
+          {!aiProfileGenerated && (
+            <p className="text-[11px] text-gray-500 text-center">
+              {hasReferenceImage 
+                ? 'Uses Gemini AI to analyze your character\'s photo and attributes to create an optimized voice description'
+                : 'Uses Gemini AI to analyze your character\'s attributes to create an optimized voice description'
+              }
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Voice Name */}
       <div className="space-y-1.5">
@@ -193,25 +307,35 @@ export function VoiceDesignPanel({
       {/* Voice Description */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <label className="text-[13px] font-medium text-gray-300">Voice Description</label>
+          <label className="text-[13px] font-medium text-gray-300">
+            Voice Description
+            {aiProfileGenerated && (
+              <span className="ml-1.5 text-[10px] text-green-400 font-normal">✦ AI-generated</span>
+            )}
+          </label>
           {characterContext && (
             <button
               onClick={() => {
                 const autoDesc = generateVoiceDesignPrompt(characterContext, screenplayContext)
                 setVoiceDescription(autoDesc)
+                setAiProfileGenerated(false)
               }}
-              className="text-[11px] text-purple-400 hover:text-purple-300 flex items-center gap-1"
+              className="text-[11px] text-gray-500 hover:text-gray-300 flex items-center gap-1"
             >
-              <Wand2 className="w-3 h-3" />
-              Auto-generate from character
+              <RotateCcwIcon className="w-3 h-3" />
+              Reset to basic
             </button>
           )}
         </div>
         <textarea
           value={voiceDescription}
-          onChange={(e) => setVoiceDescription(e.target.value)}
+          onChange={(e) => {
+            setVoiceDescription(e.target.value)
+            // If user edits, it's no longer purely AI-generated
+            if (aiProfileGenerated) setAiProfileGenerated(false)
+          }}
           placeholder="Describe the voice: gender, age, tone, accent, personality...&#10;e.g., 'A warm, mature female voice with a slight British accent, calm and reassuring'"
-          rows={3}
+          rows={4}
           className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 text-[13px] placeholder-gray-500 focus:outline-none focus:border-purple-500 resize-none"
         />
         <div className="flex justify-between text-[11px] text-gray-500">
@@ -340,5 +464,15 @@ export function VoiceDesignPanel({
         </Button>
       )}
     </div>
+  )
+}
+
+// Simple rotate icon component (avoids importing RotateCcw from lucide for just this)
+function RotateCcwIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+    </svg>
   )
 }

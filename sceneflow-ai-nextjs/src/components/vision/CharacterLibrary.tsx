@@ -103,6 +103,7 @@ interface CharacterCardProps {
   onUpdateAppearance?: (characterId: string, description: string) => void
   onUpdateCharacterName?: (characterId: string, name: string) => void
   onUpdateCharacterRole?: (characterId: string, role: string) => void
+  onUpdateCharacterAttributes?: (characterId: string, attributes: any) => void
   onUpdateWardrobe?: (characterId: string, wardrobe: { 
     defaultWardrobe?: string; 
     wardrobeAccessories?: string;
@@ -423,6 +424,7 @@ export function CharacterLibrary({ characters, scenes = [], onRegenerateCharacte
                 onUpdateAppearance={onUpdateCharacterAppearance}
                 onUpdateCharacterName={onUpdateCharacterName}
                 onUpdateCharacterRole={onUpdateCharacterRole}
+                onUpdateCharacterAttributes={onUpdateCharacterAttributes}
                 onUpdateWardrobe={onUpdateCharacterWardrobe}
                 onBatchUpdateWardrobes={onBatchUpdateWardrobes}
                 scenes={scenes}
@@ -544,7 +546,7 @@ function formatSceneRange(sceneNumbers: number[]): string {
   return ranges.join(', ')
 }
 
-const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, isUploading = false, isOrphan = false, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateWardrobe, onBatchUpdateWardrobes, scenes = [], onRemove, onEditImage, ttsProvider, voiceSectionExpanded, onToggleVoiceSection, enableDrag = false, onOpenCharacterPrompt, screenplayContext }: CharacterCardProps) => {
+const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, isUploading = false, isOrphan = false, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateCharacterAttributes, onUpdateWardrobe, onBatchUpdateWardrobes, scenes = [], onRemove, onEditImage, ttsProvider, voiceSectionExpanded, onToggleVoiceSection, enableDrag = false, onOpenCharacterPrompt, screenplayContext }: CharacterCardProps) => {
   const [imageError, setImageError] = useState(false) // Track if image failed to load
   
   // Reset imageError when referenceImage changes (new image uploaded)
@@ -629,7 +631,9 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
     age: character.age,
     ethnicity: character.ethnicity,
     personality: character.keyFeature,
-    description: character.description || character.appearanceDescription
+    description: character.description || character.appearanceDescription,
+    referenceImage: character.referenceImage,
+    voiceDescription: character.voiceDescription
   }
   
   // Helper function to generate fallback description from attributes
@@ -2184,6 +2188,13 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
           }}
           characterContext={characterContext}
           screenplayContext={screenplayContext as ScreenplayContext}
+          characterAudioSampleUrl={character.voiceTrainingAudioUrl}
+          onVoiceDescriptionGenerated={(description) => {
+            onUpdateCharacterAttributes?.(characterId, { voiceDescription: description })
+          }}
+          onVoiceTrainingAudioSaved={(audioUrl) => {
+            onUpdateCharacterAttributes?.(characterId, { voiceTrainingAudioUrl: audioUrl })
+          }}
         />
         
         {/* Approve Button - Show only if image exists and not approved */}

@@ -285,6 +285,8 @@ interface VoiceConfig {
   similarityBoost?: number
   // Google specific
   languageCode?: string
+  // AI-generated voice description (cached)
+  voiceDescription?: string
 }
 
 interface Character {
@@ -297,6 +299,10 @@ interface Character {
   appearanceDescription?: string
   // Voice assignment
   voiceConfig?: VoiceConfig
+  // AI-generated voice description (cached from Gemini analysis)
+  voiceDescription?: string
+  // URL to stored voice training audio sample (MP3 in Vercel Blob)
+  voiceTrainingAudioUrl?: string
   // Wardrobe collection - allows multiple outfit variations
   wardrobes?: CharacterWardrobe[]
   // Legacy single wardrobe fields (for backwards compatibility)
