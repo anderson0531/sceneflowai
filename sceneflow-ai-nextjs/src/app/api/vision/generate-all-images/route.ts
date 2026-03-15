@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { findSceneCharacters } from '../../../../lib/character/matching'
+import { extractLocation } from '../../../../lib/script/formatSceneHeading'
 import { 
   processWithConcurrency, 
   ConcurrentTask,
@@ -74,7 +75,11 @@ export async function POST(request: NextRequest) {
         }
 
         // Pre-validate scenes and identify which ones can be generated
-        const validScenes: { index: number; scene: any; detectedChars: any[]; scenePrompt: string }[] = []
+        const validScenes: { index: number; scene: any; detectedChars: any[]; scenePrompt: string; characterWardrobes: any[]; isEstablishingShot: boolean }[] = []
+        
+        // Load project references for intelligent auto-selection
+        const projectLocationRefs = visionPhase?.references?.locationReferences || []
+        const projectObjectRefs = visionPhase?.references?.objectReferences || []
         
         for (let i = 0; i < scenes.length; i++) {
           const scene = scenes[i]
@@ -101,36 +106,88 @@ export async function POST(request: NextRequest) {
             ...(scene.dialogue || []).map((d: any) => d.character || '')
           ].join(' ')
           
-          const detectedChars = findSceneCharacters(sceneText, characters)
+          let detectedChars = findSceneCharacters(sceneText, characters)
+          
+          // Filter out narrator/voiceover-only characters — they have no visual representation
+          detectedChars = detectedChars.filter((c: any) => 
+            c.type !== 'narrator' && c.type !== 'description' &&
+            c.name?.toUpperCase() !== 'NARRATOR' && c.name?.toUpperCase() !== 'V.O.'
+          )
           
           // Build prompt like ScenePromptBuilder does - prefer sceneDirectionText if available
           const scenePrompt = scene.sceneDirectionText || scene.visualDescription || scene.action || scene.heading || ''
           
+          // Determine if this is an establishing shot (no characters but has location)
+          let isEstablishingShot = false
           if (detectedChars.length === 0) {
-            console.log(`[Batch Images] Scene ${i + 1}: No characters detected, skipping`)
-            sceneStatuses[i].status = 'skipped'
-            skippedScenes.push({
-              scene: i + 1,
-              heading: scene.heading,
-              reason: 'No characters detected'
-            })
-            continue
+            // Check if scene has a matching location reference — if so, generate as establishing shot
+            const sceneHeading = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text
+            const currentLocation = extractLocation(sceneHeading)
+            const hasLocationRef = currentLocation && projectLocationRefs.some((loc: any) => 
+              loc.imageUrl && loc.location === currentLocation
+            )
+            
+            if (hasLocationRef) {
+              isEstablishingShot = true
+              console.log(`[Batch Images] Scene ${i + 1}: No characters but has location ref "${currentLocation}" — generating as establishing shot`)
+            } else {
+              console.log(`[Batch Images] Scene ${i + 1}: No characters detected and no location reference, skipping`)
+              sceneStatuses[i].status = 'skipped'
+              skippedScenes.push({
+                scene: i + 1,
+                heading: scene.heading,
+                reason: 'No characters detected and no location reference available'
+              })
+              continue
+            }
           }
           
-          // Check if characters have reference images
-          const charsWithoutImages = detectedChars.filter((c: any) => !c.referenceImage)
-          if (charsWithoutImages.length > 0) {
-            console.log(`[Batch Images] Scene ${i + 1}: ${charsWithoutImages.length} characters missing reference images`)
-            sceneStatuses[i].status = 'skipped'
-            skippedScenes.push({
-              scene: i + 1,
-              heading: scene.heading,
-              reason: `Characters missing reference images: ${charsWithoutImages.map((c: any) => c.name).join(', ')}`
-            })
-            continue
+          // Check if characters have reference images (only for non-establishing shots)
+          if (!isEstablishingShot) {
+            const charsWithoutImages = detectedChars.filter((c: any) => !c.referenceImage)
+            if (charsWithoutImages.length > 0) {
+              console.log(`[Batch Images] Scene ${i + 1}: ${charsWithoutImages.length} characters missing reference images`)
+              sceneStatuses[i].status = 'skipped'
+              skippedScenes.push({
+                scene: i + 1,
+                heading: scene.heading,
+                reason: `Characters missing reference images: ${charsWithoutImages.map((c: any) => c.name).join(', ')}`
+              })
+              continue
+            }
           }
           
-          validScenes.push({ index: i, scene, detectedChars, scenePrompt })
+          // Auto-resolve wardrobe assignments for this scene
+          // Priority: scene-number match → isDefault → first wardrobe
+          const sceneNum = i + 1
+          const characterWardrobes: { characterId: string; wardrobeId: string }[] = []
+          
+          for (const char of detectedChars) {
+            if (!char.wardrobes || !Array.isArray(char.wardrobes) || char.wardrobes.length === 0) continue
+            
+            // Priority 1: Wardrobe with matching scene number
+            let resolvedWardrobe = char.wardrobes.find(
+              (w: any) => w.sceneNumbers && w.sceneNumbers.includes(sceneNum)
+            )
+            
+            // Priority 2: Default wardrobe
+            if (!resolvedWardrobe) {
+              resolvedWardrobe = char.wardrobes.find((w: any) => w.isDefault)
+            }
+            
+            // Priority 3: First wardrobe
+            if (!resolvedWardrobe) {
+              resolvedWardrobe = char.wardrobes[0]
+            }
+            
+            if (resolvedWardrobe) {
+              const charId = char.id || char.name
+              characterWardrobes.push({ characterId: charId, wardrobeId: resolvedWardrobe.id })
+              console.log(`[Batch Images] Scene ${sceneNum}: Auto-assigned wardrobe "${resolvedWardrobe.name}" for ${char.name}`)
+            }
+          }
+          
+          validScenes.push({ index: i, scene, detectedChars, scenePrompt, characterWardrobes, isEstablishingShot })
         }
 
         // Send initial progress with validation results
@@ -161,7 +218,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create concurrent tasks for valid scenes
-        const tasks: ConcurrentTask<SceneGenerationResult>[] = validScenes.map(({ index, scene, detectedChars, scenePrompt }) => ({
+        const tasks: ConcurrentTask<SceneGenerationResult>[] = validScenes.map(({ index, scene, detectedChars, scenePrompt, characterWardrobes, isEstablishingShot }) => ({
           id: index,
           execute: async (): Promise<SceneGenerationResult> => {
             try {
@@ -173,8 +230,12 @@ export async function POST(request: NextRequest) {
                   sceneIndex: index,
                   scenePrompt,  // Use pre-built prompt (prefers sceneDirectionText)
                   selectedCharacters: detectedChars.map((c: any) => c.id),
+                  characterWardrobes,  // Auto-resolved wardrobe assignments per character
                   quality: imageQuality || 'auto',
-                  skipObjectAutoDetection: true  // Batch mode: don't auto-detect props
+                  // Let the per-scene endpoint auto-detect props and locations from project refs
+                  skipObjectAutoDetection: false,
+                  // For establishing shots (no characters), tell the endpoint to skip character requirements
+                  excludeCharacters: isEstablishingShot,
                 })
               })
               

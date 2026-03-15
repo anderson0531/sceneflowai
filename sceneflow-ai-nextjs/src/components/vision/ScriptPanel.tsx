@@ -3112,13 +3112,16 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             setSceneBuilderIdx(null)
           }}
           scene={scenes[sceneBuilderIdx]}
-          availableCharacters={characters.map(c => ({
+          availableCharacters={characters
+            .filter(c => c.type !== 'narrator' && c.type !== 'description')
+            .map(c => ({
             name: c.name,
             description: c.description,
             referenceImage: c.referenceImage,  // Pass Blob URL for Imagen API
             appearanceDescription: c.appearanceDescription,  // Pass appearance description
             ethnicity: c.ethnicity,
             subject: c.subject,
+            type: c.type,  // Pass type for narrator filtering in CharacterSelectionSection
             wardrobes: c.wardrobes  // Pass wardrobes for costume selection in dialog
           }))}
           sceneReferences={sceneReferences}

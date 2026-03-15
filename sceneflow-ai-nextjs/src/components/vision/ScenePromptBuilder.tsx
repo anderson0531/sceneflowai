@@ -57,6 +57,8 @@ interface ScenePromptBuilderProps {
     appearanceDescription?: string
     ethnicity?: string
     subject?: string
+    /** Character type — 'narrator' and 'description' are voiceover-only */
+    type?: string
     wardrobes?: Array<{
       id: string
       name: string
@@ -1033,6 +1035,7 @@ export function ScenePromptBuilder({
                 description: c.description,
                 ethnicity: c.ethnicity,
                 subject: c.subject,
+                type: c.type,  // Pass type for narrator filtering
                 wardrobes: c.wardrobes?.map(w => ({
                   id: w.id,
                   name: w.name,

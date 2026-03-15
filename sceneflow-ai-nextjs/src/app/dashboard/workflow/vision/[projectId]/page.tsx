@@ -4673,7 +4673,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         let wardrobes: CharacterWardrobe[] = char.wardrobes || []
         
         // Migrate legacy wardrobe to collection if exists and collection is empty
-        if (wardrobes.length === 0 && (char.defaultWardrobe || wardrobe.defaultWardrobe)) {
+        // SKIP migration when adding a new wardrobe (action === 'add') to prevent
+        // creating a duplicate "Default Outfit" alongside the wardrobe being added
+        if (wardrobes.length === 0 && wardrobe.action !== 'add' && (char.defaultWardrobe || wardrobe.defaultWardrobe)) {
           const legacyDescription = char.defaultWardrobe || wardrobe.defaultWardrobe || ''
           const legacyAccessories = char.wardrobeAccessories || wardrobe.wardrobeAccessories || ''
           if (legacyDescription) {
@@ -5782,6 +5784,77 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               })
             } catch (error) {
               console.warn('[Load Project] Failed to save character IDs:', error)
+            }
+          }
+
+          // MIGRATION: Deduplicate wardrobes within each character
+          // Fixes bug where legacy migration created a "Default Outfit" alongside
+          // the first user-added wardrobe when both shared the same description
+          let needsWardrobeDedup = false
+          charactersWithIds = charactersWithIds.map((c: any) => {
+            if (!c.wardrobes || !Array.isArray(c.wardrobes) || c.wardrobes.length <= 1) return c
+            
+            // Deduplicate by description (normalized) — keep the one with more data (images, sceneNumbers)
+            const seen = new Map<string, any>()
+            for (const w of c.wardrobes) {
+              const key = (w.description || '').trim().toLowerCase()
+              if (!key) {
+                // Keep wardrobes with empty descriptions (shouldn't happen, but safe)
+                seen.set(w.id, w)
+                continue
+              }
+              const existing = seen.get(key)
+              if (existing) {
+                // Merge: keep the one with more data (costume images, sceneNumbers)
+                needsWardrobeDedup = true
+                const existingScore = (existing.fullBodyUrl ? 10 : 0) + (existing.headshotUrl ? 5 : 0) + (existing.sceneNumbers?.length || 0)
+                const currentScore = (w.fullBodyUrl ? 10 : 0) + (w.headshotUrl ? 5 : 0) + (w.sceneNumbers?.length || 0)
+                if (currentScore > existingScore) {
+                  // Current wardrobe has more data — replace, preserving isDefault from either
+                  seen.set(key, { ...w, isDefault: w.isDefault || existing.isDefault })
+                } else {
+                  // Existing has more data — merge sceneNumbers and isDefault
+                  seen.set(key, { 
+                    ...existing, 
+                    isDefault: existing.isDefault || w.isDefault,
+                    sceneNumbers: [...new Set([...(existing.sceneNumbers || []), ...(w.sceneNumbers || [])])]
+                  })
+                }
+              } else {
+                seen.set(key, w)
+              }
+            }
+            
+            const deduped = Array.from(seen.values())
+            if (deduped.length < c.wardrobes.length) {
+              console.log(`[Load Project] Deduplicated wardrobes for ${c.name}: ${c.wardrobes.length} → ${deduped.length}`)
+              // Ensure exactly one default
+              if (!deduped.some((w: any) => w.isDefault) && deduped.length > 0) {
+                deduped[0].isDefault = true
+              }
+              return { ...c, wardrobes: deduped }
+            }
+            return c
+          })
+          
+          if (needsWardrobeDedup) {
+            console.log('[Load Project] Saving wardrobe deduplication')
+            try {
+              await fetch(`/api/projects/${projectId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  metadata: {
+                    ...proj.metadata,
+                    visionPhase: {
+                      ...visionPhase,
+                      characters: charactersWithIds
+                    }
+                  }
+                })
+              })
+            } catch (error) {
+              console.warn('[Load Project] Failed to save wardrobe dedup:', error)
             }
           }
 

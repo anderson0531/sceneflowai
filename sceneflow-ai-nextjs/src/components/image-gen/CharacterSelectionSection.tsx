@@ -29,10 +29,17 @@ export function CharacterSelectionSection({
   noTalentHint,
   className,
 }: CharacterSelectionProps) {
-  if (characters.length === 0) return null
+  // Filter out narrator/voiceover-only characters — they have no visual representation
+  const visualCharacters = characters.filter(c => {
+    return c.type !== 'narrator' && c.type !== 'description'
+  })
+
+  if (visualCharacters.length === 0) return null
 
   // Build a flat list of selectable "costume tiles"
-  // Each tile = one wardrobe with an image, OR a base character if no wardrobe images exist
+  // Each tile = one wardrobe with a costume reference image
+  // Base portraits are NOT included — they're only used as source images
+  // for generating costume references, not as standalone selectable options
   interface CostumeTile {
     characterName: string
     wardrobeId?: string
@@ -45,14 +52,23 @@ export function CharacterSelectionSection({
 
   const tiles: CostumeTile[] = []
 
-  for (const char of characters) {
+  for (const char of visualCharacters) {
     const wardrobesWithImages = (char.wardrobes || []).filter(
       (w) => (w as any).fullBodyUrl || (w as any).headshotUrl
     )
 
-    if (wardrobesWithImages.length > 0) {
-      // One tile per wardrobe that has a costume image
-      for (const w of wardrobesWithImages) {
+    // Deduplicate: if two wardrobes share the same image URL, keep only the first
+    const seenImageUrls = new Set<string>()
+    const uniqueWardrobesWithImages = wardrobesWithImages.filter((w) => {
+      const imgUrl = (w as any).fullBodyUrl || (w as any).headshotUrl
+      if (seenImageUrls.has(imgUrl)) return false
+      seenImageUrls.add(imgUrl)
+      return true
+    })
+
+    if (uniqueWardrobesWithImages.length > 0) {
+      // One tile per wardrobe that has a costume image (deduplicated)
+      for (const w of uniqueWardrobesWithImages) {
         const imgUrl = (w as any).fullBodyUrl || (w as any).headshotUrl
         tiles.push({
           characterName: char.name,
@@ -64,20 +80,9 @@ export function CharacterSelectionSection({
           isSceneDefault: sceneWardrobes?.[char.name] === w.id,
         })
       }
-      // Also add base portrait tile if it exists and is different from wardrobe images
-      if (char.referenceImage) {
-        const wardrobeImages = wardrobesWithImages.map((w) => (w as any).fullBodyUrl || (w as any).headshotUrl)
-        if (!wardrobeImages.includes(char.referenceImage)) {
-          tiles.push({
-            characterName: char.name,
-            wardrobeId: undefined,
-            wardrobeName: undefined,
-            imageUrl: char.referenceImage,
-            label: char.name,
-            sublabel: 'Base Portrait',
-          })
-        }
-      }
+      // NOTE: Base portrait tiles are intentionally NOT added here.
+      // Base portraits exist only as source images for generating costume
+      // references, not as selectable options in the image generation dialog.
     } else if (char.referenceImage) {
       // No wardrobe images — show base portrait
       tiles.push({

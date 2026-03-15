@@ -116,11 +116,19 @@ export function findSceneCharacters(
 ): Character[] {
   if (!sceneText || availableCharacters.length === 0) return []
 
+  // Exclude narrator/voiceover-only characters — they have no visual representation
+  const visualCharacters = availableCharacters.filter(c => {
+    const charType = (c as any).type
+    const charName = c.name?.toUpperCase()
+    return charType !== 'narrator' && charType !== 'description' &&
+           charName !== 'NARRATOR' && charName !== 'V.O.' && charName !== 'O.S.'
+  })
+
   const foundCharacters = new Set<Character>()
   const normalized = sceneText.toLowerCase()
 
   // Strategy 1: Match FULL character names only (highest confidence)
-  availableCharacters.forEach(char => {
+  visualCharacters.forEach(char => {
     const fullName = char.name.toLowerCase()
     if (normalized.includes(fullName)) {
       foundCharacters.add(char)
@@ -133,7 +141,7 @@ export function findSceneCharacters(
   
   for (const match of dialogueMatches) {
     const speakerName = match[1].trim()
-    const character = findMatchingCharacter(speakerName, availableCharacters)
+    const character = findMatchingCharacter(speakerName, visualCharacters)
     if (character) foundCharacters.add(character)
   }
 
@@ -150,7 +158,7 @@ export function findSceneCharacters(
     const possibleFullNames = NICKNAME_MAPPINGS[word]
     if (possibleFullNames) {
       // Try to match against character names
-      availableCharacters.forEach(char => {
+      visualCharacters.forEach(char => {
         const charNameLower = char.name.toLowerCase()
         // Check if any possible full name appears in the character name
         for (const fullName of possibleFullNames) {
@@ -165,7 +173,7 @@ export function findSceneCharacters(
     // Also check if the word is a KNOWN SHORT FORM of any character name
     // Only match if the word is a substantial prefix (at least 4 chars AND at least 60% of the full name part)
     // This prevents false positives like "Reed" matching in "agreed" or "Ben" matching in "benefit"
-    availableCharacters.forEach(char => {
+    visualCharacters.forEach(char => {
       const nameParts = char.name.toLowerCase().split(/\s+/)
       // Skip titles like "Dr.", "Mr.", etc.
       const meaningfulParts = nameParts.filter(p => !EXCLUDED_WORDS.has(p.replace('.', '')))
@@ -191,7 +199,7 @@ export function findSceneCharacters(
   // Strategy 4: Fallback - try first names only if very few matches found
   // Requires at least 4-char first names to avoid false positives on short common words
   if (foundCharacters.size === 0) {
-    availableCharacters.forEach(char => {
+    visualCharacters.forEach(char => {
       // Skip titles like "Dr.", "Mr.", etc. to get the actual first name
       const nameParts = char.name.split(/\s+/)
       const meaningfulName = nameParts.find(p => !EXCLUDED_WORDS.has(p.replace('.', '').toLowerCase()) && p.length >= 4)

@@ -17,6 +17,8 @@ export interface ImageGenCharacter {
   age?: string
   subject?: string
   description?: string
+  /** Character type — 'narrator' and 'description' are voiceover-only (no visual representation) */
+  type?: string
   /** Single wardrobe string (from FramePromptDialog) */
   wardrobe?: string
   /** Full wardrobe options (from ScenePromptBuilder) */

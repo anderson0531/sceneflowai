@@ -605,17 +605,19 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   // Costume reference generation state (uses /api/image/edit to create character-in-outfit reference)
   const [generatingCostumeRefFor, setGeneratingCostumeRefFor] = useState<string | null>(null)
   
-  // Get wardrobes collection (or migrate from legacy format)
-  const wardrobes: CharacterWardrobe[] = character.wardrobes || (
-    (character.defaultWardrobe || character.wardrobeAccessories) ? [{
-      id: 'legacy-wardrobe',
-      name: 'Default Outfit',
-      description: character.defaultWardrobe || '',
-      accessories: character.wardrobeAccessories,
-      isDefault: true,
-      createdAt: new Date().toISOString()
-    }] : []
-  )
+  // Get wardrobes collection. Only synthesize legacy entry when:
+  // 1. character.wardrobes is empty/undefined AND
+  // 2. there's a meaningful legacy description to migrate
+  const wardrobes: CharacterWardrobe[] = (character.wardrobes && character.wardrobes.length > 0)
+    ? character.wardrobes
+    : (character.defaultWardrobe?.trim() ? [{
+        id: 'legacy-wardrobe',
+        name: 'Default Outfit',
+        description: character.defaultWardrobe,
+        accessories: character.wardrobeAccessories,
+        isDefault: true,
+        createdAt: new Date().toISOString()
+      }] : [])
   
   // Build character context for voice recommendations
   const characterContext: CharacterContext = {
