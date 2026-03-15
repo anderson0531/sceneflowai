@@ -20,6 +20,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { AudioGalleryPlayer } from './AudioGalleryPlayer'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { Button } from '@/components/ui/Button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
@@ -433,6 +434,27 @@ export function SceneGallery({
               </TooltipTrigger>
               <TooltipContent>Generate narration and dialogue audio for all scenes</TooltipContent>
             </Tooltip>
+          )}
+          {/* Language Stream Selector */}
+          {availableLanguages.length > 1 && (
+            <div className="flex items-center gap-1.5">
+              <Globe className="w-4 h-4 text-blue-400" />
+              <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                <SelectTrigger className="w-[130px] h-8 text-xs bg-white dark:bg-gray-800 border-blue-500/30">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableLanguages.map(lang => {
+                    const langInfo = SUPPORTED_LANGUAGES.find(l => l.code === lang)
+                    return (
+                      <SelectItem key={lang} value={lang} className="text-xs">
+                        {langInfo?.name || lang.toUpperCase()}
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
           )}
           {/* Audio Player toggle - only show if scenes have audio */}
           {scenesWithAudio > 0 && (

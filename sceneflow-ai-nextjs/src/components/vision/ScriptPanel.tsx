@@ -2606,6 +2606,24 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               </TooltipProvider>
             )}
 
+
+            {/* Language Stream Selector */}
+            <div className="flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5 text-blue-400" />
+              <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                <SelectTrigger className="w-[130px] h-8 text-xs bg-slate-800 border-blue-500/30 text-gray-200">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700">
+                  {SUPPORTED_LANGUAGES.map(lang => (
+                    <SelectItem key={lang.code} value={lang.code} className="text-xs text-gray-200">
+                      {lang.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Translation & Script Tools overflow menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -5057,6 +5075,21 @@ function SceneCard({
                           </div>
                         </DialogContent>
                       </Dialog>
+                      {/* Language Stream Selector */}
+                      <div className="flex items-center gap-1.5">
+                        <Globe className="w-3 h-3 text-blue-400" />
+                        <select
+                          value={selectedLanguage}
+                          onChange={(e) => setSelectedLanguage(e.target.value)}
+                          className="h-7 px-1.5 text-xs bg-gray-800 border border-blue-500/30 rounded-md text-gray-200 focus:outline-none focus:border-blue-500"
+                        >
+                          {SUPPORTED_LANGUAGES.map(lang => (
+                            <option key={lang.code} value={lang.code}>
+                              {lang.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
