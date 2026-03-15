@@ -1099,8 +1099,8 @@ export const AUTOMATION_FEATURES = {
     icon: 'Volume2',
   },
   MULTILANGUAGE: {
-    name: '26-Language Generation',
-    description: 'Translate and regenerate audio in 26 languages with matched voices',
+    name: '73-Language Generation',
+    description: 'Translate and regenerate audio in 73 languages with matched voices (ElevenLabs v3)',
     manualTime: 2400, // 40 hours per language × 26 would be months
     automatedTime: 30, // 30 min for all languages
     expertiseRequired: 'Translation, voice matching, localization',

@@ -114,9 +114,9 @@ const modules = [
     textColor: 'text-emerald-400',
     accentColor: 'emerald',
     standaloneValue: 'Auto-lip sync and translation',
-    standaloneDescription: 'Professional post-production with AI-powered audio synthesis, automated lip-sync, and one-click localization to 32 languages.',
+    standaloneDescription: 'Professional post-production with AI-powered audio synthesis, automated lip-sync, and one-click localization to 70+ languages.',
     standaloneFeatures: [
-      { icon: Mic, text: '32-language AI voiceover' },
+      { icon: Mic, text: '70+ language AI voiceover' },
       { icon: Clock, text: 'Automated lip-sync technology' },
       { icon: Globe, text: 'One-click localization' },
       { icon: CheckCircle2, text: 'Professional audio mixing' },

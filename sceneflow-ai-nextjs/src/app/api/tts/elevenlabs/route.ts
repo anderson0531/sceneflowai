@@ -27,16 +27,21 @@ function splitIntoParagraphs(text: string): string[] {
     .filter(p => p.length > 0)
 }
 
-// Languages that benefit from eleven_v3's improved tonal handling
-const V3_LANGUAGES = ['th', 'vi', 'id', 'ms', 'zh', 'ja', 'ko']
+// Model selection strategy:
+// - eleven_v3: Flagship model, best quality, 73 languages, 5k char limit
+// - eleven_flash_v2_5: Ultra-fast fallback (~75ms), 32 languages, 40k char limit
+// Default: v3 for all languages (best quality). Override with ELEVENLABS_MODEL_ID env var.
+// English can optionally use flash for lower latency when quality isn't paramount.
+const FLASH_ONLY_LANGUAGES: string[] = [] // empty = always use v3; add 'en' here to use flash for English
 
 // Generate audio for a single chunk with proper multilingual support
 async function generateChunk(text: string, voiceId: string, apiKey: string, language: string = 'en'): Promise<ArrayBuffer> {
-  // Select model based on language:
-  // - eleven_turbo_v2_5: Fast, production-ready, best for most Western languages
-  // - eleven_v3: Newest flagship model with best quality for tonal/Asian languages
-  const useV3Model = V3_LANGUAGES.includes(language)
-  const modelId = useV3Model ? 'eleven_v3' : 'eleven_turbo_v2_5'
+  // Default to eleven_v3 for all languages — highest quality, 73-language support
+  // Fall back to eleven_flash_v2_5 only if language is in FLASH_ONLY_LANGUAGES or env override set
+  const useFlashModel = FLASH_ONLY_LANGUAGES.includes(language)
+  const defaultModelId = useFlashModel ? 'eleven_flash_v2_5' : 'eleven_v3'
+  const modelId = process.env.ELEVENLABS_MODEL_ID || defaultModelId
+  const useV3Model = modelId === 'eleven_v3'
   
   // Higher quality output for non-English
   const outputFormat = language !== 'en' ? 'mp3_44100_192' : 'mp3_44100_128'
@@ -70,7 +75,7 @@ async function generateChunk(text: string, voiceId: string, apiKey: string, lang
     }
   }
   
-  console.log('[Blueprint TTS] Model selection:', { language, useV3Model, modelId, outputFormat })
+  console.log('[Blueprint TTS] Model selection:', { language, modelId, useV3Model, outputFormat })
   
   const body = {
     text,

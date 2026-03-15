@@ -19,7 +19,7 @@ import type {
   DEFAULT_FINAL_CUT_SETTINGS 
 } from '@/types/productionStreams'
 import type { ProductionStream, ProductionStreamType } from '@/components/vision/scene-production/types'
-import { SUPPORTED_LANGUAGES } from '@/constants/languages'
+import { SUPPORTED_LANGUAGES, FLAG_EMOJIS } from '@/constants/languages'
 
 // ============================================================================
 // Types

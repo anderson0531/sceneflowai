@@ -101,7 +101,7 @@ const productions: ProductionCard[] = [
     workflow: [
       'Convert research outline into training modules',
       'Series Studio manages 15-part curriculum',
-      '32-language dubbing with automated lip-sync',
+      '70+ language dubbing with automated lip-sync',
       'One-click global deployment',
     ],
     tools: 'Series Studio → Smart Editor → Export',

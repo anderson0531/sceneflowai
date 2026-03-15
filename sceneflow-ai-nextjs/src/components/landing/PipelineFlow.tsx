@@ -73,7 +73,7 @@ const modules = [
     tagline: 'Auto-lip sync and translation',
     description: 'Professional post-production with AI-powered audio and video tools.',
     standaloneFeatures: [
-      { icon: Mic, text: '32-language AI voiceover' },
+      { icon: Mic, text: '70+ language AI voiceover' },
       { icon: Clock, text: 'Automated lip-sync' },
       { icon: Globe, text: 'One-click localization' },
     ],

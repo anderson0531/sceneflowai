@@ -103,7 +103,7 @@ const explorerPlan = {
     '5 GB storage (30 days)',
     'Full platform access',
     'MP4 export (any resolution)',
-    'AI voiceover (32 languages)',
+    'AI voiceover (70+ languages)',
   ],
   limitations: [
     'No recurring credits',
@@ -125,7 +125,7 @@ const basePlans = [
       '4,500 credits/month included',
       '25 GB active storage',
       'MP4 export (any resolution)',
-      'AI voiceover (32 languages)',
+      'AI voiceover (70+ languages)',
       'Email support',
     ],
     limitations: [

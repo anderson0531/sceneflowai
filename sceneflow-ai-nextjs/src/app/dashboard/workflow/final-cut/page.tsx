@@ -28,6 +28,7 @@ import type {
   ProductionLanguage,
   ProductionFormat
 } from '@/lib/types/finalCut'
+import { getLanguageName } from '@/constants/languages'
 
 // ============================================================================
 // Types
@@ -345,18 +346,12 @@ export default function FinalCutPage() {
     }
     
     const newStreamId = `stream-${language}-${format}-${Date.now()}`
-    const languageNames: Record<ProductionLanguage, string> = {
-      en: 'English', th: 'Thai', ja: 'Japanese', ko: 'Korean',
-      zh: 'Chinese', es: 'Spanish', fr: 'French', de: 'German',
-      pt: 'Portuguese', hi: 'Hindi', ar: 'Arabic', ru: 'Russian'
-    }
-    
     const newStream: FinalCutStream = {
       ...baseStream,
       id: newStreamId,
       language,
       format,
-      name: `${languageNames[language]} (${format === 'full-video' ? 'Video' : 'Animatic'})`,
+      name: `${getLanguageName(language)} (${format === 'full-video' ? 'Video' : 'Animatic'})`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       status: 'draft',
@@ -627,17 +622,12 @@ export default function FinalCutPage() {
         const hasRenderedScenes = selectedStream?.scenes?.some(s =>
           s.segments?.some(seg => seg.assetUrl && seg.assetType === 'video')
         ) ?? false
-        const languageNames: Record<string, string> = {
-          en: 'English', th: 'Thai', ja: 'Japanese', ko: 'Korean',
-          zh: 'Chinese', es: 'Spanish', fr: 'French', de: 'German',
-          pt: 'Portuguese', hi: 'Hindi', ar: 'Arabic', ru: 'Russian'
-        }
         return (
           <ExportDialog
             open={exportDialogOpen}
             onOpenChange={setExportDialogOpen}
             streamName={selectedStream?.name || 'Untitled Stream'}
-            streamLanguage={languageNames[selectedStream?.language || 'en'] || selectedStream?.language || 'English'}
+            streamLanguage={getLanguageName(selectedStream?.language || 'en')}
             totalDuration={totalDuration}
             sceneCount={selectedStream?.scenes?.length || 0}
             onExport={handleExportWithSettings}

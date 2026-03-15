@@ -97,11 +97,11 @@ export function FeatureHighlight() {
     {
       icon: Languages,
       title: 'Global Audience Reach',
-      description: 'Automated multi-language dubbing expands your audience worldwide. Premium voices in 30+ languages including tonal languages.',
-      detailedDescription: 'Reach global audiences with automated multi-language dubbing powered by ElevenLabs. Generate natural voice acting in 30+ languages including complex tonal languages like Thai, Mandarin, and Vietnamese. Lip-sync optimization ensures professional results.',
+      description: 'Automated multi-language dubbing expands your audience worldwide. Premium voices in 70+ languages including tonal languages.',
+      detailedDescription: 'Reach global audiences with automated multi-language dubbing powered by ElevenLabs. Generate natural voice acting in 70+ languages including complex tonal languages like Thai, Mandarin, and Vietnamese. Lip-sync optimization ensures professional results.',
       benefits: [
         'Automated multi-language dubbing',
-        '30+ language support',
+        '70+ language support',
         'Tonal language expertise',
         'Natural voice synthesis',
         'One-click language expansion'

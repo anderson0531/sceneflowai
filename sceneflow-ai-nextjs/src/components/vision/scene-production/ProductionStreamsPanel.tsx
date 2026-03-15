@@ -22,7 +22,7 @@ import {
   X,
   Pause
 } from 'lucide-react'
-import { SUPPORTED_LANGUAGES } from '@/constants/languages'
+import { SUPPORTED_LANGUAGES, FLAG_EMOJIS } from '@/constants/languages'
 import type { 
   ProductionStream, 
   ProductionStreamStatus, 
@@ -72,21 +72,7 @@ interface ProductionStreamsPanelProps {
 // Constants & Helpers
 // ============================================================================
 
-const FLAG_EMOJIS: Record<string, string> = {
-  en: '🇺🇸',
-  es: '🇪🇸',
-  fr: '🇫🇷',
-  de: '🇩🇪',
-  it: '🇮🇹',
-  pt: '🇧🇷',
-  zh: '🇨🇳',
-  ja: '🇯🇵',
-  ko: '🇰🇷',
-  th: '🇹🇭',
-  hi: '🇮🇳',
-  ar: '🇸🇦',
-  ru: '🇷🇺'
-}
+// FLAG_EMOJIS imported from @/constants/languages
 
 interface StreamTypeEntry {
   Icon: React.ComponentType<{ className?: string }>

@@ -279,24 +279,12 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig, l
   // For English, we can use 128kbps to save bandwidth
   const outputFormat = language !== 'en' ? 'mp3_44100_192' : 'mp3_44100_128'
 
-  // Select model based on language:
-  // - eleven_turbo_v2_5: Fast, production-ready, supports 32 languages including Thai
-  // - eleven_v3: Newest flagship model with best quality for 70+ languages (Alpha)
-  // 
-  // Languages that work well with turbo_v2_5: en, es, fr, de, it, pt, pl, nl, ru, cs, tr, th, etc.
-  // For maximum quality on complex tonal languages, use eleven_v3
-  // 
-  // NOTE: Do NOT use eleven_multilingual_v2 for Thai - it only supports 29 languages
-  // and does not officially support Thai (will produce gibberish)
-  
-  // Use eleven_v3 for best quality on Asian/tonal languages, turbo_v2_5 for others
-  // eleven_v3 handles Thai tones and nuances much better than turbo_v2_5
-  const v3Languages = ['th', 'vi', 'id', 'ms'] // Languages that benefit from v3's improved tonal handling
-  const useV3Model = v3Languages.includes(language)
-  
-  // Default model selection: v3 for tonal languages, turbo_v2_5 for everything else
-  const defaultModelId = useV3Model ? 'eleven_v3' : 'eleven_turbo_v2_5'
-  const modelId = process.env.ELEVENLABS_MODEL_ID || defaultModelId
+  // Model selection strategy:
+  // - eleven_v3: Flagship model, best quality, 73 languages, 5k char limit
+  // - eleven_flash_v2_5: Ultra-fast fallback (~75ms), 32 languages, 40k char limit
+  // Default: v3 for all languages (best quality). Override with ELEVENLABS_MODEL_ID env var.
+  const useV3Model = !process.env.ELEVENLABS_MODEL_ID || process.env.ELEVENLABS_MODEL_ID === 'eleven_v3'
+  const modelId = process.env.ELEVENLABS_MODEL_ID || 'eleven_v3'
   
   // Build URL - eleven_v3 does NOT support optimize_streaming_latency parameter
   // Only add it for non-v3 models
@@ -310,7 +298,6 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig, l
     language,
     useV3Model,
     selectedModel: modelId,
-    v3Languages: v3Languages.join(', ')
   })
 
   // Build voice_settings based on model

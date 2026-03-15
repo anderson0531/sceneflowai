@@ -29,18 +29,89 @@ export type {
  * Supported languages for multi-language production
  */
 export type ProductionLanguage = 
+  // Western European
   | 'en'      // English
-  | 'th'      // Thai
-  | 'ja'      // Japanese
-  | 'ko'      // Korean
-  | 'zh'      // Chinese (Mandarin)
-  | 'es'      // Spanish
   | 'fr'      // French
   | 'de'      // German
+  | 'es'      // Spanish
   | 'pt'      // Portuguese
-  | 'hi'      // Hindi
-  | 'ar'      // Arabic
+  | 'it'      // Italian
+  | 'nl'      // Dutch
+  | 'ca'      // Catalan
+  | 'gl'      // Galician
+  | 'lb'      // Luxembourgish
+  | 'ga'      // Irish
+  | 'cy'      // Welsh
+  | 'is'      // Icelandic
+  // Northern European
+  | 'da'      // Danish
+  | 'fi'      // Finnish
+  | 'no'      // Norwegian
+  | 'sv'      // Swedish
+  | 'et'      // Estonian
+  | 'lv'      // Latvian
+  | 'lt'      // Lithuanian
+  // Eastern European
   | 'ru'      // Russian
+  | 'pl'      // Polish
+  | 'cs'      // Czech
+  | 'sk'      // Slovak
+  | 'uk'      // Ukrainian
+  | 'be'      // Belarusian
+  | 'bg'      // Bulgarian
+  | 'ro'      // Romanian
+  | 'hr'      // Croatian
+  | 'bs'      // Bosnian
+  | 'sr'      // Serbian
+  | 'sl'      // Slovenian
+  | 'mk'      // Macedonian
+  | 'hu'      // Hungarian
+  | 'ka'      // Georgian
+  | 'hy'      // Armenian
+  | 'az'      // Azerbaijani
+  | 'kk'      // Kazakh
+  | 'ky'      // Kirghiz
+  // Mediterranean
+  | 'el'      // Greek
+  | 'tr'      // Turkish
+  // Middle East
+  | 'ar'      // Arabic
+  | 'he'      // Hebrew
+  | 'fa'      // Persian
+  | 'ps'      // Pashto
+  | 'ur'      // Urdu
+  // South Asian
+  | 'hi'      // Hindi
+  | 'bn'      // Bengali
+  | 'pa'      // Punjabi
+  | 'gu'      // Gujarati
+  | 'mr'      // Marathi
+  | 'ta'      // Tamil
+  | 'te'      // Telugu
+  | 'kn'      // Kannada
+  | 'ml'      // Malayalam
+  | 'as'      // Assamese
+  | 'ne'      // Nepali
+  | 'sd'      // Sindhi
+  // Southeast Asian
+  | 'th'      // Thai
+  | 'vi'      // Vietnamese
+  | 'id'      // Indonesian
+  | 'ms'      // Malay
+  | 'fil'     // Filipino
+  | 'jv'      // Javanese
+  | 'ceb'     // Cebuano
+  // East Asian
+  | 'zh'      // Chinese (Mandarin)
+  | 'ja'      // Japanese
+  | 'ko'      // Korean
+  // African
+  | 'af'      // Afrikaans
+  | 'sw'      // Swahili
+  | 'ha'      // Hausa
+  | 'so'      // Somali
+  | 'ny'      // Chichewa
+  | 'ln'      // Lingala
 
 /**
  * Format types for production output
@@ -898,18 +969,89 @@ export interface LanguageConfig {
  * Available languages with display names
  */
 export const LANGUAGE_CONFIGS: Record<ProductionLanguage, LanguageConfig> = {
+  // Western European
   en: { code: 'en', name: 'English', nativeName: 'English', rtl: false },
-  th: { code: 'th', name: 'Thai', nativeName: 'ไทย', rtl: false },
-  ja: { code: 'ja', name: 'Japanese', nativeName: '日本語', rtl: false },
-  ko: { code: 'ko', name: 'Korean', nativeName: '한국어', rtl: false },
-  zh: { code: 'zh', name: 'Chinese', nativeName: '中文', rtl: false },
-  es: { code: 'es', name: 'Spanish', nativeName: 'Español', rtl: false },
   fr: { code: 'fr', name: 'French', nativeName: 'Français', rtl: false },
   de: { code: 'de', name: 'German', nativeName: 'Deutsch', rtl: false },
+  es: { code: 'es', name: 'Spanish', nativeName: 'Español', rtl: false },
   pt: { code: 'pt', name: 'Portuguese', nativeName: 'Português', rtl: false },
-  hi: { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', rtl: false },
-  ar: { code: 'ar', name: 'Arabic', nativeName: 'العربية', rtl: true },
+  it: { code: 'it', name: 'Italian', nativeName: 'Italiano', rtl: false },
+  nl: { code: 'nl', name: 'Dutch', nativeName: 'Nederlands', rtl: false },
+  ca: { code: 'ca', name: 'Catalan', nativeName: 'Català', rtl: false },
+  gl: { code: 'gl', name: 'Galician', nativeName: 'Galego', rtl: false },
+  lb: { code: 'lb', name: 'Luxembourgish', nativeName: 'Lëtzebuergesch', rtl: false },
+  ga: { code: 'ga', name: 'Irish', nativeName: 'Gaeilge', rtl: false },
+  cy: { code: 'cy', name: 'Welsh', nativeName: 'Cymraeg', rtl: false },
+  is: { code: 'is', name: 'Icelandic', nativeName: 'Íslenska', rtl: false },
+  // Northern European
+  da: { code: 'da', name: 'Danish', nativeName: 'Dansk', rtl: false },
+  fi: { code: 'fi', name: 'Finnish', nativeName: 'Suomi', rtl: false },
+  no: { code: 'no', name: 'Norwegian', nativeName: 'Norsk', rtl: false },
+  sv: { code: 'sv', name: 'Swedish', nativeName: 'Svenska', rtl: false },
+  et: { code: 'et', name: 'Estonian', nativeName: 'Eesti', rtl: false },
+  lv: { code: 'lv', name: 'Latvian', nativeName: 'Latviešu', rtl: false },
+  lt: { code: 'lt', name: 'Lithuanian', nativeName: 'Lietuvių', rtl: false },
+  // Eastern European
   ru: { code: 'ru', name: 'Russian', nativeName: 'Русский', rtl: false },
+  pl: { code: 'pl', name: 'Polish', nativeName: 'Polski', rtl: false },
+  cs: { code: 'cs', name: 'Czech', nativeName: 'Čeština', rtl: false },
+  sk: { code: 'sk', name: 'Slovak', nativeName: 'Slovenčina', rtl: false },
+  uk: { code: 'uk', name: 'Ukrainian', nativeName: 'Українська', rtl: false },
+  be: { code: 'be', name: 'Belarusian', nativeName: 'Беларуская', rtl: false },
+  bg: { code: 'bg', name: 'Bulgarian', nativeName: 'Български', rtl: false },
+  ro: { code: 'ro', name: 'Romanian', nativeName: 'Română', rtl: false },
+  hr: { code: 'hr', name: 'Croatian', nativeName: 'Hrvatski', rtl: false },
+  bs: { code: 'bs', name: 'Bosnian', nativeName: 'Bosanski', rtl: false },
+  sr: { code: 'sr', name: 'Serbian', nativeName: 'Српски', rtl: false },
+  sl: { code: 'sl', name: 'Slovenian', nativeName: 'Slovenščina', rtl: false },
+  mk: { code: 'mk', name: 'Macedonian', nativeName: 'Македонски', rtl: false },
+  hu: { code: 'hu', name: 'Hungarian', nativeName: 'Magyar', rtl: false },
+  ka: { code: 'ka', name: 'Georgian', nativeName: 'ქართული', rtl: false },
+  hy: { code: 'hy', name: 'Armenian', nativeName: 'Հայերեն', rtl: false },
+  az: { code: 'az', name: 'Azerbaijani', nativeName: 'Azərbaycan', rtl: false },
+  kk: { code: 'kk', name: 'Kazakh', nativeName: 'Қазақ', rtl: false },
+  ky: { code: 'ky', name: 'Kirghiz', nativeName: 'Кыргызча', rtl: false },
+  // Mediterranean
+  el: { code: 'el', name: 'Greek', nativeName: 'Ελληνικά', rtl: false },
+  tr: { code: 'tr', name: 'Turkish', nativeName: 'Türkçe', rtl: false },
+  // Middle East
+  ar: { code: 'ar', name: 'Arabic', nativeName: 'العربية', rtl: true },
+  he: { code: 'he', name: 'Hebrew', nativeName: 'עברית', rtl: true },
+  fa: { code: 'fa', name: 'Persian', nativeName: 'فارسی', rtl: true },
+  ps: { code: 'ps', name: 'Pashto', nativeName: 'پښتو', rtl: true },
+  ur: { code: 'ur', name: 'Urdu', nativeName: 'اردو', rtl: true },
+  // South Asian
+  hi: { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', rtl: false },
+  bn: { code: 'bn', name: 'Bengali', nativeName: 'বাংলা', rtl: false },
+  pa: { code: 'pa', name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ', rtl: false },
+  gu: { code: 'gu', name: 'Gujarati', nativeName: 'ગુજરાતી', rtl: false },
+  mr: { code: 'mr', name: 'Marathi', nativeName: 'मराठी', rtl: false },
+  ta: { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்', rtl: false },
+  te: { code: 'te', name: 'Telugu', nativeName: 'తెలుగు', rtl: false },
+  kn: { code: 'kn', name: 'Kannada', nativeName: 'ಕನ್ನಡ', rtl: false },
+  ml: { code: 'ml', name: 'Malayalam', nativeName: 'മലയാളം', rtl: false },
+  as: { code: 'as', name: 'Assamese', nativeName: 'অসমীয়া', rtl: false },
+  ne: { code: 'ne', name: 'Nepali', nativeName: 'नेपाली', rtl: false },
+  sd: { code: 'sd', name: 'Sindhi', nativeName: 'سنڌي', rtl: true },
+  // Southeast Asian
+  th: { code: 'th', name: 'Thai', nativeName: 'ไทย', rtl: false },
+  vi: { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt', rtl: false },
+  id: { code: 'id', name: 'Indonesian', nativeName: 'Bahasa Indonesia', rtl: false },
+  ms: { code: 'ms', name: 'Malay', nativeName: 'Bahasa Melayu', rtl: false },
+  fil: { code: 'fil', name: 'Filipino', nativeName: 'Filipino', rtl: false },
+  jv: { code: 'jv', name: 'Javanese', nativeName: 'Basa Jawa', rtl: false },
+  ceb: { code: 'ceb', name: 'Cebuano', nativeName: 'Cebuano', rtl: false },
+  // East Asian
+  zh: { code: 'zh', name: 'Chinese', nativeName: '中文', rtl: false },
+  ja: { code: 'ja', name: 'Japanese', nativeName: '日本語', rtl: false },
+  ko: { code: 'ko', name: 'Korean', nativeName: '한국어', rtl: false },
+  // African
+  af: { code: 'af', name: 'Afrikaans', nativeName: 'Afrikaans', rtl: false },
+  sw: { code: 'sw', name: 'Swahili', nativeName: 'Kiswahili', rtl: false },
+  ha: { code: 'ha', name: 'Hausa', nativeName: 'Hausa', rtl: false },
+  so: { code: 'so', name: 'Somali', nativeName: 'Soomaali', rtl: false },
+  ny: { code: 'ny', name: 'Chichewa', nativeName: 'Chichewa', rtl: false },
+  ln: { code: 'ln', name: 'Lingala', nativeName: 'Lingála', rtl: false },
 }
 
 /**

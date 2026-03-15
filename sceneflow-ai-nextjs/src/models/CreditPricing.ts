@@ -305,7 +305,7 @@ export const DEFAULT_CREDIT_PRICING: Omit<CreditPricingCreationAttributes, 'id' 
     provider: 'elevenlabs',
     category: 'audio_tts',
     operation: 'elevenlabs_tts',
-    model: 'eleven_turbo_v2_5',
+    model: 'eleven_v3',
     metric: 'per_1k_chars',
     credits_per_unit: 80,
     provider_cost_usd: 0.35,

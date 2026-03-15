@@ -34,6 +34,7 @@ import type {
   ProductionFormat
 } from '@/lib/types/finalCut'
 import { LANGUAGE_CONFIGS, FORMAT_CONFIGS } from '@/lib/types/finalCut'
+import { FLAG_EMOJIS } from '@/constants/languages'
 
 // ============================================================================
 // Types
@@ -56,20 +57,7 @@ export interface StreamSelectorProps {
 // Constants
 // ============================================================================
 
-const FLAG_EMOJIS: Record<ProductionLanguage, string> = {
-  en: '🇺🇸',
-  th: '🇹🇭',
-  ja: '🇯🇵',
-  ko: '🇰🇷',
-  zh: '🇨🇳',
-  es: '🇪🇸',
-  fr: '🇫🇷',
-  de: '🇩🇪',
-  pt: '🇧🇷',
-  hi: '🇮🇳',
-  ar: '🇸🇦',
-  ru: '🇷🇺'
-}
+// FLAG_EMOJIS imported from @/constants/languages
 
 // ============================================================================
 // StreamSelector Component
