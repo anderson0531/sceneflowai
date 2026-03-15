@@ -349,7 +349,7 @@ export function BrowseVoicesDialog({
                   className="px-2 py-1.5 bg-gray-900 border border-gray-700 rounded text-gray-200 text-xs focus:outline-none focus:border-blue-500"
                 >
                   <option value="all">All Categories</option>
-                  <option value="cloned">My Voices</option>
+                  <option value="cloned">Custom Voices</option>
                   {filterOptions.categories.filter(c => c !== 'cloned').map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}

@@ -18,7 +18,7 @@ import { StorySetupEditDialog } from './StorySetupEditDialog'
 import { ToneStyleEditDialog } from './ToneStyleEditDialog'
 import { BeatsEditDialog } from './BeatsEditDialog'
 import { CharactersEditDialog } from './CharactersEditDialog'
-import { BrowseVoicesDialog } from '@/components/tts/BrowseVoicesDialog'
+import { NarratorVoicePicker } from '@/components/tts/NarratorVoicePicker'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import OwnerCollabPanel from '@/components/studio/OwnerCollabPanel'
 import { getCuratedElevenVoices, type CuratedVoice } from '@/lib/tts/voices'
@@ -1112,17 +1112,15 @@ export function TreatmentCard() {
           onSelectVariant={(id)=> selectTreatmentVariant(id)}
         />
         {/* Voice Selection Dialog */}
-        <BrowseVoicesDialog
+        <NarratorVoicePicker
           open={voiceDialogOpen}
           onOpenChange={setVoiceDialogOpen}
-          provider="elevenlabs"
           selectedVoiceId={selectedVoiceId}
           onSelectVoice={(voiceId, voiceName) => {
             setSelectedVoiceId(voiceId)
             setSelectedVoiceName(voiceName)
             setVoiceDialogOpen(false)
           }}
-          defaultUseCaseFilter="narrative"
         />
         {/* Character Prompt Builder removed - now in Vision phase */}
         {shareOpen && (

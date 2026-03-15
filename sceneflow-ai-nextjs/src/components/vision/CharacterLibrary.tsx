@@ -8,8 +8,8 @@ import { toast } from 'sonner'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { upload } from '@vercel/blob/client'
-import { BrowseVoicesDialog } from '@/components/tts/BrowseVoicesDialog'
-import { CreateCustomVoiceDialog } from '@/components/tts/CreateCustomVoiceDialog'
+import { VoiceSelectionDialog } from '@/components/tts/VoiceSelectionDialog'
+import { NarratorVoicePicker } from '@/components/tts/NarratorVoicePicker'
 import { CharacterPromptBuilder } from '@/components/vision/CharacterPromptBuilder'
 import { AddCharacterModal, useOrphanCharacters } from '@/components/vision/AddCharacterModal'
 import { useOverlayStore } from '@/store/useOverlayStore'
@@ -510,11 +510,13 @@ export function CharacterLibrary({ characters, scenes = [], onRegenerateCharacte
       )}
       
       {/* Create Custom Voice Dialog */}
-      <CreateCustomVoiceDialog
+      <VoiceSelectionDialog
         open={createVoiceDialogOpen}
         onOpenChange={setCreateVoiceDialogOpen}
-        onVoiceCreated={(voiceId, voiceName) => {
-          toast.success(`Voice "${voiceName}" created! Assign it to a character.`)
+        provider={ttsProvider || 'elevenlabs'}
+        mode="character"
+        onSelectVoice={(voiceId, voiceName) => {
+          toast.success(`Voice "${voiceName}" selected! Assign it to a character.`)
         }}
         screenplayContext={screenplayContext as ScreenplayContext}
       />
@@ -2166,11 +2168,12 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
         
 
         
-        {/* Browse Voices Dialog */}
-        <BrowseVoicesDialog
+        {/* Voice Selection Dialog */}
+        <VoiceSelectionDialog
           open={voiceDialogOpen}
           onOpenChange={setVoiceDialogOpen}
           provider={ttsProvider}
+          mode="character"
           selectedVoiceId={character.voiceConfig?.voiceId || ''}
           onSelectVoice={(voiceId, voiceName) => {
             onUpdateCharacterVoice?.(characterId, {
@@ -2611,11 +2614,10 @@ function NarratorCharacterCard({ character, onUpdateCharacterVoice, ttsProvider 
                 </div>
               )}
               
-              {/* Browse Voices Dialog */}
-              <BrowseVoicesDialog
+              {/* Narrator Voice Picker */}
+              <NarratorVoicePicker
                 open={voiceDialogOpen}
                 onOpenChange={setVoiceDialogOpen}
-                provider={ttsProvider}
                 selectedVoiceId={character.voiceConfig?.voiceId || ''}
                 onSelectVoice={(voiceId, voiceName) => {
                   console.log('[Narrator Voice] Selected:', { voiceId, voiceName, characterId: character.id })
@@ -2625,7 +2627,6 @@ function NarratorCharacterCard({ character, onUpdateCharacterVoice, ttsProvider 
                     voiceName
                   })
                 }}
-                characterContext={characterContext}
               />
             </div>
           )}
@@ -2716,11 +2717,10 @@ function DescriptionVoiceCard({ character, onUpdateCharacterVoice, ttsProvider }
                 </div>
               )}
               
-              {/* Browse Voices Dialog */}
-              <BrowseVoicesDialog
+              {/* Narrator Voice Picker (used for description voice) */}
+              <NarratorVoicePicker
                 open={voiceDialogOpen}
                 onOpenChange={setVoiceDialogOpen}
-                provider={ttsProvider}
                 selectedVoiceId={character.voiceConfig?.voiceId || ''}
                 onSelectVoice={(voiceId, voiceName) => {
                   onUpdateCharacterVoice?.(character.id, {
@@ -2729,7 +2729,6 @@ function DescriptionVoiceCard({ character, onUpdateCharacterVoice, ttsProvider }
                     voiceName
                   })
                 }}
-                characterContext={characterContext}
               />
             </div>
           )}

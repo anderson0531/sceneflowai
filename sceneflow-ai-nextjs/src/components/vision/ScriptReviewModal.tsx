@@ -9,13 +9,13 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/Input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { VoiceSelectorDialog } from '@/components/tts/VoiceSelectorDialog'
+import { NarratorVoicePicker } from '@/components/tts/NarratorVoicePicker'
 import { OptimizeSceneDialog } from '@/components/vision/OptimizeSceneDialog'
 import { AnimatedScore, AnimatedProgressBar } from '@/components/ui/AnimatedScore'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { toast } from 'sonner'
-import type { CharacterContext } from '@/lib/voiceRecommendation'
+
 import { CINEMATIC_ELEMENT_TYPES, type SpecialSegmentType } from '@/components/vision/scene-production/cinematic-elements'
 
 // Common optimization templates for "You Direct" tab
@@ -492,16 +492,8 @@ export default function ScriptReviewModal({
     setTranscript: setMicTranscript
   } = useSpeechRecognition()
 
-  // Character context for Review Expert voice recommendations
-  // Voices that match: authoritative, mature, professional narrators
-  const reviewExpertContext: CharacterContext = {
-    name: 'Review Expert',
-    role: 'narrator',
-    gender: 'male',
-    age: 'middle',
-    personality: 'authoritative, knowledgeable, articulate, measured, insightful',
-    description: 'A trusted film critic and screenplay analyst with decades of experience. Speaks with clarity and gravitas, like a seasoned documentary narrator or respected film reviewer. Professional, warm but analytical tone.'
-  }
+  // Review Expert voice: uses NarratorVoicePicker with curated narrator catalog
+  // Default voice: Arnold (authoritative documentary narrator)
 
   // Handle voice selection from dialog
   const handleVoiceSelect = (voiceId: string, voiceName: string) => {
@@ -2381,13 +2373,11 @@ Examples:
         </div>
 
         {/* Voice Selector Dialog */}
-        <VoiceSelectorDialog
+        <NarratorVoicePicker
           open={voiceSelectorOpen}
           onOpenChange={setVoiceSelectorOpen}
-          provider="elevenlabs"
           selectedVoiceId={selectedVoiceId}
           onSelectVoice={handleVoiceSelect}
-          characterContext={reviewExpertContext}
         />
 
         {/* Optimize Scene Dialog */}
