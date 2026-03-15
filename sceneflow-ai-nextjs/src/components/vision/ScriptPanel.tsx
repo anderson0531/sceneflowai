@@ -14,7 +14,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
@@ -587,9 +587,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // Translation import/export state
   const [translationImportOpen, setTranslationImportOpen] = useState(false)
   const [importText, setImportText] = useState('')
-  
-  // Regenerate Script confirmation dialog state
-  const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false)
   
   // Collapsible UI state with localStorage persistence
   const [sceneNavigationCollapsed, setSceneNavigationCollapsed] = useState(() => {
@@ -2590,97 +2587,65 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               </Button>
             )}
 
-            {/* Regenerate Script Button - always visible when scenes exist */}
-            {onRegenerateScript && scenes.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowRegenerateConfirm(true)}
-                disabled={isRegeneratingScript || isGenerating}
-                className="flex items-center gap-2 border-red-500/30 hover:border-red-500/50 hover:bg-red-500/10"
-                title="Regenerate script from blueprint - this will replace all existing scenes"
-              >
-                {isRegeneratingScript ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-red-400" />
-                ) : (
-                  <RefreshCw className="w-4 h-4 text-red-400" />
-                )}
-                <span className="text-sm hidden sm:inline">Reset Script</span>
-              </Button>
+            {/* Translation indicator badge - shown when non-English translations exist */}
+            {storedTranslations && Object.keys(storedTranslations).filter(k => k !== 'en' && Object.keys(storedTranslations[k] || {}).length > 0).length > 0 && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-blue-500/10 border border-blue-500/20">
+                      <Globe className="w-3.5 h-3.5 text-blue-400" />
+                      <span className="text-xs text-blue-300">
+                        {Object.keys(storedTranslations).filter(k => k !== 'en' && Object.keys(storedTranslations[k] || {}).length > 0).length} lang
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p className="text-xs">Translations available — select language in Generate Audio dialog</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
 
-            {/* Language Selector */}
-            <div className="w-[120px]">
-              <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700 text-slate-200">
-                  <SelectValue placeholder="Language" />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700 text-slate-200">
-                  {SUPPORTED_LANGUAGES.map((lang) => (
-                    <SelectItem key={lang.code} value={lang.code} className="text-xs focus:bg-slate-700 focus:text-slate-100">
-                      {lang.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {/* Translation Export/Import Icons - only show for non-English languages */}
-            {selectedLanguage !== 'en' && (
-              <div className="flex items-center gap-1">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleExportDialogue}
-                        className="h-8 w-8 p-0 text-slate-400 hover:text-green-400 hover:bg-green-500/10"
-                      >
-                        <Download className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      <p className="text-xs">Export script for {SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name} translation</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setTranslationImportOpen(true)}
-                        className="h-8 w-8 p-0 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10"
-                      >
-                        <Upload className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      <p className="text-xs">Import {SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name} translation</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                
-                {/* Show indicator if translations exist for this language */}
-                {storedTranslations?.[selectedLanguage] && Object.keys(storedTranslations[selectedLanguage]).length > 0 && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center">
-                          <CheckCircle className="w-4 h-4 text-green-400" />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        <p className="text-xs">{Object.keys(storedTranslations[selectedLanguage]).length} scenes translated</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+            {/* Translation & Script Tools overflow menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-slate-400 hover:text-white hover:bg-white/10"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-gray-900 border-gray-700">
+                <DropdownMenuLabel className="text-gray-400">Translation Tools</DropdownMenuLabel>
+                <DropdownMenuItem
+                  onClick={handleExportDialogue}
+                  className="text-gray-200 hover:bg-gray-800 cursor-pointer"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Script for Translation
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setTranslationImportOpen(true)}
+                  className="text-gray-200 hover:bg-gray-800 cursor-pointer"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Import Translation
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-gray-700" />
+                <DropdownMenuLabel className="text-gray-400">Script</DropdownMenuLabel>
+                {onRegenerateScript && (
+                  <DropdownMenuItem
+                    onClick={() => onRegenerateScript?.()}
+                    className="text-gray-200 hover:bg-gray-800 cursor-pointer"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Reset Script to Original
+                  </DropdownMenuItem>
                 )}
-              </div>
-            )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         
@@ -3274,50 +3239,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         </DialogContent>
       </Dialog>
       
-      {/* Regenerate Script Confirmation Dialog */}
-      <Dialog open={showRegenerateConfirm} onOpenChange={setShowRegenerateConfirm}>
-        <DialogContent className="max-w-md bg-gray-900 border-red-500/30">
-          <DialogHeader>
-            <DialogTitle className="text-white flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-red-400" />
-              Regenerate Script?
-            </DialogTitle>
-            <DialogDescription className="text-gray-400">
-              This is a destructive action that will replace your current script with a fresh generation from your blueprint.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="my-4 p-3 bg-red-950/30 border border-red-500/20 rounded-lg">
-            <p className="text-sm text-red-300 font-medium mb-2">The following will be permanently lost:</p>
-            <ul className="text-sm text-red-200/70 space-y-1 list-disc list-inside">
-              <li>All {scenes.length} existing scene{scenes.length !== 1 ? 's' : ''} and their content</li>
-              <li>Generated audio (narration, dialogue, music, SFX)</li>
-              <li>Scene images and direction notes</li>
-              <li>Segment configurations and keyframes</li>
-            </ul>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowRegenerateConfirm(false)}
-              className="border-slate-600 hover:bg-slate-800"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                setShowRegenerateConfirm(false)
-                onRegenerateScript?.()
-              }}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Regenerate Script
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-      
       {/* Report Preview Modals */}
       {script && (
         <>
@@ -3788,7 +3709,6 @@ function SceneCard({
   const [copilotPanelOpen, setCopilotPanelOpen] = useState(false)
   const [isImageExpanded, setIsImageExpanded] = useState(false)
   const [directionBuilderOpen, setDirectionBuilderOpen] = useState(false)
-  const [isUpdatingAudio, setIsUpdatingAudio] = useState(false)
   const [selectedSegmentIndex, setSelectedSegmentIndex] = useState<number | null>(null)
   
   // Segment selection and dialog states
@@ -4578,106 +4498,69 @@ function SceneCard({
           {/* Mark Done and Help controls */}
           {!isOutline && activeStep && (
             <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-              {/* Audio Buttons - Only visible in Script tab */}
-              {activeStep === 'dialogueAction' && (
-                <>
-                  {/* Play Scene Audio Button */}
-                  {onPlayScene && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            onClick={handlePlay}
-                            className={`p-1.5 rounded-lg transition border ${isPlaying ? 'bg-red-500/20 text-red-400 border-red-500/40 hover:bg-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30'}`}
-                          >
-                            {isPlaying ? (
-                              <Square className="w-4 h-4" />
-                            ) : (
-                              <Play className="w-4 h-4" />
-                            )}
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                          {isPlaying ? 'Stop audio' : 'Play scene audio'}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                  {/* Update Audio Button (Regenerate) */}
-                  {onUpdateSceneAudio && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            disabled={isUpdatingAudio}
-                            onClick={async (e) => {
-                              e.stopPropagation()
-                              setIsUpdatingAudio(true)
-                              try {
-                                await onUpdateSceneAudio(sceneIdx)
-                              } finally {
-                                setIsUpdatingAudio(false)
-                              }
-                            }}
-                            className="p-1.5 rounded-lg transition bg-purple-500/20 text-purple-400 border border-purple-500/40 hover:bg-purple-500/30 disabled:opacity-50"
-                          >
-                            {isUpdatingAudio ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <RefreshCw className="w-4 h-4" />
-                            )}
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Regenerate all audio for this scene</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                </>
-              )}
-              
-              {/* Mark as Done / Unmark button */}
-              {onMarkWorkflowComplete && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          const currentlyComplete = stepCompletion[activeStep as keyof typeof stepCompletion]
-                          onMarkWorkflowComplete(sceneIdx, activeStep, !currentlyComplete)
-                          
-                          // Auto-switch to Call Action when Script is marked as Done
-                          if (activeStep === 'dialogueAction' && !currentlyComplete) {
-                            setActiveWorkflowTab('callAction')
-                          }
-                        }}
-                        className={`px-2 py-1 text-xs rounded-lg transition flex items-center gap-1 ${
-                          stepCompletion[activeStep as keyof typeof stepCompletion]
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
-                            : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700'
-                        }`}
-                      >
-                        {stepCompletion[activeStep as keyof typeof stepCompletion] ? (
-                          <>
-                            <CheckCircle className="w-3 h-3" />
-                            <span>Done</span>
-                          </>
-                        ) : (
-                          <>
-                            <Circle className="w-3 h-3" />
-                            <span>Mark Done</span>
-                          </>
-                        )}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                      {stepCompletion[activeStep as keyof typeof stepCompletion]
-                        ? 'Click to unmark as complete'
-                        : 'Mark this step as complete'}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
+                {/* Play Audio Button - Only visible in Script tab */}
+                {activeStep === 'dialogueAction' && onPlayScene && (
+                  <button
+                    onClick={handlePlay}
+                    className={`px-2 py-1 text-xs rounded-lg transition flex items-center gap-1 border ${isPlaying ? 'bg-red-500/20 text-red-400 border-red-500/40 hover:bg-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30'}`}
+                  >
+                    {isPlaying ? (
+                      <>
+                        <Square className="w-3.5 h-3.5" />
+                        <span>Stop</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-3.5 h-3.5" />
+                        <span>Play Audio</span>
+                      </>
+                    )}
+                  </button>
+                )}
+                
+                {/* Mark Complete / Unmark button */}
+                {onMarkWorkflowComplete && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            const currentlyComplete = stepCompletion[activeStep as keyof typeof stepCompletion]
+                            onMarkWorkflowComplete(sceneIdx, activeStep, !currentlyComplete)
+                            
+                            // Auto-switch to Call Action when Script is marked complete
+                            if (activeStep === 'dialogueAction' && !currentlyComplete) {
+                              setActiveWorkflowTab('callAction')
+                            }
+                          }}
+                          className={`px-2 py-1 text-xs rounded-lg transition flex items-center gap-1 ${
+                            stepCompletion[activeStep as keyof typeof stepCompletion]
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
+                              : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700'
+                          }`}
+                        >
+                          {stepCompletion[activeStep as keyof typeof stepCompletion] ? (
+                            <>
+                              <CheckCircle className="w-3 h-3" />
+                              <span>Complete</span>
+                            </>
+                          ) : (
+                            <>
+                              <Circle className="w-3 h-3" />
+                              <span>Mark Complete</span>
+                            </>
+                          )}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-[200px]">
+                        {stepCompletion[activeStep as keyof typeof stepCompletion]
+                          ? 'Click to unmark — auto-detection will resume'
+                          : 'Override auto-detection and mark this step as manually complete'}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
             </div>
           )}
         </div>

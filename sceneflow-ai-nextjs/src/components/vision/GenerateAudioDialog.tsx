@@ -139,6 +139,14 @@ export function GenerateAudioDialog({
     return sum + sfx.length
   }, 0)
 
+  // Count SFX entries that have valid descriptions (required for generation)
+  const sfxWithDescriptions = scenes.reduce((sum: number, scene: any) => {
+    const sfx = scene.sfx || []
+    return sum + sfx.filter((s: any) => s.description && s.description.trim()).length
+  }, 0)
+
+  const sfxMissingDescriptions = totalSFXCount - sfxWithDescriptions
+
   const willGenerateNarration = audioTypes.narration
   const willGenerateDialogue = audioTypes.dialogue
   const willGenerateMusic = audioTypes.music
@@ -411,10 +419,26 @@ export function GenerateAudioDialog({
                 >
                   <div className="font-medium">Sound Effects</div>
                   <div className="text-xs text-gray-400">
-                    {sfxCount} effects • {audioStatus.sfxCount > 0 
-                      ? `✅ ${audioStatus.sfxCount} generated` 
-                      : '❌ Not generated'}
+                    {totalSFXCount === 0 
+                      ? 'No SFX entries in script'
+                      : sfxWithDescriptions === 0
+                        ? `${totalSFXCount} effect${totalSFXCount !== 1 ? 's' : ''} — ⚠️ none have descriptions`
+                        : sfxMissingDescriptions > 0
+                          ? `${sfxWithDescriptions} of ${totalSFXCount} effect${totalSFXCount !== 1 ? 's' : ''} have descriptions • ${audioStatus.sfxCount > 0 ? `✅ ${audioStatus.sfxCount} generated` : '❌ Not generated'}`
+                          : `${totalSFXCount} effect${totalSFXCount !== 1 ? 's' : ''} • ${audioStatus.sfxCount > 0 ? `✅ ${audioStatus.sfxCount} generated` : '❌ Not generated'}`
+                    }
                   </div>
+                  {audioTypes.sfx && sfxMissingDescriptions > 0 && totalSFXCount > 0 && (
+                    <div className="text-xs text-amber-400 mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      <span>
+                        {sfxWithDescriptions === 0
+                          ? 'No SFX entries have descriptions — nothing will be generated. Add descriptions to your SFX entries first.'
+                          : `${sfxMissingDescriptions} SFX entr${sfxMissingDescriptions === 1 ? 'y' : 'ies'} missing description${sfxMissingDescriptions === 1 ? '' : 's'} — will be skipped`
+                        }
+                      </span>
+                    </div>
+                  )}
                 </label>
               </div>
             </div>
@@ -434,7 +458,12 @@ export function GenerateAudioDialog({
                 <div>• {musicCount} music file{musicCount !== 1 ? 's' : ''}</div>
               )}
               {willGenerateSFX && (
-                <div>• {sfxCount} SFX file{sfxCount !== 1 ? 's' : ''}</div>
+                <div>
+                  • {sfxWithDescriptions} SFX file{sfxWithDescriptions !== 1 ? 's' : ''} 
+                  {sfxMissingDescriptions > 0 && (
+                    <span className="text-amber-400">({sfxMissingDescriptions} skipped — no description)</span>
+                  )}
+                </div>
               )}
               {includeCharacters && (
                 <div>
