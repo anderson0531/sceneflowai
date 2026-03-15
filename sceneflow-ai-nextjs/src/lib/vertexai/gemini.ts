@@ -622,9 +622,20 @@ export async function generateTextCacheAware(
 
     const _cacheStartTime = Date.now()
 
+  // Build full prompt by prepending cache context parts when falling back to uncached generation.
+  // This ensures scene data, formatting rules, and JSON schemas aren't lost when caching is disabled.
+  const buildFullPrompt = (): string => {
+    if (!cacheContextParts || cacheContextParts.length === 0) return prompt
+    const contextPrefix = cacheContextParts
+      .map(p => p.text || '')
+      .filter(Boolean)
+      .join('\n\n')
+    return contextPrefix ? `${contextPrefix}\n\n${prompt}` : prompt
+  }
+
   // ── Fast path: caching disabled or not requested ──
   if (!cacheZone || !isVertexCachingEnabled() || options.skipCache) {
-    const result = await generateText(prompt, standardOptions)
+    const result = await generateText(buildFullPrompt(), standardOptions)
     return { ...result, usedCache: false }
   }
 
@@ -662,8 +673,8 @@ export async function generateTextCacheAware(
       console.warn(`[Vertex Gemini] Cached generation failed, falling back: ${error.message}`)
     }
     
-    // Fall through to uncached path
-    const result = await generateText(prompt, standardOptions)
+    // Fall through to uncached path (include context parts in prompt)
+    const result = await generateText(buildFullPrompt(), standardOptions)
     return { ...result, usedCache: false }
   }
 
@@ -711,7 +722,7 @@ export async function generateTextCacheAware(
     }
   }
 
-  // ── Fallback: standard uncached generation ──
-  const result = await generateText(prompt, standardOptions)
+  // ── Fallback: standard uncached generation (include context parts in prompt) ──
+  const result = await generateText(buildFullPrompt(), standardOptions)
   return { ...result, usedCache: false }
 }
