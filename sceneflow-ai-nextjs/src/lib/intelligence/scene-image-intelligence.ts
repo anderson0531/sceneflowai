@@ -17,7 +17,7 @@
  * - Graceful fallback to existing optimizePromptForImagen() if Gemini unavailable
  */
 
-import { generateText, type TextGenerationOptions } from '@/lib/vertexai/gemini'
+import { generateText, generateTextCacheAware, type TextGenerationOptions } from '@/lib/vertexai/gemini'
 
 // =============================================================================
 // Types
@@ -104,6 +104,8 @@ export interface SceneImageIntelligenceRequest {
   artStyle?: string
   /** Number of reference images being sent */
   referenceImageCount: number
+  /** SceneFlow project ID for cache scoping */
+  projectId?: string
 }
 
 export interface SceneImageIntelligenceResult {
@@ -474,13 +476,23 @@ export async function generateSceneImagePrompt(
     
     console.log(`[Scene Image Intelligence] User prompt length: ${userPrompt.length} chars`)
     
-    const result = await generateText(userPrompt, {
-      systemInstruction: systemPrompt,
-      temperature: 0.4, // Slightly creative but mostly deterministic
-      maxOutputTokens: 2048,
-      responseMimeType: 'application/json',
-      thinkingLevel: 'low', // Fast thinking for prompt generation
-    })
+      // Use cache-aware generation: the system prompt is static across all scenes
+      // in a batch, so it benefits from Vertex AI context caching.
+      const result = await generateTextCacheAware(userPrompt, {
+        cacheZone: 'style_consistency',
+        sceneflowProjectId: request.projectId || 'default',
+        systemInstruction: systemPrompt,
+        cacheContextParts: [{ text: systemPrompt }],
+        temperature: 0.4, // Slightly creative but mostly deterministic
+        maxOutputTokens: 2048,
+        responseMimeType: 'application/json',
+        thinkingLevel: 'low', // Fast thinking for prompt generation
+        cacheTtlMinutes: 30, // Shorter TTL for batch operations
+      })
+      
+      if (result.usedCache) {
+        console.log(`[Scene Image Intelligence] Used cached system prompt for scene ${request.sceneNumber}`)
+      }
     
     // Parse JSON response
     let parsed: { prompt?: string; reasoning?: string; negativeAdditions?: string[] }

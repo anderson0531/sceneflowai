@@ -111,17 +111,29 @@ export async function POST(req: NextRequest) {
     const base = String(origin).replace(/^https?:\/\//, '').replace(/\/$/, '')
     const url = `https://${base}/api/cue/respond`
 
+      // Build cacheable treatment context (identical for all scenes in this batch)
+      const batchChars = Array.isArray(treatment?.characters) ? treatment.characters : []
+      const treatmentContext = [
+        title ? `TITLE: ${title}` : '',
+        treatment?.logline ? `LOGLINE: ${treatment.logline}` : '',
+        batchChars.length > 0 ? `CHARACTERS:\n${batchChars.map((c:any) => `- ${c.name}: ${c.description}`).join('\n')}` : '',
+        treatment?.genre ? `GENRE: ${treatment.genre}` : '',
+        treatment?.tone ? `TONE: ${treatment.tone}` : '',
+      ].filter(Boolean).join('\n\n')
+      
+      const batchProjectId = body?.projectId || 'batch-default'
+
     let outParts: string[] = []
     for (let i=0;i<scenes.length;i++) {
       try {
         // Step 1: Director's Brief (timeout ~20s)
         const briefPrompt = buildBriefPrompt({ title, treatment, scenes, index: i })
-        const briefResp = await fetchWithTimeout(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ prompt: briefPrompt, context: { mode:'text', type:'analysis' } }), timeoutMs: 20000 })
+        const briefResp = await fetchWithTimeout(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ prompt: briefPrompt, context: { mode:'text', type:'analysis', cacheZone: 'batch_brief', cacheContext: treatmentContext, projectId: batchProjectId } }), timeoutMs: 20000 })
         const briefJson = await briefResp.json().catch(()=>({}))
         const directorsBrief = String(briefJson?.reply || '').trim()
         // Step 2: Strict scene script (timeout ~60s)
         const scenePrompt = buildScenePrompt({ title, episode, sceneNumber: i+1, scene: scenes[i], directorsBrief })
-        const sceneResp = await fetchWithTimeout(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ prompt: scenePrompt, context: { mode:'scene_script', type:'text' } }), timeoutMs: 60000 })
+        const sceneResp = await fetchWithTimeout(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ prompt: scenePrompt, context: { mode:'scene_script', type:'scene_script', cacheZone: 'batch_script', cacheContext: treatmentContext, projectId: batchProjectId } }), timeoutMs: 60000 })
         if (!sceneResp.ok) throw new Error('Scene gen failed')
         const sceneJson = await sceneResp.json().catch(()=>({}))
         const sceneText = String(sceneJson?.reply || '').trim()

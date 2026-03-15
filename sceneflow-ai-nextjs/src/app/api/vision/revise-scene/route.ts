@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateText } from '@/lib/vertexai/gemini'
+import { generateTextCacheAware } from '@/lib/vertexai/gemini'
+import { logCacheEvent } from '@/lib/vertexai/cacheObservability'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -45,6 +46,7 @@ export async function POST(req: NextRequest) {
 
     // Generate revised scene based on mode
     const revisedScene = await generateRevisedScene({
+        projectId,
       currentScene,
       revisionMode,
       selectedRecommendations,
@@ -69,6 +71,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function generateRevisedScene({
+    projectId,
   currentScene,
   revisionMode,
   selectedRecommendations,
@@ -77,6 +80,7 @@ async function generateRevisedScene({
   revisionDepth,
   context
 }: {
+    projectId: string
   currentScene: any
   revisionMode: string
   selectedRecommendations: (string | { text: string; category?: string; impact?: 'structural' | 'polish' })[]
@@ -144,9 +148,10 @@ For each recommendation, make the necessary STRUCTURAL or CONTENT changes. Do NO
   const dialogueText = currentScene.dialogue?.map((d: any) => `${d.character}: ${d.line || d.text || ''}`).join('\n') || 'No dialogue'
   const characterNames = context.characters?.map((c: any) => c.name).join(', ') || 'No characters'
 
-  const prompt = `You are a professional screenwriter REWRITING a scene. Your task is to make SUBSTANTIVE changes—not cosmetic polishing. When recommendations call for change, CHANGE THE ACTUAL CONTENT, not just the wording.
-
-CURRENT SCENE:
+    // ── Cache-aware prompt splitting ──
+    // Cacheable context: scene data, formatting rules, dialogue tags, constraints
+    // These are heavy content parts that remain stable during iterative revisions.
+    const cacheableContext = `CURRENT SCENE:
 Heading: ${currentScene.heading || 'Untitled Scene'}
 Scene Description: ${currentScene.visualDescription || 'No dedicated scene description'}
 Action: ${currentScene.action || 'No action description'}
@@ -162,11 +167,6 @@ Previous Scene: ${context.previousScene?.heading || 'None'}
 Next Scene: ${context.nextScene?.heading || 'None'}
 
 CRITICAL: Maintain EXACT character names from the character list. Do not abbreviate or modify names.
-
-REWRITE INSTRUCTIONS:
-${revisionInstruction}
-
-${preserveInstructions ? `PRESERVATION REQUIREMENTS: ${preserveInstructions}` : ''}
 
 WHAT SUBSTANTIVE REWRITING MEANS:
 ✓ RESTRUCTURE dialogue: reorder lines, combine redundant exchanges, split long speeches, add/remove beats
@@ -259,12 +259,49 @@ CRITICAL SUCCESS CRITERIA:
 - If the recommendation says "add subtext" the result should have INDIRECT dialogue
 - Do NOT return a scene that could be described as "the same with minor polish"`
 
-  console.log('[Scene Revision] Calling Vertex AI Gemini...')
-  const result = await generateText(prompt, {
-    model: 'gemini-2.5-flash',
-    temperature: 0.7,
-    maxOutputTokens: 16384  // Large scenes with many dialogue lines need more tokens
-  })
+    // User delta: only the revision instruction changes between iterative calls
+    const userPrompt = `REWRITE INSTRUCTIONS:
+${revisionInstruction}
+
+${preserveInstructions ? `PRESERVATION REQUIREMENTS: ${preserveInstructions}` : ''}
+
+Now rewrite the scene following all the rules, constraints, and formatting requirements provided in the context above.`
+
+    // System instruction for the screenwriter persona
+    const systemInstruction = `You are a professional screenwriter REWRITING a scene. Your task is to make SUBSTANTIVE changes—not cosmetic polishing. When recommendations call for change, CHANGE THE ACTUAL CONTENT, not just the wording.`
+
+    console.log('[Scene Revision] Calling Vertex AI Gemini (cache-aware, zone: script_doctor)...')
+    const _startTime = Date.now()
+    const result = await generateTextCacheAware(userPrompt, {
+      cacheZone: 'script_doctor',
+      sceneflowProjectId: projectId,
+      systemInstruction,
+      cacheContextParts: [{ text: cacheableContext }],
+      model: 'gemini-2.5-flash',
+      temperature: 0.7,
+      maxOutputTokens: 16384,
+      cacheTtlMinutes: 60
+    })
+
+    if (result.usedCache) {
+      console.log('[Scene Revision] ✅ Used cached context, cache:', result.cacheEntry?.cacheId)
+    } else {
+      console.log('[Scene Revision] Cache not used (first call or below threshold)')
+    }
+
+    // Fire-and-forget cache observability
+    logCacheEvent({
+      zone: 'script_doctor',
+      projectId,
+      cacheHit: result.usedCache ?? false,
+      cacheId: result.cacheEntry?.cacheId,
+      model: 'gemini-2.5-flash',
+      usageMetadata: result.usageMetadata,
+      taskType: 'scene_revision',
+      duration: Date.now() - _startTime,
+      success: true,
+    }).catch(() => {})
+
 
   console.log('[Scene Revision] Response received, finishReason:', result.finishReason, 'length:', result.text?.length || 0)
 

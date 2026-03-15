@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { generateText } from '@/lib/vertexai/gemini'
+import { generateText, generateTextCacheAware } from '@/lib/vertexai/gemini'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,6 +20,9 @@ interface CueContext {
     metadata?: any
   }
   projectsCount?: number
+  cacheZone?: string
+  cacheContext?: string
+  projectId?: string
 }
 
 const SYSTEM_PROMPT = `You are Cue, a helpful, expert film director and audience strategist for the SceneFlow AI app, now enhanced with proactive story analysis and guardrails.
@@ -100,11 +103,29 @@ async function callGemini(messages: Message[], _apiKey: string, context?: CueCon
   const maxTokens = isProjectCreation ? 32768 : 4096
 
   console.log('[Cue Respond] Calling Vertex AI Gemini...')
-  const result = await generateText(fullPrompt, {
-    model: 'gemini-2.5-flash',
-    temperature: 0.7,
-    maxOutputTokens: maxTokens
-  })
+    // Use cache-aware generation when batch callers provide a cacheZone
+    const useCaching = context?.cacheZone && context?.cacheContext
+    
+    if (useCaching) {
+      const result = await generateTextCacheAware(fullPrompt, {
+        sceneflowProjectId: context?.projectId || context?.project?.id || 'default',
+        systemInstruction: context?.type === 'scene_script' ? SCENE_SCRIPT_SYSTEM : SYSTEM_PROMPT,
+        model: 'gemini-2.5-flash',
+        temperature: 0.7,
+        maxOutputTokens: maxTokens,
+        cacheTtlMinutes: 30,
+      })
+      if (result.usedCache) {
+        console.log('[Cue Respond] ✅ Used cached context')
+      }
+      return result.text
+    }
+
+    const result = await generateText(fullPrompt, {
+      model: 'gemini-2.5-flash',
+      temperature: 0.7,
+      maxOutputTokens: maxTokens
+    })
   
   return result.text
 }

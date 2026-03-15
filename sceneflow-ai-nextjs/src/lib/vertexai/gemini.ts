@@ -519,3 +519,199 @@ export async function generateImage(
 // =============================================================================
 
 export { getVertexAIAuthToken } from './client'
+
+// =============================================================================
+// Cache-Aware Text Generation
+// =============================================================================
+
+import {
+  isVertexCachingEnabled,
+  getOrCreateCache,
+  generateWithCache,
+  getCacheEntryByResourceName,
+  type CacheZone,
+  type CacheContentPart,
+  type CacheEntry,
+  type CacheAwareGenerationResult,
+} from './cacheManager'
+
+import { logCacheEvent } from './cacheObservability'
+
+export type { CacheZone, CacheContentPart, CacheEntry, CacheAwareGenerationResult }
+
+export interface CacheAwareTextGenerationOptions extends TextGenerationOptions {
+  /**
+   * Enable cache-aware generation. When true and ENABLE_VERTEX_CACHING=true,
+   * the system instruction + contextParts will be cached on Vertex AI,
+   * and only the userPrompt will be sent as uncached input.
+   */
+  cacheZone?: CacheZone
+  /**
+   * SceneFlow project ID for cache scoping.
+   * Required when cacheZone is set.
+   */
+  sceneflowProjectId?: string
+  /**
+   * Content parts to cache alongside the system instruction.
+   * These are the "heavy" parts (master script, style guide, transcript, etc.)
+   * that remain identical across sequential requests.
+   */
+  cacheContextParts?: CacheContentPart[]
+  /**
+   * Existing cache resource name from a previous call.
+   * When provided, skips cache creation and references the existing cache directly.
+   * This is used when the frontend passes a cache_id from its Zustand store.
+   */
+  cacheResourceName?: string
+  /**
+   * Cache TTL in minutes (default: 60).
+   */
+  cacheTtlMinutes?: number
+  /**
+   * Skip caching entirely (e.g., for BYOK users who bypass platform auth).
+   * When true, falls back to standard generateText() even if caching is enabled.
+   */
+  skipCache?: boolean
+}
+
+/**
+ * Cache-aware text generation.
+ * 
+ * When caching conditions are met (feature flag on, zone specified, context parts
+ * exceed token minimum), this function:
+ *   1. Creates or reuses a CachedContent resource on Vertex AI
+ *   2. Sends only the user's prompt as uncached input
+ *   3. Returns the result with cache metadata
+ * 
+ * When caching conditions are NOT met, falls back seamlessly to the standard
+ * generateText() function — zero behavior change for existing callers.
+ * 
+ * @example
+ * ```typescript
+ * // Cache-aware call (Script Doctor zone)
+ * const result = await generateTextCacheAware(
+ *   editInstruction,
+ *   {
+ *     cacheZone: 'script_doctor',
+ *     sceneflowProjectId: projectId,
+ *     systemInstruction: SCENEFLOW_CREATIVE_SYSTEM_INSTRUCTION,
+ *     cacheContextParts: [
+ *       { text: `<master_script>${fullScript}</master_script>` },
+ *       { text: `<characters>${characterBreakdown}</characters>` },
+ *     ],
+ *     temperature: 0.7,
+ *     maxOutputTokens: 16384,
+ *   }
+ * )
+ * 
+ * // result.cacheEntry contains the cache reference for follow-up calls
+ * ```
+ */
+export async function generateTextCacheAware(
+  prompt: string,
+  options: CacheAwareTextGenerationOptions = {}
+): Promise<TextGenerationResult & { cacheEntry?: CacheEntry; usedCache?: boolean; usageMetadata?: any }> {
+  const {
+    cacheZone,
+    sceneflowProjectId,
+    cacheContextParts,
+    cacheResourceName,
+    cacheTtlMinutes,
+    ...standardOptions
+  } = options
+
+    const _cacheStartTime = Date.now()
+
+  // ── Fast path: caching disabled or not requested ──
+  if (!cacheZone || !isVertexCachingEnabled() || options.skipCache) {
+    const result = await generateText(prompt, standardOptions)
+    return { ...result, usedCache: false }
+  }
+
+  // ── Path A: Existing cache reference from frontend ──
+  if (cacheResourceName) {
+    try {
+      const cacheEntry = await getCacheEntryByResourceName(cacheResourceName)
+      if (cacheEntry) {
+        console.log(`[Vertex Gemini] Using existing cache: ${cacheEntry.cacheId}`)
+        const cachedResult = await generateWithCache(cacheEntry, prompt, {
+          temperature: standardOptions.temperature,
+          maxOutputTokens: standardOptions.maxOutputTokens,
+          topP: standardOptions.topP,
+          topK: standardOptions.topK,
+          responseMimeType: standardOptions.responseMimeType,
+          thinkingLevel: standardOptions.thinkingLevel,
+          thinkingBudget: standardOptions.thinkingBudget,
+          safetySettings: standardOptions.safetySettings,
+          maxRetries: standardOptions.maxRetries,
+          initialDelayMs: standardOptions.initialDelayMs,
+          timeoutMs: standardOptions.timeoutMs,
+          seed: standardOptions.seed,
+        })
+        return {
+          text: cachedResult.text,
+          finishReason: cachedResult.finishReason,
+          safetyRatings: cachedResult.safetyRatings,
+          usedCache: true,
+          cacheEntry: cachedResult.cacheEntry,
+          usageMetadata: cachedResult.usageMetadata,
+        }
+      }
+      console.warn(`[Vertex Gemini] Cache ${cacheResourceName} not found, falling back to uncached`)
+    } catch (error: any) {
+      console.warn(`[Vertex Gemini] Cached generation failed, falling back: ${error.message}`)
+    }
+    
+    // Fall through to uncached path
+    const result = await generateText(prompt, standardOptions)
+    return { ...result, usedCache: false }
+  }
+
+  // ── Path B: Create-or-reuse cache, then generate ──
+  if (sceneflowProjectId && cacheContextParts && cacheContextParts.length > 0 && standardOptions.systemInstruction) {
+    try {
+      const cacheEntry = await getOrCreateCache(
+        sceneflowProjectId,
+        cacheZone,
+        standardOptions.systemInstruction,
+        cacheContextParts,
+        {
+          model: standardOptions.model,
+          ttlMinutes: cacheTtlMinutes,
+        }
+      )
+
+      if (cacheEntry) {
+        console.log(`[Vertex Gemini] Cache ready (${cacheEntry.cacheId}), generating with cache`)
+        const cachedResult = await generateWithCache(cacheEntry, prompt, {
+          temperature: standardOptions.temperature,
+          maxOutputTokens: standardOptions.maxOutputTokens,
+          topP: standardOptions.topP,
+          topK: standardOptions.topK,
+          responseMimeType: standardOptions.responseMimeType,
+          thinkingLevel: standardOptions.thinkingLevel,
+          thinkingBudget: standardOptions.thinkingBudget,
+          safetySettings: standardOptions.safetySettings,
+          maxRetries: standardOptions.maxRetries,
+          initialDelayMs: standardOptions.initialDelayMs,
+          timeoutMs: standardOptions.timeoutMs,
+          seed: standardOptions.seed,
+        })
+        return {
+          text: cachedResult.text,
+          finishReason: cachedResult.finishReason,
+          safetyRatings: cachedResult.safetyRatings,
+          usedCache: true,
+          cacheEntry: cachedResult.cacheEntry,
+          usageMetadata: cachedResult.usageMetadata,
+        }
+      }
+    } catch (error: any) {
+      console.warn(`[Vertex Gemini] Cache-aware generation failed, falling back: ${error.message}`)
+    }
+  }
+
+  // ── Fallback: standard uncached generation ──
+  const result = await generateText(prompt, standardOptions)
+  return { ...result, usedCache: false }
+}
