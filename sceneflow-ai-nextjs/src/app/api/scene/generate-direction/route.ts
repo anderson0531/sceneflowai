@@ -128,6 +128,9 @@ function fillDirectionDefaults(direction: any): DetailedSceneDirection {
   if (!direction.audio) {
     direction.audio = { priorities: 'Clean dialogue capture', considerations: 'Standard set protocols' }
   }
+  if (!direction.sceneDescription) {
+    direction.sceneDescription = ''
+  }
   return direction as DetailedSceneDirection
 }
 
@@ -177,6 +180,7 @@ For each dialogue line, provide specific, actionable performance direction that 
 Generate comprehensive technical direction suitable for professional film production crews. Return ONLY valid JSON with this exact structure:
 
 {
+  "sceneDescription": "A clear, plain-language narrative summary (2-4 sentences) of what happens in this scene. Describe the intent, action, and emotional arc in accessible terms that anyone can understand without film jargon. Focus on WHO does WHAT, WHY, and how the emotional tone shifts. Example: 'Maya attempts a home workout using holographic fitness tech, but quickly grows frustrated as she fails to keep up. After angrily tossing the tablet aside, she catches her reflection in the mirror — a moment of raw vulnerability — before picking up her phone with quiet determination to try a different path.'",
   "camera": {
     "shots": ["array of shot types, e.g., 'Wide Shot', 'Medium Close-Up', 'Insert Shot'"],
     "angle": "camera angle, e.g., 'Eye-Level', 'Low Angle', 'High Angle', 'Over-the-Shoulder'",

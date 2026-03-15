@@ -112,6 +112,8 @@ export interface NarrativeLighting {
 }
 
 export interface DetailedSceneDirection {
+  /** Plain-language narrative summary of what happens in the scene — the intent, action, and emotional arc described in accessible terms */
+  sceneDescription?: string
   camera: CameraDirection
   lighting: LightingDirection
   scene: SceneDirection

@@ -5174,6 +5174,13 @@ function SceneCard({
                         </div>
                         {!descriptionCollapsed && (
                           <div className="space-y-3">
+                            {/* Scene Description — plain-language narrative of what happens */}
+                            {hasDirection && sceneDir.sceneDescription && (
+                              <div className="text-sm text-gray-200 leading-relaxed bg-slate-800/50 rounded-md p-3 border border-slate-700/50">
+                                <span className="text-[10px] uppercase tracking-wider text-cyan-400/80 font-semibold block mb-1.5">Scene Description</span>
+                                {sceneDir.sceneDescription}
+                              </div>
+                            )}
                             {/* Show visual description as the base */}
                             {sceneDescription && (
                               <div className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
