@@ -8,7 +8,7 @@
 Implement the fix * Do NOT create separate `scenes` state - this causes sync bugs.
  * 
  * Key handlers:
- * - handleGenerateScene: Updates script.script.scenes, not separate state
+ * - handleGenerateSceneImage: Generates scene images with character auto-detection, wardrobe resolution, and DB persistence
  * - handleUploadScene: Updates script.script.scenes, not separate state
  */
 'use client'
@@ -4347,6 +4347,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [isGeneratingKeyframe, setIsGeneratingKeyframe] = useState(false)
   const [generatingKeyframeSceneNumber, setGeneratingKeyframeSceneNumber] = useState<number | null>(null)
   
+  // Batch generation state — when true, handleGenerateSceneImage suppresses per-scene overlays
+  // (SceneGallery's handleGenerateAll provides its own batch overlay via useProcessWithOverlay)
+  const batchGeneratingRef = useRef(false)
+  
   // Scene reference generation state (for Production Bible Scene tab)
   const [generatingSceneReferenceIndex, setGeneratingSceneReferenceIndex] = useState<number | null>(null)
   const [generatingSceneDirectionIndex, setGeneratingSceneDirectionIndex] = useState<number | null>(null)
@@ -6784,85 +6788,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  const handleGenerateScene = async (sceneIndex: number, prompt: string) => {
-    if (!prompt?.trim()) return
-    if (!script?.script?.scenes) return
-    
-    try {
-      const res = await fetch('/api/scene/generate-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          sceneIndex,
-          scenePrompt: prompt
-        })
-      })
-      
-      const json = await res.json()
-      
-      if (json?.imageUrl) {
-        // Use functional update to merge with CURRENT state (not stale closure)
-        // This ensures concurrent scene generations don't overwrite each other
-        let updatedScriptForSave: any = null
-        
-        setScript((prev: any) => {
-          if (!prev?.script?.scenes) return prev
-          
-          // Merge the new image into the CURRENT scenes array
-          const currentScenes = prev.script.scenes
-          const mergedScenes = currentScenes.map((s: any, idx: number) => 
-            idx === sceneIndex 
-              ? { ...s, imageUrl: json.imageUrl, imagePrompt: prompt } 
-              : s
-          )
-          
-          // Capture the updated script for persistence
-          updatedScriptForSave = {
-            ...prev,
-            script: {
-              ...prev.script,
-              scenes: mergedScenes
-            }
-          }
-          
-          return updatedScriptForSave
-        })
-        
-        // Persist to project metadata with a slight delay to ensure state is updated
-        // and use the captured script from the functional update
-        await new Promise(resolve => setTimeout(resolve, 50))
-        
-        try {
-          if (updatedScriptForSave) {
-            const currentMetadata = (projectRef.current || project)?.metadata || {}
-            const currentVisionPhase = currentMetadata.visionPhase || {}
-            await serializedProjectSave({
-              metadata: {
-                ...currentMetadata,
-                visionPhase: {
-                  ...currentVisionPhase,
-                  script: updatedScriptForSave,
-                  characters: characters,
-                  narrationVoice: narrationVoice,
-                  descriptionVoice: descriptionVoice
-                }
-              }
-            }, 'handleGenerateScene')
-          }
-        } catch (saveError) {
-          console.error('Failed to save scene to project:', saveError)
-        }
-      } else {
-        const errorMsg = json?.error || 'Failed to generate image'
-        throw new Error(errorMsg)
-      }
-    } catch (error) {
-      console.error('Scene image generation failed:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Failed to generate scene image'
-      try { const { toast } = require('sonner'); toast.error(errorMessage, { duration: Infinity }) } catch {}
-    }
-  }
+  // NOTE: Legacy handleGenerateScene removed — all scene generation now routes through
+  // handleGenerateSceneImage which provides: character auto-detection via findSceneCharacters(),
+  // wardrobe/costume reference resolution, and reliable DB persistence.
+  // SceneGallery's onGenerateScene is wired as: (sceneIdx, _prompt) => handleGenerateSceneImage(sceneIdx)
 
   const handleUploadScene = async (sceneIndex: number, file: File) => {
     if (!script?.script?.scenes) return
@@ -7462,13 +7391,36 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           sceneReferenceImageUrl: data.imageUrl
         }
         
-        setScript({
+        const updatedScript = {
           ...script,
           script: {
             ...script?.script,
             scenes: updatedScenes
           }
-        })
+        }
+        
+        setScript(updatedScript)
+        
+        // Persist to database so scene references survive refresh
+        try {
+          const { characters: _staleCharacters, ...visionPhaseWithoutCharacters } = project?.metadata?.visionPhase || {}
+          await fetch(`/api/projects/${project?.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              metadata: {
+                ...project?.metadata,
+                visionPhase: {
+                  ...visionPhaseWithoutCharacters,
+                  characters: characters,
+                  script: updatedScript
+                }
+              }
+            })
+          })
+        } catch (saveError) {
+          console.error('[handleGenerateSceneReferenceImage] Failed to persist:', saveError)
+        }
         
         try { const { toast } = require('sonner'); toast.success('Scene reference generated!') } catch {}
       }
@@ -7498,13 +7450,36 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         sceneReferenceImageUrl: uploadedUrl
       }
       
-      setScript({
+      const updatedScript = {
         ...script,
         script: {
           ...script?.script,
           scenes: updatedScenes
         }
-      })
+      }
+      
+      setScript(updatedScript)
+      
+      // Persist to database so uploaded references survive refresh
+      try {
+        const { characters: _staleCharacters, ...visionPhaseWithoutCharacters } = project?.metadata?.visionPhase || {}
+        await fetch(`/api/projects/${project?.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: {
+              ...project?.metadata,
+              visionPhase: {
+                ...visionPhaseWithoutCharacters,
+                characters: characters,
+                script: updatedScript
+              }
+            }
+          })
+        })
+      } catch (saveError) {
+        console.error('[handleUploadSceneReferenceImage] Failed to persist:', saveError)
+      }
       
       try { const { toast } = require('sonner'); toast.success('Scene reference uploaded!') } catch {}
     } catch (error: any) {
@@ -7959,7 +7934,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     console.log('[handleGenerateSceneImage] Scene description found, proceeding with generation...')
     
     // Show global processing overlay for storyboard production
-    overlayStore.show(`Storyboard Production - Scene ${sceneIdx + 1}`, 25, 'storyboard-production')
+    // Skip per-scene overlay when batch generating — SceneGallery provides its own batch overlay
+    if (!batchGeneratingRef.current) {
+      overlayStore.show(`Storyboard Production - Scene ${sceneIdx + 1}`, 25, 'storyboard-production')
+    }
     setGeneratingKeyframeSceneNumber(sceneIdx + 1)
     
     try {
@@ -8109,7 +8087,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       updatedScenes[sceneIdx] = {
         ...updatedScenes[sceneIdx],
         imageUrl: data.imageUrl,
-        imagePrompt: prompt,
+        imagePrompt: requestBody.scenePrompt || requestBody.customPrompt || '',
         // Track which direction and references this image was based on (for workflow sync)
         basedOnDirectionHash: data.basedOnDirectionHash,
         basedOnReferencesHash: data.basedOnReferencesHash
@@ -8183,7 +8161,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     } finally {
       // Hide global processing overlay
-      overlayStore.hide()
+      if (!batchGeneratingRef.current) {
+        overlayStore.hide()
+      }
       setGeneratingKeyframeSceneNumber(null)
     }
   }
@@ -10880,10 +10860,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             projectTitle={project?.title}
                             onRegenerateScene={(index) => handleGenerateSceneImage(index)}
                             onOpenPromptBuilder={openPromptBuilder}
-                            onGenerateScene={handleGenerateScene}
+                            onGenerateScene={(sceneIdx, _prompt) => handleGenerateSceneImage(sceneIdx)}
                             onUploadScene={handleUploadScene}
                             onSaveEditedScene={handleSaveEditedScene}
                             onReorderScenes={handleReorderScenes}
+                            onBatchGenerateStart={() => { batchGeneratingRef.current = true }}
+                            onBatchGenerateEnd={() => { batchGeneratingRef.current = false; overlayStore.hide() }}
                             onClose={() => setShowSceneGallery(false)}
                             onAddToSceneLibrary={async (index, imageUrl) => {
                               const scenes = normalizeScenes(script)

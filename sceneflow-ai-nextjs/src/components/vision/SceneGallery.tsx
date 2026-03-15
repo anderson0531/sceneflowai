@@ -78,6 +78,9 @@ interface SceneGalleryProps {
   onSaveEditedScene?: (sceneIndex: number, newImageUrl: string) => void
   /** Callback to reorder scenes (drag and drop) */
   onReorderScenes?: (startIndex: number, endIndex: number) => void
+  /** Called when batch generation starts/ends — parent uses this to suppress per-scene overlays */
+  onBatchGenerateStart?: () => void
+  onBatchGenerateEnd?: () => void
 }
 
 const buildSceneKey = (scene: any, index: number) => scene.sceneId || scene.id || `scene-${index}`
@@ -109,6 +112,8 @@ export function SceneGallery({
   pinnedLocations,
   onSaveEditedScene,
   onReorderScenes,
+  onBatchGenerateStart,
+  onBatchGenerateEnd,
 }: SceneGalleryProps) {
   // Drag and drop sensors
   const sensors = useSensors(
@@ -241,6 +246,7 @@ export function SceneGallery({
     if (scenesWithoutImages === 0) return
     
     setIsGeneratingAll(true)
+    onBatchGenerateStart?.()
     
     try {
       await execute(async () => {
@@ -271,8 +277,9 @@ export function SceneGallery({
       })
     } finally {
       setIsGeneratingAll(false)
+      onBatchGenerateEnd?.()
     }
-  }, [scenes, scenesWithoutImages, buildScenePrompt, onGenerateScene, execute])
+  }, [scenes, scenesWithoutImages, buildScenePrompt, onGenerateScene, execute, onBatchGenerateStart, onBatchGenerateEnd])
   
   // Generate direction for all scenes - streaming with progress
   const handleGenerateAllDirection = useCallback(async () => {
@@ -1039,22 +1046,61 @@ function SceneCard({
         </Tooltip>
       )}
       
-      {/* Character Avatars - Top Left */}
+      {/* Character Avatars - Top Left (costume-aware) */}
       {scene.characters && scene.characters.length > 0 && (
         <div className="absolute top-2 left-2 flex gap-1">
           {scene.characters.slice(0, 3).map((charName: string, i: number) => {
             const char = characters.find(c => c.name === charName)
             const hasRef = char?.referenceImage
+            
+            // Resolve costume image: wardrobe override → scene-number match → default → baseline
+            let avatarUrl = char?.referenceImage
+            let isCostumeImage = false
+            let wardrobeName = ''
+            if (char?.wardrobes && char.wardrobes.length > 0) {
+              // Priority 1: Scene-level wardrobe override (from characterWardrobes mapping)
+              const sceneWardrobeOverride = scene.characterWardrobes?.find(
+                (cw: any) => cw.characterId === char.id || cw.characterId === char.name
+              )
+              let resolvedWardrobe: any = null
+              if (sceneWardrobeOverride?.wardrobeId) {
+                resolvedWardrobe = char.wardrobes.find((w: any) => w.id === sceneWardrobeOverride.wardrobeId)
+              }
+              // Priority 2: Scene-number matched wardrobe
+              if (!resolvedWardrobe && sceneNumber) {
+                resolvedWardrobe = char.wardrobes.find((w: any) => 
+                  w.sceneNumbers && w.sceneNumbers.includes(sceneNumber)
+                )
+              }
+              // Priority 3: Default wardrobe
+              if (!resolvedWardrobe) {
+                resolvedWardrobe = char.wardrobes.find((w: any) => w.isDefault)
+              }
+              // Priority 4: First wardrobe
+              if (!resolvedWardrobe) {
+                resolvedWardrobe = char.wardrobes[0]
+              }
+              // Use costume headshot (preferred for avatar) or full-body image
+              if (resolvedWardrobe) {
+                const costumeUrl = resolvedWardrobe.headshotUrl || resolvedWardrobe.fullBodyUrl
+                if (costumeUrl) {
+                  avatarUrl = costumeUrl
+                  isCostumeImage = true
+                  wardrobeName = resolvedWardrobe.name || ''
+                }
+              }
+            }
+            
             return (
               <Tooltip key={i}>
                 <TooltipTrigger asChild>
                   <div 
                     className={`w-6 h-6 rounded-full overflow-hidden shadow-sm border-2 ${
-                      hasRef ? 'border-emerald-400' : 'border-amber-400'
+                      hasRef ? (isCostumeImage ? 'border-cyan-400' : 'border-emerald-400') : 'border-amber-400'
                     }`}
                   >
-                    {hasRef ? (
-                      <img src={char.referenceImage} alt={charName} className="w-full h-full object-cover" />
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt={charName} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-gray-700 flex items-center justify-center text-xs text-gray-300">
                         {charName[0]}
@@ -1063,7 +1109,7 @@ function SceneCard({
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {charName}{hasRef ? '' : ' (no reference)'}
+                  {charName}{isCostumeImage ? ` (${wardrobeName})` : hasRef ? '' : ' (no reference)'}
                 </TooltipContent>
               </Tooltip>
             )
