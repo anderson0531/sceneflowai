@@ -20,7 +20,7 @@ import { useVisionaryAnalysis } from '@/hooks/useVisionaryAnalysis'
 import type { VisionaryReport, LanguageOpportunity } from '@/lib/visionary/types'
 
 /**
- * VisionaryPage — Ideas
+ * VisionaryPage — Market Insights
  * 
  * Entry point for concept exploration, market-gap analysis,
  * language arbitrage mapping, and idea-to-production bridging.
@@ -71,7 +71,7 @@ export default function VisionaryPage() {
         headers: { 'x-user-id': session?.user?.email || '' },
       })
       if (!res.ok) {
-        console.warn(`[Ideas] Reports API returned ${res.status}`)
+        console.warn(`[Market Insights] Reports API returned ${res.status}`)
         return
       }
       const data = await res.json()
@@ -168,7 +168,7 @@ export default function VisionaryPage() {
               <Telescope className="w-5 h-5 text-emerald-500" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Ideas</h1>
+              <h1 className="text-2xl font-bold text-white">Market Insights</h1>
               <p className="text-sm text-gray-400">AI-powered concept exploration, market analysis & opportunity mapping</p>
             </div>
           </div>

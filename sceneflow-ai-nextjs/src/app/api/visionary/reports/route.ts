@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 /**
  * GET /api/visionary/reports
  * 
- * List all Ideas (Visionary) reports for the authenticated user.
+ * List all Market Insights (Visionary) reports for the authenticated user.
  * Supports pagination via ?page=1&pageSize=20
  */
 export async function GET(request: NextRequest) {

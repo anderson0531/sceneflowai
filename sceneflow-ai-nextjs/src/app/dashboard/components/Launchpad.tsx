@@ -62,7 +62,7 @@ export function Launchpad() {
           </motion.div>
           </Link>
 
-          {/* Card 2: Ideas */}
+          {/* Card 2: Market Insights */}
           <Link href="/dashboard/visionary">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -77,7 +77,7 @@ export function Launchpad() {
                   </div>
                 </div>
 
-                <h3 className="text-2xl font-bold mb-3 text-white">Ideas</h3>
+                <h3 className="text-2xl font-bold mb-3 text-white">Market Insights</h3>
 
                 <p className="text-emerald-100 text-base leading-relaxed font-medium">
                   Explore concepts, discover market opportunities & plan production.

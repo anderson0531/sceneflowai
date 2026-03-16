@@ -52,7 +52,7 @@ const productActions = [
       color: 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20'
     },
     { 
-      label: 'Ideas', 
+      label: 'Market Insights', 
       tagline: 'Market Analysis',
       icon: <Telescope className="w-5 h-5" />, 
       href: '/dashboard/visionary',
