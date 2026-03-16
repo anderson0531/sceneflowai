@@ -112,6 +112,7 @@ export default function VisionaryPage() {
     startAnalysis({
       concept: concept.trim(),
       genre: genre.trim() || undefined,
+      userEmail: session?.user?.email || '',
     })
   }
 

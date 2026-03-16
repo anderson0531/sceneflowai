@@ -33,7 +33,7 @@ export function useVisionaryAnalysis() {
   /**
    * Start a new analysis run
    */
-  const startAnalysis = useCallback(async (input: CreateAnalysisRequest) => {
+  const startAnalysis = useCallback(async (input: CreateAnalysisRequest & { userEmail?: string }) => {
     // Abort any existing analysis
     abortRef.current?.abort()
     const controller = new AbortController()
@@ -43,6 +43,8 @@ export function useVisionaryAnalysis() {
     setError(null)
     setReport(null)
 
+    const userEmail = input.userEmail || ''
+
     try {
       // Phase 1: Create analysis & start market scan
       setPhase('market-scan')
@@ -50,7 +52,7 @@ export function useVisionaryAnalysis() {
 
       const createRes = await fetch('/api/visionary/analyze', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-user-id': userEmail },
         body: JSON.stringify(input),
         signal: controller.signal,
       })
@@ -77,6 +79,7 @@ export function useVisionaryAnalysis() {
         attempts++
 
         const pollRes = await fetch(`/api/visionary/reports/${reportId}`, {
+          headers: { 'x-user-id': userEmail },
           signal: controller.signal,
         })
 
@@ -154,9 +157,11 @@ export function useVisionaryAnalysis() {
   /**
    * Load an existing report by ID
    */
-  const loadReport = useCallback(async (reportId: string) => {
+  const loadReport = useCallback(async (reportId: string, userEmail?: string) => {
     try {
-      const res = await fetch(`/api/visionary/reports/${reportId}`)
+      const res = await fetch(`/api/visionary/reports/${reportId}`, {
+        headers: { 'x-user-id': userEmail || '' },
+      })
       if (!res.ok) throw new Error('Failed to load report')
       const data = await res.json()
       if (data.success && data.report) {
