@@ -11,7 +11,7 @@ import {
   Globe
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import type { 
   SceneStreamSelection, 
   FinalCutConfig,
@@ -19,7 +19,6 @@ import type {
   DEFAULT_FINAL_CUT_SETTINGS 
 } from '@/types/productionStreams'
 import type { ProductionStream, ProductionStreamType } from '@/components/vision/scene-production/types'
-import { SUPPORTED_LANGUAGES, FLAG_EMOJIS } from '@/constants/languages'
 
 // ============================================================================
 // Types
@@ -52,21 +51,7 @@ interface FinalCutStreamSelectorProps {
 // Constants
 // ============================================================================
 
-const FLAG_EMOJIS: Record<string, string> = {
-  en: '🇺🇸',
-  es: '🇪🇸',
-  fr: '🇫🇷',
-  de: '🇩🇪',
-  it: '🇮🇹',
-  pt: '🇧🇷',
-  zh: '🇨🇳',
-  ja: '🇯🇵',
-  ko: '🇰🇷',
-  th: '🇹🇭',
-  hi: '🇮🇳',
-  ar: '🇸🇦',
-  ru: '🇷🇺'
-}
+// FLAG_EMOJIS now uses centralized 74-language version from @/constants/languages
 
 // ============================================================================
 // Helper Functions
@@ -252,25 +237,14 @@ function SceneRow({
       {/* Language selection */}
       <div className="flex-1">
         {hasAny && availableLanguages.length > 0 ? (
-          <Select
+          <GroupedLanguageSelector
             value={selection.language}
             onValueChange={handleLanguageChange}
+            filterCodes={availableLanguages}
             disabled={disabled || availableLanguages.length <= 1}
-          >
-            <SelectTrigger className="w-[140px] h-8 bg-gray-800 border-gray-600 text-sm">
-              <SelectValue placeholder="Language" />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-600">
-              {availableLanguages.map(lang => {
-                const langInfo = SUPPORTED_LANGUAGES.find(l => l.code === lang)
-                return (
-                  <SelectItem key={lang} value={lang} className="text-gray-200">
-                    {FLAG_EMOJIS[lang] || '🌐'} {langInfo?.name || lang}
-                  </SelectItem>
-                )
-              })}
-            </SelectContent>
-          </Select>
+            size="sm"
+            className="bg-gray-800 border-gray-600"
+          />
         ) : (
           <span className="text-xs text-gray-500">No streams</span>
         )}
@@ -361,23 +335,19 @@ export function FinalCutStreamSelector({
           {/* Primary language selector */}
           <div className="flex items-center gap-2">
             <Globe className="w-4 h-4 text-gray-500" />
-            <Select
+            <GroupedLanguageSelector
               value={primaryLanguage}
               onValueChange={onLanguageChange}
               disabled={disabled}
-            >
-              <SelectTrigger className="w-[140px] h-8 bg-gray-800 border-gray-600 text-sm">
-                <SelectValue placeholder="Primary language" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-600">
-                {SUPPORTED_LANGUAGES.map(lang => (
-                  <SelectItem key={lang.code} value={lang.code} className="text-gray-200">
-                    {FLAG_EMOJIS[lang.code] || '🌐'} {lang.name}
-                    {availableLanguages.includes(lang.code) && ' ✓'}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              size="sm"
+              className="bg-gray-800 border-gray-600"
+              placeholder="Primary language"
+              renderItemSuffix={(lang) => 
+                availableLanguages.includes(lang.code) 
+                  ? <span className="text-green-400 text-xs ml-1">✓</span> 
+                  : null
+              }
+            />
           </div>
           
           {/* Set all buttons */}

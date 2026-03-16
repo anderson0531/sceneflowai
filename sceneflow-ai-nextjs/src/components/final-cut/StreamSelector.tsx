@@ -35,6 +35,7 @@ import type {
 } from '@/lib/types/finalCut'
 import { LANGUAGE_CONFIGS, FORMAT_CONFIGS } from '@/lib/types/finalCut'
 import { FLAG_EMOJIS } from '@/constants/languages'
+import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 
 // ============================================================================
 // Types
@@ -183,26 +184,12 @@ export function StreamSelector({
             {/* Language Selection */}
             <div className="space-y-2">
               <Label>Language</Label>
-              <div className="grid grid-cols-4 gap-2">
-                {(Object.keys(LANGUAGE_CONFIGS) as ProductionLanguage[]).map((lang) => {
-                  const config = LANGUAGE_CONFIGS[lang]
-                  return (
-                    <button
-                      key={lang}
-                      onClick={() => setNewStreamLanguage(lang)}
-                      className={cn(
-                        "flex flex-col items-center gap-1 p-2 rounded-lg border transition-colors",
-                        newStreamLanguage === lang
-                          ? "border-blue-500 bg-blue-500/10"
-                          : "border-gray-700 hover:border-gray-600 bg-gray-800"
-                      )}
-                    >
-                      <span className="text-2xl">{FLAG_EMOJIS[lang]}</span>
-                      <span className="text-xs text-gray-400">{config.name}</span>
-                    </button>
-                  )
-                })}
-              </div>
+              <GroupedLanguageSelector
+                value={newStreamLanguage}
+                onValueChange={(code) => setNewStreamLanguage(code as ProductionLanguage)}
+                size="md"
+                className="w-full bg-gray-800 border-gray-700"
+              />
             </div>
             
             {/* Format Selection */}

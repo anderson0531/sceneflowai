@@ -23,6 +23,7 @@ import {
   Pause
 } from 'lucide-react'
 import { SUPPORTED_LANGUAGES, FLAG_EMOJIS } from '@/constants/languages'
+import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import type { 
   ProductionStream, 
   ProductionStreamStatus, 
@@ -635,28 +636,18 @@ export function ProductionStreamsPanel({
       {selectedStreamType === 'video' && (
         <div className="flex items-center gap-2 p-3 bg-gray-800/30 rounded-lg border border-dashed border-gray-700">
           <Globe className="w-4 h-4 text-gray-500" />
-          <Select
+          <GroupedLanguageSelector
             value={newLanguage}
             onValueChange={setNewLanguage}
             disabled={disabled || isRendering}
-          >
-            <SelectTrigger className="w-[140px] h-8 bg-gray-800 border-gray-600 text-sm">
-              <SelectValue placeholder="Language" />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-600">
-              {/* Show current language first, even if stream exists */}
-              {SUPPORTED_LANGUAGES.map(lang => (
-                <SelectItem 
-                  key={lang.code} 
-                  value={lang.code}
-                  className="text-gray-200"
-                >
-                  {FLAG_EMOJIS[lang.code] || '🌐'} {lang.name}
-                  {existingLanguages.has(lang.code) && ' (exists)'}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            size="sm"
+            className="bg-gray-800 border-gray-600 text-sm"
+            renderItemSuffix={(lang) => 
+              existingLanguages.has(lang.code) 
+                ? <span className="text-gray-500 text-xs ml-1">(exists)</span> 
+                : null
+            }
+          />
           
           <Select
             value={newResolution}

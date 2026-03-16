@@ -18,7 +18,7 @@ import { createPortal } from 'react-dom'
 import { 
   Play, Pause, Volume2, VolumeX, Mic, Music, Zap, 
   SkipBack, SkipForward, Film, Plus, Trash2, X, Maximize2, Minimize2, 
-  MessageSquare, GripVertical, Globe, AlertCircle, Download, Layers, Magnet, Link2, Pencil, Anchor, Clock, ImageIcon
+  MessageSquare, GripVertical, AlertCircle, Download, Layers, Magnet, Link2, Pencil, Anchor, Clock, ImageIcon
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
@@ -53,13 +53,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
+import { getLanguageName } from '@/constants/languages'
 // Phase 7: Drag-and-drop segment reordering
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
@@ -122,18 +117,7 @@ function formatTimeShort(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
-const LANGUAGE_LABELS: Record<string, string> = {
-  en: 'English',
-  es: 'Español',
-  fr: 'Français',
-  de: 'Deutsch',
-  it: 'Italiano',
-  pt: 'Português',
-  th: 'ไทย',
-  zh: '中文',
-  ja: '日本語',
-  ko: '한국어',
-}
+// Language display handled by GroupedLanguageSelector and getLanguageName()
 
 // ============================================================================
 // Sortable Clip Wrapper
@@ -1270,27 +1254,21 @@ export function SceneTimelineV2({
           {availableLanguages.length > 1 && (
             <>
               <div className="w-px h-5 bg-gray-700" />
-              <Select value={selectedLanguage} onValueChange={onLanguageChange}>
-                <SelectTrigger className="h-7 w-[100px] text-xs bg-gray-800 border-gray-700 text-gray-300">
-                  <Globe className="w-3 h-3 mr-1" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableLanguages.map(lang => (
-                    <SelectItem key={lang} value={lang} className="text-xs">
-                      {LANGUAGE_LABELS[lang] || lang.toUpperCase()}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <GroupedLanguageSelector
+                value={selectedLanguage}
+                onValueChange={onLanguageChange}
+                filterCodes={availableLanguages}
+                size="xs"
+                className="bg-gray-800 border-gray-700 text-gray-300"
+              />
               {/* Baseline timing indicator - shows when using non-baseline language */}
               {selectedLanguage !== baselineLanguage && (
                 <div 
                   className="flex items-center gap-1 px-2 py-1 bg-blue-900/30 border border-blue-700/50 rounded text-[10px] text-blue-300"
-                  title={`Timeline positions anchored to ${LANGUAGE_LABELS[baselineLanguage] || baselineLanguage.toUpperCase()} timing`}
+                  title={`Timeline positions anchored to ${getLanguageName(baselineLanguage)} timing`}
                 >
                   <Anchor className="w-3 h-3" />
-                  <span>{LANGUAGE_LABELS[baselineLanguage] || baselineLanguage.toUpperCase()}</span>
+                  <span>{getLanguageName(baselineLanguage)}</span>
                 </div>
               )}
               {/* Playback Offset Control - for translated audio alignment */}
@@ -1473,27 +1451,20 @@ export function SceneTimelineV2({
           {/* Language selector */}
           {availableLanguages.length > 1 && (
             <>
-              <Select value={selectedLanguage} onValueChange={onLanguageChange}>
-                <SelectTrigger className="h-7 w-[120px] text-xs">
-                  <Globe className="w-3 h-3 mr-1" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableLanguages.map(lang => (
-                    <SelectItem key={lang} value={lang} className="text-xs">
-                      {LANGUAGE_LABELS[lang] || lang.toUpperCase()}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <GroupedLanguageSelector
+                value={selectedLanguage}
+                onValueChange={onLanguageChange}
+                filterCodes={availableLanguages}
+                size="xs"
+              />
               {/* Baseline timing indicator */}
               {selectedLanguage !== baselineLanguage && (
                 <div 
                   className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700/50 rounded text-[10px] text-blue-700 dark:text-blue-300"
-                  title={`Timeline positions anchored to ${LANGUAGE_LABELS[baselineLanguage] || baselineLanguage.toUpperCase()} timing`}
+                  title={`Timeline positions anchored to ${getLanguageName(baselineLanguage)} timing`}
                 >
                   <Anchor className="w-3 h-3" />
-                  <span>{LANGUAGE_LABELS[baselineLanguage] || baselineLanguage.toUpperCase()}</span>
+                  <span>{getLanguageName(baselineLanguage)}</span>
                 </div>
               )}
             </>
@@ -1720,7 +1691,7 @@ export function SceneTimelineV2({
           <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-900/30 border-t border-gray-200 dark:border-gray-700">
             <AlertCircle className="w-4 h-4 text-gray-400" />
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              No audio tracks for {LANGUAGE_LABELS[selectedLanguage] || selectedLanguage}. 
+              No audio tracks for {getLanguageName(selectedLanguage)}. 
               Generate audio using the Update Audio button.
             </span>
           </div>
