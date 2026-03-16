@@ -24,6 +24,7 @@ export const maxDuration = 120 // Allow up to 2 minutes for full pipeline
  * - Fix single-quoted property names
  * - Remove trailing commas before } or ]
  * - Remove JS-style comments
+ * - Recover from truncated output by closing open brackets/braces
  */
 function safeParseJSON(raw: string): any {
   // First try parsing as-is
@@ -54,10 +55,46 @@ function safeParseJSON(raw: string): any {
   // Try parsing repaired text
   try {
     return JSON.parse(text)
-  } catch (e2: any) {
-    // Log first 500 chars of the raw text for debugging
-    console.error('[safeParseJSON] Repair failed. First 500 chars:', text.slice(0, 500))
-    throw new Error(`Invalid JSON from LLM: ${e2.message}`)
+  } catch {
+    // continue to truncation recovery
+  }
+
+  // ── Truncation recovery ─────────────────────────────────────────────
+  // LLM output was likely cut off at maxOutputTokens. Attempt to close
+  // all open brackets/braces and strip any trailing partial value.
+  console.warn('[safeParseJSON] Attempting truncation recovery...')
+
+  // Remove any trailing partial string value (unclosed quote)
+  // e.g., ..."sugg  → remove everything after the last complete key-value
+  text = text.replace(/,\s*"[^"]*"?\s*:\s*"[^"]*$/, '')  // partial string value
+  text = text.replace(/,\s*"[^"]*$/, '')                   // partial key
+  text = text.replace(/,\s*$/, '')                         // trailing comma
+
+  // Count open vs close brackets
+  const openBraces = (text.match(/{/g) || []).length
+  const closeBraces = (text.match(/}/g) || []).length
+  const openBrackets = (text.match(/\[/g) || []).length
+  const closeBrackets = (text.match(/\]/g) || []).length
+
+  // Close any unclosed arrays then objects
+  const missingBrackets = openBrackets - closeBrackets
+  const missingBraces = openBraces - closeBraces
+
+  for (let i = 0; i < missingBrackets; i++) text += ']'
+  for (let i = 0; i < missingBraces; i++) text += '}'
+
+  // Remove trailing commas one more time after closures
+  text = text.replace(/,\s*([}\]])/g, '$1')
+
+  try {
+    const result = JSON.parse(text)
+    console.warn('[safeParseJSON] Truncation recovery succeeded (data may be partial)')
+    return result
+  } catch (e3: any) {
+    // Log for debugging
+    console.error('[safeParseJSON] All repair attempts failed. Last 200 chars:', text.slice(-200))
+    console.error('[safeParseJSON] First 500 chars:', text.slice(0, 500))
+    throw new Error(`Invalid JSON from LLM: ${e3.message}`)
   }
 }
 
