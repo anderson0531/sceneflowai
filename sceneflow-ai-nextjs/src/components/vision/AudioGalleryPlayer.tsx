@@ -13,8 +13,7 @@ import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Globe, X, Maximiz
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { SUPPORTED_LANGUAGES } from '@/constants/languages'
+import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { cn } from '@/lib/utils'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
 
@@ -428,11 +427,7 @@ export function AudioGalleryPlayer({
   // Check if current scene has audio
   const hasAudio = audioClips.length > 0 || !!musicTrack || sfxClips.length > 0
   
-  // Language display names
-  const getLanguageName = (code: string) => {
-    const lang = SUPPORTED_LANGUAGES.find(l => l.code === code)
-    return lang?.name || code.toUpperCase()
-  }
+  // Language display handled by GroupedLanguageSelector
   
   // Calculate Ken Burns progress (0 to 1)
   const kenBurnsProgress = sceneDuration > 0 ? currentTime / sceneDuration : 0
@@ -461,18 +456,13 @@ export function AudioGalleryPlayer({
             {availableLanguages.length > 1 && (
               <div className="flex items-center gap-2">
                 <Globe className="w-4 h-4 text-gray-400" />
-                <Select value={selectedLanguage} onValueChange={onLanguageChange}>
-                  <SelectTrigger className="w-32 h-8 bg-gray-800 border-gray-700 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableLanguages.map(lang => (
-                      <SelectItem key={lang} value={lang}>
-                        {getLanguageName(lang)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <GroupedLanguageSelector
+                  value={selectedLanguage}
+                  onValueChange={onLanguageChange}
+                  filterCodes={availableLanguages}
+                  size="sm"
+                  className="bg-gray-800 border-gray-700"
+                />
               </div>
             )}
             

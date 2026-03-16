@@ -12,7 +12,7 @@ import { Slider } from '@/components/ui/slider'
 import { SegmentData } from '@/types/screenplay'
 import { buildAudioTracksForLanguage, buildAudioTracksWithBaselineTiming, determineBaselineLanguage, flattenAudioTracks, analyzeSceneLML, type AudioTrackClipV2 } from '@/components/vision/scene-production/audioTrackBuilder'
 import { getAvailableLanguages } from '@/lib/audio/languageDetection'
-import { SUPPORTED_LANGUAGES } from '@/constants/languages'
+import { GroupedNativeSelect } from '@/components/vision/GroupedNativeSelect'
 // Audience Feedback Components
 import { EmojiReactionBar } from '@/components/screening-room/EmojiReactionBar'
 import { ConsentModal } from '@/components/screening-room/ConsentModal'
@@ -331,9 +331,8 @@ export function FullscreenPlayer({
     return getAvailableLanguages(allScenes)
   }, [allScenes])
   
-  const selectableLanguages = useMemo(() => {
-    return SUPPORTED_LANGUAGES.filter(lang => availableLanguages.includes(lang.code))
-  }, [availableLanguages])
+  // selectableLanguages derived from availableLanguages (GroupedNativeSelect handles display)
+  const selectableLanguages = availableLanguages
   
   // Handle language change
   const handleLanguageChange = useCallback((newLanguage: string) => {
@@ -1023,19 +1022,13 @@ export function FullscreenPlayer({
             </button>
             
             {/* Language Selector */}
-            {selectableLanguages.length > 1 && (
-              <select
+            {availableLanguages.length > 1 && (
+              <GroupedNativeSelect
                 value={selectedLanguage}
-                onChange={(e) => handleLanguageChange(e.target.value)}
+                onChange={handleLanguageChange}
+                filterCodes={availableLanguages}
                 className="px-3 py-1.5 rounded-lg bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-colors text-sm min-h-[44px]"
-                title="Select Language"
-              >
-                {selectableLanguages.map(lang => (
-                  <option key={lang.code} value={lang.code} className="bg-gray-800 text-white">
-                    {lang.name}
-                  </option>
-                ))}
-              </select>
+              />
             )}
             
             {/* Close Button */}
