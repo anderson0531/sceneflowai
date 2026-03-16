@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { X, Subtitles, Globe, FileText, Upload } from 'lucide-react'
+import { GroupedNativeSelect } from '@/components/vision/GroupedNativeSelect'
 
 interface MobileMenuSheetProps {
   open: boolean
@@ -85,19 +86,12 @@ export function MobileMenuSheet({
               <Globe className="w-5 h-5" />
               <span className="text-base font-medium">Language</span>
             </label>
-            <select
+            <GroupedNativeSelect
               value={selectedLanguage}
-              onChange={(e) => {
-                onLanguageChange(e.target.value)
-              }}
-              className="w-full mt-2 px-3 py-2 rounded-lg bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-base"
-            >
-              {supportedLanguages.map(lang => (
-                <option key={lang.code} value={lang.code} className="bg-gray-800 text-white">
-                  {lang.name}
-                </option>
-              ))}
-            </select>
+              onChange={(code) => onLanguageChange(code)}
+              filterCodes={supportedLanguages.map(l => l.code)}
+              className="w-full mt-2 py-2 text-base bg-gray-700 border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
           </div>
           
           {/* Translation Export/Import */}

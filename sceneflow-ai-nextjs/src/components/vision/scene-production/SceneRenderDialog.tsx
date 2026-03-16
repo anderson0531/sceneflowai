@@ -42,12 +42,11 @@ import {
   Download,
   AlertCircle,
   CheckCircle2,
-  Globe,
   Video,
   VolumeX,
 } from 'lucide-react'
 import type { SceneSegment, SceneProductionData } from './types'
-import { SUPPORTED_LANGUAGES } from '@/constants/languages'
+import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 
 // Audio track configuration with timing
 interface AudioTrackConfig {
@@ -702,25 +701,11 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
                 Audio Tracks & Timing
               </Label>
               {/* Language Selector */}
-              <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4 text-slate-400" />
-                <Select
-                  value={selectedLanguage}
-                  onValueChange={setSelectedLanguage}
-                  disabled={isRendering}
-                >
-                  <SelectTrigger className="w-[120px] h-8 bg-slate-800 border-slate-700 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SUPPORTED_LANGUAGES.map(lang => (
-                      <SelectItem key={lang.code} value={lang.code} className="text-xs">
-                        {lang.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <GroupedLanguageSelector
+                value={selectedLanguage}
+                onValueChange={setSelectedLanguage}
+                size="xs"
+              />
             </div>
             
             <div className="space-y-2">

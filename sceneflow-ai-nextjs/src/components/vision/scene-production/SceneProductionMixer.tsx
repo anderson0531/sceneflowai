@@ -68,7 +68,9 @@ import {
   SelectValue 
 } from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
-import { SUPPORTED_LANGUAGES } from '@/constants/languages'
+import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
+import { cn } from '@/lib/utils'
+import { SUPPORTED_LANGUAGES, FLAG_EMOJIS } from '@/constants/languages'
 import { MixerTimeline } from './MixerTimeline'
 import { useOverlayStore } from '@/store/useOverlayStore'
 import type { 
@@ -348,11 +350,6 @@ interface SceneProductionMixerProps {
 // Constants
 // ============================================================================
 
-const FLAG_EMOJIS: Record<string, string> = {
-  en: '🇺🇸', es: '🇪🇸', fr: '🇫🇷', de: '🇩🇪', it: '🇮🇹', pt: '🇧🇷',
-  zh: '🇨🇳', ja: '🇯🇵', ko: '🇰🇷', th: '🇹🇭', hi: '🇮🇳', ar: '🇸🇦', ru: '🇷🇺'
-}
-
 const TRACK_COLORS = {
   narration: { icon: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/30', slider: 'bg-purple-500' },
   dialogue: { icon: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30', slider: 'bg-blue-500' },
@@ -446,30 +443,23 @@ function ProductionStreamSelector({
     <div className="flex items-center gap-2">
       <Globe className="w-4 h-4 text-purple-400" />
       <span className="text-xs text-gray-400 uppercase tracking-wide hidden sm:inline">Active Stream</span>
-      <Select value={selectedLanguage} onValueChange={onLanguageChange} disabled={disabled}>
-        <SelectTrigger className="w-[140px] sm:w-[160px] h-9 bg-gray-800/80 border-purple-500/40 text-white">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent className="bg-gray-900 border-gray-700">
-          {SUPPORTED_LANGUAGES.map(lang => {
-            const hasAudio = availableLanguages.includes(lang.code)
-            return (
-              <SelectItem key={lang.code} value={lang.code} className="text-gray-200">
-                <span className="flex items-center gap-2">
-                  <span>{FLAG_EMOJIS[lang.code] || '🌐'}</span>
-                  <span>{lang.name}</span>
-                  {lang.code === 'en' && <span className="text-xs text-gray-500">(Default)</span>}
-                  {hasAudio ? (
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-400" title="Audio ready" />
-                  ) : (
-                    <span className="w-1.5 h-1.5 rounded-full bg-gray-600" title="No audio" />
-                  )}
-                </span>
-              </SelectItem>
-            )
-          })}
-        </SelectContent>
-      </Select>
+      <GroupedLanguageSelector
+        value={selectedLanguage}
+        onValueChange={onLanguageChange}
+        showFlags={true}
+        size="sm"
+        disabled={disabled}
+        className="bg-gray-800/80 border-purple-500/40 text-white"
+        renderItemSuffix={(lang) => {
+          const hasAudio = availableLanguages.includes(lang.code)
+          return (
+            <span className={cn(
+              'ml-auto h-2 w-2 rounded-full',
+              hasAudio ? 'bg-green-500' : 'bg-gray-400'
+            )} />
+          )
+        }}
+      />
       {/* Generate Audio CTA for languages without audio */}
       {!hasAudioForSelected && selectedLanguage !== 'en' && onGenerateAudioForLanguage && (
         <button
@@ -4191,7 +4181,7 @@ export function SceneProductionMixer({
                     )}
                   </div>
                   <div className="px-3 pb-3 flex flex-wrap gap-1.5">
-                    {availableLanguages.map(langCode => {
+                    {(availableLanguages.length <= 5 ? availableLanguages : availableLanguages.slice(0, 4)).map(langCode => {
                       const langInfo = SUPPORTED_LANGUAGES.find(l => l.code === langCode)
                       const isActive = langCode === selectedLanguage
                       const hasNarration = !!audioAssets.narrationAudio?.[langCode]?.url
@@ -4216,6 +4206,17 @@ export function SceneProductionMixer({
                         </button>
                       )
                     })}
+                    {availableLanguages.length > 5 && (
+                      <GroupedLanguageSelector
+                        value={selectedLanguage}
+                        onValueChange={setSelectedLanguage}
+                        filterCodes={availableLanguages}
+                        size="xs"
+                        showFlags={true}
+                        className="h-[26px] w-auto min-w-[90px] text-[11px] bg-gray-700/30 border-gray-600/40 text-gray-300"
+                        placeholder={`+${availableLanguages.length - 4} more`}
+                      />
+                    )}
                   </div>
                 </div>
               )}

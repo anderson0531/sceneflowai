@@ -19,7 +19,7 @@ import { ToneStyleEditDialog } from './ToneStyleEditDialog'
 import { BeatsEditDialog } from './BeatsEditDialog'
 import { CharactersEditDialog } from './CharactersEditDialog'
 import { NarratorVoicePicker } from '@/components/tts/NarratorVoicePicker'
-import { SUPPORTED_LANGUAGES } from '@/constants/languages'
+import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import OwnerCollabPanel from '@/components/studio/OwnerCollabPanel'
 import { getCuratedElevenVoices, type CuratedVoice } from '@/lib/tts/voices'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
@@ -543,16 +543,11 @@ export function TreatmentCard() {
                                 <div className="mx-2 my-1 text-xs text-amber-300">Audio not configured</div>
                               )}
                               <div className="px-1 pt-2 pb-1 text-xs text-gray-400">Language</div>
-                              <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                                <SelectTrigger className="h-8 mx-1">
-                                  <SelectValue placeholder="Select language" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {SUPPORTED_LANGUAGES.map(lang => (
-                                    <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              <GroupedLanguageSelector
+                                value={selectedLanguage}
+                                onValueChange={(code) => setSelectedLanguage(code)}
+                                size="xs"
+                              />
                               <div className="px-1 pt-2 pb-1 text-xs text-gray-400">Narration</div>
                               <Select value={narrationMode} onValueChange={(val)=>setNarrationMode(val as any)}>
                                 <SelectTrigger className="h-8 mx-1">

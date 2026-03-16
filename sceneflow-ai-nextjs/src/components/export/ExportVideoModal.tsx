@@ -18,9 +18,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Download, Film, Globe, Monitor, Subtitles, Loader2, CheckCircle, XCircle } from 'lucide-react'
+import { Download, Film, Monitor, Subtitles, Loader2, CheckCircle, XCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { SUPPORTED_LANGUAGES } from '@/constants/languages'
+import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 
 interface SceneForExport {
   id: string
@@ -94,11 +94,6 @@ export function ExportVideoModal({
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [renderId, setRenderId] = useState<string | null>(null)
-
-  // Filter languages to only show those with available audio
-  const selectableLanguages = SUPPORTED_LANGUAGES.filter(
-    lang => availableLanguages.includes(lang.code)
-  )
 
   // Poll for render status
   const pollRenderStatus = useCallback(async (id: string) => {
@@ -257,30 +252,16 @@ export function ExportVideoModal({
         <div className="grid gap-5 py-4">
           {/* Language Selection */}
           <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-200">
-              <Globe className="w-4 h-4 text-blue-400" />
+            <label className="text-sm font-medium text-gray-200">
               Audio Language
             </label>
-            <Select
+            <GroupedLanguageSelector
               value={language}
               onValueChange={setLanguage}
+              filterCodes={availableLanguages}
+              size="sm"
               disabled={isExporting}
-            >
-              <SelectTrigger className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700">
-                <SelectValue placeholder="Select language" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-600">
-                {selectableLanguages.map(lang => (
-                  <SelectItem
-                    key={lang.code}
-                    value={lang.code}
-                    className="text-white hover:bg-gray-700 focus:bg-gray-700"
-                  >
-                    {lang.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
             {availableLanguages.length === 0 && (
               <p className="text-xs text-amber-400">
                 No audio tracks available. Generate audio for at least one language first.

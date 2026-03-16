@@ -10,7 +10,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { Checkbox } from '@/components/ui/checkbox'
 import { CheckCircle2, AlertCircle, XCircle, Loader, Sparkles, Globe } from 'lucide-react'
 import { getAvailableLanguages, hasLanguageAudio } from '@/lib/audio/languageDetection'
@@ -291,26 +291,11 @@ export function GenerateAudioDialog({
               <Globe className="w-4 h-4 text-blue-400" />
               <label className="text-sm font-medium text-gray-200">Target Language</label>
             </div>
-            <Select
+            <GroupedLanguageSelector
               value={selectedLanguage}
               onValueChange={setSelectedLanguage}
-              disabled={isRunning}
-            >
-              <SelectTrigger className="w-full bg-gray-800 border-gray-600 text-gray-200">
-                <SelectValue placeholder="Select language" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-600">
-                {SUPPORTED_LANGUAGES.map((lang) => (
-                  <SelectItem 
-                    key={lang.code} 
-                    value={lang.code}
-                    className="text-gray-200 hover:bg-gray-700 focus:bg-gray-700"
-                  >
-                    {lang.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              size="md"
+            />
             {selectedLanguage !== 'en' && (
               <p className="text-xs text-amber-400">
                 ⚡ Text will be translated from English to {SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name} before generating audio

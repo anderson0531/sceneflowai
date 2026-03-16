@@ -31,6 +31,7 @@ import { useTimelinePlayback, segmentsToVisualClips, audioTracksToClips, type Au
 import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAvailableLanguages, getAudioUrl, getAudioDuration as getStoredAudioDuration } from '@/lib/audio/languageDetection'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
+import { GroupedNativeSelect } from '@/components/vision/GroupedNativeSelect'
 import { toast } from 'sonner'
 import type { SceneProductionData, AudioTracksData } from '@/components/vision/scene-production/types'
 import { calculateSequentialAlignment, AUDIO_ALIGNMENT_BUFFERS, determineBaselineLanguage, getLanguagePlaybackOffset, type AlignmentClip } from '@/components/vision/scene-production/audioTrackBuilder'
@@ -1492,20 +1493,11 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
           >
             <Subtitles className="w-5 h-5" />
           </button>
-          <select
+          <GroupedNativeSelect
             value={selectedLanguage}
-            onChange={(e) => {
-              setSelectedLanguage(e.target.value)
-            }}
-            className="px-3 py-1.5 rounded-lg bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-colors text-sm min-h-[44px]"
-            title="Select Language"
-          >
-            {selectableLanguages.map(lang => (
-              <option key={lang.code} value={lang.code} className="bg-gray-800 text-white">
-                {lang.name}
-              </option>
-            ))}
-          </select>
+            onChange={(code) => setSelectedLanguage(code)}
+            filterCodes={selectableLanguages.map(l => l.code)}
+          />
           
           {/* NOTE: Export/Import moved to Production header (ScriptPanel) */}
           

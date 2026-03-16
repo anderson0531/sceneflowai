@@ -18,9 +18,8 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { AudioGalleryPlayer } from './AudioGalleryPlayer'
-import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { Button } from '@/components/ui/Button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
@@ -347,7 +346,7 @@ export function SceneGallery({
   return (
     <TooltipProvider>
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6 h-full overflow-y-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-y-2 mb-6">
         <div className="flex items-center gap-2">
           <Clapperboard className="w-5 h-5 text-sf-primary" />
           <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">Storyboard</h3>
@@ -363,7 +362,7 @@ export function SceneGallery({
           )}
         </div>
         
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center">
           {/* Generate All button - only show if scenes without images exist */}
           {scenesWithoutImages > 0 && (
             <Tooltip>
@@ -439,21 +438,12 @@ export function SceneGallery({
           {availableLanguages.length > 1 && (
             <div className="flex items-center gap-1.5">
               <Globe className="w-4 h-4 text-blue-400" />
-              <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                <SelectTrigger className="w-[130px] h-8 text-xs bg-white dark:bg-gray-800 border-blue-500/30">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableLanguages.map(lang => {
-                    const langInfo = SUPPORTED_LANGUAGES.find(l => l.code === lang)
-                    return (
-                      <SelectItem key={lang} value={lang} className="text-xs">
-                        {langInfo?.name || lang.toUpperCase()}
-                      </SelectItem>
-                    )
-                  })}
-                </SelectContent>
-              </Select>
+              <GroupedLanguageSelector
+                value={selectedLanguage}
+                onValueChange={setSelectedLanguage}
+                filterCodes={availableLanguages}
+                size="xs"
+              />
             </div>
           )}
           {/* Audio Player toggle - only show if scenes have audio */}
