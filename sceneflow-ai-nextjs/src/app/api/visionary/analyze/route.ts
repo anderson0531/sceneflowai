@@ -19,6 +19,49 @@ export const dynamic = 'force-dynamic'
 export const maxDuration = 120 // Allow up to 2 minutes for full pipeline
 
 /**
+ * Attempt to parse JSON from LLM output, repairing common issues:
+ * - Strip markdown code fences
+ * - Fix single-quoted property names
+ * - Remove trailing commas before } or ]
+ * - Remove JS-style comments
+ */
+function safeParseJSON(raw: string): any {
+  // First try parsing as-is
+  try {
+    return JSON.parse(raw)
+  } catch {
+    // continue to repair
+  }
+
+  let text = raw.trim()
+
+  // Strip markdown code fences (```json ... ``` or ``` ... ```)
+  text = text.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '')
+
+  // Remove single-line comments (// ...)
+  text = text.replace(/\/\/[^\n]*/g, '')
+
+  // Remove multi-line comments (/* ... */)
+  text = text.replace(/\/\*[\s\S]*?\*\//g, '')
+
+  // Fix single-quoted keys/values → double quotes (naive but effective for LLM output)
+  // Match property names: 'key': → "key":
+  text = text.replace(/(?<=[[{,\s])'/g, '"').replace(/'(?=\s*[:,\]\}])/g, '"')
+
+  // Remove trailing commas before } or ]
+  text = text.replace(/,\s*([}\]])/g, '$1')
+
+  // Try parsing repaired text
+  try {
+    return JSON.parse(text)
+  } catch (e2: any) {
+    // Log first 500 chars of the raw text for debugging
+    console.error('[safeParseJSON] Repair failed. First 500 chars:', text.slice(0, 500))
+    throw new Error(`Invalid JSON from LLM: ${e2.message}`)
+  }
+}
+
+/**
  * POST /api/visionary/analyze
  * 
  * Starts a full 4-phase Visionary Engine analysis.
@@ -81,7 +124,7 @@ export async function POST(request: NextRequest) {
         }
       )
 
-      const marketScan = JSON.parse(marketResult.text)
+      const marketScan = safeParseJSON(marketResult.text)
       marketScan.timestamp = new Date().toISOString()
       totalCredits += 25
 
@@ -110,7 +153,7 @@ export async function POST(request: NextRequest) {
         }
       )
 
-      const gapAnalysis = JSON.parse(gapResult.text)
+      const gapAnalysis = safeParseJSON(gapResult.text)
       totalCredits += 30
 
       await report.update({ gap_analysis: gapAnalysis, credits_used: totalCredits })
@@ -138,7 +181,7 @@ export async function POST(request: NextRequest) {
         }
       )
 
-      const arbitrageMap = JSON.parse(arbResult.text)
+      const arbitrageMap = safeParseJSON(arbResult.text)
       totalCredits += 30
 
       await report.update({ arbitrage_map: arbitrageMap, credits_used: totalCredits })
@@ -171,7 +214,7 @@ export async function POST(request: NextRequest) {
         }
       )
 
-      const bridgePlan = JSON.parse(bridgeResult.text)
+      const bridgePlan = safeParseJSON(bridgeResult.text)
       totalCredits += 25
 
       // Compute overall score
