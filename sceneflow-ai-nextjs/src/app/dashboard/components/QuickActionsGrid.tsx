@@ -10,7 +10,8 @@ import {
   Wand2,
   Scissors,
   BarChart2,
-  Upload
+  Upload,
+  Telescope
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -43,14 +44,21 @@ const productActions = [
     href: '/dashboard/workflow/final-cut',
     color: 'bg-purple-500/15 text-purple-400 hover:bg-purple-500/25 border border-purple-500/20'
   },
-  { 
-    label: 'Screening Room', 
-    tagline: 'Test & Feedback',
-    icon: <BarChart2 className="w-5 h-5" />, 
-    href: '/dashboard/workflow/premiere',
-    color: 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20'
-  },
-]
+    { 
+      label: 'Screening Room', 
+      tagline: 'Test & Feedback',
+      icon: <BarChart2 className="w-5 h-5" />, 
+      href: '/dashboard/workflow/premiere',
+      color: 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20'
+    },
+    { 
+      label: 'Visionary Engine', 
+      tagline: 'Market Analysis',
+      icon: <Telescope className="w-5 h-5" />, 
+      href: '/dashboard/visionary',
+      color: 'bg-teal-500/15 text-teal-400 hover:bg-teal-500/25 border border-teal-500/20'
+    },
+  ]
 
 const coreActions = [
   { 

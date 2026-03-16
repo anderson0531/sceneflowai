@@ -162,6 +162,7 @@ export function ProTipsChecklist({
     premiere: 'Premiere',
     dashboard: 'Dashboard',
     settings: 'Settings',
+    visionary: 'Visionary Engine',
   }[phase]
   
   return (

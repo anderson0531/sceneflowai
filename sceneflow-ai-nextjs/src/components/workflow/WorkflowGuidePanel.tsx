@@ -285,6 +285,7 @@ export function WorkflowGuidePanel({
     premiere: 'Premiere',
     dashboard: 'Dashboard',
     settings: 'Settings',
+    visionary: 'Visionary Engine',
   }
   
   return (

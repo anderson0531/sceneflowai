@@ -246,6 +246,7 @@ export const proTipsConfig: Record<WorkflowPhase, ProTip[]> = {
   // Dashboard and settings don't have pro tips
   dashboard: [],
   settings: [],
+  visionary: [],
 }
 
 /**

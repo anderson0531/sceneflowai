@@ -23,6 +23,8 @@ import CreditPricing from './CreditPricing'
 import VoiceConsent from './VoiceConsent'
 import UserVoiceClone from './UserVoiceClone'
 import ModerationEvent from './ModerationEvent'
+// Visionary Engine model
+import VisionaryReport from './VisionaryReport'
 
 // Define model associations
 User.hasMany(Project, {
@@ -130,6 +132,22 @@ ModerationEvent.belongsTo(User, {
   as: 'user',
 })
 
+// Visionary Engine model associations
+try {
+  User.hasMany(VisionaryReport, {
+    foreignKey: 'user_id',
+    as: 'visionaryReports',
+    onDelete: 'CASCADE',
+  })
+
+  VisionaryReport.belongsTo(User, {
+    foreignKey: 'user_id',
+    as: 'user',
+  })
+} catch (error) {
+  console.warn('[Models] VisionaryReport associations not set up:', error)
+}
+
 // DOL model associations
 PlatformModel.hasMany(PromptTemplate, {
   foreignKey: 'modelId',
@@ -182,6 +200,8 @@ export {
   VoiceConsent,
   UserVoiceClone,
   ModerationEvent,
+  // Visionary Engine
+  VisionaryReport,
 }
 
 // Export default for convenience
@@ -211,4 +231,6 @@ export default {
   VoiceConsent,
   UserVoiceClone,
   ModerationEvent,
+  // Visionary Engine
+  VisionaryReport,
 }

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 /**
  * Workflow phase identifiers matching the production pipeline
  */
-export type WorkflowPhase = 'blueprint' | 'production' | 'final-cut' | 'premiere' | 'dashboard' | 'settings'
+export type WorkflowPhase = 'blueprint' | 'production' | 'final-cut' | 'premiere' | 'dashboard' | 'settings' | 'visionary'
 
 /**
  * Status of a workflow step
@@ -397,14 +397,52 @@ export const dashboardSidebarConfig: WorkflowSidebarConfig = {
   },
 }
 
-// ============================================================================
+// ========================================================================
+// VISIONARY ENGINE CONFIG
+// ========================================================================
+
+export const visionarySidebarConfig: WorkflowSidebarConfig = {
+  phase: 'visionary',
+  showWorkflowStepper: false,
+  quickActions: [
+    { id: 'new-analysis', label: 'New Analysis', icon: 'Sparkles', iconColor: 'text-emerald-500', action: 'event', eventName: 'visionary:new-analysis' },
+    { id: 'view-reports', label: 'View Reports', icon: 'FileText', iconColor: 'text-blue-500', action: 'event', eventName: 'visionary:view-reports' },
+  ],
+  sectionVisibility: {
+    workflow: false,
+    workflowGuide: false,
+    proTips: false,
+    progress: false,
+    quickActions: true,
+    reviewScores: false,
+    screeningRoom: false,
+    projectStats: false,
+    credits: true,
+  },
+  sectionDefaults: {
+    workflow: false,
+    workflowGuide: false,
+    proTips: false,
+    progress: false,
+    quickActions: true,
+    reviewScores: false,
+    screeningRoom: false,
+    projectStats: false,
+    credits: true,
+  },
+}
+
+// ========================================================================
 // HELPER FUNCTIONS
-// ============================================================================
+// ========================================================================
 
 /**
  * Get sidebar config based on current pathname
  */
 export function getSidebarConfigForPath(pathname: string): WorkflowSidebarConfig {
+  if (pathname.includes('/dashboard/visionary')) {
+    return visionarySidebarConfig
+  }
   if (pathname.includes('/dashboard/workflow/vision/')) {
     return productionSidebarConfig
   }

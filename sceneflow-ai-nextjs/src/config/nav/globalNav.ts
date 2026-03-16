@@ -4,6 +4,7 @@ export const mainNav: GlobalNavItem[] = [
   { key: 'dashboard', label: 'Dashboard', href: '/dashboard' },
   { key: 'projects', label: 'Projects', href: '/dashboard/projects' },
   { key: 'series', label: 'Series', href: '/dashboard/series' },
+  { key: 'visionary', label: 'Visionary Engine', href: '/dashboard/visionary' },
   { key: 'start', label: 'Start Project', href: '/dashboard/studio/new-project' },
 ]
 

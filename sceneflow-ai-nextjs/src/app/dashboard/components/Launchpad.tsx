@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Plus, Play } from 'lucide-react'
+import { Plus, Play, Telescope } from 'lucide-react'
 import { useEnhancedStore } from '@/store/enhancedStore'
 import Link from 'next/link'
 import {
@@ -60,11 +60,33 @@ export function Launchpad() {
               </p>
             </div>
           </motion.div>
-        </Link>
+          </Link>
 
-        {/* Card 2 removed: Enhanced Project flows moved into Start wizard */}
+          {/* Card 2: Visionary Engine */}
+          <Link href="/dashboard/visionary">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4, delay: 0.15 }}
+              className="group cursor-pointer"
+            >
+              <div className="bg-gradient-to-br from-emerald-900/30 to-teal-800/20 text-white rounded-xl shadow-xl p-6 hover:shadow-2xl transition duration-300 group-hover:scale-105 h-full border-2 border-emerald-500/40 hover:border-emerald-400/60">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-14 h-14 bg-emerald-500/30 rounded-xl flex items-center justify-center border-2 border-emerald-400/40 shadow-lg">
+                    <Telescope className="w-7 h-7 text-emerald-300" />
+                  </div>
+                </div>
 
-        {/* Card 3: Continue Project - Now consistent with Start Project */}
+                <h3 className="text-2xl font-bold mb-3 text-white">Visionary Engine</h3>
+
+                <p className="text-emerald-100 text-base leading-relaxed font-medium">
+                  AI market analysis, language arbitrage, and production planning.
+                </p>
+              </div>
+            </motion.div>
+          </Link>
+
+          {/* Card 2 removed: Enhanced Project flows moved into Start wizard */}        {/* Card 3: Continue Project - Now consistent with Start Project */}
         {hasActiveProjects && mostRecentProject ? (
           <Link href={hasActiveProjects && mostRecentProject ? 
             `/dashboard/workflow/${mostRecentProject.currentStep}` : 
