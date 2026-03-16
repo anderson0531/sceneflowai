@@ -137,9 +137,9 @@ function SegmentDirectionCard({
       )}
       onClick={onSelect}
     >
-      <CardContent className="p-4">
+      <CardContent className="p-5">
         {/* Header Row */}
-        <div className="flex items-start justify-between mb-3">
+        <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="font-mono">
               {index + 1}
@@ -288,7 +288,7 @@ function SegmentDirectionCard({
                 value={direction.talentAction}
                 onChange={e => onEdit({ talentAction: e.target.value })}
                 placeholder="What the talent does in this segment..."
-                className="h-16 text-xs resize-none"
+                className="h-20 text-sm resize-none"
               />
             </div>
             
@@ -304,23 +304,23 @@ function SegmentDirectionCard({
             </div>
 
             {/* Frame Descriptions */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-muted-foreground">Start Frame</label>
+                <label className="text-xs font-medium text-green-400">Start Frame</label>
                 <Textarea
                   value={direction.startFrameDescription || ''}
                   onChange={e => onEdit({ startFrameDescription: e.target.value })}
                   placeholder="Opening frame description for continuity..."
-                  className="h-14 text-xs resize-none"
+                  className="h-24 text-sm resize-none mt-1"
                 />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">End Frame</label>
+                <label className="text-xs font-medium text-orange-400">End Frame</label>
                 <Textarea
                   value={direction.endFrameDescription || ''}
                   onChange={e => onEdit({ endFrameDescription: e.target.value })}
                   placeholder="Closing frame description for next segment..."
-                  className="h-14 text-xs resize-none"
+                  className="h-24 text-sm resize-none mt-1"
                 />
               </div>
             </div>
@@ -352,119 +352,143 @@ function SegmentDirectionCard({
             </div>
           </div>
         ) : (
-          <div className="space-y-2">
-            {/* Shot Info Row */}
-            <div className="flex items-center gap-2 text-sm">
-              <Camera className="w-3 h-3 text-muted-foreground" />
-              <span className="font-medium">{direction.shotType}</span>
-              <span className="text-muted-foreground">•</span>
-              <span className="text-muted-foreground">{direction.cameraMovement}</span>
-              <span className="text-muted-foreground">•</span>
-              <span className="text-muted-foreground">{direction.cameraAngle}</span>
-              {direction.lens && (
-                <>
-                  <span className="text-muted-foreground">•</span>
-                  <span className="text-xs font-mono text-blue-400">{direction.lens}</span>
-                </>
+          <div className="space-y-4">
+            {/* ── CAMERA SECTION ── */}
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Camera className="w-3.5 h-3.5 text-muted-foreground/60" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">Camera</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-medium">{direction.shotType}</span>
+                <span className="text-muted-foreground">•</span>
+                <span className="text-muted-foreground">{direction.cameraMovement}</span>
+                <span className="text-muted-foreground">•</span>
+                <span className="text-muted-foreground">{direction.cameraAngle}</span>
+                {direction.lens && (
+                  <>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-xs font-mono text-blue-400">{direction.lens}</span>
+                  </>
+                )}
+              </div>
+              {/* Transition */}
+              {direction.transitionIn && direction.transitionIn !== 'cut' && (
+                <div className="flex items-center gap-2 text-sm">
+                  <ArrowRight className="w-3 h-3 text-purple-400" />
+                  <span className="text-purple-300 text-sm capitalize">{direction.transitionIn}</span>
+                </div>
               )}
             </div>
 
-            {/* Transition */}
-            {direction.transitionIn && direction.transitionIn !== 'cut' && (
-              <div className="flex items-center gap-2 text-sm">
-                <ArrowRight className="w-3 h-3 text-purple-400" />
-                <span className="text-purple-300 text-xs capitalize">{direction.transitionIn}</span>
-              </div>
+            {/* ── PERFORMANCE SECTION ── */}
+            {(direction.talentAction || direction.emotionalBeat) && (
+              <>
+                <Separator className="opacity-40" />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Users className="w-3.5 h-3.5 text-muted-foreground/60" />
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">Performance</span>
+                  </div>
+                  <div className="p-2.5 rounded-md bg-muted/20 border border-border/20 space-y-2">
+                    {direction.talentAction && (
+                      <p className="text-sm text-foreground/80 leading-relaxed">{direction.talentAction}</p>
+                    )}
+                    {direction.emotionalBeat && (
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span className="text-sm text-amber-300 italic">{direction.emotionalBeat}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
             )}
-            
-            {/* Talent Action */}
-            {direction.talentAction && (
-              <div className="flex items-start gap-2 text-sm">
-                <Users className="w-3 h-3 text-muted-foreground mt-0.5" />
-                <span className="text-muted-foreground">{direction.talentAction}</span>
-              </div>
-            )}
-            
-            {/* Emotional Beat */}
-            {direction.emotionalBeat && (
-              <div className="flex items-center gap-2 text-sm">
-                <Sparkles className="w-3 h-3 text-amber-400" />
-                <span className="text-amber-300 text-xs">{direction.emotionalBeat}</span>
-              </div>
-            )}
-            
-            {/* Characters */}
+
+            {/* ── CHARACTERS ── */}
             {direction.characters.length > 0 && (
-              <div className="flex items-center gap-1 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 {direction.characters.map(char => (
-                  <Badge key={char} variant="secondary" className="text-xs">
+                  <Badge key={char} variant="secondary" className="text-xs px-2.5 py-0.5">
                     {char}
                   </Badge>
                 ))}
               </div>
             )}
 
-            {/* Frame Descriptions */}
+            {/* ── FRAME DESCRIPTIONS SECTION ── */}
             {(direction.startFrameDescription || direction.endFrameDescription) && (
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {direction.startFrameDescription && (
-                  <div className="p-2 rounded bg-muted/30 border border-border/30">
-                    <div className="flex items-center gap-1 mb-0.5">
-                      <Play className="w-2.5 h-2.5 text-green-400" />
-                      <span className="text-[10px] font-medium text-green-400 uppercase tracking-wide">Start Frame</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground leading-tight">{direction.startFrameDescription}</p>
+              <>
+                <Separator className="opacity-40" />
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Film className="w-3.5 h-3.5 text-muted-foreground/60" />
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">Frame Descriptions</span>
                   </div>
-                )}
-                {direction.endFrameDescription && (
-                  <div className="p-2 rounded bg-muted/30 border border-border/30">
-                    <div className="flex items-center gap-1 mb-0.5">
-                      <Lock className="w-2.5 h-2.5 text-orange-400" />
-                      <span className="text-[10px] font-medium text-orange-400 uppercase tracking-wide">End Frame</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground leading-tight">{direction.endFrameDescription}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {direction.startFrameDescription && (
+                      <div className="p-3 rounded-lg bg-green-950/30 border border-green-500/30">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Play className="w-3.5 h-3.5 text-green-400" />
+                          <span className="text-xs font-semibold text-green-400 uppercase tracking-wider">Start Frame</span>
+                        </div>
+                        <p className="text-sm text-foreground/70 leading-relaxed">{direction.startFrameDescription}</p>
+                      </div>
+                    )}
+                    {direction.endFrameDescription && (
+                      <div className="p-3 rounded-lg bg-orange-950/30 border border-orange-500/30">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Lock className="w-3.5 h-3.5 text-orange-400" />
+                          <span className="text-xs font-semibold text-orange-400 uppercase tracking-wider">End Frame</span>
+                        </div>
+                        <p className="text-sm text-foreground/70 leading-relaxed">{direction.endFrameDescription}</p>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
+              </>
+            )}
+
+            {/* ── CONTINUITY CALLOUT ── */}
+            {direction.continuityNotes && (
+              <div className="flex items-center gap-2.5 px-3 py-2 rounded-full bg-cyan-950/25 border border-cyan-500/20">
+                <Eye className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <span className="text-xs text-cyan-300 leading-snug">{direction.continuityNotes}</span>
               </div>
             )}
 
-            {/* Continuity Notes */}
-            {direction.continuityNotes && (
-              <div className="flex items-start gap-2 text-sm">
-                <Eye className="w-3 h-3 text-cyan-400 mt-0.5" />
-                <span className="text-cyan-300 text-xs">{direction.continuityNotes}</span>
-              </div>
-            )}
-            
-            {/* Dialogue Preview */}
+            {/* ── DIALOGUE SECTION ── */}
             {segmentDialogue.length > 0 && (
-              <div className="mt-2 p-2 rounded bg-muted/50 border border-border/50">
-                <div className="flex items-center gap-1 mb-1">
-                  <MessageSquare className="w-3 h-3 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">
-                    {segmentDialogue.length} dialogue line{segmentDialogue.length > 1 ? 's' : ''}
-                  </span>
+              <>
+                <Separator className="opacity-40" />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <MessageSquare className="w-3.5 h-3.5 text-muted-foreground/60" />
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                      {segmentDialogue.length} dialogue line{segmentDialogue.length > 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-lg bg-muted/40 border border-border/40 space-y-2">
+                    {segmentDialogue.map((d, i) => (
+                      <p key={i} className="text-sm leading-relaxed">
+                        <span className="font-semibold text-foreground">{d.character}:</span>{' '}
+                        <span className="text-muted-foreground">&ldquo;{d.text}&rdquo;</span>
+                      </p>
+                    ))}
+                  </div>
                 </div>
-                {segmentDialogue.slice(0, 2).map((d, i) => (
-                  <p key={i} className="text-xs text-muted-foreground truncate">
-                    <span className="font-medium text-foreground">{d.character}:</span> "{d.text.substring(0, 40)}..."
-                  </p>
-                ))}
-                {segmentDialogue.length > 2 && (
-                  <p className="text-xs text-muted-foreground">+{segmentDialogue.length - 2} more</p>
-                )}
-              </div>
+              </>
             )}
             
-            {/* Trigger Reason */}
-            <p className="text-xs text-muted-foreground italic">
+            {/* ── CUT REASON ── */}
+            <p className="text-xs text-muted-foreground/70 italic pt-1">
               Cut: {direction.triggerReason}
             </p>
           </div>
         )}
         
         {/* Action Buttons */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/50" onClick={e => e.stopPropagation()}>
           <Button
             variant="ghost"
             size="sm"
