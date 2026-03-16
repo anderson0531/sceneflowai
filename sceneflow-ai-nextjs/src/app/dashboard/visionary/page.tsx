@@ -12,7 +12,7 @@ import {
   Search,
   ChevronRight,
 } from 'lucide-react'
-import { StatusTicker } from './components/StatusTicker'
+import { AnalysisOverlay } from './components/AnalysisOverlay'
 import { ArbitrageHeatMap } from './components/ArbitrageHeatMap'
 import { RegionDetailModal } from './components/RegionDetailModal'
 import { OpportunityReport } from './components/OpportunityReport'
@@ -288,26 +288,14 @@ export default function VisionaryPage() {
 
         {/* Analysis View (in-progress) */}
         {view === 'analysis' && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="space-y-6"
-          >
-            <StatusTicker phase={phase} progress={progress} isRunning={isRunning} />
-
-            <div className="text-center">
-              <p className="text-sm text-gray-400 mb-4">
-                Analyzing: <span className="text-white font-medium">{concept}</span>
-                {genre && <span className="text-gray-500"> · {genre}</span>}
-              </p>
-              <button
-                onClick={cancelAnalysis}
-                className="px-4 py-2 text-sm bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-              >
-                Cancel Analysis
-              </button>
-            </div>
-          </motion.div>
+          <AnalysisOverlay
+            phase={phase}
+            progress={progress}
+            isRunning={isRunning}
+            concept={concept}
+            genre={genre}
+            onCancel={cancelAnalysis}
+          />
         )}
 
         {/* Report View */}
