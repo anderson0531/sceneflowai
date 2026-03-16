@@ -2807,6 +2807,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   onPlayAudio={handlePlayAudio}
                   onGenerateSceneAudio={onGenerateSceneAudio}
                   selectedLanguage={selectedLanguage}
+                  onLanguageChange={setSelectedLanguage}
                   playingAudio={playingAudio}
                       generatingDialogue={generatingDialogue}
                       setGeneratingDialogue={setGeneratingDialogue}
@@ -3610,6 +3611,7 @@ function SceneCard({
   onPlayAudio,
   onGenerateSceneAudio,
   selectedLanguage = 'en',
+  onLanguageChange,
   playingAudio,
   generatingDialogue,
   setGeneratingDialogue,
@@ -5075,7 +5077,7 @@ function SceneCard({
                         <Globe className="w-3 h-3 text-blue-400" />
                         <GroupedLanguageSelector
                           value={selectedLanguage}
-                          onValueChange={setSelectedLanguage}
+                          onValueChange={onLanguageChange}
                           size="xs"
                           className="bg-gray-800 border-blue-500/30 text-gray-200"
                         />
