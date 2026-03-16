@@ -9,12 +9,15 @@ export const dynamic = 'force-dynamic'
 /**
  * GET /api/visionary/reports
  * 
- * List all Visionary Engine reports for the authenticated user.
+ * List all Ideas (Visionary) reports for the authenticated user.
  * Supports pagination via ?page=1&pageSize=20
  */
 export async function GET(request: NextRequest) {
   try {
     await sequelize.authenticate()
+
+    // Ensure the visionary_reports table exists (auto-creates if missing)
+    await VisionaryReport.sync({ alter: false })
 
     const userIdParam = request.headers.get('x-user-id')
     if (!userIdParam) {
@@ -29,12 +32,34 @@ export async function GET(request: NextRequest) {
     const pageSize = Math.min(50, Math.max(1, Number(searchParams.get('pageSize') || '20')))
     const offset = (page - 1) * pageSize
 
-    const { rows, count } = await VisionaryReport.findAndCountAll({
-      where: { user_id: userId },
-      order: [['created_at', 'DESC']],
-      limit: pageSize,
-      offset,
-    })
+    let rows: VisionaryReport[] = []
+    let count = 0
+
+    try {
+      const result = await VisionaryReport.findAndCountAll({
+        where: { user_id: userId },
+        order: [['created_at', 'DESC']],
+        limit: pageSize,
+        offset,
+      })
+      rows = result.rows
+      count = result.count
+    } catch (queryErr: any) {
+      // Handle missing table gracefully (Postgres error 42P01 = undefined_table)
+      if (queryErr?.original?.code === '42P01' || queryErr?.message?.includes('does not exist')) {
+        console.warn('[GET /api/visionary/reports] Table does not exist yet, returning empty results')
+        const emptyResponse = NextResponse.json({
+          success: true,
+          reports: [],
+          total: 0,
+          page,
+          pageSize,
+        })
+        emptyResponse.headers.set('Cache-Control', 'no-store')
+        return emptyResponse
+      }
+      throw queryErr // Re-throw other query errors
+    }
 
     const reports = rows.map(r => ({
       id: r.id,

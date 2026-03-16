@@ -398,7 +398,7 @@ export const dashboardSidebarConfig: WorkflowSidebarConfig = {
 }
 
 // ========================================================================
-// VISIONARY ENGINE CONFIG
+// IDEAS CONFIG (formerly Visionary Engine)
 // ========================================================================
 
 export const visionarySidebarConfig: WorkflowSidebarConfig = {

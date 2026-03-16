@@ -62,7 +62,7 @@ export function Launchpad() {
           </motion.div>
           </Link>
 
-          {/* Card 2: Visionary Engine */}
+          {/* Card 2: Ideas */}
           <Link href="/dashboard/visionary">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -77,10 +77,10 @@ export function Launchpad() {
                   </div>
                 </div>
 
-                <h3 className="text-2xl font-bold mb-3 text-white">Visionary Engine</h3>
+                <h3 className="text-2xl font-bold mb-3 text-white">Ideas</h3>
 
                 <p className="text-emerald-100 text-base leading-relaxed font-medium">
-                  AI market analysis, language arbitrage, and production planning.
+                  Explore concepts, discover market opportunities & plan production.
                 </p>
               </div>
             </motion.div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSession } from 'next-auth/react'
 import { 
@@ -20,10 +20,10 @@ import { useVisionaryAnalysis } from '@/hooks/useVisionaryAnalysis'
 import type { VisionaryReport, LanguageOpportunity } from '@/lib/visionary/types'
 
 /**
- * VisionaryPage — Main Visionary Engine page
+ * VisionaryPage — Ideas
  * 
- * Entry point for market-gap analysis, language arbitrage mapping,
- * and idea-to-production bridging.
+ * Entry point for concept exploration, market-gap analysis,
+ * language arbitrage mapping, and idea-to-production bridging.
  * 
  * Route: /dashboard/visionary
  */
@@ -55,23 +55,39 @@ export default function VisionaryPage() {
   // View: 'input' | 'analysis' | 'report' | 'history'
   const [view, setView] = useState<'input' | 'analysis' | 'report' | 'history'>('input')
 
+  // Guard to prevent duplicate/infinite fetches
+  const hasFetchedRef = useRef(false)
+  const isFetchingRef = useRef(false)
+
   // Fetch past reports
-  const fetchReports = useCallback(async () => {
+  const fetchReports = useCallback(async (force = false) => {
+    // Prevent concurrent or duplicate fetches
+    if (isFetchingRef.current) return
+    if (hasFetchedRef.current && !force) return
+
+    isFetchingRef.current = true
     try {
       const res = await fetch('/api/visionary/reports', {
         headers: { 'x-user-id': session?.user?.email || '' },
       })
-      if (res.ok) {
-        const data = await res.json()
-        if (data.success) setPastReports(data.reports)
+      if (!res.ok) {
+        console.warn(`[Ideas] Reports API returned ${res.status}`)
+        return
+      }
+      const data = await res.json()
+      if (data.success) {
+        setPastReports(data.reports)
+        hasFetchedRef.current = true
       }
     } catch {
-      // Silent fail
+      // Silent fail — network errors
     } finally {
       setIsLoadingReports(false)
+      isFetchingRef.current = false
     }
   }, [session?.user?.email])
 
+  // Initial fetch when session is available
   useEffect(() => {
     if (session?.user?.email) fetchReports()
   }, [session?.user?.email, fetchReports])
@@ -85,7 +101,7 @@ export default function VisionaryPage() {
   useEffect(() => {
     if (phase === 'complete' && report) {
       setView('report')
-      fetchReports() // Refresh list
+      fetchReports(true) // Force refresh list after new analysis
     }
   }, [phase, report, fetchReports])
 
@@ -151,8 +167,8 @@ export default function VisionaryPage() {
               <Telescope className="w-5 h-5 text-emerald-500" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Visionary Engine</h1>
-              <p className="text-sm text-gray-400">AI-powered market analysis & opportunity mapping</p>
+              <h1 className="text-2xl font-bold text-white">Ideas</h1>
+              <p className="text-sm text-gray-400">AI-powered concept exploration, market analysis & opportunity mapping</p>
             </div>
           </div>
 
@@ -202,7 +218,7 @@ export default function VisionaryPage() {
           >
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Concept Input */}
-              <div className="bg-gray-800/60 border border-gray-700 rounded-xl p-6">
+              <div className="bg-gray-800/60 border border-emerald-500/30 rounded-xl p-6">
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   What&apos;s your concept or idea?
                 </label>
@@ -216,7 +232,7 @@ export default function VisionaryPage() {
               </div>
 
               {/* Genre Selection */}
-              <div className="bg-gray-800/60 border border-gray-700 rounded-xl p-6">
+              <div className="bg-gray-800/60 border border-teal-500/30 rounded-xl p-6">
                 <label className="block text-sm font-medium text-gray-300 mb-3">
                   Genre <span className="text-gray-500 font-normal">(optional)</span>
                 </label>
@@ -251,17 +267,17 @@ export default function VisionaryPage() {
 
             {/* Quick Stats */}
             <div className="mt-6 grid grid-cols-3 gap-4">
-              <div className="bg-gray-800/40 border border-gray-700/50 rounded-lg p-4 text-center">
+              <div className="bg-gray-800/40 border border-emerald-500/30 rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold text-emerald-400">{pastReports.length}</div>
                 <div className="text-xs text-gray-500 mt-1">Reports Generated</div>
               </div>
-              <div className="bg-gray-800/40 border border-gray-700/50 rounded-lg p-4 text-center">
+              <div className="bg-gray-800/40 border border-blue-500/30 rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold text-blue-400">
                   {pastReports.filter(r => r.status === 'complete').length}
                 </div>
                 <div className="text-xs text-gray-500 mt-1">Completed</div>
               </div>
-              <div className="bg-gray-800/40 border border-gray-700/50 rounded-lg p-4 text-center">
+              <div className="bg-gray-800/40 border border-amber-500/30 rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold text-amber-400">~110</div>
                 <div className="text-xs text-gray-500 mt-1">Credits per Analysis</div>
               </div>
@@ -301,7 +317,7 @@ export default function VisionaryPage() {
             className="space-y-6"
           >
             {/* Report Header */}
-            <div className="bg-gray-800/60 border border-gray-700 rounded-xl p-4 flex items-center justify-between">
+            <div className="bg-gray-800/60 border border-emerald-500/30 rounded-xl p-4 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-white">{activeReport.concept}</h2>
                 {activeReport.genre && (
@@ -356,7 +372,7 @@ export default function VisionaryPage() {
                     key={r.id}
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-gray-800/60 border border-gray-700 rounded-xl p-4 flex items-center justify-between hover:bg-gray-800/80 transition-colors group"
+                    className="bg-gray-800/60 border border-teal-500/20 rounded-xl p-4 flex items-center justify-between hover:bg-gray-800/80 hover:border-teal-500/40 transition-colors group"
                   >
                     <button
                       onClick={() => loadPastReport(r.id)}

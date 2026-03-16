@@ -49,7 +49,7 @@ const mainNav = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Projects', href: '/dashboard/projects', icon: FolderOpen },
   { name: 'Series', href: '/dashboard/series', icon: Library },
-  { name: 'Visionary Engine', href: '/dashboard/visionary', icon: Telescope },
+  { name: 'Ideas', href: '/dashboard/visionary', icon: Telescope },
   { name: 'Start Project', href: '/dashboard/studio/new-project', icon: Sparkles },
 ]
 
