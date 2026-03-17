@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -1016,6 +1016,39 @@ export function SegmentBuilder({
       setNarrationDriven(true)
     }
   }, [audioMetadata.narrationDurationSeconds])
+
+  // Detect when narration (text or audio) is removed and call server to clear
+  // any persisted audio artifacts. This helps avoid stale audio being reused
+  // when users delete narration content in the editor.
+  const prevAudioRef = useRef<{ narrationText: string | null; narrationAudioUrl: string | null }>({
+    narrationText: audioMetadata.narrationText,
+    narrationAudioUrl: audioMetadata.narrationAudioUrl,
+  })
+
+  useEffect(() => {
+    const prev = prevAudioRef.current
+    const hadNarration = Boolean(prev.narrationText || prev.narrationAudioUrl)
+    const hasNarrationNow = Boolean(audioMetadata.narrationText || audioMetadata.narrationAudioUrl)
+    if (hadNarration && !hasNarrationNow) {
+      ;(async () => {
+        try {
+          await fetch(`/api/scenes/${sceneId}/clear-audio`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fields: ['narration'] }),
+          })
+        } catch (err) {
+          // Non-fatal; log for debugging
+          // eslint-disable-next-line no-console
+          console.warn('clear-audio request failed', err)
+        }
+      })()
+    }
+    prevAudioRef.current = {
+      narrationText: audioMetadata.narrationText,
+      narrationAudioUrl: audioMetadata.narrationAudioUrl,
+    }
+  }, [audioMetadata.narrationText, audioMetadata.narrationAudioUrl, sceneId])
 
   // Selected segment for editing
   const selectedSegment = useMemo(() => {
