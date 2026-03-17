@@ -1530,6 +1530,28 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
   // Calculate audio timeline for intelligent playback
   const calculateAudioTimeline = async (scene: any): Promise<SceneAudioConfig> => {
+    // Normalize audio URLs so playback works consistently whether the stored value
+    // is a full absolute URL or a relative path (e.g., just a filename or
+    // "audio/..." path).
+    const normalizeAudioUrl = (rawUrl: string | undefined | null): string | null => {
+      if (!rawUrl) return null
+      try {
+        // If it's already a valid absolute URL, return as-is
+        new URL(rawUrl)
+        return rawUrl
+      } catch {
+        // If we're in the browser, resolve relative URLs against current origin.
+        // This prevents missing file errors when relative paths are used.
+        if (typeof window !== 'undefined') {
+          if (rawUrl.startsWith('/')) {
+            return `${window.location.origin}${rawUrl}`
+          }
+          return `${window.location.origin}/${rawUrl}`.replace(/([^:]\/)\/+/, '$1')
+        }
+        return rawUrl
+      }
+    }
+
     const config: SceneAudioConfig = {}
     let currentTime = 0
     let totalDuration = 0
@@ -1537,8 +1559,12 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     let narrationEndTime = 0
     
     // Get language-specific audio URLs
-    const narrationUrl = getAudioUrl(scene, selectedLanguage, 'narration')
-    const descriptionUrl = getAudioUrl(scene, selectedLanguage, 'description')
+    const narrationUrl = normalizeAudioUrl(
+      getAudioUrl(scene, selectedLanguage, 'narration')
+    )
+    const descriptionUrl = normalizeAudioUrl(
+      getAudioUrl(scene, selectedLanguage, 'description')
+    )
     const dialogueArray = (scene.dialogueAudio?.[selectedLanguage] || 
                           (selectedLanguage === 'en' ? scene.dialogueAudio?.en : null) ||
                           (Array.isArray(scene.dialogueAudio) ? scene.dialogueAudio : null) || []).filter(Boolean)
@@ -1547,7 +1573,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     // Check both musicAudio (new format) and music.url (legacy format)
     const musicUrl = scene.musicAudio || scene.music?.url
     if (musicUrl) {
-      config.music = musicUrl
+      config.music = normalizeAudioUrl(musicUrl) || musicUrl
     }
     
     // Scene description plays before narration when available
@@ -1615,7 +1641,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       console.log('[ScriptPanel] Sorted order:', sortedDialogue.map((d: any) => (d?.audioUrl || d?.url || '').split('/').pop()))
       
       for (const dialogue of sortedDialogue) {
-        const audioUrl = dialogue?.audioUrl || dialogue?.url
+        const audioUrl = normalizeAudioUrl(
+          dialogue?.audioUrl || dialogue?.url
+        )
         if (audioUrl) {
           // Check for custom startTime on this dialogue entry
           const customDialogueStartTime = dialogue.startTime
@@ -1649,6 +1677,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       for (let idx = 0; idx < scene.sfxAudio.length; idx++) {
         const sfxUrl = scene.sfxAudio[idx]
         if (!sfxUrl) continue
+
+        const normalizedSfxUrl = normalizeAudioUrl(sfxUrl)
         
         const sfxDef = scene.sfx?.[idx] || {}
         // Use specified time, or distribute SFX evenly across the scene
@@ -1661,9 +1691,12 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           sfxTime = 1 + (idx * interval)
         }
         
-        const sfxDuration = await resolveAudioDuration(sfxUrl, sfxDef.duration)
+        const sfxDuration = await resolveAudioDuration(
+          normalizedSfxUrl,
+          sfxDef.duration
+        )
         config.sfx.push({
-          url: sfxUrl,
+          url: normalizedSfxUrl,
           startTime: sfxTime
         })
         totalDuration = Math.max(totalDuration, sfxTime + sfxDuration)
