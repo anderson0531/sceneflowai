@@ -1530,25 +1530,54 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
   // Calculate audio timeline for intelligent playback
   const calculateAudioTimeline = async (scene: any): Promise<SceneAudioConfig> => {
-    // Normalize audio URLs so playback works consistently whether the stored value
-    // is a full absolute URL or a relative path (e.g., just a filename or
-    // "audio/..." path).
-    const normalizeAudioUrl = (rawUrl: string | undefined | null): string | null => {
+    // Normalize and validate audio URLs for playback
+    // Checks: 1) URL format is absolute, 2) URL is reachable before playback
+    // Returns: Normalized absolute URL or null if unreachable (prevents 404 errors)
+    const normalizeAudioUrl = async (rawUrl: string | undefined | null): Promise<string | null> => {
       if (!rawUrl) return null
+      
+      let absoluteUrl: string
       try {
-        // If it's already a valid absolute URL, return as-is
+        // If it's already a valid absolute URL, use as-is
         new URL(rawUrl)
-        return rawUrl
+        absoluteUrl = rawUrl
       } catch {
-        // If we're in the browser, resolve relative URLs against current origin.
-        // This prevents missing file errors when relative paths are used.
+        // Resolve relative URLs against current origin
         if (typeof window !== 'undefined') {
           if (rawUrl.startsWith('/')) {
-            return `${window.location.origin}${rawUrl}`
+            absoluteUrl = `${window.location.origin}${rawUrl}`
+          } else {
+            absoluteUrl = `${window.location.origin}/${rawUrl}`.replace(/([^:]\/)\/+/, '$1')
           }
-          return `${window.location.origin}/${rawUrl}`.replace(/([^:]\/)\/+/, '$1')
+        } else {
+          // Server-side: can't resolve relative paths, return as-is
+          return rawUrl
         }
-        return rawUrl
+      }
+
+      // Validate URL is reachable with HEAD request (5 second timeout)
+      // This prevents attempting to play stale/orphaned audio URLs that return 404
+      try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000)
+        
+        const headResponse = await fetch(absoluteUrl, {
+          method: 'HEAD',
+          signal: controller.signal,
+        })
+        
+        clearTimeout(timeoutId)
+        
+        if (!headResponse.ok) {
+          console.warn(`[calculateAudioTimeline] Audio URL unreachable (${headResponse.status}), skipping: ${absoluteUrl}`)
+          return null
+        }
+        
+        return absoluteUrl
+      } catch (error: any) {
+        // Network error/timeout - log warning but continue (may be temporary)
+        console.warn(`[calculateAudioTimeline] Could not validate audio URL (${error?.message}), attempting playback: ${absoluteUrl}`)
+        return absoluteUrl
       }
     }
 
@@ -1558,11 +1587,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     let descriptionEndTime = 0
     let narrationEndTime = 0
     
-    // Get language-specific audio URLs
-    const narrationUrl = normalizeAudioUrl(
+    // Get language-specific audio URLs and validate they're reachable
+    const narrationUrl = await normalizeAudioUrl(
       getAudioUrl(scene, selectedLanguage, 'narration')
     )
-    const descriptionUrl = normalizeAudioUrl(
+    const descriptionUrl = await normalizeAudioUrl(
       getAudioUrl(scene, selectedLanguage, 'description')
     )
     const dialogueArray = (scene.dialogueAudio?.[selectedLanguage] || 
@@ -1571,9 +1600,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     
     // Music starts at scene beginning (concurrent with everything, loops)
     // Check both musicAudio (new format) and music.url (legacy format)
-    const musicUrl = scene.musicAudio || scene.music?.url
-    if (musicUrl) {
-      config.music = normalizeAudioUrl(musicUrl) || musicUrl
+    const rawMusicUrl = scene.musicAudio || scene.music?.url
+    let musicUrl: string | null = null
+    if (rawMusicUrl) {
+      musicUrl = await normalizeAudioUrl(rawMusicUrl)
+      if (musicUrl) {
+        config.music = musicUrl
+      }
     }
     
     // Scene description plays before narration when available
@@ -1641,7 +1674,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       console.log('[ScriptPanel] Sorted order:', sortedDialogue.map((d: any) => (d?.audioUrl || d?.url || '').split('/').pop()))
       
       for (const dialogue of sortedDialogue) {
-        const audioUrl = normalizeAudioUrl(
+        const audioUrl = await normalizeAudioUrl(
           dialogue?.audioUrl || dialogue?.url
         )
         if (audioUrl) {
@@ -1678,7 +1711,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         const sfxUrl = scene.sfxAudio[idx]
         if (!sfxUrl) continue
 
-        const normalizedSfxUrl = normalizeAudioUrl(sfxUrl)
+        const normalizedSfxUrl = await normalizeAudioUrl(sfxUrl)
+        if (!normalizedSfxUrl) continue  // Skip if URL is unreachable
         
         const sfxDef = scene.sfx?.[idx] || {}
         // Use specified time, or distribute SFX evenly across the scene

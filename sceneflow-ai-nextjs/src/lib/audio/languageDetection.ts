@@ -79,12 +79,15 @@ export function hasLanguageAudio(scene: any, language: string): boolean {
 
   const dialogueArray = scene.dialogueAudio?.[language] || (language === 'en' ? scene.dialogueAudio : null)
   const hasDialogue = Array.isArray(dialogueArray) && dialogueArray.some((d: any) => d.audioUrl)
-
+  
   return hasNarration || hasDescription || hasDialogue
 }
 
 /**
  * Get audio URL for a specific language and audio type
+ * 
+ * IMPORTANT: Prioritizes narration over description to avoid fetching stale/orphaned description URLs
+ * when narration is missing. Description audio is no longer generated as a separate track.
  */
 export function getAudioUrl(
   scene: any,
@@ -93,11 +96,22 @@ export function getAudioUrl(
   dialogueIndex?: number
 ): string | null {
   if (audioType === 'narration') {
-    return scene.narrationAudio?.[language]?.url || (language === 'en' ? scene.narrationAudioUrl : null) || null
+    // Multi-language support: check narrationAudio[language] first, then legacy narrationAudioUrl for English
+    const multiLangUrl = scene.narrationAudio?.[language]?.url
+    const legacyEnUrl = language === 'en' ? scene.narrationAudioUrl : null
+    
+    // Return the first valid URL found
+    return multiLangUrl || legacyEnUrl || null
   }
 
   if (audioType === 'description') {
-    return scene.descriptionAudio?.[language]?.url || (language === 'en' ? scene.descriptionAudioUrl : null) || null
+    // Description audio is no longer independently generated.
+    // For backward compatibility with existing scenes, return description audio if available.
+    // However, new scenes should only use narration.
+    const multiLangUrl = scene.descriptionAudio?.[language]?.url
+    const legacyEnUrl = language === 'en' ? scene.descriptionAudioUrl : null
+    
+    return multiLangUrl || legacyEnUrl || null
   }
 
   const dialogueArray = scene.dialogueAudio?.[language] || (language === 'en' ? scene.dialogueAudio : null)
@@ -130,4 +144,3 @@ export function getAudioDuration(
   }
   return null
 }
-
