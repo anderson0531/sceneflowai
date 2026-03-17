@@ -129,9 +129,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Narration voice not configured' }, { status: 400 })                                                                    
     }
 
-    // DELETE ALL EXISTING AUDIO FIRST if requested
-    // This ensures fresh generation by clearing audio URLs from all scenes BEFORE any generation
-    if (deleteAllAudioFirst && scenes.length > 0) {
+    // ALWAYS DELETE EXISTING AUDIO TO PREVENT STALE DURATION VALUES
+
+
+    // This is critical: legacy narrationDuration/descriptionDuration fields must be cleared
+
+
+    // even during incremental regeneration to prevent timeline alignment issues
+
+
+    if (scenes.length > 0) {
       console.log(`[Batch Audio] Deleting all existing audio before generation...`)
       
       // STEP 1: Collect all existing audio URLs for blob deletion
@@ -244,11 +251,16 @@ export async function POST(req: NextRequest) {
         delete cleanedScene.narrationAudio
         delete cleanedScene.narrationAudioUrl
         delete cleanedScene.narrationAudioGeneratedAt
+        // CRITICAL: Also clear legacy duration fields to prevent timeline alignment issues
+        delete cleanedScene.narrationDuration
+        delete cleanedScene.narrationAudioDuration
         
         // Clear description audio (multi-language object structure)
         delete cleanedScene.descriptionAudio
         delete cleanedScene.descriptionAudioUrl
         delete cleanedScene.descriptionAudioGeneratedAt
+        // CRITICAL: Also clear legacy duration field
+        delete cleanedScene.descriptionDuration
         
         // Clear dialogue audio - CRITICAL: Must clear dialogueAudio object (where updateSceneAudio saves)
         // NOT just scene.dialogue[].audioUrl (which is legacy/unused)
@@ -272,6 +284,22 @@ export async function POST(req: NextRequest) {
           cleanedScene.music = cleanedMusic
         }
         
+        // Validate narration completeness - remove ghost narration with missing/null URLs
+        // This prevents "phantom narration" objects from persisting across regenerations
+        if (cleanedScene.narrationAudio && typeof cleanedScene.narrationAudio === 'object') {
+          Object.keys(cleanedScene.narrationAudio).forEach(lang => {
+            const narrationEntry = cleanedScene.narrationAudio[lang]
+            // Remove entries that don't have a URL or have invalid URLs
+            if (!narrationEntry?.url || !narrationEntry.url.includes('blob')) {
+              delete cleanedScene.narrationAudio[lang]
+            }
+          })
+          // If narrationAudio object is now empty, remove it completely
+          if (Object.keys(cleanedScene.narrationAudio).length === 0) {
+            delete cleanedScene.narrationAudio
+          }
+        }
+
         // Clear SFX audio
         delete cleanedScene.sfxAudio
         if (cleanedScene.sfx && Array.isArray(cleanedScene.sfx)) {
