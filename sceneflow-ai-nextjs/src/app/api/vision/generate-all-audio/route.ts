@@ -139,37 +139,64 @@ export async function POST(req: NextRequest) {
       
       scenes.forEach((scene: any) => {
         // Collect narration audio URLs (multi-language object or direct URL)
-        if (scene.narrationAudio) {
-          if (typeof scene.narrationAudio === 'object') {
-            Object.values(scene.narrationAudio).forEach((url: any) => {
-              if (typeof url === 'string' && url.includes('blob')) urlsToDelete.push(url)
-            })
-          } else if (typeof scene.narrationAudio === 'string' && scene.narrationAudio.includes('blob')) {
-            urlsToDelete.push(scene.narrationAudio)
-          }
+        // IMPORTANT: narrationAudio[language] is { url, duration, generatedAt, voiceId }, NOT a string
+        if (scene.narrationAudio && typeof scene.narrationAudio === 'object' && !Array.isArray(scene.narrationAudio)) {
+          Object.values(scene.narrationAudio).forEach((audioData: any) => {
+            // Handle nested object format { url, duration, ... }
+            if (typeof audioData === 'object' && audioData?.url && audioData.url.includes('blob')) {
+              urlsToDelete.push(audioData.url)
+            }
+            // Handle legacy direct URL format
+            else if (typeof audioData === 'string' && audioData.includes('blob')) {
+              urlsToDelete.push(audioData)
+            }
+          })
+        } else if (typeof scene.narrationAudio === 'string' && scene.narrationAudio.includes('blob')) {
+          urlsToDelete.push(scene.narrationAudio)
         }
         if (scene.narrationAudioUrl && typeof scene.narrationAudioUrl === 'string' && scene.narrationAudioUrl.includes('blob')) {
           urlsToDelete.push(scene.narrationAudioUrl)
         }
         
         // Collect description audio URLs (multi-language object or direct URL)
-        if (scene.descriptionAudio) {
-          if (typeof scene.descriptionAudio === 'object') {
-            Object.values(scene.descriptionAudio).forEach((url: any) => {
-              if (typeof url === 'string' && url.includes('blob')) urlsToDelete.push(url)
-            })
-          } else if (typeof scene.descriptionAudio === 'string' && scene.descriptionAudio.includes('blob')) {
-            urlsToDelete.push(scene.descriptionAudio)
-          }
+        // IMPORTANT: descriptionAudio[language] is { url, duration, generatedAt, voiceId }, NOT a string
+        if (scene.descriptionAudio && typeof scene.descriptionAudio === 'object' && !Array.isArray(scene.descriptionAudio)) {
+          Object.values(scene.descriptionAudio).forEach((audioData: any) => {
+            // Handle nested object format { url, duration, ... }
+            if (typeof audioData === 'object' && audioData?.url && audioData.url.includes('blob')) {
+              urlsToDelete.push(audioData.url)
+            }
+            // Handle legacy direct URL format
+            else if (typeof audioData === 'string' && audioData.includes('blob')) {
+              urlsToDelete.push(audioData)
+            }
+          })
+        } else if (typeof scene.descriptionAudio === 'string' && scene.descriptionAudio.includes('blob')) {
+          urlsToDelete.push(scene.descriptionAudio)
         }
         if (scene.descriptionAudioUrl && typeof scene.descriptionAudioUrl === 'string' && scene.descriptionAudioUrl.includes('blob')) {
           urlsToDelete.push(scene.descriptionAudioUrl)
         }
         
-        // Collect dialogue audio URLs (object keyed by index)
-        if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
-          Object.values(scene.dialogueAudio).forEach((url: any) => {
-            if (typeof url === 'string' && url.includes('blob')) urlsToDelete.push(url)
+        // Collect dialogue audio URLs
+        // IMPORTANT: dialogueAudio[language] is an array of { audioUrl, duration, character, ... }
+        if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object' && !Array.isArray(scene.dialogueAudio)) {
+          // Multi-language structure: { en: [...], th: [...], es: [...] }
+          Object.values(scene.dialogueAudio).forEach((dialogueArray: any) => {
+            if (Array.isArray(dialogueArray)) {
+              dialogueArray.forEach((dialogue: any) => {
+                if (dialogue?.audioUrl && typeof dialogue.audioUrl === 'string' && dialogue.audioUrl.includes('blob')) {
+                  urlsToDelete.push(dialogue.audioUrl)
+                }
+              })
+            }
+          })
+        } else if (Array.isArray(scene.dialogueAudio)) {
+          // Legacy flat array structure
+          scene.dialogueAudio.forEach((dialogue: any) => {
+            if (dialogue?.audioUrl && typeof dialogue.audioUrl === 'string' && dialogue.audioUrl.includes('blob')) {
+              urlsToDelete.push(dialogue.audioUrl)
+            }
           })
         }
         
