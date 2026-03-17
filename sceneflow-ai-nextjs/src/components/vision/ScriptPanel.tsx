@@ -71,6 +71,7 @@ import { SceneDirectionProvider } from '@/contexts/SceneDirectionContext'
 import { GenerateAudioDialog } from './GenerateAudioDialog'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
+import { useAudioPlayerContext, type Track } from '@/context/AudioPlayerProvider'
 import { WebAudioMixer, type SceneAudioConfig, type AudioSource } from '@/lib/audio/webAudioMixer'
 import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAudioUrl } from '@/lib/audio/languageDetection'
@@ -3953,6 +3954,67 @@ function SceneCard({
         onStopAudio()
       }
     } else if (onPlayScene) {
+      // Try to use the audio player context for enhanced playback
+      try {
+        const audioPlayer = useAudioPlayerContext()
+        if (audioPlayer && scene) {
+          // Build playlist: music + dialogue + SFX in sequence
+          const playlist: Track[] = []
+          
+          // Add music if available
+          if (scene.musicAudio?.url) {
+            playlist.push({
+              id: 'music',
+              url: scene.musicAudio.url,
+              title: scene.musicAudio.name || 'Music',
+              type: 'music',
+              meta: scene.musicAudio,
+            })
+          }
+          
+          // Add narration/dialogue lines if available
+          if (Array.isArray(scene.dialogues)) {
+            scene.dialogues.forEach((d: any, i: number) => {
+              if (d.audioUrl) {
+                playlist.push({
+                  id: `dlg-${i}`,
+                  url: d.audioUrl,
+                  title: d.speaker ?? `Line ${i + 1}`,
+                  type: d.type ?? 'dialogue',
+                  meta: d,
+                })
+              }
+            })
+          }
+          
+          // Add SFX if available
+          if (Array.isArray(scene.sfx)) {
+            scene.sfx.forEach((s: any, i: number) => {
+              if (s.url) {
+                playlist.push({
+                  id: `sfx-${i}`,
+                  url: s.url,
+                  title: s.name ?? 'SFX',
+                  type: 'sfx',
+                  meta: s,
+                })
+              }
+            })
+          }
+          
+          // Load and play if playlist has tracks
+          if (playlist.length > 0) {
+            audioPlayer.loadPlaylist(playlist, 0)
+            await audioPlayer.play()
+            return
+          }
+        }
+      } catch (err) {
+        // Provider not available or error - fall back to original handler
+        console.debug('Audio player context not available, using fallback', err)
+      }
+      
+      // Fallback: use original onPlayScene handler
       await onPlayScene(sceneIdx)
     }
   }

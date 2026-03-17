@@ -14,6 +14,7 @@ import AnimatedProcessingOverlay from '../components/AnimatedProcessingOverlay'
 import { CreditsProvider } from '@/contexts/CreditsContext'
 import { CookieConsent } from '@/components/ui/CookieConsent'
 import { GlobalErrorGuard } from '@/components/providers/GlobalErrorGuard'
+import AudioPlayerProvider from '@/context/AudioPlayerProvider'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -170,29 +171,31 @@ export default function RootLayout({
         </a>
         <ThemeProvider>
           <AuthSessionProvider>
-            <CreditsProvider>
-              <GlobalHeader />
-              <ConditionalLayout>{children}</ConditionalLayout>
-              <InstallPrompt />
-              <Toaster 
-                position="top-right" 
-                richColors 
-                theme="dark"
-                closeButton
-                toastOptions={{
-                  style: {
-                    background: '#1f2937', // gray-800
-                    color: '#f3f4f6', // gray-100
-                    border: '1px solid #374151', // gray-700
-                    opacity: 1,
-                  },
-                  className: 'bg-gray-800 text-gray-100 border-gray-700 shadow-lg !opacity-100 whitespace-pre-wrap',
-                }}
-              />
-              <AnimatedProcessingOverlay />
-              <CookieConsent />
-              <GlobalErrorGuard />
-            </CreditsProvider>
+            <AudioPlayerProvider>
+              <CreditsProvider>
+                <GlobalHeader />
+                <ConditionalLayout>{children}</ConditionalLayout>
+                <InstallPrompt />
+                <Toaster 
+                  position="top-right" 
+                  richColors 
+                  theme="dark"
+                  closeButton
+                  toastOptions={{
+                    style: {
+                      background: '#1f2937', // gray-800
+                      color: '#f3f4f6', // gray-100
+                      border: '1px solid #374151', // gray-700
+                      opacity: 1,
+                    },
+                    className: 'bg-gray-800 text-gray-100 border-gray-700 shadow-lg !opacity-100 whitespace-pre-wrap',
+                  }}
+                />
+                <AnimatedProcessingOverlay />
+                <CookieConsent />
+                <GlobalErrorGuard />
+              </CreditsProvider>
+            </AudioPlayerProvider>
           </AuthSessionProvider>
         </ThemeProvider>
       </body>
