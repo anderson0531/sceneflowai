@@ -643,6 +643,21 @@ interface SegmentBuilderProps {
 // Helper Functions
 // ============================================================================
 
+// Heuristic: determine whether the provided scene.narration should be treated as
+// real narration (audio/script text) vs being a repeat of the scene's visual
+// description. We conservatively only treat it as narration if it exists and is
+// not exactly identical to the visual description. Presence of narration audio
+// URLs still counts as narration.
+function isLikelyNarration(scene: any): boolean {
+  const narration = scene?.narration
+  if (!narration) return false
+  const nTrim = narration.toString().trim()
+  if (!nTrim) return false
+  const visual = (scene.visualDescription || scene.action || scene.summary || '').toString().trim()
+  if (visual && nTrim === visual) return false
+  return true
+}
+
 /**
  * Generate a content hash for staleness detection
  */
@@ -650,7 +665,7 @@ function generateContentHash(scene: any): string {
   const content = JSON.stringify({
     heading: scene.heading,
     visualDescription: scene.visualDescription || scene.action,
-    narration: scene.narration,
+    narration: isLikelyNarration(scene) ? scene.narration : null,
     dialogue: scene.dialogue?.map((d: any) => ({
       character: d.character,
       text: d.text || d.dialogue || d.line,
@@ -705,7 +720,7 @@ function extractSceneBible(scene: any, sceneNumber: number, characters: any[]): 
     location,
     timeOfDay,
     visualDescription: scene.visualDescription || scene.action || scene.summary || '',
-    narration: scene.narration || null,
+    narration: isLikelyNarration(scene) ? scene.narration : null,
     dialogue,
     characters: sceneCharacters,
     sceneFrameUrl: scene.imageUrl || scene.sceneImageUrl || null,
@@ -724,14 +739,14 @@ function extractAudioMetadata(scene: any, selectedLanguage = 'en-US'): {
   dialogueDurations: Array<{ character: string; text: string; durationSeconds: number }>
   totalAudioDurationSeconds: number
 } {
-  // Extract narration metadata
+  // Extract narration metadata (safely filter out visual-description masquerading as narration)
   const narrationAudio = scene.narrationAudio?.[selectedLanguage] || scene.narrationAudio?.['en-US'] || {}
-  const narrationDurationSeconds = scene.narrationDuration 
-    || narrationAudio.duration 
-    || (scene.narrationUrl && 10) // Default estimate if URL exists but no duration
-    || null
-  const narrationText = scene.narration || null
-  const narrationAudioUrl = scene.narrationUrl || narrationAudio.url || null
+  const hasNarrationAudio = Boolean(narrationAudio?.url || scene.narrationUrl)
+  const narrationText = isLikelyNarration(scene) ? scene.narration : null
+  const narrationAudioUrl = hasNarrationAudio ? (scene.narrationUrl || narrationAudio.url || null) : null
+  const narrationDurationSeconds = (narrationText || hasNarrationAudio)
+    ? (scene.narrationDuration || narrationAudio.duration || (hasNarrationAudio ? 10 : null) || null)
+    : null
 
   // Extract dialogue durations
   const dialogueAudioArray = Array.isArray(scene.dialogueAudio)
