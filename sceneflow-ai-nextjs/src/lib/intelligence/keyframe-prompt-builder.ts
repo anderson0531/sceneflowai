@@ -597,30 +597,15 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
       promptParts.push(buildCutFrameIntro(shotType))
     }
   } else {
-    // End frame - CONTENT-AWARE: Use dialogue, narration, and action to show
+    // End frame - CONTENT-AWARE: Use action and camera movement to show
     // what the scene looks like AFTER this segment's content plays out
+    // 
+    // NOTE: Dialogue and narration are NOT included in image prompts to avoid
+    // them appearing as captions in keyframe images. The segment generation
+    // already includes these for video generation.
     
     // Build specific changes that occurred during this segment
     const changes: string[] = []
-    
-    // Dialogue-driven changes: if someone spoke, show the reaction/result
-    if (segmentContent?.dialogueLines?.length) {
-      const lastLine = segmentContent.dialogueLines[segmentContent.dialogueLines.length - 1]
-      if (segmentContent.dialogueLines.length === 1) {
-        changes.push(`${lastLine.character} has just said: "${lastLine.text.substring(0, 80)}"${lastLine.emotion ? ` (${lastLine.emotion})` : ''}`)
-      } else {
-        const speakers = [...new Set(segmentContent.dialogueLines.map(d => d.character))]
-        changes.push(`After dialogue between ${speakers.join(' and ')}, ending with ${lastLine.character}: "${lastLine.text.substring(0, 60)}"`)
-      }
-    }
-    
-    // Narration-driven changes: narration describes what happened
-    if (segmentContent?.narrationText) {
-      const narrationHint = segmentContent.narrationText.length > 100
-        ? segmentContent.narrationText.substring(0, 100) + '...'
-        : segmentContent.narrationText
-      changes.push(`Scene reflects narration: "${narrationHint}"`)
-    }
     
     // Talent action: what physically changed
     if (segmentContent?.talentAction) {
