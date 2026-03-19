@@ -3960,7 +3960,7 @@ export function SceneProductionMixer({
                                 onChange={(e) => setWatermarkConfig(prev => ({
                                   ...prev,
                                   textStyle: { ...prev.textStyle, color: e.target.value }
-                                }))
+                                }))}
                                 className="w-8 h-8 rounded cursor-pointer bg-transparent border border-gray-600"
                                 disabled={isRendering}
                               />
@@ -3969,7 +3969,7 @@ export function SceneProductionMixer({
                                 onChange={(e) => setWatermarkConfig(prev => ({
                                   ...prev,
                                   textStyle: { ...prev.textStyle, color: e.target.value }
-                                }))
+                                }))}
                                 className="h-8 bg-gray-900 border-gray-600 text-white text-xs flex-1"
                                 placeholder="#FFFFFF"
                                 disabled={isRendering}
