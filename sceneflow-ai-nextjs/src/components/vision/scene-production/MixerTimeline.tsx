@@ -94,7 +94,7 @@ function formatTime(secs: number): string {
 // MixerTimeline Component
 // ============================================================================
 
-const MixerTimeline: React.FC<MixerTimelineProps> = ({
+export const MixerTimeline: React.FC<MixerTimelineProps> = ({
   audioTracks,
   onTrackChange,
   videoTotalDuration,
@@ -618,4 +618,4 @@ const MixerTimeline: React.FC<MixerTimelineProps> = ({
   )
 }
 
-export default MixerTimeline
+
