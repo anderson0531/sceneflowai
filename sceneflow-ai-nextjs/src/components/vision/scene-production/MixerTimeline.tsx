@@ -105,7 +105,7 @@ function formatTime(secs: number): string {
   totalDuration,
   disabled,
   className = '',
-}: MixerTimelineProps) {
+}) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [draggingTrack, setDraggingTrack] = useState<keyof MixerAudioTracks | null>(null)
