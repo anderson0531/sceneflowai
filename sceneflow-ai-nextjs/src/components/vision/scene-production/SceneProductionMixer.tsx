@@ -2359,6 +2359,14 @@ export function SceneProductionMixer({
     const dialogueEntries = (audioAssets.dialogueAudio?.[selectedLanguage] 
       || audioAssets.dialogueAudio?.en 
       || []).filter(Boolean)
+      .map((d, index) => ({
+        id: `dialogue-${index}-${d.character}`,
+        audioUrl: d.audioUrl,
+        character: d.character,
+        text: d.text,
+        startTime: d.startTime,
+        duration: d.duration,
+      }))
     
     const musicUrl = audioAssets.musicAudio
     

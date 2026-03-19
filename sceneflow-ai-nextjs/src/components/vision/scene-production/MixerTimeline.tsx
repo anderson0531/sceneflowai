@@ -45,6 +45,8 @@ interface MixerTimelineProps {
   sfxDuration?: number
   /** Individual dialogue clips for per-line control */
   dialogueClips?: AudioClipInfo[]
+  /** Callback when dialogue clip timing changes (drag-to-reposition) */
+  onDialogueClipChange?: (clipId: string, newStartTime: number) => void
   /** Individual SFX clips */
   sfxClips?: AudioClipInfo[]
   /** Text overlays to display on timeline */
@@ -101,6 +103,7 @@ export function MixerTimeline({
   musicDuration = 0,
   sfxDuration = 0,
   dialogueClips = [],
+  onDialogueClipChange,
   sfxClips = [],
   textOverlays = [],
   onTextOverlayChange,
@@ -113,6 +116,7 @@ export function MixerTimeline({
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [draggingTrack, setDraggingTrack] = useState<keyof MixerAudioTracks | null>(null)
   const [draggingTextId, setDraggingTextId] = useState<string | null>(null)
+  const [draggingClipId, setDraggingClipId] = useState<string | null>(null)
   
   // Zoom state: pixels per second (higher = more zoomed in)
   const MIN_PPS = 5   // Minimum zoom (zoomed out — good for 60s+ scenes)
@@ -419,9 +423,9 @@ export function MixerTimeline({
             </div>
           </div>
 
-          {/* Audio Track Bars */}
+          {/* Audio Track Bars - excluding dialogue which has its own section below */}
           <div className="space-y-1.5">
-            {TRACK_VISUALS.map((visual) => {
+            {TRACK_VISUALS.filter(v => v.key !== 'dialogue').map((visual) => {
               const config = audioTracks[visual.key]
               const duration = durations[visual.key]
               const startPercent = (config.startOffset / totalDuration) * 100
@@ -470,6 +474,77 @@ export function MixerTimeline({
                 </div>
               )
             })}
+
+            {/* Individual Dialogue Clips Track */}
+            {dialogueClips && dialogueClips.length > 0 && (
+              <div className="relative">
+                <div className="h-7 rounded bg-gray-800/30 mb-1">
+                  {/* Track label */}
+                  <div className="absolute left-0 top-0 bottom-0 w-12 flex items-center z-10">
+                    <MessageSquare className="w-3 h-3 ml-1" style={{ color: '#3b82f6' }} />
+                    <span className="text-[10px] ml-1 text-gray-400">Dialogue</span>
+                  </div>
+                </div>
+                
+                {/* Dialogue clips container */}
+                <div className="ml-12 relative" style={{ minHeight: `${Math.max(20 * dialogueClips.length, 20)}px` }}>
+                  {dialogueClips.map((clip, idx) => {
+                    const startPercent = (clip.startTime / totalDuration) * 100
+                    const widthPercent = (clip.duration / totalDuration) * 100
+                    const isDragging = draggingClipId === clip.id
+                    const characterLabel = clip.character || clip.label || `Dialogue ${idx + 1}`
+
+                    return (
+                      <div
+                        key={clip.id}
+                        className={`
+                          absolute rounded-sm px-1.5 py-0.5 flex items-center gap-1
+                          cursor-grab active:cursor-grabbing select-none
+                          transition-shadow duration-100 text-white
+                          ${isDragging ? 'ring-1 ring-white/40 z-10' : 'hover:ring-1 hover:ring-white/20'}
+                          ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+                        `}
+                        style={{
+                          left: `${startPercent}%`,
+                          width: `${Math.max(widthPercent, 3)}%`,
+                          top: `${idx * 20}px`,
+                          height: '20px',
+                          backgroundColor: 'rgba(167, 139, 250, 0.4)',
+                          borderLeft: '1px solid #a855f7',
+                          borderRadius: '3px',
+                        }}
+                        onMouseDown={(e) => handleClipDragStart(e, clip.id, clip.startTime)}
+                        title={`${characterLabel}\n${formatTime(clip.startTime)} - ${formatTime(clip.startTime + clip.duration)}\n${clip.duration.toFixed(1)}s`}
+                      >
+                        <span className="text-[8px] font-medium truncate flex-1">
+                          {characterLabel} {clip.duration > 0 ? `${clip.duration.toFixed(1)}s` : ''}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Empty dialogue state */}
+            {(!dialogueClips || dialogueClips.length === 0) && audioTracks.dialogue.enabled && (
+              <div className="h-7 relative rounded bg-gray-800/30 flex items-center">
+                <div className="absolute left-0 top-0 bottom-0 w-12 flex items-center">
+                  <MessageSquare className="w-3 h-3 ml-1" style={{ color: '#3b82f6' }} />
+                  <span className="text-[10px] ml-1 text-gray-400">Dialogue</span>
+                </div>
+                <div className="ml-12 text-[9px] text-gray-500">No dialogue clips available</div>
+              </div>
+            )}
+            {(!dialogueClips || dialogueClips.length === 0) && !audioTracks.dialogue.enabled && (
+              <div className="h-7 relative rounded bg-gray-800/30 flex items-center">
+                <div className="absolute left-0 top-0 bottom-0 w-12 flex items-center">
+                  <MessageSquare className="w-3 h-3 ml-1" style={{ color: '#6b7280' }} />
+                  <span className="text-[10px] ml-1 text-gray-600">Dialogue</span>
+                </div>
+              </div>
+            )}
+
 
             {/* Text Overlay Track */}
             <div className="h-7 relative rounded bg-gray-800/30">
