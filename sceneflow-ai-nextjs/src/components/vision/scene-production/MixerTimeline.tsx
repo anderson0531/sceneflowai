@@ -489,7 +489,9 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                 {/* Dialogue clips container */}
                 <div className="ml-12 relative" style={{ minHeight: `${Math.max(20 * dialogueClips.length, 20)}px` }}>
                   {dialogueClips.map((clip, idx) => {
-                    const startPercent = (clip.startTime / totalDuration) * 100
+                    const narrationOffset = audioTracks.narration.enabled ? audioTracks.narration.startOffset + narrationDuration : 0;
+                    const startTime = clip.startTime + narrationOffset;
+                    const startPercent = (startTime / totalDuration) * 100
                     const widthPercent = (clip.duration / totalDuration) * 100
                     const isDragging = draggingClipId === clip.id
                     const characterLabel = clip.character || clip.label || `Dialogue ${idx + 1}`

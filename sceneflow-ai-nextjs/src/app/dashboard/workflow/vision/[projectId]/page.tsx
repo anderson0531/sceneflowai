@@ -5950,8 +5950,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }
         }
         if (visionPhase.scenes) {
+          // **NEW**: Validate and clean audio data for each scene
+          const { validateAndCleanSceneAudio } = await import('@/lib/audio/cleanupAudio');
+          let allDeletedUrls: string[] = [];
+          const cleanedScenes = visionPhase.scenes.map((scene: any) => {
+            const { cleanedScene, deletedUrls } = validateAndCleanSceneAudio(scene);
+            if (deletedUrls.length > 0) {
+              allDeletedUrls = [...allDeletedUrls, ...deletedUrls];
+            }
+            return cleanedScene;
+          });
+
+          // If any stale audio files were found and removed, delete them from blob storage
+          if (allDeletedUrls.length > 0) {
+            console.log(`[loadProject] Deleting ${allDeletedUrls.length} stale audio file(s)`);
+            // Fire-and-forget deletion
+            fetch('/api/blobs/delete', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ urls: allDeletedUrls }),
+            });
+          }
+
           // MIGRATION: Add characterId to dialogue if missing
-          const scenesWithCharacterIds = visionPhase.scenes.map((scene: any) => ({
+          const scenesWithCharacterIds = cleanedScenes.map((scene: any) => ({
             ...scene,
             dialogue: scene.dialogue?.map((d: any) => {
               if (d.characterId) return d // Already has ID

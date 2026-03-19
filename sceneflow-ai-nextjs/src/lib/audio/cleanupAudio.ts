@@ -306,3 +306,35 @@ export function cleanupScriptAudio(originalScenes: any[], revisedScenes: any[]):
   
   return { cleanedScenes, deletedUrls: allDeletedUrls }
 }
+
+/**
+ * Validates the audio data for a single scene and removes stale references.
+ *
+ * This function checks for "ghost" narration - cases where narration text has been removed
+ * but the audio file reference still exists in the database.
+ *
+ * @param {any} scene - The scene object to validate and clean.
+ * @returns {CleanupResult} - Object with the cleaned scene and a list of URLs for any deleted audio files.
+ */
+export function validateAndCleanSceneAudio(scene: any): CleanupResult {
+  const cleanedScene = { ...scene };
+  const deletedUrls: string[] = [];
+
+  // Check for ghost narration: narration text is empty, but audio data still exists
+  if (!cleanedScene.narration && cleanedScene.narrationAudio) {
+    if (typeof cleanedScene.narrationAudio === 'object') {
+      for (const langAudio of Object.values(cleanedScene.narrationAudio)) {
+        if ((langAudio as any)?.url) {
+          deletedUrls.push((langAudio as any).url);
+        }
+      }
+    }
+    if (cleanedScene.narrationAudioUrl && !deletedUrls.includes(cleanedScene.narrationAudioUrl)) {
+      deletedUrls.push(cleanedScene.narrationAudioUrl);
+    }
+    delete cleanedScene.narrationAudio;
+    delete cleanedScene.narrationAudioUrl;
+  }
+
+  return { cleanedScene, deletedUrls: [...new Set(deletedUrls)] };
+}
