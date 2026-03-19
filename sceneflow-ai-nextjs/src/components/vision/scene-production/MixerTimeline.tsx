@@ -87,14 +87,6 @@ const TEXT_TRACK_VISUAL = {
 function formatTime(secs: number): string {
   const m = Math.floor(secs / 60)
   const s = Math.floor(secs % 60)
-  return `${m}:${s.toString().padStart(2, '0')}`
-}
-
-// ============================================================================
-// Main Component
-// ============================================================================
-
-export function MixerTimeline({
   audioTracks,
   onTrackChange,
   videoTotalDuration,
@@ -114,7 +106,6 @@ export function MixerTimeline({
   disabled,
   className = '',
 }: MixerTimelineProps) {
-  console.log('MixerTimeline received dialogueClips:', dialogueClips);
   const containerRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [draggingTrack, setDraggingTrack] = useState<keyof MixerAudioTracks | null>(null)
