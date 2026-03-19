@@ -803,6 +803,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       try {
         const cloned = JSON.parse(JSON.stringify(productionScenes)) as Record<string, SceneProductionData>
         
+        // Debug: Log what we're loading
+        const productionStreamsCount = Object.values(cloned).reduce((sum, scene) => 
+          sum + (scene.productionStreams?.length || 0), 0
+        )
+        console.log('[VisionPage] Loading production data:', {
+          sceneCount: Object.keys(cloned).length,
+          totalProductionStreams: productionStreamsCount,
+          sceneDetails: Object.entries(cloned).slice(0, 3).map(([sceneId, data]) => ({
+            sceneId,
+            segmentCount: data.segments?.length || 0,
+            streamCount: data.productionStreams?.length || 0,
+            hasRenderData: !!data.renderedSceneUrl
+          }))
+        })
+        
         // Sanitize stuck 'GENERATING' statuses - reset them to 'PENDING'
         // This handles cases where generation was interrupted (page refresh, network error, etc.)
         // Only runs on initial load, not during active generation

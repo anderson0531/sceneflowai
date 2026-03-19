@@ -316,15 +316,26 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
 
   // Sync productionStreams when productionData changes (e.g., after page reload)
   useEffect(() => {
-    if (productionData?.productionStreams && productionData.productionStreams.length > 0) {
-      const currentIds = productionStreams.map(s => s.id).join(',')
-      const newIds = productionData.productionStreams.map((s: ProductionStream) => s.id).join(',')
-      if (currentIds !== newIds) {
-        console.log('[DirectorConsole] Syncing productionStreams from productionData')
-        setProductionStreams(productionData.productionStreams)
+    if (productionData) {
+      const streamsFromData = productionData.productionStreams || []
+      // Compare by ID to detect changes
+      const currentIds = new Set(productionStreams.map(s => s.id))
+      const newIds = new Set(streamsFromData.map((s: ProductionStream) => s.id))
+      
+      // Check if IDs are different OR if sizes are different
+      const hasDifference = currentIds.size !== newIds.size || 
+                           !Array.from(currentIds).every(id => newIds.has(id))
+      
+      if (hasDifference) {
+        console.log('[DirectorConsole] Syncing productionStreams from productionData:', {
+          before: productionStreams.length,
+          after: streamsFromData.length,
+          streams: streamsFromData.map((s: ProductionStream) => ({ id: s.id, status: s.status, language: s.language }))
+        })
+        setProductionStreams(streamsFromData)
       }
     }
-  }, [productionData?.productionStreams])
+  }, [productionData])
 
   // Get previous segment's last frame for Extend mode (prefer actual video frame over keyframe)
   const previousSegmentLastFrame = useMemo(() => {
