@@ -109,9 +109,12 @@ export function MixerTimeline({
   onTextOverlayChange,
   segments = [],
   currentPlaybackTime = 0,
+  onTimeChange,
+  totalDuration,
   disabled,
   className = '',
 }: MixerTimelineProps) {
+  console.log('MixerTimeline received dialogueClips:', dialogueClips);
   const containerRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [draggingTrack, setDraggingTrack] = useState<keyof MixerAudioTracks | null>(null)
