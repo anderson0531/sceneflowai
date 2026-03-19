@@ -87,6 +87,14 @@ const TEXT_TRACK_VISUAL = {
 function formatTime(secs: number): string {
   const m = Math.floor(secs / 60)
   const s = Math.floor(secs % 60)
+  return `${m}:${s < 10 ? '0' : ''}${s}`
+}
+
+// ============================================================================
+// MixerTimeline Component
+// ============================================================================
+
+const MixerTimeline = ({
   audioTracks,
   onTrackChange,
   videoTotalDuration,
@@ -94,18 +102,25 @@ function formatTime(secs: number): string {
   dialogueDuration = 0,
   musicDuration = 0,
   sfxDuration = 0,
+  /** Individual dialogue clips for per-line control */
   dialogueClips = [],
   onDialogueClipChange,
+  /** Individual SFX clips */
   sfxClips = [],
+  /** Text overlays to display on timeline */
   textOverlays = [],
+  /** Callback when text overlay timing changes (drag-to-reposition) */
   onTextOverlayChange,
+  /** Video segments to show on timeline */
   segments = [],
+  /** Current playback time for playhead position */
   currentPlaybackTime = 0,
   onTimeChange,
   totalDuration,
   disabled,
   className = '',
 }) => {
+  console.log('MixerTimeline received dialogueClips:', dialogueClips);
   const containerRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [draggingTrack, setDraggingTrack] = useState<keyof MixerAudioTracks | null>(null)
