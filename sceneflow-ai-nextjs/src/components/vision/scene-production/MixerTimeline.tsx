@@ -46,7 +46,7 @@ interface MixerTimelineProps {
   /** Individual dialogue clips for per-line control */
   dialogueClips?: AudioClipInfo[]
   /** Callback when dialogue clip timing changes (drag-to-reposition) */
-  onDialogueClipChange?: (clipId: string, newStartTime: number) => void
+  onDialogueClipChange?: (clipId: string, newStartTime: number, newDuration?: number) => void
   /** Individual SFX clips */
   sfxClips?: AudioClipInfo[]
   /** Text overlays to display on timeline */
@@ -117,6 +117,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
   const [draggingTrack, setDraggingTrack] = useState<keyof MixerAudioTracks | null>(null)
   const [draggingTextId, setDraggingTextId] = useState<string | null>(null)
   const [draggingClipId, setDraggingClipId] = useState<string | null>(null)
+  const [draggingClipType, setDraggingClipType] = useState<'dialogue' | 'sfx' | null>(null)
   
   // Zoom state: pixels per second (higher = more zoomed in)
   const MIN_PPS = 5   // Minimum zoom (zoomed out — good for 60s+ scenes)
@@ -245,6 +246,56 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
     document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('mouseup', handleMouseUp)
   }, [disabled, totalDuration, onTextOverlayChange])
+
+  // Handle individual clip drag (for dialogue and sfx)
+  const handleClipDragStart = useCallback((
+    e: React.MouseEvent,
+    clipId: string,
+    initialStartTime: number,
+    type: 'dialogue' | 'sfx',
+    action: 'move' | 'resize-left' | 'resize-right'
+  ) => {
+    if (disabled) return
+    e.preventDefault()
+    setDraggingClipId(clipId)
+    setDraggingClipType(type)
+
+    const container = containerRef.current
+    if (!container) return
+
+    const containerRect = container.getBoundingClientRect()
+    const startX = e.clientX
+    const initialDuration = dialogueClips.find(c => c.id === clipId)?.duration ?? 0
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - startX
+      const deltaSeconds = deltaX / (totalDuration * pixelsPerSecond) * totalDuration
+      
+      if (type === 'dialogue' && onDialogueClipChange) {
+        if (action === 'move') {
+          const newStartTime = Math.max(0, initialStartTime + deltaSeconds)
+          onDialogueClipChange(clipId, newStartTime, initialDuration)
+        } else if (action === 'resize-left') {
+          const newStartTime = Math.max(0, initialStartTime + deltaSeconds)
+          const newDuration = Math.max(0.1, initialDuration - deltaSeconds)
+          onDialogueClipChange(clipId, newStartTime, newDuration)
+        } else if (action === 'resize-right') {
+          const newDuration = Math.max(0.1, initialDuration + deltaSeconds)
+          onDialogueClipChange(clipId, initialStartTime, newDuration)
+        }
+      }
+    }
+
+    const handleMouseUp = () => {
+      setDraggingClipId(null)
+      setDraggingClipType(null)
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }, [disabled, totalDuration, pixelsPerSecond, onDialogueClipChange])
 
   // Calculate timeline width based on zoom level
   const timelineWidth = totalDuration * pixelsPerSecond
@@ -478,7 +529,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
             {/* Individual Dialogue Clips Track */}
             {dialogueClips && dialogueClips.length > 0 && (
               <div className="relative">
-                <div className="h-7 rounded bg-gray-800/30 mb-1">
+                <div className="h-7 rounded bg-gray-800/30 mb-1 flex items-center">
                   {/* Track label */}
                   <div className="absolute left-0 top-0 bottom-0 w-12 flex items-center z-10">
                     <MessageSquare className="w-3 h-3 ml-1" style={{ color: '#3b82f6' }} />
@@ -487,43 +538,56 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                 </div>
                 
                 {/* Dialogue clips container */}
-                <div className="ml-12 relative" style={{ minHeight: `${Math.max(20 * dialogueClips.length, 20)}px` }}>
-                  {dialogueClips.map((clip, idx) => {
-                    const narrationOffset = audioTracks.narration.enabled ? audioTracks.narration.startOffset + narrationDuration : 0;
-                    const startTime = clip.startTime + narrationOffset;
-                    const startPercent = (startTime / totalDuration) * 100
-                    const widthPercent = (clip.duration / totalDuration) * 100
-                    const isDragging = draggingClipId === clip.id
-                    const characterLabel = clip.character || clip.label || `Dialogue ${idx + 1}`
-
-                    return (
-                      <div
-                        key={clip.id}
-                        className={`
-                          absolute rounded-sm px-1.5 py-0.5 flex items-center gap-1
-                          cursor-grab active:cursor-grabbing select-none
-                          transition-shadow duration-100 text-white
-                          ${isDragging ? 'ring-1 ring-white/40 z-10' : 'hover:ring-1 hover:ring-white/20'}
-                          ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                        `}
-                        style={{
-                          left: `${startPercent}%`,
-                          width: `${Math.max(widthPercent, 3)}%`,
-                          top: `${idx * 20}px`,
-                          height: '20px',
-                          backgroundColor: 'rgba(167, 139, 250, 0.4)',
-                          borderLeft: '1px solid #a855f7',
-                          borderRadius: '3px',
-                        }}
-                        onMouseDown={(e) => handleClipDragStart(e, clip.id, clip.startTime)}
-                        title={`${characterLabel}\n${formatTime(clip.startTime)} - ${formatTime(clip.startTime + clip.duration)}\n${clip.duration.toFixed(1)}s`}
-                      >
-                        <span className="text-[8px] font-medium truncate flex-1">
-                          {characterLabel} {clip.duration > 0 ? `${clip.duration.toFixed(1)}s` : ''}
-                        </span>
-                      </div>
-                    )
-                  })}
+                <div className="relative scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900" style={{ maxHeight: '80px', overflowY: 'auto' }}>
+                  <div className="relative" style={{ minHeight: `${Math.max(20 * dialogueClips.length, 20)}px` }}>
+                    {dialogueClips.map((clip, idx) => {
+                      const narrationOffset = audioTracks.narration.enabled ? audioTracks.narration.startOffset + narrationDuration : 0;
+                      const startTime = clip.startTime + narrationOffset;
+                      const startPercent = (startTime / totalDuration) * 100
+                      const widthPercent = (clip.duration / totalDuration) * 100
+                      const isDragging = draggingClipId === clip.id
+                      const characterLabel = clip.character || clip.label || `Dialogue ${idx + 1}`
+                      
+                      return (
+                        <div
+                          key={clip.id}
+                          className={`
+                            absolute rounded-sm px-1.5 py-0.5 flex items-center gap-1
+                            cursor-grab active:cursor-grabbing select-none
+                            transition-shadow duration-100 text-white
+                            ${isDragging ? 'ring-2 ring-white/60 z-20 shadow-lg' : 'hover:ring-1 hover:ring-white/20'}
+                            ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+                          `}
+                          style={{
+                            left: `${startPercent}%`,
+                            width: `${Math.max(widthPercent, 3)}%`,
+                            top: `${idx * 20}px`,
+                            height: '20px',
+                            backgroundColor: 'rgba(167, 139, 250, 0.4)',
+                            borderLeft: '1px solid #a855f7',
+                            borderRadius: '3px',
+                          }}
+                          onMouseDown={(e) => handleClipDragStart(e, clip.id, clip.startTime, 'dialogue', 'move')}
+                          title={`${characterLabel}\n${formatTime(clip.startTime)} - ${formatTime(clip.startTime + clip.duration)}\n${clip.duration.toFixed(1)}s`}
+                        >
+                          {/* Left Resize Handle */}
+                          <div
+                            className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize z-10"
+                            onMouseDown={(e) => handleClipDragStart(e, clip.id, clip.startTime, 'dialogue', 'resize-left')}
+                          />
+                          {/* Right Resize Handle */}
+                          <div
+                            className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize z-10"
+                            onMouseDown={(e) => handleClipDragStart(e, clip.id, clip.startTime, 'dialogue', 'resize-right')}
+                          />
+                          <span className="text-[8px] font-medium truncate flex-1">
+                            <span className="font-mono text-gray-500 mr-1.5">D{idx + 1}</span>
+                            {characterLabel} {clip.duration > 0 ? `${clip.duration.toFixed(1)}s` : ''}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
             )}

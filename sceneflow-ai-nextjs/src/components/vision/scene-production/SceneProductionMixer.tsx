@@ -72,19 +72,7 @@ import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSele
 import { cn } from '@/lib/utils'
 import { SUPPORTED_LANGUAGES, FLAG_EMOJIS } from '@/constants/languages'
 import { MixerTimeline } from './MixerTimeline'
-import { useOverlayStore } from '@/store/useOverlayStore'
-import type { 
-  SceneSegment, 
-  SceneProductionData, 
-  ProductionStream,
-  // Re-import these types that we moved to types.ts to break circular dep
-  TextOverlay,
-  TextOverlayStyle,
-  TextOverlayPosition,
-  TextOverlayTiming,
-  AudioTrackConfig,
-  MixerAudioTracks,
-} from './types'
+import type { AudioClipInfo } from './MixerTimeline'
 
 // Re-export the types for backwards compatibility
 export type { TextOverlay, TextOverlayStyle, TextOverlayPosition, TextOverlayTiming, AudioTrackConfig, MixerAudioTracks }
@@ -3159,7 +3147,7 @@ export function SceneProductionMixer({
             url: clip.audioUrl,
             startTime,
             duration: clip.duration || Math.max(0, totalDuration - startTime),
-            volume: (clipConfig?.volume ?? 1.0) * audioTracks.dialogue.volume,
+            volume: audioTracks.dialogue.volume,
             type: 'dialogue',
           })
         })
@@ -3377,7 +3365,7 @@ export function SceneProductionMixer({
               title={theaterMode ? 'Exit Theater Mode' : 'Theater Mode — expand video + timeline for accurate overlay placement and long-scene editing'}
             >
               {theaterMode ? <PanelRightOpen className="w-3.5 h-3.5" /> : <PanelRightClose className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">{theaterMode ? 'Show Panel' : 'Theater'}</span>
+              <span className="hidden sm:inline">{isGeneratingLanguageAudio ? 'Generating...' : theaterMode ? 'Show Panel' : 'Theater'}</span>
             </button>
           )}
           <ProductionStreamSelector
@@ -3454,7 +3442,8 @@ export function SceneProductionMixer({
                       dialogueDuration={currentAudioUrls.dialogue.reduce((sum, d) => sum + ((d as { duration?: number }).duration || 3), 0)}
                       musicDuration={audioTracks.music.duration ?? videoTotalDuration}
                       sfxDuration={currentAudioUrls.sfx.reduce((sum, s) => sum + (s.duration || 2), 0)}
-                      dialogueClips={currentAudioUrls.dialogue}
+                      dialogueClips={editableDialogueClips}
+                      onDialogueClipChange={handleDialogueClipChange}
                       textOverlays={textOverlays}
                       onTextOverlayChange={updateOverlay}
                       disabled={isRendering}
@@ -3747,7 +3736,7 @@ export function SceneProductionMixer({
                             </div>
                           </div>
                           <div>
-                            <label className="text-xs text-gray-500 mb-1 block">BG Opacity ({Math.round((editingOverlay.style.backgroundOpacity || 0) * 100)}%)</label>
+                            <label className="text-xs text-gray-500 mb-1 block">Opacity ({Math.round((editingOverlay.style.backgroundOpacity || 0) * 100)}%)</label>
                             <Slider
                               value={[editingOverlay.style.backgroundOpacity || 0]}
                               onValueChange={([v]) => updateOverlay({
