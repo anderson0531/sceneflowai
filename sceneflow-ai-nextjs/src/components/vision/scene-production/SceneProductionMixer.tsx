@@ -2428,7 +2428,7 @@ export function SceneProductionMixer({
     let maxDuration = 0
     
     // Narration duration
-    if (audioTracks.narration.enabled && currentAudioUrls.narrationDuration) {
+    if (audioTracks.narration.enabled && currentAudioUrls.narration) {
       maxDuration = Math.max(maxDuration, audioTracks.narration.startOffset + currentAudioUrls.narrationDuration)
     }
     
@@ -2856,7 +2856,6 @@ export function SceneProductionMixer({
     setActiveRenderMode('local')
     setRenderProgress(0)
     setRenderError(null)
-    setLocalRenderProgress(null)
     
     // Show global processing overlay
     overlayStore.show(
@@ -2978,38 +2977,31 @@ export function SceneProductionMixer({
             backgroundOpacity: overlay.style.backgroundOpacity,
             textShadow: overlay.style.textShadow,
           },
-          timing: {
-            startTime: overlay.timing.startTime,
-            duration: overlay.timing.duration,
-            fadeInMs: overlay.timing.fadeInMs,
-            fadeOutMs: overlay.timing.fadeOutMs,
-          },
-        })),
-        watermark: watermarkConfig.enabled ? {
-          type: watermarkConfig.type,
-          text: watermarkConfig.text,
-          imageUrl: watermarkConfig.imageUrl,
-          anchor: watermarkConfig.anchor,
-          padding: watermarkConfig.padding,
-          textStyle: watermarkConfig.textStyle,
-          imageStyle: watermarkConfig.imageStyle,
-        } : undefined,
-        resolution: localResolution,
-        fps: 30,
-        totalDuration,
-      }, (progress) => {
-        setLocalRenderProgress(progress)
-        setRenderProgress(progress.progress)
-        // Update global overlay with real progress
-        overlayStore.setProgress(progress.progress)
-        if (progress.phase === 'preparing') {
-          overlayStore.setStatus('Preparing assets...')
-        } else if (progress.phase === 'rendering' && progress.currentFrame !== undefined && progress.totalFrames) {
-          overlayStore.setStatus(`Rendering frame ${progress.currentFrame + 1}/${progress.totalFrames}`)
-        } else if (progress.phase === 'encoding') {
-          overlayStore.setStatus('Encoding video...')
-        }
-      })
+          watermark: watermarkConfig.enabled ? {
+            type: watermarkConfig.type,
+            text: watermarkConfig.text,
+            imageUrl: watermarkConfig.imageUrl,
+            anchor: watermarkConfig.anchor,
+            padding: watermarkConfig.padding,
+            textStyle: watermarkConfig.textStyle,
+            imageStyle: watermarkConfig.imageStyle,
+          } : undefined,
+          resolution: localResolution,
+          fps: 30,
+          totalDuration,
+        }), (progress) => {
+          setLocalRenderProgress(progress)
+          setRenderProgress(progress.progress)
+          // Update global overlay with real progress
+          overlayStore.setProgress(progress.progress)
+          if (progress.phase === 'preparing') {
+            overlayStore.setStatus('Preparing assets...')
+          } else if (progress.phase === 'rendering' && progress.currentFrame !== undefined && progress.totalFrames) {
+            overlayStore.setStatus(`Rendering frame ${progress.currentFrame + 1}/${progress.totalFrames}`)
+          } else if (progress.phase === 'encoding') {
+            overlayStore.setStatus('Encoding video...')
+          }
+        })
       
       if (!renderResult.success || !renderResult.blobUrl || !renderResult.blob) {
         throw new Error(renderResult.error || 'Local render failed')
@@ -3461,6 +3453,7 @@ export function SceneProductionMixer({
                       dialogueDuration={currentAudioUrls.dialogue.reduce((sum, d) => sum + ((d as { duration?: number }).duration || 3), 0)}
                       musicDuration={audioTracks.music.duration ?? videoTotalDuration}
                       sfxDuration={currentAudioUrls.sfx.reduce((sum, s) => sum + (s.duration || 2), 0)}
+                      dialogueClips={currentAudioUrls.dialogue}
                       textOverlays={textOverlays}
                       onTextOverlayChange={updateOverlay}
                       disabled={isRendering}
@@ -3487,7 +3480,7 @@ export function SceneProductionMixer({
                       {collapsedSections.textOverlays ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
                     </button>
                     <Type className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                    <span className="text-sm font-medium text-white whitespace-nowrap">Text Overlays</span>
+                    <span className="text-sm font-medium text-white">Text Overlays</span>
                     {textOverlays.length > 0 && (
                       <Badge variant="outline" className="text-xs bg-amber-500/20 border-amber-500/50 text-amber-300">
                         {textOverlays.length}
@@ -3976,7 +3969,7 @@ export function SceneProductionMixer({
                                 onChange={(e) => setWatermarkConfig(prev => ({
                                   ...prev,
                                   textStyle: { ...prev.textStyle, color: e.target.value }
-                                }))}
+                                }))
                                 className="w-8 h-8 rounded cursor-pointer bg-transparent border border-gray-600"
                                 disabled={isRendering}
                               />
@@ -3985,7 +3978,7 @@ export function SceneProductionMixer({
                                 onChange={(e) => setWatermarkConfig(prev => ({
                                   ...prev,
                                   textStyle: { ...prev.textStyle, color: e.target.value }
-                                }))}
+                                }))
                                 className="h-8 bg-gray-900 border-gray-600 text-white text-xs flex-1"
                                 placeholder="#FFFFFF"
                                 disabled={isRendering}
