@@ -1873,7 +1873,7 @@ function MusicDurationControl({
           className={`px-2 h-6 rounded text-[10px] transition-colors ${
             effectiveDuration === videoTotalDuration 
               ? 'bg-green-600/40 text-green-300 border border-green-500/50' 
-              : 'bg-gray-700 hover:bg-gray-600 text-gray-400'
+              : 'bg-gray-700 hover:bggray-600 text-gray-400'
           }`}
           title="Match video duration"
         >
@@ -1895,7 +1895,7 @@ function MusicDurationControl({
           <button
             onClick={() => onConfigChange({ ...config, duration: audioDuration })}
             disabled={disabled}
-            className="px-2 h-6 rounded bg-gray-700 hover:bg-gray-600 text-gray-400 text-[10px]"
+            className="px-2 h-6 rounded bg-gray-700 hover:bg-gray-600 text-gray-400"
             title={`Original: ${formatTime(audioDuration)}`}
           >
             Full
@@ -2285,6 +2285,9 @@ export function SceneProductionMixer({
   // === Dialogue Clip Configs (individual line control) ===
   const [dialogueClipConfigs, setDialogueClipConfigs] = useState<Record<string, AudioClipConfig>>({})
   
+  // === Editable Dialogue Clips (derived from audio assets) ===
+  const [editableDialogueClips, setEditableDialogueClips] = useState<AudioClipInfo[]>([])
+  
   // === Segment Audio Configs ===
   const [segmentAudioConfigs, setSegmentAudioConfigs] = useState<Record<string, SegmentAudioConfig>>({})
   const [masterSegmentVolume, setMasterSegmentVolume] = useState(0.8)
@@ -2297,6 +2300,23 @@ export function SceneProductionMixer({
     })
     setSegmentAudioConfigs(configs)
   }, [segments]) // eslint-disable-line react-hooks/exhaustive-deps
+  
+  // Initialize editable dialogue clips from audio assets
+  useEffect(() => {
+    if (currentAudioUrls.dialogue && currentAudioUrls.dialogue.length > 0) {
+      const clips: AudioClipInfo[] = currentAudioUrls.dialogue.map(clip => ({
+        id: clip.id,
+        label: clip.character,
+        startTime: clip.startTime ?? 0,
+        duration: clip.duration ?? 3,
+        audioUrl: clip.audioUrl,
+        character: clip.character,
+      }))
+      setEditableDialogueClips(clips)
+    } else {
+      setEditableDialogueClips([])
+    }
+  }, [currentAudioUrls.dialogue])
   
   // === Preview State ===
   const [isMuted, setIsMuted] = useState(false)
@@ -3210,25 +3230,19 @@ export function SceneProductionMixer({
               backgroundOpacity: overlay.style.backgroundOpacity,
               textShadow: overlay.style.textShadow,
             },
-            timing: {
-              startTime: overlay.timing.startTime,
-              duration: overlay.timing.duration,
-              fadeInMs: overlay.timing.fadeInMs,
-              fadeOutMs: overlay.timing.fadeOutMs,
-            },
+            watermark: watermarkConfig.enabled ? {
+              type: watermarkConfig.type,
+              text: watermarkConfig.text,
+              imageUrl: watermarkConfig.imageUrl,
+              anchor: watermarkConfig.anchor,
+              padding: watermarkConfig.padding,
+              textStyle: watermarkConfig.textStyle,
+              imageStyle: watermarkConfig.imageStyle,
+            } : undefined,
+            resolution: resolution === '4K' ? '4k' : resolution.toLowerCase() as '720p' | '1080p',
+            fps: 30,
+            totalDuration,
           })),
-          watermark: watermarkConfig.enabled ? {
-            type: watermarkConfig.type,
-            text: watermarkConfig.text,
-            imageUrl: watermarkConfig.imageUrl,
-            anchor: watermarkConfig.anchor,
-            padding: watermarkConfig.padding,
-            textStyle: watermarkConfig.textStyle,
-            imageStyle: watermarkConfig.imageStyle,
-          } : undefined,
-          resolution: resolution === '4K' ? '4k' : resolution.toLowerCase() as '720p' | '1080p',
-          fps: 30,
-          totalDuration,
         }),
       })
       
@@ -3339,6 +3353,22 @@ export function SceneProductionMixer({
   const isRendering = renderStatus === 'preparing' || renderStatus === 'rendering'
   const hasRenderedSegments = renderedSegments.length > 0
   
+  // Handle Dialogue Clip updates from timeline
+  const handleDialogueClipChange = (clipId: string, newStartTime: number, newDuration?: number) => {
+    setEditableDialogueClips(prevClips => {
+      const clipIndex = prevClips.findIndex(clip => clip.id === clipId)
+      if (clipIndex === -1) return prevClips
+      
+      const newClips = [...prevClips]
+      newClips[clipIndex] = {
+        ...newClips[clipIndex],
+        startTime: newStartTime,
+        ...(newDuration !== undefined && { duration: newDuration }),
+      }
+      return newClips
+    })
+  }
+
   return (
     <div className="bg-gray-900/50 rounded-xl border border-purple-500/30 overflow-hidden">
       {/* Header */}
@@ -3724,30 +3754,33 @@ export function SceneProductionMixer({
                                   style: { ...editingOverlay.style, backgroundColor: e.target.value }
                                 })}
                                 className="w-8 h-8 rounded cursor-pointer bg-transparent border border-gray-600"
+                                disabled={isRendering}
                               />
                               <Input
-                                value={editingOverlay.style.backgroundColor || ''}
+                                value={editingOverlay.style.backgroundColor || '#000000'}
+                               
                                 onChange={(e) => updateOverlay({
                                   ...editingOverlay,
-                                  style: { ...editingOverlay.style, backgroundColor: e.target.value || undefined }
+                                  style: { ...editingOverlay.style, backgroundColor: e.target.value }
                                 })}
                                 className="h-8 bg-gray-900 border-gray-600 text-white text-xs flex-1"
-                                placeholder="None"
+                                placeholder="#000000"
+                                disabled={isRendering}
                               />
                             </div>
                           </div>
                           <div>
-                            <label className="text-xs text-gray-500 mb-1 block">Opacity ({Math.round((editingOverlay.style.backgroundOpacity || 0) * 100)}%)</label>
+                            <label className="text-xs text-gray-500 mb-1 block">Opacity ({Math.round((editingOverlay.style.backgroundOpacity || 0.5) * 100)}%)</label>
                             <Slider
-                              value={[editingOverlay.style.backgroundOpacity || 0]}
+                              value={[(editingOverlay.style.backgroundOpacity ?? 0.5) * 100]}
                               onValueChange={([v]) => updateOverlay({
                                 ...editingOverlay,
-                                style: { ...editingOverlay.style, backgroundOpacity: v }
+                                style: { ...editingOverlay.style, backgroundOpacity: v / 100 }
                               })}
-                              min={0}
-                              max={1}
-                              step={0.05}
-                              className="w-full mt-2"
+                              min={10}
+                              max={100}
+                              step={5}
+                              disabled={isRendering}
                             />
                           </div>
                         </div>
