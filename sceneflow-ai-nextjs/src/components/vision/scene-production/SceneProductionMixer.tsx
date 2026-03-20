@@ -2288,6 +2288,22 @@ export function SceneProductionMixer({
   // === Editable Dialogue Clips (derived from audio assets) ===
   const [editableDialogueClips, setEditableDialogueClips] = useState<AudioClipInfo[]>([])
   
+  // Handle Dialogue Clip updates from timeline (declared early to avoid TDZ in minified production builds)
+  const handleDialogueClipChange = useCallback((clipId: string, newStartTime: number, newDuration?: number) => {
+    setEditableDialogueClips(prevClips => {
+      const clipIndex = prevClips.findIndex(clip => clip.id === clipId)
+      if (clipIndex === -1) return prevClips
+      
+      const newClips = [...prevClips]
+      newClips[clipIndex] = {
+        ...newClips[clipIndex],
+        startTime: newStartTime,
+        ...(newDuration !== undefined && { duration: newDuration }),
+      }
+      return newClips
+    })
+  }, [])
+  
   // === Segment Audio Configs ===
   const [segmentAudioConfigs, setSegmentAudioConfigs] = useState<Record<string, SegmentAudioConfig>>({})
   const [masterSegmentVolume, setMasterSegmentVolume] = useState(0.8)
@@ -3352,22 +3368,6 @@ export function SceneProductionMixer({
   
   const isRendering = renderStatus === 'preparing' || renderStatus === 'rendering'
   const hasRenderedSegments = renderedSegments.length > 0
-  
-  // Handle Dialogue Clip updates from timeline
-  const handleDialogueClipChange = (clipId: string, newStartTime: number, newDuration?: number) => {
-    setEditableDialogueClips(prevClips => {
-      const clipIndex = prevClips.findIndex(clip => clip.id === clipId)
-      if (clipIndex === -1) return prevClips
-      
-      const newClips = [...prevClips]
-      newClips[clipIndex] = {
-        ...newClips[clipIndex],
-        startTime: newStartTime,
-        ...(newDuration !== undefined && { duration: newDuration }),
-      }
-      return newClips
-    })
-  }
 
   return (
     <div className="bg-gray-900/50 rounded-xl border border-purple-500/30 overflow-hidden">
