@@ -15,6 +15,7 @@ import type {
   AnimaticRenderSettings,
   VideoRenderSettings,
   SmartPromptSettings,
+  LMLConfig,
 } from './types'
 
 // ============================================================================
@@ -166,3 +167,13 @@ export const createDefaultSmartPromptSettings = (): SmartPromptSettings => ({
     blendStrength: 80,
   },
 })
+
+/**
+ * Default LML configuration
+ */
+export const DEFAULT_LML_CONFIG: LMLConfig = {
+  smartPadThreshold: 0.3,
+  kenBurnsEndScale: 1.01,
+  gainRampDownDuration: 0.05,
+  maxExtensionPerSegment: 8.0,
+}

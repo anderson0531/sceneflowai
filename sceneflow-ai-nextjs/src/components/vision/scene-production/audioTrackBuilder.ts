@@ -12,7 +12,6 @@ import {
   SegmentDynamicsResult,
   LMLVisualEffect,
   LMLConfig,
-  DEFAULT_LML_CONFIG,
   SceneLMLAnalysis,
   AudioTrackClipV2,
   AudioTracksDataV2,
@@ -20,6 +19,7 @@ import {
   TimelineAudioState,
   AudioClipSource,
 } from './types'
+import { DEFAULT_LML_CONFIG } from './defaults'
 
 /**
  * Generate a hash of all audio URLs for change detection.

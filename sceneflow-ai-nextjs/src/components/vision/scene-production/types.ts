@@ -1624,16 +1624,6 @@ export interface LMLConfig {
 }
 
 /**
- * Default LML configuration
- */
-export const DEFAULT_LML_CONFIG: LMLConfig = {
-  smartPadThreshold: 0.3,
-  kenBurnsEndScale: 1.01,
-  gainRampDownDuration: 0.05,
-  maxExtensionPerSegment: 8.0,
-}
-
-/**
  * Sync status for a segment — used by the Sync-Status Bar UI
  */
 export type SegmentSyncStatus = 'base' | 'smart-pad' | 'freeze-extend'

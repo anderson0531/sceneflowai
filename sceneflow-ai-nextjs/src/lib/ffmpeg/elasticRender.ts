@@ -19,7 +19,8 @@
  * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
  */
 
-import type { SegmentDynamicsResult, LMLConfig, DEFAULT_LML_CONFIG } from '@/components/vision/scene-production/types'
+import type { SegmentDynamicsResult, LMLConfig } from '@/components/vision/scene-production/types'
+import { DEFAULT_LML_CONFIG } from '@/components/vision/scene-production/defaults'
 
 // ============================================================================
 // Types
