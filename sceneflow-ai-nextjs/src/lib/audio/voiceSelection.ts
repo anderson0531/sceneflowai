@@ -23,6 +23,27 @@ export interface VoiceProfile {
   sampleText?: string
 }
 
+const NARRATOR_TAG_KEY = 'sceneflow-voice-narrators'
+
+export function loadNarratorVoiceIds(): Set<string> {
+  if (typeof window === 'undefined') return new Set()
+  try {
+    const raw = localStorage.getItem(NARRATOR_TAG_KEY)
+    return raw ? new Set(JSON.parse(raw)) : new Set()
+  } catch {
+    return new Set()
+  }
+}
+
+export function getEffectiveNarrationProfiles(): VoiceProfile[] {
+  const tagged = loadNarratorVoiceIds()
+  if (tagged.size === 0) return NARRATION_VOICES
+
+  const taggedVoices = NARRATION_VOICES.filter(v => tagged.has(v.id))
+  const defaults = NARRATION_VOICES.filter(v => !tagged.has(v.id))
+  return [...taggedVoices, ...defaults]
+}
+
 // Curated voice catalog for narration
 export const NARRATION_VOICES: VoiceProfile[] = [
   // Cinematic Male Voices
@@ -401,8 +422,8 @@ function generateReasoning(voice: VoiceProfile, context: ScreenplayContext): str
  * Get a default cinematic male voice for narration
  */
 export function getDefaultNarrationVoice(): VoiceProfile {
-  // Adam is the default cinematic male voice
-  return NARRATION_VOICES.find(v => v.id === 'pNInz6obpgDQGcFmaJgB') || NARRATION_VOICES[0]
+  // Adam is the default cinematic male voice (or first user-tagged narrator if present)
+  return getEffectiveNarrationProfiles().find(v => v.id === 'pNInz6obpgDQGcFmaJgB') || getEffectiveNarrationProfiles()[0]
 }
 
 /**

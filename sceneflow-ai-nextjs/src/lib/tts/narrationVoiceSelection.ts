@@ -33,6 +33,27 @@ export interface NarrationContext {
   genderPreference?: 'male' | 'female' | 'any'
 }
 
+const NARRATOR_TAG_KEY = 'sceneflow-voice-narrators'
+
+export function loadNarratorVoiceIds(): Set<string> {
+  if (typeof window === 'undefined') return new Set()
+  try {
+    const raw = localStorage.getItem(NARRATOR_TAG_KEY)
+    return raw ? new Set(JSON.parse(raw)) : new Set()
+  } catch {
+    return new Set()
+  }
+}
+
+export function getEffectiveNarrationVoices(): NarrationVoice[] {
+  const tagged = loadNarratorVoiceIds()
+  if (tagged.size === 0) return NARRATION_VOICES
+
+  const customVoices = NARRATION_VOICES.filter(v => tagged.has(v.id))
+  const defaultVoices = NARRATION_VOICES.filter(v => !tagged.has(v.id))
+  return [...customVoices, ...defaultVoices]
+}
+
 // ================================================================================
 // Curated Voice Catalog
 // ================================================================================
@@ -233,10 +254,11 @@ function scoreNarrationVoice(voice: NarrationVoice, context: NarrationContext): 
  * Returns the best-matching voice from the catalog.
  */
 export function selectOptimalNarrationVoice(context: NarrationContext): NarrationVoice {
-  let bestVoice = NARRATION_VOICES[0] // Default to Adam
+  const voices = getEffectiveNarrationVoices()
+  let bestVoice = voices[0] // Default to first voice
   let bestScore = -1
 
-  for (const voice of NARRATION_VOICES) {
+  for (const voice of voices) {
     const score = scoreNarrationVoice(voice, context)
     if (score > bestScore) {
       bestScore = score
@@ -251,28 +273,28 @@ export function selectOptimalNarrationVoice(context: NarrationContext): Narratio
  * Get the default narration voice (Adam).
  */
 export function getDefaultNarrationVoice(): NarrationVoice {
-  return NARRATION_VOICES[0]
+  return getEffectiveNarrationVoices()[0]
 }
 
 /**
  * Get a voice by its ElevenLabs ID.
  */
 export function getVoiceById(voiceId: string): NarrationVoice | undefined {
-  return NARRATION_VOICES.find(v => v.id === voiceId)
+  return getEffectiveNarrationVoices().find(v => v.id === voiceId)
 }
 
 /**
  * Get all voices matching a style.
  */
 export function getVoicesByStyle(style: NarrationVoice['style']): NarrationVoice[] {
-  return NARRATION_VOICES.filter(v => v.style === style)
+  return getEffectiveNarrationVoices().filter(v => v.style === style)
 }
 
 /**
  * Get ranked narration voices with scores for a given context.
  */
 export function getRankedNarrationVoices(context: NarrationContext): Array<{ voice: NarrationVoice; score: number }> {
-  return NARRATION_VOICES
+  return getEffectiveNarrationVoices()
     .map(voice => ({ voice, score: scoreNarrationVoice(voice, context) }))
     .sort((a, b) => b.score - a.score)
 }

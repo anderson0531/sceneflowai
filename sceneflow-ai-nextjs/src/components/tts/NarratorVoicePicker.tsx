@@ -7,6 +7,7 @@ import {
   NARRATION_VOICES, 
   NarrationVoice, 
   NarrationContext,
+  getEffectiveNarrationVoices,
   getRankedNarrationVoices 
 } from '@/lib/tts/narrationVoiceSelection'
 
@@ -39,9 +40,10 @@ export function NarratorVoicePicker({
 
   // Rank voices by context if provided
   const rankedVoices = useMemo(() => {
+    const baseVoices = getEffectiveNarrationVoices()
     const ranked = narrationContext 
       ? getRankedNarrationVoices(narrationContext)
-      : NARRATION_VOICES.map(v => ({ voice: v, score: 50 }))
+      : baseVoices.map(v => ({ voice: v, score: 50 }))
 
     // Apply gender filter
     const filtered = genderFilter === 'all' 

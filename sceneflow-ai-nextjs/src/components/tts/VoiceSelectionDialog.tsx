@@ -22,6 +22,7 @@ import { debounce } from 'lodash'
 // ================================================================================
 
 const FAVORITES_KEY = 'sceneflow-voice-favorites'
+const NARRATOR_KEY = 'sceneflow-voice-narrators'
 
 function loadFavorites(): Set<string> {
   try {
@@ -36,6 +37,25 @@ function saveFavorites(ids: Set<string>) {
   try {
     if (typeof window !== 'undefined') {
       localStorage.setItem(FAVORITES_KEY, JSON.stringify([...ids]))
+    }
+  } catch {
+    // Silent fail
+  }
+}
+
+function loadNarrators(): Set<string> {
+  try {
+    const stored = typeof window !== 'undefined' ? localStorage.getItem(NARRATOR_KEY) : null
+    return stored ? new Set(JSON.parse(stored)) : new Set()
+  } catch {
+    return new Set()
+  }
+}
+
+function saveNarrators(ids: Set<string>) {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(NARRATOR_KEY, JSON.stringify([...ids]))
     }
   } catch {
     // Silent fail
@@ -132,13 +152,16 @@ export function VoiceSelectionDialog({
   const [genderFilter, setGenderFilter] = useState('all')
   const [showCustomOnly, setShowCustomOnly] = useState(false)
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
+  const [showNarratorsOnly, setShowNarratorsOnly] = useState(false)
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null)
   const [recommendations, setRecommendations] = useState<VoiceRecommendation[]>([])
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
+  const [narratorIds, setNarratorIds] = useState<Set<string>>(new Set())
 
   // Load favorites on mount
   useEffect(() => {
     setFavoriteIds(loadFavorites())
+    setNarratorIds(loadNarrators())
   }, [])
 
   // Debounced search query
@@ -225,6 +248,20 @@ export function VoiceSelectionDialog({
     })
   }, [])
 
+  const toggleNarrator = useCallback((voiceId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setNarratorIds(prev => {
+      const next = new Set(prev)
+      if (next.has(voiceId)) {
+        next.delete(voiceId)
+      } else {
+        next.add(voiceId)
+      }
+      saveNarrators(next)
+      return next
+    })
+  }, [])
+
   // ---- Filter options (only gender for the simplified UI) ----
   const genderOptions = useMemo(() => {
     const genders = new Set<string>()
@@ -256,11 +293,19 @@ export function VoiceSelectionDialog({
       result = result.filter(v => favoriteIds.has(v.id))
     }
 
+    // Narrators only
+    if (showNarratorsOnly) {
+      result = result.filter(v => narratorIds.has(v.id))
+    }
+
     // Sort: favorites first → recommended → score → gender match → category → alpha
     return result.sort((a, b) => {
       // Favorites at top
       const favA = favoriteIds.has(a.id) ? 1 : 0
       const favB = favoriteIds.has(b.id) ? 1 : 0
+      const narrA = narratorIds.has(a.id) ? 1 : 0
+      const narrB = narratorIds.has(b.id) ? 1 : 0
+      if (narrA !== narrB) return narrB - narrA
       if (favA !== favB) return favB - favA
 
       const scoreA = getRecommendationScore(a.id)
@@ -472,7 +517,11 @@ export function VoiceSelectionDialog({
                 onGenderFilterChange={setGenderFilter}
                 onToggleCustomOnly={() => setShowCustomOnly(p => !p)}
                 onToggleFavoritesOnly={() => setShowFavoritesOnly(p => !p)}
+                onToggleNarratorsOnly={() => setShowNarratorsOnly(p => !p)}
                 onToggleFavorite={toggleFavorite}
+                onToggleNarrator={toggleNarrator}
+                showNarratorsOnly={showNarratorsOnly}
+                narratorIds={narratorIds}
                 onPreview={handlePreview}
                 onSelect={handleSelectVoice}
                 onRefresh={fetchVoices}
@@ -535,14 +584,18 @@ export function VoiceSelectionDialog({
               genderOptions={genderOptions}
               showCustomOnly={showCustomOnly}
               showFavoritesOnly={showFavoritesOnly}
+              showNarratorsOnly={showNarratorsOnly}
               favoriteIds={favoriteIds}
+              narratorIds={narratorIds}
               playingVoiceId={playingVoiceId}
               characterContext={characterContext}
               onSearchChange={setSearchQuery}
               onGenderFilterChange={setGenderFilter}
               onToggleCustomOnly={() => setShowCustomOnly(p => !p)}
               onToggleFavoritesOnly={() => setShowFavoritesOnly(p => !p)}
+              onToggleNarratorsOnly={() => setShowNarratorsOnly(p => !p)}
               onToggleFavorite={toggleFavorite}
+              onToggleNarrator={toggleNarrator}
               onPreview={handlePreview}
               onSelect={handleSelectVoice}
               onRefresh={fetchVoices}
@@ -620,14 +673,20 @@ interface BrowseVoiceContentProps {
   genderOptions: string[]
   showCustomOnly: boolean
   showFavoritesOnly: boolean
+  showNarratorsOnly: boolean
   favoriteIds: Set<string>
+  narratorIds: Set<string>
   playingVoiceId: string | null
   characterContext?: CharacterContext
   onSearchChange: (q: string) => void
   onGenderFilterChange: (g: string) => void
   onToggleCustomOnly: () => void
   onToggleFavoritesOnly: () => void
+  onToggleNarratorsOnly: () => void
+  onToggleNarratorsOnly: () => void
   onToggleFavorite: (voiceId: string, e: React.MouseEvent) => void
+  onToggleNarrator: (voiceId: string, e: React.MouseEvent) => void
+  onToggleNarrator: (voiceId: string, e: React.MouseEvent) => void
   onPreview: (voice: ElevenLabsVoice) => void
   onSelect: (voiceId: string, voiceName: string) => void
   onRefresh: () => void
@@ -647,14 +706,18 @@ function BrowseVoiceContent({
   genderOptions,
   showCustomOnly,
   showFavoritesOnly,
+  showNarratorsOnly,
   favoriteIds,
+  narratorIds,
   playingVoiceId,
   characterContext,
   onSearchChange,
   onGenderFilterChange,
   onToggleCustomOnly,
   onToggleFavoritesOnly,
+  onToggleNarratorsOnly,
   onToggleFavorite,
+  onToggleNarrator,
   onPreview,
   onSelect,
   onRefresh,
@@ -819,6 +882,19 @@ function BrowseVoiceContent({
             Favorites
           </button>
 
+          {/* Narrator toggle */}
+          <button
+            onClick={onToggleNarratorsOnly}
+            className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors flex items-center gap-1 ${
+              showNarratorsOnly
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                : 'text-gray-400 hover:text-gray-300 border border-gray-700 hover:border-gray-600'
+            }`}
+          >
+            <Mic className={`w-3 h-3 ${showNarratorsOnly ? 'text-emerald-300' : 'text-gray-500'}`} />
+            Narrator
+          </button>
+
           <div className="flex-1" />
 
           <button
@@ -926,6 +1002,16 @@ function BrowseVoiceContent({
                     title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                   >
                     <Heart className={`h-3.5 w-3.5 ${isFavorite ? 'fill-red-400' : ''}`} />
+                  </button>
+
+                  <button
+                    onClick={(e) => onToggleNarrator(voice.id, e)}
+                    className={`p-1.5 rounded hover:bg-gray-700/50 transition-colors ${
+                      narratorIds.has(voice.id) ? 'text-emerald-300' : 'text-gray-600 opacity-0 group-hover:opacity-100'
+                    }`}
+                    title={narratorIds.has(voice.id) ? 'Remove narrator tag' : 'Mark as narrator'}
+                  >
+                    <Mic className={`h-3.5 w-3.5 ${narratorIds.has(voice.id) ? 'text-emerald-300' : ''}`} />
                   </button>
 
                   {/* Preview button */}
