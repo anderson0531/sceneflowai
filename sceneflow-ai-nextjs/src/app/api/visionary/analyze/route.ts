@@ -16,7 +16,7 @@ import {
 } from '@/lib/visionary/prompt-templates'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 120 // Allow up to 2 minutes for full pipeline
+export const maxDuration = 300 // Allow up to 5 minutes for full pipeline
 
 /**
  * Attempt to parse JSON from LLM output, repairing common issues:
