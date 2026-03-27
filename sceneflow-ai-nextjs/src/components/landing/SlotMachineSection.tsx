@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Dices, RefreshCw, Flame, AlertTriangle, Ban, Volume2, VolumeX, Maximize2 } from 'lucide-react';
+import { Dices, RefreshCw, Flame, AlertTriangle, Ban, Volume2, VolumeX, Maximize2, User, Users } from 'lucide-react';
 
 // Video Illustration Component with Audio Toggle
 const SlotMachineVideo = () => {
@@ -75,177 +75,86 @@ const SlotMachineVideo = () => {
   );
 };
 
-// Problem Point Card Component
-const ProblemCard = ({ 
-  icon: Icon, 
-  title, 
-  description, 
-  delay 
-}: { 
-  icon: React.ElementType; 
-  title: string; 
-  description: string; 
-  delay: number;
-}) => {
+// New Content Component
+const NewSlotMachineContent = () => {
   return (
-    <motion.div
-      className="flex items-start gap-4"
-      initial={{ opacity: 0, x: 20 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay }}
-    >
-      <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-red-500/20 border border-red-500/30 flex items-center justify-center flex-shrink-0">
-        <Icon className="w-5 h-5 md:w-6 md:h-6 text-red-400" />
-      </div>
+    <div className="space-y-8">
       <div>
-        <h4 className="text-white font-semibold text-lg md:text-xl mb-1">{title}</h4>
-        <p className="text-gray-400 text-sm md:text-base leading-relaxed">{description}</p>
+        <h3 className="text-2xl font-bold text-white">The Power of a 5-Person Crew in One Seat</h3>
+        <p className="mt-2 text-gray-400">SceneFlow empowers a single user to manage the entire production workflow, from script to final render. This isn't just about saving money; it's about moving at the speed of your vision.</p>
       </div>
-    </motion.div>
+      <div className="grid grid-cols-2 gap-6">
+        <div className="bg-slate-900/50 p-6 rounded-lg border border-white/10 text-center">
+          <Users className="w-10 h-10 mx-auto text-cyan-400" />
+          <h4 className="mt-4 text-lg font-semibold text-white">Traditional Production</h4>
+          <p className="text-sm text-gray-400">Director, Producer, Editor, Cinematographer, Gaffer</p>
+          <p className="mt-2 text-2xl font-bold text-cyan-400">5+ People</p>
+        </div>
+        <div className="bg-slate-900/50 p-6 rounded-lg border border-white/10 text-center">
+          <User className="w-10 h-10 mx-auto text-amber-400" />
+          <h4 className="mt-4 text-lg font-semibold text-white">SceneFlow Production</h4>
+          <p className="text-sm text-gray-400">The Director (You)</p>
+          <p className="mt-2 text-2xl font-bold text-amber-400">1 Person</p>
+        </div>
+      </div>
+    </div>
   );
 };
 
 export default function SlotMachineSection() {
   return (
-    <section id="problem" className="py-24 bg-slate-950 relative overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-30">
-        <div 
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `
-              radial-gradient(circle at 20% 50%, rgba(239, 68, 68, 0.1) 0%, transparent 40%),
-              radial-gradient(circle at 80% 50%, rgba(245, 158, 11, 0.1) 0%, transparent 40%)
-            `
-          }}
-        />
-        {/* Circuit pattern on edges */}
-        <div 
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px),
-                             linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px)`,
-            backgroundSize: '64px 64px'
-          }}
-        />
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        {/* Section Header */}
-        <motion.div 
-          className="text-center mb-16"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="inline-flex items-center px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-full mb-6">
-            <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 text-red-400 mr-2" />
-            <span className="text-sm md:text-base font-medium text-red-400">The Industry Problem</span>
-          </div>
-          <h2 className="landing-section-heading text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-6">
-            GenAI Video is a{' '}
-            <span className="landing-gradient-text bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent">
-              &apos;Slot Machine&apos;
-            </span>
-          </h2>
-          <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-3xl mx-auto">
-            Current tools force creators to gamble their budget on every iteration. 
-            It&apos;s time to break the cycle.
-          </p>
-        </motion.div>
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          {/* Left: Slot Machine Video Illustration */}
-          <motion.div
-            className="relative"
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+    <section id="problem" className="py-20 sm:py-28 bg-gray-950 overflow-hidden">
+      <div className="container mx-auto px-4">
+        <div className="text-center max-w-3xl mx-auto">
+          <motion.div 
+            className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 text-sm font-medium text-red-300 bg-red-500/10 border border-red-500/30 rounded-full"
+            initial={{ opacity: 0, y: -20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <SlotMachineVideo />
-            
-            {/* Character Sheet Visual Proof */}
-            <motion.div
-              className="mt-8 p-4 rounded-xl bg-gradient-to-br from-cyan-950/30 to-gray-900/80 border border-cyan-500/20"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Character Consistency Proof</span>
-                <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full">
-                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                  <span className="text-xs font-medium text-emerald-400">Character Locked</span>
-                </div>
-              </div>
-              <div className="grid grid-cols-4 gap-2">
-                {['Medieval Castle', 'Modern Office', 'Cinematic Noir', 'Close-up'].map((setting, idx) => (
-                  <div key={idx} className="relative aspect-square rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-purple-500 border-2 border-white/20" />
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 p-1.5">
-                      <span className="text-[10px] text-gray-300 font-medium block text-center">{setting}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-gray-500 mt-3 text-center">Same character, different settings — Frame-Anchored Precision™</p>
-            </motion.div>
+            <Dices className="w-5 h-5" />
+            The Old Way
           </motion.div>
+          
+          <motion.h2 
+            className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
+            Stop Gambling. Start Producing.
+          </motion.h2>
 
-          {/* Right: Problem Points */}
-          <div className="space-y-8">
-            <ProblemCard
-              icon={Ban}
-              title="The Workflow Gap"
-              description="Current tools (Sora, Runway, Pika) combine 'Creative Decisioning' and 'Pixel Generation' into one expensive step. You can't iterate on your story without paying for full video renders."
-              delay={0.2}
-            />
-            <ProblemCard
-              icon={Dices}
-              title="The Cost of Iteration"
-              description="Professional storytelling requires roughly 20 iterations to perfect a scene. Doing this with high-fidelity video models is financially unsustainable—each 're-roll' burns through your budget."
-              delay={0.4}
-            />
-            <ProblemCard
-              icon={Flame}
-              title="The Result"
-              description="Creators are burning budget on 'rerolls' rather than refining their stories. The slot machine model means you're gambling, not directing."
-              delay={0.6}
-            />
+          <motion.p 
+            className="mt-4 text-lg text-gray-400"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            Traditional video production is slow, expensive, and requires a large team. SceneFlow collapses the entire studio into a single interface.
+          </motion.p>
+        </div>
 
-            {/* Call to Action */}
-            <motion.div
-              className="pt-6"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.8 }}
-            >
-              <div className="bg-gradient-to-r from-amber-500/10 to-red-500/10 border border-amber-500/20 rounded-xl p-6">
-                <p className="text-amber-400 font-semibold text-base md:text-lg lg:text-xl mb-2">
-                  💡 What if you could iterate infinitely before spending on video?
-                </p>
-                <p className="text-gray-400 text-sm md:text-base mb-4">
-                  SceneFlow AI decouples creative direction from expensive rendering—so you perfect your vision first.
-                </p>
-                <a 
-                  href="#how-it-works"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-semibold rounded-lg shadow-lg shadow-amber-500/25 transition-all duration-300"
-                >
-                  See How It Works
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                </a>
-              </div>
-            </motion.div>
-          </div>
+        <div className="grid md:grid-cols-2 gap-12 items-center mt-16">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+          >
+            <NewSlotMachineContent />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+          >
+            <SlotMachineVideo />
+          </motion.div>
         </div>
       </div>
     </section>

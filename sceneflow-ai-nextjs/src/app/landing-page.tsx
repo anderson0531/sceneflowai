@@ -31,6 +31,8 @@ const ExitIntentPopup = dynamic(() => import('@/components/landing/ExitIntentPop
 import { FAQ } from './components/FAQ'
 import { FinalCTA } from './components/FinalCTA'
 import { Footer } from './components/Footer'
+import { ThreePillars } from '@/components/landing/ThreePillars'
+import { OutcomeGallery } from '@/components/landing/OutcomeGallery'
 
 export default function LandingPage() {
   return (
@@ -40,64 +42,44 @@ export default function LandingPage() {
       <FloatingCTA />
       <ExitIntentPopup />
       
-      {/* 1. Hero: "Stop Gambling on AI Video" + Pipeline Animation */}
+      {/* 1. Hero: "Your Vision, Rendered. Without the Friction." */}
       <HeroSection />
       
       {/* 2. Trust: Powered by Google Cloud credibility */}
       <TrustSignals />
       
-      {/* 3. Problem: Slot machine metaphor - why current tools fail */}
+      {/* 3. The "Three Pillars": Creator, Business, Educator */}
+      <ThreePillars />
+
+      {/* 4. The "Invisible Studio" - Business Protections */}
+      <FinancialFirewallSection /> {/* Reframed as "Budget Certainty" */}
+      <FrameAnchoredSection /> {/* Reframed as "Brand Protection" */}
+
+      {/* 5. "Stop Gambling. Start Producing." (Previously SlotMachineSection) */}
       <SlotMachineSection />
+
+      {/* 6. Outcome Gallery: Real Results */}
+      <OutcomeGallery />
       
-      {/* 4. Solution: Financial Firewall™ - The differentiator */}
-      <FinancialFirewallSection />
-      
-      {/* 5. Old Way vs SceneFlow Way - Now that problem is established */}
-      <UnifiedWorkflow />
-      
-      {/* 6. How: Five Phases to Cinematic Excellence */}
+      {/* 7. How It Works - Moved down */}
       <HowItWorks />
       
-      {/* 7. Modular Showcase: 5 tools with standalone value + ecosystem bonuses */}
-      <ModularShowcase />
-      
-      {/* 8. Testimonials: Creator stories - moved earlier for social proof */}
+      {/* 8. Testimonials: Social Proof */}
       <TestimonialsSection />
-      
-      {/* 9. Storyteller Mode: Audio-first creator targeting */}
-      <CreatorFastTrackHero />
-      
-      {/* 10. Value Calculator: Cost, Time, and Expertise savings */}
-      <ProductivityValueSection />
-      
-      {/* 11. Technical: Frame-anchored architecture */}
-      <FrameAnchoredSection />
-      
-      {/* 12. Features: All-in-one platform capabilities */}
-      <FeatureHighlight />
-      
-      {/* 13. Production Showcase: Versatile formats, styles, and resolutions */}
-      <TemplatesGallery />
-      
-      {/* 14. Proof: Real use cases with video demos */}
+
+      {/* 9. Use Cases */}
       <UseCasesSection />
-      
-      {/* 15. Coffee Break: Lifestyle benefit - positioned right before pricing */}
-      <AutomationSection />
-      
-      {/* 16. Pricing: Usage-based credits with project calculator */}
+
+      {/* 10. Pricing */}
       <PricingCredits />
-      
-      {/* 17. Engineering: Platform trust and security */}
-      <EngineeringTrust />
-      
-      {/* 18. FAQ: Objection handling */}
+
+      {/* 11. FAQ: Objection handling */}
       <FAQ />
       
-      {/* 19. Final CTA: Conversion */}
+      {/* 12. Final CTA: "From Prompter to Director" */}
       <FinalCTA />
       
-      {/* 20. Footer: Navigation */}
+      {/* 13. Footer: Navigation */}
       <Footer />
     </div>
   )

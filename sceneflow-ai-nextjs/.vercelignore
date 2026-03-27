@@ -1,0 +1,8 @@
+# This file tells Vercel to ignore specific files and folders during deployment.
+
+# CRITICAL: Ignore the massive Google Cloud SDK directory inside the project.
+google-cloud-sdk/
+
+# Always ignore node_modules and local build artifacts.
+node_modules/
+.next/
