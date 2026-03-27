@@ -37,6 +37,27 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
   currentStoryData, 
   className = '' 
 }) => {
+  if (!currentStoryData) {
+    return (
+      <div 
+        className={cn(
+          "h-full bg-gray-900 border-l border-gray-700 flex flex-col transition-all duration-300 w-96",
+          className
+        )}
+      >
+        <div className="flex items-center justify-between p-3 border-b border-gray-700 bg-gray-800">
+          <div className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-blue-400" />
+            <h3 className="text-lg font-bold text-white">Director's Notes</h3>
+          </div>
+        </div>
+        <div className="text-center py-12">
+          <p className="text-gray-400">No story data available.</p>
+        </div>
+      </div>
+    );
+  }
+
   const { 
     recommendations: rawRecommendations, 
     isLoading, 
