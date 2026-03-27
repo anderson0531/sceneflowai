@@ -15,7 +15,9 @@ import {
   Filter,
   SortAsc,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  PlusCircle,
+  Globe
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -24,6 +26,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { MarketOutlook } from './MarketOutlook';
 
 interface StoryInsightsProps {
   currentStoryData: any; // Replace with actual story data type
@@ -51,6 +54,7 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'applied' | 'dismissed'>('all');
   const [sortBy, setSortBy] = useState<'impact' | 'confidence' | 'title'>('impact');
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState<'notes' | 'market'>('notes');
 
   const filteredRecommendations = recommendations
     .filter(rec => filterStatus === 'all' || rec.status === filterStatus)
@@ -102,15 +106,16 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
       <div 
         className={cn(
           "h-full bg-gray-900 border-l border-gray-700 flex flex-col transition-all duration-300",
-          isCollapsed ? "w-12" : "w-80",
+          isCollapsed ? "w-12" : "w-96", // Increased width
           className
         )}
       >
+        {/* Header */}
         <div className="flex items-center justify-between p-3 border-b border-gray-700 bg-gray-800">
           {!isCollapsed && (
             <div className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-blue-400" />
-              <h3 className="text-lg font-bold text-white">Director's Notes</h3>
+              <h3 className="text-lg font-bold text-white">Director&apos;s Notes</h3>
             </div>
           )}
           
@@ -146,6 +151,10 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
             <p className="text-base text-gray-400 leading-relaxed max-w-sm mx-auto">
               The AI is examining your story structure, characters, and pacing to provide personalized recommendations.
             </p>
+            <Button className="mt-6">
+              <PlusCircle className="w-4 h-4 mr-2" />
+              Start New Project
+            </Button>
           </div>
         )}
       </div>
@@ -156,7 +165,7 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
     <div 
       className={cn(
         "h-full bg-gray-900 border-l border-gray-700 flex flex-col transition-all duration-300",
-        isCollapsed ? "w-12" : "w-80",
+        isCollapsed ? "w-12" : "w-96", // Increased width
         className
       )}
     >
@@ -164,8 +173,9 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
       <div className="flex items-center justify-between p-3 border-b border-gray-700 bg-gray-800">
         {!isCollapsed && (
           <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-blue-400" />
-            <h3 className="text-lg font-bold text-white">Director's Notes</h3>
+            <h3 className="text-lg font-bold text-white">
+              {activeTab === 'notes' ? "Director's Notes" : "Market Outlook"}
+            </h3>
           </div>
         )}
         
@@ -194,112 +204,146 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
 
       {/* Content */}
       {!isCollapsed && (
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4">
-            {/* Mode Toggle */}
-            <div className="mb-4">
+        <>
+          <div className="p-2 bg-gray-800/50">
+            <div className="flex gap-2">
               <Button
-                variant="outline"
+                variant={activeTab === 'notes' ? 'secondary' : 'ghost'}
                 size="sm"
-                onClick={toggleInteractionMode}
-                className="flex items-center gap-2 w-full"
+                className="w-full"
+                onClick={() => setActiveTab('notes')}
               >
-                <Zap className="w-4 h-4" />
-                {mode === 'CoPilot' ? 'Co-Pilot Mode' : 'Guidance Mode'}
+                <Shield className="w-4 h-4 mr-2" />
+                Director&apos;s Notes
+              </Button>
+              <Button
+                variant={activeTab === 'market' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="w-full"
+                onClick={() => setActiveTab('market')}
+              >
+                <Globe className="w-4 h-4 mr-2" />
+                Market Outlook
               </Button>
             </div>
+          </div>
 
-            {/* Mode Description */}
-            <div className="mb-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-              <p className="text-sm text-blue-200">
-                {mode === 'CoPilot' 
-                  ? '🤖 AI will automatically apply low-risk, high-confidence recommendations. You can review and undo changes.'
-                  : '👁️ All recommendations require manual review before application. Full control over every change.'
-                }
-              </p>
-            </div>
-
-            {/* Status Summary */}
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              <Badge variant="outline" className="text-yellow-300 border-yellow-500/50 bg-yellow-900/20 px-3 py-1.5 text-sm font-semibold">
-                {statusCounts.pending} Pending
-              </Badge>
-              <Badge className="text-green-300 border-green-500/50 bg-green-900/30 px-3 py-1.5 text-sm font-semibold">
-                {statusCounts.applied} Applied
-              </Badge>
-              <Badge variant="outline" className="text-gray-300 border-gray-500/50 bg-gray-800/30 px-3 py-1.5 text-sm font-semibold">
-                {statusCounts.dismissed} Dismissed
-              </Badge>
-            </div>
-
-            {/* Controls */}
-            <div className="space-y-3 mb-4">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-gray-700/50 rounded-lg">
-                  <Filter className="w-4 h-4 text-gray-300" />
+          <div className="flex-1 overflow-y-auto">
+            {activeTab === 'notes' ? (
+              <div className="p-4">
+                {/* Mode Toggle */}
+                <div className="mb-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={toggleInteractionMode}
+                    className="flex items-center gap-2 w-full"
+                  >
+                    <Zap className="w-4 h-4" />
+                    {mode === 'CoPilot' ? 'Co-Pilot Mode' : 'Guidance Mode'}
+                  </Button>
                 </div>
-                <select 
-                  value={filterStatus} 
-                  onChange={(e) => setFilterStatus(e.target.value as any)}
-                  className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white"
-                >
-                  <option value="all">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="applied">Applied</option>
-                  <option value="dismissed">Dismissed</option>
-                </select>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-gray-700/50 rounded-lg">
-                  <SortAsc className="w-4 h-4 text-gray-300" />
+
+                {/* Mode Description */}
+                <div className="mb-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                  <p className="text-sm text-blue-200">
+                    {mode === 'CoPilot' 
+                      ? '🤖 AI will automatically apply low-risk, high-confidence recommendations. You can review and undo changes.'
+                      : '👁️ All recommendations require manual review before application. Full control over every change.'
+                    }
+                  </p>
                 </div>
-                <select 
-                  value={sortBy} 
-                  onChange={(e) => setSortBy(e.target.value as any)}
-                  className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white"
+
+                {/* Status Summary */}
+                <div className="flex flex-wrap items-center gap-2 mb-4">
+                  <Badge variant="outline" className="text-yellow-300 border-yellow-500/50 bg-yellow-900/20 px-3 py-1.5 text-sm font-semibold">
+                    {statusCounts.pending} Pending
+                  </Badge>
+                  <Badge className="text-green-300 border-green-500/50 bg-green-900/30 px-3 py-1.5 text-sm font-semibold">
+                    {statusCounts.applied} Applied
+                  </Badge>
+                  <Badge variant="outline" className="text-gray-300 border-gray-500/50 bg-gray-800/30 px-3 py-1.5 text-sm font-semibold">
+                    {statusCounts.dismissed} Dismissed
+                  </Badge>
+                </div>
+
+                {/* Controls */}
+                <div className="space-y-3 mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-gray-700/50 rounded-lg">
+                      <Filter className="w-4 h-4 text-gray-300" />
+                    </div>
+                    <select 
+                      value={filterStatus} 
+                      onChange={(e) => setFilterStatus(e.target.value as any)}
+                      className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="pending">Pending</option>
+                      <option value="applied">Applied</option>
+                      <option value="dismissed">Dismissed</option>
+                    </select>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-gray-700/50 rounded-lg">
+                      <SortAsc className="w-4 h-4 text-gray-300" />
+                    </div>
+                    <select 
+                      value={sortBy} 
+                      onChange={(e) => setSortBy(e.target.value as any)}
+                      className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white"
+                    >
+                      <option value="impact">Sort by Impact</option>
+                      <option value="confidence">Sort by Confidence</option>
+                      <option value="title">Sort by Title</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Refresh Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={refreshAnalysis}
+                  className="w-full mb-4"
                 >
-                  <option value="impact">Sort by Impact</option>
-                  <option value="confidence">Sort by Confidence</option>
-                  <option value="title">Sort by Title</option>
-                </select>
-              </div>
-            </div>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Refresh Analysis
+                </Button>
 
-            {/* Refresh Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={refreshAnalysis}
-              className="w-full mb-4"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh Analysis
-            </Button>
+                {/* Recommendations */}
+                {filteredRecommendations.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Shield className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                    <h4 className="text-base font-semibold text-gray-300 mb-1">No recommendations yet</h4>
+                    <p className="text-sm text-gray-400">
+                      Your story analysis will appear here once complete. The AI is analyzing your story structure and will provide actionable recommendations.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredRecommendations.map(rec => (
+                      <RecommendationCard
+                        key={rec.id}
+                        recommendation={rec}
+                        onApply={() => manuallyApplyRecommendation(rec.id)}
+                        onDismiss={() => dismissRecommendation(rec.id)}
+                      />
+                    ))}
+                  </div>
+                )}
 
-            {/* Recommendations */}
-            {filteredRecommendations.length === 0 ? (
-              <div className="text-center py-8">
-                <Shield className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                <h4 className="text-base font-semibold text-gray-300 mb-1">No recommendations yet</h4>
-                <p className="text-sm text-gray-400">
-                  Your story analysis will appear here once complete. The AI is analyzing your story structure and will provide actionable recommendations.
-                </p>
+                <Button className="mt-6 w-full">
+                  <PlusCircle className="w-4 h-4 mr-2" />
+                  Start New Project
+                </Button>
               </div>
             ) : (
-              <div className="space-y-3">
-                {filteredRecommendations.map(rec => (
-                  <RecommendationCard
-                    key={rec.id}
-                    recommendation={rec}
-                    onApply={() => manuallyApplyRecommendation(rec.id)}
-                    onDismiss={() => dismissRecommendation(rec.id)}
-                  />
-                ))}
-              </div>
+              <MarketOutlook />
             )}
           </div>
-        </div>
+        </>
       )}
 
       {/* Review Modal */}
