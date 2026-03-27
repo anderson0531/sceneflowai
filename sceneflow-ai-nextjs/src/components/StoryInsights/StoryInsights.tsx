@@ -38,7 +38,7 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
   className = '' 
 }) => {
   const { 
-    recommendations, 
+    recommendations: rawRecommendations, 
     isLoading, 
     refreshAnalysis,
     manuallyApplyRecommendation, 
@@ -46,6 +46,8 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
     dismissRecommendation,
     interactionMode 
   } = useStoryAnalysis(currentStoryData);
+  
+  const recommendations = Array.isArray(rawRecommendations) ? rawRecommendations : [];
   
   const { interactionMode: mode, toggleInteractionMode } = usePreferences();
   
