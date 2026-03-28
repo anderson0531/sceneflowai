@@ -158,16 +158,16 @@ export async function generateText(
     }
   }
 
-  // Model-aware thinking configuration
-  const isGemini3Model = model.startsWith('gemini-3');
+  // Unified, model-aware thinking configuration
   const thinkingConfig: any = {
     includeThoughts: true,
   };
 
   if (isGemini3Model) {
-    thinkingConfig.thinkingLevel = (options.thinkingLevel || 'low').toLowerCase();
+    // Gemini 3 standard
+    thinkingConfig.thinkingLevel = (options.thinkingLevel || 'low').toUpperCase();
   } else {
-    // Translate thinkingLevel to legacy thinkingBudget for older models
+    // Gemini 2.5 legacy fallback
     const thinkingLevelToBudget = {
       minimal: 0,
       low: 1024,
