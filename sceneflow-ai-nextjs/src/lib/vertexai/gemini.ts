@@ -94,94 +94,112 @@ export async function generateText(
   prompt: string,
   options: TextGenerationOptions = {}
 ): Promise<TextGenerationResult> {
-  const { projectId, location: configLocation } = getConfig();
+  const { projectId, location: defaultLocation } = getConfig();
   
-  // 1. RESOLVE MODEL & REGION
-  const location = options.location || configLocation || 'us-central1';
-  const rawModel = options.model || getGeminiTextModel() || 'gemini-2.5-flash';
+  // 1. RESOLVE MODEL & ENDPOINT
+  const rawModel = options.model || getGeminiTextModel() || 'gemini-3.1-pro-preview';
   const model = rawModel.trim();
-  
-  const isGemini3 = model.toLowerCase().includes('gemini-3');
-  const isPreview = model.toLowerCase().includes('preview');
-  const apiVersion = isPreview ? 'v1beta1' : 'v1';
-  
-  const endpoint = `https://${location}-aiplatform.googleapis.com/${apiVersion}/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
+  const location = options.location || defaultLocation;
+
+  // 🔥 REST API REQUIREMENT: Gemini 3.1 Reasoning features MUST use v1beta1
+  const endpoint = `https://${location}-aiplatform.googleapis.com/${"v1beta1"}/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
   
   const accessToken = await getVertexAIAuthToken();
-  
-  // 2. SNAKE_CASE CONFIG
-  const thinking_config: any = { include_thoughts: true };
-  if (isGemini3) {
-    thinking_config.thinking_level = (options.thinkingLevel || 'LOW').toUpperCase();
-  } else {
-    const level = options.thinkingLevel || 'low';
-    const budgets = { minimal: 0, low: 1024, medium: 4096, high: 8192 };
-    thinking_config.thinking_budget = options.thinkingBudget ?? budgets[level as keyof typeof budgets] ?? 1024;
-  }
 
+  // 2. CONSTRUCT SDK-ALIGNED PAYLOAD (Strict Snake_Case)
   const requestBody: any = {
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: prompt }]
+      }
+    ],
     generation_config: {
-      temperature: options.temperature ?? 0.2,
-      top_p: options.topP ?? 0.9,
-      max_output_tokens: options.maxOutputTokens ?? 8192,
-      response_mime_type: options.responseMime_type ?? "application/json",
-      thinking_config: thinking_config 
+      temperature: options.temperature ?? 0.7, // Matching SDK default for creative tasks
+      top_p: options.topP ?? 0.95,             // Matching Python snippet
+      max_output_tokens: options.maxOutputTokens ?? 65535, 
+      response_mime_type: options.responseMimeType ?? "application/json",
+      
+      // 🔥 THE FIX: Nested thinking_config in snake_case
+      thinking_config: {
+        include_thoughts: true,
+        thinking_level: (options.thinkingLevel || 'MEDIUM').toUpperCase()
+      }
     },
-    safety_settings: options.safetySettings || getDefaultGeminiSafetySettings()
+    // Adding Google Search Tooling as seen in your Python snippet
+    tools: [
+      { google_search: {} }
+    ],
+    // Safety Settings set to 'OFF' to match the successful Python test
+    safety_settings: [
+      { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "OFF" },
+      { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "OFF" },
+      { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "OFF" },
+      { category: "HARM_CATEGORY_HARASSMENT", threshold: "OFF" }
+    ]
   };
 
+  // Add system instruction if provided
   if (options.systemInstruction) {
     requestBody.system_instruction = {
-      role: 'system', parts: [{ text: options.systemInstruction }]
+      role: 'system',
+      parts: [{ text: options.systemInstruction }],
     };
   }
 
-  console.log(`[Vertex Gemini] [TRY ${location}] Requesting ${model}`);
-
+  console.log(`[Vertex Gemini] Final Deploy: Requesting ${model} via v1beta1 at ${location}`);
+  
   const response = await fetchWithRetry(
     endpoint,
     {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(requestBody)
     },
-    { maxRetries: 0, timeoutMs: 30000 } // Short timeout for region-hopping
+    {
+      maxRetries: 3,
+      timeoutMs: 90000, // 90s total timeout
+    }
   );
 
   if (!response.ok) {
-    // ─── ERROR HANDLING & REGION HOPPING ───
+    const errorText = await response.text();
     
-    // STEP A: If us-central1 404s, try us-east1
-    if (response.status === 404 && location === 'us-central1' && isGemini3) {
-      console.warn(`[Vertex Gemini] 404 in us-central1. Hopping to us-east1...`);
-      return generateText(prompt, { ...options, location: 'us-east1' });
-    }
-
-    // STEP B: If us-east1 also 404s (or any other error), fall back to Gemini 2.5
-    if ((response.status === 404 || response.status === 400) && isGemini3 && !(options as any)._isFallbackAttempt) {
-      console.warn(`[Vertex Gemini] Gemini 3 unavailable in both regions. Falling back to 2.5-flash...`);
+    // Emergency Fallback to 2.5-flash if the reasoning model is strictly unreachable
+    if (response.status === 404 && !(options as any)._isFallbackAttempt) {
+      console.warn(`[Vertex Gemini] Model ${model} not found. Trying fallback...`);
       return generateText(prompt, {
         ...options,
         model: 'gemini-2.5-flash',
-        location: 'us-central1',
-        thinkingLevel: 'low', // Fast fallback to save time
         _isFallbackAttempt: true
       } as any);
     }
-
-    const errorText = await response.text();
-    throw new Error(`Vertex AI error ${response.status}: ${errorText}`);
+    
+    throw new Error(`Vertex AI Gemini error ${response.status}: ${errorText}`);
   }
 
   const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts
-    ?.filter((p: any) => !p.thought)
-    .map((p: any) => p.text).join('').trim();
-
-  if (!text) throw new Error('Empty response from Vertex AI');
+  const candidate = data.candidates?.[0];
   
-  return { text, safetyRatings: data.candidates[0].safetyRatings };
+  if (!candidate) throw new Error('No candidates in Vertex AI response');
+
+  // 3. EXTRACT CLEAN TEXT (Filter out reasoning parts)
+  const text = candidate.content?.parts
+    ?.filter((part: any) => !part.thought)
+    .map((part: any) => part.text)
+    .join('')
+    .trim();
+
+  if (!text) throw new Error('Response contained only thoughts, no final output.');
+  
+  return {
+    text,
+    finishReason: candidate.finishReason,
+    safetyRatings: candidate.safetyRatings
+  };
 }
 
 // =============================================================================
