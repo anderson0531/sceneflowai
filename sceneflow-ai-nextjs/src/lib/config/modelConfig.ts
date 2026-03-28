@@ -165,17 +165,17 @@ export function getEnvImagenQuality(): ImagenQualityTier {
 
 export const GEMINI_TEXT_MODELS = {
   /** Gemini 3.0 Flash - Fast, cheap, excellent for summarization, initial analysis */
-  flash: 'gemini-3.0-flash-preview-0126', // Using specific versioned ID
+  flash: 'gemini-3-flash-preview', // Verified Vertex AI ID for us-central1
 
   /** Gemini 3.1 Pro - Slower, more expensive, superior reasoning for complex tasks */
-  pro: 'gemini-3.1-pro-preview',
+  pro: 'gemini-3.1-pro-preview', // Verified Vertex AI ID for us-central1
 };
 
 /** Previous models, kept for fallback reference */
 export const GEMINI_TEXT_MODELS_PREVIOUS = {
   '2.5-flash': 'gemini-2.5-flash',
   '2.5-pro': 'gemini-2.5-pro',
-} as const;
+};
 
 /**
  * Returns the default Gemini text model ID.

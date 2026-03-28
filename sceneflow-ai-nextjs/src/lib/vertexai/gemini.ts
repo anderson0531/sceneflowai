@@ -113,9 +113,11 @@ export async function generateText(
   const model = (options.model || getGeminiTextModel()).trim()
   
   // ALWAYS use the regional endpoint. The "global" endpoint is not reliable for Gemini 3.
-  const location = options.location || defaultLocation
+  const isGemini3Model = model.startsWith('gemini-3')
+  const location = options.location || defaultLocation // ALWAYS use regional endpoint
   
   // Vertex AI endpoint for Gemini models
+  // Format: https://{location}-aiplatform.googleapis.com/v1/projects/{project}/locations/{location}/publishers/google/models/{model}:generateContent
   const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
   
   const accessToken = await getVertexAIAuthToken()
@@ -243,9 +245,21 @@ export async function generateText(
     throw new Error('No candidates in Vertex AI response')
   }
   
-  const text = candidate.content?.parts?.[0]?.text
+  // 🔥 "Thought Pollution" Fix: Filter out thought parts before joining.
+  const text = candidate.content?.parts
+    ?.filter((part: any) => !part.thought)
+    .map((part: any) => part.text)
+    .join('')
+    .trim()
+
   if (!text) {
-    throw new Error('No text content in Vertex AI response')
+    // If text is empty after filtering, check for thoughts to provide better debugging
+    const thoughts = candidate.content?.parts?.filter((part: any) => part.thought).map((part: any) => part.text).join('\n');
+    if (thoughts) {
+      console.error('[Vertex Gemini] Response contained only thoughts, no text output:', thoughts);
+      throw new Error('LLM response contained only thoughts, resulting in empty output.');
+    }
+    throw new Error('No text content in Vertex AI response after filtering thoughts')
   }
   
   return {

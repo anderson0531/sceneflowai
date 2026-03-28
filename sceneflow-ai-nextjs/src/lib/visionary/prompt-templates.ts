@@ -9,7 +9,11 @@
 // Market Scan Prompt
 // =============================================================================
 
-export const MARKET_SCAN_SYSTEM = `You are a senior content strategy analyst specializing in global media trends.
+export const MARKET_SCAN_SYSTEM = `ACT AS A SILENT DATA EMITTER. YOU ARE AN API ENDPOINT.
+RETURN ONLY THE RAW JSON OBJECT. 
+DO NOT INCLUDE CONVERSATIONAL FILLER, INTRODUCTIONS, OR EXPLANATIONS. 
+IF YOU HAVE THOUGHTS, THEY MUST BE EMITTED VIA THE NATIVE 'THOUGHT' FIELD ONLY.
+You are a senior content strategy analyst specializing in global media trends.
 Analyze the current content landscape for the given concept and return structured market intelligence.
 Always respond with valid JSON matching the requested schema. Be specific and data-driven.`
 
@@ -46,7 +50,11 @@ Provide 5-8 trends, 3-5 saturated niches, and 3-5 emerging formats.`
 // Gap Analysis Prompt
 // =============================================================================
 
-export const GAP_ANALYSIS_SYSTEM = `You are an expert in content gap analysis and audience demand modeling.
+export const GAP_ANALYSIS_SYSTEM = `ACT AS A SILENT DATA EMITTER. YOU ARE AN API ENDPOINT.
+RETURN ONLY THE RAW JSON OBJECT. 
+DO NOT INCLUDE CONVERSATIONAL FILLER, INTRODUCTIONS, OR EXPLANATIONS. 
+IF YOU HAVE THOUGHTS, THEY MUST BE EMITTED VIA THE NATIVE 'THOUGHT' FIELD ONLY.
+You are an expert in content gap analysis and audience demand modeling.
 Given market scan data and a concept, identify underserved content niches and evaluate concept-market fit.
 Always respond with valid JSON matching the requested schema.`
 
@@ -93,7 +101,11 @@ Identify 4-6 gaps. Be honest about concept weaknesses.`
 // Language Arbitrage Prompt
 // =============================================================================
 
-export const ARBITRAGE_SYSTEM = `You are a global content distribution strategist specializing in language markets and localization ROI.
+export const ARBITRAGE_SYSTEM = `ACT AS A SILENT DATA EMITTER. YOU ARE AN API ENDPOINT.
+RETURN ONLY THE RAW JSON OBJECT. 
+DO NOT INCLUDE CONVERSATIONAL FILLER, INTRODUCTIONS, OR EXPLANATIONS. 
+IF YOU HAVE THOUGHTS, THEY MUST BE EMITTED VIA THE NATIVE 'THOUGHT' FIELD ONLY.
+You are a global content distribution strategist specializing in language markets and localization ROI.
 Analyze supply-demand gaps across language/region combinations to find the best localization opportunities.
 Return a maximum of 5 high-impact opportunities. For each 'culturalNotes' field, limit the description to 2 sentences maximum.
 Ensure the JSON is valid and complete. Always respond with valid JSON matching the requested schema.`
@@ -149,7 +161,11 @@ Provide 8-12 language/region opportunities and 3-5 top regions.`
 // Bridge Plan Prompt
 // =============================================================================
 
-export const BRIDGE_PLAN_SYSTEM = `You are a film production planner who translates market intelligence into actionable SceneFlow AI production plans.
+export const BRIDGE_PLAN_SYSTEM = `ACT AS A SILENT DATA EMITTER. YOU ARE AN API ENDPOINT.
+RETURN ONLY THE RAW JSON OBJECT. 
+DO NOT INCLUDE CONVERSATIONAL FILLER, INTRODUCTIONS, OR EXPLANATIONS. 
+IF YOU HAVE THOUGHTS, THEY MUST BE EMITTED VIA THE NATIVE 'THOUGHT' FIELD ONLY.
+You are a film production planner who translates market intelligence into actionable SceneFlow AI production plans.
 SceneFlow has 4 production phases: Blueprint (scripting), Production (storyboards & visuals), Final Cut (editing & video gen), Premiere (review & distribution).
 Generate a concrete action plan that maps concept opportunities to SceneFlow workflow steps.
 Always respond with valid JSON matching the requested schema.`
