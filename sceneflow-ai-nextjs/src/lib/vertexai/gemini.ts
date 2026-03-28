@@ -158,18 +158,30 @@ export async function generateText(
     }
   }
 
+  // Model-aware thinking configuration
+  const isGemini3Model = model.startsWith('gemini-3');
+  const thinkingConfig: any = {
+    includeThoughts: true,
+  };
+
+  if (isGemini3Model) {
+    thinkingConfig.thinkingLevel = (options.thinkingLevel || 'low').toLowerCase();
+  } else {
+    // Translate thinkingLevel to legacy thinkingBudget for older models
+    const thinkingLevelToBudget = {
+      minimal: 0,
+      low: 1024,
+      medium: 8192,
+      high: 24576,
+    };
+    thinkingConfig.thinkingBudget = options.thinkingBudget ?? thinkingLevelToBudget[options.thinkingLevel as keyof typeof thinkingLevelToBudget] ?? 1024;
+  }
+  
+  requestBody.generationConfig.thinkingConfig = thinkingConfig;
+  
   // Safety settings
   requestBody.safetySettings = options.safetySettings || getDefaultGeminiSafetySettings()
   console.log(`[Vertex Gemini] Safety settings: ${requestBody.safetySettings.map((s: SafetySetting) => `${s.category}=${s.threshold}`).join(', ')}`)
-  
-  // Add thinking config — supports both Gemini 2.5 (numeric) and 3.0+ (string levels)
-  const thinkingConfig = buildThinkingConfig(model, {
-    thinkingBudget: options.thinkingBudget,
-    thinkingLevel: options.thinkingLevel,
-  });
-  if (thinkingConfig) {
-    requestBody.generationConfig.thinkingConfig = thinkingConfig;
-  }
   
   console.log(`[Vertex Gemini] Generating text with ${model}...`)
   
