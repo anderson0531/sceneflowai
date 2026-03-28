@@ -1,29 +1,15 @@
 /**
  * Vertex AI Gemini Client
- * 
- * Unified client for all Gemini model access via Vertex AI.
- * Replaces direct Gemini API calls (generativelanguage.googleapis.com) with
- * Vertex AI endpoints (aiplatform.googleapis.com) for pay-as-you-go billing.
- * 
- * Supports:
- * - Text generation (Gemini 2.0/3.0 Flash, Pro)
- * - Vision analysis (multimodal with images)
- * - Image generation (Gemini 3 Pro Image Preview → Imagen 4)
- * 
- * @see GEMINI_MIGRATION.md for migration details
  */
 
 import { getVertexAIAuthToken } from './client'
 import { fetchWithRetry } from '../utils/retry'
 import { 
   getDefaultGeminiSafetySettings, 
-  getImagenSafetyFilterLevel, 
-  getImagenPersonGeneration,
   type SafetySetting 
 } from './safety'
 import { 
   getGeminiTextModel, 
-  buildThinkingConfig,
   GEMINI_TEXT_MODELS_PREVIOUS,
   type GeminiThinkingLevel 
 } from '../config/modelConfig'
