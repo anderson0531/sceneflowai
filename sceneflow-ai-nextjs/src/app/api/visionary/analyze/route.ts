@@ -88,8 +88,8 @@ export async function POST(req: Request) {
     const seriesBibleResult = await generateText(biblePrompt, {
       model: 'gemini-3.1-pro-preview',
       systemInstruction: SERIES_BIBLE_SYSTEM_PROMPT,
-      // ⚡ TWEAK: Using 'medium' instead of 'high' to stay under 60s while testing
-      thinkingLevel: 'medium' 
+      // ⚡ TWEAK: Using 'low' instead of 'medium' to get under 60s
+      thinkingLevel: 'low' 
     });
     
     const seriesBible = safeParseJSON(seriesBibleResult.text);
