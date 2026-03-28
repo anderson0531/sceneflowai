@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     // Phase 1: Market Scan
     const marketScanResult = await generateText(
       buildMarketScanPrompt(concept, genre, regions),
-      { model: getGeminiTextModel(), systemInstruction: MARKET_SCAN_SYSTEM, thinkingLevel: 'low' }
+      { model: getGeminiTextModel(), systemInstruction: MARKET_SCAN_SYSTEM, thinkingLevel: 'minimal' } // Use minimal thinking for speed
     );
     const marketScan = safeParseJSON(marketScanResult.text);
     if (!marketScan || Object.keys(marketScan).length === 0) {
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     // Phase 2: Gap Analysis
     const gapAnalysisResult = await generateText(
       buildGapAnalysisPrompt(concept, JSON.stringify(marketScan), genre),
-      { model: getGeminiTextModel(), systemInstruction: GAP_ANALYSIS_SYSTEM, thinkingLevel: 'low' }
+      { model: getGeminiTextModel(), systemInstruction: GAP_ANALYSIS_SYSTEM, thinkingLevel: 'minimal' } // Use minimal thinking for speed
     );
     const gapAnalysis = safeParseJSON(gapAnalysisResult.text);
     if (!gapAnalysis || Object.keys(gapAnalysis).length === 0) {
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     // Phase 3: Arbitrage Map
     const arbitrageResult = await generateText(
       buildArbitragePrompt(concept, JSON.stringify(gapAnalysis), focusLanguages),
-      { model: 'gemini-3.1-pro-001', systemInstruction: ARBITRAGE_SYSTEM, thinkingLevel: 'medium' }
+      { model: 'gemini-3.1-pro-preview', systemInstruction: ARBITRAGE_SYSTEM, thinkingLevel: 'medium' }
     );
     const arbitrageMap = safeParseJSON(arbitrageResult.text);
     if (!arbitrageMap || Object.keys(arbitrageMap).length === 0) {
