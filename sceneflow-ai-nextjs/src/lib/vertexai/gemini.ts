@@ -151,7 +151,7 @@ export async function generateText(
 
   if (isGemini3Model) {
     // Gemini 3 standard
-    thinkingConfig.thinkingLevel = (options.thinkingLevel || 'low').toUpperCase();
+    thinkingConfig.thinkingLevel = (options.thinkingLevel || 'low').toLowerCase();
   } else {
     // Gemini 2.5 legacy fallback
     const thinkingLevelToBudget = {
