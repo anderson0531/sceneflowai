@@ -167,8 +167,9 @@ export async function generateText(
   if (!response.ok) {
     const errorText = await response.text();
     
-    if (response.status === 404 && isGemini3 && !(options as any)._isFallbackAttempt) {
-      console.warn(`[Vertex Gemini] Global 404 for ${model}. Falling back to 2.5-flash regional.`);
+    if ((response.status === 404 || response.status === 400) && isGemini3 && !(options as any)._isFallbackAttempt) {
+      console.warn(`[Vertex Gemini] Gemini 3 unavailable in both regions. Falling back to 2.5-flash...`);
+      console.error(`[Vertex Gemini] Full Error Body:`, await response.text()); // Log the full error body
       return generateText(prompt, {
         ...options,
         model: 'gemini-2.5-flash',
@@ -178,6 +179,7 @@ export async function generateText(
       } as any);
     }
     
+    console.error(`[Vertex Gemini] Full Error Body:`, errorText); // Log the full error body
     throw new Error(`Vertex AI error ${response.status}: ${errorText}`);
   }
 

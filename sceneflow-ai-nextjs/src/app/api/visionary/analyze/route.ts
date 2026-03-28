@@ -63,11 +63,16 @@ export async function POST(req: Request) {
       buildArbitragePrompt(concept, JSON.stringify(gapAnalysis), focusLanguages),
       { 
         model: 'gemini-3.1-pro-preview', 
-        systemInstruction: ARBITRAGE_SYSTEM, 
+        systemInstruction: ARBITRage_SYSTEM, 
         thinkingLevel: 'medium' 
       }
     );
     const arbitrageMap = safeParseJSON(arbitrageResult.text);
+
+    // 🔥 STRATEGIC DEBUG LOG
+    console.log('📊 [Visionary Debug] Phase 3 Arbitrage Map Data:');
+    console.log(JSON.stringify(arbitrageMap, null, 2));
+
     if (!arbitrageMap || Object.keys(arbitrageMap).length === 0) {
       throw new Error("Phase 3 failed to produce arbitrage map data.");
     }
@@ -78,12 +83,17 @@ export async function POST(req: Request) {
       selectedMarket: selectedMarket || (arbitrageMap.opportunities && arbitrageMap.opportunities[0])
     });
 
+    console.log('📜 [Visionary API] Starting Phase 4 (Series Bible)...');
+
     const seriesBibleResult = await generateText(biblePrompt, {
       model: 'gemini-3.1-pro-preview',
       systemInstruction: SERIES_BIBLE_SYSTEM_PROMPT,
-      thinkingLevel: 'high'
+      // ⚡ TWEAK: Using 'medium' instead of 'high' to stay under 60s while testing
+      thinkingLevel: 'medium' 
     });
+    
     const seriesBible = safeParseJSON(seriesBibleResult.text);
+    console.log('✅ Series Bible Complete');
 
     return NextResponse.json({
       reportId: crypto.randomUUID(),
@@ -95,7 +105,7 @@ export async function POST(req: Request) {
     });
 
   } catch (error: any) {
-    console.error('[Visionary API Error]:', error.message);
+    console.error('💥 [Visionary API Error]:', error.message);
     return NextResponse.json(
       { error: 'Pipeline failed', details: error.message },
       { status: 500 }
