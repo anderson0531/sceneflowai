@@ -1,3 +1,4 @@
+export const maxDuration = 300;
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { generateText } from '@/lib/vertexai/gemini';
