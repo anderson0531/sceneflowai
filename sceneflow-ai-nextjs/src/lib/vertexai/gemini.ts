@@ -165,9 +165,9 @@ export async function generateText(
   
   // Safety settings
   requestBody.safetySettings = options.safetySettings || getDefaultGeminiSafetySettings()
-  console.log(`[Vertex Gemini] Safety settings: ${requestBody.safetySettings.map((s: SafetySetting) => `${s.category}=${s.threshold}`).join(', ')}`)
   
-  console.log(`[Vertex Gemini] Generating text with ${model}...`)
+  console.log(`[Vertex Gemini] Generating text with ${model}...`);
+  console.log(`[Vertex Gemini] Endpoint URL: ${endpoint}`); // Emergency ID Logging
   
   const response = await fetchWithRetry(
     endpoint,
@@ -200,12 +200,12 @@ export async function generateText(
       const thinkingLevelToBudget: Record<GeminiThinkingLevel, number> = {
         minimal: 0,
         low: 1024,
-        medium: 8192,
-        high: 24576,
+        medium: 4096, // Capped at 4096
+        high: 8192,  // Capped at 8192
       }
       const fallbackOptions = { ...options }
       if (fallbackOptions.thinkingLevel) {
-        fallbackOptions.thinkingBudget = thinkingLevelToBudget[fallbackOptions.thinkingLevel]
+        fallbackOptions.thinkingBudget = Math.min(thinkingLevelToBudget[fallbackOptions.thinkingLevel], 8192); // Harden the Fallback
         delete fallbackOptions.thinkingLevel
         console.warn(`[Vertex Gemini] Translated thinkingLevel "${options.thinkingLevel}" → thinkingBudget ${fallbackOptions.thinkingBudget} for ${fallbackModel}`)
       }
