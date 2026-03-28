@@ -158,8 +158,7 @@ export async function generateText(
     }
   }
 
-  // Handle thinking configuration based on model generation.
-  // This is now correctly nested inside generationConfig.
+  // A single, unified block for handling thinking configuration.
   const thinkingConfig: any = {
     includeThoughts: true, // Always include for better debugging
   };
@@ -175,7 +174,8 @@ export async function generateText(
     }
   }
 
-  if (Object.keys(thinkingConfig).length > 1) { // More than just includeThoughts
+  // Only add the thinkingConfig to the request if it has more than just includeThoughts
+  if (Object.keys(thinkingConfig).length > 1) {
     requestBody.generationConfig.thinkingConfig = thinkingConfig;
   }
   
