@@ -204,32 +204,35 @@ export interface ReportDetailResponse {
 // Status Ticker Messages
 // =============================================================================
 
-export const PHASE_TICKER_MESSAGES: Record<VisionaryPhase, string[]> = {
-  'idle': ['Ready to analyze...'],
+export const PHASE_TICKER_MESSAGES: Record<string, string[]> = {
   'market-scan': [
-    'Scanning global content landscape...',
-    'Analyzing trending genres and formats...',
-    'Mapping competitive density across regions...',
-    'Identifying emerging content patterns...',
+    'Scouring global YouTube viewership trends...',
+    'Identifying high-retention content patterns...',
+    'Analyzing viral hooks in your niche...',
+    'Cross-referencing historical metadata...',
+    'Mapping category growth vs. saturation...',
   ],
   'gap-analysis': [
-    'Identifying underserved audience segments...',
-    'Evaluating concept-market fit...',
-    'Scoring opportunity windows...',
-    'Mapping demand signals to content gaps...',
+    'Isolating underserved audience segments...',
+    'Calculating Audience Retention Potential (ARP)...',
+    'Identifying "Content Voids" in the current market...',
+    'Synthesizing creative pivot suggestions...',
+    'Evaluating concept-market alignment...',
   ],
   'arbitrage-map': [
-    'Calculating language supply-demand ratios...',
-    'Mapping regional content opportunities...',
-    'Analyzing localization ROI potential...',
-    'Building arbitrage heat map...',
+    'Calculating language ROI across 72 regions...',
+    'Identifying high-CPM regional targets...',
+    'Mapping supply-demand gaps by territory...',
+    'Architecting the Optimized Series Bible...',
+    'Finalizing creative hooks and localized titles...',
   ],
-  'bridge-plan': [
-    'Generating production action plan...',
-    'Estimating credit requirements...',
-    'Sequencing workflow phases...',
-    'Optimizing for maximum impact...',
+  'complete': [
+    'Analysis complete!',
+    'Series Bible generated.',
+    'Market Arbitrage Map ready.',
   ],
-  'complete': ['Analysis complete!'],
-  'error': ['Analysis encountered an error.'],
+  'error': [
+    'Analysis interrupted.',
+    'Check connection or concept complexity.',
+  ],
 }

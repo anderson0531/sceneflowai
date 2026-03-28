@@ -36,16 +36,7 @@ const PHASES = [
     ringColor: 'rgba(16, 185, 129, 0.15)',
     gradient: 'from-emerald-500 to-teal-400',
   },
-  {
-    key: 'bridge-plan' as VisionaryPhase,
-    label: 'Bridge Plan',
-    icon: Route,
-    color: '#F59E0B',       // amber-500
-    glowColor: 'rgba(245, 158, 11, 0.4)',
-    ringColor: 'rgba(245, 158, 11, 0.15)',
-    gradient: 'from-amber-500 to-orange-400',
-  },
-]
+];
 
 // ─── Floating particle component ──────────────────────────────────────────────
 

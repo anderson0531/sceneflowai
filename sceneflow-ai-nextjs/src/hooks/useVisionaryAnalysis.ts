@@ -80,22 +80,26 @@ export function useVisionaryAnalysis() {
     const phaseTargets: Record<string, number> = {
       'market-scan': 33,
       'gap-analysis': 66,
-      'arbitrage-map': 95,
+      'arbitrage-map': 98, // Leave room for 100% on return
     }
 
     progressTimerRef.current = setInterval(() => {
       const currentPhase = phaseRef.current
-      const target = phaseTargets[currentPhase] || 95
+      const target = phaseTargets[currentPhase] || 98
 
       if (simulatedProgress < target) {
-        simulatedProgress += (target - simulatedProgress) * 0.06
-        simulatedProgress = Math.min(simulatedProgress, target)
-        setProgress(prev => ({
-          ...prev,
-          progress: Math.round(simulatedProgress),
-        }))
+        simulatedProgress += (target - simulatedProgress) * 0.05 // Standard approach
+      } else if (currentPhase !== 'arbitrage-map') {
+        // AUTO-ADVANCE DRIFT:
+        const order: VisionaryPhase[] = ['market-scan', 'gap-analysis', 'arbitrage-map']
+        const nextIdx = order.indexOf(currentPhase) + 1
+        if (nextIdx < order.length) {
+          setPhase(order[nextIdx])
+        }
       }
-    }, 400)
+
+      setProgress(prev => ({ ...prev, progress: Math.round(simulatedProgress) }))
+    }, 500)
 
     try {
       // ── Fire the POST (server runs all 4 phases) ─────────────────
