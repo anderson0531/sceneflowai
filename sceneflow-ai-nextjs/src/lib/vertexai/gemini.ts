@@ -164,7 +164,6 @@ export async function generateText(
     includeThoughts: true, // Always include for better debugging
   };
 
-  const isGemini3Model = model.startsWith('gemini-3');
   if (isGemini3Model) {
     if (options.thinkingLevel) {
       thinkingConfig.thinkingLevel = options.thinkingLevel.toUpperCase();
