@@ -316,21 +316,20 @@ export async function POST(request: NextRequest) {
     // ─── Phase 3: Arbitrage Map ───────────────────────────────────────
     try {
       console.log(`[${timestamp}] [Visionary] Phase 3: Arbitrage Map`)
-      const arbResult = await generateText(
+      const arbitrageResult = await generateText(
         buildArbitragePrompt(concept, JSON.stringify(report.gap_analysis), focusLanguages),
         {
+          model: 'gemini-3.1-pro-preview', // Use the superior model for heavy lifting
           systemInstruction: ARBITRAGE_SYSTEM,
-          responseMimeType: 'application/json',
-          temperature: 0.5,
-          maxOutputTokens: 4096,
           thinkingLevel: 'medium',
+          maxOutputTokens: 8192, // Increase token limit for the more powerful model
         }
       )
 
-      const arbitrageMap = safeParseJSON(arbResult.text)
+      const arbitrageJson = safeParseJSON(arbitrageResult.text)
       totalCredits += 30
 
-      await report.update({ arbitrage_map: arbitrageMap, credits_used: totalCredits })
+      await report.update({ arbitrage_map: arbitrageJson, credits_used: totalCredits })
       console.log(`[${timestamp}] [Visionary] Phase 3 complete`)
     } catch (err: any) {
       console.error(`[${timestamp}] [Visionary] Phase 3 failed:`, err.message)
