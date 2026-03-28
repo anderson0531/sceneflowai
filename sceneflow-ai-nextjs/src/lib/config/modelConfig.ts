@@ -165,10 +165,10 @@ export function getEnvImagenQuality(): ImagenQualityTier {
 
 export const GEMINI_TEXT_MODELS = {
   /** Gemini 3.0 Flash - Fast, cheap, excellent for summarization, initial analysis */
-  flash: 'gemini-3-flash-preview', // Verified Vertex AI ID for us-central1
+  flash: 'gemini-3.0-flash-001', // Verified Vertex AI ID for us-central1
 
   /** Gemini 3.1 Pro - Slower, more expensive, superior reasoning for complex tasks */
-  pro: 'gemini-3.1-pro-preview', // Verified Vertex AI ID for us-central1
+  pro: 'gemini-3.1-pro-001', // Verified Vertex AI ID for us-central1
 };
 
 /** Previous models, kept for fallback reference */

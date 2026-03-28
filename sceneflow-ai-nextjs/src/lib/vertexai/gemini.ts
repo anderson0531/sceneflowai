@@ -156,7 +156,7 @@ export async function generateText(
       minimal: 0,
       low: 1024,
       medium: 8192,
-      high: 24576,
+      high: 8192, // Capped at 8192
     };
     thinkingConfig.thinkingBudget = options.thinkingBudget ?? thinkingLevelToBudget[options.thinkingLevel as keyof typeof thinkingLevelToBudget] ?? 1024;
   }
