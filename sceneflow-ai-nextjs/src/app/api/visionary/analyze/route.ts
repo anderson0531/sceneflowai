@@ -1,99 +1,81 @@
-import { NextRequest, NextResponse } from 'next/server'
-import '@/models'
-import VisionaryReport from '@/models/VisionaryReport'
-import { sequelize } from '@/config/database'
-import { resolveUser } from '@/lib/userHelper'
-import { generateText } from '@/lib/vertexai/gemini'
-import { safeParseJSON } from '@/lib/utils/safeParseJSON';
-import {
-  MARKET_SCAN_SYSTEM,
-  buildMarketScanPrompt,
-  GAP_ANALYSIS_SYSTEM,
+import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
+import { generateText } from '@/lib/vertexai/gemini';
+import { 
+  buildMarketScanPrompt, 
   buildGapAnalysisPrompt,
-  ARBITRAGE_SYSTEM,
   buildArbitragePrompt,
-} from '@/lib/visionary/prompt-templates'
+  buildSeriesBiblePrompt,
+  MARKET_SCAN_SYSTEM,
+  GAP_ANALYSIS_SYSTEM,
+  ARBITRAGE_SYSTEM,
+  SERIES_BIBLE_SYSTEM_PROMPT
+} from '@/lib/visionary/prompt-templates';
+import { safeParseJSON } from '@/lib/utils/safeParseJSON';
 
-export const dynamic = 'force-dynamic'
-export const maxDuration = 300 // Allow up to 5 minutes for full pipeline
+export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
 
-export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const user = await resolveUser(req)
-
-  if (!user) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
-  }
-
-  if (!body.concept) {
-    return NextResponse.json({ success: false, error: 'Concept is required' }, { status: 400 })
-  }
-
-  const report = await VisionaryReport.create({
-    userId: user.id,
-    concept: body.concept,
-    genre: body.genre,
-    status: 'running',
-  })
-  
-  console.log(`[Visionary] Created report ${report.id} for user ${user.id}`)
-
+export async function POST(req: Request) {
   try {
-    // PHASE 1: Market Scan
-    console.log(`[Visionary] Phase 1: Market Scan`)
+    const headerList = await headers();
+    const userId = headerList.get('x-user-id') || 'anonymous';
+
+    const body = await req.json();
+    const { concept, genre, regions, focusLanguages, selectedMarket } = body;
+
+    if (!concept) {
+      return NextResponse.json({ error: 'Concept is required' }, { status: 400 });
+    }
+
+    // Phase 1: Market Scan
     const marketScanResult = await generateText(
-      buildMarketScanPrompt(body.concept, body.genre, body.regions),
-      {
-        systemInstruction: MARKET_SCAN_SYSTEM,
-        thinkingLevel: 'low',
-      }
-    )
-    const marketScanJson = safeParseJSON(marketScanResult.text)
-    if (!marketScanJson) {
-      throw new Error('Phase 1 failed: Invalid JSON from LLM for Market Scan')
-    }
-    await report.update({ marketScan: marketScanJson, status: 'running-phase-2' })
-    console.log(`[Visionary] Phase 1 complete`)
+      buildMarketScanPrompt(concept, genre, regions),
+      { model: 'gemini-3-flash-preview', systemInstruction: MARKET_SCAN_SYSTEM, thinkingLevel: 'low' }
+    );
+    const marketScan = safeParseJSON(marketScanResult.text);
 
-    // PHASE 2: Gap Analysis
-    console.log(`[Visionary] Phase 2: Gap Analysis`)
+    // Phase 2: Gap Analysis
     const gapAnalysisResult = await generateText(
-      buildGapAnalysisPrompt(body.concept, JSON.stringify(marketScanJson), body.genre),
-      {
-        systemInstruction: GAP_ANALYSIS_SYSTEM,
-        thinkingLevel: 'medium',
-      }
-    )
-    const gapAnalysisJson = safeParseJSON(gapAnalysisResult.text)
-    if (!gapAnalysisJson) {
-      throw new Error('Phase 2 failed: Invalid JSON from LLM for Gap Analysis')
-    }
-    await report.update({ gapAnalysis: gapAnalysisJson, status: 'running-phase-3' })
-    console.log(`[Visionary] Phase 2 complete`)
+      buildGapAnalysisPrompt(concept, JSON.stringify(marketScan), genre),
+      { model: 'gemini-3-flash-preview', systemInstruction: GAP_ANALYSIS_SYSTEM, thinkingLevel: 'low' }
+    );
+    const gapAnalysis = safeParseJSON(gapAnalysisResult.text);
 
-    // PHASE 3: Arbitrage Map
-    console.log(`[Visionary] Phase 3: Arbitrage Map`)
+    // Phase 3: Arbitrage Map
     const arbitrageResult = await generateText(
-      buildArbitragePrompt(body.concept, JSON.stringify(gapAnalysisJson), body.focusLanguages),
-      {
-        model: 'gemini-3.1-pro-preview',
-        systemInstruction: ARBITRAGE_SYSTEM,
-        thinkingLevel: 'MEDIUM',
-        maxOutputTokens: 8192,
-      }
-    )
-    const arbitrageJson = safeParseJSON(arbitrageResult.text)
-    if (!arbitrageJson) {
-      throw new Error('Phase 3 failed: Invalid JSON from LLM for Arbitrage Map')
-    }
-    await report.update({ arbitrageMap: arbitrageJson, status: 'complete' })
-    console.log(`[Visionary] Phase 3 complete`)
+      buildArbitragePrompt(concept, JSON.stringify(gapAnalysis), focusLanguages),
+      { model: 'gemini-3.1-pro-preview', systemInstruction: ARBITRAGE_SYSTEM, thinkingLevel: 'medium' }
+    );
+    const arbitrageMap = safeParseJSON(arbitrageResult.text);
+    
+    // Phase 4: Series Bible
+    const biblePrompt = buildSeriesBiblePrompt({
+      originalConcept: concept,
+      selectedMarket: selectedMarket || (arbitrageMap.opportunities && arbitrageMap.opportunities[0])
+    });
 
-    return NextResponse.json({ success: true, report })
+    const seriesBibleResult = await generateText(biblePrompt, {
+      model: 'gemini-3.1-pro-preview',
+      systemInstruction: SERIES_BIBLE_SYSTEM_PROMPT,
+      thinkingLevel: 'high'
+    });
+    const seriesBible = safeParseJSON(seriesBibleResult.text);
+
+    return NextResponse.json({
+      reportId: crypto.randomUUID(),
+      marketScan,
+      gapAnalysis,
+      arbitrageMap,
+      seriesBible,
+      metadata: { userId, timestamp: new Date().toISOString() }
+    });
 
   } catch (error: any) {
-    console.error(`[Visionary] Analysis for report ${report.id} failed:`, error)
-    await report.update({ status: 'failed', errorMessage: error.message })
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+    console.error('[Visionary API Error]:', error.message);
+    return NextResponse.json(
+      { error: 'Pipeline failed', details: error.message },
+      { status: 500 }
+    );
   }
 }

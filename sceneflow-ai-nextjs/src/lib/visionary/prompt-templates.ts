@@ -180,14 +180,14 @@ Your goal is to transform a raw concept and market arbitrage data into a "Series
 - MANDATORY TERMS: "Series", "Episode", "Viewer", "Protagonist", "Cinematic", "Hook", "Retention", "Visual Style", "Beat", "Arc".
 
 ### INPUT DATA
-1. Original Concept: {{originalConcept}}
-2. Target Market: {{selectedLanguage}} ({{selectedRegion}})
-3. Arbitrage Advantage: {{arbitrageScore}} - {{culturalNotes}}
+1. Original Concept
+2. Target Market
+3. Arbitrage Advantage
 
 ### OUTPUT STRUCTURE (Strict JSON)
 Generate a JSON object following this logic:
 
-1. "seriesTitle": A high-CTR, curiosity-gap title optimized for {{selectedLanguage}} viewers. 
+1. "seriesTitle": A high-CTR, curiosity-gap title optimized for the target market. 
 2. "logline": A one-sentence dramatic hook.
 3. "synopsis": A 3-paragraph narrative overview focusing on the "Conflict" and "Payoff" for the viewer.
 4. "protagonist": {
@@ -204,19 +204,19 @@ Generate a JSON object following this logic:
 6. "formatStyle": Define the interactive 'SceneFlow' device (e.g., 'First-Person Tactical POV' where the series stops for viewer decisions).
 
 ### CULTURAL TUNING
-Adjust the "Protagonist" and "Visual Style" to the specific tastes of {{selectedRegion}}. 
+Adjust the "Protagonist" and "Visual Style" to the specific tastes of the target region. 
 - If high-context/traditional: Emphasize honor, lineage, and atmosphere.
 - If high-energy/fast-paced: Emphasize competition, vibrant colors, and rapid beats.
 
 RETURN ONLY RAW JSON. NO PREAMBLE. NO CHAT.`
 
 export function buildSeriesBiblePrompt(marketSelection: any): string {
-  let prompt = SERIES_BIBLE_SYSTEM_PROMPT;
-  prompt = prompt.replace('{{originalConcept}}', marketSelection.originalConcept);
-  prompt = prompt.replace('{{selectedLanguage}}', marketSelection.selectedMarket.languageName);
-  prompt = prompt.replace('{{selectedRegion}}', marketSelection.selectedMarket.regionName);
-  prompt = prompt.replace('{{arbitrageScore}}', marketSelection.selectedMarket.arbitrageScore.toString());
-  prompt = prompt.replace('{{culturalNotes}}', marketSelection.selectedMarket.culturalNotes);
+  const { originalConcept, selectedMarket } = marketSelection;
+  const prompt = `
+    Original Concept: ${originalConcept}
+    Target Market: ${selectedMarket.languageName} (${selectedMarket.regionName})
+    Arbitrage Advantage: ${selectedMarket.arbitrageScore} - ${selectedMarket.culturalNotes}
+  `;
   return prompt;
 }
 
