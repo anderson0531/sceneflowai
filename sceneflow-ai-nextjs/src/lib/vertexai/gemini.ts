@@ -112,12 +112,10 @@ export async function generateText(
   // Trim the model name to remove any leading/trailing whitespace, including newlines
   const model = (options.model || getGeminiTextModel()).trim()
   
-  // Gemini 3 models require the global endpoint
-  const isGemini3Model = model.startsWith('gemini-3')
-  const location = options.location || (isGemini3Model ? 'global' : defaultLocation)
+  // ALWAYS use the regional endpoint. The "global" endpoint is not reliable for Gemini 3.
+  const location = options.location || defaultLocation
   
   // Vertex AI endpoint for Gemini models
-  // Format: https://{location}-aiplatform.googleapis.com/v1/projects/{project}/locations/{location}/publishers/google/models/{model}:generateContent
   const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
   
   const accessToken = await getVertexAIAuthToken()
@@ -158,35 +156,31 @@ export async function generateText(
     }
   }
 
-  // Initialize thinkingConfig
-  requestBody.generationConfig.thinkingConfig = {
+  // Handle thinking configuration based on model generation.
+  // This is now correctly nested inside generationConfig.
+  const thinkingConfig: any = {
     includeThoughts: true, // Always include for better debugging
   };
 
-  // Handle thinking configuration based on model generation
+  const isGemini3Model = model.startsWith('gemini-3');
   if (isGemini3Model) {
     if (options.thinkingLevel) {
-      requestBody.generationConfig.thinkingConfig.thinkingLevel = options.thinkingLevel.toUpperCase();
+      thinkingConfig.thinkingLevel = options.thinkingLevel.toUpperCase();
     }
   } else {
     // Handle legacy thinking budget for older models (e.g., Gemini 2.5)
     if (options.thinkingBudget !== undefined) {
-      requestBody.generationConfig.thinkingConfig.thinkingBudget = options.thinkingBudget;
+      thinkingConfig.thinkingBudget = options.thinkingBudget;
     }
+  }
+
+  if (Object.keys(thinkingConfig).length > 1) { // More than just includeThoughts
+    requestBody.generationConfig.thinkingConfig = thinkingConfig;
   }
   
   // Safety settings
   requestBody.safetySettings = options.safetySettings || getDefaultGeminiSafetySettings()
   console.log(`[Vertex Gemini] Safety settings: ${requestBody.safetySettings.map((s: SafetySetting) => `${s.category}=${s.threshold}`).join(', ')}`)
-  
-  // Add thinking config — supports both Gemini 2.5 (numeric) and 3.0+ (string levels)
-  const thinkingConfig = buildThinkingConfig(model, {
-    thinkingBudget: options.thinkingBudget,
-    thinkingLevel: options.thinkingLevel,
-  });
-  if (thinkingConfig) {
-    requestBody.generationConfig.thinkingConfig = thinkingConfig;
-  }
   
   console.log(`[Vertex Gemini] Generating text with ${model}...`)
   
@@ -214,7 +208,7 @@ export async function generateText(
     // Model fallback: if 404 (model not found) and using a Gemini 3 model,
     // retry with the previous-generation model (gemini-2.5-flash)
     if (response.status === 404 && isGemini3Model && !options._isFallbackAttempt) {
-      const fallbackModel = GEMINI_TEXT_MODELS_PREVIOUS.flash
+      const fallbackModel = GEMINI_TEXT_MODELS_PREVIOUS['2.5-flash']; // Correctly reference the fallback model
       console.warn(`[Vertex Gemini] Model "${model}" returned 404, falling back to "${fallbackModel}"`)
       
       // Translate 3.0 thinkingLevel → 2.5 thinkingBudget to prevent unrestricted thinking OOM

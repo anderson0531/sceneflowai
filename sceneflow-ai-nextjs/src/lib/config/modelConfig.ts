@@ -165,11 +165,11 @@ export function getEnvImagenQuality(): ImagenQualityTier {
 
 export const GEMINI_TEXT_MODELS = {
   /** Gemini 3.0 Flash - Fast, cheap, excellent for summarization, initial analysis */
-  flash: 'gemini-3-flash', // Corrected stable ID
+  flash: 'gemini-3.0-flash-preview-0126', // Using specific versioned ID
 
   /** Gemini 3.1 Pro - Slower, more expensive, superior reasoning for complex tasks */
   pro: 'gemini-3.1-pro-preview',
-} as const;
+};
 
 /** Previous models, kept for fallback reference */
 export const GEMINI_TEXT_MODELS_PREVIOUS = {
