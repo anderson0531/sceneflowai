@@ -27,6 +27,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { MarketOutlook } from './MarketOutlook';
+import { useCreativeOptimizer } from '@/hooks/useCreativeOptimizer';
+import { OptimizedCreative } from '@/types/visionary';
+import { ProductionPlan } from './ProductionPlan';
 
 interface StoryInsightsProps {
   currentStoryData: any; // Replace with actual story data type
@@ -79,7 +82,18 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
   const [sortBy, setSortBy] = useState<'impact' | 'confidence' | 'title'>('impact');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<'notes' | 'market'>('notes');
+  const [selectedMarket, setSelectedMarket] = useState<any | null>(null);
 
+  const { optimizedCreative, isLoading: isOptimizing, generateCreative } = useCreativeOptimizer();
+
+  const handleMarketSelect = (market: any) => {
+    setSelectedMarket(market);
+    generateCreative({
+      originalConcept: currentStoryData.concept,
+      selectedMarketId: market.id,
+    }, market);
+  };
+  
   // Use Optional Chaining and Nullish Coalescing for safe filtering and sorting.
   const filteredRecommendations = (recommendations ?? [])
     .filter(rec => filterStatus === 'all' || rec?.status === filterStatus)
@@ -365,8 +379,14 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
                   Start New Project
                 </Button>
               </div>
+            ) : selectedMarket && optimizedCreative ? (
+              <ProductionPlan creative={optimizedCreative} />
+            ) : selectedMarket && isOptimizing ? (
+              <div className="text-center py-12">
+                <p>Optimizing for {selectedMarket.regionName}...</p>
+              </div>
             ) : (
-              <MarketOutlook />
+              <MarketOutlook onMarketSelect={handleMarketSelect} />
             )}
           </div>
         </>

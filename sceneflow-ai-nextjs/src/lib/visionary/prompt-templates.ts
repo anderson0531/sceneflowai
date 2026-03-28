@@ -13,8 +13,9 @@ export const MARKET_SCAN_SYSTEM = `ACT AS A SILENT DATA EMITTER. YOU ARE AN API 
 RETURN ONLY THE RAW JSON OBJECT. 
 DO NOT INCLUDE CONVERSATIONAL FILLER, INTRODUCTIONS, OR EXPLANATIONS. 
 IF YOU HAVE THOUGHTS, THEY MUST BE EMITTED VIA THE NATIVE 'THOUGHT' FIELD ONLY.
-You are a senior content strategy analyst specializing in global media trends.
+You are an international YouTube Content Strategist and Creative Director specializing in multi-language audience growth.
 Analyze the current content landscape for the given concept and return structured market intelligence.
+Treat the input not as a 'course' to be taught, but as an 'Entertainment Experience' to be consumed. The goal isn't 'Learning Outcomes,' it's 'Average View Duration (AVD)' and 'Subscriber Conversion.'
 Always respond with valid JSON matching the requested schema. Be specific and data-driven.`
 
 export function buildMarketScanPrompt(concept: string, genre?: string, regions?: string[]): string {
@@ -38,8 +39,8 @@ Return a JSON object with this exact structure:
       "regions": ["string (region codes)"]
     }
   ],
-  "saturatedNiches": ["string (niches that are over-supplied)"],
-  "emergingFormats": ["string (new/growing content formats)"],
+  "saturatedNiches": ["string (e.g. 'Generic Tutorial Channels', 'Low-engagement talking-head videos')"],
+  "emergingFormats": ["string (e.g. 'First-person POV challenges', 'CGI-enhanced tactical breakdowns')"],
   "timestamp": "ISO 8601 timestamp"
 }
 
@@ -54,8 +55,9 @@ export const GAP_ANALYSIS_SYSTEM = `ACT AS A SILENT DATA EMITTER. YOU ARE AN API
 RETURN ONLY THE RAW JSON OBJECT. 
 DO NOT INCLUDE CONVERSATIONAL FILLER, INTRODUCTIONS, OR EXPLANATIONS. 
 IF YOU HAVE THOUGHTS, THEY MUST BE EMITTED VIA THE NATIVE 'THOUGHT' FIELD ONLY.
-You are an expert in content gap analysis and audience demand modeling.
+You are an international YouTube Content Strategist and Creative Director specializing in multi-language audience growth.
 Given market scan data and a concept, identify underserved content niches and evaluate concept-market fit.
+Treat the input not as a 'course' to be taught, but as an 'Entertainment Experience' to be consumed. The goal isn't 'Learning Outcomes,' it's 'Average View Duration (AVD)' and 'Subscriber Conversion.'
 Always respond with valid JSON matching the requested schema.`
 
 export function buildGapAnalysisPrompt(
@@ -105,8 +107,9 @@ export const ARBITRAGE_SYSTEM = `ACT AS A SILENT DATA EMITTER. YOU ARE AN API EN
 RETURN ONLY THE RAW JSON OBJECT. 
 DO NOT INCLUDE CONVERSATIONAL FILLER, INTRODUCTIONS, OR EXPLANATIONS. 
 IF YOU HAVE THOUGHTS, THEY MUST BE EMITTED VIA THE NATIVE 'THOUGHT' FIELD ONLY.
-You are a global content distribution strategist specializing in language markets and localization ROI.
+You are an international YouTube Content Strategist and Creative Director specializing in multi-language audience growth.
 Analyze supply-demand gaps across language/region combinations to find the best localization opportunities.
+Treat the input not as a 'course' to be taught, but as an 'Entertainment Experience' to be consumed. The goal isn't 'Learning Outcomes,' it's 'Average View Duration (AVD)' and 'Subscriber Conversion.'
 Return a maximum of 5 high-impact opportunities. For each 'culturalNotes' field, limit the description to 2 sentences maximum.
 Ensure the JSON is valid and complete. Always respond with valid JSON matching the requested schema.`
 
@@ -140,7 +143,9 @@ Return a JSON object with this exact structure:
       "arbitrageScore": number (0-100, demand-supply gap),
       "estimatedAudience": "string (e.g. '45M potential viewers')",
       "revenuePotential": "high" | "medium" | "low",
-      "culturalNotes": "string (adaptation considerations)"
+      "culturalNotes": "string (adaptation considerations)",
+      "optimizedTitle": "string (A high-CTR title for this market)",
+      "optimizedCreativeBrief": "string (A 2-3 sentence brief for this market)"
     }
   ],
   "topRegions": [
@@ -158,6 +163,32 @@ Provide 8-12 language/region opportunities and 3-5 top regions.`
 }
 
 // =============================================================================
+// Creative Optimizer Prompt
+// =============================================================================
+
+export const CREATIVE_OPTIMIZER_SYSTEM = `ACT AS A SILENT DATA EMITTER. YOU ARE AN API ENDPOINT.
+RETURN ONLY THE RAW JSON OBJECT.
+DO NOT INCLUDE CONVERSATIONAL FILLER, INTRODUCTIONS, OR EXPLANATIONS.
+IF YOU HAVE THOUGHTS, THEY MUST BE EMITTED VIA THE NATIVE 'THOUGHT' FIELD ONLY.
+You are a top-tier YouTube Creative Director. Your task is to transform a raw concept into a 'YouTube Series Bible' for a specific target market.
+Explicitly forbid 'Software/App' terminology. The goal is audience retention and CTR optimization, not software development.
+The output MUST be a single, valid JSON object matching the OptimizedCreative schema.`
+
+export function buildCreativeOptimizerPrompt(
+  originalConcept: string,
+  marketData: any // Replace with a specific type for the selected market
+): string {
+  return `Transform the following concept into a YouTube Series Bible for the specified target market.
+
+Original Concept: "${originalConcept}"
+
+Target Market Data:
+${JSON.stringify(marketData, null, 2)}
+
+Return a JSON object with the exact structure of the 'OptimizedCreative' interface.`
+}
+
+// =============================================================================
 // Bridge Plan Prompt
 // =============================================================================
 
@@ -165,9 +196,10 @@ export const BRIDGE_PLAN_SYSTEM = `ACT AS A SILENT DATA EMITTER. YOU ARE AN API 
 RETURN ONLY THE RAW JSON OBJECT. 
 DO NOT INCLUDE CONVERSATIONAL FILLER, INTRODUCTIONS, OR EXPLANATIONS. 
 IF YOU HAVE THOUGHTS, THEY MUST BE EMITTED VIA THE NATIVE 'THOUGHT' FIELD ONLY.
-You are a film production planner who translates market intelligence into actionable SceneFlow AI production plans.
+You are an international YouTube Content Strategist and Creative Director specializing in multi-language audience growth.
 SceneFlow has 4 production phases: Blueprint (scripting), Production (storyboards & visuals), Final Cut (editing & video gen), Premiere (review & distribution).
 Generate a concrete action plan that maps concept opportunities to SceneFlow workflow steps.
+Treat the input not as a 'course' to be taught, but as an 'Entertainment Experience' to be consumed. The goal isn't 'Learning Outcomes,' it's 'Average View Duration (AVD)' and 'Subscriber Conversion.'
 Always respond with valid JSON matching the requested schema.`
 
 export function buildBridgePlanPrompt(

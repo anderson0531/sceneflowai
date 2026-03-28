@@ -12,20 +12,20 @@ import {
 } from "@/components/ui/select"
 import { marketOutlookData } from '@/data/market-outlook';
 
-const ConceptCard = ({ concept }) => (
+const ConceptCard = ({ concept, onSelect }) => (
   <div className="bg-slate-800/50 p-4 rounded-lg border border-white/10 flex flex-col justify-between">
     <div>
       <h4 className="text-lg font-bold text-white">{concept.title}</h4>
       <p className="mt-2 text-sm text-gray-400">{concept.description}</p>
     </div>
-    <Button size="sm" className="mt-4 w-full">
-      Start Series
+    <Button size="sm" className="mt-4 w-full" onClick={() => onSelect(concept)}>
+      Select Market
       <ArrowRight className="w-4 h-4 ml-2" />
     </Button>
   </div>
 );
 
-export const MarketOutlook = () => {
+export const MarketOutlook = ({ onMarketSelect }) => {
   const [region, setRegion] = useState('global');
   const [language, setLanguage] = useState('en');
 
@@ -78,7 +78,7 @@ export const MarketOutlook = () => {
         </h4>
         <div className="grid grid-cols-1 gap-4">
           {concepts.map(concept => (
-            <ConceptCard key={concept.id} concept={concept} />
+            <ConceptCard key={concept.id} concept={concept} onSelect={onMarketSelect} />
           ))}
         </div>
       </div>
