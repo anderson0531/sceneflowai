@@ -3,8 +3,8 @@
         "version": "2.0.1",
         "private": true,
         "engines": {
-                "node": ">=20 <21"
-        },
+    "node": ">=22"
+  },
         "scripts": {
                 "dev": "next dev --turbo",
                 "dev:memory": "NODE_OPTIONS='--max-old-space-size=3072' next dev --turbopack",
