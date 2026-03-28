@@ -58,6 +58,7 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
     );
   }
 
+  // Use Nullish Coalescing on the hook's return value and the recommendations array.
   const { 
     recommendations: rawRecommendations, 
     isLoading, 
@@ -66,9 +67,9 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
     undoRecommendation,
     dismissRecommendation,
     interactionMode 
-  } = useStoryAnalysis(currentStoryData);
+  } = useStoryAnalysis(currentStoryData) ?? {}; // Default to empty object
   
-  const recommendations = Array.isArray(rawRecommendations) ? rawRecommendations : [];
+  const recommendations = rawRecommendations ?? []; // Default to empty array
   
   const { interactionMode: mode, toggleInteractionMode } = usePreferences();
   
@@ -79,17 +80,18 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<'notes' | 'market'>('notes');
 
-  const filteredRecommendations = recommendations
-    .filter(rec => filterStatus === 'all' || rec.status === filterStatus)
+  // Use Optional Chaining and Nullish Coalescing for safe filtering and sorting.
+  const filteredRecommendations = (recommendations ?? [])
+    .filter(rec => filterStatus === 'all' || rec?.status === filterStatus)
     .sort((a, b) => {
       switch (sortBy) {
         case 'impact':
           const impactOrder = { high: 3, medium: 2, low: 1 };
-          return impactOrder[b.impact] - impactOrder[a.impact];
+          return impactOrder[b?.impact] - impactOrder[a?.impact];
         case 'confidence':
-          return b.confidenceScore - a.confidenceScore;
+          return (b?.confidenceScore ?? 0) - (a?.confidenceScore ?? 0);
         case 'title':
-          return a.title.localeCompare(b.title);
+          return (a?.title ?? '').localeCompare(b?.title ?? '');
         default:
           return 0;
       }
@@ -110,8 +112,9 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
 
   const getStatusCounts = () => {
     const counts = { pending: 0, applied: 0, dismissed: 0 };
-    recommendations.forEach(rec => {
-      if (rec.status in counts) {
+    // Use Optional Chaining for safe iteration.
+    recommendations?.forEach(rec => {
+      if (rec?.status in counts) {
         counts[rec.status as keyof typeof counts]++;
       }
     });
