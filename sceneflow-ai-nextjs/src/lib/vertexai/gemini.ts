@@ -96,32 +96,35 @@ export async function generateText(
 ): Promise<TextGenerationResult> {
   const { projectId, location: defaultLocation } = getConfig();
   
-  // 1. RESOLVE MODEL (Using Pro for everything to guarantee 200 OK)
+  // 1. RESOLVE MODEL & DYNAMIC LOCATION
   const rawModel = options.model || 'gemini-3.1-pro-preview'; 
   const model = rawModel.trim();
   const isGemini3 = model.includes('gemini-3');
   const isPreview = model.includes('preview');
-  const location = options.location || defaultLocation;
 
-  // Use v1beta1 only for Gemini 3 Previews
+  const location = isGemini3 ? 'global' : (options.location || defaultLocation);
   const apiVersion = isPreview ? 'v1beta1' : 'v1';
-  const endpoint = `https://${location}-aiplatform.googleapis.com/${apiVersion}/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
+
+  const baseUrl = location === 'global' 
+    ? 'https://aiplatform.googleapis.com' 
+    : `https://${location}-aiplatform.googleapis.com`;
+
+  const endpoint = `${baseUrl}/${apiVersion}/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
   
   const accessToken = await getVertexAIAuthToken();
 
-  // 2. CONSTRUCT CLEAN THINKING CONFIG
+  // 2. CONSTRUCT SDK-ALIGNED THINKING CONFIG
   const thinking_config: any = { include_thoughts: true };
 
   if (isGemini3) {
-    // Gemini 3.1 ONLY supports thinking_level
     thinking_config.thinking_level = (options.thinkingLevel || 'MEDIUM').toUpperCase();
   } else {
-    // Gemini 2.5 ONLY supports thinking_budget
     const budgets = { minimal: 0, low: 1024, medium: 4096, high: 8192 };
-    thinking_config.thinking_budget = options.thinkingBudget ?? budgets[options.thinkingLevel as keyof typeof budgets] ?? 1024;
+    thinking_config.thinking_budget = budgets[options.thinkingLevel as keyof typeof budgets] ?? 1024;
+    if (options.thinkingLevel === 'minimal') thinking_config.include_thoughts = false;
   }
 
-  // 3. ASSEMBLE REQUEST
+  // 3. ASSEMBLE REQUEST (Strict Snake_Case)
   const requestBody: any = {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generation_config: {
@@ -146,13 +149,16 @@ export async function generateText(
     };
   }
 
-  console.log(`[Vertex Gemini] Requesting ${model} via ${apiVersion}`);
+  console.log(`[Vertex Gemini] Requesting ${model} via ${location} (${apiVersion})`);
   
   const response = await fetchWithRetry(
     endpoint,
     {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      headers: { 
+        'Authorization': `Bearer ${accessToken}`, 
+        'Content-Type': 'application/json' 
+      },
       body: JSON.stringify(requestBody)
     },
     { maxRetries: 3, timeoutMs: 90000 }
@@ -161,14 +167,13 @@ export async function generateText(
   if (!response.ok) {
     const errorText = await response.text();
     
-    // FALLBACK LOGIC: Strip Gemini 3 features for the retry
     if (response.status === 404 && isGemini3 && !(options as any)._isFallbackAttempt) {
-      console.warn(`[Vertex Gemini] 404 for ${model}. Falling back to 2.5-flash.`);
+      console.warn(`[Vertex Gemini] Global 404 for ${model}. Falling back to 2.5-flash regional.`);
       return generateText(prompt, {
         ...options,
         model: 'gemini-2.5-flash',
-        thinkingLevel: undefined, // 🔥 Critical: Kill the string level
-        thinkingBudget: 1024,      // 🔥 Force budget instead
+        location: 'us-central1',
+        thinkingLevel: 'minimal',
         _isFallbackAttempt: true
       } as any);
     }
@@ -181,7 +186,11 @@ export async function generateText(
     ?.filter((part: any) => !part.thought)
     .map((part: any) => part.text).join('').trim();
 
-  return { text, safetyRatings: data.candidates?.[0]?.safetyRatings, finishReason: data.candidates?.[0]?.finishReason };
+  return { 
+    text, 
+    safetyRatings: data.candidates?.[0]?.safetyRatings, 
+    finishReason: data.candidates?.[0]?.finishReason 
+  };
 }
 
 // =============================================================================
