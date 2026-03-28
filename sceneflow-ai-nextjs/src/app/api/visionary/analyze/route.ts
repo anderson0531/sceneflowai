@@ -322,7 +322,7 @@ export async function POST(request: NextRequest) {
           systemInstruction: ARBITRAGE_SYSTEM,
           responseMimeType: 'application/json',
           temperature: 0.5,
-          maxOutputTokens: 6144,
+          maxOutputTokens: 4096,
           thinkingLevel: 'medium',
         }
       )

@@ -95,7 +95,8 @@ Identify 4-6 gaps. Be honest about concept weaknesses.`
 
 export const ARBITRAGE_SYSTEM = `You are a global content distribution strategist specializing in language markets and localization ROI.
 Analyze supply-demand gaps across language/region combinations to find the best localization opportunities.
-Always respond with valid JSON matching the requested schema.`
+Return a maximum of 5 high-impact opportunities. For each 'culturalNotes' field, limit the description to 2 sentences maximum.
+Ensure the JSON is valid and complete. Always respond with valid JSON matching the requested schema.`
 
 export function buildArbitragePrompt(
   concept: string,

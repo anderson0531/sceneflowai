@@ -109,7 +109,8 @@ export async function generateText(
   options: TextGenerationOptions = {}
 ): Promise<TextGenerationResult> {
   const { projectId, location: defaultLocation } = getConfig()
-  const model = options.model || getGeminiTextModel()
+  // Trim the model name to remove any leading/trailing whitespace, including newlines
+  const model = (options.model || getGeminiTextModel()).trim()
   
   // Gemini 3 models require the global endpoint
   const isGemini3Model = model.startsWith('gemini-3')
@@ -134,6 +135,8 @@ export async function generateText(
       topP: options.topP ?? 0.9,
       topK: options.topK,
       maxOutputTokens: options.maxOutputTokens ?? 8192,
+      // Enforce JSON mode by default if not specified
+      responseMimeType: options.responseMimeType ?? "application/json",
     }
   }
   
