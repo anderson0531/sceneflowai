@@ -78,10 +78,9 @@ export function useVisionaryAnalysis() {
     // UI never feels stuck. Real phase transitions from polling override.
     let simulatedProgress = 2
     const phaseTargets: Record<string, number> = {
-      'market-scan': 22,
-      'gap-analysis': 47,
-      'arbitrage-map': 72,
-      'bridge-plan': 95,
+      'market-scan': 33,
+      'gap-analysis': 66,
+      'arbitrage-map': 95,
     }
 
     progressTimerRef.current = setInterval(() => {
@@ -134,14 +133,14 @@ export function useVisionaryAnalysis() {
         // Partial completion — show what we have
         setReport(finalReport)
         if (finalReport.arbitrageMap) {
-          setPhase('bridge-plan')
-          setProgress({ phase: 'bridge-plan', progress: 75, message: 'Bridge plan phase encountered an issue' })
+          setPhase('complete') // Arbitrage map is the final phase
+          setProgress({ phase: 'complete', progress: 100, message: 'Analysis complete!' })
         } else if (finalReport.gapAnalysis) {
           setPhase('arbitrage-map')
-          setProgress({ phase: 'arbitrage-map', progress: 50, message: 'Arbitrage map phase encountered an issue' })
+          setProgress({ phase: 'arbitrage-map', progress: 66, message: 'Arbitrage map phase...' })
         } else if (finalReport.marketScan) {
           setPhase('gap-analysis')
-          setProgress({ phase: 'gap-analysis', progress: 25, message: 'Gap analysis phase encountered an issue' })
+          setProgress({ phase: 'gap-analysis', progress: 33, message: 'Gap analysis phase...' })
         } else {
           throw new Error(finalReport.errorMessage || 'Analysis produced no results')
         }
