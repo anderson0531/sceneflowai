@@ -98,12 +98,10 @@ export async function generateText(
   // Trim the model name to remove any leading/trailing whitespace, including newlines
   const model = (options.model || getGeminiTextModel()).trim()
   
-  // ALWAYS use the regional endpoint. The "global" endpoint is not reliable for Gemini 3.
   const isGemini3Model = model.startsWith('gemini-3')
   const location = options.location || defaultLocation // ALWAYS use regional endpoint
   
   // Vertex AI endpoint for Gemini models
-  // Format: https://{location}-aiplatform.googleapis.com/v1/projects/{project}/locations/{location}/publishers/google/models/{model}:generateContent
   const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
   
   const accessToken = await getVertexAIAuthToken()
