@@ -158,30 +158,18 @@ export async function generateText(
     }
   }
 
-  // A single, unified block for handling thinking configuration.
-  const thinkingConfig: any = {
-    includeThoughts: true, // Always include for better debugging
-  };
-
-  if (isGemini3Model) {
-    if (options.thinkingLevel) {
-      thinkingConfig.thinkingLevel = options.thinkingLevel.toUpperCase();
-    }
-  } else {
-    // Handle legacy thinking budget for older models (e.g., Gemini 2.5)
-    if (options.thinkingBudget !== undefined) {
-      thinkingConfig.thinkingBudget = options.thinkingBudget;
-    }
-  }
-
-  // Only add the thinkingConfig to the request if it has more than just includeThoughts
-  if (Object.keys(thinkingConfig).length > 1) {
-    requestBody.generationConfig.thinkingConfig = thinkingConfig;
-  }
-  
   // Safety settings
   requestBody.safetySettings = options.safetySettings || getDefaultGeminiSafetySettings()
   console.log(`[Vertex Gemini] Safety settings: ${requestBody.safetySettings.map((s: SafetySetting) => `${s.category}=${s.threshold}`).join(', ')}`)
+  
+  // Add thinking config — supports both Gemini 2.5 (numeric) and 3.0+ (string levels)
+  const thinkingConfig = buildThinkingConfig(model, {
+    thinkingBudget: options.thinkingBudget,
+    thinkingLevel: options.thinkingLevel,
+  });
+  if (thinkingConfig) {
+    requestBody.generationConfig.thinkingConfig = thinkingConfig;
+  }
   
   console.log(`[Vertex Gemini] Generating text with ${model}...`)
   
