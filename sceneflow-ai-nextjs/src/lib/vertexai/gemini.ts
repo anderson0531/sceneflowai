@@ -107,34 +107,36 @@ export async function generateText(
   
   const accessToken = await getVertexAIAuthToken();
   
-  // 2. CONSTRUCT UNIFIED THINKING CONFIG
-  const thinkingConfig: any = { includeThoughts: true };
+  // 2. CONSTRUCT UNIFIED THINKING CONFIG with snake_case
+  const thinking_config: any = {
+    include_thoughts: true
+  };
+
   if (isGemini3Model) {
-    thinkingConfig.thinkingLevel = (options.thinkingLevel || 'LOW').toUpperCase();
+    thinking_config.thinking_level = (options.thinkingLevel || 'LOW').toUpperCase();
   } else {
     const thinkingLevelToBudget: Record<string, number> = {
       minimal: 0, low: 1024, medium: 4096, high: 8192
     };
     const level = options.thinkingLevel || 'low';
-    thinkingConfig.thinkingBudget = options.thinkingBudget ?? thinkingLevelToBudget[level] ?? 1024;
+    thinking_config.thinking_budget = options.thinkingBudget ?? thinkingLevelToBudget[level] ?? 1024;
   }
 
-  // 3. CORRECT REST PAYLOAD STRUCTURE
+  // 3. CORRECT REST PAYLOAD STRUCTURE with snake_case
   const requestBody: any = {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    generationConfig: {
+    generation_config: {
       temperature: options.temperature ?? 0.2,
-      topP: options.topP ?? 0.9,
-      maxOutputTokens: options.maxOutputTokens ?? 8192,
-      responseMimeType: options.responseMimeType ?? "application/json",
+      top_p: options.topP ?? 0.9,
+      max_output_tokens: options.maxOutputTokens ?? 8192,
+      response_mime_type: options.responseMimeType ?? "application/json",
+      thinking_config: thinking_config, // Nesting as per latest instruction
     },
-    // 🔥 Sibling to generationConfig, not child
-    thinkingConfig: thinkingConfig,
-    safetySettings: options.safetySettings || getDefaultGeminiSafetySettings()
+    safety_settings: options.safetySettings || getDefaultGeminiSafetySettings()
   };
 
   if (options.systemInstruction) {
-    requestBody.systemInstruction = {
+    requestBody.system_instruction = {
       role: 'system',
       parts: [{ text: options.systemInstruction }],
     };
