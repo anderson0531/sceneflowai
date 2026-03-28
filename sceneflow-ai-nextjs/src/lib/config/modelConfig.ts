@@ -171,11 +171,11 @@ export type GeminiThinkingLevel = 'minimal' | 'low' | 'medium' | 'high';
 
 // 1. PRIMARY PREVIEW MODELS
 export const GEMINI_TEXT_MODELS = {
-  '3.0-flash': 'gemini-3.0-flash-preview',
-  '3.1-pro': 'gemini-3.1-pro-preview',
+  '3-flash': 'gemini-3-flash-preview', 
+  '3-pro': 'gemini-3-pro-preview',
 } as const;
 
-// 2. STABLE FALLBACKS
+/** Previous models, kept for fallback reference */
 export const GEMINI_TEXT_MODELS_PREVIOUS = {
   '2.5-flash': 'gemini-2.5-flash',
 } as const;
@@ -185,15 +185,11 @@ export const GEMINI_TEXT_MODELS_PREVIOUS = {
  * This is the function called by your Route.ts and Gemini.ts.
  */
 export function getGeminiTextModel(
-  tier: 'flash' | 'pro' = 'flash',
-  level: GeminiThinkingLevel = 'low'
+  tier: 'flash' | 'pro' = 'flash'
 ): string {
-  // Logic: Pro is used for high-complexity (Phase 3/4), Flash for speed (Phase 1/2)
-  if (tier === 'pro') {
-    return GEMINI_TEXT_MODELS['3.1-pro'];
-  }
-  
-  return GEMINI_TEXT_MODELS['3.0-flash'];
+  // Use the major version alias for maximum compatibility with the preview registry
+  if (tier === 'pro') return 'gemini-3-pro-preview';
+  return 'gemini-3-flash-preview';
 }
 
 /**
