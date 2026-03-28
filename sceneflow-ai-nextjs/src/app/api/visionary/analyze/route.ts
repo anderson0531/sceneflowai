@@ -64,7 +64,7 @@ export async function POST(req: Request) {
       { 
         model: 'gemini-3.1-pro-preview', 
         systemInstruction: ARBITRAGE_SYSTEM, 
-        thinkingLevel: 'medium' 
+        thinkingLevel: 'minimal' // Reduced for speed
       }
     );
     const arbitrageMap = safeParseJSON(arbitrageResult.text);
@@ -88,7 +88,7 @@ export async function POST(req: Request) {
     const seriesBibleResult = await generateText(biblePrompt, {
       model: 'gemini-3.1-pro-preview',
       systemInstruction: SERIES_BIBLE_SYSTEM_PROMPT,
-      // ⚡ TWEAK: Using 'low' instead of 'medium' to get under 60s
+      // ⚡ TWEAK: Using 'low' to beat the 60s proxy wall
       thinkingLevel: 'low' 
     });
     
