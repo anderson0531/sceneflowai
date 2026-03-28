@@ -163,54 +163,27 @@ export function getEnvImagenQuality(): ImagenQualityTier {
 // TEXT GENERATION MODELS (Gemini)
 // =============================================================================
 
-export type GeminiTextTier = 'flash' | 'pro' | 'lite';
-
-/**
- * Model family identifier — determines API behavior like thinking config format.
- * - '2.5': numeric thinkingBudget (0–24576)
- * - '3.0': string thinkingLevel ('minimal' | 'low' | 'medium' | 'high')
- */
-export type GeminiModelFamily = '2.5' | '3.0';
-
-/** Thinking level for Gemini 3.0+ models */
-export type GeminiThinkingLevel = 'minimal' | 'low' | 'medium' | 'high';
-
 export const GEMINI_TEXT_MODELS = {
-  /** Gemini 3.0 Flash — primary workhorse, fast + capable */
-  flash: 'gemini-3.0-flash',
+  /** Gemini 3.0 Flash - Fast, cheap, excellent for summarization, initial analysis */
+  flash: 'gemini-3-flash', // Corrected stable ID
 
-  /** Gemini 3.1 Pro Preview — complex reasoning, highest quality */
+  /** Gemini 3.1 Pro - Slower, more expensive, superior reasoning for complex tasks */
   pro: 'gemini-3.1-pro-preview',
-
-  /** Gemini 3.1 Flash Lite Preview — lightweight, lowest cost */
-  lite: 'gemini-3.1-flash-lite-preview',
 } as const;
 
-/** Previous-generation models kept for rollback */
+/** Previous models, kept for fallback reference */
 export const GEMINI_TEXT_MODELS_PREVIOUS = {
-  flash: 'gemini-2.5-flash',
-  pro: 'gemini-2.5-pro',
+  '2.5-flash': 'gemini-2.5-flash',
+  '2.5-pro': 'gemini-2.5-pro',
 } as const;
-
-/** Default Gemini text tier */
-export const DEFAULT_GEMINI_TEXT_TIER: GeminiTextTier = 'flash';
 
 /**
- * Get the Gemini text model string for a quality tier.
- * Checks GEMINI_MODEL env override first, then falls back to the tier map.
- * 
- * Usage:
- *   getGeminiTextModel()        → env override or 'gemini-3.0-flash'
- *   getGeminiTextModel('pro')   → 'gemini-3.1-pro-preview'
- *   getGeminiTextModel('lite')  → 'gemini-3.1-flash-lite-preview'
+ * Returns the default Gemini text model ID.
+ * Use `GEMINI_DEFAULT_MODEL` env var to override (e.g., 'pro' for testing).
  */
-export function getGeminiTextModel(tier: GeminiTextTier = DEFAULT_GEMINI_TEXT_TIER): string {
-  // Environment override takes precedence (for rollback / staging)
-  const envModel = process.env.GEMINI_MODEL;
-  if (envModel && tier === DEFAULT_GEMINI_TEXT_TIER) {
-    return envModel;
-  }
-  return GEMINI_TEXT_MODELS[tier] || GEMINI_TEXT_MODELS.flash;
+export function getGeminiTextModel(): string {
+  const defaultModelKey = process.env.GEMINI_DEFAULT_MODEL || 'flash';
+  return GEMINI_TEXT_MODELS[defaultModelKey as keyof typeof GEMINI_TEXT_MODELS] || GEMINI_TEXT_MODELS.flash;
 }
 
 /**

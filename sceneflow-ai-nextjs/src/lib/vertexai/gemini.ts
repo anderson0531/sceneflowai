@@ -158,22 +158,20 @@ export async function generateText(
     }
   }
 
-  // Handle thinking configuration. Gemini 3.0+ models use the new `thinkingConfig`
-  // object, while older models use `thinkingBudget` inside `generationConfig`.
+  // Initialize thinkingConfig
+  requestBody.generationConfig.thinkingConfig = {
+    includeThoughts: true, // Always include for better debugging
+  };
+
+  // Handle thinking configuration based on model generation
   if (isGemini3Model) {
     if (options.thinkingLevel) {
-      requestBody.thinkingConfig = {
-        thinkingLevel: options.thinkingLevel.toUpperCase(),
-      };
-    }
-    // CRITICAL: Ensure legacy thinkingBudget is not passed to Gemini 3 models
-    if (requestBody.generationConfig.hasOwnProperty('thinkingBudget')) {
-      delete requestBody.generationConfig.thinkingBudget;
+      requestBody.generationConfig.thinkingConfig.thinkingLevel = options.thinkingLevel.toUpperCase();
     }
   } else {
     // Handle legacy thinking budget for older models (e.g., Gemini 2.5)
     if (options.thinkingBudget !== undefined) {
-      requestBody.generationConfig.thinkingBudget = options.thinkingBudget;
+      requestBody.generationConfig.thinkingConfig.thinkingBudget = options.thinkingBudget;
     }
   }
   
