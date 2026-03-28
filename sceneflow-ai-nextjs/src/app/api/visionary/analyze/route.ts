@@ -1,4 +1,3 @@
-export const maxDuration = 300;
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { generateText } from '@/lib/vertexai/gemini';
@@ -15,8 +14,9 @@ import {
 } from '@/lib/visionary/prompt-templates';
 import { safeParseJSON } from '@/lib/utils/safeParseJSON';
 
+// 🔥 Vercel Pro Configuration: Must be outside the POST handler
 export const dynamic = 'force-dynamic';
-export const maxDuration = 300;
+export const maxDuration = 300; 
 
 export async function POST(req: Request) {
   try {
@@ -33,7 +33,11 @@ export async function POST(req: Request) {
     // Phase 1: Market Scan
     const marketScanResult = await generateText(
       buildMarketScanPrompt(concept, genre, regions),
-      { model: getGeminiTextModel(), systemInstruction: MARKET_SCAN_SYSTEM, thinkingLevel: 'minimal' } // Use minimal thinking for speed
+      { 
+        model: getGeminiTextModel('flash'), 
+        systemInstruction: MARKET_SCAN_SYSTEM, 
+        thinkingLevel: 'minimal' 
+      }
     );
     const marketScan = safeParseJSON(marketScanResult.text);
     if (!marketScan || Object.keys(marketScan).length === 0) {
@@ -43,7 +47,11 @@ export async function POST(req: Request) {
     // Phase 2: Gap Analysis
     const gapAnalysisResult = await generateText(
       buildGapAnalysisPrompt(concept, JSON.stringify(marketScan), genre),
-      { model: getGeminiTextModel(), systemInstruction: GAP_ANALYSIS_SYSTEM, thinkingLevel: 'minimal' } // Use minimal thinking for speed
+      { 
+        model: getGeminiTextModel('flash'), 
+        systemInstruction: GAP_ANALYSIS_SYSTEM, 
+        thinkingLevel: 'minimal' 
+      }
     );
     const gapAnalysis = safeParseJSON(gapAnalysisResult.text);
     if (!gapAnalysis || Object.keys(gapAnalysis).length === 0) {
@@ -53,7 +61,11 @@ export async function POST(req: Request) {
     // Phase 3: Arbitrage Map
     const arbitrageResult = await generateText(
       buildArbitragePrompt(concept, JSON.stringify(gapAnalysis), focusLanguages),
-      { model: 'gemini-3.1-pro-preview', systemInstruction: ARBITRAGE_SYSTEM, thinkingLevel: 'medium' }
+      { 
+        model: 'gemini-3.1-pro-preview', 
+        systemInstruction: ARBITRAGE_SYSTEM, 
+        thinkingLevel: 'medium' 
+      }
     );
     const arbitrageMap = safeParseJSON(arbitrageResult.text);
     if (!arbitrageMap || Object.keys(arbitrageMap).length === 0) {
