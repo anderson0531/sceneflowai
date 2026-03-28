@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { generateText } from '@/lib/vertexai/gemini';
+import { getGeminiTextModel } from '@/lib/config/modelConfig';
 import { 
   buildMarketScanPrompt, 
   buildGapAnalysisPrompt,
