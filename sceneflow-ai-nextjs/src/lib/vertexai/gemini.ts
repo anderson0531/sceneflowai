@@ -96,23 +96,27 @@ export async function generateText(
 ): Promise<TextGenerationResult> {
   const { projectId, location: defaultLocation } = getConfig();
   
-  // 1. HARDENED MODEL RESOLUTION (Prevents 2s 500 Error)
+  // 1. HARDENED MODEL RESOLUTION
   const rawModel = options.model || getGeminiTextModel() || 'gemini-2.5-flash';
   const model = rawModel.trim();
   
-  const isGemini3Model = model.toLowerCase().includes('gemini-3');
+  const isGemini3 = model.toLowerCase().includes('gemini-3');
+  const isPreview = model.toLowerCase().includes('preview');
   const location = options.location || defaultLocation;
+
+  // 2. DYNAMIC API VERSIONING (The v1beta1 Pivot)
+  const apiVersion = isPreview ? 'v1beta1' : 'v1';
   
-  const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
+  const endpoint = `https://${location}-aiplatform.googleapis.com/${apiVersion}/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
   
   const accessToken = await getVertexAIAuthToken();
   
-  // 2. CONSTRUCT UNIFIED THINKING CONFIG with snake_case
+  // 3. CONSTRUCT SNAKE_CASE THINKING CONFIG
   const thinking_config: any = {
     include_thoughts: true
   };
 
-  if (isGemini3Model) {
+  if (isGemini3) {
     thinking_config.thinking_level = (options.thinkingLevel || 'LOW').toUpperCase();
   } else {
     const thinkingLevelToBudget: Record<string, number> = {
@@ -122,7 +126,7 @@ export async function generateText(
     thinking_config.thinking_budget = options.thinkingBudget ?? thinkingLevelToBudget[level] ?? 1024;
   }
 
-  // 3. CORRECT REST PAYLOAD STRUCTURE with snake_case
+  // 4. STRICT REST PAYLOAD (Nesting & Casing)
   const requestBody: any = {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generation_config: {
@@ -130,7 +134,7 @@ export async function generateText(
       top_p: options.topP ?? 0.9,
       max_output_tokens: options.maxOutputTokens ?? 8192,
       response_mime_type: options.responseMimeType ?? "application/json",
-      thinking_config: thinking_config, // Nesting as per latest instruction
+      thinking_config: thinking_config 
     },
     safety_settings: options.safetySettings || getDefaultGeminiSafetySettings()
   };
@@ -142,7 +146,7 @@ export async function generateText(
     };
   }
 
-  console.log(`[Vertex Gemini] Requesting: ${model} at ${location}`);
+  console.log(`[Vertex Gemini] Requesting ${model} via ${apiVersion} at ${location}`);
   
   const response = await fetchWithRetry(
     endpoint,
@@ -165,13 +169,12 @@ export async function generateText(
   if (!response.ok) {
     const errorText = await response.text();
     
-    // Fallback Logic
-    if (response.status === 404 && isGemini3Model && !(options as any)._isFallbackAttempt) {
-      console.warn(`[Vertex Gemini] 404 for ${model}, falling back to gemini-2.5-flash`);
+    if ((response.status === 404 || response.status === 400) && isGemini3 && !(options as any)._isFallbackAttempt) {
+      console.warn(`[Vertex Gemini] ${response.status} Error. Falling back to gemini-2.5-flash...`);
       return generateText(prompt, {
         ...options,
         model: 'gemini-2.5-flash',
-        thinkingLevel: 'low', // Fast fallback
+        thinkingLevel: 'low',
         _isFallbackAttempt: true,
       } as any);
     }
@@ -184,14 +187,14 @@ export async function generateText(
   
   if (!candidate) throw new Error('No candidates in Vertex AI response');
 
-  // 4. CLEAN TEXT EXTRACTION (Thought Filtering)
+  // 5. CLEAN TEXT EXTRACTION
   const text = candidate.content?.parts
     ?.filter((part: any) => !part.thought)
     .map((part: any) => part.text)
     .join('')
     .trim();
 
-  if (!text) throw new Error('LLM response filtered to empty string (Possible Thought-only response)');
+  if (!text) throw new Error('Response filtered to empty string (Check Thoughts/Safety)');
   
   return {
     text,
