@@ -108,6 +108,7 @@ export function useVisionaryAnalysis() {
         headers: { 'Content-Type': 'application/json', 'x-user-id': userEmail },
         body: JSON.stringify(input),
         signal: controller.signal,
+        keepalive: true, // Keep the connection open for long-running requests
       })
 
       clearTimers()
@@ -118,37 +119,22 @@ export function useVisionaryAnalysis() {
       }
 
       const createData = await createRes.json()
-      if (!createData.success || !createData.report) {
+      console.log('Frontend received report:', createData); // Verify received data
+
+      if (!createData.reportId) { // Check for a valid report object
         throw new Error(createData.error || 'No report returned')
       }
 
       // ── POST returned — apply final state ────────────────────────
-      const finalReport = createData.report as VisionaryReport
+      const finalReport = createData as VisionaryReport
 
       if (finalReport.status === 'failed') {
         throw new Error(finalReport.errorMessage || 'Analysis failed on the server')
       }
 
-      if (finalReport.bridgePlan || finalReport.status === 'complete') {
-        setPhase('complete')
-        setProgress({ phase: 'complete', progress: 100, message: 'Analysis complete!' })
-        setReport(finalReport)
-      } else {
-        // Partial completion — show what we have
-        setReport(finalReport)
-        if (finalReport.arbitrageMap) {
-          setPhase('complete') // Arbitrage map is the final phase
-          setProgress({ phase: 'complete', progress: 100, message: 'Analysis complete!' })
-        } else if (finalReport.gapAnalysis) {
-          setPhase('arbitrage-map')
-          setProgress({ phase: 'arbitrage-map', progress: 66, message: 'Arbitrage map phase...' })
-        } else if (finalReport.marketScan) {
-          setPhase('gap-analysis')
-          setProgress({ phase: 'gap-analysis', progress: 33, message: 'Gap analysis phase...' })
-        } else {
-          throw new Error(finalReport.errorMessage || 'Analysis produced no results')
-        }
-      }
+      setPhase('complete')
+      setProgress({ phase: 'complete', progress: 100, message: 'Analysis complete!' })
+      setReport(finalReport)
 
     } catch (err: any) {
       clearTimers()
