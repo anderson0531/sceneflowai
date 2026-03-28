@@ -112,19 +112,23 @@ export async function generateText(
   const endpoint = `${baseUrl}/${apiVersion}/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
   
   const accessToken = await getVertexAIAuthToken();
-
-  // 2. CONSTRUCT SDK-ALIGNED THINKING CONFIG
-  const thinking_config: any = { include_thoughts: true };
+  
+  // 2. CONSTRUCT CLEAN THINKING CONFIG
+  const isMinimal = options.thinkingLevel === 'minimal';
+  const thinking_config: any = { include_thoughts: !isMinimal };
 
   if (isGemini3) {
-    thinking_config.thinking_level = (options.thinkingLevel || 'MEDIUM').toUpperCase();
+    if (!isMinimal) {
+      const validLevels = ['LOW', 'MEDIUM', 'HIGH'];
+      const level = (options.thinkingLevel || 'MEDIUM').toUpperCase();
+      thinking_config.thinking_level = validLevels.includes(level) ? level : 'LOW';
+    }
   } else {
     const budgets = { minimal: 0, low: 1024, medium: 4096, high: 8192 };
-    thinking_config.thinking_budget = budgets[options.thinkingLevel as keyof typeof budgets] ?? 1024;
-    if (options.thinkingLevel === 'minimal') thinking_config.include_thoughts = false;
+    thinking_config.thinking_budget = options.thinkingBudget ?? budgets[options.thinkingLevel as keyof typeof budgets] ?? 1024;
   }
 
-  // 3. ASSEMBLE REQUEST (Strict Snake_Case)
+  // 3. ASSEMBLE REQUEST
   const requestBody: any = {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generation_config: {
@@ -132,7 +136,7 @@ export async function generateText(
       top_p: 0.95,
       max_output_tokens: 8192,
       response_mime_type: "application/json",
-      thinking_config: thinking_config
+      ...(isMinimal ? {} : { thinking_config })
     },
     safety_settings: [
       { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "OFF" },
