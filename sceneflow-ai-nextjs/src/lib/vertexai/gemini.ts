@@ -96,34 +96,40 @@ export async function generateText(
 ): Promise<TextGenerationResult> {
   const { projectId, location: defaultLocation } = getConfig();
   
-  // 1. RESOLVE MODEL & ENDPOINT
-  const rawModel = options.model || getGeminiTextModel() || 'gemini-3.1-pro-preview';
+  // 1. RESOLVE MODEL (Using Pro for everything to guarantee 200 OK)
+  const rawModel = options.model || 'gemini-3.1-pro-preview'; 
   const model = rawModel.trim();
+  const isGemini3 = model.includes('gemini-3');
+  const isPreview = model.includes('preview');
   const location = options.location || defaultLocation;
 
-  // 🔥 REST API REQUIREMENT: Gemini 3.1 Reasoning features MUST use v1beta1
-  const endpoint = `https://${location}-aiplatform.googleapis.com/${"v1beta1"}/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
+  // Use v1beta1 only for Gemini 3 Previews
+  const apiVersion = isPreview ? 'v1beta1' : 'v1';
+  const endpoint = `https://${location}-aiplatform.googleapis.com/${apiVersion}/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
   
   const accessToken = await getVertexAIAuthToken();
 
-  // 2. CONSTRUCT SDK-ALIGNED PAYLOAD (Strict Snake_Case)
+  // 2. CONSTRUCT CLEAN THINKING CONFIG
+  const thinking_config: any = { include_thoughts: true };
+
+  if (isGemini3) {
+    // Gemini 3.1 ONLY supports thinking_level
+    thinking_config.thinking_level = (options.thinkingLevel || 'MEDIUM').toUpperCase();
+  } else {
+    // Gemini 2.5 ONLY supports thinking_budget
+    const budgets = { minimal: 0, low: 1024, medium: 4096, high: 8192 };
+    thinking_config.thinking_budget = options.thinkingBudget ?? budgets[options.thinkingLevel as keyof typeof budgets] ?? 1024;
+  }
+
+  // 3. ASSEMBLE REQUEST
   const requestBody: any = {
-    contents: [
-      {
-        role: 'user',
-        parts: [{ text: prompt }]
-      }
-    ],
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generation_config: {
       temperature: options.temperature ?? 0.7,
-      top_p: options.topP ?? 0.95,
-      max_output_tokens: options.maxOutputTokens ?? 65535, 
-      response_mime_type: options.responseMimeType ?? "application/json",
-      
-      thinking_config: {
-        include_thoughts: true,
-        thinking_level: (options.thinkingLevel || 'MEDIUM').toUpperCase()
-      }
+      top_p: 0.95,
+      max_output_tokens: 8192,
+      response_mime_type: "application/json",
+      thinking_config: thinking_config
     },
     safety_settings: [
       { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "OFF" },
@@ -140,57 +146,42 @@ export async function generateText(
     };
   }
 
-  console.log(`[Vertex Gemini] Final Deploy: Requesting ${model} via v1beta1 at ${location}`);
+  console.log(`[Vertex Gemini] Requesting ${model} via ${apiVersion}`);
   
   const response = await fetchWithRetry(
     endpoint,
     {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody)
     },
-    {
-      maxRetries: 3,
-      timeoutMs: 90000,
-    }
+    { maxRetries: 3, timeoutMs: 90000 }
   );
 
   if (!response.ok) {
     const errorText = await response.text();
     
-    if (response.status === 404 && !(options as any)._isFallbackAttempt) {
-      console.warn(`[Vertex Gemini] Model ${model} not found. Trying fallback...`);
+    // FALLBACK LOGIC: Strip Gemini 3 features for the retry
+    if (response.status === 404 && isGemini3 && !(options as any)._isFallbackAttempt) {
+      console.warn(`[Vertex Gemini] 404 for ${model}. Falling back to 2.5-flash.`);
       return generateText(prompt, {
         ...options,
         model: 'gemini-2.5-flash',
+        thinkingLevel: undefined, // 🔥 Critical: Kill the string level
+        thinkingBudget: 1024,      // 🔥 Force budget instead
         _isFallbackAttempt: true
       } as any);
     }
     
-    throw new Error(`Vertex AI Gemini error ${response.status}: ${errorText}`);
+    throw new Error(`Vertex AI error ${response.status}: ${errorText}`);
   }
 
   const data = await response.json();
-  const candidate = data.candidates?.[0];
-  
-  if (!candidate) throw new Error('No candidates in Vertex AI response');
-
-  const text = candidate.content?.parts
+  const text = data.candidates?.[0]?.content?.parts
     ?.filter((part: any) => !part.thought)
-    .map((part: any) => part.text)
-    .join('')
-    .trim();
+    .map((part: any) => part.text).join('').trim();
 
-  if (!text) throw new Error('Response contained only thoughts, no final output.');
-  
-  return {
-    text,
-    finishReason: candidate.finishReason,
-    safetyRatings: candidate.safetyRatings
-  };
+  return { text, safetyRatings: data.candidates?.[0]?.safetyRatings, finishReason: data.candidates?.[0]?.finishReason };
 }
 
 // =============================================================================
