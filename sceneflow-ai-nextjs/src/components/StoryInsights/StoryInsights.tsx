@@ -27,9 +27,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { MarketOutlook } from './MarketOutlook';
-import { useCreativeOptimizer } from '@/hooks/useCreativeOptimizer';
-import { OptimizedCreative } from '@/types/visionary';
-import { ProductionPlan } from './ProductionPlan';
+import { useSeriesBibleGenerator } from '@/hooks/useSeriesBibleGenerator';
+import { SeriesBible } from '@/types/visionary';
+import { SeriesBibleView } from './SeriesBibleView';
 
 interface StoryInsightsProps {
   currentStoryData: any; // Replace with actual story data type
@@ -84,17 +84,16 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
   const [activeTab, setActiveTab] = useState<'notes' | 'market'>('notes');
   const [selectedMarket, setSelectedMarket] = useState<any | null>(null);
 
-  const { optimizedCreative, isLoading: isOptimizing, generateCreative } = useCreativeOptimizer();
+  const { seriesBible, isLoading: isGenerating, generateBible } = useSeriesBibleGenerator();
 
   const handleMarketSelect = (market: any) => {
     setSelectedMarket(market);
-    generateCreative({
+    generateBible({
       originalConcept: currentStoryData.concept,
-      selectedMarketId: market.id,
-    }, market);
+      selectedMarket: market,
+    });
   };
   
-  // Use Optional Chaining and Nullish Coalescing for safe filtering and sorting.
   const filteredRecommendations = (recommendations ?? [])
     .filter(rec => filterStatus === 'all' || rec?.status === filterStatus)
     .sort((a, b) => {
@@ -379,11 +378,11 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
                   Start New Project
                 </Button>
               </div>
-            ) : selectedMarket && optimizedCreative ? (
-              <ProductionPlan creative={optimizedCreative} />
-            ) : selectedMarket && isOptimizing ? (
+            ) : selectedMarket && seriesBible ? (
+              <SeriesBibleView bible={seriesBible} />
+            ) : selectedMarket && isGenerating ? (
               <div className="text-center py-12">
-                <p>Optimizing for {selectedMarket.regionName}...</p>
+                <p>Generating Series Bible for {selectedMarket.regionName}...</p>
               </div>
             ) : (
               <MarketOutlook onMarketSelect={handleMarketSelect} />

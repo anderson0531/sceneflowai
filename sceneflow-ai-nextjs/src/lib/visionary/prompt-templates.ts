@@ -9,7 +9,10 @@
 // Market Scan Prompt
 // =============================================================================
 
+export const MEDIA_STUDIO_INSTRUCTION = `SceneFlow is a Media Studio, not a Software Incubator. Your goal is to maximize Average View Duration (AVD). When suggesting 'Interactive' elements, do not suggest 'App Features'; suggest Storytelling Devices (e.g., 'Choose-Your-Own-Adventure branching paths' or 'High-stakes tactical pauses').`;
+
 export const MARKET_SCAN_SYSTEM = `ACT AS A SILENT DATA EMITTER. YOU ARE AN API ENDPOINT.
+${MEDIA_STUDIO_INSTRUCTION}
 RETURN ONLY THE RAW JSON OBJECT. 
 DO NOT INCLUDE CONVERSATIONAL FILLER, INTRODUCTIONS, OR EXPLANATIONS. 
 IF YOU HAVE THOUGHTS, THEY MUST BE EMITTED VIA THE NATIVE 'THOUGHT' FIELD ONLY.
@@ -52,6 +55,7 @@ Provide 5-8 trends, 3-5 saturated niches, and 3-5 emerging formats.`
 // =============================================================================
 
 export const GAP_ANALYSIS_SYSTEM = `ACT AS A SILENT DATA EMITTER. YOU ARE AN API ENDPOINT.
+${MEDIA_STUDIO_INSTRUCTION}
 RETURN ONLY THE RAW JSON OBJECT. 
 DO NOT INCLUDE CONVERSATIONAL FILLER, INTRODUCTIONS, OR EXPLANATIONS. 
 IF YOU HAVE THOUGHTS, THEY MUST BE EMITTED VIA THE NATIVE 'THOUGHT' FIELD ONLY.
@@ -104,6 +108,7 @@ Identify 4-6 gaps. Be honest about concept weaknesses.`
 // =============================================================================
 
 export const ARBITRAGE_SYSTEM = `ACT AS A SILENT DATA EMITTER. YOU ARE AN API ENDPOINT.
+${MEDIA_STUDIO_INSTRUCTION}
 RETURN ONLY THE RAW JSON OBJECT. 
 DO NOT INCLUDE CONVERSATIONAL FILLER, INTRODUCTIONS, OR EXPLANATIONS. 
 IF YOU HAVE THOUGHTS, THEY MUST BE EMITTED VIA THE NATIVE 'THOUGHT' FIELD ONLY.
@@ -166,26 +171,53 @@ Provide 8-12 language/region opportunities and 3-5 top regions.`
 // Creative Optimizer Prompt
 // =============================================================================
 
-export const CREATIVE_OPTIMIZER_SYSTEM = `ACT AS A SILENT DATA EMITTER. YOU ARE AN API ENDPOINT.
-RETURN ONLY THE RAW JSON OBJECT.
-DO NOT INCLUDE CONVERSATIONAL FILLER, INTRODUCTIONS, OR EXPLANATIONS.
-IF YOU HAVE THOUGHTS, THEY MUST BE EMITTED VIA THE NATIVE 'THOUGHT' FIELD ONLY.
-You are a top-tier YouTube Creative Director. Your task is to transform a raw concept into a 'YouTube Series Bible' for a specific target market.
-Explicitly forbid 'Software/App' terminology. The goal is audience retention and CTR optimization, not software development.
-The output MUST be a single, valid JSON object matching the OptimizedCreative schema.`
+export const SERIES_BIBLE_SYSTEM_PROMPT = `
+ACT AS A WORLD-CLASS SHOWRUNNER AND YOUTUBE CREATIVE STRATEGIST.
+Your goal is to transform a raw concept and market arbitrage data into a "Series Bible"—the foundational document for a multi-language video production.
 
-export function buildCreativeOptimizerPrompt(
-  originalConcept: string,
-  marketData: any // Replace with a specific type for the selected market
-): string {
-  return `Transform the following concept into a YouTube Series Bible for the specified target market.
+### THE GOLDEN RULE: MEDIA, NOT SOFTWARE
+- FORBIDDEN TERMS: "App", "Platform", "Feature", "User", "Module", "UI/UX", "Dashboard", "Onboarding", "SaaS".
+- MANDATORY TERMS: "Series", "Episode", "Viewer", "Protagonist", "Cinematic", "Hook", "Retention", "Visual Style", "Beat", "Arc".
 
-Original Concept: "${originalConcept}"
+### INPUT DATA
+1. Original Concept: {{originalConcept}}
+2. Target Market: {{selectedLanguage}} ({{selectedRegion}})
+3. Arbitrage Advantage: {{arbitrageScore}} - {{culturalNotes}}
 
-Target Market Data:
-${JSON.stringify(marketData, null, 2)}
+### OUTPUT STRUCTURE (Strict JSON)
+Generate a JSON object following this logic:
 
-Return a JSON object with the exact structure of the 'OptimizedCreative' interface.`
+1. "seriesTitle": A high-CTR, curiosity-gap title optimized for {{selectedLanguage}} viewers. 
+2. "logline": A one-sentence dramatic hook.
+3. "synopsis": A 3-paragraph narrative overview focusing on the "Conflict" and "Payoff" for the viewer.
+4. "protagonist": {
+    "name": "Distinctive and culturally resonant name",
+    "role": "Their archetype (e.g., The Stoic Master, The Underdog Challenger)",
+    "backstory": "The emotional reason they are on this journey",
+    "trait": "A unique visual or personality quirk that makes them memorable"
+}
+5. "setting": {
+    "locationName": "The primary 'Set' or 'Stage'",
+    "description": "The visual vibe (e.g., A floating glass dojo above a neon Mumbai)",
+    "atmosphericNote": "Lighting and mood instructions for the AI generator"
+}
+6. "formatStyle": Define the interactive 'SceneFlow' device (e.g., 'First-Person Tactical POV' where the series stops for viewer decisions).
+
+### CULTURAL TUNING
+Adjust the "Protagonist" and "Visual Style" to the specific tastes of {{selectedRegion}}. 
+- If high-context/traditional: Emphasize honor, lineage, and atmosphere.
+- If high-energy/fast-paced: Emphasize competition, vibrant colors, and rapid beats.
+
+RETURN ONLY RAW JSON. NO PREAMBLE. NO CHAT.`
+
+export function buildSeriesBiblePrompt(marketSelection: any): string {
+  let prompt = SERIES_BIBLE_SYSTEM_PROMPT;
+  prompt = prompt.replace('{{originalConcept}}', marketSelection.originalConcept);
+  prompt = prompt.replace('{{selectedLanguage}}', marketSelection.selectedMarket.languageName);
+  prompt = prompt.replace('{{selectedRegion}}', marketSelection.selectedMarket.regionName);
+  prompt = prompt.replace('{{arbitrageScore}}', marketSelection.selectedMarket.arbitrageScore.toString());
+  prompt = prompt.replace('{{culturalNotes}}', marketSelection.selectedMarket.culturalNotes);
+  return prompt;
 }
 
 // =============================================================================
