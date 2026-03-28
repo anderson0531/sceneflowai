@@ -2,9 +2,6 @@
 
 import { useState, useCallback } from 'react';
 import { SeriesBible, MarketSelection } from '@/types/visionary';
-import { generateText } from '@/lib/vertexai/gemini';
-import { buildSeriesBiblePrompt } from '@/lib/visionary/prompt-templates';
-import { safeParseJSON } from '@/lib/utils/safeParseJSON';
 
 export const useSeriesBibleGenerator = () => {
   const [seriesBible, setSeriesBible] = useState<SeriesBible | null>(null);
@@ -16,18 +13,22 @@ export const useSeriesBibleGenerator = () => {
     setError(null);
 
     try {
-      const prompt = buildSeriesBiblePrompt(marketSelection);
-      const response = await generateText(prompt, {
-        model: 'gemini-3.1-pro-preview',
-        thinkingLevel: 'MEDIUM',
-        maxOutputTokens: 8192,
+      const response = await fetch('/api/visionary/refine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(marketSelection),
       });
 
-      const parsedResponse = safeParseJSON(response.text);
-      if (parsedResponse) {
-        setSeriesBible(parsedResponse);
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || `HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        setSeriesBible(data.seriesBible);
       } else {
-        throw new Error("Failed to parse series bible response.");
+        throw new Error(data.error || "Failed to generate series bible.");
       }
     } catch (e: any) {
       setError(e.message);

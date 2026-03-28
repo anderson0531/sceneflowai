@@ -379,7 +379,7 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
                 </Button>
               </div>
             ) : selectedMarket && seriesBible ? (
-              <SeriesBibleView bible={seriesBible} />
+              <SeriesBibleView bible={seriesBible} marketContext={selectedMarket} />
             ) : selectedMarket && isGenerating ? (
               <div className="text-center py-12">
                 <p>Generating Series Bible for {selectedMarket.regionName}...</p>
