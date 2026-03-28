@@ -171,8 +171,8 @@ export type GeminiThinkingLevel = 'minimal' | 'low' | 'medium' | 'high';
 
 // 1. PRIMARY PREVIEW MODELS
 export const GEMINI_TEXT_MODELS = {
-  '3-flash': 'gemini-3-flash-preview', 
-  '3-pro': 'gemini-3-pro-preview',
+  '3-flash': 'gemini-3.1-flash-lite-preview', // As seen in Model Garden screenshot
+  '3-pro': 'gemini-3.1-pro-preview',
 } as const;
 
 /** Previous models, kept for fallback reference */
@@ -188,8 +188,8 @@ export function getGeminiTextModel(
   tier: 'flash' | 'pro' = 'flash'
 ): string {
   // Use the major version alias for maximum compatibility with the preview registry
-  if (tier === 'pro') return 'gemini-3-pro-preview';
-  return 'gemini-3-flash-preview';
+  if (tier === 'pro') return 'gemini-3.1-pro-preview';
+  return 'gemini-3.1-flash-lite-preview';
 }
 
 /**

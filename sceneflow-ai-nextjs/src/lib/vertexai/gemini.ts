@@ -125,9 +125,6 @@ export async function generateText(
         thinking_level: (options.thinkingLevel || 'MEDIUM').toUpperCase()
       }
     },
-    tools: [
-      { google_search: {} }
-    ],
     safety_settings: [
       { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "OFF" },
       { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "OFF" },
