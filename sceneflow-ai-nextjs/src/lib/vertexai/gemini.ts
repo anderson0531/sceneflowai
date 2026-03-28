@@ -94,80 +94,53 @@ export async function generateText(
   prompt: string,
   options: TextGenerationOptions = {}
 ): Promise<TextGenerationResult> {
-  const { projectId, location: defaultLocation } = getConfig()
-  // Trim the model name to remove any leading/trailing whitespace, including newlines
-  const model = (options.model || getGeminiTextModel()).trim()
+  const { projectId, location: defaultLocation } = getConfig();
   
-  const isGemini3Model = model.startsWith('gemini-3')
-  const location = options.location || defaultLocation // ALWAYS use regional endpoint
+  // 1. HARDENED MODEL RESOLUTION (Prevents 2s 500 Error)
+  const rawModel = options.model || getGeminiTextModel() || 'gemini-2.5-flash';
+  const model = rawModel.trim();
   
-  // Vertex AI endpoint for Gemini models
-  const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`
+  const isGemini3Model = model.toLowerCase().includes('gemini-3');
+  const location = options.location || defaultLocation;
   
-  const accessToken = await getVertexAIAuthToken()
+  const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
   
-  // Build request body
+  const accessToken = await getVertexAIAuthToken();
+  
+  // 2. CONSTRUCT UNIFIED THINKING CONFIG
+  const thinkingConfig: any = { includeThoughts: true };
+  if (isGemini3Model) {
+    thinkingConfig.thinkingLevel = (options.thinkingLevel || 'LOW').toUpperCase();
+  } else {
+    const thinkingLevelToBudget: Record<string, number> = {
+      minimal: 0, low: 1024, medium: 4096, high: 8192
+    };
+    const level = options.thinkingLevel || 'low';
+    thinkingConfig.thinkingBudget = options.thinkingBudget ?? thinkingLevelToBudget[level] ?? 1024;
+  }
+
+  // 3. CORRECT REST PAYLOAD STRUCTURE
   const requestBody: any = {
-    contents: [
-      {
-        role: 'user',
-        parts: [{ text: prompt }]
-      }
-    ],
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generationConfig: {
       temperature: options.temperature ?? 0.2,
       topP: options.topP ?? 0.9,
-      topK: options.topK,
       maxOutputTokens: options.maxOutputTokens ?? 8192,
-      // Enforce JSON mode by default if not specified
       responseMimeType: options.responseMimeType ?? "application/json",
-    }
-  }
-  
-  // Add seed for deterministic output
-  if (options.seed !== undefined) {
-    requestBody.generationConfig.seed = options.seed
-  }
+    },
+    // 🔥 Sibling to generationConfig, not child
+    thinkingConfig: thinkingConfig,
+    safetySettings: options.safetySettings || getDefaultGeminiSafetySettings()
+  };
 
-  // Add response mime type if specified
-  if (options.responseMimeType) {
-    requestBody.generationConfig.responseMimeType = options.responseMimeType
-  }
-  
-  // Add system instruction if provided
   if (options.systemInstruction) {
     requestBody.systemInstruction = {
       role: 'system',
       parts: [{ text: options.systemInstruction }],
-    }
-  }
-
-  // Unified, model-aware thinking configuration
-  const thinkingConfig: any = {
-    includeThoughts: true,
-  };
-
-  if (isGemini3Model) {
-    // Gemini 3 standard
-    thinkingConfig.thinkingLevel = (options.thinkingLevel || 'low').toLowerCase();
-  } else {
-    // Gemini 2.5 legacy fallback
-    const thinkingLevelToBudget = {
-      minimal: 0,
-      low: 1024,
-      medium: 8192,
-      high: 8192, // Capped at 8192
     };
-    thinkingConfig.thinkingBudget = options.thinkingBudget ?? thinkingLevelToBudget[options.thinkingLevel as keyof typeof thinkingLevelToBudget] ?? 1024;
   }
-  
-  requestBody.generationConfig.thinkingConfig = thinkingConfig;
-  
-  // Safety settings
-  requestBody.safetySettings = options.safetySettings || getDefaultGeminiSafetySettings()
-  
-  console.log(`[Vertex Gemini] Generating text with ${model}...`);
-  console.log(`[Vertex Gemini] Endpoint URL: ${endpoint}`); // Emergency ID Logging
+
+  console.log(`[Vertex Gemini] Requesting: ${model} at ${location}`);
   
   const response = await fetchWithRetry(
     endpoint,
@@ -183,73 +156,46 @@ export async function generateText(
       maxRetries: options.maxRetries ?? 3,
       initialDelayMs: options.initialDelayMs ?? 1000,
       operationName: `Vertex Gemini ${model}`,
-      timeoutMs: options.timeoutMs ?? 90000, // Default 90s timeout per request
+      timeoutMs: options.timeoutMs ?? 90000,
     }
-  )
-  
+  );
+
   if (!response.ok) {
-    const errorText = await response.text()
+    const errorText = await response.text();
     
-    // Model fallback: if 404 (model not found) and using a Gemini 3 model,
-    // retry with the previous-generation model (gemini-2.5-flash)
-    if (response.status === 404 && isGemini3Model && !options._isFallbackAttempt) {
-      const fallbackModel = GEMINI_TEXT_MODELS_PREVIOUS['2.5-flash']; // Correctly reference the fallback model
-      console.warn(`[Vertex Gemini] Model "${model}" returned 404, falling back to "${fallbackModel}"`)
-      
-      // Translate 3.0 thinkingLevel → 2.5 thinkingBudget to prevent unrestricted thinking OOM
-      const thinkingLevelToBudget: Record<GeminiThinkingLevel, number> = {
-        minimal: 0,
-        low: 1024,
-        medium: 4096, // Capped at 4096
-        high: 8192,  // Capped at 8192
-      }
-      const fallbackOptions = { ...options }
-      if (fallbackOptions.thinkingLevel) {
-        fallbackOptions.thinkingBudget = Math.min(thinkingLevelToBudget[fallbackOptions.thinkingLevel], 8192); // Harden the Fallback
-        delete fallbackOptions.thinkingLevel
-        console.warn(`[Vertex Gemini] Translated thinkingLevel "${options.thinkingLevel}" → thinkingBudget ${fallbackOptions.thinkingBudget} for ${fallbackModel}`)
-      }
-      
+    // Fallback Logic
+    if (response.status === 404 && isGemini3Model && !(options as any)._isFallbackAttempt) {
+      console.warn(`[Vertex Gemini] 404 for ${model}, falling back to gemini-2.5-flash`);
       return generateText(prompt, {
-        ...fallbackOptions,
-        model: fallbackModel,
+        ...options,
+        model: 'gemini-2.5-flash',
+        thinkingLevel: 'low', // Fast fallback
         _isFallbackAttempt: true,
-      } as TextGenerationOptions & { _isFallbackAttempt?: boolean })
+      } as any);
     }
     
-    console.error('[Vertex Gemini] Error:', errorText)
-    throw new Error(`Vertex AI Gemini error ${response.status}: ${errorText}`)
+    throw new Error(`Vertex AI Gemini error ${response.status}: ${errorText}`);
   }
+
+  const data = await response.json();
+  const candidate = data.candidates?.[0];
   
-  const data = await response.json()
-  
-  const candidate = data.candidates?.[0]
-  if (!candidate) {
-    throw new Error('No candidates in Vertex AI response')
-  }
-  
-  // 🔥 "Thought Pollution" Fix: Filter out thought parts before joining.
+  if (!candidate) throw new Error('No candidates in Vertex AI response');
+
+  // 4. CLEAN TEXT EXTRACTION (Thought Filtering)
   const text = candidate.content?.parts
     ?.filter((part: any) => !part.thought)
     .map((part: any) => part.text)
     .join('')
-    .trim()
+    .trim();
 
-  if (!text) {
-    // If text is empty after filtering, check for thoughts to provide better debugging
-    const thoughts = candidate.content?.parts?.filter((part: any) => part.thought).map((part: any) => part.text).join('\n');
-    if (thoughts) {
-      console.error('[Vertex Gemini] Response contained only thoughts, no text output:', thoughts);
-      throw new Error('LLM response contained only thoughts, resulting in empty output.');
-    }
-    throw new Error('No text content in Vertex AI response after filtering thoughts')
-  }
+  if (!text) throw new Error('LLM response filtered to empty string (Possible Thought-only response)');
   
   return {
     text,
     finishReason: candidate.finishReason,
     safetyRatings: candidate.safetyRatings
-  }
+  };
 }
 
 // =============================================================================

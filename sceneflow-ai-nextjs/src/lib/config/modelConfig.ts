@@ -163,42 +163,42 @@ export function getEnvImagenQuality(): ImagenQualityTier {
 // TEXT GENERATION MODELS (Gemini)
 // =============================================================================
 
+/**
+ * Model Configuration for 2026 Vertex AI Environment
+ */
+
+export type GeminiThinkingLevel = 'minimal' | 'low' | 'medium' | 'high';
+
+// 1. PRIMARY PREVIEW MODELS
 export const GEMINI_TEXT_MODELS = {
-  /** Gemini 3.0 Flash - Fast, cheap, excellent for summarization, initial analysis */
-  flash: 'gemini-3.0-flash-preview', // Corrected preview ID for March 2026
+  '3.0-flash': 'gemini-3.0-flash-preview',
+  '3.1-pro': 'gemini-3.1-pro-preview',
+} as const;
 
-  /** Gemini 3.1 Pro - Slower, more expensive, superior reasoning for complex tasks */
-  pro: 'gemini-3.1-pro-preview', // Corrected preview ID for March 2026
-};
-
-/** Previous models, kept for fallback reference */
+// 2. STABLE FALLBACKS
 export const GEMINI_TEXT_MODELS_PREVIOUS = {
   '2.5-flash': 'gemini-2.5-flash',
-  '2.5-pro': 'gemini-2.5-pro',
-};
+} as const;
 
 /**
- * Returns the default Gemini text model ID.
- * Use `GEMINI_DEFAULT_MODEL` env var to override (e.g., 'pro' for testing).
+ * Resolves the correct model ID based on desired tier and depth.
+ * This is the function called by your Route.ts and Gemini.ts.
  */
-export function getGeminiTextModel(): string {
-  const defaultModelKey = process.env.GEMINI_DEFAULT_MODEL || 'flash';
-  return GEMINI_TEXT_MODELS[defaultModelKey as keyof typeof GEMINI_TEXT_MODELS] || GEMINI_TEXT_MODELS.flash;
-}
-
-/**
- * Detect which model family a model string belongs to.
- * Used to determine thinking config format, endpoint routing, etc.
- */
-export function getModelFamily(model: string): GeminiModelFamily {
-  if (model.includes('3.0') || model.includes('3.1') || model.startsWith('gemini-3')) {
-    return '3.0';
+export function getGeminiTextModel(
+  tier: 'flash' | 'pro' = 'flash',
+  level: GeminiThinkingLevel = 'low'
+): string {
+  // Logic: Pro is used for high-complexity (Phase 3/4), Flash for speed (Phase 1/2)
+  if (tier === 'pro') {
+    return GEMINI_TEXT_MODELS['3.1-pro'];
   }
-  return '2.5';
+  
+  return GEMINI_TEXT_MODELS['3.0-flash'];
 }
 
 /**
- * Build the correct thinking config for the model family.
+ * Configuration for the 'thinking' parameter in Gemini.
+ * Translates abstract levels to concrete budget numbers for older models.
  * 
  * - Gemini 2.5: numeric thinkingBudget (0 = disabled, up to 24576)
  * - Gemini 3.0+: string thinkingLevel ('minimal' | 'low' | 'medium' | 'high')
