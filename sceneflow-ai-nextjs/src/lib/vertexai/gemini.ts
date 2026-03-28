@@ -115,22 +115,19 @@ export async function generateText(
       }
     ],
     generation_config: {
-      temperature: options.temperature ?? 0.7, // Matching SDK default for creative tasks
-      top_p: options.topP ?? 0.95,             // Matching Python snippet
+      temperature: options.temperature ?? 0.7,
+      top_p: options.topP ?? 0.95,
       max_output_tokens: options.maxOutputTokens ?? 65535, 
       response_mime_type: options.responseMimeType ?? "application/json",
       
-      // 🔥 THE FIX: Nested thinking_config in snake_case
       thinking_config: {
         include_thoughts: true,
         thinking_level: (options.thinkingLevel || 'MEDIUM').toUpperCase()
       }
     },
-    // Adding Google Search Tooling as seen in your Python snippet
     tools: [
       { google_search: {} }
     ],
-    // Safety Settings set to 'OFF' to match the successful Python test
     safety_settings: [
       { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "OFF" },
       { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "OFF" },
@@ -139,7 +136,6 @@ export async function generateText(
     ]
   };
 
-  // Add system instruction if provided
   if (options.systemInstruction) {
     requestBody.system_instruction = {
       role: 'system',
@@ -161,14 +157,13 @@ export async function generateText(
     },
     {
       maxRetries: 3,
-      timeoutMs: 90000, // 90s total timeout
+      timeoutMs: 90000,
     }
   );
 
   if (!response.ok) {
     const errorText = await response.text();
     
-    // Emergency Fallback to 2.5-flash if the reasoning model is strictly unreachable
     if (response.status === 404 && !(options as any)._isFallbackAttempt) {
       console.warn(`[Vertex Gemini] Model ${model} not found. Trying fallback...`);
       return generateText(prompt, {
@@ -186,7 +181,6 @@ export async function generateText(
   
   if (!candidate) throw new Error('No candidates in Vertex AI response');
 
-  // 3. EXTRACT CLEAN TEXT (Filter out reasoning parts)
   const text = candidate.content?.parts
     ?.filter((part: any) => !part.thought)
     .map((part: any) => part.text)
