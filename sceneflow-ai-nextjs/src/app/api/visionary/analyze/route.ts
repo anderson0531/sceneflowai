@@ -63,7 +63,7 @@ export async function POST(req: Request) {
       buildArbitragePrompt(concept, JSON.stringify(gapAnalysis), focusLanguages),
       { 
         model: 'gemini-3.1-pro-preview', 
-        systemInstruction: ARBITRage_SYSTEM, 
+        systemInstruction: ARBITRAGE_SYSTEM, 
         thinkingLevel: 'medium' 
       }
     );
