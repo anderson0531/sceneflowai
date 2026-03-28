@@ -321,7 +321,7 @@ export async function POST(request: NextRequest) {
         {
           model: 'gemini-3.1-pro-preview', // Use the superior model for heavy lifting
           systemInstruction: ARBITRAGE_SYSTEM,
-          thinkingLevel: 'medium',
+          thinkingLevel: 'MEDIUM', // Optimal balance for market synthesis
           maxOutputTokens: 8192, // Increase token limit for the more powerful model
         }
       )

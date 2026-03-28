@@ -153,11 +153,22 @@ export async function generateText(
   // Add system instruction if provided
   if (options.systemInstruction) {
     requestBody.systemInstruction = {
-      parts: [{ text: options.systemInstruction }]
+      role: 'system',
+      parts: [{ text: options.systemInstruction }],
     }
   }
+
+  // Handle thinking configuration (new for Gemini 3.1+)
+  if (options.thinkingLevel && isGemini3Model) {
+    requestBody.thinkingConfig = {
+      thinkingLevel: options.thinkingLevel.toUpperCase(), // Use new config and uppercase value
+    };
+  } else if (options.thinkingBudget !== undefined && !isGemini3Model) {
+    // Legacy thinking budget for older models
+    requestBody.generationConfig.thinkingBudget = options.thinkingBudget;
+  }
   
-  // Add safety settings (default: BLOCK_ONLY_HIGH for creative content flexibility)
+  // Safety settings
   requestBody.safetySettings = options.safetySettings || getDefaultGeminiSafetySettings()
   console.log(`[Vertex Gemini] Safety settings: ${requestBody.safetySettings.map((s: SafetySetting) => `${s.category}=${s.threshold}`).join(', ')}`)
   
