@@ -38,6 +38,20 @@ const PHASES = [
   },
 ];
 
+/**
+ * Extracts high-value tokens from the concept string
+ * to inject into the processing ticker.
+ */
+function getConceptTokens(concept: string): string[] {
+  const stopWords = ['a', 'an', 'the', 'and', 'or', 'in', 'on', 'at', 'with', 'for', 'how', 'to', 'of'];
+  return concept
+    .toLowerCase()
+    .replace(/[^\w\s]/gi, '') // Remove punctuation
+    .split(' ')
+    .filter(word => word.length > 3 && !stopWords.includes(word))
+    .slice(0, 5); // Grab top 5 meaningful words
+}
+
 // ─── Floating particle component ──────────────────────────────────────────────
 
 function DataParticle({ delay, color, size }: { delay: number; color: string; size: number }) {
@@ -200,23 +214,48 @@ export function AnalysisOverlay({
   onCancel,
 }: AnalysisOverlayProps) {
   const [messageIndex, setMessageIndex] = useState(0)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
-  const messages = PHASE_TICKER_MESSAGES[phase] || ['Processing...']
+  
+  const dynamicMessages = useMemo(() => {
+    const tokens = getConceptTokens(concept);
+    const primaryToken = tokens[0] || 'concept';
+    const secondaryToken = tokens[1] || genre || 'market';
+
+    const baseMessages: Record<VisionaryPhase, string[]> = {
+      'market-scan': [
+        `Cross-referencing ${primaryToken} metadata...`,
+        `Scanning global demand for ${secondaryToken} trends...`,
+        `Indexing competitive landscape for ${primaryToken}...`,
+        `Analyzing ${genre || 'creative'} saturation points...`,
+      ],
+      'gap-analysis': [
+        `Identifying untapped potential in ${primaryToken}...`,
+        `Calculating narrative friction for ${secondaryToken}...`,
+        `Isolating whitespace within ${primaryToken} tropes...`,
+        `Mapping viewer retention hooks for ${secondaryToken}...`,
+      ],
+      'arbitrage-map': [
+        `Localizing ${primaryToken} for high-revenue regions...`,
+        `Optimizing ${secondaryToken} for global resonance...`,
+        `Calculating currency-to-content arbitrage for ${primaryToken}...`,
+        `Finalizing ${secondaryToken} production blueprints...`,
+      ],
+      'idle': ['Initializing...'],
+      'complete': ['Synthesis successful.'],
+      'error': ['Synthesis interrupted.']
+    };
+
+    return baseMessages[phase] || ['Processing coordinates...'];
+  }, [phase, concept, genre]);
 
   // Cycle ticker messages
   useEffect(() => {
-    if (!isRunning) {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-      return
-    }
-    setMessageIndex(0)
-    intervalRef.current = setInterval(() => {
-      setMessageIndex(prev => (prev + 1) % messages.length)
-    }, 2800)
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
-  }, [phase, isRunning, messages.length])
+    if (!isRunning) return;
+    setMessageIndex(0);
+    const interval = setInterval(() => {
+      setMessageIndex(prev => (prev + 1) % dynamicMessages.length);
+    }, 2800);
+    return () => clearInterval(interval);
+  }, [phase, isRunning, dynamicMessages.length])
 
   // Current phase config
   const activePhaseConfig = PHASES.find(p => p.key === phase) || PHASES[0]
@@ -327,8 +366,8 @@ export function AnalysisOverlay({
               strokeWidth="3"
               strokeLinecap="round"
               strokeDasharray={226}
-              animate={{ strokeDashoffset: 226 - (226 * progress.progress) / 100 }}
-              transition={{ duration: 0.8, ease: 'easeInOut' }}
+              animate={{ strokeDashoffset: 226 - (226 * Math.round(progress.progress)) / 100 }}
+              transition={{ duration: 0.4, ease: 'linear' }}
             />
           </svg>
 
@@ -412,7 +451,7 @@ export function AnalysisOverlay({
             transition={{ duration: 0.35 }}
             className="text-sm text-gray-400 text-center"
           >
-            {messages[messageIndex]}
+            {dynamicMessages[messageIndex]}
           </motion.p>
         </AnimatePresence>
       </div>

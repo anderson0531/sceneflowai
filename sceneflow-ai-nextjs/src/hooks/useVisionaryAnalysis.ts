@@ -80,29 +80,37 @@ export function useVisionaryAnalysis() {
     const phaseTargets: Record<string, number> = {
       'market-scan': 33,
       'gap-analysis': 66,
-      'arbitrage-map': 98, // Leave room for 100% on return
+      'arbitrage-map': 98,
     }
 
     progressTimerRef.current = setInterval(() => {
       const currentPhase = phaseRef.current
       const target = phaseTargets[currentPhase] || 98
+      const remaining = target - simulatedProgress
 
-      if (simulatedProgress < target) {
-        simulatedProgress += (target - simulatedProgress) * 0.05 // Standard approach
-      } else if (currentPhase !== 'arbitrage-map') {
-        // AUTO-ADVANCE DRIFT:
+      if (remaining > 0.5) {
+        simulatedProgress += remaining * 0.05 
+      } 
+      else if (currentPhase !== 'arbitrage-map') {
         const order: VisionaryPhase[] = ['market-scan', 'gap-analysis', 'arbitrage-map']
         const nextIdx = order.indexOf(currentPhase) + 1
+        
         if (nextIdx < order.length) {
-          setPhase(order[nextIdx])
+          const nextPhase = order[nextIdx]
+          setPhase(nextPhase)
+          simulatedProgress += 1 
         }
       }
 
-      setProgress(prev => ({ ...prev, progress: Math.round(simulatedProgress) }))
+      setProgress(prev => ({ 
+        ...prev, 
+        phase: phaseRef.current,
+        progress: Math.round(simulatedProgress) 
+      }))
     }, 500)
 
     try {
-      // ── Fire the POST (server runs all 4 phases) ─────────────────
+      // ── Fire the POST (server runs all 3 phases) ─────────────────
       const createRes = await fetch('/api/visionary/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-user-id': userEmail },
