@@ -35,6 +35,8 @@ const GENRES = [
  * language arbitrage mapping, and idea-to-production bridging.
  * 
  * Route: /dashboard/visionary
+ * 
+ * Force new deployment
  */
 export default function VisionaryPage() {
   const { data: session } = useSession()
@@ -87,7 +89,7 @@ export default function VisionaryPage() {
         setPastReports(data.reports)
         hasFetchedRef.current = true
       }
-    } catch (e) { console.error(e) } finally {
+    } catch (e) { console.error('Fetch reports failed:', e) } finally {
       setIsLoadingReports(false)
       isFetchingRef.current = false
     }
