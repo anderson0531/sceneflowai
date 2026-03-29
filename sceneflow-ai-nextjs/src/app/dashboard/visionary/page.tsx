@@ -347,7 +347,7 @@ export default function VisionaryPage() {
               onClose={() => setSelectedRegion(null)}
             />
           )}
-        </AnimatePresence
+        </AnimatePresence>
       </div>
 
       {/* Use the standard GeneratingOverlay */}
