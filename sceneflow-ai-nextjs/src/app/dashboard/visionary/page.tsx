@@ -19,7 +19,7 @@ import { OpportunityReport } from './components/OpportunityReport'
 import { useVisionaryAnalysis } from '@/hooks/useVisionaryAnalysis'
 import { useConceptGenerator } from '@/hooks/useConceptGenerator'
 import { ConceptOptionsView } from './components/ConceptOptionsView'
-import { ConceptSynthesisOverlay } from './components/ConceptSynthesisOverlay'
+import GeneratingOverlay from '@/components/ui/GeneratingOverlay' // Use the standard overlay
 import type { VisionaryReport, LanguageOpportunity } from '@/lib/visionary/types'
 
 /**
@@ -159,32 +159,6 @@ export default function VisionaryPage() {
   }
 
   const activeReport = report || selectedReport
-
-  if (concepts) {
-    return <ConceptOptionsView concepts={concepts} />
-  }
-
-  if (isGeneratingConcepts || conceptError) {
-    return (
-      <ConceptSynthesisOverlay 
-        isVisible={isGeneratingConcepts || !!conceptError} 
-        error={conceptError}
-        onCancel={() => {
-          // This should be handled by a function in useConceptGenerator
-          // For now, we'll just reset the local state
-          generateConcepts.cancel(); // Assuming the hook has a cancel method
-        }} 
-        onRetry={() => {
-          generateConcepts(activeReport)
-        }} 
-      />
-    )
-  }
-
-  const genres = [
-    'Drama', 'Comedy', 'Thriller', 'Horror', 'Sci-Fi', 'Romance',
-    'Documentary', 'Animation', 'Action', 'Fantasy', 'Musical', 'Educational',
-  ]
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-6 md:p-8">
@@ -472,6 +446,13 @@ export default function VisionaryPage() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Use the standard GeneratingOverlay */}
+      <GeneratingOverlay
+        visible={isGeneratingConcepts}
+        title="Synthesizing Creative Options..."
+        subtext="This may take a moment as the AI develops narrative arcs and character concepts."
+      />
     </div>
   )
 }
