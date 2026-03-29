@@ -346,13 +346,31 @@ export default function VisionaryPage() {
               />
             )}
 
-            {concepts ? (
-              <ConceptOptionsView concepts={concepts} />
-            ) : (
-              <Button onClick={() => generateConcepts(activeReport)} disabled={isGeneratingConcepts}>
-                {isGeneratingConcepts ? 'Generating...' : 'Generate 3 Series Concepts'}
-              </Button>
-            )}
+            {/* --- THE GENERATE OPTIONS SECTION --- */}
+            <div className="bg-gray-900/40 border border-emerald-500/20 rounded-xl p-6 text-center">
+              {concepts ? (
+                <ConceptOptionsView concepts={concepts} onSelect={(concept) => {
+                  // This is where you would handle the selection
+                  console.log('Selected Concept:', concept);
+                }} />
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-400">Ready to bridge this data to a creative series?</p>
+                  <button 
+                    onClick={() => generateConcepts(activeReport)} 
+                    disabled={isGeneratingConcepts}
+                    className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-700 text-white rounded-lg font-medium transition-all flex items-center gap-2 mx-auto"
+                  >
+                    {isGeneratingConcepts ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                    {isGeneratingConcepts ? 'Synthesizing Narrative Options...' : 'Generate 3 Series Concepts'}
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Full Report */}
             <OpportunityReport report={activeReport} />

@@ -5,8 +5,9 @@ import { TrendingUp, Target, ChevronDown, ChevronUp } from 'lucide-react'
 import { useState } from 'react'
 
 interface OpportunityReportProps {
-  marketScan: any;
-  gapAnalysis: any;
+  marketScan?: any
+  gapAnalysis?: any
+  overallScore?: number
 }
 
 /**
@@ -15,8 +16,9 @@ interface OpportunityReportProps {
  * Renders the complete Visionary Engine report with:
  * - Market scan trends
  * - Gap analysis with concept fit
+ * - Bridge plan action items
  */
-export function OpportunityReport({ marketScan, gapAnalysis }: OpportunityReportProps) {
+export function OpportunityReport({ report, marketScan, gapAnalysis, overallScore }: OpportunityReportProps) {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     trends: false,
     gaps: false,
@@ -42,6 +44,34 @@ export function OpportunityReport({ marketScan, gapAnalysis }: OpportunityReport
 
   return (
     <div className="space-y-6">
+      {/* Overall Score Hero */}
+      {typeof overallScore === 'number' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`bg-gradient-to-br ${getScoreBg(overallScore)} border rounded-2xl p-6`}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-1">
+                Overall Viability Score
+              </h3>
+              <p className={`text-5xl font-bold ${getScoreColor(overallScore)}`}>
+                {overallScore}
+              </p>
+              <p className="text-sm text-gray-400 mt-2">
+                Based on concept fit, market opportunity, and language arbitrage potential
+              </p>
+            </div>
+            <div className="w-20 h-20 rounded-full border-4 border-gray-700 flex items-center justify-center">
+              <div className={`text-2xl font-bold ${getScoreColor(overallScore)}`}>
+                {overallScore >= 75 ? '🎯' : overallScore >= 50 ? '📈' : '⚠️'}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Market Trends */}
       {marketScan && (
         <div className="bg-gray-800/60 border border-gray-700 rounded-xl overflow-hidden">
@@ -64,27 +94,10 @@ export function OpportunityReport({ marketScan, gapAnalysis }: OpportunityReport
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className="flex items-center gap-3 bg-gray-700/30 rounded-lg p-3"
+                  className="bg-slate-900/50 p-3 rounded-lg border border-white/10"
                 >
-                  <div className={`w-2 h-2 rounded-full ${
-                    trend.momentum === 'rising' ? 'bg-emerald-500' :
-                    trend.momentum === 'stable' ? 'bg-yellow-500' : 'bg-red-500'
-                  }`} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-white truncate">{trend.trend}</span>
-                      <span className="text-[10px] text-gray-500 bg-gray-700 px-1.5 py-0.5 rounded">{trend.category}</span>
-                    </div>
-                    <div className="text-xs text-gray-400 mt-0.5">
-                      Relevance: {trend.relevanceScore}/100 · {trend.regions?.join(', ')}
-                    </div>
-                  </div>
-                  <span className={`text-xs font-medium capitalize ${
-                    trend.momentum === 'rising' ? 'text-emerald-400' :
-                    trend.momentum === 'stable' ? 'text-yellow-400' : 'text-red-400'
-                  }`}>
-                    {trend.momentum}
-                  </span>
+                  <h4 className="font-semibold text-white">{trend.category}</h4>
+                  <p className="text-sm text-gray-400">{trend.trend}</p>
                 </motion.div>
               ))}
             </div>
