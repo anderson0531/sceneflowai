@@ -21,6 +21,7 @@ import { useConceptGenerator } from '@/hooks/useConceptGenerator'
 import { ConceptOptionsView } from './components/ConceptOptionsView'
 import GeneratingOverlay from '@/components/ui/GeneratingOverlay'
 import type { VisionaryReport, LanguageOpportunity } from '@/lib/visionary/types'
+import { useRouter } from 'next/navigation'
 
 const GENRES = [
   'Drama', 'Comedy', 'Thriller', 'Horror', 'Sci-Fi', 'Romance',
@@ -47,6 +48,8 @@ export default function VisionaryPage() {
     cancelAnalysis,
     reset,
   } = useVisionaryAnalysis()
+  const router = useRouter();
+  const [isInitializing, setIsInitializing] = useState(false);
 
   const {
     concepts,
@@ -162,6 +165,29 @@ export default function VisionaryPage() {
       console.error('Failed to delete report:', err)
     }
   }
+
+  const handleInitializeSeries = async (concept: any) => {
+    setIsInitializing(true);
+    try {
+      const res = await fetch('/api/series/initialize', {
+        method: 'POST',
+        body: JSON.stringify({ 
+          selectedConcept: concept,
+          userEmail: session?.user?.email 
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        router.push(`/dashboard/series/${data.projectId}`);
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err) {
+      alert("Initialization failed. Please try again.");
+    } finally {
+      setIsInitializing(false);
+    }
+  };
 
   const activeReport = report || selectedReport
 
@@ -453,7 +479,7 @@ export default function VisionaryPage() {
               onClose={() => setSelectedRegion(null)}
             />
           )}
-        </AnimatePresence>
+        </AnimatePresence
       </div>
 
       {/* Use the standard GeneratingOverlay */}

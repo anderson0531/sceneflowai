@@ -5,7 +5,12 @@ import { PlayCircle, Globe, User, ChevronRight } from 'lucide-react';
 import { useStorylineGeneratorStore } from '@/store/useStorylineGeneratorStore';
 import { useRouter } from 'next/navigation';
 
-export function ConceptOptionsView({ concepts, onSelect }: any) {
+interface ConceptOptionsViewProps {
+  concepts: Concept[]
+  onSelect?: (concept: Concept) => void
+}
+
+export function ConceptOptionsView({ concepts, onSelect }: ConceptOptionsViewProps) {
   const setSeriesGenerationInput = useStorylineGeneratorStore((state) => state.setSeriesGenerationInput);
   const router = useRouter();
 
@@ -18,10 +23,23 @@ export function ConceptOptionsView({ concepts, onSelect }: any) {
     router.push('/dashboard/workflow/ideation');
   };
 
+  const getVibeStyles = (vibe: string) => {
+    switch (vibe) {
+      case 'dark':
+        return 'bg-gray-900 text-white';
+      case 'light':
+        return 'bg-white text-black';
+      case 'emerald':
+        return 'bg-emerald-500 text-white';
+      default:
+        return '';
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-8">
       {concepts.map((concept: any) => (
-        <div key={concept.id} className="bg-gray-900 border border-gray-800 rounded-2xl flex flex-col h-full overflow-hidden">
+        <div key={concept.id} className={`border border-gray-800 rounded-2xl flex flex-col h-full overflow-hidden ${getVibeStyles(concept.vibe)}`}>
           {/* Header */}
           <div className="p-6 bg-emerald-500/5 border-b border-gray-800">
              <div className="flex justify-between items-center mb-4">
@@ -80,10 +98,15 @@ export function ConceptOptionsView({ concepts, onSelect }: any) {
             </div>
           </div>
 
+          {/* Footer CTA */}
           <div className="p-6 pt-0">
-             <button onClick={() => onSelect?.(concept)} className="w-full py-3 bg-white hover:bg-emerald-500 text-black font-bold rounded-xl transition-all flex items-center justify-center gap-2">
-               Initialize Series <ChevronRight className="w-4 h-4" />
-             </button>
+            <button
+              onClick={() => onSelect?.(concept)}
+              className="w-full py-3 bg-white hover:bg-emerald-400 text-black font-bold rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95"
+            >
+              Initialize Series
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       ))}
