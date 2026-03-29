@@ -19,8 +19,13 @@ import { OpportunityReport } from './components/OpportunityReport'
 import { useVisionaryAnalysis } from '@/hooks/useVisionaryAnalysis'
 import { useConceptGenerator } from '@/hooks/useConceptGenerator'
 import { ConceptOptionsView } from './components/ConceptOptionsView'
-import GeneratingOverlay from '@/components/ui/GeneratingOverlay' // Use the standard overlay
+import GeneratingOverlay from '@/components/ui/GeneratingOverlay'
 import type { VisionaryReport, LanguageOpportunity } from '@/lib/visionary/types'
+
+const GENRES = [
+  'Drama', 'Comedy', 'Thriller', 'Horror', 'Sci-Fi', 'Romance',
+  'Documentary', 'Animation', 'Action', 'Fantasy', 'Musical', 'Educational',
+]
 
 /**
  * VisionaryPage — Market Insights
@@ -160,6 +165,10 @@ export default function VisionaryPage() {
 
   const activeReport = report || selectedReport
 
+  if (isGeneratingConcepts) {
+    return <div>Generating creative concepts...</div>
+  }
+
   return (
     <div className="min-h-screen bg-gray-950 text-white p-6 md:p-8">
       <div className="max-w-5xl mx-auto space-y-8">
@@ -244,7 +253,7 @@ export default function VisionaryPage() {
                   Genre <span className="text-gray-500 font-normal">(optional)</span>
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {genres.map(g => (
+                  {GENRES.map(g => (
                     <button
                       key={g}
                       type="button"
