@@ -1,7 +1,7 @@
-export const maxDuration = 300;
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { generateText } from '@/lib/vertexai/gemini';
+import { getGeminiTextModel } from '@/lib/config/modelConfig';
 import { 
   buildMarketScanPrompt, 
   buildGapAnalysisPrompt,
@@ -14,80 +14,86 @@ import {
 } from '@/lib/visionary/prompt-templates';
 import { safeParseJSON } from '@/lib/utils/safeParseJSON';
 
-// 🔥 Vercel Pro Config: 5-minute timeout window
+// 🔥 Vercel Pro Configuration: Must be outside the POST handler
 export const dynamic = 'force-dynamic';
-export const maxDuration = 300; 
+export const maxDuration = 300; // This should be the only declaration
 
 export async function POST(req: Request) {
-  console.log('🚀 [Visionary API] Initializing Speed-Run Pipeline');
-  
   try {
     const headerList = await headers();
     const userId = headerList.get('x-user-id') || 'anonymous';
+
     const body = await req.json();
     const { concept, genre, regions, focusLanguages, selectedMarket } = body;
 
-    if (!concept) return NextResponse.json({ error: 'Concept is required' }, { status: 400 });
+    if (!concept) {
+      return NextResponse.json({ error: 'Concept is required' }, { status: 400 });
+    }
 
-    /**
-     * ⚡ PHASE 1 & 2: CONCURRENT DISCOVERY
-     */
-    const [marketScanRaw, gapAnalysisRaw] = await Promise.all([
-      generateText(
-        buildMarketScanPrompt(concept, genre, regions),
-        { 
-          model: 'gemini-3.1-pro-preview', 
-          systemInstruction: MARKET_SCAN_SYSTEM, 
-          thinkingLevel: 'minimal'
-        }
-      ),
-      generateText(
-        buildGapAnalysisPrompt(concept, "{}", genre), 
-        { 
-          model: 'gemini-3.1-pro-preview', 
-          systemInstruction: GAP_ANALYSIS_SYSTEM, 
-          thinkingLevel: 'minimal'
-        }
-      )
-    ]);
+    // Phase 1: Market Scan
+    const marketScanResult = await generateText(
+      buildMarketScanPrompt(concept, genre, regions),
+      { 
+        model: getGeminiTextModel('flash'), 
+        systemInstruction: MARKET_SCAN_SYSTEM, 
+        thinkingLevel: 'minimal' 
+      }
+    );
+    const marketScan = safeParseJSON(marketScanResult.text);
+    if (!marketScan || Object.keys(marketScan).length === 0) {
+      throw new Error("Phase 1 failed to produce market data.");
+    }
 
-    const marketScan = safeParseJSON(marketScanRaw.text);
-    const gapAnalysis = safeParseJSON(gapAnalysisRaw.text);
+    // Phase 2: Gap Analysis
+    const gapAnalysisResult = await generateText(
+      buildGapAnalysisPrompt(concept, JSON.stringify(marketScan), genre),
+      { 
+        model: getGeminiTextModel('flash'), 
+        systemInstruction: GAP_ANALYSIS_SYSTEM, 
+        thinkingLevel: 'minimal' 
+      }
+    );
+    const gapAnalysis = safeParseJSON(gapAnalysisResult.text);
+    if (!gapAnalysis || Object.keys(gapAnalysis).length === 0) {
+      throw new Error("Phase 2 failed to produce gap analysis data.");
+    }
 
-    console.log('✅ Discovery Phases Complete (Lightning Speed)');
-
-    /**
-     * 🧠 PHASE 3: ARBITRAGE MAP
-     */
+    // Phase 3: Arbitrage Map
     const arbitrageResult = await generateText(
       buildArbitragePrompt(concept, JSON.stringify(gapAnalysis), focusLanguages),
       { 
         model: 'gemini-3.1-pro-preview', 
         systemInstruction: ARBITRAGE_SYSTEM, 
-        thinkingLevel: 'low' 
+        thinkingLevel: 'medium' 
       }
     );
     const arbitrageMap = safeParseJSON(arbitrageResult.text);
-    
-    console.log('📊 [Visionary Debug] Phase 3 Arbitrage Map Data Logged');
+
+    // 🔥 STRATEGIC DEBUG LOG
+    console.log('📊 [Visionary Debug] Phase 3 Arbitrage Map Data:');
     console.log(JSON.stringify(arbitrageMap, null, 2));
 
-    /**
-     * 📜 PHASE 4: SERIES BIBLE
-     */
+    if (!arbitrageMap || Object.keys(arbitrageMap).length === 0) {
+      throw new Error("Phase 3 failed to produce arbitrage map data.");
+    }
+    
+    // Phase 4: Series Bible
     const biblePrompt = buildSeriesBiblePrompt({
       originalConcept: concept,
-      selectedMarket: selectedMarket || (arbitrageMap?.opportunities?.[0])
+      selectedMarket: selectedMarket || (arbitrageMap.opportunities && arbitrageMap.opportunities[0])
     });
+
+    console.log('📜 [Visionary API] Starting Phase 4 (Series Bible)...');
 
     const seriesBibleResult = await generateText(biblePrompt, {
       model: 'gemini-3.1-pro-preview',
       systemInstruction: SERIES_BIBLE_SYSTEM_PROMPT,
-      thinkingLevel: 'medium'
+      // ⚡ TWEAK: Using 'low' instead of 'medium' to get under 60s
+      thinkingLevel: 'low' 
     });
     
     const seriesBible = safeParseJSON(seriesBibleResult.text);
-    console.log('✅ Full Pipeline Success');
+    console.log('✅ Series Bible Complete');
 
     return NextResponse.json({
       reportId: crypto.randomUUID(),
