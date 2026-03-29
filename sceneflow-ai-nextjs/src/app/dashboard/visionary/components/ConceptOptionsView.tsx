@@ -124,17 +124,23 @@ export function ConceptOptionsView({ concepts, onSelect }: ConceptOptionsViewPro
                   </p>
                 </div>
 
+                {/* Featured Episodes section with defensive guard */}
                 <div>
                   <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3 tracking-wider flex items-center gap-2">
                     <PlayCircle className="w-3 h-3" /> Featured Episodes
                   </h4>
                   <ul className="space-y-2">
-                    {concept.episodes.slice(0, 3).map((ep, i) => (
-                      <li key={i} className="text-[11px] text-gray-400 flex gap-2">
-                        <span className="text-emerald-500 font-mono">0{i+1}</span>
-                        <span className="truncate">{ep.title}</span>
-                      </li>
-                    ))}
+                    {/* 🛡️ DEFENSIVE GUARD: Ensure episodes is a valid array before slicing */}
+                    {Array.isArray(concept.episodes) && concept.episodes.length > 0 ? (
+                      concept.episodes.slice(0, 3).map((ep, i) => (
+                        <li key={i} className="text-[11px] text-gray-400 flex gap-2">
+                          <span className="text-emerald-500 font-mono">0{i+1}</span>
+                          <span className="truncate">{ep?.title || "Untitled Episode"}</span>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="text-[11px] text-gray-500 italic">No episode blueprints generated.</li>
+                    )}
                   </ul>
                 </div>
               </div>

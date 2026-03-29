@@ -28,8 +28,20 @@ export const useConceptGenerator = () => {
       }
 
       const data = await response.json();
-      if (data.success) {
-        setConcepts(data.concepts);
+      if (data.concepts && Array.isArray(data.concepts)) {
+        const hardenedConcepts = data.concepts.map((c: any) => ({
+          ...c,
+          id: c.id || Math.random().toString(36).substr(2, 9),
+          vibe: c.vibe || 'Spectacle',
+          marketLogic: typeof c.marketLogic === 'string' ? c.marketLogic : 'Global: Standard Opportunity',
+          episodes: Array.isArray(c.episodes) ? c.episodes : [],
+          protagonist: {
+            name: c.protagonist?.name || 'The Visionary',
+            role: c.protagonist?.role || 'Lead',
+            flaw: c.protagonist?.flaw || 'Hidden conflict'
+          }
+        }));
+        setConcepts(hardenedConcepts);
       } else {
         throw new Error(data.error || "Failed to generate concepts.");
       }

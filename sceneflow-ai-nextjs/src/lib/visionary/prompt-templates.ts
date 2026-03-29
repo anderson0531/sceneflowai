@@ -239,6 +239,10 @@ Your goal is to transform a raw concept and market analysis into three distinct,
 
 ### OUTPUT STRUCTURE (Strict JSON)
 Generate a JSON object with a single key "concepts" which is an array of exactly three Series Bible objects.
+You MUST return a valid JSON object. 
+Every field in the schema (title, marketLogic, logline, synopsis, episodes) MUST contain a value. 
+If an episode blueprint cannot be generated, return an empty array [] rather than omitting the key.
+Keep the synopsis under 150 words to ensure the model does not time out before finishing the episodes array.
 
 For each of the three concepts (The Spectacle, The Cinematic Legend, The Interactive Chaos), generate a complete Series Bible object with the following schema:
 
