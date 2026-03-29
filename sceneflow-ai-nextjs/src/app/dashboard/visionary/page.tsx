@@ -340,33 +340,19 @@ export default function VisionaryPage() {
 
             {/* Arbitrage Heat Map */}
             {activeReport.arbitrageMap && (
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-white">Global Opportunity Grid</h3>
-                  <button onClick={() => setShowGrid(!showGrid)} className="text-xs text-gray-400 hover:text-white">
-                    {showGrid ? 'Hide' : 'Show'}
-                  </button>
-                </div>
-                <AnimatePresence>
-                  {showGrid && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                    >
-                      <ArbitrageHeatMap
-                        data={activeReport.arbitrageMap}
-                        onSelectRegion={setSelectedRegion}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              <ArbitrageHeatMap
+                data={activeReport.arbitrageMap}
+                onSelectRegion={setSelectedRegion}
+              />
             )}
 
-            <Button onClick={() => generateConcepts(activeReport)} disabled={isGeneratingConcepts}>
-              Generate 3 Series Concepts
-            </Button>
+            {concepts ? (
+              <ConceptOptionsView concepts={concepts} />
+            ) : (
+              <Button onClick={() => generateConcepts(activeReport)} disabled={isGeneratingConcepts}>
+                {isGeneratingConcepts ? 'Generating...' : 'Generate 3 Series Concepts'}
+              </Button>
+            )}
 
             {/* Full Report */}
             <OpportunityReport report={activeReport} />
