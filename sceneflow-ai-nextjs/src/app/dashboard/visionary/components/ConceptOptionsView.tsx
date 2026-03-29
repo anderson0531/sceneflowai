@@ -83,7 +83,7 @@ export function ConceptOptionsView({ concepts, onSelect }: ConceptOptionsViewPro
               transition={{ delay: index * 0.1 }}
               className={`flex flex-col h-full bg-gray-900/80 border ${styles.border} rounded-2xl overflow-hidden hover:shadow-2xl hover:shadow-emerald-500/10 transition-all group`}
             >
-              {/* Header section */}
+              {/* Header section with safe access */}
               <div className={`p-6 ${styles.bg} border-b ${styles.border}`}>
                 <div className="flex items-center justify-between mb-4">
                   <div className={`p-2 rounded-lg ${styles.bg} border ${styles.border}`}>
@@ -91,14 +91,17 @@ export function ConceptOptionsView({ concepts, onSelect }: ConceptOptionsViewPro
                   </div>
                   <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
                     <Globe className="w-3 h-3" />
-                    {concept.marketLogic.split(':')[0] || 'Global Target'}
+                    {/* 🛡️ DEFENSIVE GUARD: Check if marketLogic exists and is a string before splitting */}
+                    {typeof concept.marketLogic === 'string' && concept.marketLogic.includes(':') 
+                      ? concept.marketLogic.split(':')[0] 
+                      : (concept.marketLogic || 'Global Target')}
                   </div>
                 </div>
                 <h3 className="text-xl font-bold text-white group-hover:text-emerald-400 transition-colors">
-                  {concept.title}
+                  {concept.title || "Untitled Concept"}
                 </h3>
                 <p className="text-sm text-gray-400 mt-2 line-clamp-2 italic">
-                  &quot;{concept.logline}&quot;
+                  &quot;{concept.logline || "No logline provided."}&quot;
                 </p>
               </div>
 
