@@ -29,8 +29,8 @@ interface OpportunityReportProps {
  */
 export function OpportunityReport({ report }: OpportunityReportProps) {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    trends: true,
-    gaps: true,
+    trends: false,
+    gaps: false,
     plan: true,
   })
 

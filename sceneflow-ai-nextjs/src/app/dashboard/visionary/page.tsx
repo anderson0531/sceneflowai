@@ -48,6 +48,7 @@ export default function VisionaryPage() {
   const [pastReports, setPastReports] = useState<VisionaryReport[]>([])
   const [isLoadingReports, setIsLoadingReports] = useState(true)
   const [selectedReport, setSelectedReport] = useState<VisionaryReport | null>(null)
+  const [showGrid, setShowGrid] = useState(true)
 
   // Region detail modal
   const [selectedRegion, setSelectedRegion] = useState<LanguageOpportunity | null>(null)
@@ -316,16 +317,34 @@ export default function VisionaryPage() {
                 )}
               </div>
               <div className="text-xs text-gray-500">
-                {new Date(activeReport.createdAt).toLocaleDateString()}
+                {new Date(activeReport.metadata?.timestamp || activeReport.createdAt).toLocaleDateString()}
               </div>
             </div>
 
             {/* Arbitrage Heat Map */}
             {activeReport.arbitrageMap && (
-              <ArbitrageHeatMap
-                data={activeReport.arbitrageMap}
-                onSelectRegion={setSelectedRegion}
-              />
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-white">Global Opportunity Grid</h3>
+                  <button onClick={() => setShowGrid(!showGrid)} className="text-xs text-gray-400 hover:text-white">
+                    {showGrid ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+                <AnimatePresence>
+                  {showGrid && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                    >
+                      <ArbitrageHeatMap
+                        data={activeReport.arbitrageMap}
+                        onSelectRegion={setSelectedRegion}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             )}
 
             {/* Full Report */}
@@ -383,9 +402,7 @@ export default function VisionaryPage() {
                         <div className="text-xs text-gray-500 flex items-center gap-2">
                           {r.genre && <span>{r.genre}</span>}
                           <span>·</span>
-                          <span>{new Date(r.createdAt).toLocaleDateString()}</span>
-                          <span>·</span>
-                          <span>{r.creditsUsed} credits</span>
+                          <span>{new Date(r.metadata?.timestamp || r.createdAt).toLocaleDateString()}</span>
                         </div>
                       </div>
                       <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
