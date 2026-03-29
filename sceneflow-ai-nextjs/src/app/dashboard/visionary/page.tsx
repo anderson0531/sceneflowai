@@ -17,6 +17,8 @@ import { ArbitrageHeatMap } from './components/ArbitrageHeatMap'
 import { RegionDetailModal } from './components/RegionDetailModal'
 import { OpportunityReport } from './components/OpportunityReport'
 import { useVisionaryAnalysis } from '@/hooks/useVisionaryAnalysis'
+import { useConceptGenerator } from '@/hooks/useConceptGenerator'
+import { ConceptOptionsView } from './components/ConceptOptionsView'
 import type { VisionaryReport, LanguageOpportunity } from '@/lib/visionary/types'
 
 /**
@@ -39,6 +41,13 @@ export default function VisionaryPage() {
     cancelAnalysis,
     reset,
   } = useVisionaryAnalysis()
+
+  const {
+    concepts,
+    isLoading: isGeneratingConcepts,
+    error: conceptError,
+    generateConcepts,
+  } = useConceptGenerator()
 
   // Form state
   const [concept, setConcept] = useState('')
@@ -149,6 +158,14 @@ export default function VisionaryPage() {
   }
 
   const activeReport = report || selectedReport
+
+  if (concepts) {
+    return <ConceptOptionsView concepts={concepts} />
+  }
+
+  if (isGeneratingConcepts) {
+    return <div>Generating creative concepts...</div>
+  }
 
   const genres = [
     'Drama', 'Comedy', 'Thriller', 'Horror', 'Sci-Fi', 'Romance',
@@ -346,6 +363,10 @@ export default function VisionaryPage() {
                 </AnimatePresence>
               </div>
             )}
+
+            <Button onClick={() => generateConcepts(activeReport)} disabled={isGeneratingConcepts}>
+              Generate 3 Series Concepts
+            </Button>
 
             {/* Full Report */}
             <OpportunityReport report={activeReport} />

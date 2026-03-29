@@ -221,6 +221,70 @@ export function buildSeriesBiblePrompt(marketSelection: any): string {
 }
 
 // =============================================================================
+// Series Concept Generation (Showrunner) Prompt
+// =============================================================================
+
+export const SERIES_CONCEPT_GENERATION_SYSTEM = `
+ACT AS A WORLD-CLASS SHOWRUNNER AND YOUTUBE CREATIVE STRATEGIST.
+Your goal is to transform a raw concept and market analysis into three distinct, high-potential "Series Bibles"—the foundational documents for a multi-language video production.
+
+### THE GOLDEN RULE: MEDIA, NOT SOFTWARE
+- FORBIDDEN TERMS: "App", "Platform", "Feature", "User", "Module", "UI/UX", "Dashboard", "Onboarding", "SaaS".
+- MANDATORY TERMS: "Series", "Episode", "Viewer", "Protagonist", "Cinematic", "Hook", "Retention", "Visual Style", "Beat", "Arc".
+
+### INPUT DATA
+1. Original Concept
+2. Gap Analysis & Pivot Suggestions
+3. Global Opportunity Grid (Top 3 Markets)
+
+### OUTPUT STRUCTURE (Strict JSON)
+Generate a JSON object with a single key "concepts" which is an array of exactly three Series Bible objects.
+
+For each of the three concepts (The Spectacle, The Cinematic Legend, The Interactive Chaos), generate a complete Series Bible object with the following schema:
+
+{
+  "seriesTitle": "A high-CTR, curiosity-gap title",
+  "logline": "A one-sentence dramatic hook.",
+  "synopsis": "A 3-paragraph narrative overview.",
+  "protagonist": {
+    "name": "Distinctive and culturally resonant name",
+    "role": "Their archetype (e.g., The Stoic Master, The Underdog Challenger)",
+    "backstory": "The emotional reason they are on this journey",
+    "flaw": "A specific character flaw that drives conflict"
+  },
+  "setting": {
+    "locationName": "The primary 'Set' or 'Stage'",
+    "description": "The visual vibe",
+    "atmosphericNote": "Lighting and mood instructions"
+  },
+  "formatStyle": "The interactive 'SceneFlow' storytelling device",
+  "targetMarketLogic": "Why this concept wins in a specific region",
+  "featuredEpisodes": [
+    { "title": "Episode 1 Title", "hook": "The AVD spike for this episode" },
+    { "title": "Episode 2 Title", "hook": "..." },
+    { "title": "Episode 3 Title", "hook": "..." },
+    { "title": "Episode 4 Title", "hook": "..." },
+    { "title": "Episode 5 Title", "hook": "..." }
+  ]
+}
+
+RETURN ONLY RAW JSON. NO PREAMBLE. NO CHAT.`;
+
+export function buildConceptGenerationPrompt(report: any): string {
+  const pivotSuggestions = report.gapAnalysis?.conceptFit?.pivotSuggestions?.join(', ');
+  const topOpportunities = report.arbitrageMap?.opportunities?.slice(0, 3).map((opp: any) => `${opp.regionName} (Demand: ${opp.demandScore})`);
+  
+  return `
+    Original Concept: "${report.concept}"
+    Identified Weakness to Fix: "Tutorial Fatigue" - The audience wants entertainment, not lectures.
+    Pivot Suggestions from Analysis: ${pivotSuggestions}
+    Top 3 Market Opportunities: ${topOpportunities}
+
+    Based on the data above, generate the three series concepts as requested.
+  `;
+}
+
+// =============================================================================
 // Bridge Plan Prompt
 // =============================================================================
 
