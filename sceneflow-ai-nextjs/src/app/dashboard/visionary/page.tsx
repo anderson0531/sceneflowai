@@ -19,6 +19,7 @@ import { OpportunityReport } from './components/OpportunityReport'
 import { useVisionaryAnalysis } from '@/hooks/useVisionaryAnalysis'
 import { useConceptGenerator } from '@/hooks/useConceptGenerator'
 import { ConceptOptionsView } from './components/ConceptOptionsView'
+import { ConceptSynthesisOverlay } from './components/ConceptSynthesisOverlay'
 import type { VisionaryReport, LanguageOpportunity } from '@/lib/visionary/types'
 
 /**
@@ -163,8 +164,21 @@ export default function VisionaryPage() {
     return <ConceptOptionsView concepts={concepts} />
   }
 
-  if (isGeneratingConcepts) {
-    return <div>Generating creative concepts...</div>
+  if (isGeneratingConcepts || conceptError) {
+    return (
+      <ConceptSynthesisOverlay 
+        isVisible={isGeneratingConcepts || !!conceptError} 
+        error={conceptError}
+        onCancel={() => {
+          // This should be handled by a function in useConceptGenerator
+          // For now, we'll just reset the local state
+          generateConcepts.cancel(); // Assuming the hook has a cancel method
+        }} 
+        onRetry={() => {
+          generateConcepts(activeReport)
+        }} 
+      />
+    )
   }
 
   const genres = [
