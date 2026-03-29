@@ -1,65 +1,52 @@
 "use client";
 
-import { useState, useCallback, useRef } from 'react';
-import { safeParseJSON } from '@/lib/utils/safeParseJSON';
+import { useState } from 'react';
+import type { VisionaryReport } from '@/lib/visionary/types';
 
-export const useConceptGenerator = () => {
+export function useConceptGenerator() {
   const [concepts, setConcepts] = useState<any[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
 
-  const generateConcepts = useCallback(async (report: any) => {
+  const generateConcepts = async (report: VisionaryReport) => {
     setIsLoading(true);
     setError(null);
-    abortControllerRef.current = new AbortController();
 
     try {
-      const response = await fetch('/api/visionary/generate-concepts', {
+      const res = await fetch('/api/visionary/generate-concepts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(report),
-        signal: abortControllerRef.current.signal,
+        body: JSON.stringify({ reportId: report.id }),
       });
 
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || `HTTP ${response.status}`);
-      }
+      if (!res.ok) throw new Error('Failed to generate options');
+      const data = await res.json();
 
-      const data = await response.json();
-      if (data.concepts && Array.isArray(data.concepts)) {
-        const hardenedConcepts = data.concepts.map((c: any) => ({
-          ...c,
-          id: c.id || Math.random().toString(36).substr(2, 9),
-          vibe: c.vibe || 'Spectacle',
-          marketLogic: typeof c.marketLogic === 'string' ? c.marketLogic : 'Global: Standard Opportunity',
-          episodes: Array.isArray(c.episodes) ? c.episodes : [],
-          protagonist: {
-            name: c.protagonist?.name || 'The Visionary',
-            role: c.protagonist?.role || 'Lead',
-            flaw: c.protagonist?.flaw || 'Hidden conflict'
-          }
-        }));
-        setConcepts(hardenedConcepts);
-      } else {
-        throw new Error(data.error || "Failed to generate concepts.");
-      }
-    } catch (e: any) {
-      if (e.name !== 'AbortError') {
-        setError(e.message);
-      }
+      // 🛡️ HARDENING LAYER: Map potential AI key variations to UI keys
+      const sanitized = (data.concepts || []).map((c: any) => ({
+        ...c,
+        id: c.id || Math.random().toString(36).substr(2, 9),
+        title: c.title || c.conceptTitle || c.name || "Untitled Concept",
+        logline: c.logline || "No logline provided.",
+        synopsis: c.synopsis || c.narrative || c.description || "No narrative generated.",
+        marketLogic: c.marketLogic || "GLOBAL",
+        vibe: c.vibe || 'Spectacle',
+        protagonist: {
+          name: c.protagonist?.name || "The Visionary",
+          role: c.protagonist?.role || "Lead",
+          flaw: c.protagonist?.flaw || "No flaw defined"
+        },
+        episodes: Array.isArray(c.episodes) ? c.episodes : 
+                  Array.isArray(c.featured_episodes) ? c.featured_episodes : []
+      }));
+
+      setConcepts(sanitized);
+    } catch (err: any) {
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }
 
-  const cancel = useCallback(() => {
-    abortControllerRef.current?.abort();
-    setIsLoading(false);
-    setError(null);
-    setConcepts(null);
-  }, []);
-
-  return { concepts, isLoading, error, generateConcepts, cancel };
-};
+  return { concepts, isLoading, error, generateConcepts };
+}

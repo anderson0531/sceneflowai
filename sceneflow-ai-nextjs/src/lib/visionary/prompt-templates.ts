@@ -239,114 +239,18 @@ Your goal is to transform a raw concept and market analysis into three distinct,
 
 ### OUTPUT STRUCTURE (Strict JSON)
 Generate a JSON object with a single key "concepts" which is an array of exactly three Series Bible objects.
-You MUST return a valid JSON object. 
-Every field in the schema (title, marketLogic, logline, synopsis, episodes) MUST contain a value. 
-If an episode blueprint cannot be generated, return an empty array [] rather than omitting the key.
-Keep the synopsis under 150 words to ensure the model does not time out before finishing the episodes array.
 
-For each of the three concepts (The Spectacle, The Cinematic Legend, The Interactive Chaos), generate a complete Series Bible object with the following schema:
+CRITICAL JSON SCHEMA:
+Your output MUST be a JSON object with a "concepts" array. Each concept MUST have exactly these keys:
+1. "title": (String) High-hook title. Do NOT use "conceptTitle".
+2. "logline": (String)
+3. "synopsis": (String)
+4. "marketLogic": (String)
+5. "protagonist": (Object with "name", "role", "flaw")
+6. "episodes": (Array of objects with "title" and "hook")
 
-{
-  "seriesTitle": "A high-CTR, curiosity-gap title",
-  "logline": "A one-sentence dramatic hook.",
-  "synopsis": "A 3-paragraph narrative overview.",
-  "protagonist": {
-    "name": "Distinctive and culturally resonant name",
-    "role": "Their archetype (e.g., The Stoic Master, The Underdog Challenger)",
-    "backstory": "The emotional reason they are on this journey",
-    "flaw": "A specific character flaw that drives conflict"
-  },
-  "setting": {
-    "locationName": "The primary 'Set' or 'Stage'",
-    "description": "The visual vibe",
-    "atmosphericNote": "Lighting and mood instructions"
-  },
-  "formatStyle": "The interactive 'SceneFlow' storytelling device",
-  "targetMarketLogic": "Why this concept wins in a specific region",
-  "featuredEpisodes": [
-    { "title": "Episode 1 Title", "hook": "The AVD spike for this episode" },
-    { "title": "Episode 2 Title", "hook": "..." },
-    { "title": "Episode 3 Title", "hook": "..." },
-    { "title": "Episode 4 Title", "hook": "..." },
-    { "title": "Episode 5 Title", "hook": "..." }
-  ]
-}
+FAIL-SAFE: If you cannot generate an episode, you MUST still provide an "episodes": [] empty array.
 
-RETURN ONLY RAW JSON. NO PREAMBLE. NO CHAT.`;
+For each of the three concepts (The Spectacle, The Cinematic Legend, The Interactive Chaos), generate a complete Series Bible object.
 
-export function buildConceptGenerationPrompt(report: any): string {
-  const pivotSuggestions = report.gapAnalysis?.conceptFit?.pivotSuggestions?.join(', ');
-  const topOpportunities = report.arbitrageMap?.opportunities?.slice(0, 3).map((opp: any) => `${opp.regionName} (Demand: ${opp.demandScore})`);
-  
-  return `
-    Original Concept: "${report.concept}"
-    Identified Weakness to Fix: "Tutorial Fatigue" - The audience wants entertainment, not lectures.
-    Pivot Suggestions from Analysis: ${pivotSuggestions}
-    Top 3 Market Opportunities: ${topOpportunities}
-
-    Based on the data above, generate the three series concepts as requested.
-  `;
-}
-
-// =============================================================================
-// Bridge Plan Prompt
-// =============================================================================
-
-export const BRIDGE_PLAN_SYSTEM = `ACT AS A SILENT DATA EMITTER. YOU ARE AN API ENDPOINT.
-RETURN ONLY THE RAW JSON OBJECT. 
-DO NOT INCLUDE CONVERSATIONAL FILLER, INTRODUCTIONS, OR EXPLANATIONS. 
-IF YOU HAVE THOUGHTS, THEY MUST BE EMITTED VIA THE NATIVE 'THOUGHT' FIELD ONLY.
-You are an international YouTube Content Strategist and Creative Director specializing in multi-language audience growth.
-SceneFlow has 4 production phases: Blueprint (scripting), Production (storyboards & visuals), Final Cut (editing & video gen), Premiere (review & distribution).
-Generate a concrete action plan that maps concept opportunities to SceneFlow workflow steps.
-Treat the input not as a 'course' to be taught, but as an 'Entertainment Experience' to be consumed. The goal isn't 'Learning Outcomes,' it's 'Average View Duration (AVD)' and 'Subscriber Conversion.'
-Always respond with valid JSON matching the requested schema.`
-
-export function buildBridgePlanPrompt(
-  concept: string,
-  gapAnalysisJson: string,
-  arbitrageJson: string,
-  genre?: string
-): string {
-  return `Create an actionable production plan for this concept based on market analysis:
-
-CONCEPT: "${concept}"
-${genre ? `GENRE: "${genre}"` : ''}
-
-GAP ANALYSIS:
-${gapAnalysisJson}
-
-LANGUAGE ARBITRAGE MAP:
-${arbitrageJson}
-
-SceneFlow credit estimates per action:
-- Blueprint analysis: ~50 credits
-- Script generation: ~100 credits
-- Storyboard generation (per scene): ~75 credits
-- Audio generation (per scene): ~30 credits
-- Video generation (per scene): ~200 credits
-- Translation (per language): ~40 credits
-
-Return a JSON object with this exact structure:
-{
-  "title": "string (production plan title)",
-  "summary": "string (2-3 sentence executive summary)",
-  "actions": [
-    {
-      "id": "string (unique id like action-1)",
-      "phase": "blueprint" | "production" | "final-cut" | "premiere",
-      "action": "string (short action name)",
-      "description": "string (detailed description)",
-      "estimatedCredits": number,
-      "priority": "critical" | "recommended" | "optional",
-      "dependencies": ["string (IDs of prerequisite actions)"]
-    }
-  ],
-  "totalEstimatedCredits": number,
-  "estimatedTimeline": "string (e.g. '2-3 days')",
-  "recommendedLanguages": ["string (top 3-5 language codes to localize into)"],
-  "successProbability": number (0-100, realistic estimate)
-}
-
-Provide 8-15 actions spanning all 4 phases. Be realistic about credit costs and timelines.`
-}
+RETURN ONLY RAW JSON. NO PREAMBLE. NO CHAT.`
