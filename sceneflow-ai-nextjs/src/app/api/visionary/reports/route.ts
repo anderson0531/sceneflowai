@@ -15,17 +15,21 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: NextRequest) {
   try {
     const userIdParam = request.headers.get('x-user-id')
-    if (!userIdParam) return NextResponse.json({ error: 'Missing ID' }, { status: 401 })
+    if (!userIdParam) {
+       return NextResponse.json({ success: false, error: 'Auth Required' }, { status: 401 })
+    }
+
+    // 1. First, just test the connection without user context
+    await sequelize.authenticate();
 
     // THE FIX: Upsert User to prevent "Tenant not found"
     // This ensures the foreign key relationship in Postgres is satisfied
     let [user] = await User.findOrCreate({
       where: { email: userIdParam },
-      defaults: { email: userIdParam, role: 'creator' } // Default role if new user
+      defaults: { email: userIdParam } // Default role if new user
     });
 
     const userId = user.id;
-    await sequelize.authenticate();
 
     const { searchParams } = new URL(request.url)
     const page = Math.max(1, Number(searchParams.get('page') || '1'))
