@@ -13,13 +13,14 @@ export function useConceptGenerator() {
     setError(null)
 
     try {
-      const res = await fetch('/api/visionary/generate-concepts', {
+      const response = await fetch('/api/visionary/generate-concepts', {
         method: 'POST',
-        body: JSON.stringify({ reportId: report.id }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(report),
       })
 
-      if (!res.ok) throw new Error('Failed to generate options')
-      const data = await res.json()
+      if (!response.ok) throw new Error('Failed to generate options')
+      const data = await response.json()
 
       // 🛡️ HARDENING LAYER: Map potential AI key variations to UI keys
       const sanitized = (data.concepts || []).map((c: any) => ({
