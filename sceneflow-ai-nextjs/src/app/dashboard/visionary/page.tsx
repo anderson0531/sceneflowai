@@ -322,7 +322,11 @@ export default function VisionaryPage() {
             </div>
 
             {/* Full Report */}
-            <OpportunityReport report={activeReport} />
+            <OpportunityReport 
+              marketScan={activeReport.marketScan}
+              gapAnalysis={activeReport.gapAnalysis}
+              overallScore={activeReport.overallScore}
+            />
           </motion.div>
         )}
 
