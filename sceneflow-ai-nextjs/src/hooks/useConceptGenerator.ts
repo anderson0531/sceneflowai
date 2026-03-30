@@ -20,28 +20,28 @@ export function useConceptGenerator() {
       })
 
       if (!response.ok) throw new Error('Failed to generate options')
-      const data = await response.json()
+      const data = await response.json();
 
-      // 🛡️ HARDENING LAYER: Map potential AI key variations to UI keys
-      const sanitized = (data.concepts || []).map((c: any) => ({
-        ...c,
-        id: c.id || Math.random().toString(36).substr(2, 9),
-        title: c.title || c.seriesTitle || "Untitled Concept",
-        episodes: Array.isArray(c.featuredEpisodes) ? c.featuredEpisodes : 
-                  Array.isArray(c.episodes) ? c.episodes : [],
-        marketLogic: c.marketLogic || c.targetMarketLogic || "Global",
-        protagonist: {
-          name: c.protagonist?.name || "Unknown",
-          role: c.protagonist?.role || "Lead",
-          flaw: c.protagonist?.flaw || "No flaw defined"
-        }
-      }))
-
-      setConcepts(sanitized)
-    } catch (err: any) {
-      setError(err.message)
+      if (data.concepts && Array.isArray(data.concepts)) {
+        const hardenedConcepts = data.concepts.map((c: any) => ({
+          ...c,
+          id: c.id || Math.random().toString(36).substr(2, 9),
+          vibe: c.vibe || 'Spectacle',
+          marketLogic: typeof c.marketLogic === 'string' ? c.marketLogic : 'Global: Standard Opportunity',
+          episodes: Array.isArray(c.episodes) ? c.episodes : [],
+          protagonist: {
+            name: c.protagonist?.name || 'The Visionary',
+            role: c.protagonist?.role || 'Lead',
+            flaw: c.protagonist?.flaw || 'Hidden conflict'
+          }
+        }));
+        
+        setConcepts(hardenedConcepts);
+      }
+    } catch (err) {
+      setError("Failed to synthesize options.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 

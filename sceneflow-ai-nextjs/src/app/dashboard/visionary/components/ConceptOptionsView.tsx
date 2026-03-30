@@ -47,7 +47,9 @@ export function ConceptOptionsView({ concepts, onSelect }: ConceptOptionsViewPro
                  <Globe className="w-4 h-4 text-emerald-500" />
                </div>
                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                 {concept.marketLogic}
+                 {typeof concept.marketLogic === 'string' && concept.marketLogic.includes(':') 
+                      ? concept.marketLogic.split(':')[0] 
+                      : (concept.marketLogic || 'Global Target')}
                </span>
              </div>
              {/* 🛡️ Ensure title is rendered */}
