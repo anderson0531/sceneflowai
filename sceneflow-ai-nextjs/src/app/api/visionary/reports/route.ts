@@ -14,18 +14,21 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(request: NextRequest) {
   try {
-    await sequelize.authenticate()
-
-    // Ensure the visionary_reports table exists (auto-creates if missing)
-    await VisionaryReport.sync({ alter: false })
-
     const userIdParam = request.headers.get('x-user-id')
     if (!userIdParam) {
       return NextResponse.json({ success: false, error: 'Missing x-user-id header' }, { status: 401 })
     }
 
-    const user = await resolveUser(userIdParam)
-    const userId = user.id
+    let user;
+    try {
+      user = await resolveUser(userIdParam)
+    } catch (resolveError: any) {
+      console.error('[GET /api/visionary/reports] User resolution failed:', resolveError.message);
+      return NextResponse.json({ success: false, error: resolveError.message }, { status: 401 });
+    }
+    const userId = user.id;
+
+    await sequelize.authenticate()
 
     const { searchParams } = new URL(request.url)
     const page = Math.max(1, Number(searchParams.get('page') || '1'))

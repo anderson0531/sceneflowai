@@ -322,7 +322,11 @@ export default function VisionaryPage() {
                       ))}
                     </div>
                     <button 
-                      onClick={() => generateConcepts(activeReport, generatorParams)} 
+                      onClick={async () => {
+                        // Add a small delay to prevent hitting rate-limits during phase transition
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                        generateConcepts(activeReport, generatorParams);
+                      }} 
                       disabled={isGeneratingConcepts}
                       className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex items-center gap-2 mx-auto disabled:opacity-50"
                     >
@@ -357,7 +361,11 @@ export default function VisionaryPage() {
                   ))}
                 </div>
                 <button 
-                  onClick={() => generateConcepts(activeReport, generatorParams)} 
+                  onClick={async () => {
+                    // Add a small delay to prevent hitting rate-limits during phase transition
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    generateConcepts(activeReport, generatorParams);
+                  }} 
                   disabled={isGeneratingConcepts}
                   className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex items-center gap-2 mx-auto disabled:opacity-50"
                 >
