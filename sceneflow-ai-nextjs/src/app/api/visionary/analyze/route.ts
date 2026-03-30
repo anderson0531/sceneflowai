@@ -13,6 +13,9 @@ import {
   SERIES_BIBLE_SYSTEM_PROMPT
 } from '@/lib/visionary/prompt-templates';
 import { safeParseJSON } from '@/lib/utils/safeParseJSON';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
 
 // 🔥 Vercel Pro Configuration: Must be outside the POST handler
 export const dynamic = 'force-dynamic';
@@ -21,13 +24,20 @@ export const maxDuration = 300; // This should be the only declaration
 export async function POST(req: Request) {
   try {
     const headerList = await headers();
-    const userId = headerList.get('x-user-id') || 'anonymous';
+    const userId = headerList.get('x-user-id');
+    if (!userId) return NextResponse.json({ error: "Auth Required" }, { status: 401 });
 
     const body = await req.json();
     const { concept, genre, regions, focusLanguages, selectedMarket } = body;
 
     if (!concept) {
       return NextResponse.json({ error: 'Concept is required' }, { status: 400 });
+    }
+
+    // This is a placeholder for your actual credit check logic
+    const hasSufficientCredits = true; // Replace with a real check
+    if (!hasSufficientCredits) {
+      return NextResponse.json({ error: 'Insufficient credits' }, { status: 402 });
     }
 
     // Phase 1: Market Scan
@@ -77,35 +87,36 @@ export async function POST(req: Request) {
       throw new Error("Phase 3 failed to produce arbitrage map data.");
     }
     
-    // Phase 4: Series Bible
+    // Phase 4: Series Bible - Now as a streaming response
     const biblePrompt = buildSeriesBiblePrompt({
       originalConcept: concept,
       selectedMarket: selectedMarket || (arbitrageMap.opportunities && arbitrageMap.opportunities[0])
     });
 
-    console.log('📜 [Visionary API] Starting Phase 4 (Series Bible)...');
+    const model = genAI.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
+    const result = await model.generateContentStream([biblePrompt]);
 
-    const seriesBibleResult = await generateText(biblePrompt, {
-      model: 'gemini-3.1-pro-preview',
-      systemInstruction: SERIES_BIBLE_SYSTEM_PROMPT,
-      // ⚡ TWEAK: Using 'low' instead of 'medium' to get under 60s
-      thinkingLevel: 'low' 
+    const stream = new ReadableStream({
+      async start(controller) {
+        const encoder = new TextEncoder();
+        try {
+          for await (const chunk of result.stream) {
+            const chunkText = chunk.text();
+            controller.enqueue(encoder.encode(chunkText));
+          }
+          controller.close();
+        } catch (err) {
+          controller.error(err);
+        }
+      },
     });
-    
-    const seriesBible = safeParseJSON(seriesBibleResult.text);
-    console.log('✅ Series Bible Complete');
 
-    return NextResponse.json({
-      reportId: crypto.randomUUID(),
-      marketScan,
-      gapAnalysis,
-      arbitrageMap,
-      seriesBible: seriesBible || { error: "Failed to generate series bible" },
-      metadata: { userId, timestamp: new Date().toISOString() }
+    return new Response(stream, {
+      headers: { "Content-Type": "text/event-stream" },
     });
 
   } catch (error: any) {
-    console.error('💥 [Visionary API Error]:', error.message);
+    console.error('[Visionary API Error]:', error.message);
     return NextResponse.json(
       { error: 'Pipeline failed', details: error.message },
       { status: 500 }

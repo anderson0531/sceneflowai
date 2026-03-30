@@ -58,6 +58,7 @@ export default function VisionaryPage() {
     isLoading: isGeneratingConcepts,
     error: conceptError,
     generateConcepts,
+    partialBible,
   } = useConceptGenerator()
 
   // --- STATE ---
@@ -304,7 +305,12 @@ export default function VisionaryPage() {
             <aside className="hidden lg:block sticky top-8 self-start w-80">
               <div className="bg-gray-900/40 border border-emerald-500/20 rounded-xl p-6 text-center">
                 {concepts ? (
-                  <ConceptOptionsView concepts={concepts} onSelect={handleInitializeSeries} />
+                  <ConceptOptionsView 
+                    concepts={concepts} 
+                    onSelect={handleInitializeSeries} 
+                    isStreaming={isGeneratingConcepts} 
+                    partialBible={partialBible} 
+                  />
                 ) : (
                   <div className="space-y-4">
                     <p className="text-sm text-gray-400">Ready to bridge this data to a creative series?</p>
@@ -333,8 +339,13 @@ export default function VisionaryPage() {
         {/* Generate Options on mobile */}
         {view === 'report' && activeReport && (
           <div className="lg:hidden bg-gray-900/40 border border-emerald-500/20 rounded-xl p-6 text-center">
-            {concepts ? (
-              <ConceptOptionsView concepts={concepts} onSelect={handleInitializeSeries} />
+            {isGeneratingConcepts || concepts ? (
+              <ConceptOptionsView 
+                concepts={concepts} 
+                onSelect={handleInitializeSeries} 
+                isStreaming={isGeneratingConcepts} 
+                partialBible={partialBible} 
+              />
             ) : (
               <div className="space-y-4">
                 <p className="text-sm text-gray-400">Ready to bridge this data to a creative series?</p>

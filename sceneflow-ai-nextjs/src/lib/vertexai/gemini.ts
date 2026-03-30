@@ -199,6 +199,93 @@ export async function generateText(
   };
 }
 
+export async function streamText(
+  prompt: string,
+  options: TextGenerationOptions = {}
+): Promise<Response> {
+  const { projectId, location: defaultLocation } = getConfig();
+
+  // 1. RESOLVE MODEL & DYNAMIC LOCATION
+  const rawModel = options.model || 'gemini-3.1-pro-preview';
+  const model = rawModel.trim();
+  const isGemini3 = model.includes('gemini-3');
+  const isPreview = model.includes('preview');
+
+  const location = isGemini3 ? 'global' : (options.location || defaultLocation);
+  const apiVersion = isPreview ? 'v1beta1' : 'v1';
+
+  const baseUrl = location === 'global' 
+    ? 'https://aiplatform.googleapis.com' 
+    : `https://${location}-aiplatform.googleapis.com`;
+
+  const endpoint = `${baseUrl}/${apiVersion}/projects/${projectId}/locations/${location}/publishers/google/models/${model}:streamGenerateContent`;
+
+  const accessToken = await getVertexAIAuthToken();
+
+  // 2. CONSTRUCT CLEAN THINKING CONFIG
+  const isMinimal = options.thinkingLevel === 'minimal';
+  const thinking_config: any = { include_thoughts: !isMinimal };
+
+  if (isGemini3) {
+    if (!isMinimal) {
+      const validLevels = ['LOW', 'MEDIUM', 'HIGH'];
+      const level = (options.thinkingLevel || 'MEDIUM').toUpperCase();
+      thinking_config.thinking_level = validLevels.includes(level) ? level : 'LOW';
+    }
+  } else {
+    const budgets = { minimal: 0, low: 1024, medium: 4096, high: 8192 };
+    thinking_config.thinking_budget = options.thinkingBudget ?? budgets[options.thinkingLevel as keyof typeof budgets] ?? 1024;
+  }
+
+  // 3. ASSEMBLE REQUEST
+  const requestBody: any = {
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generation_config: {
+      temperature: options.temperature ?? 0.7,
+      top_p: 0.95,
+      max_output_tokens: 8192,
+      response_mime_type: "text/plain", // Change to text/plain for streaming raw markdown
+      ...(isMinimal ? {} : { thinking_config })
+    },
+    safety_settings: [
+      { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "OFF" },
+      { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "OFF" },
+      { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "OFF" },
+      { category: "HARM_CATEGORY_HARASSMENT", threshold: "OFF" }
+    ]
+  };
+
+  if (options.systemInstruction) {
+    requestBody.system_instruction = {
+      role: 'system',
+      parts: [{ text: options.systemInstruction }],
+    };
+  }
+
+  console.log(`[Vertex Gemini Streaming] Requesting ${model} via ${location} (${apiVersion})`);
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Vertex AI Streaming error ${response.status}: ${errorText}`);
+  }
+
+  // Return the raw stream directly
+  return new Response(response.body, {
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+    },
+  });
+}
+
 // =============================================================================
 // Vision Analysis (Multimodal)
 // =============================================================================

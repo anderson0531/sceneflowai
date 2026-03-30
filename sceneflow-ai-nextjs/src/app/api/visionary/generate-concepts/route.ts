@@ -1,7 +1,6 @@
-import { NextResponse } from 'next/server';
-import { generateText } from '@/lib/vertexai/gemini';
+import { streamText } from '@/lib/vertexai/gemini';
 import { buildConceptGenerationPrompt, SERIES_CONCEPT_GENERATION_SYSTEM } from '@/lib/visionary/prompt-templates';
-import { safeParseJSON } from '@/lib/utils/safeParseJSON';
+import { NextResponse } from 'next/server'; // Keep NextResponse for error handling
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -16,20 +15,14 @@ export async function POST(req: Request) {
 
     const prompt = buildConceptGenerationPrompt(report);
 
-    const conceptsResult = await generateText(prompt, {
+    const streamResponse = await streamText(prompt, {
       model: 'gemini-3.1-pro-preview',
       systemInstruction: SERIES_CONCEPT_GENERATION_SYSTEM,
-      thinkingLevel: 'high', // Use high for maximum creativity
+      thinkingLevel: 'high',
+      responseMimeType: 'text/plain', // Ensure text/plain for raw markdown stream
     });
 
-    const conceptsJson = safeParseJSON(conceptsResult.text);
-
-    if (!conceptsJson || !conceptsJson.concepts) {
-      console.error('[Visionary Concepts] Failed to parse concepts from LLM', { text: conceptsResult.text });
-      return NextResponse.json({ success: false, error: 'Failed to generate valid series concepts.' }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true, concepts: conceptsJson.concepts });
+    return streamResponse;
 
   } catch (error: any) {
     console.error('[Visionary Concepts API Error]:', error.message);

@@ -4,13 +4,16 @@ import { motion } from 'framer-motion';
 import { PlayCircle, Globe, User, ChevronRight } from 'lucide-react';
 import { useStorylineGeneratorStore } from '@/store/useStorylineGeneratorStore';
 import { useRouter } from 'next/navigation';
+import { marked } from 'marked';
 
 interface ConceptOptionsViewProps {
-  concepts: Concept[]
-  onSelect?: (concept: Concept) => void
+  concepts: Concept[] | null;
+  onSelect?: (concept: Concept) => void;
+  isStreaming: boolean;
+  partialBible: string;
 }
 
-export function ConceptOptionsView({ concepts, onSelect }: ConceptOptionsViewProps) {
+export function ConceptOptionsView({ concepts, onSelect, isStreaming, partialBible }: ConceptOptionsViewProps) {
   const setSeriesGenerationInput = useStorylineGeneratorStore((state) => state.setSeriesGenerationInput);
   const router = useRouter();
 
@@ -36,10 +39,27 @@ export function ConceptOptionsView({ concepts, onSelect }: ConceptOptionsViewPro
     }
   };
 
+  if (isStreaming && !concepts) {
+    return (
+      <div className="md:col-span-3 bg-gray-900/50 border border-emerald-500/20 rounded-xl p-6">
+        <h3 className="text-xl font-bold text-white mb-4">Generating Series Bible...</h3>
+        <div 
+          className="prose prose-invert prose-sm max-w-none" 
+          dangerouslySetInnerHTML={{ __html: marked(partialBible) }} 
+        />
+      </div>
+    );
+  }
+
+  if (!concepts) return null;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-8">
       {concepts.map((concept: any) => (
-        <div key={concept.id} className={`border border-gray-800 rounded-2xl flex flex-col h-full overflow-hidden ${getVibeStyles(concept.vibe)}`}>
+        <motion.div
+          key={concept.id}
+          className={`border border-gray-800 rounded-2xl flex flex-col h-full overflow-hidden ${getVibeStyles(concept.vibe)}`}
+        >
           {/* Header */}
           <div className="p-6 bg-emerald-500/5 border-b border-gray-800">
              <div className="flex justify-between items-center mb-4">
@@ -110,7 +130,7 @@ export function ConceptOptionsView({ concepts, onSelect }: ConceptOptionsViewPro
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   );
