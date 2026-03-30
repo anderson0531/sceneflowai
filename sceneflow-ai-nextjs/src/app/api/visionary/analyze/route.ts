@@ -13,9 +13,9 @@ import {
   SERIES_BIBLE_SYSTEM_PROMPT
 } from '@/lib/visionary/prompt-templates';
 import { safeParseJSON } from '@/lib/utils/safeParseJSON';
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
+
+
 
 // 🔥 Vercel Pro Configuration: Must be outside the POST handler
 export const dynamic = 'force-dynamic';
@@ -87,32 +87,25 @@ export async function POST(req: Request) {
       throw new Error("Phase 3 failed to produce arbitrage map data.");
     }
     
-    // Phase 4: Series Bible - Now as a streaming response
+    // Phase 4: Vertex AI Streaming (Bypasses 429 Quota)
     const biblePrompt = buildSeriesBiblePrompt({
       originalConcept: concept,
-      selectedMarket: selectedMarket || (arbitrageMap.opportunities && arbitrageMap.opportunities[0])
+      selectedMarket: selectedMarket || (arbitrageMap.opportunities?.[0])
     });
 
-    const model = genAI.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
-    const result = await model.generateContentStream([biblePrompt]);
+    const responseStream = await streamText(
+      biblePrompt,
+      {
+        model: getGeminiTextModel('pro'),
+        systemInstruction: SERIES_BIBLE_SYSTEM_PROMPT
+      }
+    );
 
-    const stream = new ReadableStream({
-      async start(controller) {
-        const encoder = new TextEncoder();
-        try {
-          for await (const chunk of result.stream) {
-            const chunkText = chunk.text();
-            controller.enqueue(encoder.encode(chunkText));
-          }
-          controller.close();
-        } catch (err) {
-          controller.error(err);
-        }
+    return new Response(responseStream.body, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "X-Metadata": JSON.stringify({ marketScan, gapAnalysis, arbitrageMap }) // Pass metadata in headers
       },
-    });
-
-    return new Response(stream, {
-      headers: { "Content-Type": "text/event-stream" },
     });
 
   } catch (error: any) {

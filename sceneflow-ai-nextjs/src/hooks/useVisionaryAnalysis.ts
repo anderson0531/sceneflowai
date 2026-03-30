@@ -110,39 +110,40 @@ export function useVisionaryAnalysis() {
     }, 500)
 
     try {
-      // ── Fire the POST (server runs all 3 phases) ─────────────────
       const createRes = await fetch('/api/visionary/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-user-id': userEmail },
         body: JSON.stringify(input),
         signal: controller.signal,
-        keepalive: true, // Keep the connection open for long-running requests
       })
 
-      clearTimers()
+      if (!createRes.ok) throw new Error('Analysis failed');
 
-      if (!createRes.ok) {
-        const errData = await createRes.json().catch(() => ({ error: 'Failed to start analysis' }))
-        throw new Error(errData.error || `HTTP ${createRes.status}`)
+      // THE STREAM READER FIX
+      const metadata = JSON.parse(createRes.headers.get('X-Metadata') || '{}');
+      const reader = createRes.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullBible = '';
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          const chunk = decoder.decode(value, { stream: true });
+          fullBible += chunk;
+          
+          // Update progress with the streaming text
+          setProgress(prev => ({ 
+            ...prev, 
+            message: `Synthesizing Bible: ${fullBible.substring(0, 50)}...`,
+            progress: 99 
+          }));
+        }
       }
 
-      const createData = await createRes.json()
-      console.log('Frontend received report:', createData); // Verify received data
-
-      if (!createData.reportId) { // Check for a valid report object
-        throw new Error(createData.error || 'No report returned')
-      }
-
-      // ── POST returned — apply final state ────────────────────────
-      const finalReport = createData as VisionaryReport
-
-      if (finalReport.status === 'failed') {
-        throw new Error(finalReport.errorMessage || 'Analysis failed on the server')
-      }
-
-      setPhase('complete')
-      setProgress({ phase: 'complete', progress: 100, message: 'Analysis complete!' })
-      setReport(finalReport)
+      setReport({ ...metadata, bridgePlan: fullBible, status: 'complete' });
+      setPhase('complete');
 
     } catch (err: any) {
       clearTimers()

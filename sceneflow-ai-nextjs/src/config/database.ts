@@ -140,9 +140,11 @@ console.log(`[Database] Connection cleaned: ${CONN !== cleanConn ? 'removed sslm
 const dialectOptions = {
   ssl: isCloudDatabase ? {
     require: true,
-    rejectUnauthorized: false,
-    checkServerIdentity: () => undefined
-  } : false
+    rejectUnauthorized: false, // Prevents self-signed cert errors
+  } : false,
+  // ADD THIS: Prevents the "Tenant not found" FATAL errors from hanging the pool
+  keepAlive: true,
+  statement_timeout: 60000,
 }
 
 if (connectionEnvName === 'DB_DATABASE_URL') {
@@ -150,22 +152,18 @@ if (connectionEnvName === 'DB_DATABASE_URL') {
     dialect: 'postgres',
     dialectModule: pg,
     dialectOptions,
-    // Reduced pool size for Neon Session mode (limited to pool_size)
-    pool: { max: 3, min: 0, acquire: 30000, idle: 5000, evict: 1000 },
-    logging: process.env.NODE_ENV === 'development' ? console.log : false,
-    timezone: '+00:00',
-    define: { timestamps: true, underscored: true, freezeTableName: true }
+    pool: { max: 5, min: 0, acquire: 60000, idle: 10000 },
+    logging: false,
+    define: { underscored: true }
   })
 } else if (cleanConn) {
   sequelize = new Sequelize(cleanConn as string, {
     dialect: 'postgres',
     dialectModule: pg,
     dialectOptions,
-    // Reduced pool size for Neon Session mode (limited to pool_size)
-    pool: { max: 3, min: 0, acquire: 30000, idle: 5000, evict: 1000 },
-    logging: process.env.NODE_ENV === 'development' ? console.log : false,
-    timezone: '+00:00',
-    define: { timestamps: true, underscored: true, freezeTableName: true }
+    pool: { max: 5, min: 0, acquire: 60000, idle: 10000 },
+    logging: false,
+    define: { underscored: true }
   })
 }
 
