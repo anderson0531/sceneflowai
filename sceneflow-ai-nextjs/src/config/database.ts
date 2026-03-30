@@ -129,9 +129,28 @@ const isCloudDatabase = CONN.includes('supabase.co') || CONN.includes('neon.tech
 
 // Remove sslmode parameter from connection string if present
 // This prevents connection string params from overriding our SSL config
-let cleanConn = CONN.replace(/[&?]sslmode=[^&]*/g, '')
-// Ensure no trailing & or ?
-cleanConn = cleanConn.replace(/[&?]$/, '')
+let cleanConn = CONN;
+// Only remove 'sslmode' parameter, leave others (like 'options') untouched
+const url = new URL(cleanConn);
+if (url.searchParams.has('sslmode')) {
+  url.searchParams.delete('sslmode');
+  cleanConn = url.toString();
+}
+
+// Ensure correct port for Supabase pooler
+if (cleanConn.includes('pooler.supabase.com')) {
+  const supabaseUrl = new URL(cleanConn);
+  // Default to 5432 for session mode, consider 6543 for transaction mode if needed
+  if (supabaseUrl.port === '5432') { // Check if port is already default session mode
+    // Do nothing, port is already 5432
+  } else if (supabaseUrl.port === '6543') { // Check if port is transaction mode
+    // Do nothing, port is already 6543
+  } else {
+    // If no port or incorrect port, default to 5432 for session mode
+    supabaseUrl.port = '5432'; 
+    cleanConn = supabaseUrl.toString();
+  }
+}
 
 console.log(`[Database] SSL config: ${isCloudDatabase ? 'enabled (cloud database detected)' : 'disabled (local database)'}`)
 console.log(`[Database] Connection cleaned: ${CONN !== cleanConn ? 'removed sslmode parameter' : 'no changes needed'}`)
@@ -152,7 +171,7 @@ if (connectionEnvName === 'DB_DATABASE_URL') {
     dialect: 'postgres',
     dialectModule: pg,
     dialectOptions,
-    pool: { max: 5, min: 0, acquire: 60000, idle: 10000 },
+    pool: { max: 15, min: 0, acquire: 60000, idle: 10000 },
     logging: false,
     define: { underscored: true }
   })
@@ -161,7 +180,7 @@ if (connectionEnvName === 'DB_DATABASE_URL') {
     dialect: 'postgres',
     dialectModule: pg,
     dialectOptions,
-    pool: { max: 5, min: 0, acquire: 60000, idle: 10000 },
+    pool: { max: 15, min: 0, acquire: 60000, idle: 10000 },
     logging: false,
     define: { underscored: true }
   })
