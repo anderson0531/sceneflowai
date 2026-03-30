@@ -64,6 +64,7 @@ export default function VisionaryPage() {
   const [concept, setConcept] = useState('')
   const [genre, setGenre] = useState('')
   const [isInitializing, setIsInitializing] = useState(false)
+  const [generatorParams, setGeneratorParams] = useState({ highRevenue: false, viralPotential: false, lowCost: false });
   const [pastReports, setPastReports] = useState<VisionaryReport[]>([])
   const [isLoadingReports, setIsLoadingReports] = useState(true)
   const [selectedReport, setSelectedReport] = useState<VisionaryReport | null>(null)
@@ -290,44 +291,71 @@ export default function VisionaryPage() {
               </div>
             </div>
 
-            {/* Arbitrage Heat Map */}
-            {activeReport.arbitrageMap && (
-              <ArbitrageHeatMap
-                data={activeReport.arbitrageMap}
-                onSelectRegion={setSelectedRegion}
-              />
-            )}
-
-            {/* --- THE GENERATE OPTIONS SECTION --- */}
-            <div className="bg-gray-900/40 border border-emerald-500/20 rounded-xl p-6 text-center">
-              {concepts ? (
-                <ConceptOptionsView concepts={concepts} onSelect={handleInitializeSeries} />
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-400">Ready to bridge this data to a creative series?</p>
-                  <button 
-                    onClick={() => generateConcepts(activeReport)} 
-                    disabled={isGeneratingConcepts}
-                    className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex items-center gap-2 mx-auto disabled:opacity-50"
-                  >
-                    {isGeneratingConcepts ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-4 h-4" />
-                    )}
-                    {isGeneratingConcepts ? 'Synthesizing Narrative Options...' : 'Generate 3 Series Concepts'}
-                  </button>
-                </div>
+            <div className="flex-1 space-y-6">
+              {activeReport.arbitrageMap && (
+                <ArbitrageHeatMap
+                  data={activeReport.arbitrageMap}
+                  onSelectRegion={setSelectedRegion}
+                />
               )}
+              <OpportunityReport report={activeReport} />
             </div>
 
-            {/* Full Report */}
-            <OpportunityReport 
-              marketScan={activeReport.marketScan}
-              gapAnalysis={activeReport.gapAnalysis}
-              overallScore={activeReport.overallScore}
-            />
+            <aside className="hidden lg:block sticky top-8 self-start w-80">
+              <div className="bg-gray-900/40 border border-emerald-500/20 rounded-xl p-6 text-center">
+                {concepts ? (
+                  <ConceptOptionsView concepts={concepts} onSelect={handleInitializeSeries} />
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-400">Ready to bridge this data to a creative series?</p>
+                    <div className="flex justify-center gap-2">
+                      {Object.keys(generatorParams).map((param) => (
+                        <button key={param} onClick={() => setGeneratorParams(prev => ({ ...prev, [param]: !prev[param] }))} className={`px-2 py-1 text-xs rounded-md ${generatorParams[param as keyof typeof generatorParams] ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-700/50 text-gray-400'}`}>
+                          {param.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                        </button>
+                      ))}
+                    </div>
+                    <button 
+                      onClick={() => generateConcepts(activeReport, generatorParams)} 
+                      disabled={isGeneratingConcepts}
+                      className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex items-center gap-2 mx-auto disabled:opacity-50"
+                    >
+                      {isGeneratingConcepts ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                      {isGeneratingConcepts ? 'Synthesizing...' : 'Generate 3 Series Concepts'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </aside>
           </motion.div>
+        )}
+
+        {/* Generate Options on mobile */}
+        {view === 'report' && activeReport && (
+          <div className="lg:hidden bg-gray-900/40 border border-emerald-500/20 rounded-xl p-6 text-center">
+            {concepts ? (
+              <ConceptOptionsView concepts={concepts} onSelect={handleInitializeSeries} />
+            ) : (
+              <div className="space-y-4">
+                <p className="text-sm text-gray-400">Ready to bridge this data to a creative series?</p>
+                <div className="flex justify-center gap-2">
+                  {Object.keys(generatorParams).map((param) => (
+                    <button key={param} onClick={() => setGeneratorParams(prev => ({ ...prev, [param]: !prev[param] }))} className={`px-2 py-1 text-xs rounded-md ${generatorParams[param as keyof typeof generatorParams] ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-700/50 text-gray-400'}`}>
+                      {param.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                    </button>
+                  ))}
+                </div>
+                <button 
+                  onClick={() => generateConcepts(activeReport, generatorParams)} 
+                  disabled={isGeneratingConcepts}
+                  className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex items-center gap-2 mx-auto disabled:opacity-50"
+                >
+                  {isGeneratingConcepts ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  {isGeneratingConcepts ? 'Synthesizing...' : 'Generate 3 Series Concepts'}
+                </button>
+              </div>
+            )}
+          </div>
         )}
 
         {/* History View */}

@@ -41,16 +41,29 @@ export interface VisionaryPhaseProgress {
   message: string
 }
 
+// --- NEW: Generation Strategy ---
+export interface SeriesGeneratorParams {
+  highRevenue: boolean;
+  viralPotential: boolean;
+  lowCost: boolean;
+}
+
+// --- NEW: Radar Chart Axis ---
+export interface RadarAxis {
+  label: string;
+  value: number; // 0-100
+}
+
 // =============================================================================
 // Market Scan Results
 // =============================================================================
 
 export interface MarketTrend {
-  category: string
-  trend: string
-  momentum: 'rising' | 'stable' | 'declining'
-  relevanceScore: number  // 0-100
-  regions: string[]
+  id: string;
+  title: string;
+  description: string;
+  heat: 'Rising' | 'Steady' | 'Niche'; // For the UI heat indicators
+  thumbnailUrl?: string;               // For the visual moodboard
 }
 
 export interface MarketScanResult {
@@ -74,6 +87,13 @@ export interface ContentGap {
   suggestedAngles: string[]
   targetAudience: string
   estimatedTAM: string  // e.g. "2.3M viewers"
+}
+
+export interface GapItem {
+  type: 'strength' | 'weakness';
+  label: string;
+  description: string;
+  strategicPivot?: string; // The "Bridge" content for weaknesses
 }
 
 export interface GapAnalysisResult {
@@ -149,23 +169,15 @@ export interface BridgePlan {
 // =============================================================================
 
 export interface VisionaryReport {
-  id: string
-  userId: string
-  concept: string
-  genre?: string
-  createdAt: string
-  updatedAt: string
-  status: 'pending' | 'in_progress' | 'complete' | 'failed'
-  marketScan?: MarketScanResult
-  gapAnalysis?: GapAnalysisResult
-  arbitrageMap?: ArbitrageHeatMapData
-  bridgePlan?: BridgePlan
-  /** Overall viability score (0-100) computed from sub-scores */
-  overallScore?: number
-  /** Credits consumed for this analysis */
-  creditsUsed: number
-  /** Error message if status === 'failed' */
-  errorMessage?: string
+  id: string;
+  concept: string;
+  genre?: string;
+  overallScore: number;
+  radarData: RadarAxis[]; // Data for the SVG Radar Chart
+  marketScan: MarketTrend[];
+  gapAnalysis: GapItem[];
+  arbitrageMap: any; // Keep existing ArbitrageHeatMap data
+  createdAt: string;
 }
 
 // =============================================================================

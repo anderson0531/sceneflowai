@@ -1,13 +1,13 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { TrendingUp, Target, ChevronDown, ChevronUp } from 'lucide-react'
+import { TrendingUp, Target, ChevronDown, ChevronUp, Sparkles, CheckCircle2 } from 'lucide-react'
 import { useState } from 'react'
+import { RadarChart } from '@/components/RadarChart'
+import { WeaknessBridge } from '@/components/WeaknessBridge'
 
 interface OpportunityReportProps {
-  marketScan?: any
-  gapAnalysis?: any
-  overallScore?: number
+  report: VisionaryReport
 }
 
 /**
@@ -87,8 +87,8 @@ export function OpportunityReport({ report, marketScan, gapAnalysis, overallScor
             {expandedSections.trends ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
           </button>
           {expandedSections.trends && (
-            <div className="p-4 pt-0 space-y-3">
-              {marketScan.trends.map((trend: any, i: number) => (
+            <div className="p-4 pt-0 space-y-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+              {report.marketScan.trends.map((trend: any, i: number) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, x: -10 }}
@@ -96,8 +96,18 @@ export function OpportunityReport({ report, marketScan, gapAnalysis, overallScor
                   transition={{ delay: i * 0.05 }}
                   className="bg-slate-900/50 p-3 rounded-lg border border-white/10"
                 >
-                  <h4 className="font-semibold text-white">{trend.category}</h4>
-                  <p className="text-sm text-gray-400">{trend.trend}</p>
+                  <div className="w-full h-24 bg-gray-800 rounded-md mb-2 flex items-center justify-center">
+                    <Sparkles className="w-6 h-6 text-gray-600" />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <h4 className="font-semibold text-white">{trend.title}</h4>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      trend.heat === 'Rising' ? 'bg-emerald-500/20 text-emerald-400' :
+                      trend.heat === 'Steady' ? 'bg-blue-500/20 text-blue-400' :
+                      'bg-gray-700 text-gray-400'
+                    }`}>{trend.heat}</span>
+                  </div>
+                  <p className="text-sm text-gray-400">{trend.description}</p>
                 </motion.div>
               ))}
             </div>
@@ -106,7 +116,7 @@ export function OpportunityReport({ report, marketScan, gapAnalysis, overallScor
       )}
 
       {/* Gap Analysis & Concept Fit */}
-      {gapAnalysis && (
+      {report.gapAnalysis && (
         <div className="bg-gray-800/60 border border-gray-700 rounded-xl overflow-hidden">
           <button
             onClick={() => toggleSection('gaps')}
@@ -121,29 +131,24 @@ export function OpportunityReport({ report, marketScan, gapAnalysis, overallScor
           </button>
           {expandedSections.gaps && (
             <div className="p-4 pt-0 space-y-4">
-              {/* Concept Fit Score */}
-              {gapAnalysis.conceptFit && (
-                <div className={`my-4 bg-gradient-to-br ${getScoreBg(gapAnalysis.conceptFit.score)} border rounded-lg p-4`}>
-                  <h4 className="font-semibold text-white">Concept-Market Fit Score: <span className={getScoreColor(gapAnalysis.conceptFit.score)}>{gapAnalysis.conceptFit.score}</span></h4>
-                  <div className="mt-2 text-sm text-gray-300">
-                    <p><strong>Strengths:</strong> {gapAnalysis.conceptFit.strengths.join(', ')}</p>
-                    <p><strong>Weaknesses:</strong> {gapAnalysis.conceptFit.weaknesses.join(', ')}</p>
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div>
+                  <RadarChart data={report.radarData} />
                 </div>
-              )}
-              {/* Gap Cards */}
-              {gapAnalysis.gaps.map((gap: any, i: number) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="bg-slate-900/50 p-3 rounded-lg border border-white/10"
-                >
-                  <h4 className="font-semibold text-white">{gap.niche}</h4>
-                  <p className="text-sm text-gray-400">{gap.description}</p>
-                </motion.div>
-              ))}
+                <div>
+                  <h4 className="font-semibold text-white mb-2">Strengths & Weaknesses</h4>
+                  {report.gapAnalysis.map((item, i) => (
+                    item.type === 'weakness' ? (
+                      <WeaknessBridge key={i} weakness={item.label} fix={item.strategicPivot || 'Consult the SceneFlow Creator Lab for a custom pivot strategy.'} />
+                    ) : (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg border border-green-500/10 bg-green-500/5">
+                        <CheckCircle2 className="w-4 h-4 text-green-400 mt-1 shrink-0" />
+                        <span className="text-sm text-gray-300">{item.label}</span>
+                      </div>
+                    )
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>
