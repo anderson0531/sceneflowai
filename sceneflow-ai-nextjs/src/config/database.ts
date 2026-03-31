@@ -44,26 +44,18 @@ function chooseConnectionString(): { conn: string; envName: string; isSupabasePo
   return { conn: DATABASE_URL, envName: 'DATABASE_URL', isSupabasePooled: false };
 }
 
+// 1. Get the connection info (isSupabasePooled is declared here)
 const { conn: CONN, envName: connectionEnvName, isSupabasePooled } = chooseConnectionString()
 
-// LOG which connection string we're actually using (with password masked)
-const maskedConn = CONN.replace(/:([^@]+)@/, ':****@')
-console.log(`[Database] Using connection from: ${connectionEnvName}`)
-console.log(`[Database] Connection string (masked): ${maskedConn}`)
-console.log(`[Database] Timestamp: ${new Date().toISOString()}`)
-console.log(`[Database] Provider: ${maskedConn.includes('supabase') ? 'Supabase' : maskedConn.includes('neon') ? 'Neon' : 'Other'}`)
-console.log(`[Database] Connection status: DB link removed, using manual config`)
-
-// Configure SSL for cloud providers (Supabase, Neon)
-// Detect cloud database from connection string hostname
-// 1. Precise Detection for Supabase Pooler vs Direct
-const isSupabasePooled = CONN.includes('pooler.supabase.com');
+// 2. Identify Cloud provider
 const isCloudDatabase = 
   CONN.includes('supabase.co') || 
-  isSupabasePooled || 
-  CONN.includes('neon.tech');
+  CONN.includes('supabase.com') || 
+  CONN.includes('neon.tech') || 
+  CONN.includes('pooler') || 
+  CONN.includes('.rds.')
 
-// Only clean the connection if it's NOT a Supabase pooled connection
+// 3. Clean the connection ONLY if not pooled
 let cleanConn = CONN;
 if (!isSupabasePooled) {
   cleanConn = CONN.replace(/[&?]sslmode=[^&]*/g, '').replace(/[&?]$/, '');
@@ -71,28 +63,26 @@ if (!isSupabasePooled) {
 } else {
   console.log(`[Database] Supabase Pooler detected: Preserving project reference parameters.`);
 }
-// --- Block B: Secure yet Permissive SSL ---
+
+// 4. Set SSL and Sequelize options
 const dialectOptions = {
   ssl: (isCloudDatabase || isSupabasePooled) ? {
     require: true,
-    rejectUnauthorized: false, // MANDATORY: Fixes 'self-signed certificate'
+    rejectUnauthorized: false,
   } : false,
   keepAlive: true,
-  statement_timeout: 60000, // Important for migrations in CreditService
-};
+  statement_timeout: 60000,
+}
 
-// --- Block C: Constructor Optimization ---
 const sequelizeOptions = {
   dialect: 'postgres',
   dialectModule: pg,
   dialectOptions,
-  // Fixes 'Tenant not found' by preventing Sequelize from 
-  // overriding Supabase's 'options' parameter
-  query: isSupabasePooled ? { options: undefined } : undefined, // Crucial for Supavisor
+  query: isSupabasePooled ? { options: undefined } : undefined,
   pool: { 
     max: isSupabasePooled ? 15 : 5, 
     min: 0, 
-    acquire: 60000, // Give migrations time to connect
+    acquire: 60000, 
     idle: 10000 
   },
   logging: false,
