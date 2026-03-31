@@ -59,69 +59,31 @@ if (!isSupabasePooled) {
   console.log(`[Database] Supabase Pooler detected: Preserving project reference parameters.`);
 }
 
-// 4. Set SSL and Sequelize options
+// --- 1. Force SSL for all non-local connections ---
+const isLocal = CONN.includes('localhost') || CONN.includes('127.0.0.1');
+
 const dialectOptions = {
-  ssl: {
+  ssl: !isLocal ? {
     require: true,
-    rejectUnauthorized: false, // This kills the 'self-signed cert' error
-  },
+    rejectUnauthorized: false, // THIS IS THE KEY: It tells Node to ignore the certificate chain error
+  } : false,
   keepAlive: true,
-  statement_timeout: 60000,
-}
+};
 
 const sequelizeOptions = {
   dialect: 'postgres',
   dialectModule: pg,
   dialectOptions,
-  query: isSupabasePooled ? { options: undefined } : undefined, // Crucial for Supavisor
-  pool: { 
-    max: isSupabasePooled ? 15 : 5, 
-    min: 0, 
-    acquire: 60000, // Give migrations time to connect
-    idle: 10000 
-  },
+  // Ensure 'options' are undefined to let Supabase URL parameters take priority
+  query: { options: undefined }, 
+  pool: { max: 10, min: 0, acquire: 60000, idle: 10000 },
   logging: false,
   define: { underscored: true }
 };
 
+// --- 2. Ensure both assignment branches use the same options ---
 if (connectionEnvName === 'DB_DATABASE_URL') {
-  sequelize = new Sequelize(cleanConn as string, sequelizeOptions)
-} else if (cleanConn) {
-  sequelize = new Sequelize(cleanConn as string, sequelizeOptions)
+  sequelize = new Sequelize(cleanConn, sequelizeOptions);
+} else {
+  sequelize = new Sequelize(cleanConn, sequelizeOptions);
 }
-
-// Provide sanitized connection info for diagnostics
-let selectedConnectionHost = 'unknown'
-let selectedConnectionIsPooled = false
-try {
-  if (cleanConn) {
-    const parsed = new URL(cleanConn)
-    selectedConnectionHost = parsed.hostname
-    selectedConnectionIsPooled = /pooler|prisma/i.test(parsed.hostname)
-  }
-} catch {}
-
-// Test database connection
-export const testConnection = async (): Promise<void> => {
-  try {
-    await sequelize.authenticate()
-    // Database connection established successfully
-  } catch (error) {
-    console.error('❌ Unable to connect to the database:', error)
-    throw error
-  }
-}
-
-// Sync database models
-export const syncDatabase = async (): Promise<void> => {
-  try {
-    await sequelize.sync({ alter: true })
-    // Database models synchronized successfully
-  } catch (error) {
-    console.error('❌ Database synchronization failed:', error)
-    throw error
-  }
-}
-
-// Export Sequelize instance and diagnostics
-export { sequelize, connectionEnvName, selectedConnectionHost, selectedConnectionIsPooled }
