@@ -48,12 +48,7 @@ function chooseConnectionString(): { conn: string; envName: string; isSupabasePo
 const { conn: CONN, envName: connectionEnvName, isSupabasePooled } = chooseConnectionString()
 
 // 2. Identify Cloud provider
-const isCloudDatabase = 
-  CONN.includes('supabase.co') || 
-  CONN.includes('supabase.com') || 
-  CONN.includes('neon.tech') || 
-  CONN.includes('pooler') || 
-  CONN.includes('.rds.')
+const isCloudDatabase = !CONN.includes('localhost') && !CONN.includes('127.0.0.1');
 
 // 3. Clean the connection ONLY if not pooled
 let cleanConn = CONN;
@@ -66,10 +61,10 @@ if (!isSupabasePooled) {
 
 // 4. Set SSL and Sequelize options
 const dialectOptions = {
-  ssl: (isCloudDatabase || isSupabasePooled) ? {
+  ssl: {
     require: true,
-    rejectUnauthorized: false,
-  } : false,
+    rejectUnauthorized: false, // This kills the 'self-signed cert' error
+  },
   keepAlive: true,
   statement_timeout: 60000,
 }
@@ -78,11 +73,11 @@ const sequelizeOptions = {
   dialect: 'postgres',
   dialectModule: pg,
   dialectOptions,
-  query: isSupabasePooled ? { options: undefined } : undefined,
+  query: isSupabasePooled ? { options: undefined } : undefined, // Crucial for Supavisor
   pool: { 
     max: isSupabasePooled ? 15 : 5, 
     min: 0, 
-    acquire: 60000, 
+    acquire: 60000, // Give migrations time to connect
     idle: 10000 
   },
   logging: false,
