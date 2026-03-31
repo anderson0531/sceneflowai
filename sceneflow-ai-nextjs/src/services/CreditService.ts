@@ -107,9 +107,11 @@ async function findUserWithAutoMigration(userIdOrEmail: string, options?: any) {
     return user
   } catch (error: any) {
     // Check if error is due to missing subscription columns
-    if (error?.parent?.code === '42703' || // PostgreSQL undefined_column
-        error?.message?.includes('does not exist') ||
-        error?.message?.includes('subscription_tier_id')) {
+    // This is distinct from a connection error, which should be handled higher up.
+    if (
+      (error?.parent?.code === '42703' && error?.message?.includes('undefined_column')) ||
+      (error?.message?.includes('does not exist') && error?.message?.includes('subscription_tier_id'))
+    ) {
       console.log('[CreditService] Detected missing subscription columns, running migration...')
       await ensureMigrationRan()
       // Retry the query after migration
@@ -119,17 +121,7 @@ async function findUserWithAutoMigration(userIdOrEmail: string, options?: any) {
       }
       return user
     }
-    // Check if error is due to invalid UUID (email passed to findByPk)
-    if (error?.parent?.code === '22P02' || // PostgreSQL invalid input syntax
-        error?.message?.includes('invalid input syntax for type uuid')) {
-      // This shouldn't happen with resolveUser, but handle it gracefully
-      console.log('[CreditService] Invalid UUID format, retrying with resolveUser...')
-      const user = await resolveUser(userIdOrEmail)
-      if (options?.transaction) {
-        return await User.findByPk(user.id, options)
-      }
-      return user
-    }
+    // If it's not a known migration error, re-throw it.
     throw error
   }
 }
