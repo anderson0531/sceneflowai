@@ -45,21 +45,10 @@ function chooseConnectionString(): { conn: string; envName: string; isSupabasePo
 }
 
 // 1. Get the connection info (isSupabasePooled is declared here)
-const { conn: CONN, envName: connectionEnvName, isSupabasePooled } = chooseConnectionString()
+const { conn: CONN, env: connectionEnvName, isPooled: isSupabasePooled } = chooseConnectionString();
 
-// 2. Identify Cloud provider
-const isCloudDatabase = !CONN.includes('localhost') && !CONN.includes('127.0.0.1');
-
-// 3. Clean the connection ONLY if not pooled
-let cleanConn = CONN;
-if (!isSupabasePooled) {
-  cleanConn = CONN.replace(/[&?]sslmode=[^&]*/g, '').replace(/[&?]$/, '');
-  console.log(`[Database] Connection cleaned for non-pooled source.`);
-} else {
-  console.log(`[Database] Supabase Pooler detected: Preserving project reference parameters.`);
-}
-
-// --- 1. Force SSL for all non-local connections ---
+// 3. SSL and Cloud Detection
+// Force SSL for everything non-local to bypass certificate chain issues
 const isLocal = CONN.includes('localhost') || CONN.includes('127.0.0.1');
 
 const dialectOptions = {
@@ -68,22 +57,66 @@ const dialectOptions = {
     rejectUnauthorized: false, // THIS IS THE KEY: It tells Node to ignore the certificate chain error
   } : false,
   keepAlive: true,
+  statement_timeout: 60000,
 };
 
+// 4. Sequelize Options
 const sequelizeOptions = {
-  dialect: 'postgres',
+  dialect: 'postgres' as const,
   dialectModule: pg,
   dialectOptions,
   // Ensure 'options' are undefined to let Supabase URL parameters take priority
-  query: { options: undefined }, 
-  pool: { max: 10, min: 0, acquire: 60000, idle: 10000 },
+  query: isSupabasePooled ? { options: undefined } : undefined, 
+  pool: { 
+    max: isSupabasePooled ? 15 : 5, 
+    min: 0, 
+    acquire: 60000, 
+    idle: 10000 
+  },
   logging: false,
-  define: { underscored: true }
+  define: { 
+    timestamps: true,
+    underscored: true, 
+    freezeTableName: true 
+  }
 };
 
-// --- 2. Ensure both assignment branches use the same options ---
-if (connectionEnvName === 'DB_DATABASE_URL') {
-  sequelize = new Sequelize(cleanConn, sequelizeOptions);
-} else {
-  sequelize = new Sequelize(cleanConn, sequelizeOptions);
-}
+// 5. Instance Initialization
+const sequelize = new Sequelize(CONN, sequelizeOptions);
+
+// 6. Diagnostics
+let selectedConnectionHost = 'unknown';
+try {
+  const url = new URL(CONN);
+  selectedConnectionHost = url.hostname;
+} catch {}
+
+const selectedConnectionIsPooled = isSupabasePooled;
+
+// 7. NAMED EXPORTS (Crucial for the build to pass)
+export const testConnection = async (): Promise<void> => {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Database connection established.');
+  } catch (error) {
+    console.error('❌ Database connection failed:', error);
+    throw error;
+  }
+};
+
+export const syncDatabase = async (): Promise<void> => {
+  try {
+    await sequelize.sync({ alter: true });
+    console.log('✅ Database models synchronized.');
+  } catch (error) {
+    console.error('❌ Database sync failed:', error);
+    throw error;
+  }
+};
+
+export { 
+  sequelize, 
+  connectionEnvName, 
+  selectedConnectionHost, 
+  selectedConnectionIsPooled 
+};
