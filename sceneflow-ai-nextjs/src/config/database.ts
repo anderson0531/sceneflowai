@@ -56,7 +56,12 @@ console.log(`[Database] Connection status: DB link removed, using manual config`
 
 // Configure SSL for cloud providers (Supabase, Neon)
 // Detect cloud database from connection string hostname
-const isCloudDatabase = CONN.includes('supabase.co') || CONN.includes('neon.tech') || CONN.includes('aws.com') || CONN.includes('.rds.')
+const isCloudDatabase = 
+  CONN.includes('supabase.co') || 
+  CONN.includes('supabase.com') || 
+  CONN.includes('neon.tech') || 
+  CONN.includes('pooler') || 
+  CONN.includes('.rds.')
 
 // Only clean the connection if it's NOT a Supabase pooled connection
 let cleanConn = CONN;
