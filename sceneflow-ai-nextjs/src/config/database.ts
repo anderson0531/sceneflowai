@@ -2,21 +2,14 @@ import { Sequelize } from 'sequelize'
 import pg from 'pg'
 import dotenv from 'dotenv'
 
-// Load environment variables from .env.local
+// 1. Setup Environment
 dotenv.config({ path: '.env.local' })
-
-// Also try to load from parent directory if .env.local doesn't exist
 if (!process.env.DB_DATABASE_URL && !process.env.DATABASE_URL) {
   dotenv.config({ path: '../.env.local' })
 }
 
-// Database configuration
-  // Environment check
-
-let sequelize: Sequelize
 const isVercelBuild = process.env.NEXT_PHASE === 'phase-production-build'
 
-// Prefer Neon/Vercel-style vars, fall back to legacy
 function readFirst(keys: string[]): string | undefined {
   for (const key of keys) {
     const value = process.env[key]
@@ -25,26 +18,24 @@ function readFirst(keys: string[]): string | undefined {
   return undefined
 }
 
-function chooseConnectionString(): { conn: string; envName: string; isSupabasePooled: boolean } {
-  const DATABASE_URL = readFirst(['DATABASE_URL', 'Neon_DATABASE_URL', 'POSTGRES_URL_NON_POOLING']);
-  
-  if (!DATABASE_URL) {
-    if (isVercelBuild) return { conn: 'postgresql://localhost', envName: 'build-dummy', isSupabasePooled: false };
+// 2. Selection Logic
+function chooseConnectionString() {
+  const rawConn = readFirst([
+    'DATABASE_URL_UNPOOLED',
+    'POSTGRES_URL_NON_POOLING',
+    'DATABASE_URL',
+    'Neon_DATABASE_URL'
+  ]);
+
+  if (!rawConn) {
+    if (isVercelBuild) return { conn: 'postgresql://localhost:5432/dummy', env: 'build-dummy', isPooled: false };
     throw new Error('No database connection string found.');
   }
 
-  const isSupabasePooled = DATABASE_URL.includes('pooler.supabase.com');
-
-  // If it's Supabase, we return it raw immediately to preserve the ?options=reference...
-  if (isSupabasePooled) {
-    return { conn: DATABASE_URL, envName: 'DATABASE_URL (Supabase Pooled)', isSupabasePooled: true };
-  }
-
-  // ... (keep your existing de-pooling logic for non-Supabase URLs here)
-  return { conn: DATABASE_URL, envName: 'DATABASE_URL', isSupabasePooled: false };
+  const isPooled = rawConn.includes('pooler.supabase.com') || rawConn.includes('pooler');
+  return { conn: rawConn, env: 'selected-env', isPooled };
 }
 
-// 1. Get the connection info (isSupabasePooled is declared here)
 const { conn: CONN, env: connectionEnvName, isPooled: isSupabasePooled } = chooseConnectionString();
 
 // 3. SSL and Cloud Detection
@@ -54,7 +45,7 @@ const isLocal = CONN.includes('localhost') || CONN.includes('127.0.0.1');
 const dialectOptions = {
   ssl: !isLocal ? {
     require: true,
-    rejectUnauthorized: false, // THIS IS THE KEY: It tells Node to ignore the certificate chain error
+    rejectUnauthorized: false, // Fixes SELF_SIGNED_CERT_IN_CHAIN
   } : false,
   keepAlive: true,
   statement_timeout: 60000,
@@ -65,8 +56,8 @@ const sequelizeOptions = {
   dialect: 'postgres' as const,
   dialectModule: pg,
   dialectOptions,
-  // Ensure 'options' are undefined to let Supabase URL parameters take priority
-  query: isSupabasePooled ? { options: undefined } : undefined, 
+  // Fixes 'Tenant not found' by allowing Supabase URL parameters to remain primary
+  query: isSupabasePooled ? { options: undefined } : undefined,
   pool: { 
     max: isSupabasePooled ? 15 : 5, 
     min: 0, 
@@ -81,7 +72,7 @@ const sequelizeOptions = {
   }
 };
 
-// 5. Instance Initialization
+// 5. THE SINGLE DECLARATION (Previously causing the crash)
 const sequelize = new Sequelize(CONN, sequelizeOptions);
 
 // 6. Diagnostics
@@ -93,7 +84,7 @@ try {
 
 const selectedConnectionIsPooled = isSupabasePooled;
 
-// 7. NAMED EXPORTS (Crucial for the build to pass)
+// 7. NAMED EXPORTS
 export const testConnection = async (): Promise<void> => {
   try {
     await sequelize.authenticate();
