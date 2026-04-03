@@ -9,6 +9,7 @@ const withSerwist = require("@serwist/next").default({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  turbopack: {}, // Explicitly disable Turbopack by providing an empty config
   // This explicitly tells Next.js 16 to expect a Webpack setup
   webpack: (config) => {
     return config;
