@@ -9,18 +9,18 @@ const withSerwist = require("@serwist/next").default({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // 1. Move image domains to remotePatterns
+  // This explicitly tells Next.js 16 to expect a Webpack setup
+  webpack: (config) => {
+    return config;
+  },
   images: {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "**.googleusercontent.com", // Example: update with your actual domains
+        hostname: "**.googleusercontent.com",
       },
-      // Add other domains here...
     ],
   },
-  // 2. The 'eslint' block was removed. Use .eslintrc.json for lint rules.
-  // 3. Keep your other valid settings like redirects or rewrites here
 };
 
 module.exports = withSerwist(nextConfig);
