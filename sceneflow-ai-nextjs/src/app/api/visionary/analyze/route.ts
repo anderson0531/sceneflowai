@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { generateText } from '@/lib/vertexai/gemini';
+import { streamText } from 'ai';
+import { google } from '@ai-sdk/google';
 import { getGeminiTextModel } from '@/lib/config/modelConfig';
 import { 
   buildMarketScanPrompt, 
@@ -48,7 +50,6 @@ export async function POST(req: Request) {
         systemInstruction: MARKET_SCAN_SYSTEM, 
         thinkingLevel: 'minimal' 
       }
-    );
     const marketScan = safeParseJSON(marketScanResult.text);
     if (!marketScan || Object.keys(marketScan).length === 0) {
       throw new Error("Phase 1 failed to produce market data.");
@@ -62,7 +63,6 @@ export async function POST(req: Request) {
         systemInstruction: GAP_ANALYSIS_SYSTEM, 
         thinkingLevel: 'minimal' 
       }
-    );
     const gapAnalysis = safeParseJSON(gapAnalysisResult.text);
     if (!gapAnalysis || Object.keys(gapAnalysis).length === 0) {
       throw new Error("Phase 2 failed to produce gap analysis data.");
@@ -76,7 +76,6 @@ export async function POST(req: Request) {
         systemInstruction: ARBITRAGE_SYSTEM, 
         thinkingLevel: 'medium' 
       }
-    );
     const arbitrageMap = safeParseJSON(arbitrageResult.text);
 
     // 🔥 STRATEGIC DEBUG LOG
@@ -93,13 +92,11 @@ export async function POST(req: Request) {
       selectedMarket: selectedMarket || (arbitrageMap.opportunities?.[0])
     });
 
-    const responseStream = await streamText(
-      biblePrompt,
-      {
-        model: getGeminiTextModel('pro'),
-        systemInstruction: SERIES_BIBLE_SYSTEM_PROMPT
-      }
-    );
+    const responseStream = await streamText({
+      model: google.gemini('gemini-3.1-pro-preview'), // Use Google AI SDK with specified model
+      system: SERIES_BIBLE_SYSTEM_PROMPT, // Use 'system' for system instruction
+      prompt: biblePrompt,
+    });
 
     return new Response(responseStream.body, {
       headers: {
