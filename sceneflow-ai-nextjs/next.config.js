@@ -1,19 +1,13 @@
-const withSerwist = require("@serwist/next").default({
+const withSerwist = require("@serwist/turbopack").default({
   cacheOnFrontEndNav: true,
   swSrc: "app/sw.ts", // Path to your service worker
   swDest: "public/sw.js",
-  // Suppress the Turbopack warning since we are forcing Webpack in package.json
   disable: process.env.NODE_ENV === "development",
 });
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-
-  // This explicitly tells Next.js 16 to expect a Webpack setup
-  webpack: (config) => {
-    return config;
-  },
   images: {
     remotePatterns: [
       {
