@@ -1,0 +1,3 @@
+# Used when Vercel Root Directory is the repository root (not sceneflow-ai-nextjs).
+# Keep patterns narrow — never ignore app or src.
+sceneflow-ai-nextjs/google-cloud-sdk/
