@@ -67,12 +67,11 @@ export async function resolveUser(userIdOrEmail: string): Promise<User> {
 
         console.log(`[userHelper] Auto-creating user for email: ${userIdOrEmail}`)
         
-        // Create new user with full_name for welcome message
         user = await User.create({
           email: userIdOrEmail,
           username: username,
-          full_name: displayName,
-          password_hash: 'session-user', // Placeholder for session-based users
+          first_name: displayName,
+          password_hash: 'session-user',
           is_active: true,
           email_verified: false,
           credits: 0,

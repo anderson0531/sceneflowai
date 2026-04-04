@@ -71,6 +71,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
     }
 
+    if (!resolvedUserId) {
+      console.error(`[${timestamp}] [GET /api/projects] resolveUser returned user with no id for: ${userIdParam}`)
+      return NextResponse.json({ success: false, error: 'User has no id' }, { status: 500 })
+    }
+
     console.log(`[${timestamp}] [GET /api/projects] Fetching projects for userId:`, resolvedUserId)
     
     const where: any = { user_id: resolvedUserId }
