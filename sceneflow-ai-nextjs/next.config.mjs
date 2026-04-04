@@ -1,4 +1,4 @@
-import withSerwistInit from "@serwist/next";
+import withSerwistInit from "@serwist/turbopack";
 
 const withSerwist = withSerwistInit({
   swSrc: "app/sw.ts",
@@ -9,9 +9,13 @@ const withSerwist = withSerwistInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // This helps Next.js 16 gracefully fallback from Turbopack for Serwist
-  webpack: (config) => {
-    return config;
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**.googleusercontent.com",
+      },
+    ],
   },
 };
 
