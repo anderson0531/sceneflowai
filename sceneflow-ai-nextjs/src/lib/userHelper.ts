@@ -37,46 +37,6 @@ async function fetchUserIdRawByEmail(email: string): Promise<string | null> {
   return id != null && id !== '' ? String(id) : null
 }
 
-/**
- * One-shot diagnostic: dump schema info + raw row so we can see
- * exactly what the DB returns. Runs once per process lifetime.
- */
-let _diagRan = false
-async function runDiagnostics(emailHint: string): Promise<void> {
-  if (_diagRan) return
-  _diagRan = true
-  try {
-    const schemas = await sequelize.query<{ schemaname: string; tablename: string }>(
-      `SELECT schemaname, tablename FROM pg_tables WHERE tablename = 'users'`,
-      { type: QueryTypes.SELECT }
-    )
-    console.log(`${TAG} DIAG schemas with "users" table:`, JSON.stringify(schemas))
-
-    const cols = await sequelize.query<{ column_name: string; data_type: string; is_nullable: string }>(
-      `SELECT column_name, data_type, is_nullable
-       FROM information_schema.columns
-       WHERE table_name = 'users' AND table_schema = 'public'
-       ORDER BY ordinal_position`,
-      { type: QueryTypes.SELECT }
-    )
-    console.log(`${TAG} DIAG public.users columns (${cols.length}):`, JSON.stringify(cols))
-
-    const sp = await sequelize.query<{ search_path: string }>(
-      `SHOW search_path`,
-      { type: QueryTypes.SELECT }
-    )
-    console.log(`${TAG} DIAG search_path:`, JSON.stringify(sp))
-
-    const normalized = normalizeEmail(emailHint)
-    const rawRow = await sequelize.query(
-      `SELECT * FROM public.users WHERE LOWER(email) = :email LIMIT 1`,
-      { replacements: { email: normalized }, type: QueryTypes.SELECT }
-    )
-    console.log(`${TAG} DIAG raw row for ${normalized}:`, JSON.stringify(rawRow).slice(0, 1500))
-  } catch (err: any) {
-    console.error(`${TAG} DIAG error:`, err.message)
-  }
-}
 
 async function ensureUserRowHasId(user: User): Promise<User> {
   let id = readUserId(user)
@@ -133,20 +93,12 @@ export async function resolveUser(userIdOrEmail: string): Promise<User> {
     throw new Error('User ID or email is required')
   }
 
-  await runDiagnostics(userIdOrEmail)
-
   let user: User | null = null
 
   if (isUUID(userIdOrEmail)) {
     user = await User.findByPk(userIdOrEmail)
   } else {
     user = await findUserByEmailLoose(userIdOrEmail)
-  }
-
-  if (user) {
-    console.log(`${TAG} findOne returned user, dataValues:`, JSON.stringify(
-      (user as unknown as { dataValues?: Record<string, unknown> }).dataValues
-    )?.slice(0, 800))
   }
 
   if (!user) {
@@ -187,9 +139,6 @@ export async function resolveUser(userIdOrEmail: string): Promise<User> {
         storage_used_gb: 0,
         one_time_tiers_purchased: [],
       } as any)
-      console.log(`${TAG} Created user, dataValues:`, JSON.stringify(
-        (user as unknown as { dataValues?: Record<string, unknown> }).dataValues
-      )?.slice(0, 800))
     } catch (error: any) {
       if (error.name === 'SequelizeUniqueConstraintError' || error.message?.includes('unique')) {
         user =
