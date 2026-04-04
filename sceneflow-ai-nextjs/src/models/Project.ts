@@ -26,31 +26,28 @@ export interface ProjectAttributes {
 export interface ProjectCreationAttributes extends Optional<ProjectAttributes, 'id' | 'created_at' | 'updated_at' | 'status' | 'current_step' | 'step_progress'> {}
 
 export class Project extends Model<ProjectAttributes, ProjectCreationAttributes> implements ProjectAttributes {
-  public id!: string
-  public user_id!: string
-  public series_id?: string | null
-  public episode_number?: number | null
-  public title!: string
-  public description?: string
-  public genre?: string
-  public duration?: number
-  public target_audience?: string
-  public style?: string
-  public concept?: string
-  public key_message?: string
-  public tone?: string
-  public status!: 'draft' | 'in_progress' | 'completed' | 'archived'
-  public current_step!: 'ideation' | 'storyboard' | 'scene-direction' | 'video-generation' | 'completed'
-  public step_progress!: Record<string, number>
-  public metadata!: Record<string, any>
-  public created_at!: Date
-  public updated_at!: Date
+  declare id: string
+  declare user_id: string
+  declare series_id: string | null | undefined
+  declare episode_number: number | null | undefined
+  declare title: string
+  declare description: string | undefined
+  declare genre: string | undefined
+  declare duration: number | undefined
+  declare target_audience: string | undefined
+  declare style: string | undefined
+  declare concept: string | undefined
+  declare key_message: string | undefined
+  declare tone: string | undefined
+  declare status: 'draft' | 'in_progress' | 'completed' | 'archived'
+  declare current_step: 'ideation' | 'storyboard' | 'scene-direction' | 'video-generation' | 'completed'
+  declare step_progress: Record<string, number>
+  declare metadata: Record<string, any>
+  declare created_at: Date
+  declare updated_at: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
-  // Timestamps
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
-
-  // Helper methods
   public isEpisode(): boolean {
     return !!this.series_id
   }

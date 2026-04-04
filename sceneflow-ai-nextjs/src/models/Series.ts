@@ -163,26 +163,23 @@ export interface SeriesCreationAttributes extends Optional<
 > {}
 
 export class Series extends Model<SeriesAttributes, SeriesCreationAttributes> implements SeriesAttributes {
-  public id!: string
-  public user_id!: string
-  public title!: string
-  public logline?: string
-  public genre?: string
-  public target_audience?: string
-  public status!: SeriesStatus
-  public max_episodes!: number
-  public production_bible!: SeriesProductionBible
-  public episode_blueprints!: SeriesEpisodeBlueprint[]
-  public resonance_analysis?: Record<string, any>
-  public metadata!: Record<string, any>
-  public created_at!: Date
-  public updated_at!: Date
+  declare id: string
+  declare user_id: string
+  declare title: string
+  declare logline: string | undefined
+  declare genre: string | undefined
+  declare target_audience: string | undefined
+  declare status: SeriesStatus
+  declare max_episodes: number
+  declare production_bible: SeriesProductionBible
+  declare episode_blueprints: SeriesEpisodeBlueprint[]
+  declare resonance_analysis: Record<string, any> | undefined
+  declare metadata: Record<string, any>
+  declare created_at: Date
+  declare updated_at: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
-  // Timestamps
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
-
-  // Helper methods
   public getEpisodeCount(): number {
     return this.episode_blueprints?.length || 0
   }
