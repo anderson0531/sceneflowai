@@ -4,59 +4,86 @@ import dotenv from 'dotenv'
 
 dotenv.config({ path: '.env.local' })
 
-// 1. Grab the direct URL or fallback to the standard one
-const connectionString = 
-  process.env.DATABASE_URL_DIRECT || 
-  process.env.POSTGRES_URL_NON_POOLING || 
-  process.env.DATABASE_URL;
+const rawConnectionString =
+  process.env.DATABASE_URL_DIRECT ||
+  process.env.POSTGRES_URL_NON_POOLING ||
+  process.env.DATABASE_URL
 
-if (!connectionString) {
-  throw new Error('DATABASE_URL is missing. Please check your Vercel environment variables.');
+if (!rawConnectionString) {
+  throw new Error('DATABASE_URL is missing. Please check your Vercel environment variables.')
 }
 
-// 2. Simplest SSL bypass: If it's not localhost, trust the cert.
-const isLocal = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
+function hostLooksLocal(url: string): boolean {
+  try {
+    const { hostname } = new URL(url)
+    return hostname === 'localhost' || hostname === '127.0.0.1'
+  } catch {
+    return /localhost|127\.0\.0\.1/.test(url)
+  }
+}
+
+/**
+ * node-pg honors sslmode from the URI. verify-full / verify-ca commonly fail on
+ * Supabase / poolers with SELF_SIGNED_CERT_IN_CHAIN unless you install their CA.
+ * We relax to no-verify for non-local hosts unless DATABASE_SSL_REJECT_UNAUTHORIZED=true.
+ */
+function normalizeRemoteConnectionString(url: string): string {
+  let out = url
+  out = out.replace(/([?&])sslmode=verify-full/gi, '$1sslmode=no-verify')
+  out = out.replace(/([?&])sslmode=verify-ca/gi, '$1sslmode=no-verify')
+  if (!/sslmode=/i.test(out)) {
+    out += (out.includes('?') ? '&' : '?') + 'sslmode=no-verify'
+  }
+  return out
+}
+
+const isLocal = hostLooksLocal(rawConnectionString)
+const connectionString = isLocal ? rawConnectionString : normalizeRemoteConnectionString(rawConnectionString)
+
+const strictTls = process.env.DATABASE_SSL_REJECT_UNAUTHORIZED === 'true'
+const sslOption = isLocal
+  ? false
+  : {
+      require: true,
+      rejectUnauthorized: strictTls,
+    }
 
 export const sequelize = new Sequelize(connectionString, {
   dialect: 'postgres',
   dialectModule: pg,
   dialectOptions: {
-    ssl: !isLocal ? {
-      require: true,
-      rejectUnauthorized: false, // Fixes the self-signed cert issue
-    } : false,
+    ssl: sslOption,
   },
-  // Supavisor fixes:
-  // We disable Sequelize's default behavior of setting session variables
-  // which causes the "Tenant not found" error on pooled connections.
   hooks: {
     beforeConnect: async (config: any) => {
-      // This ensures we don't try to send 'options' as a separate command
-      if (config.query && config.query.options) {
-        delete config.query.options;
+      if (config.query?.options) {
+        delete config.query.options
       }
-    }
+      // Ensure pg sees SSL even if URI parsing or bundling drops dialectOptions
+      if (!isLocal) {
+        config.ssl = sslOption
+      }
+    },
   },
   pool: { max: 5, min: 0, acquire: 60000, idle: 10000 },
   logging: false,
-  define: { underscored: true }
-});
+  define: { underscored: true },
+})
 
-// 3. Simple Exports
 export const testConnection = async () => {
   try {
-    await sequelize.authenticate();
-    console.log('✅ DB Connected');
+    await sequelize.authenticate()
+    console.log('✅ DB Connected')
   } catch (err) {
-    console.error('❌ DB Fail:', err);
-    throw err;
+    console.error('❌ DB Fail:', err)
+    throw err
   }
-};
+}
 
 export const syncDatabase = async () => {
-  await sequelize.sync({ alter: true });
-};
+  await sequelize.sync({ alter: true })
+}
 
-export const connectionEnvName = 'DATABASE_URL';
-export const selectedConnectionHost = 'supabase';
-export const selectedConnectionIsPooled = false;
+export const connectionEnvName = 'DATABASE_URL'
+export const selectedConnectionHost = 'supabase'
+export const selectedConnectionIsPooled = false
