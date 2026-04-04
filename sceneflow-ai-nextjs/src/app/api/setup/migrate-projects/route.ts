@@ -5,13 +5,57 @@ import '@/models'
 
 export const dynamic = 'force-dynamic'
 
-/**
- * GET  - Show all users with project counts so you can identify orphaned projects
- * POST - Reassign projects from one user_id to another
- *        Body: { fromUserId: string, toUserId: string }
- *        OR:   { toEmail: string }  (reassigns ALL orphaned projects to the user with this email)
- */
+const TABLES_WITH_USER_ID = [
+  'projects',
+  'series',
+  'credit_ledger',
+  'ai_usages',
+  'api_usage_logs',
+  'user_provider_configs',
+  'collab_sessions',
+  'render_jobs',
+  'voice_consents',
+  'user_voice_clones',
+  'moderation_events',
+  'visionary_reports',
+] as const
 
+async function tableExists(tableName: string): Promise<boolean> {
+  const rows = await sequelize.query<{ exists: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1 FROM information_schema.tables
+       WHERE table_schema = 'public' AND table_name = :tableName
+     ) AS exists`,
+    { replacements: { tableName }, type: QueryTypes.SELECT }
+  )
+  return rows[0]?.exists === true
+}
+
+async function countRows(tableName: string, userId: string): Promise<number> {
+  const [row] = await sequelize.query<{ cnt: string }>(
+    `SELECT COUNT(*)::text AS cnt FROM public."${tableName}" WHERE user_id = :userId`,
+    { replacements: { userId }, type: QueryTypes.SELECT }
+  )
+  return parseInt(row?.cnt ?? '0', 10)
+}
+
+async function migrateTable(
+  tableName: string,
+  fromId: string,
+  toId: string
+): Promise<number> {
+  const [, meta] = await sequelize.query(
+    `UPDATE public."${tableName}" SET user_id = :toId WHERE user_id = :fromId`,
+    { replacements: { toId, fromId } }
+  )
+  return (meta as any)?.rowCount ?? 0
+}
+
+/**
+ * GET  - Show data distribution across ALL tables for each user_id
+ * POST - Migrate ALL data from one user_id to another across every table
+ *        Body: { fromUserId: string, toUserId: string }
+ */
 export async function GET() {
   try {
     await sequelize.authenticate()
@@ -34,36 +78,33 @@ export async function GET() {
       { type: QueryTypes.SELECT }
     )
 
-    const allUsers = await sequelize.query<{
-      id: string
-      email: string
-      username: string
-      created_at: string
-    }>(
-      `SELECT id::text, email, username, created_at::text
-       FROM public.users
-       ORDER BY created_at DESC
-       LIMIT 50`,
-      { type: QueryTypes.SELECT }
-    )
+    const dataByTable: Record<string, { table: string; exists: boolean; rows_for_old?: number; rows_for_new?: number }> = {}
+    const OLD_ID = 'be8aabd4-2a05-4466-abae-6ad4e1bc6498'
+    const NEW_ID = '36ea1d9d-14a6-465c-be7b-b2da1888993f'
 
-    const orphanedUserIds = usersWithProjects
-      .filter((r) => r.email === null)
-      .map((r) => r.user_id)
+    for (const table of TABLES_WITH_USER_ID) {
+      const exists = await tableExists(table)
+      if (exists) {
+        const oldCount = await countRows(table, OLD_ID)
+        const newCount = await countRows(table, NEW_ID)
+        dataByTable[table] = { table, exists, rows_for_old: oldCount, rows_for_new: newCount }
+      } else {
+        dataByTable[table] = { table, exists: false }
+      }
+    }
 
     return NextResponse.json({
       summary: {
         total_projects: usersWithProjects.reduce((s, r) => s + parseInt(r.project_count, 10), 0),
         users_with_projects: usersWithProjects.length,
-        orphaned_user_ids: orphanedUserIds,
+        old_account: OLD_ID,
+        new_account: NEW_ID,
       },
+      data_by_table: dataByTable,
       projects_by_user: usersWithProjects,
-      all_users: allUsers,
       instructions: {
-        reassign_specific:
-          'POST this endpoint with { "fromUserId": "<old-uuid>", "toUserId": "<new-uuid>" }',
-        reassign_all_to_email:
-          'POST this endpoint with { "toEmail": "your@email.com" } to reassign ALL projects from user_ids that have no matching user record',
+        migrate_all:
+          `POST this endpoint with { "fromUserId": "${OLD_ID}", "toUserId": "${NEW_ID}" } to migrate ALL data across all tables`,
       },
     })
   } catch (err: any) {
@@ -75,80 +116,34 @@ export async function POST(request: NextRequest) {
   try {
     await sequelize.authenticate()
     const body = await request.json()
-    const { fromUserId, toUserId, toEmail } = body || {}
-
-    if (toEmail && !toUserId && !fromUserId) {
-      const [targetUser] = await sequelize.query<{ id: string }>(
-        `SELECT id::text FROM public.users WHERE LOWER(email) = LOWER(:email) LIMIT 1`,
-        { replacements: { email: toEmail.trim() }, type: QueryTypes.SELECT }
-      )
-      if (!targetUser) {
-        return NextResponse.json({ error: `No user found with email: ${toEmail}` }, { status: 404 })
-      }
-      const resolvedToId = targetUser.id
-
-      const orphaned = await sequelize.query<{ user_id: string; cnt: string }>(
-        `SELECT p.user_id::text, COUNT(*)::text AS cnt
-         FROM public.projects p
-         LEFT JOIN public.users u ON u.id = p.user_id
-         WHERE u.id IS NULL
-         GROUP BY p.user_id`,
-        { type: QueryTypes.SELECT }
-      )
-
-      if (orphaned.length === 0) {
-        const allOther = await sequelize.query<{ user_id: string; cnt: string }>(
-          `SELECT user_id::text, COUNT(*)::text AS cnt
-           FROM public.projects
-           WHERE user_id != :targetId
-           GROUP BY user_id`,
-          { replacements: { targetId: resolvedToId }, type: QueryTypes.SELECT }
-        )
-
-        return NextResponse.json({
-          message: 'No orphaned projects found (all project user_ids have matching user records).',
-          hint: 'Use { "fromUserId": "<uuid>", "toUserId": "<uuid>" } to reassign from a specific user.',
-          other_users_with_projects: allOther,
-          target_user_id: resolvedToId,
-        })
-      }
-
-      let totalMigrated = 0
-      const details: { fromUserId: string; count: number }[] = []
-      for (const row of orphaned) {
-        const [, meta] = await sequelize.query(
-          `UPDATE public.projects SET user_id = :toId WHERE user_id = :fromId`,
-          { replacements: { toId: resolvedToId, fromId: row.user_id } }
-        )
-        const migrated = (meta as any)?.rowCount ?? (typeof meta === 'number' ? meta : 0)
-        totalMigrated += migrated
-        details.push({ fromUserId: row.user_id, count: migrated })
-      }
-
-      return NextResponse.json({
-        success: true,
-        message: `Migrated ${totalMigrated} orphaned projects to user ${resolvedToId} (${toEmail})`,
-        details,
-      })
-    }
+    const { fromUserId, toUserId } = body || {}
 
     if (!fromUserId || !toUserId) {
       return NextResponse.json(
-        { error: 'Provide { fromUserId, toUserId } or { toEmail }' },
+        { error: 'Provide { "fromUserId": "<old-uuid>", "toUserId": "<new-uuid>" }' },
         { status: 400 }
       )
     }
 
-    const [, meta] = await sequelize.query(
-      `UPDATE public.projects SET user_id = :toId WHERE user_id = :fromId`,
-      { replacements: { toId: toUserId, fromId: fromUserId } }
-    )
-    const migrated = (meta as any)?.rowCount ?? (typeof meta === 'number' ? meta : 0)
+    const results: { table: string; migrated: number; skipped?: string }[] = []
+    let totalMigrated = 0
+
+    for (const table of TABLES_WITH_USER_ID) {
+      const exists = await tableExists(table)
+      if (!exists) {
+        results.push({ table, migrated: 0, skipped: 'table does not exist' })
+        continue
+      }
+      const count = await migrateTable(table, fromUserId, toUserId)
+      results.push({ table, migrated: count })
+      totalMigrated += count
+    }
 
     return NextResponse.json({
       success: true,
-      message: `Reassigned ${migrated} projects from ${fromUserId} to ${toUserId}`,
-      migrated,
+      message: `Migrated ${totalMigrated} total rows across ${results.filter(r => r.migrated > 0).length} tables from ${fromUserId} to ${toUserId}`,
+      total_migrated: totalMigrated,
+      details: results,
     })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
