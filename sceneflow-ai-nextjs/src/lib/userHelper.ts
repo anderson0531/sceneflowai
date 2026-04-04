@@ -1,105 +1,212 @@
+import { Op, QueryTypes, col, fn, where as sqlWhere } from 'sequelize'
+import { sequelize } from '@/config/database'
 import { User } from '@/models/User'
 
-/**
- * Check if a string is a valid UUID format
- */
+const TAG = '[userHelper]'
+
 function isUUID(str: string): boolean {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-  return uuidRegex.test(str)
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str)
+}
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase()
+}
+
+function readUserId(user: User): string | undefined {
+  try {
+    const dv = user.getDataValue('id' as keyof User)
+    if (dv != null && dv !== '') return String(dv)
+  } catch { /* ignore */ }
+  const fromGetter = user.id
+  if (fromGetter != null && fromGetter !== '') return String(fromGetter)
+  const raw = (user as unknown as { dataValues?: Record<string, unknown> }).dataValues?.id
+  return raw != null && raw !== '' ? String(raw) : undefined
+}
+
+function applyUserId(user: User, id: string): void {
+  user.setDataValue('id', id)
+}
+
+async function fetchUserIdRawByEmail(email: string): Promise<string | null> {
+  const normalized = normalizeEmail(email)
+  const rows = await sequelize.query<{ id: string }>(
+    `SELECT id::text AS id FROM public.users WHERE LOWER(TRIM(email)) = :email LIMIT 1`,
+    { replacements: { email: normalized }, type: QueryTypes.SELECT }
+  )
+  const id = rows[0]?.id
+  return id != null && id !== '' ? String(id) : null
 }
 
 /**
- * Resolve a user by either UUID or email address
- * 
- * The NextAuth session can store session.user.id as either:
- * - A UUID (when user is properly authenticated)
- * - An email address (fallback when login API doesn't return proper UUID)
- * 
- * This function handles both cases and returns the user with their UUID.
- * If the user doesn't exist (common in demo mode or failed auth), it will
- * auto-create the user in the database.
- * 
- * @param userIdOrEmail - Either a UUID or email address
- * @returns User instance with UUID
- * @throws Error if user cannot be found or created
+ * One-shot diagnostic: dump schema info + raw row so we can see
+ * exactly what the DB returns. Runs once per process lifetime.
+ */
+let _diagRan = false
+async function runDiagnostics(emailHint: string): Promise<void> {
+  if (_diagRan) return
+  _diagRan = true
+  try {
+    const schemas = await sequelize.query<{ schemaname: string; tablename: string }>(
+      `SELECT schemaname, tablename FROM pg_tables WHERE tablename = 'users'`,
+      { type: QueryTypes.SELECT }
+    )
+    console.log(`${TAG} DIAG schemas with "users" table:`, JSON.stringify(schemas))
+
+    const cols = await sequelize.query<{ column_name: string; data_type: string; is_nullable: string }>(
+      `SELECT column_name, data_type, is_nullable
+       FROM information_schema.columns
+       WHERE table_name = 'users' AND table_schema = 'public'
+       ORDER BY ordinal_position`,
+      { type: QueryTypes.SELECT }
+    )
+    console.log(`${TAG} DIAG public.users columns (${cols.length}):`, JSON.stringify(cols))
+
+    const sp = await sequelize.query<{ search_path: string }>(
+      `SHOW search_path`,
+      { type: QueryTypes.SELECT }
+    )
+    console.log(`${TAG} DIAG search_path:`, JSON.stringify(sp))
+
+    const normalized = normalizeEmail(emailHint)
+    const rawRow = await sequelize.query(
+      `SELECT * FROM public.users WHERE LOWER(email) = :email LIMIT 1`,
+      { replacements: { email: normalized }, type: QueryTypes.SELECT }
+    )
+    console.log(`${TAG} DIAG raw row for ${normalized}:`, JSON.stringify(rawRow).slice(0, 1500))
+  } catch (err: any) {
+    console.error(`${TAG} DIAG error:`, err.message)
+  }
+}
+
+async function ensureUserRowHasId(user: User): Promise<User> {
+  let id = readUserId(user)
+  if (id) {
+    applyUserId(user, id)
+    return user
+  }
+  console.warn(`${TAG} id missing after findOne, dataValues:`, JSON.stringify(
+    (user as unknown as { dataValues?: Record<string, unknown> }).dataValues
+  )?.slice(0, 800))
+
+  await user.reload({ attributes: ['id', 'email', 'username'] })
+  id = readUserId(user)
+  if (id) {
+    applyUserId(user, id)
+    return user
+  }
+
+  const emailVal = user.getDataValue('email' as keyof User) ?? (user as User & { email?: string }).email
+  if (emailVal) {
+    const rawId = await fetchUserIdRawByEmail(String(emailVal))
+    if (rawId) {
+      console.log(`${TAG} recovered id via raw SQL: ${rawId}`)
+      applyUserId(user, rawId)
+      return user
+    }
+  }
+
+  throw new Error(
+    `User row has no id (email=${emailVal ?? 'unknown'}). Check DB primary key on public.users.`
+  )
+}
+
+async function findUserByEmailLoose(email: string): Promise<User | null> {
+  const normalized = normalizeEmail(email)
+  const byLower = await User.findOne({
+    where: sqlWhere(fn('LOWER', col('email')), normalized),
+  })
+  if (byLower) return byLower
+  return User.findOne({
+    where: { email: { [Op.iLike]: normalized } },
+  })
+}
+
+/**
+ * Resolve a user by either UUID or email address.
+ *
+ * The NextAuth session can store session.user.id as either a UUID or an
+ * email address. This function handles both and returns a User with a
+ * guaranteed id.  If the user doesn't exist it will be auto-created.
  */
 export async function resolveUser(userIdOrEmail: string): Promise<User> {
   if (!userIdOrEmail) {
     throw new Error('User ID or email is required')
   }
 
+  await runDiagnostics(userIdOrEmail)
+
   let user: User | null = null
 
   if (isUUID(userIdOrEmail)) {
-    // It's a UUID, use findByPk
     user = await User.findByPk(userIdOrEmail)
   } else {
-    // It's likely an email, use findOne
-    user = await User.findOne({
-      where: { email: userIdOrEmail },
-    })
+    user = await findUserByEmailLoose(userIdOrEmail)
   }
 
-  // If user not found, auto-create (common in demo mode or when session has email as ID)
+  if (user) {
+    console.log(`${TAG} findOne returned user, dataValues:`, JSON.stringify(
+      (user as unknown as { dataValues?: Record<string, unknown> }).dataValues
+    )?.slice(0, 800))
+  }
+
   if (!user) {
-    // Only auto-create if input is an email (not a UUID)
-    if (!isUUID(userIdOrEmail)) {
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(userIdOrEmail)) {
-        throw new Error(`Invalid email format: ${userIdOrEmail}`)
-      }
+    if (isUUID(userIdOrEmail)) {
+      throw new Error(`User not found: ${userIdOrEmail}`)
+    }
 
-      try {
-        // Generate username from email (take part before @, sanitize, limit length)
-        const emailPrefix = userIdOrEmail.split('@')[0]
-        const sanitizedUsername = emailPrefix
-          .replace(/[^a-zA-Z0-9_-]/g, '_')
-          .slice(0, 48) // Limit to 48 chars (username max is 50, leave some buffer)
-        const username = sanitizedUsername || `user_${Date.now()}`
-        
-        // Generate a friendly display name from the email prefix
-        // Convert underscores/hyphens to spaces and capitalize first letter of each word
-        const displayName = emailPrefix
-          .replace(/[._-]/g, ' ')
-          .replace(/\b\w/g, (c) => c.toUpperCase())
-          .trim() || username
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(userIdOrEmail)) {
+      throw new Error(`Invalid email format: ${userIdOrEmail}`)
+    }
 
-        console.log(`[userHelper] Auto-creating user for email: ${userIdOrEmail}`)
-        
-        user = await User.create({
-          email: userIdOrEmail,
-          username: username,
-          first_name: displayName,
-          password_hash: 'session-user',
-          is_active: true,
-          email_verified: false,
-          credits: 0,
-          subscription_credits_monthly: 0,
-          addon_credits: 0,
-          storage_used_gb: 0,
-          one_time_tiers_purchased: [],
-        } as any)
+    const normalizedEmail = normalizeEmail(userIdOrEmail)
+    const emailPrefix = userIdOrEmail.split('@')[0]
+    const sanitizedUsername = emailPrefix
+      .replace(/[^a-zA-Z0-9_-]/g, '_')
+      .slice(0, 48)
+    const username = sanitizedUsername || `user_${Date.now()}`
+    const displayName =
+      emailPrefix
+        .replace(/[._-]/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+        .trim() || username
 
-        console.log(`[userHelper] Successfully created user: ${user.id} (${user.email}) - Name: ${displayName}`)
-      } catch (error: any) {
-        // Handle unique constraint violation (user created between check and create)
-        if (error.name === 'SequelizeUniqueConstraintError' || error.message?.includes('unique')) {
-          // Try to find the user again (it was created by another request)
-          user = await User.findOne({
-            where: { email: userIdOrEmail },
-          })
-          if (user) {
-            console.log(`[userHelper] User was created by another request: ${user.id}`)
-            return user
-          }
+    console.log(`${TAG} Auto-creating user for email: ${normalizedEmail}`)
+
+    try {
+      user = await User.create({
+        email: normalizedEmail,
+        username,
+        first_name: displayName,
+        password_hash: 'session-user',
+        is_active: true,
+        email_verified: false,
+        credits: 0,
+        subscription_credits_monthly: 0,
+        addon_credits: 0,
+        storage_used_gb: 0,
+        one_time_tiers_purchased: [],
+      } as any)
+      console.log(`${TAG} Created user, dataValues:`, JSON.stringify(
+        (user as unknown as { dataValues?: Record<string, unknown> }).dataValues
+      )?.slice(0, 800))
+    } catch (error: any) {
+      if (error.name === 'SequelizeUniqueConstraintError' || error.message?.includes('unique')) {
+        user =
+          (await findUserByEmailLoose(userIdOrEmail)) ||
+          (await User.findOne({ where: { username } }))
+        if (user) {
+          console.log(`${TAG} Resolved user after unique race: ${readUserId(user)} (${user.email})`)
         }
-        console.error(`[userHelper] Failed to auto-create user: ${error.message}`)
+      }
+      if (!user) {
+        console.error(`${TAG} Failed to auto-create user: ${error.message}`)
         throw new Error(`Failed to create user: ${error.message}`)
       }
-    } else {
-      // UUID was provided but user doesn't exist - don't auto-create
-      throw new Error(`User not found: ${userIdOrEmail}`)
+    }
+
+    if (user) {
+      console.log(`${TAG} User ready: ${readUserId(user)} (${user.email})`)
     }
   }
 
@@ -107,20 +214,17 @@ export async function resolveUser(userIdOrEmail: string): Promise<User> {
     throw new Error(`User not found: ${userIdOrEmail}`)
   }
 
-  return user
+  return ensureUserRowHasId(user)
 }
 
 /**
- * Resolve user ID (UUID) from either UUID or email address
- * 
- * This is a convenience function that returns just the UUID string.
- * 
- * @param userIdOrEmail - Either a UUID or email address
- * @returns User's UUID as string
- * @throws Error if user is not found
+ * Resolve user ID (UUID) from either UUID or email address.
  */
 export async function resolveUserId(userIdOrEmail: string): Promise<string> {
   const user = await resolveUser(userIdOrEmail)
-  return user.id
+  const id = readUserId(user)
+  if (!id) {
+    throw new Error(`${TAG} User has no id after full resolution: ${userIdOrEmail}`)
+  }
+  return id
 }
-

@@ -4,7 +4,7 @@ import Project from '@/models/Project'
 import User from '@/models/User'
 import { sequelize } from '@/config/database'
 import { SubscriptionService } from '../../../services/SubscriptionService'
-import { resolveUser } from '@/lib/userHelper'
+import { resolveUserId } from '@/lib/userHelper'
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic'
@@ -60,11 +60,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Missing userId' }, { status: 401 })
     }
 
-    // Resolve email to UUID if needed
-    let resolvedUserId = userIdParam
+    let resolvedUserId: string
     try {
-      const resolvedUser = await resolveUser(userIdParam)
-      resolvedUserId = resolvedUser.id
+      resolvedUserId = await resolveUserId(userIdParam)
       console.log(`[${timestamp}] [GET /api/projects] Resolved userId: ${userIdParam} -> ${resolvedUserId}`)
     } catch (err) {
       console.error(`[${timestamp}] [GET /api/projects] Failed to resolve user:`, err)
@@ -72,7 +70,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!resolvedUserId) {
-      console.error(`[${timestamp}] [GET /api/projects] resolveUser returned user with no id for: ${userIdParam}`)
+      console.error(`[${timestamp}] [GET /api/projects] resolveUserId returned empty id for: ${userIdParam}`)
       return NextResponse.json({ success: false, error: 'User has no id' }, { status: 500 })
     }
 
