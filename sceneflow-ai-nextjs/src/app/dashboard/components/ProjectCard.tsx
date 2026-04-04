@@ -679,14 +679,14 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
               onClick={(e) => {
                 e.stopPropagation()
                 e.preventDefault()
-                navigator.clipboard.writeText(project.id)
+                navigator.clipboard.writeText(project.id || '')
                 toast.success('Project ID copied')
               }}
               className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-800/50 hover:bg-gray-700/50 transition-colors cursor-pointer group"
-              title={`Copy Project ID: ${project.id}`}
+              title={`Copy Project ID: ${project.id || ''}`}
             >
               <span className="text-xs text-gray-500 font-mono truncate max-w-[80px]">
-                {project.id.slice(0, 8)}...
+                {project.id?.slice(0, 8) ?? '—'}...
               </span>
               <Copy className="w-3 h-3 text-gray-500 group-hover:text-gray-300" />
             </button>
