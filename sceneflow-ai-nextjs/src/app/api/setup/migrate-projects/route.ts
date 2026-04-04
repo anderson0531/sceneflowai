@@ -5,7 +5,10 @@ import '@/models'
 
 export const dynamic = 'force-dynamic'
 
-const TABLES_WITH_USER_ID: { table: string; column: string }[] = [
+const OLD_ID = 'be8aabd4-2a05-4466-abae-6ad4e1bc6498'
+const NEW_ID = '36ea1d9d-14a6-465c-be7b-b2da1888993f'
+
+const CHILD_TABLES: { table: string; column: string }[] = [
   { table: 'projects', column: 'user_id' },
   { table: 'series', column: 'user_id' },
   { table: 'credit_ledger', column: 'user_id' },
@@ -19,92 +22,109 @@ const TABLES_WITH_USER_ID: { table: string; column: string }[] = [
   { table: 'visionary_reports', column: 'user_id' },
 ]
 
-async function tableExists(tableName: string): Promise<boolean> {
+const USER_FIELDS_TO_MERGE = [
+  'credits', 'subscription_tier_id', 'subscription_status',
+  'subscription_start_date', 'subscription_end_date',
+  'subscription_credits_monthly', 'subscription_credits_expires_at',
+  'addon_credits', 'storage_used_gb',
+  'paddle_customer_id', 'paddle_subscription_id',
+  'one_time_tiers_purchased', 'trust_score',
+  'first_name', 'last_name', 'avatar_url',
+]
+
+async function tableExists(name: string): Promise<boolean> {
   const rows = await sequelize.query<{ exists: boolean }>(
-    `SELECT EXISTS (
-       SELECT 1 FROM information_schema.tables
-       WHERE table_schema = 'public' AND table_name = :tableName
-     ) AS exists`,
-    { replacements: { tableName }, type: QueryTypes.SELECT }
+    `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name=:name) AS exists`,
+    { replacements: { name }, type: QueryTypes.SELECT }
   )
   return rows[0]?.exists === true
 }
 
-async function countRows(tableName: string, column: string, userId: string): Promise<number> {
-  const [row] = await sequelize.query<{ cnt: string }>(
-    `SELECT COUNT(*)::text AS cnt FROM public."${tableName}" WHERE "${column}" = :userId`,
+async function countRows(table: string, col: string, userId: string): Promise<number> {
+  const [r] = await sequelize.query<{ cnt: string }>(
+    `SELECT COUNT(*)::text AS cnt FROM public."${table}" WHERE "${col}" = :userId`,
     { replacements: { userId }, type: QueryTypes.SELECT }
   )
-  return parseInt(row?.cnt ?? '0', 10)
+  return parseInt(r?.cnt ?? '0', 10)
 }
 
-async function migrateTable(
-  tableName: string,
-  column: string,
-  fromId: string,
-  toId: string
-): Promise<number> {
+async function migrateTable(table: string, col: string, from: string, to: string): Promise<number> {
   const [, meta] = await sequelize.query(
-    `UPDATE public."${tableName}" SET "${column}" = :toId WHERE "${column}" = :fromId`,
-    { replacements: { toId, fromId } }
+    `UPDATE public."${table}" SET "${col}" = :to WHERE "${col}" = :from`,
+    { replacements: { to, from } }
   )
   return (meta as any)?.rowCount ?? 0
 }
 
-/**
- * GET  - Show data distribution across ALL tables for each user_id
- * POST - Migrate ALL data from one user_id to another across every table
- *        Body: { fromUserId: string, toUserId: string }
- */
 export async function GET() {
   try {
     await sequelize.authenticate()
 
-    const usersWithProjects = await sequelize.query<{
-      user_id: string
-      project_count: string
-      email: string | null
-      username: string | null
-    }>(
-      `SELECT
-         p.user_id::text AS user_id,
-         COUNT(*)::text AS project_count,
-         u.email,
-         u.username
-       FROM public.projects p
-       LEFT JOIN public.users u ON u.id = p.user_id
-       GROUP BY p.user_id, u.email, u.username
-       ORDER BY COUNT(*) DESC`,
-      { type: QueryTypes.SELECT }
-    )
+    const [oldUser] = await sequelize.query<Record<string, unknown>>(
+      `SELECT * FROM public.users WHERE id = :id`,
+      { replacements: { id: OLD_ID }, type: QueryTypes.SELECT }
+    ).catch(() => [null])
 
-    const dataByTable: Record<string, { table: string; exists: boolean; rows_for_old?: number; rows_for_new?: number }> = {}
-    const OLD_ID = 'be8aabd4-2a05-4466-abae-6ad4e1bc6498'
-    const NEW_ID = '36ea1d9d-14a6-465c-be7b-b2da1888993f'
+    const [newUser] = await sequelize.query<Record<string, unknown>>(
+      `SELECT * FROM public.users WHERE id = :id`,
+      { replacements: { id: NEW_ID }, type: QueryTypes.SELECT }
+    ).catch(() => [null])
 
-    for (const { table, column } of TABLES_WITH_USER_ID) {
+    const tableData: Record<string, unknown> = {}
+    for (const { table, column } of CHILD_TABLES) {
       const exists = await tableExists(table)
-      if (exists) {
-        const oldCount = await countRows(table, column, OLD_ID)
-        const newCount = await countRows(table, column, NEW_ID)
-        dataByTable[table] = { table, exists, column, rows_for_old: oldCount, rows_for_new: newCount }
-      } else {
-        dataByTable[table] = { table, exists: false }
+      if (!exists) { tableData[table] = { exists: false }; continue }
+      tableData[table] = {
+        exists: true,
+        column,
+        old_account: await countRows(table, column, OLD_ID),
+        new_account: await countRows(table, column, NEW_ID),
       }
     }
 
+    const projectSample = await sequelize.query<Record<string, unknown>>(
+      `SELECT id::text, title, description, status, current_step,
+              LEFT(metadata::text, 500) AS metadata_preview,
+              created_at, updated_at
+       FROM public.projects
+       WHERE user_id = :uid
+       ORDER BY updated_at DESC LIMIT 3`,
+      { replacements: { uid: NEW_ID }, type: QueryTypes.SELECT }
+    ).catch(() => [])
+
     return NextResponse.json({
-      summary: {
-        total_projects: usersWithProjects.reduce((s, r) => s + parseInt(r.project_count, 10), 0),
-        users_with_projects: usersWithProjects.length,
-        old_account: OLD_ID,
-        new_account: NEW_ID,
-      },
-      data_by_table: dataByTable,
-      projects_by_user: usersWithProjects,
+      old_user: oldUser ? {
+        id: (oldUser as any).id,
+        email: (oldUser as any).email,
+        credits: (oldUser as any).credits,
+        addon_credits: (oldUser as any).addon_credits,
+        subscription_credits_monthly: (oldUser as any).subscription_credits_monthly,
+        subscription_status: (oldUser as any).subscription_status,
+        subscription_tier_id: (oldUser as any).subscription_tier_id,
+        first_name: (oldUser as any).first_name,
+        last_name: (oldUser as any).last_name,
+        storage_used_gb: (oldUser as any).storage_used_gb,
+        paddle_customer_id: (oldUser as any).paddle_customer_id,
+        paddle_subscription_id: (oldUser as any).paddle_subscription_id,
+      } : 'NOT FOUND',
+      new_user: newUser ? {
+        id: (newUser as any).id,
+        email: (newUser as any).email,
+        credits: (newUser as any).credits,
+        addon_credits: (newUser as any).addon_credits,
+        subscription_credits_monthly: (newUser as any).subscription_credits_monthly,
+        subscription_status: (newUser as any).subscription_status,
+        subscription_tier_id: (newUser as any).subscription_tier_id,
+        first_name: (newUser as any).first_name,
+        last_name: (newUser as any).last_name,
+        storage_used_gb: (newUser as any).storage_used_gb,
+        paddle_customer_id: (newUser as any).paddle_customer_id,
+        paddle_subscription_id: (newUser as any).paddle_subscription_id,
+      } : 'NOT FOUND',
+      child_tables: tableData,
+      sample_projects: projectSample,
       instructions: {
-        migrate_all:
-          `POST this endpoint with { "fromUserId": "${OLD_ID}", "toUserId": "${NEW_ID}" } to migrate ALL data across all tables`,
+        migrate_all: `POST { "fromUserId": "${OLD_ID}", "toUserId": "${NEW_ID}" } to migrate child rows + merge user fields (credits, subscription, profile)`,
       },
     })
   } catch (err: any) {
@@ -115,36 +135,38 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     await sequelize.authenticate()
-    const body = await request.json()
-    const { fromUserId, toUserId } = body || {}
+    const { fromUserId, toUserId } = (await request.json()) || {}
 
     if (!fromUserId || !toUserId) {
-      return NextResponse.json(
-        { error: 'Provide { "fromUserId": "<old-uuid>", "toUserId": "<new-uuid>" }' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Provide { fromUserId, toUserId }' }, { status: 400 })
     }
 
-    const results: { table: string; migrated: number; skipped?: string }[] = []
-    let totalMigrated = 0
+    const results: { step: string; detail: string }[] = []
 
-    for (const { table, column } of TABLES_WITH_USER_ID) {
-      const exists = await tableExists(table)
-      if (!exists) {
-        results.push({ table, migrated: 0, skipped: 'table does not exist' })
+    for (const { table, column } of CHILD_TABLES) {
+      if (!(await tableExists(table))) {
+        results.push({ step: `${table}`, detail: 'table missing, skipped' })
         continue
       }
-      const count = await migrateTable(table, column, fromUserId, toUserId)
-      results.push({ table, migrated: count })
-      totalMigrated += count
+      const n = await migrateTable(table, column, fromUserId, toUserId)
+      results.push({ step: `${table}`, detail: `${n} rows moved` })
     }
 
-    return NextResponse.json({
-      success: true,
-      message: `Migrated ${totalMigrated} total rows across ${results.filter(r => r.migrated > 0).length} tables from ${fromUserId} to ${toUserId}`,
-      total_migrated: totalMigrated,
-      details: results,
-    })
+    const setClauses = USER_FIELDS_TO_MERGE.map(
+      (f) => `"${f}" = COALESCE(old."${f}", new."${f}")`
+    ).join(', ')
+
+    const [, mergeResult] = await sequelize.query(
+      `UPDATE public.users AS new
+       SET ${setClauses}
+       FROM public.users AS old
+       WHERE old.id = :fromId AND new.id = :toId`,
+      { replacements: { fromId: fromUserId, toId: toUserId } }
+    )
+    const mergedRows = (mergeResult as any)?.rowCount ?? 0
+    results.push({ step: 'user_fields_merge', detail: `${mergedRows} user record updated (credits, subscription, profile copied from old account)` })
+
+    return NextResponse.json({ success: true, results })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
