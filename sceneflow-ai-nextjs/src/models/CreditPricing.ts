@@ -66,24 +66,24 @@ export interface CreditPricingCreationAttributes extends Optional<CreditPricingA
 
 export class CreditPricing extends Model<CreditPricingAttributes, CreditPricingCreationAttributes> 
   implements CreditPricingAttributes {
-  public id!: string
-  public provider!: CreditProvider
-  public category!: CreditCategory
-  public operation!: string
-  public model!: string
-  public metric!: CreditMetric
-  public credits_per_unit!: number
-  public provider_cost_usd!: number
-  public margin_percent!: number
-  public is_active!: boolean
-  public effective_from!: Date
-  public effective_to!: Date | null
-  public notes!: string | null
-  public created_at!: Date
-  public updated_at!: Date
+  declare id: string
+  declare provider: CreditProvider
+  declare category: CreditCategory
+  declare operation: string
+  declare model: string
+  declare metric: CreditMetric
+  declare credits_per_unit: number
+  declare provider_cost_usd: number
+  declare margin_percent: number
+  declare is_active: boolean
+  declare effective_from: Date
+  declare effective_to: Date | null
+  declare notes: string | null
+  declare created_at: Date
+  declare updated_at: Date
 
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
   /**
    * Calculate margin percentage from credits and provider cost

@@ -15,17 +15,17 @@ export interface CollabParticipantAttributes {
 export interface CollabParticipantCreationAttributes extends Optional<CollabParticipantAttributes, 'id' | 'role' | 'joined_at' | 'created_at' | 'updated_at'> {}
 
 export class CollabParticipant extends Model<CollabParticipantAttributes, CollabParticipantCreationAttributes> implements CollabParticipantAttributes {
-  public id!: string
-  public session_id!: string
-  public name!: string
-  public email!: string
-  public role!: 'owner' | 'collaborator'
-  public joined_at!: Date
-  public created_at!: Date
-  public updated_at!: Date
+  declare id: string
+  declare session_id: string
+  declare name: string
+  declare email: string
+  declare role: 'owner' | 'collaborator'
+  declare joined_at: Date
+  declare created_at: Date
+  declare updated_at: Date
 
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 }
 
 CollabParticipant.init(

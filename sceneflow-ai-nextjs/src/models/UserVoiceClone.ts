@@ -54,30 +54,29 @@ export interface UserVoiceCloneCreationAttributes extends Optional<
 
 export class UserVoiceClone extends Model<UserVoiceCloneAttributes, UserVoiceCloneCreationAttributes>
   implements UserVoiceCloneAttributes {
-  public id!: string
-  public user_id!: string
-  public consent_id!: string
+  declare id: string
+  declare user_id: string
+  declare consent_id: string
   
-  public elevenlabs_voice_id!: string
-  public voice_name!: string
-  public description?: string | null
+  declare elevenlabs_voice_id: string
+  declare voice_name: string
+  declare description: string | null | undefined
   
-  public is_active!: boolean
-  public is_locked!: boolean
+  declare is_active: boolean
+  declare is_locked: boolean
   
-  public last_used_at?: Date | null
-  public use_count!: number
+  declare last_used_at: Date | null | undefined
+  declare use_count: number
   
-  public archived_at?: Date | null
-  public archived_reason?: ArchivedReason | null
-  public deletion_warning_sent_at?: Date | null
+  declare archived_at: Date | null | undefined
+  declare archived_reason: ArchivedReason | null | undefined
+  declare deletion_warning_sent_at: Date | null | undefined
   
-  public created_at!: Date
-  public updated_at!: Date
+  declare created_at: Date
+  declare updated_at: Date
 
-  // Timestamps
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
   // Helper methods
   public isUsable(): boolean {

@@ -158,7 +158,8 @@ export interface Idea {
   updatedAt: Date;
 }
 
-export type WorkflowStep = 'ideation' | 'storyboard' | 'scene-direction' | 'video-generation';
+export type { WorkflowStep } from '@/types/enhanced-project'
+import type { WorkflowStep } from '@/types/enhanced-project'
 
 export interface BYOKSettings {
   llmProvider: {
@@ -305,12 +306,13 @@ export const useStore = create<AppState>((set, get) => ({
   storyboardPanels: [],
   beatSheet: [],
   isBeatSheetDirty: false,
-  currentStep: 'ideation',
+  currentStep: 'blueprint' as WorkflowStep,
   stepProgress: {
-    'ideation': 0,
-    'storyboard': 0,
-    'scene-direction': 0,
-    'video-generation': 0
+    blueprint: 0,
+    vision: 0,
+    creation: 0,
+    polish: 0,
+    launch: 0,
   },
   byokSettings: {
     llmProvider: { name: 'google-gemini', apiKey: '', isConfigured: false },
@@ -413,7 +415,7 @@ export const useStore = create<AppState>((set, get) => ({
     stepProgress: { ...state.stepProgress, [step]: progress }
   })),
   advanceToNextStep: () => {
-    const steps: WorkflowStep[] = ['ideation', 'storyboard', 'scene-direction', 'video-generation']
+    const steps: WorkflowStep[] = ['blueprint', 'vision', 'creation', 'polish', 'launch']
     const current = get().currentStep
     const currentIndex = steps.indexOf(current)
     if (currentIndex < steps.length - 1) {
@@ -421,7 +423,7 @@ export const useStore = create<AppState>((set, get) => ({
     }
   },
   canAdvanceToStep: (step) => {
-    const steps: WorkflowStep[] = ['ideation', 'storyboard', 'scene-direction', 'video-generation']
+    const steps: WorkflowStep[] = ['blueprint', 'vision', 'creation', 'polish', 'launch']
     const current = get().currentStep
     const currentIndex = steps.indexOf(current)
     const targetIndex = steps.indexOf(step)
@@ -528,7 +530,7 @@ export const useStore = create<AppState>((set, get) => ({
     return total / Object.keys(state.stepProgress).length
   },
   getNextStep: () => {
-    const steps: WorkflowStep[] = ['ideation', 'storyboard', 'scene-direction', 'video-generation']
+    const steps: WorkflowStep[] = ['blueprint', 'vision', 'creation', 'polish', 'launch']
     const current = get().currentStep
     const currentIndex = steps.indexOf(current)
     return currentIndex < steps.length - 1 ? steps[currentIndex + 1] : null

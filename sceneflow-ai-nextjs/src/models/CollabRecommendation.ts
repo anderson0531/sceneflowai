@@ -16,18 +16,18 @@ export interface CollabRecommendationAttributes {
 export interface CollabRecommendationCreationAttributes extends Optional<CollabRecommendationAttributes, 'id' | 'status' | 'created_at' | 'updated_at'> {}
 
 export class CollabRecommendation extends Model<CollabRecommendationAttributes, CollabRecommendationCreationAttributes> implements CollabRecommendationAttributes {
-  public id!: string
-  public session_id!: string
-  public participant_id!: string
-  public variant_id!: string
-  public title!: string
-  public details!: string
-  public status!: 'proposed' | 'accepted' | 'rejected'
-  public created_at!: Date
-  public updated_at!: Date
+  declare id: string
+  declare session_id: string
+  declare participant_id: string
+  declare variant_id: string
+  declare title: string
+  declare details: string
+  declare status: 'proposed' | 'accepted' | 'rejected'
+  declare created_at: Date
+  declare updated_at: Date
 
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 }
 
 CollabRecommendation.init(

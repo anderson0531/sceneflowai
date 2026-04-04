@@ -5,6 +5,7 @@ import User from '@/models/User'
 import { sequelize } from '@/config/database'
 import { SubscriptionService } from '../../../services/SubscriptionService'
 import { resolveUserId } from '@/lib/userHelper'
+import { normalizeWorkflowStep } from '@/constants/workflowSteps'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
         id: p.id,
         title: p.title,
         description: p.description || '',
-        currentStep: (p.current_step as any) || 'ideation',
+        currentStep: normalizeWorkflowStep(p.current_step),
         progress: (typeof (p.step_progress as any)?.overall === 'number' ? (p.step_progress as any).overall : 0) || 0,
         status: (p.status as any) || 'draft',
         createdAt: p.created_at,
@@ -93,7 +94,7 @@ export async function GET(request: NextRequest) {
       id: p.id,
       title: p.title,
       description: p.description || '',
-      currentStep: (p.current_step as any) || 'ideation',
+      currentStep: normalizeWorkflowStep(p.current_step),
       progress: (typeof (p.step_progress as any)?.overall === 'number' ? (p.step_progress as any).overall : 0) || 0,
       status: (p.status as any) || 'draft',
       createdAt: p.created_at,
@@ -186,7 +187,7 @@ export async function POST(request: NextRequest) {
       title,
       description: description || '',
       status: 'draft',
-      current_step: (currentStep || 'ideation') as any,
+      current_step: normalizeWorkflowStep(currentStep || 'blueprint'),
       step_progress: {},
       metadata: metadata || {}
     } as any)

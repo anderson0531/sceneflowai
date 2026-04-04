@@ -18,20 +18,20 @@ export interface CreditLedgerAttributes {
 export interface CreditLedgerCreationAttributes extends Optional<CreditLedgerAttributes, 'id' | 'created_at' | 'updated_at' | 'ref' | 'meta' | 'credit_type'> {}
 
 export class CreditLedger extends Model<CreditLedgerAttributes, CreditLedgerCreationAttributes> implements CreditLedgerAttributes {
-    public id!: string
-  public user_id!: string
-  public delta_credits!: number
-  public prev_balance!: number
-  public new_balance!: number
-  public reason!: 'ai_usage' | 'refund' | 'purchase' | 'adjustment' | 'hold_release' | 'subscription_allocation' | 'addon_purchase' | 'subscription_expiry' | 'byok_platform_fee'
-  public credit_type!: 'subscription' | 'addon' | null
-  public ref!: string | null
-  public meta!: any | null
-  public created_at!: Date
-  public updated_at!: Date
+  declare id: string
+  declare user_id: string
+  declare delta_credits: number
+  declare prev_balance: number
+  declare new_balance: number
+  declare reason: 'ai_usage' | 'refund' | 'purchase' | 'adjustment' | 'hold_release' | 'subscription_allocation' | 'addon_purchase' | 'subscription_expiry' | 'byok_platform_fee'
+  declare credit_type: 'subscription' | 'addon' | null
+  declare ref: string | null
+  declare meta: any | null
+  declare created_at: Date
+  declare updated_at: Date
 
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 }
 
 CreditLedger.init(

@@ -52,33 +52,32 @@ export interface VoiceConsentCreationAttributes extends Optional<
 
 export class VoiceConsent extends Model<VoiceConsentAttributes, VoiceConsentCreationAttributes>
   implements VoiceConsentAttributes {
-  public id!: string
-  public user_id!: string
-  public voice_clone_id?: string | null
+  declare id: string
+  declare user_id: string
+  declare voice_clone_id: string | null | undefined
   
-  public consent_type!: ConsentType
-  public consent_status!: ConsentStatus
-  public actor_name!: string
-  public consent_phrase!: string
-  public verification_code!: string
+  declare consent_type: ConsentType
+  declare consent_status: ConsentStatus
+  declare actor_name: string
+  declare consent_phrase: string
+  declare verification_code: string
   
-  public sample_audio_urls!: string[]
-  public consent_audio_url?: string | null
+  declare sample_audio_urls: string[]
+  declare consent_audio_url: string | null | undefined
   
-  public azure_profile_id?: string | null
-  public match_score?: number | null
+  declare azure_profile_id: string | null | undefined
+  declare match_score: number | null | undefined
   
-  public verified_at?: Date | null
-  public ip_address?: string | null
-  public user_agent?: string | null
+  declare verified_at: Date | null | undefined
+  declare ip_address: string | null | undefined
+  declare user_agent: string | null | undefined
   
-  public created_at!: Date
-  public updated_at!: Date
-  public expires_at?: Date | null
+  declare created_at: Date
+  declare updated_at: Date
+  declare expires_at: Date | null | undefined
 
-  // Timestamps
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
   // Helper methods
   public isVerified(): boolean {

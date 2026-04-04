@@ -62,7 +62,7 @@ export const products: Product[] = [
     color: 'text-blue-400',
     hoverColor: 'hover:bg-blue-500/10 hover:text-blue-300',
     activeColor: 'bg-blue-500/15 text-blue-300 border-blue-400',
-    matchPaths: ['/dashboard/workflow/storyboard', '/dashboard/workflow/vision', '/dashboard/workflow/scene-direction']
+    matchPaths: ['/dashboard/workflow/storyboard', '/dashboard/workflow/vision', '/dashboard/workflow/direction']
   },
   {
     id: 'smart-editor',

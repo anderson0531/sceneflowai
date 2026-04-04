@@ -518,10 +518,12 @@ export interface AIAssistanceSettings {
   collaboration: boolean;
 }
 
-// Unified workflow steps - legacy values are normalized by workflowSteps.ts
-export type WorkflowStep = 'blueprint' | 'vision' | 'creation' | 'polish' | 'launch' | 
-  // Legacy values for backwards compatibility (normalized in code)
-  'ideation' | 'storyboard' | 'scene-direction' | 'video-generation' | 'review' | 'optimization';
+/**
+ * Canonical workflow steps. Legacy values (ideation, storyboard, scene-direction,
+ * video-generation, review, optimization) are normalized at runtime via
+ * normalizeWorkflowStep() in constants/workflowSteps.ts.
+ */
+export type WorkflowStep = 'blueprint' | 'vision' | 'creation' | 'polish' | 'launch'
 
 // Project Bible System for Consistency Across Projects
 export interface ProjectBible {

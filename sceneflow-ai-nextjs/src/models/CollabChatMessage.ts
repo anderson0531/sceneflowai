@@ -23,17 +23,17 @@ export class CollabChatMessage
   extends Model<CollabChatMessageAttributes, CollabChatMessageCreationAttributes> 
   implements CollabChatMessageAttributes {
   
-  public id!: string
-  public sessionId!: string
-  public channel!: string
-  public scopeId?: string
-  public authorRole!: 'owner' | 'collaborator'
-  public alias!: string
-  public text!: string
-  public clientId?: string
-  public seq!: number
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare id: string
+  declare sessionId: string
+  declare channel: string
+  declare scopeId: string | undefined
+  declare authorRole: 'owner' | 'collaborator'
+  declare alias: string
+  declare text: string
+  declare clientId: string | undefined
+  declare seq: number
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 }
 
 CollabChatMessage.init(

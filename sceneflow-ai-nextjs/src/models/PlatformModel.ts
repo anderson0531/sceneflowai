@@ -41,38 +41,38 @@ export interface PlatformModelCreationAttributes extends Omit<PlatformModelAttri
 }
 
 class PlatformModel extends Model<PlatformModelAttributes, PlatformModelCreationAttributes> {
-  public id!: string;
-  public modelId!: string;
-  public platformId!: string;
-  public platformType!: string;
-  public category!: string;
-  public displayName!: string;
-  public description!: string;
-  public costPerUnit!: number;
-  public basePerformanceScore!: number;
-  public maxTokens?: number;
-  public maxDuration?: number;
-  public maxResolution?: string;
-  public features!: string[];
-  public isBYOKSupported!: boolean;
-  public isOperational!: boolean;
-  public isActive!: boolean;
-  public totalRequests!: number;
-  public successCount!: number;
-  public successRate!: number;
-  public totalCost!: number;
-  public averageCost!: number;
-  public totalDuration!: number;
-  public averageDuration!: number;
-  public totalQuality!: number;
-  public averageQuality!: number;
-  public totalUserRating!: number;
-  public averageUserRating!: number;
-  public lastUpdated!: Date;
-  public metadata!: Record<string, any>;
+  declare id: string;
+  declare modelId: string;
+  declare platformId: string;
+  declare platformType: string;
+  declare category: string;
+  declare displayName: string;
+  declare description: string;
+  declare costPerUnit: number;
+  declare basePerformanceScore: number;
+  declare maxTokens: number | undefined;
+  declare maxDuration: number | undefined;
+  declare maxResolution: string | undefined;
+  declare features: string[];
+  declare isBYOKSupported: boolean;
+  declare isOperational: boolean;
+  declare isActive: boolean;
+  declare totalRequests: number;
+  declare successCount: number;
+  declare successRate: number;
+  declare totalCost: number;
+  declare averageCost: number;
+  declare totalDuration: number;
+  declare averageDuration: number;
+  declare totalQuality: number;
+  declare averageQuality: number;
+  declare totalUserRating: number;
+  declare averageUserRating: number;
+  declare lastUpdated: Date;
+  declare metadata: Record<string, any>;
 
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 PlatformModel.init(

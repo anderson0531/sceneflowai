@@ -26,28 +26,28 @@ export interface SubscriptionTierAttributes {
 export interface SubscriptionTierCreationAttributes extends Optional<SubscriptionTierAttributes, 'id' | 'created_at' | 'updated_at' | 'is_active'> {}
 
 export class SubscriptionTier extends Model<SubscriptionTierAttributes, SubscriptionTierCreationAttributes> implements SubscriptionTierAttributes {             
-  public id!: string
-  public name!: 'trial' | 'starter' | 'pro' | 'studio' | 'enterprise'
-  public display_name!: string
-  public monthly_price_usd!: number
-  public annual_price_usd!: number
-  public included_credits_monthly!: number
-  public storage_gb!: number
-  public max_resolution!: '720p' | '1080p' | '4K' | '4K+'
-  public ai_model_access!: 'standard' | 'premium' | 'premium_beta' | 'custom'
-  public byok_access!: boolean
-  public processing_priority!: 'standard' | 'priority' | 'high' | 'dedicated'
-  public collaboration_seats!: number
-  public is_active!: boolean
-  public is_one_time!: boolean
-  public max_projects!: number | null
-  public max_scenes_per_project!: number | null
-  public features!: string[]
-  public created_at!: Date
-  public updated_at!: Date
+  declare id: string
+  declare name: 'trial' | 'starter' | 'pro' | 'studio' | 'enterprise'
+  declare display_name: string
+  declare monthly_price_usd: number
+  declare annual_price_usd: number
+  declare included_credits_monthly: number
+  declare storage_gb: number
+  declare max_resolution: '720p' | '1080p' | '4K' | '4K+'
+  declare ai_model_access: 'standard' | 'premium' | 'premium_beta' | 'custom'
+  declare byok_access: boolean
+  declare processing_priority: 'standard' | 'priority' | 'high' | 'dedicated'
+  declare collaboration_seats: number
+  declare is_active: boolean
+  declare is_one_time: boolean
+  declare max_projects: number | null
+  declare max_scenes_per_project: number | null
+  declare features: string[]
+  declare created_at: Date
+  declare updated_at: Date
 
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
   // Helper methods
   public hasFeature(feature: string): boolean {

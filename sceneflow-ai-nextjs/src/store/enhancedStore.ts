@@ -233,7 +233,7 @@ const initialBYOKSettings = {
   },
 };
 
-const workflowSteps: WorkflowStep[] = ['ideation', 'storyboard', 'scene-direction', 'video-generation', 'review', 'optimization'];
+const workflowSteps: WorkflowStep[] = ['blueprint', 'vision', 'creation', 'polish', 'launch'];
 
 export const useEnhancedStore = create<EnhancedAppState>()(
   persist(
@@ -248,16 +248,15 @@ export const useEnhancedStore = create<EnhancedAppState>()(
       projects: [],
       
       // Workflow state
-      currentStep: 'ideation',
+      currentStep: 'blueprint' as WorkflowStep,
       stepProgress: {
-        ideation: 0,
-        storyboard: 0,
-        'scene-direction': 0,
-        'video-generation': 0,
-        review: 0,
-        optimization: 0
-      },
-      workflowSteps: ['ideation', 'storyboard', 'scene-direction', 'video-generation', 'review', 'optimization'],
+        blueprint: 0,
+        vision: 0,
+        creation: 0,
+        polish: 0,
+        launch: 0,
+      } as Record<WorkflowStep, number>,
+      workflowSteps: ['blueprint', 'vision', 'creation', 'polish', 'launch'] as WorkflowStep[],
       
       // AI state
       aiConfiguration: initialAIConfiguration,
@@ -381,8 +380,7 @@ export const useEnhancedStore = create<EnhancedAppState>()(
         const state = get();
         const stepIndex = state.workflowSteps.indexOf(step);
         
-        // Can always go to ideation
-        if (step === 'ideation') return true;
+        if (step === 'blueprint') return true;
         
         // Check if previous step is completed
         const previousStep = state.workflowSteps[stepIndex - 1];
@@ -410,16 +408,15 @@ export const useEnhancedStore = create<EnhancedAppState>()(
           currentProject: null,
           projects: [],
           // Reset workflow state
-          currentStep: 'ideation',
+          currentStep: 'blueprint' as WorkflowStep,
           stepProgress: {
-            ideation: 0,
-            storyboard: 0,
-            'scene-direction': 0,
-            'video-generation': 0,
-            review: 0,
-            optimization: 0
-          },
-          workflowSteps: ['ideation', 'storyboard', 'scene-direction', 'video-generation', 'review', 'optimization'],
+            blueprint: 0,
+            vision: 0,
+            creation: 0,
+            polish: 0,
+            launch: 0,
+          } as Record<WorkflowStep, number>,
+          workflowSteps: ['blueprint', 'vision', 'creation', 'polish', 'launch'] as WorkflowStep[],
           
           // Reset storyboard readiness
           storyboardReadiness: {},

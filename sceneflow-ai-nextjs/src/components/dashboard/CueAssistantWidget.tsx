@@ -135,7 +135,7 @@ export function CueAssistantWidget() {
     if (!p) return 'general'
     if (p.startsWith('/dashboard/workflow/ideation')) return 'spark'
     if (p.startsWith('/dashboard/workflow/storyboard')) return 'vision'
-    if (p.startsWith('/dashboard/workflow/scene-direction')) return 'director'
+    if (p.startsWith('/dashboard/workflow/direction')) return 'director'
     if (p.startsWith('/dashboard/workflow/video-generation')) return 'screening'
     if (p.startsWith('/dashboard')) return 'dashboard'
     return 'general'

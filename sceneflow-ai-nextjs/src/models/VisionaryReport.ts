@@ -52,27 +52,26 @@ export interface VisionaryReportCreationAttributes extends Optional<
 
 export class VisionaryReport extends Model<VisionaryReportAttributes, VisionaryReportCreationAttributes>
   implements VisionaryReportAttributes {
-  public id!: string
-  public user_id!: string
-  public concept!: string
-  public genre!: string | null
-  public status!: 'pending' | 'in_progress' | 'complete' | 'failed'
-  public market_scan!: Record<string, any> | null
-  public gap_analysis!: Record<string, any> | null
-  public arbitrage_map!: Record<string, any> | null
-  public bridge_plan!: Record<string, any> | null
-  public overall_score!: number | null
-  public credits_used!: number
-  public error_message!: string | null
-  public target_regions!: string[] | null
-  public focus_languages!: string[] | null
-  public project_id!: string | null
-  public created_at!: Date
-  public updated_at!: Date
+  declare id: string
+  declare user_id: string
+  declare concept: string
+  declare genre: string | null
+  declare status: 'pending' | 'in_progress' | 'complete' | 'failed'
+  declare market_scan: Record<string, any> | null
+  declare gap_analysis: Record<string, any> | null
+  declare arbitrage_map: Record<string, any> | null
+  declare bridge_plan: Record<string, any> | null
+  declare overall_score: number | null
+  declare credits_used: number
+  declare error_message: string | null
+  declare target_regions: string[] | null
+  declare focus_languages: string[] | null
+  declare project_id: string | null
+  declare created_at: Date
+  declare updated_at: Date
 
-  // Timestamps
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 
   /**
    * Compute overall viability score from sub-analyses

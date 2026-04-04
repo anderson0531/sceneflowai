@@ -49,31 +49,30 @@ export interface RenderJobCreationAttributes extends Optional<
 
 export class RenderJob extends Model<RenderJobAttributes, RenderJobCreationAttributes>
   implements RenderJobAttributes {
-  public id!: string
-  public project_id!: string
-  public scene_id!: string | null
-  public user_id!: string
-  public status!: RenderJobStatus
-  public progress!: number
-  public resolution!: '720p' | '1080p' | '4K'
-  public language!: string
-  public include_subtitles!: boolean
-  public render_type!: RenderType
-  public stream_type!: StreamType
-  public estimated_duration!: number | null
-  public file_size!: number | null
-  public cloud_run_execution_id!: string | null
-  public output_path!: string | null
-  public download_url!: string | null
-  public download_url_expires_at!: Date | null
-  public error!: string | null
-  public created_at!: Date
-  public updated_at!: Date
-  public completed_at!: Date | null
+  declare id: string
+  declare project_id: string
+  declare scene_id: string | null
+  declare user_id: string
+  declare status: RenderJobStatus
+  declare progress: number
+  declare resolution: '720p' | '1080p' | '4K'
+  declare language: string
+  declare include_subtitles: boolean
+  declare render_type: RenderType
+  declare stream_type: StreamType
+  declare estimated_duration: number | null
+  declare file_size: number | null
+  declare cloud_run_execution_id: string | null
+  declare output_path: string | null
+  declare download_url: string | null
+  declare download_url_expires_at: Date | null
+  declare error: string | null
+  declare created_at: Date
+  declare updated_at: Date
+  declare completed_at: Date | null
 
-  // Timestamps
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 }
 
 RenderJob.init(

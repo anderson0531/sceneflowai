@@ -20,20 +20,20 @@ export interface PromptTemplateCreationAttributes extends Omit<PromptTemplateAtt
 }
 
 class PromptTemplate extends Model<PromptTemplateAttributes, PromptTemplateCreationAttributes> {
-  public id!: string;
-  public templateId!: string;
-  public modelId!: string;
-  public taskType!: string;
-  public templateString!: string;
-  public variables!: string[];
-  public currentQualityScore!: number;
-  public usageCount!: number;
-  public isDeprecated!: boolean;
-  public userSatisfaction?: number;
-  public metadata!: Record<string, any>;
+  declare id: string;
+  declare templateId: string;
+  declare modelId: string;
+  declare taskType: string;
+  declare templateString: string;
+  declare variables: string[];
+  declare currentQualityScore: number;
+  declare usageCount: number;
+  declare isDeprecated: boolean;
+  declare userSatisfaction: number | undefined;
+  declare metadata: Record<string, any>;
 
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 PromptTemplate.init(

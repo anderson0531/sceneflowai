@@ -274,7 +274,8 @@ export interface RuleCondition {
   value: any;
 }
 
-export type WorkflowStep = 'ideation' | 'storyboard' | 'scene-direction' | 'video-generation' | 'review' | 'optimization';
+import type { WorkflowStep } from './enhanced-project'
+export type { WorkflowStep } from './enhanced-project'
 
 export interface AgentAssignment {
   id: string;

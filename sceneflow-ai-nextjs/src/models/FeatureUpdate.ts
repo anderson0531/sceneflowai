@@ -19,18 +19,18 @@ export interface FeatureUpdateCreationAttributes extends Omit<FeatureUpdateAttri
 }
 
 class FeatureUpdate extends Model<FeatureUpdateAttributes, FeatureUpdateCreationAttributes> {
-  public id!: string;
-  public platformId!: string;
-  public modelId!: string;
-  public feature!: string;
-  public status!: string;
-  public description!: string;
-  public source!: string;
-  public confidence!: number;
-  public timestamp?: Date;
-  public metadata!: Record<string, any>;
+  declare id: string;
+  declare platformId: string;
+  declare modelId: string;
+  declare feature: string;
+  declare status: string;
+  declare description: string;
+  declare source: string;
+  declare confidence: number;
+  declare timestamp: Date | undefined;
+  declare metadata: Record<string, any>;
 
-  public readonly createdAt!: Date;
+  declare readonly createdAt: Date;
 }
 
 FeatureUpdate.init(

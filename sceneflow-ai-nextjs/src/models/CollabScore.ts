@@ -14,16 +14,16 @@ export interface CollabScoreAttributes {
 export interface CollabScoreCreationAttributes extends Optional<CollabScoreAttributes, 'id' | 'created_at' | 'updated_at'> {}
 
 export class CollabScore extends Model<CollabScoreAttributes, CollabScoreCreationAttributes> implements CollabScoreAttributes {
-  public id!: string
-  public session_id!: string
-  public participant_id!: string
-  public variant_id!: string
-  public score!: number
-  public created_at!: Date
-  public updated_at!: Date
+  declare id: string
+  declare session_id: string
+  declare participant_id: string
+  declare variant_id: string
+  declare score: number
+  declare created_at: Date
+  declare updated_at: Date
 
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 }
 
 CollabScore.init(

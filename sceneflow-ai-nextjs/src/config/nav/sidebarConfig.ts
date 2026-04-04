@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 /**
  * Workflow phase identifiers matching the production pipeline
  */
-export type WorkflowPhase = 'blueprint' | 'production' | 'final-cut' | 'premiere' | 'dashboard' | 'settings' | 'visionary'
+export type WorkflowPhase = 'blueprint' | 'production' | 'final-cut' | 'dashboard' | 'settings' | 'visionary'
 
 /**
  * Status of a workflow step
@@ -94,38 +94,31 @@ export interface WorkflowSidebarConfig {
 }
 
 // ============================================================================
+// SHARED WORKFLOW STEPPER (canonical 3-phase pipeline)
+// ============================================================================
+
+function makeWorkflowSteps(currentPhase: 'blueprint' | 'production' | 'final-cut'): WorkflowStep[] {
+  const phases: { id: string; label: string; href: (pid: string) => string }[] = [
+    { id: 'blueprint', label: 'Blueprint', href: (pid) => `/dashboard/studio/${pid}` },
+    { id: 'production', label: 'Production', href: (pid) => `/dashboard/workflow/vision/${pid}` },
+    { id: 'final-cut', label: 'Final Cut', href: (pid) => `/dashboard/workflow/final-cut?projectId=${pid}` },
+  ]
+  const currentIndex = phases.findIndex((p) => p.id === currentPhase)
+  return phases.map((p, i) => ({
+    ...p,
+    status: (i < currentIndex ? 'completed' : i === currentIndex ? 'current' : 'upcoming') as WorkflowStepStatus,
+    ...(i === currentIndex ? { badge: 'Current' } : {}),
+  }))
+}
+
+// ============================================================================
 // BLUEPRINT PHASE CONFIG
 // ============================================================================
 
 export const blueprintSidebarConfig: WorkflowSidebarConfig = {
   phase: 'blueprint',
   showWorkflowStepper: true,
-  workflowSteps: [
-    {
-      id: 'blueprint',
-      label: 'Blueprint',
-      href: (projectId) => `/dashboard/studio/${projectId}`,
-      status: 'current',
-    },
-    {
-      id: 'production',
-      label: 'Production',
-      href: (projectId) => `/dashboard/workflow/vision/${projectId}`,
-      status: 'upcoming',
-    },
-    {
-      id: 'final-cut',
-      label: 'Final Cut',
-      href: (projectId) => `/dashboard/workflow/final-cut?projectId=${projectId}`,
-      status: 'locked',
-    },
-    {
-      id: 'premiere',
-      label: 'Premiere',
-      href: (projectId) => `/dashboard/workflow/premiere?projectId=${projectId}`,
-      status: 'locked',
-    },
-  ],
+  workflowSteps: makeWorkflowSteps('blueprint'),
   progressItems: [
     { id: 'concept-analysis', label: 'Concept Analysis', icon: 'CheckCircle2', isComplete: false },
     { id: 'workshop', label: 'Workshop Refinement', icon: 'Wrench', isComplete: false },
@@ -170,33 +163,7 @@ export const blueprintSidebarConfig: WorkflowSidebarConfig = {
 export const productionSidebarConfig: WorkflowSidebarConfig = {
   phase: 'production',
   showWorkflowStepper: true,
-  workflowSteps: [
-    {
-      id: 'blueprint',
-      label: 'Blueprint',
-      href: (projectId) => `/dashboard/studio/${projectId}`,
-      status: 'completed',
-    },
-    {
-      id: 'production',
-      label: 'Production',
-      href: (projectId) => `/dashboard/workflow/vision/${projectId}`,
-      status: 'current',
-      badge: 'Current',
-    },
-    {
-      id: 'final-cut',
-      label: 'Final Cut',
-      href: (projectId) => `/dashboard/workflow/final-cut?projectId=${projectId}`,
-      status: 'upcoming',
-    },
-    {
-      id: 'premiere',
-      label: 'Premiere',
-      href: (projectId) => `/dashboard/workflow/premiere?projectId=${projectId}`,
-      status: 'upcoming',
-    },
-  ],
+  workflowSteps: makeWorkflowSteps('production'),
   progressItems: [
     { id: 'film-treatment', label: 'Film Treatment', icon: 'CheckCircle2', isComplete: false },
     { id: 'screenplay', label: 'Screenplay', icon: 'CheckCircle2', isComplete: false },
@@ -244,33 +211,7 @@ export const productionSidebarConfig: WorkflowSidebarConfig = {
 export const finalCutSidebarConfig: WorkflowSidebarConfig = {
   phase: 'final-cut',
   showWorkflowStepper: true,
-  workflowSteps: [
-    {
-      id: 'blueprint',
-      label: 'Blueprint',
-      href: (projectId) => `/dashboard/studio/${projectId}`,
-      status: 'completed',
-    },
-    {
-      id: 'production',
-      label: 'Production',
-      href: (projectId) => `/dashboard/workflow/vision/${projectId}`,
-      status: 'completed',
-    },
-    {
-      id: 'final-cut',
-      label: 'Final Cut',
-      href: (projectId) => `/dashboard/workflow/final-cut?projectId=${projectId}`,
-      status: 'current',
-      badge: 'Current',
-    },
-    {
-      id: 'premiere',
-      label: 'Premiere',
-      href: (projectId) => `/dashboard/workflow/premiere?projectId=${projectId}`,
-      status: 'upcoming',
-    },
-  ],
+  workflowSteps: makeWorkflowSteps('final-cut'),
   progressItems: [
     { id: 'video-gen', label: 'Video Generation', icon: 'Video', isComplete: false, progress: 0 },
     { id: 'assembly', label: 'Assembly', icon: 'Film', isComplete: false },
@@ -300,68 +241,6 @@ export const finalCutSidebarConfig: WorkflowSidebarConfig = {
     reviewScores: true,
     screeningRoom: true,
     projectStats: false,
-    credits: true,
-  },
-}
-
-// ============================================================================
-// PREMIERE PHASE CONFIG
-// ============================================================================
-
-export const premiereSidebarConfig: WorkflowSidebarConfig = {
-  phase: 'premiere',
-  showWorkflowStepper: true,
-  workflowSteps: [
-    {
-      id: 'blueprint',
-      label: 'Blueprint',
-      href: (projectId) => `/dashboard/studio/${projectId}`,
-      status: 'completed',
-    },
-    {
-      id: 'production',
-      label: 'Production',
-      href: (projectId) => `/dashboard/workflow/vision/${projectId}`,
-      status: 'completed',
-    },
-    {
-      id: 'final-cut',
-      label: 'Final Cut',
-      href: (projectId) => `/dashboard/workflow/final-cut?projectId=${projectId}`,
-      status: 'completed',
-    },
-    {
-      id: 'premiere',
-      label: 'Premiere',
-      href: (projectId) => `/dashboard/workflow/premiere?projectId=${projectId}`,
-      status: 'current',
-      badge: 'Current',
-    },
-  ],
-  quickActions: [
-    { id: 'share', label: 'Share Film', icon: 'Share2', iconColor: 'text-sf-primary', action: 'event', eventName: 'premiere:share' },
-    { id: 'download', label: 'Download', icon: 'Download', iconColor: 'text-green-500', action: 'event', eventName: 'premiere:download' },
-  ],
-  sectionVisibility: {
-    workflow: true,
-    workflowGuide: false,
-    proTips: true,
-    progress: false,
-    quickActions: true,
-    reviewScores: true,
-    screeningRoom: true,
-    projectStats: true,
-    credits: true,
-  },
-  sectionDefaults: {
-    workflow: true,
-    workflowGuide: false,
-    proTips: false,
-    progress: false,
-    quickActions: true,
-    reviewScores: true,
-    screeningRoom: true,
-    projectStats: true,
     credits: true,
   },
 }
@@ -446,11 +325,10 @@ export function getSidebarConfigForPath(pathname: string): WorkflowSidebarConfig
   if (pathname.includes('/dashboard/workflow/vision/')) {
     return productionSidebarConfig
   }
-  if (pathname.includes('/dashboard/workflow/generation/')) {
+  if (pathname.includes('/dashboard/workflow/generation/') ||
+      pathname.includes('/dashboard/workflow/final-cut') ||
+      pathname.includes('/dashboard/workflow/premiere')) {
     return finalCutSidebarConfig
-  }
-  if (pathname.includes('/dashboard/workflow/premiere/')) {
-    return premiereSidebarConfig
   }
   if (pathname.includes('/dashboard/studio/') || pathname.includes('/dashboard/workflow/ideation/')) {
     return blueprintSidebarConfig

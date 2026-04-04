@@ -16,7 +16,7 @@ export interface ProjectAttributes {
   key_message?: string
   tone?: string
   status: 'draft' | 'in_progress' | 'completed' | 'archived'
-  current_step: 'ideation' | 'storyboard' | 'scene-direction' | 'video-generation' | 'completed'
+  current_step: string
   step_progress: Record<string, number>
   metadata: Record<string, any>
   created_at: Date
@@ -40,7 +40,7 @@ export class Project extends Model<ProjectAttributes, ProjectCreationAttributes>
   declare key_message: string | undefined
   declare tone: string | undefined
   declare status: 'draft' | 'in_progress' | 'completed' | 'archived'
-  declare current_step: 'ideation' | 'storyboard' | 'scene-direction' | 'video-generation' | 'completed'
+  declare current_step: string
   declare step_progress: Record<string, number>
   declare metadata: Record<string, any>
   declare created_at: Date
@@ -123,9 +123,10 @@ Project.init(
       defaultValue: 'draft',
     },
     current_step: {
-      type: DataTypes.ENUM('ideation', 'storyboard', 'scene-direction', 'video-generation', 'completed'),
+      type: DataTypes.STRING(50),
       allowNull: false,
-      defaultValue: 'ideation',
+      defaultValue: 'blueprint',
+      comment: 'Canonical: blueprint, vision, creation, polish, launch. Legacy values normalized at app layer.',
     },
     step_progress: {
       type: DataTypes.JSONB,

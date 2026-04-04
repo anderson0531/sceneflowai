@@ -15,17 +15,16 @@ export interface UserProviderConfigAttributes {
 export interface UserProviderConfigCreationAttributes extends Optional<UserProviderConfigAttributes, 'id' | 'created_at' | 'updated_at'> {}
 
 export class UserProviderConfig extends Model<UserProviderConfigAttributes, UserProviderConfigCreationAttributes> implements UserProviderConfigAttributes {
-  public id!: string
-  public user_id!: string
-  public provider_name!: AIProvider
-  public encrypted_credentials!: string
-  public is_valid!: boolean
-  public created_at!: Date
-  public updated_at!: Date
+  declare id: string
+  declare user_id: string
+  declare provider_name: AIProvider
+  declare encrypted_credentials: string
+  declare is_valid: boolean
+  declare created_at: Date
+  declare updated_at: Date
 
-  // Timestamps
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 }
 
 UserProviderConfig.init(

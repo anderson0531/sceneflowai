@@ -47,27 +47,26 @@ export interface ModerationEventCreationAttributes extends Optional<
 
 export class ModerationEvent extends Model<ModerationEventAttributes, ModerationEventCreationAttributes>
   implements ModerationEventAttributes {
-  public id!: string
-  public user_id!: string
+  declare id: string
+  declare user_id: string
   
-  public content_type!: ContentType
-  public content_hash!: string
-  public content_preview?: string | null
+  declare content_type: ContentType
+  declare content_hash: string
+  declare content_preview: string | null | undefined
   
-  public action!: ModerationAction
-  public flagged_categories!: string[]
-  public category_scores?: Record<string, number> | null
+  declare action: ModerationAction
+  declare flagged_categories: string[]
+  declare category_scores: Record<string, number> | null | undefined
   
-  public voice_type?: VoiceType | null
-  public voice_id?: string | null
-  public project_id?: string | null
+  declare voice_type: VoiceType | null | undefined
+  declare voice_id: string | null | undefined
+  declare project_id: string | null | undefined
   
-  public threshold_applied!: number
+  declare threshold_applied: number
   
-  public created_at!: Date
+  declare created_at: Date
 
-  // Timestamps
-  public readonly createdAt!: Date
+  declare readonly createdAt: Date
 
   // Helper methods
   public wasBlocked(): boolean {

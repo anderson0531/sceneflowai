@@ -20,22 +20,22 @@ export interface RateCardAttributes {
 export interface RateCardCreationAttributes extends Optional<RateCardAttributes, 'id' | 'created_at' | 'updated_at' | 'effective_to' | 'is_active'> {}
 
 export class RateCard extends Model<RateCardAttributes, RateCardCreationAttributes> implements RateCardAttributes {
-  public id!: string
-  public service_category!: 'image_gen' | 'video_gen' | 'tts' | 'ai_analysis' | 'storage'
-  public service_name!: string
-  public quality_tier!: 'standard' | 'premium' | 'ultra'
-  public credits_per_unit!: number
-  public byok_credits_per_unit!: number
-  public unit_description!: string
-  public provider_cost_usd!: number
-  public is_active!: boolean
-  public effective_from!: Date
-  public effective_to?: Date | null
-  public created_at!: Date
-  public updated_at!: Date
+  declare id: string
+  declare service_category: 'image_gen' | 'video_gen' | 'tts' | 'ai_analysis' | 'storage'
+  declare service_name: string
+  declare quality_tier: 'standard' | 'premium' | 'ultra'
+  declare credits_per_unit: number
+  declare byok_credits_per_unit: number
+  declare unit_description: string
+  declare provider_cost_usd: number
+  declare is_active: boolean
+  declare effective_from: Date
+  declare effective_to: Date | null | undefined
+  declare created_at: Date
+  declare updated_at: Date
 
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 }
 
 RateCard.init(

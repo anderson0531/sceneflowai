@@ -25,27 +25,27 @@ export interface AIUsageAttributes {
 export interface AIUsageCreationAttributes extends Optional<AIUsageAttributes, 'id' | 'created_at' | 'updated_at' | 'request_id' | 'error_code'> {}
 
 export class AIUsage extends Model<AIUsageAttributes, AIUsageCreationAttributes> implements AIUsageAttributes {
-  public id!: string
-  public user_id!: string
-  public route!: string
-  public provider!: 'openai'
-  public model!: string
-  public category!: 'text' | 'images' | 'tts' | 'whisper' | 'video' | 'other'
-  public request_id!: string | null
-  public byok!: boolean
-  public input_tokens!: number
-  public output_tokens!: number
-  public image_count!: number
-  public cogs_usd!: number
-  public markup_multiplier!: number
-  public charged_credits!: number
-  public status!: 'success' | 'error'
-  public error_code!: string | null
-  public created_at!: Date
-  public updated_at!: Date
+  declare id: string
+  declare user_id: string
+  declare route: string
+  declare provider: 'openai'
+  declare model: string
+  declare category: 'text' | 'images' | 'tts' | 'whisper' | 'video' | 'other'
+  declare request_id: string | null
+  declare byok: boolean
+  declare input_tokens: number
+  declare output_tokens: number
+  declare image_count: number
+  declare cogs_usd: number
+  declare markup_multiplier: number
+  declare charged_credits: number
+  declare status: 'success' | 'error'
+  declare error_code: string | null
+  declare created_at: Date
+  declare updated_at: Date
 
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 }
 
 AIUsage.init(

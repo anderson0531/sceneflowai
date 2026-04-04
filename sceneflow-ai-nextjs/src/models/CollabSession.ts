@@ -16,18 +16,18 @@ export interface CollabSessionAttributes {
 export interface CollabSessionCreationAttributes extends Optional<CollabSessionAttributes, 'id' | 'status' | 'expires_at' | 'payload' | 'created_at' | 'updated_at'> {}
 
 export class CollabSession extends Model<CollabSessionAttributes, CollabSessionCreationAttributes> implements CollabSessionAttributes {
-  public id!: string
-  public project_id!: string
-  public owner_user_id!: string
-  public token!: string
-  public status!: 'active' | 'closed'
-  public expires_at!: Date | null
-  public payload!: Record<string, any> | null
-  public created_at!: Date
-  public updated_at!: Date
+  declare id: string
+  declare project_id: string
+  declare owner_user_id: string
+  declare token: string
+  declare status: 'active' | 'closed'
+  declare expires_at: Date | null
+  declare payload: Record<string, any> | null
+  declare created_at: Date
+  declare updated_at: Date
 
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 }
 
 CollabSession.init(

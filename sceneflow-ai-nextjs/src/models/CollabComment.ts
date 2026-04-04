@@ -16,18 +16,18 @@ export interface CollabCommentAttributes {
 export interface CollabCommentCreationAttributes extends Optional<CollabCommentAttributes, 'id' | 'path' | 'created_at' | 'updated_at'> {}
 
 export class CollabComment extends Model<CollabCommentAttributes, CollabCommentCreationAttributes> implements CollabCommentAttributes {
-  public id!: string
-  public session_id!: string
-  public participant_id!: string
-  public variant_id!: string
-  public section!: string
-  public path!: string | null
-  public content!: string
-  public created_at!: Date
-  public updated_at!: Date
+  declare id: string
+  declare session_id: string
+  declare participant_id: string
+  declare variant_id: string
+  declare section: string
+  declare path: string | null
+  declare content: string
+  declare created_at: Date
+  declare updated_at: Date
 
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 }
 
 CollabComment.init(

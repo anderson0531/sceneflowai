@@ -184,7 +184,7 @@ export default function VideoGenerationPage() {
   }
 
   const handlePreviousStep = () => {
-    router.push('/dashboard/workflow/scene-direction')
+    router.push('/dashboard/workflow/direction')
   }
 
   const getStatusIcon = (status: string) => {

@@ -20,22 +20,22 @@ export interface AIPricingAttributes {
 export interface AIPricingCreationAttributes extends Optional<AIPricingAttributes, 'id' | 'created_at' | 'updated_at' | 'active_from' | 'active_to'> {}
 
 export class AIPricing extends Model<AIPricingAttributes, AIPricingCreationAttributes> implements AIPricingAttributes {
-  public id!: string
-  public provider!: 'openai'
-  public category!: 'text' | 'images' | 'tts' | 'whisper' | 'other'
-  public model!: string
-  public variant!: string
-  public metric!: 'per_million_tokens' | 'per_image' | 'per_minute' | 'per_unit'
-  public unit_per!: number
-  public price_usd!: number
-  public is_active!: boolean
-  public active_from!: Date | null
-  public active_to!: Date | null
-  public created_at!: Date
-  public updated_at!: Date
+  declare id: string
+  declare provider: 'openai'
+  declare category: 'text' | 'images' | 'tts' | 'whisper' | 'other'
+  declare model: string
+  declare variant: string
+  declare metric: 'per_million_tokens' | 'per_image' | 'per_minute' | 'per_unit'
+  declare unit_per: number
+  declare price_usd: number
+  declare is_active: boolean
+  declare active_from: Date | null
+  declare active_to: Date | null
+  declare created_at: Date
+  declare updated_at: Date
 
-  public readonly createdAt!: Date
-  public readonly updatedAt!: Date
+  declare readonly createdAt: Date
+  declare readonly updatedAt: Date
 }
 
 AIPricing.init(
