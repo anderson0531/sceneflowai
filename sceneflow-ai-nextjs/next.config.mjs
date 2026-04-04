@@ -1,10 +1,4 @@
-import withSerwistInit from "@serwist/turbopack";
-
-const withSerwist = withSerwistInit({
-  swSrc: "app/sw.ts",
-  swDest: "public/sw.js",
-  disable: process.env.NODE_ENV === "development",
-});
+import { withSerwist } from "@serwist/turbopack";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
