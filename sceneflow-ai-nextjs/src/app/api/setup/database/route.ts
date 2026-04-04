@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { QueryTypes } from 'sequelize'
 import { sequelize } from '@/config/database'
 
-// Import all models to register them
 import User from '@/models/User'
 import Project from '@/models/Project'
 import UserProviderConfig from '@/models/UserProviderConfig'
@@ -31,12 +31,17 @@ export async function POST(request: NextRequest) {
   const logs: string[] = []
   
   try {
-    logs.push('🔧 Database Setup Starting...')
+    logs.push('Database Setup Starting...')
     
-    // Authenticate connection
     logs.push('1. Testing database connection...')
     await sequelize.authenticate()
-    logs.push('✅ Connection successful')
+    logs.push('Connection successful')
+
+    const [connInfo] = await sequelize.query<{ db: string; host: string; user: string }>(
+      `SELECT current_database() AS db, inet_server_addr()::text AS host, current_user AS "user"`,
+      { type: QueryTypes.SELECT }
+    ).catch(() => [{ db: '?', host: '?', user: '?' }])
+    logs.push(`Connected to: host=${connInfo?.host}, db=${connInfo?.db}, user=${connInfo?.user}`)
     
     // Create tables in dependency order
     // Parent tables first, then child tables
