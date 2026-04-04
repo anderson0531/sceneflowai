@@ -254,3 +254,17 @@ FAIL-SAFE: If you cannot generate an episode, you MUST still provide an "episode
 For each of the three concepts (The Spectacle, The Cinematic Legend, The Interactive Chaos), generate a complete Series Bible object.
 
 RETURN ONLY RAW JSON. NO PREAMBLE. NO CHAT.`
+
+export function buildConceptGenerationPrompt(report: unknown): string {
+  const body =
+    typeof report === 'string'
+      ? report
+      : JSON.stringify(report, null, 2)
+
+  return `You have completed a full Visionary analysis pipeline. Use the report below as the single source of truth.
+
+ANALYSIS REPORT:
+${body}
+
+Produce the JSON output exactly as specified in your system instructions (a "concepts" array of three Series Bible objects).`
+}

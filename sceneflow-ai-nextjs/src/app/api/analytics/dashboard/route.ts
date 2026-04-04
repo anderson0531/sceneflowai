@@ -184,9 +184,9 @@ export async function GET(request: NextRequest) {
 
         // Also count manual reactions (emoji clicks)
         for (const metric of metrics) {
-          if (metric.type === 'manual_reaction' && metric.reaction?.emoji) {
+          if (metric.type === 'manual_reaction' && metric.manualReaction?.emoji) {
             // Map emoji to emotion
-            const emoji = metric.reaction.emoji
+            const emoji = metric.manualReaction.emoji
             if (['😊', '😄', '❤️', '🎉'].includes(emoji)) emotionCounts.happy++
             else if (['😲', '🤯', '😱'].includes(emoji)) emotionCounts.surprised++
             else if (['🤔', '😕'].includes(emoji)) emotionCounts.confused++

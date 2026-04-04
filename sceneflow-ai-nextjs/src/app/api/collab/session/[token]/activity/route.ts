@@ -3,8 +3,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { CollabSession, CollabParticipant, CollabScore, CollabComment, CollabRecommendation, CollabChatMessage } from '../../../../../../models'
 
-export async function GET(req: NextRequest, { params }: { params: { token: string } }) {
-  const token = params.token
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ token: string }> }
+) {
+  const { token } = await params
   const session = await CollabSession.findOne({ where: { token, status: 'active' } })
   if (!session) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   const sessionId = (session as any).id

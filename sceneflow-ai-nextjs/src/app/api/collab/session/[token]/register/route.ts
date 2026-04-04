@@ -6,11 +6,12 @@ import { CollabSession, CollabParticipant } from '../../../../../../models'
 
 const RegisterSchema = z.object({ name: z.string().min(2).max(120), email: z.string().email() })
 
-export async function POST(req: NextRequest, { params }: { params: { token: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   try {
     const body = await req.json()
     const { name, email } = RegisterSchema.parse(body)
-    const session = await CollabSession.findOne({ where: { token: params.token, status: 'active' } })
+    const { token } = await params
+    const session = await CollabSession.findOne({ where: { token, status: 'active' } })
     if (!session) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     let participant = await CollabParticipant.findOne({ where: { session_id: (session as any).id, email } })

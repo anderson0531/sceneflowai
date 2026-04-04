@@ -37,6 +37,12 @@ interface SwitchPlanRequest {
   grantCredits?: boolean;
 }
 
+async function getTestSession() {
+  return (await getServerSession(authOptions)) as {
+    user?: { id?: string; email?: string | null; name?: string | null; image?: string | null }
+  } | null
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Check if this feature is enabled (only in development or with test flag)
@@ -51,8 +57,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Get authenticated user
-    const session = await getServerSession(authOptions);
-    
+    const session = await getTestSession()
+
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized - must be logged in' },
@@ -225,8 +231,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Get authenticated user
-    const session = await getServerSession(authOptions);
-    
+    const session = await getTestSession()
+
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized - must be logged in' },

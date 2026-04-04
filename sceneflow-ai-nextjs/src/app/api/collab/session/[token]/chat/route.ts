@@ -6,11 +6,12 @@ import { CollabSession, CollabParticipant, CollabChatMessage } from '../../../..
 
 const ChatSchema = z.object({ participantId: z.string().uuid(), content: z.string().min(1).max(5000) })
 
-export async function POST(req: NextRequest, { params }: { params: { token: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   try {
     const body = await req.json()
     const { participantId, content } = ChatSchema.parse(body)
-    const session = await CollabSession.findOne({ where: { token: params.token, status: 'active' } })
+    const { token } = await params
+    const session = await CollabSession.findOne({ where: { token, status: 'active' } })
     if (!session) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     const participant = await CollabParticipant.findOne({ where: { id: participantId, session_id: (session as any).id } })
     if (!participant) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

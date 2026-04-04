@@ -3,10 +3,10 @@ import { collaborationSessions } from '@/lib/collaborationSessions';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
-    const { sessionId } = params;
+    const { sessionId } = await params;
     const body = await request.json();
     const { ideaId, voteType, voterId } = body; // voteType: 'upvote' | 'downvote'
 

@@ -21,9 +21,9 @@ const MIN_SEGMENT_DURATION = 4
 const FALLBACK_OPENAI_MODEL = process.env.SCENE_PRODUCTION_OPENAI_MODEL ?? 'gpt-4o-mini'
 const FALLBACK_GEMINI_MODEL = process.env.SCENE_PRODUCTION_GEMINI_MODEL ?? 'gemini-3-pro-preview'
 
-export async function POST(request: NextRequest, { params }: { params: { sceneId: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ sceneId: string }> }) {
   try {
-    const sceneId = params.sceneId
+    const { sceneId } = await params
     if (!sceneId) {
       return NextResponse.json({ success: false, error: 'sceneId is required in route params' }, { status: 400 })
     }

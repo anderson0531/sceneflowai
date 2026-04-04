@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
-export async function POST(req: Request, { params }: { params: { sceneId: string } }) {
-  const { sceneId } = params
+export async function POST(req: Request, { params }: { params: Promise<{ sceneId: string }> }) {
+  const { sceneId } = await params
   let body: any = {}
   try {
     body = await req.json()
