@@ -116,11 +116,11 @@ export async function POST(request: NextRequest) {
       let totalMigrated = 0
       const details: { fromUserId: string; count: number }[] = []
       for (const row of orphaned) {
-        const [, count] = await sequelize.query(
+        const [, meta] = await sequelize.query(
           `UPDATE public.projects SET user_id = :toId WHERE user_id = :fromId`,
-          { replacements: { toId: resolvedToId, fromId: row.user_id }, type: QueryTypes.RAW }
+          { replacements: { toId: resolvedToId, fromId: row.user_id } }
         )
-        const migrated = typeof count === 'number' ? count : 0
+        const migrated = (meta as any)?.rowCount ?? (typeof meta === 'number' ? meta : 0)
         totalMigrated += migrated
         details.push({ fromUserId: row.user_id, count: migrated })
       }
@@ -139,12 +139,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const [result, count] = await sequelize.query(
+    const [, meta] = await sequelize.query(
       `UPDATE public.projects SET user_id = :toId WHERE user_id = :fromId`,
-      { replacements: { toId: toUserId, fromId: fromUserId }, type: QueryTypes.RAW }
+      { replacements: { toId: toUserId, fromId: fromUserId } }
     )
-
-    const migrated = typeof count === 'number' ? count : 0
+    const migrated = (meta as any)?.rowCount ?? (typeof meta === 'number' ? meta : 0)
 
     return NextResponse.json({
       success: true,
