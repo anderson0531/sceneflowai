@@ -1,14 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server'
-import '@/models' // Import all models to register them with Sequelize
+import { QueryTypes } from 'sequelize'
+import '@/models'
 import Project from '@/models/Project'
 import User from '@/models/User'
 import { sequelize } from '@/config/database'
 import { SubscriptionService } from '../../../services/SubscriptionService'
 import { resolveUserId } from '@/lib/userHelper'
 
-// Disable caching for this route
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
+
+let _projectsDiagRan = false
+async function runProjectsDiag() {
+  if (_projectsDiagRan) return
+  _projectsDiagRan = true
+  try {
+    const [hostRow] = await sequelize.query<{ host: string }>(
+      `SELECT inet_server_addr()::text AS host`,
+      { type: QueryTypes.SELECT }
+    ).catch(() => [{ host: 'unknown' }] as { host: string }[])
+
+    const [dbRow] = await sequelize.query<{ db: string; user: string; version: string }>(
+      `SELECT current_database() AS db, current_user AS "user", version() AS version`,
+      { type: QueryTypes.SELECT }
+    )
+    console.log(`[projects DIAG] connected to: host=${hostRow?.host}, db=${dbRow?.db}, user=${dbRow?.user}`)
+
+    const [totalRow] = await sequelize.query<{ total: string }>(
+      `SELECT COUNT(*)::text AS total FROM public.projects`,
+      { type: QueryTypes.SELECT }
+    ).catch(() => [{ total: 'TABLE_MISSING' }] as { total: string }[])
+    console.log(`[projects DIAG] total rows in public.projects: ${totalRow?.total}`)
+
+    if (totalRow?.total !== 'TABLE_MISSING' && totalRow?.total !== '0') {
+      const userIds = await sequelize.query<{ user_id: string; cnt: string }>(
+        `SELECT user_id::text, COUNT(*)::text AS cnt FROM public.projects GROUP BY user_id ORDER BY cnt DESC LIMIT 10`,
+        { type: QueryTypes.SELECT }
+      )
+      console.log(`[projects DIAG] user_ids in projects:`, JSON.stringify(userIds))
+    }
+  } catch (err: any) {
+    console.error(`[projects DIAG] error:`, err.message)
+  }
+}
 
 // GET /api/projects?userId=<uuid or email>
 export async function GET(request: NextRequest) {
@@ -17,10 +51,11 @@ export async function GET(request: NextRequest) {
   try {
     console.log(`[${timestamp}] [GET /api/projects] Request received`)
     
-    // Ensure database connection
     console.log(`[${timestamp}] [GET /api/projects] Authenticating database connection...`)
     await sequelize.authenticate()
     console.log(`[${timestamp}] [GET /api/projects] Database authenticated`)
+    
+    await runProjectsDiag()
     
     // Note: Run POST /api/setup/database once to create tables in fresh database
     

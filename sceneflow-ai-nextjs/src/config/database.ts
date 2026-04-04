@@ -4,14 +4,27 @@ import dotenv from 'dotenv'
 
 dotenv.config({ path: '.env.local' })
 
+const envSource =
+  process.env.DATABASE_URL_DIRECT ? 'DATABASE_URL_DIRECT' :
+  process.env.POSTGRES_URL_NON_POOLING ? 'POSTGRES_URL_NON_POOLING' :
+  process.env.SUPABASE_DATABASE_URL ? 'SUPABASE_DATABASE_URL' :
+  process.env.DATABASE_URL ? 'DATABASE_URL' : null
+
 const rawConnectionString =
   process.env.DATABASE_URL_DIRECT ||
   process.env.POSTGRES_URL_NON_POOLING ||
   process.env.SUPABASE_DATABASE_URL ||
   process.env.DATABASE_URL
 
-if (!rawConnectionString) {
+if (!rawConnectionString || !envSource) {
   throw new Error('DATABASE_URL is missing. Please check your Vercel environment variables.')
+}
+
+try {
+  const u = new URL(rawConnectionString)
+  console.log(`[database] Using ${envSource} → host=${u.hostname}, port=${u.port || '5432'}, db=${u.pathname.slice(1) || 'postgres'}, user=${u.username}`)
+} catch {
+  console.log(`[database] Using ${envSource} (could not parse URL for logging)`)
 }
 
 function hostLooksLocal(url: string): boolean {
