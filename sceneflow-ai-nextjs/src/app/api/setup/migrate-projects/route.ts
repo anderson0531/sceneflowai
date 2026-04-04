@@ -5,20 +5,19 @@ import '@/models'
 
 export const dynamic = 'force-dynamic'
 
-const TABLES_WITH_USER_ID = [
-  'projects',
-  'series',
-  'credit_ledger',
-  'ai_usages',
-  'api_usage_logs',
-  'user_provider_configs',
-  'collab_sessions',
-  'render_jobs',
-  'voice_consents',
-  'user_voice_clones',
-  'moderation_events',
-  'visionary_reports',
-] as const
+const TABLES_WITH_USER_ID: { table: string; column: string }[] = [
+  { table: 'projects', column: 'user_id' },
+  { table: 'series', column: 'user_id' },
+  { table: 'credit_ledger', column: 'user_id' },
+  { table: 'ai_usage', column: 'user_id' },
+  { table: 'user_provider_configs', column: 'user_id' },
+  { table: 'collab_sessions', column: 'owner_user_id' },
+  { table: 'render_jobs', column: 'user_id' },
+  { table: 'voice_consents', column: 'user_id' },
+  { table: 'user_voice_clones', column: 'user_id' },
+  { table: 'moderation_events', column: 'user_id' },
+  { table: 'visionary_reports', column: 'user_id' },
+]
 
 async function tableExists(tableName: string): Promise<boolean> {
   const rows = await sequelize.query<{ exists: boolean }>(
@@ -31,9 +30,9 @@ async function tableExists(tableName: string): Promise<boolean> {
   return rows[0]?.exists === true
 }
 
-async function countRows(tableName: string, userId: string): Promise<number> {
+async function countRows(tableName: string, column: string, userId: string): Promise<number> {
   const [row] = await sequelize.query<{ cnt: string }>(
-    `SELECT COUNT(*)::text AS cnt FROM public."${tableName}" WHERE user_id = :userId`,
+    `SELECT COUNT(*)::text AS cnt FROM public."${tableName}" WHERE "${column}" = :userId`,
     { replacements: { userId }, type: QueryTypes.SELECT }
   )
   return parseInt(row?.cnt ?? '0', 10)
@@ -41,11 +40,12 @@ async function countRows(tableName: string, userId: string): Promise<number> {
 
 async function migrateTable(
   tableName: string,
+  column: string,
   fromId: string,
   toId: string
 ): Promise<number> {
   const [, meta] = await sequelize.query(
-    `UPDATE public."${tableName}" SET user_id = :toId WHERE user_id = :fromId`,
+    `UPDATE public."${tableName}" SET "${column}" = :toId WHERE "${column}" = :fromId`,
     { replacements: { toId, fromId } }
   )
   return (meta as any)?.rowCount ?? 0
@@ -82,12 +82,12 @@ export async function GET() {
     const OLD_ID = 'be8aabd4-2a05-4466-abae-6ad4e1bc6498'
     const NEW_ID = '36ea1d9d-14a6-465c-be7b-b2da1888993f'
 
-    for (const table of TABLES_WITH_USER_ID) {
+    for (const { table, column } of TABLES_WITH_USER_ID) {
       const exists = await tableExists(table)
       if (exists) {
-        const oldCount = await countRows(table, OLD_ID)
-        const newCount = await countRows(table, NEW_ID)
-        dataByTable[table] = { table, exists, rows_for_old: oldCount, rows_for_new: newCount }
+        const oldCount = await countRows(table, column, OLD_ID)
+        const newCount = await countRows(table, column, NEW_ID)
+        dataByTable[table] = { table, exists, column, rows_for_old: oldCount, rows_for_new: newCount }
       } else {
         dataByTable[table] = { table, exists: false }
       }
@@ -128,13 +128,13 @@ export async function POST(request: NextRequest) {
     const results: { table: string; migrated: number; skipped?: string }[] = []
     let totalMigrated = 0
 
-    for (const table of TABLES_WITH_USER_ID) {
+    for (const { table, column } of TABLES_WITH_USER_ID) {
       const exists = await tableExists(table)
       if (!exists) {
         results.push({ table, migrated: 0, skipped: 'table does not exist' })
         continue
       }
-      const count = await migrateTable(table, fromUserId, toUserId)
+      const count = await migrateTable(table, column, fromUserId, toUserId)
       results.push({ table, migrated: count })
       totalMigrated += count
     }
