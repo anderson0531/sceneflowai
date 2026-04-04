@@ -23,52 +23,82 @@ function hostLooksLocal(url: string): boolean {
 }
 
 /**
- * node-pg honors sslmode from the URI. verify-full / verify-ca commonly fail on
- * Supabase / poolers with SELF_SIGNED_CERT_IN_CHAIN unless you install their CA.
- * We relax to no-verify for non-local hosts unless DATABASE_SSL_REJECT_UNAUTHORIZED=true.
+ * Parse postgres URL with WHATWG URL (no url.parse).
+ * Used for remote hosts so we never pass sslmode=* in the URI to pg:
+ * pg v8 + pg-connection-string treats require/prefer as verify-full unless
+ * uselibpqcompat is set, which breaks Supabase/poolers with SELF_SIGNED_CERT_IN_CHAIN.
  */
-function normalizeRemoteConnectionString(url: string): string {
-  let out = url
-  out = out.replace(/([?&])sslmode=verify-full/gi, '$1sslmode=no-verify')
-  out = out.replace(/([?&])sslmode=verify-ca/gi, '$1sslmode=no-verify')
-  if (!/sslmode=/i.test(out)) {
-    out += (out.includes('?') ? '&' : '?') + 'sslmode=no-verify'
+function parsePostgresUrl(connectionUrl: string): {
+  host: string
+  port: number
+  username: string
+  password: string
+  database: string
+} {
+  const u = new URL(connectionUrl)
+  const pathMatch = u.pathname.match(/^\/([^?]*)/)
+  const rawDb = pathMatch?.[1]?.trim()
+  const database = rawDb && rawDb.length > 0 ? rawDb : 'postgres'
+
+  return {
+    host: u.hostname,
+    port: Number.parseInt(u.port || '5432', 10),
+    username: decodeURIComponent(u.username),
+    password: decodeURIComponent(u.password),
+    database,
   }
-  return out
 }
 
 const isLocal = hostLooksLocal(rawConnectionString)
-const connectionString = isLocal ? rawConnectionString : normalizeRemoteConnectionString(rawConnectionString)
-
 const strictTls = process.env.DATABASE_SSL_REJECT_UNAUTHORIZED === 'true'
-const sslOption = isLocal
-  ? false
-  : {
-      require: true,
-      rejectUnauthorized: strictTls,
-    }
 
-export const sequelize = new Sequelize(connectionString, {
-  dialect: 'postgres',
-  dialectModule: pg,
-  dialectOptions: {
-    ssl: sslOption,
-  },
-  hooks: {
-    beforeConnect: async (config: any) => {
-      if (config.query?.options) {
-        delete config.query.options
-      }
-      // Ensure pg sees SSL even if URI parsing or bundling drops dialectOptions
-      if (!isLocal) {
-        config.ssl = sslOption
-      }
-    },
-  },
-  pool: { max: 5, min: 0, acquire: 60000, idle: 10000 },
-  logging: false,
-  define: { underscored: true },
-})
+const remoteSsl = {
+  require: true as const,
+  rejectUnauthorized: strictTls,
+}
+
+const pool = { max: 5, min: 0, acquire: 60000, idle: 10000 }
+const define = { underscored: true }
+
+export const sequelize = isLocal
+  ? new Sequelize(rawConnectionString, {
+      dialect: 'postgres',
+      dialectModule: pg,
+      dialectOptions: { ssl: false },
+      hooks: {
+        beforeConnect: async (config: any) => {
+          if (config.query?.options) {
+            delete config.query.options
+          }
+        },
+      },
+      pool,
+      logging: false,
+      define,
+    })
+  : (() => {
+      const { host, port, username, password, database } = parsePostgresUrl(rawConnectionString)
+      return new Sequelize(database, username, password, {
+        dialect: 'postgres',
+        dialectModule: pg,
+        host,
+        port,
+        dialectOptions: {
+          ssl: remoteSsl,
+        },
+        hooks: {
+          beforeConnect: async (config: any) => {
+            if (config.query?.options) {
+              delete config.query.options
+            }
+            config.ssl = remoteSsl
+          },
+        },
+        pool,
+        logging: false,
+        define,
+      })
+    })()
 
 export const testConnection = async () => {
   try {
