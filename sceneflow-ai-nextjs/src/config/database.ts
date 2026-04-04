@@ -7,6 +7,7 @@ dotenv.config({ path: '.env.local' })
 const rawConnectionString =
   process.env.DATABASE_URL_DIRECT ||
   process.env.POSTGRES_URL_NON_POOLING ||
+  process.env.SUPABASE_DATABASE_URL ||
   process.env.DATABASE_URL
 
 if (!rawConnectionString) {
@@ -22,11 +23,28 @@ function hostLooksLocal(url: string): boolean {
   }
 }
 
+/** project ref from https://<ref>.supabase.co */
+function supabaseProjectRefFromEnv(): string | null {
+  const explicit = process.env.SUPABASE_PROJECT_REF?.trim()
+  if (explicit) return explicit
+
+  for (const key of ['NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_URL'] as const) {
+    const raw = process.env[key]
+    if (!raw) continue
+    try {
+      const host = new URL(raw).hostname
+      const m = host.match(/^([a-z0-9]{15,40})\.supabase\.co$/i)
+      if (m) return m[1]
+    } catch {
+      /* ignore */
+    }
+  }
+  return null
+}
+
 /**
  * Parse postgres URL with WHATWG URL (no url.parse).
- * Used for remote hosts so we never pass sslmode=* in the URI to pg:
- * pg v8 + pg-connection-string treats require/prefer as verify-full unless
- * uselibpqcompat is set, which breaks Supabase/poolers with SELF_SIGNED_CERT_IN_CHAIN.
+ * Omit sslmode in URI for remote hosts so pg v8 does not force verify-full.
  */
 function parsePostgresUrl(connectionUrl: string): {
   host: string
@@ -40,10 +58,34 @@ function parsePostgresUrl(connectionUrl: string): {
   const rawDb = pathMatch?.[1]?.trim()
   const database = rawDb && rawDb.length > 0 ? rawDb : 'postgres'
 
+  let username = decodeURIComponent(u.username)
+  const host = u.hostname
+  const port = Number.parseInt(u.port || '5432', 10)
+
+  /**
+   * Supavisor *session* pooler (shared): aws-0-<region>.pooler.supabase.com:5432
+   * Docs: user must be postgres.<project_ref>, NOT plain postgres.
+   * Plain postgres on this host → FATAL "Tenant or user not found".
+   */
+  const isSupavisorSessionHost =
+    /\.pooler\.supabase\.com$/i.test(host) && port === 5432
+
+  if (isSupavisorSessionHost && username === 'postgres') {
+    const ref = supabaseProjectRefFromEnv()
+    if (!ref) {
+      throw new Error(
+        'DATABASE_URL points at Supabase session pooler (pooler.supabase.com:5432) with user "postgres". ' +
+          'Use the exact Session mode string from Supabase (Connect → Session pooling), or set SUPABASE_PROJECT_REF / NEXT_PUBLIC_SUPABASE_URL so the user can be set to postgres.<ref>. ' +
+          'Alternatively set DATABASE_URL_DIRECT or POSTGRES_URL_NON_POOLING to the direct or non-pooling URL.'
+      )
+    }
+    username = `postgres.${ref}`
+  }
+
   return {
-    host: u.hostname,
-    port: Number.parseInt(u.port || '5432', 10),
-    username: decodeURIComponent(u.username),
+    host,
+    port,
+    username,
     password: decodeURIComponent(u.password),
     database,
   }
