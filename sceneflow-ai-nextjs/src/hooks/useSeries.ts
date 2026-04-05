@@ -159,7 +159,6 @@ export function useSeries(seriesId: string | null) {
     if (!seriesId) throw new Error('No series selected')
     
     setIsLoading(true)
-    setError(null)
     
     try {
       const response = await fetch(`${API_BASE}/${seriesId}`, {
@@ -176,7 +175,6 @@ export function useSeries(seriesId: string | null) {
       setSeries(data.series)
       return data.series as SeriesResponse
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
       throw err
     } finally {
       setIsLoading(false)
@@ -187,7 +185,6 @@ export function useSeries(seriesId: string | null) {
     if (!seriesId) throw new Error('No series selected')
     
     setIsGenerating(true)
-    setError(null)
     
     try {
       const response = await fetch(`${API_BASE}/${seriesId}/generate`, {
@@ -195,19 +192,33 @@ export function useSeries(seriesId: string | null) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(request)
       })
-      const data = await response.json()
+      const raw = await response.text()
+      let data: {
+        success?: boolean
+        error?: string
+        series?: SeriesResponse
+        generated?: Record<string, unknown>
+      } = {}
+      try {
+        data = raw ? JSON.parse(raw) : {}
+      } catch {
+        throw new Error(
+          response.status >= 500
+            ? 'Generation failed (server timeout or out of memory). Try fewer episodes or use “Add episodes” to expand in smaller batches.'
+            : 'Invalid response from server'
+        )
+      }
       
       if (!data.success) {
         throw new Error(data.error || 'Failed to generate storyline')
       }
       
-      setSeries(data.series)
+      setSeries(data.series as SeriesResponse)
       return {
         series: data.series as SeriesResponse,
         generated: data.generated
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
       throw err
     } finally {
       setIsGenerating(false)
@@ -218,7 +229,6 @@ export function useSeries(seriesId: string | null) {
     if (!seriesId) throw new Error('No series selected')
     
     setIsGenerating(true)
-    setError(null)
     
     try {
       const response = await fetch(`${API_BASE}/${seriesId}/episodes/add`, {
@@ -242,7 +252,6 @@ export function useSeries(seriesId: string | null) {
         canAddMore: data.canAddMore
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
       throw err
     } finally {
       setIsGenerating(false)

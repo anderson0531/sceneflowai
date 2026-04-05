@@ -169,14 +169,25 @@ export default function SeriesStudioPage() {
         operationType: 'series-generation'
       })
 
+      const gen = result?.generated as
+        | {
+            episodeCount?: number
+            wasCapped?: boolean
+            requestedEpisodeCount?: number
+          }
+        | undefined
       const epCount =
-        result?.generated?.episodeCount ??
+        gen?.episodeCount ??
         result?.series?.episodeBlueprints?.length ??
         0
-      toast.success(
+      const base =
         epCount > 0
           ? `Generated ${epCount} episode${epCount !== 1 ? 's' : ''}!`
           : 'Storyline updated.'
+      toast.success(
+        gen?.wasCapped && typeof gen.requestedEpisodeCount === 'number'
+          ? `${base} (${gen.requestedEpisodeCount} requested — use “Add episodes” to reach your full season.)`
+          : base
       )
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to generate storyline')
@@ -351,12 +362,16 @@ export default function SeriesStudioPage() {
     )
   }
 
-  if (error || !series) {
+  if (!series) {
     return (
       <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Series not found</h2>
-          <p className="text-gray-400 mb-4">{error || 'The series you\'re looking for doesn\'t exist.'}</p>
+          <h2 className="text-xl font-semibold mb-2">
+            {error ? 'Could not load series' : 'Series not found'}
+          </h2>
+          <p className="text-gray-400 mb-4">
+            {error || "The series you're looking for doesn't exist."}
+          </p>
           <Link href="/dashboard/series">
             <Button>Back to Series</Button>
           </Link>

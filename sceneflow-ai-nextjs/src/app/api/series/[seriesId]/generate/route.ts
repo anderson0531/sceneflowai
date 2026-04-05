@@ -14,6 +14,11 @@ export const maxDuration = 600 // Allow 10 minutes for full series generation
 const EPISODE_BATCH_SIZE = 5 // Generate in batches of 5 for reliable JSON parsing
 const MAX_OUTPUT_TOKENS = 16384 // Token limit for series generation
 const GENERATION_TIMEOUT_MS = 90000 // 90 second timeout per batch
+/** Full storyline generation is memory-heavy; cap episodes per request on serverless (override via env). */
+const PER_REQUEST_MAX_FULL_GENERATE_EPISODES = Math.min(
+  20,
+  Math.max(5, parseInt(process.env.SERIES_GENERATE_MAX_EPISODES || '10', 10) || 10)
+)
 
 /**
  * Safely parse JSON from LLM responses
@@ -180,12 +185,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }, { status: 400 })
     }
     
-    const targetEpisodeCount = Math.min(
-      episodeCount || series.max_episodes,
+    const rawRequestedEpisodes = Math.min(
+      episodeCount ?? series.max_episodes ?? DEFAULT_MAX_EPISODES,
       DEFAULT_MAX_EPISODES
     )
-    
-    console.log(`[${timestamp}] [POST /api/series/${seriesId}/generate] Generating storyline for topic: "${topic}", episodes: ${targetEpisodeCount}`)
+    const targetEpisodeCount = regenerateField
+      ? rawRequestedEpisodes
+      : Math.min(rawRequestedEpisodes, PER_REQUEST_MAX_FULL_GENERATE_EPISODES)
+    const episodesCapped =
+      !regenerateField && rawRequestedEpisodes > targetEpisodeCount
+
+    if (episodesCapped) {
+      console.warn(
+        `[${timestamp}] [POST /api/series/${seriesId}/generate] Capping episodes ${rawRequestedEpisodes} → ${targetEpisodeCount} (PER_REQUEST_MAX_FULL_GENERATE_EPISODES=${PER_REQUEST_MAX_FULL_GENERATE_EPISODES})`
+      )
+    }
+
+    console.log(
+      `[${timestamp}] [POST /api/series/${seriesId}/generate] Generating storyline for topic: "${topic}", episodes: ${targetEpisodeCount}${episodesCapped ? ` (requested ${rawRequestedEpisodes})` : ''}`
+    )
     
     // Build the generation prompt based on what needs to be generated
     let generatedData: any
@@ -240,7 +258,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           timestamp: new Date().toISOString(),
           topic,
           regenerateField,
-          episodeCount: targetEpisodeCount
+          episodeCount: targetEpisodeCount,
+          ...(episodesCapped ? { requestedEpisodeCount: rawRequestedEpisodes } : {})
         }
       }
     }
@@ -271,8 +290,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       generated: {
         fields: Object.keys(generatedData),
         episodeCount: generatedData.episodeBlueprints?.length || 0,
-        model: 'gemini-2.5-pro',
-        batchSize: EPISODE_BATCH_SIZE
+        model: 'gemini-2.5-flash',
+        batchSize: EPISODE_BATCH_SIZE,
+        requestedEpisodeCount: rawRequestedEpisodes,
+        perRequestEpisodeCap: PER_REQUEST_MAX_FULL_GENERATE_EPISODES,
+        wasCapped: episodesCapped
       }
     })
     
