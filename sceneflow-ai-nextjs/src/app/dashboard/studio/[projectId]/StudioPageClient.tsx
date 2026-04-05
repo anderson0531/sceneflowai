@@ -730,10 +730,10 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             setTimeout(async () => {
               try {
                 await handleGenerateBlueprint(metadata.blueprintPrimeInput, {
-                  genre: projectData.genre || undefined,
+                  genre: metadata.genre || projectData.genre || undefined,
                   variantCount: 1, // Single variant for series episodes - they have specific requirements
                   hasStoryDirections: true, // Series data acts as story directions
-                  format: projectData?.metadata?.format
+                  format: metadata.format || projectData?.metadata?.format
                 })
               } catch (err) {
                 console.error('[StudioPage] Auto-generation failed:', err)
