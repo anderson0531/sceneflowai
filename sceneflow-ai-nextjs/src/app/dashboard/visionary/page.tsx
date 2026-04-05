@@ -7,10 +7,10 @@ import {
   Telescope, 
   Sparkles, 
   FileText, 
-  Trash2, 
   Loader2,
-  Search,
-  ChevronRight,
+  BookOpen,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 import { AnalysisOverlay } from './components/AnalysisOverlay'
 import { ArbitrageHeatMap } from './components/ArbitrageHeatMap'
@@ -28,16 +28,6 @@ const GENRES = [
   'Documentary', 'Animation', 'Action', 'Fantasy', 'Musical', 'Educational',
 ]
 
-/**
- * VisionaryPage — Market Insights
- * 
- * Entry point for concept exploration, market-gap analysis,
- * language arbitrage mapping, and idea-to-production bridging.
- * 
- * Route: /dashboard/visionary
- * 
- * Force new deployment
- */
 export default function VisionaryPage() {
   const { data: session } = useSession()
   const router = useRouter()
@@ -61,26 +51,22 @@ export default function VisionaryPage() {
     partialBible,
   } = useConceptGenerator()
 
-  // --- STATE ---
   const [concept, setConcept] = useState('')
   const [genre, setGenre] = useState('')
   const [isInitializing, setIsInitializing] = useState(false)
-  const [generatorParams, setGeneratorParams] = useState({ highRevenue: false, viralPotential: false, lowCost: false });
   const [pastReports, setPastReports] = useState<VisionaryReport[]>([])
   const [isLoadingReports, setIsLoadingReports] = useState(true)
   const [selectedReport, setSelectedReport] = useState<VisionaryReport | null>(null)
   const [selectedRegion, setSelectedRegion] = useState<LanguageOpportunity | null>(null)
   const [view, setView] = useState<'input' | 'analysis' | 'report' | 'history'>('input')
+  const [bibleExpanded, setBibleExpanded] = useState(false)
 
   const hasFetchedRef = useRef(false)
   const isFetchingRef = useRef(false)
 
-  // --- ACTIONS ---
   const fetchReports = useCallback(async (force = false) => {
-    // Prevent concurrent or duplicate fetches
     if (isFetchingRef.current) return
     if (hasFetchedRef.current && !force) return
-
     isFetchingRef.current = true
     try {
       const res = await fetch('/api/visionary/reports', {
@@ -97,25 +83,21 @@ export default function VisionaryPage() {
     }
   }, [session?.user?.email])
 
-  // Initial fetch when session is available
   useEffect(() => {
     if (session?.user?.email) fetchReports()
   }, [session?.user?.email, fetchReports])
 
-  // Switch to analysis view when running
   useEffect(() => {
     if (isRunning) setView('analysis')
   }, [isRunning])
 
-  // Switch to report view when complete
   useEffect(() => {
     if (phase === 'complete' && report) {
       setView('report')
-      fetchReports(true) // Force refresh list after new analysis
+      fetchReports(true)
     }
   }, [phase, report, fetchReports])
 
-  // --- HANDLERS ---
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!concept.trim()) return
@@ -142,14 +124,13 @@ export default function VisionaryPage() {
       } else {
         throw new Error(data.error)
       }
-    } catch (err) {
+    } catch {
       alert("Initialization failed. Please try again.")
     } finally {
       setIsInitializing(false)
     }
   }
 
-  // Load a past report
   const loadPastReport = async (reportId: string) => {
     try {
       const res = await fetch(`/api/visionary/reports/${reportId}`, {
@@ -167,7 +148,6 @@ export default function VisionaryPage() {
     }
   }
 
-  // Delete a report
   const deleteReport = async (reportId: string) => {
     try {
       await fetch(`/api/visionary/reports/${reportId}`, {
@@ -181,6 +161,7 @@ export default function VisionaryPage() {
   }
 
   const activeReport = report || selectedReport
+  const bridgePlan = activeReport?.bridgePlan
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-6 md:p-8">
@@ -196,10 +177,9 @@ export default function VisionaryPage() {
               <p className="text-sm text-gray-400">AI-powered concept exploration & opportunity mapping</p>
             </div>
           </div>
-
           <div className="flex items-center gap-2">
             {view !== 'input' && (
-              <button onClick={() => { reset(); setSelectedReport(null); setView('input'); }} className="px-4 py-2 text-sm font-medium bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">
+              <button onClick={() => { reset(); setSelectedReport(null); setView('input'); setBibleExpanded(false) }} className="px-4 py-2 text-sm font-medium bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">
                 New Analysis
               </button>
             )}
@@ -212,15 +192,9 @@ export default function VisionaryPage() {
 
         {/* Error Banner */}
         {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-center justify-between"
-          >
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-center justify-between">
             <p className="text-sm text-red-400">{error}</p>
-            <button onClick={reset} className="text-xs text-red-400 hover:text-red-300">
-              Dismiss
-            </button>
+            <button onClick={reset} className="text-xs text-red-400 hover:text-red-300">Dismiss</button>
           </motion.div>
         )}
 
@@ -228,7 +202,6 @@ export default function VisionaryPage() {
         {view === 'input' && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Concept Input */}
               <div className="bg-gray-800/60 border border-emerald-500/30 rounded-xl p-6">
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   What&apos;s your concept or idea?
@@ -241,12 +214,8 @@ export default function VisionaryPage() {
                   className="w-full bg-gray-900/60 border border-gray-700 rounded-lg p-4 text-white resize-none focus:outline-none focus:border-emerald-500/50"
                 />
               </div>
-
-              {/* Genre Selection */}
               <div className="bg-gray-800/60 border border-teal-500/30 rounded-xl p-6">
-                <label className="block text-sm font-medium text-gray-300 mb-3">
-                  Genre
-                </label>
+                <label className="block text-sm font-medium text-gray-300 mb-3">Genre</label>
                 <div className="flex flex-wrap gap-2">
                   {GENRES.map(g => (
                     <button key={g} type="button" onClick={() => setGenre(genre === g ? '' : g)} className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${genre === g ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-gray-700/50 text-gray-400 hover:bg-gray-700'}`}>
@@ -255,8 +224,6 @@ export default function VisionaryPage() {
                   ))}
                 </div>
               </div>
-
-              {/* Submit */}
               <button type="submit" disabled={!concept.trim() || isRunning} className="w-full py-4 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-semibold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50">
                 <Sparkles className="w-5 h-5" />
                 Analyze Market Opportunity
@@ -280,110 +247,96 @@ export default function VisionaryPage() {
         {/* Report View */}
         {view === 'report' && activeReport && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-            {/* Report Header */}
-            <div className="bg-gray-800/60 border border-emerald-500/30 rounded-xl p-4 flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-white">{activeReport.concept}</h2>
-                {activeReport.genre && (
-                  <span className="text-xs text-gray-400 bg-gray-700 px-2 py-0.5 rounded mt-1 inline-block">
-                    {activeReport.genre}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="flex-1 space-y-6">
-              {activeReport.arbitrageMap && (
-                <ArbitrageHeatMap
-                  data={activeReport.arbitrageMap}
-                  onSelectRegion={setSelectedRegion}
-                />
-              )}
-              <OpportunityReport report={activeReport} />
-            </div>
-
-            <aside className="hidden lg:block sticky top-8 self-start w-80">
-              <div className="bg-gray-900/40 border border-emerald-500/20 rounded-xl p-6 text-center">
-                {concepts ? (
-                  <ConceptOptionsView 
-                    concepts={concepts} 
-                    onSelect={handleInitializeSeries} 
-                    isStreaming={isGeneratingConcepts} 
-                    partialBible={partialBible} 
-                  />
-                ) : (
-                  <div className="space-y-4">
-                    <p className="text-sm text-gray-400">Ready to bridge this data to a creative series?</p>
-                    <div className="flex justify-center gap-2">
-                      {Object.keys(generatorParams).map((param) => (
-                        <button key={param} onClick={() => setGeneratorParams(prev => ({ ...prev, [param]: !prev[param] }))} className={`px-2 py-1 text-xs rounded-md ${generatorParams[param as keyof typeof generatorParams] ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-700/50 text-gray-400'}`}>
-                          {param.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                        </button>
-                      ))}
+            {/* Series Bible (Phase 4 output) */}
+            {bridgePlan && (
+              <div className="bg-gray-800/60 border border-emerald-500/30 rounded-xl overflow-hidden">
+                <button
+                  onClick={() => setBibleExpanded(!bibleExpanded)}
+                  className="flex items-center justify-between w-full p-5 text-left hover:bg-gray-800/40 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                      <BookOpen className="w-4 h-4 text-emerald-400" />
                     </div>
-                    <button 
-                      onClick={async () => {
-                        // Add a small delay to prevent hitting rate-limits during phase transition
-                        await new Promise(resolve => setTimeout(resolve, 200));
-                        generateConcepts(activeReport, generatorParams);
-                      }} 
-                      disabled={isGeneratingConcepts}
-                      className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex items-center gap-2 mx-auto disabled:opacity-50"
-                    >
-                      {isGeneratingConcepts ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                      {isGeneratingConcepts ? 'Synthesizing...' : 'Generate 3 Series Concepts'}
-                    </button>
+                    <div>
+                      <h2 className="text-lg font-semibold text-white">
+                        {activeReport.concept || 'Series Bible'}
+                      </h2>
+                      {activeReport.genre && (
+                        <span className="text-xs text-gray-400">{activeReport.genre}</span>
+                      )}
+                    </div>
+                  </div>
+                  {bibleExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                </button>
+                {bibleExpanded && (
+                  <div className="px-5 pb-5">
+                    <div className="prose prose-invert prose-sm max-w-none bg-gray-900/50 rounded-lg p-5 border border-gray-700/50 max-h-[500px] overflow-y-auto">
+                      <pre className="whitespace-pre-wrap font-sans text-sm text-gray-300 leading-relaxed">{bridgePlan}</pre>
+                    </div>
                   </div>
                 )}
               </div>
-            </aside>
-          </motion.div>
-        )}
+            )}
 
-        {/* Generate Options on mobile */}
-        {view === 'report' && activeReport && (
-          <div className="lg:hidden bg-gray-900/40 border border-emerald-500/20 rounded-xl p-6 text-center">
-            {isGeneratingConcepts || concepts ? (
-              <ConceptOptionsView 
-                concepts={concepts} 
-                onSelect={handleInitializeSeries} 
-                isStreaming={isGeneratingConcepts} 
-                partialBible={partialBible} 
-              />
-            ) : (
-              <div className="space-y-4">
-                <p className="text-sm text-gray-400">Ready to bridge this data to a creative series?</p>
-                <div className="flex justify-center gap-2">
-                  {Object.keys(generatorParams).map((param) => (
-                    <button key={param} onClick={() => setGeneratorParams(prev => ({ ...prev, [param]: !prev[param] }))} className={`px-2 py-1 text-xs rounded-md ${generatorParams[param as keyof typeof generatorParams] ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-700/50 text-gray-400'}`}>
-                      {param.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                    </button>
-                  ))}
+            {/* Generate Series Concepts CTA */}
+            {!concepts && (
+              <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <Sparkles className="w-5 h-5 text-emerald-400 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-white">Ready to develop this concept?</p>
+                    <p className="text-xs text-gray-400">Generate 3 series concept variations based on market data</p>
+                  </div>
                 </div>
-                <button 
+                <button
                   onClick={async () => {
-                    // Add a small delay to prevent hitting rate-limits during phase transition
-                    await new Promise(resolve => setTimeout(resolve, 200));
-                    generateConcepts(activeReport, generatorParams);
-                  }} 
+                    await new Promise(resolve => setTimeout(resolve, 200))
+                    generateConcepts(activeReport)
+                  }}
                   disabled={isGeneratingConcepts}
-                  className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex items-center gap-2 mx-auto disabled:opacity-50"
+                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-lg flex items-center gap-2 disabled:opacity-50 shrink-0 transition-colors"
                 >
                   {isGeneratingConcepts ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  {isGeneratingConcepts ? 'Synthesizing...' : 'Generate 3 Series Concepts'}
+                  {isGeneratingConcepts ? 'Generating...' : 'Generate Concepts'}
                 </button>
               </div>
             )}
-          </div>
+
+            {/* Generated Concepts */}
+            {(concepts || isGeneratingConcepts) && (
+              <ConceptOptionsView
+                concepts={concepts}
+                onSelect={handleInitializeSeries}
+                isStreaming={isGeneratingConcepts}
+                partialBible={partialBible}
+              />
+            )}
+
+            {/* Target Markets Grid */}
+            {activeReport.arbitrageMap && (
+              <ArbitrageHeatMap
+                data={activeReport.arbitrageMap}
+                onSelectRegion={setSelectedRegion}
+              />
+            )}
+
+            {/* Market Analysis & Recommended Structure */}
+            <OpportunityReport report={activeReport} />
+          </motion.div>
         )}
 
         {/* History View */}
         {view === 'history' && (
           <div className="space-y-3">
+            {pastReports.length === 0 && !isLoadingReports && (
+              <p className="text-sm text-gray-500 text-center py-8">No past analyses yet.</p>
+            )}
             {pastReports.map((r) => (
               <div key={r.id} className="bg-gray-800/60 border border-teal-500/20 rounded-xl p-4 flex items-center justify-between">
-                <button onClick={() => loadPastReport(r.id)} className="flex-1 text-left">
+                <button onClick={() => r.id && loadPastReport(r.id)} className="flex-1 text-left">
                   <div className="text-sm font-medium text-white">{r.concept}</div>
+                  {r.genre && <span className="text-xs text-gray-500">{r.genre}</span>}
                 </button>
               </div>
             ))}
@@ -401,7 +354,6 @@ export default function VisionaryPage() {
         </AnimatePresence>
       </div>
 
-      {/* Use the standard GeneratingOverlay */}
       <GeneratingOverlay
         visible={isGeneratingConcepts || isInitializing}
         title={isInitializing ? "Initializing Series Bible..." : "Synthesizing Creative Options..."}

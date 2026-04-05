@@ -1,11 +1,18 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { TrendingUp, Target, ChevronDown, ChevronUp, Sparkles, CheckCircle2 } from 'lucide-react'
-import { useState } from 'react'
+import {
+  TrendingUp,
+  Lightbulb,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle2,
+  AlertTriangle,
+  Sparkles,
+  BookOpen,
+} from 'lucide-react'
 import { RadarChart } from '@/components/RadarChart'
-import { WeaknessBridge } from '@/components/WeaknessBridge'
 import type { VisionaryReport } from '@/lib/visionary/types'
 
 interface OpportunityReportProps {
@@ -13,20 +20,20 @@ interface OpportunityReportProps {
 }
 
 /**
- * OpportunityReport — Full analysis summary view
+ * OpportunityReport — Market analysis results and recommended structure.
  *
- * Derives all display data from the single `report` prop which contains
- * the raw Gemini output from phases 1-3.
+ * Sections:
+ *  1. Viability Score hero
+ *  2. Market Trends (collapsible)
+ *  3. Recommended Structure — replaces raw "gap analysis" with actionable guidance
  */
 export function OpportunityReport({ report }: OpportunityReportProps) {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    trends: false,
-    gaps: false,
+    trends: true,
+    structure: true,
   })
 
-  const toggleSection = (key: string) => {
-    setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }))
-  }
+  const toggle = (key: string) => setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }))
 
   const marketScan = report.marketScan
   const gapAnalysis = report.gapAnalysis
@@ -37,7 +44,7 @@ export function OpportunityReport({ report }: OpportunityReportProps) {
     const fitScore = gapAnalysis?.conceptFit?.score ?? 0
     const opps = arbitrageMap?.opportunities ?? []
     const avgArbitrage = opps.length > 0
-      ? opps.reduce((s: number, o: { arbitrageScore?: number }) => s + (o.arbitrageScore ?? 0), 0) / opps.length
+      ? opps.reduce((s: number, o: any) => s + (o.arbitrageScore ?? 0), 0) / opps.length
       : 0
     return Math.round(fitScore * 0.6 + avgArbitrage * 0.4)
   }, [report.overallScore, gapAnalysis, arbitrageMap])
@@ -48,7 +55,7 @@ export function OpportunityReport({ report }: OpportunityReportProps) {
     if (!fit) return []
     const opps = arbitrageMap?.opportunities ?? []
     const avgArbitrage = opps.length > 0
-      ? Math.round(opps.reduce((s: number, o: { arbitrageScore?: number }) => s + (o.arbitrageScore ?? 0), 0) / opps.length)
+      ? Math.round(opps.reduce((s: number, o: any) => s + (o.arbitrageScore ?? 0), 0) / opps.length)
       : 0
     return [
       { label: 'Concept Fit', value: fit.score ?? 0 },
@@ -59,7 +66,6 @@ export function OpportunityReport({ report }: OpportunityReportProps) {
     ]
   }, [report.radarData, gapAnalysis, arbitrageMap])
 
-  // Gemini trends use `category`/`trend`/`momentum` — normalise for display
   const trends = useMemo(() => {
     const raw = marketScan?.trends ?? []
     return raw.map((t: any) => ({
@@ -70,49 +76,36 @@ export function OpportunityReport({ report }: OpportunityReportProps) {
     }))
   }, [marketScan])
 
-  const getScoreColor = (score: number) => {
-    if (score >= 75) return 'text-emerald-400'
-    if (score >= 50) return 'text-yellow-400'
-    if (score >= 25) return 'text-orange-400'
-    return 'text-red-400'
-  }
-
-  const getScoreBg = (score: number) => {
-    if (score >= 75) return 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/30'
-    if (score >= 50) return 'from-yellow-500/20 to-yellow-600/10 border-yellow-500/30'
-    if (score >= 25) return 'from-orange-500/20 to-orange-600/10 border-orange-500/30'
-    return 'from-red-500/20 to-red-600/10 border-red-500/30'
-  }
+  const scoreColor = (s: number) => s >= 75 ? 'text-emerald-400' : s >= 50 ? 'text-yellow-400' : s >= 25 ? 'text-orange-400' : 'text-red-400'
+  const scoreBg = (s: number) => s >= 75 ? 'from-emerald-500/15 to-emerald-600/5 border-emerald-500/30' : s >= 50 ? 'from-yellow-500/15 to-yellow-600/5 border-yellow-500/30' : 'from-orange-500/15 to-orange-600/5 border-orange-500/30'
 
   const conceptFit = gapAnalysis?.conceptFit
   const gaps = gapAnalysis?.gaps ?? []
 
   return (
     <div className="space-y-6">
-      {/* Overall Score Hero */}
+      {/* Viability Score */}
       {typeof overallScore === 'number' && overallScore > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`bg-gradient-to-br ${getScoreBg(overallScore)} border rounded-2xl p-6`}
+          className={`bg-gradient-to-br ${scoreBg(overallScore)} border rounded-2xl p-6`}
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-1">
+          <div className="flex items-center gap-6">
+            <div className="flex-1">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
                 Overall Viability Score
               </h3>
-              <p className={`text-5xl font-bold ${getScoreColor(overallScore)}`}>
-                {overallScore}
-              </p>
+              <p className={`text-5xl font-bold ${scoreColor(overallScore)}`}>{overallScore}</p>
               <p className="text-sm text-gray-400 mt-2">
-                Based on concept fit, market opportunity, and language arbitrage potential
+                Based on concept fit, market opportunity, and global reach potential
               </p>
             </div>
-            <div className="w-20 h-20 rounded-full border-4 border-gray-700 flex items-center justify-center">
-              <div className={`text-2xl font-bold ${getScoreColor(overallScore)}`}>
-                {overallScore >= 75 ? '🎯' : overallScore >= 50 ? '📈' : '⚠️'}
+            {radarData.length > 0 && (
+              <div className="hidden md:block w-48 h-48 -my-4">
+                <RadarChart data={radarData} size={192} />
               </div>
-            </div>
+            )}
           </div>
         </motion.div>
       )}
@@ -120,10 +113,7 @@ export function OpportunityReport({ report }: OpportunityReportProps) {
       {/* Market Trends */}
       {trends.length > 0 && (
         <div className="bg-gray-800/60 border border-gray-700 rounded-xl overflow-hidden">
-          <button
-            onClick={() => toggleSection('trends')}
-            className="flex items-center justify-between w-full p-4 text-left hover:bg-gray-800/40 transition-colors"
-          >
+          <button onClick={() => toggle('trends')} className="flex items-center justify-between w-full p-4 text-left hover:bg-gray-800/40 transition-colors">
             <div className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-blue-500" />
               <h3 className="text-base font-semibold text-white">Market Trends</h3>
@@ -132,30 +122,30 @@ export function OpportunityReport({ report }: OpportunityReportProps) {
             {expandedSections.trends ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
           </button>
           {expandedSections.trends && (
-            <div className="p-4 pt-0 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {trends.map((trend: any, i: number) => (
+            <div className="p-4 pt-0 grid grid-cols-1 md:grid-cols-2 gap-3">
+              {trends.map((t: any, i: number) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  className="bg-slate-900/50 p-3 rounded-lg border border-white/10"
+                  transition={{ delay: i * 0.04 }}
+                  className="bg-slate-900/50 p-3 rounded-lg border border-white/5"
                 >
                   <div className="flex justify-between items-center mb-1">
-                    <h4 className="font-semibold text-white">{trend.title}</h4>
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      trend.heat === 'Rising' ? 'bg-emerald-500/20 text-emerald-400' :
-                      trend.heat === 'Steady' ? 'bg-blue-500/20 text-blue-400' :
+                    <h4 className="font-medium text-white text-sm">{t.title}</h4>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                      t.heat === 'Rising' ? 'bg-emerald-500/20 text-emerald-400' :
+                      t.heat === 'Steady' ? 'bg-blue-500/20 text-blue-400' :
                       'bg-gray-700 text-gray-400'
-                    }`}>{trend.heat}</span>
+                    }`}>{t.heat}</span>
                   </div>
-                  <p className="text-sm text-gray-400">{trend.description}</p>
-                  {typeof trend.relevanceScore === 'number' && (
+                  <p className="text-xs text-gray-400 leading-relaxed">{t.description}</p>
+                  {typeof t.relevanceScore === 'number' && (
                     <div className="mt-2 flex items-center gap-2">
-                      <div className="flex-1 h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-500 rounded-full" style={{ width: `${trend.relevanceScore}%` }} />
+                      <div className="flex-1 h-1 bg-gray-700 rounded-full overflow-hidden">
+                        <div className="h-full bg-blue-500/60 rounded-full" style={{ width: `${t.relevanceScore}%` }} />
                       </div>
-                      <span className="text-xs text-gray-500">{trend.relevanceScore}</span>
+                      <span className="text-[10px] text-gray-500 tabular-nums">{t.relevanceScore}</span>
                     </div>
                   )}
                 </motion.div>
@@ -165,70 +155,83 @@ export function OpportunityReport({ report }: OpportunityReportProps) {
         </div>
       )}
 
-      {/* Gap Analysis & Concept Fit */}
+      {/* Recommended Structure (replaces raw Gap Analysis) */}
       {conceptFit && (
         <div className="bg-gray-800/60 border border-gray-700 rounded-xl overflow-hidden">
-          <button
-            onClick={() => toggleSection('gaps')}
-            className="flex items-center justify-between w-full p-4 text-left hover:bg-gray-800/40 transition-colors"
-          >
+          <button onClick={() => toggle('structure')} className="flex items-center justify-between w-full p-4 text-left hover:bg-gray-800/40 transition-colors">
             <div className="flex items-center gap-2">
-              <Target className="w-5 h-5 text-purple-500" />
-              <h3 className="text-base font-semibold text-white">Gap Analysis & Concept Fit</h3>
-              <span className="text-xs text-gray-500">({gaps.length} gaps, fit: {conceptFit.score ?? '—'})</span>
+              <Lightbulb className="w-5 h-5 text-amber-500" />
+              <h3 className="text-base font-semibold text-white">Recommended Structure</h3>
+              <span className="text-xs text-gray-500">(fit score: {conceptFit.score ?? '—'})</span>
             </div>
-            {expandedSections.gaps ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+            {expandedSections.structure ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
           </button>
-          {expandedSections.gaps && (
+          {expandedSections.structure && (
             <div className="p-4 pt-0 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                {radarData.length > 0 && (
-                  <div>
-                    <RadarChart data={radarData} />
+              {/* Strengths */}
+              {conceptFit.strengths?.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Strengths to Leverage
+                  </h4>
+                  <div className="space-y-1.5">
+                    {conceptFit.strengths.map((s: string, i: number) => (
+                      <div key={i} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
+                        <span className="text-sm text-gray-300 leading-relaxed">{s}</span>
+                      </div>
+                    ))}
                   </div>
-                )}
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-white mb-2">Strengths & Weaknesses</h4>
-                  {conceptFit.strengths?.map((s: string, i: number) => (
-                    <div key={`s-${i}`} className="flex items-start gap-3 p-3 rounded-lg border border-green-500/10 bg-green-500/5">
-                      <CheckCircle2 className="w-4 h-4 text-green-400 mt-1 shrink-0" />
-                      <span className="text-sm text-gray-300">{s}</span>
-                    </div>
-                  ))}
-                  {conceptFit.weaknesses?.map((w: string, i: number) => (
-                    <WeaknessBridge
-                      key={`w-${i}`}
-                      weakness={w}
-                      fix={conceptFit.pivotSuggestions?.[i] || 'Consider a creative pivot to address this gap.'}
-                    />
-                  ))}
                 </div>
-              </div>
+              )}
 
-              {/* Gap details */}
+              {/* Recommendations (from weaknesses + pivot suggestions) */}
+              {(conceptFit.weaknesses?.length > 0 || conceptFit.pivotSuggestions?.length > 0) && (
+                <div>
+                  <h4 className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" /> Optimization Recommendations
+                  </h4>
+                  <div className="space-y-1.5">
+                    {conceptFit.pivotSuggestions?.map((suggestion: string, i: number) => (
+                      <div key={`p-${i}`} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/10">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
+                        <span className="text-sm text-gray-300 leading-relaxed">{suggestion}</span>
+                      </div>
+                    ))}
+                    {conceptFit.weaknesses?.map((w: string, i: number) => (
+                      <div key={`w-${i}`} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-red-500/5 border border-red-500/10">
+                        <AlertTriangle className="w-3.5 h-3.5 text-red-400 mt-0.5 shrink-0" />
+                        <span className="text-sm text-gray-300 leading-relaxed">{w}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Niche Opportunities */}
               {gaps.length > 0 && (
-                <div className="space-y-3 pt-4 border-t border-gray-700">
-                  <h4 className="font-semibold text-white text-sm">Identified Gaps</h4>
-                  {gaps.map((gap: any, i: number) => (
-                    <div key={gap.id || i} className="bg-slate-900/50 p-3 rounded-lg border border-white/10">
-                      <div className="flex justify-between items-center mb-1">
-                        <h5 className="font-medium text-white text-sm">{gap.niche}</h5>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          gap.opportunityScore >= 70 ? 'bg-emerald-500/20 text-emerald-400' :
-                          gap.opportunityScore >= 40 ? 'bg-yellow-500/20 text-yellow-400' :
-                          'bg-gray-700 text-gray-400'
-                        }`}>
-                          {gap.opportunityScore}/100
-                        </span>
+                <div>
+                  <h4 className="text-xs font-semibold text-purple-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <BookOpen className="w-3.5 h-3.5" /> Niche Opportunities
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {gaps.map((gap: any, i: number) => (
+                      <div key={gap.id || i} className="bg-slate-900/50 p-3 rounded-lg border border-white/5">
+                        <div className="flex justify-between items-center mb-1">
+                          <h5 className="font-medium text-white text-sm">{gap.niche}</h5>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                            gap.opportunityScore >= 70 ? 'bg-emerald-500/20 text-emerald-400' :
+                            gap.opportunityScore >= 40 ? 'bg-yellow-500/20 text-yellow-400' :
+                            'bg-gray-700 text-gray-400'
+                          }`}>{gap.opportunityScore}/100</span>
+                        </div>
+                        <p className="text-xs text-gray-400 leading-relaxed">{gap.description}</p>
+                        {gap.targetAudience && (
+                          <p className="text-[10px] text-gray-500 mt-1.5">Audience: {gap.targetAudience}</p>
+                        )}
                       </div>
-                      <p className="text-xs text-gray-400">{gap.description}</p>
-                      <div className="flex gap-2 mt-2 text-xs">
-                        <span className="px-2 py-0.5 bg-gray-800 rounded text-gray-300">Demand: {gap.demandSignal}</span>
-                        <span className="px-2 py-0.5 bg-gray-800 rounded text-gray-300">Competition: {gap.competitionLevel}</span>
-                        {gap.estimatedTAM && <span className="px-2 py-0.5 bg-gray-800 rounded text-gray-300">{gap.estimatedTAM}</span>}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -236,5 +239,5 @@ export function OpportunityReport({ report }: OpportunityReportProps) {
         </div>
       )}
     </div>
-  );
+  )
 }
