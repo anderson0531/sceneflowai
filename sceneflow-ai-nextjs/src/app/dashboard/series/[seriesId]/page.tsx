@@ -128,6 +128,7 @@ export default function SeriesStudioPage() {
   const [episodeCount, setEpisodeCount] = useState(DEFAULT_MAX_EPISODES)
   const [genre, setGenre] = useState('any')
   const [tone, setTone] = useState('any')
+  const [format, setFormat] = useState('narrative')
   const [isIdeateDialogOpen, setIsIdeateDialogOpen] = useState(false)
   const [isResonancePanelOpen, setIsResonancePanelOpen] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -221,7 +222,8 @@ export default function SeriesStudioPage() {
           topic: ideaTopic,
           episodeCount,
           genre: genre === 'any' ? undefined : genre,
-          tone: tone === 'any' ? undefined : tone
+          tone: tone === 'any' ? undefined : tone,
+          format: format === 'narrative' ? undefined : format
         })
       }, {
         message: `Generating ${episodeCount} episode storyline...`,
@@ -849,6 +851,23 @@ export default function SeriesStudioPage() {
                 className="bg-gray-800 border-gray-700 text-white min-h-24 focus:border-cyan-500/50 focus:ring-cyan-500/20"
                 autoFocus
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Production Format
+              </label>
+              <Select value={format} onValueChange={setFormat}>
+                <SelectTrigger className="bg-gray-800 border-gray-700 focus:border-cyan-500/50">
+                  <SelectValue placeholder="Select format" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700">
+                  <SelectItem value="narrative">Narrative Series (Default)</SelectItem>
+                  <SelectItem value="educational">Educational/Instructional</SelectItem>
+                  <SelectItem value="podcast">Podcast</SelectItem>
+                  <SelectItem value="documentary">Documentary</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

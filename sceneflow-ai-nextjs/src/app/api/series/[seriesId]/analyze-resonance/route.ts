@@ -264,6 +264,9 @@ function buildAnalysisPrompt(
   locations: any[],
   context?: { previousScore: number | null; iterationCount: number; appliedFixes: string[] }
 ): string {
+  const meta = series.metadata as Record<string, unknown> | null;
+  const format = (meta?.format as string) || 'narrative';
+
   // Episode summaries with story threads
   const episodeSummaries = episodes.map(ep => {
     const threads = ep.storyThreads?.map((t: any) => `${t.name}(${t.status})`).join(', ') || 'none'
@@ -303,9 +306,44 @@ IMPORTANT SCORING GUIDELINES:
 `
   }
   
-  return `You are an expert TV series analyst evaluating a production series for audience engagement and commercial viability.
+  let formatInstruction = 'You are an expert TV series analyst evaluating a production series for audience engagement and commercial viability.'
+  let mappingInstruction = ''
+
+  if (format === 'educational') {
+    formatInstruction = 'You are an expert curriculum designer and educational content analyst evaluating a course for student engagement, learning outcomes, and market viability.'
+    mappingInstruction = `
+CRITICAL EVALUATION MAPPING FOR EDUCATIONAL FORMAT:
+- "Concept Originality": Evaluate the uniqueness of the teaching approach or curriculum.
+- "Character Depth": Evaluate the "Host/Instructor" (protagonist) engagement and relatability.
+- "Story Arc Coherence": Evaluate the "Curriculum Progression" - does it build skills logically?
+- "Episode Engagement": Evaluate "Lesson Engagement" - do the lessons hold attention?
+- "Cliffhanger Score": Evaluate "Motivation to take the next lesson" - does it tease the next concept well?
+`
+  } else if (format === 'podcast') {
+    formatInstruction = 'You are an expert podcast producer and content analyst evaluating a podcast for listener retention, format coherence, and commercial viability.'
+    mappingInstruction = `
+CRITICAL EVALUATION MAPPING FOR PODCAST FORMAT:
+- "Concept Originality": Evaluate the uniqueness of the podcast format or angle.
+- "Character Depth": Evaluate the "Host(s)" and "Guest Archetypes" for personality and chemistry.
+- "Story Arc Coherence": Evaluate "Season/Theme Coherence" - do the episodes explore the central theme well?
+- "Episode Engagement": Evaluate "Listener Retention" - do the segments hold attention?
+- "Cliffhanger Score": Evaluate "Teaser Strength" - does the outro make listeners want to hear the next episode?
+`
+  } else if (format === 'documentary') {
+    formatInstruction = 'You are an expert documentary filmmaker and analyst evaluating a docuseries for audience engagement, narrative impact, and commercial viability.'
+    mappingInstruction = `
+CRITICAL EVALUATION MAPPING FOR DOCUMENTARY FORMAT:
+- "Concept Originality": Evaluate the uniqueness of the subject matter or investigative angle.
+- "Character Depth": Evaluate the "Subjects/Interviewees" for emotional resonance and impact.
+- "Story Arc Coherence": Evaluate "Narrative/Investigative Coherence" - does the evidence build a compelling overarching story?
+- "Episode Engagement": Evaluate "Viewer Engagement" - does the pacing keep the documentary interesting?
+`
+  }
+  
+  return `${formatInstruction}
 ${contextSection}
-SERIES: ${series.title}
+SERIES/PRODUCTION: ${series.title}
+FORMAT: ${format}
 GENRE: ${series.genre || 'Drama'}
 TARGET AUDIENCE: ${series.target_audience || 'General'}
 LOGLINE: ${series.logline || bible.logline || 'Not specified'}
@@ -313,24 +351,25 @@ LOGLINE: ${series.logline || bible.logline || 'Not specified'}
 SYNOPSIS:
 ${bible.synopsis || 'Not specified'}
 
-PROTAGONIST: ${bible.protagonist?.name || 'Not specified'} - Goal: ${bible.protagonist?.goal || ''}, Flaw: ${bible.protagonist?.flaw || ''}
+PROTAGONIST/HOST: ${bible.protagonist?.name || 'Not specified'} - Goal: ${bible.protagonist?.goal || ''}, Flaw/Trait: ${bible.protagonist?.flaw || ''}
 
-ANTAGONIST/CONFLICT: ${bible.antagonistConflict?.description || 'Not specified'}
+ANTAGONIST/CONFLICT/CHALLENGE: ${bible.antagonistConflict?.description || 'Not specified'}
 
-SETTING: ${bible.setting || 'Not specified'}
+SETTING/CONTEXT: ${bible.setting || 'Not specified'}
 
 TONE: ${bible.toneGuidelines || 'Not specified'}
 
-CHARACTERS (${characters.length}):
+CHARACTERS/SUBJECTS (${characters.length}):
 ${characterSummaries || 'No characters defined'}
 
-LOCATIONS (${locations.length}):
+LOCATIONS/SETTINGS (${locations.length}):
 ${locationSummaries || 'No locations defined'}
 
-EPISODES (${episodes.length}):
+EPISODES/INSTALLMENTS (${episodes.length}):
 ${episodeSummaries}
 
-Analyze this series comprehensively. Score each dimension 0-100.
+Analyze this production comprehensively. Score each dimension 0-100.
+${mappingInstruction}
 
 Return ONLY valid JSON:
 {

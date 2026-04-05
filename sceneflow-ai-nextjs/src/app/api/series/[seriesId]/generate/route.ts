@@ -175,7 +175,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       regenerateField,
       preserveExisting = false,
       genre,
-      tone
+      tone,
+      format = 'narrative'
     } = body
     
     if (!topic && !regenerateField) {
@@ -219,14 +220,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         series,
         regenerateField,
         topic || series.production_bible?.synopsis || series.title,
-        { genre, tone, targetEpisodeCount }
+        { genre, tone, targetEpisodeCount, format }
       )
     } else {
       // Generate full series storyline
       generatedData = await generateFullSeriesStoryline(
         topic,
         targetEpisodeCount,
-        { genre, tone }
+        { genre, tone, format }
       )
     }
     
@@ -256,6 +257,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       production_bible: updatedBible,
       metadata: {
         ...existingMeta,
+        format,
         ...(preservedIdeaTopic !== undefined && preservedIdeaTopic !== null
           ? { ideaTopic: preservedIdeaTopic }
           : {}),
@@ -320,22 +322,67 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 async function generateFullSeriesStoryline(
   topic: string,
   episodeCount: number,
-  options: { genre?: string; tone?: string }
+  options: { genre?: string; tone?: string; format?: string }
 ): Promise<any> {
   console.log(`[generateFullSeriesStoryline] Generating ${episodeCount} episodes with Pro model`)
+  
+  const format = options.format || 'narrative'
+  
+  // Dynamic persona and instructions based on format
+  let personaInstruction = 'You are an expert TV series showrunner creating a comprehensive series bible.'
+  let mappingInstruction = ''
+  
+  if (format === 'educational') {
+    personaInstruction = 'You are an expert curriculum designer and educational video producer.'
+    mappingInstruction = `
+CRITICAL SCHEMA MAPPING FOR EDUCATIONAL CONTENT:
+- "protagonist": Use this for the Host, Lead Instructor, or Guide.
+- "antagonistConflict": Use this for the core learning challenge, common misconceptions, or the problem the viewer is trying to solve.
+- "storyThreads": Use this for core learning objectives or recurring themes across the course.
+- "episodes": These are individual lessons or course modules.
+- episode "beats": These are lesson segments (e.g., Intro/Hook, Core Concept/Exercise, Review/Conclusion).
+- "episodeHook": Use this to preview the next lesson and build anticipation.
+`
+  } else if (format === 'podcast') {
+    personaInstruction = 'You are an expert podcast producer and showrunner.'
+    mappingInstruction = `
+CRITICAL SCHEMA MAPPING FOR PODCAST CONTENT:
+- "protagonist": Use this for the Main Host.
+- "characters": Use this for co-hosts or recurring guest archetypes.
+- "antagonistConflict": Use this for the central theme of debate, the mystery being investigated, or the overarching topic.
+- "storyThreads": Use this for recurring segments, ongoing investigations, or season-long themes.
+- "episodes": These are podcast episodes.
+- episode "beats": These are show segments (e.g., Intro/Banter, Main Interview/Deep Dive, Outro/Call to Action).
+`
+  } else if (format === 'documentary') {
+    personaInstruction = 'You are an expert documentary filmmaker and docuseries producer.'
+    mappingInstruction = `
+CRITICAL SCHEMA MAPPING FOR DOCUMENTARY CONTENT:
+- "protagonist": Use this for the main subject of the documentary or the narrator/investigator.
+- "characters": Use this for key interviewees, historical figures, or subjects.
+- "antagonistConflict": Use this for the central conflict, systemic issue, or historical challenge being explored.
+- "storyThreads": Use this for different angles of the investigation or historical timelines.
+- "episodes": These are documentary parts/installments.
+- episode "beats": These are narrative segments (e.g., Establishing the Mystery, Presenting Evidence, Resolution/Impact).
+`
+  } else {
+    mappingInstruction = `
+CRITICAL: Each episode must advance the overall series arc. Include "storyThreads" to track ongoing plots.
+`
+  }
   
   // Phase 1: Generate series bible and first batch of episodes
   const firstBatchSize = Math.min(episodeCount, EPISODE_BATCH_SIZE)
   
-  const biblePrompt = `You are an expert TV series showrunner creating a comprehensive series bible.
+  const biblePrompt = `${personaInstruction}
 
 TOPIC: ${topic}
 ${options.genre ? `GENRE: ${options.genre}` : ''}
 ${options.tone ? `TONE: ${options.tone}` : ''}
-TOTAL PLANNED EPISODES: ${episodeCount}
-EPISODES TO GENERATE NOW: ${firstBatchSize}
+TOTAL PLANNED EPISODES/INSTALLMENTS: ${episodeCount}
+TO GENERATE NOW: ${firstBatchSize}
 
-Create a series bible that can sustain ${episodeCount} episodes with compelling story arcs.
+Create a series bible that can sustain ${episodeCount} episodes/installments with compelling arcs.
 
 Generate:
 1. Series title (memorable, evocative)
@@ -344,12 +391,12 @@ Generate:
 4. Synopsis (2 paragraphs covering the full series arc)
 5. ${firstBatchSize} episodes with:
    - title, logline, synopsis
-   - 3 story beats (opening/conflict/resolution)
+   - 3 story beats (opening/conflict/resolution or appropriate segments)
    - storyThreads: ongoing narrative threads introduced or developed
    - plotDevelopments: key events affecting future episodes
    - episodeHook: cliffhanger or setup for next episode
 
-CRITICAL: Each episode must advance the overall series arc. Include "storyThreads" to track ongoing plots.
+${mappingInstruction}
 
 Return ONLY valid JSON:
 {
@@ -470,53 +517,54 @@ Return ONLY valid JSON:
       }
     }
     
-    const batchPrompt = `You are continuing an existing TV series with consistent story arcs.
+    const batchPrompt = `You are continuing an existing series/production with consistent arcs/curriculum.
 
-SERIES: ${parsed.title}
+SERIES/PRODUCTION: ${parsed.title}
 LOGLINE: ${parsed.logline}
 SYNOPSIS: ${parsed.productionBible?.synopsis || ''}
-GENRE: ${parsed.genre || options.genre || 'Drama'}
+FORMAT: ${format}
+GENRE: ${parsed.genre || options.genre || 'Unspecified'}
 TONE: ${parsed.productionBible?.toneGuidelines || options.tone || ''}
 
-CHARACTERS:
+CHARACTERS/SUBJECTS:
 ${parsed.productionBible?.characters?.map((c: any) => `- ${c.name} (${c.role}): ${c.description}`).join('\n') || 'Not specified'}
 
-PROTAGONIST: ${parsed.productionBible?.protagonist?.name || 'Not specified'} - Goal: ${parsed.productionBible?.protagonist?.goal || ''}, Flaw: ${parsed.productionBible?.protagonist?.flaw || ''}
+PROTAGONIST/HOST: ${parsed.productionBible?.protagonist?.name || 'Not specified'} - Goal: ${parsed.productionBible?.protagonist?.goal || ''}, Flaw/Trait: ${parsed.productionBible?.protagonist?.flaw || ''}
 
-ANTAGONIST/CONFLICT: ${parsed.productionBible?.antagonistConflict?.description || 'Not specified'}
+ANTAGONIST/CONFLICT/CHALLENGE: ${parsed.productionBible?.antagonistConflict?.description || 'Not specified'}
 
-PREVIOUS EPISODES (last 3):
+PREVIOUS INSTALLMENTS (last 3):
 ${episodeSummaries || 'None'}
 
-ACTIVE STORY THREADS:
+ACTIVE THREADS/OBJECTIVES:
 ${activeThreads.map(t => `- ${t.name} (${t.type}): ${t.status} - ${t.description || ''}`).join('\n') || 'None yet'}
 
-TOTAL SERIES LENGTH: ${episodeCount} episodes
-NOW GENERATING: Episodes ${startEpisodeNum} to ${startEpisodeNum + batchSize - 1}
+TOTAL LENGTH: ${episodeCount} installments
+NOW GENERATING: ${startEpisodeNum} to ${startEpisodeNum + batchSize - 1}
 
-Continue the narrative naturally. Each episode must:
-1. Pick up from the previous episode's hook
-2. Advance or resolve active story threads
-3. Introduce new threads if appropriate (esp. in early/mid series)
-4. End with a hook for the next episode (except finale)
-5. Build toward series climax if approaching final episodes
+Continue the content naturally. Each new installment must:
+1. Pick up logically from the previous (or follow the curriculum)
+2. Advance active threads/objectives
+3. End with a hook for the next installment (unless finale)
+
+${mappingInstruction}
 
 Return ONLY valid JSON array:
 [
   {
     "episodeNumber": ${startEpisodeNum},
-    "title": "Episode Title",
+    "title": "Title",
     "logline": "One sentence hook",
-    "synopsis": "Full episode summary that continues the story",
+    "synopsis": "Full summary",
     "beats": [
       {"beatNumber": 1, "title": "Opening", "description": "Pickup from previous", "act": 1},
-      {"beatNumber": 2, "title": "Conflict", "description": "Rising action", "act": 2},
-      {"beatNumber": 3, "title": "Resolution", "description": "Climax/cliffhanger", "act": 3}
+      {"beatNumber": 2, "title": "Middle", "description": "Core action", "act": 2},
+      {"beatNumber": 3, "title": "End", "description": "Climax/resolution", "act": 3}
     ],
     "characters": [{"characterId": "char_1", "role": "protagonist"}],
     "storyThreads": [{"id": "thread_1", "name": "Name", "type": "main", "status": "developing", "description": "Progress"}],
     "plotDevelopments": ["Key event"],
-    "episodeHook": "Setup for next episode",
+    "episodeHook": "Setup for next",
     "status": "blueprint"
   }
 ]`
@@ -561,10 +609,17 @@ async function regenerateSpecificField(
   series: Series,
   field: string,
   context: string,
-  options: { genre?: string; tone?: string; targetEpisodeCount: number }
+  options: { genre?: string; tone?: string; targetEpisodeCount: number; format?: string }
 ): Promise<any> {
   const currentBible = series.production_bible || {}
+  const format = options.format || 'narrative'
   
+  // Dynamic persona
+  let persona = 'You are a professional TV series writer.'
+  if (format === 'educational') persona = 'You are an expert curriculum designer and educational video producer.'
+  else if (format === 'podcast') persona = 'You are an expert podcast producer and showrunner.'
+  else if (format === 'documentary') persona = 'You are an expert documentary filmmaker and docuseries producer.'
+
   // Limit episode generation to batches of 5 to avoid token limits
   const episodeBatchSize = Math.min(options.targetEpisodeCount, 5)
   
@@ -584,9 +639,10 @@ async function regenerateSpecificField(
     throw new Error(`Unknown field to regenerate: ${field}`)
   }
   
-  const fullPrompt = `You are a professional TV series writer. ${prompt}
+  const fullPrompt = `${persona} ${prompt}
 ${options.genre ? `Genre: ${options.genre}` : ''}
 ${options.tone ? `Tone: ${options.tone}` : ''}
+Format: ${format}
 
 Return ONLY valid JSON.`
 
