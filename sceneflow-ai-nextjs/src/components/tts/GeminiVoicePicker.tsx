@@ -4,38 +4,23 @@ import React, { useState, useCallback } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Play, Check, Volume2, Loader2, Sparkles } from 'lucide-react'
 
-// Gemini 2.5 TTS Voices (Vertex AI Audio Modality)
+// Google Cloud TTS (Journey Models)
 export const GEMINI_VOICES = [
-  { id: 'Puck', name: 'Puck', description: 'Upbeat, friendly, and energetic.' },
-  { id: 'Charon', name: 'Charon', description: 'Informative, articulate, and professional.' },
-  { id: 'Zephyr', name: 'Zephyr', description: 'Bright, conversational, and light.' },
-  { id: 'Aoede', name: 'Aoede', description: 'Warm, expressive, and engaging.' },
-  { id: 'Fenrir', name: 'Fenrir', description: 'Strong, authoritative, and direct.' },
-  { id: 'Kore', name: 'Kore', description: 'Youthful, dynamic, and clear.' },
-  { id: 'Leda', name: 'Leda', description: 'Smooth, measured, and pleasant.' },
-  { id: 'Orus', name: 'Orus', description: 'Confident, clear, and steady.' },
-  { id: 'Autonoe', name: 'Autonoe', description: 'Calm, thoughtful, and composed.' },
-  { id: 'Umbriel', name: 'Umbriel', description: 'Deep, resonant, and serious.' },
-  { id: 'Erinome', name: 'Erinome', description: 'Professional narrator voice.' },
-  { id: 'Laomedeia', name: 'Laomedeia', description: 'Clear and distinct articulation.' },
-  { id: 'Schedar', name: 'Schedar', description: 'Warm conversational tone.' },
-  { id: 'Achird', name: 'Achird', description: 'Bright and engaging delivery.' },
-  { id: 'Sadachbia', name: 'Sadachbia', description: 'Smooth and expressive pacing.' },
-  { id: 'Enceladus', name: 'Enceladus', description: 'Deep and authoritative voice.' },
-  { id: 'Algieba', name: 'Algieba', description: 'Professional and informative.' },
-  { id: 'Algenib', name: 'Algenib', description: 'Clear and steady narration.' },
-  { id: 'Achernar', name: 'Achernar', description: 'Friendly and conversational.' },
-  { id: 'Gacrux', name: 'Gacrux', description: 'Energetic and upbeat tone.' },
-  { id: 'Zubenelgenubi', name: 'Zubenelgenubi', description: 'Warm and expressive.' },
-  { id: 'Sadaltager', name: 'Sadaltager', description: 'Smooth and measured pacing.' },
-  { id: 'Callirrhoe', name: 'Callirrhoe', description: 'Professional and clear.' },
-  { id: 'Iapetus', name: 'Iapetus', description: 'Deep and resonant voice.' },
-  { id: 'Despina', name: 'Despina', description: 'Bright and energetic delivery.' },
-  { id: 'Rasalgethi', name: 'Rasalgethi', description: 'Calm and thoughtful tone.' },
-  { id: 'Alnilam', name: 'Alnilam', description: 'Informative and articulate.' },
-  { id: 'Pulcherrima', name: 'Pulcherrima', description: 'Warm and engaging.' },
-  { id: 'Vindemiatrix', name: 'Vindemiatrix', description: 'Clear and distinct narration.' },
-  { id: 'Sulafat', name: 'Sulafat', description: 'Smooth and professional.' }
+  // Journey Models (Deep Learning TTS)
+  { id: 'en-US-Journey-D', name: 'Journey D (Male)', description: 'Deep, resonant, and authoritative. Best for dramatic narration.' },
+  { id: 'en-US-Journey-F', name: 'Journey F (Female)', description: 'Clear, expressive, and engaging. Best for conversational reads.' },
+  { id: 'en-US-Journey-O', name: 'Journey O (Female)', description: 'Warm, natural, and friendly. Excellent all-rounder.' },
+  
+  // Studio Quality Fallbacks
+  { id: 'en-US-Studio-M', name: 'Studio M (Male)', description: 'Professional studio quality male voice.' },
+  { id: 'en-US-Studio-O', name: 'Studio O (Female)', description: 'Professional studio quality female voice.' },
+  { id: 'en-US-Studio-Q', name: 'Studio Q (Male)', description: 'Energetic studio male voice.' },
+  
+  // Neural2 Fallbacks (High Quality)
+  { id: 'en-US-Neural2-A', name: 'Neural2 A (Male)', description: 'Standard high-quality male voice.' },
+  { id: 'en-US-Neural2-C', name: 'Neural2 C (Female)', description: 'Standard high-quality female voice.' },
+  { id: 'en-US-Neural2-D', name: 'Neural2 D (Male)', description: 'Deep high-quality male voice.' },
+  { id: 'en-US-Neural2-F', name: 'Neural2 F (Female)', description: 'Clear high-quality female voice.' }
 ]
 
 interface GeminiVoicePickerProps {
@@ -69,14 +54,13 @@ export function GeminiVoicePicker({
 
     setIsSynthesizing(voiceId)
     try {
-      // Use the Gemini TTS API to generate a preview
-      const response = await fetch('/api/tts/gemini', {
+      // Use the Google TTS API to generate a preview
+      const response = await fetch('/api/tts/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: 'This is a preview of my voice using the Gemini 2.5 Flash audio model.',
-          voiceId: voiceId,
-          instruction: 'Sound confident, clear, and engaging.'
+          text: 'This is a preview of my voice using Google Cloud Journey TTS models.',
+          voiceId: voiceId
         }),
       })
 
@@ -113,12 +97,12 @@ export function GeminiVoicePicker({
             className="flex items-center gap-2 font-medium text-gray-200 text-lg"
           >
             <Sparkles className="w-4 h-4 text-cyan-400" />
-            Gemini 2.5 Actor Personalities
+            Google Cloud Journey TTS
           </DialogTitle>
           <DialogDescription 
             className="text-gray-400"
           >
-            Powered by Vertex AI. These 30 "Actor" personalities are natively steerable using natural language instructions, replacing the standard Google Cloud TTS suite.
+            Powered by Google Cloud Text-to-Speech. Journey voices provide highly natural, expressive narration.
           </DialogDescription>
         </DialogHeader>
 

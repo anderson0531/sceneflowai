@@ -940,8 +940,8 @@ function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProp
   const [isPlaying, setIsPlaying] = useState(false)
   const [isGeneratingTTS, setIsGeneratingTTS] = useState(false)
   const [voiceSelectorOpen, setVoiceSelectorOpen] = useState(false)
-  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('Puck') // Gemini Voice fallback
-  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Puck')
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('en-US-Journey-F') // Google Cloud TTS Voice fallback
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Journey F (Female)')
   const audioRef = React.useRef<HTMLAudioElement | null>(null)
 
   // Clean up audio on unmount
@@ -973,13 +973,12 @@ function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProp
 
     setIsGeneratingTTS(true)
     try {
-      const response = await fetch('/api/tts/gemini', {
+      const response = await fetch('/api/tts/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: textToSpeak,
-          voiceId: selectedVoiceId,
-          instruction: 'Read clearly and engagingly as a series overview.'
+          voiceId: selectedVoiceId
         })
       })
 
