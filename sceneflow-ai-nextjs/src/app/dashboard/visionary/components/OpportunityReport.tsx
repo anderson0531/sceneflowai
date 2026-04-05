@@ -91,8 +91,8 @@ export function OpportunityReport({ report }: OpportunityReportProps) {
           animate={{ opacity: 1, y: 0 }}
           className={`bg-gradient-to-br ${scoreBg(overallScore)} border rounded-2xl p-6`}
         >
-          <div className="flex items-center gap-6">
-            <div className="flex-1">
+          <div className="flex flex-col gap-8">
+            <div>
               <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
                 Overall Viability Score
               </h3>
@@ -102,8 +102,23 @@ export function OpportunityReport({ report }: OpportunityReportProps) {
               </p>
             </div>
             {radarData.length > 0 && (
-              <div className="hidden md:block w-48 h-48 -my-4">
-                <RadarChart data={radarData} size={192} />
+              <div className="w-full flex flex-col items-center gap-4">
+                <RadarChart data={radarData} size={400} showScores />
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3 w-full max-w-3xl">
+                  {radarData.map((axis) => (
+                    <div
+                      key={axis.label}
+                      className="rounded-xl bg-gray-950/40 border border-white/10 px-2 py-2.5 text-center"
+                    >
+                      <p className="text-[9px] sm:text-[10px] font-semibold text-gray-500 uppercase tracking-wider leading-snug">
+                        {axis.label}
+                      </p>
+                      <p className={`text-lg sm:text-xl font-bold tabular-nums mt-1 ${scoreColor(Math.round(axis.value))}`}>
+                        {Math.round(Math.min(100, Math.max(0, axis.value)))}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
