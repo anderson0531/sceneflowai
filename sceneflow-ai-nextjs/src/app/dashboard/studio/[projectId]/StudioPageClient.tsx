@@ -427,7 +427,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           input: text,
-          format: 'short_film',
+          format: projectData?.metadata?.format || 'short_film',
           filmType: opts?.duration || 'short_film',
           rigor: opts?.rigor || 'thorough',
           variants: variantCount,

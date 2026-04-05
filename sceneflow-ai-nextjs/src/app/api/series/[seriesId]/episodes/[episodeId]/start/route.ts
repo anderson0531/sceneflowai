@@ -94,6 +94,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         seriesTitle: series.title,
         episodeId,
         episodeNumber: episode.episodeNumber,
+        format: series.metadata?.format || 'narrative',
         
         // Blueprint prime input for auto-generation in Studio
         blueprintPrimeInput,

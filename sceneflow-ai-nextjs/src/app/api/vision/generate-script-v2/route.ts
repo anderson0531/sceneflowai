@@ -206,7 +206,15 @@ export async function POST(request: NextRequest) {
         console.log(`[Script Gen V2] Starting single-pass generation for ${duration}s film with ${beatCount} story beats...`)
         
         // Build the single-pass prompt
-        const singlePassPrompt = buildSinglePassPrompt(treatment, duration, existingCharacters, storyBeats, maxSafetyScenes, subscriptionMaxScenes)
+        const singlePassPrompt = buildSinglePassPrompt(
+          treatment, 
+          duration, 
+          existingCharacters, 
+          storyBeats, 
+          maxSafetyScenes, 
+          subscriptionMaxScenes,
+          projectFormat
+        )
         
         let retryCount = 0
         let generationSuccessful = false
@@ -901,8 +909,26 @@ function buildSinglePassPrompt(
   characters: any[],
   storyBeats: any[],
   maxSafetyScenes: number,
-  subscriptionMaxScenes: number | null
+  subscriptionMaxScenes: number | null,
+  format: string = 'narrative'
 ): string {
+  // Dynamically set persona based on format
+  let persona = 'You are a master screenwriter. Write a complete, production-ready script'
+  let formatLabel = 'FILM'
+  let sceneHeadingExample = '"heading": "INT. LOCATION - TIME"'
+  
+  if (format === 'educational') {
+    persona = 'You are an expert curriculum designer and educational video producer. Write a complete, production-ready lesson script'
+    formatLabel = 'EDUCATIONAL COURSE'
+    sceneHeadingExample = '"heading": "LESSON SEGMENT: Topic"'
+  } else if (format === 'podcast') {
+    persona = 'You are an expert podcast producer and showrunner. Write a complete, production-ready podcast script'
+    formatLabel = 'PODCAST EPISODE'
+    sceneHeadingExample = '"heading": "SEGMENT: Intro/Discussion/Outro"'
+  } else if (format === 'documentary') {
+    persona = 'You are an expert documentary filmmaker and docuseries producer. Write a complete, production-ready docuseries script'
+    formatLabel = 'DOCUMENTARY'
+  }
   // Build character list with strict name enforcement
   const characterNames = characters.map((c: any) => c.name)
   const characterList = characters.length > 0
@@ -934,13 +960,14 @@ CHARACTER DETAILS:\n${characters.map((c: any) =>
     ? Math.min(maxSafetyScenes, subscriptionMaxScenes)
     : maxSafetyScenes
 
-  return `You are a master screenwriter. Write a complete, production-ready script for the following film.
+  return `${persona} for the following production.
 
-FILM TREATMENT:
+${formatLabel} TREATMENT:
 Title: ${treatment.title}
 Logline: ${treatment.logline}
 Genre: ${treatment.genre || 'Drama'}
 Tone: ${treatment.tone || 'Engaging'}
+Format: ${format}
 Target Duration: ~${Math.floor(targetDuration / 60)} minutes (${targetDuration} seconds)
 
 Synopsis:
@@ -951,32 +978,30 @@ ${storyBeatsText}
 === SCRIPT GENERATION PHILOSOPHY ===
 
 Your goal is to write an ENGAGING, ENTERTAINING script optimized for audience connection.
-Do NOT fragment the story into tiny scenes. Each scene should be a COMPLETE dramatic unit.
+Do NOT fragment the story/lesson into tiny segments. Each segment should be a COMPLETE unit.
 
-SCENE STRUCTURE PRINCIPLES:
-• Each scene = ONE complete dramatic beat with beginning, middle, end
-• Natural scene breaks occur at: location changes, time jumps, POV shifts
-• A conversation between characters = ONE scene (not multiple)
-• Minimum 4-8 dialogue exchanges per dialogue-heavy scene
-• Target 60-120 seconds per scene (based on content density)
+STRUCTURE PRINCIPLES:
+• Each segment = ONE complete beat/lesson/discussion point with beginning, middle, end
+• Natural breaks occur at: topic changes, transitions, ad breaks, or location changes
+• Minimum 4-8 dialogue exchanges per dialogue-heavy segment
+• Target 60-120 seconds per segment (based on content density)
 
 WHAT TO AVOID:
-❌ Splitting conversations across multiple scenes
-❌ Creating scenes under 45 seconds
-❌ One scene per line of dialogue (this is a script, not a shot list)
-❌ Fragmented "reaction" scenes that belong in the previous scene
-❌ Arbitrary scene breaks that disrupt narrative flow
+❌ Fragmenting discussions across multiple segments
+❌ Creating segments under 45 seconds
+❌ One segment per line of dialogue
+❌ Arbitrary breaks that disrupt flow
 
 WHAT TO CREATE:
-✓ Rich, substantive scenes with complete dramatic arcs
-✓ Natural dialogue that sounds like real conversation
-✓ Scenes that advance BOTH plot AND character
+✓ Rich, substantive segments with complete arcs
+✓ Natural dialogue/monologues that sound like real conversation
+✓ Content that advances BOTH the topic AND audience engagement
 ✓ Emotional beats that resonate with the audience
-✓ A cohesive narrative following the story beats
+✓ A cohesive narrative following the story/lesson beats
 
 DIALOGUE REQUIREMENTS:
 • Every dialogue line MUST start with emotion tags: [emotion, delivery]
-• Examples: [sadly, slowly], [excited, quickly], [whispering nervously]
+• Examples: [sadly, slowly], [excited, quickly], [whispering nervously], [teaching clearly, passionately]
 • Use ellipses (...) for pauses, dashes (—) for interruptions
 • Use CAPS for EMPHASIS on specific words
 
@@ -984,7 +1009,7 @@ TECHNICAL REQUIREMENTS:
 • CHARACTER NAMES: Copy-paste EXACTLY from the whitelist above - no variations!
   ✓ Correct: "Dr. Ben Anderson" (if that's the listed name)
   ✗ Wrong: "BEN", "Ben", "DR. BEN ANDERSON", "Doctor Ben Anderson"
-• Include "narration" field with captivating voiceover (1-2 sentences)
+• Include "narration" field with captivating voiceover (if applicable to format)
 • Include "sfx" and "music" for atmosphere
 • Estimate realistic durations based on content
 
@@ -993,14 +1018,14 @@ OUTPUT FORMAT (JSON):
   "scenes": [
     {
       "sceneNumber": 1,
-      "heading": "INT. LOCATION - TIME",
+      ${sceneHeadingExample},
       "characters": ["Character Name 1", "Character Name 2"],
-      "action": "Detailed scene action with atmosphere...\\n\\nSFX: Sound description\\n\\nMusic: Music description",
-      "narration": "Captivating voiceover narration...",
+      "action": "Detailed segment action with atmosphere...\\n\\nSFX: Sound description\\n\\nMusic: Music description",
+      "narration": "Voiceover narration/intro...",
       "dialogue": [
         {"character": "Character Name", "line": "[emotion] Dialogue text..."}
       ],
-      "visualDescription": "Camera and lighting notes",
+      "visualDescription": "Camera and lighting notes (or audio focus if podcast)",
       "duration": 75,
       "sfx": [{"time": 0, "description": "Sound effect"}],
       "music": {"description": "Background music mood"}
@@ -1009,12 +1034,12 @@ OUTPUT FORMAT (JSON):
 }
 
 IMPORTANT CONSTRAINTS:
-• Maximum ${sceneLimit} scenes total (consolidate if needed)
-• Each scene MINIMUM 45 seconds
-• Write the COMPLETE story from beginning to end
+• Maximum ${sceneLimit} segments total (consolidate if needed)
+• Each segment MINIMUM 45 seconds
+• Write the COMPLETE script from beginning to end
 • Return ONLY valid JSON - no markdown, no explanations
 
-Now write the complete script, following the Film Treatment's story beats naturally. Focus on entertainment value and audience engagement over hitting any specific scene count.`
+Now write the complete script, following the Treatment's beats naturally and dynamically adapting the structure to match the ${format} format. Focus on value and audience engagement over hitting any specific segment count.`
 }
 
 /**
