@@ -410,6 +410,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     targetAudience?: string;
     visualStyle?: string;
     hasStoryDirections?: boolean; // Story direction options were selected - triggers OOM-safe mode
+    format?: string;
   }) => {
     setLastInput(text)
     setIsGen(true)
@@ -427,7 +428,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           input: text,
-          format: projectData?.metadata?.format || 'short_film',
+          format: opts?.format || currentProject?.metadata?.format || 'short_film',
           filmType: opts?.duration || 'short_film',
           rigor: opts?.rigor || 'thorough',
           variants: variantCount,
@@ -719,7 +720,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               handleGenerateBlueprint(metadata.blueprintPrimeInput, {
                 genre: projectData.genre || undefined,
                 variantCount: 1, // Single variant for series episodes - they have specific requirements
-                hasStoryDirections: true // Series data acts as story directions
+                hasStoryDirections: true, // Series data acts as story directions
+                format: projectData?.metadata?.format
               })
               // Clear the query param to prevent re-generation on refresh
               router.replace(`/dashboard/studio/${projectId}`, { scroll: false })
