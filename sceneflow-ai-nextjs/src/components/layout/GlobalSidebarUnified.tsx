@@ -26,6 +26,8 @@ import {
   Coins,
   Library,
   Telescope,
+  PanelLeftClose,
+  PanelLeft,
   // Icons for sections
   GitBranch,
   TrendingUp,
@@ -83,6 +85,8 @@ interface GlobalSidebarProps {
   children?: React.ReactNode
 }
 
+const SIDEBAR_VISIBILITY_KEY = 'sceneflow-unified-sidebar-visible'
+
 export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
   const pathname = usePathname()
   const params = useParams() as Record<string, string>
@@ -120,6 +124,26 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
   // Navigation warning dialog state for backward navigation
   const [showNavigationWarning, setShowNavigationWarning] = useState(false)
   const [navigationTarget, setNavigationTarget] = useState<{ href: string; label: string }>({ href: '', label: '' })
+
+  /** Whole left rail hidden → main uses full width (persisted for different displays). */
+  const [sidebarVisible, setSidebarVisible] = useState(true)
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SIDEBAR_VISIBILITY_KEY)
+      if (raw === '0') setSidebarVisible(false)
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_VISIBILITY_KEY, sidebarVisible ? '1' : '0')
+    } catch {
+      /* ignore */
+    }
+  }, [sidebarVisible])
 
   // Determine if currently in Production phase (Vision page)
   const isInProductionPhase = pathname.includes('/workflow/vision/')
@@ -219,9 +243,33 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
   }, [config.phase, config.progressItems, currentProject?.metadata, progressData])
 
   return (
-    <div className="flex pt-16">
-      <aside className="w-64 shrink-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/90 h-[calc(100vh-4rem)] overflow-y-auto sticky top-16 z-30 relative">
-        <div className="flex flex-col h-full">
+    <div className="flex pt-16 relative">
+      <aside
+        className={cn(
+          'shrink-0 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/90 h-[calc(100vh-4rem)] sticky top-16 z-30 relative overflow-hidden transition-[width] duration-200 ease-out',
+          sidebarVisible ? 'w-64 border-r' : 'w-0 border-transparent'
+        )}
+        aria-hidden={!sidebarVisible}
+      >
+        <div
+          className={cn(
+            'w-64 h-full overflow-y-auto flex flex-col transition-opacity duration-200',
+            sidebarVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          )}
+        >
+          <div className="flex items-center justify-end gap-1 px-2 py-1.5 border-b border-gray-200 dark:border-gray-700">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+              onClick={() => setSidebarVisible(false)}
+              aria-label="Hide navigation sidebar"
+              title="Hide sidebar (more space for content)"
+            >
+              <PanelLeftClose className="h-4 w-4" aria-hidden />
+            </Button>
+          </div>
           {/* Main Navigation */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <nav className="space-y-1">
@@ -440,7 +488,20 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
           )}
         </div>
       </aside>
-      <main className="flex-1 min-h-screen">{children}</main>
+
+      {!sidebarVisible && (
+        <button
+          type="button"
+          onClick={() => setSidebarVisible(true)}
+          className="fixed left-2 top-[4.75rem] z-[35] flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-md transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+          aria-label="Show navigation sidebar"
+          title="Show sidebar"
+        >
+          <PanelLeft className="h-4 w-4" aria-hidden />
+        </button>
+      )}
+
+      <main className={cn('flex-1 min-h-screen min-w-0', !sidebarVisible && 'w-full')}>{children}</main>
 
       {/* Navigation Warning Dialog for backward navigation */}
       <NavigationWarningDialog
