@@ -19,8 +19,7 @@ import {
   BookOpen,
   CheckCircle,
   Wrench,
-  Library,
-  Telescope
+  Library
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -49,7 +48,6 @@ const mainNav = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Projects', href: '/dashboard/projects', icon: FolderOpen },
   { name: 'Series', href: '/dashboard/series', icon: Library },
-  { name: 'Market Insights', href: '/dashboard/visionary', icon: Telescope },
   { name: 'Start Project', href: '/dashboard/studio/new-project', icon: Sparkles },
 ]
 

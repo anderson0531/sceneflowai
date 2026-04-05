@@ -25,7 +25,6 @@ import {
   CreditCard,
   Coins,
   Library,
-  Telescope,
   PanelLeftClose,
   PanelLeft,
   // Icons for sections
@@ -78,7 +77,6 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Sparkles,
   Home,
   FolderOpen,
-  Telescope,
 }
 
 interface GlobalSidebarProps {
@@ -286,9 +284,8 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
                 >
                   {item.key === 'dashboard' && <Home className="w-4 h-4 text-amber-500" />}
                   {item.key === 'projects' && <FolderOpen className="w-4 h-4 text-yellow-500" />}
-                    {item.key === 'series' && <Library className="w-4 h-4 text-cyan-500" />}
-                    {item.key === 'visionary' && <Telescope className="w-4 h-4 text-emerald-500" />}
-                    {item.key === 'start' && <Sparkles className="w-4 h-4 text-purple-500" />}
+                  {item.key === 'series' && <Library className="w-4 h-4 text-cyan-500" />}
+                  {item.key === 'start' && <Sparkles className="w-4 h-4 text-purple-500" />}
                   <span>{item.label}</span>
                 </Link>
               ))}

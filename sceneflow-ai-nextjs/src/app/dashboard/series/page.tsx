@@ -17,7 +17,8 @@ import {
   ArrowRight,
   X,
   Clapperboard,
-  Rocket
+  Rocket,
+  Telescope
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -165,13 +166,22 @@ export default function SeriesPage() {
                 </p>
               </div>
             </div>
-            <Button
-              onClick={() => setIsCreateDialogOpen(true)}
-              className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white shadow-lg shadow-cyan-500/25"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Series
-            </Button>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+              <Link
+                href="/dashboard/visionary"
+                className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold border border-emerald-500/40 text-emerald-300 bg-emerald-500/5 hover:bg-emerald-500/15 transition-colors whitespace-nowrap"
+              >
+                <Telescope className="w-4 h-4 shrink-0" />
+                Market Insights
+              </Link>
+              <Button
+                onClick={() => setIsCreateDialogOpen(true)}
+                className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white shadow-lg shadow-cyan-500/25"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                New Series
+              </Button>
+            </div>
           </div>
         </motion.div>
 

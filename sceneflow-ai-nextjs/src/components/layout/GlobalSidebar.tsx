@@ -37,7 +37,6 @@ const navIcons: Record<string, { icon: React.ElementType; color: string }> = {
   dashboard: { icon: Home, color: 'text-amber-500' },
   projects: { icon: FolderOpen, color: 'text-yellow-500' },
   series: { icon: Library, color: 'text-cyan-500' },
-  visionary: { icon: Telescope, color: 'text-emerald-500' },
   start: { icon: Sparkles, color: 'text-purple-500' },
 }
 
