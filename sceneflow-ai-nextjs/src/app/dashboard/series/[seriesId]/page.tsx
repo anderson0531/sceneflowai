@@ -99,6 +99,7 @@ export default function SeriesStudioPage() {
   const [genre, setGenre] = useState('any')
   const [tone, setTone] = useState('any')
   const [isIdeateDialogOpen, setIsIdeateDialogOpen] = useState(false)
+  const [isResonancePanelOpen, setIsResonancePanelOpen] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [resonanceAnalysis, setResonanceAnalysis] = useState<SeriesResonanceAnalysis | null>(null)
   
@@ -497,16 +498,24 @@ export default function SeriesStudioPage() {
                 </Button>
               )}
               {bible?.synopsis && (
-                <Button
-                  variant="outline"
-                  onClick={() => setIsEditStorylineOpen(true)}
-                  className="border-amber-500/50 text-amber-400 hover:bg-amber-500/10"
-                >
-                  <Edit2 className="w-4 h-4 mr-2" />
-                  Edit Storyline
-                </Button>
-              )}
               <Button
+                variant="outline"
+                onClick={() => setIsEditStorylineOpen(true)}
+                className="border-amber-500/50 text-amber-400 hover:bg-amber-500/10"
+              >
+                <Edit2 className="w-4 h-4 mr-2" />
+                Edit Storyline
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              onClick={() => setIsResonancePanelOpen(true)}
+              className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 shadow-sm"
+            >
+              <Target className="w-4 h-4 mr-2" />
+              Analyze Series
+            </Button>
+            <Button
                 onClick={() => setIsIdeateDialogOpen(true)}
                 className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg shadow-amber-500/25"
               >
@@ -648,13 +657,6 @@ export default function SeriesStudioPage() {
               <Palette className="w-4 h-4" />
               Visual Style
             </TabsTrigger>
-            <TabsTrigger 
-              value="resonance" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-cyan-400 data-[state=active]:border-cyan-500/30 gap-2"
-            >
-              <Target className="w-4 h-4" />
-              Resonance
-            </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -705,17 +707,6 @@ export default function SeriesStudioPage() {
               aesthetic={bible?.aesthetic}
               toneGuidelines={bible?.toneGuidelines}
               visualGuidelines={bible?.visualGuidelines}
-            />
-          </TabsContent>
-
-          {/* Resonance Analysis Tab */}
-          <TabsContent value="resonance">
-            <SeriesResonancePanel
-              series={series}
-              onAnalyze={handleAnalyzeResonance}
-              onApplyFix={handleApplyResonanceFix}
-              savedAnalysis={resonanceAnalysis}
-              onSeriesUpdated={refreshSeries}
             />
           </TabsContent>
         </Tabs>
@@ -918,6 +909,21 @@ export default function SeriesStudioPage() {
                 )}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Series Resonance Analysis Modal */}
+      <Dialog open={isResonancePanelOpen} onOpenChange={setIsResonancePanelOpen}>
+        <DialogContent className="bg-gray-950 border-gray-800 text-white max-w-6xl w-[95vw] h-[85vh] p-0 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
+            <SeriesResonancePanel
+              series={series}
+              onAnalyze={handleAnalyzeResonance}
+              onApplyFix={handleApplyResonanceFix}
+              savedAnalysis={resonanceAnalysis}
+              onSeriesUpdated={refreshSeries}
+            />
           </div>
         </DialogContent>
       </Dialog>
