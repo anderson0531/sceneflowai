@@ -1,19 +1,17 @@
 "use client";
 
 import { useState, useRef, useCallback } from 'react';
-import type { VisionaryReport } from '@/lib/visionary/types'
 
 export function useConceptGenerator() {
   const [concepts, setConcepts] = useState<any[] | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null);
-  const [partialBible, setPartialBible] = useState('');
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const generateConcepts = useCallback(async (report: any) => {
     setIsLoading(true);
     setError(null);
-    setPartialBible('');
+    setConcepts(null);
     abortControllerRef.current = new AbortController();
 
     try {
@@ -29,18 +27,11 @@ export function useConceptGenerator() {
         throw new Error(errData.error || `HTTP ${response.status}`);
       }
 
-      if (!response.body) {
-        throw new Error("Streaming body not available.");
+      const data = await response.json();
+      if (!data?.success || !Array.isArray(data?.concepts)) {
+        throw new Error(data?.error || 'Failed to parse concept generation response.');
       }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunkText = decoder.decode(value);
-        setPartialBible(prev => prev + chunkText);
-      }
+      setConcepts(data.concepts);
 
     } catch (e: any) {
       if (e.name !== 'AbortError') {
@@ -57,7 +48,8 @@ export function useConceptGenerator() {
       abortControllerRef.current = null;
     }
     setConcepts(null);
+    setIsLoading(false);
   }, []);
 
-  return { concepts, isLoading, error, generateConcepts, cancel, partialBible };
+  return { concepts, isLoading, error, generateConcepts, cancel };
 };

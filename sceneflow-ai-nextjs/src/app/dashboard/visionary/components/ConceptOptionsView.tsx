@@ -1,19 +1,17 @@
 "use client";
 
 import { motion } from 'framer-motion';
-import { PlayCircle, Globe, User, ChevronRight } from 'lucide-react';
+import { PlayCircle, Globe, User, ChevronRight, Loader2, Sparkles } from 'lucide-react';
 import { useStorylineGeneratorStore } from '@/store/useStorylineGeneratorStore';
 import { useRouter } from 'next/navigation';
-import { marked } from 'marked';
 
 interface ConceptOptionsViewProps {
   concepts: Concept[] | null;
   onSelect?: (concept: Concept) => void;
   isStreaming: boolean;
-  partialBible: string;
 }
 
-export function ConceptOptionsView({ concepts, onSelect, isStreaming, partialBible }: ConceptOptionsViewProps) {
+export function ConceptOptionsView({ concepts, onSelect, isStreaming }: ConceptOptionsViewProps) {
   const setSeriesGenerationInput = useStorylineGeneratorStore((state) => state.setSeriesGenerationInput);
   const router = useRouter();
 
@@ -41,12 +39,24 @@ export function ConceptOptionsView({ concepts, onSelect, isStreaming, partialBib
 
   if (isStreaming && !concepts) {
     return (
-      <div className="md:col-span-3 bg-gray-900/50 border border-emerald-500/20 rounded-xl p-6">
-        <h3 className="text-xl font-bold text-white mb-4">Generating Series Bible...</h3>
-        <div 
-          className="prose prose-invert prose-sm max-w-none" 
-          dangerouslySetInnerHTML={{ __html: marked(partialBible) }} 
-        />
+      <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/30 rounded-xl p-8">
+        <div className="max-w-xl mx-auto text-center space-y-4">
+          <motion.div
+            className="w-16 h-16 mx-auto rounded-2xl bg-emerald-500/15 border border-emerald-400/40 flex items-center justify-center"
+            animate={{ scale: [1, 1.08, 1], rotate: [0, 4, -4, 0] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <Sparkles className="w-7 h-7 text-emerald-300" />
+          </motion.div>
+          <h3 className="text-xl font-bold text-white">Generating concept variations...</h3>
+          <p className="text-sm text-gray-300">
+            We are synthesizing three market-aligned series directions from your report.
+          </p>
+          <div className="flex items-center justify-center gap-2 text-emerald-300 text-sm">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Please wait while we finalize your options
+          </div>
+        </div>
       </div>
     );
   }

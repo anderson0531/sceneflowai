@@ -8,9 +8,6 @@ import {
   Sparkles, 
   FileText, 
   Loader2,
-  BookOpen,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react'
 import { AnalysisOverlay } from './components/AnalysisOverlay'
 import { ArbitrageHeatMap } from './components/ArbitrageHeatMap'
@@ -48,7 +45,6 @@ export default function VisionaryPage() {
     isLoading: isGeneratingConcepts,
     error: conceptError,
     generateConcepts,
-    partialBible,
   } = useConceptGenerator()
 
   const [concept, setConcept] = useState('')
@@ -59,7 +55,6 @@ export default function VisionaryPage() {
   const [selectedReport, setSelectedReport] = useState<VisionaryReport | null>(null)
   const [selectedRegion, setSelectedRegion] = useState<LanguageOpportunity | null>(null)
   const [view, setView] = useState<'input' | 'analysis' | 'report' | 'history'>('input')
-  const [bibleExpanded, setBibleExpanded] = useState(false)
 
   const hasFetchedRef = useRef(false)
   const isFetchingRef = useRef(false)
@@ -161,7 +156,15 @@ export default function VisionaryPage() {
   }
 
   const activeReport = report || selectedReport
-  const bridgePlan = activeReport?.bridgePlan
+
+  const summarizeConceptTitle = (text: string) => {
+    const cleaned = text.replace(/\s+/g, ' ').trim()
+    if (!cleaned) return 'Market Insights Brief'
+    const sentence = cleaned.split(/[.!?]/)[0]?.trim() || cleaned
+    const words = sentence.split(' ').filter(Boolean)
+    if (words.length <= 12) return sentence
+    return `${words.slice(0, 12).join(' ')}...`
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-6 md:p-8">
@@ -179,7 +182,7 @@ export default function VisionaryPage() {
           </div>
           <div className="flex items-center gap-2">
             {view !== 'input' && (
-              <button onClick={() => { reset(); setSelectedReport(null); setView('input'); setBibleExpanded(false) }} className="px-4 py-2 text-sm font-medium bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">
+              <button onClick={() => { reset(); setSelectedReport(null); setView('input') }} className="px-4 py-2 text-sm font-medium bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">
                 New Analysis
               </button>
             )}
@@ -195,6 +198,11 @@ export default function VisionaryPage() {
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-center justify-between">
             <p className="text-sm text-red-400">{error}</p>
             <button onClick={reset} className="text-xs text-red-400 hover:text-red-300">Dismiss</button>
+          </motion.div>
+        )}
+        {conceptError && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+            <p className="text-sm text-red-300">Concept generation failed: {conceptError}</p>
           </motion.div>
         )}
 
@@ -247,39 +255,31 @@ export default function VisionaryPage() {
         {/* Report View */}
         {view === 'report' && activeReport && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-            {/* Series Bible (Phase 4 output) */}
-            {bridgePlan && (
-              <div className="bg-gray-800/60 border border-emerald-500/30 rounded-xl overflow-hidden">
-                <button
-                  onClick={() => setBibleExpanded(!bibleExpanded)}
-                  className="flex items-center justify-between w-full p-5 text-left hover:bg-gray-800/40 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                      <BookOpen className="w-4 h-4 text-emerald-400" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-semibold text-white">
-                        {activeReport.concept || 'Series Bible'}
-                      </h2>
-                      {activeReport.genre && (
-                        <span className="text-xs text-gray-400">{activeReport.genre}</span>
-                      )}
-                    </div>
-                  </div>
-                  {bibleExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
-                </button>
-                {bibleExpanded && (
-                  <div className="px-5 pb-5">
-                    <div className="prose prose-invert prose-sm max-w-none bg-gray-900/50 rounded-lg p-5 border border-gray-700/50 max-h-[500px] overflow-y-auto">
-                      <pre className="whitespace-pre-wrap font-sans text-sm text-gray-300 leading-relaxed">{bridgePlan}</pre>
-                    </div>
-                  </div>
-                )}
-              </div>
+            {/* Analysis heading */}
+            <div className="bg-gray-800/60 border border-emerald-500/20 rounded-xl p-5">
+              <p className="text-xs uppercase tracking-wider text-emerald-300/80 mb-2">
+                Analysis Focus
+              </p>
+              <h2 className="text-xl md:text-2xl font-semibold text-white leading-snug">
+                {summarizeConceptTitle(activeReport.concept || '')}
+              </h2>
+              {activeReport.genre && (
+                <p className="text-sm text-gray-400 mt-2">{activeReport.genre}</p>
+              )}
+            </div>
+
+            {/* Target Markets Grid */}
+            {activeReport.arbitrageMap && (
+              <ArbitrageHeatMap
+                data={activeReport.arbitrageMap}
+                onSelectRegion={setSelectedRegion}
+              />
             )}
 
-            {/* Generate Series Concepts CTA */}
+            {/* Market Analysis & Recommended Structure */}
+            <OpportunityReport report={activeReport} />
+
+            {/* Generate Series Concepts CTA (below Recommended Structure) */}
             {!concepts && (
               <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
@@ -309,20 +309,8 @@ export default function VisionaryPage() {
                 concepts={concepts}
                 onSelect={handleInitializeSeries}
                 isStreaming={isGeneratingConcepts}
-                partialBible={partialBible}
               />
             )}
-
-            {/* Target Markets Grid */}
-            {activeReport.arbitrageMap && (
-              <ArbitrageHeatMap
-                data={activeReport.arbitrageMap}
-                onSelectRegion={setSelectedRegion}
-              />
-            )}
-
-            {/* Market Analysis & Recommended Structure */}
-            <OpportunityReport report={activeReport} />
           </motion.div>
         )}
 
