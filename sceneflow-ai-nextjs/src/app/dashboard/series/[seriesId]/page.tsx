@@ -108,24 +108,32 @@ export default function SeriesStudioPage() {
   // Processing overlay for generation
   const { execute: executeWithOverlay } = useProcessWithOverlay()
 
+  // Track if we've auto-opened the dialog in this session to prevent loops
+  const [hasAutoOpened, setHasAutoOpened] = useState(false)
+
   // Open ideation with pre-filled topic from Market Insights, or empty bible for new series
   useEffect(() => {
-    if (!series) return
+    if (!series || hasAutoOpened) return
 
-    const meta = series.metadata as Record<string, unknown> | undefined
-    const seed = typeof meta?.ideaTopic === 'string' ? meta.ideaTopic : ''
-    const fromMarket = meta?.source === 'market_insights'
+    const hasContent = !!(series.productionBible?.synopsis || series.productionBible?.logline)
+    
+    // Only auto-open for brand new series without a generated storyline
+    if (!hasContent) {
+      const meta = series.metadata as Record<string, unknown> | undefined
+      const seed = typeof meta?.ideaTopic === 'string' ? meta.ideaTopic : ''
+      const fromMarket = meta?.source === 'market_insights'
 
-    if (fromMarket && seed.trim()) {
-      setIdeaTopic(seed)
+      if (fromMarket && seed.trim()) {
+        setIdeaTopic(seed)
+        setIsIdeateDialogOpen(true)
+        setHasAutoOpened(true)
+        return
+      }
+
       setIsIdeateDialogOpen(true)
-      return
+      setHasAutoOpened(true)
     }
-
-    if (!series.productionBible?.synopsis && !series.productionBible?.logline) {
-      setIsIdeateDialogOpen(true)
-    }
-  }, [series])
+  }, [series, hasAutoOpened])
 
   const handleIdeateDialogOpenChange = useCallback((open: boolean) => {
     setIsIdeateDialogOpen(open)
