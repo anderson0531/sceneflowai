@@ -67,12 +67,18 @@ Always respond with valid JSON matching the requested schema.`
 export function buildGapAnalysisPrompt(
   concept: string,
   marketScanJson: string,
-  genre?: string
+  genre?: string,
+  targetRegions?: string[]
 ): string {
+  const regionBias = targetRegions?.length
+    ? `The creator's priority markets (weight gaps and fit toward these): ${targetRegions.join(', ')} (ISO 3166-1 alpha-2).`
+    : ''
+
   return `Given this concept and market scan data, identify content gaps and evaluate fit:
 
 CONCEPT: "${concept}"
 ${genre ? `GENRE: "${genre}"` : ''}
+${regionBias}
 
 MARKET SCAN DATA:
 ${marketScanJson}
@@ -115,18 +121,68 @@ IF YOU HAVE THOUGHTS, THEY MUST BE EMITTED VIA THE NATIVE 'THOUGHT' FIELD ONLY.
 You are an international YouTube Content Strategist and Creative Director specializing in multi-language audience growth.
 Analyze supply-demand gaps across language/region combinations to find the best localization opportunities.
 Treat the input not as a 'course' to be taught, but as an 'Entertainment Experience' to be consumed. The goal isn't 'Learning Outcomes,' it's 'Average View Duration (AVD)' and 'Subscriber Conversion.'
-Return a maximum of 5 high-impact opportunities. For each 'culturalNotes' field, limit the description to 2 sentences maximum.
+When the user prompt includes "USER-SELECTED TARGET MARKETS", return exactly one opportunity per listed region code and ignore any other opportunity-count guidance. Otherwise return up to 12 high-impact opportunities. For each 'culturalNotes' field, limit the description to 2 sentences maximum.
 Ensure the JSON is valid and complete. Always respond with valid JSON matching the requested schema.`
 
 export function buildArbitragePrompt(
   concept: string,
   gapAnalysisJson: string,
-  focusLanguages?: string[]
+  focusLanguages?: string[],
+  targetRegions?: string[]
 ): string {
   const langFilter = focusLanguages?.length
     ? `Focus especially on these languages: ${focusLanguages.join(', ')}.`
     : 'Consider all major world languages.'
-  
+
+  if (targetRegions?.length) {
+    const codes = targetRegions.map((c) => String(c).toUpperCase()).join(', ')
+    const n = targetRegions.length
+    return `Analyze language/region arbitrage for this concept.
+
+CONCEPT: "${concept}"
+
+=== USER-SELECTED TARGET MARKETS (STRICT) ===
+The creator chose ONLY these ISO 3166-1 alpha-2 territory codes: ${codes}
+You MUST return EXACTLY ${n} objects in "opportunities" — one per code above, IN THAT ORDER.
+Each object MUST use "region" equal to that exact code (uppercase). Pick the primary YouTube / localization language for that territory (e.g. US→en, IN→hi, TH→th).
+Do NOT add any other countries or regions. "topRegions" must contain ONLY these same ${n} regions (same order). Score each market on its own merits (demand, supply gap, cultural fit).
+${langFilter}
+
+GAP ANALYSIS DATA:
+${gapAnalysisJson}
+
+Return a JSON object with this exact structure:
+{
+  "opportunities": [
+    {
+      "language": "string (BCP 47 code, e.g. 'es', 'pt-BR', 'hi')",
+      "languageName": "string (e.g. 'Spanish')",
+      "region": "string (ISO 3166-1 alpha-2, e.g. 'MX')",
+      "regionName": "string (e.g. 'Mexico')",
+      "supplyScore": number (0-100, how much content exists),
+      "demandScore": number (0-100, audience interest),
+      "arbitrageScore": number (0-100, demand-supply gap),
+      "estimatedAudience": "string (e.g. '45M potential viewers')",
+      "revenuePotential": "high" | "medium" | "low",
+      "culturalNotes": "string (adaptation considerations)",
+      "optimizedTitle": "string (A high-CTR title for this market)",
+      "optimizedCreativeBrief": "string (A 2-3 sentence brief for this market)"
+    }
+  ],
+  "topRegions": [
+    {
+      "region": "string (ISO code)",
+      "regionName": "string",
+      "totalArbitrageScore": number,
+      "topLanguages": ["string (language names)"]
+    }
+  ],
+  "globalInsight": "string (one paragraph: strategy limited to these ${n} markets only)"
+}
+
+Return EXACTLY ${n} opportunities and EXACTLY ${n} topRegions entries — no extras.`
+  }
+
   return `Analyze language/region arbitrage opportunities for this concept:
 
 CONCEPT: "${concept}"

@@ -142,12 +142,16 @@ export function useVisionaryAnalysis() {
       }
 
       clearTimers()
+      const targetRegions =
+        input.regions?.length ? input.regions : input.targetRegions?.length ? input.targetRegions : undefined
+
       const finalReport: VisionaryReport = {
         ...(metadata as any),
         concept: input.concept,
         genre: input.genre,
         bridgePlan: fullBible,
         status: 'complete',
+        ...(targetRegions?.length ? { targetRegions } : {}),
       }
       setReport(finalReport)
       setPhase('complete')

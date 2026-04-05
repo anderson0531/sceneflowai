@@ -57,6 +57,7 @@ export async function GET(
         arbitrageMap: report.arbitrage_map,
         bridgePlan: report.bridge_plan,
         overallScore: report.overall_score,
+        targetRegions: report.target_regions ?? undefined,
         creditsUsed: report.credits_used,
         errorMessage: report.error_message,
         createdAt: report.created_at?.toISOString(),

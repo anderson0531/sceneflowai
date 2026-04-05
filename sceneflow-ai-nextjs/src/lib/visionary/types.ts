@@ -182,6 +182,9 @@ export interface VisionaryReport {
   /** Phase 4 output — streamed Series Bible text */
   bridgePlan?: string
 
+  /** ISO 3166-1 alpha-2 codes the user chose before analysis (optional) */
+  targetRegions?: string[]
+
   /** Derived overall score (conceptFit + avg arbitrage) */
   overallScore?: number
   /** Radar chart axes derived from phase data */
@@ -198,6 +201,8 @@ export interface CreateAnalysisRequest {
   concept: string
   genre?: string
   targetRegions?: string[]
+  /** ISO region codes — Market Insights form sends this; analyze route reads as `regions` */
+  regions?: string[]
   focusLanguages?: string[]
   projectId?: string
 }

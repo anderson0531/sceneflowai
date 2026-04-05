@@ -88,6 +88,7 @@ export default function VisionaryPage() {
 
   const hasFetchedRef = useRef(false)
   const isFetchingRef = useRef(false)
+  const marketsSeedKeyRef = useRef<string>('')
 
   const fetchReports = useCallback(async (force = false) => {
     if (isFetchingRef.current) return
@@ -127,11 +128,34 @@ export default function VisionaryPage() {
 
   useEffect(() => {
     const opps = activeReport?.arbitrageMap?.opportunities
-    if (opps?.length && selectedMarkets.length === 0) {
-      const top3 = [...opps].sort((a, b) => (b.arbitrageScore ?? 0) - (a.arbitrageScore ?? 0)).slice(0, 3)
-      setSelectedMarkets(top3)
+    if (!opps?.length || !activeReport) return
+
+    const targets = (activeReport.targetRegions ?? [])
+      .map((c) => String(c).toUpperCase())
+      .filter(Boolean)
+    const seedKey = [
+      activeReport.id ?? 'live',
+      activeReport.concept ?? '',
+      targets.join(','),
+      opps.map((o) => `${o.region}:${o.arbitrageScore}`).join('|'),
+    ].join('§')
+    if (marketsSeedKeyRef.current === seedKey) return
+    marketsSeedKeyRef.current = seedKey
+
+    let next: LanguageOpportunity[] = []
+    if (targets.length > 0) {
+      for (const code of targets) {
+        const candidates = opps.filter((o) => String(o.region).toUpperCase() === code)
+        if (!candidates.length) continue
+        candidates.sort((a, b) => (b.arbitrageScore ?? 0) - (a.arbitrageScore ?? 0))
+        next.push(candidates[0])
+      }
     }
-  }, [activeReport?.arbitrageMap?.opportunities]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (next.length === 0) {
+      next = [...opps].sort((a, b) => (b.arbitrageScore ?? 0) - (a.arbitrageScore ?? 0)).slice(0, 3)
+    }
+    setSelectedMarkets(next)
+  }, [activeReport])
 
   const toggleRegion = (code: string) => {
     setSelectedRegions(prev =>
@@ -155,7 +179,7 @@ export default function VisionaryPage() {
       genre: genre.trim() || undefined,
       regions: selectedRegions.length > 0 ? selectedRegions : undefined,
       userEmail: session?.user?.email || '',
-    } as any)
+    })
   }
 
   const handleInitializeSeries = async (conceptData: any) => {
@@ -235,7 +259,7 @@ export default function VisionaryPage() {
           </div>
           <div className="flex items-center gap-2">
             {view !== 'input' && (
-              <button onClick={() => { reset(); setSelectedReport(null); setSelectedMarkets([]); setView('input') }} className="px-4 py-2 text-sm font-medium bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">
+              <button onClick={() => { reset(); setSelectedReport(null); setSelectedMarkets([]); marketsSeedKeyRef.current = ''; setView('input') }} className="px-4 py-2 text-sm font-medium bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">
                 New Analysis
               </button>
             )}
@@ -387,6 +411,7 @@ export default function VisionaryPage() {
                 onSelectRegion={setSelectedRegion}
                 selectedMarkets={selectedMarkets}
                 onToggleMarket={toggleMarket}
+                targetRegionCodes={activeReport.targetRegions}
               />
             )}
 
