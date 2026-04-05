@@ -2,14 +2,13 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, BarChart3, Globe2, BookOpen, CheckCircle2, X, Loader2 } from 'lucide-react'
+import { Search, BarChart3, Globe2, CheckCircle2, X, Loader2 } from 'lucide-react'
 import type { VisionaryPhase, VisionaryPhaseProgress } from '@/lib/visionary/types'
 
 const PHASES: { key: VisionaryPhase; label: string; description: string; icon: typeof Search }[] = [
   { key: 'market-scan', label: 'Market Scan', description: 'Scanning global content landscape', icon: Search },
   { key: 'gap-analysis', label: 'Gap Analysis', description: 'Identifying underserved niches', icon: BarChart3 },
   { key: 'arbitrage-map', label: 'Opportunity Map', description: 'Mapping regional opportunities', icon: Globe2 },
-  { key: 'bridge-plan', label: 'Series Bible', description: 'Generating production framework', icon: BookOpen },
 ]
 
 function getConceptTokens(concept: string): string[] {
@@ -71,11 +70,6 @@ export function AnalysisOverlay({
         `Localizing "${p}" for high-revenue regions...`,
         `Optimizing for global resonance...`,
         `Calculating regional arbitrage for "${s}"...`,
-      ],
-      'bridge-plan': [
-        `Generating Series Bible for "${p}"...`,
-        `Crafting narrative arcs and characters...`,
-        `Building production framework...`,
       ],
     }
     return map[phase] || ['Processing...']

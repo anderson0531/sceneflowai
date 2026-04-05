@@ -11,12 +11,11 @@ import type {
 /**
  * useVisionaryAnalysis — Multi-phase analysis state machine
  *
- * Orchestrates the 4-phase Visionary Engine analysis pipeline:
- * 1. Market Scan  2. Gap Analysis  3. Arbitrage Map  4. Series Bible (streamed)
+ * Orchestrates the 3-phase Visionary Engine analysis pipeline:
+ * 1. Market Scan  2. Gap Analysis  3. Opportunity Map (Arbitrage)
  *
- * The server runs phases 1-3 synchronously, then streams phase 4.
- * The response body starts with a JSON metadata line (phases 1-3 results),
- * followed by the streamed Series Bible text.
+ * The server runs all three phases, then returns a JSON metadata line
+ * followed by optional streamed text (bridge plan).
  */
 export function useVisionaryAnalysis() {
   const [phase, setPhase] = useState<VisionaryPhase>('idle')
@@ -57,36 +56,39 @@ export function useVisionaryAnalysis() {
 
     const userEmail = input.userEmail || ''
 
-    // Smooth progress simulation while the server works on phases 1-3
+    // Smooth progress simulation across the 3 analysis phases.
+    // Each phase owns ~33% of the bar. The timer eases toward
+    // the phase ceiling, then auto-advances to the next phase.
     let simulatedProgress = 2
-    const phaseTargets: Record<string, number> = {
-      'market-scan': 33,
-      'gap-analysis': 66,
-      'arbitrage-map': 98,
+    const phaseOrder: VisionaryPhase[] = ['market-scan', 'gap-analysis', 'arbitrage-map']
+    const phaseCeiling: Record<string, number> = {
+      'market-scan': 30,
+      'gap-analysis': 62,
+      'arbitrage-map': 92,
     }
 
     progressTimerRef.current = setInterval(() => {
       const currentPhase = phaseRef.current
-      const target = phaseTargets[currentPhase] || 98
-      const remaining = target - simulatedProgress
+      const ceiling = phaseCeiling[currentPhase] ?? 92
+      const remaining = ceiling - simulatedProgress
 
-      if (remaining > 0.5) {
-        simulatedProgress += remaining * 0.05 
-      } else if (currentPhase !== 'arbitrage-map') {
-        const order: VisionaryPhase[] = ['market-scan', 'gap-analysis', 'arbitrage-map']
-        const nextIdx = order.indexOf(currentPhase) + 1
-        if (nextIdx < order.length) {
-          setPhase(order[nextIdx])
-          simulatedProgress += 1 
+      if (remaining > 1) {
+        simulatedProgress += remaining * 0.04
+      } else {
+        const idx = phaseOrder.indexOf(currentPhase)
+        if (idx >= 0 && idx < phaseOrder.length - 1) {
+          const next = phaseOrder[idx + 1]
+          setPhase(next)
+          simulatedProgress = (phaseCeiling[currentPhase] ?? simulatedProgress) + 1
         }
       }
 
-      setProgress(prev => ({ 
-        ...prev, 
+      setProgress(prev => ({
+        ...prev,
         phase: phaseRef.current,
-        progress: Math.round(simulatedProgress) 
+        progress: Math.round(Math.min(simulatedProgress, 95)),
       }))
-    }, 500)
+    }, 600)
 
     try {
       const createRes = await fetch('/api/visionary/analyze', {
@@ -123,8 +125,7 @@ export function useVisionaryAnalysis() {
                 const parsed = JSON.parse(firstLine)
                 if (parsed.__metadata) {
                   metadata = parsed.__metadata
-                  setPhase('bridge-plan')
-                  simulatedProgress = 99
+                  simulatedProgress = 96
                 }
               } catch {
                 fullBible += firstLine
@@ -137,13 +138,6 @@ export function useVisionaryAnalysis() {
 
           fullBible += buffer
           buffer = ''
-
-          setProgress(prev => ({ 
-            ...prev, 
-            phase: 'bridge-plan',
-            message: `Generating Series Bible...`,
-            progress: 99 
-          }))
         }
       }
 
