@@ -67,6 +67,16 @@ export function SeriesResonancePanel({
   const [showEpisodeDetails, setShowEpisodeDetails] = useState(false)
   const [selectedEpisode, setSelectedEpisode] = useState<number | null>(null)
   
+  // Update local state if the savedAnalysis prop changes
+  React.useEffect(() => {
+    if (savedAnalysis) {
+      setAnalysis(savedAnalysis)
+      if (savedAnalysis.appliedFixes) {
+        setAppliedFixes(savedAnalysis.appliedFixes)
+      }
+    }
+  }, [savedAnalysis])
+  
   // Handle analyze
   const handleAnalyze = useCallback(async () => {
     setIsAnalyzing(true)
