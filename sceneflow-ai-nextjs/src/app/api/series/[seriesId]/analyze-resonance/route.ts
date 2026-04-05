@@ -203,6 +203,21 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         analyzedAt: timestamp,
         episodeCount: episodes.length,
         version: '1.1'
+      },
+      metadata: {
+        ...(series.metadata || {}),
+        resonance_analysis: {
+          ...analysis,
+          appliedFixes: existingAppliedFixes,
+          iterationCount: currentIteration,
+          previousScore,
+          isProductionReady,
+          suggestedAction,
+          scoreTrend,
+          analyzedAt: timestamp,
+          episodeCount: episodes.length,
+          version: '1.1'
+        }
       }
     })
     

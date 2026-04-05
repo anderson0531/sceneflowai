@@ -37,6 +37,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Select,
@@ -66,6 +67,35 @@ import type {
   SeriesLocationResponse,
   EpisodeBlueprintResponse
 } from '@/types/series'
+
+// Common optimization templates for Edit Storyline
+const STORYLINE_INSTRUCTION_TEMPLATES = [
+  {
+    id: 'raise-stakes',
+    label: 'Raise the Stakes',
+    text: 'Increase the tension and raise the stakes for the main characters across the series.'
+  },
+  {
+    id: 'deepen-antagonist',
+    label: 'Deepen Antagonist',
+    text: 'Make the antagonist more complex, giving them clearer and more relatable motivations.'
+  },
+  {
+    id: 'improve-pacing',
+    label: 'Improve Pacing',
+    text: 'Adjust the pacing to ensure a stronger mid-season hook and a more explosive finale.'
+  },
+  {
+    id: 'flesh-out-world',
+    label: 'Flesh Out the World',
+    text: 'Add more rich details about the setting, lore, and rules of the world.'
+  },
+  {
+    id: 'stronger-character-arcs',
+    label: 'Stronger Character Arcs',
+    text: 'Give the protagonist and main supporting characters more distinct emotional journeys.'
+  }
+]
 
 export default function SeriesStudioPage() {
   const params = useParams()
@@ -101,13 +131,31 @@ export default function SeriesStudioPage() {
   const [isIdeateDialogOpen, setIsIdeateDialogOpen] = useState(false)
   const [isResonancePanelOpen, setIsResonancePanelOpen] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const [resonanceAnalysis, setResonanceAnalysis] = useState<SeriesResonanceAnalysis | null>(null)
+  
+  // Get initial analysis from series if available
+  const [resonanceAnalysis, setResonanceAnalysis] = useState<SeriesResonanceAnalysis | null>(() => {
+    // We'll safely parse the stored resonance_analysis in a useEffect instead
+    return null
+  })
+  
+  // Initialize analysis from series prop when it loads/changes
+  useEffect(() => {
+    if (series?.metadata?.resonance_analysis) {
+      setResonanceAnalysis(series.metadata.resonance_analysis as SeriesResonanceAnalysis)
+    }
+  }, [series?.metadata?.resonance_analysis])
   
   // Edit Storyline dialog state
   const [isEditStorylineOpen, setIsEditStorylineOpen] = useState(false)
   const [editInstruction, setEditInstruction] = useState('')
   const [editTargetAspect, setEditTargetAspect] = useState<'all' | 'plot' | 'characters' | 'episodes' | 'tone' | 'setting'>('all')
   const [isEditingStoryline, setIsEditingStoryline] = useState(false)
+  
+  // Edit Title dialog state
+  const [isEditTitleOpen, setIsEditTitleOpen] = useState(false)
+  const [newTitle, setNewTitle] = useState('')
+  const [isGeneratingTitles, setIsGeneratingTitles] = useState(false)
+  const [titleRecommendations, setTitleRecommendations] = useState<string[]>([])
   
   // Processing overlay for generation
   const { execute: executeWithOverlay } = useProcessWithOverlay()
@@ -272,6 +320,14 @@ export default function SeriesStudioPage() {
       operationType: 'series-analysis'
     })
     
+    // Also update the series data locally so the score persists without a full refresh immediately
+    if (series) {
+      series.metadata = {
+        ...(series.metadata || {}),
+        resonance_analysis: result
+      }
+    }
+    
     setResonanceAnalysis(result)
     return result
   }, [series, executeWithOverlay])
@@ -365,6 +421,48 @@ export default function SeriesStudioPage() {
       setIsEditingStoryline(false)
     }
   }, [series, editInstruction, editTargetAspect, executeWithOverlay, refreshSeries])
+
+  // Title edit handlers
+  const handleOpenEditTitle = () => {
+    setNewTitle(series?.title || '')
+    setTitleRecommendations([])
+    setIsEditTitleOpen(true)
+  }
+
+  const handleSaveTitle = async () => {
+    if (!newTitle.trim() || !series) return;
+    try {
+      await updateSeries({ title: newTitle.trim() });
+      toast.success('Series title updated');
+      setIsEditTitleOpen(false);
+      await refreshSeries();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update title');
+    }
+  }
+
+  const handleGenerateTitles = async () => {
+    if (!series) return;
+    setIsGeneratingTitles(true);
+    try {
+      const response = await fetch(`/api/series/${series.id}/generate-titles`, {
+        method: 'POST'
+      });
+      if (!response.ok) throw new Error('Failed to generate titles');
+      const data = await response.json();
+      setTitleRecommendations(data.titles || []);
+    } catch (err) {
+      toast.error('Failed to generate title recommendations');
+    } finally {
+      setIsGeneratingTitles(false);
+    }
+  }
+
+  const handleEditSpecificEpisode = (episodeNumber: number) => {
+    setEditTargetAspect('episodes')
+    setEditInstruction(`For Episode ${episodeNumber}:\n`)
+    setIsEditStorylineOpen(true)
+  }
 
   if (isLoading) {
     return (
@@ -480,9 +578,19 @@ export default function SeriesStudioPage() {
                     Bible v{bible?.version || '1.0.0'}
                   </span>
                 </div>
-                <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
-                  {series.title}
-                </h1>
+                <div className="group flex items-center gap-2 mb-2">
+                  <h1 className="text-3xl lg:text-4xl font-bold text-white">
+                    {series.title}
+                  </h1>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={handleOpenEditTitle}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 rounded-full bg-gray-800/50 hover:bg-gray-700"
+                  >
+                    <Edit2 className="w-4 h-4 text-gray-400 hover:text-white" />
+                  </Button>
+                </div>
                 <p className="text-gray-400 text-sm max-w-xl line-clamp-2">
                   {bible?.logline || series.logline || 'Generate a storyline to get started with your series.'}
                 </p>
@@ -513,7 +621,7 @@ export default function SeriesStudioPage() {
               className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 shadow-sm"
             >
               <Target className="w-4 h-4 mr-2" />
-              Analyze Series
+              {resonanceAnalysis?.greenlightScore?.score ? `Score: ${resonanceAnalysis.greenlightScore.score}` : 'Analyze Series'}
             </Button>
             <Button
                 onClick={() => setIsIdeateDialogOpen(true)}
@@ -675,6 +783,7 @@ export default function SeriesStudioPage() {
               seriesId={series.id}
               onStartEpisode={handleStartEpisode}
               onSelectEpisode={setSelectedEpisodeId}
+              onEditEpisode={handleEditSpecificEpisode}
               selectedEpisodeId={selectedEpisodeId}
               isStarting={isStartingEpisode}
               maxEpisodes={series.maxEpisodes}
@@ -860,6 +969,24 @@ export default function SeriesStudioPage() {
                 autoFocus
               />
             </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Recommendations & Quick Edits
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {STORYLINE_INSTRUCTION_TEMPLATES.map(t => (
+                  <Badge 
+                    key={t.id} 
+                    variant="outline" 
+                    className="cursor-pointer hover:bg-amber-500/10 hover:text-amber-400 border-gray-700 transition-colors"
+                    onClick={() => setEditInstruction(prev => prev ? `${prev}\n${t.text}` : t.text)}
+                  >
+                    {t.label}
+                  </Badge>
+                ))}
+              </div>
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -913,10 +1040,93 @@ export default function SeriesStudioPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Title Dialog */}
+      <Dialog open={isEditTitleOpen} onOpenChange={setIsEditTitleOpen}>
+        <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-md">
+          <DialogHeader className="pb-4 border-b border-gray-700/50">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center border border-gray-700">
+                <BookOpen className="w-4 h-4 text-gray-400" />
+              </div>
+              <span>Edit Series Title</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Title
+              </label>
+              <Input
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                className="bg-gray-800 border-gray-700 text-white focus:border-cyan-500/50"
+                placeholder="Enter series title"
+                autoFocus
+              />
+            </div>
+            
+            <div className="pt-2">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-300">
+                  AI Recommendations
+                </label>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleGenerateTitles}
+                  disabled={isGeneratingTitles}
+                  className="h-8 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                >
+                  {isGeneratingTitles ? (
+                    <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3.5 h-3.5 mr-1" />
+                  )}
+                  Generate Ideas
+                </Button>
+              </div>
+              
+              {titleRecommendations.length > 0 && (
+                <div className="flex flex-col gap-2 mt-3">
+                  {titleRecommendations.map((titleOption, idx) => (
+                    <div 
+                      key={idx}
+                      className="flex items-center justify-between p-2.5 rounded-lg border border-gray-700 bg-gray-800/50 hover:bg-gray-800 cursor-pointer transition-colors"
+                      onClick={() => setNewTitle(titleOption)}
+                    >
+                      <span className="text-sm">{titleOption}</span>
+                      <Check className={`w-4 h-4 ${newTitle === titleOption ? 'text-cyan-400' : 'text-transparent'}`} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 pt-4 border-t border-gray-700/50 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => setIsEditTitleOpen(false)}
+                className="flex-1 border-gray-600 hover:bg-gray-800"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveTitle}
+                disabled={!newTitle.trim() || newTitle === series?.title}
+                className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700"
+              >
+                Save Title
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Series Resonance Analysis Modal */}
       <Dialog open={isResonancePanelOpen} onOpenChange={setIsResonancePanelOpen}>
-        <DialogContent className="bg-gray-950 border-gray-800 text-white max-w-6xl w-[95vw] h-[85vh] p-0 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto">
+        <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-6xl w-[95vw] h-[85vh] p-6 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
             <SeriesResonancePanel
               series={series}
               onAnalyze={handleAnalyzeResonance}
@@ -1237,6 +1447,7 @@ interface EpisodesPanelProps {
   selectedEpisodeId: string | null
   isStarting: boolean
   isAddingEpisodes: boolean
+  onEditEpisode?: (episodeNumber: number) => void
 }
 
 function EpisodesPanel({
@@ -1248,7 +1459,8 @@ function EpisodesPanel({
   onAddMoreEpisodes,
   selectedEpisodeId,
   isStarting,
-  isAddingEpisodes
+  isAddingEpisodes,
+  onEditEpisode
 }: EpisodesPanelProps) {
   const selectedEpisode = episodes.find(ep => ep.id === selectedEpisodeId)
   const canAddMore = episodes.length < maxEpisodes
@@ -1309,6 +1521,17 @@ function EpisodesPanel({
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xs font-medium text-amber-400">EPISODE {selectedEpisode.episodeNumber}</span>
                   <EpisodeStatusBadge status={selectedEpisode.status} />
+                  {onEditEpisode && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 text-gray-500 hover:text-white ml-2"
+                      onClick={() => onEditEpisode(selectedEpisode.episodeNumber)}
+                      title="Edit Episode"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </Button>
+                  )}
                 </div>
                 <h2 className="text-2xl font-bold text-white">{selectedEpisode.title}</h2>
                 <p className="text-gray-400 mt-2">{selectedEpisode.logline}</p>
