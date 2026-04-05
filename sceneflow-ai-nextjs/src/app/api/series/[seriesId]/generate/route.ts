@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
 export const maxDuration = 600 // Allow 10 minutes for full series generation
 
 // Generation configuration
-const EPISODE_BATCH_SIZE = 5 // Generate in batches of 5 for reliable JSON parsing
+const EPISODE_BATCH_SIZE = 2 // Reduced from 5 to 2 to prevent Vercel out-of-memory errors
 const MAX_OUTPUT_TOKENS = 16384 // Token limit for series generation
 const GENERATION_TIMEOUT_MS = 90000 // 90 second timeout per batch
 /** Full storyline generation is memory-heavy; cap episodes per request on serverless (override via env). */
@@ -371,8 +371,8 @@ CRITICAL: Each episode must advance the overall series arc. Include "storyThread
 `
   }
   
-  // Phase 1: Generate series bible and first batch of episodes
-  const firstBatchSize = Math.min(episodeCount, EPISODE_BATCH_SIZE)
+  // Phase 1: Generate series bible ONLY (0 episodes) to prevent memory limits
+  const firstBatchSize = 0
   
   const biblePrompt = `${personaInstruction}
 
@@ -380,7 +380,7 @@ TOPIC: ${topic}
 ${options.genre ? `GENRE: ${options.genre}` : ''}
 ${options.tone ? `TONE: ${options.tone}` : ''}
 TOTAL PLANNED EPISODES/INSTALLMENTS: ${episodeCount}
-TO GENERATE NOW: ${firstBatchSize}
+TO GENERATE NOW: 0
 
 Create a series bible that can sustain ${episodeCount} episodes/installments with compelling arcs.
 
@@ -389,12 +389,7 @@ Generate:
 2. Logline (1-2 sentences, hooks the audience)
 3. Setting (vivid, specific), Protagonist (name, goal, fatal flaw), Antagonist/Conflict
 4. Synopsis (2 paragraphs covering the full series arc)
-5. ${firstBatchSize} episodes with:
-   - title, logline, synopsis
-   - 3 story beats (opening/conflict/resolution or appropriate segments)
-   - storyThreads: ongoing narrative threads introduced or developed
-   - plotDevelopments: key events affecting future episodes
-   - episodeHook: cliffhanger or setup for next episode
+5. Comprehensive characters and locations arrays.
 
 ${mappingInstruction}
 
@@ -421,25 +416,7 @@ Return ONLY valid JSON:
     "visualGuidelines": "Cinematography and visual approach",
     "seriesArcs": ["Main arc description", "Subplot arc description"]
   },
-  "episodeBlueprints": [
-    {
-      "id": "ep_1",
-      "episodeNumber": 1,
-      "title": "Episode Title",
-      "logline": "One sentence hook",
-      "synopsis": "Full episode summary",
-      "beats": [
-        {"beatNumber": 1, "title": "Opening", "description": "Setup", "act": 1},
-        {"beatNumber": 2, "title": "Conflict", "description": "Rising action", "act": 2},
-        {"beatNumber": 3, "title": "Resolution", "description": "Climax/cliffhanger", "act": 3}
-      ],
-      "characters": [{"characterId": "char_1", "role": "protagonist"}],
-      "storyThreads": [{"id": "thread_1", "name": "Thread Name", "type": "main|subplot|character|mystery|romance", "status": "introduced|developing|climax|resolved", "description": "What this thread explores"}],
-      "plotDevelopments": ["Key event 1", "Key revelation 2"],
-      "episodeHook": "Cliffhanger or setup for next episode",
-      "status": "blueprint"
-    }
-  ]
+  "episodeBlueprints": []
 }`
 
   const bibleResponse = await callLLM(

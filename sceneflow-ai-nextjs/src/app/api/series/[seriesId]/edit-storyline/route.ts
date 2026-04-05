@@ -21,7 +21,7 @@ interface RouteParams {
   params: Promise<{ seriesId: string }>
 }
 
-const EPISODE_BATCH_SIZE = 3
+const EPISODE_BATCH_SIZE = 2
 
 /**
  * Safe JSON parse with repair - handles truncated responses, markdown wrapping, and common LLM issues
