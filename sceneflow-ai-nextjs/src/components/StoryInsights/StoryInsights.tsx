@@ -26,10 +26,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { MarketOutlook } from './MarketOutlook';
-import { useSeriesBibleGenerator } from '@/hooks/useSeriesBibleGenerator';
-import { SeriesBible } from '@/types/visionary';
-import { SeriesBibleView } from './SeriesBibleView';
 
 interface StoryInsightsProps {
   currentStoryData: any; // Replace with actual story data type
@@ -81,18 +77,6 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'applied' | 'dismissed'>('all');
   const [sortBy, setSortBy] = useState<'impact' | 'confidence' | 'title'>('impact');
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [activeTab, setActiveTab] = useState<'notes' | 'market'>('notes');
-  const [selectedMarket, setSelectedMarket] = useState<any | null>(null);
-
-  const { seriesBible, isLoading: isGenerating, generateBible } = useSeriesBibleGenerator();
-
-  const handleMarketSelect = (market: any) => {
-    setSelectedMarket(market);
-    generateBible({
-      originalConcept: currentStoryData.concept,
-      selectedMarket: market,
-    });
-  };
   
   const filteredRecommendations = (recommendations ?? [])
     .filter(rec => filterStatus === 'all' || rec?.status === filterStatus)
@@ -213,7 +197,7 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
         {!isCollapsed && (
           <div className="flex items-center gap-2">
             <h3 className="text-lg font-bold text-white">
-              {activeTab === 'notes' ? "Director's Notes" : "Market Outlook"}
+              Director's Notes
             </h3>
           </div>
         )}
@@ -244,32 +228,8 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
       {/* Content */}
       {!isCollapsed && (
         <>
-          <div className="p-2 bg-gray-800/50">
-            <div className="flex gap-2">
-              <Button
-                variant={activeTab === 'notes' ? 'secondary' : 'ghost'}
-                size="sm"
-                className="w-full"
-                onClick={() => setActiveTab('notes')}
-              >
-                <Shield className="w-4 h-4 mr-2" />
-                Director&apos;s Notes
-              </Button>
-              <Button
-                variant={activeTab === 'market' ? 'secondary' : 'ghost'}
-                size="sm"
-                className="w-full"
-                onClick={() => setActiveTab('market')}
-              >
-                <Globe className="w-4 h-4 mr-2" />
-                Market Outlook
-              </Button>
-            </div>
-          </div>
-
           <div className="flex-1 overflow-y-auto">
-            {activeTab === 'notes' ? (
-              <div className="p-4">
+            <div className="p-4">
                 {/* Mode Toggle */}
                 <div className="mb-4">
                   <Button
@@ -378,15 +338,6 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
                   Start New Project
                 </Button>
               </div>
-            ) : selectedMarket && seriesBible ? (
-              <SeriesBibleView bible={seriesBible} marketContext={selectedMarket} />
-            ) : selectedMarket && isGenerating ? (
-              <div className="text-center py-12">
-                <p>Generating Series Bible for {selectedMarket.regionName}...</p>
-              </div>
-            ) : (
-              <MarketOutlook onMarketSelect={handleMarketSelect} />
-            )}
           </div>
         </>
       )}

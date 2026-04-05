@@ -25,7 +25,8 @@ import {
   Eye,
   Loader2,
   Check,
-  X
+  X,
+  Globe
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import {
@@ -38,7 +39,7 @@ import {
 
 interface SeriesResonancePanelProps {
   series: SeriesResponse
-  onAnalyze: () => Promise<SeriesResonanceAnalysis>
+  onAnalyze: (config?: { targetAudience?: string, targetMarkets?: string[] }) => Promise<SeriesResonanceAnalysis>
   onApplyFix: (insightId: string, fixSuggestion: string, targetSection: string, targetId?: string) => Promise<void>
   savedAnalysis?: SeriesResonanceAnalysis | null
   onSeriesUpdated?: () => void
@@ -67,10 +68,16 @@ export function SeriesResonancePanel({
   const [showEpisodeDetails, setShowEpisodeDetails] = useState(false)
   const [selectedEpisode, setSelectedEpisode] = useState<number | null>(null)
   
+  // Market config state
+  const [showConfig, setShowConfig] = useState(!savedAnalysis)
+  const [targetAudience, setTargetAudience] = useState(series.targetAudience || '')
+  const [targetMarkets, setTargetMarkets] = useState<string[]>(series.metadata?.targetMarkets || ['Global'])
+  
   // Update local state if the savedAnalysis prop changes
   React.useEffect(() => {
     if (savedAnalysis) {
       setAnalysis(savedAnalysis)
+      setShowConfig(false)
       if (savedAnalysis.appliedFixes) {
         setAppliedFixes(savedAnalysis.appliedFixes)
       }
@@ -83,8 +90,9 @@ export function SeriesResonancePanel({
     setError(null)
     
     try {
-      const result = await onAnalyze()
+      const result = await onAnalyze({ targetAudience, targetMarkets })
       setAnalysis(result)
+      setShowConfig(false)
       // Preserve appliedFixes from the new analysis result
       if (result.appliedFixes) {
         setAppliedFixes(result.appliedFixes)
@@ -94,7 +102,7 @@ export function SeriesResonancePanel({
     } finally {
       setIsAnalyzing(false)
     }
-  }, [onAnalyze])
+  }, [onAnalyze, targetAudience, targetMarkets])
   
   // Handle apply fix
   const handleApplyFix = useCallback(async (insight: SeriesResonanceInsight) => {
@@ -207,7 +215,11 @@ export function SeriesResonancePanel({
             {/* Greenlight Score */}
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
               <div className="flex flex-col items-center">
-                <GreenlightScoreDisplay score={analysis.greenlightScore.score} />
+                <GreenlightScoreDisplay 
+                  score={analysis.greenlightScore.score} 
+                  targetMarkets={targetMarkets}
+                  targetAudience={targetAudience}
+                />
                 
                 {/* Production Ready Indicator */}
                 {analysis.isProductionReady ? (
@@ -237,12 +249,12 @@ export function SeriesResonancePanel({
                     )}
                     {analysis.scoreTrend && (
                       <span className={`px-2 py-1 rounded flex items-center gap-1 ${
-                        analysis.scoreTrend === 'up' ? 'bg-green-500/20 text-green-400' :
-                        analysis.scoreTrend === 'down' ? 'bg-red-500/20 text-red-400' :
+                        analysis.scoreTrend === 'improving' ? 'bg-green-500/20 text-green-400' :
+                        analysis.scoreTrend === 'declining' ? 'bg-red-500/20 text-red-400' :
                         'bg-slate-700/50 text-gray-400'
                       }`}>
-                        {analysis.scoreTrend === 'up' ? <ArrowUp className="w-3 h-3" /> :
-                         analysis.scoreTrend === 'down' ? <ArrowDown className="w-3 h-3" /> : null}
+                        {analysis.scoreTrend === 'improving' ? <ArrowUp className="w-3 h-3" /> :
+                         analysis.scoreTrend === 'declining' ? <ArrowDown className="w-3 h-3" /> : null}
                         {analysis.previousScore !== undefined && analysis.scoreTrend !== 'stable' && (
                           <span>from {analysis.previousScore}</span>
                         )}
@@ -589,6 +601,60 @@ export function SeriesResonancePanel({
                 )}
               </div>
             )}
+
+            {/* Market Analysis / Outlook */}
+            {analysis.summary.marketAnalysis && (
+              <div className="mt-4 pt-4 border-t border-slate-700/50">
+                <h5 className="text-xs font-medium text-blue-400 mb-3 flex items-center gap-1">
+                  <Globe className="w-3 h-3" />
+                  Market Outlook
+                </h5>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700/50">
+                    <h6 className="text-xs font-medium text-gray-500 mb-1">Demand Outlook</h6>
+                    <p className={`text-sm font-medium ${
+                      analysis.summary.marketAnalysis.demandOutlook.toLowerCase().includes('high') ? 'text-emerald-400' :
+                      analysis.summary.marketAnalysis.demandOutlook.toLowerCase().includes('low') ? 'text-red-400' : 'text-amber-400'
+                    }`}>
+                      {analysis.summary.marketAnalysis.demandOutlook}
+                    </p>
+                  </div>
+                  
+                  <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700/50">
+                    <h6 className="text-xs font-medium text-gray-500 mb-1">Primary Markets</h6>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {analysis.summary.marketAnalysis.primaryMarkets.map((m, i) => (
+                        <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-gray-300 border border-slate-600">
+                          {m}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {analysis.summary.marketAnalysis.competitiveLandscape && (
+                  <div className="mb-4">
+                    <h6 className="text-xs font-medium text-gray-500 mb-1">Competitive Landscape</h6>
+                    <p className="text-sm text-gray-400">{analysis.summary.marketAnalysis.competitiveLandscape}</p>
+                  </div>
+                )}
+
+                {analysis.summary.marketAnalysis.culturalAdaptationNotes && analysis.summary.marketAnalysis.culturalAdaptationNotes.length > 0 && (
+                  <div>
+                    <h6 className="text-xs font-medium text-gray-500 mb-1">Cultural Adaptation Notes</h6>
+                    <ul className="space-y-1">
+                      {analysis.summary.marketAnalysis.culturalAdaptationNotes.map((note, i) => (
+                        <li key={i} className="text-sm text-gray-400 flex items-start gap-2">
+                          <span className="text-blue-400 mt-1">•</span>
+                          {note}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           
           {/* Insights with Apply Fix */}
@@ -656,20 +722,60 @@ export function SeriesResonancePanel({
         </motion.div>
       )}
       
-      {/* Empty State */}
+      {/* Empty State / Configuration Form */}
       {!analysis && !isAnalyzing && (
-        <div className="bg-slate-800/30 border border-slate-700/30 border-dashed rounded-xl p-12 text-center">
+        <div className="bg-slate-800/30 border border-slate-700/30 border-dashed rounded-xl p-8 text-center max-w-2xl mx-auto">
           <Target className="w-12 h-12 text-cyan-400/50 mx-auto mb-4" />
           <h4 className="text-lg font-medium text-gray-300 mb-2">
-            Analyze Your Series
+            Target Market & Audience
           </h4>
-          <p className="text-sm text-gray-500 max-w-md mx-auto mb-6">
-            Get AI-powered insights on audience engagement, character depth, 
-            story arc coherence, and commercial viability.
+          <p className="text-sm text-gray-500 mb-8">
+            Define your commercial targets before running the resonance analysis. This helps the AI evaluate your series' market viability.
           </p>
+          
+          <div className="space-y-6 text-left mb-8">
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">Target Audience</label>
+              <input
+                type="text"
+                placeholder="e.g., 18-35 Males, Sci-Fi fans..."
+                value={targetAudience}
+                onChange={e => setTargetAudience(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">Target Markets</label>
+              <div className="flex flex-wrap gap-2">
+                {['Global', 'North America', 'Europe', 'Asia-Pacific', 'Latin America', 'Middle East & Africa'].map(market => (
+                  <button
+                    key={market}
+                    onClick={() => {
+                      setTargetMarkets(prev => {
+                        if (market === 'Global') return ['Global']
+                        const newMarkets = prev.includes(market) 
+                          ? prev.filter(m => m !== market)
+                          : [...prev.filter(m => m !== 'Global'), market]
+                        return newMarkets.length ? newMarkets : ['Global']
+                      })
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                      targetMarkets.includes(market)
+                        ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300'
+                        : 'bg-slate-900 border-slate-700 text-gray-400 hover:border-slate-500'
+                    }`}
+                  >
+                    {market}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          
           <Button
             onClick={handleAnalyze}
-            className="bg-gradient-to-r from-cyan-500 to-purple-600"
+            className="bg-gradient-to-r from-cyan-500 to-purple-600 w-full"
           >
             <Sparkles className="w-4 h-4 mr-2" />
             Start Analysis
@@ -684,7 +790,7 @@ export function SeriesResonancePanel({
 // Sub-Components
 // =============================================================================
 
-function GreenlightScoreDisplay({ score }: { score: number }) {
+function GreenlightScoreDisplay({ score, targetMarkets, targetAudience }: { score: number, targetMarkets?: string[], targetAudience?: string }) {
   const { tier, label, color } = getSeriesGreenlightTier(score)
   
   const radius = 60
@@ -699,51 +805,64 @@ function GreenlightScoreDisplay({ score }: { score: number }) {
       : 'rgba(239, 68, 68, 0.2)'
   
   return (
-    <div className="relative" style={{ width: 140, height: 140 }}>
-      {/* Glow */}
-      <div 
-        className="absolute inset-0 rounded-full blur-xl"
-        style={{ backgroundColor: glowColor }}
-      />
-      
-      {/* SVG */}
-      <svg className="transform -rotate-90 relative z-10" width={140} height={140}>
-        <circle
-          cx={70}
-          cy={70}
-          r={radius}
-          stroke="rgba(255, 255, 255, 0.1)"
-          strokeWidth={strokeWidth}
-          fill="transparent"
+    <div className="flex flex-col items-center">
+      <div className="relative" style={{ width: 140, height: 140 }}>
+        {/* Glow */}
+        <div 
+          className="absolute inset-0 rounded-full blur-xl"
+          style={{ backgroundColor: glowColor }}
         />
-        <motion.circle
-          cx={70}
-          cy={70}
-          r={radius}
-          stroke={color}
-          strokeWidth={strokeWidth}
-          fill="transparent"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset }}
-          transition={{ duration: 1.2, ease: 'easeOut' }}
-          style={{ filter: `drop-shadow(0 0 6px ${color})` }}
-        />
-      </svg>
+        
+        {/* SVG */}
+        <svg className="transform -rotate-90 relative z-10" width={140} height={140}>
+          <circle
+            cx={70}
+            cy={70}
+            r={radius}
+            stroke="rgba(255, 255, 255, 0.1)"
+            strokeWidth={strokeWidth}
+            fill="transparent"
+          />
+          <motion.circle
+            cx={70}
+            cy={70}
+            r={radius}
+            stroke={color}
+            strokeWidth={strokeWidth}
+            fill="transparent"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            initial={{ strokeDashoffset: circumference }}
+            animate={{ strokeDashoffset }}
+            transition={{ duration: 1.2, ease: 'easeOut' }}
+            style={{ filter: `drop-shadow(0 0 6px ${color})` }}
+          />
+        </svg>
+        
+        {/* Center */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+          <motion.span
+            className="text-4xl font-bold"
+            style={{ color }}
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            {score}
+          </motion.span>
+          <span className="text-xs text-gray-400 mt-1">{label}</span>
+        </div>
+      </div>
       
-      {/* Center */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-        <motion.span
-          className="text-4xl font-bold"
-          style={{ color }}
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-        >
-          {score}
-        </motion.span>
-        <span className="text-xs text-gray-400 mt-1">{label}</span>
+      {/* Target Market Context Note */}
+      <div className="mt-3 text-[10px] text-center text-gray-500 max-w-[180px]">
+        Score factors in targeting: <br/>
+        <span className="text-gray-400">
+          {targetMarkets?.join(', ') || 'Global'}
+        </span>
+        {targetAudience && (
+          <> &bull; <span className="text-gray-400">{targetAudience}</span></>
+        )}
       </div>
     </div>
   )

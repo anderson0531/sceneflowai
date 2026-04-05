@@ -574,6 +574,13 @@ export interface AudienceEngagementDriver {
 /**
  * Full Series Resonance Analysis result
  */
+export interface SeriesMarketAnalysis {
+  primaryMarkets: string[]
+  demandOutlook: string
+  competitiveLandscape: string
+  culturalAdaptationNotes: string[]
+}
+
 export interface SeriesResonanceAnalysis {
   seriesId: string
   /** Overall greenlight score */
@@ -602,6 +609,8 @@ export interface SeriesResonanceAnalysis {
     marketPositioning?: string
     /** Potential for renewal/additional seasons */
     renewalPotential?: string
+    /** Detailed market outlook analysis */
+    marketAnalysis?: SeriesMarketAnalysis
   }
   /** Analysis metadata */
   analysisVersion: string

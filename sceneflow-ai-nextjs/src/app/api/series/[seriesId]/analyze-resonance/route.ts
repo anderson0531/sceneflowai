@@ -118,11 +118,33 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   const { seriesId } = await params
   
   try {
+    const body = await request.json().catch(() => ({}))
+    const { targetAudience, targetMarkets } = body
+
     await sequelize.authenticate()
     
     const series = await Series.findByPk(seriesId)
     if (!series) {
       return NextResponse.json({ success: false, error: 'Series not found' }, { status: 404 })
+    }
+
+    // Save configuration to series
+    let requiresUpdate = false
+    if (targetAudience !== undefined && targetAudience !== series.target_audience) {
+      series.target_audience = targetAudience
+      requiresUpdate = true
+    }
+    
+    let meta = series.metadata || {}
+    if (targetMarkets && Array.isArray(targetMarkets)) {
+      meta.targetMarkets = targetMarkets
+      series.metadata = meta
+      series.changed('metadata', true)
+      requiresUpdate = true
+    }
+
+    if (requiresUpdate) {
+      await series.save()
     }
     
     const bible = series.production_bible || {}
@@ -346,6 +368,7 @@ SERIES/PRODUCTION: ${series.title}
 FORMAT: ${format}
 GENRE: ${series.genre || 'Drama'}
 TARGET AUDIENCE: ${series.target_audience || 'General'}
+TARGET MARKETS: ${meta?.targetMarkets ? (meta.targetMarkets as string[]).join(', ') : 'Global'}
 LOGLINE: ${series.logline || bible.logline || 'Not specified'}
 
 SYNOPSIS:
@@ -480,7 +503,13 @@ Return ONLY valid JSON:
       }
     ],
     "marketPositioning": "Where this series fits in the current market landscape",
-    "renewalPotential": "High/Medium/Low with reasoning for continued seasons"
+    "renewalPotential": "High/Medium/Low with reasoning for continued seasons",
+    "marketAnalysis": {
+      "primaryMarkets": ["Market 1", "Market 2"],
+      "demandOutlook": "High/Medium/Low",
+      "competitiveLandscape": "Description of the competitive landscape for this specific market and audience.",
+      "culturalAdaptationNotes": ["Adaptation note 1", "Adaptation note 2"]
+    }
   }
 }`
 }

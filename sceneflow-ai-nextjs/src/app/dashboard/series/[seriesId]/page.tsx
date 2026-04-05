@@ -298,7 +298,7 @@ export default function SeriesStudioPage() {
   }
 
   // Resonance analysis handlers
-  const handleAnalyzeResonance = useCallback(async (): Promise<SeriesResonanceAnalysis> => {
+  const handleAnalyzeResonance = useCallback(async (config?: { targetAudience?: string, targetMarkets?: string[] }): Promise<SeriesResonanceAnalysis> => {
     if (!series) throw new Error('No series loaded')
     
     const episodeCount = series.episodeCount || 10
@@ -306,7 +306,8 @@ export default function SeriesStudioPage() {
     const result = await executeWithOverlay(async () => {
       const response = await fetch(`/api/series/${series.id}/analyze-resonance`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config || {})
       })
       
       if (!response.ok) {

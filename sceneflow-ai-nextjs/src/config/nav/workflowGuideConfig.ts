@@ -261,7 +261,6 @@ export const workflowGuideConfig: Record<WorkflowPhase, WorkflowGroup[]> = {
   premiere: [], // TODO: Add Premiere workflow
   dashboard: [],
   settings: [],
-  visionary: [],
 }
 
 /**

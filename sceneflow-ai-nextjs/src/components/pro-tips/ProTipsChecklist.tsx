@@ -161,8 +161,7 @@ export function ProTipsChecklist({
     'final-cut': 'Final Cut',
     premiere: 'Premiere',
     dashboard: 'Dashboard',
-    settings: 'Settings',
-    visionary: 'Visionary Engine',
+    settings: 'Settings'
   }[phase]
   
   return (

@@ -19,7 +19,6 @@ const CHILD_TABLES: { table: string; column: string }[] = [
   { table: 'voice_consents', column: 'user_id' },
   { table: 'user_voice_clones', column: 'user_id' },
   { table: 'moderation_events', column: 'user_id' },
-  { table: 'visionary_reports', column: 'user_id' },
 ]
 
 const USER_FIELDS_TO_MERGE = [

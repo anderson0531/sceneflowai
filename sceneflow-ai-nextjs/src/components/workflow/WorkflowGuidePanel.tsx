@@ -284,8 +284,7 @@ export function WorkflowGuidePanel({
     'final-cut': 'Final Cut',
     premiere: 'Premiere',
     dashboard: 'Dashboard',
-    settings: 'Settings',
-    visionary: 'Visionary Engine',
+    settings: 'Settings'
   }
   
   return (
