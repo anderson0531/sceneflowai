@@ -722,7 +722,16 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           
           // Check for primeBlueprint query param - auto-generate Blueprint from series data
           const primeBlueprint = searchParams.get('primeBlueprint')
-          const hasBlueprintPrimeInput = metadata.blueprintPrimeInput && !hasFilmTreatmentVariant && !hasTreatmentVariants && !hasFilmTreatment && !hasApprovedTreatment
+          const hasBlueprintPrimeInput = metadata.blueprintPrimeInput && !hasFilmTreatmentVariant && !hasTreatmentVariants && !hasFilmTreatment
+          
+          console.log('[StudioPage] PrimeBlueprint Check:', {
+            primeBlueprint,
+            hasBlueprintPrimeInput,
+            metadataHasPrimeInput: !!metadata.blueprintPrimeInput,
+            hasFilmTreatmentVariant: !!hasFilmTreatmentVariant,
+            hasTreatmentVariants: !!hasTreatmentVariants,
+            hasFilmTreatment: !!hasFilmTreatment
+          })
           
           if (primeBlueprint === 'true' && hasBlueprintPrimeInput) {
             console.log('[StudioPage] Series episode detected - auto-generating Blueprint from series data...')
@@ -1143,6 +1152,15 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         open={showReimaginDialog}
         onClose={() => setShowReimaginDialog(false)}
         existingVariant={null}
+        initialIdea={
+          currentProject?.metadata?.blueprintPrimeInput
+            ? {
+                logline: currentProject.metadata.blueprintPrimeInput,
+                synopsis: currentProject.metadata.blueprintPrimeInput,
+                genre: currentProject.genre || currentProject.metadata.genre,
+              }
+            : undefined
+        }
         onGenerate={async (input, opts) => {
           setShowReimaginDialog(false)
           // Forward dialog options to enable API optimizations (reduced variants, skip core concept)
