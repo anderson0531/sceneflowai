@@ -8,17 +8,21 @@ export function useConceptGenerator() {
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const generateConcepts = useCallback(async (report: any) => {
+  const generateConcepts = useCallback(async (report: any, targetMarkets?: any[]) => {
     setIsLoading(true);
     setError(null);
     setConcepts(null);
     abortControllerRef.current = new AbortController();
 
+    const payload = targetMarkets?.length
+      ? { ...report, targetMarkets }
+      : report;
+
     try {
       const response = await fetch('/api/visionary/generate-concepts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(report),
+        body: JSON.stringify(payload),
         signal: abortControllerRef.current.signal,
       });
 

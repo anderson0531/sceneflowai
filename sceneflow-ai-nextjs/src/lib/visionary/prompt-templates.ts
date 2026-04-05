@@ -228,6 +228,11 @@ export const SERIES_CONCEPT_GENERATION_SYSTEM = `
 ACT AS A WORLD-CLASS SHOWRUNNER AND YOUTUBE CREATIVE STRATEGIST.
 Your goal is to transform a raw concept and market analysis into three distinct, high-potential "Series Bibles"—the foundational documents for a multi-language video production.
 
+### PRODUCTION MODEL
+- The base production is in ENGLISH.
+- The creator can produce up to 72 language voiceovers for global distribution.
+- Therefore, cultural resonance is about STORY THEMES, NARRATIVE CHOICES, CHARACTER ARCHETYPES, and VISUAL MOTIFS that resonate with target audiences — NOT about the language of production.
+
 ### THE GOLDEN RULE: MEDIA, NOT SOFTWARE
 - FORBIDDEN TERMS: "App", "Platform", "Feature", "User", "Module", "UI/UX", "Dashboard", "Onboarding", "SaaS".
 - MANDATORY TERMS: "Series", "Episode", "Viewer", "Protagonist", "Cinematic", "Hook", "Retention", "Visual Style", "Beat", "Arc".
@@ -235,7 +240,8 @@ Your goal is to transform a raw concept and market analysis into three distinct,
 ### INPUT DATA
 1. Original Concept
 2. Gap Analysis & Pivot Suggestions
-3. Global Opportunity Grid (Top 3 Markets)
+3. Global Opportunity Grid
+4. Target Markets (if provided) — these are the user's chosen priority markets. Each concept's marketLogic MUST explicitly address cultural resonance with every listed target market.
 
 ### OUTPUT STRUCTURE (Strict JSON)
 Generate a JSON object with a single key "concepts" which is an array of exactly three Series Bible objects.
@@ -245,7 +251,7 @@ Your output MUST be a JSON object with a "concepts" array. Each concept MUST hav
 1. "title": (String) High-hook title. Do NOT use "conceptTitle".
 2. "logline": (String)
 3. "synopsis": (String)
-4. "marketLogic": (String)
+4. "marketLogic": (String) — When target markets are provided, explain how the storyline, character archetypes, and thematic elements resonate with each target audience's cultural preferences, viewing habits, and storytelling traditions.
 5. "protagonist": (Object with "name", "role", "flaw")
 6. "episodes": (Array of objects with "title" and "hook")
 
@@ -255,16 +261,35 @@ For each of the three concepts (The Spectacle, The Cinematic Legend, The Interac
 
 RETURN ONLY RAW JSON. NO PREAMBLE. NO CHAT.`
 
-export function buildConceptGenerationPrompt(report: unknown): string {
+export function buildConceptGenerationPrompt(report: unknown, targetMarkets?: any[]): string {
   const body =
     typeof report === 'string'
       ? report
       : JSON.stringify(report, null, 2)
 
+  let targetSection = ''
+  if (targetMarkets && targetMarkets.length > 0) {
+    const marketLines = targetMarkets.map(m => {
+      const parts = [`- ${m.regionName || m.region} (${m.languageName || m.language})`]
+      if (m.arbitrageScore) parts.push(`  Arbitrage Score: ${m.arbitrageScore}`)
+      if (m.culturalNotes) parts.push(`  Cultural Context: ${m.culturalNotes}`)
+      if (m.demandScore) parts.push(`  Demand: ${m.demandScore}`)
+      if (m.revenuePotential) parts.push(`  Revenue Potential: ${m.revenuePotential}`)
+      return parts.join('\n')
+    }).join('\n')
+
+    targetSection = `
+
+TARGET MARKETS (user-selected priority markets — each concept's marketLogic MUST address cultural resonance with these audiences):
+${marketLines}
+
+The production is English-based with multilingual voiceover. Focus on story themes, character archetypes, visual motifs, and narrative structures that resonate culturally with these specific markets.`
+  }
+
   return `You have completed a full Visionary analysis pipeline. Use the report below as the single source of truth.
 
 ANALYSIS REPORT:
-${body}
+${body}${targetSection}
 
 Produce the JSON output exactly as specified in your system instructions (a "concepts" array of three Series Bible objects).`
 }

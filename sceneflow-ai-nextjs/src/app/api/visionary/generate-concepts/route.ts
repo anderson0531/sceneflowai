@@ -8,13 +8,14 @@ export const maxDuration = 300;
 
 export async function POST(req: Request) {
   try {
-    const report = await req.json();
+    const body = await req.json();
 
-    if (!report) {
+    if (!body) {
       return NextResponse.json({ success: false, error: 'Analysis report is required' }, { status: 400 });
     }
 
-    const prompt = buildConceptGenerationPrompt(report);
+    const { targetMarkets, ...report } = body;
+    const prompt = buildConceptGenerationPrompt(report, targetMarkets);
 
     const result = await generateText(prompt, {
       model: 'gemini-3.1-pro-preview',

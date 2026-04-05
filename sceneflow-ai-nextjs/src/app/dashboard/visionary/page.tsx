@@ -8,6 +8,10 @@ import {
   Sparkles, 
   FileText, 
   Loader2,
+  Globe2,
+  ChevronDown,
+  ChevronUp,
+  Info,
 } from 'lucide-react'
 import { AnalysisOverlay } from './components/AnalysisOverlay'
 import { ArbitrageHeatMap } from './components/ArbitrageHeatMap'
@@ -23,6 +27,29 @@ import { useRouter } from 'next/navigation'
 const GENRES = [
   'Drama', 'Comedy', 'Thriller', 'Horror', 'Sci-Fi', 'Romance',
   'Documentary', 'Animation', 'Action', 'Fantasy', 'Musical', 'Educational',
+]
+
+const REGION_TIERS: { label: string; regions: { code: string; name: string }[] }[] = [
+  { label: 'Americas', regions: [
+    { code: 'US', name: 'United States' }, { code: 'BR', name: 'Brazil' },
+    { code: 'MX', name: 'Mexico' }, { code: 'AR', name: 'Argentina' }, { code: 'CO', name: 'Colombia' },
+  ]},
+  { label: 'Europe', regions: [
+    { code: 'GB', name: 'United Kingdom' }, { code: 'DE', name: 'Germany' },
+    { code: 'FR', name: 'France' }, { code: 'ES', name: 'Spain' },
+    { code: 'IT', name: 'Italy' }, { code: 'NL', name: 'Netherlands' },
+    { code: 'PL', name: 'Poland' }, { code: 'TR', name: 'Turkey' },
+  ]},
+  { label: 'Asia-Pacific', regions: [
+    { code: 'JP', name: 'Japan' }, { code: 'KR', name: 'South Korea' },
+    { code: 'IN', name: 'India' }, { code: 'ID', name: 'Indonesia' },
+    { code: 'TH', name: 'Thailand' }, { code: 'PH', name: 'Philippines' }, { code: 'AU', name: 'Australia' },
+  ]},
+  { label: 'Middle East & Africa', regions: [
+    { code: 'SA', name: 'Saudi Arabia' }, { code: 'AE', name: 'UAE' },
+    { code: 'EG', name: 'Egypt' }, { code: 'NG', name: 'Nigeria' },
+    { code: 'ZA', name: 'South Africa' }, { code: 'KE', name: 'Kenya' },
+  ]},
 ]
 
 export default function VisionaryPage() {
@@ -49,11 +76,14 @@ export default function VisionaryPage() {
 
   const [concept, setConcept] = useState('')
   const [genre, setGenre] = useState('')
+  const [selectedRegions, setSelectedRegions] = useState<string[]>([])
+  const [regionsExpanded, setRegionsExpanded] = useState(false)
   const [isInitializing, setIsInitializing] = useState(false)
   const [pastReports, setPastReports] = useState<VisionaryReport[]>([])
   const [isLoadingReports, setIsLoadingReports] = useState(true)
   const [selectedReport, setSelectedReport] = useState<VisionaryReport | null>(null)
   const [selectedRegion, setSelectedRegion] = useState<LanguageOpportunity | null>(null)
+  const [selectedMarkets, setSelectedMarkets] = useState<LanguageOpportunity[]>([])
   const [view, setView] = useState<'input' | 'analysis' | 'report' | 'history'>('input')
 
   const hasFetchedRef = useRef(false)
@@ -86,6 +116,8 @@ export default function VisionaryPage() {
     if (isRunning) setView('analysis')
   }, [isRunning])
 
+  const activeReport = report || selectedReport
+
   useEffect(() => {
     if (phase === 'complete' && report) {
       setView('report')
@@ -93,14 +125,37 @@ export default function VisionaryPage() {
     }
   }, [phase, report, fetchReports])
 
+  useEffect(() => {
+    const opps = activeReport?.arbitrageMap?.opportunities
+    if (opps?.length && selectedMarkets.length === 0) {
+      const top3 = [...opps].sort((a, b) => (b.arbitrageScore ?? 0) - (a.arbitrageScore ?? 0)).slice(0, 3)
+      setSelectedMarkets(top3)
+    }
+  }, [activeReport?.arbitrageMap?.opportunities]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toggleRegion = (code: string) => {
+    setSelectedRegions(prev =>
+      prev.includes(code) ? prev.filter(r => r !== code) : [...prev, code]
+    )
+  }
+
+  const toggleMarket = (opp: LanguageOpportunity) => {
+    setSelectedMarkets(prev => {
+      const key = `${opp.language}-${opp.region}`
+      const exists = prev.some(m => `${m.language}-${m.region}` === key)
+      return exists ? prev.filter(m => `${m.language}-${m.region}` !== key) : [...prev, opp]
+    })
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!concept.trim()) return
     startAnalysis({
       concept: concept.trim(),
       genre: genre.trim() || undefined,
+      regions: selectedRegions.length > 0 ? selectedRegions : undefined,
       userEmail: session?.user?.email || '',
-    })
+    } as any)
   }
 
   const handleInitializeSeries = async (conceptData: any) => {
@@ -155,8 +210,6 @@ export default function VisionaryPage() {
     }
   }
 
-  const activeReport = report || selectedReport
-
   const summarizeConceptTitle = (text: string) => {
     const cleaned = text.replace(/\s+/g, ' ').trim()
     if (!cleaned) return 'Market Insights Brief'
@@ -182,7 +235,7 @@ export default function VisionaryPage() {
           </div>
           <div className="flex items-center gap-2">
             {view !== 'input' && (
-              <button onClick={() => { reset(); setSelectedReport(null); setView('input') }} className="px-4 py-2 text-sm font-medium bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">
+              <button onClick={() => { reset(); setSelectedReport(null); setSelectedMarkets([]); setView('input') }} className="px-4 py-2 text-sm font-medium bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">
                 New Analysis
               </button>
             )}
@@ -232,6 +285,65 @@ export default function VisionaryPage() {
                   ))}
                 </div>
               </div>
+              <div className="bg-gray-800/60 border border-purple-500/20 rounded-xl overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setRegionsExpanded(!regionsExpanded)}
+                  className="flex items-center justify-between w-full p-5 text-left hover:bg-gray-800/40 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Globe2 className="w-5 h-5 text-purple-400" />
+                    <div>
+                      <span className="text-sm font-medium text-gray-300">Target Regions</span>
+                      {selectedRegions.length > 0 && (
+                        <span className="ml-2 text-xs text-purple-300">({selectedRegions.length} selected)</span>
+                      )}
+                    </div>
+                  </div>
+                  {regionsExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                </button>
+                {regionsExpanded && (
+                  <div className="px-5 pb-5 space-y-4">
+                    <div className="flex items-start gap-2 text-xs text-gray-500 bg-gray-900/40 p-3 rounded-lg">
+                      <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 text-gray-400" />
+                      <span>
+                        Select regions to focus the analysis on specific audiences. Leave empty to auto-detect top global markets.
+                        Productions are generated in English with up to 72 language voiceovers — market selection influences cultural themes in your storyline.
+                      </span>
+                    </div>
+                    {REGION_TIERS.map(tier => (
+                      <div key={tier.label}>
+                        <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2">{tier.label}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {tier.regions.map(r => (
+                            <button
+                              key={r.code}
+                              type="button"
+                              onClick={() => toggleRegion(r.code)}
+                              className={`px-2.5 py-1 text-xs rounded-lg transition-colors ${
+                                selectedRegions.includes(r.code)
+                                  ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                                  : 'bg-gray-700/50 text-gray-400 hover:bg-gray-700'
+                              }`}
+                            >
+                              {r.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    {selectedRegions.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedRegions([])}
+                        className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                      >
+                        Clear all
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
               <button type="submit" disabled={!concept.trim() || isRunning} className="w-full py-4 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-semibold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50">
                 <Sparkles className="w-5 h-5" />
                 Analyze Market Opportunity
@@ -268,11 +380,13 @@ export default function VisionaryPage() {
               )}
             </div>
 
-            {/* Target Markets Grid */}
+            {/* Target Markets Grid (selectable) */}
             {activeReport.arbitrageMap && (
               <ArbitrageHeatMap
                 data={activeReport.arbitrageMap}
                 onSelectRegion={setSelectedRegion}
+                selectedMarkets={selectedMarkets}
+                onToggleMarket={toggleMarket}
               />
             )}
 
@@ -281,25 +395,37 @@ export default function VisionaryPage() {
 
             {/* Generate Series Concepts CTA (below Recommended Structure) */}
             {!concepts && (
-              <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <Sparkles className="w-5 h-5 text-emerald-400 shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-white">Ready to develop this concept?</p>
-                    <p className="text-xs text-gray-400">Generate 3 series concept variations based on market data</p>
+              <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-xl p-5 space-y-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <Sparkles className="w-5 h-5 text-emerald-400 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-white">Ready to develop this concept?</p>
+                      <p className="text-xs text-gray-400">
+                        Generate 3 series concept variations
+                        {selectedMarkets.length > 0 && (
+                          <> targeting <span className="text-emerald-300">
+                            {selectedMarkets.map(m => m.regionName).join(', ')}
+                          </span></>
+                        )}
+                      </p>
+                    </div>
                   </div>
+                  <button
+                    onClick={async () => {
+                      await new Promise(resolve => setTimeout(resolve, 200))
+                      generateConcepts(activeReport, selectedMarkets.length > 0 ? selectedMarkets : undefined)
+                    }}
+                    disabled={isGeneratingConcepts || selectedMarkets.length === 0}
+                    className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-lg flex items-center gap-2 disabled:opacity-50 shrink-0 transition-colors"
+                  >
+                    {isGeneratingConcepts ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    {isGeneratingConcepts ? 'Generating...' : `Generate for ${selectedMarkets.length} Market${selectedMarkets.length !== 1 ? 's' : ''}`}
+                  </button>
                 </div>
-                <button
-                  onClick={async () => {
-                    await new Promise(resolve => setTimeout(resolve, 200))
-                    generateConcepts(activeReport)
-                  }}
-                  disabled={isGeneratingConcepts}
-                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-lg flex items-center gap-2 disabled:opacity-50 shrink-0 transition-colors"
-                >
-                  {isGeneratingConcepts ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  {isGeneratingConcepts ? 'Generating...' : 'Generate Concepts'}
-                </button>
+                {selectedMarkets.length === 0 && (
+                  <p className="text-xs text-amber-400/80 text-center">Select at least one target market above to generate concepts.</p>
+                )}
               </div>
             )}
 
