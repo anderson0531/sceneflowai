@@ -1894,16 +1894,16 @@ function CharactersPanel({ characters, onRegenerate, isGenerating }: CharactersP
           {characters.map((char) => (
             <div
               key={char.id}
-              className="bg-gray-800 rounded-xl border border-gray-700 p-5 hover:border-gray-600 transition-colors"
+              className="bg-gray-800 rounded-xl border border-gray-700 p-5 hover:border-gray-600 transition-colors flex flex-col h-full"
             >
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-4 mb-3">
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500/30 to-purple-600/30 rounded-full flex items-center justify-center flex-shrink-0">
                   <Users className="w-6 h-6 text-blue-400" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-semibold text-white truncate">{char.name}</h4>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <h4 className="font-semibold text-white break-words w-full text-lg leading-tight">{char.name}</h4>
+                    <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${
                       char.role === 'protagonist' ? 'bg-green-500/20 text-green-400' :
                       char.role === 'antagonist' ? 'bg-red-500/20 text-red-400' :
                       'bg-gray-600/50 text-gray-400'
@@ -1911,13 +1911,19 @@ function CharactersPanel({ characters, onRegenerate, isGenerating }: CharactersP
                       {char.role}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-400 line-clamp-2">{char.description}</p>
-                  {char.appearance && (
-                    <p className="text-xs text-gray-500 mt-2 line-clamp-1">
-                      <span className="text-gray-600">Appearance:</span> {char.appearance}
-                    </p>
-                  )}
                 </div>
+              </div>
+              
+              <div className="flex flex-col flex-grow gap-3 pl-[4.5rem]">
+                <p className="text-sm text-gray-300 break-words">{char.description}</p>
+                {char.appearance && (
+                  <div className="mt-auto pt-3 border-t border-gray-700/50">
+                    <h5 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Appearance</h5>
+                    <p className="text-sm text-gray-400 break-words">
+                      {char.appearance}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           ))}
