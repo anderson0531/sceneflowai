@@ -112,10 +112,11 @@ export default function SeriesStudioPage() {
   useEffect(() => {
     if (!series) return
 
-    const seed = series.metadata?.ideaTopic
-    const fromMarket = series.metadata?.source === 'market_insights'
+    const meta = series.metadata as Record<string, unknown> | undefined
+    const seed = typeof meta?.ideaTopic === 'string' ? meta.ideaTopic : ''
+    const fromMarket = meta?.source === 'market_insights'
 
-    if (fromMarket && typeof seed === 'string' && seed.trim()) {
+    if (fromMarket && seed.trim()) {
       setIdeaTopic(seed)
       setIsIdeateDialogOpen(true)
       return
@@ -124,6 +125,25 @@ export default function SeriesStudioPage() {
     if (!series.productionBible?.synopsis && !series.productionBible?.logline) {
       setIsIdeateDialogOpen(true)
     }
+  }, [series])
+
+  const handleIdeateDialogOpenChange = useCallback((open: boolean) => {
+    setIsIdeateDialogOpen(open)
+    if (!open || !series) return
+    setIdeaTopic((prev) => {
+      if (prev.trim()) return prev
+      const meta = series.metadata as Record<string, unknown> | undefined
+      const fromMeta = typeof meta?.ideaTopic === 'string' ? meta.ideaTopic.trim() : ''
+      const fromLast =
+        meta?.lastGeneration &&
+        typeof meta.lastGeneration === 'object' &&
+        meta.lastGeneration !== null &&
+        typeof (meta.lastGeneration as { topic?: string }).topic === 'string'
+          ? (meta.lastGeneration as { topic: string }).topic.trim()
+          : ''
+      const next = fromMeta || fromLast
+      return next || prev
+    })
   }, [series])
 
   const handleGenerate = async () => {
@@ -149,10 +169,17 @@ export default function SeriesStudioPage() {
         operationType: 'series-generation'
       })
 
-      toast.success(`Generated ${result.generated.episodeCount} episodes!`)
-      setIdeaTopic('')
+      const epCount =
+        result?.generated?.episodeCount ??
+        result?.series?.episodeBlueprints?.length ??
+        0
+      toast.success(
+        epCount > 0
+          ? `Generated ${epCount} episode${epCount !== 1 ? 's' : ''}!`
+          : 'Storyline updated.'
+      )
     } catch (err) {
-      toast.error('Failed to generate storyline')
+      toast.error(err instanceof Error ? err.message : 'Failed to generate storyline')
       setIsIdeateDialogOpen(true)
     }
   }
@@ -669,7 +696,7 @@ export default function SeriesStudioPage() {
       </div>
 
       {/* Ideate Dialog */}
-      <Dialog open={isIdeateDialogOpen} onOpenChange={setIsIdeateDialogOpen}>
+      <Dialog open={isIdeateDialogOpen} onOpenChange={handleIdeateDialogOpenChange}>
         <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-lg">
           <DialogHeader className="pb-4 border-b border-gray-700/50">
             <DialogTitle className="flex items-center gap-2 text-lg">

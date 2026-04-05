@@ -216,11 +216,26 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     updatedBible.version = incrementVersion(currentBible.version || '1.0.0')
     updatedBible.lastUpdated = new Date().toISOString()
     
-    // Update series with generated data
+    const existingMeta =
+      series.metadata && typeof series.metadata === 'object' && !Array.isArray(series.metadata)
+        ? { ...(series.metadata as Record<string, unknown>) }
+        : {}
+
+    const preservedIdeaTopic =
+      typeof existingMeta.ideaTopic === 'string' && existingMeta.ideaTopic.trim()
+        ? existingMeta.ideaTopic
+        : typeof topic === 'string' && topic.trim()
+          ? topic
+          : existingMeta.ideaTopic
+
+    // Update series with generated data (preserve Market Insights seed in metadata)
     const updates: any = {
       production_bible: updatedBible,
       metadata: {
-        ...series.metadata,
+        ...existingMeta,
+        ...(preservedIdeaTopic !== undefined && preservedIdeaTopic !== null
+          ? { ideaTopic: preservedIdeaTopic }
+          : {}),
         lastGeneration: {
           timestamp: new Date().toISOString(),
           topic,
