@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { generateText, streamText } from '@/lib/vertexai/gemini';
+import { generateText } from '@/lib/vertexai/gemini';
 import { getGeminiTextModel } from '@/lib/config/modelConfig';
 import { 
   buildMarketScanPrompt, 
@@ -16,32 +16,6 @@ import { safeParseJSON } from '@/lib/utils/safeParseJSON';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
-
-/**
- * Extract text content from Vertex streamGenerateContent JSON chunks.
- * The stream body is a JSON array: [{candidates:[{content:{parts:[{text}]}}]}, ...]
- * We parse incrementally, pull out non-thought text parts, and forward clean text.
- */
-function extractTextFromVertexChunk(raw: string): string {
-  try {
-    const chunks = safeParseJSON(raw)
-    if (!chunks) return ''
-    const arr = Array.isArray(chunks) ? chunks : [chunks]
-    const parts: string[] = []
-    for (const chunk of arr) {
-      const candidates = chunk?.candidates ?? []
-      for (const candidate of candidates) {
-        for (const part of candidate?.content?.parts ?? []) {
-          if (part.thought) continue
-          if (part.text) parts.push(part.text)
-        }
-      }
-    }
-    return parts.join('')
-  } catch {
-    return raw
-  }
-}
 
 export async function POST(req: Request) {
   try {
@@ -98,61 +72,26 @@ export async function POST(req: Request) {
       throw new Error("Phase 3 failed to produce arbitrage map data.");
     }
     
-    // Phase 4: Stream Series Bible via Vertex AI
+    // Phase 4: Generate Series Bible (non-streaming to avoid chunk parse errors)
     const biblePrompt = buildSeriesBiblePrompt({
       originalConcept: concept,
       selectedMarket: selectedMarket || (arbitrageMap.opportunities?.[0])
     });
 
-    const responseStream = await streamText(biblePrompt, {
+    const bibleResult = await generateText(biblePrompt, {
       model: 'gemini-3.1-pro-preview',
       systemInstruction: SERIES_BIBLE_SYSTEM_PROMPT.trim(),
       thinkingLevel: 'high',
+      responseMimeType: 'text/plain',
     });
 
-    // Build a composite stream: metadata JSON line first, then transformed
-    // Vertex text chunks. This avoids stuffing non-ASCII data into HTTP
-    // headers (which are limited to Latin-1 and crash on CJK / Devanagari).
+    const bridgePlan = bibleResult.text || '';
+
+    // Return metadata line + bridge plan text (keeps client protocol intact)
     const encoder = new TextEncoder()
     const metadataLine = JSON.stringify({ __metadata: { marketScan, gapAnalysis, arbitrageMap } }) + '\n'
 
-    const vertexReader = responseStream.body?.getReader()
-    const decoder = new TextDecoder()
-
-    const compositeStream = new ReadableStream({
-      async start(controller) {
-        controller.enqueue(encoder.encode(metadataLine))
-
-        if (!vertexReader) { controller.close(); return }
-
-        // Buffer for incremental JSON array parsing from Vertex
-        let buffer = ''
-        try {
-          while (true) {
-            const { done, value } = await vertexReader.read()
-            if (done) break
-            buffer += decoder.decode(value, { stream: true })
-
-            // Vertex streams a JSON array; try to extract text so far
-            const text = extractTextFromVertexChunk(buffer)
-            if (text) {
-              controller.enqueue(encoder.encode(text))
-              buffer = ''
-            }
-          }
-          // Flush any remaining buffer
-          if (buffer.trim()) {
-            const remaining = extractTextFromVertexChunk(buffer)
-            if (remaining) controller.enqueue(encoder.encode(remaining))
-          }
-        } catch (err) {
-          console.error('[Visionary] Stream transform error:', err)
-        }
-        controller.close()
-      }
-    })
-
-    return new Response(compositeStream, {
+    return new Response(encoder.encode(metadataLine + bridgePlan), {
       headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });
 
