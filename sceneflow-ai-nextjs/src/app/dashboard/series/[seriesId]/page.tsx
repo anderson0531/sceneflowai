@@ -30,7 +30,9 @@ import {
   TrendingUp,
   Clock,
   Star,
-  Target
+  Target,
+  Square,
+  Volume2
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/input'
@@ -50,6 +52,7 @@ import {
   DialogTitle,
   DialogDescription
 } from '@/components/ui/dialog'
+import { NarratorVoicePicker } from '@/components/tts/NarratorVoicePicker'
 import { useSeriesStudio } from '@/hooks/useSeries'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useSession } from 'next-auth/react'
@@ -933,6 +936,76 @@ interface OverviewPanelProps {
 function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProps) {
   const bible = series.productionBible
 
+  // --- TTS State & Logic ---
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [isGeneratingTTS, setIsGeneratingTTS] = useState(false)
+  const [voiceSelectorOpen, setVoiceSelectorOpen] = useState(false)
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('CwhRBWXzGAHq8TQ4Fs17') // Roger fallback
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Roger')
+  const audioRef = React.useRef<HTMLAudioElement | null>(null)
+
+  // Clean up audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+    }
+  }, [])
+
+  const handlePlayAudio = async () => {
+    // If playing, stop it
+    if (isPlaying) {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+      setIsPlaying(false)
+      return
+    }
+
+    const textToSpeak = `${bible?.logline || series.logline || ''}\n\n${bible?.synopsis || ''}`.trim()
+    if (!textToSpeak) {
+      toast.error('No logline or synopsis to play.')
+      return
+    }
+
+    setIsGeneratingTTS(true)
+    try {
+      const response = await fetch('/api/tts/elevenlabs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: textToSpeak,
+          voiceId: selectedVoiceId,
+          language: 'en',
+          parallel: true,
+          stability: 0.5,
+          similarityBoost: 0.75
+        })
+      })
+
+      if (!response.ok) throw new Error('TTS failed')
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      
+      audioRef.current = new Audio(url)
+      audioRef.current.onended = () => setIsPlaying(false)
+      audioRef.current.onerror = () => setIsPlaying(false)
+      
+      await audioRef.current.play()
+      setIsPlaying(true)
+    } catch (err) {
+      console.error('TTS error:', err)
+      toast.error('Failed to generate audio readout.')
+      setIsPlaying(false)
+    } finally {
+      setIsGeneratingTTS(false)
+    }
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Main Overview */}
@@ -946,15 +1019,54 @@ function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProp
               </div>
               <h3 className="font-semibold text-lg">Series Overview</h3>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onRegenerate('title')}
-              disabled={isGenerating}
-              className="text-gray-400 hover:text-amber-400 hover:bg-amber-500/10"
-            >
-              <RefreshCw className={`w-4 h-4 ${isGenerating ? 'animate-spin' : ''}`} />
-            </Button>
+            
+            <div className="flex items-center gap-2">
+              <div className="flex items-center bg-gray-900/50 rounded-lg border border-gray-700/50 p-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setVoiceSelectorOpen(true)}
+                  className="h-7 text-xs px-2 text-gray-400 hover:text-white"
+                >
+                  <Volume2 className="w-3.5 h-3.5 mr-1.5" />
+                  <span className="truncate max-w-[80px]">{selectedVoiceName}</span>
+                </Button>
+                <div className="w-px h-4 bg-gray-700 mx-1" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handlePlayAudio}
+                  disabled={isGeneratingTTS}
+                  className={`h-7 px-3 text-xs font-medium ${
+                    isPlaying 
+                      ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30' 
+                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                  }`}
+                >
+                  {isGeneratingTTS ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : isPlaying ? (
+                    <>
+                      <Square className="w-3.5 h-3.5 mr-1.5 fill-current" /> Stop
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-3.5 h-3.5 mr-1.5 fill-current" /> Read
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onRegenerate('title')}
+                disabled={isGenerating}
+                className="text-gray-400 hover:text-amber-400 hover:bg-amber-500/10 h-9 w-9 p-0"
+              >
+                <RefreshCw className={`w-4 h-4 ${isGenerating ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
           </div>
           <div className="space-y-4">
             <div>
@@ -969,6 +1081,17 @@ function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProp
             </div>
           </div>
         </div>
+
+        {/* Voice Selector Dialog */}
+        <NarratorVoicePicker
+          open={voiceSelectorOpen}
+          onOpenChange={setVoiceSelectorOpen}
+          selectedVoiceId={selectedVoiceId}
+          onSelectVoice={(id, name) => {
+            setSelectedVoiceId(id)
+            setSelectedVoiceName(name)
+          }}
+        />
 
         {/* Setting */}
         <div className="bg-gradient-to-br from-gray-800 to-gray-800/50 rounded-xl p-6 border border-gray-700/50">
