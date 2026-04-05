@@ -53,7 +53,7 @@ import {
   DialogTitle,
   DialogDescription
 } from '@/components/ui/dialog'
-import { GeminiVoicePicker } from '@/components/tts/GeminiVoicePicker'
+import { GeminiVoicePicker, GEMINI_VOICES } from '@/components/tts/GeminiVoicePicker'
 import { useSeriesStudio } from '@/hooks/useSeries'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useSession } from 'next-auth/react'
@@ -1176,9 +1176,29 @@ function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProp
   const [isGeneratingTTS, setIsGeneratingTTS] = useState(false)
   const [voiceSelectorOpen, setVoiceSelectorOpen] = useState(false)
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>('en-US-Journey-F') // Google Cloud TTS Voice fallback
-  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Journey F (Female)')
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Elena (Storyteller)')
   const [audioProfilePrompt, setAudioProfilePrompt] = useState<string>('')
   const audioRef = React.useRef<HTMLAudioElement | null>(null)
+
+  // Initialize with favorite voice if available
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('directorNoteFavorites')
+      if (stored) {
+        const favs = JSON.parse(stored)
+        if (Array.isArray(favs) && favs.length > 0) {
+          const favVoiceId = favs[0]
+          const voice = GEMINI_VOICES.find(v => v.id === favVoiceId)
+          if (voice) {
+            setSelectedVoiceId(voice.id)
+            setSelectedVoiceName(voice.name)
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load favorites', e)
+    }
+  }, [])
 
   // Clean up audio on unmount
   useEffect(() => {
@@ -1503,6 +1523,98 @@ function EpisodesPanel({
   const selectedEpisode = episodes.find(ep => ep.id === selectedEpisodeId)
   const canAddMore = episodes.length < maxEpisodes
 
+  // --- TTS State & Logic ---
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [isGeneratingTTS, setIsGeneratingTTS] = useState(false)
+  const [voiceSelectorOpen, setVoiceSelectorOpen] = useState(false)
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('en-US-Journey-F')
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Elena (Storyteller)')
+  const [audioProfilePrompt, setAudioProfilePrompt] = useState<string>('')
+  const audioRef = React.useRef<HTMLAudioElement | null>(null)
+
+  // Initialize with favorite voice if available
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('directorNoteFavorites')
+      if (stored) {
+        const favs = JSON.parse(stored)
+        if (Array.isArray(favs) && favs.length > 0) {
+          const favVoiceId = favs[0]
+          const voice = GEMINI_VOICES.find(v => v.id === favVoiceId)
+          if (voice) {
+            setSelectedVoiceId(voice.id)
+            setSelectedVoiceName(voice.name)
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load favorites', e)
+    }
+  }, [])
+
+  // Clean up audio on unmount or episode change
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
+    }
+    setIsPlaying(false)
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+    }
+  }, [selectedEpisodeId])
+
+  const handlePlayAudio = async () => {
+    if (isPlaying) {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+      setIsPlaying(false)
+      return
+    }
+
+    const textToSpeak = `${selectedEpisode?.logline || ''}\n\n${selectedEpisode?.synopsis || ''}`.trim()
+    if (!textToSpeak) {
+      toast.error('No logline or synopsis to play.')
+      return
+    }
+
+    setIsGeneratingTTS(true)
+    try {
+      const response = await fetch('/api/tts/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: textToSpeak,
+          voiceId: selectedVoiceId,
+          ...(selectedVoiceId.startsWith('gemini-') && audioProfilePrompt ? { prompt: audioProfilePrompt } : {})
+        })
+      })
+
+      if (!response.ok) throw new Error('TTS failed')
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      
+      audioRef.current = new Audio(url)
+      audioRef.current.onended = () => setIsPlaying(false)
+      audioRef.current.onerror = () => setIsPlaying(false)
+      
+      await audioRef.current.play()
+      setIsPlaying(true)
+    } catch (err) {
+      console.error('TTS error:', err)
+      toast.error('Failed to generate audio readout.')
+      setIsPlaying(false)
+    } finally {
+      setIsGeneratingTTS(false)
+    }
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Episode List */}
@@ -1554,8 +1666,8 @@ function EpisodesPanel({
       <div className="lg:col-span-2">
         {selectedEpisode ? (
           <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
-            <div className="flex items-start justify-between mb-6">
-              <div>
+            <div className="flex items-start justify-between mb-6 gap-4">
+              <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xs font-medium text-amber-400">EPISODE {selectedEpisode.episodeNumber}</span>
                   <EpisodeStatusBadge status={selectedEpisode.status} />
@@ -1574,28 +1686,86 @@ function EpisodesPanel({
                 <h2 className="text-2xl font-bold text-white">{selectedEpisode.title}</h2>
                 <p className="text-gray-400 mt-2">{selectedEpisode.logline}</p>
               </div>
-              {selectedEpisode.status === 'blueprint' && !selectedEpisode.projectId && (
-                <Button
-                  onClick={() => onStartEpisode(selectedEpisode.id)}
-                  disabled={isStarting}
-                  className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
-                >
-                  {isStarting ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Play className="w-4 h-4 mr-2" />
-                  )}
-                  Start Project
-                </Button>
-              )}
-              {selectedEpisode.projectId && (
-                <Link href={`/dashboard/workflow/vision/${selectedEpisode.projectId}`}>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    Continue Project
-                    <ChevronRight className="w-4 h-4 ml-1" />
+              
+              <div className="flex flex-col items-end gap-3 shrink-0">
+                {selectedEpisode.status === 'blueprint' && !selectedEpisode.projectId && (
+                  <Button
+                    onClick={() => onStartEpisode(selectedEpisode.id)}
+                    disabled={isStarting}
+                    className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                  >
+                    {isStarting ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Play className="w-4 h-4 mr-2" />
+                    )}
+                    Start Project
                   </Button>
-                </Link>
-              )}
+                )}
+                {selectedEpisode.projectId && (
+                  <Link href={`/dashboard/workflow/vision/${selectedEpisode.projectId}`}>
+                    <Button className="bg-blue-600 hover:bg-blue-700">
+                      Continue Project
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </Link>
+                )}
+
+                {/* TTS Controls */}
+                <div className="flex flex-col items-end gap-2 mt-2 w-full max-w-[280px]">
+                  <div className="flex items-center bg-gray-900/50 rounded-lg border border-gray-700/50 p-1 self-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setVoiceSelectorOpen(true)}
+                      className="h-7 text-xs px-2 text-gray-400 hover:text-white"
+                    >
+                      <Volume2 className="w-3.5 h-3.5 mr-1.5" />
+                      <span className="truncate max-w-[80px]">{selectedVoiceName}</span>
+                    </Button>
+                    <div className="w-px h-4 bg-gray-700 mx-1" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handlePlayAudio}
+                      disabled={isGeneratingTTS}
+                      className={`h-7 px-3 text-xs font-medium ${
+                        isPlaying 
+                          ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30' 
+                          : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                      }`}
+                    >
+                      {isGeneratingTTS ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : isPlaying ? (
+                        <>
+                          <Square className="w-3.5 h-3.5 mr-1.5 fill-current" /> Stop
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-3.5 h-3.5 mr-1.5 fill-current" /> Read
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  
+                  {selectedVoiceId.startsWith('gemini-') && (
+                    <div className="w-full bg-gray-900/50 rounded-lg p-2.5 border border-cyan-500/30 mt-1">
+                      <label className="text-[10px] font-medium text-cyan-400 flex items-center gap-1 mb-1.5">
+                        <Sparkles className="w-2.5 h-2.5" />
+                        Director's Note (Audio Profile)
+                      </label>
+                      <textarea
+                        value={audioProfilePrompt}
+                        onChange={(e) => setAudioProfilePrompt(e.target.value)}
+                        placeholder="e.g., Make the speaker sound like a 50-year-old professor..."
+                        className="w-full px-2 py-1.5 text-xs rounded border border-gray-700 bg-gray-800 text-gray-200 resize-none placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
+                        rows={2}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Synopsis */}
@@ -1651,6 +1821,17 @@ function EpisodesPanel({
             <p className="text-gray-500 text-sm">Click on an episode to view its details and beats.</p>
           </div>
         )}
+
+        {/* Voice Selector Dialog */}
+        <GeminiVoicePicker
+          open={voiceSelectorOpen}
+          onOpenChange={setVoiceSelectorOpen}
+          selectedVoiceId={selectedVoiceId}
+          onSelectVoice={(id, name) => {
+            setSelectedVoiceId(id)
+            setSelectedVoiceName(name)
+          }}
+        />
       </div>
     </div>
   )
