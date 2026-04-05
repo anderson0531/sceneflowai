@@ -14,12 +14,34 @@ import {
 } from '@/lib/visionary/prompt-templates';
 import { safeParseJSON } from '@/lib/utils/safeParseJSON';
 
-
-
-
-// 🔥 Vercel Pro Configuration: Must be outside the POST handler
 export const dynamic = 'force-dynamic';
-export const maxDuration = 300; // This should be the only declaration
+export const maxDuration = 300;
+
+/**
+ * Extract text content from Vertex streamGenerateContent JSON chunks.
+ * The stream body is a JSON array: [{candidates:[{content:{parts:[{text}]}}]}, ...]
+ * We parse incrementally, pull out non-thought text parts, and forward clean text.
+ */
+function extractTextFromVertexChunk(raw: string): string {
+  try {
+    const chunks = safeParseJSON(raw)
+    if (!chunks) return ''
+    const arr = Array.isArray(chunks) ? chunks : [chunks]
+    const parts: string[] = []
+    for (const chunk of arr) {
+      const candidates = chunk?.candidates ?? []
+      for (const candidate of candidates) {
+        for (const part of candidate?.content?.parts ?? []) {
+          if (part.thought) continue
+          if (part.text) parts.push(part.text)
+        }
+      }
+    }
+    return parts.join('')
+  } catch {
+    return raw
+  }
+}
 
 export async function POST(req: Request) {
   try {
@@ -32,12 +54,6 @@ export async function POST(req: Request) {
 
     if (!concept) {
       return NextResponse.json({ error: 'Concept is required' }, { status: 400 });
-    }
-
-    // This is a placeholder for your actual credit check logic
-    const hasSufficientCredits = true; // Replace with a real check
-    if (!hasSufficientCredits) {
-      return NextResponse.json({ error: 'Insufficient credits' }, { status: 402 });
     }
 
     // Phase 1: Market Scan
@@ -78,16 +94,11 @@ export async function POST(req: Request) {
       }
     );
     const arbitrageMap = safeParseJSON(arbitrageResult.text);
-
-    // 🔥 STRATEGIC DEBUG LOG
-    console.log('📊 [Visionary Debug] Phase 3 Arbitrage Map Data:');
-    console.log(JSON.stringify(arbitrageMap, null, 2));
-
     if (!arbitrageMap || Object.keys(arbitrageMap).length === 0) {
       throw new Error("Phase 3 failed to produce arbitrage map data.");
     }
     
-    // Phase 4: Vertex AI streaming (same stack as other Gemini routes — no Vercel `ai` package)
+    // Phase 4: Stream Series Bible via Vertex AI
     const biblePrompt = buildSeriesBiblePrompt({
       originalConcept: concept,
       selectedMarket: selectedMarket || (arbitrageMap.opportunities?.[0])
@@ -99,10 +110,51 @@ export async function POST(req: Request) {
       thinkingLevel: 'high',
     });
 
-    const outHeaders = new Headers(responseStream.headers);
-    outHeaders.set('X-Metadata', JSON.stringify({ marketScan, gapAnalysis, arbitrageMap }));
+    // Build a composite stream: metadata JSON line first, then transformed
+    // Vertex text chunks. This avoids stuffing non-ASCII data into HTTP
+    // headers (which are limited to Latin-1 and crash on CJK / Devanagari).
+    const encoder = new TextEncoder()
+    const metadataLine = JSON.stringify({ __metadata: { marketScan, gapAnalysis, arbitrageMap } }) + '\n'
 
-    return new Response(responseStream.body, { headers: outHeaders });
+    const vertexReader = responseStream.body?.getReader()
+    const decoder = new TextDecoder()
+
+    const compositeStream = new ReadableStream({
+      async start(controller) {
+        controller.enqueue(encoder.encode(metadataLine))
+
+        if (!vertexReader) { controller.close(); return }
+
+        // Buffer for incremental JSON array parsing from Vertex
+        let buffer = ''
+        try {
+          while (true) {
+            const { done, value } = await vertexReader.read()
+            if (done) break
+            buffer += decoder.decode(value, { stream: true })
+
+            // Vertex streams a JSON array; try to extract text so far
+            const text = extractTextFromVertexChunk(buffer)
+            if (text) {
+              controller.enqueue(encoder.encode(text))
+              buffer = ''
+            }
+          }
+          // Flush any remaining buffer
+          if (buffer.trim()) {
+            const remaining = extractTextFromVertexChunk(buffer)
+            if (remaining) controller.enqueue(encoder.encode(remaining))
+          }
+        } catch (err) {
+          console.error('[Visionary] Stream transform error:', err)
+        }
+        controller.close()
+      }
+    })
+
+    return new Response(compositeStream, {
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
 
   } catch (error: any) {
     console.error('[Visionary API Error]:', error.message);

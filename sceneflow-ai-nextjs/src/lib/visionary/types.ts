@@ -115,18 +115,14 @@ export interface LanguageOpportunity {
   languageName: string
   region: string           // ISO 3166-1 alpha-2
   regionName: string
-  /** Supply score: how much content exists (0 = none, 100 = saturated) */
   supplyScore: number
-  /** Demand score: audience interest (0 = none, 100 = massive) */
   demandScore: number
-  /** Arbitrage score: demand - supply gap (higher = more opportunity) */
   arbitrageScore: number
-  /** Estimated audience size in that language/region */
   estimatedAudience: string
-  /** Revenue potential indicator */
   revenuePotential: 'high' | 'medium' | 'low'
-  /** Notes about cultural adaptation needs */
   culturalNotes: string
+  optimizedTitle?: string
+  optimizedCreativeBrief?: string
 }
 
 export interface ArbitrageHeatMapData {
@@ -139,6 +135,9 @@ export interface ArbitrageHeatMapData {
   }>
   globalInsight: string
 }
+
+/** Alias used by UI components */
+export type ArbitrageMap = ArbitrageHeatMapData
 
 // =============================================================================
 // Bridge Plan (Idea → Production)
@@ -169,15 +168,26 @@ export interface BridgePlan {
 // =============================================================================
 
 export interface VisionaryReport {
-  id: string;
-  concept: string;
-  genre?: string;
-  overallScore: number;
-  radarData: RadarAxis[]; // Data for the SVG Radar Chart
-  marketScan: MarketTrend[];
-  gapAnalysis: GapItem[];
-  arbitrageMap: any; // Keep existing ArbitrageHeatMap data
-  createdAt: string;
+  id?: string
+  concept?: string
+  genre?: string
+  status?: 'pending' | 'in_progress' | 'complete' | 'failed'
+
+  /** Phase 1 output — matches Gemini MarketScan JSON */
+  marketScan: MarketScanResult
+  /** Phase 2 output — matches Gemini GapAnalysis JSON */
+  gapAnalysis: GapAnalysisResult
+  /** Phase 3 output — matches Gemini ArbitrageMap JSON */
+  arbitrageMap: ArbitrageHeatMapData
+  /** Phase 4 output — streamed Series Bible text */
+  bridgePlan?: string
+
+  /** Derived overall score (conceptFit + avg arbitrage) */
+  overallScore?: number
+  /** Radar chart axes derived from phase data */
+  radarData?: RadarAxis[]
+
+  createdAt?: string
 }
 
 // =============================================================================
@@ -237,6 +247,12 @@ export const PHASE_TICKER_MESSAGES: Record<string, string[]> = {
     'Mapping supply-demand gaps by territory...',
     'Architecting the Optimized Series Bible...',
     'Finalizing creative hooks and localized titles...',
+  ],
+  'bridge-plan': [
+    'Generating Series Bible...',
+    'Building narrative framework...',
+    'Crafting production blueprint...',
+    'Synthesizing creative brief...',
   ],
   'complete': [
     'Analysis complete!',

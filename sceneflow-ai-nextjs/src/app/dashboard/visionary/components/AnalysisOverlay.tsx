@@ -239,6 +239,12 @@ export function AnalysisOverlay({
         `Calculating currency-to-content arbitrage for ${primaryToken}...`,
         `Finalizing ${secondaryToken} production blueprints...`,
       ],
+      'bridge-plan': [
+        `Generating Series Bible for ${primaryToken}...`,
+        `Crafting narrative arcs around ${secondaryToken}...`,
+        `Building creative framework for ${primaryToken}...`,
+        `Synthesizing production blueprint...`,
+      ],
       'idle': ['Initializing...'],
       'complete': ['Synthesis successful.'],
       'error': ['Synthesis interrupted.']

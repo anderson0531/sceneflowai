@@ -10,14 +10,13 @@ import type {
 
 /**
  * useVisionaryAnalysis — Multi-phase analysis state machine
- * 
+ *
  * Orchestrates the 4-phase Visionary Engine analysis pipeline:
- * 1. Market Scan → 2. Gap Analysis → 3. Arbitrage Map → 4. Bridge Plan
- * 
- * The server runs all phases sequentially in a single POST request,
- * updating the DB record after each phase completes. The client fires
- * the POST without blocking and runs a parallel polling loop + smooth
- * progress simulation so the UI reflects real-time phase transitions.
+ * 1. Market Scan  2. Gap Analysis  3. Arbitrage Map  4. Series Bible (streamed)
+ *
+ * The server runs phases 1-3 synchronously, then streams phase 4.
+ * The response body starts with a JSON metadata line (phases 1-3 results),
+ * followed by the streamed Series Bible text.
  */
 export function useVisionaryAnalysis() {
   const [phase, setPhase] = useState<VisionaryPhase>('idle')
@@ -30,35 +29,20 @@ export function useVisionaryAnalysis() {
   const [error, setError] = useState<string | null>(null)
   const [isRunning, setIsRunning] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
-  const pollTimerRef = useRef<NodeJS.Timeout | null>(null)
   const progressTimerRef = useRef<NodeJS.Timeout | null>(null)
   const phaseRef = useRef<VisionaryPhase>('idle')
 
-  // Keep phaseRef in sync so timers can read current phase
-  useEffect(() => {
-    phaseRef.current = phase
-  }, [phase])
+  useEffect(() => { phaseRef.current = phase }, [phase])
 
-  // Clean up timers on unmount
   useEffect(() => {
-    return () => {
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current)
-      if (progressTimerRef.current) clearInterval(progressTimerRef.current)
-    }
+    return () => { if (progressTimerRef.current) clearInterval(progressTimerRef.current) }
   }, [])
 
-  /** Stop all running timers */
   const clearTimers = useCallback(() => {
-    if (pollTimerRef.current) { clearInterval(pollTimerRef.current); pollTimerRef.current = null }
     if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null }
   }, [])
 
-  /**
-   * Start a new analysis run.
-   * Fires the POST and immediately begins polling + progress simulation.
-   */
   const startAnalysis = useCallback(async (input: CreateAnalysisRequest & { userEmail?: string }) => {
-    // Abort any existing analysis
     abortRef.current?.abort()
     clearTimers()
 
@@ -73,9 +57,7 @@ export function useVisionaryAnalysis() {
 
     const userEmail = input.userEmail || ''
 
-    // ── Smooth progress simulation ──────────────────────────────────
-    // Incrementally advance progress within each phase's band so the
-    // UI never feels stuck. Real phase transitions from polling override.
+    // Smooth progress simulation while the server works on phases 1-3
     let simulatedProgress = 2
     const phaseTargets: Record<string, number> = {
       'market-scan': 33,
@@ -90,14 +72,11 @@ export function useVisionaryAnalysis() {
 
       if (remaining > 0.5) {
         simulatedProgress += remaining * 0.05 
-      } 
-      else if (currentPhase !== 'arbitrage-map') {
+      } else if (currentPhase !== 'arbitrage-map') {
         const order: VisionaryPhase[] = ['market-scan', 'gap-analysis', 'arbitrage-map']
         const nextIdx = order.indexOf(currentPhase) + 1
-        
         if (nextIdx < order.length) {
-          const nextPhase = order[nextIdx]
-          setPhase(nextPhase)
+          setPhase(order[nextIdx])
           simulatedProgress += 1 
         }
       }
@@ -117,33 +96,68 @@ export function useVisionaryAnalysis() {
         signal: controller.signal,
       })
 
-      if (!createRes.ok) throw new Error('Analysis failed');
+      if (!createRes.ok) {
+        const errBody = await createRes.json().catch(() => null)
+        throw new Error(errBody?.details || errBody?.error || 'Analysis failed')
+      }
 
-      // THE STREAM READER FIX
-      const metadata = JSON.parse(createRes.headers.get('X-Metadata') || '{}');
-      const reader = createRes.body?.getReader();
-      const decoder = new TextDecoder();
-      let fullBible = '';
+      const reader = createRes.body?.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let metadata: Record<string, unknown> | null = null
+      let fullBible = ''
 
       if (reader) {
         while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          const chunk = decoder.decode(value, { stream: true });
-          fullBible += chunk;
-          
-          // Update progress with the streaming text
+          const { done, value } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+
+          // The first line is a JSON object with __metadata key
+          if (!metadata) {
+            const newlineIdx = buffer.indexOf('\n')
+            if (newlineIdx !== -1) {
+              const firstLine = buffer.slice(0, newlineIdx)
+              buffer = buffer.slice(newlineIdx + 1)
+              try {
+                const parsed = JSON.parse(firstLine)
+                if (parsed.__metadata) {
+                  metadata = parsed.__metadata
+                  setPhase('bridge-plan')
+                  simulatedProgress = 99
+                }
+              } catch {
+                fullBible += firstLine
+              }
+              fullBible += buffer
+              buffer = ''
+            }
+            continue
+          }
+
+          fullBible += buffer
+          buffer = ''
+
           setProgress(prev => ({ 
             ...prev, 
-            message: `Synthesizing Bible: ${fullBible.substring(0, 50)}...`,
+            phase: 'bridge-plan',
+            message: `Generating Series Bible...`,
             progress: 99 
-          }));
+          }))
         }
       }
 
-      setReport({ ...metadata, bridgePlan: fullBible, status: 'complete' });
-      setPhase('complete');
+      clearTimers()
+      const finalReport: VisionaryReport = {
+        ...(metadata as any),
+        concept: input.concept,
+        genre: input.genre,
+        bridgePlan: fullBible,
+        status: 'complete',
+      }
+      setReport(finalReport)
+      setPhase('complete')
+      setProgress({ phase: 'complete', progress: 100, message: 'Analysis complete' })
 
     } catch (err: any) {
       clearTimers()
@@ -156,9 +170,6 @@ export function useVisionaryAnalysis() {
     }
   }, [clearTimers])
 
-  /**
-   * Cancel a running analysis
-   */
   const cancelAnalysis = useCallback(() => {
     abortRef.current?.abort()
     clearTimers()
@@ -167,9 +178,6 @@ export function useVisionaryAnalysis() {
     setProgress({ phase: 'idle', progress: 0, message: 'Analysis cancelled' })
   }, [clearTimers])
 
-  /**
-   * Reset state for a new analysis
-   */
   const reset = useCallback(() => {
     abortRef.current?.abort()
     clearTimers()
@@ -180,9 +188,6 @@ export function useVisionaryAnalysis() {
     setIsRunning(false)
   }, [clearTimers])
 
-  /**
-   * Load an existing report by ID
-   */
   const loadReport = useCallback(async (reportId: string, userEmail?: string) => {
     try {
       const res = await fetch(`/api/visionary/reports/${reportId}`, {
@@ -200,13 +205,11 @@ export function useVisionaryAnalysis() {
   }, [])
 
   return {
-    // State
     phase,
     progress,
     report,
     error,
     isRunning,
-    // Actions
     startAnalysis,
     cancelAnalysis,
     reset,
