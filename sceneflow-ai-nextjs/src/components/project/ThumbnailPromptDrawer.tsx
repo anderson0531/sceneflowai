@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog'
 import { Button } from '../ui/Button'
 import { toast } from 'sonner'
 import { Loader2, Camera, Sun, Wind, Palette, Users, ChevronDown, ChevronUp, Sparkles, Image as ImageIcon } from 'lucide-react'
@@ -375,6 +375,9 @@ export default function ThumbnailPromptDrawer({
             <ImageIcon className="w-5 h-5 text-cyan-400" />
             {isTreatmentMode ? 'Hero Image Prompt Builder' : 'Edit Thumbnail Prompt'}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Build a detailed prompt to generate a thumbnail image for this project.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col h-[calc(100dvh-56px)]">

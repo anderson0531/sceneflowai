@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog'
 import { Button } from '../ui/Button'
 import { Textarea } from '../ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '../ui/select'
@@ -398,6 +398,9 @@ export function BlueprintReimaginDialog({
               </>
             )}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            {isReimaginMode ? 'Form to reimagine an existing blueprint' : 'Form to create a new blueprint'}
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-6 py-4">

@@ -716,15 +716,22 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           if (primeBlueprint === 'true' && hasBlueprintPrimeInput) {
             console.log('[StudioPage] Series episode detected - auto-generating Blueprint from series data...')
             // Use setTimeout to allow state to settle before generating
-            setTimeout(() => {
-              handleGenerateBlueprint(metadata.blueprintPrimeInput, {
-                genre: projectData.genre || undefined,
-                variantCount: 1, // Single variant for series episodes - they have specific requirements
-                hasStoryDirections: true, // Series data acts as story directions
-                format: projectData?.metadata?.format
-              })
-              // Clear the query param to prevent re-generation on refresh
-              router.replace(`/dashboard/studio/${projectId}`, { scroll: false })
+            setTimeout(async () => {
+              try {
+                await handleGenerateBlueprint(metadata.blueprintPrimeInput, {
+                  genre: projectData.genre || undefined,
+                  variantCount: 1, // Single variant for series episodes - they have specific requirements
+                  hasStoryDirections: true, // Series data acts as story directions
+                  format: projectData?.metadata?.format
+                })
+              } catch (err) {
+                console.error('[StudioPage] Auto-generation failed:', err)
+                const { toast } = await import('sonner')
+                toast.error('Failed to generate Blueprint automatically.')
+              } finally {
+                // Clear the query param to prevent re-generation on refresh
+                router.replace(`/dashboard/studio/${projectId}`, { scroll: false })
+              }
             }, 500)
           }
         }

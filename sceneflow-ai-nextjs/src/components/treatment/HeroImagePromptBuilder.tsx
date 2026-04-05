@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -396,6 +396,9 @@ export function HeroImagePromptBuilder({
             <Film className="w-5 h-5 text-amber-400" />
             Hero Image — {treatment.title || 'Untitled'}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Form to build a prompt and generate a hero image for this treatment.
+          </DialogDescription>
         </DialogHeader>
 
         {/* Scrollable Content Area */}

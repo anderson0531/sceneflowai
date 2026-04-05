@@ -1069,6 +1069,9 @@ export default function SeriesStudioPage() {
               </div>
               <span>Edit Series Title</span>
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              Edit the title of your series.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 pt-4">
@@ -1145,6 +1148,8 @@ export default function SeriesStudioPage() {
       {/* Series Resonance Analysis Modal */}
       <Dialog open={isResonancePanelOpen} onOpenChange={setIsResonancePanelOpen}>
         <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-6xl w-[95vw] h-[85vh] p-6 flex flex-col overflow-hidden">
+          <DialogTitle className="sr-only">Series Resonance Analysis</DialogTitle>
+          <DialogDescription className="sr-only">Detailed audience resonance analysis for your series.</DialogDescription>
           <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
             <SeriesResonancePanel
               series={series}
