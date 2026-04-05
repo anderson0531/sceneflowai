@@ -2,16 +2,40 @@
 
 import React, { useState, useCallback } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Play, Check, Volume2, Loader2 } from 'lucide-react'
+import { Play, Check, Volume2, Loader2, Sparkles } from 'lucide-react'
 
-// Gemini 2.5 / Chirp 3 (Journey) voices
+// Gemini 2.5 TTS Voices (Vertex AI Audio Modality)
 export const GEMINI_VOICES = [
-  { id: 'en-US-Journey-D', name: 'Journey D (Male)', gender: 'male', description: 'Deep, resonant, and authoritative.' },
-  { id: 'en-US-Journey-F', name: 'Journey F (Female)', gender: 'female', description: 'Clear, expressive, and engaging.' },
-  { id: 'en-US-Journey-O', name: 'Journey O (Female)', gender: 'female', description: 'Warm, conversational, and natural.' },
-  // Fallbacks if Journey isn't available
-  { id: 'en-US-Studio-O', name: 'Studio O (Female)', gender: 'female', description: 'Professional studio quality.' },
-  { id: 'en-US-Studio-M', name: 'Studio M (Male)', gender: 'male', description: 'Professional studio quality.' },
+  { id: 'Puck', name: 'Puck', description: 'Upbeat, friendly, and energetic.' },
+  { id: 'Charon', name: 'Charon', description: 'Informative, articulate, and professional.' },
+  { id: 'Zephyr', name: 'Zephyr', description: 'Bright, conversational, and light.' },
+  { id: 'Aoede', name: 'Aoede', description: 'Warm, expressive, and engaging.' },
+  { id: 'Fenrir', name: 'Fenrir', description: 'Strong, authoritative, and direct.' },
+  { id: 'Kore', name: 'Kore', description: 'Youthful, dynamic, and clear.' },
+  { id: 'Leda', name: 'Leda', description: 'Smooth, measured, and pleasant.' },
+  { id: 'Orus', name: 'Orus', description: 'Confident, clear, and steady.' },
+  { id: 'Autonoe', name: 'Autonoe', description: 'Calm, thoughtful, and composed.' },
+  { id: 'Umbriel', name: 'Umbriel', description: 'Deep, resonant, and serious.' },
+  { id: 'Erinome', name: 'Erinome', description: 'Professional narrator voice.' },
+  { id: 'Laomedeia', name: 'Laomedeia', description: 'Clear and distinct articulation.' },
+  { id: 'Schedar', name: 'Schedar', description: 'Warm conversational tone.' },
+  { id: 'Achird', name: 'Achird', description: 'Bright and engaging delivery.' },
+  { id: 'Sadachbia', name: 'Sadachbia', description: 'Smooth and expressive pacing.' },
+  { id: 'Enceladus', name: 'Enceladus', description: 'Deep and authoritative voice.' },
+  { id: 'Algieba', name: 'Algieba', description: 'Professional and informative.' },
+  { id: 'Algenib', name: 'Algenib', description: 'Clear and steady narration.' },
+  { id: 'Achernar', name: 'Achernar', description: 'Friendly and conversational.' },
+  { id: 'Gacrux', name: 'Gacrux', description: 'Energetic and upbeat tone.' },
+  { id: 'Zubenelgenubi', name: 'Zubenelgenubi', description: 'Warm and expressive.' },
+  { id: 'Sadaltager', name: 'Sadaltager', description: 'Smooth and measured pacing.' },
+  { id: 'Callirrhoe', name: 'Callirrhoe', description: 'Professional and clear.' },
+  { id: 'Iapetus', name: 'Iapetus', description: 'Deep and resonant voice.' },
+  { id: 'Despina', name: 'Despina', description: 'Bright and energetic delivery.' },
+  { id: 'Rasalgethi', name: 'Rasalgethi', description: 'Calm and thoughtful tone.' },
+  { id: 'Alnilam', name: 'Alnilam', description: 'Informative and articulate.' },
+  { id: 'Pulcherrima', name: 'Pulcherrima', description: 'Warm and engaging.' },
+  { id: 'Vindemiatrix', name: 'Vindemiatrix', description: 'Clear and distinct narration.' },
+  { id: 'Sulafat', name: 'Sulafat', description: 'Smooth and professional.' }
 ]
 
 interface GeminiVoicePickerProps {
@@ -45,13 +69,14 @@ export function GeminiVoicePicker({
 
     setIsSynthesizing(voiceId)
     try {
-      // Use the Google TTS API to generate a preview
-      const response = await fetch('/api/tts/google', {
+      // Use the Gemini TTS API to generate a preview
+      const response = await fetch('/api/tts/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: 'This is a preview of my voice using the Gemini and Chirp audio models.',
+          text: 'This is a preview of my voice using the Gemini 2.5 Flash audio model.',
           voiceId: voiceId,
+          instruction: 'Sound confident, clear, and engaging.'
         }),
       })
 
@@ -82,24 +107,22 @@ export function GeminiVoicePicker({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[70vh] overflow-hidden flex flex-col bg-gray-900 border-gray-800">
-        <DialogHeader className="pb-2">
+      <DialogContent className="max-w-[600px] max-h-[80vh] overflow-hidden flex flex-col bg-gray-900 border-gray-800">
+        <DialogHeader className="pb-4 border-b border-gray-800">
           <DialogTitle 
-            className="flex items-center gap-1.5 font-medium text-gray-200"
-            style={{ fontSize: '15px', lineHeight: '1.3' }}
+            className="flex items-center gap-2 font-medium text-gray-200 text-lg"
           >
-            <Volume2 className="w-3.5 h-3.5 text-cyan-400" />
-            Select Gemini/Chirp Voice
+            <Sparkles className="w-4 h-4 text-cyan-400" />
+            Gemini 2.5 Actor Personalities
           </DialogTitle>
           <DialogDescription 
             className="text-gray-400"
-            style={{ fontSize: '12px', lineHeight: '1.4' }}
           >
-            Powered by Google Cloud Text-to-Speech (Journey/Chirp models).
+            Powered by Vertex AI. These 30 "Actor" personalities are natively steerable using natural language instructions, replacing the standard Google Cloud TTS suite.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto min-h-0 pr-2 pb-4 space-y-2 mt-4 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto min-h-0 pr-2 space-y-2 mt-4 custom-scrollbar grid grid-cols-2 gap-3 pb-4">
           {GEMINI_VOICES.map((voice) => {
             const isSelected = selectedVoiceId === voice.id
             const isPlaying = playingVoiceId === voice.id
@@ -122,7 +145,7 @@ export function GeminiVoicePicker({
                     handlePreview(voice.id)
                   }}
                   disabled={isSynthesizing !== null && isSynthesizing !== voice.id}
-                  className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                  className={`shrink-0 w-8 h-8 mt-0.5 rounded-full flex items-center justify-center transition-colors ${
                     isPlaying 
                       ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20' 
                       : 'bg-gray-700/50 text-gray-300 hover:bg-gray-600 hover:text-white'
@@ -139,14 +162,14 @@ export function GeminiVoicePicker({
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="font-medium text-gray-200 text-sm">{voice.name}</span>
+                    <span className="font-medium text-gray-200 text-[13px]">{voice.name}</span>
                     {isSelected && (
-                      <span className="flex items-center gap-1 text-[10px] font-semibold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full">
-                        <Check className="w-3 h-3" /> Selected
+                      <span className="flex items-center gap-1 text-[10px] font-semibold text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded-full">
+                        <Check className="w-3 h-3" />
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-gray-400 leading-relaxed">
+                  <div className="text-[11px] text-gray-400 leading-relaxed line-clamp-2" title={voice.description}>
                     {voice.description}
                   </div>
                 </div>
