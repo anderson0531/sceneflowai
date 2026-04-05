@@ -52,7 +52,7 @@ import {
   DialogTitle,
   DialogDescription
 } from '@/components/ui/dialog'
-import { NarratorVoicePicker } from '@/components/tts/NarratorVoicePicker'
+import { GeminiVoicePicker } from '@/components/tts/GeminiVoicePicker'
 import { useSeriesStudio } from '@/hooks/useSeries'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useSession } from 'next-auth/react'
@@ -940,8 +940,8 @@ function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProp
   const [isPlaying, setIsPlaying] = useState(false)
   const [isGeneratingTTS, setIsGeneratingTTS] = useState(false)
   const [voiceSelectorOpen, setVoiceSelectorOpen] = useState(false)
-  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('CwhRBWXzGAHq8TQ4Fs17') // Roger fallback
-  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Roger')
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('en-US-Journey-F') // Google/Gemini fallback
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Journey F (Female)')
   const audioRef = React.useRef<HTMLAudioElement | null>(null)
 
   // Clean up audio on unmount
@@ -973,16 +973,12 @@ function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProp
 
     setIsGeneratingTTS(true)
     try {
-      const response = await fetch('/api/tts/elevenlabs', {
+      const response = await fetch('/api/tts/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: textToSpeak,
-          voiceId: selectedVoiceId,
-          language: 'en',
-          parallel: true,
-          stability: 0.5,
-          similarityBoost: 0.75
+          voiceId: selectedVoiceId
         })
       })
 
@@ -1083,7 +1079,7 @@ function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProp
         </div>
 
         {/* Voice Selector Dialog */}
-        <NarratorVoicePicker
+        <GeminiVoicePicker
           open={voiceSelectorOpen}
           onOpenChange={setVoiceSelectorOpen}
           selectedVoiceId={selectedVoiceId}

@@ -1,24 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getVertexAIAuthToken } from '@/lib/vertexai/client'
 
 export const dynamic = 'force-dynamic'
 
 // Default voice if none specified
-const DEFAULT_VOICE = 'en-US-Neural2-F'
+const DEFAULT_VOICE = 'en-US-Journey-F'
 
 // Voice ID mapping from common ElevenLabs-style IDs to Google voices
 const VOICE_MAPPING: Record<string, string> = {
   // Female voices
-  'rachel': 'en-US-Neural2-F',
-  'bella': 'en-US-Neural2-C',
+  'rachel': 'en-US-Journey-F',
+  'bella': 'en-US-Journey-O',
   'domi': 'en-US-Neural2-E',
   'elli': 'en-US-Neural2-G',
   // Male voices
-  'adam': 'en-US-Neural2-D',
+  'adam': 'en-US-Journey-D',
   'antoni': 'en-US-Neural2-A',
   'arnold': 'en-US-Neural2-I',
   'josh': 'en-US-Neural2-J',
   // Default mapping
-  '21m00Tcm4TlvDq8ikWAM': 'en-US-Neural2-F', // Rachel default from ElevenLabs
+  '21m00Tcm4TlvDq8ikWAM': 'en-US-Journey-F', // Rachel default from ElevenLabs
 }
 
 export async function POST(request: NextRequest) {
@@ -29,11 +30,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing text parameter' }, { status: 400 })
     }
 
-    const apiKey = process.env.GOOGLE_API_KEY
-    console.log('[Google TTS] API Key present:', !!apiKey)
+    let apiKey = process.env.GOOGLE_API_KEY
+    let accessToken: string | null = null
+
+    try {
+      // First try to get the GCP token (Vertex AI / standard Google service account auth)
+      accessToken = await getVertexAIAuthToken()
+      console.log('[Google TTS] Using Vertex AI service account token')
+    } catch (authErr) {
+      console.log('[Google TTS] No service account token available, falling back to API key:', authErr)
+    }
     
-    if (!apiKey) {
-      console.error('[Google TTS] Error: Google API key not configured')
+    if (!accessToken && !apiKey) {
+      console.error('[Google TTS] Error: Google API key or service account not configured')
       return NextResponse.json({ error: 'TTS not configured' }, { status: 500 })
     }
 
@@ -47,15 +56,23 @@ export async function POST(request: NextRequest) {
     console.log('[Google TTS] Generating speech:', { text: text.substring(0, 50), voice: googleVoice })
 
     // Use REST API instead of client library
-    const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`
+    let url = `https://texttospeech.googleapis.com/v1/text:synthesize`
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`
+      // Explicitly specify the cloud project if needed via headers x-goog-user-project, but bearer is enough
+    } else if (apiKey) {
+      url += `?key=${apiKey}`
+    }
     
     const languageCode = googleVoice.split('-').slice(0, 2).join('-') // e.g., 'en-US'
     
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({
         input: { text },
         voice: {
