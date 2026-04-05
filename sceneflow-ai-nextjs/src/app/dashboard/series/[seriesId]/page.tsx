@@ -1177,6 +1177,7 @@ function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProp
   const [voiceSelectorOpen, setVoiceSelectorOpen] = useState(false)
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>('en-US-Journey-F') // Google Cloud TTS Voice fallback
   const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Journey F (Female)')
+  const [audioProfilePrompt, setAudioProfilePrompt] = useState<string>('')
   const audioRef = React.useRef<HTMLAudioElement | null>(null)
 
   // Clean up audio on unmount
@@ -1213,7 +1214,8 @@ function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProp
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: textToSpeak,
-          voiceId: selectedVoiceId
+          voiceId: selectedVoiceId,
+          ...(selectedVoiceId.startsWith('gemini-') && audioProfilePrompt ? { prompt: audioProfilePrompt } : {})
         })
       })
 
@@ -1298,6 +1300,23 @@ function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProp
                 <RefreshCw className={`w-4 h-4 ${isGenerating ? 'animate-spin' : ''}`} />
               </Button>
             </div>
+
+            {/* Director's Note (Audio Profile) for Gemini Voices */}
+            {selectedVoiceId.startsWith('gemini-') && (
+              <div className="mt-4 bg-gray-900/50 rounded-lg p-3 border border-cyan-500/30">
+                <label className="text-xs font-medium text-cyan-400 flex items-center gap-1 mb-2">
+                  <Sparkles className="w-3 h-3" />
+                  Director's Note (Audio Profile)
+                </label>
+                <textarea
+                  value={audioProfilePrompt}
+                  onChange={(e) => setAudioProfilePrompt(e.target.value)}
+                  placeholder="e.g., Make the speaker sound like a 50-year-old professor from London, slightly raspy, speaking with a gentle, scholarly authority."
+                  className="w-full px-3 py-2 text-sm rounded border border-gray-700 bg-gray-800 text-gray-200 resize-none placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
+                  rows={2}
+                />
+              </div>
+            )}
           </div>
           <div className="space-y-4">
             <div>
