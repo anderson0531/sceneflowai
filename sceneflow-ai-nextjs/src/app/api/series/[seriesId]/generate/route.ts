@@ -17,7 +17,7 @@ const GENERATION_TIMEOUT_MS = 90000 // 90 second timeout per batch
 /** Full storyline generation is memory-heavy; cap episodes per request on serverless (override via env). */
 const PER_REQUEST_MAX_FULL_GENERATE_EPISODES = Math.min(
   20,
-  Math.max(5, parseInt(process.env.SERIES_GENERATE_MAX_EPISODES || '10', 10) || 10)
+  Math.max(5, parseInt(process.env.SERIES_GENERATE_MAX_EPISODES || '5', 10) || 5)
 )
 
 /**
@@ -189,9 +189,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       episodeCount ?? series.max_episodes ?? DEFAULT_MAX_EPISODES,
       DEFAULT_MAX_EPISODES
     )
-    const targetEpisodeCount = regenerateField
-      ? rawRequestedEpisodes
-      : Math.min(rawRequestedEpisodes, PER_REQUEST_MAX_FULL_GENERATE_EPISODES)
+  const targetEpisodeCount = regenerateField
+    ? rawRequestedEpisodes
+    : Math.min(rawRequestedEpisodes, PER_REQUEST_MAX_FULL_GENERATE_EPISODES)
+  
+  // Clean up global references to hint V8 GC before heavy generation
+  if (global.gc) {
+    global.gc()
+  }
     const episodesCapped =
       !regenerateField && rawRequestedEpisodes > targetEpisodeCount
 
