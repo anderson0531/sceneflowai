@@ -285,6 +285,7 @@ interface VoiceConfig {
   similarityBoost?: number
   // Google specific
   languageCode?: string
+  prompt?: string // Director's Note (Audio Profile)
   // AI-generated voice description (cached)
   voiceDescription?: string
 }

@@ -6,6 +6,12 @@ import { Play, Check, Volume2, Loader2, Sparkles } from 'lucide-react'
 
 // Google Cloud TTS (Journey Models)
 export const GEMINI_VOICES = [
+  // Gemini Models (Support Audio Profiles / Director's Notes)
+  { id: 'gemini-Kore', name: 'Kore (Gemini)', description: 'Expressive female voice supporting Audio Profiles and script markup tags.' },
+  { id: 'gemini-Charon', name: 'Charon (Gemini)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.' },
+  { id: 'gemini-Aoede', name: 'Aoede (Gemini)', description: 'Expressive female voice supporting Audio Profiles and script markup tags.' },
+  { id: 'gemini-Puck', name: 'Puck (Gemini)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.' },
+  
   // Journey Models (Deep Learning TTS)
   { id: 'en-US-Journey-D', name: 'Journey D (Male)', description: 'Deep, resonant, and authoritative. Best for dramatic narration.' },
   { id: 'en-US-Journey-F', name: 'Journey F (Female)', description: 'Clear, expressive, and engaging. Best for conversational reads.' },

@@ -1727,8 +1727,34 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
             }`}
           >
             <Volume2 className="w-3.5 h-3.5" />
-            {character.voiceConfig ? 'Voice' : 'Add Voice'}
+            {character.voiceConfig ? character.voiceConfig.voiceName || 'Voice' : 'Add Voice'}
           </button>
+
+          {/* Director's Note (Audio Profile) for Gemini Voices */}
+          {character.voiceConfig?.voiceId?.startsWith('gemini-') && (
+            <div className="mt-2 space-y-1">
+              <label className="text-xs font-medium text-cyan-400 flex items-center gap-1">
+                <Sparkles className="w-3 h-3" />
+                Director's Note (Audio Profile)
+              </label>
+              <textarea
+                value={character.voiceConfig.prompt || ''}
+                onChange={(e) => {
+                  onUpdateCharacterVoice?.(characterId, {
+                    ...character.voiceConfig,
+                    prompt: e.target.value
+                  })
+                }}
+                onClick={(e) => e.stopPropagation()}
+                placeholder="e.g., Make the speaker sound like a 50-year-old professor from London, slightly raspy, speaking with a gentle, scholarly authority."
+                className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none placeholder-gray-500"
+                rows={3}
+              />
+              <p className="text-[10px] text-gray-500">
+                You can use markup tags like <code className="bg-gray-800 px-1 rounded text-cyan-300">[sigh]</code>, <code className="bg-gray-800 px-1 rounded text-cyan-300">[laugh]</code>, or <code className="bg-gray-800 px-1 rounded text-cyan-300">[whisper]</code> directly in your script for this voice.
+              </p>
+            </div>
+          )}
         </div>
         
         {/* Wardrobe Section - Collapsible with Collection Management */}

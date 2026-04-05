@@ -4,6 +4,11 @@ export const dynamic = 'force-dynamic'
 
 // Static voice list (ListVoices API is blocked, so we use a curated list)
 const GOOGLE_VOICES = [
+  // Gemini voices (Support Audio Profiles / Director's Notes)
+  { name: 'gemini-Kore', languageCode: 'en-US', gender: 'FEMALE', type: 'Gemini', displayName: 'Kore (Gemini)' },
+  { name: 'gemini-Charon', languageCode: 'en-US', gender: 'MALE', type: 'Gemini', displayName: 'Charon (Gemini)' },
+  { name: 'gemini-Aoede', languageCode: 'en-US', gender: 'FEMALE', type: 'Gemini', displayName: 'Aoede (Gemini)' },
+  { name: 'gemini-Puck', languageCode: 'en-US', gender: 'MALE', type: 'Gemini', displayName: 'Puck (Gemini)' },
   // Studio voices (Premium quality - ElevenLabs comparable)
   { name: 'en-US-Studio-O', languageCode: 'en-US', gender: 'FEMALE', type: 'Studio', displayName: 'Sophia (Studio)' },
   { name: 'en-US-Neural2-C', languageCode: 'en-US', gender: 'FEMALE', type: 'Neural2', displayName: 'Emma (Neural2)' },

@@ -17,6 +17,7 @@ interface VoiceConfig {
   stability?: number
   similarityBoost?: number
   languageCode?: string
+  prompt?: string
 }
 
 interface AudioGenerationRequest {
@@ -368,24 +369,39 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig, l
 }
 
 async function generateGoogleAudio(text: string, voiceConfig: VoiceConfig): Promise<Buffer> {
-  const apiKey = process.env.GOOGLE_GEMINI_API_KEY
+  const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
   if (!apiKey) throw new Error('Google API key not configured')
+
+  const isGemini = voiceConfig.voiceId.startsWith('gemini-')
+  const actualVoiceName = isGemini ? voiceConfig.voiceId.replace('gemini-', '') : voiceConfig.voiceId
+  const languageCode = actualVoiceName.split('-').length >= 2 && !isGemini 
+    ? actualVoiceName.split('-').slice(0, 2).join('-') 
+    : (voiceConfig.languageCode || 'en-US')
+
+  const payload: any = {
+    input: { text },
+    voice: {
+      languageCode,
+      name: actualVoiceName,
+    },
+    audioConfig: {
+      audioEncoding: 'MP3',
+    },
+  }
+
+  if (isGemini) {
+    payload.voice.modelName = 'gemini-2.5-flash-tts'
+    if (voiceConfig.prompt) {
+      payload.input.prompt = voiceConfig.prompt
+    }
+  }
 
   const response = await fetch(
     `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        input: { text },
-        voice: {
-          languageCode: voiceConfig.languageCode || 'en-US',
-          name: voiceConfig.voiceId,
-        },
-        audioConfig: {
-          audioEncoding: 'MP3',
-        },
-      }),
+      body: JSON.stringify(payload),
     }
   )
 

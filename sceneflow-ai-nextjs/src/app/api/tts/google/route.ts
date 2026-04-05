@@ -24,7 +24,7 @@ const VOICE_MAPPING: Record<string, string> = {
 
 export async function POST(request: NextRequest) {
   try {
-    const { text, voiceId } = await request.json()
+    const { text, voiceId, prompt } = await request.json()
 
     if (!text || typeof text !== 'string') {
       return NextResponse.json({ error: 'Missing text parameter' }, { status: 400 })
@@ -68,24 +68,37 @@ export async function POST(request: NextRequest) {
       url += `?key=${apiKey}`
     }
     
-    const languageCode = googleVoice.split('-').slice(0, 2).join('-') // e.g., 'en-US'
+    const isGemini = googleVoice.startsWith('gemini-')
+    const actualVoiceName = isGemini ? googleVoice.replace('gemini-', '') : googleVoice
+    const languageCode = actualVoiceName.split('-').length >= 2 && !isGemini 
+      ? actualVoiceName.split('-').slice(0, 2).join('-') 
+      : 'en-US'
     
+    const payload: any = {
+      input: { text },
+      voice: {
+        languageCode,
+        name: actualVoiceName,
+      },
+      audioConfig: {
+        audioEncoding: 'MP3',
+        speakingRate: 1.0,
+        pitch: 0.0,
+        volumeGainDb: 0.0,
+      },
+    }
+
+    if (isGemini) {
+      payload.voice.modelName = 'gemini-2.5-flash-tts'
+      if (prompt) {
+        payload.input.prompt = prompt
+      }
+    }
+
     const response = await fetch(url, {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        input: { text },
-        voice: {
-          languageCode,
-          name: googleVoice,
-        },
-        audioConfig: {
-          audioEncoding: 'MP3',
-          speakingRate: 1.0,
-          pitch: 0.0,
-          volumeGainDb: 0.0,
-        },
-      }),
+      body: JSON.stringify(payload),
     })
 
     if (!response.ok) {

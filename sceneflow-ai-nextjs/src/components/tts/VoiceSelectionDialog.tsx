@@ -782,6 +782,12 @@ function BrowseVoiceContent({
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400">
                       {Math.round(rec.score)}% match
                     </span>
+                    {voice.id.startsWith('gemini-') && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 flex items-center gap-1" title="Supports Audio Profiles">
+                        <Sparkles className="w-2.5 h-2.5" />
+                        Gemini
+                      </span>
+                    )}
                     {voice.gender && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-700 text-gray-400">
                         {voice.gender}
@@ -953,6 +959,12 @@ function BrowseVoiceContent({
                     {isCustom && !isRecommended && (
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/30 text-purple-300">
                         Custom
+                      </span>
+                    )}
+                    {voice.id.startsWith('gemini-') && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 flex items-center gap-1" title="Supports Audio Profiles">
+                        <Sparkles className="w-2.5 h-2.5" />
+                        Gemini
                       </span>
                     )}
                     <span className={`text-sm font-medium truncate ${
