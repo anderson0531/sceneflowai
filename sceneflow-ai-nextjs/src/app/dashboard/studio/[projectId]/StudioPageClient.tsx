@@ -631,6 +631,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           const hasFilmTreatmentVariant = metadata.filmTreatmentVariant
           const hasTreatmentVariants = Array.isArray(metadata.treatmentVariants) && metadata.treatmentVariants.length > 0
           const hasFilmTreatment = metadata.filmTreatment
+          const hasApprovedTreatment = metadata.approvedTreatment
           
           // Check if this is a series episode and set context for badge
           if (metadata.seriesId && metadata.seriesTitle && metadata.episodeNumber) {
@@ -652,6 +653,16 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               ...approvedVariant
             }])
             console.log('[StudioPage] Restored approved filmTreatmentVariant from project:', approvedVariant.id || 'approved-treatment')
+          } else if (hasApprovedTreatment) {
+            const approvedVariant = metadata.approvedTreatment
+            if (approvedVariant.content || approvedVariant.synopsis) {
+              updateTreatment(approvedVariant.content || approvedVariant.synopsis || '')
+            }
+            setTreatmentVariants([{
+              id: approvedVariant.id || 'approved-treatment',
+              ...approvedVariant
+            }])
+            console.log('[StudioPage] Restored approvedTreatment from project:', approvedVariant.id || 'approved-treatment')
           } else if (hasTreatmentVariants) {
             // Restore from treatmentVariants array
             setTreatmentVariants(metadata.treatmentVariants)
@@ -681,11 +692,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             setBeatsView(metadata.beats)
           }
           
-          if (!hasFilmTreatmentVariant && !hasTreatmentVariants && Array.isArray(metadata.beats)) {
+          if (!hasFilmTreatmentVariant && !hasApprovedTreatment && !hasTreatmentVariants && Array.isArray(metadata.beats)) {
             setBeatsView(metadata.beats)
           }
           
-          if (!hasFilmTreatmentVariant && !hasTreatmentVariants && metadata.estimatedRuntime) {
+          if (!hasFilmTreatmentVariant && !hasApprovedTreatment && !hasTreatmentVariants && metadata.estimatedRuntime) {
             setEstimatedRuntime(metadata.estimatedRuntime)
           }
           
@@ -711,7 +722,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           
           // Check for primeBlueprint query param - auto-generate Blueprint from series data
           const primeBlueprint = searchParams.get('primeBlueprint')
-          const hasBlueprintPrimeInput = metadata.blueprintPrimeInput && !hasFilmTreatmentVariant && !hasTreatmentVariants && !hasFilmTreatment
+          const hasBlueprintPrimeInput = metadata.blueprintPrimeInput && !hasFilmTreatmentVariant && !hasTreatmentVariants && !hasFilmTreatment && !hasApprovedTreatment
           
           if (primeBlueprint === 'true' && hasBlueprintPrimeInput) {
             console.log('[StudioPage] Series episode detected - auto-generating Blueprint from series data...')
