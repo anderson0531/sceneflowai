@@ -1,32 +1,46 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Play, Check, Volume2, Loader2, Sparkles } from 'lucide-react'
+import { Play, Check, Loader2, Sparkles, Star, Search, X } from 'lucide-react'
+import { Input } from '@/components/ui/Input'
 
-// Google Cloud TTS (Journey Models)
 export const GEMINI_VOICES = [
-  // Gemini Models (Support Audio Profiles / Director's Notes)
-  { id: 'gemini-Kore', name: 'Kore (Gemini)', description: 'Expressive female voice supporting Audio Profiles and script markup tags.' },
-  { id: 'gemini-Charon', name: 'Charon (Gemini)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.' },
-  { id: 'gemini-Aoede', name: 'Aoede (Gemini)', description: 'Expressive female voice supporting Audio Profiles and script markup tags.' },
-  { id: 'gemini-Puck', name: 'Puck (Gemini)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.' },
+  // Gemini Models
+  { id: 'gemini-Kore', name: 'Kore (Premium)', description: 'Expressive female voice supporting Audio Profiles and script markup tags.', gender: 'Female', category: 'Premium' },
+  { id: 'gemini-Charon', name: 'Charon (Premium)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.', gender: 'Male', category: 'Premium' },
+  { id: 'gemini-Aoede', name: 'Aoede (Premium)', description: 'Expressive female voice supporting Audio Profiles and script markup tags.', gender: 'Female', category: 'Premium' },
+  { id: 'gemini-Puck', name: 'Puck (Premium)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.', gender: 'Male', category: 'Premium' },
   
-  // Journey Models (Deep Learning TTS)
-  { id: 'en-US-Journey-D', name: 'Journey D (Male)', description: 'Deep, resonant, and authoritative. Best for dramatic narration.' },
-  { id: 'en-US-Journey-F', name: 'Journey F (Female)', description: 'Clear, expressive, and engaging. Best for conversational reads.' },
-  { id: 'en-US-Journey-O', name: 'Journey O (Female)', description: 'Warm, natural, and friendly. Excellent all-rounder.' },
+  // Journey Models (Deep Learning TTS) -> Storytellers
+  { id: 'en-US-Journey-D', name: 'Marcus (Storyteller)', description: 'Deep, resonant, and authoritative. Best for dramatic narration and suspense.', gender: 'Male', category: 'Standard' },
+  { id: 'en-US-Journey-F', name: 'Elena (Storyteller)', description: 'Clear, expressive, and engaging. Best for conversational and emotional reads.', gender: 'Female', category: 'Standard' },
+  { id: 'en-US-Journey-O', name: 'Sarah (Storyteller)', description: 'Warm, natural, and friendly. Excellent all-rounder for documentaries.', gender: 'Female', category: 'Standard' },
   
-  // Studio Quality Fallbacks
-  { id: 'en-US-Studio-M', name: 'Studio M (Male)', description: 'Professional studio quality male voice.' },
-  { id: 'en-US-Studio-O', name: 'Studio O (Female)', description: 'Professional studio quality female voice.' },
-  { id: 'en-US-Studio-Q', name: 'Studio Q (Male)', description: 'Energetic studio male voice.' },
+  // Studio Quality -> Broadcast
+  { id: 'en-US-Studio-M', name: 'James (Broadcast)', description: 'Professional studio quality male voice. Perfect for news and announcements.', gender: 'Male', category: 'Standard' },
+  { id: 'en-US-Studio-O', name: 'Olivia (Broadcast)', description: 'Professional studio quality female voice. Clear and crisp articulation.', gender: 'Female', category: 'Standard' },
+  { id: 'en-US-Studio-Q', name: 'Michael (Broadcast)', description: 'Energetic studio male voice. Great for action and fast-paced narratives.', gender: 'Male', category: 'Standard' },
   
-  // Neural2 Fallbacks (High Quality)
-  { id: 'en-US-Neural2-A', name: 'Neural2 A (Male)', description: 'Standard high-quality male voice.' },
-  { id: 'en-US-Neural2-C', name: 'Neural2 C (Female)', description: 'Standard high-quality female voice.' },
-  { id: 'en-US-Neural2-D', name: 'Neural2 D (Male)', description: 'Deep high-quality male voice.' },
-  { id: 'en-US-Neural2-F', name: 'Neural2 F (Female)', description: 'Clear high-quality female voice.' }
+  // Neural2 Fallbacks -> Documentary
+  { id: 'en-US-Neural2-A', name: 'Arthur (Documentary)', description: 'Standard high-quality male voice with a calm, educational tone.', gender: 'Male', category: 'Standard' },
+  { id: 'en-US-Neural2-C', name: 'Clara (Documentary)', description: 'Standard high-quality female voice. Gentle and soothing.', gender: 'Female', category: 'Standard' },
+  { id: 'en-US-Neural2-D', name: 'David (Documentary)', description: 'Deep high-quality male voice. Excellent for historical pieces.', gender: 'Male', category: 'Standard' },
+  { id: 'en-US-Neural2-F', name: 'Fiona (Documentary)', description: 'Clear high-quality female voice with a bright, uplifting tone.', gender: 'Female', category: 'Standard' },
+  { id: 'en-US-Neural2-E', name: 'Emma (Documentary)', description: 'Articulate female voice, ideal for instructional and corporate content.', gender: 'Female', category: 'Standard' },
+  { id: 'en-US-Neural2-G', name: 'Grace (Documentary)', description: 'Soft-spoken female voice, great for intimate storytelling.', gender: 'Female', category: 'Standard' },
+  { id: 'en-US-Neural2-H', name: 'Hannah (Documentary)', description: 'Confident female voice with a clear, steady pace.', gender: 'Female', category: 'Standard' },
+  { id: 'en-US-Neural2-I', name: 'Isaac (Documentary)', description: 'Smooth male voice, suitable for professional presentations.', gender: 'Male', category: 'Standard' },
+  { id: 'en-US-Neural2-J', name: 'Jack (Documentary)', description: 'Warm male voice, excellent for friendly and welcoming narration.', gender: 'Male', category: 'Standard' },
+
+  // Wavenet -> Classic
+  { id: 'en-US-Wavenet-A', name: 'Adam (Classic)', description: 'Traditional male voice with a neutral, straightforward delivery.', gender: 'Male', category: 'Standard' },
+  { id: 'en-US-Wavenet-B', name: 'Ben (Classic)', description: 'Gruff, mature male voice suitable for gritty or hardboiled stories.', gender: 'Male', category: 'Standard' },
+  { id: 'en-US-Wavenet-C', name: 'Catherine (Classic)', description: 'Clear, high-pitched female voice, excellent for youth-oriented content.', gender: 'Female', category: 'Standard' },
+  { id: 'en-US-Wavenet-D', name: 'Daniel (Classic)', description: 'Fast-paced, energetic male voice for upbeat narratives.', gender: 'Male', category: 'Standard' },
+  { id: 'en-US-Wavenet-E', name: 'Emily (Classic)', description: 'Polite and formal female voice, great for automated announcements.', gender: 'Female', category: 'Standard' },
+  { id: 'en-US-Wavenet-F', name: 'Faith (Classic)', description: 'Bright and cheery female voice.', gender: 'Female', category: 'Standard' },
+  { id: 'en-US-Wavenet-G', name: 'Gwen (Classic)', description: 'Soft, melodious female voice.', gender: 'Female', category: 'Standard' },
 ]
 
 interface GeminiVoicePickerProps {
@@ -44,7 +58,37 @@ export function GeminiVoicePicker({
 }: GeminiVoicePickerProps) {
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null)
   const [isSynthesizing, setIsSynthesizing] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filter, setFilter] = useState<'All' | 'Favorites' | 'Male' | 'Female'>('All')
+  const [favorites, setFavorites] = useState<string[]>([])
   const audioRef = React.useRef<HTMLAudioElement | null>(null)
+
+  // Load favorites from local storage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('directorNoteFavorites')
+      if (stored) {
+        setFavorites(JSON.parse(stored))
+      }
+    } catch (e) {
+      console.error('Failed to load favorites', e)
+    }
+  }, [])
+
+  // Save favorites to local storage
+  const toggleFavorite = (e: React.MouseEvent, voiceId: string) => {
+    e.stopPropagation()
+    setFavorites(prev => {
+      const isFav = prev.includes(voiceId)
+      const newFavs = isFav ? prev.filter(id => id !== voiceId) : [...prev, voiceId]
+      try {
+        localStorage.setItem('directorNoteFavorites', JSON.stringify(newFavs))
+      } catch (err) {
+        console.error('Failed to save favorites', err)
+      }
+      return newFavs
+    })
+  }
 
   const handlePreview = useCallback(async (voiceId: string) => {
     // If playing, stop it
@@ -65,7 +109,7 @@ export function GeminiVoicePicker({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: 'This is a preview of my voice using Google Cloud Journey TTS models.',
+          text: 'This is a preview of my voice for the Director\'s Note.',
           voiceId: voiceId
         }),
       })
@@ -95,77 +139,189 @@ export function GeminiVoicePicker({
     onOpenChange(false)
   }, [onSelectVoice, onOpenChange])
 
+  // Stop audio when dialog closes
+  useEffect(() => {
+    if (!open && audioRef.current) {
+      audioRef.current.pause()
+      setPlayingVoiceId(null)
+    }
+  }, [open])
+
+  const filteredVoices = useMemo(() => {
+    return GEMINI_VOICES.filter(voice => {
+      // Filter by category/tab
+      if (filter === 'Favorites' && !favorites.includes(voice.id)) return false
+      if (filter === 'Male' && voice.gender !== 'Male') return false
+      if (filter === 'Female' && voice.gender !== 'Female') return false
+
+      // Filter by search query
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase()
+        const matchName = voice.name.toLowerCase().includes(query)
+        const matchDesc = voice.description.toLowerCase().includes(query)
+        if (!matchName && !matchDesc) return false
+      }
+
+      return true
+    })
+  }, [searchQuery, filter, favorites])
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[600px] max-h-[80vh] overflow-hidden flex flex-col bg-gray-900 border-gray-800">
-        <DialogHeader className="pb-4 border-b border-gray-800">
+      <DialogContent className="max-w-[700px] h-[85vh] max-h-[800px] overflow-hidden flex flex-col bg-gray-900 border-gray-800 p-0">
+        <DialogHeader className="p-6 pb-4 border-b border-gray-800 shrink-0">
           <DialogTitle 
             className="flex items-center gap-2 font-medium text-gray-200 text-lg"
           >
-            <Sparkles className="w-4 h-4 text-cyan-400" />
-            Google Cloud Journey TTS
+            <Sparkles className="w-5 h-5 text-cyan-400" />
+            Director's Note Voices
           </DialogTitle>
           <DialogDescription 
-            className="text-gray-400"
+            className="text-gray-400 mt-2"
           >
-            Powered by Google Cloud Text-to-Speech. Journey voices provide highly natural, expressive narration.
+            Select a professional narrator voice for your Director's Note.
           </DialogDescription>
-        </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto min-h-0 pr-2 space-y-2 mt-4 custom-scrollbar grid grid-cols-2 gap-3 pb-4">
-          {GEMINI_VOICES.map((voice) => {
-            const isSelected = selectedVoiceId === voice.id
-            const isPlaying = playingVoiceId === voice.id
-            const isGenerating = isSynthesizing === voice.id
-
-            return (
-              <div
-                key={voice.id}
-                className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
-                  isSelected 
-                    ? 'bg-cyan-500/10 border-cyan-500/30' 
-                    : 'bg-gray-800/40 border-gray-800/60 hover:bg-gray-800 hover:border-gray-700'
-                }`}
-                onClick={() => handleSelect(voice.id, voice.name)}
-              >
-                {/* Preview Button */}
+          <div className="mt-4 space-y-3">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by name, style, or description..."
+                className="w-full bg-gray-950 border-gray-700 pl-9 pr-8 text-sm"
+              />
+              {searchQuery && (
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handlePreview(voice.id)
-                  }}
-                  disabled={isSynthesizing !== null && isSynthesizing !== voice.id}
-                  className={`shrink-0 w-8 h-8 mt-0.5 rounded-full flex items-center justify-center transition-colors ${
-                    isPlaying 
-                      ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20' 
-                      : 'bg-gray-700/50 text-gray-300 hover:bg-gray-600 hover:text-white'
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Filters */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+              {(['All', 'Favorites', 'Male', 'Female'] as const).map(f => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                    filter === f 
+                      ? 'bg-cyan-500 text-white shadow-md shadow-cyan-500/20' 
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-300'
                   }`}
                 >
-                  {isGenerating ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : isPlaying ? (
-                    <div className="w-2 h-2 rounded-sm bg-current" /> // Stop icon
-                  ) : (
-                    <Play className="w-3.5 h-3.5 ml-0.5 fill-current" />
-                  )}
+                  {f === 'Favorites' ? (
+                    <span className="flex items-center gap-1">
+                      <Star className="w-3 h-3 fill-current" /> Favorites
+                    </span>
+                  ) : f}
                 </button>
+              ))}
+            </div>
+          </div>
+        </DialogHeader>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className="font-medium text-gray-200 text-[13px]">{voice.name}</span>
-                    {isSelected && (
-                      <span className="flex items-center gap-1 text-[10px] font-semibold text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded-full">
-                        <Check className="w-3 h-3" />
-                      </span>
-                    )}
+        <div className="flex-1 overflow-y-auto p-6 pt-4 custom-scrollbar">
+          {filteredVoices.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-gray-500 space-y-3">
+              <Search className="w-8 h-8 opacity-50" />
+              <p>No voices found matching your criteria.</p>
+              <button 
+                onClick={() => { setSearchQuery(''); setFilter('All'); }}
+                className="text-cyan-500 hover:text-cyan-400 text-sm font-medium"
+              >
+                Clear filters
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 pb-4">
+              {filteredVoices.map((voice) => {
+                const isSelected = selectedVoiceId === voice.id
+                const isPlaying = playingVoiceId === voice.id
+                const isGenerating = isSynthesizing === voice.id
+                const isFavorite = favorites.includes(voice.id)
+
+                return (
+                  <div
+                    key={voice.id}
+                    className={`group flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer ${
+                      isSelected 
+                        ? 'bg-cyan-500/10 border-cyan-500/30 shadow-sm shadow-cyan-500/5' 
+                        : 'bg-gray-800/40 border-gray-800/60 hover:bg-gray-800 hover:border-gray-700'
+                    }`}
+                    onClick={() => handleSelect(voice.id, voice.name)}
+                  >
+                    {/* Preview Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handlePreview(voice.id)
+                      }}
+                      disabled={isSynthesizing !== null && isSynthesizing !== voice.id}
+                      className={`shrink-0 w-10 h-10 mt-0.5 rounded-full flex items-center justify-center transition-all duration-200 ${
+                        isPlaying 
+                          ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/30 scale-105' 
+                          : 'bg-gray-900 border border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white group-hover:border-gray-600'
+                      }`}
+                    >
+                      {isGenerating ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
+                      ) : isPlaying ? (
+                        <div className="w-3 h-3 rounded-sm bg-current" /> // Stop icon
+                      ) : (
+                        <Play className="w-4 h-4 ml-0.5 fill-current" />
+                      )}
+                    </button>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between mb-1 gap-2">
+                        <span className="font-semibold text-gray-200 text-sm leading-tight truncate" title={voice.name}>
+                          {voice.name}
+                        </span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {isSelected && (
+                            <span className="flex items-center gap-1 text-[10px] font-bold text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                              <Check className="w-3 h-3" /> Selected
+                            </span>
+                          )}
+                          <button
+                            onClick={(e) => toggleFavorite(e, voice.id)}
+                            className={`p-1 -m-1 rounded-full transition-colors ${
+                              isFavorite 
+                                ? 'text-amber-400 hover:text-amber-300' 
+                                : 'text-gray-600 hover:text-gray-400 opacity-0 group-hover:opacity-100'
+                            } ${isFavorite ? 'opacity-100' : ''}`}
+                            title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                          >
+                            <Star className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-[10px] font-medium text-gray-500 bg-gray-900/80 px-1.5 py-0.5 rounded border border-gray-800">
+                          {voice.gender}
+                        </span>
+                        {voice.category === 'Premium' && (
+                          <span className="text-[10px] font-medium text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20 flex items-center gap-1">
+                            <Sparkles className="w-2.5 h-2.5" /> Premium
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="text-xs text-gray-400 leading-relaxed line-clamp-2" title={voice.description}>
+                        {voice.description}
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-[11px] text-gray-400 leading-relaxed line-clamp-2" title={voice.description}>
-                    {voice.description}
-                  </div>
-                </div>
-              </div>
-            )
-          })}
+                )
+              })}
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
