@@ -108,9 +108,20 @@ export default function SeriesStudioPage() {
   // Processing overlay for generation
   const { execute: executeWithOverlay } = useProcessWithOverlay()
 
-  // Show ideate dialog for new series without production bible
+  // Open ideation with pre-filled topic from Market Insights, or empty bible for new series
   useEffect(() => {
-    if (series && !series.productionBible?.synopsis && !series.productionBible?.logline) {
+    if (!series) return
+
+    const seed = series.metadata?.ideaTopic
+    const fromMarket = series.metadata?.source === 'market_insights'
+
+    if (fromMarket && typeof seed === 'string' && seed.trim()) {
+      setIdeaTopic(seed)
+      setIsIdeateDialogOpen(true)
+      return
+    }
+
+    if (!series.productionBible?.synopsis && !series.productionBible?.logline) {
       setIsIdeateDialogOpen(true)
     }
   }, [series])

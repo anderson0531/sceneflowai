@@ -185,16 +185,24 @@ export default function VisionaryPage() {
   const handleInitializeSeries = async (conceptData: any) => {
     setIsInitializing(true)
     try {
+      const uid = session?.user?.email || ''
       const res = await fetch('/api/series/initialize', {
         method: 'POST',
-        body: JSON.stringify({ 
+        headers: {
+          'Content-Type': 'application/json',
+          ...(uid ? { 'x-user-id': uid } : {}),
+        },
+        body: JSON.stringify({
           selectedConcept: conceptData,
-          userEmail: session?.user?.email 
+          userEmail: uid,
+          genre: activeReport?.genre?.trim() || undefined,
         }),
       })
       const data = await res.json()
       if (data.success) {
-        router.push(`/dashboard/series/${data.projectId}`)
+        const id = data.seriesId || data.projectId
+        if (!id) throw new Error('No series id returned')
+        router.push(`/dashboard/series/${id}`)
       } else {
         throw new Error(data.error)
       }
