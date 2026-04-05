@@ -23,7 +23,7 @@ Guidelines:
 - Be specific and descriptive
 - Include relevant style, lighting, and composition details
 - Follow Imagen 3 best practices
-- Maintain cinematic billboard quality
+- Maintain cinematic thumbnail quality
 - Keep the core concept while applying improvements
 - Don't add text, titles, or watermarks to the prompt
 - Focus on visual elements: lighting, composition, mood, color palette

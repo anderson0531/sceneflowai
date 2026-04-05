@@ -34,19 +34,19 @@ export async function POST(request: NextRequest) {
       enhancedPrompt = customPrompt
       console.log('[Thumbnail] Using custom prompt from user')
     } else {
-      // Build default cinematic billboard prompt
+      // Build default cinematic thumbnail prompt
       const projectInfo = [
         title ? `Film Title: ${title}` : '',
         genre ? `Genre: ${genre}` : '',
         description ? `Concept: ${description}` : ''
       ].filter(Boolean).join('\n')
 
-      enhancedPrompt = `Create a cinematic billboard image for a film with the following details:
+      enhancedPrompt = `Create an engaging and cinematic 16:9 thumbnail image for a film with the following details:
 
 ${projectInfo}
 
 Style Requirements:
-- Professional film poster quality, suitable for billboard display
+- Professional film poster quality, suitable for thumbnail display
 - Cinematic lighting with high contrast and dramatic shadows
 - Visually striking composition with strong focal point
 - Film marketing quality, eye-catching and memorable

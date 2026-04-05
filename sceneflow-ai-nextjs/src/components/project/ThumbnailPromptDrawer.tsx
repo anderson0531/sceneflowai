@@ -102,14 +102,14 @@ const LIGHTING_OPTIONS = [
   { value: 'neon', label: 'Neon' },
 ]
 
-const DEFAULT_PROMPT_TEMPLATE = (title: string, genre: string, description: string) => `Create a cinematic billboard image for a film with the following details:
+const DEFAULT_PROMPT_TEMPLATE = (title: string, genre: string, description: string) => `Create an engaging and cinematic 16:9 thumbnail image for a film with the following details:
 
 Film Title: ${title}
 Genre: ${genre}
 Concept: ${description}
 
 Style Requirements:
-- Professional film poster quality, suitable for billboard display
+- Professional film poster quality, suitable for thumbnail display
 - Cinematic lighting with high contrast and dramatic shadows
 - Visually striking composition with strong focal point
 - Film marketing quality, eye-catching and memorable
@@ -220,7 +220,7 @@ export default function ThumbnailPromptDrawer({
     const parts: string[] = []
     
     // Base scene description
-    parts.push(`Create a cinematic billboard image for "${title}", a ${genre} film.`)
+    parts.push(`Create an engaging and cinematic 16:9 thumbnail image for "${title}", a ${genre} film.`)
     parts.push('')
     
     // Story context
@@ -271,7 +271,7 @@ export default function ThumbnailPromptDrawer({
     
     // Technical requirements
     parts.push('Technical Requirements:')
-    parts.push('- Professional film poster quality, suitable for billboard display')
+    parts.push('- Professional film poster quality, suitable for thumbnail display')
     parts.push('- Visually striking composition with strong focal point')
     parts.push('- 2.39:1 cinematic aspect ratio')
     parts.push('- No text, titles, or watermarks')

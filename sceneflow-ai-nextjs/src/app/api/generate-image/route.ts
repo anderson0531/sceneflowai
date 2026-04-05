@@ -34,21 +34,21 @@ export async function POST(req: NextRequest) {
       const startedAt = Date.now();
       const traceId = `img-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       
-      // Create a compelling image prompt for the film billboard
+      // Create a compelling image prompt for the film thumbnail
       const sanitize = (p: string) => p
         .replace(/\b(16\s*[:x]\s*9|9\s*[:x]\s*16)\b/gi, '')
         .replace(/\b(1024|1536|1792)\s*x\s*(1024|1536|1792)\b/gi, '')
         .replace(/aspect\s*ratio\s*:?\s*[^\n]+/gi, '')
         .replace(/resolution\s*:?\s*[^\n]+/gi, '')
         .trim();
-      const enhancedPrompt = `Create a cinematic billboard image for a film with the following requirements: ${sanitize(prompt)}
+      const enhancedPrompt = `Create an engaging and cinematic 16:9 thumbnail image for a film with the following requirements: ${sanitize(prompt)}
       
-      Style: Professional film poster, cinematic lighting, high contrast, suitable for billboard display
+      Style: Professional film poster, cinematic lighting, high contrast, suitable for thumbnail display
       Quality: High-resolution, professional photography, visually striking
       Composition: Dramatic, eye-catching, film marketing quality
       Camera: Wide angle, cinematic framing
       Lighting: Dramatic, high contrast, professional studio lighting
-      Aspect ratio: 16:9 landscape for billboard display`;
+      Aspect ratio: 16:9 landscape for thumbnail display`;
       
       console.log('🎨 Enhanced prompt created:', enhancedPrompt);
 
@@ -188,7 +188,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Return placeholder if all providers fail
-        const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='675' viewBox='0 0 1200 675' fill='none'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='#0f172a'/><stop offset='100%' stop-color='#1e293b'/></linearGradient></defs><rect width='1200' height='675' fill='url(#g)'/><g fill='#64748b'><rect x='80' y='120' width='1040' height='435' rx='16' ry='16' fill-opacity='0.25' stroke='#334155' stroke-width='2'/><text x='600' y='300' font-family='Inter, system-ui, -apple-system' font-size='42' text-anchor='middle' fill='#cbd5e1'>Billboard Preview</text><text x='600' y='360' font-family='Inter, system-ui, -apple-system' font-size='20' text-anchor='middle' fill='#94a3b8'>Image will appear here once generated</text></g></svg>`
+        const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='675' viewBox='0 0 1200 675' fill='none'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='#0f172a'/><stop offset='100%' stop-color='#1e293b'/></linearGradient></defs><rect width='1200' height='675' fill='url(#g)'/><g fill='#64748b'><rect x='80' y='120' width='1040' height='435' rx='16' ry='16' fill-opacity='0.25' stroke='#334155' stroke-width='2'/><text x='600' y='300' font-family='Inter, system-ui, -apple-system' font-size='42' text-anchor='middle' fill='#cbd5e1'>Thumbnail Preview</text><text x='600' y='360' font-family='Inter, system-ui, -apple-system' font-size='20' text-anchor='middle' fill='#94a3b8'>Image will appear here once generated</text></g></svg>`
         const placeholder = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
         return NextResponse.json({ success: true, ...payload, imageUrl: placeholder, images: [{ dataUrl: placeholder, mimeType: 'image/svg+xml' }], providerUsed, message: 'Placeholder returned: no image bytes from providers', primaryBodyText })
       }

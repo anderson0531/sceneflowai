@@ -56,19 +56,19 @@ export async function POST(
       enhancedPrompt = customPrompt
       console.log('[Series Thumbnail] Using custom prompt from user')
     } else {
-      // Build cinematic billboard prompt from series metadata
+      // Build cinematic thumbnail prompt from series metadata
       const seriesInfo = [
         series.title ? `Series Title: ${series.title}` : '',
         series.genre ? `Genre: ${series.genre}` : '',
         series.logline ? `Concept: ${series.logline}` : ''
       ].filter(Boolean).join('\n')
 
-      enhancedPrompt = `Create a cinematic billboard image for a TV series with the following details:
+      enhancedPrompt = `Create an engaging and cinematic 16:9 thumbnail image for a TV series with the following details:
 
 ${seriesInfo}
 
 Style Requirements:
-- Professional TV series poster quality, suitable for streaming platform display
+- Professional TV series poster quality, suitable for streaming platform thumbnail display
 - Cinematic lighting with high contrast and dramatic shadows
 - Visually striking composition with strong focal point
 - Premium streaming platform marketing quality, eye-catching and memorable
