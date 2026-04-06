@@ -6,6 +6,8 @@ import {
   calculateBase64Size 
 } from '@/lib/storage/mediaStorage'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * POST /api/admin/migrate-media
  * 
