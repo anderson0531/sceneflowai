@@ -19,8 +19,9 @@ export async function POST(request: NextRequest) {
     
     // Construct the prompt for the director script
     let prompt = `You are an expert Voice Director casting a voice actor for a specific character. 
-Your task is to write a short, 10-15 second monologue (about 30-40 words) that captures the character's unique voice, personality, and tone. 
-This script will be read by the voice actor to create a custom voice clone.
+Your task is to write a short, precise Director's Note (Audio Profile) that captures the character's unique voice, personality, and tone.
+
+This note will be passed as instructions to an advanced Text-to-Speech system (Gemini TTS).
 
 CHARACTER DETAILS:
 Name: ${name || 'Unknown'}
@@ -36,10 +37,10 @@ Synopsis: ${screenplayContext.synopsis || 'Not specified'}`
     }
 
     prompt += `\n\nREQUIREMENTS:
-1. Write ONLY the monologue text. No stage directions, no quotes, no intro/outro.
-2. The text should be highly conversational and phonetic, showcasing the emotional range of the character.
-3. Make it natural for a human to read aloud, avoiding overly complex words unless it fits the character.
-4. Keep it exactly 10-15 seconds when spoken (approx 30-45 words).`
+1. Write ONLY the voice description / Audio Profile. Do NOT write a monologue or script for the character to say.
+2. The description must focus strictly on the vocal qualities: tone, pitch, cadence, age, gender, accent, texture, and emotional delivery.
+3. Be highly descriptive but concise (4-5 sentences max).
+4. Example output format: "A resonant, middle-aged African American male voice in his early 50s. The tone is a warm, textured baritone with a slight, natural huskiness. His delivery is measured, grounded, and deeply empathetic, conveying the calm authority of a trusted mentor."`
 
     const response = await generateText(prompt, {
       temperature: 0.7,
