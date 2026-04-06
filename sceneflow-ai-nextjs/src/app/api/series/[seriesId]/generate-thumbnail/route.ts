@@ -57,23 +57,33 @@ export async function POST(
       console.log('[Series Thumbnail] Using custom prompt from user')
     } else {
       // Build cinematic thumbnail prompt from series metadata
+      const protagonist = series.production_bible?.characters?.find(
+        (c: any) => c.id === series.production_bible?.protagonist?.characterId
+      ) || series.production_bible?.characters?.[0]
+      
+      const mainLocation = series.production_bible?.locations?.[0]
+      
       const seriesInfo = [
         series.title ? `Series Title: ${series.title}` : '',
         series.genre ? `Genre: ${series.genre}` : '',
-        series.logline ? `Concept: ${series.logline}` : ''
+        series.logline ? `Action/Concept: ${series.logline}` : '',
+        protagonist ? `Main Subject: ${protagonist.name} - ${protagonist.appearance}` : '',
+        mainLocation ? `Setting/Location: ${mainLocation.name} - ${mainLocation.visualDescription || mainLocation.description}` : ''
       ].filter(Boolean).join('\n')
 
-      enhancedPrompt = `Create an engaging and cinematic 16:9 thumbnail image for a TV series with the following details:
+      enhancedPrompt = `Create an engaging, illustrative, and highly cinematic 16:9 thumbnail image for a TV series. 
+DO NOT generate a simple headshot or portrait. The image MUST depict an active scene illustrating the core concept.
 
+Series Details:
 ${seriesInfo}
 
-Style Requirements:
+CRITICAL INSTRUCTIONS:
+- Create a dynamic, active scene based on the Action/Concept.
+- The Main Subject must be situated within the Setting/Location.
+- Show the character engaged in the narrative, not just staring at the camera.
 - Professional TV series poster quality, suitable for streaming platform thumbnail display
 - Cinematic lighting with high contrast and dramatic shadows
-- Visually striking composition with strong focal point
-- Premium streaming platform marketing quality, eye-catching and memorable
-- Wide angle cinematic framing
-- Professional studio lighting with dramatic highlights
+- Wide angle cinematic framing (environmental context is important)
 - 16:9 landscape aspect ratio
 - No text, titles, or watermarks on the image
 - Photorealistic or stylized based on genre appropriateness`
