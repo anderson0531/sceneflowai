@@ -177,7 +177,7 @@ export function VoiceSelectionDialog({
 
   // Fetch voices when dialog opens
   useEffect(() => {
-    if (open && provider === 'elevenlabs') {
+    if (open) {
       fetchVoices()
     }
   }, [open, provider])
