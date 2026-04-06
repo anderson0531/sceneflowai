@@ -1,5 +1,6 @@
 'use client';
 
+import { use } from 'react';
 import dynamic from 'next/dynamic';
 
 // Load the entire page client-side only to avoid hydration issues
@@ -8,6 +9,7 @@ const StudioPageClient = dynamic(
   { ssr: false }
 );
 
-export default function SparkStudioPage({ params }: { params: { projectId: string } }) {
-  return <StudioPageClient projectId={params.projectId} />;
+export default function SparkStudioPage({ params }: { params: Promise<{ projectId: string }> }) {
+  const { projectId } = use(params);
+  return <StudioPageClient projectId={projectId} />;
 }

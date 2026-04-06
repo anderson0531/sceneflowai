@@ -63,7 +63,7 @@ interface CollaborationSession {
   expiresAt: string;
 }
 
-export default function LegacyCollaborationRedirect({ params }: { params: { sessionId: string } }) {
-  const { sessionId } = params
+export default async function LegacyCollaborationRedirect({ params }: { params: Promise<{ sessionId: string }> }) {
+  const { sessionId } = await params
   redirect(`/c/${sessionId}`)
 }

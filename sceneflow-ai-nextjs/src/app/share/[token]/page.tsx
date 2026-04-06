@@ -2,8 +2,8 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 
-export default function SharePage({ params }: { params: { token: string } }) {
-  const token = params.token
+export default function SharePage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = React.use(params)
   const [loading, setLoading] = useState(true)
   const [session, setSession] = useState<any>(null)
   const [participantId, setParticipantId] = useState<string | null>(null)
