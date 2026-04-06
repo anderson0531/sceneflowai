@@ -515,7 +515,7 @@ export function CharacterLibrary({ characters, scenes = [], onRegenerateCharacte
       <VoiceSelectionDialog
         open={createVoiceDialogOpen}
         onOpenChange={setCreateVoiceDialogOpen}
-        provider={ttsProvider || 'elevenlabs'}
+        provider={ttsProvider || 'google'}
         mode="character"
         onSelectVoice={(voiceId, voiceName) => {
           toast.success(`Voice "${voiceName}" selected! Assign it to a character.`)

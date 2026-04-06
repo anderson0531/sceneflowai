@@ -4331,7 +4331,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Image quality setting
   const [imageQuality, setImageQuality] = useState<'max' | 'auto'>('auto')
-  const [ttsProvider, setTtsProvider] = useState<'google' | 'elevenlabs'>('elevenlabs')
+  const [ttsProvider, setTtsProvider] = useState<'google' | 'elevenlabs'>('google')
   
   // BYOK Settings
   const [showBYOKSettings, setShowBYOKSettings] = useState(false)
