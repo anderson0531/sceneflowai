@@ -1878,7 +1878,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       overlayStore?.show(`Generating sound effect ${sfxIdx + 1} for Scene ${sceneIdx + 1}...`, 15, 'audio-generation')
     }
     try {
-      const response = await fetch('/api/tts/elevenlabs/sound-effects', {
+      const response = await fetch('/api/tts/google/sound-effects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: typeof sfx === 'string' ? sfx : sfx.description, duration: 2.0 })
@@ -1937,7 +1937,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     try {
       const duration = scene.duration || 30
       // Use saveToBlob to have the server upload directly - avoids 4.5MB payload limit
-      const response = await fetch('/api/tts/elevenlabs/music', {
+      const response = await fetch('/api/tts/google/music', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -2162,7 +2162,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // Quick play SFX (generate and play immediately)
   const generateAndPlaySFX = async (description: string) => {
     try {
-      const response = await fetch('/api/tts/elevenlabs/sound-effects', {
+      const response = await fetch('/api/tts/google/sound-effects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: description, duration: 2.0 })
@@ -2199,7 +2199,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // Quick play Music (generate and play immediately)
   const generateAndPlayMusic = async (description: string, duration: number = 30) => {
     try {
-      const response = await fetch('/api/tts/elevenlabs/music', {
+      const response = await fetch('/api/tts/google/music', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: description, duration })
