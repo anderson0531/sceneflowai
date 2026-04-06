@@ -1029,6 +1029,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const bookmarkedSceneIndex = useMemo(() => {
     if (!sceneBookmark) return -1
     const scriptScenes = normalizeScenes(script)
+    if (!Array.isArray(scriptScenes)) return -1
     return scriptScenes.findIndex((s: any, idx: number) => {
       const sceneId = s.id || s.sceneId || `scene-${idx}`
       if (sceneBookmark?.sceneId) {
@@ -5475,9 +5476,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   const sidebarProjectStats = useMemo(() => {
     const scriptScenes = normalizeScenes(script)
-    const sceneCount = scriptScenes.length
+    const sceneCount = Array.isArray(scriptScenes) ? scriptScenes.length : 0
     const castCount = Array.isArray(characters) ? characters.length : 0
-    const durationMinutes = Math.round(scriptScenes.reduce((sum: number, s: any) => sum + (s.estimatedDuration || s.duration || 15), 0) / 60)
+    const durationMinutes = Math.round(Array.isArray(scriptScenes) ? scriptScenes.reduce((sum: number, s: any) => sum + (s.estimatedDuration || s.duration || 15), 0) / 60 : 0)
     const imageCredits = sceneCount * 5
     const charCredits = castCount * 2
     const audioCredits = sceneCount * 1
@@ -5488,14 +5489,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   const sidebarProgressData = useMemo(() => {
     const scriptScenes = normalizeScenes(script)
-    const sceneCount = scriptScenes.length
+    const isScenesArray = Array.isArray(scriptScenes)
+    const sceneCount = isScenesArray ? scriptScenes.length : 0
     const hasFilmTreatment = !!(project?.metadata?.filmTreatment || project?.metadata?.filmTreatmentVariant)
     const hasScreenplay = sceneCount > 0
     const refLibraryCount = (Array.isArray(sceneReferences) ? sceneReferences.length : 0) + (Array.isArray(objectReferences) ? objectReferences.length : 0)
-    const scenesWithImages = scriptScenes.filter((s: any) => s.imageUrl).length
-    const scenesWithAudio = scriptScenes.filter((s: any) => 
+    const scenesWithImages = isScenesArray ? scriptScenes.filter((s: any) => s.imageUrl).length : 0
+    const scenesWithAudio = isScenesArray ? scriptScenes.filter((s: any) => 
       s.narrationAudioUrl || s.dialogueAudio?.en?.length || (Array.isArray(s.dialogueAudio) && s.dialogueAudio.length)
-    ).length
+    ).length : 0
     const imageProgress = sceneCount > 0 ? Math.round((scenesWithImages / sceneCount) * 100) : 0
     const audioProgress = sceneCount > 0 ? Math.round((scenesWithAudio / sceneCount) * 100) : 0
     
