@@ -145,6 +145,19 @@ export function VoiceSelectionDialog({
 }: VoiceSelectionDialogProps) {
   const [activeTab, setActiveTab] = useState<'browse' | 'create'>('browse')
   const [createTab, setCreateTab] = useState<'design' | 'clone'>(provider === 'google' ? 'clone' : 'design')
+
+  // Default to the Create tab if Google is the provider, as there is no Browse library for Google character voices
+  useEffect(() => {
+    if (open) {
+      if (provider === 'google') {
+        setActiveTab('create')
+        setCreateTab('clone')
+      } else {
+        setActiveTab('browse')
+        setCreateTab('design')
+      }
+    }
+  }, [open, provider])
   const [voices, setVoices] = useState<ElevenLabsVoice[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
