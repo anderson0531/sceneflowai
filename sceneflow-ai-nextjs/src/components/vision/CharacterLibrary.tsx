@@ -12,6 +12,7 @@ import { VoiceSelectionDialog } from '@/components/tts/VoiceSelectionDialog'
 import { NarratorVoicePicker } from '@/components/tts/NarratorVoicePicker'
 import { CharacterPromptBuilder } from '@/components/vision/CharacterPromptBuilder'
 import { AddCharacterModal, useOrphanCharacters } from '@/components/vision/AddCharacterModal'
+import { DirectorNoteBuilderDialog } from '@/components/tts/DirectorNoteBuilderDialog'
 import { useOverlayStore } from '@/store/useOverlayStore'
 import type { CharacterContext, ScreenplayContext } from '@/lib/voiceRecommendation'
 
@@ -111,6 +112,7 @@ interface CharacterCardProps {
     wardrobeName?: string;
     headshotUrl?: string;
     fullBodyUrl?: string;
+    previewImageUrl?: string;
     sceneNumbers?: number[];
     reason?: string;
     action?: 'add' | 'update' | 'delete' | 'setDefault';
@@ -577,6 +579,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false)
   const [showAddWardrobeForm, setShowAddWardrobeForm] = useState(false) // Toggle for add new wardrobe form
   const [enhancingWardrobeId, setEnhancingWardrobeId] = useState<string | null>(null) // Which wardrobe is being AI-enhanced
+  const [directorNoteDialogOpen, setDirectorNoteDialogOpen] = useState(false)
   
   // Script analysis for wardrobes state
   const [isAnalyzingScript, setIsAnalyzingScript] = useState(false)
@@ -605,7 +608,6 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   // Wardrobe preview generation state
   const [generatingPreviewFor, setGeneratingPreviewFor] = useState<string | null>(null)
   const [isGeneratingAllPreviews, setIsGeneratingAllPreviews] = useState(false)
-  const [isGeneratingDirectorsNote, setIsGeneratingDirectorsNote] = useState(false)
   
   // Costume reference generation state (uses /api/image/edit to create character-in-outfit reference)
   const [generatingCostumeRefFor, setGeneratingCostumeRefFor] = useState<string | null>(null)
@@ -765,44 +767,6 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
       })))
       setWardrobeSuggestions([])
       toast.success(`Added ${wardrobeSuggestions.length} wardrobe(s) to collection`)
-    }
-  }
-
-  const handleGenerateDirectorsNote = async () => {
-    setIsGeneratingDirectorsNote(true)
-    try {
-      const response = await fetch('/api/tts/google/director-prompt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          characterContext: {
-            name: character.name,
-            role: character.role,
-            description: character.description,
-            attributes: {
-              appearance: character.appearanceDescription || character.imagePrompt,
-              wardrobe: wardrobes[0]?.description
-            }
-          },
-          screenplayContext
-        }),
-      })
-
-      if (!response.ok) throw new Error('Failed to generate prompt')
-      const data = await response.json()
-      
-      if (data.script) {
-        onUpdateCharacterVoice?.(characterId, {
-          ...character.voiceConfig,
-          prompt: data.script
-        })
-        toast.success("Director's Note generated!")
-      }
-    } catch (error) {
-      console.error('Error generating director note:', error)
-      toast.error("Failed to generate Director's Note")
-    } finally {
-      setIsGeneratingDirectorsNote(false)
     }
   }
 
@@ -1780,36 +1744,39 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    handleGenerateDirectorsNote()
+                    setDirectorNoteDialogOpen(true)
                   }}
-                  disabled={isGeneratingDirectorsNote}
-                  className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-cyan-300 hover:text-cyan-200 hover:bg-cyan-900/30 rounded transition-colors disabled:opacity-50"
-                  title="Auto-generate based on character description"
+                  className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-cyan-300 hover:text-cyan-200 hover:bg-cyan-900/30 rounded transition-colors"
+                  title="Edit voice characteristics"
                 >
-                  {isGeneratingDirectorsNote ? (
-                    <Loader className="w-2.5 h-2.5 animate-spin" />
-                  ) : (
-                    <Wand2 className="w-2.5 h-2.5" />
-                  )}
-                  Auto-fill
+                  <Wand2 className="w-2.5 h-2.5" />
+                  Edit Profile
                 </button>
               </div>
-              <textarea
-                value={character.voiceConfig.prompt || ''}
-                onChange={(e) => {
-                  onUpdateCharacterVoice?.(characterId, {
-                    ...character.voiceConfig,
-                    prompt: e.target.value
-                  })
-                }}
-                onClick={(e) => e.stopPropagation()}
-                placeholder="e.g., Make the speaker sound like a 50-year-old professor from London, slightly raspy, speaking with a gentle, scholarly authority."
-                className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none placeholder-gray-500"
-                rows={3}
-              />
+              <p className="text-xs text-gray-300 bg-gray-800/50 p-2 rounded border border-gray-700 min-h-[40px] cursor-pointer hover:bg-gray-800/80 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setDirectorNoteDialogOpen(true)
+                }}>
+                {character.voiceConfig.prompt || 'No audio profile set. Click Edit Profile to shape the voice.'}
+              </p>
               <p className="text-[10px] text-gray-500">
                 You can use markup tags like <code className="bg-gray-800 px-1 rounded text-cyan-300">[sigh]</code>, <code className="bg-gray-800 px-1 rounded text-cyan-300">[laugh]</code>, or <code className="bg-gray-800 px-1 rounded text-cyan-300">[whisper]</code> directly in your script for this voice.
               </p>
+              
+              <DirectorNoteBuilderDialog
+                isOpen={directorNoteDialogOpen}
+                onClose={() => setDirectorNoteDialogOpen(false)}
+                initialPrompt={character.voiceConfig.prompt || ''}
+                characterContext={characterContext}
+                screenplayContext={screenplayContext}
+                onSave={(prompt) => {
+                  onUpdateCharacterVoice?.(characterId, {
+                    ...character.voiceConfig,
+                    prompt
+                  })
+                }}
+              />
             </div>
           )}
         </div>

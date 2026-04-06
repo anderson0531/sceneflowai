@@ -54,6 +54,7 @@ import {
   DialogDescription
 } from '@/components/ui/dialog'
 import { GeminiVoicePicker, GEMINI_VOICES } from '@/components/tts/GeminiVoicePicker'
+import { DirectorNoteBuilderDialog } from '@/components/tts/DirectorNoteBuilderDialog'
 import { useSeriesStudio } from '@/hooks/useSeries'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useSession } from 'next-auth/react'
@@ -1400,16 +1401,30 @@ function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProp
             {/* Director's Note (Audio Profile) for Gemini Voices */}
             {selectedVoiceId.startsWith('gemini-') && (
               <div className="mt-4 bg-gray-900/50 rounded-lg p-3 border border-cyan-500/30">
-                <label className="text-xs font-medium text-cyan-400 flex items-center gap-1 mb-2">
-                  <Sparkles className="w-3 h-3" />
-                  Director's Note (Audio Profile)
-                </label>
-                <textarea
-                  value={audioProfilePrompt}
-                  onChange={(e) => setAudioProfilePrompt(e.target.value)}
-                  placeholder="e.g., Make the speaker sound like a 50-year-old professor from London, slightly raspy, speaking with a gentle, scholarly authority."
-                  className="w-full px-3 py-2 text-sm rounded border border-gray-700 bg-gray-800 text-gray-200 resize-none placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
-                  rows={2}
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-medium text-cyan-400 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" />
+                    Director's Note (Audio Profile)
+                  </label>
+                  <button
+                    onClick={() => setDirectorNoteDialogOpen(true)}
+                    className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-cyan-300 hover:text-cyan-200 hover:bg-cyan-900/30 rounded transition-colors"
+                  >
+                    <Wand2 className="w-2.5 h-2.5" />
+                    Edit Profile
+                  </button>
+                </div>
+                <p 
+                  className="text-xs text-gray-300 bg-gray-800/50 p-2 rounded border border-gray-700 min-h-[40px] cursor-pointer hover:bg-gray-800/80 transition-colors"
+                  onClick={() => setDirectorNoteDialogOpen(true)}
+                >
+                  {audioProfilePrompt || 'No audio profile set. Click Edit Profile to shape the narrator voice.'}
+                </p>
+                <DirectorNoteBuilderDialog
+                  isOpen={directorNoteDialogOpen}
+                  onClose={() => setDirectorNoteDialogOpen(false)}
+                  initialPrompt={audioProfilePrompt}
+                  onSave={(prompt) => setAudioProfilePrompt(prompt)}
                 />
               </div>
             )}
@@ -1606,6 +1621,7 @@ function EpisodesPanel({
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>('en-US-Journey-F')
   const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Elena (Storyteller)')
   const [audioProfilePrompt, setAudioProfilePrompt] = useState<string>('')
+  const [directorNoteDialogOpen, setDirectorNoteDialogOpen] = useState(false)
   const audioRef = React.useRef<HTMLAudioElement | null>(null)
 
   // Initialize with favorite voice if available
@@ -1827,16 +1843,30 @@ function EpisodesPanel({
                   
                   {selectedVoiceId.startsWith('gemini-') && (
                     <div className="w-full bg-gray-900/50 rounded-lg p-2.5 border border-cyan-500/30 mt-1">
-                      <label className="text-[10px] font-medium text-cyan-400 flex items-center gap-1 mb-1.5">
-                        <Sparkles className="w-2.5 h-2.5" />
-                        Director's Note (Audio Profile)
-                      </label>
-                      <textarea
-                        value={audioProfilePrompt}
-                        onChange={(e) => setAudioProfilePrompt(e.target.value)}
-                        placeholder="e.g., Make the speaker sound like a 50-year-old professor..."
-                        className="w-full px-2 py-1.5 text-xs rounded border border-gray-700 bg-gray-800 text-gray-200 resize-none placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
-                        rows={2}
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-[10px] font-medium text-cyan-400 flex items-center gap-1">
+                          <Sparkles className="w-2.5 h-2.5" />
+                          Director's Note (Audio Profile)
+                        </label>
+                        <button
+                          onClick={() => setDirectorNoteDialogOpen(true)}
+                          className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-cyan-300 hover:text-cyan-200 hover:bg-cyan-900/30 rounded transition-colors"
+                        >
+                          <Wand2 className="w-2.5 h-2.5" />
+                          Edit Profile
+                        </button>
+                      </div>
+                      <p 
+                        className="w-full px-2 py-1.5 text-xs rounded border border-gray-700 bg-gray-800 text-gray-200 min-h-[30px] cursor-pointer hover:bg-gray-800/80 transition-colors"
+                        onClick={() => setDirectorNoteDialogOpen(true)}
+                      >
+                        {audioProfilePrompt || 'No audio profile set. Click Edit Profile to shape the narrator voice.'}
+                      </p>
+                      <DirectorNoteBuilderDialog
+                        isOpen={directorNoteDialogOpen}
+                        onClose={() => setDirectorNoteDialogOpen(false)}
+                        initialPrompt={audioProfilePrompt}
+                        onSave={(prompt) => setAudioProfilePrompt(prompt)}
                       />
                     </div>
                   )}
