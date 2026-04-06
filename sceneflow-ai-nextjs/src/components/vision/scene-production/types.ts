@@ -1494,39 +1494,17 @@ export interface ProposedDirection {
   sequenceIndex: number
   estimatedDuration: number
   shotType: string
-  cameraMovement: string
-  cameraAngle: string
-  /** Lens/focal length recommendation (e.g., '85mm f/1.2', '24mm f/2.8') */
-  lens?: string
   talentAction: string
-  emotionalBeat: string
-  characters: string[]
-  isNoTalent: boolean
-  lightingMood?: string
-  keyProps?: string[]
   dialogueLineIds: string[]
   generationMethod: 'T2V' | 'I2V' | 'EXT' | 'FTV'
   triggerReason: string
-  confidence: number
-  /** Transition from previous segment (e.g., 'cut', 'dissolve', 'match cut') */
-  transitionIn?: string
-  /** Description of opening frame for continuity */
-  startFrameDescription?: string
-  /** Description of final frame for next segment continuity */
-  endFrameDescription?: string
-  /** Continuity notes (wardrobe, props, lighting consistency) */
-  continuityNotes?: string
-  // Keyframe-specific direction (Phase 8: Segment Intelligence Overhaul)
+  
+  // Phase 8: Keyframe specific fields for prompt enrichment
   /** Detailed keyframe start frame description for Imagen generation */
   keyframeStartDescription?: string
   /** Detailed keyframe end frame description for Imagen generation */
   keyframeEndDescription?: string
-  /** Environment/backdrop description for no-talent or establishing shots */
-  environmentDescription?: string
-  /** Specific color palette for visual consistency */
-  colorPalette?: string
-  /** Depth of field specification */
-  depthOfField?: string
+  
   // User review status
   isApproved: boolean
   isUserEdited: boolean
@@ -1559,7 +1537,7 @@ export interface ProposedSegment {
 /**
  * Workflow phase for the builder
  */
-export type BuilderPhase = 'analyze' | 'directions' | 'review' | 'finalize'
+export type BuilderPhase = 'analyze' | 'directions'
 
 // ============================================================================
 // Lean Multi-Language (LML) Elastic Segment Types

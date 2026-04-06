@@ -55,8 +55,7 @@ import {
   ProposedSegment,
   BuilderPhase,
 } from './types'
-import { SegmentPreviewTimeline } from './SegmentPreviewTimeline'
-import { SegmentPromptEditor } from './SegmentPromptEditor'
+// Timeline removed
 // SegmentValidation is dynamically imported to avoid circular dependency TDZ
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/textarea'
@@ -121,19 +120,12 @@ function SegmentDirectionCard({
     'FTV': 'bg-amber-500/20 text-amber-400 border-amber-500/30',
   }
   
-  const confidenceColor = direction.confidence >= 80 
-    ? 'text-green-400' 
-    : direction.confidence >= 60 
-    ? 'text-amber-400' 
-    : 'text-red-400'
-  
   return (
     <Card 
       className={cn(
         "transition-all cursor-pointer",
         isSelected && "ring-2 ring-primary",
-        direction.isApproved && "border-green-500/50 bg-green-950/10",
-        direction.isNoTalent && "border-cyan-500/30"
+        direction.isApproved && "border-green-500/50 bg-green-950/10"
       )}
       onClick={onSelect}
     >
@@ -147,11 +139,6 @@ function SegmentDirectionCard({
             <Badge className={methodColors[direction.generationMethod] || ''}>
               {direction.generationMethod}
             </Badge>
-            {direction.isNoTalent && (
-              <Badge variant="outline" className="text-cyan-400 border-cyan-500/30">
-                No Talent
-              </Badge>
-            )}
             {direction.isUserEdited && (
               <Badge variant="outline" className="text-amber-400 border-amber-500/30">
                 <Edit3 className="w-3 h-3 mr-1" />
@@ -160,9 +147,6 @@ function SegmentDirectionCard({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <span className={cn("text-xs font-mono", confidenceColor)}>
-              {direction.confidence}% conf
-            </span>
             <Badge variant="outline" className="font-mono text-xs">
               ~{direction.estimatedDuration}s
             </Badge>
@@ -171,113 +155,25 @@ function SegmentDirectionCard({
         
         {/* Direction Details */}
         {isEditing ? (
-          <div className="space-y-3" onClick={e => e.stopPropagation()}>
-            {/* Shot Type / Camera / Angle Row */}
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <label className="text-xs text-muted-foreground">Shot Type</label>
-                <Select
-                  value={direction.shotType}
-                  onValueChange={v => onEdit({ shotType: v })}
-                >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Wide Shot">Wide Shot</SelectItem>
-                    <SelectItem value="Medium Shot">Medium Shot</SelectItem>
-                    <SelectItem value="Medium Close-Up">Medium Close-Up</SelectItem>
-                    <SelectItem value="Close-Up">Close-Up</SelectItem>
-                    <SelectItem value="Extreme Close-Up">Extreme Close-Up</SelectItem>
-                    <SelectItem value="Two Shot">Two Shot</SelectItem>
-                    <SelectItem value="Over-the-Shoulder">Over-the-Shoulder</SelectItem>
-                    <SelectItem value="Insert Shot">Insert Shot</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Camera</label>
-                <Select
-                  value={direction.cameraMovement}
-                  onValueChange={v => onEdit({ cameraMovement: v })}
-                >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Static">Static</SelectItem>
-                    <SelectItem value="Dolly In">Dolly In</SelectItem>
-                    <SelectItem value="Dolly Out">Dolly Out</SelectItem>
-                    <SelectItem value="Pan Left">Pan Left</SelectItem>
-                    <SelectItem value="Pan Right">Pan Right</SelectItem>
-                    <SelectItem value="Tilt Up">Tilt Up</SelectItem>
-                    <SelectItem value="Tilt Down">Tilt Down</SelectItem>
-                    <SelectItem value="Handheld">Handheld</SelectItem>
-                    <SelectItem value="Steadicam">Steadicam</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Angle</label>
-                <Select
-                  value={direction.cameraAngle}
-                  onValueChange={v => onEdit({ cameraAngle: v })}
-                >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Eye-Level">Eye-Level</SelectItem>
-                    <SelectItem value="Low Angle">Low Angle</SelectItem>
-                    <SelectItem value="High Angle">High Angle</SelectItem>
-                    <SelectItem value="Dutch Angle">Dutch Angle</SelectItem>
-                    <SelectItem value="Bird's Eye">Bird's Eye</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Lens / Transition Row */}
+          <div className="space-y-4" onClick={e => e.stopPropagation()}>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-xs text-muted-foreground">Lens / Focal Length</label>
-                <Select
-                  value={direction.lens || '50mm'}
-                  onValueChange={v => onEdit({ lens: v })}
-                >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="24mm f/2.8">24mm f/2.8 — Wide, deep DOF</SelectItem>
-                    <SelectItem value="35mm f/1.8">35mm f/1.8 — Natural, moderate DOF</SelectItem>
-                    <SelectItem value="50mm">50mm — Standard</SelectItem>
-                    <SelectItem value="50mm f/1.4">50mm f/1.4 — Shallow DOF, natural</SelectItem>
-                    <SelectItem value="85mm f/1.2">85mm f/1.2 — Portrait, beautiful bokeh</SelectItem>
-                    <SelectItem value="135mm f/2.0">135mm f/2.0 — Compressed, dreamy</SelectItem>
-                  </SelectContent>
-                </Select>
+                <label className="text-xs text-muted-foreground">Shot Type</label>
+                <Input
+                  value={direction.shotType}
+                  onChange={e => onEdit({ shotType: e.target.value })}
+                  placeholder="e.g., Medium Close-Up"
+                  className="h-8 text-xs"
+                />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">Transition In</label>
-                <Select
-                  value={direction.transitionIn || 'cut'}
-                  onValueChange={v => onEdit({ transitionIn: v })}
-                >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cut">Hard Cut</SelectItem>
-                    <SelectItem value="dissolve">Dissolve</SelectItem>
-                    <SelectItem value="match cut">Match Cut</SelectItem>
-                    <SelectItem value="j-cut">J-Cut (audio leads)</SelectItem>
-                    <SelectItem value="l-cut">L-Cut (audio trails)</SelectItem>
-                    <SelectItem value="whip pan">Whip Pan</SelectItem>
-                    <SelectItem value="fade from black">Fade from Black</SelectItem>
-                    <SelectItem value="smash cut">Smash Cut</SelectItem>
-                  </SelectContent>
-                </Select>
+                <label className="text-xs text-muted-foreground">Trigger Reason</label>
+                <Input
+                  value={direction.triggerReason}
+                  onChange={e => onEdit({ triggerReason: e.target.value })}
+                  placeholder="Why cut here?"
+                  className="h-8 text-xs"
+                />
               </div>
             </div>
             
@@ -291,227 +187,125 @@ function SegmentDirectionCard({
                 className="h-20 text-sm resize-none"
               />
             </div>
-            
-            {/* Emotional Beat */}
-            <div>
-              <label className="text-xs text-muted-foreground">Emotional Beat</label>
-              <Input
-                value={direction.emotionalBeat}
-                onChange={e => onEdit({ emotionalBeat: e.target.value })}
-                placeholder="e.g., Tension building, Moment of realization"
-                className="h-8 text-xs"
-              />
-            </div>
 
             {/* Frame Descriptions */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-medium text-green-400">Start Frame</label>
+                <label className="text-xs font-medium text-green-400">Start Frame Image Prompt</label>
                 <Textarea
-                  value={direction.startFrameDescription || ''}
-                  onChange={e => onEdit({ startFrameDescription: e.target.value })}
-                  placeholder="Opening frame description for continuity..."
-                  className="h-24 text-sm resize-none mt-1"
+                  value={direction.keyframeStartDescription || ''}
+                  onChange={e => onEdit({ keyframeStartDescription: e.target.value })}
+                  placeholder="Detailed prompt for the starting keyframe..."
+                  className="h-32 text-xs resize-none mt-1 font-mono bg-green-950/20 border-green-900"
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-orange-400">End Frame</label>
+                <label className="text-xs font-medium text-orange-400">End Frame Image Prompt</label>
                 <Textarea
-                  value={direction.endFrameDescription || ''}
-                  onChange={e => onEdit({ endFrameDescription: e.target.value })}
-                  placeholder="Closing frame description for next segment..."
-                  className="h-24 text-sm resize-none mt-1"
+                  value={direction.keyframeEndDescription || ''}
+                  onChange={e => onEdit({ keyframeEndDescription: e.target.value })}
+                  placeholder="Detailed prompt for the ending keyframe..."
+                  className="h-32 text-xs resize-none mt-1 font-mono bg-orange-950/20 border-orange-900"
                 />
               </div>
-            </div>
-
-            {/* Continuity Notes */}
-            <div>
-              <label className="text-xs text-muted-foreground">Continuity Notes</label>
-              <Input
-                value={direction.continuityNotes || ''}
-                onChange={e => onEdit({ continuityNotes: e.target.value })}
-                placeholder="Wardrobe, props, lighting consistency notes..."
-                className="h-8 text-xs"
-              />
-            </div>
-            
-            {/* No Talent Toggle */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant={direction.isNoTalent ? "default" : "outline"}
-                size="sm"
-                onClick={() => onEdit({ isNoTalent: !direction.isNoTalent, characters: direction.isNoTalent ? [] : direction.characters })}
-                className="h-7 text-xs"
-              >
-                {direction.isNoTalent ? '✓ No Talent' : 'Mark as No Talent'}
-              </Button>
-              <span className="text-xs text-muted-foreground">
-                (for abstract/title/establishing shots)
-              </span>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
             {/* ── CAMERA SECTION ── */}
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Camera className="w-3.5 h-3.5 text-muted-foreground/60" />
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">Camera</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="font-medium">{direction.shotType}</span>
-                <span className="text-muted-foreground">•</span>
-                <span className="text-muted-foreground">{direction.cameraMovement}</span>
-                <span className="text-muted-foreground">•</span>
-                <span className="text-muted-foreground">{direction.cameraAngle}</span>
-                {direction.lens && (
-                  <>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="text-xs font-mono text-blue-400">{direction.lens}</span>
-                  </>
-                )}
-              </div>
-              {/* Transition */}
-              {direction.transitionIn && direction.transitionIn !== 'cut' && (
-                <div className="flex items-center gap-2 text-sm">
-                  <ArrowRight className="w-3 h-3 text-purple-400" />
-                  <span className="text-purple-300 text-sm capitalize">{direction.transitionIn}</span>
-                </div>
-              )}
+            <div className="flex items-center gap-2 text-sm">
+              <Camera className="w-3.5 h-3.5 text-muted-foreground/60" />
+              <span className="font-medium">{direction.shotType}</span>
             </div>
 
             {/* ── PERFORMANCE SECTION ── */}
-            {(direction.talentAction || direction.emotionalBeat) && (
-              <>
-                <Separator className="opacity-40" />
-                <div className="space-y-2">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <Users className="w-3.5 h-3.5 text-muted-foreground/60" />
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">Performance</span>
-                  </div>
-                  <div className="p-2.5 rounded-md bg-muted/20 border border-border/20 space-y-2">
-                    {direction.talentAction && (
-                      <p className="text-sm text-foreground/80 leading-relaxed">{direction.talentAction}</p>
-                    )}
-                    {direction.emotionalBeat && (
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                        <span className="text-sm text-amber-300 italic">{direction.emotionalBeat}</span>
-                      </div>
-                    )}
-                  </div>
+            {direction.talentAction && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Users className="w-3.5 h-3.5 text-muted-foreground/60" />
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">Action</span>
                 </div>
-              </>
-            )}
-
-            {/* ── CHARACTERS ── */}
-            {direction.characters.length > 0 && (
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {direction.characters.map(char => (
-                  <Badge key={char} variant="secondary" className="text-xs px-2.5 py-0.5">
-                    {char}
-                  </Badge>
-                ))}
+                <div className="p-2.5 rounded-md bg-muted/20 border border-border/20 space-y-2">
+                  <p className="text-sm text-foreground/80 leading-relaxed">{direction.talentAction}</p>
+                </div>
               </div>
             )}
 
-            {/* ── FRAME DESCRIPTIONS SECTION ── */}
-            {(direction.startFrameDescription || direction.endFrameDescription) && (
-              <>
-                <Separator className="opacity-40" />
-                <div className="space-y-2.5">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <Film className="w-3.5 h-3.5 text-muted-foreground/60" />
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">Frame Descriptions</span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {direction.startFrameDescription && (
-                      <div className="p-3 rounded-lg bg-green-950/30 border border-green-500/30">
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <Play className="w-3.5 h-3.5 text-green-400" />
-                          <span className="text-xs font-semibold text-green-400 uppercase tracking-wider">Start Frame</span>
-                        </div>
-                        <p className="text-sm text-foreground/70 leading-relaxed">{direction.startFrameDescription}</p>
-                      </div>
-                    )}
-                    {direction.endFrameDescription && (
-                      <div className="p-3 rounded-lg bg-orange-950/30 border border-orange-500/30">
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <Lock className="w-3.5 h-3.5 text-orange-400" />
-                          <span className="text-xs font-semibold text-orange-400 uppercase tracking-wider">End Frame</span>
-                        </div>
-                        <p className="text-sm text-foreground/70 leading-relaxed">{direction.endFrameDescription}</p>
-                      </div>
-                    )}
-                  </div>
+            {/* ── FRAME PROMPTS SECTION ── */}
+            {(direction.keyframeStartDescription || direction.keyframeEndDescription) && (
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Film className="w-3.5 h-3.5 text-muted-foreground/60" />
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">Image Prompts</span>
                 </div>
-              </>
-            )}
-
-            {/* ── CONTINUITY CALLOUT ── */}
-            {direction.continuityNotes && (
-              <div className="flex items-center gap-2.5 px-3 py-2 rounded-full bg-cyan-950/25 border border-cyan-500/20">
-                <Eye className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                <span className="text-xs text-cyan-300 leading-snug">{direction.continuityNotes}</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {direction.keyframeStartDescription && (
+                    <div className="p-2.5 rounded border border-green-500/20 bg-green-950/10">
+                      <div className="text-[10px] uppercase text-green-500/70 mb-1.5 font-semibold">Start Frame</div>
+                      <p className="text-xs text-foreground/70 leading-relaxed font-mono">{direction.keyframeStartDescription}</p>
+                    </div>
+                  )}
+                  {direction.keyframeEndDescription && (
+                    <div className="p-2.5 rounded border border-orange-500/20 bg-orange-950/10">
+                      <div className="text-[10px] uppercase text-orange-500/70 mb-1.5 font-semibold">End Frame</div>
+                      <p className="text-xs text-foreground/70 leading-relaxed font-mono">{direction.keyframeEndDescription}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
-
-            {/* ── DIALOGUE SECTION ── */}
-            {segmentDialogue.length > 0 && (
-              <>
-                <Separator className="opacity-40" />
-                <div className="space-y-2">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <MessageSquare className="w-3.5 h-3.5 text-muted-foreground/60" />
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-                      {segmentDialogue.length} dialogue line{segmentDialogue.length > 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  <div className="p-3 rounded-lg bg-muted/40 border border-border/40 space-y-2">
-                    {segmentDialogue.map((d, i) => (
-                      <p key={i} className="text-sm leading-relaxed">
-                        <span className="font-semibold text-foreground">{d.character}:</span>{' '}
-                        <span className="text-muted-foreground">&ldquo;{d.text}&rdquo;</span>
-                      </p>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-            
-            {/* ── CUT REASON ── */}
-            <p className="text-xs text-muted-foreground/70 italic pt-1">
-              Cut: {direction.triggerReason}
-            </p>
           </div>
         )}
-        
-        {/* Action Buttons */}
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/50" onClick={e => e.stopPropagation()}>
+
+        {/* Dialogue Covered */}
+        {segmentDialogue.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-border/40">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-2">
+              Audio Covered
+            </div>
+            <div className="space-y-1.5">
+              {segmentDialogue.map((line, i) => (
+                <div key={i} className="text-xs flex gap-2">
+                  <span className="text-muted-foreground min-w-[60px]">{line.character}:</span>
+                  <span className="text-foreground/90 italic truncate">"{line.text}"</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Action Bar */}
+        <div className="mt-4 pt-4 border-t border-border/40 flex items-center gap-2" onClick={e => e.stopPropagation()}>
           <Button
-            variant="ghost"
+            variant={isEditing ? "default" : "outline"}
             size="sm"
             onClick={() => setIsEditing(!isEditing)}
-            className="h-7 text-xs"
+            className="h-8"
           >
-            <Edit3 className="w-3 h-3 mr-1" />
-            {isEditing ? 'Done' : 'Edit'}
+            {isEditing ? 'Done Editing' : 'Edit Frames'}
           </Button>
-          <div className="flex items-center gap-2">
+
+          <div className="flex-1" />
+
+          {direction.isApproved ? (
             <Button
-              variant={direction.isApproved ? "default" : "outline"}
+              variant="outline"
               size="sm"
               onClick={onApprove}
-              className={cn(
-                "h-7 text-xs",
-                direction.isApproved && "bg-green-600 hover:bg-green-700"
-              )}
+              className="h-8 text-green-400 border-green-500/30 hover:bg-green-500/10 hover:text-green-300"
             >
-              <Check className="w-3 h-3 mr-1" />
-              {direction.isApproved ? 'Approved' : 'Approve'}
+              <CheckCircle2 className="w-4 h-4 mr-1.5" />
+              Approved
             </Button>
-          </div>
+          ) : (
+            <Button
+              size="sm"
+              onClick={onApprove}
+              className="h-8 bg-green-600 hover:bg-green-500 text-white"
+            >
+              Approve Segment
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -790,19 +584,17 @@ function extractAudioMetadata(scene: any, selectedLanguage = 'en-US'): {
 interface PhaseIndicatorProps {
   currentPhase: BuilderPhase
   onPhaseClick: (phase: BuilderPhase) => void
-  canAdvance: { directions: boolean; review: boolean; finalize: boolean }
+  canAdvance: { directions: boolean }
 }
 
 function PhaseIndicator({ currentPhase, onPhaseClick, canAdvance }: PhaseIndicatorProps) {
   const phases: { id: BuilderPhase; label: string; icon: React.ReactNode }[] = [
     { id: 'analyze', label: 'Analysis', icon: <Sparkles className="w-4 h-4" /> },
-    { id: 'directions', label: 'Review Directions', icon: <Eye className="w-4 h-4" /> },
-    { id: 'review', label: 'Review Prompts', icon: <Edit3 className="w-4 h-4" /> },
-    { id: 'finalize', label: 'Finalize', icon: <Check className="w-4 h-4" /> },
+    { id: 'directions', label: 'Review Segments', icon: <Eye className="w-4 h-4" /> },
   ]
 
   const getPhaseStatus = (phase: BuilderPhase) => {
-    const phaseOrder = ['analyze', 'directions', 'review', 'finalize']
+    const phaseOrder = ['analyze', 'directions']
     const currentIndex = phaseOrder.indexOf(currentPhase)
     const phaseIndex = phaseOrder.indexOf(phase)
     
@@ -814,8 +606,6 @@ function PhaseIndicator({ currentPhase, onPhaseClick, canAdvance }: PhaseIndicat
   const canClickPhase = (phase: BuilderPhase) => {
     if (phase === 'analyze') return true
     if (phase === 'directions') return canAdvance.directions
-    if (phase === 'review') return canAdvance.review
-    if (phase === 'finalize') return canAdvance.finalize
     return false
   }
 
@@ -955,11 +745,6 @@ export function SegmentBuilder({
   
   // NEW: Phase 1 - Proposed directions for user review
   const [proposedDirections, setProposedDirections] = useState<ProposedDirection[]>([])
-  const [isGeneratingPrompts, setIsGeneratingPrompts] = useState(false)
-  
-  // Phase 2 - Proposed segments with full prompts
-  const [proposedSegments, setProposedSegments] = useState<ProposedSegment[]>([])
-  const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null)
   const [selectedDirectionId, setSelectedDirectionId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   
@@ -1051,43 +836,13 @@ export function SegmentBuilder({
   }, [audioMetadata.narrationText, audioMetadata.narrationAudioUrl, sceneId])
 
   // Selected segment for editing
-  const selectedSegment = useMemo(() => {
-    return proposedSegments.find(s => s.id === selectedSegmentId) || null
-  }, [proposedSegments, selectedSegmentId])
-
-  // Validation for all segments (loaded asynchronously to avoid TDZ)
-  useEffect(() => {
-    if (proposedSegments.length === 0 || !sceneBible) {
-      setAllValidations([])
-      return
-    }
-    
-    // Dynamically import and run validation
-    const runValidation = async () => {
-      const SegmentValidation = await getSegmentValidation()
-      const results = proposedSegments.map(seg => ({
-        segmentId: seg.id,
-        validation: SegmentValidation.validateSegment(seg, sceneBible),
-      }))
-      setAllValidations(results)
-    }
-    
-    runValidation()
-  }, [proposedSegments, sceneBible])
-
   // Check if can advance to next phase
   const canAdvance = useMemo(() => {
     const hasDirections = proposedDirections.length > 0
-    const allDirectionsApproved = proposedDirections.every(d => d.isApproved)
-    const hasSegments = proposedSegments.length > 0
-    const allValid = allValidations.every(v => v.validation.isValid)
-    
     return {
       directions: hasDirections, // Can go to directions phase once we have them
-      review: hasSegments, // Can go to review phase once we have segments with prompts
-      finalize: hasSegments && allValid,
     }
-  }, [proposedDirections, proposedSegments, allValidations])
+  }, [proposedDirections])
   
   // Count approved directions
   const approvedDirectionCount = useMemo(() => {
@@ -1095,14 +850,9 @@ export function SegmentBuilder({
   }, [proposedDirections])
 
   // Total estimated duration from directions
-  const totalDirectionsDuration = useMemo(() => {
+  const totalDuration = useMemo(() => {
     return proposedDirections.reduce((sum, d) => sum + d.estimatedDuration, 0)
   }, [proposedDirections])
-
-  // Total estimated duration from segments
-  const totalDuration = useMemo(() => {
-    return proposedSegments.reduce((sum, seg) => sum + seg.duration, 0)
-  }, [proposedSegments])
   
   // Check if scene has direction
   const hasSceneDirection = useMemo(() => {
@@ -1193,31 +943,16 @@ export function SegmentBuilder({
       const directions: ProposedDirection[] = data.directions.map((dir: any, idx: number) => ({
         id: `dir_${sceneId}_${idx + 1}`,
         sequenceIndex: idx,
-        estimatedDuration: dir.estimatedDuration || targetDuration,
-        shotType: dir.shotType || 'Medium Shot',
-        cameraMovement: dir.cameraMovement || 'Static',
-        cameraAngle: dir.cameraAngle || 'Eye-Level',
-        lens: dir.lens || '50mm',
-        talentAction: dir.talentAction || '',
-        emotionalBeat: dir.emotionalBeat || '',
-        characters: dir.characters || [],
-        isNoTalent: dir.isNoTalent || false,
-        lightingMood: dir.lightingMood,
-        keyProps: dir.keyProps || [],
-        dialogueLineIds: dir.dialogueLineIds || [],
-        generationMethod: dir.generationMethod || 'FTV',
-        triggerReason: dir.triggerReason || 'AI-determined cut point',
-        confidence: dir.confidence || 75,
-        transitionIn: dir.transitionIn || 'cut',
-        startFrameDescription: dir.startFrameDescription || '',
-        endFrameDescription: dir.endFrameDescription || '',
-        continuityNotes: dir.continuityNotes || '',
-        // Phase 8: Keyframe-specific direction fields
-        keyframeStartDescription: dir.keyframeStartDescription || '',
-        keyframeEndDescription: dir.keyframeEndDescription || '',
-        environmentDescription: dir.environmentDescription || '',
-        colorPalette: dir.colorPalette || '',
-        depthOfField: dir.depthOfField || '',
+        estimatedDuration: dir.estimated_duration || dir.estimatedDuration || targetDuration,
+        shotType: dir.shot_type || dir.shotType || 'Medium Shot',
+        talentAction: dir.talent_action || dir.talentAction || '',
+        dialogueLineIds: dir.dialogue_indices || dir.dialogueLineIds || [],
+        generationMethod: dir.generation_method || dir.generationMethod || 'FTV',
+        triggerReason: dir.trigger_reason || dir.triggerReason || 'AI-determined cut point',
+        confidence: dir.confidence || 90,
+        // Map the new image prompts
+        keyframeStartDescription: dir.keyframe_start_prompt || dir.keyframeStartDescription || '',
+        keyframeEndDescription: dir.keyframe_end_prompt || dir.keyframeEndDescription || '',
         isApproved: false, // User must approve
         isUserEdited: false,
       }))
@@ -1245,127 +980,6 @@ export function SegmentBuilder({
   }, [sceneId, projectId, targetDuration, narrationDriven, totalDurationTarget, segmentCountTarget, focusMode, customInstructions, audioMetadata, sceneBible.contentHash, hasSceneDirection, runProductionAnimation])
 
   // Phase 2: Generate prompts from approved directions
-  const handleGeneratePrompts = useCallback(async () => {
-    const approvedDirs = proposedDirections.filter(d => d.isApproved)
-    
-    if (approvedDirs.length === 0) {
-      toast.error('No directions approved', {
-        description: 'Please approve at least one segment direction.',
-      })
-      return
-    }
-    
-    setIsGeneratingPrompts(true)
-    setError(null)
-
-    try {
-      // Convert ProposedDirections to API format
-      const apiDirections = approvedDirs.map(dir => ({
-        shotType: dir.shotType,
-        cameraMovement: dir.cameraMovement,
-        cameraAngle: dir.cameraAngle,
-        lens: dir.lens,
-        talentAction: dir.talentAction,
-        emotionalBeat: dir.emotionalBeat,
-        characters: dir.characters,
-        isNoTalent: dir.isNoTalent,
-        lightingMood: dir.lightingMood,
-        keyProps: dir.keyProps,
-        dialogueLineIds: dir.dialogueLineIds,
-        isApproved: dir.isApproved,
-        isUserEdited: dir.isUserEdited,
-        generationMethod: dir.generationMethod,
-        triggerReason: dir.triggerReason,
-        confidence: dir.confidence,
-        transitionIn: dir.transitionIn,
-        startFrameDescription: dir.startFrameDescription,
-        endFrameDescription: dir.endFrameDescription,
-        continuityNotes: dir.continuityNotes,
-      }))
-
-      const response = await fetch(`/api/scenes/${sceneId}/generate-segments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          preferredDuration: targetDuration,
-          projectId,
-          narrationDriven,
-          narrationDurationSeconds: audioMetadata.narrationDurationSeconds,
-          narrationText: audioMetadata.narrationText,
-          narrationAudioUrl: audioMetadata.narrationAudioUrl,
-          totalAudioDurationSeconds: audioMetadata.totalAudioDurationSeconds,
-          // Phase 2: Generate prompts from approved directions
-          phase: 'prompts',
-          approvedDirections: apiDirections,
-          previewMode: true,
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to generate prompts')
-      }
-
-      const data = await response.json()
-      
-      // Transform to ProposedSegments
-      const proposed: ProposedSegment[] = data.segments.map((seg: any, idx: number) => ({
-        id: seg.segmentId,
-        sequenceIndex: seg.sequenceIndex,
-        startTime: seg.startTime,
-        endTime: seg.endTime,
-        duration: seg.endTime - seg.startTime,
-        triggerReason: seg.triggerReason || 'AI-determined cut point',
-        generationMethod: seg.generationMethod || 'FTV',
-        generatedPrompt: seg.generatedPrompt || '',
-        emotionalBeat: seg.emotionalBeat || '',
-        dialogueLineIds: seg.dialogueLineIds || [],
-        confidence: seg.generationPlan?.confidence || 75,
-        isAdjusted: false,
-        userEditedPrompt: null,
-        directionId: approvedDirs[idx]?.id,
-      }))
-
-      // Client-side safety net: split any segments exceeding Veo max duration
-      const safeProposed = enforceClientMaxDuration(proposed)
-      if (safeProposed.length !== proposed.length) {
-        console.log(`[SegmentBuilder] Client-side split: ${proposed.length} → ${safeProposed.length} segments`)
-        toast.info(`Split ${proposed.length - safeProposed.length + (safeProposed.length - proposed.length)} oversized segment(s) to fit Veo 3.1 limits`)
-      }
-
-      setProposedSegments(safeProposed)
-      setPhase('review')
-      
-      if (safeProposed.length > 0) {
-        setSelectedSegmentId(safeProposed[0].id)
-      }
-
-      toast.success(`Generated ${safeProposed.length} segment prompts`)
-    } catch (err: any) {
-      console.error('[SegmentBuilder] Prompt generation error:', err)
-      setError(err.message || 'Failed to generate prompts')
-      toast.error('Failed to generate prompts')
-    } finally {
-      setIsGeneratingPrompts(false)
-    }
-  }, [sceneId, projectId, targetDuration, narrationDriven, audioMetadata, proposedDirections])
-
-  // Generate prompt for a single direction
-  const handleGenerateSinglePrompt = useCallback(async (directionId: string) => {
-    const direction = proposedDirections.find(d => d.id === directionId)
-    if (!direction) return
-    
-    // Mark as approved and generate
-    setProposedDirections(prev => prev.map(d => 
-      d.id === directionId ? { ...d, isApproved: true } : d
-    ))
-    
-    toast.info('Generating prompt...', { description: `For segment ${direction.sequenceIndex + 1}` })
-    
-    // For now, just mark it approved - user can click "Generate All Prompts" 
-    // A future enhancement could generate just this one segment's prompt
-  }, [proposedDirections])
-
   // Direction editing handlers
   const handleDirectionEdit = useCallback((directionId: string, updates: Partial<ProposedDirection>) => {
     setProposedDirections(prev => prev.map(d => {
@@ -1386,99 +1000,7 @@ export function SegmentBuilder({
     toast.success('All directions approved')
   }, [])
 
-  // Legacy: Full segment generation (backwards compatible)
-  const handleLegacyAnalyze = useCallback(async () => {
-    if (!hasSceneDirection) {
-      toast.error('Scene direction required')
-      return
-    }
-    
-    setIsAnalyzing(true)
-    setError(null)
-    runProductionAnimation()
-
-    try {
-      const response = await fetch(`/api/scenes/${sceneId}/generate-segments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          preferredDuration: targetDuration,
-          projectId,
-          focusMode: 'balanced',
-          narrationDriven,
-          narrationDurationSeconds: audioMetadata.narrationDurationSeconds,
-          narrationText: audioMetadata.narrationText,
-          narrationAudioUrl: audioMetadata.narrationAudioUrl,
-          totalAudioDurationSeconds: audioMetadata.totalAudioDurationSeconds,
-          previewMode: true,
-          // No phase = legacy full generation
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to analyze scene')
-      }
-
-      const data = await response.json()
-      
-      const proposed: ProposedSegment[] = data.segments.map((seg: any) => ({
-        id: seg.segmentId,
-        sequenceIndex: seg.sequenceIndex,
-        startTime: seg.startTime,
-        endTime: seg.endTime,
-        duration: seg.endTime - seg.startTime,
-        triggerReason: seg.triggerReason || 'AI-determined cut point',
-        generationMethod: seg.generationMethod || 'FTV',
-        generatedPrompt: seg.generatedPrompt || '',
-        emotionalBeat: seg.emotionalBeat || '',
-        dialogueLineIds: seg.dialogueLineIds || [],
-        confidence: seg.generationPlan?.confidence || 75,
-        isAdjusted: false,
-        userEditedPrompt: null,
-      }))
-
-      // Client-side safety net: split any segments exceeding Veo max duration
-      const safeProposed = enforceClientMaxDuration(proposed)
-      if (safeProposed.length !== proposed.length) {
-        console.log(`[SegmentBuilder] Client-side split: ${proposed.length} → ${safeProposed.length} segments`)
-        toast.info(`Split oversized segment(s) to fit Veo 3.1 max duration`)
-      }
-
-      setProposedSegments(safeProposed)
-      setPhase('review')
-      
-      // Save the content hash for staleness detection
-      setLastGeneratedHash(sceneBible.contentHash)
-      
-      // Select first segment
-      if (safeProposed.length > 0) {
-        setSelectedSegmentId(safeProposed[0].id)
-      }
-
-      toast.success(`AI generated ${safeProposed.length} segments`)
-    } catch (err: any) {
-      console.error('[SegmentBuilder] Analysis error:', err)
-      setError(err.message || 'Failed to analyze scene')
-      toast.error('Failed to analyze scene')
-    } finally {
-      setIsAnalyzing(false)
-      setShowProductionOverlay(false)
-      setProductionStage(0)
-    }
-  }, [sceneId, projectId, targetDuration, narrationDriven, audioMetadata, sceneBible.contentHash, hasSceneDirection, runProductionAnimation])
-
-  const handlePromptEdit = useCallback((segmentId: string, newPrompt: string) => {
-    setProposedSegments(prev => prev.map(seg => {
-      if (seg.id !== segmentId) return seg
-      return {
-        ...seg,
-        userEditedPrompt: newPrompt,
-        isAdjusted: true,
-      }
-    }))
-  }, [])
-
+  const handleGenerateSinglePrompt = useCallback((directionId: string) => {}, []) // Stub for type compatibility
 
   // Open regeneration dialog with current settings
   const handleOpenRegenerateDialog = useCallback(() => {
@@ -1489,14 +1011,11 @@ export function SegmentBuilder({
     })
     setShowRegenerateDialog(true)
   }, [targetDuration, narrationDriven])
-  
+
   // Unified reset — clears all builder state back to analyze phase
-  const resetToAnalyze = useCallback(() => {
-    setPhase('analyze')
+  const resetToAnalyze = useCallback(() => {    setPhase('analyze')
     setError(null)
     setProposedDirections([])
-    setProposedSegments([])
-    setSelectedSegmentId(null)
     setSelectedDirectionId(null)
   }, [])
 
@@ -1506,55 +1025,74 @@ export function SegmentBuilder({
     setTargetDuration(regenerationConfig.targetDuration)
     setNarrationDriven(regenerationConfig.narrationDriven)
     
-    // Store current user-edited prompts if preserving
-    const preservedEdits = regenerationConfig.preserveManualEdits
-      ? proposedSegments
-          .filter(s => s.userEditedPrompt)
-          .map(s => ({ sequenceIndex: s.sequenceIndex, prompt: s.userEditedPrompt }))
-      : []
-    
     // Reset state for new generation (uses unified reset + dialog dismiss)
     resetToAnalyze()
     setShowRegenerateDialog(false)
     
-    toast.info('Ready for regeneration - click Generate Segments')
-  }, [regenerationConfig, proposedSegments, resetToAnalyze])
+    toast.info('Ready for regeneration - click Analyze Scene')
+  }, [regenerationConfig, resetToAnalyze])
 
   const handleFinalize = useCallback(() => {
-    // Transform ProposedSegments to SceneSegments
-    const finalSegments: SceneSegment[] = proposedSegments.map(seg => ({
-      segmentId: seg.id,
-      sequenceIndex: seg.sequenceIndex,
-      startTime: seg.startTime,
-      endTime: seg.endTime,
-      status: 'READY' as const,
-      generatedPrompt: seg.generatedPrompt,
-      userEditedPrompt: seg.userEditedPrompt,
-      activeAssetUrl: null,
-      assetType: null,
-      generationMethod: seg.generationMethod,
-      triggerReason: seg.triggerReason,
-      emotionalBeat: seg.emotionalBeat,
-      dialogueLineIds: seg.dialogueLineIds,
-      references: {
-        startFrameUrl: null,
-        endFrameUrl: null,
-        useSceneFrame: seg.sequenceIndex === 0,
-        characterRefs: [],
-        characterIds: [],
-        sceneRefIds: [],
-        objectRefIds: [],
-      },
-      takes: [],
-      // Prompt context for staleness detection
-      promptContext: {
-        dialogueHash: '',
-        visualDescriptionHash: sceneBible.contentHash,
-        generatedAt: new Date().toISOString(),
-        sceneNumber: sceneBible.sceneNumber,
-      },
-      isStale: false,
-    }))
+    // Transform ProposedDirections directly to SceneSegments
+    const approvedDirs = proposedDirections.filter(d => d.isApproved)
+    
+    if (approvedDirs.length === 0) {
+      toast.error('No directions approved', {
+        description: 'Please approve at least one segment direction.',
+      })
+      return
+    }
+
+    let currentTime = 0;
+    
+    const finalSegments: SceneSegment[] = approvedDirs.map((dir, idx) => {
+      const startTime = currentTime;
+      const endTime = currentTime + dir.estimatedDuration;
+      currentTime = endTime;
+      
+      // We will generate the F2V video_generation_prompt lazily or in SegmentStudio
+      const fallbackPrompt = `${dir.shotType} shot. ${dir.talentAction}`
+      
+      return {
+        segmentId: dir.id,
+        sequenceIndex: idx,
+        startTime,
+        endTime,
+        status: 'READY' as const,
+        generatedPrompt: '', // F2V prompt starts empty, generated in Step 2
+        userEditedPrompt: null,
+        activeAssetUrl: null,
+        assetType: null,
+        generationMethod: dir.generationMethod,
+        triggerReason: dir.triggerReason,
+        emotionalBeat: '', // omitted from simplified format
+        dialogueLineIds: dir.dialogueLineIds,
+        // Map talentAction and shotType so the prompt builder has something to start with
+        action: dir.talentAction,
+        shotType: dir.shotType,
+        references: {
+          startFrameUrl: null,
+          endFrameUrl: null,
+          useSceneFrame: idx === 0,
+          characterRefs: [],
+          characterIds: [],
+          sceneRefIds: [],
+          objectRefIds: [],
+          // Map the Image Gen Prompts!
+          startFrameDescription: dir.keyframeStartDescription,
+          endFrameDescription: dir.keyframeEndDescription,
+        },
+        takes: [],
+        // Prompt context for staleness detection
+        promptContext: {
+          dialogueHash: '',
+          visualDescriptionHash: sceneBible.contentHash,
+          generatedAt: new Date().toISOString(),
+          sceneNumber: sceneBible.sceneNumber,
+        },
+        isStale: false,
+      }
+    })
 
     onSegmentsFinalized(finalSegments)
     toast.success(`Finalized ${finalSegments.length} segments - Ready for Key Frames`)
@@ -1562,7 +1100,7 @@ export function SegmentBuilder({
     if (onClose) {
       onClose()
     }
-  }, [proposedSegments, sceneBible, onSegmentsFinalized, onClose])
+  }, [proposedDirections, sceneBible, onSegmentsFinalized, onClose])
 
   // -------------------------------------------------------------------------
   // Render
@@ -1876,7 +1414,7 @@ export function SegmentBuilder({
                       {approvedDirectionCount}/{proposedDirections.length} Approved
                     </Badge>
                     <Badge variant="outline">
-                      ~{Math.round(totalDirectionsDuration)}s total
+                      ~{Math.round(totalDuration)}s total
                     </Badge>
                   </div>
                 </div>
@@ -1922,186 +1460,21 @@ export function SegmentBuilder({
                   </Button>
                 </div>
                 <Button
-                  onClick={handleGeneratePrompts}
-                  disabled={approvedDirectionCount === 0 || isGeneratingPrompts}
+                  onClick={handleFinalize}
+                  disabled={approvedDirectionCount === 0}
                   size="lg"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
                 >
-                  {isGeneratingPrompts ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Generating Prompts...
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="w-4 h-4 mr-2" />
-                      Generate Prompts ({approvedDirectionCount})
-                    </>
-                  )}
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Finalize Segments ({approvedDirectionCount})
                 </Button>
               </div>
             </div>
           )}
 
-          {/* Phase: Review */}
-          {phase === 'review' && (
-            <div className="flex-1 flex flex-col overflow-hidden">
-              {/* Timeline Preview */}
-              <div className="border-b border-gray-700/50 px-4 py-3">
-                <SegmentPreviewTimeline
-                  segments={proposedSegments}
-                  selectedSegmentId={selectedSegmentId}
-                  onSelectSegment={setSelectedSegmentId}
-                  totalDuration={totalDuration}
-                />
-              </div>
-
-              {/* Segment Editor */}
-              <div className="flex-1 overflow-y-auto p-4">
-                {selectedSegment ? (
-                  <SegmentPromptEditor
-                    segment={selectedSegment}
-                    sceneBible={sceneBible}
-                    validation={allValidations.find(v => v.segmentId === selectedSegment.id)?.validation}
-                    onPromptChange={handlePromptEdit}
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-gray-500">
-                    <p>Select a segment to edit</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Validation Issues Banner */}
-              {allValidations.some(v => !v.validation.isValid) && (
-                <div className="mx-4 my-2 px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-3">
-                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-                  <div className="flex-1 text-sm">
-                    <span className="text-red-300 font-medium">
-                      {allValidations.filter(v => !v.validation.isValid).length} segment(s) have issues
-                    </span>
-                    {allValidations.some(v => v.validation.issues.some(i => i.code === 'DURATION_TOO_LONG')) && (
-                      <span className="text-red-400/80 ml-2">
-                        — segments exceed {8}s max duration. Adjust boundaries or regenerate.
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Action Bar */}
-              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-700/50 bg-gray-900/40">
-                <div className="flex items-center gap-4">
-                  <div className="text-sm">
-                    <span className="font-medium text-white">{proposedSegments.length}</span>{' '}
-                    <span className="text-gray-400">segments</span>
-                  </div>
-                  <div className="text-sm">
-                    <Clock className="w-3 h-3 inline mr-1" />
-                    <span className="font-mono text-white">{totalDuration.toFixed(1)}s</span>{' '}
-                    <span className="text-gray-400">total</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {/* Staleness Warning */}
-                  {isStale && (
-                    <Badge variant="outline" className="text-amber-500 border-amber-500/50 gap-1">
-                      <AlertTriangle className="w-3 h-3" />
-                      Scene Changed
-                    </Badge>
-                  )}
-                  <Button variant="outline" onClick={handleOpenRegenerateDialog}>
-                    <Settings2 className="w-4 h-4 mr-2" />
-                    Regenerate...
-                  </Button>
-                  <Button
-                    onClick={() => setPhase('finalize')}
-                    disabled={!canAdvance.finalize}
-                    title={!canAdvance.finalize 
-                      ? 'Fix validation issues before finalizing (e.g. segments exceeding 8s max duration)' 
-                      : 'Proceed to finalize segments'}
-                    className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/20"
-                  >
-                    Continue to Finalize
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Phase: Finalize */}
-          {phase === 'finalize' && (
-            <div className="flex-1 flex items-center justify-center p-8">
-              <Card className="w-full max-w-lg bg-gray-900/60 border-gray-700/50">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-white">
-                    <Check className="w-5 h-5 text-emerald-400" />
-                    Ready to Finalize
-                  </CardTitle>
-                  <CardDescription className="text-gray-400">
-                    Review your segments before proceeding to Key Frame generation
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Summary */}
-                  <div className="bg-gray-800/50 rounded-lg p-4 space-y-2 border border-gray-700/30">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Total Segments:</span>
-                      <span className="font-medium text-white">{proposedSegments.length}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Total Duration:</span>
-                      <span className="font-medium font-mono text-white">{totalDuration.toFixed(1)}s</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Dialogue Lines Covered:</span>
-                      <span className="font-medium text-white">
-                        {new Set(proposedSegments.flatMap(s => s.dialogueLineIds)).size} / {sceneBible.dialogue.length}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">User Adjusted:</span>
-                      <span className="font-medium text-white">
-                        {proposedSegments.filter(s => s.isAdjusted).length} segments
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Validation Warnings */}
-                  {allValidations.some(v => !v.validation.isValid) && (
-                    <Alert variant="destructive">
-                      <AlertTriangle className="w-4 h-4" />
-                      <AlertDescription>
-                        Some segments have validation issues. Please review before finalizing.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setPhase('review')}
-                      className="flex-1"
-                    >
-                      Back to Review
-                    </Button>
-                    <Button
-                      onClick={handleFinalize}
-                      className="flex-1 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/20"
-                    >
-                      <CheckCircle2 className="w-4 h-4 mr-2" />
-                      Finalize & Proceed
-                    </Button>
-                  </div>
-
-                  <p className="text-xs text-center text-gray-500">
-                    After finalizing, proceed to the Frame tab to generate key frames for each segment
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+          {/* Phase 2 was removed. Finalize happens directly. */}
+          
+          {/* Phase 2 was removed. Finalize happens directly. */}
         </div>
       </div>
 
@@ -2170,12 +1543,12 @@ export function SegmentBuilder({
             </div>
 
             {/* Preserve Manual Edits Toggle */}
-            {proposedSegments.some(s => s.userEditedPrompt) && (
+            {proposedDirections.some(d => d.isUserEdited) && (
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">Preserve Manual Edits</p>
                   <p className="text-xs text-muted-foreground">
-                    Attempt to reapply your prompt edits to matching segments
+                    Attempt to reapply your edits to matching segments
                   </p>
                 </div>
                 <Button
@@ -2195,8 +1568,8 @@ export function SegmentBuilder({
             <Alert>
               <AlertCircle className="w-4 h-4" />
               <AlertDescription>
-                {proposedSegments.filter(s => s.isAdjusted).length > 0 
-                  ? `${proposedSegments.filter(s => s.isAdjusted).length} adjusted segment(s) will be discarded.`
+                {proposedDirections.filter(d => d.isUserEdited).length > 0 
+                  ? `${proposedDirections.filter(d => d.isUserEdited).length} edited direction(s) will be discarded.`
                   : 'Current segment proposals will be discarded.'}
               </AlertDescription>
             </Alert>

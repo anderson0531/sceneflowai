@@ -1556,28 +1556,12 @@ Return a JSON array. Each segment direction object MUST have ALL these fields:
     "sequence": 1,
     "estimated_duration": 6.0,
     "shot_type": "Medium Close-Up",
-    "camera_movement": "Slow dolly in",
-    "camera_angle": "Eye-Level, slightly camera-left",
-    "lens": "85mm f/1.2",
-    "talent_action": "SARAH (30s Latina, dark curly hair in low bun, cream silk blouse) sits at mahogany desk, left hand reaching toward manila envelope, eyes widening with recognition. Her right hand grips the desk edge, knuckles whitening.",
-    "emotional_beat": "Shock of recognition — jaw drops slightly, breath catches, pupils dilate",
-    "characters": ["SARAH"],
-    "is_no_talent": false,
-    "lighting_mood": "Warm tungsten key from desk lamp camera-left, cool blue fill from laptop screen, rim light from window behind",
-    "key_props": ["manila envelope", "mahogany desk", "desk lamp", "laptop"],
+    "talent_action": "SARAH (30s Latina) sits at mahogany desk. Her right hand grips the desk edge.",
     "dialogue_indices": [0, 1],
     "generation_method": "FTV",
-    "trigger_reason": "Opening shot — establishes SARAH discovering the envelope",
-    "confidence": 90,
-    "transition_in": "cut",
-    "start_frame_description": "Wide shot of SARAH at desk viewed from door frame",
-    "end_frame_description": "MCU of SARAH clutching envelope to chest, eyes closed, single tear on left cheek",
-    "continuity_notes": "Cream blouse, low bun hairstyle, desk lamp warm glow consistent",
-    "keyframe_start_description": "Medium close-up of SARAH, 30s Latina woman with dark curly hair pulled back in a low bun, wearing a cream silk blouse with pearl buttons. She sits at a mahogany desk, her left hand frozen mid-reach toward a thick manila envelope. Her brown eyes are wide with recognition, lips slightly parted. Warm tungsten key light from brass desk lamp camera-left casts golden highlights on her cheekbone. Cool blue fill from laptop screen camera-right. Background: rain-streaked window with city lights in soft bokeh. 85mm f/1.2, shallow depth of field, subject tack-sharp. Warm amber and cool blue color palette. 8K photorealistic, cinematic film grain.",
-    "keyframe_end_description": "Same medium close-up composition. SARAH now clutches the manila envelope against her chest with both hands, eyes squeezed shut, a single tear tracking down her left cheek. Her body has turned 15 degrees away from the desk. The desk lamp flickers. Same warm tungsten and cool blue lighting but shadows have deepened. 85mm f/1.2 shallow DOF. Warm amber tones shift slightly cooler. 8K photorealistic.",
-    "environment_description": "Upscale home office: mahogany desk with brass desk lamp, open laptop, scattered papers, half-empty coffee cup. Rain streaks on floor-to-ceiling window behind desk. City lights visible through rain. Hardwood floors, built-in bookshelves camera-right.",
-    "color_palette": "Warm amber highlights from desk lamp, cool blue accents from laptop, deep mahogany shadows",
-    "depth_of_field": "Shallow DOF f/1.2 — subject tack sharp, background and foreground in creamy bokeh"
+    "trigger_reason": "Opening shot",
+    "keyframe_start_description": "Medium close-up of SARAH, 30s Latina woman with dark curly hair pulled back in a low bun, wearing a cream silk blouse. She sits at a mahogany desk. Warm tungsten key light from brass desk lamp. 85mm f/1.2. 8K photorealistic.",
+    "keyframe_end_description": "Same medium close-up composition. SARAH now clutches the manila envelope against her chest with both hands. The desk lamp flickers. Warm amber tones. 8K photorealistic."
   }
 ]
 
@@ -1588,40 +1572,18 @@ Return a JSON array. Each segment direction object MUST have ALL these fields:
    - Exact body position and posture
    - Specific physical action (not just emotion)
    - What their hands are doing
-   - Where they are looking
 
-2. **keyframe_start_description** (NEW — CRITICAL): A complete 50-80 word image generation prompt describing the OPENING FRAME:
+2. **keyframe_start_description** (CRITICAL): A complete 50-80 word image generation prompt describing the OPENING FRAME:
    - Shot type and lens
    - Subject with full appearance (face, hair, skin, build, wardrobe)
    - Exact pose, expression, hand position
    - Lighting setup with direction and quality
-   - Background elements with DOF treatment
-   - Color palette
-   - Technical: "8K photorealistic, cinematic"
+   - Background elements
 
-3. **keyframe_end_description** (NEW — CRITICAL): A complete 50-80 word image generation prompt describing the CLOSING FRAME:
+3. **keyframe_end_description** (CRITICAL): A complete 50-80 word image generation prompt describing the CLOSING FRAME:
    - What has CHANGED from the start frame
    - New pose, expression, position
-   - Same lighting setup (unless dramatically motivated change)
-   - Same technical specs
-
-4. **environment_description** (NEW): Detailed backdrop description usable independently:
-   - Location details (furniture, props, architecture)
-   - Atmosphere (weather, particles, haze)
-   - Practical light sources
-   - Key set dressing elements
-
-5. **color_palette** (NEW): Specific color language for consistency:
-   - Highlight color and source
-   - Shadow color and depth
-   - Accent colors
-   - Overall grade direction
-
-6. **depth_of_field** (NEW): Camera optical specifications:
-   - F-stop
-   - What is in focus
-   - What is in bokeh
-   - Any rack focus directions
+   - Same lighting setup and technical specs
 
 **RULES:**
 1. Split at MAJOR visual changes only (angle, location, emotional shift)

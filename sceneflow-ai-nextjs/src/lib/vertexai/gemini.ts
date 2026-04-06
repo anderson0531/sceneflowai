@@ -155,6 +155,8 @@ export async function generateText(
 
   console.log(`[Vertex Gemini] Requesting ${model} via ${location} (${apiVersion})`);
   
+  const timeoutToUse = options.timeoutMs || 90000
+  
   const response = await fetchWithRetry(
     endpoint,
     {
@@ -165,7 +167,7 @@ export async function generateText(
       },
       body: JSON.stringify(requestBody)
     },
-    { maxRetries: 3, timeoutMs: 90000 }
+    { maxRetries: 3, timeoutMs: timeoutToUse }
   );
 
   const isOk = response.ok;
