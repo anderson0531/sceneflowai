@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useCallback, useEffect } from 'react'
-import { Upload, X, Play, Pause, Loader, Mic, MicOff, AlertCircle, CheckCircle, RotateCcw, Square, FileAudio, Shield, Lock, Trash2 } from 'lucide-react'
+import { Upload, X, Play, Pause, Loader, Mic, MicOff, AlertCircle, CheckCircle, RotateCcw, Square, FileAudio, Shield, Lock, Trash2, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { toast } from 'sonner'
 import { useAudioRecorder, audioBlob2File, formatRecordingTime } from '@/hooks/useAudioRecorder'
@@ -9,27 +9,10 @@ import { useVoiceConsent } from '@/hooks/useVoiceConsent'
 import { VoiceConsentWizard } from './VoiceConsentWizard'
 import { TierGateModal } from '@/components/ui/TierGateModal'
 
-// Training scripts for voice cloning - phonetically diverse text
-const TRAINING_SCRIPTS = [
-  {
-    id: 'standard',
-    name: 'Standard Script',
-    text: `The rainbow is a division of white light into many beautiful colors. These take the shape of a long round arch, with its path high above, and its two ends apparently beyond the horizon. There is, according to legend, a boiling pot of gold at one end. People look, but no one ever finds it. When a man looks for something beyond his reach, his friends say he is looking for the pot of gold at the end of the rainbow.`,
-    duration: '~45 seconds',
-  },
-  {
-    id: 'dramatic',
-    name: 'Dramatic Monologue',
-    text: `In the depths of winter, I finally learned that within me there lay an invincible summer. The storm may rage outside, thunder crashing against the sky, lightning illuminating the darkness for brief moments of clarity. Yet here I stand, unwavering. For I have discovered that courage is not the absence of fear, but rather the judgment that something else is more important than fear. The brave may not live forever, but the cautious do not live at all.`,
-    duration: '~50 seconds',
-  },
-  {
-    id: 'conversational',
-    name: 'Conversational',
-    text: `So here's the thing about cooking - it's really not as complicated as people make it out to be. You just need to trust your instincts, you know? Start with good ingredients, keep things simple, and don't be afraid to make mistakes. I've burned more dishes than I can count, but each one taught me something new. The key is to taste as you go, adjust the seasonings, and most importantly, have fun with it. That's what makes a meal memorable.`,
-    duration: '~40 seconds',
-  },
-]
+// Training scripts for voice cloning - fallback text
+const DEFAULT_SCRIPT = `The rainbow is a division of white light into many beautiful colors. These take the shape of a long round arch, with its path high above, and its two ends apparently beyond the horizon.`
+
+import type { CharacterContext, ScreenplayContext } from '@/lib/voiceRecommendation'
 
 type InputMode = 'upload' | 'record' | 'character-sample'
 
@@ -38,9 +21,12 @@ interface VoiceClonePanelProps {
   characterName?: string
   /** URL to character's stored voice training audio sample */
   characterAudioSampleUrl?: string
+  characterContext?: CharacterContext
+  screenplayContext?: ScreenplayContext
+  provider?: 'elevenlabs' | 'google'
 }
 
-export function VoiceClonePanel({ onVoiceCreated, characterName, characterAudioSampleUrl }: VoiceClonePanelProps) {
+export function VoiceClonePanel({ onVoiceCreated, characterName, characterAudioSampleUrl, characterContext, screenplayContext, provider = 'elevenlabs' }: VoiceClonePanelProps) {
   const [voiceName, setVoiceName] = useState(characterName ? `${characterName}'s Voice` : '')
   const [description, setDescription] = useState('')
   const [files, setFiles] = useState<File[]>([])
@@ -50,7 +36,8 @@ export function VoiceClonePanel({ onVoiceCreated, characterName, characterAudioS
   
   // Recording mode state
   const [inputMode, setInputMode] = useState<InputMode>('upload')
-  const [selectedScript, setSelectedScript] = useState(TRAINING_SCRIPTS[0])
+  const [directorPrompt, setDirectorPrompt] = useState(DEFAULT_SCRIPT)
+  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false)
   const audioPlayerRef = useRef<HTMLAudioElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   
@@ -77,7 +64,11 @@ export function VoiceClonePanel({ onVoiceCreated, characterName, characterAudioS
     refreshQuota()
   }, [refreshQuota])
   
-  // Audio recorder hook
+  // Audio recorder hooks
+  const trainingRecorder = useAudioRecorder()
+  const consentRecorder = useAudioRecorder()
+  
+  // Backwards compatibility for ElevenLabs UI which assumes single recorder
   const {
     state: recorderState,
     isRecording,
@@ -90,7 +81,7 @@ export function VoiceClonePanel({ onVoiceCreated, characterName, characterAudioS
     startRecording,
     stopRecording,
     reset: resetRecording,
-  } = useAudioRecorder()
+  } = trainingRecorder
 
   // Handle using the recorded audio
   const handleUseRecording = useCallback(() => {
@@ -101,6 +92,37 @@ export function VoiceClonePanel({ onVoiceCreated, characterName, characterAudioS
     toast.success('Recording added to samples')
     resetRecording()
   }, [audioBlob, resetRecording])
+
+  const handleGeneratePrompt = useCallback(async () => {
+    if (!characterContext) {
+      toast.error('Character context is required to generate a director prompt.')
+      return
+    }
+
+    setIsGeneratingPrompt(true)
+    try {
+      const response = await fetch('/api/tts/google/director-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ characterContext, screenplayContext }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate prompt')
+      }
+
+      const data = await response.json()
+      if (data.script) {
+        setDirectorPrompt(data.script)
+        toast.success('Director prompt generated!')
+      }
+    } catch (error) {
+      console.error('[VoiceClone] Error generating prompt:', error)
+      toast.error('Failed to generate director prompt')
+    } finally {
+      setIsGeneratingPrompt(false)
+    }
+  }, [characterContext, screenplayContext])
 
   // Toggle audio playback
   const togglePlayback = useCallback(() => {
@@ -156,8 +178,13 @@ export function VoiceClonePanel({ onVoiceCreated, characterName, characterAudioS
       return
     }
 
-    if (files.length === 0) {
-      toast.error('Please upload at least one audio sample')
+    if (files.length === 0 && !audioBlob) {
+      toast.error('Please upload or record at least one audio sample')
+      return
+    }
+
+    if (provider === 'google' && !consentRecorder.audioBlob) {
+      toast.error('Google Voice Cloning requires you to record the consent statement below.')
       return
     }
 
@@ -178,8 +205,13 @@ export function VoiceClonePanel({ onVoiceCreated, characterName, characterAudioS
       return
     }
 
-    // Show consent wizard
-    setShowConsentWizard(true)
+    if (provider === 'google') {
+      // For Google, we already have the consent audio via consentRecorder.
+      handleCloneVoice()
+    } else {
+      // Show ElevenLabs consent wizard
+      setShowConsentWizard(true)
+    }
   }
 
   // Handle consent completion - proceed with voice cloning
@@ -198,16 +230,26 @@ export function VoiceClonePanel({ onVoiceCreated, characterName, characterAudioS
       return
     }
 
-    if (files.length === 0) {
-      toast.error('Please upload at least one audio sample')
+    const trainingFiles = [...files]
+    if (audioBlob) {
+      trainingFiles.push(audioBlob2File(audioBlob, 'voice-recording'))
+    }
+
+    if (trainingFiles.length === 0) {
+      toast.error('Please upload or record at least one audio sample')
       return
     }
 
-    // Require consent for compliance
+    if (provider === 'google' && !consentRecorder.audioBlob) {
+      toast.error('Google Voice Cloning requires you to record the consent statement.')
+      return
+    }
+
+    // Require consent for compliance (ElevenLabs only)
     const useConsentId = consentId || pendingConsentId
     const useCloneId = voiceCloneId || pendingCloneId
     
-    if (!useConsentId && !useCloneId) {
+    if (provider === 'elevenlabs' && (!useConsentId && !useCloneId)) {
       // Need to go through consent flow first
       handleInitiateClone()
       return
@@ -219,15 +261,20 @@ export function VoiceClonePanel({ onVoiceCreated, characterName, characterAudioS
       formData.append('name', voiceName.trim())
       formData.append('description', description.trim())
       
-      // Include consent/clone IDs for compliance
-      if (useConsentId) formData.append('consentId', useConsentId)
-      if (useCloneId) formData.append('voiceCloneId', useCloneId)
+      if (provider === 'elevenlabs') {
+        // Include consent/clone IDs for compliance
+        if (useConsentId) formData.append('consentId', useConsentId)
+        if (useCloneId) formData.append('voiceCloneId', useCloneId)
+      } else if (provider === 'google' && consentRecorder.audioBlob) {
+        formData.append('consentAudio', audioBlob2File(consentRecorder.audioBlob, 'consent-recording'))
+      }
       
-      for (const file of files) {
+      for (const file of trainingFiles) {
         formData.append('files', file)
       }
 
-      const response = await fetch('/api/tts/elevenlabs/voice-clone', {
+      const endpoint = provider === 'google' ? '/api/tts/google/voice-clone' : '/api/tts/elevenlabs/voice-clone'
+      const response = await fetch(endpoint, {
         method: 'POST',
         body: formData,
       })
@@ -518,36 +565,32 @@ export function VoiceClonePanel({ onVoiceCreated, characterName, characterAudioS
       {/* Record Mode */}
       {inputMode === 'record' && (
         <div className="space-y-3">
-          {/* Script Selection */}
+          {/* Director Prompt Display */}
           <div className="space-y-1.5">
-            <label className="text-[12px] text-gray-400">Select a script to read:</label>
-            <div className="flex gap-2 flex-wrap">
-              {TRAINING_SCRIPTS.map((script) => (
-                <button
-                  key={script.id}
-                  onClick={() => setSelectedScript(script)}
-                  className={`px-3 py-1.5 rounded-md text-[12px] transition-colors ${
-                    selectedScript.id === script.id
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-200'
-                  }`}
-                >
-                  {script.name}
-                </button>
-              ))}
+            <div className="flex items-center justify-between">
+              <label className="text-[12px] text-gray-400">Director Prompt / Script to Read:</label>
+              <Button
+                onClick={handleGeneratePrompt}
+                disabled={isGeneratingPrompt || !characterContext}
+                variant="ghost"
+                size="sm"
+                className="h-6 text-[11px] px-2 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 hover:text-purple-300"
+              >
+                {isGeneratingPrompt ? (
+                  <Loader className="w-3 h-3 mr-1 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3 h-3 mr-1" />
+                )}
+                Auto-Generate Custom Script
+              </Button>
             </div>
-          </div>
-
-          {/* Training Script Display */}
-          <div className="relative p-4 bg-gray-900/80 border border-gray-700 rounded-lg max-h-36 overflow-y-auto">
-            <div className="absolute top-2 right-2 flex items-center gap-2">
-              <span className="text-[10px] text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
-                {selectedScript.duration}
-              </span>
-            </div>
-            <p className="text-[14px] text-gray-200 leading-relaxed pr-16">
-              {selectedScript.text}
-            </p>
+            <textarea
+              value={directorPrompt}
+              onChange={(e) => setDirectorPrompt(e.target.value)}
+              className="w-full p-3 bg-gray-900/80 border border-gray-700 rounded-lg text-[13px] text-gray-200 leading-relaxed resize-y focus:outline-none focus:border-blue-500"
+              rows={4}
+              placeholder="Enter the script you want to read aloud, or generate a custom one..."
+            />
           </div>
 
           {/* Permission Warning */}
@@ -659,14 +702,100 @@ export function VoiceClonePanel({ onVoiceCreated, characterName, characterAudioS
                   <RotateCcw className="w-4 h-4 mr-2" />
                   Re-record
                 </Button>
-                <Button
-                  onClick={handleUseRecording}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Use Recording
-                </Button>
+                {provider === 'elevenlabs' && (
+                  <Button
+                    onClick={handleUseRecording}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Add to Uploads
+                  </Button>
+                )}
               </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Google TTS Voice Talent Consent */}
+      {provider === 'google' && (
+        <div className="mt-4 space-y-3 p-4 bg-gray-900/50 border border-blue-500/20 rounded-lg">
+          <div className="space-y-1.5">
+            <label className="text-[12px] text-blue-300 font-medium">Consent Recording (Required for Google)</label>
+            <div className="flex items-start gap-2 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <Shield className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[12px] text-blue-200 leading-snug">
+                  Google requires you to record the following exact phrase to verify your consent to clone your voice:
+                </p>
+                <p className="mt-2 text-[14px] text-white italic font-medium">
+                  "I am the owner of this voice and I consent to Google using this voice to create a synthetic voice model."
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {consentRecorder.state === 'idle' && (
+            <Button
+              onClick={consentRecorder.startRecording}
+              disabled={consentRecorder.permissionState === 'denied'}
+              className="w-full bg-red-600 hover:bg-red-700 text-white"
+            >
+              <Mic className="w-4 h-4 mr-2" />
+              Record Consent Phrase
+            </Button>
+          )}
+
+          {consentRecorder.isPreparing && (
+            <Button disabled className="w-full bg-gray-700 text-gray-400">
+              <Loader className="w-4 h-4 mr-2 animate-spin" />
+              Requesting microphone access...
+            </Button>
+          )}
+
+          {consentRecorder.isRecording && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-center gap-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                  </span>
+                  <span className="text-red-400 font-medium text-[14px]">Recording...</span>
+                </div>
+                <span className="text-red-300 font-mono text-lg">
+                  {formatRecordingTime(consentRecorder.elapsedMs)}
+                </span>
+              </div>
+              <Button
+                onClick={consentRecorder.stopRecording}
+                className="w-full bg-gray-700 hover:bg-gray-600 text-white"
+              >
+                <Square className="w-4 h-4 mr-2 fill-current" />
+                Stop Recording
+              </Button>
+            </div>
+          )}
+
+          {consentRecorder.state === 'stopped' && consentRecorder.audioUrl && (
+            <div className="space-y-3 p-3 bg-gray-800/50 border border-gray-700 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileAudio className="w-4 h-4 text-green-400" />
+                  <span className="text-[13px] text-green-400 font-medium">Consent Recorded</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <audio src={consentRecorder.audioUrl} className="flex-1 h-8" controls />
+              </div>
+              <Button
+                onClick={consentRecorder.reset}
+                variant="outline"
+                className="w-full border-gray-600 text-gray-300 hover:bg-gray-700"
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Re-record Consent
+              </Button>
             </div>
           )}
         </div>
@@ -712,10 +841,94 @@ export function VoiceClonePanel({ onVoiceCreated, characterName, characterAudioS
         </div>
       )}
 
+      {/* Google TTS Voice Talent Consent */}
+      {provider === 'google' && (
+        <div className="mt-4 space-y-3 p-4 bg-gray-900/50 border border-blue-500/20 rounded-lg">
+          <div className="space-y-1.5">
+            <label className="text-[12px] text-blue-300 font-medium">Consent Recording (Required for Google)</label>
+            <div className="flex items-start gap-2 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <Shield className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[12px] text-blue-200 leading-snug">
+                  Google requires you to record the following exact phrase to verify your consent to clone your voice:
+                </p>
+                <p className="mt-2 text-[14px] text-white italic font-medium">
+                  "I am the owner of this voice and I consent to Google using this voice to create a synthetic voice model."
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {consentRecorder.state === 'idle' && (
+            <Button
+              onClick={consentRecorder.startRecording}
+              disabled={consentRecorder.permissionState === 'denied'}
+              className="w-full bg-red-600 hover:bg-red-700 text-white"
+            >
+              <Mic className="w-4 h-4 mr-2" />
+              Record Consent Phrase
+            </Button>
+          )}
+
+          {consentRecorder.isPreparing && (
+            <Button disabled className="w-full bg-gray-700 text-gray-400">
+              <Loader className="w-4 h-4 mr-2 animate-spin" />
+              Requesting microphone access...
+            </Button>
+          )}
+
+          {consentRecorder.isRecording && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-center gap-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                  </span>
+                  <span className="text-red-400 font-medium text-[14px]">Recording...</span>
+                </div>
+                <span className="text-red-300 font-mono text-lg">
+                  {formatRecordingTime(consentRecorder.elapsedMs)}
+                </span>
+              </div>
+              <Button
+                onClick={consentRecorder.stopRecording}
+                className="w-full bg-gray-700 hover:bg-gray-600 text-white"
+              >
+                <Square className="w-4 h-4 mr-2 fill-current" />
+                Stop Recording
+              </Button>
+            </div>
+          )}
+
+          {consentRecorder.state === 'stopped' && consentRecorder.audioUrl && (
+            <div className="space-y-3 p-3 bg-gray-800/50 border border-gray-700 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileAudio className="w-4 h-4 text-green-400" />
+                  <span className="text-[13px] text-green-400 font-medium">Consent Recorded</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <audio src={consentRecorder.audioUrl} className="flex-1 h-8" controls />
+              </div>
+              <Button
+                onClick={consentRecorder.reset}
+                variant="outline"
+                className="w-full border-gray-600 text-gray-300 hover:bg-gray-700"
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Re-record Consent
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Clone Button */}
       <Button
         onClick={handleInitiateClone}
-        disabled={isUploading || !voiceName.trim() || files.length === 0 || (quota && !quota.canCreate)}
+        disabled={isUploading || !voiceName.trim() || (files.length === 0 && !audioBlob) || Boolean(quota && !quota.canCreate) || (provider === 'google' && !consentRecorder.audioBlob)}
         className="w-full bg-blue-600 hover:bg-blue-700 text-white"
       >
         {isUploading ? (

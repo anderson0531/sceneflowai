@@ -69,8 +69,10 @@ export async function POST(request: NextRequest) {
     }
     
     const isGemini = googleVoice.startsWith('gemini-')
+    const isCustomClone = !isGemini && !googleVoice.includes('-') && googleVoice.length > 20 // Custom clone keys are typically long alphanumeric strings
+    
     const actualVoiceName = isGemini ? googleVoice.replace('gemini-', '') : googleVoice
-    const languageCode = actualVoiceName.split('-').length >= 2 && !isGemini 
+    const languageCode = actualVoiceName.split('-').length >= 2 && !isGemini && !isCustomClone
       ? actualVoiceName.split('-').slice(0, 2).join('-') 
       : 'en-US'
     
@@ -78,7 +80,6 @@ export async function POST(request: NextRequest) {
       input: { text },
       voice: {
         languageCode,
-        name: actualVoiceName,
       },
       audioConfig: {
         audioEncoding: 'MP3',
@@ -86,6 +87,15 @@ export async function POST(request: NextRequest) {
         pitch: 0.0,
         volumeGainDb: 0.0,
       },
+    }
+
+    if (isCustomClone) {
+      // Use Voice Cloning Key
+      payload.voice.voiceClone = {
+        voiceCloningKey: actualVoiceName
+      }
+    } else {
+      payload.voice.name = actualVoiceName
     }
 
     if (isGemini) {

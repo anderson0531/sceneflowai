@@ -144,7 +144,7 @@ export function VoiceSelectionDialog({
   onVoiceTrainingAudioSaved
 }: VoiceSelectionDialogProps) {
   const [activeTab, setActiveTab] = useState<'browse' | 'create'>('browse')
-  const [createTab, setCreateTab] = useState<'design' | 'clone'>('design')
+  const [createTab, setCreateTab] = useState<'design' | 'clone'>(provider === 'google' ? 'clone' : 'design')
   const [voices, setVoices] = useState<ElevenLabsVoice[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -532,36 +532,43 @@ export function VoiceSelectionDialog({
             <TabsContent value="create" className="flex-1 overflow-y-auto mt-4">
               <Tabs value={createTab} onValueChange={(v) => setCreateTab(v as 'design' | 'clone')} className="h-full">
                 <TabsList className="mb-3 h-8 bg-transparent border-b border-gray-700 rounded-none p-0 gap-6">
-                  <TabsTrigger 
-                    value="design" 
-                    className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-purple-500 bg-transparent rounded-none px-0 pb-2"
-                    style={{ fontSize: '13px', textTransform: 'none', letterSpacing: 'normal', minWidth: '120px' }}
-                  >
-                    <span className="inline-flex items-center gap-1.5"><Wand2 className="w-3 h-3 shrink-0" />AI Voice Design</span>
-                  </TabsTrigger>
+                  {provider === 'elevenlabs' && (
+                    <TabsTrigger 
+                      value="design" 
+                      className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-purple-500 bg-transparent rounded-none px-0 pb-2"
+                      style={{ fontSize: '13px', textTransform: 'none', letterSpacing: 'normal', minWidth: '120px' }}
+                    >
+                      <span className="inline-flex items-center gap-1.5"><Wand2 className="w-3 h-3 shrink-0" />AI Voice Design</span>
+                    </TabsTrigger>
+                  )}
                   <TabsTrigger 
                     value="clone" 
                     className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-purple-500 bg-transparent rounded-none px-0 pb-2"
                     style={{ fontSize: '13px', textTransform: 'none', letterSpacing: 'normal', minWidth: '100px' }}
                   >
-                    <span className="inline-flex items-center gap-1.5"><Mic className="w-3 h-3 shrink-0" />Clone Voice</span>
+                    <span className="inline-flex items-center gap-1.5"><Mic className="w-3 h-3 shrink-0" />{provider === 'google' ? 'Director Voice Clone' : 'Clone Voice'}</span>
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="design">
-                  <VoiceDesignPanel
-                    onVoiceCreated={handleVoiceCreated}
-                    characterContext={characterContext}
-                    screenplayContext={screenplayContext}
-                    onVoiceDescriptionGenerated={onVoiceDescriptionGenerated}
-                  />
-                </TabsContent>
+                {provider === 'elevenlabs' && (
+                  <TabsContent value="design">
+                    <VoiceDesignPanel
+                      onVoiceCreated={handleVoiceCreated}
+                      characterContext={characterContext}
+                      screenplayContext={screenplayContext}
+                      onVoiceDescriptionGenerated={onVoiceDescriptionGenerated}
+                    />
+                  </TabsContent>
+                )}
 
                 <TabsContent value="clone">
                   <VoiceClonePanel
                     onVoiceCreated={handleVoiceCreated}
                     characterName={characterContext?.name}
                     characterAudioSampleUrl={characterAudioSampleUrl}
+                    characterContext={characterContext}
+                    screenplayContext={screenplayContext}
+                    provider={provider}
                   />
                 </TabsContent>
               </Tabs>
@@ -683,9 +690,7 @@ interface BrowseVoiceContentProps {
   onToggleCustomOnly: () => void
   onToggleFavoritesOnly: () => void
   onToggleNarratorsOnly: () => void
-  onToggleNarratorsOnly: () => void
   onToggleFavorite: (voiceId: string, e: React.MouseEvent) => void
-  onToggleNarrator: (voiceId: string, e: React.MouseEvent) => void
   onToggleNarrator: (voiceId: string, e: React.MouseEvent) => void
   onPreview: (voice: ElevenLabsVoice) => void
   onSelect: (voiceId: string, voiceName: string) => void
