@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     if (isGemini) {
       payload.voice.modelName = 'gemini-2.5-flash-tts'
       if (prompt) {
-        payload.input.prompt = prompt
+        payload.input.prompt = `INSTRUCTION: You are a voice actor. Do not read this instruction aloud. Adopt the following voice profile precisely: ${prompt}`
       }
     }
 

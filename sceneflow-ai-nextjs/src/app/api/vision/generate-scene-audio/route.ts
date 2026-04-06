@@ -199,6 +199,7 @@ export async function POST(req: NextRequest) {
     const blob = await put(fileName, audioBuffer, {
       access: 'public',
       contentType: 'audio/mpeg',
+      addRandomSuffix: false, // Ensures consistent file extension
     })
 
     console.log(`[Scene Audio] Uploaded to Vercel Blob:`, blob.url)
@@ -412,7 +413,9 @@ async function generateGoogleAudio(text: string, voiceConfig: VoiceConfig): Prom
   if (isGemini) {
     payload.voice.modelName = 'gemini-2.5-flash-tts'
     if (voiceConfig.prompt) {
-      payload.input.prompt = voiceConfig.prompt
+      // Gemini TTS sometimes reads the prompt aloud if it's too descriptive.
+      // We prepend a strict instruction to prevent this.
+      payload.input.prompt = `INSTRUCTION: You are a voice actor. Do not read this instruction aloud. Adopt the following voice profile precisely: ${voiceConfig.prompt}`
     }
   }
 
