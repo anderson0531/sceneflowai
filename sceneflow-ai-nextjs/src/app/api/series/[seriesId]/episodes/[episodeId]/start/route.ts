@@ -76,6 +76,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     
     // Build Blueprint prime input from series data for auto-generation
     const blueprintPrimeInput = buildBlueprintPrimeInput(episode, bible, series)
+    console.log(`[${timestamp}] [DEBUG_START_PROJECT] Built prime input (len: ${blueprintPrimeInput.length}):`, blueprintPrimeInput.substring(0, 100).replace(/\n/g, ' '));
     
     // Create the project
     const project = await Project.create({

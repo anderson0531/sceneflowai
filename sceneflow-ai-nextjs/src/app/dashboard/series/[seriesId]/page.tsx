@@ -259,14 +259,19 @@ export default function SeriesStudioPage() {
 
   const handleStartEpisode = async (episodeId: string) => {
     try {
+      console.log(`[DEBUG_START_PROJECT] Initiating startEpisode for: ${episodeId}`);
+      toast.loading('Initializing episode project...', { id: 'start-ep' });
       const result = await startEpisode(episodeId)
-      toast.success(`Started Episode ${result.episode.episodeNumber}`)
+      console.log(`[DEBUG_START_PROJECT] Success. Project ID: ${result.project.id}`);
+      toast.success(`Started Episode ${result.episode.episodeNumber}`, { id: 'start-ep' })
       
       // Force a hard navigation to completely bypass Next.js App Router hydration delays
       // This ensures window.location.search is accurate when the Studio mounts and runs load()
+      console.log(`[DEBUG_START_PROJECT] Navigating to: /dashboard/studio/${result.project.id}?primeBlueprint=true`);
       window.location.href = `/dashboard/studio/${result.project.id}?primeBlueprint=true`
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to start episode')
+      console.error(`[DEBUG_START_PROJECT] Error starting episode:`, err);
+      toast.error(err instanceof Error ? err.message : 'Failed to start episode', { id: 'start-ep' })
     }
   }
 

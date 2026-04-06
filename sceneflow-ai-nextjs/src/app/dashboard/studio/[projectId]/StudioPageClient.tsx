@@ -725,6 +725,21 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           const isPrimeBlueprint = urlParams.get('primeBlueprint') === 'true'
           const hasBlueprintPrimeInput = metadata.blueprintPrimeInput && !hasFilmTreatmentVariant && !hasTreatmentVariants
 
+          console.log('[DEBUG_START_PROJECT] Evaluate conditions:', {
+            urlSearch: window.location.search,
+            isPrimeBlueprint,
+            hasBlueprintPrimeInput,
+            blueprintPrimeInputLength: metadata.blueprintPrimeInput?.length || 0,
+            hasFilmTreatmentVariant,
+            hasTreatmentVariants,
+            hasFilmTreatment: !!metadata.filmTreatment,
+            metadataKeys: Object.keys(metadata)
+          });
+          
+          import('sonner').then(({ toast }) => {
+            toast.info(`[Debug] primeBlueprint=${isPrimeBlueprint}, hasInput=${!!metadata.blueprintPrimeInput}, variants=${hasTreatmentVariants}`, { duration: 10000 });
+          });
+
           if (isPrimeBlueprint && hasBlueprintPrimeInput) {
             console.log('[StudioPage] Series episode detected - auto-generating Blueprint directly from load()')
             
@@ -732,6 +747,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             router.replace(`/dashboard/studio/${projectId}`, { scroll: false })
             
             setTimeout(() => {
+              console.log('[DEBUG_START_PROJECT] Executing handleGenerateBlueprint()');
+              import('sonner').then(({ toast }) => toast.info('Auto-generating blueprint now...'));
+              
               handleGenerateBlueprint(metadata.blueprintPrimeInput, {
                 genre: metadata.genre || projectData.genre || 'Drama',
                 tone: metadata.tone || projectData.tone || 'Cinematic',
@@ -744,6 +762,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 import('sonner').then(({ toast }) => toast.error('Failed to generate Blueprint automatically.'))
               })
             }, 800) // Slightly longer timeout to let React completely finish mounting state
+          } else if (isPrimeBlueprint) {
+            console.log('[DEBUG_START_PROJECT] Skipping generation. Reason:', !hasBlueprintPrimeInput ? 'Missing prime input or already has variants' : 'Unknown');
+            import('sonner').then(({ toast }) => toast.warning('Skipping auto-gen: Variants exist or missing input. Check console.', { duration: 10000 }));
           }
         }
       } catch (err) {
