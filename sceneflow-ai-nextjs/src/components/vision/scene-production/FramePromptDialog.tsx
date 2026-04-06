@@ -240,9 +240,15 @@ export function FramePromptDialog({
   // State - Initialize customPrompt from segment data immediately to prevent race conditions
   const initialPrompt = useMemo(() => {
     if (!segment) return ''
-    if (frameType === 'start' && segment.startFramePrompt) return segment.startFramePrompt
-    if (frameType === 'end' && segment.endFramePrompt) return segment.endFramePrompt
-    if (frameType === 'both' && segment.startFramePrompt) return segment.startFramePrompt
+    if (frameType === 'start') {
+      return segment.startFramePrompt || segment.references?.startFrameDescription || segment.userEditedPrompt || segment.generatedPrompt || ''
+    }
+    if (frameType === 'end') {
+      return segment.endFramePrompt || segment.references?.endFrameDescription || segment.userEditedPrompt || segment.generatedPrompt || ''
+    }
+    if (frameType === 'both') {
+      return segment.startFramePrompt || segment.references?.startFrameDescription || segment.userEditedPrompt || segment.generatedPrompt || ''
+    }
     return segment.userEditedPrompt || segment.generatedPrompt || segment.actionPrompt || ''
   }, [segment, frameType])
   
@@ -303,12 +309,12 @@ export function FramePromptDialog({
     
     // Reset customPrompt to segment's prompt when dialog opens
     let basePrompt = ''
-    if (frameType === 'start' && segment.startFramePrompt) {
-      basePrompt = segment.startFramePrompt
-    } else if (frameType === 'end' && segment.endFramePrompt) {
-      basePrompt = segment.endFramePrompt
-    } else if (frameType === 'both' && segment.startFramePrompt) {
-      basePrompt = segment.startFramePrompt
+    if (frameType === 'start') {
+      basePrompt = segment.startFramePrompt || segment.references?.startFrameDescription || segment.userEditedPrompt || segment.generatedPrompt || ''
+    } else if (frameType === 'end') {
+      basePrompt = segment.endFramePrompt || segment.references?.endFrameDescription || segment.userEditedPrompt || segment.generatedPrompt || ''
+    } else if (frameType === 'both') {
+      basePrompt = segment.startFramePrompt || segment.references?.startFrameDescription || segment.userEditedPrompt || segment.generatedPrompt || ''
     } else {
       basePrompt = segment.userEditedPrompt || segment.generatedPrompt || segment.actionPrompt || ''
     }
@@ -799,6 +805,18 @@ export function FramePromptDialog({
 
   const transitionType = segment.transitionType || 'CUT'
   const canUsePreviousFrame = !!previousEndFrameUrl && (frameType === 'start' || frameType === 'both')
+
+  const isGenerateDisabled = useMemo(() => {
+    if (isGenerating) return true
+    if (usePreviousEndFrame && frameType === 'start') return false
+    
+    // In guided mode, there is always some default setup structure (from characters, location, action),
+    // so we don't block on customPrompt being empty.
+    if (mode === 'guided') return false
+    
+    // In advanced mode, the custom prompt must have content
+    return !customPrompt.trim()
+  }, [isGenerating, usePreviousEndFrame, frameType, mode, customPrompt])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1442,8 +1460,8 @@ export function FramePromptDialog({
           </Button>
           <Button
             onClick={handleGenerate}
-            disabled={isGenerating || (!customPrompt.trim() && !usePreviousEndFrame)}
-            className="gap-2"
+            disabled={isGenerateDisabled}
+            className={cn("gap-2", isGenerateDisabled ? "opacity-50 cursor-not-allowed" : "")}
           >
             <Wand2 className="w-4 h-4" />
             {isGenerating ? 'Generating...' : `Generate ${frameType === 'both' ? 'Frames' : 'Frame'}`}
