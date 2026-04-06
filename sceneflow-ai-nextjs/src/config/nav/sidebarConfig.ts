@@ -139,7 +139,7 @@ export const blueprintSidebarConfig: WorkflowSidebarConfig = {
     progress: true,
     quickActions: true,
     reviewScores: false,
-    screeningRoom: false,
+    screeningRoom: false, // Hidden in blueprint phase
     projectStats: false,
     credits: true,
   },
@@ -187,7 +187,7 @@ export const productionSidebarConfig: WorkflowSidebarConfig = {
     progress: true,
     quickActions: true,
     reviewScores: true,
-    screeningRoom: true,
+    screeningRoom: false, // Hidden in production phase
     projectStats: true,
     credits: true,
   },
@@ -198,7 +198,7 @@ export const productionSidebarConfig: WorkflowSidebarConfig = {
     progress: false,
     quickActions: true,
     reviewScores: true,
-    screeningRoom: true,
+    screeningRoom: false,
     projectStats: false,
     credits: true,
   },
