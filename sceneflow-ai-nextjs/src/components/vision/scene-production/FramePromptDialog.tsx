@@ -617,7 +617,7 @@ export function FramePromptDialog({
       const contentForEnd = (frameType === 'end' || frameType === 'both') ? {
         dialogueLines: segment.dialogueLines
           ?.filter(d => d.covered !== false)
-          ?.map(d => ({ character: d.character || 'Unknown', text: d.text || '', emotion: d.emotion })),
+          ?.map(d => ({ character: d.character || 'Unknown', text: d.line || '' })),
         cameraMovement: segDir?.cameraMovement || segment.cameraMovement || undefined,
         talentAction: segDir?.talentAction || undefined,
         emotionalArc: segDir?.emotionalBeat 
