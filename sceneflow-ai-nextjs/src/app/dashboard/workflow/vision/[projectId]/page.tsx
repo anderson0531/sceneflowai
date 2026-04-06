@@ -786,7 +786,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       scenesWithImages,
       scenesWithAudio,
       isAudioReady: voicesAssigned === speakingCharacters.length && speakingCharacters.length >= 0,
-      hasNarrationVoice: !!characters.find(c => c.type === 'narrator')?.voiceConfig
+      hasNarrationVoice: Array.isArray(characters) && !!characters.find(c => c.type === 'narrator')?.voiceConfig
     }
   }, [characters, script])
 
@@ -5476,7 +5476,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const sidebarProjectStats = useMemo(() => {
     const scriptScenes = normalizeScenes(script)
     const sceneCount = scriptScenes.length
-    const castCount = characters.length
+    const castCount = Array.isArray(characters) ? characters.length : 0
     const durationMinutes = Math.round(scriptScenes.reduce((sum: number, s: any) => sum + (s.estimatedDuration || s.duration || 15), 0) / 60)
     const imageCredits = sceneCount * 5
     const charCredits = castCount * 2
@@ -5484,7 +5484,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const estimatedCredits = imageCredits + charCredits + audioCredits
     
     return { sceneCount, castCount, durationMinutes, estimatedCredits }
-  }, [script, characters.length])
+  }, [script, characters])
   
   const sidebarProgressData = useMemo(() => {
     const scriptScenes = normalizeScenes(script)
