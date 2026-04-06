@@ -336,11 +336,12 @@ async function generateFullSeriesStoryline(
     personaInstruction = 'You are an expert curriculum designer and educational video producer.'
     mappingInstruction = `
 CRITICAL SCHEMA MAPPING FOR EDUCATIONAL CONTENT:
+- Ensure the curriculum is highly structured, logical, and builds comprehensively on prior knowledge (e.g., for technical certifications or fitness programs).
 - "protagonist": Use this for the Host, Lead Instructor, or Guide.
-- "antagonistConflict": Use this for the core learning challenge, common misconceptions, or the problem the viewer is trying to solve.
-- "storyThreads": Use this for core learning objectives or recurring themes across the course.
-- "episodes": These are individual lessons or course modules.
-- episode "beats": These are lesson segments (e.g., Intro/Hook, Core Concept/Exercise, Review/Conclusion).
+- "antagonistConflict": Use this for the core learning challenge, common misconceptions, or the complex problem the viewer must solve.
+- "storyThreads": Use this for core learning objectives or recurring themes across the entire course.
+- "episodes": These are individual lessons or training modules, sequenced intelligently from foundational to advanced.
+- episode "beats": These are lesson segments (e.g., Intro/Hook, Core Concept Breakdown, Practical Exercise/Demo, Review/Conclusion).
 - "episodeHook": Use this to preview the next lesson and build anticipation.
 `
   } else if (format === 'podcast') {
@@ -364,6 +365,39 @@ CRITICAL SCHEMA MAPPING FOR DOCUMENTARY CONTENT:
 - "storyThreads": Use this for different angles of the investigation or historical timelines.
 - "episodes": These are documentary parts/installments.
 - episode "beats": These are narrative segments (e.g., Establishing the Mystery, Presenting Evidence, Resolution/Impact).
+`
+  } else if (format === 'demo') {
+    personaInstruction = 'You are an expert product marketer and technical evangelist.'
+    mappingInstruction = `
+CRITICAL SCHEMA MAPPING FOR DEMO / WALKTHROUGH CONTENT:
+- "protagonist": Use this for the Presenter or Product Specialist.
+- "characters": Use this for user personas or specific use-cases being demonstrated.
+- "antagonistConflict": Use this for the customer pain points, inefficiencies, or technical hurdles the product solves.
+- "storyThreads": Use this for overarching value propositions or key product pillars.
+- "episodes": These are specific feature demonstrations or workflow walkthroughs.
+- episode "beats": These are demonstration segments (e.g., Identifying the Problem, Showing the Feature/Solution, Emphasizing the Value/Benefit).
+`
+  } else if (format === 'sales') {
+    personaInstruction = 'You are an expert sales director and persuasive storyteller.'
+    mappingInstruction = `
+CRITICAL SCHEMA MAPPING FOR SALES CONTENT:
+- "protagonist": Use this for the Sales Lead, Agent, or Brand Ambassador.
+- "characters": Use this for the target customer profiles or stakeholders.
+- "antagonistConflict": Use this for the competitive alternatives, market challenges, or the cost of inaction.
+- "storyThreads": Use this for recurring sales arguments, core benefits, or ROI considerations.
+- "episodes": These are stages of the pitch, property tours, or specific value propositions.
+- episode "beats": These are pitch segments (e.g., Hook/Pain Resonance, Value Presentation, Handling Objections, Call to Action).
+`
+  } else if (format === 'news') {
+    personaInstruction = 'You are an expert investigative journalist and news producer.'
+    mappingInstruction = `
+CRITICAL SCHEMA MAPPING FOR NEWS CONTENT:
+- "protagonist": Use this for the Lead Anchor or Investigative Reporter.
+- "characters": Use this for key sources, experts, or public figures involved in the story.
+- "antagonistConflict": Use this for the core controversy, societal issue, or unfolding crisis.
+- "storyThreads": Use this for different perspectives, ongoing developments, or historical context.
+- "episodes": These are news segments, special reports, or chronological updates.
+- episode "beats": These are reporting segments (e.g., Breaking the Headline, Field Reporting/Interviews, Expert Analysis/Context).
 `
   } else {
     mappingInstruction = `
@@ -596,6 +630,9 @@ async function regenerateSpecificField(
   if (format === 'educational') persona = 'You are an expert curriculum designer and educational video producer.'
   else if (format === 'podcast') persona = 'You are an expert podcast producer and showrunner.'
   else if (format === 'documentary') persona = 'You are an expert documentary filmmaker and docuseries producer.'
+  else if (format === 'demo') persona = 'You are an expert product marketer and technical evangelist.'
+  else if (format === 'sales') persona = 'You are an expert sales director and persuasive storyteller.'
+  else if (format === 'news') persona = 'You are an expert investigative journalist and news producer.'
 
   // Limit episode generation to batches of 5 to avoid token limits
   const episodeBatchSize = Math.min(options.targetEpisodeCount, 5)

@@ -57,7 +57,7 @@ import { GeminiVoicePicker, GEMINI_VOICES } from '@/components/tts/GeminiVoicePi
 import { useSeriesStudio } from '@/hooks/useSeries'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useSession } from 'next-auth/react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { DEFAULT_MAX_EPISODES, ABSOLUTE_MAX_EPISODES, SeriesResonanceAnalysis } from '@/types/series'
@@ -99,6 +99,7 @@ const STORYLINE_INSTRUCTION_TEMPLATES = [
 
 export default function SeriesStudioPage() {
   const params = useParams()
+  const searchParams = useSearchParams()
   const seriesId = params?.seriesId as string
   const { data: session } = useSession()
   const userId = session?.user?.id || null
@@ -170,8 +171,35 @@ export default function SeriesStudioPage() {
 
     const hasContent = !!(series.productionBible?.synopsis || series.productionBible?.logline)
     
+    // Check if we need to auto-generate from the new dashboard flow
+    const isAutoGenerate = searchParams?.get('autoGenerate') === 'true'
+    
+    if (isAutoGenerate) {
+      const meta = series.metadata as any
+      if (meta && meta.ideaTopic) {
+        // Clear param immediately
+        router.replace(`/dashboard/series/${series.id}`, { scroll: false })
+        
+        // Populate state from metadata
+        setIdeaTopic(meta.ideaTopic)
+        setFormat(meta.format || 'narrative')
+        setEpisodeCount(meta.episodeCount || 10)
+        setGenre(meta.genre || 'any')
+        setTone(meta.tone || 'any')
+        
+        setHasAutoOpened(true)
+        
+        // Wait slightly for react state and then trigger generation
+        setTimeout(() => {
+          import('sonner').then(({ toast }) => toast.info('Auto-generating series storyline...'))
+          handleAutoGenerate(meta)
+        }, 500)
+        return
+      }
+    }
+    
     // Only auto-open for brand new series without a generated storyline
-    if (!hasContent) {
+    if (!hasContent && !isAutoGenerate) {
       const meta = series.metadata as Record<string, unknown> | undefined
       const seed = typeof meta?.ideaTopic === 'string' ? meta.ideaTopic : ''
       const fromMarket = meta?.source === 'market_insights'
@@ -186,7 +214,38 @@ export default function SeriesStudioPage() {
       setIsIdeateDialogOpen(true)
       setHasAutoOpened(true)
     }
-  }, [series, hasAutoOpened])
+  }, [series, hasAutoOpened, searchParams, router])
+
+  const handleAutoGenerate = async (meta: any) => {
+    try {
+      const result = await executeWithOverlay(async () => {
+        return await generateStoryline({
+          topic: meta.ideaTopic,
+          episodeCount: meta.episodeCount || 10,
+          genre: meta.genre === 'any' ? undefined : meta.genre,
+          tone: meta.tone === 'any' ? undefined : meta.tone,
+          format: meta.format === 'narrative' ? undefined : meta.format
+        })
+      }, {
+        message: `Generating ${meta.episodeCount || 10} episode storyline...`,
+        estimatedDuration: (meta.episodeCount || 10) * 3 + 15,
+        operationType: 'series-generation'
+      })
+
+      const gen = result?.generated as any
+      const epCount = gen?.episodeCount ?? result?.series?.episodeBlueprints?.length ?? 0
+      const base = epCount > 0 ? `Generated ${epCount} episode${epCount !== 1 ? 's' : ''}!` : 'Storyline updated.'
+      toast.success(
+        gen?.wasCapped && typeof gen.requestedEpisodeCount === 'number'
+          ? `${base} (${gen.requestedEpisodeCount} requested — use “Add episodes” to reach your full season.)`
+          : base
+      )
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to generate storyline')
+      // Open dialog if it fails so user can retry
+      setIsIdeateDialogOpen(true)
+    }
+  }
 
   const handleIdeateDialogOpenChange = useCallback((open: boolean) => {
     setIsIdeateDialogOpen(open)
@@ -875,6 +934,9 @@ export default function SeriesStudioPage() {
                   <SelectItem value="educational">Educational/Instructional</SelectItem>
                   <SelectItem value="podcast">Podcast</SelectItem>
                   <SelectItem value="documentary">Documentary</SelectItem>
+                  <SelectItem value="demo">Product Demo</SelectItem>
+                  <SelectItem value="sales">Sales / Walkthrough</SelectItem>
+                  <SelectItem value="news">News / Current Events</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -186,7 +186,7 @@ function autoDetectFilmStructure(
   
   // Check for instructional/educational content
   const instructionalPatterns = /\b(tutorial|how-to|guide|lesson|learn|teach|step-by-step|instructions|training|course|module|explain|explainer|walkthrough|demonstration)\b/i
-  if (instructionalPatterns.test(content) || format === 'education' || format === 'training') {
+  if (instructionalPatterns.test(content) || format === 'education' || format === 'educational' || format === 'training') {
     return {
       structure: 'instructional',
       confidence: 0.9,
@@ -194,13 +194,33 @@ function autoDetectFilmStructure(
     }
   }
   
+  // Check for sales/demo content
+  const salesDemoPatterns = /\b(demo|product|sales|pitch|walkthrough|tour|feature|benefit|roi|conversion|prospect|lead)\b/i
+  if (salesDemoPatterns.test(content) || format === 'demo' || format === 'sales') {
+    return {
+      structure: 'instructional', // Sales/demo fits well with instructional structure
+      confidence: 0.85,
+      reason: 'Content suits sales/demo format'
+    }
+  }
+
+  // Check for news/reporting content
+  const newsPatterns = /\b(news|report|breaking|investigate|coverage|headline|anchor|correspondent|journalism|update)\b/i
+  if (newsPatterns.test(content) || format === 'news') {
+    return {
+      structure: 'mini_doc', // News fits well with documentary structure
+      confidence: 0.85,
+      reason: 'Content suits news/reporting format'
+    }
+  }
+
   // Check for documentary/mini-doc style
-  const documentaryPatterns = /\b(documentary|real|authentic|behind-the-scenes|journey|explore|discover|reveal|interview|profile|portrait|day-in-the-life|story of|true story)\b/i
-  if (documentaryPatterns.test(content) || format === 'documentary') {
+  const documentaryPatterns = /\b(documentary|real|authentic|behind-the-scenes|journey|explore|discover|reveal|interview|profile|portrait|day-in-the-life|story of|true story|podcast)\b/i
+  if (documentaryPatterns.test(content) || format === 'documentary' || format === 'podcast') {
     return {
       structure: 'mini_doc',
       confidence: 0.85,
-      reason: 'Content suits documentary/mini-doc format'
+      reason: 'Content suits documentary/podcast/mini-doc format'
     }
   }
   

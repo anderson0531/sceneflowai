@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -66,7 +67,11 @@ export default function SeriesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [newSeriesTitle, setNewSeriesTitle] = useState('')
+  const [ideaTopic, setIdeaTopic] = useState('')
+  const [format, setFormat] = useState('narrative')
+  const [episodeCount, setEpisodeCount] = useState(10)
+  const [genre, setGenre] = useState('any')
+  const [tone, setTone] = useState('any')
   const [isCreating, setIsCreating] = useState(false)
   
   // Filter series by search and status
@@ -79,21 +84,36 @@ export default function SeriesPage() {
   })
 
   const handleCreateSeries = async () => {
-    if (!newSeriesTitle.trim() || !userId) return
+    if (!ideaTopic.trim() || !userId) return
     
     setIsCreating(true)
     try {
+      // Auto-generate a working title from the concept
+      const words = ideaTopic.trim().split(/\s+/)
+      const workingTitle = words.slice(0, 5).join(' ') + (words.length > 5 ? '...' : '')
+      
       const newSeries = await createSeries({
         userId,
-        title: newSeriesTitle.trim()
+        title: workingTitle || 'Untitled Series',
+        metadata: {
+          ideaTopic,
+          format,
+          genre: genre === 'any' ? undefined : genre,
+          tone: tone === 'any' ? undefined : tone,
+          episodeCount
+        }
       })
       
-      toast.success('Series created! Opening the studio...')
+      toast.success('Series created! Generating storyline...')
       setIsCreateDialogOpen(false)
-      setNewSeriesTitle('')
+      setIdeaTopic('')
+      setFormat('narrative')
+      setEpisodeCount(10)
+      setGenre('any')
+      setTone('any')
       
-      // Navigate to series studio for ideation
-      router.push(`/dashboard/series/${newSeries.id}`)
+      // Navigate to series studio for ideation with autoGenerate flag
+      router.push(`/dashboard/series/${newSeries.id}?autoGenerate=true`)
     } catch (err) {
       toast.error('Failed to create series')
     } finally {
@@ -373,31 +393,106 @@ export default function SeriesPage() {
 
       {/* Create Series Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-md">
+        <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-xl">
           <DialogHeader>
             <DialogTitle className="text-xl">Create New Series</DialogTitle>
             <DialogDescription className="text-gray-400">
-              Give your series a working title. You can use AI to generate the full storyline in the studio.
+              Describe your series concept and AI will generate the complete storyline with episodes.
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 pt-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Series Title
+                Topic / Concept <span className="text-cyan-400">*</span>
               </label>
-              <Input
-                placeholder="e.g., The Adventures of..."
-                value={newSeriesTitle}
-                onChange={(e) => setNewSeriesTitle(e.target.value)}
-                className="bg-gray-800 border-gray-700 text-white"
+              <Textarea
+                placeholder="e.g., A comedy about a group of friends who start a haunted house business but discover their house is actually haunted..."
+                value={ideaTopic}
+                onChange={(e) => setIdeaTopic(e.target.value)}
+                className="bg-gray-800 border-gray-700 text-white min-h-24 focus:border-cyan-500/50 focus:ring-cyan-500/20"
                 autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && newSeriesTitle.trim()) {
-                    handleCreateSeries()
-                  }
-                }}
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Production Format
+              </label>
+              <Select value={format} onValueChange={setFormat}>
+                <SelectTrigger className="bg-gray-800 border-gray-700 focus:border-cyan-500/50">
+                  <SelectValue placeholder="Select format" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700">
+                  <SelectItem value="narrative">Narrative Series (Default)</SelectItem>
+                  <SelectItem value="educational">Educational/Instructional</SelectItem>
+                  <SelectItem value="podcast">Podcast</SelectItem>
+                  <SelectItem value="documentary">Documentary</SelectItem>
+                  <SelectItem value="demo">Product Demo</SelectItem>
+                  <SelectItem value="sales">Sales / Walkthrough</SelectItem>
+                  <SelectItem value="news">News / Current Events</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Number of Episodes
+                </label>
+                <Select value={String(episodeCount)} onValueChange={(v) => setEpisodeCount(Number(v))}>
+                  <SelectTrigger className="bg-gray-800 border-gray-700 focus:border-cyan-500/50">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-gray-700">
+                    {[5, 8, 10, 12, 15, 20].map((n) => (
+                      <SelectItem key={n} value={String(n)}>{n} episodes</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Genre <span className="text-gray-500 text-xs">(optional)</span>
+                </label>
+                <Select value={genre} onValueChange={setGenre}>
+                  <SelectTrigger className="bg-gray-800 border-gray-700 focus:border-cyan-500/50">
+                    <SelectValue placeholder="Select genre" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-gray-700">
+                    <SelectItem value="any">Any</SelectItem>
+                    <SelectItem value="comedy">Comedy</SelectItem>
+                    <SelectItem value="drama">Drama</SelectItem>
+                    <SelectItem value="thriller">Thriller</SelectItem>
+                    <SelectItem value="sci-fi">Sci-Fi</SelectItem>
+                    <SelectItem value="fantasy">Fantasy</SelectItem>
+                    <SelectItem value="horror">Horror</SelectItem>
+                    <SelectItem value="documentary">Documentary</SelectItem>
+                    <SelectItem value="educational">Educational</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Tone <span className="text-gray-500 text-xs">(optional)</span>
+              </label>
+              <Select value={tone} onValueChange={setTone}>
+                <SelectTrigger className="bg-gray-800 border-gray-700 focus:border-cyan-500/50">
+                  <SelectValue placeholder="Select tone" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700">
+                  <SelectItem value="any">Any</SelectItem>
+                  <SelectItem value="dark">Dark & Gritty</SelectItem>
+                  <SelectItem value="lighthearted">Lighthearted</SelectItem>
+                  <SelectItem value="suspenseful">Suspenseful</SelectItem>
+                  <SelectItem value="dramatic">Dramatic</SelectItem>
+                  <SelectItem value="satirical">Satirical</SelectItem>
+                  <SelectItem value="inspirational">Inspirational</SelectItem>
+                  <SelectItem value="professional">Professional / Informative</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="flex items-center gap-3 pt-2">
@@ -410,11 +505,11 @@ export default function SeriesPage() {
               </Button>
               <Button
                 onClick={handleCreateSeries}
-                disabled={!newSeriesTitle.trim() || isCreating}
+                disabled={!ideaTopic.trim() || isCreating}
                 className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700"
               >
-                {isCreating ? 'Creating...' : 'Create & Open Studio'}
-                <ArrowRight className="w-4 h-4 ml-2" />
+                {isCreating ? 'Generating...' : 'Generate Storyline'}
+                <Sparkles className="w-4 h-4 ml-2" />
               </Button>
             </div>
           </div>

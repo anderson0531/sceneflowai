@@ -150,7 +150,8 @@ export async function POST(request: NextRequest) {
       targetAudience,
       maxEpisodes,
       productionBible,
-      episodeBlueprints
+      episodeBlueprints,
+      metadata
     } = body || {}
     
     if (!title || typeof title !== 'string') {
@@ -222,7 +223,7 @@ export async function POST(request: NextRequest) {
       max_episodes: validatedMaxEpisodes,
       production_bible: initialBible,
       episode_blueprints: episodeBlueprints || [],
-      metadata: {}
+      metadata: metadata || {}
     })
     
     console.log(`[${timestamp}] [POST /api/series] Created series:`, series.id)
