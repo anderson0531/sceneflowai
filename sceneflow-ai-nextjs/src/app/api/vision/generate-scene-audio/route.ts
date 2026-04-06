@@ -373,8 +373,10 @@ async function generateGoogleAudio(text: string, voiceConfig: VoiceConfig): Prom
   if (!apiKey) throw new Error('Google API key not configured')
 
   const isGemini = voiceConfig.voiceId.startsWith('gemini-')
+  const isCustomClone = !isGemini && !voiceConfig.voiceId.includes('-') && voiceConfig.voiceId.length > 20
+  
   const actualVoiceName = isGemini ? voiceConfig.voiceId.replace('gemini-', '') : voiceConfig.voiceId
-  const languageCode = actualVoiceName.split('-').length >= 2 && !isGemini 
+  const languageCode = actualVoiceName.split('-').length >= 2 && !isGemini && !isCustomClone
     ? actualVoiceName.split('-').slice(0, 2).join('-') 
     : (voiceConfig.languageCode || 'en-US')
 
@@ -382,11 +384,18 @@ async function generateGoogleAudio(text: string, voiceConfig: VoiceConfig): Prom
     input: { text },
     voice: {
       languageCode,
-      name: actualVoiceName,
     },
     audioConfig: {
       audioEncoding: 'MP3',
     },
+  }
+
+  if (isCustomClone) {
+    payload.voice.voiceClone = {
+      voiceCloningKey: actualVoiceName
+    }
+  } else {
+    payload.voice.name = actualVoiceName
   }
 
   if (isGemini) {
@@ -396,8 +405,11 @@ async function generateGoogleAudio(text: string, voiceConfig: VoiceConfig): Prom
     }
   }
 
+  // Use v1beta1 for Gemini TTS and Voice Cloning
+  const apiVersion = (isGemini || isCustomClone) ? 'v1beta1' : 'v1'
+
   const response = await fetch(
-    `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
+    `https://texttospeech.googleapis.com/${apiVersion}/text:synthesize?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -406,7 +418,9 @@ async function generateGoogleAudio(text: string, voiceConfig: VoiceConfig): Prom
   )
 
   if (!response.ok) {
-    throw new Error(`Google TTS API error: ${response.status}`)
+    const errorText = await response.text()
+    console.error(`[Google TTS] API error (${response.status}):`, errorText)
+    throw new Error(`Google TTS API error: ${response.status} - ${errorText}`)
   }
 
   const data = await response.json()
