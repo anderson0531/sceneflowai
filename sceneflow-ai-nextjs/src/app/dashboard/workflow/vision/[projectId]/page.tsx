@@ -763,7 +763,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Calculate production readiness for workflow guards
   const productionReadiness = useMemo(() => {
-    const speakingCharacters = characters.filter(c => c.type !== 'narrator')
+    const speakingCharacters = Array.isArray(characters) ? characters.filter(c => c.type !== 'narrator') : []
     const voicesAssigned = speakingCharacters.filter(c => c.voiceConfig).length
     const charactersMissingVoices = speakingCharacters
       .filter(c => !c.voiceConfig)
@@ -7283,6 +7283,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Helper function to find potential duplicate characters
   const findPotentialDuplicates = (characters: any[]): any[][] => {
+    if (!Array.isArray(characters)) return []
     const groups = new Map<string, any[]>()
     
     characters.forEach(char => {
@@ -8486,7 +8487,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
 
     // Check if all characters have voices (exclude narrator)
-    const charactersWithoutVoice = characters.filter(c => c.type !== 'narrator' && !c.voiceConfig)
+    const charactersWithoutVoice = Array.isArray(characters) ? characters.filter(c => c.type !== 'narrator' && !c.voiceConfig) : []
     if (charactersWithoutVoice.length > 0) {
       console.warn('[Generate All Audio] Characters without voices:', charactersWithoutVoice.map(c => c.name))                                                  
       try { 
