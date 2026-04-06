@@ -261,7 +261,10 @@ export default function SeriesStudioPage() {
     try {
       const result = await startEpisode(episodeId)
       toast.success(`Started Episode ${result.episode.episodeNumber}`)
-      router.push(`/dashboard/studio/${result.project.id}?primeBlueprint=true`)
+      
+      // Force a hard navigation to completely bypass Next.js App Router hydration delays
+      // This ensures window.location.search is accurate when the Studio mounts and runs load()
+      window.location.href = `/dashboard/studio/${result.project.id}?primeBlueprint=true`
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to start episode')
     }
@@ -1709,7 +1712,7 @@ function EpisodesPanel({
                   </Button>
                 )}
                 {selectedEpisode.projectId && (
-                  <Link href={`/dashboard/workflow/vision/${selectedEpisode.projectId}`}>
+                  <Link href={`/dashboard/studio/${selectedEpisode.projectId}`}>
                     <Button className="bg-blue-600 hover:bg-blue-700">
                       Continue Project
                       <ChevronRight className="w-4 h-4 ml-1" />
