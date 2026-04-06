@@ -13,6 +13,9 @@
     "deploy:dol": "bash scripts/deploy-dol-production.sh"
   },
   "dependencies": {
+    "acorn": "^8.16.0",
+    "acorn-jsx": "^5.3.2",
+    "acorn-walk": "^8.3.5",
     "next": "^15.0.0"
   },
   "keywords": [

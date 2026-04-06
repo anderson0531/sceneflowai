@@ -826,11 +826,6 @@ export function FramePromptDialog({
     onGenerate(options)
   }, [segment, frameType, customPrompt, buildNegativePrompt, usePreviousEndFrame, previousEndFrameUrl, onGenerate, selectedCharacters, characters, selectedWardrobes, objectReferences, selectedObjectRefIds, locationReferences, selectedLocationRefIds, mode, visualSetup, artStyle, modelTier, thinkingLevel])
 
-  if (!segment) return null
-
-  const transitionType = segment.transitionType || 'CUT'
-  const canUsePreviousFrame = !!previousEndFrameUrl && (frameType === 'start' || frameType === 'both')
-
   const isGenerateDisabled = useMemo(() => {
     if (isGenerating) return true
     if (usePreviousEndFrame && frameType === 'start') return false
@@ -842,6 +837,11 @@ export function FramePromptDialog({
     // In advanced mode, the custom prompt must have content
     return !customPrompt.trim()
   }, [isGenerating, usePreviousEndFrame, frameType, mode, customPrompt])
+
+  if (!segment) return null
+
+  const transitionType = segment.transitionType || 'CUT'
+  const canUsePreviousFrame = !!previousEndFrameUrl && (frameType === 'start' || frameType === 'both')
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

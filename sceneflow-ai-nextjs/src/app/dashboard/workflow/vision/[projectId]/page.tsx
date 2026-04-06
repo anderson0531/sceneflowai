@@ -5457,7 +5457,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Compute sidebar data for the unified GlobalSidebar
   // Director review removed - user is the director. Only Audience Resonance is shown.
   const sidebarReviewScores = useMemo(() => {
-    if (!audienceReview?.overallScore) return null
     return {
       director: null, // Deprecated - user is the director
       audience: audienceReview?.overallScore ?? null
@@ -5466,11 +5465,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Compute audience review details for sidebar chart/demographic/emotional impact
   const sidebarAudienceReviewDetails = useMemo(() => {
-    if (!audienceReview?.categories) return null
     return {
-      categories: audienceReview.categories || [],
-      targetDemographic: audienceReview.targetDemographic,
-      emotionalImpact: audienceReview.emotionalImpact
+      categories: audienceReview?.categories || [],
+      targetDemographic: audienceReview?.targetDemographic,
+      emotionalImpact: audienceReview?.emotionalImpact
     }
   }, [audienceReview?.categories, audienceReview?.targetDemographic, audienceReview?.emotionalImpact])
   

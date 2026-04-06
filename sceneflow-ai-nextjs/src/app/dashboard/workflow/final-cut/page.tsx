@@ -114,14 +114,20 @@ const createDemoStream = (): FinalCutStream => {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     scenes: demoScenes,
-    totalDurationMs: 300000, // 5 minutes
-    transitions: [],
     status: 'draft',
-    exportSettings: {
+    settings: {
       resolution: '1080p',
       frameRate: 24,
-      codec: 'h264'
-    }
+      aspectRatio: '16:9',
+      audioMixProfile: 'cinematic',
+      masterVolume: 100,
+      colorGrade: 'natural',
+      upscalingEnabled: false,
+      upscalingProvider: 'none',
+      watermarkEnabled: false,
+      watermarkPosition: 'bottom-right'
+    },
+    exports: []
   }
 }
 
@@ -204,7 +210,7 @@ export default function FinalCutPage() {
       
       try {
         // Check if project has existing Final Cut streams
-        const existingStreams = currentProject.metadata?.finalCutStreams as FinalCutStream[] | undefined
+        const existingStreams = (currentProject.metadata as any)?.finalCutStreams as FinalCutStream[] | undefined
         
         if (existingStreams && existingStreams.length > 0) {
           setStreams(existingStreams)
@@ -447,12 +453,12 @@ export default function FinalCutPage() {
     setIsSaving(true)
     try {
       // Save streams to project metadata
-      await updateProject({
+      await updateProject(currentProject.id, {
         ...currentProject,
         metadata: {
           ...currentProject.metadata,
           finalCutStreams: streams
-        }
+        } as any
       })
       
       toast.success('Final Cut saved')
@@ -469,10 +475,148 @@ export default function FinalCutPage() {
   }, [])
   
   const handleExportWithSettings = useCallback(async (settings: ExportSettings) => {
-    toast.info(`Export queued — ${settings.resolution} ${settings.codec.toUpperCase()} at ${settings.frameRate}fps. Cloud rendering will begin shortly.`)
+    if (!currentProject) return
+    const selectedStream = streams.find(s => s.id === selectedStreamId)
+    if (!selectedStream) return
+    
     setExportDialogOpen(false)
-    // TODO: Wire to Cloud Run render endpoint when available
-  }, [])
+    const toastId = toast.loading(`Starting Final Cut export (${settings.resolution} @ ${settings.frameRate}fps)...`)
+    
+    try {
+      const { LocalRenderService } = await import('@/lib/video/LocalRenderService')
+      const { upload } = await import('@vercel/blob/client')
+      
+      // Calculate total duration across all scenes
+      const totalDuration = selectedStream.scenes.reduce((max, scene) => 
+        Math.max(max, scene.endTime), 
+        0
+      )
+      
+      const configSegments: any[] = []
+      const configAudioClips: any[] = []
+      const configTextOverlays: any[] = []
+      
+      // Map Final Cut timeline into LocalRenderService config
+      for (const scene of selectedStream.scenes) {
+        for (const seg of scene.segments) {
+          if (!seg.assetUrl) continue
+          
+          // 1. Video/Image segment
+          configSegments.push({
+            segmentId: seg.id,
+            assetUrl: seg.assetUrl,
+            assetType: seg.assetType,
+            startTime: scene.startTime + (seg.startTime / 1000),
+            duration: seg.durationMs / 1000,
+            includeVideoAudio: true // Could be based on seg settings
+          })
+          
+          // 2. Audio tracks for the segment
+          if (seg.audioTracks) {
+            for (const track of seg.audioTracks) {
+              if (!track.sourceUrl) continue
+              configAudioClips.push({
+                url: track.sourceUrl,
+                startTime: scene.startTime + (seg.startTime / 1000) + (track.startOffset / 1000),
+                duration: track.duration / 1000,
+                volume: (track.volume ?? 100) / 100,
+                type: track.type
+              })
+            }
+          }
+          
+          // 3. Overlays for the segment
+          if (seg.overlays) {
+            for (const overlay of seg.overlays) {
+              if (overlay.type === 'text') {
+                configTextOverlays.push({
+                  id: overlay.id,
+                  text: overlay.content,
+                  position: { x: overlay.position.x, y: overlay.position.y, anchor: 'center' },
+                  style: {
+                    fontFamily: overlay.style.fontFamily || 'Inter',
+                    fontSize: overlay.style.fontSize || 36,
+                    fontWeight: 700,
+                    color: overlay.style.color || '#ffffff',
+                    textShadow: true
+                  },
+                  timing: {
+                    startTime: scene.startTime + (seg.startTime / 1000) + (overlay.startTime / 1000),
+                    duration: overlay.duration / 1000,
+                    fadeInMs: 200,
+                    fadeOutMs: 200
+                  }
+                })
+              }
+            }
+          }
+        }
+      }
+      
+      const config = {
+        segments: configSegments,
+        audioClips: configAudioClips,
+        textOverlays: configTextOverlays,
+        resolution: settings.resolution.includes('4K') || settings.resolution.includes('1080') ? '1080p' : '720p',
+        fps: settings.frameRate || 30,
+        totalDuration,
+      } as const
+      
+      const renderService = new LocalRenderService()
+      
+      const result = await renderService.render(config, (progress: any) => {
+        if (progress.phase === 'rendering' || progress.phase === 'encoding') {
+          toast.loading(`Rendering Final Cut: ${Math.round(progress.progress)}%`, { id: toastId })
+        }
+      })
+      
+      if (!result.success || !result.blobUrl || !result.blob) {
+        throw new Error(result.error || 'Unknown render error')
+      }
+      
+      toast.loading('Render complete! Uploading to secure cloud storage...', { id: toastId })
+      
+      // Upload to Blob storage
+      const filename = `final-cut-${currentProject.id}-${selectedStreamId}-${Date.now()}.webm`
+      const videoFile = new File([result.blob], filename, { type: result.mimeType || 'video/webm' })
+      
+      const uploadedBlob = await upload(
+        `renders/${filename}`,
+        videoFile,
+        {
+          access: 'public',
+          handleUploadUrl: '/api/segments/upload-video-url',
+        }
+      )
+      
+      // Revoke local object URL to free memory
+      LocalRenderService.revokeBlobUrl(result.blobUrl)
+      
+      // Update Project Metadata
+      const updatedMetadata = {
+        ...currentProject.metadata,
+        exportedVideoUrl: uploadedBlob.url
+      }
+      
+      await updateProject(currentProject.id, {
+        ...currentProject,
+        metadata: updatedMetadata
+      })
+      
+      toast.success('Final Cut exported successfully! Ready for Screening Room.', { 
+        id: toastId,
+        duration: 10000,
+        action: {
+          label: 'Open Screening Room',
+          onClick: () => window.open(`/screening-room`, '_blank')
+        }
+      })
+      
+    } catch (error) {
+      console.error('Final Cut Export Error:', error)
+      toast.error(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: toastId, duration: 8000 })
+    }
+  }, [currentProject, streams, selectedStreamId, updateProject])
   
   // ============================================================================
   // Calculate total duration
