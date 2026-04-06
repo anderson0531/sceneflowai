@@ -719,48 +719,6 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             // Use setTimeout to allow state to settle before generating
             setTimeout(() => generateHeroImage(loadedVariant), 500)
           }
-          
-          // Check for primeBlueprint query param - auto-generate Blueprint from series data
-          const primeBlueprint = searchParams.get('primeBlueprint')
-          
-          // We DO NOT block auto-generation if they only have a basic treatment framework
-          // (which is passed from the episode).
-          // We only block if they have actually generated variants (hasTreatmentVariants)
-          // or finalized a variant (hasFilmTreatmentVariant).
-          const hasBlueprintPrimeInput = metadata.blueprintPrimeInput && !hasFilmTreatmentVariant && !hasTreatmentVariants
-          
-          console.log('[StudioPage] PrimeBlueprint Check:', {
-            primeBlueprint,
-            hasBlueprintPrimeInput,
-            metadataHasPrimeInput: !!metadata.blueprintPrimeInput,
-            hasFilmTreatmentVariant: !!hasFilmTreatmentVariant,
-            hasTreatmentVariants: !!hasTreatmentVariants,
-            hasFilmTreatment: !!hasFilmTreatment
-          })
-          
-          if (primeBlueprint === 'true' && hasBlueprintPrimeInput) {
-            console.log('[StudioPage] Series episode detected - auto-generating Blueprint from series data...')
-            // Use setTimeout to allow state to settle before generating
-            setTimeout(async () => {
-              try {
-                await handleGenerateBlueprint(metadata.blueprintPrimeInput, {
-                  genre: metadata.genre || projectData.genre || 'Drama',
-                  tone: metadata.tone || projectData.tone || 'Cinematic', // Default tone to trigger optimizations
-                  targetAudience: metadata.targetAudience || 'General Audience', // Triggers optimizations
-                  variantCount: 1, // Single variant for series episodes - they have specific requirements
-                  hasStoryDirections: true, // Series data acts as story directions
-                  format: metadata.format || projectData?.metadata?.format || 'narrative'
-                })
-              } catch (err) {
-                console.error('[StudioPage] Auto-generation failed:', err)
-                const { toast } = await import('sonner')
-                toast.error('Failed to generate Blueprint automatically.')
-              } finally {
-                // Clear the query param to prevent re-generation on refresh
-                router.replace(`/dashboard/studio/${projectId}`, { scroll: false })
-              }
-            }, 500)
-          }
         }
       } catch (err) {
         console.error('[StudioPage] Failed to load project:', err)
@@ -840,6 +798,46 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       }
     }
   }, [projectId, lastInput, variantsLastModified, guide.title, guide.filmTreatment, treatmentVariants, beatsView, estimatedRuntime])
+
+  // Dedicated effect for handling auto-generation to prevent race conditions with load() and searchParams
+  useEffect(() => {
+    const primeBlueprint = searchParams.get('primeBlueprint')
+    const metadata = currentProject?.metadata || {}
+    
+    // We only block if they have actually generated variants (hasTreatmentVariants)
+    // or finalized a variant (hasFilmTreatmentVariant).
+    // An inherited framework DOES NOT block generation.
+    const hasTreatmentVariants = Array.isArray(metadata.treatmentVariants) && metadata.treatmentVariants.length > 0
+    const hasFilmTreatmentVariant = !!metadata.filmTreatmentVariant
+    
+    const hasBlueprintPrimeInput = metadata.blueprintPrimeInput && !hasFilmTreatmentVariant && !hasTreatmentVariants
+
+    // Check if we should auto-generate
+    if (primeBlueprint === 'true' && hasBlueprintPrimeInput && !isGen) {
+      console.log('[StudioPage] Series episode detected - auto-generating Blueprint from series data...')
+      
+      // Clear the query param IMMEDIATELY to prevent multiple triggers if component re-renders
+      router.replace(`/dashboard/studio/${projectId}`, { scroll: false })
+      
+      // Use a timeout to ensure state settles and UI renders before heavy generation
+      setTimeout(async () => {
+        try {
+          await handleGenerateBlueprint(metadata.blueprintPrimeInput, {
+            genre: metadata.genre || currentProject?.genre || 'Drama',
+            tone: metadata.tone || currentProject?.tone || 'Cinematic',
+            targetAudience: metadata.targetAudience || 'General Audience',
+            variantCount: 1, // Single variant for series episodes
+            hasStoryDirections: true, // Optimizes flow
+            format: metadata.format || currentProject?.metadata?.format || 'narrative'
+          })
+        } catch (err) {
+          console.error('[StudioPage] Auto-generation failed:', err)
+          const { toast } = await import('sonner')
+          toast.error('Failed to generate Blueprint automatically.')
+        }
+      }, 500)
+    }
+  }, [searchParams, currentProject?.metadata, currentProject?.genre, currentProject?.tone, isGen, projectId, router])
 
   useEffect(() => { console.debug('[StudioPage] outline autogen disabled; relying on OutlineV2') }, [guide?.filmTreatment, currentProject?.id])
 
