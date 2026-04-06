@@ -605,6 +605,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   // Wardrobe preview generation state
   const [generatingPreviewFor, setGeneratingPreviewFor] = useState<string | null>(null)
   const [isGeneratingAllPreviews, setIsGeneratingAllPreviews] = useState(false)
+  const [isGeneratingDirectorsNote, setIsGeneratingDirectorsNote] = useState(false)
   
   // Costume reference generation state (uses /api/image/edit to create character-in-outfit reference)
   const [generatingCostumeRefFor, setGeneratingCostumeRefFor] = useState<string | null>(null)
@@ -764,6 +765,44 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
       })))
       setWardrobeSuggestions([])
       toast.success(`Added ${wardrobeSuggestions.length} wardrobe(s) to collection`)
+    }
+  }
+
+  const handleGenerateDirectorsNote = async () => {
+    setIsGeneratingDirectorsNote(true)
+    try {
+      const response = await fetch('/api/tts/google/director-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          characterContext: {
+            name: character.name,
+            role: character.role,
+            description: character.description,
+            attributes: {
+              appearance: character.appearanceDescription || character.imagePrompt,
+              wardrobe: wardrobes[0]?.description
+            }
+          },
+          screenplayContext
+        }),
+      })
+
+      if (!response.ok) throw new Error('Failed to generate prompt')
+      const data = await response.json()
+      
+      if (data.script) {
+        onUpdateCharacterVoice?.(characterId, {
+          ...character.voiceConfig,
+          prompt: data.script
+        })
+        toast.success("Director's Note generated!")
+      }
+    } catch (error) {
+      console.error('Error generating director note:', error)
+      toast.error("Failed to generate Director's Note")
+    } finally {
+      setIsGeneratingDirectorsNote(false)
     }
   }
 
@@ -1733,10 +1772,28 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
           {/* Director's Note (Audio Profile) for Gemini Voices */}
           {character.voiceConfig?.voiceId?.startsWith('gemini-') && (
             <div className="mt-2 space-y-1">
-              <label className="text-xs font-medium text-cyan-400 flex items-center gap-1">
-                <Sparkles className="w-3 h-3" />
-                Director's Note (Audio Profile)
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-cyan-400 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" />
+                  Director's Note (Audio Profile)
+                </label>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleGenerateDirectorsNote()
+                  }}
+                  disabled={isGeneratingDirectorsNote}
+                  className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-cyan-300 hover:text-cyan-200 hover:bg-cyan-900/30 rounded transition-colors disabled:opacity-50"
+                  title="Auto-generate based on character description"
+                >
+                  {isGeneratingDirectorsNote ? (
+                    <Loader className="w-2.5 h-2.5 animate-spin" />
+                  ) : (
+                    <Wand2 className="w-2.5 h-2.5" />
+                  )}
+                  Auto-fill
+                </button>
+              </div>
               <textarea
                 value={character.voiceConfig.prompt || ''}
                 onChange={(e) => {
