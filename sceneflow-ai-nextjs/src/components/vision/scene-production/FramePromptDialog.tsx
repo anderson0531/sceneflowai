@@ -327,12 +327,33 @@ export function FramePromptDialog({
       setUsePreviousEndFrame(false)
     }
     
+    // Check if the segment indicates an abstract or non-physical space
+    const segmentTextForLocation = [
+      segment.action,
+      segment.subject,
+      segment.actionPrompt,
+      segment.generatedPrompt,
+      segment.startFramePrompt,
+      segment.endFramePrompt,
+      segment.references?.startFrameDescription,
+      segment.references?.endFrameDescription,
+    ].filter(Boolean).join(' ').toLowerCase()
+    
+    const abstractIndicators = [
+      'non-physical', 'abstract space', 'void', 'digital canvas', 'vfx only', 
+      'entirely vfx/cgi', 'visual effects only', 'black space', 'white space', 
+      'abstract environment', 'cyberspace'
+    ]
+    const isAbstractSpace = abstractIndicators.some(ind => segmentTextForLocation.includes(ind))
+
     // Initialize visual setup from scene direction
     if (sceneDirection) {
       const setup = { ...visualSetup }
       
       // Location from scene direction
-      if (sceneDirection.scene?.location) {
+      if (isAbstractSpace) {
+        setup.location = segmentTextForLocation.includes('digital canvas') ? 'Abstract digital canvas' : 'Abstract space / Void'
+      } else if (sceneDirection.scene?.location) {
         setup.location = sceneDirection.scene.location
       } else if (sceneHeading) {
         // Parse from heading: "INT./EXT. LOCATION - TIME"
@@ -479,7 +500,7 @@ export function FramePromptDialog({
     }
 
     // Auto-match location references from scene heading
-    if (locationReferences.length > 0 && sceneHeading) {
+    if (!isAbstractSpace && locationReferences.length > 0 && sceneHeading) {
       // Parse location from heading: "INT. LOCATION - TIME"
       const headingStr = typeof sceneHeading === 'string' ? sceneHeading : ''
       const headingLower = headingStr.toLowerCase()
@@ -508,6 +529,10 @@ export function FramePromptDialog({
       setAutoMatchedLocationRefIds(new Set())
       setSelectedLocationRefIds([])
       setLocationSectionCollapsed(true)
+      
+      if (isAbstractSpace) {
+        console.log('[FramePromptDialog] Abstract space detected, skipping location auto-matching')
+      }
     }
 
     // Reset collapse states on dialog open (default all closed)
