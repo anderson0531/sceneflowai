@@ -6,6 +6,7 @@ import { optimizeTextForTTS } from '../../../../lib/tts/textOptimizer'
 import { getAudioDurationFromBuffer } from '../../../../lib/audio/serverAudioDuration'
 import { getElevenLabsVoiceForLanguage } from '../../../../lib/audio/elevenlabsVoices'
 import { translateWithVertexAI } from '../../../../lib/vertexai/translate'
+import { getVertexAIAuthToken } from '../../../../lib/vertexai/client'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -370,7 +371,17 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig, l
 
 async function generateGoogleAudio(text: string, voiceConfig: VoiceConfig): Promise<Buffer> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
-  if (!apiKey) throw new Error('Google API key not configured')
+  let accessToken: string | null = null
+
+  try {
+    // Try to get the GCP token (Vertex AI / standard Google service account auth)
+    accessToken = await getVertexAIAuthToken()
+    console.log('[Google TTS] Using Vertex AI service account token')
+  } catch (authErr) {
+    console.log('[Google TTS] No service account token available, falling back to API key:', authErr)
+  }
+
+  if (!accessToken && !apiKey) throw new Error('Google API key or service account not configured')
 
   const isGemini = voiceConfig.voiceId.startsWith('gemini-')
   const isCustomClone = !isGemini && !voiceConfig.voiceId.includes('-') && voiceConfig.voiceId.length > 20
@@ -407,15 +418,23 @@ async function generateGoogleAudio(text: string, voiceConfig: VoiceConfig): Prom
 
   // Use v1beta1 for Gemini TTS and Voice Cloning
   const apiVersion = (isGemini || isCustomClone) ? 'v1beta1' : 'v1'
+  let url = `https://texttospeech.googleapis.com/${apiVersion}/text:synthesize`
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
 
-  const response = await fetch(
-    `https://texttospeech.googleapis.com/${apiVersion}/text:synthesize?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    }
-  )
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`
+  } else if (apiKey) {
+    url += `?key=${apiKey}`
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  })
 
   if (!response.ok) {
     const errorText = await response.text()
