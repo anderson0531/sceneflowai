@@ -1022,7 +1022,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   // Compute set of pinned location names for quick lookup in SceneGallery
   const pinnedLocations = useMemo(() => {
-    return new Set(locationReferences.map(ref => ref.location))
+    return new Set(Array.isArray(locationReferences) ? locationReferences.map(ref => ref.location) : [])
   }, [locationReferences])
 
   // Compute bookmark index for quick actions
@@ -5491,7 +5491,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const sceneCount = scriptScenes.length
     const hasFilmTreatment = !!(project?.metadata?.filmTreatment || project?.metadata?.filmTreatmentVariant)
     const hasScreenplay = sceneCount > 0
-    const refLibraryCount = sceneReferences.length + objectReferences.length
+    const refLibraryCount = (Array.isArray(sceneReferences) ? sceneReferences.length : 0) + (Array.isArray(objectReferences) ? objectReferences.length : 0)
     const scenesWithImages = scriptScenes.filter((s: any) => s.imageUrl).length
     const scenesWithAudio = scriptScenes.filter((s: any) => 
       s.narrationAudioUrl || s.dialogueAudio?.en?.length || (Array.isArray(s.dialogueAudio) && s.dialogueAudio.length)
@@ -5500,7 +5500,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const audioProgress = sceneCount > 0 ? Math.round((scenesWithAudio / sceneCount) * 100) : 0
     
     return { hasFilmTreatment, hasScreenplay, sceneCount, refLibraryCount, imageProgress, audioProgress }
-  }, [script, project?.metadata, sceneReferences.length, objectReferences.length])
+  }, [script, project?.metadata, sceneReferences, objectReferences])
   
   // Push data to global sidebar via store
   useSidebarData({
