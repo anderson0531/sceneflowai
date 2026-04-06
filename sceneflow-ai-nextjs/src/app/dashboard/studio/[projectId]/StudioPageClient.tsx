@@ -723,11 +723,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           // Check for primeBlueprint query param - auto-generate Blueprint from series data
           const primeBlueprint = searchParams.get('primeBlueprint')
           
-          // We DO NOT block auto-generation if they only have hasApprovedTreatment, 
-          // because that is just the fallback framework passed from the episode.
+          // We DO NOT block auto-generation if they only have a basic treatment framework
+          // (which is passed from the episode).
           // We only block if they have actually generated variants (hasTreatmentVariants)
           // or finalized a variant (hasFilmTreatmentVariant).
-          const hasBlueprintPrimeInput = metadata.blueprintPrimeInput && !hasFilmTreatmentVariant && !hasTreatmentVariants && !hasFilmTreatment
+          const hasBlueprintPrimeInput = metadata.blueprintPrimeInput && !hasFilmTreatmentVariant && !hasTreatmentVariants
           
           console.log('[StudioPage] PrimeBlueprint Check:', {
             primeBlueprint,
