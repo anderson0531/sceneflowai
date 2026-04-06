@@ -25,6 +25,30 @@ export function Launchpad() {
   const getStageDisplayName = (step: string) =>
     WORKFLOW_STEP_LABELS[normalizeWorkflowStep(step)]
 
+  const getResumeRoute = (project: any): string => {
+    if (!project) return '/dashboard/studio/new-project'
+    
+    const { currentStep, id } = project
+    
+    // Map workflow steps to correct routes
+    const routeMap: Record<string, string> = {
+      // Phase 1 - Pre-Production
+      'ideation': `/dashboard/studio/${id}`,
+      'start': `/dashboard/studio/${id}`,
+      'blueprint': `/dashboard/studio/${id}`,
+      'storyboard': `/dashboard/workflow/vision/${id}`, // Route to new Vision page
+      'vision': `/dashboard/workflow/vision/${id}`,     // Route to new Vision page
+      'scene-direction': `/dashboard/workflow/video-generation?project=${id}`,
+      
+      // Phase 2 - Production
+      'video-generation': `/dashboard/workflow/video-generation?project=${id}`,
+      'review': `/dashboard/workflow/review?project=${id}`,
+      'optimization': `/dashboard/workflow/optimization?project=${id}`
+    }
+    
+    return routeMap[currentStep] || `/dashboard/studio/${id}`
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -64,10 +88,7 @@ export function Launchpad() {
 
           {/* Card 2 removed: Enhanced Project flows moved into Start wizard */}        {/* Card 3: Continue Project - Now consistent with Start Project */}
         {hasActiveProjects && mostRecentProject ? (
-          <Link href={hasActiveProjects && mostRecentProject ? 
-            `/dashboard/workflow/${mostRecentProject.currentStep}` : 
-            '/dashboard/workflow/ideation'
-          }>
+          <Link href={getResumeRoute(mostRecentProject)}>
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}

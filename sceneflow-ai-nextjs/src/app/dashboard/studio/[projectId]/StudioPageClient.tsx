@@ -739,10 +739,12 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             setTimeout(async () => {
               try {
                 await handleGenerateBlueprint(metadata.blueprintPrimeInput, {
-                  genre: metadata.genre || projectData.genre || undefined,
+                  genre: metadata.genre || projectData.genre || 'Drama',
+                  tone: metadata.tone || projectData.tone || 'Cinematic', // Default tone to trigger optimizations
+                  targetAudience: metadata.targetAudience || 'General Audience', // Triggers optimizations
                   variantCount: 1, // Single variant for series episodes - they have specific requirements
                   hasStoryDirections: true, // Series data acts as story directions
-                  format: metadata.format || projectData?.metadata?.format
+                  format: metadata.format || projectData?.metadata?.format || 'narrative'
                 })
               } catch (err) {
                 console.error('[StudioPage] Auto-generation failed:', err)
@@ -797,6 +799,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           title: guide.title || 'Untitled Project',
           description: '',
           metadata: {
+            ...(currentProject?.metadata || {}), // Preserve existing metadata (like visionPhase, seriesId)
             blueprintInput: lastInput,
             filmTreatment: guide.filmTreatment,
             treatmentVariants: treatmentVariants,

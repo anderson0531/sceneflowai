@@ -20,6 +20,27 @@ export function ProjectHub() {
   const getStageDisplayName = (step: string) =>
     WORKFLOW_STEP_LABELS[normalizeWorkflowStep(step)]
 
+  const getResumeRoute = (project: any): string => {
+    const { currentStep, id } = project
+    
+    // Map workflow steps to correct routes
+    const routeMap: Record<string, string> = {
+      // Phase 1 - Pre-Production
+      'ideation': `/dashboard/studio/${id}`,
+      'start': `/dashboard/studio/${id}`,
+      'storyboard': `/dashboard/workflow/vision/${id}`, // Route to new Vision page
+      'vision': `/dashboard/workflow/vision/${id}`,     // Route to new Vision page
+      'scene-direction': `/dashboard/workflow/video-generation?project=${id}`,
+      
+      // Phase 2 - Production
+      'video-generation': `/dashboard/workflow/video-generation?project=${id}`,
+      'review': `/dashboard/workflow/review?project=${id}`,
+      'optimization': `/dashboard/workflow/optimization?project=${id}`
+    }
+    
+    return routeMap[currentStep] || `/dashboard/studio/${id}`
+  }
+
   if (projects.length === 0) {
     return (
       <motion.div
@@ -157,7 +178,7 @@ export function ProjectHub() {
                     </div>
                     
                     {/* Action Button */}
-                    <Link href={`/dashboard/workflow/${project.currentStep}?project=${project.id}`}>
+                    <Link href={getResumeRoute(project)}>
                       <Button
                         size="sm"
                         className="bg-blue-500 hover:bg-blue-600 text-white"
