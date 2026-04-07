@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Search, RefreshCw, Play, Check, Sparkles, Star, Wand2, Mic, X, Volume2, Heart, Loader, FileAudio, Save } from 'lucide-react'
 import { VoiceDesignPanel } from './VoiceDesignPanel'
 import { VoiceClonePanel } from './VoiceClonePanel'
+import { VoiceDirectionEditor } from './VoiceDirectionEditor'
 import { toast } from 'sonner'
 import { 
   getCharacterVoiceRecommendations, 
@@ -108,7 +109,7 @@ interface VoiceSelectionDialogProps {
   onOpenChange: (open: boolean) => void
   provider: 'elevenlabs' | 'google'
   selectedVoiceId?: string
-  onSelectVoice: (voiceId: string, voiceName: string) => void
+  onSelectVoice: (voiceId: string, voiceName: string, prompt?: string) => void
   /** Controls which view to show */
   mode?: VoiceSelectionMode
   characterContext?: CharacterContext
@@ -170,6 +171,7 @@ export function VoiceSelectionDialog({
   const [recommendations, setRecommendations] = useState<VoiceRecommendation[]>([])
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
   const [narratorIds, setNarratorIds] = useState<Set<string>>(new Set())
+  const [configuringVoice, setConfiguringVoice] = useState<{id: string, name: string} | null>(null)
 
   // Load favorites on mount
   useEffect(() => {
@@ -362,17 +364,42 @@ export function VoiceSelectionDialog({
   }
 
   const handleSelectVoice = (voiceId: string, voiceName: string) => {
+    if (voiceId.startsWith('gemini-')) {
+      setConfiguringVoice({ id: voiceId, name: voiceName })
+    } else {
+      // Persist to voice history for consistency tracking
+      if (characterContext?.name) {
+        saveVoiceHistory({
+          voiceId,
+          voiceName,
+          characterName: characterContext.name,
+          timestamp: Date.now()
+        })
+      }
+      onSelectVoice(voiceId, voiceName)
+      onOpenChange(false)
+    }
+  }
+
+  const handleSaveConfiguredVoice = (prompt: string) => {
+    if (!configuringVoice) return
+    
     // Persist to voice history for consistency tracking
     if (characterContext?.name) {
       saveVoiceHistory({
-        voiceId,
-        voiceName,
+        voiceId: configuringVoice.id,
+        voiceName: configuringVoice.name,
         characterName: characterContext.name,
         timestamp: Date.now()
       })
     }
-    onSelectVoice(voiceId, voiceName)
+    onSelectVoice(configuringVoice.id, configuringVoice.name, prompt)
+    setConfiguringVoice(null)
     onOpenChange(false)
+  }
+
+  const handleCancelConfigure = () => {
+    setConfiguringVoice(null)
   }
 
   // State for voice sample generation after voice creation
@@ -488,7 +515,19 @@ export function VoiceSelectionDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {showCreateTab ? (
+        {configuringVoice ? (
+          <div className="flex-1 overflow-hidden flex flex-col mt-4 -mx-6 -mb-6">
+            <VoiceDirectionEditor
+              voiceId={configuringVoice.id}
+              voiceName={configuringVoice.name}
+              initialPrompt={characterContext?.voiceDescription || ''}
+              characterContext={characterContext}
+              screenplayContext={screenplayContext}
+              onSave={handleSaveConfiguredVoice}
+              onCancel={handleCancelConfigure}
+            />
+          </div>
+        ) : showCreateTab ? (
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'browse' | 'create')} className="flex-1 flex flex-col overflow-hidden">
             <TabsList className="shrink-0 h-8 bg-transparent border-b border-gray-700 rounded-none p-0 gap-6">
               <TabsTrigger 

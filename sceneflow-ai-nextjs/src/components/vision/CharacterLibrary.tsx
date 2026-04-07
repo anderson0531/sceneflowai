@@ -12,7 +12,6 @@ import { VoiceSelectionDialog } from '@/components/tts/VoiceSelectionDialog'
 import { NarratorVoicePicker } from '@/components/tts/NarratorVoicePicker'
 import { CharacterPromptBuilder } from '@/components/vision/CharacterPromptBuilder'
 import { AddCharacterModal, useOrphanCharacters } from '@/components/vision/AddCharacterModal'
-import { DirectorNoteBuilderDialog } from '@/components/tts/DirectorNoteBuilderDialog'
 import { useOverlayStore } from '@/store/useOverlayStore'
 import type { CharacterContext, ScreenplayContext } from '@/lib/voiceRecommendation'
 
@@ -579,7 +578,6 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false)
   const [showAddWardrobeForm, setShowAddWardrobeForm] = useState(false) // Toggle for add new wardrobe form
   const [enhancingWardrobeId, setEnhancingWardrobeId] = useState<string | null>(null) // Which wardrobe is being AI-enhanced
-  const [directorNoteDialogOpen, setDirectorNoteDialogOpen] = useState(false)
   
   // Script analysis for wardrobes state
   const [isAnalyzingScript, setIsAnalyzingScript] = useState(false)
@@ -1723,62 +1721,20 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
               e.stopPropagation()
               setVoiceDialogOpen(true)
             }}
-            className={`w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs rounded-lg transition-colors ${
+            className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors ${
               character.voiceConfig
-                ? 'bg-green-500/10 border border-green-500/30 text-green-400 hover:bg-green-500/20'
+                ? 'bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20'
                 : 'bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
             }`}
           >
-            <Volume2 className="w-3.5 h-3.5" />
-            {character.voiceConfig ? character.voiceConfig.voiceName || 'Voice' : 'Add Voice'}
+            <span className="flex items-center gap-2">
+              <Volume2 className="w-4 h-4" />
+              Voice Settings
+            </span>
+            <span className="text-xs font-medium bg-black/20 px-2 py-0.5 rounded">
+              {character.voiceConfig ? character.voiceConfig.voiceName : 'Required'}
+            </span>
           </button>
-
-          {/* Director's Note (Audio Profile) for Gemini Voices */}
-          {character.voiceConfig?.voiceId?.startsWith('gemini-') && (
-            <div className="mt-2 space-y-1">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-cyan-400 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" />
-                  Director's Note (Audio Profile)
-                </label>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setDirectorNoteDialogOpen(true)
-                  }}
-                  className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-cyan-300 hover:text-cyan-200 hover:bg-cyan-900/30 rounded transition-colors"
-                  title="Edit voice characteristics"
-                >
-                  <Wand2 className="w-2.5 h-2.5" />
-                  Edit Profile
-                </button>
-              </div>
-              <p className="text-xs text-gray-300 bg-gray-800/50 p-2 rounded border border-gray-700 min-h-[40px] cursor-pointer hover:bg-gray-800/80 transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setDirectorNoteDialogOpen(true)
-                }}>
-                {character.voiceConfig.prompt || 'No audio profile set. Click Edit Profile to shape the voice.'}
-              </p>
-              <p className="text-[10px] text-gray-500">
-                You can use markup tags like <code className="bg-gray-800 px-1 rounded text-cyan-300">[sigh]</code>, <code className="bg-gray-800 px-1 rounded text-cyan-300">[laugh]</code>, or <code className="bg-gray-800 px-1 rounded text-cyan-300">[whisper]</code> directly in your script for this voice.
-              </p>
-              
-              <DirectorNoteBuilderDialog
-                isOpen={directorNoteDialogOpen}
-                onClose={() => setDirectorNoteDialogOpen(false)}
-                initialPrompt={character.voiceConfig.prompt || ''}
-                characterContext={characterContext}
-                screenplayContext={screenplayContext}
-                onSave={(prompt) => {
-                  onUpdateCharacterVoice?.(characterId, {
-                    ...character.voiceConfig,
-                    prompt
-                  })
-                }}
-              />
-            </div>
-          )}
         </div>
         
         {/* Wardrobe Section - Collapsible with Collection Management */}
@@ -2229,11 +2185,12 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
           provider={ttsProvider}
           mode="character"
           selectedVoiceId={character.voiceConfig?.voiceId || ''}
-          onSelectVoice={(voiceId, voiceName) => {
+          onSelectVoice={(voiceId, voiceName, prompt) => {
             onUpdateCharacterVoice?.(characterId, {
               provider: ttsProvider,
               voiceId,
-              voiceName
+              voiceName,
+              prompt: prompt || character.voiceConfig?.prompt
             })
           }}
           characterContext={characterContext}
