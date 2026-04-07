@@ -33,9 +33,7 @@ Ethnicity: ${ethnicity || 'Not specified'}
 Personality: ${personality || 'Not specified'}
 Description: ${description || 'Not specified'}
 Traits/Attributes: ${attributes ? Object.entries(attributes).map(([k, v]) => `${k}: ${v}`).join(', ') : 'Not specified'}
-Backstory: ${backstory || 'Not specified'}
-
-CRITICAL INSTRUCTION: Ensure the generated voice description exactly matches the character's provided age, gender, ethnicity, appearance, and role from the details above.`
+Backstory: ${backstory || 'Not specified'}`
 
     if (selectedInstructions && selectedInstructions.length > 0) {
       prompt += `\n\nSELECTED VOICE TRAITS:
@@ -54,14 +52,14 @@ Synopsis: ${screenplayContext.synopsis || 'Not specified'}`
 
     prompt += `\n\nREQUIREMENTS:
 1. Write ONLY the voice description / Audio Profile. Do NOT write a monologue or script for the character to say.
-2. The VERY FIRST SENTENCE MUST explicitly state the character's exact ethnicity, gender, and exact age range verbatim as provided in the details (e.g., "An African American male voice in his late 40s to early 50s."). Do NOT generalize the age (e.g., do not say "in his 40s" if the description says "late 40s to early 50s") and do NOT omit the ethnicity. If the demographic fields are "Not specified" but the details are mentioned in the Description or Backstory, you MUST extract and use them.
-3. The rest of the description must focus strictly on the vocal qualities: tone, pitch, cadence, accent, texture, and emotional delivery. Include how their role shapes their vocal delivery.
+2. Ensure the generated voice description exactly matches the character's provided age, gender, ethnicity, and role from the details above. If the demographic fields are "Not specified" but the details are mentioned in the Description or Backstory, you MUST extract and use them.
+3. The description must focus strictly on the vocal qualities: tone, pitch, cadence, accent, texture, and emotional delivery. Include how their role and personality shape their vocal delivery.
 4. Be highly descriptive but concise (4-5 sentences max).
 5. Do NOT wrap the output in markdown code blocks or JSON formatting. Just return the raw text.
 6. Example output format: "An African American male voice in his late 40s to early 50s. The tone is a warm, textured baritone with a slight, natural huskiness. As the visionary host of 'Cognitive Horizons,' his delivery balances an energetic, forward-leaning enthusiasm with a measured, thoughtful pacing. His emotional delivery exudes a deep, empathetic hope, capturing the calm authority of an intellectually stimulating mind grappling with profound responsibilities."`
 
     const response = await generateText(prompt, {
-      temperature: 0.4,
+      temperature: 0.7,
       maxOutputTokens: 250
     })
 
