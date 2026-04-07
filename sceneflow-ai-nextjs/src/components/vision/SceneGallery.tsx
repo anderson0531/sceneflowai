@@ -637,7 +637,7 @@ export function SceneGallery({
                     return location ? pinnedLocations.has(location) : false
                   })()}
                   showDragHandle={!!onReorderScenes}
-                  onUpdateSceneAudio={onUpdateSceneAudio ? async () => { await onUpdateSceneAudio(idx) } : undefined}
+                  onUpdateSceneAudio={onUpdateSceneAudio}
                 />
                   </SortableSceneWrapper>
                 )
