@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   try {
     // Get user session for credit charging
     const session = await getServerSession(authOptions)
-    const userId = session?.user?.id || session?.user?.email
+    const userId = session?.user?.id
     
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized - please sign in' }, { status: 401 })

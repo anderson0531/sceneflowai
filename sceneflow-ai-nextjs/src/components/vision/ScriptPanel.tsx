@@ -1878,10 +1878,17 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       overlayStore?.show(`Generating sound effect ${sfxIdx + 1} for Scene ${sceneIdx + 1}...`, 15, 'audio-generation')
     }
     try {
+      // Use saveToBlob to have the server upload directly - avoids 4.5MB payload limit
       const response = await fetch('/api/tts/google/sound-effects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: typeof sfx === 'string' ? sfx : sfx.description, duration: 2.0 })
+        body: JSON.stringify({ 
+          text: typeof sfx === 'string' ? sfx : sfx.description, 
+          duration: 2.0,
+          saveToBlob: true,  // Server-side upload bypasses client payload limits
+          projectId: projectId || 'temp',
+          sceneId: `scene-${sceneIdx}-sfx-${sfxIdx}`
+        })
       })
 
       if (!response.ok) {
@@ -1889,25 +1896,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         throw new Error(error.details || 'SFX generation failed')
       }
 
-      const blob = await response.blob()
-      
-      // Upload to blob storage for persistence
-      const formData = new FormData()
-      const fileName = `sfx-${projectId || 'temp'}-scene-${sceneIdx}-sfx-${sfxIdx}-${Date.now()}.mp3`
-      formData.append('file', blob, fileName)
-      
-      const uploadResponse = await fetch('/api/audio/upload', {
-        method: 'POST',
-        body: formData
-      })
-      
-      if (!uploadResponse.ok) {
-        const error = await uploadResponse.json()
-        throw new Error(error.details || 'Failed to save SFX audio')
-      }
-      
-      const uploadData = await uploadResponse.json()
-      const audioUrl = uploadData.audioUrl
+      // Server returns the blob URL directly when saveToBlob=true
+      const data = await response.json()
+      const audioUrl = data.url
       
       // Update scene with persistent audio URL
       await saveSceneAudio(sceneIdx, 'sfx', audioUrl, sfxIdx)
@@ -2165,7 +2156,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       const response = await fetch('/api/tts/google/sound-effects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: description, duration: 2.0 })
+        body: JSON.stringify({ 
+          text: description, 
+          duration: 2.0,
+          saveToBlob: true,
+          projectId: projectId || 'temp',
+          sceneId: 'temp'
+        })
       })
       
       if (!response.ok) {
@@ -2173,8 +2170,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         throw new Error(error.details || error.error || 'SFX generation failed')
       }
       
-      const blob = await response.blob()
-      const audioUrl = URL.createObjectURL(blob)
+      // Server returns the blob URL directly when saveToBlob=true
+      const data = await response.json()
+      const audioUrl = data.url
       const audio = new Audio(audioUrl)
       
       // Track the audio object for cleanup (prevents ghost audio)
@@ -2202,7 +2200,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       const response = await fetch('/api/tts/google/music', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: description, duration })
+        body: JSON.stringify({ 
+          text: description, 
+          duration,
+          saveToBlob: true,
+          projectId: projectId || 'temp',
+          sceneId: 'temp'
+        })
       })
       
       if (!response.ok) {
@@ -2217,8 +2221,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         throw new Error(error.details || error.error || 'Music generation failed')
       }
       
-      const blob = await response.blob()
-      const audioUrl = URL.createObjectURL(blob)
+      // Server returns the blob URL directly when saveToBlob=true
+      const data = await response.json()
+      const audioUrl = data.url
       const audio = new Audio(audioUrl)
       
       // Track the audio object for cleanup (prevents ghost audio)
