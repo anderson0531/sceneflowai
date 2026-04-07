@@ -354,7 +354,7 @@ export function VoiceDirectionEditor({
             Close
           </Button>
           <Button onClick={handleSave} className="bg-cyan-600 hover:bg-cyan-500 text-white">
-            Confirm Selection
+            Save
           </Button>
         </div>
       </div>

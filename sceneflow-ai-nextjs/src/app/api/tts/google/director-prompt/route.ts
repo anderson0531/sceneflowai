@@ -28,7 +28,9 @@ CHARACTER DETAILS:
 Name: ${name || 'Unknown'}
 Role: ${role || 'Not specified'}
 Traits/Attributes: ${attributes ? Object.entries(attributes).map(([k, v]) => `${k}: ${v}`).join(', ') : 'Not specified'}
-Backstory: ${backstory || 'Not specified'}`
+Backstory: ${backstory || 'Not specified'}
+
+CRITICAL INSTRUCTION: Ensure the generated voice description exactly matches the character's provided age, gender, ethnicity, and role from the traits and backstory above.`
 
     if (selectedInstructions && selectedInstructions.length > 0) {
       prompt += `\n\nSELECTED VOICE TRAITS:
@@ -47,16 +49,31 @@ Synopsis: ${screenplayContext.synopsis || 'Not specified'}`
 
     prompt += `\n\nREQUIREMENTS:
 1. Write ONLY the voice description / Audio Profile. Do NOT write a monologue or script for the character to say.
-2. The description must focus strictly on the vocal qualities: tone, pitch, cadence, age, gender, accent, texture, and emotional delivery.
+2. The description must focus strictly on the vocal qualities: tone, pitch, cadence, age, gender, accent, texture, and emotional delivery. It MUST reflect the character's exact age bracket, gender, and ethnicity. Include how their role shapes their vocal delivery.
 3. Be highly descriptive but concise (4-5 sentences max).
-4. Example output format: "A resonant, middle-aged African American male voice in his early 50s. The tone is a warm, textured baritone with a slight, natural huskiness. His delivery is measured, grounded, and deeply empathetic, conveying the calm authority of a trusted mentor."`
+4. Do NOT wrap the output in markdown code blocks or JSON formatting. Just return the raw text.
+5. Example output format: "An African American male voice in his late 40s to early 50s. The tone is a warm, textured baritone with a slight, natural huskiness. As the visionary host of 'Cognitive Horizons,' his delivery balances an energetic, forward-leaning enthusiasm with a measured, thoughtful pacing. His emotional delivery exudes a deep, empathetic hope, capturing the calm authority of an intellectually stimulating mind grappling with profound responsibilities."`
 
     const response = await generateText(prompt, {
       temperature: 0.7,
-      maxOutputTokens: 150
+      maxOutputTokens: 250
     })
 
-    return NextResponse.json({ script: response.text.trim() })
+    let generatedText = response.text.trim()
+    
+    // Fallback: If Gemini still returns JSON, parse it out
+    if (generatedText.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(generatedText)
+        if (parsed.audio_profile) {
+          generatedText = parsed.audio_profile
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    return NextResponse.json({ script: generatedText })
 
   } catch (error) {
     console.error('[API] Error generating director prompt:', error)
