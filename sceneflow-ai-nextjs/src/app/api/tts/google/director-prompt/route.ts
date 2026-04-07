@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing character context' }, { status: 400 })
     }
 
-    const { name, role, attributes, backstory } = characterContext
+    const { name, role, attributes, backstory, description, age, gender, ethnicity, personality } = characterContext
     
     // Construct the prompt for the director script
     let prompt = `You are an expert Voice Director casting a voice actor for a specific character. 
@@ -27,10 +27,15 @@ This note will be passed as instructions to an advanced Text-to-Speech system (G
 CHARACTER DETAILS:
 Name: ${name || 'Unknown'}
 Role: ${role || 'Not specified'}
+Age: ${age || 'Not specified'}
+Gender: ${gender || 'Not specified'}
+Ethnicity: ${ethnicity || 'Not specified'}
+Personality: ${personality || 'Not specified'}
+Description: ${description || 'Not specified'}
 Traits/Attributes: ${attributes ? Object.entries(attributes).map(([k, v]) => `${k}: ${v}`).join(', ') : 'Not specified'}
 Backstory: ${backstory || 'Not specified'}
 
-CRITICAL INSTRUCTION: Ensure the generated voice description exactly matches the character's provided age, gender, ethnicity, and role from the traits and backstory above.`
+CRITICAL INSTRUCTION: Ensure the generated voice description exactly matches the character's provided age, gender, ethnicity, appearance, and role from the details above.`
 
     if (selectedInstructions && selectedInstructions.length > 0) {
       prompt += `\n\nSELECTED VOICE TRAITS:

@@ -25,13 +25,17 @@ export interface VoiceProfile {
 }
 
 export interface CharacterContext {
+  id?: string
   name: string
-  role?: 'protagonist' | 'antagonist' | 'supporting' | 'background' | 'narrator'
+  role?: 'protagonist' | 'antagonist' | 'supporting' | 'background' | 'narrator' | string
   gender?: string
-  age?: string
+  age?: string | number
   ethnicity?: string
   personality?: string
   description?: string
+  /** Key-value pairs for other attributes */
+  attributes?: Record<string, string>
+  backstory?: string
   /** URL to the character's reference image for AI voice profile generation */
   referenceImage?: string
   /** Cached AI-generated voice description for this character */
