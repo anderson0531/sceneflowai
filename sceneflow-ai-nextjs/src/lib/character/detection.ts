@@ -44,10 +44,13 @@ export function extractCharactersFromScenes(scenes: any[]): Character[] {
       if (!charMap.has(normalizedName)) {
         const cleanName = d.character.replace(/\s*\([^)]*\)\s*/g, '').trim()
         
+        const isNarrator = cleanName.toUpperCase().includes('NARRATOR')
+        const dialogueSample = d.line ? d.line.substring(0, 100) + (d.line.length > 100 ? '...' : '') : ''
+        
         charMap.set(normalizedName, {
           name: cleanName,
-          role: d.character === 'NARRATOR' ? 'narrator' : 'supporting',
-          description: `Character from script`,
+          role: isNarrator ? 'narrator' : d.character === 'NARRATOR' ? 'narrator' : 'supporting',
+          description: isNarrator ? `Narrator for the scene. Tone reference: "${dialogueSample}"` : `Character from script`,
         })
       }
     })

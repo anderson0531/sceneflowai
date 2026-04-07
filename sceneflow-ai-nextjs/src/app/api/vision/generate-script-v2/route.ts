@@ -1893,10 +1893,13 @@ function extractCharacters(scenes: any[]): any[] {
         // Clean the display name (remove V.O., etc. but keep proper case)
         const cleanName = d.character.replace(/\s*\([^)]*\)\s*/g, '').trim()
         
+        const isNarrator = cleanName.toUpperCase().includes('NARRATOR')
+        const dialogueSample = d.line ? d.line.substring(0, 100) + (d.line.length > 100 ? '...' : '') : ''
+        
         charMap.set(normalizedName, {
           name: cleanName,  // Use cleaned version (e.g., "Brian Anderson" not "BRIAN ANDERSON (V.O.)")
-          role: 'character',
-          description: `Character from script`
+          role: isNarrator ? 'narrator' : 'character',
+          description: isNarrator ? `Narrator for the scene. Tone reference: "${dialogueSample}"` : `Character from script`
         })
       }
     })

@@ -134,8 +134,6 @@ export const TRIGGER_WORD_ALTERNATIVES: Record<string, string[]> = {
   'slimy': ['glossy', 'wet', 'reflective'],
   'putrid': ['aged', 'deteriorated', 'weathered'],
   'rancid': ['aged', 'deteriorated'],
-  'festering': ['spreading', 'growing', 'developing'],
-  'necrotic': ['darkened', 'shadowed', 'blackened'],
   'tissue': ['material', 'surface', 'substance'],
   'flesh': ['surface', 'material', 'skin-like texture'],
   'visceral': ['intense', 'raw', 'powerful', 'emotional'],
