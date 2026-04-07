@@ -4285,7 +4285,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [generatingScoreFor, setGeneratingScoreFor] = useState<number | null>(null)
   
   // Per-scene audience analysis state (integrated from ScriptReviewModal)
-  const [analyzingSceneIndex, setAnalyzingSceneIndex] = useState<number | null>(null)
   const [optimizingSceneIndex, setOptimizingSceneIndex] = useState<number | null>(null)
   
   // Audio timing resync state
@@ -5300,67 +5299,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       debouncedSaveSceneAnalysis(updatedScript, currentProject?.metadata, projectId)
     }
   }, [projectId, debouncedSaveSceneAnalysis])
-
-  // Handler for analyzing a single scene (called from ScriptPanel)
-  const handleAnalyzeScene = useCallback(async (sceneIndex: number) => {
-    if (!projectId || !script?.script?.scenes?.[sceneIndex]) return
-    
-    setAnalyzingSceneIndex(sceneIndex)
-    
-    await execute(async () => {
-      const scene = script.script.scenes[sceneIndex]
-      
-      // Build previous analysis context for progressive recommendations
-      const previousAnalyses = scene.audienceAnalysis ? [{
-        sceneIndex: 0, // We're sending a single scene, so index is 0
-        score: scene.audienceAnalysis.score,
-        recommendations: scene.audienceAnalysis.recommendations || [],
-        analyzedAt: scene.audienceAnalysis.analyzedAt,
-        optimizedAt: scene.audienceAnalysis.optimizedAt,
-      }] : undefined
-      
-      // Call the existing analyze-scenes API with just this one scene
-      const response = await fetch('/api/vision/analyze-scenes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          script: {
-            title: script.script.title,
-            logline: script.script.logline,
-            scenes: [scene],
-            characters: script.script.characters
-          },
-          sceneIndices: [sceneIndex],
-          ...(previousAnalyses && { previousAnalyses })
-        })
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to analyze scene')
-      }
-      
-      const data = await response.json()
-      
-      if (data.sceneAnalysis?.[0]) {
-        // Update the scene with analysis
-        handleSceneAnalysisComplete([{
-          sceneIndex,
-          analysis: data.sceneAnalysis[0]
-        }])
-        toast.success(`Scene ${sceneIndex + 1} analyzed`)
-      }
-    }, {
-      message: `Analyzing Scene ${sceneIndex + 1}...`,
-      estimatedDuration: 12,
-      operationType: 'scene-analysis'
-    }).catch((error) => {
-      console.error('[handleAnalyzeScene] Error:', error)
-      toast.error('Failed to analyze scene')
-    }).finally(() => {
-      setAnalyzingSceneIndex(null)
-    })
-  }, [projectId, script, handleSceneAnalysisComplete, execute])
 
   // Handler for optimizing a single scene (called from ScriptPanel)
   const handleOptimizeScene = useCallback(async (
@@ -10878,8 +10816,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onClearScriptEditorInstruction={() => setReviseScriptInstruction('')}
                 storedTranslations={storedTranslations}
                 onSaveTranslations={handleSaveTranslations}
-                onAnalyzeScene={handleAnalyzeScene}
-                analyzingSceneIndex={analyzingSceneIndex}
                 onOptimizeScene={handleOptimizeScene}
                 optimizingSceneIndex={optimizingSceneIndex}
                 onResyncAudioTiming={handleResyncAudioTiming}
