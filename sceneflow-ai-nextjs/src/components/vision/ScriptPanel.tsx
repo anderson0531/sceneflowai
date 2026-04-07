@@ -1869,51 +1869,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
   // Audio generation functions
   const generateSFX = async (sceneIdx: number, sfxIdx: number, skipOverlay?: boolean) => {
-    const scene = scenes[sceneIdx]
-    const sfx = scene?.sfx?.[sfxIdx]
-    if (!sfx) return
-
-    setGeneratingSFX({ sceneIdx, sfxIdx })
-    if (!skipOverlay) {
-      overlayStore?.show(`Generating sound effect ${sfxIdx + 1} for Scene ${sceneIdx + 1}...`, 15, 'audio-generation')
-    }
-    try {
-      // Use saveToBlob to have the server upload directly - avoids 4.5MB payload limit
-      const response = await fetch('/api/tts/google/sound-effects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          text: typeof sfx === 'string' ? sfx : sfx.description, 
-          duration: 2.0,
-          saveToBlob: true,  // Server-side upload bypasses client payload limits
-          projectId: projectId || 'temp',
-          sceneId: `scene-${sceneIdx}-sfx-${sfxIdx}`
-        })
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.details || 'SFX generation failed')
-      }
-
-      // Server returns the blob URL directly when saveToBlob=true
-      const data = await response.json()
-      const audioUrl = data.url
-      
-      // Update scene with persistent audio URL
-      await saveSceneAudio(sceneIdx, 'sfx', audioUrl, sfxIdx)
-      if (!skipOverlay) {
-        overlayStore?.hide()
-      }
-    } catch (error: any) {
-      console.error('[SFX Generation] Error:', error)
-      if (!skipOverlay) {
-        overlayStore?.hide()
-      }
-      toast.error(`Failed to generate sound effect: ${error.message}`)
-    } finally {
-      setGeneratingSFX(null)
-    }
+    toast.error('SFX generation is temporarily disabled.')
+    return
   }
 
   const generateMusic = async (sceneIdx: number, skipOverlay?: boolean) => {
@@ -2152,46 +2109,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
   // Quick play SFX (generate and play immediately)
   const generateAndPlaySFX = async (description: string) => {
-    try {
-      const response = await fetch('/api/tts/google/sound-effects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          text: description, 
-          duration: 2.0,
-          saveToBlob: true,
-          projectId: projectId || 'temp',
-          sceneId: 'temp'
-        })
-      })
-      
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'SFX generation failed' }))
-        throw new Error(error.details || error.error || 'SFX generation failed')
-      }
-      
-      // Server returns the blob URL directly when saveToBlob=true
-      const data = await response.json()
-      const audioUrl = data.url
-      const audio = new Audio(audioUrl)
-      
-      // Track the audio object for cleanup (prevents ghost audio)
-      orphanAudioRefs.current.add(audio)
-      
-      audio.onended = () => {
-        orphanAudioRefs.current.delete(audio)
-        URL.revokeObjectURL(audioUrl)  // Free memory
-      }
-      audio.onerror = () => {
-        orphanAudioRefs.current.delete(audio)
-        URL.revokeObjectURL(audioUrl)
-      }
-      
-      audio.play()
-    } catch (error: any) {
-      console.error('[SFX Playback] Error:', error)
-      alert(`Failed to play sound effect: ${error.message}`)
-    }
+    toast.error('SFX generation is temporarily disabled.')
+    return
   }
 
   // Quick play Music (generate and play immediately)

@@ -139,7 +139,6 @@ export function getEstimatedProviderCost(
       return ((metrics?.audioChars ?? 1000) / 1000) * PROVIDER_COSTS_USD.elevenlabs_1k_chars
     
     case 'elevenlabs_sfx':
-    case 'google_sfx':
       // SFX is a flat rate per generation - estimate based on average generation
       return 0.05 // ~$0.05 per SFX generation
     
@@ -375,7 +374,7 @@ function mapOperationToModel(operation: string): string {
   if (operation.includes('gemini_flash')) return 'gemini-3.0-flash'
   if (operation.includes('gemini_pro')) return 'gemini-3.1-pro-preview'
   if (operation.includes('elevenlabs_tts')) return 'eleven_turbo_v2_5'
-  if (operation.includes('google_sfx') || operation.includes('google_music')) return 'lyria-002'
+  if (operation.includes('google_music')) return 'lyria-002'
   if (operation.includes('sfx')) return 'sound_generation_v1'
   if (operation.includes('music')) return 'music_v1'
   return 'unknown'

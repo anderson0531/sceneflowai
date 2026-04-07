@@ -50,43 +50,8 @@ async function generateAndSaveMusicForScene(scene: any, projectId: string, scene
 
 // Helper function to generate and save SFX for a scene
 async function generateAndSaveSFXForScene(scene: any, projectId: string, sceneIdx: number, sfxIdx: number, baseUrl: string): Promise<string | null> {
-  try {
-    const sfxItem = scene.sfx[sfxIdx]
-    const description = typeof sfxItem === 'string' ? sfxItem : sfxItem?.description
-    if (!description) return null
-    
-    console.log(`[Batch Audio] Generating SFX ${sfxIdx + 1} for scene ${sceneIdx + 1}: ${description.substring(0, 50)}...`)
-    
-    // Generate SFX via our API endpoint
-    const sfxResponse = await fetch(`${baseUrl}/api/tts/elevenlabs/sound-effects`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: description, duration: 2.0 })
-    })
-    
-    if (!sfxResponse.ok) {
-      const errorText = await sfxResponse.text().catch(() => 'Unknown error')
-      console.error(`[Batch Audio] SFX generation failed for scene ${sceneIdx + 1}, SFX ${sfxIdx + 1}:`, errorText)
-      return null
-    }
-    
-    const arrayBuffer = await sfxResponse.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
-    
-    // Upload to Vercel Blob
-    const timestamp = Date.now()
-    const filename = `audio/sfx/${projectId}/scene${sceneIdx}-sfx-${sfxIdx}-${timestamp}.mp3`
-    const blob = await put(filename, buffer, {
-      access: 'public',
-      contentType: 'audio/mpeg',
-    })
-    
-    console.log(`[Batch Audio] SFX ${sfxIdx + 1} saved for scene ${sceneIdx + 1}: ${blob.url}`)
-    return blob.url
-  } catch (error: any) {
-    console.error(`[Batch Audio] SFX generation failed for scene ${sceneIdx + 1}, SFX ${sfxIdx + 1}:`, error?.message || String(error))
-    return null
-  }
+  // SFX generation is temporarily disabled
+  return null
 }
 
 export async function POST(req: NextRequest) {

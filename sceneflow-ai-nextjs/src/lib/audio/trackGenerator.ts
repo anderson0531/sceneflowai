@@ -102,43 +102,8 @@ export async function generateTTSAudio(params: GenerateTTSParams): Promise<{ mp3
  * Generate sound effect using ElevenLabs SFX API
  */
 export async function generateSFXAudio(params: GenerateSFXParams): Promise<{ mp3Url: string; duration: number }> {
-  const response = await fetch('/api/tts/google/sound-effects', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      text: params.description,
-      duration: params.duration || 2.0
-    })
-  })
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'SFX generation failed' }))
-    throw new Error(error.error || 'Failed to generate sound effect')
-  }
-
-  const blob = await response.blob()
-
-  // Upload to Vercel Blob
-  const formData = new FormData()
-  const timestamp = Date.now()
-  const filename = `audio/sfx-${timestamp}.mp3`
-  formData.append('file', blob, filename)
-
-  const uploadRes = await fetch('/api/upload/audio', {
-    method: 'POST',
-    body: formData
-  })
-
-  if (!uploadRes.ok) {
-    throw new Error('Failed to upload SFX file')
-  }
-
-  const { url } = await uploadRes.json()
-
-  return {
-    mp3Url: url,
-    duration: params.duration || 2.0
-  }
+  // SFX generation is temporarily disabled
+  throw new Error('SFX generation is temporarily disabled.')
 }
 
 /**

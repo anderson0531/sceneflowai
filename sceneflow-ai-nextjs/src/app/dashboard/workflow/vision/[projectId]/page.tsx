@@ -9587,84 +9587,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Generate SFX for a scene (used by handleUpdateSceneAudio)
   const generateSFXForScene = async (sceneIndex: number, sfxIndex: number, scene: any) => {
-    const sfx = scene.sfx?.[sfxIndex]
-    if (!sfx) return
-    
-    const description = typeof sfx === 'string' ? sfx : sfx.description
-    
-    console.log(`[Update Scene Audio] Generating SFX ${sfxIndex + 1} for Scene ${sceneIndex + 1}...`)
-    
-    const response = await fetch('/api/tts/google/sound-effects', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: description, duration: 2.0 })
-    })
-    
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.details || 'SFX generation failed')
-    }
-    
-    const blob = await response.blob()
-    
-    // Upload to blob storage
-    const formData = new FormData()
-    const fileName = `sfx-${projectId}-scene-${sceneIndex}-sfx-${sfxIndex}-${Date.now()}.mp3`
-    formData.append('file', blob, fileName)
-    
-    const uploadResponse = await fetch('/api/audio/upload', {
-      method: 'POST',
-      body: formData
-    })
-    
-    if (!uploadResponse.ok) {
-      throw new Error('Failed to upload SFX audio')
-    }
-    
-    const uploadData = await uploadResponse.json()
-    const audioUrl = uploadData.audioUrl
-    
-    // Update state with SFX URL
-    setScript((prevScript: any) => {
-      const updatedScenes = [...(prevScript?.script?.scenes || [])]
-      if (updatedScenes[sceneIndex]) {
-        const updatedSfx = [...(updatedScenes[sceneIndex].sfx || [])]
-        if (typeof updatedSfx[sfxIndex] === 'string') {
-          // Convert string SFX to object with audioUrl
-          updatedSfx[sfxIndex] = {
-            description: updatedSfx[sfxIndex],
-            audioUrl: audioUrl
-          }
-        } else {
-          updatedSfx[sfxIndex] = {
-            ...updatedSfx[sfxIndex],
-            audioUrl: audioUrl
-          }
-        }
-        updatedScenes[sceneIndex] = {
-          ...updatedScenes[sceneIndex],
-          sfx: updatedSfx,
-          sfxAudio: updatedSfx.map((s: any) => typeof s === 'string' ? null : s?.audioUrl).filter(Boolean)
-        }
-      }
-      
-      // Save to DB in background
-      setTimeout(() => {
-        saveScenesToDatabase(updatedScenes).catch(err => {
-          console.error('[Update Scene Audio] Failed to save SFX to database:', err)
-        })
-      }, 100)
-      
-      return {
-        ...prevScript,
-        script: {
-          ...prevScript?.script,
-          scenes: updatedScenes
-        }
-      }
-    })
-    
-    console.log(`[Update Scene Audio] SFX ${sfxIndex + 1} generated for Scene ${sceneIndex + 1}`)
+    try { const { toast } = require('sonner'); toast.error('SFX generation is temporarily disabled.') } catch {}
+    return
   }
 
   // Update all scene audio - clears existing audio and regenerates sequentially
