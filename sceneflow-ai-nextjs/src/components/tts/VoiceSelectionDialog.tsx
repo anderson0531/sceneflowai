@@ -147,16 +147,12 @@ export function VoiceSelectionDialog({
   const [activeTab, setActiveTab] = useState<'browse' | 'create'>('browse')
   const [createTab, setCreateTab] = useState<'design' | 'clone'>(provider === 'google' ? 'clone' : 'design')
 
-  // Default to the Create tab if Google is the provider, as there is no Browse library for Google character voices
+  // Reset tab to 'browse' (Assign Voice) when dialog opens
   useEffect(() => {
     if (open) {
-      if (provider === 'google') {
-        setActiveTab('create')
-        setCreateTab('clone')
-      } else {
-        setActiveTab('browse')
-        setCreateTab('design')
-      }
+      setActiveTab('browse')
+      setConfiguringVoice(null)
+      setCreateTab(provider === 'google' ? 'clone' : 'design')
     }
   }, [open, provider])
   const [voices, setVoices] = useState<ElevenLabsVoice[]>([])
@@ -363,8 +359,8 @@ export function VoiceSelectionDialog({
     }
   }
 
-  const handleSelectVoice = (voiceId: string, voiceName: string) => {
-    if (voiceId.startsWith('gemini-')) {
+  const handleSelectVoice = (voiceId: string, voiceName: string, isDirect?: boolean) => {
+    if (isDirect && voiceId.startsWith('gemini-')) {
       setConfiguringVoice({ id: voiceId, name: voiceName })
     } else {
       // Persist to voice history for consistency tracking
@@ -377,7 +373,9 @@ export function VoiceSelectionDialog({
         })
       }
       onSelectVoice(voiceId, voiceName)
-      onOpenChange(false)
+      if (!isDirect) {
+        onOpenChange(false)
+      }
     }
   }
 
@@ -757,7 +755,7 @@ interface BrowseVoiceContentProps {
   onToggleFavorite: (voiceId: string, e: React.MouseEvent) => void
   onToggleNarrator: (voiceId: string, e: React.MouseEvent) => void
   onPreview: (voice: ElevenLabsVoice) => void
-  onSelect: (voiceId: string, voiceName: string) => void
+  onSelect: (voiceId: string, voiceName: string, isDirect?: boolean) => void
   onRefresh: () => void
 }
 
@@ -825,7 +823,7 @@ function BrowseVoiceContent({
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-medium text-gray-200 truncate">
-                      {rec.voiceName}
+                      {rec.voiceName.replace(/ \((Gemini|Studio)\)/i, '')}
                     </span>
                     <div className="flex items-center gap-1">
                       <button
@@ -1030,12 +1028,6 @@ function BrowseVoiceContent({
                         Custom
                       </span>
                     )}
-                    {voice.id.startsWith('gemini-') && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 flex items-center gap-1" title="Supports Audio Profiles">
-                        <Sparkles className="w-2.5 h-2.5" />
-                        Gemini
-                      </span>
-                    )}
                     <span className={`text-sm font-medium truncate ${
                       voice.id === selectedVoiceId 
                         ? 'text-blue-300' 
@@ -1043,7 +1035,7 @@ function BrowseVoiceContent({
                           ? 'text-yellow-200'
                           : 'text-gray-200'
                     }`}>
-                      {voice.name}
+                      {voice.name.replace(/ \((Gemini|Studio)\)/i, '')}
                     </span>
                     {voice.id === selectedVoiceId && (
                       <Check className="h-4 w-4 text-blue-400 shrink-0" />
@@ -1054,7 +1046,17 @@ function BrowseVoiceContent({
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 mt-0.5">
+                  {/* Voice Description or Direct label */}
+                  {voice.description ? (
+                    <p className="text-[11px] text-gray-500 mt-1 truncate max-w-[90%]">
+                      {voice.description}
+                    </p>
+                  ) : voice.id.startsWith('gemini-') ? (
+                    <p className="text-[11px] text-gray-500 mt-1 truncate max-w-[90%]">
+                      Dynamic, expressive AI voice with directional support
+                    </p>
+                  ) : null}
+                  <div className="flex items-center gap-2 mt-1">
                     {voice.language && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-800/50 text-gray-400">
                         {voice.language}
@@ -1074,6 +1076,17 @@ function BrowseVoiceContent({
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0 ml-2">
+                  {voice.id.startsWith('gemini-') && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onSelect(voice.id, voice.name, true)
+                      }}
+                      className="px-2 py-1 text-[11px] font-medium text-cyan-400 bg-cyan-950/30 hover:bg-cyan-900/50 border border-cyan-800/50 rounded mr-2 transition-colors"
+                    >
+                      Direct
+                    </button>
+                  )}
                   {/* Favorite button */}
                   <button
                     onClick={(e) => onToggleFavorite(voice.id, e)}

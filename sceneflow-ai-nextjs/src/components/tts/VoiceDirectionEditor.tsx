@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Loader, Sparkles, ChevronDown, ChevronUp, Wand2, Play, Square } from 'lucide-react'
+import { Loader, Sparkles, ChevronDown, ChevronUp, Wand2, Play, Square, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { VOICE_TRAIT_CATEGORIES } from '@/lib/constants/director-note-templates'
 
@@ -34,6 +34,9 @@ export function VoiceDirectionEditor({
   
   // Expanded categories (default to closed)
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
+  
+  // Editor tab mode ('guided' vs 'character')
+  const [editorTab, setEditorTab] = useState<'guided' | 'character'>('guided')
   
   const [isGenerating, setIsGenerating] = useState(false)
   const [isTesting, setIsTesting] = useState(false)
@@ -211,86 +214,121 @@ export function VoiceDirectionEditor({
             <Sparkles className="w-4 h-4 text-cyan-400" />
             Voice Direction
           </h3>
-          <p className="text-xs text-gray-400">
-            Shaping <span className="text-gray-300 font-medium">{voiceName}</span> for {name}
+          <p className="text-xs text-gray-400 mt-1">
+            Shaping <span className="text-gray-300 font-medium">{voiceName.replace(/ \((Gemini|Studio)\)/i, '')}</span> for {name}
           </p>
         </div>
       </div>
 
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-        <div className="space-y-4">
-          {VOICE_TRAIT_CATEGORIES.map((category) => {
-            const isExpanded = expandedCategories.has(category.id)
-            return (
-              <div key={category.id} className="space-y-2">
-                <button
-                  onClick={() => toggleCategory(category.id)}
-                  className="flex items-center justify-between w-full text-sm font-medium text-gray-300 hover:text-white"
-                >
-                  <span className="flex items-center gap-2">
-                    <span>{category.icon}</span>
-                    {category.label}
-                  </span>
-                  {isExpanded ? (
-                    <ChevronUp className="w-4 h-4" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4" />
-                  )}
-                </button>
-                
-                {isExpanded && (
-                  <div className="flex flex-wrap gap-2 pl-1">
-                    {category.templates.map((template) => {
-                      const isSelected = selectedTemplates.has(template.id)
-                      return (
-                        <button
-                          key={template.id}
-                          onClick={() => toggleTemplate(category.id, template.id)}
-                          className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
-                            isSelected
-                              ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300'
-                              : 'bg-gray-800 border-gray-700 hover:bg-gray-750 text-gray-300'
-                          }`}
-                        >
-                          {template.label}
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            )
-          })}
+      {/* Segmented Control */}
+      <div className="px-4 pt-4 shrink-0">
+        <div className="flex p-1 bg-gray-900 border border-gray-800 rounded-lg">
+          <button
+            onClick={() => setEditorTab('guided')}
+            className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              editorTab === 'guided' 
+                ? 'bg-cyan-900/40 text-cyan-300 shadow-sm' 
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            Guided
+          </button>
+          <button
+            onClick={() => setEditorTab('character')}
+            className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-1.5 ${
+              editorTab === 'character' 
+                ? 'bg-cyan-900/40 text-cyan-300 shadow-sm' 
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            <Sparkles className="w-3 h-3" />
+            Character Match
+          </button>
         </div>
+      </div>
 
-        <div className="space-y-2 pt-4 border-t border-gray-800">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-              ✏️ Custom Instructions & Refinements
-            </label>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleAutoFill}
-              disabled={isGenerating}
-              className="border-cyan-700/50 hover:bg-cyan-900/30 text-cyan-300 h-7"
-            >
-              {isGenerating ? (
-                <Loader className="w-3.5 h-3.5 animate-spin mr-1.5" />
-              ) : (
-                <Wand2 className="w-3.5 h-3.5 mr-1.5" />
-              )}
-              Generate
-            </Button>
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar flex flex-col">
+        {editorTab === 'guided' && (
+          <div className="space-y-4">
+            {VOICE_TRAIT_CATEGORIES.map((category) => {
+              const isExpanded = expandedCategories.has(category.id)
+              return (
+                <div key={category.id} className="space-y-2">
+                  <button
+                    onClick={() => toggleCategory(category.id)}
+                    className="flex items-center justify-between w-full text-sm font-medium text-gray-300 hover:text-white"
+                  >
+                    <span className="flex items-center gap-2">
+                      <span>{category.icon}</span>
+                      {category.label}
+                    </span>
+                    {isExpanded ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </button>
+                  
+                  {isExpanded && (
+                    <div className="flex flex-wrap gap-2 pl-1">
+                      {category.templates.map((template) => {
+                        const isSelected = selectedTemplates.has(template.id)
+                        return (
+                          <button
+                            key={template.id}
+                            onClick={() => toggleTemplate(category.id, template.id)}
+                            className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+                              isSelected
+                                ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300'
+                                : 'bg-gray-800 border-gray-700 hover:bg-gray-750 text-gray-300'
+                            }`}
+                          >
+                            {template.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
-          <Textarea
-            value={customInstruction}
-            onChange={(e) => setCustomInstruction(e.target.value)}
-            placeholder="e.g., Make the speaker sound like a 50-year-old professor from London, slightly raspy, speaking with a gentle, scholarly authority."
-            className="min-h-[100px] text-sm bg-gray-900 border-gray-700 text-gray-200 resize-none focus:border-cyan-500/50 focus:ring-cyan-500/20"
-          />
-        </div>
+        )}
+
+        {editorTab === 'character' && (
+          <div className="flex flex-col h-full space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-cyan-400" />
+                Text Direction
+              </label>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAutoFill}
+                disabled={isGenerating}
+                className="border-cyan-700/50 hover:bg-cyan-900/30 text-cyan-300 h-7"
+              >
+                {isGenerating ? (
+                  <Loader className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                ) : (
+                  <Wand2 className="w-3.5 h-3.5 mr-1.5" />
+                )}
+                Generate
+              </Button>
+            </div>
+            <p className="text-[11px] text-gray-400">
+              The AI will generate a comprehensive voice direction based on the character's profile and any currently selected guides. You can test and refine the generated text below.
+            </p>
+            <Textarea
+              value={customInstruction}
+              onChange={(e) => setCustomInstruction(e.target.value)}
+              placeholder="e.g., Make the speaker sound like a 50-year-old professor from London, slightly raspy, speaking with a gentle, scholarly authority."
+              className="flex-1 min-h-[200px] text-sm bg-gray-900 border-gray-700 text-gray-200 resize-y focus:border-cyan-500/50 focus:ring-cyan-500/20"
+            />
+          </div>
+        )}
       </div>
 
       {/* Footer */}
