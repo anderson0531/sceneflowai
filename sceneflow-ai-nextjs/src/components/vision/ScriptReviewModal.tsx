@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { NarratorVoicePicker } from '@/components/tts/NarratorVoicePicker'
+import { VoiceSelectorDialog } from '@/components/tts/VoiceSelectorDialog'
 import { OptimizeSceneDialog } from '@/components/vision/OptimizeSceneDialog'
 import { AnimatedScore, AnimatedProgressBar } from '@/components/ui/AnimatedScore'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
@@ -428,7 +428,7 @@ export default function ScriptReviewModal({
         console.warn('Failed to load review voice from localStorage:', e)
       }
     }
-    return 'CwhRBWXzGAHq8TQ4Fs17' // Roger - professional narrator (default)
+    return 'en-US-Journey-F' // Google fallback
   })
   const [selectedVoiceName, setSelectedVoiceName] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -442,7 +442,7 @@ export default function ScriptReviewModal({
         // Already warned above
       }
     }
-    return 'Roger'
+    return 'en-US-Journey-F'
   })
   const [voiceSelectorOpen, setVoiceSelectorOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en') // Keep for TTS playback
@@ -639,10 +639,10 @@ export default function ScriptReviewModal({
     try {
       // Use the selected voice directly - trust the user's selection from VoiceSelectorDialog
       // Only fall back to default if no voice is selected at all
-      const voiceToUse = selectedVoiceId || 'CwhRBWXzGAHq8TQ4Fs17' // Roger as ultimate fallback
+      const voiceToUse = selectedVoiceId || 'en-US-Journey-F' // Google fallback
       
       if (!selectedVoiceId) {
-        console.log('No voice in state, using default Roger')
+        console.log('No voice in state, using default Google')
       } else {
         console.log('Using selected voice:', selectedVoiceId, selectedVoiceName)
       }
@@ -670,16 +670,13 @@ export default function ScriptReviewModal({
         }
       }
       
-      const response = await fetch('/api/tts/elevenlabs', {
+      const response = await fetch('/api/tts/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: textToSpeak,
           voiceId: voiceToUse,
-          language: selectedLanguage,
-          parallel: true,
-          stability: 0.5,
-          similarityBoost: 0.75
+          language: selectedLanguage
         })
       })
 
@@ -2367,7 +2364,8 @@ Examples:
         </div>
 
         {/* Voice Selector Dialog */}
-        <NarratorVoicePicker
+        <VoiceSelectorDialog
+          provider="google"
           open={voiceSelectorOpen}
           onOpenChange={setVoiceSelectorOpen}
           selectedVoiceId={selectedVoiceId}
