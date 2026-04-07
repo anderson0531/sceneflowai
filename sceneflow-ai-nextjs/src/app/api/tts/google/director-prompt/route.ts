@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateText } from '@/lib/vertexai/gemini'
+import { generateText, generateWithVision } from '@/lib/vertexai/gemini'
 import { CharacterContext, ScreenplayContext } from '@/lib/voiceRecommendation'
 
 export const dynamic = 'force-dynamic'
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing character context' }, { status: 400 })
     }
 
-    const { name, role, attributes, backstory, description, age, gender, ethnicity, personality } = characterContext
+    const { name, role, attributes, backstory, description, age, gender, ethnicity, personality, referenceImage } = characterContext
     
     // Construct the prompt for the director script
     let prompt = `You are an expert Voice Director casting a voice actor for a specific character. 
@@ -34,6 +34,11 @@ Personality: ${personality || 'Not specified'}
 Description: ${description || 'Not specified'}
 Traits/Attributes: ${attributes ? Object.entries(attributes).map(([k, v]) => `${k}: ${v}`).join(', ') : 'Not specified'}
 Backstory: ${backstory || 'Not specified'}`
+
+    if (referenceImage) {
+      prompt += `\n\nREFERENCE IMAGE:
+A visual reference of the character is attached. Analyze their facial structure, apparent age, ethnicity, and overall demeanor to infer vocal qualities that perfectly match their physical presence.`
+    }
 
     if (selectedInstructions && selectedInstructions.length > 0) {
       prompt += `\n\nSELECTED VOICE TRAITS:
@@ -58,12 +63,54 @@ Synopsis: ${screenplayContext.synopsis || 'Not specified'}`
 5. Do NOT wrap the output in markdown code blocks or JSON formatting. Just return the raw text.
 6. Example output format: "An African American male voice in his late 40s to early 50s. The tone is a warm, textured baritone with a slight, natural huskiness. As the visionary host of 'Cognitive Horizons,' his delivery balances an energetic, forward-leaning enthusiasm with a measured, thoughtful pacing. His emotional delivery exudes a deep, empathetic hope, capturing the calm authority of an intellectually stimulating mind grappling with profound responsibilities."`
 
-    const response = await generateText(prompt, {
-      temperature: 0.7,
-      maxOutputTokens: 250
-    })
+    let generatedText = ''
 
-    let generatedText = response.text.trim()
+    if (referenceImage && referenceImage.startsWith('http')) {
+      try {
+        console.log(`[Director Prompt] Generating with vision for "${name}"...`)
+        const imageResponse = await fetch(referenceImage)
+        if (!imageResponse.ok) {
+          throw new Error(`Failed to fetch reference image: ${imageResponse.status}`)
+        }
+        
+        const imageBuffer = await imageResponse.arrayBuffer()
+        const base64Image = Buffer.from(imageBuffer).toString('base64')
+        const contentType = imageResponse.headers.get('content-type') || 'image/jpeg'
+        
+        const response = await generateWithVision(
+          [
+            {
+              inlineData: {
+                mimeType: contentType,
+                data: base64Image
+              }
+            },
+            { text: prompt }
+          ],
+          {
+            temperature: 0.7,
+            maxOutputTokens: 250,
+          }
+        )
+        
+        generatedText = response.text.trim()
+      } catch (visionError) {
+        console.warn('[Director Prompt] Vision failed, falling back to text-only:', visionError)
+        // Fallback to text-only generation
+        const response = await generateText(prompt, {
+          temperature: 0.7,
+          maxOutputTokens: 250
+        })
+        generatedText = response.text.trim()
+      }
+    } else {
+      // Text-only generation
+      const response = await generateText(prompt, {
+        temperature: 0.7,
+        maxOutputTokens: 250
+      })
+      generatedText = response.text.trim()
+    }
     
     // Fallback: If Gemini still returns JSON, parse it out
     if (generatedText.startsWith('{')) {
