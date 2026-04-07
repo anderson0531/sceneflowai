@@ -433,22 +433,38 @@ export async function POST(req: NextRequest) {
       references = project.metadata?.visionPhase?.references || []  // Capture references
       
       if (scene) {
-        // Prefer action (detailed) over visualDescription (camera-focused)
-        // Combine both if they're different for maximum context
-        fullSceneContext = scene.action || scene.visualDescription || scene.heading || scenePrompt || ''
+        // PRIORITY 1: Enhanced Scene Direction (customPrompt from PromptBuilder, or sceneDirectionText)
+        // PRIORITY 2: Original script components (action + visualDescription)
+        const sceneDirectionText = scene.sceneDirectionText || ''
+        
+        if (customPrompt && customPrompt.trim()) {
+          fullSceneContext = customPrompt
+          console.log('[Scene Image] Using custom prompt from ScenePromptBuilder')
+        } else if (sceneDirectionText && sceneDirectionText.trim()) {
+          fullSceneContext = sceneDirectionText
+          console.log('[Scene Image] Using enhanced Scene Direction as base context')
+        } else if (scenePrompt && scenePrompt.trim()) {
+          fullSceneContext = scenePrompt
+          console.log('[Scene Image] Using explicitly provided scenePrompt')
+        } else {
+          // Fallback to original script components
+          // Prefer action (detailed) over visualDescription (camera-focused)
+          fullSceneContext = scene.action || scene.visualDescription || scene.heading || ''
 
-        // If both action and visualDescription exist and are different, combine them
-        if (scene.action && scene.visualDescription && scene.action !== scene.visualDescription) {
-          fullSceneContext = `${scene.action} ${scene.visualDescription}`
+          // If both action and visualDescription exist and are different, combine them
+          if (scene.action && scene.visualDescription && scene.action !== scene.visualDescription) {
+            fullSceneContext = `${scene.action} ${scene.visualDescription}`
+          }
+          console.log('[Scene Image] Using original script components (action/visualDescription)')
         }
         
-        console.log('[Scene Image] Using scene data:', {
+        console.log('[Scene Image] Scene context established:', {
           hasVisualDescription: !!scene.visualDescription,
           hasAction: !!scene.action,
-          hasHeading: !!scene.heading,
+          hasSceneDirection: !!sceneDirectionText,
+          hasCustomPrompt: !!customPrompt,
           contextLength: fullSceneContext.length,
-          sceneIndex: sceneIndex,
-          combinedFields: !!(scene.action && scene.visualDescription && scene.action !== scene.visualDescription)
+          sceneIndex: sceneIndex
         })
       }
     }

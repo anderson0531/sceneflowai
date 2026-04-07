@@ -16,11 +16,17 @@ async function generateAndSaveMusicForScene(scene: any, projectId: string, scene
     
     console.log(`[Batch Audio] Generating music for scene ${sceneIdx + 1}: ${description.substring(0, 50)}...`)
     
-    // Generate music via our API endpoint
-    const musicResponse = await fetch(`${baseUrl}/api/tts/elevenlabs/music`, {
+    // Generate music via our API endpoint, using saveToBlob to avoid payload limits
+    const musicResponse = await fetch(`${baseUrl}/api/tts/google/music`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: description, duration: 30 })
+      body: JSON.stringify({ 
+        text: description, 
+        duration: 30,
+        saveToBlob: true,
+        projectId,
+        sceneId: `scene-${sceneIdx}`
+      })
     })
     
     if (!musicResponse.ok) {
@@ -29,19 +35,13 @@ async function generateAndSaveMusicForScene(scene: any, projectId: string, scene
       return null
     }
     
-    const arrayBuffer = await musicResponse.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+    const result = await musicResponse.json()
+    if (result.url) {
+      console.log(`[Batch Audio] Music saved for scene ${sceneIdx + 1}: ${result.url}`)
+      return result.url
+    }
     
-    // Upload to Vercel Blob
-    const timestamp = Date.now()
-    const filename = `audio/music/${projectId}/scene${sceneIdx}-music-${timestamp}.mp3`
-    const blob = await put(filename, buffer, {
-      access: 'public',
-      contentType: 'audio/mpeg',
-    })
-    
-    console.log(`[Batch Audio] Music saved for scene ${sceneIdx + 1}: ${blob.url}`)
-    return blob.url
+    return null
   } catch (error: any) {
     console.error(`[Batch Audio] Music generation failed for scene ${sceneIdx + 1}:`, error?.message || String(error))
     return null

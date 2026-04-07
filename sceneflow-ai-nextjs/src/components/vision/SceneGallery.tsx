@@ -81,6 +81,7 @@ interface SceneGalleryProps {
   /** Called when batch generation starts/ends — parent uses this to suppress per-scene overlays */
   onBatchGenerateStart?: () => void
   onBatchGenerateEnd?: () => void
+  onUpdateSceneAudio?: (sceneIndex: number) => Promise<void>
 }
 
 const buildSceneKey = (scene: any, index: number) => scene.sceneId || scene.id || `scene-${index}`
@@ -114,6 +115,7 @@ export function SceneGallery({
   onReorderScenes,
   onBatchGenerateStart,
   onBatchGenerateEnd,
+  onUpdateSceneAudio,
 }: SceneGalleryProps) {
   // Drag and drop sensors
   const sensors = useSensors(
@@ -413,27 +415,6 @@ export function SceneGallery({
             </Tooltip>
           )}
           {/* Generate All Audio button */}
-          {onOpenGenerateAudio && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onOpenGenerateAudio}
-                  disabled={isGeneratingAudio}
-                  className="flex items-center gap-2 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-emerald-500/30 hover:border-emerald-500/50 hover:from-emerald-500/20 hover:to-teal-500/20"
-                >
-                  {isGeneratingAudio ? (
-                    <Loader className="w-4 h-4 animate-spin text-emerald-400" />
-                  ) : (
-                    <Volume2 className="w-4 h-4 text-emerald-400" />
-                  )}
-                  <span>Generate Audio</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Generate narration and dialogue audio for all scenes</TooltipContent>
-            </Tooltip>
-          )}
           {/* Language Stream Selector */}
           {availableLanguages.length > 1 && (
             <div className="flex items-center gap-1.5">
@@ -656,6 +637,7 @@ export function SceneGallery({
                     return location ? pinnedLocations.has(location) : false
                   })()}
                   showDragHandle={!!onReorderScenes}
+                  onUpdateSceneAudio={onUpdateSceneAudio ? async () => { await onUpdateSceneAudio(idx) } : undefined}
                 />
                   </SortableSceneWrapper>
                 )
@@ -763,6 +745,7 @@ interface SceneCardProps {
   isLocationPinned?: boolean
   /** Whether to show the drag handle for reordering */
   showDragHandle?: boolean
+  onUpdateSceneAudio?: (sceneIndex: number) => Promise<void>
 }
 
 // Sortable wrapper component for drag-and-drop
@@ -836,6 +819,7 @@ function SceneCard({
   onPinAsLocationReference,
   isLocationPinned = false,
   showDragHandle = false,
+  onUpdateSceneAudio,
 }: SceneCardProps) {
   const hasImage = !!scene.imageUrl
   const fileInputRef = React.useRef<HTMLInputElement>(null)
@@ -1134,7 +1118,7 @@ function SceneCard({
         </div>
       )}
       
-      {/* Audio Status Indicator */}
+      {/* Audio Status Indicator & Generate Button */}
       {(() => {
         const hasNarration = scene.narrationAudio?.en?.url || scene.narrationAudioUrl
         const hasDialogue = scene.dialogueAudio?.en && scene.dialogueAudio.en.length > 0
@@ -1142,19 +1126,41 @@ function SceneCard({
         const hasSfx = scene.sfxAudio && scene.sfxAudio.length > 0
         const hasAnyAudio = hasNarration || hasDialogue || hasMusic || hasSfx
         
-        if (!hasAnyAudio) return null
-        
         return (
-          <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/60 rounded-full px-2 py-1">
-            <Volume2 className="w-3 h-3 text-emerald-400" />
-            <span className="text-[10px] text-white font-medium">
-              {[
-                hasNarration && 'VO',
-                hasDialogue && 'DLG',
-                hasMusic && '♪',
-                hasSfx && 'SFX'
-              ].filter(Boolean).join(' · ')}
-            </span>
+          <div className="absolute top-2 right-2 flex items-center gap-1">
+            {hasAnyAudio && (
+              <div className="flex items-center gap-1 bg-black/60 rounded-full px-2 py-1">
+                <Volume2 className="w-3 h-3 text-emerald-400" />
+                <span className="text-[10px] text-white font-medium">
+                  {[
+                    hasNarration && 'VO',
+                    hasDialogue && 'DLG',
+                    hasMusic && '♪',
+                    hasSfx && 'SFX'
+                  ].filter(Boolean).join(' · ')}
+                </span>
+              </div>
+            )}
+            
+            {onUpdateSceneAudio && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-6 px-2 rounded-full bg-black/60 hover:bg-black/80 border-0 text-white"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onUpdateSceneAudio(sceneNumber - 1)
+                    }}
+                  >
+                    <RefreshCw className="w-3 h-3 text-emerald-400 mr-1" />
+                    <span className="text-[10px] font-medium text-emerald-400">Gen Audio</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Generate narration, dialogue, music, and SFX for this scene</TooltipContent>
+              </Tooltip>
+            )}
           </div>
         )
       })()}

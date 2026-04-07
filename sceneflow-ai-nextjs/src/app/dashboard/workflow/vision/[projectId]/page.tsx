@@ -10766,6 +10766,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onReorderScenes={handleReorderScenes}
                             onBatchGenerateStart={() => { batchGeneratingRef.current = true }}
                             onBatchGenerateEnd={() => { batchGeneratingRef.current = false; overlayStore.hide() }}
+                            onUpdateSceneAudio={handleUpdateSceneAudio}
                             onClose={() => setShowSceneGallery(false)}
                             onAddToSceneLibrary={async (index, imageUrl) => {
                               const scenes = normalizeScenes(script)
