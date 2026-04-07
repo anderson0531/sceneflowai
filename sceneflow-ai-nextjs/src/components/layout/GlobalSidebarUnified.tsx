@@ -397,7 +397,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
           )}
 
           {/* Storyboard Section */}
-          {config.sectionVisibility.screeningRoom && (
+          {isInProductionPhase && (
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => {
