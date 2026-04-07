@@ -498,169 +498,181 @@ export function VoiceSelectionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-        <DialogHeader className="pb-2">
-          <DialogTitle 
-            className="flex items-center gap-1.5 font-medium text-gray-200"
-            style={{ fontSize: '15px', lineHeight: '1.3' }}
-          >
-            <Volume2 className="w-3.5 h-3.5 text-blue-400" />
-            {dialogTitle}
-          </DialogTitle>
-          <DialogDescription 
-            className="text-gray-400"
-            style={{ fontSize: '12px', lineHeight: '1.4' }}
-          >
-            {dialogDesc}
-          </DialogDescription>
-        </DialogHeader>
-
-        {configuringVoice ? (
-          <div className="flex-1 overflow-hidden flex flex-col mt-4 -mx-6 -mb-6">
-            <VoiceDirectionEditor
-              voiceId={configuringVoice.id}
-              voiceName={configuringVoice.name}
-              initialPrompt={characterContext?.voiceDescription || ''}
-              characterContext={characterContext}
-              screenplayContext={screenplayContext}
-              onSave={handleSaveConfiguredVoice}
-              onCancel={handleCancelConfigure}
-            />
-          </div>
-        ) : showCreateTab ? (
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'browse' | 'create')} className="flex-1 flex flex-col overflow-hidden">
-            <TabsList className="shrink-0 h-8 bg-transparent border-b border-gray-700 rounded-none p-0 gap-6">
-              <TabsTrigger 
-                value="browse" 
-                className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 bg-transparent rounded-none px-0 pb-2"
-                style={{ fontSize: '13px', textTransform: 'none', letterSpacing: 'normal', minWidth: '120px' }}
+      <DialogContent className="max-w-5xl max-h-[85vh] overflow-hidden flex flex-col p-0 gap-0">
+        <div className="flex flex-1 overflow-hidden">
+          {/* Left Panel: Browse/Create Voices */}
+          <div className="flex-1 flex flex-col p-6 overflow-hidden">
+            <DialogHeader className="pb-2">
+            <DialogTitle 
+              className="flex items-center justify-between font-medium text-gray-200 w-full"
+              style={{ fontSize: '15px', lineHeight: '1.3' }}
+            >
+              <div className="flex items-center gap-1.5">
+                <Volume2 className="w-3.5 h-3.5 text-blue-400" />
+                {dialogTitle}
+              </div>
+            </DialogTitle>
+              <DialogDescription 
+                className="text-gray-400"
+                style={{ fontSize: '12px', lineHeight: '1.4' }}
               >
-                <span className="inline-flex items-center gap-1.5"><Search className="w-3 h-3 shrink-0" />Browse Voices</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="create" 
-                className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 bg-transparent rounded-none px-0 pb-2"
-                style={{ fontSize: '13px', textTransform: 'none', letterSpacing: 'normal', minWidth: '120px' }}
-              >
-                <span className="inline-flex items-center gap-1.5"><Sparkles className="w-3 h-3 shrink-0" />Create Custom</span>
-              </TabsTrigger>
-            </TabsList>
+                {dialogDesc}
+              </DialogDescription>
+            </DialogHeader>
 
-            {/* Browse Tab */}
-            <TabsContent value="browse" className="flex-1 overflow-hidden flex flex-col mt-4">
-              <BrowseVoiceContent
-                voices={voices}
-                loading={loading}
-                filteredVoices={filteredVoices}
-                recommendations={recommendations}
-                recommendedVoiceIds={recommendedVoiceIds}
-                getRecommendationScore={getRecommendationScore}
-                selectedVoiceId={selectedVoiceId}
-                searchQuery={searchQuery}
-                debouncedQuery={debouncedQuery}
-                genderFilter={genderFilter}
-                genderOptions={genderOptions}
-                showCustomOnly={showCustomOnly}
-                showFavoritesOnly={showFavoritesOnly}
-                favoriteIds={favoriteIds}
-                playingVoiceId={playingVoiceId}
-                characterContext={characterContext}
-                onSearchChange={setSearchQuery}
-                onGenderFilterChange={setGenderFilter}
-                onToggleCustomOnly={() => setShowCustomOnly(p => !p)}
-                onToggleFavoritesOnly={() => setShowFavoritesOnly(p => !p)}
-                onToggleNarratorsOnly={() => setShowNarratorsOnly(p => !p)}
-                onToggleFavorite={toggleFavorite}
-                onToggleNarrator={toggleNarrator}
-                showNarratorsOnly={showNarratorsOnly}
-                narratorIds={narratorIds}
-                onPreview={handlePreview}
-                onSelect={handleSelectVoice}
-                onRefresh={fetchVoices}
-              />
-            </TabsContent>
-
-            {/* Create Tab */}
-            <TabsContent value="create" className="flex-1 overflow-y-auto mt-4">
-              <Tabs value={createTab} onValueChange={(v) => setCreateTab(v as 'design' | 'clone')} className="h-full">
-                <TabsList className="mb-3 h-8 bg-transparent border-b border-gray-700 rounded-none p-0 gap-6">
-                  {provider === 'elevenlabs' && (
-                    <TabsTrigger 
-                      value="design" 
-                      className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-purple-500 bg-transparent rounded-none px-0 pb-2"
-                      style={{ fontSize: '13px', textTransform: 'none', letterSpacing: 'normal', minWidth: '120px' }}
-                    >
-                      <span className="inline-flex items-center gap-1.5"><Wand2 className="w-3 h-3 shrink-0" />AI Voice Design</span>
-                    </TabsTrigger>
-                  )}
+            {showCreateTab ? (
+              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'browse' | 'create')} className="flex-1 flex flex-col overflow-hidden">
+                <TabsList className="shrink-0 h-8 bg-transparent border-b border-gray-700 rounded-none p-0 gap-6">
                   <TabsTrigger 
-                    value="clone" 
-                    className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-purple-500 bg-transparent rounded-none px-0 pb-2"
-                    style={{ fontSize: '13px', textTransform: 'none', letterSpacing: 'normal', minWidth: '100px' }}
+                    value="browse" 
+                    className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 bg-transparent rounded-none px-0 pb-2"
+                    style={{ fontSize: '13px', textTransform: 'none', letterSpacing: 'normal', minWidth: '120px' }}
                   >
-                    <span className="inline-flex items-center gap-1.5"><Mic className="w-3 h-3 shrink-0" />{provider === 'google' ? 'Director Voice Clone' : 'Clone Voice'}</span>
+                    <span className="inline-flex items-center gap-1.5"><Search className="w-3 h-3 shrink-0" />Browse Voices</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="create" 
+                    className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 bg-transparent rounded-none px-0 pb-2"
+                    style={{ fontSize: '13px', textTransform: 'none', letterSpacing: 'normal', minWidth: '120px' }}
+                  >
+                    <span className="inline-flex items-center gap-1.5"><Sparkles className="w-3 h-3 shrink-0" />Create Custom</span>
                   </TabsTrigger>
                 </TabsList>
 
-                {provider === 'elevenlabs' && (
-                  <TabsContent value="design">
-                    <VoiceDesignPanel
-                      onVoiceCreated={handleVoiceCreated}
-                      characterContext={characterContext}
-                      screenplayContext={screenplayContext}
-                      onVoiceDescriptionGenerated={onVoiceDescriptionGenerated}
-                    />
-                  </TabsContent>
-                )}
-
-                <TabsContent value="clone">
-                  <VoiceClonePanel
-                    onVoiceCreated={handleVoiceCreated}
-                    characterName={characterContext?.name}
-                    characterAudioSampleUrl={characterAudioSampleUrl}
+                {/* Browse Tab */}
+                <TabsContent value="browse" className="flex-1 overflow-hidden flex flex-col mt-4">
+                  <BrowseVoiceContent
+                    voices={voices}
+                    loading={loading}
+                    filteredVoices={filteredVoices}
+                    recommendations={recommendations}
+                    recommendedVoiceIds={recommendedVoiceIds}
+                    getRecommendationScore={getRecommendationScore}
+                    selectedVoiceId={configuringVoice?.id || selectedVoiceId}
+                    searchQuery={searchQuery}
+                    debouncedQuery={debouncedQuery}
+                    genderFilter={genderFilter}
+                    genderOptions={genderOptions}
+                    showCustomOnly={showCustomOnly}
+                    showFavoritesOnly={showFavoritesOnly}
+                    favoriteIds={favoriteIds}
+                    playingVoiceId={playingVoiceId}
                     characterContext={characterContext}
-                    screenplayContext={screenplayContext}
-                    provider={provider}
+                    onSearchChange={setSearchQuery}
+                    onGenderFilterChange={setGenderFilter}
+                    onToggleCustomOnly={() => setShowCustomOnly(p => !p)}
+                    onToggleFavoritesOnly={() => setShowFavoritesOnly(p => !p)}
+                    onToggleNarratorsOnly={() => setShowNarratorsOnly(p => !p)}
+                    onToggleFavorite={toggleFavorite}
+                    onToggleNarrator={toggleNarrator}
+                    showNarratorsOnly={showNarratorsOnly}
+                    narratorIds={narratorIds}
+                    onPreview={handlePreview}
+                    onSelect={handleSelectVoice}
+                    onRefresh={fetchVoices}
                   />
                 </TabsContent>
+
+                {/* Create Tab */}
+                <TabsContent value="create" className="flex-1 overflow-y-auto mt-4">
+                  <Tabs value={createTab} onValueChange={(v) => setCreateTab(v as 'design' | 'clone')} className="h-full">
+                    <TabsList className="mb-3 h-8 bg-transparent border-b border-gray-700 rounded-none p-0 gap-6">
+                      {provider === 'elevenlabs' && (
+                        <TabsTrigger 
+                          value="design" 
+                          className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-purple-500 bg-transparent rounded-none px-0 pb-2"
+                          style={{ fontSize: '13px', textTransform: 'none', letterSpacing: 'normal', minWidth: '120px' }}
+                        >
+                          <span className="inline-flex items-center gap-1.5"><Wand2 className="w-3 h-3 shrink-0" />AI Voice Design</span>
+                        </TabsTrigger>
+                      )}
+                      <TabsTrigger 
+                        value="clone" 
+                        className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-purple-500 bg-transparent rounded-none px-0 pb-2"
+                        style={{ fontSize: '13px', textTransform: 'none', letterSpacing: 'normal', minWidth: '100px' }}
+                      >
+                        <span className="inline-flex items-center gap-1.5"><Mic className="w-3 h-3 shrink-0" />{provider === 'google' ? 'Director Voice Clone' : 'Clone Voice'}</span>
+                      </TabsTrigger>
+                    </TabsList>
+
+                    {provider === 'elevenlabs' && (
+                      <TabsContent value="design">
+                        <VoiceDesignPanel
+                          onVoiceCreated={handleVoiceCreated}
+                          characterContext={characterContext}
+                          screenplayContext={screenplayContext}
+                          onVoiceDescriptionGenerated={onVoiceDescriptionGenerated}
+                        />
+                      </TabsContent>
+                    )}
+
+                    <TabsContent value="clone">
+                      <VoiceClonePanel
+                        onVoiceCreated={handleVoiceCreated}
+                        characterName={characterContext?.name}
+                        characterAudioSampleUrl={characterAudioSampleUrl}
+                        characterContext={characterContext}
+                        screenplayContext={screenplayContext}
+                        provider={provider}
+                      />
+                    </TabsContent>
+                  </Tabs>
+                </TabsContent>
               </Tabs>
-            </TabsContent>
-          </Tabs>
-        ) : (
-          /* Browse-only mode (no Create tab) */
-          <div className="flex-1 overflow-hidden flex flex-col mt-4">
-            <BrowseVoiceContent
-              voices={voices}
-              loading={loading}
-              filteredVoices={filteredVoices}
-              recommendations={recommendations}
-              recommendedVoiceIds={recommendedVoiceIds}
-              getRecommendationScore={getRecommendationScore}
-              selectedVoiceId={selectedVoiceId}
-              searchQuery={searchQuery}
-              debouncedQuery={debouncedQuery}
-              genderFilter={genderFilter}
-              genderOptions={genderOptions}
-              showCustomOnly={showCustomOnly}
-              showFavoritesOnly={showFavoritesOnly}
-              showNarratorsOnly={showNarratorsOnly}
-              favoriteIds={favoriteIds}
-              narratorIds={narratorIds}
-              playingVoiceId={playingVoiceId}
-              characterContext={characterContext}
-              onSearchChange={setSearchQuery}
-              onGenderFilterChange={setGenderFilter}
-              onToggleCustomOnly={() => setShowCustomOnly(p => !p)}
-              onToggleFavoritesOnly={() => setShowFavoritesOnly(p => !p)}
-              onToggleNarratorsOnly={() => setShowNarratorsOnly(p => !p)}
-              onToggleFavorite={toggleFavorite}
-              onToggleNarrator={toggleNarrator}
-              onPreview={handlePreview}
-              onSelect={handleSelectVoice}
-              onRefresh={fetchVoices}
-            />
+            ) : (
+              /* Browse-only mode (no Create tab) */
+              <div className="flex-1 overflow-hidden flex flex-col mt-4">
+                <BrowseVoiceContent
+                  voices={voices}
+                  loading={loading}
+                  filteredVoices={filteredVoices}
+                  recommendations={recommendations}
+                  recommendedVoiceIds={recommendedVoiceIds}
+                  getRecommendationScore={getRecommendationScore}
+                  selectedVoiceId={configuringVoice?.id || selectedVoiceId}
+                  searchQuery={searchQuery}
+                  debouncedQuery={debouncedQuery}
+                  genderFilter={genderFilter}
+                  genderOptions={genderOptions}
+                  showCustomOnly={showCustomOnly}
+                  showFavoritesOnly={showFavoritesOnly}
+                  showNarratorsOnly={showNarratorsOnly}
+                  favoriteIds={favoriteIds}
+                  narratorIds={narratorIds}
+                  playingVoiceId={playingVoiceId}
+                  characterContext={characterContext}
+                  onSearchChange={setSearchQuery}
+                  onGenderFilterChange={setGenderFilter}
+                  onToggleCustomOnly={() => setShowCustomOnly(p => !p)}
+                  onToggleFavoritesOnly={() => setShowFavoritesOnly(p => !p)}
+                  onToggleNarratorsOnly={() => setShowNarratorsOnly(p => !p)}
+                  onToggleFavorite={toggleFavorite}
+                  onToggleNarrator={toggleNarrator}
+                  onPreview={handlePreview}
+                  onSelect={handleSelectVoice}
+                  onRefresh={fetchVoices}
+                />
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Right Panel: Voice Direction Editor */}
+          {configuringVoice && (
+            <div className="w-[400px] border-l border-gray-800 flex flex-col bg-gray-950/50">
+              <VoiceDirectionEditor
+                key={configuringVoice.id}
+                voiceId={configuringVoice.id}
+                voiceName={configuringVoice.name}
+                initialPrompt={characterContext?.voiceDescription || ''}
+                characterContext={characterContext}
+                screenplayContext={screenplayContext}
+                onSave={handleSaveConfiguredVoice}
+                onCancel={handleCancelConfigure}
+              />
+            </div>
+          )}
+        </div>
+
         {/* Save Voice Sample Overlay */}
         {showSaveVoiceSample && createdVoiceInfo && (
           <div className="absolute inset-0 bg-gray-950/95 z-50 flex flex-col items-center justify-center p-8 rounded-lg">

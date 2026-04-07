@@ -242,19 +242,14 @@ export function VoiceDirectionEditor({
     <div className="flex flex-col h-full bg-gray-950 text-gray-200">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-800">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={onCancel} className="h-8 w-8 p-0 text-gray-400 hover:text-white">
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <div>
-            <h3 className="font-semibold text-white flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-cyan-400" />
-              Voice Direction
-            </h3>
-            <p className="text-xs text-gray-400">
-              Shaping <span className="text-gray-300 font-medium">{voiceName}</span> for {name}
-            </p>
-          </div>
+        <div>
+          <h3 className="font-semibold text-white flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-cyan-400" />
+            Voice Direction
+          </h3>
+          <p className="text-xs text-gray-400">
+            Shaping <span className="text-gray-300 font-medium">{voiceName}</span> for {name}
+          </p>
         </div>
       </div>
 
@@ -388,10 +383,10 @@ export function VoiceDirectionEditor({
         </Button>
         <div className="flex gap-2">
           <Button variant="ghost" onClick={onCancel} className="text-gray-400 hover:text-white">
-            Cancel
+            Close
           </Button>
           <Button onClick={handleSave} className="bg-cyan-600 hover:bg-cyan-500 text-white">
-            Save Voice & Profile
+            Confirm Selection
           </Button>
         </div>
       </div>
