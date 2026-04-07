@@ -1,7 +1,11 @@
-with open('src/components/vision/CharacterLibrary.tsx', 'r') as f:
+import re
+
+with open('sceneflow-ai-nextjs/src/components/vision/CharacterLibrary.tsx', 'r') as f:
     content = f.read()
 
 start = content.find("const CharacterCard = ({ character")
+# The end of CharacterCard is just before `// Narrator Character Card Component` or similar.
+# Let's find the last `}` before `// Narrator Character Card Component`
 end = content.find("// Narrator Character Card Component", start)
 if end == -1:
     end = content.find("// Scene Description Voice Card Component", start)

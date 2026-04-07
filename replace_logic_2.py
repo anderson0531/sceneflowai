@@ -1,40 +1,42 @@
 import re
 
-with open('src/components/vision/CharacterLibrary.tsx', 'r') as f:
-    content = f.read()
+with open('character_card.tsx', 'r') as f:
+    text = f.read()
 
-start_marker = "  return (\n    <div\n      ref={setNodeRef}\n      style={draggableStyle}\n      className=\"relative bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all overflow-hidden\"\n    >"
-end_marker = "        {/* Voice Selection Dialog */}"
+start_sig = '  return (\n    <div\n      ref={setNodeRef}\n      style={draggableStyle}\n      className="relative bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all overflow-hidden"\n    >'
 
-start_idx = content.find(start_marker)
-end_idx = content.find(end_marker, start_idx)
+idx = text.find(start_sig)
+before_return = text[:idx]
 
-# Extract pieces using regex
-old_block = content[start_idx:end_idx]
+def extract_section(s, e):
+    i1 = text.find(s, idx)
+    i2 = text.find(e, i1)
+    return text[i1:i2]
 
-def extract_between(text, start, end):
-    s = text.find(start)
-    if s == -1: return ""
-    e = text.find(end, s + len(start))
-    if e == -1: return ""
-    return text[s:e]
+# Image Section: From `{/* Image Section */}` to `{/* Status Badges - Top Right */}`. It lacks closing `</div>`.
+image_section = extract_section('{/* Image Section */}', '{/* Status Badges - Top Right */}') + "</div>"
 
-# 1. Image Section (Lines 1322-1459 approx)
-image_section = extract_between(old_block, "{/* Image Section */}", "        {/* Status Badges")
+# Header section: From `{/* Header */}` to `{/* Description */}`. Needs to end cleanly. 
+# In original, it ends with `</div>\n        \n        {/* Description */}`
+header_section = extract_section('{/* Header */}', '{/* Description */}')
 
-# 2. Header (Name, Role, Edit logic)
-header_section = extract_between(old_block, "{/* Header */}", "{/* Description */}")
+# Desc section: `p` tag
+desc_section = extract_section('{/* Description */}', '{/* Body Description - Editable for image generation prompts */}')
 
-# 3. Body description
-body_desc_section = extract_between(old_block, "{/* Body Description - Editable", "{/* Voice Button")
+# Body Desc Section:
+body_desc_section = extract_section('{/* Body Description - Editable for image generation prompts */}', '{/* Voice Button - Above Wardrobes */}')
 
-# 4. Wardrobe collection management
-wardrobe_section = extract_between(old_block, "{/* Primary CTA:", "{/* Compact Scene-Mapped Wardrobe List */}")
+# Wardrobe Top Section:
+wardrobe_top = extract_section('{/* Primary CTA: Analyze Script for Outfits (Automate) */}', '{/* Compact Scene-Mapped Wardrobe List */}')
 
-# 5. Bottom action row (AI assist, Generate previews)
-wardrobe_bottom = extract_between(old_block, "{/* Bottom action row */}", "        </div>\n        \n\n        \n")
+# Wardrobe Bottom Section:
+wardrobe_bottom = extract_section('{/* Bottom action row */}', '{/* Voice Selection Dialog */}')
 
-new_ui = f"""  return (
+rest_start = '{/* Voice Selection Dialog */}'
+rest_end = text.rfind('}')
+rest_section = text[text.find(rest_start):rest_end]
+
+new_return = f"""  return (
     <div
       ref={{setNodeRef}}
       style={{draggableStyle}}
@@ -50,18 +52,32 @@ new_ui = f"""  return (
         </div>
       )}}
 
+      {{/* Approve Button */}}
+      {{hasImage && !isApproved && (
+        <div className="p-2 bg-green-50 dark:bg-green-900/20 border-b border-green-200 dark:border-green-800">
+          <button
+            onClick={{(e) => {{ 
+              e.stopPropagation()
+              onApprove()
+            }}}}
+            disabled={{isGenerating}}
+            className="w-full flex items-center justify-center px-3 py-2 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50"
+          >
+            <Check className="w-3 h-3 inline mr-1" />
+            Approve Image
+          </button>
+        </div>
+      )}}
+
       <div className="p-4 space-y-4">
         {{/* Header Section */}}
         <div className="flex items-start justify-between gap-2">
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
 {header_section}
           </div>
           <button
-            onClick={{(e) => {{
-              e.stopPropagation()
-              setIsCollapsed(true)
-            }}}}
-            className="p-1 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors shrink-0"
+            onClick={{(e) => {{ e.stopPropagation(); setIsCollapsed(true); }}}}
+            className="p-1.5 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors shrink-0"
             title="Hide character card"
           >
             <ChevronUp className="w-4 h-4" />
@@ -71,46 +87,43 @@ new_ui = f"""  return (
         {{/* Status Indicators */}}
         <div className="flex flex-wrap gap-2">
           {{character.voiceConfig ? (
-            <div className="bg-green-500/10 text-green-700 dark:text-green-400 text-[10px] px-2 py-1 rounded-md flex items-center gap-1 border border-green-500/20">
+            <div className="bg-green-500/10 text-green-700 dark:text-green-400 text-[10px] px-2.5 py-1 rounded-md flex items-center gap-1.5 border border-green-500/20 shadow-sm">
               <Mic className="w-3 h-3" /> <span>Voice</span>
             </div>
           ) : (
-            <div className="bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[10px] px-2 py-1 rounded-md flex items-center gap-1 border border-amber-500/20" title="Assign voice for audio generation">
+            <div className="bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[10px] px-2.5 py-1 rounded-md flex items-center gap-1.5 border border-amber-500/20 shadow-sm" title="Assign voice for audio generation">
               <AlertCircle className="w-3 h-3" /> <span>No Voice</span>
             </div>
           )}}
           {{character.referenceImage && (
-            <div className="bg-blue-500/10 text-blue-700 dark:text-blue-400 text-[10px] px-2 py-1 rounded-md flex items-center gap-1 border border-blue-500/20">
+            <div className="bg-blue-500/10 text-blue-700 dark:text-blue-400 text-[10px] px-2.5 py-1 rounded-md flex items-center gap-1.5 border border-blue-500/20 shadow-sm">
               <ImageIcon className="w-3 h-3" /> <span>Image</span>
             </div>
           )}}
           {{wardrobes.length > 0 && (
-            <div className="bg-purple-500/10 text-purple-700 dark:text-purple-400 text-[10px] px-2 py-1 rounded-md flex items-center gap-1 border border-purple-500/20">
+            <div className="bg-purple-500/10 text-purple-700 dark:text-purple-400 text-[10px] px-2.5 py-1 rounded-md flex items-center gap-1.5 border border-purple-500/20 shadow-sm">
               <Shirt className="w-3 h-3" /> <span>{{wardrobes.length}} Wardrobes</span>
             </div>
           )}}
         </div>
 
-        {{/* Description */}}
-        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-          {{character.description}}
-        </p>
+{desc_section}
 
         {{/* Subsections */}}
-        <div className="space-y-3 pt-2">
+        <div className="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800">
           
           {{/* Voice Settings */}}
-          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800">
             <button
               onClick={{(e) => {{ e.stopPropagation(); setVoiceSectionExpandedLocal(!voiceSectionExpandedLocal) }}}}
-              className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
+              className="w-full flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
             >
               <div className="flex items-center gap-2 font-medium text-sm text-gray-900 dark:text-gray-100">
                 <Mic className="w-4 h-4 text-gray-500" />
                 Voice Settings
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-gray-500">
+                <span className="text-xs font-medium text-gray-500 px-2 py-0.5 bg-black/5 dark:bg-white/5 rounded">
                   {{character.voiceConfig ? character.voiceConfig.voiceName : 'Required'}}
                 </span>
                 <ChevronDown className={{`w-4 h-4 text-gray-500 transition-transform ${{voiceSectionExpandedLocal ? 'rotate-180' : ''}}`}} />
@@ -123,10 +136,10 @@ new_ui = f"""  return (
                     e.stopPropagation()
                     setVoiceDialogOpen(true)
                   }}}}
-                  className={{`w-full flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${{
+                  className={{`w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${{
                     character.voiceConfig
-                      ? 'bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20'
-                      : 'bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20'
+                      ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40'
+                      : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40'
                   }}`}}
                 >
                   <Volume2 className="w-4 h-4" />
@@ -137,14 +150,14 @@ new_ui = f"""  return (
           </div>
 
           {{/* Talent Reference */}}
-          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800">
             <button
               onClick={{(e) => {{ e.stopPropagation(); setTalentSectionExpanded(!talentSectionExpanded) }}}}
-              className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
+              className="w-full flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
             >
               <div className="flex items-center gap-2 font-medium text-sm text-gray-900 dark:text-gray-100">
                 <ImageIcon className="w-4 h-4 text-gray-500" />
-                Talent Reference
+                Talent
               </div>
               <ChevronDown className={{`w-4 h-4 text-gray-500 transition-transform ${{talentSectionExpanded ? 'rotate-180' : ''}}`}} />
             </button>
@@ -152,43 +165,28 @@ new_ui = f"""  return (
               <div className="p-3 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 space-y-3">
 {image_section}
 
-                {{/* Approve Button */}}
-                {{hasImage && !isApproved && (
-                  <button
-                    onClick={{(e) => {{ 
-                      e.stopPropagation()
-                      onApprove()
-                    }}}}
-                    disabled={{isGenerating}}
-                    className="w-full flex items-center justify-center px-3 py-2 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    <Check className="w-3 h-3 inline mr-1" />
-                    Approve Character Design
-                  </button>
-                )}}
-
 {body_desc_section}
               </div>
             )}}
           </div>
 
           {{/* Wardrobes */}}
-          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800">
             <button
               onClick={{(e) => {{ e.stopPropagation(); setWardrobeSectionExpanded(!wardrobeSectionExpanded) }}}}
-              className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
+              className="w-full flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
             >
               <div className="flex items-center gap-2 font-medium text-sm text-gray-900 dark:text-gray-100">
                 <Shirt className="w-4 h-4 text-gray-500" />
-                Character
+                Character Wardrobes
               </div>
               <ChevronDown className={{`w-4 h-4 text-gray-500 transition-transform ${{wardrobeSectionExpanded ? 'rotate-180' : ''}}`}} />
             </button>
             {{wardrobeSectionExpanded && (
               <div className="p-3 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 space-y-4">
-{wardrobe_section}
+{wardrobe_top}
                 
-                {{/* Wardrobe Large Cards */}}
+                {{/* Large Image Wardrobe Cards */}}
                 {{wardrobes.length > 0 && (
                   <div className="space-y-4">
                     {{wardrobes.map((w) => (
@@ -201,7 +199,7 @@ new_ui = f"""  return (
                         }}`}}
                       >
                         {{/* Large Image Format */}}
-                        <div className="relative aspect-square bg-gray-100 dark:bg-gray-800">
+                        <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                           {{(w.fullBodyUrl || w.headshotUrl || w.previewImageUrl) ? (
                             <>
                               <img 
@@ -300,12 +298,12 @@ new_ui = f"""  return (
                               </span>
                             )}}
                             {{w.sceneNumbers && w.sceneNumbers.length > 0 && (
-                              <span className="text-[10px] text-blue-500">
+                              <span className="text-[10px] text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">
                                 Scenes {{formatSceneRange(w.sceneNumbers)}}
                               </span>
                             )}}
                           </div>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1.5">
                             {{w.description}}
                           </p>
                         </div>
@@ -318,13 +316,12 @@ new_ui = f"""  return (
               </div>
             )}}
           </div>
-
         </div>
       </div>
+
+{rest_section}
 """
 
-new_content = content[:start_idx] + new_ui + content[end_idx:]
-
-with open('src/components/vision/CharacterLibrary.tsx', 'w') as f:
-    f.write(new_content)
+with open('new_character_card.tsx', 'w') as f:
+    f.write(before_return + new_return)
 
