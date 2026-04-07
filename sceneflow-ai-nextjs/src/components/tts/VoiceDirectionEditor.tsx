@@ -3,9 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Loader, Sparkles, ChevronDown, ChevronUp, Wand2, Mic, MicOff, Play, Square, ArrowLeft } from 'lucide-react'
+import { Loader, Sparkles, ChevronDown, ChevronUp, Wand2, Play, Square } from 'lucide-react'
 import { toast } from 'sonner'
-import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { VOICE_TRAIT_CATEGORIES } from '@/lib/constants/director-note-templates'
 
 interface VoiceDirectionEditorProps {
@@ -33,27 +32,14 @@ export function VoiceDirectionEditor({
   // Custom instruction text
   const [customInstruction, setCustomInstruction] = useState(initialPrompt)
   
-  // Expanded categories
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set(VOICE_TRAIT_CATEGORIES.map(c => c.id))
-  )
+  // Expanded categories (default to closed)
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   
   const [isGenerating, setIsGenerating] = useState(false)
   const [isTesting, setIsTesting] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   
-  // Speech recognition for voice input
-  const {
-    supported: sttSupported,
-    isSecure: sttSecure,
-    isRecording: isMicRecording,
-    transcript: micTranscript,
-    start: startMic,
-    stop: stopMic,
-    setTranscript: setMicTranscript
-  } = useSpeechRecognition()
-
   // Clean up audio on unmount
   useEffect(() => {
     return () => {
@@ -63,37 +49,6 @@ export function VoiceDirectionEditor({
       }
     }
   }, [])
-
-  // Update custom instruction with speech transcript
-  const baseInstructionRef = useRef('')
-  
-  useEffect(() => {
-    if (isMicRecording && !baseInstructionRef.current) {
-      baseInstructionRef.current = customInstruction
-    }
-  }, [isMicRecording, customInstruction])
-  
-  useEffect(() => {
-    if (!micTranscript) return
-    const base = baseInstructionRef.current.trim()
-    setCustomInstruction(base ? `${base} ${micTranscript}` : micTranscript)
-  }, [micTranscript])
-
-  const handleVoiceToggle = () => {
-    if (!sttSupported || !sttSecure) {
-      toast.error('Voice input not available')
-      return
-    }
-    if (isMicRecording) {
-      stopMic()
-      baseInstructionRef.current = customInstruction
-      setMicTranscript('')
-    } else {
-      baseInstructionRef.current = customInstruction
-      setMicTranscript('')
-      startMic()
-    }
-  }
 
   const toggleTemplate = (categoryId: string, templateId: string) => {
     setSelectedTemplates(prev => {
@@ -152,18 +107,28 @@ export function VoiceDirectionEditor({
 
   const handleAutoFill = async () => {
     if (!characterContext && !screenplayContext) {
-      toast.error('Character context is required to auto-fill.')
+      toast.error('Character context is required to generate.')
       return
     }
 
     setIsGenerating(true)
     try {
+      const selectedInstructions: string[] = []
+      VOICE_TRAIT_CATEGORIES.forEach(category => {
+        category.templates.forEach(template => {
+          if (selectedTemplates.has(template.id)) {
+            selectedInstructions.push(template.label) // use label for prompt context
+          }
+        })
+      })
+
       const response = await fetch('/api/tts/google/director-prompt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           characterContext: characterContext || { name: 'the speaker', role: 'narrator' }, 
-          screenplayContext 
+          screenplayContext,
+          selectedInstructions
         }),
       })
 
@@ -172,12 +137,11 @@ export function VoiceDirectionEditor({
       
       if (data.script) {
         setCustomInstruction(data.script)
-        setSelectedTemplates(new Set()) // Clear templates since we just generated a full text
-        toast.success("Auto-filled Director's Note!")
+        toast.success("Generated Voice Direction!")
       }
     } catch (error) {
       console.error('[VoiceDirectionEditor] Error:', error)
-      toast.error('Failed to auto-fill prompt')
+      toast.error('Failed to generate Voice Direction')
     } finally {
       setIsGenerating(false)
     }
@@ -255,32 +219,6 @@ export function VoiceDirectionEditor({
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-        <div className="flex items-center justify-between bg-cyan-950/20 p-3 rounded-lg border border-cyan-900/30">
-          <div>
-            <h4 className="text-sm font-medium text-cyan-400 flex items-center gap-1.5">
-              <Wand2 className="w-4 h-4" />
-              AI Assistant
-            </h4>
-            <p className="text-xs text-gray-400 mt-0.5">
-              Automatically generate a profile based on {name}'s context.
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleAutoFill}
-            disabled={isGenerating}
-            className="border-cyan-700/50 hover:bg-cyan-900/30 text-cyan-300"
-          >
-            {isGenerating ? (
-              <Loader className="w-4 h-4 animate-spin mr-2" />
-            ) : (
-              <Sparkles className="w-4 h-4 mr-2" />
-            )}
-            Auto-fill
-          </Button>
-        </div>
-
         <div className="space-y-4">
           {VOICE_TRAIT_CATEGORIES.map((category) => {
             const isExpanded = expandedCategories.has(category.id)
@@ -331,28 +269,20 @@ export function VoiceDirectionEditor({
             <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
               ✏️ Custom Instructions & Refinements
             </label>
-            <div className="flex items-center gap-2">
-              {sttSupported && sttSecure && (
-                <Button
-                  variant={isMicRecording ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={handleVoiceToggle}
-                  className={`h-7 ${isMicRecording ? 'bg-red-500 hover:bg-red-600 border-transparent text-white' : 'border-gray-700 text-gray-300 hover:text-white hover:bg-gray-800'}`}
-                >
-                  {isMicRecording ? (
-                    <>
-                      <MicOff className="w-3.5 h-3.5 mr-1" />
-                      Stop
-                    </>
-                  ) : (
-                    <>
-                      <Mic className="w-3.5 h-3.5 mr-1" />
-                      Voice
-                    </>
-                  )}
-                </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleAutoFill}
+              disabled={isGenerating}
+              className="border-cyan-700/50 hover:bg-cyan-900/30 text-cyan-300 h-7"
+            >
+              {isGenerating ? (
+                <Loader className="w-3.5 h-3.5 animate-spin mr-1.5" />
+              ) : (
+                <Wand2 className="w-3.5 h-3.5 mr-1.5" />
               )}
-            </div>
+              Generate
+            </Button>
           </div>
           <Textarea
             value={customInstruction}

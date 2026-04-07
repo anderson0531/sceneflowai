@@ -528,14 +528,14 @@ export function VoiceSelectionDialog({
                     className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 bg-transparent rounded-none px-0 pb-2"
                     style={{ fontSize: '13px', textTransform: 'none', letterSpacing: 'normal', minWidth: '120px' }}
                   >
-                    <span className="inline-flex items-center gap-1.5"><Search className="w-3 h-3 shrink-0" />Browse Voices</span>
+                    <span className="inline-flex items-center gap-1.5"><Search className="w-3 h-3 shrink-0" />Assign Voice</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="create" 
                     className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 bg-transparent rounded-none px-0 pb-2"
                     style={{ fontSize: '13px', textTransform: 'none', letterSpacing: 'normal', minWidth: '120px' }}
                   >
-                    <span className="inline-flex items-center gap-1.5"><Sparkles className="w-3 h-3 shrink-0" />Create Custom</span>
+                    <span className="inline-flex items-center gap-1.5"><Sparkles className="w-3 h-3 shrink-0" />Create Voice</span>
                   </TabsTrigger>
                 </TabsList>
 
@@ -575,8 +575,8 @@ export function VoiceSelectionDialog({
 
                 {/* Create Tab */}
                 <TabsContent value="create" className="flex-1 overflow-y-auto mt-4">
-                  <Tabs value={createTab} onValueChange={(v) => setCreateTab(v as 'design' | 'clone')} className="h-full">
-                    <TabsList className="mb-3 h-8 bg-transparent border-b border-gray-700 rounded-none p-0 gap-6">
+                  <Tabs value={createTab} onValueChange={(v) => setCreateTab(v as 'design' | 'clone')} className="h-full flex flex-col">
+                    <TabsList className="shrink-0 mb-3 h-8 bg-transparent border-b border-gray-700 rounded-none p-0 gap-6">
                       {provider === 'elevenlabs' && (
                         <TabsTrigger 
                           value="design" 
@@ -596,7 +596,7 @@ export function VoiceSelectionDialog({
                     </TabsList>
 
                     {provider === 'elevenlabs' && (
-                      <TabsContent value="design">
+                      <TabsContent value="design" className="flex-1 overflow-hidden mt-0">
                         <VoiceDesignPanel
                           onVoiceCreated={handleVoiceCreated}
                           characterContext={characterContext}
@@ -606,7 +606,7 @@ export function VoiceSelectionDialog({
                       </TabsContent>
                     )}
 
-                    <TabsContent value="clone">
+                    <TabsContent value="clone" className="flex-1 overflow-hidden mt-0">
                       <VoiceClonePanel
                         onVoiceCreated={handleVoiceCreated}
                         characterName={characterContext?.name}

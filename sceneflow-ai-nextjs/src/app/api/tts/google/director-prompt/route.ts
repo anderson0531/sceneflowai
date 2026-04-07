@@ -6,9 +6,10 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
-    const { characterContext, screenplayContext } = await request.json() as {
+    const { characterContext, screenplayContext, selectedInstructions } = await request.json() as {
       characterContext?: CharacterContext
       screenplayContext?: ScreenplayContext
+      selectedInstructions?: string[]
     }
 
     if (!characterContext) {
@@ -28,6 +29,14 @@ Name: ${name || 'Unknown'}
 Role: ${role || 'Not specified'}
 Traits/Attributes: ${attributes ? Object.entries(attributes).map(([k, v]) => `${k}: ${v}`).join(', ') : 'Not specified'}
 Backstory: ${backstory || 'Not specified'}`
+
+    if (selectedInstructions && selectedInstructions.length > 0) {
+      prompt += `\n\nSELECTED VOICE TRAITS:
+The user has specifically requested the voice to include the following characteristics:
+${selectedInstructions.map(i => `- ${i}`).join('\n')}
+
+INCORPORATE THESE TRAITS into your final description naturally.`
+    }
 
     if (screenplayContext) {
       prompt += `\n\nSERIES CONTEXT:
