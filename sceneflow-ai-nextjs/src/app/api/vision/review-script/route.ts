@@ -63,6 +63,7 @@ interface ScriptReviewRequest {
     scenes: any[]
     characters?: any[]
   }
+  targetDemographic?: string
   /** Previous dimensional scores for hysteresis smoothing (prevents score volatility) */
   previousScores?: {
     overallScore: number
@@ -109,7 +110,7 @@ export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions)
     const userId = session?.user?.id
 
-    const { projectId, script, previousScores }: ScriptReviewRequest = await req.json()
+    const { projectId, script, previousScores, targetDemographic }: ScriptReviewRequest = await req.json()
 
     if (!projectId || !script) {
       return NextResponse.json(
@@ -167,7 +168,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Generate Audience Resonance review (replaces both director and audience)
-    const audienceResonance = await generateAudienceResonance(script, showVsTellMetrics, contentSeed, previousScores, cleanedScenes)
+    const audienceResonance = await generateAudienceResonance(script, showVsTellMetrics, contentSeed, previousScores, cleanedScenes, targetDemographic)
 
     // =========================================================================
     // CREDIT CHARGE: Deduct credits after successful AI generation
@@ -220,7 +221,8 @@ async function generateAudienceResonance(
   showVsTellMetrics: { ratio: number; narrationWords: number; actionWords: number; dialogueWords: number },
   contentSeed: number,
   previousScores?: ScriptReviewRequest['previousScores'],
-  cleanedScenes?: any[]
+  cleanedScenes?: any[],
+  targetDemographic?: string
 ): Promise<AudienceResonanceReview> {
   const sceneCount = script.scenes?.length || 0
   const characterCount = script.characters?.length || 0
@@ -255,7 +257,13 @@ async function generateAudienceResonance(
     } else if (showVsTellMetrics.ratio > 20) {
       autoScoreCap = 95
       autoCapReason = `Narration comprises ${showVsTellMetrics.ratio.toFixed(1)}% of content (>20%). Minor narration adjustment may help.`
-    }  const prompt = `You are an expert screenplay analyst using a DEDUCTION-BASED RUBRIC system. Your job is to provide fair, constructive feedback that helps writers improve their scripts.
+    }
+
+  const audienceContext = targetDemographic && targetDemographic !== 'Global Audience' 
+    ? `\nCRITICAL CONTEXT:\nAnalyze this script SPECIFICALLY for the following target demographic/market: "${targetDemographic}".\nTailor all feedback, strengths, improvements, and scores to how this specific audience would perceive the narrative, pacing, themes, and cultural resonance.` 
+    : ''
+
+  const prompt = `You are an expert screenplay analyst using a DEDUCTION-BASED RUBRIC system. Your job is to provide fair, constructive feedback that helps writers improve their scripts.${audienceContext}
 
 SCORING RULES:
 1. Start at 100 and deduct points for genuine craft issues
@@ -534,22 +542,29 @@ FINAL CHECK before outputting:
     totalWeight += weight
   }
   
-  // Calculate overall score from weighted dimensional average
-  const weightedScore = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 70
+  // Calculate average of scene scores if available
+  let sceneAverageScore = 0;
+  if (review.sceneAnalysis && review.sceneAnalysis.length > 0) {
+    const totalSceneScore = review.sceneAnalysis.reduce((sum: number, scene: any) => sum + (scene.score || 0), 0);
+    sceneAverageScore = Math.round(totalSceneScore / review.sceneAnalysis.length);
+  }
+
+  // Calculate overall score from scene average (primary) or weighted dimensional average (fallback)
+  const baseCalculatedScore = sceneAverageScore > 0 ? sceneAverageScore : (totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 70)
   
   // Apply auto cap if needed (for high narration scripts)
-  const enforcedScore = Math.min(weightedScore, autoScoreCap)
+  const enforcedScore = Math.min(baseCalculatedScore, autoScoreCap)
   
   if (enforcedScore !== review.overallScore) {
-    console.log(`[Audience Resonance] Score calculation: AI returned ${review.overallScore}, Weighted dimensional avg: ${weightedScore}, Cap: ${autoScoreCap} -> Final: ${enforcedScore}`)
+    console.log(`[Audience Resonance] Score calculation: AI returned ${review.overallScore}, Base Calculated (Scene Avg/Dimensional): ${baseCalculatedScore}, Cap: ${autoScoreCap} -> Final: ${enforcedScore}`)
   }
   
-  // Apply the weighted score (aligned with dimensional analysis)
+  // Apply the final calculated score
   review.overallScore = enforcedScore
   
   // Log the calculation breakdown
   const totalDeductions = deductions.reduce((sum: number, d: any) => sum + (d.points || 0), 0)
-  console.log(`[Audience Resonance] Final score: ${review.overallScore} (weighted avg of ${categories.length} dimensions, deductions for feedback: ${totalDeductions} pts)`)
+  console.log(`[Audience Resonance] Final score: ${review.overallScore} (based on ${sceneAverageScore > 0 ? 'scene average' : 'dimensional average'}, deductions for feedback: ${totalDeductions} pts)`)
   
   // Normalize recommendations
   if (review.recommendations && Array.isArray(review.recommendations)) {

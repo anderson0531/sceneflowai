@@ -5024,7 +5024,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }, [projectId, mounted, router])
 
   // Script review functions
-  const handleGenerateReviews = async () => {
+  const handleGenerateReviews = async (targetDemographic?: string) => {
     // Use ref to read latest script state — avoids stale closures when called
     // immediately after setScript() (e.g. auto re-analyze after revision)
     const currentScript = scriptRef.current || script
@@ -5048,6 +5048,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             projectId,
+            targetDemographic,
             script: {
               title: currentScript.title,
               logline: currentScript.logline,

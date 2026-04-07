@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/Input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { NarratorVoicePicker } from '@/components/tts/NarratorVoicePicker'
 import { OptimizeSceneDialog } from '@/components/vision/OptimizeSceneDialog'
@@ -79,6 +80,7 @@ interface Deduction {
   reason: string
   points: number
   category: string
+  importance?: string
 }
 
 interface SceneAnalysis {
@@ -327,7 +329,7 @@ interface ScriptReviewModalProps {
   onClose: () => void
   directorReview: Review | null // Deprecated, kept for compatibility
   audienceReview: AudienceResonanceReview | Review | null
-  onRegenerate: () => Promise<void>
+  onRegenerate: (targetDemographic?: string) => Promise<void>
   isGenerating: boolean
   onReviseScript?: (recommendations: string[]) => void
   // New props for inline revision
@@ -478,6 +480,16 @@ export default function ScriptReviewModal({
   const [customInstruction, setCustomInstruction] = useState('')
   const [isOptimizingYouDirect, setIsOptimizingYouDirect] = useState(false)
   const baseInstructionRef = useRef<string>('')
+
+  // Target Demographic state
+  const [targetDemographicPreset, setTargetDemographicPreset] = useState<string>('Global Audience')
+  const [customTargetDemographic, setCustomTargetDemographic] = useState('')
+  
+  // Handle regeneration with current demographic
+  const handleRegenerate = async () => {
+    const demographic = targetDemographicPreset === 'Custom...' ? customTargetDemographic : targetDemographicPreset
+    await onRegenerate(demographic)
+  }
   
   // Speech recognition for voice input
   const {
@@ -896,7 +908,7 @@ export default function ScriptReviewModal({
           await new Promise<void>(resolve => {
             requestAnimationFrame(() => setTimeout(resolve, 50))
           })
-          await onRegenerate()
+          await handleRegenerate()
           setActiveTab('overview')
         } else {
           toast.message('No changes returned for the current instruction.')
@@ -1022,7 +1034,7 @@ export default function ScriptReviewModal({
           await new Promise<void>(resolve => {
             requestAnimationFrame(() => setTimeout(resolve, 50))
           })
-          await onRegenerate()
+          await handleRegenerate()
           setActiveTab('overview')
         } else {
           throw new Error('No optimized script returned')
@@ -1059,7 +1071,7 @@ export default function ScriptReviewModal({
         categories: audienceReview.categories?.map(c => ({
           name: c.name,
           score: c.score,
-          weight: c.weight || 0
+          weight: 'weight' in c ? c.weight : 0
         })),
         recommendations: audienceReview.recommendations?.map(r => ({
           text: typeof r === 'string' ? r : r.text,
@@ -1282,9 +1294,9 @@ export default function ScriptReviewModal({
         }
       },
       {
-        title: `Rewriting Scene ${sceneNumber}`,
-        successTitle: 'Scene Rewritten',
-        errorTitle: 'Scene Rewrite Failed'
+        message: `Rewriting Scene ${sceneNumber}...`,
+        estimatedDuration: 15000,
+        operationType: 'scene-revision'
       }
     )
   }
@@ -1361,20 +1373,44 @@ export default function ScriptReviewModal({
                 <Download className="w-4 h-4" />
                 Export PDF
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onRegenerate}
-                disabled={isGenerating}
-                className="flex items-center gap-2"
-              >
-                {isGenerating ? (
-                  <Loader className="w-4 h-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="w-4 h-4" />
+              <div className="flex items-center gap-2 border-l border-gray-200 dark:border-gray-700 pl-2 ml-1">
+                <span className="text-xs text-gray-500 font-medium hidden sm:inline-block">Target Audience:</span>
+                <Select value={targetDemographicPreset} onValueChange={setTargetDemographicPreset}>
+                  <SelectTrigger className="w-[140px] h-9 text-xs">
+                    <SelectValue placeholder="Select demographic" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Global Audience">Global Audience</SelectItem>
+                    <SelectItem value="US/North America">US/North America</SelectItem>
+                    <SelectItem value="Thai Audience">Thai Audience</SelectItem>
+                    <SelectItem value="European Audience">European Audience</SelectItem>
+                    <SelectItem value="Young Adult">Young Adult</SelectItem>
+                    <SelectItem value="Custom...">Custom...</SelectItem>
+                  </SelectContent>
+                </Select>
+                {targetDemographicPreset === 'Custom...' && (
+                  <Input
+                    value={customTargetDemographic}
+                    onChange={(e) => setCustomTargetDemographic(e.target.value)}
+                    placeholder="e.g. Thai teenagers..."
+                    className="w-[140px] h-9 text-xs"
+                  />
                 )}
-                Re-analyze
-              </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRegenerate}
+                  disabled={isGenerating}
+                  className="flex items-center gap-2"
+                >
+                  {isGenerating ? (
+                    <Loader className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4" />
+                  )}
+                  Re-analyze
+                </Button>
+              </div>
               {/* Go to Scenes with tooltip showing scene stats */}
               <TooltipProvider>
                 <Tooltip>
@@ -1474,7 +1510,7 @@ export default function ScriptReviewModal({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={onRegenerate}
+                      onClick={handleRegenerate}
                       disabled={isGenerating}
                       className="h-7 text-xs border-amber-300 text-amber-700 hover:bg-amber-100"
                     >
@@ -1503,13 +1539,13 @@ export default function ScriptReviewModal({
                   <TabsTrigger 
                     value="recommendations" 
                     className="flex items-center gap-1.5 text-xs sm:text-sm"
-                    title="AI recommendations to improve your script"
+                    title="Scene-by-scene analysis and optimization"
                   >
-                    <FileText className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Recommendations</span>
-                    {review.recommendations.length > 0 && (
+                    <ListChecks className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Scene Breakdown</span>
+                    {sceneAnalysis.length > 0 && (
                       <Badge variant="secondary" className="ml-1 text-xs h-5 px-1.5 hidden sm:flex">
-                        {review.recommendations.length}
+                        {sceneAnalysis.length}
                       </Badge>
                     )}
                   </TabsTrigger>
@@ -1835,116 +1871,74 @@ export default function ScriptReviewModal({
                   <div className="space-y-6">
                     <Card>
                       <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle className="text-lg">🎯 Script Recommendations</CardTitle>
-                        <div className="flex items-center gap-2">
-                          <AudioButton sectionId="recommendations" text={`Recommendations: ${review.recommendations.map(r => getRecommendationText(r)).join('. ')}`} />
-                        </div>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <ListChecks className="w-5 h-5 text-purple-600" />
+                          Scene Breakdown
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
-                  {/* Selection controls */}
-                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                      <span>{selectedRecommendationIndices.size} of {review.recommendations.length} selected</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleAllRecommendations(true)}
-                        className="text-xs h-7 px-2"
-                      >
-                        Select All
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleAllRecommendations(false)}
-                        className="text-xs h-7 px-2"
-                      >
-                        Clear
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {/* Selectable recommendations list */}
-                  <ul className="space-y-2">
-                    {review.recommendations.map((recommendation, index) => {
-                      const isObject = typeof recommendation !== 'string'
-                      const text = getRecommendationText(recommendation)
-                      const priority = isObject ? recommendation.priority : undefined
-                      const category = isObject ? recommendation.category : undefined
-                      const isSelected = selectedRecommendationIndices.has(index)
-                      
-                      return (
-                        <li 
-                          key={index} 
-                          className={`flex items-start gap-2 text-sm p-2 rounded-lg cursor-pointer transition-colors ${
-                            isSelected 
-                              ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800' 
-                              : 'hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent'
-                          }`}
-                          onClick={() => toggleRecommendation(index)}
-                        >
-                          {/* Checkbox */}
-                          <button
-                            type="button"
-                            className="mt-0.5 flex-shrink-0"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              toggleRecommendation(index)
-                            }}
-                          >
-                            {isSelected ? (
-                              <CheckSquare className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                            ) : (
-                              <Square className="w-4 h-4 text-gray-400" />
-                            )}
-                          </button>
-                          <div className="flex-1">
-                            <span className={isSelected ? 'text-gray-900 dark:text-gray-100' : 'text-gray-600 dark:text-gray-400'}>{text}</span>
-                            {(priority || category) && (
-                              <div className="flex gap-2 mt-1">
-                                {priority && (
-                                  <Badge variant="secondary" className={`text-xs ${getPriorityColor(priority)}`}>
-                                    {priority}
+                        {sceneAnalysis.length === 0 ? (
+                          <div className="text-center py-8 text-gray-500">
+                            No scene analysis available.
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {sceneAnalysis.map((scene, index) => (
+                              <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800/50">
+                                <div className="flex items-start justify-between mb-3">
+                                  <div>
+                                    <h3 className="font-semibold text-base text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                      <span className="bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded text-sm">
+                                        Scene {scene.sceneNumber}
+                                      </span>
+                                      {scene.sceneHeading}
+                                    </h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 italic">
+                                      {scene.notes}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex flex-col items-end">
+                                      <span className={`text-lg font-bold ${scene.score >= 80 ? 'text-green-600' : 'text-amber-600'}`}>
+                                        {scene.score}
+                                      </span>
+                                      <span className="text-[10px] text-gray-500 uppercase">Score</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                {/* Metrics */}
+                                <div className="flex flex-wrap gap-2 mb-3">
+                                  <Badge variant="outline" className="text-xs bg-white dark:bg-gray-900">
+                                    Pacing: <span className="ml-1 capitalize">{scene.pacing}</span>
                                   </Badge>
-                                )}
-                                {category && (
-                                  <Badge variant="outline" className="text-xs">
-                                    {category}
+                                  <Badge variant="outline" className="text-xs bg-white dark:bg-gray-900">
+                                    Tension: <span className="ml-1 capitalize">{scene.tension}</span>
                                   </Badge>
+                                  <Badge variant="outline" className="text-xs bg-white dark:bg-gray-900">
+                                    Visual: <span className="ml-1 capitalize">{scene.visualPotential}</span>
+                                  </Badge>
+                                </div>
+                                
+                                {/* Specific Recommendations */}
+                                {scene.recommendations && scene.recommendations.length > 0 && (
+                                  <div className="bg-white dark:bg-gray-900 rounded-md p-3 border border-purple-100 dark:border-purple-900/30">
+                                    <h4 className="text-xs font-semibold text-purple-700 dark:text-purple-400 mb-2 uppercase tracking-wider">Recommendations</h4>
+                                    <ul className="space-y-1">
+                                      {scene.recommendations.map((rec, rIdx) => (
+                                        <li key={rIdx} className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2">
+                                          <span className="text-purple-500 mt-0.5">•</span>
+                                          <span>{rec}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
                                 )}
                               </div>
-                            )}
+                            ))}
                           </div>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                  
-                  {/* Revise Script button */}
-                  <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={handleInlineRevise}
-                      disabled={selectedRecommendationIndices.size === 0 || isRevising}
-                      className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
-                    >
-                      {isRevising ? (
-                        <>
-                          <Loader className="w-4 h-4 animate-spin" />
-                          Revising Script...
-                        </>
-                      ) : (
-                        <>
-                          <Wand2 className="w-4 h-4" />
-                          Revise Script with {selectedRecommendationIndices.size} Recommendation{selectedRecommendationIndices.size !== 1 ? 's' : ''}
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </CardContent>
+                        )}
+                      </CardContent>
                     </Card>
                   </div>
                 )}
@@ -2389,15 +2383,7 @@ Examples:
           }}
           sceneNumber={optimizeDialogScene?.sceneNumber ?? 0}
           sceneHeading={optimizeDialogScene?.sceneHeading ?? ''}
-          sceneAnalysis={optimizeDialogScene ? {
-            score: optimizeDialogScene.score,
-            pacing: optimizeDialogScene.pacing,
-            tension: optimizeDialogScene.tension,
-            characterDevelopment: optimizeDialogScene.characterDevelopment,
-            visualPotential: optimizeDialogScene.visualPotential,
-            notes: optimizeDialogScene.notes,
-            recommendations: optimizeDialogScene.recommendations || []
-          } : undefined}
+          sceneAnalysis={optimizeDialogScene as any}
           onOptimize={handleOptimizeSceneFromDialog}
           isOptimizing={optimizeDialogScene ? fixingScenes.has(optimizeDialogScene.sceneNumber) : false}
         />
