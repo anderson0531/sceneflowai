@@ -139,10 +139,12 @@ export function getEstimatedProviderCost(
       return ((metrics?.audioChars ?? 1000) / 1000) * PROVIDER_COSTS_USD.elevenlabs_1k_chars
     
     case 'elevenlabs_sfx':
+    case 'google_sfx':
       // SFX is a flat rate per generation - estimate based on average generation
       return 0.05 // ~$0.05 per SFX generation
     
     case 'elevenlabs_music':
+    case 'google_music':
       // Music is a flat rate per generation
       return 0.10 // ~$0.10 per music generation (30 seconds)
     
@@ -183,14 +185,14 @@ export async function logProviderCost(log: ProviderCostLog): Promise<void> {
     // Log to AIUsage table (existing table, add cost fields to meta)
     await AIUsage.create({
       user_id: log.userId,
+      route: `/api/costs/${log.operation.replace(/_/g, '/')}`,
       provider: log.provider as any,
       category: mapOperationToCategory(log.operation),
       model: log.model,
       input_tokens: log.inputTokens || 0,
       output_tokens: log.outputTokens || 0,
-      total_tokens: (log.inputTokens || 0) + (log.outputTokens || 0),
-      cost_usd: log.providerCostUsd,
-      latency_ms: 0,
+      cogs_usd: log.providerCostUsd,
+      charged_credits: log.creditsCharged,
       meta: {
         operation: log.operation,
         creditsCharged: log.creditsCharged,
@@ -362,9 +364,8 @@ export async function trackCost(
 }
 
 function mapOperationToProvider(operation: string): string {
-  if (operation.includes('elevenlabs')) return 'elevenlabs'
   if (operation.includes('openai') || operation.includes('dall')) return 'openai'
-  return 'google_vertex'
+  return 'sceneflow-ai'
 }
 
 function mapOperationToModel(operation: string): string {
@@ -374,6 +375,7 @@ function mapOperationToModel(operation: string): string {
   if (operation.includes('gemini_flash')) return 'gemini-3.0-flash'
   if (operation.includes('gemini_pro')) return 'gemini-3.1-pro-preview'
   if (operation.includes('elevenlabs_tts')) return 'eleven_turbo_v2_5'
+  if (operation.includes('google_sfx') || operation.includes('google_music')) return 'lyria-002'
   if (operation.includes('sfx')) return 'sound_generation_v1'
   if (operation.includes('music')) return 'music_v1'
   return 'unknown'
