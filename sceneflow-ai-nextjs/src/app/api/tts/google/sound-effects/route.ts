@@ -8,9 +8,9 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 60 // Allow up to 60 seconds for music generation
+export const maxDuration = 60 // Allow up to 60 seconds for SFX generation
 
-const MUSIC_CREDIT_COST = AUDIO_CREDITS.MUSIC_TRACK || 25 // Fallback to 25
+const SFX_CREDIT_COST = AUDIO_CREDITS.SOUND_EFFECT || 15 // Fallback to 15
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,12 +23,12 @@ export async function POST(request: NextRequest) {
     }
     
     // Check if user has sufficient credits
-    const hasCredits = await CreditService.ensureCredits(userId, MUSIC_CREDIT_COST)
+    const hasCredits = await CreditService.ensureCredits(userId, SFX_CREDIT_COST)
     if (!hasCredits) {
       return NextResponse.json({ 
         error: 'Insufficient credits', 
-        required: MUSIC_CREDIT_COST,
-        operation: 'music_generation'
+        required: SFX_CREDIT_COST,
+        operation: 'sound_effect_generation'
       }, { status: 402 })
     }
 
@@ -42,24 +42,26 @@ export async function POST(request: NextRequest) {
     const gcpProjectId = process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID
     const region = process.env.GCP_REGION || 'us-central1'
     
-    console.log('[Google Music] Vertex AI project configured:', !!gcpProjectId)
+    console.log('[Google SFX] Vertex AI project configured:', !!gcpProjectId)
     
     if (!gcpProjectId) {
-      console.error('[Google Music] Error: Vertex AI not configured (VERTEX_PROJECT_ID required)')
-      return NextResponse.json({ error: 'Music generation API not configured' }, { status: 500 })
+      console.error('[Google SFX] Error: Vertex AI not configured (VERTEX_PROJECT_ID required)')
+      return NextResponse.json({ error: 'SFX generation API not configured' }, { status: 500 })
     }
 
-    console.log('[Google Music] Generating music with Lyria:', { text })
+    // Append a hint for Lyria to generate sound effects instead of music if possible
+    const sfxPrompt = `Sound effect, ambiance, or foley: ${text}`
+    console.log('[Google SFX] Generating SFX with Lyria:', { text: sfxPrompt })
 
     const accessToken = await getVertexAIAuthToken()
-    // Using lyria-002 model which is GA for 30s clips
+    // Using lyria-002 model which handles audio generation
     const modelId = 'lyria-002'
     const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${gcpProjectId}/locations/${region}/publishers/google/models/${modelId}:predict`
     
     const requestBody = {
       instances: [
         {
-          prompt: text,
+          prompt: sfxPrompt,
         }
       ],
       parameters: {
@@ -78,9 +80,9 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('[Google Music] Lyria API failed:', response.status, errorText)
+      console.error('[Google SFX] Lyria API failed:', response.status, errorText)
       return NextResponse.json({ 
-        error: 'Music generation failed', 
+        error: 'SFX generation failed', 
         details: errorText 
       }, { status: 502 })
     }
@@ -89,7 +91,7 @@ export async function POST(request: NextRequest) {
     const predictions = data?.predictions
     
     if (!predictions || predictions.length === 0) {
-      console.error('[Google Music] Unexpected response structure:', JSON.stringify(data).slice(0, 500))
+      console.error('[Google SFX] Unexpected response structure:', JSON.stringify(data).slice(0, 500))
       return NextResponse.json({ error: 'Unexpected response format from Vertex AI' }, { status: 500 })
     }
     
@@ -98,47 +100,47 @@ export async function POST(request: NextRequest) {
     const base64Data = prediction.bytesBase64Encoded || prediction.audioContent || prediction.audio || prediction.content
     
     if (!base64Data) {
-      console.error('[Google Music] Could not find base64 audio in prediction:', JSON.stringify(prediction).slice(0, 500))
+      console.error('[Google SFX] Could not find base64 audio in prediction:', JSON.stringify(prediction).slice(0, 500))
       return NextResponse.json({ error: 'Unexpected prediction format from Vertex AI' }, { status: 500 })
     }
     
     const arrayBuffer = Buffer.from(base64Data, 'base64')
     
-    console.log('[Google Music] Music generated successfully, size:', arrayBuffer.byteLength)
+    console.log('[Google SFX] SFX generated successfully, size:', arrayBuffer.byteLength)
     
     // Charge credits after successful generation
     try {
       await CreditService.charge(
         userId,
-        MUSIC_CREDIT_COST,
+        SFX_CREDIT_COST,
         'ai_usage',
         null,
-        { operation: 'google_music', duration: 30, prompt: text.substring(0, 100) }
+        { operation: 'google_sfx', duration: duration || 2, prompt: sfxPrompt.substring(0, 100) }
       )
-      console.log(`[Google Music] Charged ${MUSIC_CREDIT_COST} credits to user ${userId}`)
+      console.log(`[Google SFX] Charged ${SFX_CREDIT_COST} credits to user ${userId}`)
       
       // Track cost for reconciliation
-      await trackCost(userId, 'google_music', MUSIC_CREDIT_COST, {
+      await trackCost(userId, 'google_sfx', SFX_CREDIT_COST, {
         projectId,
         sceneId
       })
     } catch (chargeError: any) {
-      console.error('[Google Music] Failed to charge credits:', chargeError)
+      console.error('[Google SFX] Failed to charge credits:', chargeError)
     }
     
     // Optionally save to Vercel Blob for persistence
     if (saveToBlob) {
       const timestamp = Date.now()
-      const filename = `audio/music/${projectId || 'default'}/${sceneId || 'music'}-${timestamp}.wav`
+      const filename = `audio/sfx/${projectId || 'default'}/${sceneId || 'sfx'}-${timestamp}.wav`
       const blob = await put(filename, arrayBuffer, {
         access: 'public',
         contentType: 'audio/wav',
       })
-      console.log('[Google Music] Saved to blob:', blob.url)
+      console.log('[Google SFX] Saved to blob:', blob.url)
       return NextResponse.json({
         url: blob.url,
         size: arrayBuffer.byteLength,
-        duration: 30,
+        duration: duration || 2,
       })
     }
     
@@ -150,9 +152,9 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error: any) {
-    console.error('[Google Music] Error:', error?.message || String(error))
+    console.error('[Google SFX] Error:', error?.message || String(error))
     return NextResponse.json({ 
-      error: 'Music generation failed', 
+      error: 'SFX generation failed', 
       details: error?.message || String(error)
     }, { status: 500 })
   }

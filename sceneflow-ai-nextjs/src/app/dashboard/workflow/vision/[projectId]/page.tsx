@@ -9535,7 +9535,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     console.log(`[Update Scene Audio] Generating music for Scene ${sceneIndex + 1}...`)
     
     // Use saveToBlob to have the server upload directly - avoids 4.5MB payload limit
-    const response = await fetch('/api/tts/elevenlabs/music', {
+    const response = await fetch('/api/tts/google/music', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
@@ -9594,7 +9594,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     
     console.log(`[Update Scene Audio] Generating SFX ${sfxIndex + 1} for Scene ${sceneIndex + 1}...`)
     
-    const response = await fetch('/api/tts/elevenlabs/sound-effects', {
+    const response = await fetch('/api/tts/google/sound-effects', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: description, duration: 2.0 })
