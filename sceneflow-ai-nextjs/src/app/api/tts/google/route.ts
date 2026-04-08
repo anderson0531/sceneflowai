@@ -50,6 +50,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing text parameter' }, { status: 400 })
     }
 
+    // Extract and remove [DirectorNote: ...] so standard voices don't read it aloud
+    let cleanText = text;
+    let extractedPrompt = prompt;
+    const noteMatch = cleanText.match(/\[DirectorNote:\s*(.*?)\]/);
+    if (noteMatch) {
+      extractedPrompt = extractedPrompt || noteMatch[1];
+      cleanText = cleanText.replace(/\[DirectorNote:\s*(.*?)\]\s*/, '').trim();
+    }
+
     let apiKey = process.env.GOOGLE_API_KEY
     let accessToken: string | null = null
 
@@ -96,7 +105,7 @@ export async function POST(request: NextRequest) {
       ? actualVoiceName.split('-').slice(0, 2).join('-') 
       : 'en-US'
     
-    const chunks = splitTextIntoChunks(text, 4000);
+    const chunks = splitTextIntoChunks(cleanText, 4000);
     const audioBuffers: Buffer[] = [];
 
     for (let i = 0; i < chunks.length; i++) {
@@ -126,8 +135,8 @@ export async function POST(request: NextRequest) {
 
       if (isGemini) {
         payload.voice.modelName = 'gemini-2.5-flash-tts'
-        if (prompt) {
-          payload.input.prompt = `INSTRUCTION: You are a voice actor. Do not read this instruction aloud. Adopt the following voice profile precisely: ${prompt}`
+        if (extractedPrompt) {
+          payload.input.prompt = `INSTRUCTION: You are a voice actor. Do not read this instruction aloud. Adopt the following voice profile precisely: ${extractedPrompt}`
         }
       }
 

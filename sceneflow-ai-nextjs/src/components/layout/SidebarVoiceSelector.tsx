@@ -19,8 +19,9 @@ const REVIEW_VOICE_STORAGE_KEY = 'sceneflow-audience-resonance-voice'
 export function SidebarVoiceSelector({ isOpen, onToggle, className }: SidebarVoiceSelectorProps) {
   const selectedVoiceId = useStore(s => s.sidebarData.selectedVoiceId)
   const setSidebarVoiceSelection = useStore(s => s.setSidebarVoiceSelection)
-  const userName = useStore(s => s.user?.name || 'Director')
+  const storeUserName = useStore(s => s.user?.name)
 
+  const [firstName, setFirstName] = useState<string>('Director')
   const [isPlaying, setIsPlaying] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -44,6 +45,20 @@ export function SidebarVoiceSelector({ isOpen, onToggle, className }: SidebarVoi
       setSidebarVoiceSelection(DIRECTOR_ASSISTANTS[0].voiceId, DIRECTOR_ASSISTANTS[0].title)
     }
   }, [selectedVoiceId, setSidebarVoiceSelection])
+
+  // Try to determine user's first name
+  useEffect(() => {
+    if (storeUserName) {
+      setFirstName(storeUserName.split(' ')[0])
+    } else {
+      try {
+        const stored = localStorage.getItem('authUserName')
+        if (stored && stored.trim()) {
+          setFirstName(stored.split(' ')[0])
+        }
+      } catch (e) {}
+    }
+  }, [storeUserName])
 
   useEffect(() => {
     return () => {
@@ -70,7 +85,6 @@ export function SidebarVoiceSelector({ isOpen, onToggle, className }: SidebarVoi
     }
 
     const selectedAssistant = DIRECTOR_ASSISTANTS.find(a => a.voiceId === selectedVoiceId) || DIRECTOR_ASSISTANTS[0]
-    const firstName = userName.split(' ')[0]
     const message = `Hi ${firstName}. I'm your ${selectedAssistant.title}. ${selectedAssistant.pitch} I will be your voice for this session.`
     
     // Add persona instructions
