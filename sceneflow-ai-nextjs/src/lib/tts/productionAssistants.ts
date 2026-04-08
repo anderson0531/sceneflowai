@@ -26,8 +26,8 @@ export const DIRECTOR_ASSISTANTS: ProductionAssistant[] = [
     name: 'Elena',
     avatar: { initials: 'E', color: 'bg-rose-500' },
     title: 'Head of Editorial',
-    voiceId: 'en-US-Neural2-J',
-    description: 'Polished, crisp, and authoritative. Formal, high-stakes production briefing tone.',
+    voiceId: 'en-US-Neural2-E',
+    description: 'Polished, crisp, and authoritative female voice. Formal, high-stakes production briefing tone.',
     pitch: 'My delivery is polished, crisp, and authoritative. Choose me for your high-stakes production briefings and formal script analysis.',
   },
   {
