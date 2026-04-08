@@ -87,12 +87,14 @@ interface SceneRecommendation {
   targetElement?: string
   impact?: 'structural' | 'polish'
   priority?: 'high' | 'medium' | 'low'
+  pointsDeducted?: number
 }
 
 interface SceneAnalysis {
   sceneNumber: number
   sceneHeading: string
   score: number
+  storyWeight?: number
   pacing: 'slow' | 'moderate' | 'fast'
   tension: 'low' | 'medium' | 'high'
   characterDevelopment: 'minimal' | 'moderate' | 'strong'
@@ -1553,57 +1555,83 @@ export default function ScriptReviewModal({
                       </div>
                     </div>
 
-                    {/* Deduction Breakdown Toggle */}
-                    {deductions.length > 0 && (
-                      <div className="mt-4 border-t pt-4">
-                        <button
-                          onClick={() => setShowDeductions(!showDeductions)}
-                          className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors"
-                        >
-                          <div className="flex items-center gap-2">
-                            <TrendingDown className="w-4 h-4 text-red-500" />
-                            <span className="text-sm font-medium">
-                              Score Breakdown: 100 → {review.overallScore}
-                            </span>
-                            <Badge variant="destructive" className="text-xs">
-                              -{totalDeductions} points
-                            </Badge>
-                          </div>
-                          {showDeductions ? (
-                            <ChevronUp className="w-4 h-4" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" />
+                    {/* Top Impact Issues (from scene recommendations) */}
+                    {(() => {
+                      // Collect all recommendations that have pointsDeducted
+                      const allRecs: { rec: SceneRecommendation, sceneNum: number, heading: string }[] = [];
+                      if (sceneAnalysis && sceneAnalysis.length > 0) {
+                        sceneAnalysis.forEach(scene => {
+                          if (scene.recommendations) {
+                            scene.recommendations.forEach(rec => {
+                              if (typeof rec === 'object' && typeof rec.pointsDeducted === 'number' && rec.pointsDeducted > 0) {
+                                allRecs.push({ rec, sceneNum: scene.sceneNumber, heading: scene.sceneHeading });
+                              }
+                            });
+                          }
+                        });
+                      }
+                      
+                      // Sort by pointsDeducted descending and take top 5
+                      const topIssues = allRecs.sort((a, b) => (b.rec.pointsDeducted || 0) - (a.rec.pointsDeducted || 0)).slice(0, 5);
+                      
+                      if (topIssues.length === 0) return null;
+
+                      return (
+                        <div className="mt-4 border-t pt-4">
+                          <button
+                            onClick={() => setShowDeductions(!showDeductions)}
+                            className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors"
+                          >
+                            <div className="flex items-center gap-2">
+                              <TrendingDown className="w-4 h-4 text-red-500" />
+                              <span className="text-sm font-medium">Top Impact Issues</span>
+                            </div>
+                            {showDeductions ? (
+                              <ChevronUp className="w-4 h-4" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4" />
+                            )}
+                          </button>
+                          
+                          {showDeductions && (
+                            <div className="mt-3 max-h-60 overflow-y-auto space-y-3 pl-2 pr-2">
+                              {topIssues.map((issue, i) => (
+                                <div key={i} className="flex flex-col gap-1 text-sm bg-gray-50 dark:bg-gray-800/50 p-3 rounded-md border border-gray-100 dark:border-gray-700">
+                                  <div className="flex items-start justify-between">
+                                    <span className="font-semibold text-gray-900 dark:text-gray-100">
+                                      Scene {issue.sceneNum}: {issue.heading}
+                                    </span>
+                                    <div className="flex gap-2">
+                                      {issue.rec.priority && (
+                                        <Badge 
+                                          variant="outline" 
+                                          className={`text-xs uppercase tracking-wider ${
+                                            issue.rec.priority === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                            issue.rec.priority === 'medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                                            'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                          }`}
+                                        >
+                                          {issue.rec.priority}
+                                        </Badge>
+                                      )}
+                                      <Badge variant="destructive" className="text-xs shrink-0">
+                                        -{issue.rec.pointsDeducted} pts
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                  <span className="text-gray-600 dark:text-gray-400">{issue.rec.text}</span>
+                                  {issue.rec.category && (
+                                    <div className="flex gap-2 mt-1">
+                                      <span className="text-xs text-gray-400">{issue.rec.category}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
                           )}
-                        </button>
-                        
-                        {showDeductions && (
-                          <div className="mt-3 max-h-48 overflow-y-auto space-y-2 pl-6 pr-2">
-                            {deductions.map((d, i) => (
-                              <div key={i} className="flex items-start gap-2 text-sm">
-                                <span className="text-red-500 font-mono shrink-0">-{d.points}</span>
-                                <span className="text-gray-600 dark:text-gray-400 flex-1">{d.reason}</span>
-                                {d.importance && (
-                                  <Badge 
-                                    variant="outline" 
-                                    className={`text-xs shrink-0 ${
-                                      d.importance === 'critical' ? 'border-red-500 text-red-500' :
-                                      d.importance === 'high' ? 'border-orange-500 text-orange-500' :
-                                      d.importance === 'medium' ? 'border-yellow-500 text-yellow-500' :
-                                      'border-gray-400 text-gray-400'
-                                    }`}
-                                  >
-                                    {d.importance}
-                                  </Badge>
-                                )}
-                                <Badge variant="outline" className="text-xs shrink-0">
-                                  {d.category}
-                                </Badge>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Show vs Tell Ratio */}
                     {showVsTellRatio > 0 && (
@@ -1818,6 +1846,14 @@ export default function ScriptReviewModal({
                                     </p>
                                   </div>
                                   <div className="flex items-center gap-2">
+                                    {scene.storyWeight && (
+                                      <div className="flex flex-col items-end mr-4">
+                                        <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">
+                                          {scene.storyWeight}%
+                                        </span>
+                                        <span className="text-[10px] text-gray-400 uppercase">Weight</span>
+                                      </div>
+                                    )}
                                     <div className="flex flex-col items-end">
                                       <span className={`text-lg font-bold ${scene.score >= 80 ? 'text-green-600' : 'text-amber-600'}`}>
                                         {scene.score}
@@ -1848,6 +1884,7 @@ export default function ScriptReviewModal({
                                       {scene.recommendations.map((rec, rIdx) => {
                                         const recText = typeof rec === 'string' ? rec : rec?.text || String(rec)
                                         const recPriority = typeof rec === 'object' && rec?.priority ? rec.priority : null
+                                        const recPointsDeducted = typeof rec === 'object' && rec?.pointsDeducted ? rec.pointsDeducted : null
                                         return (
                                           <li key={rIdx} className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2">
                                             <span className="text-purple-500 mt-0.5">•</span>
@@ -1860,6 +1897,11 @@ export default function ScriptReviewModal({
                                                   'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                                                 }`}>
                                                   {recPriority}
+                                                </Badge>
+                                              )}
+                                              {recPointsDeducted && (
+                                                <Badge variant="destructive" className="ml-2 text-[10px] px-1 py-0 h-4 border-none uppercase tracking-wider bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                                                  -{recPointsDeducted} pts
                                                 </Badge>
                                               )}
                                             </span>

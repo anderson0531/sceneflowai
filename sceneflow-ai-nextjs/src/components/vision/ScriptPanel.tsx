@@ -4710,11 +4710,12 @@ function SceneCard({
                       Recommendations
                     </p>
                     <ul className="space-y-2">
-                      {scene.audienceAnalysis.recommendations.map((rec: string | { text: string; category?: string; impact?: string; priority?: string }, rIdx: number) => {
+                      {scene.audienceAnalysis.recommendations.map((rec: string | { text: string; category?: string; impact?: string; priority?: string; pointsDeducted?: number }, rIdx: number) => {
                         const recText = typeof rec === 'string' ? rec : rec?.text || String(rec)
                         const recCategory = typeof rec === 'object' && rec?.category ? rec.category : null
                         const recImpact = typeof rec === 'object' && rec?.impact ? rec.impact : null
                         const recPriority = typeof rec === 'object' && rec?.priority ? rec.priority : null
+                        const recPointsDeducted = typeof rec === 'object' && rec?.pointsDeducted ? rec.pointsDeducted : null
                         return (
                           <li key={rIdx} className="text-xs text-gray-300 flex gap-3 p-2.5 bg-gray-800/40 rounded-lg border border-gray-700/30 hover:bg-gray-800/60 transition-colors">
                             <span className="flex items-center justify-center w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 text-[10px] font-bold flex-shrink-0 mt-0.5">
@@ -4722,8 +4723,8 @@ function SceneCard({
                             </span>
                             <div className="flex-1 min-w-0">
                               <span className="leading-relaxed">{recText}</span>
-                              {(recCategory || recImpact || recPriority) && (
-                                <div className="flex items-center gap-1.5 mt-1.5">
+                              {(recCategory || recImpact || recPriority || recPointsDeducted) && (
+                                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                                   {recPriority && (
                                     <span className={`inline-flex items-center text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider ${
                                       recPriority === 'high' ? 'bg-red-500/20 text-red-300 border border-red-500/30' :
@@ -4731,6 +4732,11 @@ function SceneCard({
                                       'bg-blue-500/20 text-blue-300 border border-blue-500/30'
                                     }`}>
                                       {recPriority === 'high' ? '🚨' : recPriority === 'medium' ? '⚠️' : '💡'} {recPriority}
+                                    </span>
+                                  )}
+                                  {recPointsDeducted && (
+                                    <span className="inline-flex items-center text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider bg-red-500/20 text-red-300 border border-red-500/30">
+                                      -{recPointsDeducted} pts
                                     </span>
                                   )}
                                   {recImpact && (

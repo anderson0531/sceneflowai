@@ -8,6 +8,7 @@ interface SceneAnalysis {
   sceneNumber: number
   sceneHeading: string
   score: number
+  storyWeight?: number
   pacing: 'slow' | 'moderate' | 'fast'
   tension: 'low' | 'medium' | 'high'
   characterDevelopment: 'minimal' | 'moderate' | 'strong'
@@ -22,6 +23,7 @@ interface SceneRecommendation {
   targetElement?: string // The specific line, action, or element to change
   impact: 'structural' | 'polish' // structural = requires rewrite, polish = minor adjustment
   priority: 'high' | 'medium' | 'low'
+  pointsDeducted?: number
 }
 
 interface AudienceReviewContext {
@@ -183,7 +185,7 @@ ${sceneDetails}
 For EACH scene (1 through ${sceneCount}), provide:
 
 1. **score** (1-100): Overall quality score - USE THIS CALIBRATION:
-   - Start at a base score of 100. Deduct 10-15 points for each 'high' priority issue, 5-9 points for 'medium', and 1-4 points for 'low'. Ensure the final score strictly reflects these deductions.
+   - Calculate strictly as 100 minus the sum of \`pointsDeducted\` from recommendations.
    - 90-100: Exceptional - production ready, masterful execution
    - 80-89: Strong - minor polish needed, works well
    - 75-79: Good - solid foundation, some refinement needed
@@ -193,7 +195,9 @@ For EACH scene (1 through ${sceneCount}), provide:
    
    Note: Be honest and calibrated. A scene that "works but has issues" is 70-79, not 85+.
 
-2. **pacing**: slow / moderate / fast
+2. **storyWeight** (1-100): Evaluate narrative importance. A climax or major turning point is high weight (e.g., 80-100), a standard scene is medium (40-70), and a minor transition is low (10-30).
+
+3. **pacing**: slow / moderate / fast
    - Consider dialogue density, action beats, tension buildup
 
 3. **tension**: low / medium / high
@@ -207,26 +211,26 @@ For EACH scene (1 through ${sceneCount}), provide:
 
 6. **notes**: One sentence identifying what works well AND/OR the most impactful improvement needed
 
-7. **recommendations**: Array of 2-4 specific, actionable fixes. CRITICAL REQUIREMENTS:
+8. **recommendations**: Array of 2-4 specific, actionable fixes. CRITICAL REQUIREMENTS:
    - Each must quote or reference SPECIFIC content from the scene
    - Each must specify the category of issue (e.g., "Dialogue Issues", "Narration/Description Issues", "Pacing Issues")
    - Each should include the targetElement (the specific line, action, or element to change)
    - Each MUST specify impact level:
      * "structural" = requires rewriting/restructuring (e.g., condense dialogue, reorder beats, convert narration to action)
      * "polish" = minor adjustment to existing content (e.g., add emotional tag, tweak word choice)
-   - Each MUST specify priority:
-     * "high" = major issue severely affecting scene quality, clarity, or narrative purpose
-     * "medium" = noticeable issue that weakens the scene's impact
-     * "low" = minor polish or subjective improvement
+   - Each MUST specify priority and pointsDeducted:
+     * "high" = major issue severely affecting scene quality, clarity, or narrative purpose. Assign \`pointsDeducted\`: 10-15
+     * "medium" = noticeable issue that weakens the scene's impact. Assign \`pointsDeducted\`: 5-9
+     * "low" = minor polish or subjective improvement. Assign \`pointsDeducted\`: 1-4
    
    STRUCTURAL EXAMPLES (impact: "structural"):
-   - { "text": "Condense the initial confrontation - combine Ben's first two speeches into one", "category": "Pacing Issues", "targetElement": "Lines 13-15", "impact": "structural", "priority": "high" }
-   - { "text": "Replace narration 'Sarah felt torn' with visual action showing hesitation through body language", "category": "Narration/Description Issues", "targetElement": "Narration about Sarah's feelings", "impact": "structural", "priority": "medium" }
-   - { "text": "Rewrite Alexander's dialogue to be subtly manipulative instead of directly dismissive", "category": "Dialogue Issues", "targetElement": "ALEXANDER: I understand your concern", "impact": "structural", "priority": "high" }
+   - { "text": "Condense the initial confrontation - combine Ben's first two speeches into one", "category": "Pacing Issues", "targetElement": "Lines 13-15", "impact": "structural", "priority": "high", "pointsDeducted": 12 }
+   - { "text": "Replace narration 'Sarah felt torn' with visual action showing hesitation through body language", "category": "Narration/Description Issues", "targetElement": "Narration about Sarah's feelings", "impact": "structural", "priority": "medium", "pointsDeducted": 7 }
+   - { "text": "Rewrite Alexander's dialogue to be subtly manipulative instead of directly dismissive", "category": "Dialogue Issues", "targetElement": "ALEXANDER: I understand your concern", "impact": "structural", "priority": "high", "pointsDeducted": 10 }
    
    POLISH EXAMPLES (impact: "polish"):
-   - { "text": "Add [hesitantly] tag to SARAH's line to convey internal conflict", "category": "Dialogue Issues", "targetElement": "SARAH: I'll do it", "impact": "polish", "priority": "low" }
-   - { "text": "Strengthen the visual description of the security guards' synchronized movements", "category": "Narration/Description Issues", "targetElement": "Action describing guards", "impact": "polish", "priority": "medium" }
+   - { "text": "Add [hesitantly] tag to SARAH's line to convey internal conflict", "category": "Dialogue Issues", "targetElement": "SARAH: I'll do it", "impact": "polish", "priority": "low", "pointsDeducted": 2 }
+   - { "text": "Strengthen the visual description of the security guards' synchronized movements", "category": "Narration/Description Issues", "targetElement": "Action describing guards", "impact": "polish", "priority": "medium", "pointsDeducted": 5 }
 
 OUTPUT FORMAT - Return ONLY valid JSON (no markdown, no code fences):
 {
@@ -235,14 +239,15 @@ OUTPUT FORMAT - Return ONLY valid JSON (no markdown, no code fences):
       "sceneNumber": 1,
       "sceneHeading": "INT. LOCATION - TIME",
       "score": 75,
+      "storyWeight": 60,
       "pacing": "moderate",
       "tension": "medium",
       "characterDevelopment": "moderate",
       "visualPotential": "high",
       "notes": "Strong visual opening but dialogue needs more subtext",
       "recommendations": [
-        { "text": "Replace 'She was nervous' with visual cues - trembling hands, avoiding eye contact", "category": "Narration/Description Issues", "targetElement": "Narration: She was nervous", "impact": "structural", "priority": "high" },
-        { "text": "Add a beat before JOHN's reveal to build suspense", "category": "Pacing Issues", "targetElement": "JOHN: I'm your father", "impact": "structural", "priority": "medium" }
+        { "text": "Replace 'She was nervous' with visual cues - trembling hands, avoiding eye contact", "category": "Narration/Description Issues", "targetElement": "Narration: She was nervous", "impact": "structural", "priority": "high", "pointsDeducted": 15 },
+        { "text": "Add a beat before JOHN's reveal to build suspense", "category": "Pacing Issues", "targetElement": "JOHN: I'm your father", "impact": "structural", "priority": "medium", "pointsDeducted": 10 }
       ]
     }
   ]
@@ -291,6 +296,7 @@ CRITICAL REMINDERS:
       sceneNumber: sa.sceneNumber || idx + 1,
       sceneHeading: sa.sceneHeading || script.scenes[idx]?.heading || 'Unknown',
       score: Math.min(100, Math.max(1, sa.score || 70)),
+      storyWeight: Math.min(100, Math.max(1, sa.storyWeight || 50)),
       pacing: ['slow', 'moderate', 'fast'].includes(sa.pacing) ? sa.pacing : 'moderate',
       tension: ['low', 'medium', 'high'].includes(sa.tension) ? sa.tension : 'medium',
       characterDevelopment: ['minimal', 'moderate', 'strong'].includes(sa.characterDevelopment) ? sa.characterDevelopment : 'moderate',
@@ -306,7 +312,8 @@ CRITICAL REMINDERS:
           category: rec.category || 'General',
           targetElement: rec.targetElement,
           impact: rec.impact === 'polish' ? 'polish' as const : 'structural' as const, // Default to structural
-          priority: ['high', 'medium', 'low'].includes(rec.priority) ? rec.priority : 'medium' as const // Default to medium
+          priority: ['high', 'medium', 'low'].includes(rec.priority) ? rec.priority : 'medium' as const, // Default to medium
+          pointsDeducted: typeof rec.pointsDeducted === 'number' ? rec.pointsDeducted : undefined
         }
       }) : []
     }))

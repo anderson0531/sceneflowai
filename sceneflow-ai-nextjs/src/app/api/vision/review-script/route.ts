@@ -284,65 +284,8 @@ PRE-CALCULATED METRICS:
 - Dialogue Words: ${showVsTellMetrics.dialogueWords}
 ${autoCapReason ? `- AUTO CAP: ${autoCapReason}` : ''}
 
-## CONDITIONAL DEDUCTIONS (Apply only if metrics warrant)
-
-For a script with ${sceneCount} scenes, check these issues:
-
-${sceneCount > 80 ? `- **-10 points**: Excessive scene count (${sceneCount} scenes). Most feature films have 40-60 scenes. Many scenes may be too short or redundant.` : ''}
-${showVsTellMetrics.ratio > 15 ? `- **-${Math.min(15, Math.round(showVsTellMetrics.ratio - 10))} points**: Narration overuse (${showVsTellMetrics.ratio.toFixed(1)}% is narration). Professional scripts aim for under 15%.` : `Note: Narration ratio is ${showVsTellMetrics.ratio.toFixed(1)}% which is within acceptable range (under 15%). Do NOT deduct for narration.`}
-
 Scene Content:
 ${sceneSummaries}
-
-## DEDUCTION RUBRIC WITH IMPORTANCE LEVELS
-
-Each deduction has an importance level that affects how much it impacts the audience experience:
-- **critical**: Major issue that breaks immersion or confuses audience (full point value)
-- **high**: Noticeable issue that detracts from the experience (full point value)
-- **medium**: Minor issue that most viewers would overlook (half point value for scoring)
-- **low**: Polish issue for final drafts only (quarter point value for scoring)
-
-### Dialogue Issues
-- **-5 points** (high): "On-the-nose" dialogue - characters say exactly what they feel without subtext
-- **-4 points** (medium): Characters all sound the same (no distinct voices)
-- **-3 points** (low): Exposition dumps through dialogue ("As you know, Bob...")
-- **-3 points** (low): Repetitive dialogue beats (same argument repeated without progression)
-
-### Narration/Description Issues  
-- **-7 points** (high): Narration explains emotions instead of showing through action/behavior
-- **-5 points** (medium): "Purple prose" - overly poetic/flowery narration that slows pacing
-- **-4 points** (low): Camera direction in action lines (unnecessary "we see", "we hear")
-- **-3 points** (low): Telling internal thoughts that should be dramatized
-
-### Structural Issues
-- **-5 points** (critical): No clear inciting incident in first 10% of script
-- **-5 points** (high): Saggy middle - second act lacks escalation or new information
-- **-4 points** (medium): Rushed resolution - climax/resolution happens too abruptly
-- **-3 points per instance** (medium): Scenes that repeat same emotional beat without progression (max -12)
-
-### Character Issues
-- **-5 points** (critical): Protagonist lacks clear want/need or motivation
-- **-4 points** (high): Antagonist is one-dimensional or unclear
-- **-4 points** (medium): Supporting characters serve only as "validators" without agency
-- **-3 points** (low): Character decisions don't follow established logic
-
-### Pacing Issues
-- **-5 points** (high): Discovery/setup phase takes >40% of the script
-- **-4 points** (medium): "Staccato" pacing - too many very short scenes (2-3 lines) without rhythm variation
-- **-3 points** (low): Transitions between scenes are jarring or unmotivated
-- **-3 points** (low): Choppy scene structure prevents emotional immersion
-
-### Visual Storytelling
-- **-4 points** (medium): Reliance on dialogue to convey what should be visual
-- **-3 points** (low): Missed opportunities for "show don't tell" moments
-- **-3 points** (low): Lack of visual motifs or recurring imagery
-
-### Redundancy Issues
-- **-4 points per instance** (medium, max -12): Scenes that repeat the same argument/confrontation without escalation
-- **-3 points** (low): Characters have the same conversation multiple times with same outcome
-- **-5 points** (high): Conflict doesn't escalate between repeated confrontations
-
-IMPORTANT: Include the "importance" field in each deduction. Be selective - focus on critical and high importance issues. Low importance issues are polish items that shouldn't heavily impact the score.
 
 ## EVALUATION DIMENSIONS (Score each 1-100)
 
@@ -364,7 +307,7 @@ IMPORTANT: Include the "importance" field in each deduction. Be selective - focu
 
 Be fair and constructive. Good first drafts CAN score 75-85 if well-executed.
 
-MATH CHECK: Your overallScore MUST equal 100 minus the sum of all deduction points.
+MATH CHECK: Your overallScore will be automatically recalculated as the weighted average of the scene scores. However, try to provide a realistic overallScore estimate here based on those scene scores.
 
 ## SCENE ANALYSIS
 
@@ -372,13 +315,14 @@ ${sceneCount <= 30
   ? `Provide brief analysis for EVERY scene (1 through ${sceneCount}). This data drives targeted per-scene optimization, so completeness matters.`
   : `For scenes 1, 15, 30, 45, 60, 75, 90 (or similar key moments spaced ~15 scenes apart), provide brief analysis:`
 }
-- Score (1-100)
+- Score (1-100): Calculate strictly as 100 minus the sum of pointsDeducted from the scene's recommendations.
+- Story Weight (1-100): Evaluate narrative importance. A climax or major turning point is high weight (80-100), a standard scene is medium (40-70), and a minor transition is low (10-30).
 - Pacing: slow/moderate/fast
 - Tension: low/medium/high
 - Character Development: minimal/moderate/strong
 - Visual Potential: low/medium/high
 - Notes: One sentence identifying what works OR the single most impactful fix for this scene
-- Recommendations: 2-4 specific, actionable fixes for scenes scoring below 80. Each recommendation should be a concrete instruction that can be applied independently (e.g., "Add subtext to Alexander's dialogue — he agrees too quickly without internal conflict", "Replace the narration explaining Lena's feelings with a visual reaction shot"). For scenes scoring 80+, provide 1-2 polish suggestions. These recommendations will be sent directly to a scene revision AI, so make them precise and self-contained.
+- Recommendations: 2-4 specific, actionable fixes. Each recommendation should be a concrete instruction that can be applied independently. Include a priority (high/medium/low) and a pointsDeducted value based on that priority (high=10-15, medium=5-9, low=1-4).
 
 ## OUTPUT FORMAT
 
@@ -386,10 +330,6 @@ Return ONLY valid JSON:
 {
   "overallScore": <calculated score after deductions, max ${autoScoreCap}>,
   "baseScore": 100,
-  "deductions": [
-    {"reason": "<specific issue found>", "points": <points deducted>, "category": "<category>", "importance": "critical|high|medium|low"},
-    ...
-  ],
   "categories": [
     {"name": "Dialogue Subtext", "score": <1-100>, "weight": 20},
     {"name": "Structural Integrity", "score": <1-100>, "weight": 20},
@@ -407,7 +347,7 @@ Return ONLY valid JSON:
     ...
   ],
   "sceneAnalysis": [
-    {"sceneNumber": 1, "sceneHeading": "<heading>", "score": <1-100>, "pacing": "slow|moderate|fast", "tension": "low|medium|high", "characterDevelopment": "minimal|moderate|strong", "visualPotential": "low|medium|high", "notes": "<one sentence>", "recommendations": [{"text": "<specific fix 1>", "priority": "high|medium|low"}, {"text": "<specific fix 2>", "priority": "high|medium|low"}]},
+    {"sceneNumber": 1, "sceneHeading": "<heading>", "score": <1-100>, "storyWeight": <1-100>, "pacing": "slow|moderate|fast", "tension": "low|medium|high", "characterDevelopment": "minimal|moderate|strong", "visualPotential": "low|medium|high", "notes": "<one sentence>", "recommendations": [{"text": "<specific fix 1>", "priority": "high|medium|low", "pointsDeducted": <number>}, {"text": "<specific fix 2>", "priority": "high|medium|low", "pointsDeducted": <number>}]},
     ...
   ],
   "targetDemographic": "<primary audience>",
@@ -417,9 +357,7 @@ Return ONLY valid JSON:
 Provide constructive, actionable feedback. Acknowledge what works well while identifying genuine areas for improvement.
 
 FINAL CHECK before outputting:
-1. Verify: overallScore = 100 - (sum of all deduction points)
-2. Ensure deductions are for real issues, not invented problems
-3. Balance criticism with recognition of strengths`
+1. Balance criticism with recognition of strengths`
 
   console.log('[Audience Resonance] Calling Vertex AI Gemini with deduction-based prompt...')
   // Token budget: 12k base + tokens for scene analysis
@@ -542,29 +480,52 @@ FINAL CHECK before outputting:
     totalWeight += weight
   }
   
-  // Calculate average of scene scores if available
-  let sceneAverageScore = 0;
+  // Calculate weighted average from scene scores (primary)
+  let sceneWeightedScore = 0;
+  let hasValidSceneWeights = false;
+  
   if (review.sceneAnalysis && review.sceneAnalysis.length > 0) {
-    const totalSceneScore = review.sceneAnalysis.reduce((sum: number, scene: any) => sum + (scene.score || 0), 0);
-    sceneAverageScore = Math.round(totalSceneScore / review.sceneAnalysis.length);
+    let totalWeightedScore = 0;
+    let totalSceneWeight = 0;
+    let allWeightsValid = true;
+    
+    for (const scene of review.sceneAnalysis) {
+      // Validate that scene has both a score and a storyWeight
+      if (typeof scene.score === 'number' && typeof scene.storyWeight === 'number' && scene.storyWeight > 0) {
+        totalWeightedScore += scene.score * scene.storyWeight;
+        totalSceneWeight += scene.storyWeight;
+      } else {
+        allWeightsValid = false;
+        break;
+      }
+    }
+    
+    if (allWeightsValid && totalSceneWeight > 0) {
+      sceneWeightedScore = Math.round(totalWeightedScore / totalSceneWeight);
+      hasValidSceneWeights = true;
+    } else {
+      // Fallback: simple average if weights are missing or invalid
+      const totalSceneScore = review.sceneAnalysis.reduce((sum: number, scene: any) => sum + (scene.score || 0), 0);
+      sceneWeightedScore = Math.round(totalSceneScore / review.sceneAnalysis.length);
+      hasValidSceneWeights = true; // Not strictly weighted, but we have a scene-based score
+    }
   }
 
-  // Calculate overall score from scene average (primary) or weighted dimensional average (fallback)
-  const baseCalculatedScore = sceneAverageScore > 0 ? sceneAverageScore : (totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 70)
+  // Calculate overall score from scene weighted average (primary) or weighted dimensional average (fallback)
+  const baseCalculatedScore = hasValidSceneWeights ? sceneWeightedScore : (totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 70)
   
   // Apply auto cap if needed (for high narration scripts)
   const enforcedScore = Math.min(baseCalculatedScore, autoScoreCap)
   
   if (enforcedScore !== review.overallScore) {
-    console.log(`[Audience Resonance] Score calculation: AI returned ${review.overallScore}, Base Calculated (Scene Avg/Dimensional): ${baseCalculatedScore}, Cap: ${autoScoreCap} -> Final: ${enforcedScore}`)
+    console.log(`[Audience Resonance] Score calculation: AI returned ${review.overallScore}, Base Calculated (Scene Weighted/Dimensional): ${baseCalculatedScore}, Cap: ${autoScoreCap} -> Final: ${enforcedScore}`)
   }
   
   // Apply the final calculated score
   review.overallScore = enforcedScore
   
   // Log the calculation breakdown
-  const totalDeductions = deductions.reduce((sum: number, d: any) => sum + (d.points || 0), 0)
-  console.log(`[Audience Resonance] Final score: ${review.overallScore} (based on ${sceneAverageScore > 0 ? 'scene average' : 'dimensional average'}, deductions for feedback: ${totalDeductions} pts)`)
+  console.log(`[Audience Resonance] Final score: ${review.overallScore} (based on ${hasValidSceneWeights ? 'scene weighted average' : 'dimensional average'})`)
   
   // Normalize recommendations
   if (review.recommendations && Array.isArray(review.recommendations)) {
