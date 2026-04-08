@@ -30,9 +30,6 @@ import { LocationPromptBuilder, LocationPromptPayload } from './LocationPromptBu
 // Scene heading regex for INT/EXT extraction
 const SCENE_CODE_REGEX = /^(INT\.\/EXT\.|EXT\.\/INT\.|INT\.\/EXT|EXT\.\/INT|INT\. |EXT\. |INT\/EXT|EXT\/INT|INT\.|EXT\.|INT|EXT)\s*(.*)$/i
 
-// Time of day indicators
-const TIME_INDICATORS = ['DAY', 'NIGHT', 'MORNING', 'EVENING', 'SUNSET', 'SUNRISE', 'DUSK', 'DAWN', 'CONTINUOUS', 'LATER', 'SAME', 'MOMENTS LATER']
-
 interface LocationLibraryProps {
   /** Current location references */
   locationReferences: LocationReference[]
@@ -91,8 +88,17 @@ function parseSceneHeadingMeta(heading: string): { intExt?: 'INT' | 'EXT' | 'INT
   let timeOfDay: string | undefined
   if (parts.length > 1) {
     const lastPart = parts[parts.length - 1]?.trim()
-    if (lastPart && TIME_INDICATORS.includes(lastPart)) {
-      timeOfDay = lastPart
+    if (lastPart) {
+      const isModifier = 
+        /^(DAY|NIGHT|MORNING|EVENING|SUNSET|SUNRISE|DUSK|DAWN|CONTINUOUS|LATER|SAME|MOMENTS LATER)$/.test(lastPart) ||
+        /\bTO\b/.test(lastPart) || // e.g. DAY TO NIGHT
+        /LATER$/.test(lastPart) || // e.g. MONTHS LATER, YEARS LATER
+        /^(FLASHBACK|DREAM|MONTAGE)/.test(lastPart) || // sequence types
+        /^(19|20)\d{2}$/.test(lastPart); // Years like 1999, 2024
+      
+      if (isModifier) {
+        timeOfDay = lastPart
+      }
     }
   }
 
@@ -105,9 +111,9 @@ function parseSceneHeadingMeta(heading: string): { intExt?: 'INT' | 'EXT' | 'INT
 function TimeIcon({ time }: { time?: string }) {
   if (!time) return null
   const t = time.toUpperCase()
-  if (['NIGHT', 'DUSK'].includes(t)) return <Moon className="w-3 h-3 text-indigo-400" />
-  if (['SUNRISE', 'DAWN', 'MORNING'].includes(t)) return <Sunrise className="w-3 h-3 text-amber-400" />
-  if (['SUNSET', 'EVENING'].includes(t)) return <Sunrise className="w-3 h-3 text-orange-400" />
+  if (t.includes('NIGHT') || t.includes('DUSK')) return <Moon className="w-3 h-3 text-indigo-400" />
+  if (t.includes('SUNRISE') || t.includes('DAWN') || t.includes('MORNING')) return <Sunrise className="w-3 h-3 text-amber-400" />
+  if (t.includes('SUNSET') || t.includes('EVENING')) return <Sunrise className="w-3 h-3 text-orange-400" />
   return <Sun className="w-3 h-3 text-yellow-400" />
 }
 

@@ -50,19 +50,23 @@ export function extractLocation(rawHeading?: string | null): string | null {
   const remainder = match[2]?.trim() || ''
   if (!remainder) return null
 
-  // Split by " - " to separate location from time of day
-  // "LIVING ROOM - DAY" → "LIVING ROOM"
-  // "CAR - MOVING - NIGHT" → "CAR - MOVING" (preserve middle segments)
+  // Split by " - " to separate location from modifiers (time of day, state, etc.)
   const parts = remainder.split(/\s+-\s+/)
   
-  // Time indicators to strip from the end
-  const timeIndicators = ['DAY', 'NIGHT', 'MORNING', 'EVENING', 'SUNSET', 'SUNRISE', 'DUSK', 'DAWN', 'CONTINUOUS', 'LATER', 'SAME', 'MOMENTS LATER']
-  
-  // Remove last part if it's a time indicator
   if (parts.length > 1) {
     const lastPart = parts[parts.length - 1]?.trim()
-    if (lastPart && timeIndicators.includes(lastPart)) {
-      parts.pop()
+    if (lastPart) {
+      // Heuristic: Is it a time/state modifier?
+      const isModifier = 
+        /^(DAY|NIGHT|MORNING|EVENING|SUNSET|SUNRISE|DUSK|DAWN|CONTINUOUS|LATER|SAME|MOMENTS LATER)$/.test(lastPart) ||
+        /\bTO\b/.test(lastPart) || // e.g. DAY TO NIGHT
+        /LATER$/.test(lastPart) || // e.g. MONTHS LATER, YEARS LATER
+        /^(FLASHBACK|DREAM|MONTAGE)/.test(lastPart) || // sequence types
+        /^(19|20)\d{2}$/.test(lastPart); // Years like 1999, 2024
+        
+      if (isModifier) {
+        parts.pop()
+      }
     }
   }
 
