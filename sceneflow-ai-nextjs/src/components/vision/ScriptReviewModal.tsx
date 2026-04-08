@@ -1348,18 +1348,18 @@ export default function ScriptReviewModal({
                   />
                 )}
                 <Button
-                  variant="outline"
+                  variant="default"
                   size="sm"
                   onClick={handleRegenerate}
                   disabled={isGenerating}
-                  className="flex items-center gap-2 h-8 text-xs"
+                  className="flex items-center gap-2 h-8 text-xs bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
                 >
                   {isGenerating ? (
                     <Loader className="w-3.5 h-3.5 animate-spin" />
                   ) : (
                     <RefreshCw className="w-3.5 h-3.5" />
                   )}
-                  Re-analyze
+                  Analyze
                 </Button>
               </div>
               {/* Go to Scenes with tooltip showing scene stats */}
@@ -1367,13 +1367,13 @@ export default function ScriptReviewModal({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="default"
+                      variant="outline"
                       size="sm"
                       onClick={() => {
                         stopPlayback()
                         onClose()
                       }}
-                      className="flex items-center gap-2 h-8 text-xs bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white ml-2"
+                      className="flex items-center gap-2 h-8 text-xs border-purple-500/50 text-purple-400 hover:bg-purple-500/10 ml-2"
                     >
                       <Film className="w-3.5 h-3.5" />
                       Go to Scenes
