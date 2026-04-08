@@ -63,6 +63,7 @@ export interface SectionVisibility {
   screeningRoom: boolean
   projectStats: boolean
   credits: boolean
+  voiceSelector?: boolean
 }
 
 /**
@@ -78,6 +79,7 @@ export interface SectionDefaults {
   screeningRoom: boolean
   projectStats: boolean
   credits: boolean
+  voiceSelector?: boolean
 }
 
 /**
@@ -187,6 +189,7 @@ export const productionSidebarConfig: WorkflowSidebarConfig = {
     progress: true,
     quickActions: true,
     reviewScores: true,
+    voiceSelector: true,
     screeningRoom: false, // Hidden in production phase
     projectStats: true,
     credits: true,
@@ -198,6 +201,7 @@ export const productionSidebarConfig: WorkflowSidebarConfig = {
     progress: false,
     quickActions: true,
     reviewScores: true,
+    voiceSelector: true,
     screeningRoom: false,
     projectStats: false,
     credits: true,

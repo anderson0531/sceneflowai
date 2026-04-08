@@ -50,6 +50,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { ReviewScoresPanel, type ReviewScores, type AudienceReviewDetails } from './ReviewScoresPanel'
+import { SidebarVoiceSelector } from './SidebarVoiceSelector'
 import { ProjectStatsPanel, type ProjectStats } from './ProjectStatsPanel'
 import { ProTipsChecklist } from '../pro-tips/ProTipsChecklist'
 import { WorkflowGuidePanel } from '../workflow/WorkflowGuidePanel'
@@ -107,6 +108,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
     progress: config.sectionDefaults.progress,
     quickActions: config.sectionDefaults.quickActions,
     reviewScores: config.sectionDefaults.reviewScores,
+    voiceSelector: config.sectionDefaults.voiceSelector ?? false,
     screeningRoom: config.sectionDefaults.screeningRoom,
     projectStats: config.sectionDefaults.projectStats,
     credits: config.sectionDefaults.credits,
@@ -393,6 +395,14 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
               isOpen={sectionsOpen.reviewScores}
               onToggle={() => toggleSection('reviewScores')}
               isGenerating={isGeneratingReviews}
+            />
+          )}
+
+          {/* Voice Selector Section */}
+          {config.sectionVisibility.voiceSelector && (
+            <SidebarVoiceSelector
+              isOpen={sectionsOpen.voiceSelector ?? false}
+              onToggle={() => toggleSection('voiceSelector')}
             />
           )}
 

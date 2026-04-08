@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 60 // Vercel timeout 60s
 
 // Default voice if none specified
 const DEFAULT_VOICE = 'en-US-Journey-F'
@@ -20,6 +21,25 @@ const VOICE_MAPPING: Record<string, string> = {
   'josh': 'en-US-Neural2-J',
   // Default mapping
   '21m00Tcm4TlvDq8ikWAM': 'en-US-Journey-F', // Rachel default from ElevenLabs
+}
+
+
+function splitTextIntoChunks(text: string, maxLength: number = 4000) {
+  const chunks = []
+  let currentChunk = ''
+  
+  const sentences = text.split(/(?<=[.!?])\s+/)
+  
+  for (const sentence of sentences) {
+    if (currentChunk.length + sentence.length + 1 <= maxLength) {
+      currentChunk += (currentChunk ? ' ' : '') + sentence
+    } else {
+      if (currentChunk) chunks.push(currentChunk)
+      currentChunk = sentence
+    }
+  }
+  if (currentChunk) chunks.push(currentChunk)
+  return chunks
 }
 
 export async function POST(request: NextRequest) {
@@ -76,62 +96,70 @@ export async function POST(request: NextRequest) {
       ? actualVoiceName.split('-').slice(0, 2).join('-') 
       : 'en-US'
     
-    const payload: any = {
-      input: { text },
-      voice: {
-        languageCode,
-      },
-      audioConfig: {
-        audioEncoding: 'MP3',
-        speakingRate: 1.0,
-        pitch: 0.0,
-        volumeGainDb: 0.0,
-      },
-    }
+    const chunks = splitTextIntoChunks(text, 4000);
+    const audioBuffers: Buffer[] = [];
 
-    if (isCustomClone) {
-      // Use Voice Cloning Key
-      payload.voice.voiceClone = {
-        voiceCloningKey: actualVoiceName
+    for (let i = 0; i < chunks.length; i++) {
+      const chunkText = chunks[i];
+      console.log(`[Google TTS] Processing chunk ${i + 1}/${chunks.length} (${chunkText.length} chars)`);
+      
+      const payload: any = {
+        input: { text: chunkText },
+        voice: {
+          languageCode,
+        },
+        audioConfig: {
+          audioEncoding: 'MP3',
+          speakingRate: 1.0,
+          pitch: 0.0,
+          volumeGainDb: 0.0,
+        },
       }
-    } else {
-      payload.voice.name = actualVoiceName
-    }
 
-    if (isGemini) {
-      payload.voice.modelName = 'gemini-2.5-flash-tts'
-      if (prompt) {
-        payload.input.prompt = `INSTRUCTION: You are a voice actor. Do not read this instruction aloud. Adopt the following voice profile precisely: ${prompt}`
+      if (isCustomClone) {
+        payload.voice.voiceClone = {
+          voiceCloningKey: actualVoiceName
+        }
+      } else {
+        payload.voice.name = actualVoiceName
       }
+
+      if (isGemini) {
+        payload.voice.modelName = 'gemini-2.5-flash-tts'
+        if (prompt) {
+          payload.input.prompt = `INSTRUCTION: You are a voice actor. Do not read this instruction aloud. Adopt the following voice profile precisely: ${prompt}`
+        }
+      }
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error(`[Google TTS] REST API error on chunk ${i + 1}:`, response.status, errorText)
+        return NextResponse.json({ 
+          error: 'TTS failed on a chunk', 
+          details: errorText 
+        }, { status: 502 })
+      }
+
+      const data = await response.json()
+      
+      if (!data.audioContent) {
+        console.error(`[Google TTS] No audio content in response for chunk ${i + 1}`)
+        return NextResponse.json({ error: 'No audio generated for chunk' }, { status: 500 })
+      }
+
+      audioBuffers.push(Buffer.from(data.audioContent, 'base64'));
     }
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload),
-    })
+    const finalAudioBuffer = Buffer.concat(audioBuffers);
+    console.log('[Google TTS] Audio generated successfully, total size:', finalAudioBuffer.length)
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('[Google TTS] REST API error:', response.status, errorText)
-      return NextResponse.json({ 
-        error: 'TTS failed', 
-        details: errorText 
-      }, { status: 502 })
-    }
-
-    const data = await response.json()
-    
-    if (!data.audioContent) {
-      console.error('[Google TTS] No audio content in response')
-      return NextResponse.json({ error: 'No audio generated' }, { status: 500 })
-    }
-
-    // audioContent is base64 encoded
-    const audioBuffer = Buffer.from(data.audioContent, 'base64')
-    console.log('[Google TTS] Audio generated successfully, size:', audioBuffer.length)
-
-    return new Response(audioBuffer, {
+    return new Response(finalAudioBuffer, {
       status: 200,
       headers: {
         'Content-Type': 'audio/mpeg',

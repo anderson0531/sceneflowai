@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { OptimizeSceneDialog } from '@/components/vision/OptimizeSceneDialog'
 import { DIRECTOR_ASSISTANTS, applyAssistantStyle, getAssistantByVoiceId } from '@/lib/tts/productionAssistants'
+import { useStore } from '@/store/useStore'
 import { AnimatedScore, AnimatedProgressBar } from '@/components/ui/AnimatedScore'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
@@ -69,9 +70,6 @@ interface Voice {
   category?: string
   labels?: Record<string, string>
 }
-
-// LocalStorage key for persisting voice selection
-const REVIEW_VOICE_STORAGE_KEY = 'sceneflow-audience-resonance-voice'
 
 // Recommendation can be either a string (legacy) or an object with text, priority, category
 type RecommendationItem = string | { text: string; priority: 'critical' | 'high' | 'medium' | 'optional'; category: string }
@@ -416,35 +414,8 @@ export default function ScriptReviewModal({
   const [cinematicScenes, setCinematicScenes] = useState<CinematicScenePlan[]>(existingCinematicScenes)
   const [editingCreditId, setEditingCreditId] = useState<string | null>(null)
   
-  const [selectedVoiceId, setSelectedVoiceId] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(REVIEW_VOICE_STORAGE_KEY)
-        if (stored) {
-          const { voiceId } = JSON.parse(stored)
-          if (voiceId && DIRECTOR_ASSISTANTS.find(a => a.voiceId === voiceId)) return voiceId
-        }
-      } catch (e) {
-        console.warn('Failed to load review voice from localStorage:', e)
-      }
-    }
-    return DIRECTOR_ASSISTANTS[0].voiceId
-  })
-  
-  const [selectedVoiceName, setSelectedVoiceName] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(REVIEW_VOICE_STORAGE_KEY)
-        if (stored) {
-          const { voiceName, voiceId } = JSON.parse(stored)
-          if (voiceName && DIRECTOR_ASSISTANTS.find(a => a.voiceId === voiceId)) return voiceName
-        }
-      } catch (e) {
-        // Already warned above
-      }
-    }
-    return DIRECTOR_ASSISTANTS[0].title
-  })
+  const selectedVoiceId = useStore(s => s.sidebarData.selectedVoiceId) || DIRECTOR_ASSISTANTS[0].voiceId
+  const selectedVoiceName = useStore(s => s.sidebarData.selectedVoiceName) || DIRECTOR_ASSISTANTS[0].title
   
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en') // Keep for TTS playback
   const [playingSection, setPlayingSection] = useState<string | null>(null)
@@ -508,21 +479,10 @@ export default function ScriptReviewModal({
   // Review Expert voice: uses NarratorVoicePicker with curated narrator catalog
   // Default voice: Arnold (authoritative documentary narrator)
 
-  // Handle voice selection from dialog
-  const handleVoiceSelect = (voiceId: string, voiceName: string) => {
-    setSelectedVoiceId(voiceId)
-    setSelectedVoiceName(voiceName)
-    // Clear audio cache since voice changed
+  // Clear cache if voice changes (now handled globally, so just a watcher)
+  useEffect(() => {
     audioCacheRef.current.clear()
-    // Persist to localStorage
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem(REVIEW_VOICE_STORAGE_KEY, JSON.stringify({ voiceId, voiceName }))
-      } catch (e) {
-        console.warn('Failed to save review voice to localStorage:', e)
-      }
-    }
-  }
+  }, [selectedVoiceId])
 
   const hashText = (text: string): string => {
     let hash = 0
@@ -1329,28 +1289,10 @@ export default function ScriptReviewModal({
             </Button>
           </div>
 
-          {/* Bottom Line: Playback Voice & Action Buttons */}
+          {/* Bottom Line: Action Buttons & Playback Control */}
           <div className="flex items-center justify-between flex-wrap gap-4">
-            {/* Voice Selector */}
+            {/* Playback Controls */}
             <div className="flex items-center gap-3">
-              <Volume2 className="w-4 h-4 text-gray-500" />
-              <span className="text-sm text-gray-600 dark:text-gray-400">Production Assistant:</span>
-              <Select value={selectedVoiceId} onValueChange={(val) => {
-                const asst = DIRECTOR_ASSISTANTS.find(a => a.voiceId === val)
-                if (asst) handleVoiceSelect(asst.voiceId, asst.title)
-              }}>
-                <SelectTrigger className="w-[220px] h-8 text-xs">
-                  <SelectValue placeholder="Select assistant..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {DIRECTOR_ASSISTANTS.map((asst) => (
-                    <SelectItem key={asst.id} value={asst.voiceId}>
-                      {asst.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
               {playingSection && (
                 <Button
                   variant="outline"
@@ -1359,8 +1301,15 @@ export default function ScriptReviewModal({
                   className="flex items-center gap-1 text-red-500 border-red-300 h-8"
                 >
                   <VolumeX className="w-3 h-3" />
-                  Stop
+                  Stop Playback
                 </Button>
+              )}
+              {/* Note: Production Assistant voice is now configured in the global sidebar */}
+              {!playingSection && (
+                 <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                   <Volume2 className="w-3 h-3" />
+                   Configure voice in sidebar
+                 </span>
               )}
             </div>
 

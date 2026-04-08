@@ -224,6 +224,8 @@ interface AppState {
     } | null;
     quickActionHandlers: Record<string, () => void>;
     isGeneratingReviews?: boolean;
+    selectedVoiceId: string | null;
+    selectedVoiceName: string | null;
   };
   
   // Sidebar actions
@@ -234,6 +236,7 @@ interface AppState {
   registerQuickActionHandler: (actionId: string, handler: () => void) => void;
   unregisterQuickActionHandler: (actionId: string) => void;
   setIsGeneratingReviews: (isGenerating: boolean) => void;
+  setSidebarVoiceSelection: (voiceId: string | null, voiceName: string | null) => void;
   clearSidebarData: () => void;
   
   // Cue Assistant state
@@ -329,6 +332,8 @@ export const useStore = create<AppState>((set, get) => ({
     progressData: null,
     quickActionHandlers: {},
     isGeneratingReviews: false,
+    selectedVoiceId: null,
+    selectedVoiceName: null,
   },
   cueConversation: {
     messages: [],
@@ -488,6 +493,9 @@ export const useStore = create<AppState>((set, get) => ({
   setIsGeneratingReviews: (isGenerating) => set((state) => ({
     sidebarData: { ...state.sidebarData, isGeneratingReviews: isGenerating }
   })),
+  setSidebarVoiceSelection: (voiceId, voiceName) => set((state) => ({
+    sidebarData: { ...state.sidebarData, selectedVoiceId: voiceId, selectedVoiceName: voiceName }
+  })),
   clearSidebarData: () => set((state) => ({
     sidebarData: {
       reviewScores: null,
@@ -496,6 +504,8 @@ export const useStore = create<AppState>((set, get) => ({
       progressData: null,
       quickActionHandlers: {},
       isGeneratingReviews: false,
+      selectedVoiceId: null,
+      selectedVoiceName: null,
     }
   })),
   
