@@ -46,7 +46,7 @@ export function FeatureHighlight() {
     },
     {
       icon: Brain,
-      title: 'AI-Powered Script Insights & Direction',
+      title: 'AI-Powered Insights & Direction',
       description: 'Edit scripts with voice or text. Common optimizations, custom instructions, and Review Insights from Director & Audience analysis.',
       detailedDescription: 'Flow Assist transforms script editing with AI-powered optimization. Choose from common improvements (pacing, narrative arc, dialogue polish, visual cohesion) or enter custom instructions via text or voice. The Review Insights tab surfaces high-priority recommendations from Director and Audience reviews—select the ones you want and preview changes before applying.',
       benefits: [
