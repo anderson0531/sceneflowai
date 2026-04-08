@@ -81,6 +81,14 @@ interface Deduction {
   importance?: string
 }
 
+interface SceneRecommendation {
+  text: string
+  category?: string
+  targetElement?: string
+  impact?: 'structural' | 'polish'
+  priority?: 'high' | 'medium' | 'low'
+}
+
 interface SceneAnalysis {
   sceneNumber: number
   sceneHeading: string
@@ -90,7 +98,7 @@ interface SceneAnalysis {
   characterDevelopment: 'minimal' | 'moderate' | 'strong'
   visualPotential: 'low' | 'medium' | 'high'
   notes: string
-  recommendations?: string[]  // Per-scene targeted fixes
+  recommendations?: (string | SceneRecommendation)[]  // Per-scene targeted fixes (string legacy, object new)
 }
 
 interface AudienceResonanceReview {
@@ -349,7 +357,7 @@ interface ScriptReviewModalProps {
       characterDevelopment: 'minimal' | 'moderate' | 'strong'
       visualPotential: 'low' | 'medium' | 'high'
       notes: string
-      recommendations: string[]
+      recommendations: (string | SceneRecommendation)[]
       analyzedAt: string
     }
   }>) => void
@@ -1837,12 +1845,27 @@ export default function ScriptReviewModal({
                                   <div className="bg-white dark:bg-gray-900 rounded-md p-3 border border-purple-100 dark:border-purple-900/30">
                                     <h4 className="text-xs font-semibold text-purple-700 dark:text-purple-400 mb-2 uppercase tracking-wider">Recommendations</h4>
                                     <ul className="space-y-1">
-                                      {scene.recommendations.map((rec, rIdx) => (
-                                        <li key={rIdx} className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2">
-                                          <span className="text-purple-500 mt-0.5">•</span>
-                                          <span>{rec}</span>
-                                        </li>
-                                      ))}
+                                      {scene.recommendations.map((rec, rIdx) => {
+                                        const recText = typeof rec === 'string' ? rec : rec?.text || String(rec)
+                                        const recPriority = typeof rec === 'object' && rec?.priority ? rec.priority : null
+                                        return (
+                                          <li key={rIdx} className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2">
+                                            <span className="text-purple-500 mt-0.5">•</span>
+                                            <span className="flex-1">
+                                              {recText}
+                                              {recPriority && (
+                                                <Badge variant="outline" className={`ml-2 text-[10px] px-1 py-0 h-4 border-none uppercase tracking-wider ${
+                                                  recPriority === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                                  recPriority === 'medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                                                  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                                }`}>
+                                                  {recPriority}
+                                                </Badge>
+                                              )}
+                                            </span>
+                                          </li>
+                                        )
+                                      })}
                                     </ul>
                                   </div>
                                 )}

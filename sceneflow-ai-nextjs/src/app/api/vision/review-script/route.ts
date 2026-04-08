@@ -407,7 +407,7 @@ Return ONLY valid JSON:
     ...
   ],
   "sceneAnalysis": [
-    {"sceneNumber": 1, "sceneHeading": "<heading>", "score": <1-100>, "pacing": "slow|moderate|fast", "tension": "low|medium|high", "characterDevelopment": "minimal|moderate|strong", "visualPotential": "low|medium|high", "notes": "<one sentence>", "recommendations": ["<specific fix 1>", "<specific fix 2>"]},
+    {"sceneNumber": 1, "sceneHeading": "<heading>", "score": <1-100>, "pacing": "slow|moderate|fast", "tension": "low|medium|high", "characterDevelopment": "minimal|moderate|strong", "visualPotential": "low|medium|high", "notes": "<one sentence>", "recommendations": [{"text": "<specific fix 1>", "priority": "high|medium|low"}, {"text": "<specific fix 2>", "priority": "high|medium|low"}]},
     ...
   ],
   "targetDemographic": "<primary audience>",

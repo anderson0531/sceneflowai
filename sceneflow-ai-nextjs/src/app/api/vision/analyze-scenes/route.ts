@@ -21,6 +21,7 @@ interface SceneRecommendation {
   category: string // Matches script-level categories: Dialogue Issues, Narration/Description Issues, etc.
   targetElement?: string // The specific line, action, or element to change
   impact: 'structural' | 'polish' // structural = requires rewrite, polish = minor adjustment
+  priority: 'high' | 'medium' | 'low'
 }
 
 interface AudienceReviewContext {
@@ -182,6 +183,7 @@ ${sceneDetails}
 For EACH scene (1 through ${sceneCount}), provide:
 
 1. **score** (1-100): Overall quality score - USE THIS CALIBRATION:
+   - Start at a base score of 100. Deduct 10-15 points for each 'high' priority issue, 5-9 points for 'medium', and 1-4 points for 'low'. Ensure the final score strictly reflects these deductions.
    - 90-100: Exceptional - production ready, masterful execution
    - 80-89: Strong - minor polish needed, works well
    - 75-79: Good - solid foundation, some refinement needed
@@ -212,15 +214,19 @@ For EACH scene (1 through ${sceneCount}), provide:
    - Each MUST specify impact level:
      * "structural" = requires rewriting/restructuring (e.g., condense dialogue, reorder beats, convert narration to action)
      * "polish" = minor adjustment to existing content (e.g., add emotional tag, tweak word choice)
+   - Each MUST specify priority:
+     * "high" = major issue severely affecting scene quality, clarity, or narrative purpose
+     * "medium" = noticeable issue that weakens the scene's impact
+     * "low" = minor polish or subjective improvement
    
    STRUCTURAL EXAMPLES (impact: "structural"):
-   - { "text": "Condense the initial confrontation - combine Ben's first two speeches into one", "category": "Pacing Issues", "targetElement": "Lines 13-15", "impact": "structural" }
-   - { "text": "Replace narration 'Sarah felt torn' with visual action showing hesitation through body language", "category": "Narration/Description Issues", "targetElement": "Narration about Sarah's feelings", "impact": "structural" }
-   - { "text": "Rewrite Alexander's dialogue to be subtly manipulative instead of directly dismissive", "category": "Dialogue Issues", "targetElement": "ALEXANDER: I understand your concern", "impact": "structural" }
+   - { "text": "Condense the initial confrontation - combine Ben's first two speeches into one", "category": "Pacing Issues", "targetElement": "Lines 13-15", "impact": "structural", "priority": "high" }
+   - { "text": "Replace narration 'Sarah felt torn' with visual action showing hesitation through body language", "category": "Narration/Description Issues", "targetElement": "Narration about Sarah's feelings", "impact": "structural", "priority": "medium" }
+   - { "text": "Rewrite Alexander's dialogue to be subtly manipulative instead of directly dismissive", "category": "Dialogue Issues", "targetElement": "ALEXANDER: I understand your concern", "impact": "structural", "priority": "high" }
    
    POLISH EXAMPLES (impact: "polish"):
-   - { "text": "Add [hesitantly] tag to SARAH's line to convey internal conflict", "category": "Dialogue Issues", "targetElement": "SARAH: I'll do it", "impact": "polish" }
-   - { "text": "Strengthen the visual description of the security guards' synchronized movements", "category": "Narration/Description Issues", "targetElement": "Action describing guards", "impact": "polish" }
+   - { "text": "Add [hesitantly] tag to SARAH's line to convey internal conflict", "category": "Dialogue Issues", "targetElement": "SARAH: I'll do it", "impact": "polish", "priority": "low" }
+   - { "text": "Strengthen the visual description of the security guards' synchronized movements", "category": "Narration/Description Issues", "targetElement": "Action describing guards", "impact": "polish", "priority": "medium" }
 
 OUTPUT FORMAT - Return ONLY valid JSON (no markdown, no code fences):
 {
@@ -235,8 +241,8 @@ OUTPUT FORMAT - Return ONLY valid JSON (no markdown, no code fences):
       "visualPotential": "high",
       "notes": "Strong visual opening but dialogue needs more subtext",
       "recommendations": [
-        { "text": "Replace 'She was nervous' with visual cues - trembling hands, avoiding eye contact", "category": "Narration/Description Issues", "targetElement": "Narration: She was nervous", "impact": "structural" },
-        { "text": "Add a beat before JOHN's reveal to build suspense", "category": "Pacing Issues", "targetElement": "JOHN: I'm your father", "impact": "structural" }
+        { "text": "Replace 'She was nervous' with visual cues - trembling hands, avoiding eye contact", "category": "Narration/Description Issues", "targetElement": "Narration: She was nervous", "impact": "structural", "priority": "high" },
+        { "text": "Add a beat before JOHN's reveal to build suspense", "category": "Pacing Issues", "targetElement": "JOHN: I'm your father", "impact": "structural", "priority": "medium" }
       ]
     }
   ]
@@ -291,15 +297,16 @@ CRITICAL REMINDERS:
       visualPotential: ['low', 'medium', 'high'].includes(sa.visualPotential) ? sa.visualPotential : 'medium',
       notes: sa.notes || 'No specific notes',
       recommendations: Array.isArray(sa.recommendations) ? sa.recommendations.map((rec: any) => {
-        // Normalize recommendations to include impact field
+        // Normalize recommendations to include impact and priority fields
         if (typeof rec === 'string') {
-          return { text: rec, category: 'General', impact: 'structural' as const }
+          return { text: rec, category: 'General', impact: 'structural' as const, priority: 'medium' as const }
         }
         return {
           text: rec.text || rec,
           category: rec.category || 'General',
           targetElement: rec.targetElement,
-          impact: rec.impact === 'polish' ? 'polish' as const : 'structural' as const // Default to structural
+          impact: rec.impact === 'polish' ? 'polish' as const : 'structural' as const, // Default to structural
+          priority: ['high', 'medium', 'low'].includes(rec.priority) ? rec.priority : 'medium' as const // Default to medium
         }
       }) : []
     }))

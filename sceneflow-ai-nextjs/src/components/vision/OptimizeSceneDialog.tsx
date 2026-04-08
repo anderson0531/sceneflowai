@@ -232,6 +232,7 @@ export function OptimizeSceneDialog({
                   {sceneAnalysis.recommendations.map((rec, idx) => {
                     const isSelected = selectedRecommendations.has(idx)
                     const recText = typeof rec === 'string' ? rec : (rec as any)?.text || String(rec)
+                    const recPriority = typeof rec === 'object' && (rec as any)?.priority ? (rec as any).priority : null
                     return (
                       <div
                         key={idx}
@@ -256,8 +257,17 @@ export function OptimizeSceneDialog({
                             <Square className="w-4 h-4 text-gray-400" />
                           )}
                         </button>
-                        <span className={`text-sm ${isSelected ? 'text-gray-900 dark:text-gray-100' : 'text-gray-600 dark:text-gray-400'}`}>
+                        <span className={`text-sm flex-1 ${isSelected ? 'text-gray-900 dark:text-gray-100 font-medium' : 'text-gray-600 dark:text-gray-400'}`}>
                           {recText}
+                          {recPriority && (
+                            <Badge variant="outline" className={`ml-2 text-[9px] px-1 py-0 h-4 border-none uppercase tracking-wider ${
+                              recPriority === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                              recPriority === 'medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                              'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                            }`}>
+                              {recPriority}
+                            </Badge>
+                          )}
                         </span>
                       </div>
                     )
