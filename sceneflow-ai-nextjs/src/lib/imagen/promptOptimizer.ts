@@ -376,6 +376,36 @@ export function buildWardrobeNegatives(defaultWardrobe?: string): string[] {
 }
 
 /**
+ * Strip emotional descriptors from character descriptions
+ * Keeps only physical characteristics, lets scene drive emotions
+ */
+export function stripEmotionalDescriptors(description: string): string {
+  // Remove common emotional/expression terms
+  const emotionalTerms = [
+    // "friendly smile", "warm expression", "wide smile", etc.
+    /\b(friendly|warm|cheerful|happy|sad|worried|confident|stern|serious|welcoming|inviting|wide|bright|broad)\s+(smile|expression|demeanor|look|face|grin)\b/gi,
+    // "smiling", "frowning", "grinning", "beaming"
+    /\b(smiling|frowning|grinning|beaming)\b/gi,
+    // "with a happy expression", "with a smile", "and a wide smile"
+    /\b(with|and)\s+a\s+(happy|sad|worried|confident|friendly|stern|serious|warm|cheerful|weary|tired|energetic|excited|wide|bright|broad)?\s*(smile|expression|look|demeanor|face|appearance|frown|grin|smirk)\b/gi,
+    // "and a smile", ", a smile"
+    /[,\s]+(and\s+)?a\s+(smile|frown|grin|smirk)\b/gi,
+    // "appears happy", "looks tired"
+    /\b(appears|looks|seems)\s+(happy|sad|worried|confident|tired|energetic|friendly|stern|serious|cheerful)\b/gi,
+  ]
+  
+  let cleaned = description
+  emotionalTerms.forEach(pattern => {
+    cleaned = cleaned.replace(pattern, '')
+  })
+  
+  // Clean up double spaces and punctuation
+  cleaned = cleaned.replace(/\s{2,}/g, ' ').replace(/\s+\./g, '.').trim()
+  
+  return cleaned
+}
+
+/**
  * Strip clothing/wardrobe descriptors from character descriptions
  * Used when explicit defaultWardrobe is set to prevent conflicts between
  * clothing mentioned in visionDescription and the intended wardrobe
