@@ -427,7 +427,7 @@ export async function POST(request: NextRequest) {
             
             return {
               ...d,
-              character: character ? character.name : d.character,
+              character: character ? character.name.toUpperCase() : d.character,
               characterId: character?.id
             }
           })

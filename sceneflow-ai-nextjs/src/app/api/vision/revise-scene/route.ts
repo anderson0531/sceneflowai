@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateTextCacheAware } from '@/lib/vertexai/gemini'
 import { logCacheEvent } from '@/lib/vertexai/cacheObservability'
+import { findMatchingCharacter } from '@/lib/character/matching'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -361,7 +362,7 @@ Now rewrite the scene following all the rules, constraints, and formatting requi
     const revisedScene = JSON.parse(jsonText)
     
     // Apply preservation rules
-    const finalScene = { ...currentScene, ...revisedScene }
+    let finalScene = { ...currentScene, ...revisedScene }
     if (revisedScene.visualDescription === undefined && currentScene.visualDescription) {
       finalScene.visualDescription = currentScene.visualDescription
     }
@@ -379,6 +380,18 @@ Now rewrite the scene following all the rules, constraints, and formatting requi
       finalScene.sfx = currentScene.sfx
     }
 
+    if (finalScene.dialogue && Array.isArray(finalScene.dialogue) && context?.characters) {
+      finalScene.dialogue = finalScene.dialogue.map((d: any) => {
+        if (d.character) {
+          const match = findMatchingCharacter(d.character, context.characters)
+          if (match) {
+            return { ...d, character: match.name.toUpperCase() }
+          }
+        }
+        return d
+      })
+    }
+
     return finalScene
 } catch (parseError) {
   console.error('[Scene Revision] JSON parse error:', parseError)
@@ -392,7 +405,20 @@ Now rewrite the scene following all the rules, constraints, and formatting requi
       const retryParsed = JSON.parse(jsonObjectMatch[0])
       if (retryParsed.heading || retryParsed.dialogue || retryParsed.action) {
         console.log('[Scene Revision] Retry parse succeeded')
-        const finalScene = { ...currentScene, ...retryParsed }
+        let finalScene = { ...currentScene, ...retryParsed }
+        
+        if (finalScene.dialogue && Array.isArray(finalScene.dialogue) && context?.characters) {
+          finalScene.dialogue = finalScene.dialogue.map((d: any) => {
+            if (d.character) {
+              const match = findMatchingCharacter(d.character, context.characters)
+              if (match) {
+                return { ...d, character: match.name.toUpperCase() }
+              }
+            }
+            return d
+          })
+        }
+        
         return finalScene
       }
     }
