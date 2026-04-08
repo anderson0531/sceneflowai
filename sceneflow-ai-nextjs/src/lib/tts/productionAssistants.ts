@@ -1,4 +1,9 @@
 export interface ProductionAssistant {
+  name: string
+  avatar: {
+    initials: string
+    color: string
+  }
   id: string
   title: string
   voiceId: string
@@ -9,6 +14,8 @@ export interface ProductionAssistant {
 export const DIRECTOR_ASSISTANTS: ProductionAssistant[] = [
   {
     id: 'senior-script-consultant',
+    name: 'Marcus',
+    avatar: { initials: 'M', color: 'bg-indigo-500' },
     title: 'Senior Script Consultant',
     voiceId: 'en-US-Journey-D',
     description: 'Seasoned, soulful male voice. Measured wisdom, deep resonance, significant pauses.',
@@ -16,6 +23,8 @@ export const DIRECTOR_ASSISTANTS: ProductionAssistant[] = [
   },
   {
     id: 'head-of-editorial',
+    name: 'Elena',
+    avatar: { initials: 'E', color: 'bg-rose-500' },
     title: 'Head of Editorial',
     voiceId: 'en-US-Neural2-J',
     description: 'Polished, crisp, and authoritative. Formal, high-stakes production briefing tone.',
@@ -23,6 +32,8 @@ export const DIRECTOR_ASSISTANTS: ProductionAssistant[] = [
   },
   {
     id: 'research-lead',
+    name: 'Julian',
+    avatar: { initials: 'J', color: 'bg-emerald-500' },
     title: 'Research Lead',
     voiceId: 'en-US-Neural2-I',
     description: 'Intelligent, inquisitive, neutral male tone. Optimized for data-heavy and investigative insights.',
@@ -30,6 +41,8 @@ export const DIRECTOR_ASSISTANTS: ProductionAssistant[] = [
   },
   {
     id: 'creative-story-partner',
+    name: 'Sarah',
+    avatar: { initials: 'S', color: 'bg-amber-500' },
     title: 'Creative Story Partner',
     voiceId: 'en-US-Journey-F',
     description: 'Warm, smooth, highly expressive female voice. Focus on narrative nuance and emotional summaries.',
@@ -37,6 +50,8 @@ export const DIRECTOR_ASSISTANTS: ProductionAssistant[] = [
   },
   {
     id: 'executive-producer',
+    name: 'David',
+    avatar: { initials: 'D', color: 'bg-slate-700' },
     title: 'Executive Producer',
     voiceId: 'en-US-Neural2-A',
     description: 'Commanding, steady baritone. Direct, no-nonsense delivery for status reports.',
@@ -44,6 +59,8 @@ export const DIRECTOR_ASSISTANTS: ProductionAssistant[] = [
   },
   {
     id: 'innovation-liaison',
+    name: 'Chloe',
+    avatar: { initials: 'C', color: 'bg-fuchsia-500' },
     title: 'Innovation Liaison',
     voiceId: 'en-US-Journey-O',
     description: 'Modern, bright, energetic female voice. Tailored for tech-centric and visionary updates.',
@@ -51,6 +68,8 @@ export const DIRECTOR_ASSISTANTS: ProductionAssistant[] = [
   },
   {
     id: 'international-liaison',
+    name: 'Arthur',
+    avatar: { initials: 'A', color: 'bg-cyan-600' },
     title: 'International Liaison',
     voiceId: 'en-GB-Neural2-B',
     description: 'Sophisticated, mid-range male. Neutral international polish for an unbiased perspective.',
@@ -58,6 +77,8 @@ export const DIRECTOR_ASSISTANTS: ProductionAssistant[] = [
   },
   {
     id: 'continuity-advisor',
+    name: 'Rachel',
+    avatar: { initials: 'R', color: 'bg-teal-500' },
     title: 'Continuity Advisor',
     voiceId: 'en-US-Neural2-C',
     description: 'Trustworthy, grounded female voice. High clarity for long-form content.',
@@ -65,6 +86,8 @@ export const DIRECTOR_ASSISTANTS: ProductionAssistant[] = [
   },
   {
     id: 'field-correspondent',
+    name: 'Victor',
+    avatar: { initials: 'V', color: 'bg-orange-600' },
     title: 'Field Correspondent',
     voiceId: 'en-US-Neural2-D',
     description: 'Gritty, rhythmic, urgent male voice. Slight "breaking news" edge.',
@@ -72,6 +95,8 @@ export const DIRECTOR_ASSISTANTS: ProductionAssistant[] = [
   },
   {
     id: 'zen-flow-assistant',
+    name: 'Maya',
+    avatar: { initials: 'M', color: 'bg-violet-400' },
     title: 'Zen Flow Assistant',
     voiceId: 'en-US-Neural2-F',
     description: 'Ultra-calm, atmospheric female voice. Designed to reduce listener fatigue.',

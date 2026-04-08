@@ -85,7 +85,7 @@ export function SidebarVoiceSelector({ isOpen, onToggle, className }: SidebarVoi
     }
 
     const selectedAssistant = DIRECTOR_ASSISTANTS.find(a => a.voiceId === selectedVoiceId) || DIRECTOR_ASSISTANTS[0]
-    const message = `Hi ${firstName}. I'm your ${selectedAssistant.title}. ${selectedAssistant.pitch} I will be your voice for this session.`
+    const message = `Hi ${firstName}. I'm ${selectedAssistant.name}, your ${selectedAssistant.title}. ${selectedAssistant.pitch} I will be your voice for this session.`
     
     // Add persona instructions
     const styledMessage = applyAssistantStyle(message, selectedAssistant.id)
@@ -154,12 +154,26 @@ export function SidebarVoiceSelector({ isOpen, onToggle, className }: SidebarVoi
         <div className="space-y-3 mt-3">
           <Select value={selectedVoiceId || ''} onValueChange={handleVoiceSelect}>
             <SelectTrigger className="w-full h-9 text-xs">
-              <SelectValue placeholder="Select assistant..." />
+              <SelectValue placeholder="Select assistant...">
+                {selectedAssistant && (
+                  <div className="flex items-center gap-2">
+                    <div className={cn("w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white shrink-0", selectedAssistant.avatar.color)}>
+                      {selectedAssistant.avatar.initials}
+                    </div>
+                    <span>{selectedAssistant.name} - {selectedAssistant.title}</span>
+                  </div>
+                )}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {DIRECTOR_ASSISTANTS.map((asst) => (
                 <SelectItem key={asst.id} value={asst.voiceId}>
-                  {asst.title}
+                  <div className="flex items-center gap-2">
+                    <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0", asst.avatar.color)}>
+                      {asst.avatar.initials}
+                    </div>
+                    <span>{asst.name} - {asst.title}</span>
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>
