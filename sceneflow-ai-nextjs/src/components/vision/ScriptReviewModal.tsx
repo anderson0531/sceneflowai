@@ -10,8 +10,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { VoiceSelectorDialog } from '@/components/tts/VoiceSelectorDialog'
 import { OptimizeSceneDialog } from '@/components/vision/OptimizeSceneDialog'
+import { DIRECTOR_ASSISTANTS, applyAssistantStyle, getAssistantByVoiceId } from '@/lib/tts/productionAssistants'
 import { AnimatedScore, AnimatedProgressBar } from '@/components/ui/AnimatedScore'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
@@ -422,29 +422,30 @@ export default function ScriptReviewModal({
         const stored = localStorage.getItem(REVIEW_VOICE_STORAGE_KEY)
         if (stored) {
           const { voiceId } = JSON.parse(stored)
-          if (voiceId) return voiceId
+          if (voiceId && DIRECTOR_ASSISTANTS.find(a => a.voiceId === voiceId)) return voiceId
         }
       } catch (e) {
         console.warn('Failed to load review voice from localStorage:', e)
       }
     }
-    return 'en-US-Journey-F' // Google fallback
+    return DIRECTOR_ASSISTANTS[0].voiceId
   })
+  
   const [selectedVoiceName, setSelectedVoiceName] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       try {
         const stored = localStorage.getItem(REVIEW_VOICE_STORAGE_KEY)
         if (stored) {
-          const { voiceName } = JSON.parse(stored)
-          if (voiceName) return voiceName
+          const { voiceName, voiceId } = JSON.parse(stored)
+          if (voiceName && DIRECTOR_ASSISTANTS.find(a => a.voiceId === voiceId)) return voiceName
         }
       } catch (e) {
         // Already warned above
       }
     }
-    return 'en-US-Journey-F'
+    return DIRECTOR_ASSISTANTS[0].title
   })
-  const [voiceSelectorOpen, setVoiceSelectorOpen] = useState(false)
+  
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en') // Keep for TTS playback
   const [playingSection, setPlayingSection] = useState<string | null>(null)
   const [loadingSection, setLoadingSection] = useState<string | null>(null)
@@ -511,7 +512,6 @@ export default function ScriptReviewModal({
   const handleVoiceSelect = (voiceId: string, voiceName: string) => {
     setSelectedVoiceId(voiceId)
     setSelectedVoiceName(voiceName)
-    setVoiceSelectorOpen(false)
     // Clear audio cache since voice changed
     audioCacheRef.current.clear()
     // Persist to localStorage
@@ -535,9 +535,6 @@ export default function ScriptReviewModal({
   }
 
   useEffect(() => {
-    if (isOpen) {
-      fetchVoices()
-    }
     return () => {
       if (audioRef.current) {
         audioRef.current.pause()
@@ -545,47 +542,6 @@ export default function ScriptReviewModal({
       }
     }
   }, [isOpen])
-
-  const fetchVoices = async () => {
-    try {
-      const res = await fetch('/api/tts/elevenlabs/voices', { cache: 'no-store' })
-      if (res.ok) {
-        const data = await res.json()
-        const voiceList = data.voices || []
-        setVoices(voiceList)
-        // Verify persisted/default voice exists and update name
-        if (voiceList.length > 0) {
-          const currentVoice = voiceList.find((v: Voice) => v.voice_id === selectedVoiceId)
-          if (currentVoice) {
-            // Voice exists, just ensure name is correct
-            setSelectedVoiceName(currentVoice.name)
-          } else {
-            // Persisted voice not found - fallback to Roger or first available
-            console.log('Selected voice not in list, using fallback voice')
-            const roger = voiceList.find((v: Voice) => v.name === 'Roger' || v.voice_id === 'CwhRBWXzGAHq8TQ4Fs17')
-            const fallback = roger || voiceList[0]
-            if (fallback) {
-              setSelectedVoiceId(fallback.voice_id)
-              setSelectedVoiceName(fallback.name)
-              // Update localStorage with the valid fallback
-              if (typeof window !== 'undefined') {
-                try {
-                  localStorage.setItem(REVIEW_VOICE_STORAGE_KEY, JSON.stringify({ 
-                    voiceId: fallback.voice_id, 
-                    voiceName: fallback.name 
-                  }))
-                } catch (e) {
-                  // Ignore storage errors
-                }
-              }
-            }
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Failed to fetch voices:', err)
-    }
-  }
 
   const getCachedAudio = (sectionId: string, text: string): string | null => {
     const cached = audioCacheRef.current.get(sectionId)
@@ -637,16 +593,10 @@ export default function ScriptReviewModal({
 
     setLoadingSection(sectionId)
     try {
-      // Use the selected voice directly - trust the user's selection from VoiceSelectorDialog
-      // Only fall back to default if no voice is selected at all
-      const voiceToUse = selectedVoiceId || 'en-US-Journey-F' // Google fallback
-      
-      if (!selectedVoiceId) {
-        console.log('No voice in state, using default Google')
-      } else {
-        console.log('Using selected voice:', selectedVoiceId, selectedVoiceName)
-      }
-      
+      // Find the assistant definition by voice ID to apply styling
+      const assistant = getAssistantByVoiceId(selectedVoiceId)
+      const voiceToUse = assistant?.voiceId || DIRECTOR_ASSISTANTS[0].voiceId
+
       // Translate text if non-English language is selected
       // Uses Vertex AI Translation API (service account auth) to avoid API key rate limits
       let textToSpeak = text
@@ -668,6 +618,11 @@ export default function ScriptReviewModal({
         } catch (translateErr) {
           console.warn('Translation failed, using original text:', translateErr)
         }
+      }
+
+      // Apply the chosen assistant's persona styling
+      if (assistant) {
+        textToSpeak = applyAssistantStyle(textToSpeak, assistant.id)
       }
       
       const response = await fetch('/api/tts/google', {
@@ -1353,27 +1308,77 @@ export default function ScriptReviewModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex flex-col gap-4 p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex flex-col gap-4 p-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+          {/* Top Line: Title & Close Button */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Target className="w-6 h-6 text-purple-500" />
+            <div className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-purple-500" />
               <h2 className="text-xl font-semibold">Insights & Direction</h2>
-              <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">Analysis & Planning</span>
+              <span className="text-[11px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded ml-2">Analysis & Planning</span>
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                stopPlayback()
+                onClose()
+              }}
+              className="h-8 w-8 p-0 rounded-full text-gray-500 hover:text-gray-900 dark:hover:text-gray-100"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* Bottom Line: Playback Voice & Action Buttons */}
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            {/* Voice Selector */}
+            <div className="flex items-center gap-3">
+              <Volume2 className="w-4 h-4 text-gray-500" />
+              <span className="text-sm text-gray-600 dark:text-gray-400">Production Assistant:</span>
+              <Select value={selectedVoiceId} onValueChange={(val) => {
+                const asst = DIRECTOR_ASSISTANTS.find(a => a.voiceId === val)
+                if (asst) handleVoiceSelect(asst.voiceId, asst.title)
+              }}>
+                <SelectTrigger className="w-[220px] h-8 text-xs">
+                  <SelectValue placeholder="Select assistant..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {DIRECTOR_ASSISTANTS.map((asst) => (
+                    <SelectItem key={asst.id} value={asst.voiceId}>
+                      {asst.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {playingSection && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={stopPlayback}
+                  className="flex items-center gap-1 text-red-500 border-red-300 h-8"
+                >
+                  <VolumeX className="w-3 h-3" />
+                  Stop
+                </Button>
+              )}
+            </div>
+
+            {/* Action Buttons */}
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={exportAsPDF}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 h-8 text-xs"
               >
-                <Download className="w-4 h-4" />
+                <Download className="w-3.5 h-3.5" />
                 Export PDF
               </Button>
               <div className="flex items-center gap-2 border-l border-gray-200 dark:border-gray-700 pl-2 ml-1">
                 <span className="text-xs text-gray-500 font-medium hidden sm:inline-block">Target Audience:</span>
                 <Select value={targetDemographicPreset} onValueChange={setTargetDemographicPreset}>
-                  <SelectTrigger className="w-[140px] h-9 text-xs">
+                  <SelectTrigger className="w-[140px] h-8 text-xs">
                     <SelectValue placeholder="Select demographic" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1390,7 +1395,7 @@ export default function ScriptReviewModal({
                     value={customTargetDemographic}
                     onChange={(e) => setCustomTargetDemographic(e.target.value)}
                     placeholder="e.g. Thai teenagers..."
-                    className="w-[140px] h-9 text-xs"
+                    className="w-[140px] h-8 text-xs"
                   />
                 )}
                 <Button
@@ -1398,12 +1403,12 @@ export default function ScriptReviewModal({
                   size="sm"
                   onClick={handleRegenerate}
                   disabled={isGenerating}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 h-8 text-xs"
                 >
                   {isGenerating ? (
-                    <Loader className="w-4 h-4 animate-spin" />
+                    <Loader className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <RefreshCw className="w-4 h-4" />
+                    <RefreshCw className="w-3.5 h-3.5" />
                   )}
                   Re-analyze
                 </Button>
@@ -1419,9 +1424,9 @@ export default function ScriptReviewModal({
                         stopPlayback()
                         onClose()
                       }}
-                      className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                      className="flex items-center gap-2 h-8 text-xs bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white ml-2"
                     >
-                      <Film className="w-4 h-4" />
+                      <Film className="w-3.5 h-3.5" />
                       Go to Scenes
                     </Button>
                   </TooltipTrigger>
@@ -1442,46 +1447,7 @@ export default function ScriptReviewModal({
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  stopPlayback()
-                  onClose()
-                }}
-                className="flex items-center gap-1.5"
-              >
-                <X className="w-4 h-4" />
-                Close
-              </Button>
             </div>
-          </div>
-          
-          {/* Voice Selector */}
-          <div className="flex items-center gap-3">
-            <Volume2 className="w-4 h-4 text-gray-500" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">Playback Voice:</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setVoiceSelectorOpen(true)}
-              className="flex items-center gap-2 h-8 min-w-[180px] justify-between"
-            >
-              <span className="truncate">{selectedVoiceName || 'Select voice...'}</span>
-              <Settings2 className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-            </Button>
-            
-            {playingSection && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={stopPlayback}
-                className="flex items-center gap-1 text-red-500 border-red-300"
-              >
-                <VolumeX className="w-3 h-3" />
-                Stop
-              </Button>
-            )}
           </div>
         </div>
 
@@ -2363,14 +2329,6 @@ Examples:
           )}
         </div>
 
-        {/* Voice Selector Dialog */}
-        <VoiceSelectorDialog
-          provider="google"
-          open={voiceSelectorOpen}
-          onOpenChange={setVoiceSelectorOpen}
-          selectedVoiceId={selectedVoiceId}
-          onSelectVoice={handleVoiceSelect}
-        />
 
         {/* Optimize Scene Dialog */}
         <OptimizeSceneDialog
