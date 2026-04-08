@@ -11112,11 +11112,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }
         }}
         onReviseScript={(recommendations: string[]) => {
-          // Legacy fallback - opens Script Editor
+          // Legacy fallback - opens Script Insights & Direction
           const instruction = recommendations.map((rec, i) => `${i + 1}. ${rec}`).join('\n\n')
           setReviseScriptInstruction(instruction)
           setShowReviewModal(false)
-          toast.success('Opening Script Editor with review recommendations...')
+          toast.success('Opening Script Insights & Direction with review recommendations...')
         }}
         onCinematicScenesApply={async (cinematicScenes) => {
           // Convert cinematic scene plans into ParsedScene objects

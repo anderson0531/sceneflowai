@@ -46,7 +46,7 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
   {
     id: 'script-tab',
     title: '1. Script — Write & Refine',
-    description: 'Start with your AI-generated scene script. Use the Script Editor to make specific revisions with AI assistance. Generate audio narration and dialogue in 13+ languages.',
+    description: 'Start with your AI-generated scene script. Use Script Insights & Direction to make specific revisions with AI assistance. Generate audio narration and dialogue in 13+ languages.',
     icon: <FileText className="w-6 h-6" />,
     workflowStep: 'dialogueAction',
     tip: 'The Audience Resonance score (shown on each scene) measures quality across Dialogue, Pacing, Emotion, and Visual dimensions. Aim for 85+.',

@@ -1357,7 +1357,7 @@ export default function ScriptReviewModal({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Target className="w-6 h-6 text-purple-500" />
-              <h2 className="text-xl font-semibold">Script Editor</h2>
+              <h2 className="text-xl font-semibold">Script Insights & Direction</h2>
               <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">Analysis & Planning</span>
             </div>
             <div className="flex items-center gap-2">
