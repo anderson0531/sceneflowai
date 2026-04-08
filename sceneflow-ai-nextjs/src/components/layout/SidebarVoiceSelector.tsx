@@ -153,26 +153,32 @@ export function SidebarVoiceSelector({ isOpen, onToggle, className }: SidebarVoi
       {isOpen && (
         <div className="space-y-3 mt-3">
           <Select value={selectedVoiceId || ''} onValueChange={handleVoiceSelect}>
-            <SelectTrigger className="w-full h-9 text-xs">
+            <SelectTrigger className="w-full h-auto min-h-[44px] py-1.5 px-3 bg-gray-800/40 hover:bg-gray-800 transition-colors border border-gray-700/60 rounded-xl [&>span]:line-clamp-none [&>span]:w-full [&>span]:flex-1">
               <SelectValue placeholder="Select assistant...">
                 {selectedAssistant && (
-                  <div className="flex items-center gap-2">
-                    <div className={cn("w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white shrink-0", selectedAssistant.avatar.color)}>
+                  <div className="flex items-center gap-3 text-left w-full min-w-0">
+                    <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 shadow-sm border border-white/10", selectedAssistant.avatar.color)}>
                       {selectedAssistant.avatar.initials}
                     </div>
-                    <span>{selectedAssistant.name} - {selectedAssistant.title}</span>
+                    <div className="flex flex-col min-w-0 overflow-hidden pr-2">
+                      <span className="font-semibold text-[13px] text-gray-200 truncate">{selectedAssistant.name}</span>
+                      <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider truncate">{selectedAssistant.title}</span>
+                    </div>
                   </div>
                 )}
               </SelectValue>
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-h-[300px]">
               {DIRECTOR_ASSISTANTS.map((asst) => (
-                <SelectItem key={asst.id} value={asst.voiceId}>
-                  <div className="flex items-center gap-2">
-                    <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0", asst.avatar.color)}>
+                <SelectItem key={asst.id} value={asst.voiceId} className="py-2.5 px-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 shadow-sm border border-white/10", asst.avatar.color)}>
                       {asst.avatar.initials}
                     </div>
-                    <span>{asst.name} - {asst.title}</span>
+                    <div className="flex flex-col text-left min-w-0">
+                      <span className="font-medium text-[13px] text-gray-200 truncate">{asst.name}</span>
+                      <span className="text-[10px] text-gray-500 uppercase tracking-wide truncate">{asst.title}</span>
+                    </div>
                   </div>
                 </SelectItem>
               ))}
@@ -180,29 +186,32 @@ export function SidebarVoiceSelector({ isOpen, onToggle, className }: SidebarVoi
           </Select>
 
           {selectedAssistant && (
-            <div className="p-3 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100/50 dark:border-blue-800/30 rounded-lg space-y-2.5">
-              <div className="flex items-center justify-between">
-                <p className="text-[11px] font-medium text-blue-700 dark:text-blue-400">
+            <div className="p-3.5 bg-gray-800/30 border border-gray-700/50 rounded-xl space-y-3 relative overflow-hidden">
+              {/* Subtle colored glow in the background based on assistant color */}
+              <div className={cn("absolute -top-10 -right-10 w-24 h-24 rounded-full blur-2xl opacity-20 pointer-events-none", selectedAssistant.avatar.color)} />
+              
+              <div className="flex items-center justify-between relative z-10">
+                <p className="text-[11px] font-medium text-gray-400">
                   Voice Profile
                 </p>
                 <Button 
-                  variant="ghost" 
+                  variant="secondary" 
                   size="sm" 
                   onClick={handleListen}
                   disabled={isLoading}
-                  className="h-6 px-2 text-[10px] text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800"
+                  className="h-7 px-3 text-[11px] bg-white/5 hover:bg-white/10 text-gray-200 border border-white/5 rounded-full"
                 >
                   {isLoading ? (
-                    <Loader className="w-3 h-3 mr-1 animate-spin" />
+                    <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                   ) : isPlaying ? (
-                    <Square className="w-3 h-3 mr-1 fill-current" />
+                    <Square className="w-3.5 h-3.5 mr-1.5 fill-current" />
                   ) : (
-                    <Play className="w-3 h-3 mr-1 fill-current" />
+                    <Play className="w-3.5 h-3.5 mr-1.5 fill-current" />
                   )}
                   {isPlaying ? 'Stop' : 'Listen'}
                 </Button>
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+              <p className="text-xs text-gray-300 leading-relaxed relative z-10">
                 {selectedAssistant.description}
               </p>
             </div>
