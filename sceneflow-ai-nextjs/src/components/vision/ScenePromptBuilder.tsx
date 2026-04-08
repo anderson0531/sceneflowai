@@ -244,6 +244,21 @@ export function ScenePromptBuilder({
       if (detectedChars.length > 0) {
         updates.characters = detectedChars.map((c: any) => c.name)
         console.log('[ScenePromptBuilder] Auto-selected characters (with nickname matching):', detectedChars.map((c: any) => c.name))
+        
+        // Auto-select the first available wardrobe for detected characters to fix UI selection state
+        setLocalWardrobes(prev => {
+          const newLocalWardrobes = { ...prev }
+          let wardrobesUpdated = false
+          
+          detectedChars.forEach((char: any) => {
+            if (char.wardrobes && char.wardrobes.length > 0 && !newLocalWardrobes[char.name] && !sceneWardrobes?.[char.name]) {
+              newLocalWardrobes[char.name] = char.wardrobes[0].id
+              wardrobesUpdated = true
+            }
+          })
+          
+          return wardrobesUpdated ? newLocalWardrobes : prev
+        })
       }
     } else if (isNoTalentScene) {
       updates.characters = []
@@ -543,6 +558,8 @@ export function ScenePromptBuilder({
       setAutoMatchedLocationRefIds(matchedIdSet)
       if (matchedIds.length > 0) {
         setLocationSectionCollapsed(false)
+        // Ensure matched location is selected by default to fix missing location references
+        setSelectedLocationRefIds(matchedIds)
       } else {
         setLocationSectionCollapsed(true)
       }

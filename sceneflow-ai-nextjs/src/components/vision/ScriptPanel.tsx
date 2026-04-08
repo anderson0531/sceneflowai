@@ -6445,13 +6445,26 @@ function SceneCard({
                                  <Button
                                     size="sm"
                                     variant="secondary"
-                                    className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
+                                    className="bg-indigo-500/90 text-white hover:bg-indigo-500 w-10 h-10 p-0 border-0"
+                                    onClick={handleQuickGenerate}
+                                 >
+                                   <Zap className="w-4 h-4" />
+                                 </Button>
+                               </TooltipTrigger>
+                               <TooltipContent>Quick Generate</TooltipContent>
+                             </Tooltip>
+                             <Tooltip>
+                               <TooltipTrigger asChild>
+                                 <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0 border-0"
                                     onClick={() => onOpenPromptBuilder?.(sceneIdx)}
                                  >
                                    <Wand2 className="w-4 h-4" />
                                  </Button>
                                </TooltipTrigger>
-                               <TooltipContent>Generate</TooltipContent>
+                               <TooltipContent>Open Prompt Builder</TooltipContent>
                              </Tooltip>
                              <Tooltip>
                                <TooltipTrigger asChild>
@@ -6605,16 +6618,24 @@ function SceneCard({
                             Reference images help maintain character and scene consistency across video segments.
                           </p>
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            // Open scene image generation dialog
-                            onGenerateImage?.(sceneIdx)
-                          }}
-                          className="px-3 py-1.5 text-xs font-medium bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 rounded transition-colors"
-                        >
-                          Generate Image
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={handleQuickGenerate}
+                            className="px-3 py-1.5 text-xs font-medium bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 rounded transition-colors"
+                          >
+                            Quick Generate
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onOpenPromptBuilder?.(sceneIdx)
+                            }}
+                            className="px-3 py-1.5 text-xs font-medium bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 rounded transition-colors flex items-center gap-1.5"
+                          >
+                            <Wand2 className="w-3.5 h-3.5" />
+                            Builder
+                          </button>
+                        </div>
                       </div>
                     )}
                     

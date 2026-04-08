@@ -13,7 +13,7 @@
 'use client'
 
 import React, { useState, useCallback, useMemo } from 'react'
-import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, EyeOff, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2, Volume2, VolumeX, Play, Pause, SkipForward, SkipBack, Check, Globe, Users, Package, AlertCircle, CheckCircle2, MapPin, FileText, ChevronDown, ChevronUp, GripVertical } from 'lucide-react'
+import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, EyeOff, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2, Volume2, VolumeX, Play, Pause, SkipForward, SkipBack, Check, Globe, Users, Package, AlertCircle, CheckCircle2, MapPin, FileText, ChevronDown, ChevronUp, GripVertical, Zap, Settings2 } from 'lucide-react'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -914,17 +914,13 @@ function SceneCard({
           }}
         />
         
-        {/* Generate image (Sparkles - indigo) */}
+        {/* Quick Generate image (Zap - indigo) */}
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={(e) => { 
                 e.stopPropagation(); 
-                if (onOpenPromptBuilder) {
-                  onOpenPromptBuilder();
-                } else {
-                  onGenerate(prompt);
-                }
+                onGenerate(prompt);
               }}
               disabled={isGenerating}
               className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
@@ -932,14 +928,33 @@ function SceneCard({
               {isGenerating ? (
                 <Loader className="w-5 h-5 text-white animate-spin" />
               ) : (
-                <Sparkles className="w-5 h-5 text-white" />
+                <Zap className="w-5 h-5 text-white" />
               )}
             </button>
           </TooltipTrigger>
-          <TooltipContent>{hasImage ? 'Generate New Image' : 'Generate Scene Image'}</TooltipContent>
+          <TooltipContent>{hasImage ? 'Quick Regenerate Image' : 'Quick Generate Image'}</TooltipContent>
         </Tooltip>
+
+        {/* Prompt Builder (Wand2/Sparkles - amber) */}
+        {onOpenPromptBuilder && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  onOpenPromptBuilder();
+                }}
+                disabled={isGenerating}
+                className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors disabled:opacity-50"
+              >
+                <Wand2 className="w-5 h-5 text-white" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Open Prompt Builder</TooltipContent>
+          </Tooltip>
+        )}
         
-        {/* Edit image (Wand2 - purple) - only show if has image */}
+        {/* Edit image (Settings2 - purple) - only show if has image */}
         {hasImage && onEdit && (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -947,7 +962,7 @@ function SceneCard({
                 onClick={(e) => { e.stopPropagation(); onEdit(); }}
                 className="p-3 bg-purple-600/80 hover:bg-purple-600 rounded-full transition-colors"
               >
-                <Wand2 className="w-5 h-5 text-white" />
+                <Settings2 className="w-5 h-5 text-white" />
               </button>
             </TooltipTrigger>
             <TooltipContent>Edit Image</TooltipContent>
