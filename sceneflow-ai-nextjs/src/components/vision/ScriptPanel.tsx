@@ -3112,6 +3112,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       {/* Scene Prompt Builder Modal */}
       {sceneBuilderIdx !== null && (
         <ScenePromptBuilder
+          projectId={projectId}
           open={sceneBuilderOpen}
           onClose={() => {
             setSceneBuilderOpen(false)

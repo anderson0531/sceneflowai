@@ -70,10 +70,6 @@ interface SceneGalleryProps {
   onOpenGenerateAudio?: () => void
   /** Whether audio generation is currently in progress */
   isGeneratingAudio?: boolean
-  /** Callback to pin a storyboard image as a location reference */
-  onPinAsLocationReference?: (sceneIndex: number, imageUrl: string, sceneHeading: string) => void
-  /** Set of location names that are already pinned */
-  pinnedLocations?: Set<string>
   /** Callback when an edited image is saved */
   onSaveEditedScene?: (sceneIndex: number, newImageUrl: string) => void
   /** Callback to reorder scenes (drag and drop) */
@@ -109,8 +105,6 @@ export function SceneGallery({
   objectReferences,
   onOpenGenerateAudio,
   isGeneratingAudio = false,
-  onPinAsLocationReference,
-  pinnedLocations,
   onSaveEditedScene,
   onReorderScenes,
   onBatchGenerateStart,
@@ -626,16 +620,6 @@ export function SceneGallery({
                   onSegmentUpload={onSegmentUpload}
                   characters={characters}
                   objectReferences={objectReferences}
-                  onPinAsLocationReference={onPinAsLocationReference && scene.imageUrl ? () => {
-                    const sceneHeading = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text
-                    onPinAsLocationReference(idx, scene.imageUrl, sceneHeading || '')
-                  } : undefined}
-                  isLocationPinned={(() => {
-                    if (!pinnedLocations) return false
-                    const sceneHeading = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text
-                    const location = extractLocation(sceneHeading)
-                    return location ? pinnedLocations.has(location) : false
-                  })()}
                   showDragHandle={!!onReorderScenes}
                   onUpdateSceneAudio={onUpdateSceneAudio}
                 />
@@ -739,10 +723,6 @@ interface SceneCardProps {
   characters?: any[]
   /** Object/prop references from reference library */
   objectReferences?: Array<{ id: string; name: string; imageUrl: string; description?: string }>
-  /** Callback to pin the storyboard image as a location reference */
-  onPinAsLocationReference?: () => void
-  /** Whether this location is already pinned */
-  isLocationPinned?: boolean
   /** Whether to show the drag handle for reordering */
   showDragHandle?: boolean
   onUpdateSceneAudio?: (sceneIndex: number) => Promise<void>
@@ -816,8 +796,6 @@ function SceneCard({
   onSegmentUpload,
   characters = [],
   objectReferences = [],
-  onPinAsLocationReference,
-  isLocationPinned = false,
   showDragHandle = false,
   onUpdateSceneAudio,
 }: SceneCardProps) {
@@ -988,27 +966,6 @@ function SceneCard({
           </TooltipTrigger>
           <TooltipContent>Upload Image</TooltipContent>
         </Tooltip>
-        
-        {/* Pin as Location Reference (MapPin - cyan) - only show if has image */}
-        {hasImage && onPinAsLocationReference && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={(e) => { e.stopPropagation(); onPinAsLocationReference(); }}
-                className={`p-3 rounded-full transition-colors ${
-                  isLocationPinned 
-                    ? 'bg-cyan-500 ring-2 ring-cyan-300' 
-                    : 'bg-cyan-600/80 hover:bg-cyan-600'
-                }`}
-              >
-                <MapPin className="w-5 h-5 text-white" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {isLocationPinned ? 'Location Already Pinned' : 'Pin as Location Reference'}
-            </TooltipContent>
-          </Tooltip>
-        )}
       </div>
       
       {/* Reference Status Indicator - Top Right */}

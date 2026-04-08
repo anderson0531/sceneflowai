@@ -10833,8 +10833,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onOpenPreview={() => setIsPlayerOpen(true)}
                             onOpenGenerateAudio={openGenerateAudio}
                             isGeneratingAudio={isGeneratingAudio}
-                            onPinAsLocationReference={handlePinAsLocationReference}
-                            pinnedLocations={pinnedLocations}
                           />
                         </div>
                       )}

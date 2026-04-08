@@ -98,8 +98,8 @@ export interface SceneImageIntelligenceRequest {
   characters: CharacterContext[]
   /** Props/objects in this scene */
   props: PropContext[]
-  /** Location info */
-  location?: LocationContext
+  /** Available location references to choose from */
+  availableLocations?: LocationContext[]
   /** Art style selection */
   artStyle?: string
   /** Number of reference images being sent */
@@ -117,6 +117,12 @@ export interface SceneImageIntelligenceResult {
   negativePromptAdditions?: string[]
   /** Whether AI intelligence was used (false = fallback) */
   usedAI: boolean
+  /** AI selected character references by name */
+  selectedCharacterNames?: string[]
+  /** AI selected prop references by name */
+  selectedPropNames?: string[]
+  /** AI selected location reference by name (only 1) */
+  selectedLocationName?: string
 }
 
 // =============================================================================
@@ -328,7 +334,10 @@ CRITICAL RULES:
    {
      "prompt": "The optimized image generation prompt (800 chars max)",
      "reasoning": "Brief explanation of your composition choices (100 chars max)",
-     "negativeAdditions": ["any", "specific", "things", "to", "avoid"]
+     "negativeAdditions": ["any", "specific", "things", "to", "avoid"],
+     "selectedCharacterNames": ["Name 1", "Name 2"], // Array of character names from the input that should be included
+     "selectedPropNames": ["Prop 1"], // Array of prop names from the input that should be included
+     "selectedLocationName": "Location Name" // A single location name from the input, if appropriate for the scene type. Omit for title sequences.
    }
 
 9. PROMPT STRUCTURE (in order):
@@ -407,8 +416,12 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
   }
   
   // Location
-  if (request.location) {
-    prompt += `LOCATION: ${request.location.name}${request.location.hasReferenceImage ? ' [reference image provided]' : ''}\n\n`
+  if (request.availableLocations && request.availableLocations.length > 0) {
+    prompt += `AVAILABLE LOCATIONS (select at most one if it matches the scene heading/action):\n`
+    request.availableLocations.forEach(loc => {
+      prompt += `- ${loc.name}${loc.hasReferenceImage ? ' [reference image provided]' : ''}\n`
+    })
+    prompt += '\n'
   }
   
   // Scene direction metadata (preserved useful cues)
@@ -495,7 +508,7 @@ export async function generateSceneImagePrompt(
       }
     
     // Parse JSON response
-    let parsed: { prompt?: string; reasoning?: string; negativeAdditions?: string[] }
+    let parsed: { prompt?: string; reasoning?: string; negativeAdditions?: string[]; selectedCharacterNames?: string[]; selectedPropNames?: string[]; selectedLocationName?: string }
     try {
       // Handle potential markdown code fence wrapping
       let cleanText = result.text.trim()
@@ -528,6 +541,9 @@ export async function generateSceneImagePrompt(
       prompt: finalPrompt,
       reasoning: parsed.reasoning,
       negativePromptAdditions: parsed.negativeAdditions,
+      selectedCharacterNames: parsed.selectedCharacterNames,
+      selectedPropNames: parsed.selectedPropNames,
+      selectedLocationName: parsed.selectedLocationName,
       usedAI: true,
     }
     

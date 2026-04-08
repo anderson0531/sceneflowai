@@ -47,6 +47,7 @@ interface ScenePromptStructure {
 }
 
 interface ScenePromptBuilderProps {
+  projectId: string
   open: boolean
   onClose: () => void
   scene: any
@@ -63,6 +64,7 @@ interface ScenePromptBuilderProps {
       id: string
       name: string
       description: string
+      fullBodyUrl?: string
     }>
   }>
   /** Scene backdrop references from the Reference Library */
@@ -155,6 +157,7 @@ function extractPrimaryAction(keyActions: string[]): string {
 }
 
 export function ScenePromptBuilder({
+  projectId,
   open,
   onClose,
   scene,
@@ -539,15 +542,12 @@ export function ScenePromptBuilder({
       }
       setAutoMatchedLocationRefIds(matchedIdSet)
       if (matchedIds.length > 0) {
-        setSelectedLocationRefIds(matchedIds)
         setLocationSectionCollapsed(false)
       } else {
-        setSelectedLocationRefIds([])
         setLocationSectionCollapsed(true)
       }
     } else {
       setAutoMatchedLocationRefIds(new Set())
-      setSelectedLocationRefIds([])
       setLocationSectionCollapsed(true)
     }
   }, [open, scene, availableCharacters, objectReferences, locationReferences])
@@ -608,7 +608,7 @@ export function ScenePromptBuilder({
               const wardrobe = character.wardrobes.find(w => w.id === wardrobeId)
               if (wardrobe) {
                 // Skip wardrobe text if costume reference exists (model sees outfit in image)
-                if (wardrobe.fullBodyUrl) {
+                if ((wardrobe as any).fullBodyUrl) {
                   wardrobeDescriptions.push(`${charName} in their costume reference outfit`)
                 } else {
                   // Use description if available, otherwise just name
@@ -933,7 +933,82 @@ export function ScenePromptBuilder({
     setMode(mode)
   }
 
-  // Optimize prompt with AI - restructures verbose prompts into hierarchical format
+  const [isAutoOptimizing, setIsAutoOptimizing] = useState(false)
+
+  // Optimize prompt and intelligently select references using Gemini
+  const handleAutoOptimize = async () => {
+    setIsAutoOptimizing(true)
+    try {
+      const response = await fetch('/api/scene/generate-intelligent-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex: scene?.sceneNumber ? scene.sceneNumber - 1 : 0,
+          scenePrompt: getRawPrompt(),
+          objectReferences,
+          locationReferences,
+          characters: availableCharacters,
+        })
+      })
+
+      if (!response.ok) throw new Error('Failed to optimize prompt')
+
+      const data = await response.json()
+      if (data.success && data.result) {
+        const { prompt, selectedCharacterNames, selectedPropNames, selectedLocationName } = data.result
+        
+        // 1. Switch to advanced mode and apply the prompt
+        setMode('advanced')
+        setAdvancedPrompt(prompt)
+        setIsPromptEdited(true)
+
+        // 2. Apply AI character selections
+        if (selectedCharacterNames && selectedCharacterNames.length > 0) {
+          const newChars = structure.characters.filter(c => selectedCharacterNames.includes(c))
+          // If the AI selected characters that weren't already in the structure, we can add them
+          const missingChars = selectedCharacterNames.filter((c: string) => !structure.characters.includes(c))
+          setStructure(prev => ({
+            ...prev,
+            characters: [...newChars, ...missingChars]
+          }))
+        } else if (selectedCharacterNames?.length === 0) {
+          // AI explicitly chose no characters
+          setStructure(prev => ({ ...prev, characters: [] }))
+        }
+
+        // 3. Apply AI location selection
+        if (selectedLocationName) {
+          const locMatch = locationReferences.find(l => 
+            l.location.toLowerCase() === selectedLocationName.toLowerCase() || 
+            (l as any).name?.toLowerCase() === selectedLocationName.toLowerCase()
+          )
+          if (locMatch) {
+            setSelectedLocationRefIds([locMatch.id])
+            setLocationSectionCollapsed(false)
+          }
+        } else {
+          // AI explicitly chose no location
+          setSelectedLocationRefIds([])
+        }
+
+        // 4. Apply AI prop selections
+        if (selectedPropNames) {
+          const propMatches = objectReferences.filter(o => 
+            selectedPropNames.some((name: string) => name.toLowerCase() === o.name.toLowerCase())
+          )
+          setSelectedObjectRefIds(propMatches.map(p => p.id))
+        }
+        
+      } else {
+        console.error('[ScenePromptBuilder] Auto-optimization failed:', data.error)
+      }
+    } catch (error) {
+      console.error('[ScenePromptBuilder] Failed to auto-optimize:', error)
+    } finally {
+      setIsAutoOptimizing(false)
+    }
+  }
   const handleOptimizePrompt = async () => {
     if (!advancedPrompt.trim() || isOptimizing) return
     
@@ -1040,7 +1115,7 @@ export function ScenePromptBuilder({
                   id: w.id,
                   name: w.name,
                   description: w.description,
-                  fullBodyUrl: w.fullBodyUrl,  // Costume reference indicator
+                  fullBodyUrl: (w as any).fullBodyUrl,  // Costume reference indicator
                 })),
               }))}
               selectedCharacterNames={structure.characters}
@@ -1242,12 +1317,12 @@ export function ScenePromptBuilder({
                     {/* Props — Shared Component */}
                     {objectReferences.length > 0 && (
                       <PropSelectionSection
-                        objectReferences={objectReferences.map(ref => ({
+                        objectReferences={objectReferences.filter(r => r.imageUrl).map(ref => ({
                           id: ref.id,
                           name: ref.name,
-                          imageUrl: ref.imageUrl,
+                          imageUrl: ref.imageUrl as string,
                           description: ref.description,
-                          importance: ref.importance,
+                          importance: (ref as any).importance as 'critical' | 'secondary' | undefined,
                         }))}
                         selectedObjectIds={selectedObjectRefIds}
                         onSelectionChange={setSelectedObjectRefIds}
@@ -1386,6 +1461,16 @@ export function ScenePromptBuilder({
                 : 'Custom Prompt'
               }
             </label>
+            <Button
+              onClick={handleAutoOptimize}
+              disabled={isAutoOptimizing}
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs bg-purple-500/10 border-purple-500/30 text-purple-400 hover:bg-purple-500/20 hover:text-purple-300"
+            >
+              {isAutoOptimizing ? <Loader2 className="w-3 h-3 mr-1.5 animate-spin" /> : <Wand2 className="w-3 h-3 mr-1.5" />}
+              Auto-Optimize Prompt & References
+            </Button>
           </div>
           <div className="text-sm text-slate-200 p-2 bg-slate-800 rounded border border-slate-700 max-h-32 overflow-y-auto leading-relaxed">
             {constructedPrompt || <span className="text-slate-500 italic">Fill in the fields above to build your prompt...</span>}

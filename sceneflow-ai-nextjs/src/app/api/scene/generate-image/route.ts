@@ -361,10 +361,10 @@ export async function POST(req: NextRequest) {
                 
                 // Strategy 2: Word-boundary match on meaningful name parts (first name, last name)
                 // Skip titles (Dr., Mr., Mrs., etc.) and short words
-                const nameParts = charNameLower.split(/[\s.]+/).filter(part => 
+                const nameParts = charNameLower.split(/[\s.]+/).filter((part: string) => 
                   part.length >= 4 && !['dr', 'mr', 'mrs', 'ms', 'prof', 'sir'].includes(part)
                 )
-                return nameParts.some(part => {
+                return nameParts.some((part: string) => {
                   // Require full word boundary match — "Reed" matches "reed" but not "agreed" or "reeder"
                   const wordBoundaryRegex = new RegExp(`\\b${part}\\b`)
                   return wordBoundaryRegex.test(sceneText)
@@ -469,168 +469,18 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    // AUTO-DETECT: If no objectReferences provided, try to match from project's reference library
-    // This ensures objects mentioned in scene text (like "Sarah's Digital Image") are included
-    // INTELLIGENT SELECTION: Prioritizes set-pieces/locations, respects importance levels,
-    // and enforces budget constraints to avoid overwhelming the model
-    // SKIP: When skipObjectAutoDetection=true (batch mode), don't auto-detect - use only what's passed
-    let detectedObjectReferences = objectReferences
+    // Initialize variables to hold selected references
+    let detectedObjectReferences = objectReferences || []
+    let matchedLocationReference: any = locationReferences.length > 0 ? locationReferences[0] : null
     
-    // Reference slot budget: Expanded for richer scene context
-    // Characters always have priority, objects fill remaining slots
-    // alwaysInclude props bypass the budget (they're critical to the scene)
-    const MAX_OBJECT_REFERENCES = 4
-    const MAX_ALWAYS_INCLUDE = 3  // Safety cap for alwaysInclude to prevent abuse
+    // Fetch available project references for the AI to choose from
+    const projectObjectRefs = project?.metadata?.visionPhase?.references?.objectReferences || []
+    const projectLocationRefs = project?.metadata?.visionPhase?.references?.locationReferences || []
     
-    if (project && detectedObjectReferences.length === 0 && !skipObjectAutoDetection) {
-      const projectObjectRefs = project.metadata?.visionPhase?.references?.objectReferences || []
-      
-      if (projectObjectRefs.length > 0 && fullSceneContext) {
-        // Build scene text for matching (including the prompt)
-        const sceneText = `${fullSceneContext} ${scenePrompt || ''} ${customPrompt || ''}`.toLowerCase()
-        
-        // Location keywords that boost priority for set-piece detection
-        const locationKeywords = ['apartment', 'office', 'room', 'house', 'building', 'exterior', 'interior',
-          'set-piece', 'setpiece', 'location', 'studio', 'stage', 'warehouse', 'garage', 'kitchen',
-          'bedroom', 'bathroom', 'living', 'dining', 'hallway', 'corridor', 'lobby', 'entrance']
-        
-        // Match object names from scene text using fuzzy matching
-        const matchedObjects = projectObjectRefs.filter((obj: any) => {
-          if (!obj.name || !obj.imageUrl) return false
-          const objNameLower = obj.name.toLowerCase()
-          
-          // Check for exact name match
-          if (sceneText.includes(objNameLower)) return true
-          
-          // Check for partial matches (e.g., "Sarah's Digital Image" matches "wife's image", "Sarah", "digital image")
-          const nameParts = objNameLower.split(/[\s']+/).filter((p: string) => p.length > 2)
-          const significantMatches = nameParts.filter((part: string) => sceneText.includes(part))
-          
-          // If 2+ significant parts match, include the object (e.g., "digital" and "image" both match)
-          if (significantMatches.length >= 2) return true
-          
-          // Check description for key terms if available
-          if (obj.description) {
-            const descLower = obj.description.toLowerCase()
-            // Look for terms like "wife", "Sarah" in both scene and description
-            const descKeywords = descLower.match(/\b[a-z]{4,}\b/g) || []
-            const sceneKeywords = sceneText.match(/\b[a-z]{4,}\b/g) || []
-            const commonKeywords = descKeywords.filter((k: string) => sceneKeywords.includes(k))
-            if (commonKeywords.length >= 2) return true
-          }
-          
-          return false
-        })
-        
-        if (matchedObjects.length > 0) {
-          // Calculate priority score for each matched object
-          // Higher score = more important
-          const scoredObjects = matchedObjects.map((obj: any) => {
-            let score = 0
-            const objNameLower = obj.name.toLowerCase()
-            
-            // alwaysInclude: Highest priority (bypass budget)
-            if (obj.alwaysInclude) score += 1000
-            
-            // Category-based scoring (set-piece and vehicle are environment-defining)
-            if (obj.category === 'set-piece') score += 50
-            else if (obj.category === 'vehicle') score += 40
-            else if (obj.category === 'technology') score += 20
-            else if (obj.category === 'costume') score += 15
-            else if (obj.category === 'prop') score += 10
-            // 'other' gets base score of 0
-            
-            // Importance-based scoring
-            if (obj.importance === 'critical') score += 30
-            else if (obj.importance === 'important') score += 20
-            else if (obj.importance === 'background') score += 5
-            
-            // Location keyword boost (detect set-pieces by name even if not categorized)
-            const hasLocationKeyword = locationKeywords.some(kw => objNameLower.includes(kw))
-            if (hasLocationKeyword) score += 25
-            
-            // Exact name match in scene text is more relevant than fuzzy match
-            if (sceneText.includes(objNameLower)) score += 15
-            
-            // Longer, more specific names suggest more relevant props
-            if (obj.name.length > 20) score += 5
-            
-            return { ...obj, _priorityScore: score }
-          })
-          
-          // Sort by priority score (highest first)
-          scoredObjects.sort((a: any, b: any) => b._priorityScore - a._priorityScore)
-          
-          // Separate alwaysInclude objects from regular budget
-          const alwaysIncludeObjects = scoredObjects.filter((o: any) => o.alwaysInclude).slice(0, MAX_ALWAYS_INCLUDE)
-          const budgetedObjects = scoredObjects.filter((o: any) => !o.alwaysInclude).slice(0, MAX_OBJECT_REFERENCES)
-          
-          // Combine: alwaysInclude first, then budgeted objects
-          const selectedObjects = [...alwaysIncludeObjects, ...budgetedObjects]
-          
-          // Remove internal scoring field before using
-          detectedObjectReferences = selectedObjects.map((o: any) => {
-            const { _priorityScore, ...objWithoutScore } = o
-            return objWithoutScore
-          })
-          
-          // Enhanced logging for transparency
-          console.log(`[Scene Image] Intelligent prop selection:`, {
-            totalMatched: matchedObjects.length,
-            selected: detectedObjectReferences.length,
-            alwaysIncludeCount: alwaysIncludeObjects.length,
-            budgetedCount: budgetedObjects.length,
-            maxBudget: MAX_OBJECT_REFERENCES,
-            selectedProps: detectedObjectReferences.map((o: any) => ({
-              name: o.name,
-              category: o.category || 'uncategorized',
-              importance: o.importance || 'unset',
-              alwaysInclude: o.alwaysInclude || false
-            })),
-            filteredOut: matchedObjects.length > selectedObjects.length 
-              ? matchedObjects.slice(selectedObjects.length).map((o: any) => o.name)
-              : []
-          })
-        } else {
-          console.log('[Scene Image] No object references matched from', projectObjectRefs.length, 'available objects')
-        }
-      }
-    }
-    
-    // AUTO-DETECT: Location reference for environment consistency
-    // If no location references provided, try to match from project's reference library
-    let matchedLocationReference: any = null
-    if (project && locationReferences.length === 0) {
-      const projectLocationRefs = project.metadata?.visionPhase?.references?.locationReferences || []
-      
-      if (projectLocationRefs.length > 0 && sceneData) {
-        // Extract location from current scene heading
-        const sceneHeading = typeof sceneData.heading === 'string' ? sceneData.heading : sceneData.heading?.text
-        const currentLocation = extractLocation(sceneHeading)
-        
-        if (currentLocation) {
-          // Find matching location reference
-          matchedLocationReference = projectLocationRefs.find((locRef: any) => locRef.location === currentLocation)
-          
-          if (matchedLocationReference) {
-            console.log(`[Scene Image] Auto-detected location reference for "${currentLocation}":`, matchedLocationReference.imageUrl?.substring(0, 40))
-          } else {
-            console.log(`[Scene Image] No location reference found for "${currentLocation}" (${projectLocationRefs.length} available)`)
-          }
-        }
-      }
-    } else if (locationReferences.length > 0 && sceneData) {
-      // Location references were provided, find matching one
-      const sceneHeading = typeof sceneData.heading === 'string' ? sceneData.heading : sceneData.heading?.text
-      const currentLocation = extractLocation(sceneHeading)
-      
-      if (currentLocation) {
-        matchedLocationReference = locationReferences.find((locRef: any) => locRef.location === currentLocation)
-        if (matchedLocationReference) {
-          console.log(`[Scene Image] Using provided location reference for "${currentLocation}"`)
-        }
-      }
-    }
+    // We pass all available references to the AI, and let it filter them.
+    // If the user manually provided references (objectReferences or locationReferences), we bypass auto-detection for those categories.
+    const autoDetectObjects = detectedObjectReferences.length === 0 && !skipObjectAutoDetection
+    const autoDetectLocations = !matchedLocationReference
     
     // Build character references using visionDescription (preferred) or fallback descriptions
     // IMPORTANT: referenceId is ONLY assigned to characters with GCS images
@@ -943,17 +793,34 @@ export async function POST(req: NextRequest) {
         hasReferenceImage: !!obj.imageUrl,
       }))
       
-      // Build location context
-      const locationContext: LocationContext | undefined = matchedLocationReference ? {
-        name: matchedLocationReference.location || 'Unknown location',
-        hasReferenceImage: !!matchedLocationReference.imageUrl,
-      } : undefined
+      // Build available location contexts
+      const availableLocationsContext: LocationContext[] = projectLocationRefs.map((locRef: any) => ({
+        name: locRef.location || locRef.name || 'Unknown location',
+        hasReferenceImage: !!locRef.imageUrl,
+      }))
       
-      // Count total reference images that will be sent
-      const totalRefImages = 
+      // We pass the project references to AI, except if the user explicitly provided them
+      const propsToPassToAI = autoDetectObjects 
+        ? projectObjectRefs.map((obj: any) => ({
+            name: obj.name,
+            description: obj.description,
+            category: obj.category,
+            importance: obj.importance,
+            hasReferenceImage: !!obj.imageUrl,
+          }))
+        : propContexts
+        
+      const locationsToPassToAI = autoDetectLocations ? availableLocationsContext : (matchedLocationReference ? [{
+        name: matchedLocationReference.location || matchedLocationReference.name || 'Unknown location',
+        hasReferenceImage: !!matchedLocationReference.imageUrl,
+      }] : [])
+      
+      // Count total reference images that MIGHT be sent (will be refined after AI selects)
+      // We'll update this count later, but for the prompt, we just let it know how many are available
+      const totalAvailableRefImages = 
         characterReferences.filter((r: any) => r.referenceId).length +
-        detectedObjectReferences.filter((o: any) => o.imageUrl).length +
-        (matchedLocationReference?.imageUrl ? 1 : 0)
+        propsToPassToAI.filter((o: any) => o.hasReferenceImage).length +
+        locationsToPassToAI.filter((l: any) => l.hasReferenceImage).length
       
       // Call Gemini intelligence
       const aiResult = await generateSceneImagePrompt({
@@ -965,11 +832,32 @@ export async function POST(req: NextRequest) {
         sceneType,
         directionMetadata,
         characters: characterContexts,
-        props: propContexts,
-        location: locationContext,
+        props: propsToPassToAI,
+        availableLocations: locationsToPassToAI,
         artStyle: artStyle || 'photorealistic',
-        referenceImageCount: totalRefImages,
+        referenceImageCount: totalAvailableRefImages,
       })
+      
+      // Apply AI selections if auto-detect was enabled
+      if (aiResult.usedAI) {
+        if (autoDetectObjects && aiResult.selectedPropNames && aiResult.selectedPropNames.length > 0) {
+          detectedObjectReferences = projectObjectRefs.filter((obj: any) => 
+            aiResult.selectedPropNames!.includes(obj.name)
+          ).slice(0, 4) // Max 4 objects
+          
+          console.log(`[Scene Image] AI selected props:`, detectedObjectReferences.map((o: any) => o.name).join(', '))
+        }
+        
+        if (autoDetectLocations && aiResult.selectedLocationName) {
+          const matched = projectLocationRefs.find((loc: any) => 
+            loc.location === aiResult.selectedLocationName || loc.name === aiResult.selectedLocationName
+          )
+          if (matched) {
+            matchedLocationReference = matched
+            console.log(`[Scene Image] AI selected location:`, matched.location || matched.name)
+          }
+        }
+      }
       
       if (aiResult.usedAI && aiResult.prompt) {
         // AI intelligence succeeded — use the AI-generated prompt
