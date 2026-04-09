@@ -182,25 +182,29 @@ export async function POST(req: NextRequest) {
         }
         
         // Collect music audio URL
-        if (scene.musicAudio && typeof scene.musicAudio === 'string' && scene.musicAudio.includes('blob')) {
-          urlsToDelete.push(scene.musicAudio)
-        }
-        if (scene.music && typeof scene.music === 'object' && scene.music.url && scene.music.url.includes('blob')) {
-          urlsToDelete.push(scene.music.url)
+        if (includeMusic && (!scene.musicAudio)) {
+          if (scene.musicAudio && typeof scene.musicAudio === 'string' && scene.musicAudio.includes('blob')) {
+            urlsToDelete.push(scene.musicAudio)
+          }
+          if (scene.music && typeof scene.music === 'object' && scene.music.url && scene.music.url.includes('blob')) {
+            urlsToDelete.push(scene.music.url)
+          }
         }
         
         // Collect SFX audio URLs
-        if (scene.sfxAudio && typeof scene.sfxAudio === 'object') {
-          Object.values(scene.sfxAudio).forEach((url: any) => {
-            if (typeof url === 'string' && url.includes('blob')) urlsToDelete.push(url)
-          })
-        }
-        if (scene.sfx && Array.isArray(scene.sfx)) {
-          scene.sfx.forEach((s: any) => {
-            if (typeof s === 'object' && s.url && s.url.includes('blob')) {
-              urlsToDelete.push(s.url)
-            }
-          })
+        if (includeSFX && (!scene.sfxAudio)) {
+          if (scene.sfxAudio && typeof scene.sfxAudio === 'object') {
+            Object.values(scene.sfxAudio).forEach((url: any) => {
+              if (typeof url === 'string' && url.includes('blob')) urlsToDelete.push(url)
+            })
+          }
+          if (scene.sfx && Array.isArray(scene.sfx)) {
+            scene.sfx.forEach((s: any) => {
+              if (typeof s === 'object' && s.url && s.url.includes('blob')) {
+                urlsToDelete.push(s.url)
+              }
+            })
+          }
         }
       })
       
@@ -361,7 +365,7 @@ export async function POST(req: NextRequest) {
           let dialogueCount = 0
           let musicCount = 0
           let sfxCount = 0
-          const skippedDialogue = []
+          const skippedDialogue: { scene: number, character: string, reason: string }[] = []
           
           for (let i = 0; i < scenes.length; i++) {
             const scene = scenes[i]
@@ -400,12 +404,20 @@ export async function POST(req: NextRequest) {
                   text: optimizedNarration.text,
                   voiceConfig: narrationVoice,
                   language, // Pass language for translation support
-                  skipTranslation: narrationIsPreTranslated, // Don't re-translate stored translations
-                }),
+                  skipTranslation: narrationIsPreTranslated, skipDbUpdate: true }),
               })
               const narrationData = await narrationResult.json()
-              if (narrationData.success) narrationCount++
-              results.push(narrationData)
+              if (narrationData.success) {
+                narrationCount++;
+                scenes[i].narrationAudio = scenes[i].narrationAudio || {};
+                scenes[i].narrationAudio[language] = {
+                  url: narrationData.audioUrl,
+                  duration: narrationData.duration || 0,
+                  generatedAt: new Date().toISOString(),
+                  voiceId: narrationVoice.voiceId
+                };
+              }
+              results.push(narrationData);
             }
             
             // Generate dialogue
@@ -418,77 +430,32 @@ export async function POST(req: NextRequest) {
                 dialogueCount: scene.dialogue.length
               })
               
-              for (let dialogueIndex = 0; dialogueIndex < scene.dialogue.length; dialogueIndex++) {                                                             
-                const dialogueLine = scene.dialogue[dialogueIndex]
-                console.log(`[Batch Audio] Processing dialogue ${dialogueIndex + 1}/${scene.dialogue.length} for character: "${dialogueLine.character}"`)       
-                
-                // Primary: Match by ID (most reliable)
+              const dialogueTasks = scene.dialogue.map(async (dialogueLine: any, dialogueIndex: number) => {
                 let character = dialogueLine.characterId
                   ? characters.find((c: any) => c.id === dialogueLine.characterId)
-                  : null
-                
-                // Enhanced fallback matching using canonical names
-                // This handles screenplay annotations like (V.O.), (O.S.), (CONT'D) and name variations
+                  : null;
+                  
                 if (!character && dialogueLine.character) {
-                  const canonicalSearchName = toCanonicalName(dialogueLine.character)
-                  console.log(`[Batch Audio] Using canonical name matching: "${dialogueLine.character}" → "${canonicalSearchName}"`)
-                  
-                  // Try exact canonical match first
-                  const exactMatch = characters.find((c: any) => 
-                    toCanonicalName(c.name) === canonicalSearchName
-                  )
-                  
-                  if (exactMatch) {
-                    character = exactMatch
-                    console.log(`[Batch Audio] Matched via exact canonical name: ${exactMatch.name}`)
-                  } else {
-                    // Try alias matching (first name, last name, nickname variations)
-                    character = characters.find((c: any) => {
-                      const aliases = generateAliases(toCanonicalName(c.name), c.name)
-                      return aliases.some(alias => 
-                        toCanonicalName(alias) === canonicalSearchName
-                      )
-                    })
-                    if (character) {
-                      console.log(`[Batch Audio] Matched via alias: ${character.name}`)
-                    }
-                  }
+                  const canonicalSearchName = toCanonicalName(dialogueLine.character);
+                  character = characters.find((c: any) => 
+                    c.id === dialogueLine.characterId || 
+                    toCanonicalName(c.name) === canonicalSearchName ||
+                    generateAliases(c.name).includes(canonicalSearchName)
+                  );
                 }
                 
-                console.log(`[Batch Audio] Found character:`, character ? {
-                  id: character.id,
-                  name: character.name,
-                  matchedWith: dialogueLine.character,
-                  matchedBy: dialogueLine.characterId ? 'ID' : 'name',
-                  hasVoiceConfig: !!character.voiceConfig,
-                  voiceConfig: character.voiceConfig
-                } : 'NOT FOUND')
-                
-                if (!character?.voiceConfig) {
-                  console.warn(`[Batch Audio] No voice for ${dialogueLine.character} - skipping dialogue`)                                                      
-                  skippedDialogue.push({
-                    scene: i + 1,
-                    character: dialogueLine.character,
-                    reason: character ? 'No voice assigned' : 'Character not found'                                                                             
-                  })
-                  continue
+                if (!character || !character.voiceConfig) {
+                  skippedDialogue.push({ scene: i + 1, character: dialogueLine.character, reason: character ? 'No voice assigned' : 'Character not found' });
+                  return null;
                 }
                 
-                // CRITICAL: Use character.voiceConfig, NOT narrationVoice
-                console.log(`[Batch Audio] Generating dialogue with voice:`, character.voiceConfig)                                                             
+                const sceneTranslation = (storedTranslations as any)[i] as { narration?: string; dialogue?: string[] } | undefined;
+                const storedDialogueLine = sceneTranslation?.dialogue?.[dialogueIndex];
+                const dialogueText = storedDialogueLine || dialogueLine.line;
                 
-                // Check stored translations first (user imports > machine translation)
-                const storedDialogueLine = sceneTranslation?.dialogue?.[dialogueIndex]
-                const dialogueText = storedDialogueLine || dialogueLine.line
-                const dialogueIsPreTranslated = !!storedDialogueLine
-                if (storedDialogueLine) {
-                  console.log(`[Batch Audio] Using stored ${language} translation for dialogue ${dialogueIndex + 1} in scene ${i + 1}`)
-                }
+                const optimizedDialogue = optimizeTextForTTS(dialogueText);
                 
-                // Optimize dialogue text for TTS
-                const optimizedDialogue = optimizeTextForTTS(dialogueText)
-                
-                const dialogueResult = await fetch(`${baseUrl}/api/vision/generate-scene-audio`, {                                                              
+                const dialogueResult = await fetch(`${baseUrl}/api/vision/generate-scene-audio`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
@@ -497,21 +464,42 @@ export async function POST(req: NextRequest) {
                     audioType: 'dialogue',
                     text: optimizedDialogue.text,
                     voiceConfig: character.voiceConfig,
-                    characterName: dialogueLine.character,
+                    characterName: character.name,
                     dialogueIndex,
-                    language, // Pass language for translation support
-                    skipTranslation: dialogueIsPreTranslated, // Don't re-translate stored translations
+                    language,
+                    skipTranslation: !!storedDialogueLine,
+                    skipDbUpdate: true
                   }),
-                })
-                const dialogueData = await dialogueResult.json()
-                console.log(`[Batch Audio] Dialogue result:`, dialogueData.success ? 'SUCCESS' : `FAILED: ${dialogueData.error}`)                               
-                if (dialogueData.success) dialogueCount++
-                results.push(dialogueData)
+                });
+                
+                const dialogueData = await dialogueResult.json();
+                return { dialogueData, character, dialogueIndex, dialogueLine };
+              });
+              
+              const dialogueResultsArray = await Promise.all(dialogueTasks);
+              scenes[i].dialogueAudio = scenes[i].dialogueAudio || {};
+              scenes[i].dialogueAudio[language] = scenes[i].dialogueAudio[language] || [];
+              
+              for (const res of dialogueResultsArray) {
+                if (res && res.dialogueData.success) {
+                  dialogueCount++;
+                  results.push(res.dialogueData);
+                  while (scenes[i].dialogueAudio[language].length <= res.dialogueIndex) {
+                     scenes[i].dialogueAudio[language].push(null);
+                  }
+                  scenes[i].dialogueAudio[language][res.dialogueIndex] = {
+                    audioUrl: res.dialogueData.audioUrl,
+                    duration: res.dialogueData.duration || 0,
+                    character: res.dialogueLine.character,
+                    generatedAt: new Date().toISOString(),
+                    voiceId: res.character.voiceConfig.voiceId
+                  };
+                }
               }
             }
             
             // Generate music if enabled
-            if (includeMusic && scene.music) {
+            if (includeMusic && scene.music && !scene.musicAudio) {
               sendProgress({
                 type: 'progress',
                 scene: i + 1,
@@ -567,7 +555,7 @@ export async function POST(req: NextRequest) {
             }
             
             // Generate SFX if enabled
-            if (includeSFX && scene.sfx && scene.sfx.length > 0) {
+            if (includeSFX && scene.sfx && scene.sfx.length > 0 && !scene.sfxAudio) {
               sendProgress({
                 type: 'progress',
                 scene: i + 1,
