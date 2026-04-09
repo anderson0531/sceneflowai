@@ -31,10 +31,10 @@ export type VeoQualityTier = 'fast' | 'premium';
 
 export const VEO_MODELS = {
   /** Veo 3.1 Fast - ~$0.20/sec, 1080p, faster generation, supports FTV (lastFrame) */
-  fast: 'veo-3.1-fast-generate-preview',
+  fast: 'veo-3.1-fast-generate-001',
   
   /** Veo 3.1 Premium - ~$0.75/sec, 4K capable, best quality, supports FTV (lastFrame) */
-  premium: 'veo-3.1-generate-preview',
+  premium: 'veo-3.1-generate-001',
 } as const;
 
 /** Default Veo quality tier (cost-optimized) */
@@ -190,6 +190,20 @@ export function getGeminiTextModel(
   // Use the major version alias for maximum compatibility with the preview registry
   if (tier === 'pro') return 'gemini-3.1-pro-preview';
   return 'gemini-3.1-flash-lite-preview';
+}
+
+
+export type GeminiModelFamily = '2.5' | '3.0';
+
+/**
+ * Detect which model family a model string belongs to.
+ * Used to determine thinking config format, endpoint routing, etc.
+ */
+export function getModelFamily(model: string): GeminiModelFamily {
+  if (model.includes('3.0') || model.includes('3.1') || model.startsWith('gemini-3')) {
+    return '3.0';
+  }
+  return '2.5';
 }
 
 /**

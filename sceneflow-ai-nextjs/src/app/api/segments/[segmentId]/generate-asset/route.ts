@@ -64,9 +64,11 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ segmentId: string }> }
 ) {
+  let requestBody: Partial<GenerateAssetRequest> = {}
   try {
     const { segmentId } = await params
-    const body: GenerateAssetRequest = await req.json()
+    requestBody = await req.json()
+    const body = requestBody as GenerateAssetRequest
     const { 
       prompt, 
       genType, 
@@ -566,9 +568,9 @@ export async function POST(
     // Handle common error types with user-friendly messages
     const originalErrorMessage = errorMessage // Preserve original for details
     // Determine the effective generation method for error context
-    const effectiveGenerationMethod = generationMethod || genType
+    const effectiveGenerationMethod = requestBody.generationMethod || requestBody.genType
     const isFTVMethod = effectiveGenerationMethod === 'FTV'
-    const hasMultipleFrames = !!(startFrameUrl && endFrameUrl)
+    const hasMultipleFrames = !!(requestBody.startFrameUrl && requestBody.endFrameUrl)
     
     if (errorMessage.includes('Content Safety Filter') || 
         errorMessage.includes('filtered') || 
@@ -603,9 +605,9 @@ export async function POST(
           generationMethod: effectiveGenerationMethod,
           isFTVRelated: isFTVMethod || hasMultipleFrames,
           suggestion: (isFTVMethod || hasMultipleFrames) ? 'RETRY_I2V' : 'REPHRASE_PROMPT',
-          retryI2VData: (isFTVMethod || hasMultipleFrames) && startFrameUrl ? {
-            startFrameUrl,
-            prompt: prompt, // Original prompt (pre-sanitization) for user review
+          retryI2VData: (isFTVMethod || hasMultipleFrames) && requestBody.startFrameUrl ? {
+            startFrameUrl: requestBody.startFrameUrl,
+            prompt: requestBody.prompt, // Original prompt (pre-sanitization) for user review
           } : undefined,
         }),
         // Include original Vertex AI error details (with support codes) for content policy violations
