@@ -24,10 +24,32 @@ export async function POST(request: NextRequest) {
     // Generate unique share token
     const shareToken = uuidv4()
     
+    // Generate branded slug from project title
+    const baseSlug = project.title.replace(/[^a-zA-Z0-9]/g, '')
+    let finalSlug = baseSlug
+    
+    // Check if slug is unique
+    const projects = await Project.findAll()
+    const isSlugTaken = (slug: string) => {
+      return projects.some(p => {
+        if (p.id === projectId) return false // Ignore self
+        const sLink = p.metadata?.storyboardShareLink
+        const cLink = p.metadata?.screeningRoomShareLink
+        return (sLink && sLink.slug === slug) || (cLink && cLink.slug === slug)
+      })
+    }
+    
+    let counter = 1
+    while (isSlugTaken(finalSlug)) {
+      finalSlug = `${baseSlug}${counter}`
+      counter++
+    }
+    
     // Create share link data
     const shareLink = {
       id: uuidv4(),
       shareToken,
+      slug: finalSlug,
       linkType,
       createdAt: new Date().toISOString(),
       isActive: true,
@@ -50,10 +72,10 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sceneflow-ai-nextjs.vercel.app'
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sceneflowai.studio'
     const shareUrl = linkType === 'storyboard' 
-      ? `${baseUrl}/share/storyboard/${shareToken}`
-      : `${baseUrl}/share/screening-room/${shareToken}`
+      ? `${baseUrl}/${finalSlug}`
+      : `${baseUrl}/share/screening-room/${finalSlug}`
 
     console.log(`[Create Share Link] Created ${linkType} link for project ${projectId}: ${shareUrl}`)
 
@@ -61,6 +83,7 @@ export async function POST(request: NextRequest) {
       success: true,
       shareUrl,
       shareToken,
+      slug: finalSlug,
       linkType
     })
   } catch (error: any) {

@@ -18,24 +18,29 @@ export async function GET(
 
     await sequelize.authenticate()
     
-    // Find project with this share token
+    // Find project with this share token or slug
     const projects = await Project.findAll()
     const project = projects.find(p => {
       const screeningLink = p.metadata?.screeningRoomShareLink
       const storyboardLink = p.metadata?.storyboardShareLink
       return (screeningLink?.shareToken === shareToken && screeningLink?.isActive) ||
-             (storyboardLink?.shareToken === shareToken && storyboardLink?.isActive)
+             (storyboardLink?.shareToken === shareToken && storyboardLink?.isActive) ||
+             (screeningLink?.slug === shareToken && screeningLink?.isActive) ||
+             (storyboardLink?.slug === shareToken && storyboardLink?.isActive)
     })
 
     if (!project) {
-      console.log(`[Get Shared Project] Share token not found or inactive: ${shareToken}`)
+      console.log(`[Get Shared Project] Share token/slug not found or inactive: ${shareToken}`)
       return NextResponse.json({ error: 'Share link not found or expired' }, { status: 404 })
     }
 
     // Determine which link was used and increment view count
-    const isStoryboard = project.metadata?.storyboardShareLink?.shareToken === shareToken
+    const isStoryboard = (project.metadata?.storyboardShareLink?.shareToken === shareToken || project.metadata?.storyboardShareLink?.slug === shareToken)
     const metadataKey = isStoryboard ? 'storyboardShareLink' : 'screeningRoomShareLink'
     const shareLink = project.metadata[metadataKey]
+    
+    // Make sure we pass the exact token used for feedback linking back
+    const actualShareToken = shareLink.shareToken
     
     shareLink.viewCount = (shareLink.viewCount || 0) + 1
     await project.update({
@@ -51,7 +56,8 @@ export async function GET(
       script: project.metadata?.visionPhase?.script,
       characters: project.metadata?.visionPhase?.characters,
       sceneProductionState: project.metadata?.visionPhase?.production?.scenes,
-      allowedFeatures: shareLink.allowedFeatures
+      allowedFeatures: shareLink.allowedFeatures,
+      shareToken: actualShareToken // Pass this back so the feedback API can find it
     }
 
     console.log(`[Get Shared Project] Serving shared project: ${project.title} (views: ${shareLink.viewCount})`)

@@ -599,14 +599,16 @@ export function AudioGalleryPlayer({
         {/* Main content area */}
         <div className={cn(
           "flex gap-4 p-4",
-          isFullscreen && "flex-1 flex-col items-center justify-center"
+          (isFullscreen || isSharedView) && "flex-1 flex-col items-center justify-center w-full"
         )}>
           {/* Scene image with Ken Burns effect */}
           <div className={cn(
             "relative rounded-lg overflow-hidden bg-black flex-shrink-0",
             isFullscreen 
               ? "w-[80vw] max-w-7xl aspect-video" 
-              : "w-[500px] h-[280px]"
+              : isSharedView
+                ? "w-full max-w-6xl aspect-video shadow-2xl"
+                : "w-[500px] h-[280px]"
           )}>
             {currentScene?.imageUrl ? (
               <img
@@ -639,21 +641,21 @@ export function AudioGalleryPlayer({
             )}
           </div>
           
-          {/* Scene title below video in fullscreen */}
-          {isFullscreen && (
-            <div className="w-[80vw] max-w-7xl mt-2 text-center">
-              <span className="text-white/50 text-xs uppercase tracking-wide">SCENE {currentSceneIndex + 1}</span>
-              <h2 className="text-white text-sm font-medium truncate mt-0.5">{formattedHeading}</h2>
+          {/* Scene title below video in fullscreen or shared view */}
+          {(isFullscreen || isSharedView) && (
+            <div className={cn("mt-4 text-center", isFullscreen ? "w-[80vw] max-w-7xl" : "w-full max-w-6xl")}>
+              <span className="text-white/50 text-xs uppercase tracking-wide font-semibold">SCENE {currentSceneIndex + 1}</span>
+              <h2 className="text-white text-lg font-medium truncate mt-1">{formattedHeading}</h2>
             </div>
           )}
           
           {/* Playback controls and info */}
           <div className={cn(
             "flex flex-col justify-between min-w-0",
-            isFullscreen ? "w-[80vw] max-w-7xl mt-3" : "flex-1"
+            isFullscreen ? "w-[80vw] max-w-7xl mt-3" : isSharedView ? "w-full max-w-6xl mt-4" : "flex-1"
           )}>
-            {/* Scene info - hide in fullscreen (shown below video) */}
-            {!isFullscreen && (
+            {/* Scene info - hide in fullscreen/shared (shown below video) */}
+            {(!isFullscreen && !isSharedView) && (
               <div>
                 <h4 className="text-sm font-semibold text-white mb-1">
                   SCENE {currentSceneIndex + 1}
@@ -697,10 +699,10 @@ export function AudioGalleryPlayer({
                         disabled={currentSceneIndex === 0}
                         className={cn(
                           "rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors",
-                          isFullscreen ? "p-3" : "p-2"
+                          (isFullscreen || isSharedView) ? "p-3" : "p-2"
                         )}
                       >
-                        <SkipBack className={cn("text-white", isFullscreen ? "w-5 h-5" : "w-4 h-4")} />
+                        <SkipBack className={cn("text-white", (isFullscreen || isSharedView) ? "w-5 h-5" : "w-4 h-4")} />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>Previous scene</TooltipContent>
@@ -711,13 +713,13 @@ export function AudioGalleryPlayer({
                     onClick={() => setIsPlaying(!isPlaying)}
                     className={cn(
                       "rounded-full bg-emerald-600 hover:bg-emerald-500 transition-colors",
-                      isFullscreen ? "p-4" : "p-3"
+                      (isFullscreen || isSharedView) ? "p-4" : "p-3"
                     )}
                   >
                     {isPlaying ? (
-                      <Pause className={cn("text-white", isFullscreen ? "w-6 h-6" : "w-5 h-5")} />
+                      <Pause className={cn("text-white", (isFullscreen || isSharedView) ? "w-6 h-6" : "w-5 h-5")} />
                     ) : (
-                      <Play className={cn("text-white ml-0.5", isFullscreen ? "w-6 h-6" : "w-5 h-5")} />
+                      <Play className={cn("text-white ml-0.5", (isFullscreen || isSharedView) ? "w-6 h-6" : "w-5 h-5")} />
                     )}
                   </button>
                   
@@ -729,10 +731,10 @@ export function AudioGalleryPlayer({
                         disabled={currentSceneIndex === scenes.length - 1}
                         className={cn(
                           "rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors",
-                          isFullscreen ? "p-3" : "p-2"
+                          (isFullscreen || isSharedView) ? "p-3" : "p-2"
                         )}
                       >
-                        <SkipForward className={cn("text-white", isFullscreen ? "w-5 h-5" : "w-4 h-4")} />
+                        <SkipForward className={cn("text-white", (isFullscreen || isSharedView) ? "w-5 h-5" : "w-4 h-4")} />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>Next scene</TooltipContent>
