@@ -45,7 +45,7 @@ export const SUPPORTED_LANGUAGES: SupportedLanguage[] = [
   { code: 'gl', name: 'Galician', voice: 'gl-ES-Standard-A', region: 'western-europe', rank: 72, tier: 'long-tail' },
   { code: 'lb', name: 'Luxembourgish', voice: '', region: 'western-europe', rank: 74, tier: 'long-tail' },
   { code: 'ga', name: 'Irish', voice: 'ga-IE-Standard-A', region: 'western-europe', rank: 71, tier: 'long-tail' },
-  { code: 'cy', name: 'Welsh', voice: '', region: 'western-europe', rank: 73, tier: 'long-tail' },
+  { code: 'cy', name: 'Welsh', voice: 'cy-GB-Standard-A', region: 'western-europe', rank: 73, tier: 'long-tail' },
   { code: 'is', name: 'Icelandic', voice: 'is-IS-Standard-A', region: 'western-europe', rank: 68, tier: 'long-tail' },
 
   // ── Northern European ─────────────────────────────────────────────────────
@@ -53,7 +53,7 @@ export const SUPPORTED_LANGUAGES: SupportedLanguage[] = [
   { code: 'fi', name: 'Finnish', voice: 'fi-FI-Wavenet-A', region: 'northern-europe', rank: 34, tier: 'mid-tier' },
   { code: 'no', name: 'Norwegian', voice: 'nb-NO-Wavenet-B', region: 'northern-europe', rank: 37, tier: 'mid-tier' },
   { code: 'sv', name: 'Swedish', voice: 'sv-SE-Wavenet-C', region: 'northern-europe', rank: 32, tier: 'mid-tier' },
-  { code: 'et', name: 'Estonian', voice: '', region: 'northern-europe', rank: 60, tier: 'long-tail' },
+  { code: 'et', name: 'Estonian', voice: 'et-EE-Standard-A', region: 'northern-europe', rank: 60, tier: 'long-tail' },
   { code: 'lv', name: 'Latvian', voice: 'lv-LV-Standard-A', region: 'northern-europe', rank: 58, tier: 'long-tail' },
   { code: 'lt', name: 'Lithuanian', voice: 'lt-LT-Standard-A', region: 'northern-europe', rank: 56, tier: 'long-tail' },
 
@@ -66,16 +66,16 @@ export const SUPPORTED_LANGUAGES: SupportedLanguage[] = [
   { code: 'be', name: 'Belarusian', voice: '', region: 'eastern-europe', rank: 63, tier: 'long-tail' },
   { code: 'bg', name: 'Bulgarian', voice: 'bg-BG-Standard-A', region: 'eastern-europe', rank: 42, tier: 'mid-tier' },
   { code: 'ro', name: 'Romanian', voice: 'ro-RO-Wavenet-A', region: 'eastern-europe', rank: 29, tier: 'mid-tier' },
-  { code: 'hr', name: 'Croatian', voice: '', region: 'eastern-europe', rank: 44, tier: 'mid-tier' },
-  { code: 'bs', name: 'Bosnian', voice: '', region: 'eastern-europe', rank: 59, tier: 'long-tail' },
+  { code: 'hr', name: 'Croatian', voice: 'hr-HR-Standard-A', region: 'eastern-europe', rank: 44, tier: 'mid-tier' },
+  { code: 'bs', name: 'Bosnian', voice: 'bs-BA-Standard-A', region: 'eastern-europe', rank: 59, tier: 'long-tail' },
   { code: 'sr', name: 'Serbian', voice: 'sr-RS-Standard-A', region: 'eastern-europe', rank: 36, tier: 'mid-tier' },
-  { code: 'sl', name: 'Slovenian', voice: '', region: 'eastern-europe', rank: 50, tier: 'mid-tier' },
-  { code: 'mk', name: 'Macedonian', voice: '', region: 'eastern-europe', rank: 57, tier: 'long-tail' },
+  { code: 'sl', name: 'Slovenian', voice: 'sl-SI-Standard-A', region: 'eastern-europe', rank: 50, tier: 'mid-tier' },
+  { code: 'mk', name: 'Macedonian', voice: 'mk-MK-Standard-A', region: 'eastern-europe', rank: 57, tier: 'long-tail' },
   { code: 'hu', name: 'Hungarian', voice: 'hu-HU-Wavenet-A', region: 'eastern-europe', rank: 28, tier: 'mid-tier' },
-  { code: 'ka', name: 'Georgian', voice: '', region: 'eastern-europe', rank: 55, tier: 'long-tail' },
+  { code: 'ka', name: 'Georgian', voice: 'ka-GE-Standard-A', region: 'eastern-europe', rank: 55, tier: 'long-tail' },
   { code: 'hy', name: 'Armenian', voice: '', region: 'eastern-europe', rank: 53, tier: 'long-tail' },
-  { code: 'az', name: 'Azerbaijani', voice: '', region: 'eastern-europe', rank: 43, tier: 'mid-tier' },
-  { code: 'kk', name: 'Kazakh', voice: '', region: 'eastern-europe', rank: 52, tier: 'long-tail' },
+  { code: 'az', name: 'Azerbaijani', voice: 'az-AZ-Standard-A', region: 'eastern-europe', rank: 43, tier: 'mid-tier' },
+  { code: 'kk', name: 'Kazakh', voice: 'kk-KZ-Standard-A', region: 'eastern-europe', rank: 52, tier: 'long-tail' },
   { code: 'ky', name: 'Kirghiz', voice: '', region: 'eastern-europe', rank: 67, tier: 'long-tail' },
 
   // ── Greek & Turkish ────────────────────────────────────────────────────────
@@ -85,9 +85,9 @@ export const SUPPORTED_LANGUAGES: SupportedLanguage[] = [
   // ── Middle Eastern & North African ─────────────────────────────────────────
   { code: 'ar', name: 'Arabic', voice: 'ar-XA-Wavenet-B', region: 'middle-east', rank: 6, tier: 'top-10' },
   { code: 'he', name: 'Hebrew', voice: 'he-IL-Wavenet-A', region: 'middle-east', rank: 33, tier: 'mid-tier' },
-  { code: 'fa', name: 'Persian', voice: '', region: 'middle-east', rank: 24, tier: 'mid-tier' },
+  { code: 'fa', name: 'Persian', voice: 'fa-IR-Standard-A', region: 'middle-east', rank: 24, tier: 'mid-tier' },
   { code: 'ps', name: 'Pashto', voice: '', region: 'middle-east', rank: 62, tier: 'long-tail' },
-  { code: 'ur', name: 'Urdu', voice: '', region: 'middle-east', rank: 20, tier: 'mid-tier' },
+  { code: 'ur', name: 'Urdu', voice: 'ur-PK-Standard-A', region: 'middle-east', rank: 20, tier: 'mid-tier' },
 
   // ── South Asian ────────────────────────────────────────────────────────────
   { code: 'hi', name: 'Hindi', voice: 'hi-IN-Neural2-B', region: 'south-asia', rank: 3, tier: 'top-10' },
@@ -119,7 +119,7 @@ export const SUPPORTED_LANGUAGES: SupportedLanguage[] = [
 
   // ── African ────────────────────────────────────────────────────────────────
   { code: 'af', name: 'Afrikaans', voice: 'af-ZA-Standard-A', region: 'african', rank: 47, tier: 'mid-tier' },
-  { code: 'sw', name: 'Swahili', voice: '', region: 'african', rank: 48, tier: 'mid-tier' },
+  { code: 'sw', name: 'Swahili', voice: 'sw-KE-Standard-A', region: 'african', rank: 48, tier: 'mid-tier' },
   { code: 'ha', name: 'Hausa', voice: '', region: 'african', rank: 49, tier: 'mid-tier' },
   { code: 'so', name: 'Somali', voice: '', region: 'african', rank: 54, tier: 'long-tail' },
   { code: 'ny', name: 'Chichewa', voice: '', region: 'african', rank: 69, tier: 'long-tail' },
