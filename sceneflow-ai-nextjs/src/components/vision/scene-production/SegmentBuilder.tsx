@@ -654,6 +654,8 @@ export function SegmentBuilder({
           endTime,
           status: 'READY' as const,
           generatedPrompt: '', // F2V prompt starts empty, generated in Step 2
+          startFramePrompt: dir.keyframeStartDescription,
+          endFramePrompt: dir.keyframeEndDescription,
           userEditedPrompt: null,
           activeAssetUrl: null,
           assetType: null,

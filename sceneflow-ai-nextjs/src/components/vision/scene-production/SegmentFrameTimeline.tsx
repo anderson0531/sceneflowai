@@ -27,6 +27,7 @@ import { DeleteSegmentDialog } from './DeleteSegmentDialog'
 import { RegenerateSegmentsDialog } from './RegenerateSegmentsDialog'
 import { AddSegmentTypeDialog, type SegmentPurpose, type AdjacentSceneContext } from './AddSegmentTypeDialog'
 import { AddSpecialSegmentDialog } from './AddSpecialSegmentDialog'
+import type { KeyframeGenerationConfig } from './KeyframeRegenerationDialog'
 import type { 
   SceneSegment, 
   AnchorStatus 
@@ -86,7 +87,6 @@ export interface SegmentFrameTimelineProps {
     /** Scene direction for intelligent prompt building (avoids fallback to PromptEnhancer) */
     sceneDirection?: DetailedSceneDirection | null
   }) => Promise<void>
-  onGenerateAllFrames: () => Promise<void>
   onGenerateVideo: (segmentId: string) => void
   onOpenDirectorConsole?: () => void
   onEditFrame?: (segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
@@ -220,7 +220,6 @@ export function SegmentFrameTimeline({
   selectedSegmentIndex,
   onSelectSegment,
   onGenerateFrames,
-  onGenerateAllFrames,
   onGenerateVideo,
   onOpenDirectorConsole,
   onEditFrame,
@@ -293,6 +292,29 @@ export function SegmentFrameTimeline({
   
   // Handle generation from dialog
   const { execute: executeWithOverlay } = useProcessWithOverlay()
+
+  // Quick generate bypassing the dialog
+  const quickGenerateFrame = useCallback(async (
+    segment: SceneSegment,
+    segmentIndex: number,
+    frameType: 'start' | 'end' | 'both'
+  ) => {
+    const frameLabel = frameType === 'both' ? 'start + end frames' : `${frameType} frame`
+    await executeWithOverlay(
+      async () => {
+        await onGenerateFrames(segment.segmentId, frameType, {
+          usePreviousEndFrame: frameType === 'start' && segmentIndex > 0,
+          previousEndFrameUrl: frameType === 'start' && segmentIndex > 0 ? getPreviousEndFrame(segmentIndex) || undefined : undefined,
+          sceneDirection,
+        })
+      },
+      {
+        message: `Generating ${frameLabel}...`,
+        estimatedDuration: frameType === 'both' ? 45 : 25,
+        operationType: 'keyframe-generation'
+      }
+    )
+  }, [onGenerateFrames, executeWithOverlay, sceneDirection, getPreviousEndFrame])
   
   const handleDialogGenerate = useCallback(async (options: FrameGenerationOptions) => {
     setFramePromptDialogOpen(false)
@@ -408,19 +430,7 @@ export function SegmentFrameTimeline({
               <span className="text-cyan-400/70 text-[10px] w-8">{Math.round(stats.progressPercent)}%</span>
             </div>
             
-            {/* Keyframes Button - Generate all frames */}
-            {stats.pending > 0 || stats.startLocked > 0 ? (
-              <Button
-                size="default"
-                variant="secondary"
-                onClick={onGenerateAllFrames}
-                disabled={isGenerating}
-                className="h-10 px-5 text-sm font-semibold bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/40 transition-all"
-              >
-                <ImageIcon className="w-5 h-5 mr-2" />
-                Generate
-              </Button>
-            ) : stats.fullyAnchored === stats.total && stats.total > 0 ? (
+            {stats.fullyAnchored === stats.total && stats.total > 0 ? (
               <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 h-10 px-4 text-sm font-semibold flex items-center">
                 <CheckCircle2 className="w-5 h-5 mr-2" />
                 FTV Ready
@@ -522,9 +532,10 @@ export function SegmentFrameTimeline({
                     segmentIndex={index}
                     isSelected={selectedSegmentIndex === index}
                     onSelect={() => onSelectSegment(index)}
-                    onGenerateStartFrame={() => openFramePromptDialog(segment, index, 'start')}
-                    onGenerateEndFrame={() => openFramePromptDialog(segment, index, 'end')}
-                    onGenerateBothFrames={() => openFramePromptDialog(segment, index, 'both')}
+                    onGenerateStartFrame={() => quickGenerateFrame(segment, index, 'start')}
+                    onGenerateEndFrame={() => quickGenerateFrame(segment, index, 'end')}
+                    onGenerateBothFrames={() => quickGenerateFrame(segment, index, 'both')}
+                    onAdvancedFrameOptions={(frameType) => openFramePromptDialog(segment, index, frameType)}
                     onGenerateVideo={() => onGenerateVideo(segment.segmentId)}
                     onOpenDirectorConsole={onOpenDirectorConsole}
                     onEditFrame={onEditFrame ? (frameType, frameUrl) => onEditFrame(segment.segmentId, frameType, frameUrl) : undefined}
@@ -636,7 +647,7 @@ export function SegmentFrameTimeline({
           toast.info('Segment created! Connect the onAddSegment handler to persist.')
           console.log('New segment:', segment)
         })}
-        onRegenerateAll={sceneData && onResegmentWithConfig ? () => setKeyframeRegenDialogOpen(true) : undefined}
+        onRegenerateAll={sceneData && onResegmentWithConfig ? () => setRegenerateDialogOpen(true) : undefined}
       />
       
       {/* Add Special Segment Dialog - for cinematic elements (title, match-cut, establishing, b-roll, outro) */}

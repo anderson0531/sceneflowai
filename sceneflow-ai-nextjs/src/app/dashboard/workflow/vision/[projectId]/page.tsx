@@ -2263,96 +2263,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [script?.script?.scenes, sceneProductionState, characters, applySceneProductionUpdate]
   )
 
-  // Keyframe State Machine: Batch generate all pending frames for a scene
-  const handleGenerateAllSegmentFrames = useCallback(
-    async (sceneId: string) => {
-      const productionData = sceneProductionState[sceneId]
-      if (!productionData?.segments?.length) {
-        toast.error('No segments to generate frames for')
-        return
-      }
-
-      // Find segments that need frame generation
-      const pendingSegments = productionData.segments.filter(seg => {
-        const hasStart = seg.startFrameUrl || seg.references?.startFrameUrl
-        const hasEnd = seg.endFrameUrl || seg.references?.endFrameUrl
-        return !hasStart || !hasEnd
-      })
-
-      if (pendingSegments.length === 0) {
-        toast.info('All frames are already generated')
-        return
-      }
-
-      toast.info(`Generating frames for ${pendingSegments.length} segments...`)
-
-      // Generate frames sequentially to respect API rate limits
-      // For each segment, detect which characters actually appear (instead of sending ALL project characters)
-      for (const segment of pendingSegments) {
-        const hasStart = segment.startFrameUrl || segment.references?.startFrameUrl
-        const hasEnd = segment.endFrameUrl || segment.references?.endFrameUrl
-        
-        const frameType: 'start' | 'end' | 'both' = !hasStart && !hasEnd 
-          ? 'both' 
-          : !hasEnd 
-            ? 'end' 
-            : 'start'
-
-        // Detect segment-specific characters from segment text + segment.characters
-        // This prevents sending ALL project characters to every segment (e.g., title sequences)
-        let segmentCharacters: Array<{ name: string; referenceImageUrl?: string }> | undefined
-
-        // Priority 1: Use segment's own character assignments (most authoritative)
-        if (segment.characters && segment.characters.length > 0) {
-          segmentCharacters = segment.characters.map((sc: any) => {
-            const fullChar = characters.find(c => c.name.toLowerCase() === sc.name.toLowerCase())
-            return {
-              name: sc.name,
-              referenceImageUrl: fullChar?.referenceImage,
-            }
-          })
-        } else if (segment.segmentDirection?.isNoTalent || (segment.characters !== undefined && segment.characters.length === 0)) {
-          // Explicitly no-talent segment — send empty characters
-          segmentCharacters = []
-        } else {
-          // Priority 2: Text-based character detection from segment content
-          const segmentText = [
-            segment.userEditedPrompt || segment.generatedPrompt || segment.action || '',
-            segment.subject || '',
-            segment.emotionalBeat || '',
-            segment.endFrameDescription || '',
-          ].filter(Boolean).join(' ')
-
-          const detected = findSceneCharacters(segmentText, characters.map(c => ({ name: c.name })))
-          if (detected.length > 0) {
-            segmentCharacters = detected.map(dc => {
-              const fullChar = characters.find(c => c.name === dc.name)
-              return {
-                name: dc.name,
-                referenceImageUrl: fullChar?.referenceImage,
-              }
-            })
-          } else {
-            // No characters detected — send empty (don't fall back to ALL characters)
-            segmentCharacters = []
-          }
-        }
-
-        await handleGenerateSegmentFrames(sceneId, segment.segmentId, frameType, {
-          selectedCharacters: segmentCharacters,
-          // Use eco (Draft) for batch generation to minimize costs
-          // Users can regenerate individual frames at Final quality from the dialog
-          modelTier: 'eco',
-          thinkingLevel: 'low',
-        })
-        
-        // Small delay between generations to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 500))
-      }
-    },
-    [sceneProductionState, handleGenerateSegmentFrames, characters]
-  )
-
   const handleInitializeSceneProduction = useCallback(
     async (sceneId: string, { targetDuration, generationOptions, segments: prePardsedSegments }: { targetDuration: number; generationOptions?: any; segments?: any[] }) => {
       if (!project?.id) {
@@ -10710,7 +10620,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSelectTake={handleSelectTake}
                 onDeleteTake={handleDeleteTake}
                 onGenerateSegmentFrames={handleGenerateSegmentFrames}
-                onGenerateAllSegmentFrames={handleGenerateAllSegmentFrames}
                 onEditFrame={handleEditFrame}
                 onUploadFrame={handleUploadFrame}
                 generatingFrameForSegment={generatingFrameForSegment}

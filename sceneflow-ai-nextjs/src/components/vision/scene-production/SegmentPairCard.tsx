@@ -42,6 +42,7 @@ export interface SegmentPairCardProps {
   onGenerateStartFrame: () => void
   onGenerateEndFrame: () => void
   onGenerateBothFrames: () => void
+  onAdvancedFrameOptions: (frameType: 'start' | 'end' | 'both') => void
   onGenerateVideo: () => void
   onOpenDirectorConsole?: () => void
   onEditFrame?: (frameType: 'start' | 'end', frameUrl: string) => void
@@ -117,6 +118,7 @@ export function SegmentPairCard({
   onGenerateStartFrame,
   onGenerateEndFrame,
   onGenerateBothFrames,
+  onAdvancedFrameOptions,
   onGenerateVideo,
   onOpenDirectorConsole,
   onEditFrame,
@@ -152,6 +154,33 @@ export function SegmentPairCard({
 
   return (
     <TooltipProvider>
+      {/* Hidden file inputs for upload */}
+      <input
+        ref={startFrameInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file && onUploadFrame) {
+            onUploadFrame('start', file)
+          }
+          e.target.value = '' // Reset for re-upload
+        }}
+      />
+      <input
+        ref={endFrameInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file && onUploadFrame) {
+            onUploadFrame('end', file)
+          }
+          e.target.value = '' // Reset for re-upload
+        }}
+      />
     <div 
       className={cn(
         "relative rounded-lg border transition-all cursor-pointer",
@@ -258,143 +287,216 @@ export function SegmentPairCard({
                     alt="Start frame" 
                     className="w-full h-full object-cover"
                   />
-                  {/* Action buttons overlay */}
+                  
+                  {/* Floating Action Buttons Overlay */}
                   {!isGenerating && (
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                      {onEditFrame && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              className="h-7 w-7 p-0 bg-white/90 hover:bg-white text-slate-900"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onEditFrame('start', startFrameUrl)
-                              }}
-                            >
-                              <Pencil className="w-3 h-3" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Edit</TooltipContent>
-                        </Tooltip>
-                      )}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 backdrop-blur-[1px]">
+                      {/* Generate / Regenerate */}
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
                             size="sm"
                             variant="secondary"
-                            className="h-7 w-7 p-0 bg-white/90 hover:bg-white text-slate-900"
-                            onClick={async (e) => {
+                            className="h-10 w-10 rounded-full p-0 bg-blue-600/90 hover:bg-blue-500 text-white shadow-lg border border-blue-400/50"
+                            onClick={(e) => {
                               e.stopPropagation()
-                              // Download the frame
-                              try {
-                                const response = await fetch(startFrameUrl)
-                                const blob = await response.blob()
-                                const url = window.URL.createObjectURL(blob)
-                                const a = document.createElement('a')
-                                a.href = url
-                                a.download = `segment-${segmentIndex + 1}-start-frame.png`
-                                document.body.appendChild(a)
-                                a.click()
-                                document.body.removeChild(a)
-                                window.URL.revokeObjectURL(url)
-                              } catch (error) {
-                                console.error('Download failed:', error)
-                              }
+                              onGenerateStartFrame()
                             }}
                           >
-                            <Download className="w-3 h-3" />
+                            {true ? <RefreshCw className="w-4 h-4" /> : <Wand2 className="w-4 h-4" />}
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Download</TooltipContent>
+                        <TooltipContent>{true ? 'Regenerate' : 'Quick Generate'}</TooltipContent>
                       </Tooltip>
+                      
+                      {/* Advanced Settings */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="h-10 w-10 rounded-full p-0 bg-slate-800/90 hover:bg-slate-700 text-slate-200 shadow-lg border border-slate-600/50"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onAdvancedFrameOptions('start')
+                            }}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Advanced Options</TooltipContent>
+                      </Tooltip>
+
+                      {/* Upload */}
+                      {onUploadFrame && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="h-10 w-10 rounded-full p-0 bg-slate-800/90 hover:bg-slate-700 text-slate-200 shadow-lg border border-slate-600/50"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                startFrameInputRef.current?.click()
+                              }}
+                            >
+                              <Upload className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Upload Frame</TooltipContent>
+                        </Tooltip>
+                      )}
+
+                      {/* Download (only if generated) */}
+                      {true && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="h-10 w-10 rounded-full p-0 bg-slate-800/90 hover:bg-slate-700 text-slate-200 shadow-lg border border-slate-600/50"
+                              onClick={async (e) => {
+                                e.stopPropagation()
+                                try {
+                                  const response = await fetch(startFrameUrl as string)
+                                  const blob = await response.blob()
+                                  const url = window.URL.createObjectURL(blob)
+                                  const a = document.createElement('a')
+                                  a.href = url
+                                  a.download = `segment-${segmentIndex + 1}-start-frame.png`
+                                  document.body.appendChild(a)
+                                  a.click()
+                                  document.body.removeChild(a)
+                                  window.URL.revokeObjectURL(url)
+                                } catch (error) {
+                                  console.error('Download failed:', error)
+                                }
+                              }}
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Download</TooltipContent>
+                        </Tooltip>
+                      )}
                     </div>
                   )}
                   {isGenerating && generatingPhase === 'start' && (
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                      <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full" />
+                      <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full" />
                     </div>
                   )}
+
                 </>
               ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
-                  <ImageIcon className="w-6 h-6 mb-1 opacity-40" />
-                  <span className="text-[10px]">No frame</span>
-                  {isGenerating && generatingPhase === 'start' && (
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                      <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full" />
+                <>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-900/50">
+                    <ImageIcon className="w-6 h-6 mb-1 opacity-40" />
+                    <span className="text-[10px]">No frame</span>
+                  </div>
+                  
+                  {/* Floating Action Buttons Overlay */}
+                  {!isGenerating && (
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 backdrop-blur-[1px]">
+                      {/* Generate / Regenerate */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="h-10 w-10 rounded-full p-0 bg-blue-600/90 hover:bg-blue-500 text-white shadow-lg border border-blue-400/50"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onGenerateStartFrame()
+                            }}
+                          >
+                            {false ? <RefreshCw className="w-4 h-4" /> : <Wand2 className="w-4 h-4" />}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{false ? 'Regenerate' : 'Quick Generate'}</TooltipContent>
+                      </Tooltip>
+                      
+                      {/* Advanced Settings */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="h-10 w-10 rounded-full p-0 bg-slate-800/90 hover:bg-slate-700 text-slate-200 shadow-lg border border-slate-600/50"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onAdvancedFrameOptions('start')
+                            }}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Advanced Options</TooltipContent>
+                      </Tooltip>
+
+                      {/* Upload */}
+                      {onUploadFrame && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="h-10 w-10 rounded-full p-0 bg-slate-800/90 hover:bg-slate-700 text-slate-200 shadow-lg border border-slate-600/50"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                startFrameInputRef.current?.click()
+                              }}
+                            >
+                              <Upload className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Upload Frame</TooltipContent>
+                        </Tooltip>
+                      )}
+
+                      {/* Download (only if generated) */}
+                      {false && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="h-10 w-10 rounded-full p-0 bg-slate-800/90 hover:bg-slate-700 text-slate-200 shadow-lg border border-slate-600/50"
+                              onClick={async (e) => {
+                                e.stopPropagation()
+                                try {
+                                  const response = await fetch(startFrameUrl as string)
+                                  const blob = await response.blob()
+                                  const url = window.URL.createObjectURL(blob)
+                                  const a = document.createElement('a')
+                                  a.href = url
+                                  a.download = `segment-${segmentIndex + 1}-start-frame.png`
+                                  document.body.appendChild(a)
+                                  a.click()
+                                  document.body.removeChild(a)
+                                  window.URL.revokeObjectURL(url)
+                                } catch (error) {
+                                  console.error('Download failed:', error)
+                                }
+                              }}
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Download</TooltipContent>
+                        </Tooltip>
+                      )}
                     </div>
                   )}
-                </div>
+                  {isGenerating && generatingPhase === 'start' && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                      <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full" />
+                    </div>
+                  )}
+
+                </>
               )}
             </div>
-            {/* Start Frame Action Buttons */}
-            {isSelected && (
-              <div className="flex items-center gap-1.5 mt-2">
-                {/* Hidden file input for upload */}
-                <input
-                  ref={startFrameInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file && onUploadFrame) {
-                      onUploadFrame('start', file)
-                    }
-                    e.target.value = '' // Reset for re-upload
-                  }}
-                />
-                {/* Generate/Regenerate button */}
-                {startFrameUrl ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={(e) => { e.stopPropagation(); onGenerateStartFrame(); }}
-                        disabled={isGenerating}
-                        className="h-6 text-[10px] px-2 border-orange-500/50 text-orange-400 hover:bg-orange-500/10 flex-1"
-                      >
-                        <RefreshCw className="w-3 h-3 mr-1" />
-                        Generate
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Regenerate Start Frame</TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <Button 
-                    size="sm" 
-                    variant="secondary"
-                    onClick={(e) => { e.stopPropagation(); onGenerateStartFrame(); }}
-                    disabled={isGenerating}
-                    className="h-6 text-[10px] px-2 bg-blue-600/20 hover:bg-blue-600/30 border-blue-500/50 text-blue-300 flex-1"
-                  >
-                    <Wand2 className="w-3 h-3 mr-1" />
-                    Generate
-                  </Button>
-                )}
-                {/* Upload button */}
-                {onUploadFrame && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={(e) => { e.stopPropagation(); startFrameInputRef.current?.click(); }}
-                        disabled={isGenerating}
-                        className="h-6 text-[10px] px-2 border-slate-500/50 text-slate-400 hover:bg-slate-500/10 flex-1"
-                      >
-                        <Upload className="w-3 h-3 mr-1" />
-                        Upload
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Upload Start Frame</TooltipContent>
-                  </Tooltip>
-                )}
-              </div>
-            )}
           </div>
           
           {/* Arrow with Duration */}
@@ -424,143 +526,216 @@ export function SegmentPairCard({
                     alt="End frame" 
                     className="w-full h-full object-cover"
                   />
-                  {/* Action buttons overlay */}
+                  
+                  {/* Floating Action Buttons Overlay */}
                   {!isGenerating && (
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                      {onEditFrame && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              className="h-7 w-7 p-0 bg-white/90 hover:bg-white text-slate-900"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onEditFrame('end', endFrameUrl)
-                              }}
-                            >
-                              <Pencil className="w-3 h-3" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Edit</TooltipContent>
-                        </Tooltip>
-                      )}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 backdrop-blur-[1px]">
+                      {/* Generate / Regenerate */}
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
                             size="sm"
                             variant="secondary"
-                            className="h-7 w-7 p-0 bg-white/90 hover:bg-white text-slate-900"
-                            onClick={async (e) => {
+                            className="h-10 w-10 rounded-full p-0 bg-blue-600/90 hover:bg-blue-500 text-white shadow-lg border border-blue-400/50"
+                            onClick={(e) => {
                               e.stopPropagation()
-                              // Download the frame
-                              try {
-                                const response = await fetch(endFrameUrl)
-                                const blob = await response.blob()
-                                const url = window.URL.createObjectURL(blob)
-                                const a = document.createElement('a')
-                                a.href = url
-                                a.download = `segment-${segmentIndex + 1}-end-frame.png`
-                                document.body.appendChild(a)
-                                a.click()
-                                document.body.removeChild(a)
-                                window.URL.revokeObjectURL(url)
-                              } catch (error) {
-                                console.error('Download failed:', error)
-                              }
+                              onGenerateEndFrame()
                             }}
                           >
-                            <Download className="w-3 h-3" />
+                            {true ? <RefreshCw className="w-4 h-4" /> : <Wand2 className="w-4 h-4" />}
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Download</TooltipContent>
+                        <TooltipContent>{true ? 'Regenerate' : 'Quick Generate'}</TooltipContent>
                       </Tooltip>
+                      
+                      {/* Advanced Settings */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="h-10 w-10 rounded-full p-0 bg-slate-800/90 hover:bg-slate-700 text-slate-200 shadow-lg border border-slate-600/50"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onAdvancedFrameOptions('end')
+                            }}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Advanced Options</TooltipContent>
+                      </Tooltip>
+
+                      {/* Upload */}
+                      {onUploadFrame && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="h-10 w-10 rounded-full p-0 bg-slate-800/90 hover:bg-slate-700 text-slate-200 shadow-lg border border-slate-600/50"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                endFrameInputRef.current?.click()
+                              }}
+                            >
+                              <Upload className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Upload Frame</TooltipContent>
+                        </Tooltip>
+                      )}
+
+                      {/* Download (only if generated) */}
+                      {true && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="h-10 w-10 rounded-full p-0 bg-slate-800/90 hover:bg-slate-700 text-slate-200 shadow-lg border border-slate-600/50"
+                              onClick={async (e) => {
+                                e.stopPropagation()
+                                try {
+                                  const response = await fetch(endFrameUrl as string)
+                                  const blob = await response.blob()
+                                  const url = window.URL.createObjectURL(blob)
+                                  const a = document.createElement('a')
+                                  a.href = url
+                                  a.download = `segment-${segmentIndex + 1}-end-frame.png`
+                                  document.body.appendChild(a)
+                                  a.click()
+                                  document.body.removeChild(a)
+                                  window.URL.revokeObjectURL(url)
+                                } catch (error) {
+                                  console.error('Download failed:', error)
+                                }
+                              }}
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Download</TooltipContent>
+                        </Tooltip>
+                      )}
                     </div>
                   )}
                   {isGenerating && generatingPhase === 'end' && (
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                      <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full" />
+                      <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full" />
                     </div>
                   )}
+
                 </>
               ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
-                  <ImageIcon className="w-6 h-6 mb-1 opacity-40" />
-                  <span className="text-[10px]">No frame</span>
-                  {isGenerating && generatingPhase === 'end' && (
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                      <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full" />
+                <>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-900/50">
+                    <ImageIcon className="w-6 h-6 mb-1 opacity-40" />
+                    <span className="text-[10px]">No frame</span>
+                  </div>
+                  
+                  {/* Floating Action Buttons Overlay */}
+                  {!isGenerating && (
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 backdrop-blur-[1px]">
+                      {/* Generate / Regenerate */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="h-10 w-10 rounded-full p-0 bg-blue-600/90 hover:bg-blue-500 text-white shadow-lg border border-blue-400/50"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onGenerateEndFrame()
+                            }}
+                          >
+                            {false ? <RefreshCw className="w-4 h-4" /> : <Wand2 className="w-4 h-4" />}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{false ? 'Regenerate' : 'Quick Generate'}</TooltipContent>
+                      </Tooltip>
+                      
+                      {/* Advanced Settings */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="h-10 w-10 rounded-full p-0 bg-slate-800/90 hover:bg-slate-700 text-slate-200 shadow-lg border border-slate-600/50"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onAdvancedFrameOptions('end')
+                            }}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Advanced Options</TooltipContent>
+                      </Tooltip>
+
+                      {/* Upload */}
+                      {onUploadFrame && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="h-10 w-10 rounded-full p-0 bg-slate-800/90 hover:bg-slate-700 text-slate-200 shadow-lg border border-slate-600/50"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                endFrameInputRef.current?.click()
+                              }}
+                            >
+                              <Upload className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Upload Frame</TooltipContent>
+                        </Tooltip>
+                      )}
+
+                      {/* Download (only if generated) */}
+                      {false && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="h-10 w-10 rounded-full p-0 bg-slate-800/90 hover:bg-slate-700 text-slate-200 shadow-lg border border-slate-600/50"
+                              onClick={async (e) => {
+                                e.stopPropagation()
+                                try {
+                                  const response = await fetch(endFrameUrl as string)
+                                  const blob = await response.blob()
+                                  const url = window.URL.createObjectURL(blob)
+                                  const a = document.createElement('a')
+                                  a.href = url
+                                  a.download = `segment-${segmentIndex + 1}-end-frame.png`
+                                  document.body.appendChild(a)
+                                  a.click()
+                                  document.body.removeChild(a)
+                                  window.URL.revokeObjectURL(url)
+                                } catch (error) {
+                                  console.error('Download failed:', error)
+                                }
+                              }}
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Download</TooltipContent>
+                        </Tooltip>
+                      )}
                     </div>
                   )}
-                </div>
+                  {isGenerating && generatingPhase === 'end' && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                      <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full" />
+                    </div>
+                  )}
+
+                </>
               )}
             </div>
-            {/* End Frame Action Buttons */}
-            {isSelected && (
-              <div className="flex items-center gap-1.5 mt-2">
-                {/* Hidden file input for upload */}
-                <input
-                  ref={endFrameInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file && onUploadFrame) {
-                      onUploadFrame('end', file)
-                    }
-                    e.target.value = '' // Reset for re-upload
-                  }}
-                />
-                {/* Generate/Regenerate button */}
-                {endFrameUrl ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={(e) => { e.stopPropagation(); onGenerateEndFrame(); }}
-                        disabled={isGenerating}
-                        className="h-6 text-[10px] px-2 border-orange-500/50 text-orange-400 hover:bg-orange-500/10 flex-1"
-                      >
-                        <RefreshCw className="w-3 h-3 mr-1" />
-                        Generate
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Regenerate End Frame</TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <Button 
-                    size="sm" 
-                    variant="secondary"
-                    onClick={(e) => { e.stopPropagation(); onGenerateEndFrame(); }}
-                    disabled={isGenerating}
-                    className="h-6 text-[10px] px-2 bg-blue-600/20 hover:bg-blue-600/30 border-blue-500/50 text-blue-300 flex-1"
-                  >
-                    <Wand2 className="w-3 h-3 mr-1" />
-                    Generate
-                  </Button>
-                )}
-                {/* Upload button */}
-                {onUploadFrame && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={(e) => { e.stopPropagation(); endFrameInputRef.current?.click(); }}
-                        disabled={isGenerating}
-                        className="h-6 text-[10px] px-2 border-slate-500/50 text-slate-400 hover:bg-slate-500/10 flex-1"
-                      >
-                        <Upload className="w-3 h-3 mr-1" />
-                        Upload
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Upload End Frame</TooltipContent>
-                  </Tooltip>
-                )}
-              </div>
-            )}
           </div>
         </div>
       </div>
