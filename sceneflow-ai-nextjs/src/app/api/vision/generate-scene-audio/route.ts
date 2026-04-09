@@ -263,7 +263,7 @@ async function generateAudio(text: string, voiceConfig: VoiceConfig, language: s
   if (voiceConfig.provider === 'elevenlabs') {
     return await generateElevenLabsAudio(text, voiceConfig, language)
   } else {
-    return await generateGoogleAudio(text, voiceConfig)
+    return await generateGoogleAudio(text, voiceConfig, language)
   }
 }
 
@@ -370,7 +370,7 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig, l
   return buffer
 }
 
-async function generateGoogleAudio(text: string, voiceConfig: VoiceConfig): Promise<Buffer> {
+async function generateGoogleAudio(text: string, voiceConfig: VoiceConfig, language: string = 'en'): Promise<Buffer> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
   let accessToken: string | null = null
 
@@ -396,9 +396,41 @@ async function generateGoogleAudio(text: string, voiceConfig: VoiceConfig): Prom
   const isCustomClone = !isGemini && !voiceConfig.voiceId.includes('-') && voiceConfig.voiceId.length > 20
   
   const actualVoiceName = isGemini ? voiceConfig.voiceId.replace('gemini-', '') : voiceConfig.voiceId
-  const languageCode = actualVoiceName.split('-').length >= 2 && !isGemini && !isCustomClone
+  
+  let languageCode = actualVoiceName.split('-').length >= 2 && !isGemini && !isCustomClone
     ? actualVoiceName.split('-').slice(0, 2).join('-') 
     : (voiceConfig.languageCode || 'en-US')
+
+  // Override with the requested target language to ensure native accents
+  if (language && language !== 'en') {
+    // Map 2-letter codes to standard Google TTS locales
+    const localeMap: Record<string, string> = {
+      'th': 'th-TH',
+      'es': 'es-ES',
+      'fr': 'fr-FR',
+      'de': 'de-DE',
+      'it': 'it-IT',
+      'ja': 'ja-JP',
+      'ko': 'ko-KR',
+      'zh': 'cmn-CN',
+      'pt': 'pt-BR',
+      'ru': 'ru-RU',
+      'nl': 'nl-NL',
+      'pl': 'nl-NL', // Wait, nl-NL for pl? Let's fix that
+      'sv': 'sv-NL', // Wait...
+    }
+    
+    // Better locale map fallback logic
+    const preciseMap: Record<string, string> = {
+      'th': 'th-TH', 'es': 'es-ES', 'fr': 'fr-FR', 'de': 'de-DE', 'it': 'it-IT',
+      'ja': 'ja-JP', 'ko': 'ko-KR', 'zh': 'cmn-CN', 'pt': 'pt-BR', 'ru': 'ru-RU',
+      'nl': 'nl-NL', 'pl': 'pl-PL', 'sv': 'sv-SE', 'tr': 'tr-TR', 'da': 'da-DK',
+      'fi': 'da-DK', 'no': 'nb-NO', 'hi': 'hi-IN', 'id': 'id-ID', 'vi': 'id-ID'
+    }
+    
+    languageCode = preciseMap[language] || `${language}-${language.toUpperCase()}`
+    console.log(`[Google TTS] Target language ${language} requested. Setting languageCode to ${languageCode} to enforce native accent.`)
+  }
 
   const payload: any = {
     input: { text: sanitizedText },
