@@ -1537,7 +1537,7 @@ export interface ProposedSegment {
 /**
  * Workflow phase for the builder
  */
-export type BuilderPhase = 'analyze' | 'directions'
+export type BuilderPhase = 'analyze'
 
 // ============================================================================
 // Lean Multi-Language (LML) Elastic Segment Types
