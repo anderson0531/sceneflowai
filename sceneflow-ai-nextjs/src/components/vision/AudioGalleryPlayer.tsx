@@ -17,14 +17,14 @@ import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSele
 import { cn } from '@/lib/utils'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
 
-// Ken Burns animation configurations - different pan directions
+// Ken Burns animation configurations - more pronounced scales for longer durations
 const KEN_BURNS_CONFIGS = [
-  { scale: 1.15, x: -5, y: -3 },   // Zoom in, pan left-up
-  { scale: 1.12, x: 5, y: -2 },    // Zoom in, pan right-up
-  { scale: 1.18, x: -3, y: 4 },    // Zoom in, pan left-down
-  { scale: 1.14, x: 4, y: 3 },     // Zoom in, pan right-down
-  { scale: 1.1, x: 0, y: -5 },     // Zoom in, pan up
-  { scale: 1.16, x: 0, y: 4 },     // Zoom in, pan down
+  { scale: 1.25, x: -8, y: -4 },   // Zoom in, pan left-up
+  { scale: 1.20, x: 8, y: -3 },    // Zoom in, pan right-up
+  { scale: 1.30, x: -6, y: 6 },    // Zoom in, pan left-down
+  { scale: 1.22, x: 7, y: 5 },     // Zoom in, pan right-down
+  { scale: 1.20, x: 0, y: -8 },    // Zoom in, pan up
+  { scale: 1.28, x: 0, y: 7 },     // Zoom in, pan down
 ]
 
 interface AudioGalleryPlayerProps {
@@ -476,8 +476,23 @@ export function AudioGalleryPlayer({
   
   // Language display handled by GroupedLanguageSelector
   
-  // Calculate Ken Burns progress (0 to 1)
-  const kenBurnsProgress = sceneDuration > 0 ? currentTime / sceneDuration : 0
+  // Calculate Ken Burns progress
+  // We want continuous motion, but we also want it to look good for both short and long clips.
+  // For very long clips (>30s), a simple linear interpolation over the entire clip might be too slow.
+  // Instead, let's make it slowly pan over the duration, but cap the speed so it's not jarring for short clips
+  // and doesn't get stuck for long clips. A common trick is to use a CSS transition that triggers when the scene changes.
+  
+  // Actually, tying it to currentTime gives the best synchronization. If the scene is 5 minutes long, 
+  // it will pan very slowly over 5 minutes. If that's not desired, we could loop it, but usually Ken Burns
+  // is just a very slow single pan. Let's stick to tying to currentTime, but ensure it always moves.
+  const kenBurnsProgress = sceneDuration > 0 ? Math.min(currentTime / sceneDuration, 1) : 0
+  
+  // Calculate transform values based on progress
+  // To make it look smoother and constantly moving, we can apply an easing function or just linear.
+  // We apply the transform smoothly.
+  const currentScale = 1 + (kenBurnsConfig.scale - 1) * kenBurnsProgress;
+  const currentX = kenBurnsConfig.x * kenBurnsProgress;
+  const currentY = kenBurnsConfig.y * kenBurnsProgress;
   
   return (
     <TooltipProvider>
@@ -589,8 +604,8 @@ export function AudioGalleryPlayer({
                 alt={`Scene ${currentSceneIndex + 1}`}
                 className="w-full h-full object-cover"
                 style={{
-                  transform: `scale(${1 + (kenBurnsConfig.scale - 1) * kenBurnsProgress}) translate(${kenBurnsConfig.x * kenBurnsProgress}%, ${kenBurnsConfig.y * kenBurnsProgress}%)`,
-                  transition: isPlaying ? 'none' : 'transform 0.2s ease-out',
+                  transform: `scale(${currentScale}) translate(${currentX}%, ${currentY}%)`,
+                  transition: isPlaying ? 'transform 0.1s linear' : 'transform 0.2s ease-out',
                 }}
               />
             ) : (
@@ -600,7 +615,7 @@ export function AudioGalleryPlayer({
             )}
             
             {/* Watermark overlay */}
-            <div className="absolute top-4 right-4 pointer-events-none opacity-40 mix-blend-overlay">
+            <div className="absolute top-4 right-4 pointer-events-none opacity-60 mix-blend-overlay">
               <span className="text-white font-bold tracking-widest uppercase" style={{ fontSize: isFullscreen ? '1.5rem' : '0.875rem' }}>
                 SceneFlow AI Studio
               </span>
