@@ -2311,6 +2311,49 @@ export function SceneProductionMixer({
     setSegmentAudioConfigs(configs)
   }, [segments]) // eslint-disable-line react-hooks/exhaustive-deps
   
+  // Get available languages from audio assets
+  const availableLanguages = useMemo(() => {
+    const langs = new Set<string>(['en'])
+    if (audioAssets.narrationAudio) {
+      Object.keys(audioAssets.narrationAudio).forEach(l => langs.add(l))
+    }
+    if (audioAssets.dialogueAudio) {
+      Object.keys(audioAssets.dialogueAudio).forEach(l => langs.add(l))
+    }
+    return Array.from(langs)
+  }, [audioAssets])
+  
+  // Get audio URLs for selected language
+  const currentAudioUrls = useMemo(() => {
+    const narrationUrl = audioAssets.narrationAudio?.[selectedLanguage]?.url 
+      || audioAssets.narrationAudio?.en?.url 
+      || audioAssets.narrationAudioUrl
+    
+    const dialogueEntries = (audioAssets.dialogueAudio?.[selectedLanguage] 
+      || audioAssets.dialogueAudio?.en 
+      || []).filter(Boolean)
+      .map((d, index) => ({
+        id: `dialogue-${index}-${d.character}`,
+        audioUrl: d.audioUrl,
+        character: d.character,
+        text: d.text,
+        startTime: d.startTime,
+        duration: d.duration,
+      }))
+    
+    const musicUrl = audioAssets.musicAudio
+    
+    const sfxEntries = audioAssets.sfx?.filter(s => s?.audioUrl) || []
+    
+    return {
+      narration: narrationUrl,
+      narrationDuration: audioAssets.narrationAudio?.[selectedLanguage]?.duration,
+      dialogue: dialogueEntries,
+      music: musicUrl,
+      sfx: sfxEntries,
+    }
+  }, [audioAssets, selectedLanguage])
+
   // Initialize editable dialogue clips from audio assets
   useEffect(() => {
     if (currentAudioUrls.dialogue && currentAudioUrls.dialogue.length > 0) {
@@ -2356,49 +2399,6 @@ export function SceneProductionMixer({
   const localRenderSupported = localRenderSupportCheck.supported
   
   // === Derived Data ===
-  
-  // Get available languages from audio assets
-  const availableLanguages = useMemo(() => {
-    const langs = new Set<string>(['en'])
-    if (audioAssets.narrationAudio) {
-      Object.keys(audioAssets.narrationAudio).forEach(l => langs.add(l))
-    }
-    if (audioAssets.dialogueAudio) {
-      Object.keys(audioAssets.dialogueAudio).forEach(l => langs.add(l))
-    }
-    return Array.from(langs)
-  }, [audioAssets])
-  
-  // Get audio URLs for selected language
-  const currentAudioUrls = useMemo(() => {
-    const narrationUrl = audioAssets.narrationAudio?.[selectedLanguage]?.url 
-      || audioAssets.narrationAudio?.en?.url 
-      || audioAssets.narrationAudioUrl
-    
-    const dialogueEntries = (audioAssets.dialogueAudio?.[selectedLanguage] 
-      || audioAssets.dialogueAudio?.en 
-      || []).filter(Boolean)
-      .map((d, index) => ({
-        id: `dialogue-${index}-${d.character}`,
-        audioUrl: d.audioUrl,
-        character: d.character,
-        text: d.text,
-        startTime: d.startTime,
-        duration: d.duration,
-      }))
-    
-    const musicUrl = audioAssets.musicAudio
-    
-    const sfxEntries = audioAssets.sfx?.filter(s => s?.audioUrl) || []
-    
-    return {
-      narration: narrationUrl,
-      narrationDuration: audioAssets.narrationAudio?.[selectedLanguage]?.duration,
-      dialogue: dialogueEntries,
-      music: musicUrl,
-      sfx: sfxEntries,
-    }
-  }, [audioAssets, selectedLanguage])
   
   // Rendered segments (includes both video and image assets)
   const renderedSegments = useMemo(() => {
