@@ -3791,7 +3791,13 @@ function SceneCard({
         }
         
         // Each dialogue line should have a matching audio entry
+        // NOTE: We only expect audio for characters that have a voiceConfig assigned
         hasAllDialogueAudio = dialogueLines.every((d: any, idx: number) => {
+          const char = characters.find(c => c.name === d.character)
+          if (!char?.voiceConfig) {
+            return true // No voice assigned, so audio isn't expected for this line
+          }
+          
           const audioEntry = dialogueAudioArray.find((a: any) => 
             a?.dialogueIndex === idx && a?.audioUrl
           )
@@ -3802,7 +3808,7 @@ function SceneCard({
       return hasNarrationAudio && hasAllDialogueAudio
     }
   }, [scene.narration, scene.dialogue, 
-      scene.narrationAudio, scene.narrationAudioUrl, scene.dialogueAudio])
+      scene.narrationAudio, scene.narrationAudioUrl, scene.dialogueAudio, characters])
   
   // Completion status detection for workflow steps (combines auto-detection + manual overrides)
   const stepCompletion = useMemo(() => {
@@ -6583,9 +6589,15 @@ function SceneCard({
                         } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
                           dialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
                         }
-                        const missingCount = dialogueLines.filter((_: any, idx: number) => 
-                          !dialogueAudioArray.find((a: any) => a?.dialogueIndex === idx && a?.audioUrl)
-                        ).length
+                        
+                        const missingCount = dialogueLines.filter((d: any, idx: number) => {
+                          const char = characters.find(c => c.name === d.character)
+                          if (!char?.voiceConfig) {
+                            return false // Skip lines without a voice assigned
+                          }
+                          return !dialogueAudioArray.find((a: any) => a?.dialogueIndex === idx && a?.audioUrl)
+                        }).length
+                        
                         if (missingCount > 0) missing.push(`${missingCount} dialogue line${missingCount > 1 ? 's' : ''}`)
                       }
                       const missingText = missing.length > 0 ? missing.join(' and ') : 'Audio'
