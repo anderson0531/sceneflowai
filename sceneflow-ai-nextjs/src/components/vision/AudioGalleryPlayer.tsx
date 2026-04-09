@@ -590,7 +590,7 @@ export function AudioGalleryPlayer({
                 className="w-full h-full object-cover"
                 style={{
                   transform: `scale(${1 + (kenBurnsConfig.scale - 1) * kenBurnsProgress}) translate(${kenBurnsConfig.x * kenBurnsProgress}%, ${kenBurnsConfig.y * kenBurnsProgress}%)`,
-                  transition: 'transform 0.1s linear',
+                  transition: isPlaying ? 'none' : 'transform 0.2s ease-out',
                 }}
               />
             ) : (
@@ -600,8 +600,8 @@ export function AudioGalleryPlayer({
             )}
             
             {/* Watermark overlay */}
-            <div className="absolute top-4 right-4 pointer-events-none">
-              <span className="text-white/40 font-bold tracking-widest uppercase" style={{ fontSize: isFullscreen ? '1.5rem' : '0.875rem', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+            <div className="absolute top-4 right-4 pointer-events-none opacity-40 mix-blend-overlay">
+              <span className="text-white font-bold tracking-widest uppercase" style={{ fontSize: isFullscreen ? '1.5rem' : '0.875rem' }}>
                 SceneFlow AI Studio
               </span>
             </div>

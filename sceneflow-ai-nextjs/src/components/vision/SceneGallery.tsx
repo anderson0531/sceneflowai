@@ -341,7 +341,6 @@ export function SceneGallery({
 
   const handleShareStoryboard = async () => {
     try {
-      const { toast } = require('sonner')
       const projectId = scenes[0]?.projectId || window.location.pathname.split('/').pop()
       
       const response = await fetch('/api/vision/create-share-link', {
@@ -353,11 +352,22 @@ export function SceneGallery({
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Failed to create share link')
       
-      await navigator.clipboard.writeText(data.shareUrl)
-      toast.success('Storyboard link copied to clipboard!')
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(data.shareUrl)
+        toast.success('Storyboard link copied to clipboard!')
+      } else {
+        // Fallback if clipboard API is not available
+        toast.success('Share link created!', {
+          description: data.shareUrl,
+          duration: 10000,
+          action: {
+            label: 'Open',
+            onClick: () => window.open(data.shareUrl, '_blank')
+          }
+        })
+      }
     } catch (err: any) {
       console.error('[Share Storyboard]', err)
-      const { toast } = require('sonner')
       toast.error(err.message || 'Failed to create share link')
     }
   }
