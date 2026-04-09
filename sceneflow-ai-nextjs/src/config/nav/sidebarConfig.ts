@@ -146,15 +146,15 @@ export const blueprintSidebarConfig: WorkflowSidebarConfig = {
     credits: true,
   },
   sectionDefaults: {
-    workflow: true,
+    workflow: false,
     workflowGuide: false,
     proTips: false,
     progress: false,
-    quickActions: true,
+    quickActions: false,
     reviewScores: false,
     screeningRoom: false,
     projectStats: false,
-    credits: true,
+    credits: false,
   },
 }
 
@@ -195,16 +195,16 @@ export const productionSidebarConfig: WorkflowSidebarConfig = {
     credits: true,
   },
   sectionDefaults: {
-    workflow: true,
+    workflow: false,
     workflowGuide: false,
     proTips: false,
     progress: false,
-    quickActions: true,
-    reviewScores: true,
-    voiceSelector: true,
+    quickActions: false,
+    reviewScores: false,
+    voiceSelector: false,
     screeningRoom: false,
     projectStats: false,
-    credits: true,
+    credits: false,
   },
 }
 
@@ -237,15 +237,15 @@ export const finalCutSidebarConfig: WorkflowSidebarConfig = {
     credits: true,
   },
   sectionDefaults: {
-    workflow: true,
+    workflow: false,
     workflowGuide: false,
     proTips: false,
     progress: false,
-    quickActions: true,
-    reviewScores: true,
-    screeningRoom: true,
+    quickActions: false,
+    reviewScores: false,
+    screeningRoom: false,
     projectStats: false,
-    credits: true,
+    credits: false,
   },
 }
 

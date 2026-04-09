@@ -3716,7 +3716,9 @@ function SceneCard({
   visualStyle,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
-  const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(null)
+  const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(
+    scene.workflowCompletions?.['callAction'] ? 'callAction' : 'dialogueAction'
+  )
   const [copilotPanelOpen, setCopilotPanelOpen] = useState(false)
   const [isImageExpanded, setIsImageExpanded] = useState(false)
   const [directionBuilderOpen, setDirectionBuilderOpen] = useState(false)
@@ -3912,25 +3914,9 @@ function SceneCard({
     { key: 'callAction', label: 'Action', icon: <Clapperboard className="w-4 h-4" />, description: 'Build storyboard and produce video' }
   ], [])
   
-  // Set default tab to first incomplete unlocked step (Feature 3: auto-open first incomplete)
-  useEffect(() => {
-    if (!activeWorkflowTab && !isOutline) {
-      // Priority: First incomplete & unlocked step
-      const firstIncomplete = workflowTabs.find(tab => {
-        const isUnlocked = stepUnlocked[tab.key as keyof typeof stepUnlocked]
-        const isComplete = stepCompletion[tab.key as keyof typeof stepCompletion]
-        return isUnlocked && !isComplete
-      })
-      
-      // Fall back to first unlocked step if all are complete
-      const fallback = workflowTabs.find(tab => stepUnlocked[tab.key as keyof typeof stepUnlocked])
-      
-      const targetTab = firstIncomplete || fallback
-      if (targetTab) {
-        setActiveWorkflowTab(targetTab.key)
-      }
-    }
-  }, [isOutline, activeWorkflowTab, stepUnlocked, stepCompletion, workflowTabs])
+  // Update active workflow tab when completions change if we haven't manually switched
+  // By default we no longer auto-open the first incomplete step to prevent panel jumping,
+  // we just respect the initial state set above (either 'dialogueAction' or 'callAction').
   
   const handleExpand = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -4615,12 +4601,12 @@ function SceneCard({
                           {stepCompletion[activeStep as keyof typeof stepCompletion] ? (
                             <>
                               <CheckCircle className="w-3 h-3" />
-                              <span>Complete</span>
+                              <span>Script Complete</span>
                             </>
                           ) : (
                             <>
                               <Circle className="w-3 h-3" />
-                              <span>Mark Complete</span>
+                              <span>Mark Script Complete</span>
                             </>
                           )}
                         </button>
