@@ -7,7 +7,7 @@
 export const PUBLIC_ROUTES = ['/', '/terms', '/privacy', '/refunds', '/trust-safety'] as const;
 
 // Prefix match routes (no navigation for any path starting with these)
-export const PUBLIC_ROUTE_PREFIXES = ['/c/', '/collaborate/'] as const;
+export const PUBLIC_ROUTE_PREFIXES = ['/c/', '/collaborate/', '/share/'] as const;
 
 /**
  * Check if a pathname should display without app navigation

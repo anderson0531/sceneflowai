@@ -17,8 +17,10 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
   
   // Feedback state per scene
   const [feedbacks, setFeedbacks] = useState<Record<number, { rating: number, comment: string }>>({})
+  const [reviewerName, setReviewerName] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   
   const currentFeedback = feedbacks[currentSceneIndex] || { rating: 0, comment: '' }
   
@@ -38,13 +40,29 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
 
   const handleSubmitFeedback = async () => {
     setIsSubmitting(true)
-    // Simulate API call for now since we don't have a dedicated feedback endpoint yet
-    // In a real implementation, we'd send `feedbacks` and `shareToken` to an API route
-    setTimeout(() => {
-      setIsSubmitting(false)
+    setSubmitError(null)
+    
+    try {
+      const response = await fetch(`/api/vision/shared-project/${shareToken}/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ feedbacks, reviewerName })
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit feedback')
+      }
+      
       setSubmitSuccess(true)
       setTimeout(() => setSubmitSuccess(false), 3000)
-    }, 1000)
+    } catch (err: any) {
+      console.error('[Submit Feedback]', err)
+      setSubmitError(err.message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   // Derive available languages from project data
@@ -96,6 +114,19 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
           <div className="p-4 flex-1 flex flex-col gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
+                Your Name (Optional)
+              </label>
+              <input
+                type="text"
+                value={reviewerName}
+                onChange={(e) => setReviewerName(e.target.value)}
+                placeholder="Enter your name..."
+                className="w-full bg-gray-800 border border-gray-700 rounded-md p-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Rating
               </label>
               <div className="flex gap-1">
@@ -133,6 +164,11 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
             <p className="text-xs text-gray-500 text-center">
               Your feedback is saved locally until you click "Submit All Feedback".
             </p>
+            {submitError && (
+              <p className="text-sm text-red-400 text-center bg-red-900/20 p-2 rounded">
+                {submitError}
+              </p>
+            )}
           </div>
         </div>
       </div>

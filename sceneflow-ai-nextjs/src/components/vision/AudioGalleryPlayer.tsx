@@ -134,12 +134,22 @@ export function AudioGalleryPlayer({
       if (fetchingUrls.current.has(url)) return
       fetchingUrls.current.add(url)
       
-      const audio = new Audio(url)
-      audio.addEventListener('loadedmetadata', () => {
-        if (audio.duration && audio.duration !== Infinity && !isNaN(audio.duration)) {
-          setDynamicDurations(curr => ({ ...curr, [url]: audio.duration }))
-        }
-      })
+      try {
+        const audio = new Audio(url)
+        audio.addEventListener('loadedmetadata', () => {
+          if (audio.duration && audio.duration !== Infinity && !isNaN(audio.duration)) {
+            setDynamicDurations(curr => ({ ...curr, [url]: audio.duration }))
+          }
+        })
+        audio.addEventListener('error', (e) => {
+          console.warn(`[AudioGalleryPlayer] Failed to load audio metadata for URL: ${url}`)
+          // On error (e.g. 404), set duration to 0.1s so we skip over this missing clip quickly
+          // instead of waiting for a long fallback duration (which causes lag).
+          setDynamicDurations(curr => ({ ...curr, [url]: 0.1 }))
+        })
+      } catch (err) {
+        console.warn(`[AudioGalleryPlayer] Failed to create Audio object for URL: ${url}`, err)
+      }
     })
   }, [currentScene, selectedLanguage])
   
@@ -251,7 +261,8 @@ export function AudioGalleryPlayer({
   const sceneDuration = useMemo(() => {
     if (audioClips.length === 0) return 5 // Default 5s for scenes without audio
     const lastClip = audioClips[audioClips.length - 1]
-    return lastClip.startTime + lastClip.duration
+    // Add a small 1.5s buffer after the last voice clip completes
+    return lastClip.startTime + lastClip.duration + 1.5
   }, [audioClips])
   
   // Current audio clip based on playback time
