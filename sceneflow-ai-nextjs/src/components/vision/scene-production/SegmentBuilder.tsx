@@ -38,6 +38,7 @@ import {
   Eye,
   Edit3,
   AlertTriangle,
+  ChevronDown,
   Users,
   FileText,
   CheckCircle2,
@@ -494,12 +495,34 @@ export function SegmentBuilder({
     return extractAudioMetadata(scene)
   }, [scene])
 
-  // Auto-enable narration-driven mode if scene has narration audio
+  // Intelligently auto-determine settings based on audio metadata
   useEffect(() => {
+    // 1. Narration Driven
     if (audioMetadata.narrationDurationSeconds && audioMetadata.narrationDurationSeconds > 0) {
       setNarrationDriven(true)
+    } else {
+      setNarrationDriven(false)
     }
-  }, [audioMetadata.narrationDurationSeconds])
+
+    // 2. Focus Mode
+    const hasDialogue = audioMetadata.dialogueDurations.length > 0
+    const hasNarration = audioMetadata.narrationDurationSeconds && audioMetadata.narrationDurationSeconds > 0
+    
+    let recommendedFocusMode: 'balanced' | 'dialogue-focused' | 'action-focused' = 'balanced'
+    if (hasDialogue && !hasNarration) {
+      recommendedFocusMode = 'dialogue-focused'
+    } else if (!hasDialogue && !hasNarration) {
+      recommendedFocusMode = 'action-focused'
+    }
+    setFocusMode(recommendedFocusMode)
+
+    // 3. Target Duration
+    if (recommendedFocusMode === 'action-focused') {
+      setTargetDuration(4) // Faster pacing for action
+    } else {
+      setTargetDuration(6) // Standard 6s for dialogue/balanced
+    }
+  }, [audioMetadata])
 
   // Detect when narration (text or audio) is removed and call server to clear
   // any persisted audio artifacts. This helps avoid stale audio being reused
@@ -787,138 +810,167 @@ export function SegmentBuilder({
                     </Alert>
                   )}
 
-                  {/* Duration Setting */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-300">Target Segment Duration</label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="range"
-                        min={4}
-                        max={8}
-                        step={1}
-                        value={targetDuration}
-                        onChange={e => setTargetDuration(parseInt(e.target.value))}
-                        className="flex-1"
-                      />
-                      <span className="text-sm font-mono w-12">{targetDuration}s</span>
+                                    {/* AI Recommendation Summary */}
+                  <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-4 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-cyan-500/20 p-2 rounded-full mt-0.5">
+                        <Sparkles className="w-4 h-4 text-cyan-400" />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm text-slate-200">
+                          Based on an estimated audio duration of <strong>~{Math.ceil(audioMetadata.totalAudioDurationSeconds)}s</strong> with <strong>{audioMetadata.dialogueDurations.length}</strong> dialogue line{audioMetadata.dialogueDurations.length !== 1 ? 's' : ''}, the AI recommends a <strong className="capitalize text-cyan-400">{focusMode.replace('-', ' ')}</strong> approach with segments averaging <strong>{targetDuration}s</strong>.
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-xs text-gray-500">
-                      Segments will be up to {targetDuration} seconds (Veo 3.1 optimal range: 4-8s)
-                    </p>
                   </div>
 
-                  {/* Narration-Driven Toggle */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-300">Narration-Driven</p>
-                      <p className="text-xs text-gray-500">
-                        Prioritize narration timing for segment boundaries
-                      </p>
-                    </div>
-                    <Button
-                      variant={narrationDriven ? 'default' : 'outline'}
-                      size="sm"
-                      className={narrationDriven ? 'bg-cyan-600 text-white hover:bg-cyan-500' : 'border-gray-600 text-gray-400 hover:bg-gray-800'}
-                      onClick={() => setNarrationDriven(!narrationDriven)}
-                    >
-                      {narrationDriven ? 'On' : 'Off'}
-                    </Button>
-                  </div>
+                  {/* Advanced Settings Accordion */}
+                  <div className="border border-slate-700/50 rounded-lg overflow-hidden">
+                    <details className="group">
+                      <summary className="flex items-center justify-between p-3 cursor-pointer bg-slate-800/30 hover:bg-slate-800/50 transition-colors list-none [&::-webkit-details-marker]:hidden">
+                        <div className="flex items-center gap-2">
+                          <Settings2 className="w-4 h-4 text-slate-400" />
+                          <span className="text-sm font-medium text-slate-300">Advanced Settings</span>
+                        </div>
+                        <ChevronDown className="w-4 h-4 text-slate-400 transition-transform group-open:rotate-180" />
+                      </summary>
+                      
+                      <div className="p-4 space-y-6 border-t border-slate-700/50 bg-slate-900/30">
+                        {/* Duration Setting */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-300">Target Segment Duration</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="range"
+                              min={4}
+                              max={8}
+                              step={1}
+                              value={targetDuration}
+                              onChange={e => setTargetDuration(parseInt(e.target.value))}
+                              className="flex-1"
+                            />
+                            <span className="text-sm font-mono w-12 text-slate-300">{targetDuration}s</span>
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            Segments will be up to {targetDuration} seconds (Veo 3.1 optimal range: 4-8s)
+                          </p>
+                        </div>
 
-                  {/* Total Scene Duration Target */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium text-gray-300">Total Scene Duration</label>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-2 text-xs text-gray-500 hover:text-gray-300"
-                        onClick={() => setTotalDurationTarget(null)}
-                      >
-                        {totalDurationTarget ? 'Clear' : 'Auto'}
-                      </Button>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="range"
-                        min={10}
-                        max={120}
-                        step={5}
-                        value={totalDurationTarget ?? 30}
-                        onChange={e => setTotalDurationTarget(parseInt(e.target.value))}
-                        className="flex-1"
-                      />
-                      <span className="text-sm font-mono w-16 text-right">
-                        {totalDurationTarget ? `~${totalDurationTarget}s` : 'Auto'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      {totalDurationTarget
-                        ? `AI will target approximately ${totalDurationTarget}s total (may adjust ±10% for better cut points)`
-                        : 'Let AI determine total duration based on content'}
-                    </p>
-                  </div>
+                        {/* Narration-Driven Toggle */}
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-300">Narration-Driven</p>
+                            <p className="text-xs text-gray-500">
+                              Prioritize narration timing for segment boundaries
+                            </p>
+                          </div>
+                          <Button
+                            variant={narrationDriven ? 'default' : 'outline'}
+                            size="sm"
+                            className={narrationDriven ? 'bg-cyan-600 text-white hover:bg-cyan-500' : 'border-gray-600 text-gray-400 hover:bg-gray-800'}
+                            onClick={() => setNarrationDriven(!narrationDriven)}
+                          >
+                            {narrationDriven ? 'On' : 'Off'}
+                          </Button>
+                        </div>
 
-                  {/* Segment Count Target */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium text-gray-300">Segment Count</label>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-2 text-xs text-gray-500 hover:text-gray-300"
-                        onClick={() => setSegmentCountTarget(null)}
-                      >
-                        {segmentCountTarget ? 'Clear' : 'Auto'}
-                      </Button>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="range"
-                        min={2}
-                        max={12}
-                        step={1}
-                        value={segmentCountTarget ?? 5}
-                        onChange={e => setSegmentCountTarget(parseInt(e.target.value))}
-                        className="flex-1"
-                      />
-                      <span className="text-sm font-mono w-16 text-right">
-                        {segmentCountTarget ? `${segmentCountTarget}` : 'Auto'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      {segmentCountTarget
-                        ? `AI will aim for ${segmentCountTarget} segments`
-                        : 'Let AI determine optimal segment count'}
-                    </p>
-                  </div>
+                        {/* Total Scene Duration Target */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-sm font-medium text-gray-300">Total Scene Duration</label>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-xs text-gray-500 hover:text-gray-300"
+                              onClick={() => setTotalDurationTarget(null)}
+                            >
+                              {totalDurationTarget ? 'Clear' : 'Auto'}
+                            </Button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="range"
+                              min={10}
+                              max={120}
+                              step={5}
+                              value={totalDurationTarget ?? 30}
+                              onChange={e => setTotalDurationTarget(parseInt(e.target.value))}
+                              className="flex-1"
+                            />
+                            <span className="text-sm font-mono w-16 text-right text-slate-300">
+                              {totalDurationTarget ? `~${totalDurationTarget}s` : 'Auto'}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            {totalDurationTarget
+                              ? `AI will target approximately ${totalDurationTarget}s total (may adjust ±10% for better cut points)`
+                              : 'Let AI determine total duration based on content'}
+                          </p>
+                        </div>
 
-                  {/* Focus Mode */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-300">Focus Mode</label>
-                    <div className="grid grid-cols-3 gap-1">
-                      {(['balanced', 'dialogue-focused', 'action-focused'] as const).map(mode => (
-                        <Button
-                          key={mode}
-                          variant={focusMode === mode ? 'default' : 'outline'}
-                          size="sm"
-                          className={cn(
-                            'text-xs capitalize',
-                            focusMode === mode
-                              ? 'bg-cyan-600 text-white hover:bg-cyan-500 border-cyan-600'
-                              : 'border-gray-600 text-gray-400 hover:bg-gray-800 hover:text-gray-300'
-                          )}
-                          onClick={() => setFocusMode(mode)}
-                        >
-                          {mode.replace('-', ' ')}
-                        </Button>
-                      ))}
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      {focusMode === 'balanced' && 'Balance dialogue and visual action in segments'}
-                      {focusMode === 'dialogue-focused' && 'Prioritize dialogue coverage — combine visual beats'}
-                      {focusMode === 'action-focused' && 'Prioritize visual action — combine dialogue lines'}
-                    </p>
+                        {/* Segment Count Target */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-sm font-medium text-gray-300">Segment Count</label>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-xs text-gray-500 hover:text-gray-300"
+                              onClick={() => setSegmentCountTarget(null)}
+                            >
+                              {segmentCountTarget ? 'Clear' : 'Auto'}
+                            </Button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="range"
+                              min={2}
+                              max={12}
+                              step={1}
+                              value={segmentCountTarget ?? 5}
+                              onChange={e => setSegmentCountTarget(parseInt(e.target.value))}
+                              className="flex-1"
+                            />
+                            <span className="text-sm font-mono w-16 text-right text-slate-300">
+                              {segmentCountTarget ? `${segmentCountTarget}` : 'Auto'}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            {segmentCountTarget
+                              ? `AI will aim for ${segmentCountTarget} segments`
+                              : 'Let AI determine optimal segment count'}
+                          </p>
+                        </div>
+
+                        {/* Focus Mode */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-300">Focus Mode</label>
+                          <div className="grid grid-cols-3 gap-1">
+                            {(['balanced', 'dialogue-focused', 'action-focused'] as const).map(mode => (
+                              <Button
+                                key={mode}
+                                variant={focusMode === mode ? 'default' : 'outline'}
+                                size="sm"
+                                className={cn(
+                                  'text-xs capitalize',
+                                  focusMode === mode
+                                    ? 'bg-cyan-600 text-white hover:bg-cyan-500 border-cyan-600'
+                                    : 'border-gray-700 text-gray-400 hover:text-gray-300'
+                                )}
+                                onClick={() => setFocusMode(mode)}
+                              >
+                                {mode.replace('-', ' ')}
+                              </Button>
+                            ))}
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            {focusMode === 'balanced' && 'Balance dialogue and visual action in segments'}
+                            {focusMode === 'dialogue-focused' && 'Prioritize dialogue coverage — combine visual beats'}
+                            {focusMode === 'action-focused' && 'Prioritize visual action — combine dialogue lines'}
+                          </p>
+                        </div>
+                      </div>
+                    </details>
                   </div>
 
                   {/* Custom Instructions */}
