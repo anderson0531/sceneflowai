@@ -477,19 +477,18 @@ export function AudioGalleryPlayer({
   // Language display handled by GroupedLanguageSelector
   
   // Calculate Ken Burns progress
-  // We want continuous motion, but we also want it to look good for both short and long clips.
-  // For very long clips (>30s), a simple linear interpolation over the entire clip might be too slow.
-  // Instead, let's make it slowly pan over the duration, but cap the speed so it's not jarring for short clips
-  // and doesn't get stuck for long clips. A common trick is to use a CSS transition that triggers when the scene changes.
+  // For scenes with very long audio (e.g., 5 minutes), tying transform to `currentTime / sceneDuration` 
+  // makes the motion imperceptibly slow. Instead, we use a constant cycle (e.g., 20 seconds to zoom in, 
+  // 20 seconds to zoom out). This ensures a constant, optimal illusion of motion for any scene length.
+  const CYCLE_DURATION = 40 // 40s full cycle (20s forward, 20s reverse)
+  const cyclePhase = (currentTime % CYCLE_DURATION) / CYCLE_DURATION
   
-  // Actually, tying it to currentTime gives the best synchronization. If the scene is 5 minutes long, 
-  // it will pan very slowly over 5 minutes. If that's not desired, we could loop it, but usually Ken Burns
-  // is just a very slow single pan. Let's stick to tying to currentTime, but ensure it always moves.
-  const kenBurnsProgress = sceneDuration > 0 ? Math.min(currentTime / sceneDuration, 1) : 0
+  // Alternate direction: 0 to 0.5 phase maps to 0->1 progress, 0.5 to 1.0 maps to 1->0
+  const kenBurnsProgress = cyclePhase <= 0.5 
+    ? cyclePhase * 2 
+    : 2 - (cyclePhase * 2)
   
   // Calculate transform values based on progress
-  // To make it look smoother and constantly moving, we can apply an easing function or just linear.
-  // We apply the transform smoothly.
   const currentScale = 1 + (kenBurnsConfig.scale - 1) * kenBurnsProgress;
   const currentX = kenBurnsConfig.x * kenBurnsProgress;
   const currentY = kenBurnsConfig.y * kenBurnsProgress;
