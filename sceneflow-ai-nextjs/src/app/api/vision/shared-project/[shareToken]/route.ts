@@ -21,8 +21,10 @@ export async function GET(
     // Find project with this share token
     const projects = await Project.findAll()
     const project = projects.find(p => {
-      const shareLink = p.metadata?.screeningRoomShareLink
-      return shareLink?.shareToken === shareToken && shareLink?.isActive
+      const screeningLink = p.metadata?.screeningRoomShareLink
+      const storyboardLink = p.metadata?.storyboardShareLink
+      return (screeningLink?.shareToken === shareToken && screeningLink?.isActive) ||
+             (storyboardLink?.shareToken === shareToken && storyboardLink?.isActive)
     })
 
     if (!project) {
@@ -30,13 +32,16 @@ export async function GET(
       return NextResponse.json({ error: 'Share link not found or expired' }, { status: 404 })
     }
 
-    // Increment view count
-    const shareLink = project.metadata.screeningRoomShareLink
+    // Determine which link was used and increment view count
+    const isStoryboard = project.metadata?.storyboardShareLink?.shareToken === shareToken
+    const metadataKey = isStoryboard ? 'storyboardShareLink' : 'screeningRoomShareLink'
+    const shareLink = project.metadata[metadataKey]
+    
     shareLink.viewCount = (shareLink.viewCount || 0) + 1
     await project.update({
       metadata: {
         ...project.metadata,
-        screeningRoomShareLink: shareLink
+        [metadataKey]: shareLink
       }
     })
 

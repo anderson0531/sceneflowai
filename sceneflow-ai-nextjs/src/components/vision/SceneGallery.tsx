@@ -339,6 +339,29 @@ export function SceneGallery({
     }
   }, [scenes, scenesWithoutDirection])
 
+  const handleShareStoryboard = async () => {
+    try {
+      const { toast } = require('sonner')
+      const projectId = scenes[0]?.projectId || window.location.pathname.split('/').pop()
+      
+      const response = await fetch('/api/vision/create-share-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, linkType: 'storyboard' })
+      })
+      
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to create share link')
+      
+      await navigator.clipboard.writeText(data.shareUrl)
+      toast.success('Storyboard link copied to clipboard!')
+    } catch (err: any) {
+      console.error('[Share Storyboard]', err)
+      const { toast } = require('sonner')
+      toast.error(err.message || 'Failed to create share link')
+    }
+  }
+
   return (
     <TooltipProvider>
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6 h-full overflow-y-auto">
@@ -513,6 +536,7 @@ export function SceneGallery({
             onLanguageChange={setSelectedLanguage}
             availableLanguages={availableLanguages}
             onClose={() => setShowAudioPlayer(false)}
+            onShare={handleShareStoryboard}
           />
         </div>
       )}

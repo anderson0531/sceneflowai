@@ -9,7 +9,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Globe, X, Maximize, Minimize } from 'lucide-react'
+import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Globe, X, Maximize, Minimize, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -33,6 +33,9 @@ interface AudioGalleryPlayerProps {
   onLanguageChange: (language: string) => void
   availableLanguages: string[]
   onClose?: () => void
+  onShare?: () => void
+  onSceneChange?: (index: number) => void
+  isSharedView?: boolean
 }
 
 interface AudioClip {
@@ -51,6 +54,9 @@ export function AudioGalleryPlayer({
   onLanguageChange,
   availableLanguages,
   onClose,
+  onShare,
+  onSceneChange,
+  isSharedView = false,
 }: AudioGalleryPlayerProps) {
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false)
@@ -60,6 +66,8 @@ export function AudioGalleryPlayer({
   const [isMuted, setIsMuted] = useState(false)
   const [autoAdvance, setAutoAdvance] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [dynamicDurations, setDynamicDurations] = useState<Record<string, number>>({})
+  const fetchingUrls = useRef<Set<string>>(new Set())
   
   // Ken Burns effect - pick a config per scene for variety
   const kenBurnsConfig = useMemo(() => {
@@ -100,6 +108,40 @@ export function AudioGalleryPlayer({
     document.addEventListener('fullscreenchange', handleFullscreenChange)
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
   }, [])
+
+  // Fetch true audio duration
+  useEffect(() => {
+    if (!currentScene) return
+    
+    const urlsToFetch: string[] = []
+    
+    const narrationUrl = currentScene.narrationAudio?.[selectedLanguage]?.url 
+      || currentScene.narrationAudio?.en?.url 
+      || currentScene.narrationAudioUrl
+    if (narrationUrl) urlsToFetch.push(narrationUrl)
+      
+    const dialogueAudio = currentScene.dialogueAudio?.[selectedLanguage] 
+      || currentScene.dialogueAudio?.en 
+      || []
+    if (Array.isArray(dialogueAudio)) {
+      dialogueAudio.forEach((d: any) => {
+        const dUrl = d.audioUrl || d.url
+        if (dUrl) urlsToFetch.push(dUrl)
+      })
+    }
+    
+    urlsToFetch.forEach(url => {
+      if (fetchingUrls.current.has(url)) return
+      fetchingUrls.current.add(url)
+      
+      const audio = new Audio(url)
+      audio.addEventListener('loadedmetadata', () => {
+        if (audio.duration && audio.duration !== Infinity && !isNaN(audio.duration)) {
+          setDynamicDurations(curr => ({ ...curr, [url]: audio.duration }))
+        }
+      })
+    })
+  }, [currentScene, selectedLanguage])
   
   // Build audio clips for current scene (narration & dialogue - played sequentially)
   const audioClips = useMemo((): AudioClip[] => {
@@ -112,7 +154,9 @@ export function AudioGalleryPlayer({
     const narrationUrl = currentScene.narrationAudio?.[selectedLanguage]?.url 
       || currentScene.narrationAudio?.en?.url 
       || currentScene.narrationAudioUrl
-    const narrationDuration = currentScene.narrationAudio?.[selectedLanguage]?.duration
+    const narrationDuration = narrationUrl && dynamicDurations[narrationUrl]
+      ? dynamicDurations[narrationUrl]
+      : currentScene.narrationAudio?.[selectedLanguage]?.duration
       || currentScene.narrationAudio?.en?.duration
       || currentScene.narrationDuration
       || 0
@@ -136,22 +180,24 @@ export function AudioGalleryPlayer({
     
     if (Array.isArray(dialogueAudio)) {
       dialogueAudio.forEach((d: any, idx: number) => {
-        if (d.audioUrl || d.url) {
+        const dUrl = d.audioUrl || d.url
+        if (dUrl) {
+          const dur = dynamicDurations[dUrl] || d.duration || 3
           clips.push({
             id: `dialogue-${idx}`,
-            url: d.audioUrl || d.url,
+            url: dUrl,
             startTime: currentStartTime,
-            duration: d.duration || 3,
+            duration: dur,
             type: 'dialogue',
             label: d.character || `Dialogue ${idx + 1}`
           })
-          currentStartTime += (d.duration || 3) + 0.3 // 0.3s buffer between dialogue lines
+          currentStartTime += dur + 0.3 // 0.3s buffer between dialogue lines
         }
       })
     }
     
     return clips
-  }, [currentScene, selectedLanguage])
+  }, [currentScene, selectedLanguage, dynamicDurations])
   
   // Build music track for current scene (plays concurrently, loops)
   const musicTrack = useMemo((): AudioClip | null => {
@@ -219,6 +265,7 @@ export function AudioGalleryPlayer({
   const goToScene = useCallback((index: number) => {
     if (index >= 0 && index < scenes.length) {
       setCurrentSceneIndex(index)
+      if (onSceneChange) onSceneChange(index)
       setCurrentTime(0)
       setIsPlaying(false)
       
@@ -452,6 +499,19 @@ export function AudioGalleryPlayer({
           </div>
           
           <div className="flex items-center gap-3">
+            {/* Share button */}
+            {onShare && !isSharedView && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onShare}
+                className="h-7 text-xs bg-gray-800 border-gray-700 hover:bg-gray-700 hover:text-white"
+              >
+                <Share2 className="w-3.5 h-3.5 mr-1.5" />
+                Share
+              </Button>
+            )}
+            
             {/* Language selector */}
             {availableLanguages.length > 1 && (
               <div className="flex items-center gap-2">
@@ -538,6 +598,13 @@ export function AudioGalleryPlayer({
                 <span className="text-sm">No image</span>
               </div>
             )}
+            
+            {/* Watermark overlay */}
+            <div className="absolute top-4 right-4 pointer-events-none">
+              <span className="text-white/40 font-bold tracking-widest uppercase" style={{ fontSize: isFullscreen ? '1.5rem' : '0.875rem', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                SceneFlow AI Studio
+              </span>
+            </div>
             
             {/* Current clip label overlay */}
             {currentClip && (

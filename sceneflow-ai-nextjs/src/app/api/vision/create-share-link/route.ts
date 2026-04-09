@@ -8,7 +8,7 @@ export const maxDuration = 30
 
 export async function POST(request: NextRequest) {
   try {
-    const { projectId } = await request.json()
+    const { projectId, linkType = 'screening-room' } = await request.json()
     
     if (!projectId) {
       return NextResponse.json({ error: 'Project ID required' }, { status: 400 })
@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
     const shareLink = {
       id: uuidv4(),
       shareToken,
+      linkType,
       createdAt: new Date().toISOString(),
       isActive: true,
       viewCount: 0,
@@ -40,21 +41,27 @@ export async function POST(request: NextRequest) {
 
     // Save to project metadata
     const metadata = project.metadata || {}
+    const metadataKey = linkType === 'storyboard' ? 'storyboardShareLink' : 'screeningRoomShareLink'
+    
     await project.update({
       metadata: {
         ...metadata,
-        screeningRoomShareLink: shareLink
+        [metadataKey]: shareLink
       }
     })
 
-    const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://sceneflow-ai-nextjs.vercel.app'}/share/screening-room/${shareToken}`
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sceneflow-ai-nextjs.vercel.app'
+    const shareUrl = linkType === 'storyboard' 
+      ? `${baseUrl}/share/storyboard/${shareToken}`
+      : `${baseUrl}/share/screening-room/${shareToken}`
 
-    console.log(`[Create Share Link] Created share link for project ${projectId}: ${shareUrl}`)
+    console.log(`[Create Share Link] Created ${linkType} link for project ${projectId}: ${shareUrl}`)
 
     return NextResponse.json({
       success: true,
       shareUrl,
-      shareToken
+      shareToken,
+      linkType
     })
   } catch (error: any) {
     console.error('[Create Share Link] Error:', error)
