@@ -66,30 +66,49 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
   }
 
   // Derive available languages from project data
-  const availableLanguages = ['en'] // Assuming English by default, extend if project data includes others
+  const availableLanguages = React.useMemo(() => {
+    const scenes = projectData.script?.script?.scenes || projectData.script?.scenes || projectData.sceneProductionState || []
+    const langs = new Set<string>()
+    
+    scenes.forEach((scene: any) => {
+      if (scene.narrationAudio) {
+        Object.keys(scene.narrationAudio).forEach(lang => {
+          if (scene.narrationAudio[lang]?.url) langs.add(lang)
+        })
+      }
+      if (scene.dialogueAudio) {
+        Object.keys(scene.dialogueAudio).forEach(lang => {
+          if (Array.isArray(scene.dialogueAudio[lang]) && scene.dialogueAudio[lang].length > 0) langs.add(lang)
+        })
+      }
+    })
+    
+    if (langs.size === 0) langs.add('en')
+    return Array.from(langs).sort()
+  }, [projectData])
 
   return (
-    <div className="flex flex-col h-screen bg-black">
+    <div className="flex flex-col min-h-screen lg:h-screen bg-black lg:overflow-hidden">
       {/* Top Banner */}
-      <div className="flex items-center justify-between p-4 bg-gray-900 border-b border-gray-800">
-        <div>
-          <h1 className="text-xl font-semibold text-white">{projectData.title}</h1>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-900 border-b border-gray-800 gap-4 sm:gap-0">
+        <div className="w-full sm:w-auto">
+          <h1 className="text-xl font-semibold text-white truncate max-w-[80vw] sm:max-w-[50vw]">{projectData.title}</h1>
           <p className="text-sm text-gray-400">Storyboard Review</p>
         </div>
-        <div className="text-right">
+        <div className="w-full sm:w-auto text-left sm:text-right">
           <Button 
             onClick={handleSubmitFeedback}
             disabled={isSubmitting || Object.keys(feedbacks).length === 0}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white"
+            className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white"
           >
             {isSubmitting ? 'Submitting...' : submitSuccess ? 'Submitted!' : 'Submit All Feedback'}
           </Button>
         </div>
       </div>
       
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-col lg:flex-row flex-1 lg:overflow-hidden">
         {/* Main Player Area */}
-        <div className="flex-1 p-4 md:p-8 overflow-y-auto bg-gray-950 flex flex-col justify-center items-center">
+        <div className="flex-1 p-2 sm:p-4 md:p-8 overflow-y-auto bg-gray-950 flex flex-col justify-start lg:justify-center items-center h-full">
           <div className="w-full flex justify-center items-center">
             <AudioGalleryPlayer
               scenes={projectData.script?.script?.scenes || projectData.script?.scenes || projectData.sceneProductionState || []}
@@ -103,7 +122,7 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
         </div>
         
         {/* Feedback Sidebar */}
-        <div className="w-80 bg-gray-900 border-l border-gray-800 flex flex-col">
+        <div className="w-full lg:w-96 bg-gray-900 border-t lg:border-t-0 lg:border-l border-gray-800 flex flex-col lg:h-full">
           <div className="p-4 border-b border-gray-800">
             <h2 className="text-lg font-medium text-white flex items-center gap-2">
               <MessageSquare className="w-4 h-4" />

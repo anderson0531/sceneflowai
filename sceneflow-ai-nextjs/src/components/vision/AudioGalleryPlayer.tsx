@@ -603,12 +603,12 @@ export function AudioGalleryPlayer({
         )}>
           {/* Scene image with Ken Burns effect */}
           <div className={cn(
-            "relative rounded-lg overflow-hidden bg-black flex-shrink-0",
+            "relative rounded-lg overflow-hidden bg-black flex-shrink-0 w-full",
             isFullscreen 
-              ? "w-[80vw] max-w-7xl aspect-video" 
+              ? "max-w-7xl aspect-video" 
               : isSharedView
-                ? "w-full max-w-6xl aspect-video shadow-2xl"
-                : "w-[500px] h-[280px]"
+                ? "max-w-6xl aspect-video shadow-2xl"
+                : "max-w-[500px] aspect-video shadow-xl"
           )}>
             {currentScene?.imageUrl ? (
               <img
@@ -643,7 +643,7 @@ export function AudioGalleryPlayer({
           
           {/* Scene title below video in fullscreen or shared view */}
           {(isFullscreen || isSharedView) && (
-            <div className={cn("mt-4 text-center", isFullscreen ? "w-[80vw] max-w-7xl" : "w-full max-w-6xl")}>
+            <div className={cn("mt-4 text-center w-full", isFullscreen ? "max-w-7xl" : "max-w-6xl")}>
               <span className="text-white/50 text-xs uppercase tracking-wide font-semibold">SCENE {currentSceneIndex + 1}</span>
               <h2 className="text-white text-lg font-medium truncate mt-1">{formattedHeading}</h2>
             </div>
@@ -651,8 +651,8 @@ export function AudioGalleryPlayer({
           
           {/* Playback controls and info */}
           <div className={cn(
-            "flex flex-col justify-between min-w-0",
-            isFullscreen ? "w-[80vw] max-w-7xl mt-3" : isSharedView ? "w-full max-w-6xl mt-4" : "flex-1"
+            "flex flex-col justify-between min-w-0 w-full",
+            isFullscreen ? "max-w-7xl mt-3" : isSharedView ? "max-w-6xl mt-4" : "flex-1"
           )}>
             {/* Scene info - hide in fullscreen/shared (shown below video) */}
             {(!isFullscreen && !isSharedView) && (
