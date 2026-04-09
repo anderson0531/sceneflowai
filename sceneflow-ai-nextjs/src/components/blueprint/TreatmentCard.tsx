@@ -547,6 +547,7 @@ export function TreatmentCard() {
                                 value={selectedLanguage}
                                 onValueChange={(code) => setSelectedLanguage(code)}
                                 size="xs"
+                                intent="generate"
                               />
                               <div className="px-1 pt-2 pb-1 text-xs text-gray-400">Narration</div>
                               <Select value={narrationMode} onValueChange={(val)=>setNarrationMode(val as any)}>

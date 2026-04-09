@@ -295,6 +295,7 @@ export function GenerateAudioDialog({
               value={selectedLanguage}
               onValueChange={setSelectedLanguage}
               size="md"
+              intent="generate"
             />
             {selectedLanguage !== 'en' && (
               <p className="text-xs text-amber-400">

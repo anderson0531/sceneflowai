@@ -446,7 +446,6 @@ export function SceneGallery({
           {/* Language Stream Selector */}
           {availableLanguages.length > 1 && (
             <div className="flex items-center gap-1.5">
-              <Globe className="w-4 h-4 text-blue-400" />
               <GroupedLanguageSelector
                 value={selectedLanguage}
                 onValueChange={setSelectedLanguage}

@@ -430,7 +430,6 @@ function ProductionStreamSelector({
   
   return (
     <div className="flex items-center gap-2">
-      <Globe className="w-4 h-4 text-purple-400" />
       <span className="text-xs text-gray-400 uppercase tracking-wide hidden sm:inline">Active Stream</span>
       <GroupedLanguageSelector
         value={selectedLanguage}

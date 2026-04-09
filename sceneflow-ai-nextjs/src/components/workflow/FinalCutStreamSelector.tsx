@@ -334,7 +334,6 @@ export function FinalCutStreamSelector({
         <div className="flex items-center gap-3">
           {/* Primary language selector */}
           <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4 text-gray-500" />
             <GroupedLanguageSelector
               value={primaryLanguage}
               onValueChange={onLanguageChange}

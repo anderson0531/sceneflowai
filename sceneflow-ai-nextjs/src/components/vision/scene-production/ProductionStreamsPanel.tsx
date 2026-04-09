@@ -635,12 +635,12 @@ export function ProductionStreamsPanel({
       {/* Add New Production - Only shown on Video tab */}
       {selectedStreamType === 'video' && (
         <div className="flex items-center gap-2 p-3 bg-gray-800/30 rounded-lg border border-dashed border-gray-700">
-          <Globe className="w-4 h-4 text-gray-500" />
           <GroupedLanguageSelector
             value={newLanguage}
             onValueChange={setNewLanguage}
             disabled={disabled || isRendering}
             size="sm"
+            intent="generate"
             className="bg-gray-800 border-gray-600 text-sm"
             renderItemSuffix={(lang) => 
               existingLanguages.has(lang.code) 

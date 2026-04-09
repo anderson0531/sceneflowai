@@ -2602,11 +2602,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
             {/* Language Stream Selector */}
             <div className="flex items-center gap-1.5">
-              <Globe className="w-3.5 h-3.5 text-blue-400" />
               <GroupedLanguageSelector
                 value={selectedLanguage}
                 onValueChange={setSelectedLanguage}
                 size="xs"
+                intent="generate"
                 className="bg-slate-800 border-blue-500/30 text-gray-200"
               />
             </div>
@@ -5130,11 +5130,11 @@ function SceneCard({
                       </Dialog>
                       {/* Language Stream Selector */}
                       <div className="flex items-center gap-1.5">
-                        <Globe className="w-3 h-3 text-blue-400" />
                         <GroupedLanguageSelector
                           value={selectedLanguage}
                           onValueChange={onLanguageChange}
                           size="xs"
+                          intent="generate"
                           className="bg-gray-800 border-blue-500/30 text-gray-200"
                         />
                       </div>

@@ -705,6 +705,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
                 value={selectedLanguage}
                 onValueChange={setSelectedLanguage}
                 size="xs"
+                intent="generate"
               />
             </div>
             

@@ -540,7 +540,6 @@ export function AudioGalleryPlayer({
             {/* Language selector */}
             {availableLanguages.length > 1 && (
               <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4 text-gray-400" />
                 <GroupedLanguageSelector
                   value={selectedLanguage}
                   onValueChange={onLanguageChange}
