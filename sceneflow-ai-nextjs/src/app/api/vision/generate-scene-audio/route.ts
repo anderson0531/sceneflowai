@@ -376,7 +376,8 @@ async function generateGoogleAudio(text: string, voiceConfig: VoiceConfig, langu
 
   // Gemini TTS doesn't natively support bracketed emotion tags like ElevenLabs.
   // Remove them to prevent hallucinations where it reads them aloud or stutters.
-  const sanitizedText = text.replace(/\[.*?\]/g, '').trim()
+  // Also remove asterisks (*) used for markdown emphasis, as Gemini sometimes reads the word "asterisk" aloud.
+  const sanitizedText = text.replace(/\[.*?\]/g, '').replace(/\*/g, '').trim()
   
   if (!sanitizedText) {
     throw new Error('Text is empty after removing bracketed tags')
