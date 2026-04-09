@@ -8533,10 +8533,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   // The audio is saved in the database by the API - the UI will update on next page load.
                   // For immediate UI update, we need to manually refresh the scenes from database.
                   
-                  // Longer delay to ensure all database writes are fully committed
-                  await new Promise(resolve => setTimeout(resolve, 3000))
-                  
-                  // Reload project with extra retry logic and longer delays
+                  // Reload project with extra retry logic
                   let retries = 3
                   while (retries > 0) {
                     try {

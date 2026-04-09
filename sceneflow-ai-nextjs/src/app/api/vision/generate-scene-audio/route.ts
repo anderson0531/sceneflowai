@@ -31,11 +31,12 @@ interface AudioGenerationRequest {
   dialogueIndex?: number // For dialogue - index of the dialog line in the scene
   language?: string // Target language for TTS (default: 'en')
   skipTranslation?: boolean // Skip server-side translation (text is already translated)
+  skipDbUpdate?: boolean // Skip database update if called from batch generation
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, sceneIndex, audioType, text, voiceConfig, characterName, dialogueIndex, language: requestedLanguage, skipTranslation }: AudioGenerationRequest & { text: string } = await req.json()
+    const { projectId, sceneIndex, audioType, text, voiceConfig, characterName, dialogueIndex, language: requestedLanguage, skipTranslation, skipDbUpdate = false }: AudioGenerationRequest & { text: string, skipDbUpdate?: boolean } = await req.json()
 
     // Log the request for debugging
     console.log('[Scene Audio] Request:', { 
@@ -205,17 +206,19 @@ export async function POST(req: NextRequest) {
     console.log(`[Scene Audio] Uploaded to Vercel Blob:`, blob.url)
 
     // Step 7: Update scene in project metadata with language-specific storage
-    await updateSceneAudio(
-      projectId, 
-      sceneIndex, 
-      audioType, 
-      blob.url, 
-      language,
-      audioDuration,
-      finalVoiceConfig.voiceId,
-      characterName, 
-      dialogueIndex
-    )
+    if (!skipDbUpdate) {
+      await updateSceneAudio(
+        projectId, 
+        sceneIndex, 
+        audioType, 
+        blob.url, 
+        language,
+        audioDuration,
+        finalVoiceConfig.voiceId,
+        characterName, 
+        dialogueIndex
+      )
+    }
 
     console.log('[Scene Audio] Response payload', {
       success: true,
