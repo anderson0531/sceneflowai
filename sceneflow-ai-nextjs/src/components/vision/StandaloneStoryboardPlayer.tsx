@@ -74,7 +74,7 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
         <div className="flex-1 p-6 overflow-y-auto">
           <div className="max-w-5xl mx-auto">
             <AudioGalleryPlayer
-              scenes={projectData.script?.scenes || projectData.sceneProductionState || []}
+              scenes={projectData.script?.script?.scenes || projectData.script?.scenes || projectData.sceneProductionState || []}
               selectedLanguage={selectedLanguage}
               onLanguageChange={setSelectedLanguage}
               availableLanguages={availableLanguages}
