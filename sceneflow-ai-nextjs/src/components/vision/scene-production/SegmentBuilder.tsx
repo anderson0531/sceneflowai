@@ -82,237 +82,6 @@ const getSegmentValidation = async () => {
 }
 
 // ============================================================================
-// Segment Direction Card Component
-// ============================================================================
-
-interface SegmentDirectionCardProps {
-  direction: ProposedDirection
-  index: number
-  dialogueLines: Array<{ id: string; character: string; text: string }>
-  isSelected: boolean
-  onSelect: () => void
-  onEdit: (updates: Partial<ProposedDirection>) => void
-  onApprove: () => void
-  onGeneratePrompt: () => void
-}
-
-function SegmentDirectionCard({
-  direction,
-  index,
-  dialogueLines,
-  isSelected,
-  onSelect,
-  onEdit,
-  onApprove,
-  onGeneratePrompt,
-}: SegmentDirectionCardProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  
-  // Get dialogue lines for this segment
-  const segmentDialogue = dialogueLines.filter(d => 
-    direction.dialogueLineIds.includes(d.id)
-  )
-  
-  const methodColors: Record<string, string> = {
-    'I2V': 'bg-green-500/20 text-green-400 border-green-500/30',
-    'T2V': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    'EXT': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-    'FTV': 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  }
-  
-  return (
-    <Card 
-      className={cn(
-        "transition-all cursor-pointer",
-        isSelected && "ring-2 ring-primary",
-        direction.isApproved && "border-green-500/50 bg-green-950/10"
-      )}
-      onClick={onSelect}
-    >
-      <CardContent className="p-5">
-        {/* Header Row */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="font-mono">
-              {index + 1}
-            </Badge>
-            <Badge className={methodColors[direction.generationMethod] || ''}>
-              {direction.generationMethod}
-            </Badge>
-            {direction.isUserEdited && (
-              <Badge variant="outline" className="text-amber-400 border-amber-500/30">
-                <Edit3 className="w-3 h-3 mr-1" />
-                Edited
-              </Badge>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="font-mono text-xs">
-              ~{direction.estimatedDuration}s
-            </Badge>
-          </div>
-        </div>
-        
-        {/* Direction Details */}
-        {isEditing ? (
-          <div className="space-y-4" onClick={e => e.stopPropagation()}>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-xs text-muted-foreground">Shot Type</label>
-                <Input
-                  value={direction.shotType}
-                  onChange={e => onEdit({ shotType: e.target.value })}
-                  placeholder="e.g., Medium Close-Up"
-                  className="h-8 text-xs"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Trigger Reason</label>
-                <Input
-                  value={direction.triggerReason}
-                  onChange={e => onEdit({ triggerReason: e.target.value })}
-                  placeholder="Why cut here?"
-                  className="h-8 text-xs"
-                />
-              </div>
-            </div>
-            
-            {/* Talent Action */}
-            <div>
-              <label className="text-xs text-muted-foreground">Talent Action</label>
-              <Textarea
-                value={direction.talentAction}
-                onChange={e => onEdit({ talentAction: e.target.value })}
-                placeholder="What the talent does in this segment..."
-                className="h-20 text-sm resize-none"
-              />
-            </div>
-
-            {/* Frame Descriptions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-medium text-green-400">Start Frame Image Prompt</label>
-                <Textarea
-                  value={direction.keyframeStartDescription || ''}
-                  onChange={e => onEdit({ keyframeStartDescription: e.target.value })}
-                  placeholder="Detailed prompt for the starting keyframe..."
-                  className="h-32 text-xs resize-none mt-1 font-mono bg-green-950/20 border-green-900"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-orange-400">End Frame Image Prompt</label>
-                <Textarea
-                  value={direction.keyframeEndDescription || ''}
-                  onChange={e => onEdit({ keyframeEndDescription: e.target.value })}
-                  placeholder="Detailed prompt for the ending keyframe..."
-                  className="h-32 text-xs resize-none mt-1 font-mono bg-orange-950/20 border-orange-900"
-                />
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {/* ── CAMERA SECTION ── */}
-            <div className="flex items-center gap-2 text-sm">
-              <Camera className="w-3.5 h-3.5 text-muted-foreground/60" />
-              <span className="font-medium">{direction.shotType}</span>
-            </div>
-
-            {/* ── PERFORMANCE SECTION ── */}
-            {direction.talentAction && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Users className="w-3.5 h-3.5 text-muted-foreground/60" />
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">Action</span>
-                </div>
-                <div className="p-2.5 rounded-md bg-muted/20 border border-border/20 space-y-2">
-                  <p className="text-sm text-foreground/80 leading-relaxed">{direction.talentAction}</p>
-                </div>
-              </div>
-            )}
-
-            {/* ── FRAME PROMPTS SECTION ── */}
-            {(direction.keyframeStartDescription || direction.keyframeEndDescription) && (
-              <div className="space-y-2.5">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Film className="w-3.5 h-3.5 text-muted-foreground/60" />
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">Image Prompts</span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {direction.keyframeStartDescription && (
-                    <div className="p-2.5 rounded border border-green-500/20 bg-green-950/10">
-                      <div className="text-[10px] uppercase text-green-500/70 mb-1.5 font-semibold">Start Frame</div>
-                      <p className="text-xs text-foreground/70 leading-relaxed font-mono">{direction.keyframeStartDescription}</p>
-                    </div>
-                  )}
-                  {direction.keyframeEndDescription && (
-                    <div className="p-2.5 rounded border border-orange-500/20 bg-orange-950/10">
-                      <div className="text-[10px] uppercase text-orange-500/70 mb-1.5 font-semibold">End Frame</div>
-                      <p className="text-xs text-foreground/70 leading-relaxed font-mono">{direction.keyframeEndDescription}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Dialogue Covered */}
-        {segmentDialogue.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-border/40">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-2">
-              Audio Covered
-            </div>
-            <div className="space-y-1.5">
-              {segmentDialogue.map((line, i) => (
-                <div key={i} className="text-xs flex gap-2">
-                  <span className="text-muted-foreground min-w-[60px]">{line.character}:</span>
-                  <span className="text-foreground/90 italic truncate">"{line.text}"</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Action Bar */}
-        <div className="mt-4 pt-4 border-t border-border/40 flex items-center gap-2" onClick={e => e.stopPropagation()}>
-          <Button
-            variant={isEditing ? "default" : "outline"}
-            size="sm"
-            onClick={() => setIsEditing(!isEditing)}
-            className="h-8"
-          >
-            {isEditing ? 'Done Editing' : 'Edit Frames'}
-          </Button>
-
-          <div className="flex-1" />
-
-          {direction.isApproved ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onApprove}
-              className="h-8 text-green-400 border-green-500/30 hover:bg-green-500/10 hover:text-green-300"
-            >
-              <CheckCircle2 className="w-4 h-4 mr-1.5" />
-              Approved
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              onClick={onApprove}
-              className="h-8 bg-green-600 hover:bg-green-500 text-white"
-            >
-              Approve Segment
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-// ============================================================================
 // Movie Set Production Overlay
 // ============================================================================
 
@@ -581,70 +350,6 @@ function extractAudioMetadata(scene: any, selectedLanguage = 'en-US'): {
 // Workflow Phase Indicator
 // ============================================================================
 
-interface PhaseIndicatorProps {
-  currentPhase: BuilderPhase
-  onPhaseClick: (phase: BuilderPhase) => void
-  canAdvance: { directions: boolean }
-}
-
-function PhaseIndicator({ currentPhase, onPhaseClick, canAdvance }: PhaseIndicatorProps) {
-  const phases: { id: BuilderPhase; label: string; icon: React.ReactNode }[] = [
-    { id: 'analyze', label: 'Analysis', icon: <Sparkles className="w-4 h-4" /> },
-    { id: 'directions', label: 'Review Segments', icon: <Eye className="w-4 h-4" /> },
-  ]
-
-  const getPhaseStatus = (phase: BuilderPhase) => {
-    const phaseOrder = ['analyze', 'directions']
-    const currentIndex = phaseOrder.indexOf(currentPhase)
-    const phaseIndex = phaseOrder.indexOf(phase)
-    
-    if (phaseIndex < currentIndex) return 'complete'
-    if (phaseIndex === currentIndex) return 'current'
-    return 'pending'
-  }
-
-  const canClickPhase = (phase: BuilderPhase) => {
-    if (phase === 'analyze') return true
-    if (phase === 'directions') return canAdvance.directions
-    return false
-  }
-
-  return (
-    <div className="flex items-center gap-2">
-      {phases.map((phase, idx) => {
-        const status = getPhaseStatus(phase.id)
-        const canClick = canClickPhase(phase.id)
-        
-        return (
-          <React.Fragment key={phase.id}>
-            <button
-              onClick={() => canClick && onPhaseClick(phase.id)}
-              disabled={!canClick}
-              className={cn(
-                'flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium',
-                status === 'current' && 'bg-cyan-600 text-white shadow-md shadow-cyan-500/20',
-                status === 'complete' && 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
-                status === 'pending' && 'text-gray-500',
-                canClick && status !== 'current' && 'hover:bg-gray-800 cursor-pointer',
-                !canClick && 'opacity-50 cursor-not-allowed'
-              )}
-            >
-              {status === 'complete' ? (
-                <CheckCircle2 className="w-4 h-4" />
-              ) : (
-                phase.icon
-              )}
-              <span>{phase.label}</span>
-            </button>
-            {idx < phases.length - 1 && (
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            )}
-          </React.Fragment>
-        )
-      })}
-    </div>
-  )
-}
 
 // ============================================================================
 // Client-Side Segment Duration Enforcement (Safety Net)
@@ -744,9 +449,7 @@ export function SegmentBuilder({
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   
   // NEW: Phase 1 - Proposed directions for user review
-  const [proposedDirections, setProposedDirections] = useState<ProposedDirection[]>([])
-  const [selectedDirectionId, setSelectedDirectionId] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+      const [error, setError] = useState<string | null>(null)
   
   // Production overlay state
   const [showProductionOverlay, setShowProductionOverlay] = useState(false)
@@ -761,12 +464,8 @@ export function SegmentBuilder({
   const [customInstructions, setCustomInstructions] = useState('')
   
   // Regeneration dialog state
-  const [showRegenerateDialog, setShowRegenerateDialog] = useState(false)
-  const [regenerationConfig, setRegenerationConfig] = useState({
-    targetDuration: 6,
-    narrationDriven: false,
-    preserveManualEdits: false,
-  })
+  
+  
   
   // Track scene bible hash for staleness
   const [lastGeneratedHash, setLastGeneratedHash] = useState<string | null>(null)
@@ -836,24 +535,9 @@ export function SegmentBuilder({
   }, [audioMetadata.narrationText, audioMetadata.narrationAudioUrl, sceneId])
 
   // Selected segment for editing
-  // Check if can advance to next phase
-  const canAdvance = useMemo(() => {
-    const hasDirections = proposedDirections.length > 0
-    return {
-      directions: hasDirections, // Can go to directions phase once we have them
-    }
-  }, [proposedDirections])
+    
   
-  // Count approved directions
-  const approvedDirectionCount = useMemo(() => {
-    return proposedDirections.filter(d => d.isApproved).length
-  }, [proposedDirections])
-
-  // Total estimated duration from directions
-  const totalDuration = useMemo(() => {
-    return proposedDirections.reduce((sum, d) => sum + d.estimatedDuration, 0)
-  }, [proposedDirections])
-  
+    
   // Check if scene has direction
   const hasSceneDirection = useMemo(() => {
     const dir = scene?.sceneDirection
@@ -953,21 +637,65 @@ export function SegmentBuilder({
         // Map the new image prompts
         keyframeStartDescription: dir.keyframe_start_prompt || dir.keyframeStartDescription || '',
         keyframeEndDescription: dir.keyframe_end_prompt || dir.keyframeEndDescription || '',
-        isApproved: false, // User must approve
+        isApproved: true, // Auto-approve
         isUserEdited: false,
       }))
 
-      setProposedDirections(directions)
-      setPhase('directions') // Go to directions review phase
-      setLastGeneratedHash(sceneBible.contentHash)
-      
-      if (directions.length > 0) {
-        setSelectedDirectionId(directions[0].id)
-      }
-
-      toast.success(`AI proposed ${directions.length} segment directions`, {
-        description: 'Review and approve directions before generating prompts.',
+      let currentTime = 0;
+      const finalSegments: SceneSegment[] = directions.map((dir, idx) => {
+        const startTime = currentTime;
+        const endTime = currentTime + dir.estimatedDuration;
+        currentTime = endTime;
+        
+        return {
+          segmentId: dir.id,
+          sequenceIndex: idx,
+          startTime,
+          endTime,
+          status: 'READY' as const,
+          generatedPrompt: '', // F2V prompt starts empty, generated in Step 2
+          userEditedPrompt: null,
+          activeAssetUrl: null,
+          assetType: null,
+          generationMethod: dir.generationMethod,
+          triggerReason: dir.triggerReason,
+          emotionalBeat: '', // omitted from simplified format
+          dialogueLineIds: dir.dialogueLineIds,
+          // Map talentAction and shotType so the prompt builder has something to start with
+          action: dir.talentAction,
+          shotType: dir.shotType,
+          references: {
+            startFrameUrl: null,
+            endFrameUrl: null,
+            useSceneFrame: idx === 0,
+            characterRefs: [],
+            characterIds: [],
+            sceneRefIds: [],
+            objectRefIds: [],
+            // Map the Image Gen Prompts!
+            startFrameDescription: dir.keyframeStartDescription,
+            endFrameDescription: dir.keyframeEndDescription,
+          },
+          takes: [],
+          // Prompt context for staleness detection
+          promptContext: {
+            dialogueHash: '',
+            visualDescriptionHash: sceneBible.contentHash,
+            generatedAt: new Date().toISOString(),
+            sceneNumber: sceneBible.sceneNumber,
+          },
+          isStale: false,
+        }
       })
+
+      onSegmentsFinalized(finalSegments)
+      setLastGeneratedHash(sceneBible.contentHash)
+
+      toast.success(`Generated ${finalSegments.length} segments - Ready for Key Frames`)
+      
+      if (onClose) {
+        onClose()
+      }
     } catch (err: any) {
       console.error('[SegmentBuilder] Analysis error:', err)
       setError(err.message || 'Failed to analyze scene')
@@ -980,128 +708,7 @@ export function SegmentBuilder({
   }, [sceneId, projectId, targetDuration, narrationDriven, totalDurationTarget, segmentCountTarget, focusMode, customInstructions, audioMetadata, sceneBible.contentHash, hasSceneDirection, runProductionAnimation])
 
   // Phase 2: Generate prompts from approved directions
-  // Direction editing handlers
-  const handleDirectionEdit = useCallback((directionId: string, updates: Partial<ProposedDirection>) => {
-    setProposedDirections(prev => prev.map(d => {
-      if (d.id !== directionId) return d
-      return { ...d, ...updates, isUserEdited: true }
-    }))
-  }, [])
-
-  const handleDirectionApprove = useCallback((directionId: string) => {
-    setProposedDirections(prev => prev.map(d => {
-      if (d.id !== directionId) return d
-      return { ...d, isApproved: !d.isApproved }
-    }))
-  }, [])
-
-  const handleApproveAll = useCallback(() => {
-    setProposedDirections(prev => prev.map(d => ({ ...d, isApproved: true })))
-    toast.success('All directions approved')
-  }, [])
-
-  const handleGenerateSinglePrompt = useCallback((directionId: string) => {}, []) // Stub for type compatibility
-
-  // Open regeneration dialog with current settings
-  const handleOpenRegenerateDialog = useCallback(() => {
-    setRegenerationConfig({
-      targetDuration,
-      narrationDriven,
-      preserveManualEdits: false,
-    })
-    setShowRegenerateDialog(true)
-  }, [targetDuration, narrationDriven])
-
-  // Unified reset — clears all builder state back to analyze phase
-  const resetToAnalyze = useCallback(() => {    setPhase('analyze')
-    setError(null)
-    setProposedDirections([])
-    setSelectedDirectionId(null)
-  }, [])
-
-  // Confirm regeneration from dialog
-  const handleConfirmRegenerate = useCallback(() => {
-    // Apply config to generation options
-    setTargetDuration(regenerationConfig.targetDuration)
-    setNarrationDriven(regenerationConfig.narrationDriven)
-    
-    // Reset state for new generation (uses unified reset + dialog dismiss)
-    resetToAnalyze()
-    setShowRegenerateDialog(false)
-    
-    toast.info('Ready for regeneration - click Analyze Scene')
-  }, [regenerationConfig, resetToAnalyze])
-
-  const handleFinalize = useCallback(() => {
-    // Transform ProposedDirections directly to SceneSegments
-    const approvedDirs = proposedDirections.filter(d => d.isApproved)
-    
-    if (approvedDirs.length === 0) {
-      toast.error('No directions approved', {
-        description: 'Please approve at least one segment direction.',
-      })
-      return
-    }
-
-    let currentTime = 0;
-    
-    const finalSegments: SceneSegment[] = approvedDirs.map((dir, idx) => {
-      const startTime = currentTime;
-      const endTime = currentTime + dir.estimatedDuration;
-      currentTime = endTime;
-      
-      // We will generate the F2V video_generation_prompt lazily or in SegmentStudio
-      const fallbackPrompt = `${dir.shotType} shot. ${dir.talentAction}`
-      
-      return {
-        segmentId: dir.id,
-        sequenceIndex: idx,
-        startTime,
-        endTime,
-        status: 'READY' as const,
-        generatedPrompt: '', // F2V prompt starts empty, generated in Step 2
-        userEditedPrompt: null,
-        activeAssetUrl: null,
-        assetType: null,
-        generationMethod: dir.generationMethod,
-        triggerReason: dir.triggerReason,
-        emotionalBeat: '', // omitted from simplified format
-        dialogueLineIds: dir.dialogueLineIds,
-        // Map talentAction and shotType so the prompt builder has something to start with
-        action: dir.talentAction,
-        shotType: dir.shotType,
-        references: {
-          startFrameUrl: null,
-          endFrameUrl: null,
-          useSceneFrame: idx === 0,
-          characterRefs: [],
-          characterIds: [],
-          sceneRefIds: [],
-          objectRefIds: [],
-          // Map the Image Gen Prompts!
-          startFrameDescription: dir.keyframeStartDescription,
-          endFrameDescription: dir.keyframeEndDescription,
-        },
-        takes: [],
-        // Prompt context for staleness detection
-        promptContext: {
-          dialogueHash: '',
-          visualDescriptionHash: sceneBible.contentHash,
-          generatedAt: new Date().toISOString(),
-          sceneNumber: sceneBible.sceneNumber,
-        },
-        isStale: false,
-      }
-    })
-
-    onSegmentsFinalized(finalSegments)
-    toast.success(`Finalized ${finalSegments.length} segments - Ready for Key Frames`)
-    
-    if (onClose) {
-      onClose()
-    }
-  }, [proposedDirections, sceneBible, onSegmentsFinalized, onClose])
-
+  
   // -------------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------------
@@ -1120,11 +727,7 @@ export function SegmentBuilder({
           </div>
           <Badge variant="outline" className="border-gray-600 text-gray-400">Scene {sceneNumber}</Badge>
         </div>
-        <PhaseIndicator
-          currentPhase={phase}
-          onPhaseClick={setPhase}
-          canAdvance={canAdvance}
-        />
+        
       </div>
 
       {/* Main Content */}
@@ -1351,7 +954,7 @@ export function SegmentBuilder({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={resetToAnalyze}
+                        onClick={() => setError(null)}
                         className="w-full"
                       >
                         <RefreshCw className="w-3 h-3 mr-2" />
@@ -1393,199 +996,8 @@ export function SegmentBuilder({
               </Card>
             </div>
           )}
-
-          {/* Phase: Directions Review (NEW) */}
-          {phase === 'directions' && (
-            <div className="flex-1 flex flex-col overflow-hidden">
-              {/* Directions Header */}
-              <div className="px-4 py-3 border-b border-gray-700/50 bg-gray-900/40">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium flex items-center gap-2 text-white">
-                      <Eye className="w-4 h-4 text-cyan-400" />
-                      Review Segment Directions
-                    </h3>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Review and approve each segment's direction before generating video prompts
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-cyan-400 border-cyan-400/30">
-                      {approvedDirectionCount}/{proposedDirections.length} Approved
-                    </Badge>
-                    <Badge variant="outline">
-                      ~{Math.round(totalDuration)}s total
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-
-              {/* Directions List */}
-              <ScrollArea className="flex-1">
-                <div className="p-4 space-y-3">
-                  {proposedDirections.map((direction, idx) => (
-                    <SegmentDirectionCard
-                      key={direction.id}
-                      direction={direction}
-                      index={idx}
-                      dialogueLines={sceneBible.dialogue}
-                      isSelected={selectedDirectionId === direction.id}
-                      onSelect={() => setSelectedDirectionId(direction.id)}
-                      onEdit={(updates) => handleDirectionEdit(direction.id, updates)}
-                      onApprove={() => handleDirectionApprove(direction.id)}
-                      onGeneratePrompt={() => handleGenerateSinglePrompt(direction.id)}
-                    />
-                  ))}
-                </div>
-              </ScrollArea>
-
-              {/* Actions Bar */}
-              <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleApproveAll}
-                  >
-                    <Check className="w-3 h-3 mr-1" />
-                    Approve All
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={resetToAnalyze}
-                  >
-                    <RefreshCw className="w-3 h-3 mr-1" />
-                    Start Over
-                  </Button>
-                </div>
-                <Button
-                  onClick={handleFinalize}
-                  disabled={approvedDirectionCount === 0}
-                  size="lg"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
-                >
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Finalize Segments ({approvedDirectionCount})
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Phase 2 was removed. Finalize happens directly. */}
-          
-          {/* Phase 2 was removed. Finalize happens directly. */}
         </div>
       </div>
-
-      {/* Regeneration Configuration Dialog */}
-      <Dialog open={showRegenerateDialog} onOpenChange={setShowRegenerateDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <RefreshCw className="w-5 h-5 text-primary" />
-              Regenerate Segments
-            </DialogTitle>
-            <DialogDescription>
-              Configure options for segment regeneration. Current proposals will be discarded.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            {/* Staleness Warning */}
-            {isStale && (
-              <Alert className="border-amber-500/50 bg-amber-950/20">
-                <AlertTriangle className="w-4 h-4 text-amber-500" />
-                <AlertDescription className="text-amber-400">
-                  Scene content has changed since last generation. Regeneration recommended.
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            {/* Duration Setting */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Target Segment Duration</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="range"
-                  min={4}
-                  max={8}
-                  step={1}
-                  value={regenerationConfig.targetDuration}
-                  onChange={e => setRegenerationConfig(prev => ({
-                    ...prev,
-                    targetDuration: parseInt(e.target.value)
-                  }))}
-                  className="flex-1"
-                />
-                <span className="text-sm font-mono w-12">{regenerationConfig.targetDuration}s</span>
-              </div>
-            </div>
-
-            {/* Narration-Driven Toggle */}
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Narration-Driven</p>
-                <p className="text-xs text-muted-foreground">
-                  Prioritize narration timing for segment boundaries
-                </p>
-              </div>
-              <Button
-                variant={regenerationConfig.narrationDriven ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setRegenerationConfig(prev => ({
-                  ...prev,
-                  narrationDriven: !prev.narrationDriven
-                }))}
-              >
-                {regenerationConfig.narrationDriven ? 'On' : 'Off'}
-              </Button>
-            </div>
-
-            {/* Preserve Manual Edits Toggle */}
-            {proposedDirections.some(d => d.isUserEdited) && (
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">Preserve Manual Edits</p>
-                  <p className="text-xs text-muted-foreground">
-                    Attempt to reapply your edits to matching segments
-                  </p>
-                </div>
-                <Button
-                  variant={regenerationConfig.preserveManualEdits ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setRegenerationConfig(prev => ({
-                    ...prev,
-                    preserveManualEdits: !prev.preserveManualEdits
-                  }))}
-                >
-                  {regenerationConfig.preserveManualEdits ? 'Yes' : 'No'}
-                </Button>
-              </div>
-            )}
-
-            {/* Warning about discarding current work */}
-            <Alert>
-              <AlertCircle className="w-4 h-4" />
-              <AlertDescription>
-                {proposedDirections.filter(d => d.isUserEdited).length > 0 
-                  ? `${proposedDirections.filter(d => d.isUserEdited).length} edited direction(s) will be discarded.`
-                  : 'Current segment proposals will be discarded.'}
-              </AlertDescription>
-            </Alert>
-          </div>
-
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setShowRegenerateDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleConfirmRegenerate}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Regenerate
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
