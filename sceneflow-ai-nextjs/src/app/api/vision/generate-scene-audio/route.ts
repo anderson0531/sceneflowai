@@ -374,6 +374,14 @@ async function generateGoogleAudio(text: string, voiceConfig: VoiceConfig): Prom
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
   let accessToken: string | null = null
 
+  // Gemini TTS doesn't natively support bracketed emotion tags like ElevenLabs.
+  // Remove them to prevent hallucinations where it reads them aloud or stutters.
+  const sanitizedText = text.replace(/\[.*?\]/g, '').trim()
+  
+  if (!sanitizedText) {
+    throw new Error('Text is empty after removing bracketed tags')
+  }
+
   try {
     // Try to get the GCP token (Vertex AI / standard Google service account auth)
     accessToken = await getVertexAIAuthToken()
@@ -393,7 +401,7 @@ async function generateGoogleAudio(text: string, voiceConfig: VoiceConfig): Prom
     : (voiceConfig.languageCode || 'en-US')
 
   const payload: any = {
-    input: { text },
+    input: { text: sanitizedText },
     voice: {
       languageCode,
     },

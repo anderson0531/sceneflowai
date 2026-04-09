@@ -330,26 +330,28 @@ DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
 EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
 
 STYLE TAGS (In square brackets BEFORE text):
+- MUST BE SHORT AND CONCISE (1-3 words max).
+- Do not use complex, conversational phrases like "[slower, a hint of sorrow]". Use simple combinations instead.
 Emotions: [happy], [sad], [angry], [fearful], [surprised], [disgusted], [neutral]
 Intensity: [very], [slightly], [extremely]
 Vocal Quality: [whispering], [shouting], [mumbling], [singing], [laughing], [crying], [gasping]
 Pace: [quickly], [slowly], [hesitantly], [confidently]
-Combined: [very happy], [slightly angry], [extremely fearful], [confidently asserting]
+Combined Examples: [very happy], [slightly angry], [slow, sad], [confidently]
 
 PUNCTUATION & PACING:
 - Use ellipses (...) for pauses, trailing off, or hesitation
 - Use dashes (—) for interruptions or sudden stops  
-- Use CAPS for EMPHASIS on specific words
+- Use CAPS for EMPHASIS on specific words (NEVER use asterisks * or underscores _ for emphasis)
 - Use commas (,) for natural breathing pauses
 
 EXAMPLES:
   * {"character": "BRIAN ANDERSON SR", "line": "[very excited] I can't believe it! This changes EVERYTHING!"}
-  * {"character": "MINT", "line": "[whispering nervously] Don't tell anyone... It's our secret, okay?"}
-  * {"character": "ERIC", "line": "[sadly, slowly] I wish things were different— but they're not."}
-  * {"character": "DR. MARTINEZ", "line": "[confidently] The results are clear, and I'm afraid... [pausing] they're not good."}
-  * {"character": "CHILD", "line": "[very happy, quickly] Mommy, mommy! Look what I found!"}
+  * {"character": "MINT", "line": "[whispering] Don't tell anyone... It's our secret, okay?"}
+  * {"character": "ERIC", "line": "[sad, slow] I wish things were different— but they're not."}
+  * {"character": "DR. MARTINEZ", "line": "[confident] The results are clear, and I'm afraid... they're not good."}
+  * {"character": "CHILD", "line": "[happy, quickly] Mommy, mommy! Look what I found!"}
 
-CRITICAL: Every single dialogue line must start with at least one emotion/style tag in [brackets].
+CRITICAL: Every single dialogue line must start with at least one simple emotion/style tag in [brackets].
 
 CRITICAL REQUIREMENTS:
 1. Generate a COMPLETE, CONTINUOUS script with ${sceneCount} scenes

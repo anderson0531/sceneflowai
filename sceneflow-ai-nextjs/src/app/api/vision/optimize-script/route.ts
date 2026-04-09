@@ -1094,6 +1094,8 @@ RULES:
 • Output ${batchScenes.length} scene(s) — you MAY add new dialogue lines or action beats WITHIN scenes
 • Duration may INCREASE for expanded scenes (add 5-15s per added beat)
 • All dialogue needs [emotion] tags
+• Emotion tags MUST be short and concise (1-3 words max, e.g., [sad] or [slow, sad]). Do NOT use complex conversational phrases like "[slower, a hint of sorrow]"
+• NEVER use asterisks (*) or underscores (_) for emphasis in dialogue. Use ALL CAPS instead.
 • Escape quotes in JSON
 • Narration: 1 sentence max, or empty string "" if the scene works without it. Prefer showing through action over telling through narration
 • REWRITE dialogue substantially — don't just change emotion tags`
