@@ -509,7 +509,6 @@ function ScenePreviewPlayer({
   audioTracks,
   currentAudioUrls,
   totalDuration,
-  videoTotalDuration,
   isMuted,
   onToggleMute,
   segmentAudioConfigs,
@@ -526,8 +525,7 @@ function ScenePreviewPlayer({
     music?: string
     sfx: Array<{ audioUrl?: string; duration?: number; startTime?: number }>
   }
-  totalDuration: number      // Scene duration (max of video/audio)
-  videoTotalDuration: number // Video-only duration
+  totalDuration: number // max(metadata video, audio) from parent — scrubber uses max of this and measured video
   isMuted: boolean
   onToggleMute: () => void
   segmentAudioConfigs: Record<string, SegmentAudioConfig>
@@ -547,6 +545,8 @@ function ScenePreviewPlayer({
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0)
   const [isVideoFrozen, setIsVideoFrozen] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  /** Decoded duration per segment from the video element (timeline metadata can be shorter than the file). */
+  const [measuredSegmentDurations, setMeasuredSegmentDurations] = useState<Record<string, number>>({})
   
   // Track container width for proportional overlay scaling
   // Text overlays use vh units (viewport-relative) but need to be scaled
@@ -565,35 +565,63 @@ function ScenePreviewPlayer({
   
   // Track loaded video URL to prevent duplicate loads
   const loadedVideoUrlRef = useRef<string | null>(null)
+  const segmentIdForLoadedVideoRef = useRef<string | null>(null)
   
   // Timer for audio-extended playback (when video is frozen)
   const audioTimerRef = useRef<NodeJS.Timeout | null>(null)
   
-  // Helper: Get effective duration of a segment (uses actualVideoDuration for uploads)
+  // Helper: Segment duration from production metadata only
   const getSegmentDuration = useCallback((segment: SceneSegment) => {
     return segment.actualVideoDuration ?? (segment.endTime - segment.startTime)
   }, [])
-  
-  // Helper: Calculate start time for a segment index
-  const getSegmentStartTime = useCallback((segmentIndex: number) => {
-    let elapsed = 0
-    for (let i = 0; i < Math.min(segmentIndex, segments.length); i++) {
-      elapsed += getSegmentDuration(segments[i])
-    }
-    return elapsed
-  }, [segments, getSegmentDuration])
-  
-  // Helper: Calculate end time for a segment index (end of that segment)
-  const getSegmentEndTime = useCallback((segmentIndex: number) => {
-    let elapsed = 0
-    for (let i = 0; i <= Math.min(segmentIndex, segments.length - 1); i++) {
-      elapsed += getSegmentDuration(segments[i])
-    }
-    return elapsed
-  }, [segments, getSegmentDuration])
-  
-  // Calculate progress percentage
-  const progressPercent = totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0
+
+  /** Playback duration: prefer decoded media length when it differs from metadata. */
+  const getPlaybackSegmentDuration = useCallback(
+    (segment: SceneSegment) => {
+      const measured = measuredSegmentDurations[segment.segmentId]
+      if (measured != null && Number.isFinite(measured) && measured > 0) {
+        return measured
+      }
+      return getSegmentDuration(segment)
+    },
+    [measuredSegmentDurations, getSegmentDuration]
+  )
+
+  // Helper: Start time on the playback timeline (uses measured segment lengths)
+  const getSegmentStartTime = useCallback(
+    (segmentIndex: number) => {
+      let elapsed = 0
+      for (let i = 0; i < Math.min(segmentIndex, segments.length); i++) {
+        elapsed += getPlaybackSegmentDuration(segments[i])
+      }
+      return elapsed
+    },
+    [segments, getPlaybackSegmentDuration]
+  )
+
+  // Helper: End time on the playback timeline
+  const getSegmentEndTime = useCallback(
+    (segmentIndex: number) => {
+      let elapsed = 0
+      for (let i = 0; i <= Math.min(segmentIndex, segments.length - 1); i++) {
+        elapsed += getPlaybackSegmentDuration(segments[i])
+      }
+      return elapsed
+    },
+    [segments, getPlaybackSegmentDuration]
+  )
+
+  const timelineVideoDuration = useMemo(
+    () => segments.reduce((sum, s) => sum + getPlaybackSegmentDuration(s), 0),
+    [segments, getPlaybackSegmentDuration]
+  )
+
+  // Scrubber/timeline length: at least as long as decoded video and at least parent total (audio/elastic)
+  const scrubberTotalDuration = Math.max(timelineVideoDuration, totalDuration, 0.001)
+
+  // Calculate progress percentage (clamped — denominator tracks real media + elastic audio)
+  const progressPercent =
+    scrubberTotalDuration > 0 ? Math.min(100, (currentTime / scrubberTotalDuration) * 100) : 0
   
   // Current segment (based on segment index, not time-based calculation)
   const currentSegment = useMemo(() => {
@@ -603,14 +631,10 @@ function ScenePreviewPlayer({
     return { segment: segments[0], index: 0 }
   }, [segments, currentSegmentIndex])
   
-  // Calculate cumulative start time for current segment (uses actualVideoDuration for uploads)
-  const segmentStartTime = useMemo(() => {
-    let elapsed = 0
-    for (let i = 0; i < currentSegmentIndex; i++) {
-      elapsed += getSegmentDuration(segments[i])
-    }
-    return elapsed
-  }, [segments, currentSegmentIndex, getSegmentDuration])
+  const segmentStartTime = useMemo(
+    () => getSegmentStartTime(currentSegmentIndex),
+    [currentSegmentIndex, getSegmentStartTime]
+  )
 
   // Handle video time updates
   useEffect(() => {
@@ -642,12 +666,12 @@ function ScenePreviewPlayer({
           audioTracks.music.enabled && currentAudioUrls.music ? totalDuration : 0
         )
         
-        if (audioEndTime > videoTotalDuration && currentTime < audioEndTime) {
+        if (audioEndTime > timelineVideoDuration && currentTime < audioEndTime) {
           // Freeze video on last frame, continue audio
           setIsVideoFrozen(true)
           
           // Start timer to continue advancing currentTime for audio playback
-          const startFreezeTime = videoTotalDuration
+          const startFreezeTime = timelineVideoDuration
           const remainingTime = audioEndTime - startFreezeTime
           let elapsedFrozen = 0
           
@@ -683,7 +707,17 @@ function ScenePreviewPlayer({
       video.removeEventListener('timeupdate', handleTimeUpdate)
       video.removeEventListener('ended', handleEnded)
     }
-  }, [currentSegmentIndex, segments, segmentStartTime, isVideoFrozen, audioTracks, currentAudioUrls, totalDuration, videoTotalDuration, currentTime])
+  }, [
+    currentSegmentIndex,
+    segments,
+    segmentStartTime,
+    isVideoFrozen,
+    audioTracks,
+    currentAudioUrls,
+    totalDuration,
+    timelineVideoDuration,
+    currentTime,
+  ])
   
   // Sync audio tracks with video playback
   useEffect(() => {
@@ -774,6 +808,7 @@ function ScenePreviewPlayer({
     
     if (video && newUrl && newUrl !== loadedVideoUrlRef.current) {
       loadedVideoUrlRef.current = newUrl
+      segmentIdForLoadedVideoRef.current = currentSegment.segment?.segmentId ?? null
       video.src = newUrl
       video.load()
       if (isPlaying && !isVideoFrozen) {
@@ -845,20 +880,19 @@ function ScenePreviewPlayer({
   }
   
   const handleSeek = (percent: number) => {
-    const targetTime = (percent / 100) * totalDuration
-    
+    const targetTime = (percent / 100) * scrubberTotalDuration
+
     // Clear any frozen state
     setIsVideoFrozen(false)
     if (audioTimerRef.current) {
       clearInterval(audioTimerRef.current)
       audioTimerRef.current = null
     }
-    
-    // Find target segment based on video time (capped to video duration)
-    const videoTargetTime = Math.min(targetTime, videoTotalDuration)
+
+    const videoTargetTime = Math.min(targetTime, timelineVideoDuration)
     let elapsed = 0
     for (let i = 0; i < segments.length; i++) {
-      const segDuration = getSegmentDuration(segments[i])
+      const segDuration = getPlaybackSegmentDuration(segments[i])
       if (videoTargetTime < elapsed + segDuration) {
         setCurrentSegmentIndex(i)
         const localTime = videoTargetTime - elapsed
@@ -870,11 +904,10 @@ function ScenePreviewPlayer({
       }
       elapsed += segDuration
     }
-    
-    // If seeking beyond video, seek to end of last segment
+
     setCurrentSegmentIndex(segments.length - 1)
     if (videoRef.current) {
-      const lastSegDuration = getSegmentDuration(segments[segments.length - 1])
+      const lastSegDuration = getPlaybackSegmentDuration(segments[segments.length - 1])
       videoRef.current.currentTime = lastSegDuration
     }
     setCurrentTime(targetTime)
@@ -939,6 +972,17 @@ function ScenePreviewPlayer({
             className="w-full h-full object-contain"
             muted={isMuted || !segmentAudioConfigs[currentSegment.segment.segmentId]?.includeAudio}
             playsInline
+            onLoadedMetadata={(e) => {
+              const video = e.currentTarget
+              const id = segmentIdForLoadedVideoRef.current
+              if (!id) return
+              const d = video.duration
+              if (!Number.isFinite(d) || d <= 0) return
+              setMeasuredSegmentDurations((prev) => {
+                if (prev[id] === d) return prev
+                return { ...prev, [id]: d }
+              })
+            }}
           />
         ) : (
           <div className="text-gray-500 text-sm flex flex-col items-center gap-2">
@@ -951,7 +995,7 @@ function ScenePreviewPlayer({
         <div className="absolute top-3 left-3 flex items-center gap-2">
           <Badge variant="outline" className="bg-black/60 border-gray-600 text-white text-xs">
             <Clock className="w-3 h-3 mr-1" />
-            {formatTime(totalDuration)}
+            {formatTime(scrubberTotalDuration)}
           </Badge>
           <Badge variant="outline" className="bg-black/60 border-purple-500/50 text-purple-300 text-xs">
             Seg {currentSegmentIndex + 1}/{segments.length}
@@ -1218,7 +1262,7 @@ function ScenePreviewPlayer({
         </div>
         
         <span className="text-xs text-gray-400 font-mono w-10 text-right">
-          {formatTime(totalDuration)}
+          {formatTime(scrubberTotalDuration)}
         </span>
         
         {/* Mute Button */}
@@ -3424,7 +3468,6 @@ export function SceneProductionMixer({
                 audioTracks={audioTracks}
                 currentAudioUrls={currentAudioUrls}
                 totalDuration={totalDuration}
-                videoTotalDuration={videoTotalDuration}
                 isMuted={isMuted}
                 onToggleMute={() => setIsMuted(prev => !prev)}
                 segmentAudioConfigs={segmentAudioConfigs}
