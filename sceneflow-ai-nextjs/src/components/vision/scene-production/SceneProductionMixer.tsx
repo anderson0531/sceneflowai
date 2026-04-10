@@ -2454,6 +2454,40 @@ export function SceneProductionMixer({
   const [preserveBackgroundStem, setPreserveBackgroundStem] = useState(true)
   const [includeSpeechStem, setIncludeSpeechStem] = useState(false)
   const [masterSegmentVolume, setMasterSegmentVolume] = useState(0.8)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const stored = localStorage.getItem(MIXER_SETTINGS_STORAGE_KEY)
+      const parsed = stored ? JSON.parse(stored) : {}
+      if (typeof parsed.preserveBackgroundStem === 'boolean') {
+        setPreserveBackgroundStem(parsed.preserveBackgroundStem)
+      }
+      if (typeof parsed.includeSpeechStem === 'boolean') {
+        setIncludeSpeechStem(parsed.includeSpeechStem)
+      }
+    } catch (e) {
+      console.warn('[SceneProductionMixer] Failed to load stem policy settings:', e)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const stored = localStorage.getItem(MIXER_SETTINGS_STORAGE_KEY)
+      const parsed = stored ? JSON.parse(stored) : {}
+      localStorage.setItem(
+        MIXER_SETTINGS_STORAGE_KEY,
+        JSON.stringify({
+          ...parsed,
+          preserveBackgroundStem,
+          includeSpeechStem,
+        })
+      )
+    } catch (e) {
+      console.warn('[SceneProductionMixer] Failed to persist stem policy settings:', e)
+    }
+  }, [preserveBackgroundStem, includeSpeechStem])
   
   // Initialize segment configs
   useEffect(() => {
@@ -2475,6 +2509,11 @@ export function SceneProductionMixer({
     }
     return Array.from(langs)
   }, [audioAssets])
+
+  const nonEnglishSegmentsMissingBackgroundStem = useMemo(() => {
+    if (productionTarget.language === 'en') return 0
+    return previewSegments.filter((seg) => !seg.stemSeparation?.backgroundStemUrl).length
+  }, [previewSegments, productionTarget.language])
   
   // Get audio URLs for selected language
   const currentAudioUrls = useMemo(() => {
@@ -4509,6 +4548,35 @@ export function SceneProductionMixer({
                         className="h-[26px] w-auto min-w-[90px] text-[11px] bg-gray-700/30 border-gray-600/40 text-gray-300"
                         placeholder={`+${availableLanguages.length - 4} more`}
                       />
+                    )}
+                  </div>
+                  <div className="px-3 pb-3 pt-1 space-y-2 border-t border-gray-700/50">
+                    <div className="flex items-center justify-between">
+                      <div className="text-[11px] text-gray-400">
+                        Preserve Veo ambience for dubbed renders
+                      </div>
+                      <Switch
+                        checked={preserveBackgroundStem}
+                        onCheckedChange={setPreserveBackgroundStem}
+                        disabled={isRendering}
+                      />
+                    </div>
+                    {preserveBackgroundStem && (
+                      <div className="flex items-center justify-between">
+                        <div className="text-[11px] text-gray-500">
+                          Keep original speech stem
+                        </div>
+                        <Switch
+                          checked={includeSpeechStem}
+                          onCheckedChange={setIncludeSpeechStem}
+                          disabled={isRendering}
+                        />
+                      </div>
+                    )}
+                    {preserveBackgroundStem && productionTarget.language !== 'en' && nonEnglishSegmentsMissingBackgroundStem > 0 && (
+                      <p className="text-[11px] text-amber-300/90">
+                        {nonEnglishSegmentsMissingBackgroundStem} segment{nonEnglishSegmentsMissingBackgroundStem > 1 ? 's are' : ' is'} missing background stems. Falling back to original segment audio for those clips.
+                      </p>
                     )}
                   </div>
                 </div>

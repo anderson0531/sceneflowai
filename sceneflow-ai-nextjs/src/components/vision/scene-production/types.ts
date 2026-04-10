@@ -3,6 +3,37 @@ import type { SegmentDirection } from '@/types/scene-direction'
 
 export type SceneSegmentStatus = 'DRAFT' | 'READY' | 'GENERATING' | 'COMPLETE' | 'UPLOADED' | 'ERROR'
 
+export type StemSeparationStatus = 'pending' | 'processing' | 'complete' | 'failed' | 'skipped'
+
+export interface StemSeparationDiagnostics {
+  model?: string
+  modelVersion?: string
+  sourceHash?: string
+  sourceAudioUrl?: string
+  speechStemPath?: string
+  backgroundStemPath?: string
+  processingMs?: number
+  confidence?: number
+  sampleRate?: number
+  channels?: number
+  jobId?: string
+  jobStatus?: 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED'
+  [key: string]: unknown
+}
+
+export interface StemSeparationState {
+  status: StemSeparationStatus
+  speechStemUrl?: string
+  backgroundStemUrl?: string
+  provider?: string
+  error?: string
+  sourceAudioUrl?: string
+  sourceHash?: string
+  jobId?: string
+  processedAt?: string
+  providerMeta?: StemSeparationDiagnostics
+}
+
 // ============================================================================
 // Scene Context Types (AI-enhanced scene details)
 // ============================================================================
@@ -439,15 +470,7 @@ export interface SceneSegmentTake {
   // ISO timestamp when veoVideoRef expires (48 hours from generation)
   // After this time, video extension falls back to I2V mode with the last frame
   veoVideoRefExpiry?: string
-  stemSeparation?: {
-    status: 'pending' | 'processing' | 'complete' | 'failed' | 'skipped'
-    speechStemUrl?: string
-    backgroundStemUrl?: string
-    provider?: string
-    error?: string
-    sourceAudioUrl?: string
-    processedAt?: string
-  }
+  stemSeparation?: StemSeparationState
 }
 
 export interface SceneSegmentReferences {
@@ -615,15 +638,7 @@ export interface SceneSegment {
   
   // Audio overrun amount in seconds (how much audio exceeds video)
   audioOverrun?: number
-  stemSeparation?: {
-    status: 'pending' | 'processing' | 'complete' | 'failed' | 'skipped'
-    speechStemUrl?: string
-    backgroundStemUrl?: string
-    provider?: string
-    error?: string
-    sourceAudioUrl?: string
-    processedAt?: string
-  }
+  stemSeparation?: StemSeparationState
 }
 
 // Character presence in a segment

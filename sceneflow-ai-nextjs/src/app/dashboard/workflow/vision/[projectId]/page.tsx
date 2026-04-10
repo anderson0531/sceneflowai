@@ -2602,7 +2602,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             // Pass guidePrompt containing voice/dialogue/SFX for Veo 3.1 audio generation
             guidePrompt: options?.guidePrompt,
             existingStemSourceAudioUrl: segment.stemSeparation?.sourceAudioUrl,
+            existingStemSourceHash: segment.stemSeparation?.sourceHash,
             existingStemStatus: segment.stemSeparation?.status,
+            existingStemJobId: segment.stemSeparation?.jobId,
           }),
         })
 
@@ -2875,6 +2877,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         aspectRatio: options?.aspectRatio,
                         resolution: options?.resolution,
                         guidePrompt: options?.guidePrompt,
+                        existingStemSourceAudioUrl: segment.stemSeparation?.sourceAudioUrl,
+                        existingStemSourceHash: segment.stemSeparation?.sourceHash,
+                        existingStemStatus: segment.stemSeparation?.status,
+                        existingStemJobId: segment.stemSeparation?.jobId,
                       }),
                     }).then(async (retryResponse) => {
                       toast.dismiss('retry-i2v')
@@ -2895,6 +2901,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                                 status: 'COMPLETE' as const,
                                 durationSec: seg.endTime - seg.startTime,
                                 veoVideoRef: retryData.veoVideoRef,
+                                stemSeparation: retryData.stemSeparation
+                                  ? {
+                                      ...retryData.stemSeparation,
+                                      sourceAudioUrl: retryData.assetUrl,
+                                      processedAt: new Date().toISOString(),
+                                    }
+                                  : undefined,
                               }
                               return {
                                 ...seg,
@@ -2904,6 +2917,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                                 takes: [newTake, ...(seg.takes || [])],
                                 errorMessage: undefined,
                                 lastContentPolicyFailure: undefined, // Clear failure flag on success
+                                stemSeparation: retryData.stemSeparation
+                                  ? {
+                                      ...retryData.stemSeparation,
+                                      sourceAudioUrl: retryData.assetUrl,
+                                      processedAt: new Date().toISOString(),
+                                    }
+                                  : seg.stemSeparation,
                                 references: {
                                   ...seg.references,
                                   endFrameUrl: retryData.lastFrameUrl || seg.references?.endFrameUrl,
@@ -3039,6 +3059,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         aspectRatio: options?.aspectRatio,
                         resolution: options?.resolution,
                         guidePrompt: options?.guidePrompt,
+                        existingStemSourceAudioUrl: segment.stemSeparation?.sourceAudioUrl,
+                        existingStemSourceHash: segment.stemSeparation?.sourceHash,
+                        existingStemStatus: segment.stemSeparation?.status,
+                        existingStemJobId: segment.stemSeparation?.jobId,
                       }),
                     }).then(async (retryResponse) => {
                       toast.dismiss('retry-sanitized')
@@ -3059,6 +3083,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                                 status: 'COMPLETE' as const,
                                 durationSec: seg.endTime - seg.startTime,
                                 veoVideoRef: retryData.veoVideoRef,
+                                stemSeparation: retryData.stemSeparation
+                                  ? {
+                                      ...retryData.stemSeparation,
+                                      sourceAudioUrl: retryData.assetUrl,
+                                      processedAt: new Date().toISOString(),
+                                    }
+                                  : undefined,
                               }
                               return {
                                 ...seg,
@@ -3067,6 +3098,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                                 activeAssetUrl: retryData.assetUrl,
                                 takes: [newTake, ...(seg.takes || [])],
                                 errorMessage: undefined,
+                                stemSeparation: retryData.stemSeparation
+                                  ? {
+                                      ...retryData.stemSeparation,
+                                      sourceAudioUrl: retryData.assetUrl,
+                                      processedAt: new Date().toISOString(),
+                                    }
+                                  : seg.stemSeparation,
                               }
                             })
                             return { ...current, segments }

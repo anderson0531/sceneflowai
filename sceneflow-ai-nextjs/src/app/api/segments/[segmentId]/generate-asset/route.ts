@@ -20,6 +20,7 @@ import {
 import { getQualityForMethod } from '@/lib/config/modelConfig'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { separateAudioStemsWithRetry, type StemSeparationResult } from '@/lib/audio/stemSeparation'
+import { computeSourceHash } from '@/lib/audio/stemJobs'
 
 export const maxDuration = 300 // 5 minutes for video generation
 export const runtime = 'nodejs'
@@ -60,7 +61,9 @@ interface GenerateAssetRequest {
   // Composed by GuidePromptEditor with proper voice anchors and Veo formatting
   guidePrompt?: string
   existingStemSourceAudioUrl?: string
+  existingStemSourceHash?: string
   existingStemStatus?: string
+  existingStemJobId?: string
 }
 
 export async function POST(
@@ -101,7 +104,10 @@ export async function POST(
       guidePrompt
       ,
       existingStemSourceAudioUrl,
+      existingStemSourceHash,
       existingStemStatus
+      ,
+      existingStemJobId
     } = body
 
     // Get user session for authentication
@@ -508,20 +514,39 @@ export async function POST(
         try {
           const stemStart = Date.now()
           const sourceForStem = assetUrl
+          const sourceHash = computeSourceHash(sourceForStem)
           if (
-            existingStemSourceAudioUrl &&
             existingStemStatus === 'complete' &&
-            existingStemSourceAudioUrl === sourceForStem
+            (existingStemSourceHash === sourceHash || existingStemSourceAudioUrl === sourceForStem)
           ) {
             stemSeparation = {
               status: 'skipped',
               provider: (process.env.STEM_SEPARATION_PROVIDER || 'none').toLowerCase(),
+              sourceHash,
+              sourceAudioUrl: sourceForStem,
+              jobId: existingStemJobId,
               error: 'Stem separation skipped: source unchanged and already complete',
             }
           } else {
-            stemSeparation = await separateAudioStemsWithRetry(sourceForStem, 3)
+            stemSeparation = await separateAudioStemsWithRetry(sourceForStem, {
+              maxAttempts: 3,
+              mode: (process.env.STEM_SEPARATION_MODE || 'async').toLowerCase() as 'sync' | 'async',
+              context: {
+                projectId,
+                sceneId,
+                segmentId,
+                userId: String(session.user.id),
+              },
+              model: process.env.DEMUCS_MODEL || 'htdemucs_ft',
+            })
           }
           const stemLatencyMs = Date.now() - stemStart
+          stemSeparation = {
+            ...stemSeparation,
+            sourceHash: stemSeparation.sourceHash || sourceHash,
+            sourceAudioUrl: stemSeparation.sourceAudioUrl || sourceForStem,
+            processingMs: stemSeparation.processingMs || stemLatencyMs,
+          }
           console.log('[Segment Asset Generation] Stem metrics', {
             segmentId,
             status: stemSeparation.status,
