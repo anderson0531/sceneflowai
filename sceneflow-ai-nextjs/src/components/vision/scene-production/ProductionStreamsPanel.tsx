@@ -2,14 +2,11 @@
 
 import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { 
   Play, 
   Download, 
   RefreshCw, 
   Trash2, 
-  Plus, 
-  Globe, 
   CheckCircle2, 
   AlertCircle,
   Loader2,
@@ -23,13 +20,11 @@ import {
   Pause
 } from 'lucide-react'
 import { SUPPORTED_LANGUAGES, FLAG_EMOJIS } from '@/constants/languages'
-import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import type {
   ProductionStream,
   ProductionStreamStatus,
   ProductionStreamType,
   AnimaticRenderSettings,
-  KenBurnsIntensity,
 } from './types'
 
 // ============================================================================
@@ -46,8 +41,6 @@ interface ProductionStreamsPanelProps {
   onStreamTypeTabChange?: (t: ProductionStreamType) => void
   /** Callback to render a new animatic production stream */
   onRenderAnimatic?: (language: string, resolution: '720p' | '1080p' | '4K', settings: AnimaticRenderSettings) => Promise<void>
-  /** Callback to render a new video production stream */
-  onRenderVideo?: (language: string, resolution: '720p' | '1080p' | '4K') => Promise<void>
   /** Legacy callback for backwards compatibility - renders as animatic */
   onRenderProduction?: (language: string, resolution: '720p' | '1080p' | '4K') => Promise<void>
   /** Callback to delete a production stream */
@@ -97,18 +90,14 @@ const STREAM_TYPE_CONFIG: Record<ProductionStreamType, StreamTypeEntry> = {
   },
 }
 
-const KEN_BURNS_OPTIONS: { value: KenBurnsIntensity; label: string }[] = [
-  { value: 'off', label: 'Off' },
-  { value: 'subtle', label: 'Subtle' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'dramatic', label: 'Dramatic' },
-]
-
-const TRANSITION_OPTIONS: { value: 'cut' | 'crossfade' | 'fade-to-black'; label: string }[] = [
-  { value: 'cut', label: 'Cut' },
-  { value: 'crossfade', label: 'Crossfade' },
-  { value: 'fade-to-black', label: 'Fade to Black' },
-]
+/** Defaults for “Compose animatic” (same as previous inline form defaults). */
+const DEFAULT_ANIMATIC_EXPORT_SETTINGS: AnimaticRenderSettings = {
+  type: 'animatic',
+  kenBurnsIntensity: 'subtle',
+  transitionStyle: 'crossfade',
+  transitionDuration: 0.5,
+  includeSubtitles: false,
+}
 
 interface StatusEntry {
   Icon: React.ComponentType<{ className?: string }>
@@ -457,7 +446,6 @@ export function ProductionStreamsPanel({
   streamTypeTab,
   onStreamTypeTabChange,
   onRenderAnimatic,
-  onRenderVideo,
   onRenderProduction, // Legacy - maps to onRenderAnimatic
   onDeleteStream,
   onReRenderStream,
@@ -470,8 +458,6 @@ export function ProductionStreamsPanel({
   videoGenerationAvailable = false,
   disabled = false
 }: ProductionStreamsPanelProps) {
-  const [newLanguage, setNewLanguage] = useState(selectedLanguage)
-  const [newResolution, setNewResolution] = useState<'720p' | '1080p' | '4K'>('1080p')
   const [internalStreamType, setInternalStreamType] = useState<ProductionStreamType>('animatic')
   const isStreamTabControlled = streamTypeTab != null
   const selectedStreamType = streamTypeTab ?? internalStreamType
@@ -486,14 +472,6 @@ export function ProductionStreamsPanel({
     [isStreamTabControlled, onStreamTypeTabChange]
   )
 
-  useEffect(() => {
-    setNewLanguage(selectedLanguage)
-  }, [selectedLanguage])
-  
-  // Animatic-specific settings
-  const [kenBurnsIntensity, setKenBurnsIntensity] = useState<KenBurnsIntensity>('subtle')
-  const [transitionStyle, setTransitionStyle] = useState<'cut' | 'crossfade' | 'fade-to-black'>('crossfade')
-  
   // Inline video preview state
   const [previewingStreamId, setPreviewingStreamId] = useState<string | null>(null)
   
@@ -541,42 +519,16 @@ export function ProductionStreamsPanel({
   
   const currentStreams = selectedStreamType === 'animatic' ? animaticStreams : videoStreams
   
-  // Languages that already have production streams of current type
-  const existingLanguages = useMemo(() => 
-    new Set(currentStreams.map(s => s.language)),
-    [currentStreams]
-  )
-  
-  // Available languages for new production
-  const availableLanguages = useMemo(() => 
-    SUPPORTED_LANGUAGES.filter(l => !existingLanguages.has(l.code)),
-    [existingLanguages]
-  )
-  
-  const handleRenderNew = async () => {
-    if (!newLanguage) return
-
-    if (selectedStreamType === 'video' && onRenderVideo) {
-      await onRenderVideo(newLanguage, newResolution)
-      return
+  const handleComposeAnimatic = useCallback(async () => {
+    if (!selectedLanguage) return
+    const resolution: '720p' | '1080p' | '4K' = '1080p'
+    if (onRenderAnimatic) {
+      await onRenderAnimatic(selectedLanguage, resolution, DEFAULT_ANIMATIC_EXPORT_SETTINGS)
+    } else if (onRenderProduction) {
+      await onRenderProduction(selectedLanguage, resolution)
     }
+  }, [selectedLanguage, onRenderAnimatic, onRenderProduction])
 
-    if (selectedStreamType === 'animatic') {
-      const settings: AnimaticRenderSettings = {
-        type: 'animatic',
-        kenBurnsIntensity,
-        transitionStyle,
-        transitionDuration: transitionStyle === 'cut' ? 0 : 0.5,
-        includeSubtitles: false,
-      }
-      if (onRenderAnimatic) {
-        await onRenderAnimatic(newLanguage, newResolution, settings)
-      } else if (onRenderProduction) {
-        await onRenderProduction(newLanguage, newResolution)
-      }
-    }
-  }
-  
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -600,7 +552,7 @@ export function ProductionStreamsPanel({
       
       {/* Stream Type Tabs */}
       <p className="text-[11px] text-gray-500">
-        Rendered outputs for this scene. Mix, preview, and export from the Scene Production Mixer above.
+        Library of finished exports for this scene. Tabs follow the same Animatic vs Video choice as Preview output in the Scene Production Mixer above (change either place to stay in sync).
       </p>
 
       <div className="flex gap-1 p-1 bg-gray-800/50 rounded-lg">
@@ -672,139 +624,43 @@ export function ProductionStreamsPanel({
         </div>
       )}
       
-      {/* Add new animatic stream */}
+      {/* Animatic: open scene composer (language follows mixer Preview output) */}
       {selectedStreamType === 'animatic' && (
-        <div className="flex flex-col gap-2 p-3 bg-gray-800/30 rounded-lg border border-dashed border-gray-700">
-          <div className="flex flex-wrap items-center gap-2">
-            <GroupedLanguageSelector
-              value={newLanguage}
-              onValueChange={setNewLanguage}
-              disabled={disabled || isRendering}
-              size="sm"
-              intent="generate"
-              className="bg-gray-800 border-gray-600 text-sm"
-              renderItemSuffix={(lang) =>
-                existingLanguages.has(lang.code)
-                  ? <span className="text-gray-500 text-xs ml-1">(exists)</span>
-                  : null
-              }
-            />
-            <Select
-              value={newResolution}
-              onValueChange={(v) => setNewResolution(v as '720p' | '1080p' | '4K')}
-              disabled={disabled || isRendering}
-            >
-              <SelectTrigger className="w-[90px] h-8 bg-gray-800 border-gray-600 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-600">
-                <SelectItem value="720p" className="text-gray-200">720p</SelectItem>
-                <SelectItem value="1080p" className="text-gray-200">1080p</SelectItem>
-                <SelectItem value="4K" className="text-gray-200">4K</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={kenBurnsIntensity}
-              onValueChange={(v) => setKenBurnsIntensity(v as KenBurnsIntensity)}
-              disabled={disabled || isRendering}
-            >
-              <SelectTrigger className="w-[120px] h-8 bg-gray-800 border-gray-600 text-sm">
-                <SelectValue placeholder="Ken Burns" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-600">
-                {KEN_BURNS_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value} className="text-gray-200">{o.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={transitionStyle}
-              onValueChange={(v) => setTransitionStyle(v as 'cut' | 'crossfade' | 'fade-to-black')}
-              disabled={disabled || isRendering}
-            >
-              <SelectTrigger className="w-[130px] h-8 bg-gray-800 border-gray-600 text-sm">
-                <SelectValue placeholder="Transition" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-600">
-                {TRANSITION_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value} className="text-gray-200">{o.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              size="sm"
-              onClick={handleRenderNew}
-              disabled={disabled || isRendering || !newLanguage || !(onRenderAnimatic || onRenderProduction)}
-              className="h-8 text-white bg-purple-600 hover:bg-purple-700"
-            >
-              {isRendering ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                  Rendering...
-                </>
-              ) : (
-                <>
-                  <Plus className="w-4 h-4 mr-1" />
-                  Render Animatic
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Add new video stream */}
-      {selectedStreamType === 'video' && (
-        <div className="flex items-center gap-2 p-3 bg-gray-800/30 rounded-lg border border-dashed border-gray-700">
-          <GroupedLanguageSelector
-            value={newLanguage}
-            onValueChange={setNewLanguage}
-            disabled={disabled || isRendering}
-            size="sm"
-            intent="generate"
-            className="bg-gray-800 border-gray-600 text-sm"
-            renderItemSuffix={(lang) => 
-              existingLanguages.has(lang.code) 
-                ? <span className="text-gray-500 text-xs ml-1">(exists)</span> 
-                : null
-            }
-          />
-          
-          <Select
-            value={newResolution}
-            onValueChange={(v) => setNewResolution(v as '720p' | '1080p' | '4K')}
-            disabled={disabled || isRendering}
-          >
-            <SelectTrigger className="w-[90px] h-8 bg-gray-800 border-gray-600 text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-600">
-              <SelectItem value="720p" className="text-gray-200">720p</SelectItem>
-              <SelectItem value="1080p" className="text-gray-200">1080p</SelectItem>
-              <SelectItem value="4K" className="text-gray-200">4K</SelectItem>
-            </SelectContent>
-          </Select>
-          
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 bg-gray-800/30 rounded-lg border border-dashed border-gray-700">
+          <p className="text-xs text-gray-400 flex-1">
+            Uses <span className="text-gray-200 font-medium">Preview output</span> language from the mixer (
+            {SUPPORTED_LANGUAGES.find((l) => l.code === selectedLanguage)?.name ?? selectedLanguage.toUpperCase()}
+            ). Adjust Ken Burns and transitions in the dialog.
+          </p>
           <Button
             size="sm"
-            onClick={handleRenderNew}
-            disabled={disabled || isRendering || !newLanguage || !videoGenerationAvailable}
-            className="h-8 text-white bg-indigo-600 hover:bg-indigo-700"
+            onClick={handleComposeAnimatic}
+            disabled={disabled || isRendering || !selectedLanguage || !(onRenderAnimatic || onRenderProduction)}
+            className="h-9 shrink-0 text-white bg-purple-600 hover:bg-purple-700"
           >
             {isRendering ? (
               <>
-                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                Rendering...
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Opening…
               </>
             ) : (
               <>
-                <Plus className="w-4 h-4 mr-1" />
-                Render Video
+                <Clapperboard className="w-4 h-4 mr-2" />
+                Compose animatic…
               </>
             )}
           </Button>
         </div>
       )}
+
+      {selectedStreamType === 'video' && videoGenerationAvailable && (
+        <div className="p-3 bg-gray-800/25 rounded-lg border border-gray-700/60">
+          <p className="text-xs text-gray-400 text-center">
+            New stitched video exports: use <span className="text-indigo-300 font-medium">Render</span> in the Scene Production Mixer footer. This list shows completed outputs for preview and download.
+          </p>
+        </div>
+      )}
+
       
       {/* Video tab notice when video generation not available */}
       {selectedStreamType === 'video' && !videoGenerationAvailable && (
@@ -819,7 +675,7 @@ export function ProductionStreamsPanel({
       {selectedStreamType === 'animatic' && animaticStreams.length === 0 && (
         <div className="p-3 bg-purple-900/20 border border-purple-700/50 rounded-lg">
           <p className="text-xs text-purple-300 text-center">
-            Add an animatic stream above (language + Ken Burns + transitions), or use the scene export dialog from the mixer workflow.
+            No animatic files yet. Use Compose animatic above to open the export wizard (defaults: subtle Ken Burns, crossfade).
           </p>
         </div>
       )}
@@ -827,8 +683,7 @@ export function ProductionStreamsPanel({
       {/* Help text */}
       {currentStreams.length === 0 && selectedStreamType === 'video' && videoGenerationAvailable && (
         <p className="text-xs text-gray-500 text-center">
-          Create video streams to combine your AI-generated video segments with audio.
-          This is your final production output.
+          Stitched video exports from the mixer will show up here. Set Output resolution in the mixer before rendering.
         </p>
       )}
     </div>

@@ -514,39 +514,6 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   
   // === Production Streams Handlers ===
   
-  // Render a new production stream for a specific language
-  const handleRenderProduction = useCallback(async (language: string, resolution: '720p' | '1080p' | '4K') => {
-    const languageInfo = SUPPORTED_LANGUAGES.find(l => l.code === language)
-    const streamId = `stream-${language}-${Date.now()}`
-    
-    const newStream: ProductionStream = {
-      id: streamId,
-      streamType: 'video',
-      language,
-      languageLabel: languageInfo?.name || language,
-      status: 'rendering',
-      resolution,
-      createdAt: new Date().toISOString(),
-    }
-    
-    const updatedStreams = [...productionStreams, newStream]
-    setProductionStreams(updatedStreams)
-    setRenderingStreamId(streamId)
-    setStreamRenderProgress(0)
-    setProductionTarget(prev => ({ ...prev, streamType: 'video', language }))
-    setRenderDialogMode('video')
-    setRenderDialogAnimaticSettings(undefined)
-    
-    if (onProductionDataChange && productionData) {
-      onProductionDataChange({
-        ...productionData,
-        productionStreams: updatedStreams,
-      })
-    }
-    
-    setIsRenderDialogOpen(true)
-  }, [productionStreams, productionData, onProductionDataChange])
-
   const handleRenderAnimatic = useCallback(
     async (language: string, resolution: '720p' | '1080p' | '4K', settings: AnimaticRenderSettings) => {
       const languageInfo = SUPPORTED_LANGUAGES.find(l => l.code === language)
@@ -1224,7 +1191,6 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           streamTypeTab={productionTarget.streamType}
           onStreamTypeTabChange={(t) => setProductionTarget(prev => ({ ...prev, streamType: t }))}
           onRenderAnimatic={handleRenderAnimatic}
-          onRenderVideo={handleRenderProduction}
           onDeleteStream={handleDeleteStream}
           onReRenderStream={handleReRenderStream}
           onPreviewStream={handlePreviewStream}

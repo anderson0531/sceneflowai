@@ -325,6 +325,14 @@ export interface SegmentAudioConfig {
 type RenderStatus = 'idle' | 'preparing' | 'rendering' | 'complete' | 'error'
 type ActiveRenderMode = 'local' | 'server' | 'headless'
 
+/** Short labels for the render-mode Select trigger (dropdown items stay verbose). */
+const RENDER_MODE_TRIGGER_LABELS: Record<RenderMode, string> = {
+  local: 'Quick',
+  server: 'Final',
+  headless: 'Pro Cloud',
+  auto: 'Auto',
+}
+
 interface SceneProductionMixerProps {
   sceneId: string
   sceneNumber: number
@@ -471,7 +479,7 @@ function ProductionTargetSelector({
 
   return (
     <div className="flex items-center gap-2 flex-wrap justify-end">
-      <span className="text-xs text-gray-400 uppercase tracking-wide hidden sm:inline">Output</span>
+      <span className="text-xs text-gray-400 uppercase tracking-wide hidden sm:inline">Preview output</span>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -567,15 +575,15 @@ function ResolutionSelector({
   return (
     <div className="flex items-center gap-2">
       <Settings2 className="w-4 h-4 text-gray-400" />
-      <span className="text-xs text-gray-400 uppercase tracking-wide hidden sm:inline">Output</span>
+      <span className="text-xs text-gray-400 uppercase tracking-wide hidden sm:inline">Resolution</span>
       <Select value={resolution} onValueChange={onResolutionChange as (v: string) => void} disabled={disabled}>
-        <SelectTrigger className="w-[120px] sm:w-[140px] h-9 bg-gray-800/80 border-gray-600 text-white">
+        <SelectTrigger className="w-[128px] sm:w-[152px] h-9 bg-gray-800/80 border-gray-600 text-white">
           <SelectValue />
         </SelectTrigger>
         <SelectContent className="bg-gray-900 border-gray-700">
-          <SelectItem value="720p" className="text-gray-200">720p (1280×720)</SelectItem>
-          <SelectItem value="1080p" className="text-gray-200">1080p (1920×1080)</SelectItem>
-          <SelectItem value="4K" className="text-gray-200">4K (3840×2160)</SelectItem>
+          <SelectItem value="720p" className="text-gray-200">720p (HD)</SelectItem>
+          <SelectItem value="1080p" className="text-gray-200">1080p (Full HD)</SelectItem>
+          <SelectItem value="4K" className="text-gray-200">4K (UHD)</SelectItem>
         </SelectContent>
       </Select>
     </div>
@@ -3207,14 +3215,41 @@ export function SceneProductionMixer({
         padding: watermarkConfig.padding,
       })
       
+      const localWatermark =
+        watermarkConfig.enabled
+          ? {
+              type: watermarkConfig.type,
+              text: watermarkConfig.text,
+              imageUrl: watermarkConfig.imageUrl || undefined,
+              anchor: watermarkConfig.anchor,
+              padding: watermarkConfig.padding,
+              textStyle: {
+                fontFamily: watermarkConfig.textStyle.fontFamily,
+                fontSize: watermarkConfig.textStyle.fontSize,
+                fontWeight: watermarkConfig.textStyle.fontWeight,
+                color: watermarkConfig.textStyle.color,
+                opacity: watermarkConfig.textStyle.opacity,
+                textShadow: watermarkConfig.textStyle.textShadow,
+              },
+              imageStyle: {
+                width: watermarkConfig.imageStyle.width,
+                opacity: watermarkConfig.imageStyle.opacity,
+              },
+            }
+          : undefined
+
       const renderResult = await renderService.render({
         segments: segmentsForLocal,
         audioClips,
-        textOverlays: textOverlays.map(overlay => ({
+        textOverlays: textOverlays.map((overlay) => ({
           id: overlay.id,
           text: overlay.text,
           subtext: overlay.subtext,
-          position: { x: overlay.position.x, y: overlay.position.y, anchor: 'center' },
+          position: {
+            x: overlay.position.x,
+            y: overlay.position.y,
+            anchor: overlay.position.anchor,
+          },
           style: {
             fontFamily: overlay.style.fontFamily,
             fontSize: overlay.style.fontSize,
@@ -3224,16 +3259,14 @@ export function SceneProductionMixer({
             backgroundOpacity: overlay.style.backgroundOpacity,
             textShadow: overlay.style.textShadow,
           },
-          watermark: watermarkConfig.enabled ? {
-            type: watermarkConfig.type,
-            text: watermarkConfig.text,
-            imageUrl: watermarkConfig.imageUrl,
-            anchor: watermarkConfig.anchor,
-            padding: watermarkConfig.padding,
-            textStyle: watermarkConfig.textStyle,
-            imageStyle: watermarkConfig.imageStyle,
-          } : undefined,
+          timing: {
+            startTime: overlay.timing.startTime,
+            duration: overlay.timing.duration,
+            fadeInMs: overlay.timing.fadeInMs,
+            fadeOutMs: overlay.timing.fadeOutMs,
+          },
         })),
+        watermark: localWatermark,
         resolution: localResolution,
         fps: 30,
         totalDuration,
@@ -3447,6 +3480,32 @@ export function SceneProductionMixer({
         hasWatermark: watermarkConfig.enabled,
       })
       
+      const headlessResolution =
+        resolution === '4K' ? '4k' : (resolution.toLowerCase() as '720p' | '1080p')
+
+      const headlessWatermark =
+        watermarkConfig.enabled
+          ? {
+              type: watermarkConfig.type,
+              text: watermarkConfig.text,
+              imageUrl: watermarkConfig.imageUrl || undefined,
+              anchor: watermarkConfig.anchor,
+              padding: watermarkConfig.padding,
+              textStyle: {
+                fontFamily: watermarkConfig.textStyle.fontFamily,
+                fontSize: watermarkConfig.textStyle.fontSize,
+                fontWeight: watermarkConfig.textStyle.fontWeight,
+                color: watermarkConfig.textStyle.color,
+                opacity: watermarkConfig.textStyle.opacity,
+                textShadow: watermarkConfig.textStyle.textShadow,
+              },
+              imageStyle: {
+                width: watermarkConfig.imageStyle.width,
+                opacity: watermarkConfig.imageStyle.opacity,
+              },
+            }
+          : undefined
+
       // Call headless render API
       const response = await fetch('/api/render/headless', {
         method: 'POST',
@@ -3454,11 +3513,15 @@ export function SceneProductionMixer({
         body: JSON.stringify({
           segments: segmentsForHeadless,
           audioClips,
-          textOverlays: textOverlays.map(overlay => ({
+          textOverlays: textOverlays.map((overlay) => ({
             id: overlay.id,
             text: overlay.text,
             subtext: overlay.subtext,
-            position: { x: overlay.position.x, y: overlay.position.y, anchor: 'center' },
+            position: {
+              x: overlay.position.x,
+              y: overlay.position.y,
+              anchor: overlay.position.anchor,
+            },
             style: {
               fontFamily: overlay.style.fontFamily,
               fontSize: overlay.style.fontSize,
@@ -3468,19 +3531,17 @@ export function SceneProductionMixer({
               backgroundOpacity: overlay.style.backgroundOpacity,
               textShadow: overlay.style.textShadow,
             },
-            watermark: watermarkConfig.enabled ? {
-              type: watermarkConfig.type,
-              text: watermarkConfig.text,
-              imageUrl: watermarkConfig.imageUrl,
-              anchor: watermarkConfig.anchor,
-              padding: watermarkConfig.padding,
-              textStyle: watermarkConfig.textStyle,
-              imageStyle: watermarkConfig.imageStyle,
-            } : undefined,
-            resolution: resolution === '4K' ? '4k' : resolution.toLowerCase() as '720p' | '1080p',
-            fps: 30,
-            totalDuration,
+            timing: {
+              startTime: overlay.timing.startTime,
+              duration: overlay.timing.duration,
+              fadeInMs: overlay.timing.fadeInMs,
+              fadeOutMs: overlay.timing.fadeOutMs,
+            },
           })),
+          resolution: headlessResolution,
+          fps: 30,
+          totalDuration,
+          ...(headlessWatermark ? { watermark: headlessWatermark } : {}),
         }),
       })
       
@@ -3601,7 +3662,18 @@ export function SceneProductionMixer({
           </div>
           <div>
             <h3 className="!text-lg !leading-normal !mb-0 font-semibold text-white">Scene Production Mixer</h3>
-            <p className="text-xs text-gray-400">Render video segments with audio tracks</p>
+            <p className="text-xs text-gray-400">
+              Mix segment video or animatic keyframes with narration, dialogue, music, and SFX — then export from the footer.
+            </p>
+            <p className="text-[11px] text-purple-300/90 mt-1">
+              Preview:{' '}
+              <span className="font-medium text-purple-200">
+                {productionTarget.streamType === 'animatic' ? 'Animatic' : 'Video'} ·{' '}
+                {SUPPORTED_LANGUAGES.find((l) => l.code === productionTarget.language)?.name ??
+                  productionTarget.language.toUpperCase()}
+              </span>
+              <span className="text-gray-500"> — matches Production Streams below when you switch tabs there.</span>
+            </p>
           </div>
         </div>
         
@@ -4563,7 +4635,7 @@ export function SceneProductionMixer({
             <h4 className="text-lg font-medium text-gray-300 mb-2">Nothing to preview yet</h4>
             <p className="text-sm text-gray-500 max-w-md mx-auto">
               {animaticPreviewSegments.length > 0
-                ? 'Use Output → Animatic above to preview keyframes, or generate segment videos in the Director’s Console for full video output and stitching.'
+                ? 'Use Preview output → Animatic above to preview keyframes, or generate segment videos in the Director’s Console for full video output and stitching.'
                 : 'Generate keyframes or video segments in the Director’s Console above, then mix and render from this panel.'}
             </p>
           </div>
@@ -4625,8 +4697,10 @@ export function SceneProductionMixer({
                 onValueChange={(value) => setSelectedRenderMode(value as RenderMode)}
                 disabled={isRendering}
               >
-                <SelectTrigger className="w-[140px] h-9 bg-gray-800 border-gray-600">
-                  <SelectValue placeholder="Render mode" />
+                <SelectTrigger className="min-w-[7.25rem] w-[min(100%,9.5rem)] max-w-[10.5rem] h-9 shrink-0 bg-gray-800 border-gray-600 [&>span]:flex-1 [&>span]:min-w-0 [&>span]:text-left">
+                  <SelectValue placeholder="Mode">
+                    {RENDER_MODE_TRIGGER_LABELS[selectedRenderMode]}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {renderOptions.filter(opt => opt.available).map((option) => (
@@ -4661,11 +4735,11 @@ export function SceneProductionMixer({
                     : 'bg-purple-600 hover:bg-purple-700'
                 } text-white`}
                 title={
-                  selectedRenderMode === 'local' 
-                    ? 'Quick Export: Render in browser (instant, no credits)' 
+                  selectedRenderMode === 'local'
+                    ? 'Quick Export: browser WebM up to 1080p (4K uses cloud). Overlays and sync may vary by device.'
                     : selectedRenderMode === 'headless'
-                    ? 'Pro Cloud: Deterministic 4K render with guaranteed watermarks'
-                    : 'Final Render: Cloud render to MP4'
+                    ? `Pro Cloud: headless render at your Output resolution (${resolution}) with frame-accurate overlays when configured`
+                    : `Final Render: server MP4 at your Output resolution (${resolution})`
                 }
               >
                 {isRendering ? (
@@ -4697,10 +4771,12 @@ export function SceneProductionMixer({
                     <div className="flex items-center gap-1">
                       <Zap className="w-3 h-3 text-yellow-400" />
                       <span className="text-yellow-300">Quick Export:</span>
-                      <span>Browser-based • Instant • Free • WebM output</span>
+                      <span>
+                        Browser WebM • Up to 1080p (matches Output; 4K requires Final or Pro Cloud) • May vary vs preview on slower devices
+                      </span>
                     </div>
                     <div className="flex items-center gap-1 text-gray-400">
-                      <span>Best for: Fast previews, social sharing</span>
+                      <span>Best for: Fast drafts; use Final Render for delivery-grade MP4</span>
                     </div>
                     {watermarkConfig.enabled && (
                       <div className="flex items-center gap-1 text-green-400">
@@ -4715,10 +4791,10 @@ export function SceneProductionMixer({
                     <div className="flex items-center gap-1">
                       <Video className="w-3 h-3 text-purple-400" />
                       <span className="text-purple-300">Final Render (FFmpeg):</span>
-                      <span>Cloud server • MP4 (H.264)</span>
+                      <span>Cloud MP4 (H.264) at Output resolution ({resolution})</span>
                     </div>
                     <div className="flex items-center gap-1 text-gray-400">
-                      <span>Best for: Final delivery, universal compatibility</span>
+                      <span>Best for: Final delivery and consistent results</span>
                     </div>
                     {watermarkConfig.enabled && (
                       <div className="flex items-center gap-1 text-green-400">
@@ -4733,10 +4809,10 @@ export function SceneProductionMixer({
                     <div className="flex items-center gap-1">
                       <Monitor className="w-3 h-3 text-blue-400" />
                       <span className="text-blue-300">Pro Cloud (Puppeteer):</span>
-                      <span>Frame-perfect 4K • WebM (VP9) • Guaranteed watermarks</span>
+                      <span>Headless WebM at Output resolution ({resolution}) • Frame-accurate overlays and watermarks when enabled</span>
                     </div>
                     <div className="flex items-center gap-1 text-gray-400">
-                      <span>Best for: Pixel-perfect quality, consistent results across devices</span>
+                      <span>Best for: Deterministic output across machines (Pro plan)</span>
                     </div>
                     {watermarkConfig.enabled && (
                       <div className="flex items-center gap-1 text-green-400">
@@ -4756,7 +4832,7 @@ export function SceneProductionMixer({
               </div>
               {!canMixerStitchRender && (
                 <p className="text-amber-300/90 leading-snug">
-                  Mixer quick/server stitch needs generated segment videos. For animatic (keyframes), render from Production Streams or the scene export dialog.
+                  Mixer quick/server stitch needs generated segment videos. For animatic (keyframes), use Compose animatic in Production Streams to open the scene export dialog.
                 </p>
               )}
             </div>

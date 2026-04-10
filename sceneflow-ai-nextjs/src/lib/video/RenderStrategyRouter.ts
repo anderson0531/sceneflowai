@@ -411,7 +411,8 @@ export function getRenderModeOptions(context: RenderContext): Array<{
     {
       mode: 'local',
       label: 'Quick Export',
-      description: 'Render in browser • Instant start • No credits',
+      description:
+        'Browser WebM • Up to 1080p (4K needs cloud) • Fast; quality/sync can vary by device',
       available: localSupport.supported && context.duration <= LOCAL_RENDER_MAX_DURATION && context.resolution !== '4K',
       recommended: decision.mode === 'local',
       badge: decision.mode === 'local' ? 'Recommended' : undefined,
@@ -419,7 +420,7 @@ export function getRenderModeOptions(context: RenderContext): Array<{
     {
       mode: 'server',
       label: 'Final Render',
-      description: `Server rendering • Pro codecs • ${SERVER_RENDER_CREDITS_PER_MINUTE} credits/min`,
+      description: `Server MP4 at your Output resolution • ${SERVER_RENDER_CREDITS_PER_MINUTE} credits/min`,
       available: canServer.allowed,
       recommended: decision.mode === 'server',
       badge: decision.mode === 'server' ? 'Recommended' : canServer.allowed ? undefined : 'Upgrade',
@@ -427,7 +428,8 @@ export function getRenderModeOptions(context: RenderContext): Array<{
     {
       mode: 'headless',
       label: 'Pro Cloud',
-      description: '4K deterministic • Frame-perfect watermarks • Guaranteed quality',
+      description:
+        'Headless WebM at your Output resolution • Frame-accurate overlays and watermarks when enabled',
       available: canHeadless,
       recommended: context.resolution === '4K' || context.duration > 60,
       badge: canHeadless ? 'Pro' : 'Pro Plan',
