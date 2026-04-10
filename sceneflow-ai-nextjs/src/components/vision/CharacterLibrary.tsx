@@ -52,6 +52,10 @@ import type {
   CharacterContext,
   ScreenplayContext,
 } from "@/lib/voiceRecommendation";
+import {
+  getCharacterVoiceRecommendations,
+  type ElevenLabsVoice,
+} from "@/lib/voiceRecommendation";
 
 export interface CharacterLibraryProps {
   characters: any[];
@@ -754,6 +758,17 @@ const CharacterCard = ({
   const [aiPromptText, setAiPromptText] = useState("");
   const [isGeneratingWardrobe, setIsGeneratingWardrobe] = useState(false);
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
+  const [isAutoSelectingVoice, setIsAutoSelectingVoice] = useState(false);
+  const autoTestAudioRef = React.useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (autoTestAudioRef.current) {
+        autoTestAudioRef.current.pause();
+        autoTestAudioRef.current = null;
+      }
+    };
+  }, []);
   const [showAddWardrobeForm, setShowAddWardrobeForm] = useState(false); // Toggle for add new wardrobe form
   const [enhancingWardrobeId, setEnhancingWardrobeId] = useState<string | null>(
     null,
@@ -831,6 +846,133 @@ const CharacterCard = ({
     description: character.description || character.appearanceDescription,
     referenceImage: character.referenceImage,
     voiceDescription: character.voiceDescription,
+  };
+
+  const handleAutoVoice = async () => {
+    if (!onUpdateCharacterVoice) {
+      toast.error("Voice update is not available.");
+      return;
+    }
+
+    setIsAutoSelectingVoice(true);
+    let selectedVoice: ElevenLabsVoice | null = null;
+    let generatedPrompt = "";
+    let testAudioPlayed = false;
+
+    try {
+      // 1) Select best Gemini base voice
+      const voicesRes = await fetch("/api/tts/google/voices", {
+        cache: "no-store",
+      });
+      const voicesData = await voicesRes.json().catch(() => ({}));
+      const allVoices: ElevenLabsVoice[] = Array.isArray(voicesData?.voices)
+        ? voicesData.voices
+        : [];
+      const geminiVoices = allVoices.filter(
+        (v) => typeof v.id === "string" && v.id.startsWith("gemini-"),
+      );
+
+      if (geminiVoices.length === 0) {
+        throw new Error("No Gemini voices are available right now.");
+      }
+
+      const recs = getCharacterVoiceRecommendations(
+        geminiVoices,
+        characterContext,
+        screenplayContext as ScreenplayContext,
+        1,
+      );
+      const recommendedVoiceId = recs[0]?.voiceId;
+      selectedVoice =
+        geminiVoices.find((v) => v.id === recommendedVoiceId) || geminiVoices[0];
+
+      toast.success(
+        `Auto selected: ${selectedVoice.name.replace(/ \((Gemini|Studio)\)/i, "")}`,
+      );
+
+      // 2) Generate director prompt (best effort)
+      try {
+        const promptRes = await fetch("/api/tts/google/director-prompt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            characterContext,
+            screenplayContext,
+          }),
+        });
+        if (promptRes.ok) {
+          const promptData = await promptRes.json();
+          generatedPrompt = (promptData?.script || "").trim();
+          if (generatedPrompt) {
+            toast.success("Generated Voice Direction.");
+          }
+        }
+      } catch (promptErr) {
+        console.warn("[Auto Voice] Director prompt generation failed:", promptErr);
+      }
+
+      // 3) Persist selected Gemini voice + generated prompt
+      onUpdateCharacterVoice(characterId, {
+        provider: "google",
+        voiceId: selectedVoice.id,
+        voiceName: selectedVoice.name,
+        prompt: generatedPrompt || character.voiceConfig?.prompt,
+      });
+
+      // 4) Generate and auto-play test dialogue (best effort)
+      try {
+        const sampleText = characterContext?.name
+          ? `${characterContext.name}: This is my automatically recommended voice profile test.`
+          : "This is my automatically recommended voice profile test.";
+
+        const testRes = await fetch("/api/tts/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: sampleText,
+            voiceId: selectedVoice.id,
+            ...(generatedPrompt ? { prompt: generatedPrompt } : {}),
+          }),
+        });
+
+        if (!testRes.ok) {
+          throw new Error("Failed to generate test dialogue.");
+        }
+
+        const testBlob = await testRes.blob();
+        const testUrl = URL.createObjectURL(testBlob);
+
+        if (autoTestAudioRef.current) {
+          autoTestAudioRef.current.pause();
+          autoTestAudioRef.current = null;
+        }
+        const audio = new Audio(testUrl);
+        autoTestAudioRef.current = audio;
+        audio.onended = () => {
+          URL.revokeObjectURL(testUrl);
+          if (autoTestAudioRef.current === audio) autoTestAudioRef.current = null;
+        };
+        audio.onerror = () => {
+          URL.revokeObjectURL(testUrl);
+          if (autoTestAudioRef.current === audio) autoTestAudioRef.current = null;
+        };
+        await audio.play();
+        testAudioPlayed = true;
+      } catch (testErr) {
+        console.warn("[Auto Voice] Test playback failed:", testErr);
+      }
+
+      if (testAudioPlayed) {
+        toast.success("Auto voice setup complete. Playing test dialogue.");
+      } else {
+        toast.success("Auto voice saved. Test dialogue could not be played.");
+      }
+    } catch (error: any) {
+      console.error("[Auto Voice] Error:", error);
+      toast.error(error?.message || "Auto voice setup failed.");
+    } finally {
+      setIsAutoSelectingVoice(false);
+    }
   };
 
   // Helper function to generate fallback description from attributes
@@ -1845,20 +1987,38 @@ const CharacterCard = ({
             </button>
             {voiceSectionExpandedLocal && (
               <div className="p-3 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setVoiceDialogOpen(true);
-                  }}
-                  className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    character.voiceConfig
-                      ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40"
-                      : "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40"
-                  }`}
-                >
-                  <Volume2 className="w-4 h-4" />
-                  Select Voice
-                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setVoiceDialogOpen(true);
+                    }}
+                    className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      character.voiceConfig
+                        ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40"
+                        : "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40"
+                    }`}
+                  >
+                    <Volume2 className="w-4 h-4" />
+                    Select Voice
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAutoVoice();
+                    }}
+                    disabled={isAutoSelectingVoice}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-60"
+                    title="Auto select Gemini voice, generate direction, and play test dialogue"
+                  >
+                    {isAutoSelectingVoice ? (
+                      <Loader className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                    Auto
+                  </button>
+                </div>
               </div>
             )}
           </div>
