@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { DndContext } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, BookOpen, Wand2, Loader2, Upload, Copy, CheckCircle2, AlertCircle, LayoutGrid, MapPin } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, BookOpen, Wand2, Loader2, Upload, Copy, CheckCircle2, AlertCircle, LayoutGrid, MapPin, Zap, Settings2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -21,8 +21,16 @@ import { LocationPromptPayload } from './LocationPromptBuilder'
 import { ImageEditModal } from './ImageEditModal'
 import { ReadinessProgress, calculateProductionReadiness, ProductionReadinessState } from '@/components/ui/StatusBadge'
 import { SceneReferenceCard } from './SceneReferenceCard'
-import { TooltipProvider } from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { DetailedSceneDirection } from '@/types/scene-direction'
+
+function buildObjectReferencePrompt(ref: VisualReference): string {
+  const base = ref.generationPrompt?.trim() || ref.description?.trim() || ref.name
+  const studioStyle =
+    'Professional product photography, clean studio lighting with soft shadows, centered composition, high resolution, sharp focus, 8K quality, production reference image.'
+  if (base.includes('Professional product')) return base
+  return `${base}. ${studioStyle}`
+}
 
 // Extended scene type for Scene tab that includes sceneDirection
 interface SceneWithDirection {
@@ -150,9 +158,21 @@ interface DraggableReferenceCardProps {
   projectId?: string
   /** Callback when an image is uploaded */
   onImageUploaded?: (referenceId: string, referenceType: 'scene' | 'object', imageUrl: string) => void
+  /** Open prompt dialog for object reference regeneration (Props tab) */
+  onOpenObjectPromptDialog?: (reference: VisualReference) => void
 }
 
-function DraggableReferenceCard({ reference, onRemove, scenes, onInsertBackdropSegment, onEditImage, referenceType, projectId, onImageUploaded }: DraggableReferenceCardProps) {
+function DraggableReferenceCard({
+  reference,
+  onRemove,
+  scenes,
+  onInsertBackdropSegment,
+  onEditImage,
+  referenceType,
+  projectId,
+  onImageUploaded,
+  onOpenObjectPromptDialog,
+}: DraggableReferenceCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `visual-reference-${reference.id}`,
     data: {
@@ -167,6 +187,11 @@ function DraggableReferenceCard({ reference, onRemove, scenes, onInsertBackdropS
   const [isExpanded, setIsExpanded] = useState(false)
   const [showSceneSelector, setShowSceneSelector] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [isQuickGenerating, setIsQuickGenerating] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const isObjectCard = referenceType === 'object' && !!projectId
+  const hasImage = !!reference.imageUrl
 
   // Handle file upload for reference image
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -207,12 +232,32 @@ function DraggableReferenceCard({ reference, onRemove, scenes, onInsertBackdropS
     }
   }
 
-  // Copy generation prompt to clipboard
-  const handleCopyPrompt = () => {
-    // Build a prompt from the reference data
-    const prompt = reference.generationPrompt || reference.description || reference.name
-    navigator.clipboard.writeText(prompt)
-    toast.success('Prompt copied to clipboard')
+  const handleQuickGenerateObject = async () => {
+    if (!isObjectCard || !onImageUploaded) return
+    setIsQuickGenerating(true)
+    try {
+      const response = await fetch('/api/vision/generate-object', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: reference.name,
+          description: reference.description || '',
+          prompt: buildObjectReferencePrompt(reference),
+          category: reference.category || 'other',
+        }),
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate image')
+      }
+      onImageUploaded(reference.id, 'object', data.imageUrl)
+      toast.success('Prop reference image updated')
+    } catch (error) {
+      console.error('[DraggableReferenceCard] Quick generate:', error)
+      toast.error(error instanceof Error ? error.message : 'Generation failed')
+    } finally {
+      setIsQuickGenerating(false)
+    }
   }
 
   // Helper to get scene label
@@ -238,29 +283,164 @@ function DraggableReferenceCard({ reference, onRemove, scenes, onInsertBackdropS
         {...attributes}
         className="flex flex-col p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm group w-full"
       >
-        {/* Row 1: Larger Image */}
-        <div className="w-full aspect-video rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center relative mb-2">
+        {/* Row 1: Image + storyboard-style overlay (Quick, Prompt, Edit, Upload) for Props */}
+        <div className="w-full aspect-video rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 relative mb-2 group">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
+
           {reference.imageUrl ? (
-            <>
-              <img src={reference.imageUrl} alt={reference.name} className="w-full h-full object-cover" />
-              {/* Expand button overlay - use onPointerDown to prevent drag interference */}
-              <div
-                onPointerDown={(e) => {
-                  e.stopPropagation()
-                  e.preventDefault()
-                  setIsExpanded(true)
-                }}
-                className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                title="View full size"
-              >
-                <Maximize2 className="w-5 h-5 text-white" />
-              </div>
-            </>
+            <img src={reference.imageUrl} alt={reference.name} className="w-full h-full object-cover" />
           ) : (
-            <Images className="w-8 h-8 text-gray-400" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
+              <Images className="w-8 h-8 text-gray-400" />
+              {!isObjectCard && <span className="text-xs mt-1">No image</span>}
+            </div>
+          )}
+
+          {reference.imageUrl && (
+            <button
+              type="button"
+              onPointerDown={(e) => {
+                e.stopPropagation()
+                e.preventDefault()
+              }}
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsExpanded(true)
+              }}
+              className="absolute top-2 right-2 z-20 p-1.5 rounded-md bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+              title="View full size"
+            >
+              <Maximize2 className="w-4 h-4" />
+            </button>
+          )}
+
+          {isObjectCard ? (
+            <div
+              className={`absolute inset-0 z-10 bg-black/40 transition-opacity flex items-center justify-center gap-3 ${
+                hasImage ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'
+              }`}
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onPointerDown={(e) => {
+                      e.stopPropagation()
+                      e.preventDefault()
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      void handleQuickGenerateObject()
+                    }}
+                    disabled={isQuickGenerating || isUploading}
+                    className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
+                  >
+                    {isQuickGenerating ? (
+                      <Loader2 className="w-5 h-5 text-white animate-spin" />
+                    ) : (
+                      <Zap className="w-5 h-5 text-white" />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>{hasImage ? 'Quick Regenerate Image' : 'Quick Generate Image'}</TooltipContent>
+              </Tooltip>
+
+              {onOpenObjectPromptDialog && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onPointerDown={(e) => {
+                        e.stopPropagation()
+                        e.preventDefault()
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onOpenObjectPromptDialog(reference)
+                      }}
+                      disabled={isQuickGenerating || isUploading}
+                      className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors disabled:opacity-50"
+                    >
+                      <Wand2 className="w-5 h-5 text-white" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Open Prompt Builder</TooltipContent>
+                </Tooltip>
+              )}
+
+              {hasImage && onEditImage && referenceType && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onPointerDown={(e) => {
+                        e.stopPropagation()
+                        e.preventDefault()
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onEditImage(reference.imageUrl!, reference.id, referenceType)
+                      }}
+                      disabled={isQuickGenerating || isUploading}
+                      className="p-3 bg-purple-600/80 hover:bg-purple-600 rounded-full transition-colors disabled:opacity-50"
+                    >
+                      <Settings2 className="w-5 h-5 text-white" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Edit Image</TooltipContent>
+                </Tooltip>
+              )}
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onPointerDown={(e) => {
+                      e.stopPropagation()
+                      e.preventDefault()
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      fileInputRef.current?.click()
+                    }}
+                    disabled={isUploading || isQuickGenerating}
+                    className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors disabled:opacity-50"
+                  >
+                    {isUploading ? (
+                      <Loader2 className="w-5 h-5 text-white animate-spin" />
+                    ) : (
+                      <Upload className="w-5 h-5 text-white" />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Upload Image</TooltipContent>
+              </Tooltip>
+            </div>
+          ) : (
+            <>
+              {reference.imageUrl && (
+                <div
+                  onPointerDown={(e) => {
+                    e.stopPropagation()
+                    e.preventDefault()
+                    setIsExpanded(true)
+                  }}
+                  className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  title="View full size"
+                >
+                  <Maximize2 className="w-5 h-5 text-white" />
+                </div>
+              )}
+            </>
           )}
         </div>
-        
+
         {/* Row 2: Name and Description */}
         <div className="mb-2">
           <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">{reference.name}</div>
@@ -268,87 +448,96 @@ function DraggableReferenceCard({ reference, onRemove, scenes, onInsertBackdropS
             <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-0.5">{reference.description}</div>
           ) : null}
         </div>
-        
-        {/* Row 3: Action Buttons */}
-        <div className="flex items-center gap-2">
-          {/* Hidden file input for upload */}
-          <input
-            type="file"
-            id={`reference-upload-${reference.id}`}
-            accept="image/*"
-            className="hidden"
-            onChange={handleFileUpload}
-          />
-          {/* Upload button - always show for objects, or if projectId is available */}
-          {projectId && referenceType && (
+
+        {/* Row 3: legacy actions (non–Props cards) + Remove */}
+        {!isObjectCard && (
+          <div className="flex items-center gap-2 flex-wrap">
+            {projectId && referenceType && (
+              <button
+                onPointerDown={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  fileInputRef.current?.click()
+                }}
+                disabled={isUploading}
+                className="p-1.5 rounded-md text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors disabled:opacity-50"
+                title="Upload image"
+              >
+                {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              </button>
+            )}
             <button
               onPointerDown={(e) => {
                 e.stopPropagation()
                 e.preventDefault()
-                document.getElementById(`reference-upload-${reference.id}`)?.click()
+                const prompt = reference.generationPrompt || reference.description || reference.name
+                navigator.clipboard.writeText(prompt)
+                toast.success('Prompt copied to clipboard')
               }}
-              disabled={isUploading}
-              className="p-1.5 rounded-md text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors disabled:opacity-50"
-              title="Upload image"
+              className="p-1.5 rounded-md text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+              title="Copy prompt"
             >
-              {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              <Copy className="w-4 h-4" />
             </button>
-          )}
-          {/* Copy Prompt button */}
-          <button
-            onPointerDown={(e) => {
-              e.stopPropagation()
-              e.preventDefault()
-              handleCopyPrompt()
-            }}
-            className="p-1.5 rounded-md text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-            title="Copy prompt"
-          >
-            <Copy className="w-4 h-4" />
-          </button>
-          {/* Add to Timeline button - only for scene backdrops */}
-          {canAddToTimeline && (
-            <button
-              onPointerDown={(e) => {
-                e.stopPropagation()
-                e.preventDefault()
-                setShowSceneSelector(true)
-              }}
-              className="flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-sf-primary/10 hover:bg-sf-primary/20 text-sf-primary text-xs font-medium transition-colors"
-              title="Add to Timeline"
-            >
-              <Film className="w-3.5 h-3.5" />
-              <span>Add to Timeline</span>
-            </button>
-          )}
-          {/* Edit Image button */}
-          {onEditImage && reference.imageUrl && referenceType && (
-            <button
-              onPointerDown={(e) => {
-                e.stopPropagation()
-                e.preventDefault()
-                onEditImage(reference.imageUrl!, reference.id, referenceType)
-              }}
-              className="p-1.5 rounded-md text-sf-primary hover:text-sf-primary/80 hover:bg-sf-primary/10 transition-colors"
-              title="Edit image"
-            >
-              <Wand2 className="w-4 h-4" />
-            </button>
-          )}
-          {onRemove && (
+            {canAddToTimeline && (
+              <button
+                onPointerDown={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  setShowSceneSelector(true)
+                }}
+                className="flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-sf-primary/10 hover:bg-sf-primary/20 text-sf-primary text-xs font-medium transition-colors"
+                title="Add to Timeline"
+              >
+                <Film className="w-3.5 h-3.5" />
+                <span>Add to Timeline</span>
+              </button>
+            )}
+            {onEditImage && reference.imageUrl && referenceType && (
+              <button
+                onPointerDown={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  onEditImage(reference.imageUrl!, reference.id, referenceType)
+                }}
+                className="p-1.5 rounded-md text-sf-primary hover:text-sf-primary/80 hover:bg-sf-primary/10 transition-colors"
+                title="Edit image"
+              >
+                <Wand2 className="w-4 h-4" />
+              </button>
+            )}
+            {onRemove && (
+              <button
+                onPointerDown={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  onRemove()
+                }}
+                className="p-1.5 rounded-md text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                title="Remove reference"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {isObjectCard && onRemove && (
+          <div className="flex justify-end pt-0.5">
             <button
               onPointerDown={(e) => {
                 e.stopPropagation()
                 e.preventDefault()
                 onRemove()
               }}
-              className="p-1.5 rounded-md text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              className="flex items-center gap-1 px-2 py-1 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition-colors"
               title="Remove reference"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3 h-3" />
+              Remove
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Expanded View Dialog */}
@@ -748,6 +937,96 @@ function AddReferenceDialog({ open, onClose, onSubmit, onGenerateObject, type, i
   )
 }
 
+function ObjectReferencePromptDialog({
+  open,
+  reference,
+  onClose,
+  onUpdateReferenceImage,
+}: {
+  open: boolean
+  reference: VisualReference | null
+  onClose: () => void
+  onUpdateReferenceImage?: (type: 'scene' | 'object', referenceId: string, newImageUrl: string) => void
+}) {
+  const [prompt, setPrompt] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (reference && open) {
+      setPrompt(buildObjectReferencePrompt(reference))
+    }
+  }, [reference, open])
+
+  const handleGenerate = async () => {
+    if (!reference || !prompt.trim() || !onUpdateReferenceImage) return
+    setLoading(true)
+    try {
+      const response = await fetch('/api/vision/generate-object', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: reference.name,
+          description: reference.description || '',
+          prompt: prompt.trim(),
+          category: reference.category || 'other',
+        }),
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate image')
+      }
+      onUpdateReferenceImage('object', reference.id, data.imageUrl)
+      toast.success('Prop reference image updated')
+      onClose()
+    } catch (error) {
+      console.error('[ObjectReferencePromptDialog]', error)
+      toast.error(error instanceof Error ? error.message : 'Generation failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(value) => !value && !loading && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Regenerate prop — {reference?.name}</DialogTitle>
+          <DialogDescription>
+            Adjust the prompt, then generate a new reference image (same controls as storyboard Prompt Builder).
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Generation prompt</label>
+          <Textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            className="min-h-[120px] text-sm"
+            disabled={loading}
+          />
+        </div>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button onClick={handleGenerate} disabled={loading || !prompt.trim()} className="bg-sf-primary hover:bg-sf-primary/80">
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Wand2 className="w-4 h-4 mr-2" />
+                Generate
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 /**
  * Production Readiness Section
  * Shows progress indicators for voice assignment, scene images, and audio generation
@@ -1081,6 +1360,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   const [castOpen, setCastOpen] = useState(false)
   const [showProTips, setShowProTips] = useState(false)
   const [activeReferenceTab, setActiveReferenceTab] = useState<'cast' | 'object' | 'locations'>('cast')
+  const [objectRegenerateTarget, setObjectRegenerateTarget] = useState<VisualReference | null>(null)
 
   // Reference tabs matching ScriptPanel folder tab style (Storyboard removed - handled in main panel)
   // Scene tab now shows allScenes count (per-scene references) instead of just manual sceneReferences
@@ -1092,6 +1372,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
 
   return (
     <DndContext>
+      <TooltipProvider delayDuration={300}>
       <div className="flex flex-col h-full">
         {/* Title - h4 style */}
         <div className="flex items-center gap-2 py-3 mb-2">
@@ -1248,6 +1529,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                     onEditImage={handleEditReferenceImage}
                     referenceType="object"
                     projectId={projectId}
+                    onOpenObjectPromptDialog={(ref) => setObjectRegenerateTarget(ref)}
                     onImageUploaded={(refId, refType, imageUrl) => {
                       if (onUpdateReferenceImage) {
                         onUpdateReferenceImage(refType, refId, imageUrl)
@@ -1260,6 +1542,15 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
           )}
         </div>
       </div>
+      </TooltipProvider>
+
+      <ObjectReferencePromptDialog
+        open={!!objectRegenerateTarget}
+        reference={objectRegenerateTarget}
+        onClose={() => setObjectRegenerateTarget(null)}
+        onUpdateReferenceImage={onUpdateReferenceImage}
+      />
+
       <AddReferenceDialog
         open={isDialogOpen}
         onClose={handleCloseDialog}

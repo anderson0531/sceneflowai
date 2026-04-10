@@ -18,10 +18,13 @@ import {
   Sun,
   Moon,
   Sunrise,
-  Camera
+  Camera,
+  Zap,
+  Settings2
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
 import { LocationReference } from '@/types/visionReferences'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
@@ -298,6 +301,7 @@ export function LocationLibrary({
   }
 
   return (
+    <TooltipProvider delayDuration={300}>
     <div className="space-y-3">
       {/* Extract Locations CTA */}
       <div className="flex items-center gap-2">
@@ -447,102 +451,182 @@ export function LocationLibrary({
                       )}
                     </div>
 
-                    {/* Image Section */}
+                    {/* Image Section — overlay controls match Storyboard / Scene Gallery (Quick, Prompt, Edit, Upload) */}
                     {hasImage ? (
-                      <div className="relative aspect-video rounded-md overflow-hidden bg-gray-200 dark:bg-gray-700">
+                      <div className="relative aspect-video rounded-md overflow-hidden bg-gray-200 dark:bg-gray-700 group">
                         <img
                           src={loc.imageUrl}
                           alt={loc.location}
                           className="w-full h-full object-cover"
                         />
-                        {/* Overlay controls */}
-                        <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all opacity-0 hover:opacity-100 flex items-center justify-center gap-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setExpandedImageUrl(loc.imageUrl)
-                              setExpandedImageName(loc.location)
-                            }}
-                            className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 hover:bg-white transition-colors shadow-sm"
-                            title="View full size"
-                          >
-                            <Maximize2 className="w-4 h-4" />
-                          </button>
-                          {onEditLocationImage && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onEditLocationImage(loc.id, loc.imageUrl)
-                              }}
-                              className="p-2 rounded-lg bg-purple-500/90 text-white hover:bg-purple-600 transition-colors shadow-sm"
-                              title="Edit image"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setExpandedImageUrl(loc.imageUrl)
+                            setExpandedImageName(loc.location)
+                          }}
+                          className="absolute top-2 right-2 z-20 p-1.5 rounded-md bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+                          title="View full size"
+                        >
+                          <Maximize2 className="w-4 h-4" />
+                        </button>
+                        <input
+                          id={`location-upload-${loc.id}`}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleFileUpload(loc.id, e)}
+                        />
+                        <div className="absolute inset-0 z-10 bg-black/40 transition-opacity opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3">
+                          {onGenerateLocationImage && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    onGenerateLocationImage(loc)
+                                  }}
+                                  disabled={isGenerating}
+                                  className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
+                                >
+                                  {isGenerating ? (
+                                    <Loader2 className="w-5 h-5 text-white animate-spin" />
+                                  ) : (
+                                    <Zap className="w-5 h-5 text-white" />
+                                  )}
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>Quick Regenerate Image</TooltipContent>
+                            </Tooltip>
                           )}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setPromptBuilderOpenFor(loc.id)
-                            }}
-                            disabled={isGenerating}
-                            className="p-2 rounded-lg bg-cyan-500/90 text-white hover:bg-cyan-600 transition-colors shadow-sm disabled:opacity-50"
-                            title="Regenerate with Prompt Builder"
-                          >
-                            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
-                          </button>
-                          <label className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 hover:bg-white transition-colors shadow-sm cursor-pointer">
-                            <Upload className="w-4 h-4" />
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setPromptBuilderOpenFor(loc.id)
+                                }}
+                                disabled={isGenerating}
+                                className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors disabled:opacity-50"
+                              >
+                                <Wand2 className="w-5 h-5 text-white" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>Open Prompt Builder</TooltipContent>
+                          </Tooltip>
+                          {onEditLocationImage && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    onEditLocationImage(loc.id, loc.imageUrl)
+                                  }}
+                                  className="p-3 bg-purple-600/80 hover:bg-purple-600 rounded-full transition-colors"
+                                >
+                                  <Settings2 className="w-5 h-5 text-white" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>Edit Image</TooltipContent>
+                            </Tooltip>
+                          )}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  document.getElementById(`location-upload-${loc.id}`)?.click()
+                                }}
+                                disabled={isUploading}
+                                className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors disabled:opacity-50"
+                              >
+                                {isUploading ? (
+                                  <Loader2 className="w-5 h-5 text-white animate-spin" />
+                                ) : (
+                                  <Upload className="w-5 h-5 text-white" />
+                                )}
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>Upload Image</TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="relative aspect-video rounded-md overflow-hidden bg-gray-200 dark:bg-gray-700 group">
+                        {isGenerating || isUploading ? (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                            <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+                            <span className="text-xs text-gray-400">{isUploading ? 'Uploading...' : 'Generating...'}</span>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 pointer-events-none">
+                              <ImageIcon className="w-8 h-8 text-gray-400 mb-1" />
+                              <span className="text-xs">No reference image</span>
+                            </div>
                             <input
+                              id={`location-upload-empty-${loc.id}`}
                               type="file"
                               accept="image/*"
                               className="hidden"
                               onChange={(e) => handleFileUpload(loc.id, e)}
                             />
-                          </label>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="aspect-video rounded-md bg-gray-200 dark:bg-gray-700 flex flex-col items-center justify-center gap-2">
-                        {isGenerating || isUploading ? (
-                          <>
-                            <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
-                            <span className="text-xs text-gray-400">{isUploading ? 'Uploading...' : 'Generating...'}</span>
-                          </>
-                        ) : (
-                          <>
-                            <ImageIcon className="w-8 h-8 text-gray-400" />
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setPromptBuilderOpenFor(loc.id)
-                                }}
-                                className="bg-cyan-600 hover:bg-cyan-700 text-white border-0 text-xs"
-                              >
-                                <Sparkles className="w-3 h-3 mr-1" />
-                                Generate
-                              </Button>
-                              <label>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-xs cursor-pointer"
-                                  asChild
-                                >
-                                  <span>
-                                    <Upload className="w-3 h-3 mr-1" />
-                                    Upload
-                                  </span>
-                                </Button>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  className="hidden"
-                                  onChange={(e) => handleFileUpload(loc.id, e)}
-                                />
-                              </label>
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-3">
+                              {onGenerateLocationImage && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        onGenerateLocationImage(loc)
+                                      }}
+                                      disabled={isGenerating}
+                                      className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
+                                    >
+                                      <Zap className="w-5 h-5 text-white" />
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Quick Generate Image</TooltipContent>
+                                </Tooltip>
+                              )}
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setPromptBuilderOpenFor(loc.id)
+                                    }}
+                                    disabled={isGenerating}
+                                    className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors disabled:opacity-50"
+                                  >
+                                    <Wand2 className="w-5 h-5 text-white" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Open Prompt Builder</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      document.getElementById(`location-upload-empty-${loc.id}`)?.click()
+                                    }}
+                                    disabled={isUploading}
+                                    className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors disabled:opacity-50"
+                                  >
+                                    <Upload className="w-5 h-5 text-white" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Upload Image</TooltipContent>
+                              </Tooltip>
                             </div>
                           </>
                         )}
@@ -611,5 +695,6 @@ export function LocationLibrary({
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   )
 }
