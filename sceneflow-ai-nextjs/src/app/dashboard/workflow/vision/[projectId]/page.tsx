@@ -17,7 +17,7 @@ Implement the fix * Do NOT create separate `scenes` state - this causes sync bug
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels'
+import { PanelGroup, Panel, PanelResizeHandle, ImperativePanelHandle } from 'react-resizable-panels'
 import { upload } from '@vercel/blob/client'
 import { debounce } from 'lodash'
 import { cleanupStaleAudio, clearAllSceneAudio } from '@/lib/audio/cleanupAudio'
@@ -59,7 +59,7 @@ import { Button, buttonVariants } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, ChevronRight, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText, Coins, ExternalLink, CheckCircle2, Circle, Music, Video } from 'lucide-react'
+import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, ChevronRight, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText, Coins, ExternalLink, CheckCircle2, Circle, Music, Video, PanelRightClose, PanelRight } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 
 const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement> & { size?: number }> = ({ size = 32, className, ...props }) => (
@@ -625,6 +625,10 @@ function BYOKSettingsPanel({ isOpen, onClose, settings, onUpdateSettings, projec
 
 export default function VisionPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params)
+  
+  // Right Sidebar State
+  const [rightSidebarVisible, setRightSidebarVisible] = useState(true)
+  const rightSidebarRef = useRef<ImperativePanelHandle>(null)
   const router = useRouter()
   const { execute } = useProcessWithOverlay()
   const overlayStore = useOverlayStore()
@@ -845,6 +849,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Wrapper for setScript that also updates the edit timestamp AND saves to database
   // This ensures ScreeningRoom clears audio caches when script is edited via ScriptEditorModal
   // and that changes are persisted to the database
+  // Toggle right sidebar visibility
+  const toggleRightSidebar = useCallback(() => {
+    const isCurrentlyVisible = rightSidebarVisible
+    setRightSidebarVisible(!isCurrentlyVisible)
+    
+    if (rightSidebarRef.current) {
+      if (isCurrentlyVisible) {
+        rightSidebarRef.current.collapse()
+      } else {
+        rightSidebarRef.current.expand()
+      }
+    }
+  }, [rightSidebarVisible])
+
   const handleScriptChange = useCallback(async (updatedScript: any) => {
     // Update local state immediately for responsive UI
     setScript(updatedScript)
@@ -10362,6 +10380,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               <ArrowRight className="w-4 h-4 ml-1.5" />
             </Button>
           </Link>
+          
+          <div className="h-5 w-px bg-gray-300 dark:bg-gray-700 ml-2 mr-1" />
+          
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={toggleRightSidebar}
+            className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+            title={rightSidebarVisible ? "Hide Reference Library" : "Show Reference Library"}
+          >
+            {rightSidebarVisible ? <PanelRightClose className="w-4 h-4" /> : <PanelRight className="w-4 h-4" />}
+          </Button>
         </div>
       </header>
       
@@ -10749,11 +10780,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             </div>
           </Panel>
           
-          <PanelResizeHandle className="w-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors cursor-col-resize" />
+          <PanelResizeHandle className={`w-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors cursor-col-resize ${!rightSidebarVisible ? 'hidden' : ''}`} />
           
           {/* Right Sidebar: Reference Library */}
-          <Panel defaultSize={15} minSize={15} maxSize={40} className="min-w-0 overflow-x-hidden">
-            <div className="h-full overflow-y-auto overflow-x-hidden pl-6 min-w-0">
+          <Panel 
+            ref={rightSidebarRef}
+            collapsible={true}
+            defaultSize={15} 
+            minSize={15} 
+            maxSize={40} 
+            className={`min-w-0 overflow-x-hidden transition-all duration-300 ${!rightSidebarVisible ? 'hidden' : ''}`}
+          >
+            <div className="h-full overflow-y-auto overflow-x-hidden pl-6 min-w-0 relative">
               {/* Merge Duplicates Button */}
               {findPotentialDuplicates(characters).length > 0 && (
                 <div className="mb-4 px-2">

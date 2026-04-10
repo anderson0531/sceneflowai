@@ -67,7 +67,7 @@ export function ProductionBiblePanel({
         <div className="flex items-center gap-3 text-gray-500">
           <BookOpen className="w-5 h-5" />
           <div>
-            <p className="text-sm font-medium">Production Bible</p>
+            <p className="text-sm font-medium">Reference Library</p>
             <p className="text-xs">This project is not part of a series</p>
           </div>
         </div>
@@ -136,7 +136,7 @@ export function ProductionBiblePanel({
             <BookOpen className="w-4 h-4 text-amber-400" />
           </div>
           <div className="text-left">
-            <p className="text-sm font-medium text-white">Production Bible</p>
+            <p className="text-sm font-medium text-white">Reference Library</p>
             <p className="text-xs text-gray-500">
               {seriesTitle || 'Series'} • v{bibleVersion || '1.0.0'}
               {lastSynced && ` • Synced ${new Date(lastSynced).toLocaleDateString()}`}
