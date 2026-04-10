@@ -1123,7 +1123,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           productionTarget={productionTarget}
           onProductionTargetChange={setProductionTarget}
           videoGenerationAvailable={videoGenerationAvailable}
-          onRenderComplete={(downloadUrl, language) => {
+          onRenderComplete={(downloadUrl, language, streamType = productionTarget.streamType) => {
             // Update the rendered scene URL
             setRenderedSceneUrl(downloadUrl)
             
@@ -1131,13 +1131,13 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
             const languageInfo = SUPPORTED_LANGUAGES.find(l => l.code === language)
             const updatedStreams = (() => {
               const prev = productionStreams
-              // Check if there's an existing stream for this language
-              const existingIndex = prev.findIndex(s => s.language === language)
+              // Check if there's an existing stream for this language and stream type
+              const existingIndex = prev.findIndex(s => s.language === language && (s.streamType || 'animatic') === streamType)
               if (existingIndex >= 0) {
                 // Update existing stream to complete
                 return prev.map((s, i) => 
                   i === existingIndex 
-                    ? { ...s, status: 'complete' as const, streamType: 'video' as const, mp4Url: downloadUrl, completedAt: new Date().toISOString() }
+                    ? { ...s, status: 'complete' as const, streamType, mp4Url: downloadUrl, completedAt: new Date().toISOString() }
                     : s
                 )
               }
@@ -1147,7 +1147,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                 language,
                 languageLabel: languageInfo?.name || language,
                 status: 'complete' as const,
-                streamType: 'video' as const,
+                streamType,
                 mp4Url: downloadUrl,
                 completedAt: new Date().toISOString(),
               }]

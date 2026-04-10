@@ -334,7 +334,7 @@ interface SceneProductionMixerProps {
   /** Callback when text overlays change */
   onTextOverlaysChange?: (overlays: TextOverlay[]) => void
   /** Callback when render completes successfully */
-  onRenderComplete?: (downloadUrl: string, language: string) => void
+  onRenderComplete?: (downloadUrl: string, language: string, streamType?: ProductionStreamType) => void
   /** Callback to update production streams in parent */
   onProductionStreamsChange?: (streams: ProductionStream[]) => void
   /** Whether segment generation is in progress */
@@ -3070,7 +3070,7 @@ export function SceneProductionMixer({
             console.warn('[ServerRender] Failed to cache video to IndexedDB:', cacheError)
           }
           
-          onRenderComplete?.(persistentUrl, selectedLanguage)
+          onRenderComplete?.(persistentUrl, selectedLanguage, productionTarget.streamType)
           return
         }
         
@@ -3092,9 +3092,13 @@ export function SceneProductionMixer({
   
   // === Local Render Handler ===
   const handleLocalRender = useCallback(async () => {
+    const renderingAnimatic = productionTarget.streamType === 'animatic'
+    const sourceSegments = renderingAnimatic ? previewSegments : videoSegments
     console.log('[LocalRender] Checking segments:', {
       totalSegments: segments.length,
       videoSegmentsCount: videoSegments.length,
+      sourceSegmentsCount: sourceSegments.length,
+      streamType: productionTarget.streamType,
       renderedSegmentsCount: renderedSegments.length,
       segments: segments.map(s => ({
         id: s.segmentId,
@@ -3105,17 +3109,19 @@ export function SceneProductionMixer({
       }))
     })
     
-    if (videoSegments.length === 0) {
+    if (sourceSegments.length === 0) {
       // Provide helpful context about what segments exist
       const completeSegments = segments.filter(s => s.status === 'COMPLETE' && s.activeAssetUrl)
       const imageSegments = completeSegments.filter(s => s.assetType === 'image')
       
-      let errorMessage = 'No video segments available for Video render mode. '
-      if (imageSegments.length > 0) {
+      let errorMessage = renderingAnimatic
+        ? 'No keyframe/image segments available for Animatic render mode. Generate keyframes first.'
+        : 'No video segments available for Video render mode. '
+      if (!renderingAnimatic && imageSegments.length > 0) {
         errorMessage += `Found ${imageSegments.length} image-only segment(s) - use Animatic mode for images, or upload/generate video content.`
-      } else if (completeSegments.length > 0) {
+      } else if (!renderingAnimatic && completeSegments.length > 0) {
         errorMessage += `Found ${completeSegments.length} segment(s) but they don't appear to be video. Check that your uploaded files are video format (mp4, webm, mov).`
-      } else {
+      } else if (!renderingAnimatic) {
         errorMessage += 'Generate or upload video content first.'
       }
       setRenderError(errorMessage)
@@ -3155,7 +3161,7 @@ export function SceneProductionMixer({
     
     try {
       const useStemDubbingPolicy = productionTarget.language !== 'en' && preserveBackgroundStem
-      const segmentsForLocal = videoSegments.map(seg => {
+      const segmentsForLocal = sourceSegments.map(seg => {
         const duration = seg.actualVideoDuration ?? (seg.endTime - seg.startTime)
         const audioConfig = segmentAudioConfigs[seg.segmentId]
         const hasBackgroundStem = !!seg.stemSeparation?.backgroundStemUrl
@@ -3237,7 +3243,7 @@ export function SceneProductionMixer({
         })
       }
 
-      if (useStemDubbingPolicy) {
+      if (useStemDubbingPolicy && !renderingAnimatic) {
         videoSegments.forEach(seg => {
           const backgroundStemUrl = seg.stemSeparation?.backgroundStemUrl
           if (!backgroundStemUrl) return
@@ -3410,7 +3416,7 @@ export function SceneProductionMixer({
         console.warn('[SceneProductionMixer] Failed to cache video to IndexedDB:', cacheError)
       }
       
-      onRenderComplete?.(persistentUrl, selectedLanguage)
+      onRenderComplete?.(persistentUrl, selectedLanguage, productionTarget.streamType)
       
     } catch (err) {
       console.error('[SceneProductionMixer] Local render error:', err)
@@ -3420,7 +3426,7 @@ export function SceneProductionMixer({
       overlayStore.hide()
     }
   }, [
-    videoSegments, segments, segmentAudioConfigs, audioTracks, currentAudioUrls,
+    productionTarget.streamType, previewSegments, videoSegments, segments, segmentAudioConfigs, audioTracks, currentAudioUrls,
     totalDuration, videoTotalDuration, maxAudioDuration, resolution, selectedLanguage, 
     textOverlays, masterSegmentVolume, localRenderSupported, localRenderSupportCheck.reason,
     dialogueClipConfigs, sceneNumber, onRenderComplete, watermarkConfig, overlayStore
@@ -3660,7 +3666,7 @@ export function SceneProductionMixer({
             console.warn('[HeadlessRender] Failed to cache video to IndexedDB:', cacheError)
           }
           
-          onRenderComplete?.(persistentUrl, selectedLanguage)
+          onRenderComplete?.(persistentUrl, selectedLanguage, productionTarget.streamType)
           return
         }
         
@@ -3683,6 +3689,12 @@ export function SceneProductionMixer({
   
   // === Smart Render Handler (routes to local, server, or headless) ===
   const handleSmartRender = useCallback(async () => {
+    // Animatic target renders from keyframe/image sequence in-browser.
+    if (productionTarget.streamType === 'animatic') {
+      await handleLocalRender()
+      return
+    }
+
     const hasBurnIns = textOverlays.length > 0 || watermarkConfig.enabled
     const audioLongerThanVideo = maxAudioDuration > videoTotalDuration + 0.1
 
@@ -3711,6 +3723,7 @@ export function SceneProductionMixer({
     renderStrategy,
     handleLocalRender,
     handleRender,
+    productionTarget.streamType,
     textOverlays.length,
     watermarkConfig.enabled,
     maxAudioDuration,
@@ -4796,7 +4809,7 @@ export function SceneProductionMixer({
               {/* Smart Render Button */}
               <Button
                 onClick={handleSmartRender}
-                disabled={isRendering || !canMixerStitchRender}
+                disabled={isRendering || !hasRenderablePreview}
                 size="lg"
                 className={`px-6 whitespace-nowrap min-w-[160px] ${
                   selectedRenderMode === 'local' 
@@ -4901,7 +4914,7 @@ export function SceneProductionMixer({
                   </div>
                 )}
               </div>
-              {!canMixerStitchRender && (
+              {!hasRenderablePreview && (
                 <p className="text-amber-300/90 leading-snug">
                   Mixer quick/server stitch needs generated segment videos. For animatic (keyframes), use Render in the mixer footer.
                 </p>
