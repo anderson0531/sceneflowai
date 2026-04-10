@@ -19,6 +19,7 @@ import {
 } from '@/lib/vision/intelligentMethodSelection'
 import { getQualityForMethod } from '@/lib/config/modelConfig'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
+import { separateAudioStemsWithRetry, type StemSeparationResult } from '@/lib/audio/stemSeparation'
 
 export const maxDuration = 300 // 5 minutes for video generation
 export const runtime = 'nodejs'
@@ -58,6 +59,8 @@ interface GenerateAssetRequest {
   // Guide prompt containing voice/dialogue/SFX cues for Veo 3.1 native audio
   // Composed by GuidePromptEditor with proper voice anchors and Veo formatting
   guidePrompt?: string
+  existingStemSourceAudioUrl?: string
+  existingStemStatus?: string
 }
 
 export async function POST(
@@ -96,6 +99,9 @@ export async function POST(
       audioContext,
       // Guide prompt with voice/dialogue/SFX cues for Veo 3.1 native audio
       guidePrompt
+      ,
+      existingStemSourceAudioUrl,
+      existingStemStatus
     } = body
 
     // Get user session for authentication
@@ -119,6 +125,7 @@ export async function POST(
     let veoVideoRef: string | undefined = undefined  // Store Veo video reference for video extension
     let veoVideoRefExpiry: string | undefined = undefined  // ISO timestamp when veoVideoRef expires (48 hours)
     let methodSelectionResult: MethodSelectionResult | undefined = undefined  // Store method selection details
+    let stemSeparation: StemSeparationResult | undefined = undefined
 
     if (genType === 'T2V' || genType === 'I2V') {
       // Video generation using Veo 3.1 (platform credentials)
@@ -494,6 +501,50 @@ export async function POST(
         // Continue without last frame - not critical
       }
 
+      // Optional post-process: separate speech/background stems from generated video audio.
+      // Safe fallback: render pipeline still succeeds even if stems fail.
+      const stemFeatureEnabled = process.env.STEM_SEPARATION_ENABLED === 'true'
+      if (stemFeatureEnabled) {
+        try {
+          const stemStart = Date.now()
+          const sourceForStem = assetUrl
+          if (
+            existingStemSourceAudioUrl &&
+            existingStemStatus === 'complete' &&
+            existingStemSourceAudioUrl === sourceForStem
+          ) {
+            stemSeparation = {
+              status: 'skipped',
+              provider: (process.env.STEM_SEPARATION_PROVIDER || 'none').toLowerCase(),
+              error: 'Stem separation skipped: source unchanged and already complete',
+            }
+          } else {
+            stemSeparation = await separateAudioStemsWithRetry(sourceForStem, 3)
+          }
+          const stemLatencyMs = Date.now() - stemStart
+          console.log('[Segment Asset Generation] Stem metrics', {
+            segmentId,
+            status: stemSeparation.status,
+            provider: stemSeparation.provider,
+            latencyMs: stemLatencyMs,
+            fallback: stemSeparation.status !== 'complete',
+          })
+          if (stemSeparation.status !== 'complete') {
+            console.warn('[Segment Asset Generation] Stem separation fallback:', stemSeparation.error || stemSeparation.status)
+          } else {
+            console.log('[Segment Asset Generation] Stem separation complete')
+          }
+        } catch (stemError: any) {
+          stemSeparation = {
+            status: 'failed',
+            provider: (process.env.STEM_SEPARATION_PROVIDER || 'none').toLowerCase(),
+            error: stemError?.message || 'Stem separation failed unexpectedly',
+          }
+        }
+      } else {
+        stemSeparation = { status: 'skipped', provider: 'none' }
+      }
+
     } else if (genType === 'T2I') {
       // Image generation using Gemini API
       const base64Image = await generateImageWithGemini(prompt, {
@@ -533,6 +584,7 @@ export async function POST(
         reasoning: methodSelectionResult.reasoning,
         warnings: methodSelectionResult.warnings,
       } : undefined,
+      stemSeparation,
     })
   } catch (error: any) {
     console.error('[Segment Asset Generation] Error:', error)

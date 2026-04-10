@@ -99,38 +99,13 @@ export async function generateTTSAudio(params: GenerateTTSParams): Promise<{ mp3
 }
 
 /**
- * Generate sound effect via Epidemic API
+ * SFX auto-generation is intentionally disabled.
+ * Veo-native scene audio + manual curated uploads are the supported path.
  */
 export async function generateSFXAudio(params: GenerateSFXParams): Promise<{ mp3Url: string; duration: number }> {
-  const searchResponse = await fetch('/api/audio/epidemic/search', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      query: params.description,
-      targetDurationSec: params.duration || 2,
-      limit: 5,
-    }),
-  })
-  if (!searchResponse.ok) {
-    const error = await searchResponse.json().catch(() => ({ error: 'SFX search failed' }))
-    throw new Error(error.error || 'SFX search failed')
-  }
-  const searchData = await searchResponse.json()
-  const topResult = Array.isArray(searchData.results) && searchData.results.length > 0 ? searchData.results[0] : null
-  if (!topResult?.id) throw new Error('No SFX result found')
-
-  const selectResponse = await fetch('/api/audio/epidemic/select', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ assetId: topResult.id, commit: false }),
-  })
-  if (!selectResponse.ok) {
-    const error = await selectResponse.json().catch(() => ({ error: 'SFX select failed' }))
-    throw new Error(error.error || 'SFX select failed')
-  }
-  const selectData = await selectResponse.json()
-  if (!selectData.url) throw new Error('SFX select response missing url')
-  return { mp3Url: selectData.url, duration: params.duration || topResult.durationSec || 2 }
+  throw new Error(
+    `Auto SFX generation is disabled. Upload curated SFX manually for: "${params.description}".`
+  )
 }
 
 /**

@@ -2431,6 +2431,8 @@ export function SceneProductionMixer({
   
   // === Segment Audio Configs ===
   const [segmentAudioConfigs, setSegmentAudioConfigs] = useState<Record<string, SegmentAudioConfig>>({})
+  const [preserveBackgroundStem, setPreserveBackgroundStem] = useState(true)
+  const [includeSpeechStem, setIncludeSpeechStem] = useState(false)
   const [masterSegmentVolume, setMasterSegmentVolume] = useState(0.8)
   
   // Initialize segment configs
@@ -2738,15 +2740,17 @@ export function SceneProductionMixer({
     
     try {
       // Build segment data
+      const useStemDubbingPolicy = productionTarget.language !== 'en' && preserveBackgroundStem
       const segmentData = renderedSegments.map(seg => {
         const audioConfig = segmentAudioConfigs[seg.segmentId] || { includeAudio: true, volume: 1.0 }
+        const hasBackgroundStem = !!seg.stemSeparation?.backgroundStemUrl
         return {
           segmentId: seg.segmentId,
           sequenceIndex: seg.sequenceIndex,
           videoUrl: seg.activeAssetUrl!,
           startTime: seg.startTime,
           endTime: seg.endTime,
-          audioSource: audioConfig.includeAudio ? 'original' : 'none',
+          audioSource: (audioConfig.includeAudio && (!useStemDubbingPolicy || includeSpeechStem || !hasBackgroundStem)) ? 'original' : 'none',
           audioVolume: audioConfig.volume,
         }
       })
@@ -2791,6 +2795,20 @@ export function SceneProductionMixer({
           duration: s.duration || 5,
           volume: audioTracks.sfx.volume,
         }))
+      }
+
+      if (useStemDubbingPolicy) {
+        const stemClips = renderedSegments
+          .filter(seg => !!seg.stemSeparation?.backgroundStemUrl)
+          .map(seg => ({
+            url: seg.stemSeparation!.backgroundStemUrl!,
+            startTime: seg.startTime,
+            duration: Math.max(0, seg.endTime - seg.startTime),
+            volume: 1.0,
+          }))
+        if (stemClips.length > 0) {
+          audioTracksPayload.sfx = [...(audioTracksPayload.sfx || []), ...stemClips]
+        }
       }
       
       setRenderStatus('rendering')
@@ -3028,11 +3046,13 @@ export function SceneProductionMixer({
     )
     
     try {
+      const useStemDubbingPolicy = productionTarget.language !== 'en' && preserveBackgroundStem
       const segmentsForLocal = videoSegments.map(seg => {
         const duration = seg.actualVideoDuration ?? (seg.endTime - seg.startTime)
         const audioConfig = segmentAudioConfigs[seg.segmentId]
+        const hasBackgroundStem = !!seg.stemSeparation?.backgroundStemUrl
         // Include video audio if: config says includeAudio=true (default), OR config doesn't exist (default to include)
-        const includeVideoAudio = audioConfig?.includeAudio ?? true
+        const includeVideoAudio = (audioConfig?.includeAudio ?? true) && (!useStemDubbingPolicy || includeSpeechStem || !hasBackgroundStem)
         console.log('[LocalRender] Segment config:', {
           segmentId: seg.segmentId,
           actualVideoDuration: seg.actualVideoDuration,
@@ -3104,6 +3124,20 @@ export function SceneProductionMixer({
             startTime,
             duration: s.duration || Math.max(0, totalDuration - startTime),
             volume: audioTracks.sfx.volume,
+            type: 'sfx',
+          })
+        })
+      }
+
+      if (useStemDubbingPolicy) {
+        videoSegments.forEach(seg => {
+          const backgroundStemUrl = seg.stemSeparation?.backgroundStemUrl
+          if (!backgroundStemUrl) return
+          audioClips.push({
+            url: backgroundStemUrl,
+            startTime: seg.startTime,
+            duration: Math.max(0, seg.endTime - seg.startTime),
+            volume: 1.0,
             type: 'sfx',
           })
         })

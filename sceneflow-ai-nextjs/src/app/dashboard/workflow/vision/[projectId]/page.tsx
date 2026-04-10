@@ -2601,6 +2601,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             resolution: options?.resolution,
             // Pass guidePrompt containing voice/dialogue/SFX for Veo 3.1 audio generation
             guidePrompt: options?.guidePrompt,
+            existingStemSourceAudioUrl: segment.stemSeparation?.sourceAudioUrl,
+            existingStemStatus: segment.stemSeparation?.status,
           }),
         })
 
@@ -2684,6 +2686,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               durationSec: segment.endTime - segment.startTime,
               // Store Veo video reference for future video extension
               veoVideoRef: data.veoVideoRef,
+              stemSeparation: data.stemSeparation
+                ? {
+                    ...data.stemSeparation,
+                    sourceAudioUrl: data.assetUrl,
+                    processedAt: new Date().toISOString(),
+                  }
+                : undefined,
             }
 
             return {
@@ -2697,6 +2706,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 startFrameUrl: options?.startFrameUrl || segment.references?.startFrameUrl,
                 endFrameUrl: lastFrameUrl || segment.references?.endFrameUrl,
               },
+              stemSeparation: data.stemSeparation
+                ? {
+                    ...data.stemSeparation,
+                    sourceAudioUrl: data.assetUrl,
+                    processedAt: new Date().toISOString(),
+                  }
+                : segment.stemSeparation,
             }
           })
           return { ...current, segments }

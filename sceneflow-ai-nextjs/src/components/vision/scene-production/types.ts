@@ -439,6 +439,15 @@ export interface SceneSegmentTake {
   // ISO timestamp when veoVideoRef expires (48 hours from generation)
   // After this time, video extension falls back to I2V mode with the last frame
   veoVideoRefExpiry?: string
+  stemSeparation?: {
+    status: 'pending' | 'processing' | 'complete' | 'failed' | 'skipped'
+    speechStemUrl?: string
+    backgroundStemUrl?: string
+    provider?: string
+    error?: string
+    sourceAudioUrl?: string
+    processedAt?: string
+  }
 }
 
 export interface SceneSegmentReferences {
@@ -606,6 +615,15 @@ export interface SceneSegment {
   
   // Audio overrun amount in seconds (how much audio exceeds video)
   audioOverrun?: number
+  stemSeparation?: {
+    status: 'pending' | 'processing' | 'complete' | 'failed' | 'skipped'
+    speechStemUrl?: string
+    backgroundStemUrl?: string
+    provider?: string
+    error?: string
+    sourceAudioUrl?: string
+    processedAt?: string
+  }
 }
 
 // Character presence in a segment
@@ -657,6 +675,8 @@ export interface ProductionAudioMixConfig {
   music: { enabled: boolean; volume: number; startOffset: number }
   sfx: { enabled: boolean; volume: number; startOffset: number }
   segmentAudio: { enabled: boolean; volume: number }
+  preserveBackgroundStem?: boolean
+  includeSpeechStem?: boolean
 }
 
 /**

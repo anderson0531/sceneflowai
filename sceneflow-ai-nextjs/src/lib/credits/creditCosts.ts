@@ -161,8 +161,6 @@ export const AUDIO_CREDITS = {
   
   /** ElevenLabs sound effects */
   ELEVENLABS_SFX: 15,
-  /** Epidemic Sound SFX selection/licensing */
-  EPIDEMIC_SFX: 15,
   
   /** ElevenLabs music generation */
   ELEVENLABS_MUSIC: 25,
@@ -605,7 +603,6 @@ export const PROVIDER_COSTS_USD = {
   veo_quality_4k_8s: 1.30,
   topaz_upscale_min: 0.20,
   elevenlabs_1k_chars: 0.35,
-  epidemic_sfx: 0.08,
   ffmpeg_render: 0.05,
 } as const;
 
