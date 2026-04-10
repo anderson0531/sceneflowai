@@ -533,13 +533,17 @@ export class LocalRenderService {
         }
       }
       
-      // Create a real-time AudioContext to play the pre-rendered audio into MediaRecorder
-      const playbackAudioContext = new AudioContextClass()
-      this.playbackAudioContext = playbackAudioContext
-      const audioDestination = playbackAudioContext.createMediaStreamDestination()
-      const audioTrack = audioDestination.stream.getAudioTracks()[0]
-      if (audioTrack) {
-        stream.addTrack(audioTrack)
+      // Create audio track for recorder only when we actually have pre-rendered audio.
+      // Attaching an empty audio track can cause some browsers to emit zero chunks.
+      let audioDestination: MediaStreamAudioDestinationNode | null = null
+      if (preRenderedAudioBuffer) {
+        const playbackAudioContext = new AudioContextClass()
+        this.playbackAudioContext = playbackAudioContext
+        audioDestination = playbackAudioContext.createMediaStreamDestination()
+        const audioTrack = audioDestination.stream.getAudioTracks()[0]
+        if (audioTrack) {
+          stream.addTrack(audioTrack)
+        }
       }
       const hasAudioTrack = stream.getAudioTracks().length > 0
       if (!hasAudioTrack && mimeType.includes('opus')) {
@@ -598,8 +602,8 @@ export class LocalRenderService {
       
       // Play back pre-rendered audio through the real-time context
       // This will be captured by the MediaRecorder's audio track
-      if (preRenderedAudioBuffer) {
-        const audioSource = playbackAudioContext.createBufferSource()
+      if (preRenderedAudioBuffer && audioDestination && this.playbackAudioContext) {
+        const audioSource = this.playbackAudioContext.createBufferSource()
         audioSource.buffer = preRenderedAudioBuffer
         audioSource.connect(audioDestination)
         audioSource.start(0)
