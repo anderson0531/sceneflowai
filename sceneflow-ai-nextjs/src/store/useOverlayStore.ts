@@ -184,7 +184,7 @@ export const OPERATION_CONFIGS: Record<OperationType, OperationConfig> = {
     ]
   },
   'video-generation': {
-    title: 'Generating Video',
+    title: 'Rendering Scene',
     animationType: 'video',
     phases: [
       { id: 'init', label: 'Preparing video assets...', progress: 5 },

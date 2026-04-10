@@ -318,9 +318,9 @@ type ActiveRenderMode = 'local' | 'server' | 'headless'
 
 /** Short labels for the render-mode Select trigger (dropdown items stay verbose). */
 const RENDER_MODE_TRIGGER_LABELS: Record<RenderMode, string> = {
-  local: '720/1080 Fast',
-  server: '1080/4K Final',
-  headless: '4K Pro Cloud',
+  local: 'Fast',
+  server: 'Final',
+  headless: 'Pro Cloud',
   auto: 'Auto',
 }
 
@@ -328,6 +328,13 @@ const RESOLUTION_TRIGGER_LABELS: Record<'720p' | '1080p' | '4K', string> = {
   '720p': '720',
   '1080p': '1080',
   '4K': '4K',
+}
+
+const RENDER_MODE_MENU_LABELS: Record<RenderMode, string> = {
+  local: 'Fast',
+  server: 'Final',
+  headless: 'Pro Cloud',
+  auto: 'Auto',
 }
 
 interface SceneProductionMixerProps {
@@ -3646,7 +3653,19 @@ export function SceneProductionMixer({
     const audioLongerThanVideo = maxAudioDuration > videoTotalDuration + 0.1
     const headlessAvailable = renderOptions.some((opt) => opt.mode === 'headless' && opt.available)
 
-    if (selectedRenderMode === 'auto' && (hasBurnIns || audioLongerThanVideo)) {
+    // Reliability guard: use deterministic cloud rendering for any burn-ins.
+    // This avoids local/server path variance where text/watermark can drift or drop.
+    if (hasBurnIns) {
+      if (headlessAvailable) {
+        await handleHeadlessRender()
+        return
+      }
+      setActiveRenderMode('server')
+      await handleRender()
+      return
+    }
+
+    if (selectedRenderMode === 'auto' && audioLongerThanVideo) {
       if (headlessAvailable) {
         await handleHeadlessRender()
         return
@@ -4770,7 +4789,7 @@ export function SceneProductionMixer({
                         {option.mode === 'server' && <Server className="w-3 h-3 text-purple-400" />}
                         {option.mode === 'headless' && <Monitor className="w-3 h-3 text-blue-400" />}
                         {option.mode === 'auto' && <Sparkles className="w-3 h-3 text-gray-400" />}
-                        <span>{option.label}</span>
+                        <span>{RENDER_MODE_MENU_LABELS[option.mode]}</span>
                         {option.badge && (
                           <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0">
                             {option.badge}
