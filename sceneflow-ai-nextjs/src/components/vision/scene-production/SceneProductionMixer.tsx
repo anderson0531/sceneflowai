@@ -2510,11 +2510,6 @@ export function SceneProductionMixer({
     return Array.from(langs)
   }, [audioAssets])
 
-  const nonEnglishSegmentsMissingBackgroundStem = useMemo(() => {
-    if (productionTarget.language === 'en') return 0
-    return previewSegments.filter((seg) => !seg.stemSeparation?.backgroundStemUrl).length
-  }, [previewSegments, productionTarget.language])
-  
   // Get audio URLs for selected language
   const currentAudioUrls = useMemo(() => {
     const narrationUrl = audioAssets.narrationAudio?.[selectedLanguage]?.url 
@@ -2634,6 +2629,11 @@ export function SceneProductionMixer({
     if (videoSegments.length > 0) return videoSegments
     return renderedSegments
   }, [productionTarget.streamType, animaticPreviewSegments, videoSegments, renderedSegments])
+
+  const nonEnglishSegmentsMissingBackgroundStem = useMemo(() => {
+    if (productionTarget.language === 'en') return 0
+    return previewSegments.filter((seg) => !seg.stemSeparation?.backgroundStemUrl).length
+  }, [previewSegments, productionTarget.language])
 
   const previewPlaybackKind: 'video' | 'image-sequence' =
     productionTarget.streamType === 'animatic' && animaticPreviewSegments.length > 0
