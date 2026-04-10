@@ -669,6 +669,12 @@ export type ProductionStreamStatus = 'pending' | 'rendering' | 'complete' | 'fai
  */
 export type ProductionStreamType = 'animatic' | 'video'
 
+/** Unified mixer / export target: output kind + language for audio and preview policy */
+export interface ProductionTarget {
+  streamType: ProductionStreamType
+  language: string
+}
+
 /**
  * Ken Burns intensity for animatic rendering
  */

@@ -45,7 +45,7 @@ import {
   Video,
   VolumeX,
 } from 'lucide-react'
-import type { SceneSegment, SceneProductionData } from './types'
+import type { SceneSegment, SceneProductionData, AnimaticRenderSettings } from './types'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 
 // Audio track configuration with timing
@@ -79,6 +79,10 @@ interface SceneRenderDialogProps {
     sfxDuration?: number
   }
   onRenderComplete?: (downloadUrl: string, streamType?: 'video' | 'animatic') => void
+  /** Sync language when dialog opens (from production stream / mixer target) */
+  initialLanguage?: string
+  /** Optional animatic export settings (Ken Burns, transitions) merged into the animatic API payload */
+  animaticRenderSettings?: Partial<Omit<AnimaticRenderSettings, 'type'>>
 }
 
 type RenderStatus = 'idle' | 'preparing' | 'uploading' | 'rendering' | 'complete' | 'error'
@@ -94,6 +98,8 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
   renderMode = 'video',
   audioData,
   onRenderComplete,
+  initialLanguage,
+  animaticRenderSettings,
 }) => {
   // Per-segment audio settings: { [segmentId]: { includeAudio: boolean, volume: number } }
   const [segmentAudioSettings, setSegmentAudioSettings] = useState<Record<string, { includeAudio: boolean; volume: number }>>({})
@@ -120,9 +126,15 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
   // Calculate rendered segments (video mode) or keyframe segments (animatic mode)
   const renderedSegments = useMemo(() => {
     if (renderMode === 'animatic') {
-      // For animatic: use segments with image URLs (keyframes)
       return segments.filter(s => {
-        const imageUrl = s.keyframeUrl || s.thumbnailUrl || (s as any).imageUrl
+        const x = s as SceneSegment & { keyframeUrl?: string | null; thumbnailUrl?: string | null; imageUrl?: string }
+        const imageUrl =
+          s.startFrameUrl ||
+          s.references?.startFrameUrl ||
+          s.visualFrame ||
+          x.keyframeUrl ||
+          x.thumbnailUrl ||
+          x.imageUrl
         return !!imageUrl
       })
     }
@@ -142,6 +154,13 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
   const totalDuration = useMemo(() => {
     return renderedSegments.reduce((sum, s) => sum + (s.endTime - s.startTime), 0)
   }, [renderedSegments])
+
+  // Sync language when opening from production streams / mixer
+  useEffect(() => {
+    if (open && initialLanguage) {
+      setSelectedLanguage(initialLanguage)
+    }
+  }, [open, initialLanguage])
 
   // Initialize per-segment audio settings when segments change
   useEffect(() => {
@@ -203,12 +222,22 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
   // Animatic render: calls /api/export/scene-animatic with keyframe images
   const handleAnimaticRender = async () => {
     // Build segment data with image URLs
-    const animaticSegments = renderedSegments.map(s => ({
+    const animaticSegments = renderedSegments.map(s => {
+      const x = s as SceneSegment & { keyframeUrl?: string | null; thumbnailUrl?: string | null; imageUrl?: string }
+      return {
       segmentId: s.segmentId,
-      imageUrl: s.keyframeUrl || s.thumbnailUrl || (s as any).imageUrl || '',
+      imageUrl:
+        s.startFrameUrl ||
+        s.references?.startFrameUrl ||
+        s.visualFrame ||
+        x.keyframeUrl ||
+        x.thumbnailUrl ||
+        x.imageUrl ||
+        '',
       startTime: s.startTime,
       duration: s.endTime - s.startTime,
-    }))
+    }
+    })
 
     // Build audio clips
     const audioClips: Array<{ url: string; startTime: number; duration: number; volume?: number; type?: string }> = []
@@ -258,10 +287,10 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
         segments: animaticSegments,
         audioClips,
         settings: {
-          kenBurnsIntensity: 'subtle',
-          transitionStyle: 'crossfade',
-          transitionDuration: 0.5,
-          includeSubtitles: false,
+          kenBurnsIntensity: animaticRenderSettings?.kenBurnsIntensity ?? 'subtle',
+          transitionStyle: animaticRenderSettings?.transitionStyle ?? 'crossfade',
+          transitionDuration: animaticRenderSettings?.transitionDuration ?? 0.5,
+          includeSubtitles: animaticRenderSettings?.includeSubtitles ?? false,
         },
       }),
     })

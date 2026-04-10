@@ -33,15 +33,8 @@ const DirectorConsole = dynamic(
   () => import('./scene-production/DirectorConsole').then(mod => ({ default: mod.DirectorConsole })),
   { ssr: false, loading: () => <div className="p-4 text-center text-zinc-500">Loading Director Console...</div> }
 )
-import { SceneTimelineV2 } from './scene-production/SceneTimelineV2'
-// Dynamic import for SceneRenderDialog - shared between ScriptPanel and DirectorConsole chunks
-const SceneRenderDialog = dynamic(
-  () => import('./scene-production/SceneRenderDialog').then(mod => ({ default: mod.SceneRenderDialog })),
-  { ssr: false }
-)
-import { applySequentialAlignmentToScene, AUDIO_ALIGNMENT_BUFFERS, getLanguagePlaybackOffset, calculateSuggestedOffset } from './scene-production/audioTrackBuilder'
-import { type AudioTracksData, type AudioTrackClip } from './scene-production/AudioTimeline'
-import type { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings, SceneSegment, AudioTrackType } from './scene-production/types'
+import { AUDIO_ALIGNMENT_BUFFERS, getLanguagePlaybackOffset, calculateSuggestedOffset } from './scene-production/audioTrackBuilder'
+import type { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings, SceneSegment } from './scene-production/types'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -236,6 +229,7 @@ interface ScriptPanelProps {
   onSegmentAnimaticSettingsChange?: (sceneId: string, segmentId: string, settings: { imageDuration?: number }) => void
   /** Persist rendered scene URL to database */
   onRenderedSceneUrlChange?: (sceneId: string, url: string | null) => void
+  onProductionDataChange?: (sceneId: string, data: SceneProductionData) => void
   onAddSegment?: (sceneId: string, afterSegmentId: string | null, duration: number) => void
   onAddFullSegment?: (sceneId: string, segment: any) => void
   onDeleteSegment?: (sceneId: string, segmentId: string) => void
@@ -562,7 +556,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false }: ScriptPanelProps) {
 
 
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
@@ -688,10 +682,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // Scene review modal state
   const [showSceneReviewModal, setShowSceneReviewModal] = useState(false)
   const [selectedSceneForReview, setSelectedSceneForReview] = useState<number | null>(null)
-  
-  // Animatic render dialog state
-  const [animaticRenderDialogOpen, setAnimaticRenderDialogOpen] = useState(false)
-  const [animaticRenderSceneIdx, setAnimaticRenderSceneIdx] = useState<number | null>(null)
   
   // Drag and drop functionality
   const sensors = useSensors(
@@ -2840,6 +2830,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       onLockSegment={onLockSegment}
                       onSegmentAnimaticSettingsChange={onSegmentAnimaticSettingsChange}
                       onRenderedSceneUrlChange={onRenderedSceneUrlChange}
+                      onProductionDataChange={onProductionDataChange}
+                      onGenerateAllAudio={onGenerateAllAudio}
+                      isGeneratingAudio={isGeneratingAudio}
                       onAddSegment={onAddSegment}
                       onAddFullSegment={onAddFullSegment}
                       onDeleteSegment={onDeleteSegment}
@@ -3043,69 +3036,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           isOptimizing={isOptimizingDirection}
         />
       )}
-
-      {/* Animatic Render Dialog - for exporting keyframe-based animatic as MP4 */}
-      {animaticRenderSceneIdx !== null && (() => {
-        const scene = scenes[animaticRenderSceneIdx]
-        const sceneId = scene?.sceneId || scene?.id || `scene-${animaticRenderSceneIdx}`
-        const sceneProductionData = getSceneProductionData?.(sceneId)
-        
-        // Build audio data from scene
-        const narrationUrl = scene?.narrationAudio?.[selectedLanguage]?.url || scene?.narrationAudioUrl
-        const narrationDuration = scene?.narrationAudio?.[selectedLanguage]?.duration
-        const dialogueAudioArray = (Array.isArray(scene?.dialogueAudio) 
-          ? scene.dialogueAudio 
-          : scene?.dialogueAudio?.[selectedLanguage] || []).filter(Boolean)
-        
-        return (
-          <SceneRenderDialog
-            open={animaticRenderDialogOpen}
-            onOpenChange={(open) => {
-              setAnimaticRenderDialogOpen(open)
-              if (!open) setAnimaticRenderSceneIdx(null)
-            }}
-            sceneId={sceneId}
-            sceneNumber={animaticRenderSceneIdx + 1}
-            projectId={projectId}
-            renderMode="animatic"
-            segments={sceneProductionData?.segments || []}
-            productionData={sceneProductionData || null}
-            audioData={{
-              narrationUrl,
-              narrationDuration,
-              dialogueEntries: dialogueAudioArray.map((d: any, i: number) => ({
-                audioUrl: d?.audioUrl,
-                duration: d?.duration,
-                character: scene?.dialogue?.[i]?.character || d?.character
-              })),
-              musicUrl: scene?.musicAudio || scene?.music?.url,
-              musicDuration: scene?.music?.duration,
-            }}
-            onRenderComplete={(downloadUrl, streamType) => {
-              toast.success('Animatic rendered successfully!')
-              console.log('[ScriptPanel] Animatic render complete:', downloadUrl)
-              
-              // Persist the animatic stream to production data
-              if (onProductionDataChange && sceneProductionData) {
-                const existingStreams = sceneProductionData.productionStreams || []
-                const newStream = {
-                  id: `animatic-${selectedLanguage}-${Date.now()}`,
-                  streamType: 'animatic' as const,
-                  language: selectedLanguage,
-                  languageLabel: SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name || selectedLanguage,
-                  status: 'complete' as const,
-                  mp4Url: downloadUrl,
-                  completedAt: new Date().toISOString(),
-                }
-                onProductionDataChange(sceneId, {
-                  ...sceneProductionData,
-                  productionStreams: [...existingStreams, newStream],
-                })
-              }
-            }}
-          />
-        )
-      })()}
 
       {/* Scene Prompt Builder Modal */}
       {sceneBuilderIdx !== null && (
@@ -3402,7 +3332,10 @@ interface SceneCardProps {
   // Individual audio playback
   onPlayAudio?: (audioUrl: string, label: string) => void
   onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number, language?: string) => void
+  onGenerateAllAudio?: (language?: string) => void
+  isGeneratingAudio?: boolean
   selectedLanguage?: string
+  onLanguageChange?: (lang: string) => void
   playingAudio?: string | null
   generatingDialogue?: {sceneIdx: number, character: string, dialogueIndex?: number} | null
   setGeneratingDialogue?: (state: {sceneIdx: number, character: string, dialogueIndex?: number} | null) => void
@@ -3411,6 +3344,7 @@ interface SceneCardProps {
   onAddScene?: (afterIndex?: number) => void
   onDeleteScene?: (sceneIndex: number) => void
   onEditScene?: (sceneIndex: number) => void
+  onEditSceneWithRecommendations?: (sceneIndex: number) => void
   onUpdateSceneAudio?: (sceneIndex: number) => Promise<void>
   // NEW: Delete specific audio from scene
   onDeleteSceneAudio?: (sceneIndex: number, audioType: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx', dialogueIndex?: number, sfxIndex?: number) => void
@@ -3455,6 +3389,7 @@ interface SceneCardProps {
   onSegmentAnimaticSettingsChange?: (sceneId: string, segmentId: string, settings: { imageDuration?: number }) => void
   /** Persist rendered scene URL to database */
   onRenderedSceneUrlChange?: (sceneId: string, url: string | null) => void
+  onProductionDataChange?: (sceneId: string, data: SceneProductionData) => void
   onAddSegment?: (sceneId: string, afterSegmentId: string | null, duration: number) => void
   onAddFullSegment?: (sceneId: string, segment: any) => void
   onDeleteSegment?: (sceneId: string, segmentId: string) => void
@@ -3567,10 +3502,6 @@ interface SceneCardProps {
   resyncingAudioSceneIndex?: number | null
   // Production readiness for workflow guards (voices assigned, etc.)
   productionReadiness?: ProductionReadiness
-  // Film context for cinematic elements
-  projectTitle?: string
-  projectLogline?: string
-  visualStyle?: string
 }
 
 function SceneCard({
@@ -3600,6 +3531,8 @@ function SceneCard({
   generateAndPlayMusic,
   onPlayAudio,
   onGenerateSceneAudio,
+  onGenerateAllAudio,
+  isGeneratingAudio,
   selectedLanguage = 'en',
   onLanguageChange,
   playingAudio,
@@ -6802,211 +6735,34 @@ function SceneCard({
                           } : undefined}
                         />
                     
-                    {/* Storyboard Editor - Preview and edit timing */}
-                    {(() => {
-                      // Build audio tracks data from scene using sequential alignment
-                      const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
-                      
-                      // Get dialogue audio array
-                      let dialogueAudioArray: any[] = []
-                      if (Array.isArray(scene.dialogueAudio)) {
-                        dialogueAudioArray = scene.dialogueAudio
-                      } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
-                        dialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
-                      }
-                      
-                      // Check if we have any audio to display
-                      const hasSfxAudio = scene.sfxAudio && scene.sfxAudio.length > 0 && scene.sfxAudio.some((url: string) => url)
-                      const hasMusicAudio = !!(scene.musicAudio || scene.music?.url)
-                      const hasAnyAudio = narrationUrl || dialogueAudioArray.some((d: any) => d?.audioUrl) || hasSfxAudio || hasMusicAudio
-                      if (!hasAnyAudio) return null
-                      
-                      // ================================================================
-                      // Use sequential alignment system for consistent timing
-                      // ================================================================
-                      const alignment = applySequentialAlignmentToScene(scene, selectedLanguage, new Set())
-                      
-                      // Build audio tracks using aligned timings
-                      const audioTracks: AudioTracksData = {
-                        voiceover: [],
-                        dialogue: [],
-                        music: [],
-                        sfx: []
-                      }
-                      
-                      // Add Narration to voiceover track (blue) with aligned timing
-                      if (narrationUrl) {
-                        audioTracks.voiceover!.push({
-                          id: 'narration',
-                          url: narrationUrl,
-                          startTime: alignment.narrationStartTime,
-                          duration: alignment.narrationDuration || 5,
-                          label: 'Narration'
-                        })
-                      }
-                      
-                      // Add dialogue clips with aligned timings
-                      const dialogueClips: AudioTrackClip[] = dialogueAudioArray
-                        .filter((d: any) => d?.audioUrl)
-                        .map((d: any, idx: number) => {
-                          // Find aligned timing for this dialogue
-                          const alignedTiming = alignment.dialogueTimings.find(t => t.index === idx)
-                          return {
-                            id: `dialogue-${idx}`,
-                            url: d.audioUrl,
-                            startTime: alignedTiming?.startTime ?? (alignment.narrationStartTime + alignment.narrationDuration + 1 + (idx * 4)),
-                            duration: alignedTiming?.duration ?? d.duration ?? 3,
-                            label: d.character || `Line ${idx + 1}`
-                          }
-                        })
-                      
-                      if (dialogueClips.length > 0) {
-                        audioTracks.dialogue = dialogueClips
-                      }
-                      
-                      // Add SFX clips with aligned timings
-                      const sfxList = scene.sfx || []
-                      const sfxAudioList = scene.sfxAudio || []
-                      
-                      if (sfxList.length > 0 || sfxAudioList.length > 0) {
-                        const sfxClips: AudioTrackClip[] = []
-                        const maxLength = Math.max(sfxList.length, sfxAudioList.length)
-                        
-                        for (let idx = 0; idx < maxLength; idx++) {
-                          const sfxDef = sfxList[idx] || {}
-                          const url = sfxAudioList[idx] || (typeof sfxDef !== 'string' && sfxDef?.audioUrl)
-                          
-                          if (!url) continue
-                          
-                          // Find aligned timing for this SFX
-                          const alignedTiming = alignment.sfxTimings.find(t => t.index === idx)
-                          
-                          sfxClips.push({
-                            id: `sfx-${idx}`,
-                            url,
-                            startTime: alignedTiming?.startTime ?? (1 + idx * 2),
-                            duration: alignedTiming?.duration ?? (typeof sfxDef !== 'string' && sfxDef.duration) ?? 2,
-                            label: typeof sfxDef === 'string' ? sfxDef.slice(0, 20) : (sfxDef.description?.slice(0, 20) || `SFX ${idx + 1}`)
-                          })
-                        }
-                        
-                        if (sfxClips.length > 0) {
-                          audioTracks.sfx = sfxClips
-                        }
-                      }
-                      
-                      // Add Music with duration spanning entire scene + buffer
-                      const musicUrl = scene.musicAudio || scene.music?.url
-                      if (musicUrl) {
-                        audioTracks.music!.push({
-                          id: 'music',
-                          url: musicUrl,
-                          startTime: 0,
-                          duration: alignment.musicDuration,
-                          label: 'Background Music'
-                        })
-                      }
-                      
-                      // Use aligned total duration
-                      const sceneDuration = alignment.totalDuration + 2 // Add 2s buffer for display
-                      
-                      return (
-                        <div className="p-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setAudioTimelineCollapsed(!audioTimelineCollapsed)
-                              }}
-                              className="flex items-center gap-3 transition-colors group"
-                              title={audioTimelineCollapsed ? 'Show animatic editor' : 'Hide animatic editor'}
-                            >
-                              {audioTimelineCollapsed ? <ChevronRight className="w-4 h-4 text-cyan-400 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-cyan-400 flex-shrink-0" />}
-                              <Layers className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-                              <span className="text-cyan-300 font-medium">Animatic Editor</span>
-                            </button>
-                            <span className="text-cyan-400/70 text-sm ml-auto">{sceneDuration.toFixed(1)}s total</span>
-                          </div>
-                          <AnimatePresence>
-                            {!audioTimelineCollapsed && (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                transition={{ duration: 0.2 }}
-                                className="mt-3"
-                              >
-                                <SceneTimelineV2
-                                  mode="storyboard"
-                                  segments={sceneProductionData?.segments || []}
-                                  scene={scene}
-                                  selectedSegmentId={selectedSegmentId}
-                                  selectedLanguage={selectedLanguage}
-                                  playbackOffset={getPlaybackOffsetForScene?.(scene.sceneId || scene.id || `scene-${sceneIdx}`, selectedLanguage) ?? 0}
-                                  suggestedOffset={getSuggestedOffsetForScene?.(scene)}
-                                  onPlaybackOffsetChange={(offset) => {
-                                    const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
-                                    handlePlaybackOffsetChange?.(sceneId, sceneIdx, selectedLanguage, offset)
-                                  }}
-                                  onLanguageChange={(lang) => {
-                                    // Update panel-level language state
-                                    setSelectedLanguage(lang)
-                                  }}
-                                  onSegmentSelect={setSelectedSegmentId}
-                                  onVisualClipChange={(clipId, changes) => {
-                                    const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
-                                    onSegmentResize?.(sceneId, clipId, changes)
-                                  }}
-                                  onAudioClipChange={(trackType: AudioTrackType, clipId: string, changes: { startTime?: number; duration?: number }) => {
-                                    onAudioClipChange?.(sceneIdx, trackType, clipId, changes)
-                                  }}
-                                  onDeleteSegment={(segmentId) => {
-                                    const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
-                                    onDeleteSegment?.(sceneId, segmentId)
-                                  }}
-                                  onReorderSegments={(oldIndex, newIndex) => {
-                                    const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
-                                    onReorderSegments?.(sceneId, oldIndex, newIndex)
-                                  }}
-                                  onApplyIntelligentAlignment={onApplyIntelligentAlignment}
-                                  sceneFrameUrl={scene?.imageUrl}
-                                  onGenerateSceneMp4={() => {
-                                    setAnimaticRenderSceneIdx(sceneIdx)
-                                    setAnimaticRenderDialogOpen(true)
-                                  }}
-                                />
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                          
-                          {/* Segment controls footer when segment selected */}
-                          {sceneProductionData?.segments?.length > 0 && !audioTimelineCollapsed && selectedSegmentId && (
-                            <div className="px-3 py-2 border-t border-cyan-500/20 bg-cyan-900/10 flex items-center justify-end">
-                              <div className="flex items-center gap-2">
-                                {/* Edit Segment button */}
-                                <button
-                                  onClick={() => setEditSegmentDialogOpen(true)}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 rounded text-amber-300 text-xs font-medium transition-colors"
-                                >
-                                  <Pencil className="w-3.5 h-3.5" />
-                                  Edit Segment
-                                </button>
-                                {/* Delete Segment button - only when more than 1 segment */}
-                                {sceneProductionData.segments.length > 1 && (
-                                  <button
-                                    onClick={() => setDeleteConfirmOpen(true)}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 rounded text-red-300 text-xs font-medium transition-colors"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                    Delete
-                                  </button>
-                                )}
-                              </div>
+                    {sceneProductionData?.segments && sceneProductionData.segments.length > 0 && (
+                      <div className="p-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-lg">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                          <div className="flex items-start gap-3 min-w-0">
+                            <Clapperboard className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-cyan-300 font-medium text-sm">Scene production mixer</p>
+                              <p className="text-cyan-400/80 text-xs mt-1 leading-snug">
+                                Edit timing, audio mix, overlays, and render animatic or video in one place—open Video Production below.
+                              </p>
                             </div>
-                          )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const anchorId = `director-console-${scene.sceneId || scene.id || `scene-${sceneIdx}`}`
+                              setVideoProductionCollapsed(false)
+                              requestAnimationFrame(() => {
+                                document.getElementById(anchorId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                              })
+                            }}
+                            className="shrink-0 px-3 py-2 rounded-lg text-xs font-medium bg-cyan-500/20 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/30 transition-colors"
+                          >
+                            Open Scene Production Mixer
+                          </button>
                         </div>
-                      )
-                    })()}
+                      </div>
+                    )}
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -7049,8 +6805,8 @@ function SceneCard({
                           <DirectorConsole
                             sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
                             sceneNumber={sceneNumber}
-                            projectId={projectId}
-                            productionData={sceneProductionData}
+                            projectId={projectId ?? ''}
+                            productionData={sceneProductionData ?? null}
                             sceneImageUrl={scene.imageUrl}
                             scene={{
                               ...scene,
@@ -7069,8 +6825,8 @@ function SceneCard({
                             onProductionDataChange={onProductionDataChange ? (data) => onProductionDataChange(scene.sceneId || scene.id || `scene-${sceneIdx}`, data) : undefined}
                             sceneIndex={sceneIdx}
                             onGenerateSceneAudio={onGenerateSceneAudio ? (idx, audioType, characterName, dialogueIndex, language) => onGenerateSceneAudio(idx, audioType, characterName, dialogueIndex, language) : undefined}
-                            onGenerateAllAudio={(arguments[0] as ScriptPanelProps).onGenerateAllAudio ? (language: string) => (arguments[0] as ScriptPanelProps).onGenerateAllAudio!(language) : undefined}
-                            isGeneratingAudio={(arguments[0] as ScriptPanelProps).isGeneratingAudio ?? false}
+                            onGenerateAllAudio={onGenerateAllAudio}
+                            isGeneratingAudio={isGeneratingAudio}
                           />
                         </div>
                         </motion.div>

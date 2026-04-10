@@ -24,12 +24,12 @@ import {
 } from 'lucide-react'
 import { SUPPORTED_LANGUAGES, FLAG_EMOJIS } from '@/constants/languages'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
-import type { 
-  ProductionStream, 
-  ProductionStreamStatus, 
+import type {
+  ProductionStream,
+  ProductionStreamStatus,
   ProductionStreamType,
   AnimaticRenderSettings,
-  KenBurnsIntensity
+  KenBurnsIntensity,
 } from './types'
 
 // ============================================================================
@@ -39,8 +39,11 @@ import type {
 interface ProductionStreamsPanelProps {
   /** Existing production streams for this scene */
   productionStreams: ProductionStream[]
-  /** Currently selected language for audio tracks */
+  /** Currently selected language for audio tracks (synced with mixer output target) */
   selectedLanguage: string
+  /** When set, Animatic / Video tab is controlled by parent (e.g. mixer output) */
+  streamTypeTab?: ProductionStreamType
+  onStreamTypeTabChange?: (t: ProductionStreamType) => void
   /** Callback to render a new animatic production stream */
   onRenderAnimatic?: (language: string, resolution: '720p' | '1080p' | '4K', settings: AnimaticRenderSettings) => Promise<void>
   /** Callback to render a new video production stream */
@@ -119,7 +122,8 @@ const STATUS_CONFIG: Record<ProductionStreamStatus, StatusEntry> = {
   rendering: { Icon: Loader2, iconClassName: 'animate-spin', label: 'Rendering', className: 'text-blue-400' },
   complete: { Icon: CheckCircle2, label: 'Ready', className: 'text-green-400' },
   failed: { Icon: XCircle, label: 'Failed', className: 'text-red-400' },
-  stale: { Icon: AlertCircle, label: 'Stale', className: 'text-amber-400' }
+  stale: { Icon: AlertCircle, label: 'Stale', className: 'text-amber-400' },
+  outdated: { Icon: AlertCircle, label: 'Outdated', className: 'text-amber-400' },
 }
 
 function formatDuration(seconds: number): string {
@@ -256,7 +260,7 @@ function InlineVideoPlayer({ stream, onClose, onExpandFullscreen, onDownload }: 
       <div className="relative bg-black">
         <video
           ref={videoRef}
-          src={stream.mp4Url}
+          src={stream.mp4Url || undefined}
           className="w-full aspect-video"
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
@@ -450,6 +454,8 @@ function ProductionStreamCard({
 export function ProductionStreamsPanel({
   productionStreams,
   selectedLanguage,
+  streamTypeTab,
+  onStreamTypeTabChange,
   onRenderAnimatic,
   onRenderVideo,
   onRenderProduction, // Legacy - maps to onRenderAnimatic
@@ -466,7 +472,23 @@ export function ProductionStreamsPanel({
 }: ProductionStreamsPanelProps) {
   const [newLanguage, setNewLanguage] = useState(selectedLanguage)
   const [newResolution, setNewResolution] = useState<'720p' | '1080p' | '4K'>('1080p')
-  const [selectedStreamType, setSelectedStreamType] = useState<ProductionStreamType>('animatic')
+  const [internalStreamType, setInternalStreamType] = useState<ProductionStreamType>('animatic')
+  const isStreamTabControlled = streamTypeTab != null
+  const selectedStreamType = streamTypeTab ?? internalStreamType
+
+  const setSelectedStreamType = useCallback(
+    (t: ProductionStreamType) => {
+      onStreamTypeTabChange?.(t)
+      if (!isStreamTabControlled) {
+        setInternalStreamType(t)
+      }
+    },
+    [isStreamTabControlled, onStreamTypeTabChange]
+  )
+
+  useEffect(() => {
+    setNewLanguage(selectedLanguage)
+  }, [selectedLanguage])
   
   // Animatic-specific settings
   const [kenBurnsIntensity, setKenBurnsIntensity] = useState<KenBurnsIntensity>('subtle')
@@ -533,11 +555,25 @@ export function ProductionStreamsPanel({
   
   const handleRenderNew = async () => {
     if (!newLanguage) return
-    
-    // Only video rendering is triggered from this panel.
-    // Animatic rendering is handled by the Storyboard Editor's "Render Animatic" button.
+
     if (selectedStreamType === 'video' && onRenderVideo) {
       await onRenderVideo(newLanguage, newResolution)
+      return
+    }
+
+    if (selectedStreamType === 'animatic') {
+      const settings: AnimaticRenderSettings = {
+        type: 'animatic',
+        kenBurnsIntensity,
+        transitionStyle,
+        transitionDuration: transitionStyle === 'cut' ? 0 : 0.5,
+        includeSubtitles: false,
+      }
+      if (onRenderAnimatic) {
+        await onRenderAnimatic(newLanguage, newResolution, settings)
+      } else if (onRenderProduction) {
+        await onRenderProduction(newLanguage, newResolution)
+      }
     }
   }
   
@@ -563,6 +599,10 @@ export function ProductionStreamsPanel({
       </div>
       
       {/* Stream Type Tabs */}
+      <p className="text-[11px] text-gray-500">
+        Rendered outputs for this scene. Mix, preview, and export from the Scene Production Mixer above.
+      </p>
+
       <div className="flex gap-1 p-1 bg-gray-800/50 rounded-lg">
         <button
           onClick={() => setSelectedStreamType('animatic')}
@@ -632,7 +672,88 @@ export function ProductionStreamsPanel({
         </div>
       )}
       
-      {/* Add New Production - Only shown on Video tab */}
+      {/* Add new animatic stream */}
+      {selectedStreamType === 'animatic' && (
+        <div className="flex flex-col gap-2 p-3 bg-gray-800/30 rounded-lg border border-dashed border-gray-700">
+          <div className="flex flex-wrap items-center gap-2">
+            <GroupedLanguageSelector
+              value={newLanguage}
+              onValueChange={setNewLanguage}
+              disabled={disabled || isRendering}
+              size="sm"
+              intent="generate"
+              className="bg-gray-800 border-gray-600 text-sm"
+              renderItemSuffix={(lang) =>
+                existingLanguages.has(lang.code)
+                  ? <span className="text-gray-500 text-xs ml-1">(exists)</span>
+                  : null
+              }
+            />
+            <Select
+              value={newResolution}
+              onValueChange={(v) => setNewResolution(v as '720p' | '1080p' | '4K')}
+              disabled={disabled || isRendering}
+            >
+              <SelectTrigger className="w-[90px] h-8 bg-gray-800 border-gray-600 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border-gray-600">
+                <SelectItem value="720p" className="text-gray-200">720p</SelectItem>
+                <SelectItem value="1080p" className="text-gray-200">1080p</SelectItem>
+                <SelectItem value="4K" className="text-gray-200">4K</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={kenBurnsIntensity}
+              onValueChange={(v) => setKenBurnsIntensity(v as KenBurnsIntensity)}
+              disabled={disabled || isRendering}
+            >
+              <SelectTrigger className="w-[120px] h-8 bg-gray-800 border-gray-600 text-sm">
+                <SelectValue placeholder="Ken Burns" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border-gray-600">
+                {KEN_BURNS_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value} className="text-gray-200">{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={transitionStyle}
+              onValueChange={(v) => setTransitionStyle(v as 'cut' | 'crossfade' | 'fade-to-black')}
+              disabled={disabled || isRendering}
+            >
+              <SelectTrigger className="w-[130px] h-8 bg-gray-800 border-gray-600 text-sm">
+                <SelectValue placeholder="Transition" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border-gray-600">
+                {TRANSITION_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value} className="text-gray-200">{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              size="sm"
+              onClick={handleRenderNew}
+              disabled={disabled || isRendering || !newLanguage || !(onRenderAnimatic || onRenderProduction)}
+              className="h-8 text-white bg-purple-600 hover:bg-purple-700"
+            >
+              {isRendering ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                  Rendering...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Render Animatic
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Add new video stream */}
       {selectedStreamType === 'video' && (
         <div className="flex items-center gap-2 p-3 bg-gray-800/30 rounded-lg border border-dashed border-gray-700">
           <GroupedLanguageSelector
@@ -695,12 +816,10 @@ export function ProductionStreamsPanel({
         </div>
       )}
       
-      {/* Animatic tab info - rendering is done from Storyboard Editor */}
       {selectedStreamType === 'animatic' && animaticStreams.length === 0 && (
         <div className="p-3 bg-purple-900/20 border border-purple-700/50 rounded-lg">
           <p className="text-xs text-purple-300 text-center">
-            Animatics are rendered from the Storyboard Editor using the &quot;Render Animatic&quot; button.
-            Completed animatic renders will appear here.
+            Add an animatic stream above (language + Ken Burns + transitions), or use the scene export dialog from the mixer workflow.
           </p>
         </div>
       )}

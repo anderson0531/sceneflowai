@@ -64,6 +64,8 @@ import type {
   SceneAudioConfig,
   ProductionStream,
   TextOverlay,
+  ProductionTarget,
+  AnimaticRenderSettings,
 } from './types'
 import { DirectorDialog } from './DirectorDialog'
 // Dynamic import for VideoEditingDialog to prevent TDZ
@@ -152,7 +154,7 @@ interface DirectorConsoleProps {
   /** Generate audio for a specific scene, audio type, and language */
   onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number, language?: string) => void | Promise<void>
   /** Generate all audio for all scenes in a given language */
-  onGenerateAllAudio?: (language: string) => void | Promise<void>
+  onGenerateAllAudio?: (language?: string) => void | Promise<void>
   /** Whether audio generation is in progress */
   isGeneratingAudio?: boolean
 }
@@ -196,6 +198,11 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   // Use stable EMPTY_SEGMENTS constant to prevent TDZ render loops
   // productionData?.segments || [] creates a new array reference each render
   const segments = productionData?.segments ?? EMPTY_SEGMENTS
+
+  const videoGenerationAvailable = useMemo(
+    () => segments.some(s => s.activeAssetUrl && s.status === 'COMPLETE'),
+    [segments]
+  )
   
   // Video queue state and actions
   const {
@@ -275,7 +282,18 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   )
   const [renderingStreamId, setRenderingStreamId] = useState<string | null>(null)
   const [streamRenderProgress, setStreamRenderProgress] = useState(0)
-  const [selectedStreamLanguage, setSelectedStreamLanguage] = useState('en')
+  const [productionTarget, setProductionTarget] = useState<ProductionTarget>({ streamType: 'animatic', language: 'en' })
+  const [renderDialogMode, setRenderDialogMode] = useState<'video' | 'animatic'>('video')
+  const [renderDialogAnimaticSettings, setRenderDialogAnimaticSettings] = useState<
+    Partial<Omit<AnimaticRenderSettings, 'type'>> | undefined
+  >(undefined)
+
+  const renderDialogLanguage = useMemo(() => {
+    if (renderingStreamId) {
+      return productionStreams.find(s => s.id === renderingStreamId)?.language ?? productionTarget.language
+    }
+    return productionTarget.language
+  }, [renderingStreamId, productionStreams, productionTarget.language])
   
   // Text overlays state - titles, lower thirds, subtitles
   const [textOverlays, setTextOverlays] = useState<TextOverlay[]>(
@@ -501,10 +519,9 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     const languageInfo = SUPPORTED_LANGUAGES.find(l => l.code === language)
     const streamId = `stream-${language}-${Date.now()}`
     
-    // Create new stream entry (default to video for backward compatibility)
     const newStream: ProductionStream = {
       id: streamId,
-      streamType: 'video', // Default to video; animatic rendering uses different flow
+      streamType: 'video',
       language,
       languageLabel: languageInfo?.name || language,
       status: 'rendering',
@@ -516,9 +533,10 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     setProductionStreams(updatedStreams)
     setRenderingStreamId(streamId)
     setStreamRenderProgress(0)
-    setSelectedStreamLanguage(language)
+    setProductionTarget(prev => ({ ...prev, streamType: 'video', language }))
+    setRenderDialogMode('video')
+    setRenderDialogAnimaticSettings(undefined)
     
-    // Persist new stream to database
     if (onProductionDataChange && productionData) {
       onProductionDataChange({
         ...productionData,
@@ -526,9 +544,46 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
       })
     }
     
-    // Open the render dialog with the selected language
     setIsRenderDialogOpen(true)
   }, [productionStreams, productionData, onProductionDataChange])
+
+  const handleRenderAnimatic = useCallback(
+    async (language: string, resolution: '720p' | '1080p' | '4K', settings: AnimaticRenderSettings) => {
+      const languageInfo = SUPPORTED_LANGUAGES.find(l => l.code === language)
+      const streamId = `stream-animatic-${language}-${Date.now()}`
+      const newStream: ProductionStream = {
+        id: streamId,
+        streamType: 'animatic',
+        language,
+        languageLabel: languageInfo?.name || language,
+        status: 'rendering',
+        resolution,
+        createdAt: new Date().toISOString(),
+        renderSettings: settings,
+      }
+      const updatedStreams = [...productionStreams, newStream]
+      setProductionStreams(updatedStreams)
+      setRenderingStreamId(streamId)
+      setStreamRenderProgress(0)
+      setProductionTarget(prev => ({ ...prev, streamType: 'animatic', language }))
+      setRenderDialogMode('animatic')
+      setRenderDialogAnimaticSettings({
+        kenBurnsIntensity: settings.kenBurnsIntensity,
+        transitionStyle: settings.transitionStyle,
+        transitionDuration: settings.transitionDuration,
+        includeSubtitles: settings.includeSubtitles,
+        subtitleStyle: settings.subtitleStyle,
+      })
+      if (onProductionDataChange && productionData) {
+        onProductionDataChange({
+          ...productionData,
+          productionStreams: updatedStreams,
+        })
+      }
+      setIsRenderDialogOpen(true)
+    },
+    [productionStreams, productionData, onProductionDataChange]
+  )
   
   // Delete a production stream
   const handleDeleteStream = useCallback((streamId: string) => {
@@ -558,9 +613,21 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     setProductionStreams(updatedStreams)
     setRenderingStreamId(streamId)
     setStreamRenderProgress(0)
-    setSelectedStreamLanguage(stream.language)
+    setProductionTarget(prev => ({ ...prev, streamType: stream.streamType, language: stream.language }))
+    setRenderDialogMode(stream.streamType === 'video' ? 'video' : 'animatic')
+    if (stream.streamType === 'animatic' && stream.renderSettings?.type === 'animatic') {
+      const rs = stream.renderSettings
+      setRenderDialogAnimaticSettings({
+        kenBurnsIntensity: rs.kenBurnsIntensity,
+        transitionStyle: rs.transitionStyle,
+        transitionDuration: rs.transitionDuration,
+        includeSubtitles: rs.includeSubtitles,
+        subtitleStyle: rs.subtitleStyle,
+      })
+    } else {
+      setRenderDialogAnimaticSettings(undefined)
+    }
     
-    // Persist updated stream status to database
     if (onProductionDataChange && productionData) {
       onProductionDataChange({
         ...productionData,
@@ -568,7 +635,6 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
       })
     }
     
-    // Open render dialog
     setIsRenderDialogOpen(true)
   }, [productionStreams, productionData, onProductionDataChange])
   
@@ -590,11 +656,10 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   }, [sceneNumber])
   
   // Update stream when render completes
-  const handleRenderComplete = useCallback((downloadUrl: string) => {
+  const handleRenderComplete = useCallback((downloadUrl: string, streamType?: 'video' | 'animatic') => {
     console.log('[DirectorConsole] Scene render complete:', downloadUrl)
     setRenderedSceneUrl(downloadUrl)
     
-    // If we were rendering a specific stream, update it and persist to database
     if (renderingStreamId) {
       const updatedStreams = productionStreams.map(s => 
         s.id === renderingStreamId 
@@ -603,6 +668,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
               status: 'complete' as const, 
               mp4Url: downloadUrl,
               completedAt: new Date().toISOString(),
+              streamType: streamType === 'animatic' ? 'animatic' as const : 'video' as const,
             }
           : s
       )
@@ -1042,7 +1108,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
 
       
       {/* Scene Production Mixer - Unified render workflow (Collapsible) */}
-      {statusCounts.rendered > 0 && sceneId && (
+      {segments.length > 0 && sceneId && (
         <div className="mt-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg overflow-hidden">
           {/* Mixer Header - Collapsible */}
           <button
@@ -1087,6 +1153,9 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           onGenerateSceneAudio={onGenerateSceneAudio}
           onGenerateAllAudio={onGenerateAllAudio}
           isGeneratingAudio={isGeneratingAudio}
+          productionTarget={productionTarget}
+          onProductionTargetChange={setProductionTarget}
+          videoGenerationAvailable={videoGenerationAvailable}
           onRenderComplete={(downloadUrl, language) => {
             // Update the rendered scene URL
             setRenderedSceneUrl(downloadUrl)
@@ -1133,7 +1202,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                 renderedSceneUrl: downloadUrl,
                 renderedAt: new Date().toISOString(),
                 productionStreams: updatedStreams,
-              })
+              } as SceneProductionData)
             }
           }}
           onProductionStreamsChange={(streams) => {
@@ -1151,7 +1220,10 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
       <div className="mt-4 p-4 bg-slate-800/50 rounded-lg border border-purple-500/30">
         <ProductionStreamsPanel
           productionStreams={productionStreams}
-          selectedLanguage={selectedStreamLanguage}
+          selectedLanguage={productionTarget.language}
+          streamTypeTab={productionTarget.streamType}
+          onStreamTypeTabChange={(t) => setProductionTarget(prev => ({ ...prev, streamType: t }))}
+          onRenderAnimatic={handleRenderAnimatic}
           onRenderVideo={handleRenderProduction}
           onDeleteStream={handleDeleteStream}
           onReRenderStream={handleReRenderStream}
@@ -1161,7 +1233,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           renderingStreamId={renderingStreamId}
           renderProgress={streamRenderProgress}
           hasSegmentChanges={false}
-          videoGenerationAvailable={segments.some(s => s.activeAssetUrl && s.status === 'COMPLETE')}
+          videoGenerationAvailable={videoGenerationAvailable}
           disabled={isRendering}
         />
       </div>
@@ -1267,24 +1339,36 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
       {/* Scene Render Dialog - for exporting scene as MP4 */}
       <SceneRenderDialog
         open={isRenderDialogOpen}
-        onOpenChange={setIsRenderDialogOpen}
+        onOpenChange={(open) => {
+          setIsRenderDialogOpen(open)
+          if (!open) {
+            setRenderDialogAnimaticSettings(undefined)
+          }
+        }}
         sceneId={sceneId}
         sceneNumber={sceneNumber}
         projectId={projectId}
         segments={segments}
         productionData={productionData}
+        renderMode={renderDialogMode}
+        initialLanguage={renderDialogLanguage}
+        animaticRenderSettings={renderDialogAnimaticSettings}
         audioData={{
-          narrationUrl: scene?.narrationAudioUrl || scene?.narrationAudio?.en?.url,
-          narrationDuration: 30, // TODO: Calculate from audio file
-          dialogueEntries: scene?.dialogueAudio?.en?.map(d => ({
-            audioUrl: d?.audioUrl,
-            duration: 3, // TODO: Calculate from audio file
-            character: d.character,
-          })),
+          narrationUrl: scene?.narrationAudioUrl || scene?.narrationAudio?.[renderDialogLanguage]?.url,
+          narrationDuration: scene?.narrationAudio?.[renderDialogLanguage]?.duration ?? 30,
+          dialogueEntries: (() => {
+            const dAudio = scene?.dialogueAudio
+            const arr = Array.isArray(dAudio) ? dAudio : dAudio?.[renderDialogLanguage] || []
+            return arr.filter(Boolean).map((d: { audioUrl?: string; duration?: number; character?: string }, i: number) => ({
+              audioUrl: d?.audioUrl,
+              duration: d?.duration ?? 3,
+              character: scene?.dialogue?.[i]?.character || d?.character,
+            }))
+          })(),
           musicUrl: scene?.musicAudio,
-          musicDuration: 30, // TODO: Calculate from audio file
+          musicDuration: 30,
           sfxUrl: scene?.sfx?.find(s => s.audioUrl)?.audioUrl,
-          sfxDuration: 5, // TODO: Calculate from audio file
+          sfxDuration: 5,
         }}
         onRenderComplete={handleRenderComplete}
       />

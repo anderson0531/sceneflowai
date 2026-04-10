@@ -53,6 +53,7 @@ import {
   PanelRightOpen,
   Languages,
   RefreshCw,
+  Clapperboard,
 } from 'lucide-react'
 import { upload } from '@vercel/blob/client'
 import { Button } from '@/components/ui/Button'
@@ -69,14 +70,19 @@ import {
 } from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import { SUPPORTED_LANGUAGES, FLAG_EMOJIS } from '@/constants/languages'
 import { MixerTimeline } from './MixerTimeline'
 import { useOverlayStore } from '@/store/useOverlayStore'
 import type { AudioClipInfo } from './MixerTimeline'
-
-// Re-export the types for backwards compatibility
-export type { TextOverlay, TextOverlayStyle, TextOverlayPosition, TextOverlayTiming, AudioTrackConfig, MixerAudioTracks }
 
 // =============================================================================
 // IMPORTANT: TDZ Prevention - Do NOT import LocalRenderService at module level
@@ -90,6 +96,21 @@ import type {
   LocalRenderConfig,
   LocalRenderProgress,
 } from '@/lib/video/LocalRenderService'
+import type {
+  ProductionStreamType,
+  ProductionTarget,
+  SceneSegment,
+  SceneProductionData,
+  ProductionStream,
+  TextOverlay,
+  TextOverlayStyle,
+  TextOverlayPosition,
+  TextOverlayTiming,
+  AudioTrackConfig,
+  MixerAudioTracks,
+} from './types'
+
+export type { ProductionTarget, TextOverlay, TextOverlayStyle, TextOverlayPosition, TextOverlayTiming, AudioTrackConfig, MixerAudioTracks }
 
 // Duplicate constant to avoid module-level import (keep in sync with LocalRenderService.ts)
 const LOCAL_RENDER_MAX_DURATION = 300
@@ -333,6 +354,11 @@ interface SceneProductionMixerProps {
   onGenerateAllAudio?: (language: string) => void | Promise<void>
   /** Whether audio generation is in progress */
   isGeneratingAudio?: boolean
+  /** Current production target: animatic vs video preview + language for audio */
+  productionTarget: ProductionTarget
+  onProductionTargetChange: (target: ProductionTarget) => void
+  /** Segment videos exist — enables Video output target */
+  videoGenerationAvailable: boolean
 }
 
 // ============================================================================
@@ -406,55 +432,113 @@ function parseTime(input: string): number {
 // Sub-Components
 // ============================================================================
 
+function animaticKeyframeUrl(segment: SceneSegment): string | null {
+  const ext = segment as SceneSegment & { keyframeUrl?: string | null; thumbnailUrl?: string | null }
+  const u =
+    segment.startFrameUrl ||
+    segment.references?.startFrameUrl ||
+    segment.visualFrame ||
+    ext.keyframeUrl ||
+    ext.thumbnailUrl ||
+    null
+  return u && String(u).trim() ? String(u) : null
+}
+
 /**
- * ProductionStreamSelector - Language selection for the active mix
- * Shows all supported languages with audio availability status.
- * Languages without audio show a generation CTA.
+ * Single control for output kind (animatic vs video) and mix language.
  */
-function ProductionStreamSelector({
-  selectedLanguage,
-  onLanguageChange,
+function ProductionTargetSelector({
+  productionTarget,
+  onProductionTargetChange,
+  videoGenerationAvailable,
   availableLanguages,
   disabled,
   onGenerateAudioForLanguage,
   isGeneratingAudio,
 }: {
-  selectedLanguage: string
-  onLanguageChange: (lang: string) => void
+  productionTarget: ProductionTarget
+  onProductionTargetChange: (target: ProductionTarget) => void
+  videoGenerationAvailable: boolean
   availableLanguages: string[]
   disabled?: boolean
   onGenerateAudioForLanguage?: (lang: string) => void
   isGeneratingAudio?: boolean
 }) {
-  const hasAudioForSelected = availableLanguages.includes(selectedLanguage)
-  
+  const { streamType, language } = productionTarget
+  const langName = SUPPORTED_LANGUAGES.find(l => l.code === language)?.name || language.toUpperCase()
+  const hasAudioForSelected = availableLanguages.includes(language)
+  const TypeIcon = streamType === 'animatic' ? Clapperboard : Video
+
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-xs text-gray-400 uppercase tracking-wide hidden sm:inline">Active Stream</span>
-      <GroupedLanguageSelector
-        value={selectedLanguage}
-        onValueChange={onLanguageChange}
-        showFlags={true}
-        size="sm"
-        disabled={disabled}
-        className="bg-gray-800/80 border-purple-500/40 text-white"
-        renderItemSuffix={(lang) => {
-          const hasAudio = availableLanguages.includes(lang.code)
-          return (
-            <span className={cn(
-              'ml-auto h-2 w-2 rounded-full',
-              hasAudio ? 'bg-green-500' : 'bg-gray-400'
-            )} />
-          )
-        }}
-      />
-      {/* Generate Audio CTA for languages without audio */}
-      {!hasAudioForSelected && selectedLanguage !== 'en' && onGenerateAudioForLanguage && (
+    <div className="flex items-center gap-2 flex-wrap justify-end">
+      <span className="text-xs text-gray-400 uppercase tracking-wide hidden sm:inline">Output</span>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={disabled}
+            className="h-9 gap-2 bg-gray-800/80 border-purple-500/40 text-white hover:bg-gray-800 hover:text-white"
+          >
+            <TypeIcon className="w-3.5 h-3.5 text-purple-300 shrink-0" />
+            <span className="text-xs font-medium">
+              {streamType === 'animatic' ? 'Animatic' : 'Video'} · {langName}
+            </span>
+            <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="bg-gray-900 border-gray-700 text-gray-100 max-h-[min(70vh,420px)] overflow-y-auto w-[min(100vw-2rem,280px)]">
+          <DropdownMenuLabel className="text-purple-300 text-xs">Animatic</DropdownMenuLabel>
+          {SUPPORTED_LANGUAGES.map((lang) => {
+            const hasAudio = availableLanguages.includes(lang.code)
+            return (
+              <DropdownMenuItem
+                key={`animatic-${lang.code}`}
+                className="gap-2 cursor-pointer"
+                onSelect={() => onProductionTargetChange({ streamType: 'animatic', language: lang.code })}
+              >
+                <span>{FLAG_EMOJIS[lang.code] || '🌐'}</span>
+                <span className="flex-1">{lang.name}</span>
+                <span className={cn('h-2 w-2 rounded-full shrink-0', hasAudio ? 'bg-green-500' : 'bg-gray-500')} />
+              </DropdownMenuItem>
+            )
+          })}
+          <DropdownMenuSeparator className="bg-gray-700" />
+          <DropdownMenuLabel className="text-indigo-300 text-xs">Video</DropdownMenuLabel>
+          {SUPPORTED_LANGUAGES.map((lang) => {
+            const hasAudio = availableLanguages.includes(lang.code)
+            return (
+              <DropdownMenuItem
+                key={`video-${lang.code}`}
+                className="gap-2 cursor-pointer"
+                disabled={!videoGenerationAvailable}
+                onSelect={() => {
+                  if (videoGenerationAvailable) {
+                    onProductionTargetChange({ streamType: 'video', language: lang.code })
+                  }
+                }}
+              >
+                <span>{FLAG_EMOJIS[lang.code] || '🌐'}</span>
+                <span className="flex-1">{lang.name}</span>
+                <span className={cn('h-2 w-2 rounded-full shrink-0', hasAudio ? 'bg-green-500' : 'bg-gray-500')} />
+              </DropdownMenuItem>
+            )
+          })}
+          {!videoGenerationAvailable && (
+            <p className="px-2 py-1.5 text-[10px] text-gray-500 leading-snug">
+              Generate segment videos to enable Video output.
+            </p>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {!hasAudioForSelected && language !== 'en' && onGenerateAudioForLanguage && (
         <button
-          onClick={() => onGenerateAudioForLanguage(selectedLanguage)}
+          type="button"
+          onClick={() => onGenerateAudioForLanguage(language)}
           disabled={disabled || isGeneratingAudio}
           className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 transition-colors disabled:opacity-50"
-          title={`Translate & generate audio in ${SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name}`}
+          title={`Translate & generate audio in ${langName}`}
         >
           {isGeneratingAudio ? (
             <Loader2 className="w-3 h-3 animate-spin" />
@@ -516,6 +600,7 @@ function ScenePreviewPlayer({
   onEditOverlay,
   onDeleteOverlay,
   watermarkConfig,
+  playbackKind = 'video',
 }: {
   segments: SceneSegment[]
   audioTracks: MixerAudioTracks
@@ -533,6 +618,8 @@ function ScenePreviewPlayer({
   onEditOverlay?: (overlay: TextOverlay) => void
   onDeleteOverlay?: (overlayId: string) => void
   watermarkConfig?: WatermarkConfig
+  /** Keyframe / still preview timed by segment metadata (animatic target) */
+  playbackKind?: 'video' | 'image-sequence'
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -570,9 +657,9 @@ function ScenePreviewPlayer({
   // Timer for audio-extended playback (when video is frozen)
   const audioTimerRef = useRef<NodeJS.Timeout | null>(null)
   
-  // Helper: Segment duration from production metadata only
+  // Helper: Segment duration from production metadata (animatic uses imageDuration when set)
   const getSegmentDuration = useCallback((segment: SceneSegment) => {
-    return segment.actualVideoDuration ?? (segment.endTime - segment.startTime)
+    return segment.imageDuration ?? segment.actualVideoDuration ?? (segment.endTime - segment.startTime)
   }, [])
 
   /** Playback duration: prefer decoded media length when it differs from metadata. */
@@ -624,20 +711,52 @@ function ScenePreviewPlayer({
     scrubberTotalDuration > 0 ? Math.min(100, (currentTime / scrubberTotalDuration) * 100) : 0
   
   // Current segment (based on segment index, not time-based calculation)
+  const imageSequenceIndex = useMemo(() => {
+    if (playbackKind !== 'image-sequence' || segments.length === 0) return 0
+    if (currentTime >= timelineVideoDuration) return segments.length - 1
+    let elapsed = 0
+    for (let i = 0; i < segments.length; i++) {
+      const d = getPlaybackSegmentDuration(segments[i])
+      if (currentTime < elapsed + d) return i
+      elapsed += d
+    }
+    return Math.max(0, segments.length - 1)
+  }, [playbackKind, segments, currentTime, timelineVideoDuration, getPlaybackSegmentDuration])
+
+  const activeSegmentIndex = playbackKind === 'image-sequence' ? imageSequenceIndex : currentSegmentIndex
+
   const currentSegment = useMemo(() => {
-    if (currentSegmentIndex >= 0 && currentSegmentIndex < segments.length) {
-      return { segment: segments[currentSegmentIndex], index: currentSegmentIndex }
+    if (activeSegmentIndex >= 0 && activeSegmentIndex < segments.length) {
+      return { segment: segments[activeSegmentIndex], index: activeSegmentIndex }
     }
     return { segment: segments[0], index: 0 }
-  }, [segments, currentSegmentIndex])
+  }, [segments, activeSegmentIndex])
   
   const segmentStartTime = useMemo(
-    () => getSegmentStartTime(currentSegmentIndex),
-    [currentSegmentIndex, getSegmentStartTime]
+    () => getSegmentStartTime(activeSegmentIndex),
+    [activeSegmentIndex, getSegmentStartTime]
   )
+
+  // Image-sequence playback: advance global time (last frame holds while audio extends past visual length)
+  useEffect(() => {
+    if (playbackKind !== 'image-sequence') return
+    if (!isPlaying || isVideoFrozen) return
+    const id = window.setInterval(() => {
+      setCurrentTime(prev => {
+        const next = prev + 0.1
+        if (next >= scrubberTotalDuration) {
+          setIsPlaying(false)
+          return 0
+        }
+        return next
+      })
+    }, 100)
+    return () => window.clearInterval(id)
+  }, [playbackKind, isPlaying, isVideoFrozen, scrubberTotalDuration])
 
   // Handle video time updates
   useEffect(() => {
+    if (playbackKind === 'image-sequence') return
     const video = videoRef.current
     if (!video) return
     
@@ -708,6 +827,7 @@ function ScenePreviewPlayer({
       video.removeEventListener('ended', handleEnded)
     }
   }, [
+    playbackKind,
     currentSegmentIndex,
     segments,
     segmentStartTime,
@@ -803,6 +923,7 @@ function ScenePreviewPlayer({
   
   // Load new segment video when segment index changes
   useEffect(() => {
+    if (playbackKind === 'image-sequence') return
     const video = videoRef.current
     const newUrl = currentSegment.segment?.activeAssetUrl
     
@@ -815,7 +936,7 @@ function ScenePreviewPlayer({
         video.play().catch(() => {})
       }
     }
-  }, [currentSegmentIndex, currentSegment.segment?.activeAssetUrl, isPlaying, isVideoFrozen])
+  }, [playbackKind, currentSegmentIndex, currentSegment.segment?.activeAssetUrl, isPlaying, isVideoFrozen])
   
   // Comprehensive cleanup on unmount - prevents memory leaks
   useEffect(() => {
@@ -857,6 +978,20 @@ function ScenePreviewPlayer({
   }, [])
   
   const handlePlayPause = () => {
+    if (playbackKind === 'image-sequence') {
+      if (isPlaying) {
+        setIsPlaying(false)
+        setIsVideoFrozen(false)
+        if (audioTimerRef.current) {
+          clearInterval(audioTimerRef.current)
+          audioTimerRef.current = null
+        }
+      } else {
+        setIsPlaying(true)
+      }
+      return
+    }
+
     const video = videoRef.current
     if (!video) return
     
@@ -887,6 +1022,22 @@ function ScenePreviewPlayer({
     if (audioTimerRef.current) {
       clearInterval(audioTimerRef.current)
       audioTimerRef.current = null
+    }
+
+    if (playbackKind === 'image-sequence') {
+      setCurrentTime(targetTime)
+      const clamped = Math.min(targetTime, timelineVideoDuration)
+      let elapsed = 0
+      for (let i = 0; i < segments.length; i++) {
+        const segDuration = getPlaybackSegmentDuration(segments[i])
+        if (clamped < elapsed + segDuration) {
+          setCurrentSegmentIndex(i)
+          return
+        }
+        elapsed += segDuration
+      }
+      setCurrentSegmentIndex(Math.max(0, segments.length - 1))
+      return
     }
 
     const videoTargetTime = Math.min(targetTime, timelineVideoDuration)
@@ -920,12 +1071,20 @@ function ScenePreviewPlayer({
       clearInterval(audioTimerRef.current)
       audioTimerRef.current = null
     }
-    
-    if (direction === 'prev') {
-      setCurrentSegmentIndex(Math.max(0, currentSegmentIndex - 1))
-    } else {
-      setCurrentSegmentIndex(Math.min(segments.length - 1, currentSegmentIndex + 1))
+
+    const baseIdx = playbackKind === 'image-sequence' ? imageSequenceIndex : currentSegmentIndex
+    const nextIdx =
+      direction === 'prev'
+        ? Math.max(0, baseIdx - 1)
+        : Math.min(segments.length - 1, baseIdx + 1)
+
+    if (playbackKind === 'image-sequence') {
+      setCurrentTime(getSegmentStartTime(nextIdx))
+      setCurrentSegmentIndex(nextIdx)
+      return
     }
+
+    setCurrentSegmentIndex(nextIdx)
     if (videoRef.current) {
       videoRef.current.currentTime = 0
     }
@@ -967,6 +1126,15 @@ function ScenePreviewPlayer({
       {/* Video Display Area */}
       <div className={`relative bg-gray-900 flex items-center justify-center ${isFullscreen ? 'flex-1' : 'aspect-video'}`}>
         {currentSegment.segment?.activeAssetUrl ? (
+          playbackKind === 'image-sequence' ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={currentSegment.segment.activeAssetUrl}
+              alt=""
+              className="w-full h-full object-contain select-none"
+              draggable={false}
+            />
+          ) : (
           <video
             ref={videoRef}
             className="w-full h-full object-contain"
@@ -984,6 +1152,7 @@ function ScenePreviewPlayer({
               })
             }}
           />
+          )
         ) : (
           <div className="text-gray-500 text-sm flex flex-col items-center gap-2">
             <Film className="w-12 h-12 opacity-30" />
@@ -2120,9 +2289,11 @@ export function SceneProductionMixer({
   onGenerateSceneAudio,
   onGenerateAllAudio,
   isGeneratingAudio,
+  productionTarget,
+  onProductionTargetChange,
+  videoGenerationAvailable,
 }: SceneProductionMixerProps) {
-  // === Language/Stream State ===
-  const [selectedLanguage, setSelectedLanguage] = useState('en')
+  const selectedLanguage = productionTarget.language
   const [isGeneratingLanguageAudio, setIsGeneratingLanguageAudio] = useState(false)
   const [resolution, setResolution] = useState<'720p' | '1080p' | '4K'>('1080p')
   
@@ -2465,26 +2636,39 @@ export function SceneProductionMixer({
       return false
     })
   }, [segments])
-  
-  // Calculate video-only duration from segments
-  // Uses actualVideoDuration for uploaded videos, otherwise falls back to segment bounds
-  const videoTotalDuration = useMemo(() => {
-    const duration = renderedSegments.reduce((sum, s) => {
-      // For user uploads with actual duration, use that; otherwise use segment bounds
-      const segmentDuration = s.actualVideoDuration ?? (s.endTime - s.startTime)
-      console.log('[SceneProductionMixer] Segment duration:', {
-        segmentId: s.segmentId,
-        actualVideoDuration: s.actualVideoDuration,
-        startTime: s.startTime,
-        endTime: s.endTime,
-        calculatedDuration: segmentDuration,
-        isUserUpload: s.isUserUpload,
+
+  const canMixerStitchRender = videoSegments.length > 0
+
+  const animaticPreviewSegments = useMemo(() => {
+    return segments
+      .map((s) => {
+        const url = animaticKeyframeUrl(s)
+        if (!url) return null
+        return { ...s, activeAssetUrl: url } as SceneSegment
       })
-      return sum + segmentDuration
+      .filter((s): s is SceneSegment => s != null)
+  }, [segments])
+
+  const previewSegments = useMemo(() => {
+    if (productionTarget.streamType === 'animatic') {
+      if (animaticPreviewSegments.length > 0) return animaticPreviewSegments
+      return renderedSegments
+    }
+    if (videoSegments.length > 0) return videoSegments
+    return renderedSegments
+  }, [productionTarget.streamType, animaticPreviewSegments, videoSegments, renderedSegments])
+
+  const previewPlaybackKind: 'video' | 'image-sequence' =
+    productionTarget.streamType === 'animatic' && animaticPreviewSegments.length > 0
+      ? 'image-sequence'
+      : 'video'
+
+  // Visual timeline length for the active output target (keyframes or video)
+  const videoTotalDuration = useMemo(() => {
+    return previewSegments.reduce((sum, s) => {
+      return sum + (s.imageDuration ?? s.actualVideoDuration ?? (s.endTime - s.startTime))
     }, 0)
-    console.log('[SceneProductionMixer] Total video duration:', duration)
-    return duration
-  }, [renderedSegments])
+  }, [previewSegments])
   
   // Calculate max audio duration across all enabled tracks
   const maxAudioDuration = useMemo(() => {
@@ -2492,7 +2676,7 @@ export function SceneProductionMixer({
     
     // Narration duration
     if (audioTracks.narration.enabled && currentAudioUrls.narration) {
-      maxDuration = Math.max(maxDuration, audioTracks.narration.startOffset + currentAudioUrls.narrationDuration)
+      maxDuration = Math.max(maxDuration, audioTracks.narration.startOffset + (currentAudioUrls.narrationDuration ?? 0))
     }
     
     // Dialogue duration - sum of all clips or last clip end time
@@ -3405,7 +3589,7 @@ export function SceneProductionMixer({
   // === Render ===
   
   const isRendering = renderStatus === 'preparing' || renderStatus === 'rendering'
-  const hasRenderedSegments = renderedSegments.length > 0
+  const hasRenderablePreview = previewSegments.length > 0
 
   return (
     <div className="bg-gray-900/50 rounded-xl border border-purple-500/30 overflow-hidden">
@@ -3423,7 +3607,7 @@ export function SceneProductionMixer({
         
         <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
           {/* Theater Mode Toggle */}
-          {hasRenderedSegments && (
+          {hasRenderablePreview && (
             <button
               onClick={() => setTheaterMode(prev => !prev)}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border ${
@@ -3437,9 +3621,10 @@ export function SceneProductionMixer({
               <span className="hidden sm:inline">{isGeneratingLanguageAudio ? 'Generating...' : theaterMode ? 'Show Panel' : 'Theater'}</span>
             </button>
           )}
-          <ProductionStreamSelector
-            selectedLanguage={selectedLanguage}
-            onLanguageChange={setSelectedLanguage}
+          <ProductionTargetSelector
+            productionTarget={productionTarget}
+            onProductionTargetChange={onProductionTargetChange}
+            videoGenerationAvailable={videoGenerationAvailable}
             availableLanguages={availableLanguages}
             disabled={isRendering}
             onGenerateAudioForLanguage={onGenerateSceneAudio ? handleGenerateLanguageAudio : undefined}
@@ -3455,7 +3640,7 @@ export function SceneProductionMixer({
       
       {/* Main Content */}
       <div className="p-4 sm:p-5">
-        {hasRenderedSegments ? (
+        {hasRenderablePreview ? (
           <div className={`grid gap-4 sm:gap-6 transition-all duration-300 ${
             theaterMode 
               ? 'grid-cols-1' 
@@ -3464,7 +3649,8 @@ export function SceneProductionMixer({
             {/* Left Column: Video Preview + Timeline */}
             <div className="space-y-4 min-w-0">
               <ScenePreviewPlayer
-                segments={renderedSegments}
+                segments={previewSegments}
+                playbackKind={previewPlaybackKind}
                 audioTracks={audioTracks}
                 currentAudioUrls={currentAudioUrls}
                 totalDuration={totalDuration}
@@ -3495,13 +3681,13 @@ export function SceneProductionMixer({
                     </button>
                     <Clock className="w-4 h-4 text-blue-400" />
                     <span className="text-sm font-medium text-white">Timeline</span>
-                    <span className="text-xs text-gray-500">Video: {formatTime(videoTotalDuration)} | Total: {formatTime(totalDuration)}</span>
+                    <span className="text-xs text-gray-500">Visual: {formatTime(videoTotalDuration)} | Total: {formatTime(totalDuration)}</span>
                   </div>
                 </div>
                 {!collapsedSections.timeline && (
                   <div className="px-3 pb-3">
                     <MixerTimeline
-                      segments={renderedSegments}
+                      segments={previewSegments}
                       currentPlaybackTime={0}
                       audioTracks={audioTracks}
                       onTrackChange={updateTrackConfig}
@@ -4207,7 +4393,7 @@ export function SceneProductionMixer({
               </div>
               
               <SegmentAudioControls
-                segments={renderedSegments}
+                segments={previewSegments}
                 segmentConfigs={segmentAudioConfigs}
                 onConfigChange={setSegmentAudioConfigs}
                 masterVolume={masterSegmentVolume}
@@ -4231,7 +4417,7 @@ export function SceneProductionMixer({
                     {onGenerateAllAudio && (
                       <button
                         onClick={() => {
-                          const lang = selectedLanguage === 'en' ? 'es' : selectedLanguage
+                          const lang = productionTarget.language === 'en' ? 'es' : productionTarget.language
                           onGenerateAllAudio(lang)
                         }}
                         disabled={isRendering || isGeneratingAudio || isGeneratingLanguageAudio}
@@ -4245,14 +4431,14 @@ export function SceneProductionMixer({
                   <div className="px-3 pb-3 flex flex-wrap gap-1.5">
                     {(availableLanguages.length <= 5 ? availableLanguages : availableLanguages.slice(0, 4)).map(langCode => {
                       const langInfo = SUPPORTED_LANGUAGES.find(l => l.code === langCode)
-                      const isActive = langCode === selectedLanguage
+                      const isActive = langCode === productionTarget.language
                       const hasNarration = !!audioAssets.narrationAudio?.[langCode]?.url
                       const hasDialogue = (audioAssets.dialogueAudio?.[langCode]?.length || 0) > 0
                       
                       return (
                         <button
                           key={langCode}
-                          onClick={() => setSelectedLanguage(langCode)}
+                          onClick={() => onProductionTargetChange({ ...productionTarget, language: langCode })}
                           className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-all border ${
                             isActive
                               ? 'bg-purple-600/30 border-purple-500/50 text-purple-200'
@@ -4270,8 +4456,8 @@ export function SceneProductionMixer({
                     })}
                     {availableLanguages.length > 5 && (
                       <GroupedLanguageSelector
-                        value={selectedLanguage}
-                        onValueChange={setSelectedLanguage}
+                        value={productionTarget.language}
+                        onValueChange={(code) => onProductionTargetChange({ ...productionTarget, language: code })}
                         filterCodes={availableLanguages}
                         size="xs"
                         showFlags={true}
@@ -4293,7 +4479,7 @@ export function SceneProductionMixer({
                 audioUrl={currentAudioUrls.narration}
                 audioDuration={currentAudioUrls.narrationDuration}
                 videoTotalDuration={videoTotalDuration}
-                segmentCount={renderedSegments.length}
+                segmentCount={previewSegments.length}
                 subtitle={audioAssets.narration ? `"${audioAssets.narration.slice(0, 60)}..."` : undefined}
                 hasAudio={!!currentAudioUrls.narration}
                 disabled={isRendering}
@@ -4311,7 +4497,7 @@ export function SceneProductionMixer({
                 onConfigChange={(c) => updateTrackConfig('dialogue', c)}
                 audioUrl={currentAudioUrls.dialogue[0]?.audioUrl}
                 videoTotalDuration={videoTotalDuration}
-                segmentCount={renderedSegments.length}
+                segmentCount={previewSegments.length}
                 clipCount={currentAudioUrls.dialogue.length}
                 subtitle={currentAudioUrls.dialogue.length > 0 
                   ? `${currentAudioUrls.dialogue.length} clip${currentAudioUrls.dialogue.length > 1 ? 's' : ''} • ${languageLabel}`
@@ -4335,7 +4521,7 @@ export function SceneProductionMixer({
                 config={audioTracks.sfx}
                 onConfigChange={(c) => updateTrackConfig('sfx', c)}
                 audioUrl={currentAudioUrls.sfx[0]?.audioUrl}
-                segmentCount={renderedSegments.length}
+                segmentCount={previewSegments.length}
                 clipCount={currentAudioUrls.sfx.length}
                 subtitle={currentAudioUrls.sfx.length > 0 
                   ? currentAudioUrls.sfx.map(s => s.description).filter(Boolean).join(', ').slice(0, 50)
@@ -4356,7 +4542,7 @@ export function SceneProductionMixer({
                 audioUrl={currentAudioUrls.music}
                 videoTotalDuration={videoTotalDuration}
                 audioDuration={30}
-                segmentCount={renderedSegments.length}
+                segmentCount={previewSegments.length}
                 subtitle={typeof audioAssets.music === 'string' 
                   ? audioAssets.music.slice(0, 50) 
                   : audioAssets.music?.description?.slice(0, 50)
@@ -4374,17 +4560,18 @@ export function SceneProductionMixer({
           /* Empty State */
           <div className="py-12 text-center">
             <Film className="w-16 h-16 mx-auto mb-4 text-gray-600 opacity-40" />
-            <h4 className="text-lg font-medium text-gray-300 mb-2">No Rendered Segments</h4>
+            <h4 className="text-lg font-medium text-gray-300 mb-2">Nothing to preview yet</h4>
             <p className="text-sm text-gray-500 max-w-md mx-auto">
-              Generate video segments in the Director's Console above to enable the production mixer.
-              Once segments are rendered, you can configure audio tracks and create final productions.
+              {animaticPreviewSegments.length > 0
+                ? 'Use Output → Animatic above to preview keyframes, or generate segment videos in the Director’s Console for full video output and stitching.'
+                : 'Generate keyframes or video segments in the Director’s Console above, then mix and render from this panel.'}
             </p>
           </div>
         )}
       </div>
       
       {/* Footer - Render Action */}
-      {hasRenderedSegments && (
+      {hasRenderablePreview && (
         <div className="px-4 sm:px-5 py-4 bg-gray-800/50 border-t border-gray-700/50">
           {/* Render Status Row */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -4464,7 +4651,7 @@ export function SceneProductionMixer({
               {/* Smart Render Button */}
               <Button
                 onClick={handleSmartRender}
-                disabled={isRendering || !hasRenderedSegments}
+                disabled={isRendering || !canMixerStitchRender}
                 size="lg"
                 className={`px-6 whitespace-nowrap min-w-[160px] ${
                   selectedRenderMode === 'local' 
@@ -4567,6 +4754,11 @@ export function SceneProductionMixer({
                   </div>
                 )}
               </div>
+              {!canMixerStitchRender && (
+                <p className="text-amber-300/90 leading-snug">
+                  Mixer quick/server stitch needs generated segment videos. For animatic (keyframes), render from Production Streams or the scene export dialog.
+                </p>
+              )}
             </div>
           )}
         </div>

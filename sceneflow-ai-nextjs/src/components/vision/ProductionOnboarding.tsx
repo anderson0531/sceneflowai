@@ -69,10 +69,10 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
   },
   {
     id: 'storyboard-editor',
-    title: '4. Storyboard Editor — Preview & Align',
-    description: 'Align audio tracks with your keyframe images and add text overlays. Preview as an animatic with multiple language audio tracks. For many productions, the animatic is the final output.',
+    title: '4. Storyboard → Scene Production Mixer',
+    description: 'After keyframes, open Video Production and use the Scene Production Mixer: one output target (Animatic or Video × language), timeline preview, overlays, and Production Streams for animatic and final video renders.',
     icon: <Film className="w-6 h-6" />,
-    tip: 'You can render animatic MP4/WebM streams directly from here — great for storyboard reviews and presentations.',
+    tip: 'Use Output in the mixer to switch between animatic (keyframes) and stitched segment video; render animatics from Production Streams or the export dialog.',
   },
   {
     id: 'video-generation',
