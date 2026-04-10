@@ -442,6 +442,16 @@ function animaticKeyframeUrl(segment: SceneSegment): string | null {
   return u && String(u).trim() ? String(u) : null
 }
 
+function animaticEndFrameUrl(segment: SceneSegment): string | null {
+  const ext = segment as SceneSegment & { endFrameUrl?: string | null }
+  const u =
+    segment.endFrameUrl ||
+    segment.references?.endFrameUrl ||
+    ext.endFrameUrl ||
+    null
+  return u && String(u).trim() ? String(u) : null
+}
+
 /**
  * Stream type tabs for mixer/streams navigation.
  */
@@ -669,6 +679,23 @@ function ScenePreviewPlayer({
   const segmentStartTime = useMemo(
     () => getSegmentStartTime(activeSegmentIndex),
     [activeSegmentIndex, getSegmentStartTime]
+  )
+  const activeSegmentDuration = useMemo(
+    () => (segments[activeSegmentIndex] ? getPlaybackSegmentDuration(segments[activeSegmentIndex]) : 0),
+    [segments, activeSegmentIndex, getPlaybackSegmentDuration]
+  )
+  const animaticFrameProgress = useMemo(() => {
+    if (playbackKind !== 'image-sequence' || activeSegmentDuration <= 0) return 0
+    const local = currentTime - segmentStartTime
+    return Math.max(0, Math.min(1, local / activeSegmentDuration))
+  }, [playbackKind, currentTime, segmentStartTime, activeSegmentDuration])
+  const animaticStartFrameSrc = useMemo(
+    () => (currentSegment.segment ? animaticKeyframeUrl(currentSegment.segment) : null),
+    [currentSegment.segment]
+  )
+  const animaticEndFrameSrc = useMemo(
+    () => (currentSegment.segment ? animaticEndFrameUrl(currentSegment.segment) : null),
+    [currentSegment.segment]
   )
 
   // Image-sequence playback: advance global time (last frame holds while audio extends past visual length)
@@ -1061,13 +1088,35 @@ function ScenePreviewPlayer({
       <div className={`relative bg-gray-900 flex items-center justify-center ${isFullscreen ? 'flex-1' : 'aspect-video'}`}>
         {currentSegment.segment?.activeAssetUrl ? (
           playbackKind === 'image-sequence' ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={currentSegment.segment.activeAssetUrl}
-              alt=""
-              className="w-full h-full object-contain select-none"
-              draggable={false}
-            />
+            <div className="relative w-full h-full">
+              {/* Start frame with subtle push-in to preserve storyboard-like motion feeling */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={animaticStartFrameSrc || currentSegment.segment.activeAssetUrl || ''}
+                alt=""
+                className="absolute inset-0 w-full h-full object-contain select-none"
+                draggable={false}
+                style={{
+                  transform: `scale(${1 + animaticFrameProgress * 0.02})`,
+                  transformOrigin: 'center center',
+                }}
+              />
+              {/* End frame crossfades in across segment time when available */}
+              {animaticEndFrameSrc && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={animaticEndFrameSrc}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-contain select-none"
+                  draggable={false}
+                  style={{
+                    opacity: animaticFrameProgress,
+                    transform: `scale(${1 + animaticFrameProgress * 0.02})`,
+                    transformOrigin: 'center center',
+                  }}
+                />
+              )}
+            </div>
           ) : (
           <video
             ref={videoRef}
@@ -1101,7 +1150,7 @@ function ScenePreviewPlayer({
             {formatTime(scrubberTotalDuration)}
           </Badge>
           <Badge variant="outline" className="bg-black/60 border-purple-500/50 text-purple-300 text-xs">
-            Seg {currentSegmentIndex + 1}/{segments.length}
+            Seg {activeSegmentIndex + 1}/{segments.length}
           </Badge>
           {isVideoFrozen && (
             <Badge variant="outline" className="bg-amber-500/20 border-amber-500/50 text-amber-300 text-xs animate-pulse">
