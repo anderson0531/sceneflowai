@@ -426,7 +426,7 @@ export class LocalRenderService {
       
       // Setup MediaRecorder
       onProgress?.({ phase: 'rendering', progress: 40 })
-      const mimeType = getMediaRecorderMimeType()!
+      let mimeType = getMediaRecorderMimeType()!
       // Use captureStream(0) for manual frame capture - this ensures all drawing
       // (including overlays and watermarks) is complete before frame is captured
       const stream = this.canvas.captureStream(0)
@@ -540,6 +540,20 @@ export class LocalRenderService {
       const audioTrack = audioDestination.stream.getAudioTracks()[0]
       if (audioTrack) {
         stream.addTrack(audioTrack)
+      }
+      const hasAudioTrack = stream.getAudioTracks().length > 0
+      if (!hasAudioTrack && mimeType.includes('opus')) {
+        // Image-only animatic renders may not have an audio track.
+        // Prefer a video-only mime to avoid empty recordings.
+        const videoOnlyMimeTypes = [
+          'video/webm;codecs=vp9',
+          'video/webm;codecs=vp8',
+          'video/webm',
+        ]
+        const fallbackMime = videoOnlyMimeTypes.find((mt) => MediaRecorder.isTypeSupported(mt))
+        if (fallbackMime) {
+          mimeType = fallbackMime
+        }
       }
       
       this.recordedChunks = []
@@ -694,6 +708,11 @@ export class LocalRenderService {
       
       // Stop recording
       onProgress?.({ phase: 'encoding', progress: 95 })
+      // Final flush: request one more frame and allow recorder to emit trailing chunk.
+      if (canvasVideoTrack && 'requestFrame' in canvasVideoTrack) {
+        canvasVideoTrack.requestFrame()
+      }
+      await this.sleep(150, signal)
       this.mediaRecorder.stop()
       
       // Wait for blob
