@@ -435,6 +435,7 @@ function animaticKeyframeUrl(segment: SceneSegment): string | null {
     segment.startFrameUrl ||
     segment.references?.startFrameUrl ||
     segment.visualFrame ||
+    (segment.assetType === 'image' ? segment.activeAssetUrl : null) ||
     ext.keyframeUrl ||
     ext.thumbnailUrl ||
     null
@@ -587,7 +588,12 @@ function ScenePreviewPlayer({
   
   // Helper: Segment duration from production metadata (animatic uses imageDuration when set)
   const getSegmentDuration = useCallback((segment: SceneSegment) => {
-    return segment.imageDuration ?? segment.actualVideoDuration ?? (segment.endTime - segment.startTime)
+    const raw = segment.imageDuration ?? segment.actualVideoDuration ?? (segment.endTime - segment.startTime)
+    // Guard against 0/invalid metadata durations that collapse image-sequence playback to the last frame.
+    if (!Number.isFinite(raw) || raw <= 0) {
+      return 4
+    }
+    return raw
   }, [])
 
   /** Playback duration: prefer decoded media length when it differs from metadata. */
