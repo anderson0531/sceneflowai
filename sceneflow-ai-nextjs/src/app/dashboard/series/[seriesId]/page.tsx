@@ -1931,7 +1931,7 @@ function CharactersPanel({ characters, onRegenerate, isGenerating }: CharactersP
           </div>
           <div>
             <h3 className="text-xl font-bold">Series Characters</h3>
-            <p className="text-sm text-gray-500">Characters shared across all episodes in the Production Bible</p>
+            <p className="text-sm text-gray-500">Characters shared across all episodes in the Reference Library</p>
           </div>
         </div>
         <Button
@@ -2012,7 +2012,7 @@ function LocationsPanel({ locations, onRegenerate, isGenerating }: LocationsPane
           </div>
           <div>
             <h3 className="text-xl font-bold">Series Locations</h3>
-            <p className="text-sm text-gray-500">Recurring locations in the Production Bible</p>
+            <p className="text-sm text-gray-500">Recurring locations in the Reference Library</p>
           </div>
         </div>
         <Button

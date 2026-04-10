@@ -5033,7 +5033,7 @@ function SceneCard({
                                       </p>
                                     )}
                                     <p className="text-[10px] text-gray-500 pt-1">
-                                      Set up voices in the Production Bible sidebar
+                                      Set up voices in the Reference Library sidebar
                                     </p>
                                   </div>
                                 </TooltipContent>

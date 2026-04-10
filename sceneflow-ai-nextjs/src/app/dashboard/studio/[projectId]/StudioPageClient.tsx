@@ -1201,7 +1201,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         />
       )}
       
-      {/* Hero Image Prompt Builder Dialog - with production bible integration */}
+      {/* Hero Image Prompt Builder Dialog - with reference library integration */}
       {guide.treatmentVariants && guide.treatmentVariants[0] && (
         <HeroImagePromptBuilder
           open={showHeroPromptBuilder}

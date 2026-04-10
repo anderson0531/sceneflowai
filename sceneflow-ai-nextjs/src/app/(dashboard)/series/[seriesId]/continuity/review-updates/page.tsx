@@ -227,7 +227,7 @@ export default function ContinuityReview() {
             Review &amp; Sync Updates
           </h2>
           <p className="text-sm text-muted-foreground">
-            Preview and apply storyline data from completed episodes to the production bible
+            Preview and apply storyline data from completed episodes to the reference library
           </p>
         </div>
       </div>

@@ -46,7 +46,7 @@ const personas: UseCasePersona[] = [
       features: [
         'Retention-Optimized visuals that match your script beat-by-beat',
         'Consistent Protagonists across every scene',
-        'Showrunner Engine™—scale to 40+ episode series with shared Production Bible',
+        'Showrunner Engine™—scale to 40+ episode series with shared Reference Library',
       ],
     },
     win: 'Go from monthly uploads to launching a full YouTube franchise. Your script becomes a series, automatically.',

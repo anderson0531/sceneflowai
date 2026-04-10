@@ -61,7 +61,7 @@ export default function LocationsPage() {
             Locations
           </h2>
           <p className="text-sm text-muted-foreground">
-            {locations.length} location{locations.length !== 1 ? 's' : ''} in the production bible
+            {locations.length} location{locations.length !== 1 ? 's' : ''} in the reference library
           </p>
         </div>
       </div>
@@ -69,7 +69,7 @@ export default function LocationsPage() {
       {locations.length === 0 ? (
         <div className="border rounded-lg p-8 text-center text-muted-foreground">
           <MapPin className="h-12 w-12 mx-auto mb-3 opacity-30" />
-          <p>No locations in the production bible yet.</p>
+          <p>No locations in the reference library yet.</p>
           <p className="text-sm mt-1">Locations are extracted from scene headings when you sync an episode.</p>
         </div>
       ) : (

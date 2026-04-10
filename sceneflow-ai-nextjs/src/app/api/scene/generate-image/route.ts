@@ -239,7 +239,7 @@ export async function POST(req: NextRequest) {
       characterWardrobes = [], // NEW: Scene-level wardrobe overrides - array of { characterId, wardrobeId }
       sceneReferences = [],   // NEW: Scene backdrop references from Reference Library
       objectReferences = [],  // NEW: Prop/object references from Reference Library
-      excludeCharacters = false,  // NEW: Generate scene reference only (no people) for production bible
+      excludeCharacters = false,  // NEW: Generate scene reference only (no people) for reference library
       locationReferences = [],  // NEW: Location references for environment consistency
       skipObjectAutoDetection = false,  // NEW: Skip auto-detection of objects (for batch mode)
       characterSelectionExplicit = false,  // NEW: Client explicitly chose characters (even if empty = no characters wanted)

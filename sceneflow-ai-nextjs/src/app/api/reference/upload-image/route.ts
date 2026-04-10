@@ -5,7 +5,7 @@ import { sequelize } from '@/config/database'
 import sharp from 'sharp'
 
 /**
- * Upload an image for a Production Bible reference (scene backdrop or object)
+ * Upload an image for a Reference Library reference (scene backdrop or object)
  * POST /api/reference/upload-image
  * 
  * Form data:

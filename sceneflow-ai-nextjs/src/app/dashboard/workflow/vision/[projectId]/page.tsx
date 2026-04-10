@@ -4295,7 +4295,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // (SceneGallery's handleGenerateAll provides its own batch overlay via useProcessWithOverlay)
   const batchGeneratingRef = useRef(false)
   
-  // Scene reference generation state (for Production Bible Scene tab)
+  // Scene reference generation state (for Reference Library Scene tab)
   const [generatingSceneReferenceIndex, setGeneratingSceneReferenceIndex] = useState<number | null>(null)
   const [generatingSceneDirectionIndex, setGeneratingSceneDirectionIndex] = useState<number | null>(null)
   const [isGeneratingAllSceneReferences, setIsGeneratingAllSceneReferences] = useState(false)
@@ -10816,7 +10816,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               
               {/* Narration Voice Selector */}
               
-              {/* Production Bible Panel - only shown for series episodes */}
+              {/* Reference Library Panel - only shown for series episodes */}
               {project?.series_id && (
                 <ProductionBiblePanel 
                   projectId={projectId}

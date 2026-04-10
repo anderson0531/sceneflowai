@@ -113,7 +113,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           }
         },
         
-        // Series production bible reference (for "Save to Bible" feature)
+        // Series reference library reference (for "Save to Bible" feature)
         seriesBibleRef: {
           version: bible.version,
           syncedAt: new Date().toISOString()
@@ -266,7 +266,7 @@ function buildBlueprintPrimeInput(episode: any, bible: any, series: any): string
   }
   lines.push('')
   
-  // Setting from production bible
+  // Setting from reference library
   if (bible.setting?.description || bible.setting?.timePeriod) {
     lines.push('Setting:')
     if (bible.setting.description) {
@@ -281,7 +281,7 @@ function buildBlueprintPrimeInput(episode: any, bible: any, series: any): string
     lines.push('')
   }
   
-  // Protagonist from production bible
+  // Protagonist from reference library
   if (bible.protagonist?.name || bible.protagonist?.goal) {
     lines.push('Protagonist:')
     if (bible.protagonist.name) {
@@ -293,7 +293,7 @@ function buildBlueprintPrimeInput(episode: any, bible: any, series: any): string
     lines.push('')
   }
   
-  // Antagonist/Conflict from production bible
+  // Antagonist/Conflict from reference library
   if (bible.antagonistConflict?.description) {
     lines.push('Antagonist/Conflict:')
     lines.push(bible.antagonistConflict.description)
@@ -303,7 +303,7 @@ function buildBlueprintPrimeInput(episode: any, bible: any, series: any): string
     lines.push('')
   }
   
-  // Characters from production bible (those appearing in this episode)
+  // Characters from reference library (those appearing in this episode)
   const episodeCharacterIds = (episode.characters || []).map((ec: any) => ec.characterId)
   const episodeCharacters = (bible.characters || []).filter((char: any) => 
     episodeCharacterIds.includes(char.id)
@@ -322,7 +322,7 @@ function buildBlueprintPrimeInput(episode: any, bible: any, series: any): string
     lines.push('')
   }
   
-  // Locations from production bible
+  // Locations from reference library
   if (bible.locations?.length > 0) {
     lines.push('Locations:')
     bible.locations.forEach((loc: any) => {
@@ -331,7 +331,7 @@ function buildBlueprintPrimeInput(episode: any, bible: any, series: any): string
     lines.push('')
   }
   
-  // Visual style from production bible aesthetic
+  // Visual style from reference library aesthetic
   if (bible.aesthetic) {
     lines.push('Visual Style:')
     if (bible.aesthetic.visualStyle) {
@@ -361,7 +361,7 @@ function buildBlueprintPrimeInput(episode: any, bible: any, series: any): string
     lines.push('')
   }
   
-  // Continuity from previous episodes (from production bible)
+  // Continuity from previous episodes (from reference library)
   const episodeSummaries = bible.episodeSummaries || []
   const previousSummaries = episodeSummaries.filter((s: any) => s.episodeNumber < episode.episodeNumber)
   if (previousSummaries.length > 0) {

@@ -38,7 +38,7 @@ const productions: ProductionCard[] = [
     workflow: [
       'Series Studio locks protagonist across 10 episodes',
       'Designer Mode: Photorealistic or Cinematic Noir',
-      'Production Bible ensures visual continuity',
+      'Reference Library ensures visual continuity',
       'Export 4K Widescreen or 9:16 Social Thrillers',
     ],
     tools: 'Series Studio → Writer\'s Room → Visualizer',
@@ -78,7 +78,7 @@ const productions: ProductionCard[] = [
       badge: 'bg-cyan-500/20 text-cyan-400',
     },
     workflow: [
-      'Shared Production Bible for 20 episodes',
+      'Shared Reference Library for 20 episodes',
       'Resonance tool identifies pacing issues',
       'Concept Art or Digital Illustration backgrounds',
       '800+ voices with cloning for your host',

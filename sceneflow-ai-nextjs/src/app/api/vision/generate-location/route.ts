@@ -106,7 +106,7 @@ function buildLocationPrompt(
 }
 
 /**
- * Generate a location reference image for the Production Bible.
+ * Generate a location reference image for the Reference Library.
  * Creates environment-only shots for visual consistency across scenes.
  */
 export async function POST(req: NextRequest) {

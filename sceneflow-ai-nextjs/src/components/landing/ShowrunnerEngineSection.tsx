@@ -43,7 +43,7 @@ const launchSteps = [
   {
     step: 3,
     title: 'Sync',
-    description: 'Production Bible auto-carries your Protagonist into every scene',
+    description: 'Reference Library auto-carries your Protagonist into every scene',
     time: '5 min',
     icon: RefreshCw,
   },
@@ -67,7 +67,7 @@ const comparisonRows = [
   {
     feature: 'Consistency',
     standard: 'Characters change every prompt',
-    showrunner: 'Shared Production Bible for characters & locations',
+    showrunner: 'Shared Reference Library for characters & locations',
   },
   {
     feature: 'Scale',
@@ -86,7 +86,7 @@ const comparisonRows = [
   },
 ]
 
-// Production Bible Card Component
+// Reference Library Card Component
 const BibleCard = ({ 
   icon: Icon, 
   title, 
@@ -252,7 +252,7 @@ export function ShowrunnerEngineSection() {
 
           <p className="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto mb-4">
             Create multi-episode series with persistent characters, locations, and storylines.
-            SceneFlow&apos;s <span className="text-cyan-400 font-semibold">Shared Production Bible</span> ensures 
+            SceneFlow&apos;s <span className="text-cyan-400 font-semibold">Shared Reference Library</span> ensures 
             total visual continuity across 40+ episodes.
           </p>
 
@@ -261,9 +261,9 @@ export function ShowrunnerEngineSection() {
           </p>
         </motion.div>
 
-        {/* Two Column Layout: Production Bible + Episode Grid */}
+        {/* Two Column Layout: Reference Library + Episode Grid */}
         <div className="grid lg:grid-cols-2 gap-12 mb-20">
-          {/* Left: Production Bible Visualization */}
+          {/* Left: Reference Library Visualization */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -292,10 +292,10 @@ export function ShowrunnerEngineSection() {
 
             <div className="flex items-center gap-2 mb-4">
               <BookOpen className="w-5 h-5 text-purple-400" />
-              <h3 className="text-xl font-bold text-white">Shared Production Bible</h3>
+              <h3 className="text-xl font-bold text-white">Shared Reference Library</h3>
             </div>
             <p className="text-gray-400 text-sm mb-6">
-              Every character, location, and visual style is locked in your Production Bible.
+              Every character, location, and visual style is locked in your Reference Library.
               Dr. Benjamin Anderson looks the same in Episode 1 and Episode 100.
             </p>
 

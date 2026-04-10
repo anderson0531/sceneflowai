@@ -135,7 +135,7 @@ export default function ContinuityDashboard() {
             Continuity Engine
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {seriesTitle ? `${seriesTitle} — ` : ''}Production Bible v{stats?.version || '1.0.0'}
+            {seriesTitle ? `${seriesTitle} — ` : ''}Reference Library v{stats?.version || '1.0.0'}
           </p>
         </div>
         {stats && stats.unresolvedHooks > 0 && (

@@ -15,7 +15,7 @@ import { VisualReference } from '@/types/visionReferences'
  * HeroImagePromptBuilder - Poster/Billboard Image Prompt Builder
  * 
  * Adapted from ScenePromptBuilder for creating cinematic hero/poster images
- * with production bible integration (characters, scenes, objects).
+ * with reference library integration (characters, scenes, objects).
  * 
  * Features:
  * - Poster-specific composition types (hero portrait, ensemble, silhouette, key art)

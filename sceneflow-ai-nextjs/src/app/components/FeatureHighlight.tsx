@@ -72,7 +72,7 @@ export function FeatureHighlight() {
     {
       icon: Library,
       title: 'Consistency Reference Library',
-      description: 'Automated generation of character, wardrobe, voice, scene, and object references. Your production bible, always in sync.',
+      description: 'Automated generation of character, wardrobe, voice, scene, and object references. Your reference library, always in sync.',
       detailedDescription: 'Automatically build and maintain a comprehensive reference library for your entire production. Character appearances, wardrobe choices, voice selections (from library or custom), scene settings, and key objects are tracked and enforced across every frame.',
       benefits: [
         'Auto-generated character references',

@@ -83,7 +83,7 @@ const sizeConfig = {
  * <StatusBadge 
  *   status="partial" 
  *   tooltip="2 characters missing voices" 
- *   actionText="Assign in Production Bible →"
+ *   actionText="Assign in Reference Library →"
  *   onAction={() => scrollToBible()}
  * />
  */

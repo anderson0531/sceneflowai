@@ -51,7 +51,7 @@ SceneFlow AI provides an integrated platform that:
 - **Creates** stunning visuals using AI image and video generation
 - **Produces** natural voiceovers with AI voice synthesis
 - **Assembles** complete videos with intelligent editing
-- **Manages** multi-episode series with production bibles
+- **Manages** multi-episode series with reference librarys
 
 ---
 
@@ -143,8 +143,8 @@ SceneFlow AI provides an integrated platform that:
 
 ## Series Studio (Multi-Episode Production)
 
-### Production Bible System
-Create and manage multi-episode video series with AI-generated production bibles:
+### Reference Library System
+Create and manage multi-episode video series with AI-generated reference librarys:
 
 - **Series Overview**: Title, logline, synopsis, and genre
 - **Character Bible**: Recurring characters with visual consistency
@@ -154,7 +154,7 @@ Create and manage multi-episode video series with AI-generated production bibles
 
 ### Episode Workflow
 1. Generate series concept with AI
-2. Create production bible with characters and locations
+2. Create reference library with characters and locations
 3. Generate episode blueprints with story beats
 4. Start individual episode projects
 5. Maintain consistency across all episodes
@@ -243,7 +243,7 @@ Create and manage multi-episode video series with AI-generated production bibles
 
 ### vs. Other AI Tools
 - **End-to-end workflow** (not just single-feature)
-- **Production Bible system** for series consistency
+- **Reference Library system** for series consistency
 - **Professional terminology** and workflow
 - **Enterprise-grade moderation** for safety
 - **Cloud rendering** for high-quality exports
@@ -421,7 +421,7 @@ export default function ProductDescriptionPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-green-400 mt-1 flex-shrink-0" />
-                  <span>Manage multi-episode series with production bibles</span>
+                  <span>Manage multi-episode series with reference librarys</span>
                 </li>
               </ul>
             </div>
@@ -481,7 +481,7 @@ export default function ProductDescriptionPage() {
               { icon: Palette, title: 'Image Generation', desc: 'Imagen 3 for photorealistic visuals with character consistency', color: 'cyan' },
               { icon: Video, title: 'Video Generation', desc: 'Veo 2 for cinematic video clips with smart prompt modules', color: 'blue' },
               { icon: Mic2, title: 'Voice Synthesis', desc: 'ElevenLabs integration with multiple voices and voice cloning', color: 'green' },
-              { icon: Users, title: 'Series Studio', desc: 'Multi-episode production with AI-generated production bibles', color: 'purple' },
+              { icon: Users, title: 'Series Studio', desc: 'Multi-episode production with AI-generated reference librarys', color: 'purple' },
               { icon: Share2, title: 'Collaboration', desc: 'Screening room, stakeholder review, and feedback integration', color: 'pink' },
             ].map((feature, i) => (
               <div 
@@ -576,7 +576,7 @@ export default function ProductDescriptionPage() {
                 </li>
                 <li className="flex items-center gap-3">
                   <BookOpen className="w-5 h-5 text-purple-400" />
-                  <span><strong>Production Bible system</strong> for series</span>
+                  <span><strong>Reference Library system</strong> for series</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Shield className="w-5 h-5 text-purple-400" />

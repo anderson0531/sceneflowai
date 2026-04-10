@@ -319,7 +319,7 @@ export function useEpisode(seriesId: string | null) {
 }
 
 /**
- * Hook for production bible sync operations
+ * Hook for reference library sync operations
  */
 export function useProductionBible(seriesId: string | null) {
   const [isSyncing, setIsSyncing] = useState(false)

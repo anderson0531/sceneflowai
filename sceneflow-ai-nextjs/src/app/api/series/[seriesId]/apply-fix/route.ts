@@ -540,7 +540,7 @@ Return ONLY valid JSON:
 }
 
 /**
- * Apply fix to the production bible (synopsis, logline, etc.)
+ * Apply fix to the reference library (synopsis, logline, etc.)
  */
 async function applyBibleFix(
   series: Series,
@@ -548,7 +548,7 @@ async function applyBibleFix(
 ): Promise<{ updatedBible: any; updatedLogline?: string; summary: string }> {
   const bible = series.production_bible || {}
   
-  const prompt = `You are improving a TV series production bible based on feedback.
+  const prompt = `You are improving a TV series reference library based on feedback.
 
 CURRENT BIBLE:
 Title: ${series.title}
@@ -606,7 +606,7 @@ Return ONLY valid JSON:
   return {
     updatedBible,
     updatedLogline: updated.logline,
-    summary: updated.changesSummary || 'Updated production bible'
+    summary: updated.changesSummary || 'Updated reference library'
   }
 }
 

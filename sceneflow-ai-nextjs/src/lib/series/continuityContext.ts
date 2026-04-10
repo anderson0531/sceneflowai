@@ -2,7 +2,7 @@
  * Series Continuity Context Builder
  * 
  * Gathers story threads, key events, episode summaries, and consistency rules
- * from a series' Production Bible and assembles them into a prompt-ready block
+ * from a series' Reference Library and assembles them into a prompt-ready block
  * for injection into AI generation and editing endpoints.
  * 
  * This is the single source of truth for cross-episode continuity context.
@@ -31,7 +31,7 @@ const MAX_STORY_THREADS_IN_PROMPT = 15
  * Build a SeriesContinuityContext from raw series data.
  * This is a pure function — no DB calls. The caller loads the series first.
  * 
- * @param bible         The series production bible
+ * @param bible         The series reference library
  * @param blueprints    All episode blueprints (for fallback summaries/threads)
  * @param seriesTitle   Series title
  * @param seriesLogline Series logline

@@ -17,7 +17,7 @@ interface RouteParams {
 /**
  * GET /api/series/[seriesId]/bible
  * 
- * Get the series production bible
+ * Get the series reference library
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   const { seriesId } = await params
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 /**
  * POST /api/series/[seriesId]/bible
  * 
- * Sync project data to series production bible
+ * Sync project data to series reference library
  * Implements the "explicit save with diff preview" pattern
  * 
  * Body:

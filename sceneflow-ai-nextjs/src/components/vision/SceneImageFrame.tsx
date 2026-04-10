@@ -15,7 +15,7 @@ export interface SceneImageFrameProps {
   onUpload: (file: File) => void
   onEdit?: (imageUrl: string) => void
   onAddToReferenceLibrary?: (imageUrl: string, name: string, sceneNumber: number) => void
-  /** Compact mode for production bible - smaller frame */
+  /** Compact mode for reference library - smaller frame */
   compact?: boolean
   /** Show as a card with border */
   showBorder?: boolean

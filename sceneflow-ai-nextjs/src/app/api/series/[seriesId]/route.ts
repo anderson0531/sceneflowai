@@ -70,7 +70,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  * - targetAudience: Target audience
  * - status: 'draft' | 'active' | 'completed' | 'archived'
  * - maxEpisodes: Max episode count (requires confirmation for > 20)
- * - productionBible: Update production bible (partial merge)
+ * - productionBible: Update reference library (partial merge)
  * - episodeBlueprints: Replace episode blueprints array
  */
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
@@ -132,7 +132,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       updates.max_episodes = Math.max(1, newMax)
     }
     
-    // Merge production bible (partial update)
+    // Merge reference library (partial update)
     if (productionBible !== undefined) {
       const currentBible = series.production_bible || {}
       updates.production_bible = {

@@ -4,7 +4,7 @@ import { sequelize } from '../config/database'
 /**
  * Series Model
  * 
- * Represents a multi-episode video series with shared production bible,
+ * Represents a multi-episode video series with shared reference library,
  * characters, locations, and visual consistency settings.
  * 
  * Design Decisions:
@@ -263,7 +263,7 @@ Series.init(
         characters: [],
         locations: [],
       },
-      comment: 'Shared production bible with characters, locations, and visual settings',
+      comment: 'Shared reference library with characters, locations, and visual settings',
     },
     episode_blueprints: {
       type: DataTypes.JSONB,

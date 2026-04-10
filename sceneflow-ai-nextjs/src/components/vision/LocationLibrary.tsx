@@ -118,7 +118,7 @@ function TimeIcon({ time }: { time?: string }) {
 }
 
 /**
- * LocationLibrary - Intelligent location management for Production Bible
+ * LocationLibrary - Intelligent location management for Reference Library
  * 
  * Auto-extracts unique locations from script scene headings, showing INT/EXT,
  * time of day, scene count, and reference images with generate/upload/edit controls.

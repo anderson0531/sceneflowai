@@ -213,12 +213,12 @@ export default function SeriesPage() {
               <p className="text-gray-300 text-sm mb-4">
                 Ideate a topic and let AI generate your complete series storyline — title, logline, 
                 setting, protagonist, antagonist, and up to {DEFAULT_MAX_EPISODES} episodes with beats and characters.
-                Each series has a shared Production Bible for character and visual consistency across all episodes.
+                Each series has a shared Reference Library for character and visual consistency across all episodes.
               </p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="flex items-center gap-2 text-sm text-gray-400">
                   <BookOpen className="w-4 h-4 text-cyan-400" />
-                  <span>Production Bible</span>
+                  <span>Reference Library</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-400">
                   <Users className="w-4 h-4 text-purple-400" />

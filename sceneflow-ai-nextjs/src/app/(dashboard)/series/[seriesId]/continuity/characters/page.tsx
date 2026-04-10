@@ -134,7 +134,7 @@ export default function CharactersPage() {
             Characters
           </h2>
           <p className="text-sm text-muted-foreground">
-            {characters.length} character{characters.length !== 1 ? 's' : ''} in the production bible
+            {characters.length} character{characters.length !== 1 ? 's' : ''} in the reference library
           </p>
         </div>
       </div>
@@ -142,7 +142,7 @@ export default function CharactersPage() {
       {characters.length === 0 ? (
         <div className="border rounded-lg p-8 text-center text-muted-foreground">
           <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
-          <p>No characters in the production bible yet.</p>
+          <p>No characters in the reference library yet.</p>
           <p className="text-sm mt-1">Characters will appear here after syncing from an episode.</p>
         </div>
       ) : (

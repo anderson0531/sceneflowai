@@ -122,9 +122,9 @@ export interface SeriesContinuityContext {
   keyEvents: KeyEvent[]
   /** Character current statuses derived from key events */
   characterStatuses: Record<string, string>
-  /** Consistency rules from the production bible */
+  /** Consistency rules from the reference library */
   consistencyRules: string[]
-  /** World-building notes from the production bible */
+  /** World-building notes from the reference library */
   worldBuildingNotes: string[]
   /** Tone, visual, audio guidelines */
   toneGuidelines?: string
@@ -204,7 +204,7 @@ export interface SeriesAesthetic {
 }
 
 /**
- * Series Production Bible
+ * Series Reference Library
  */
 export interface SeriesProductionBible {
   version: string
@@ -423,7 +423,7 @@ export interface EpisodeCardProps {
 }
 
 /**
- * Production Bible Panel Props
+ * Reference Library Panel Props
  */
 export interface ProductionBiblePanelProps {
   bible: SeriesProductionBibleResponse

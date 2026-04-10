@@ -160,7 +160,7 @@ function safeParseJSON(text: string): any {
 }
 
 /**
- * Phase 1: Update production bible (logline, synopsis, characters)
+ * Phase 1: Update reference library (logline, synopsis, characters)
  * This is the core refactor that establishes the new storyline foundation
  */
 async function refactorProductionBible(
@@ -205,7 +205,7 @@ Return ONLY valid JSON (no markdown, no explanation):
   "changesApplied": ["Specific change 1", "Specific change 2"]
 }`
 
-  console.log('[Edit Storyline] Phase 1: Calling LLM for production bible refactor...')
+  console.log('[Edit Storyline] Phase 1: Calling LLM for reference library refactor...')
   
   const response = await callLLM({
     provider: 'gemini',
@@ -359,8 +359,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     console.log(`[${timestamp}] [POST /api/series/${seriesId}/edit-storyline] Starting comprehensive refactor`)
     console.log(`[${timestamp}] Instruction: "${instruction.slice(0, 100)}"`)
     
-    // ========== PHASE 1: Refactor Production Bible ==========
-    console.log(`[${timestamp}] Phase 1: Refactoring production bible...`)
+    // ========== PHASE 1: Refactor Reference Library ==========
+    console.log(`[${timestamp}] Phase 1: Refactoring reference library...`)
     const bibleUpdates = await refactorProductionBible(instruction, series)
     
     if (!bibleUpdates) {

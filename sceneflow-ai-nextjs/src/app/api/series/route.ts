@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
  * - genre: Optional. Series genre
  * - targetAudience: Optional. Target audience
  * - maxEpisodes: Optional. Max episodes (default: 20, max: 30)
- * - productionBible: Optional. Initial production bible data
+ * - productionBible: Optional. Initial reference library data
  * - episodeBlueprints: Optional. Initial episode blueprints
  */
 export async function POST(request: NextRequest) {
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
     
-    // Build initial production bible
+    // Build initial reference library
     const initialBible = {
       version: '1.0.0',
       lastUpdated: new Date().toISOString(),

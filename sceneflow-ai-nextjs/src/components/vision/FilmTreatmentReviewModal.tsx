@@ -123,7 +123,7 @@ export function FilmTreatmentReviewModal({
   const sceneCount = script?.scenes?.length || 0
   const scriptLogline = script?.logline || ''
   
-  // Compare treatment characters with Production Bible characters
+  // Compare treatment characters with Reference Library characters
   const characterMatches = treatmentCharacters.map(tc => {
     const match = characters.find(c => 
       c.name.toLowerCase().includes(tc.name.toLowerCase()) ||
@@ -268,8 +268,8 @@ export function FilmTreatmentReviewModal({
                 ))}
               </div>
               <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-xs text-gray-500">
-                <CheckCircle2 className="w-3 h-3 inline text-emerald-500 mr-1" /> In Production Bible
-                <AlertCircle className="w-3 h-3 inline text-amber-500 ml-3 mr-1" /> Not yet in Production Bible
+                <CheckCircle2 className="w-3 h-3 inline text-emerald-500 mr-1" /> In Reference Library
+                <AlertCircle className="w-3 h-3 inline text-amber-500 ml-3 mr-1" /> Not yet in Reference Library
               </div>
             </div>
           )}

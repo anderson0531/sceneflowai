@@ -1,5 +1,5 @@
 /**
- * SceneReferenceCard - Individual scene reference card for Production Bible Scene tab
+ * SceneReferenceCard - Individual scene reference card for Reference Library Scene tab
  * 
  * Scene references are environment-only shots WITHOUT actors, intended for
  * production consistency across image and video generation.

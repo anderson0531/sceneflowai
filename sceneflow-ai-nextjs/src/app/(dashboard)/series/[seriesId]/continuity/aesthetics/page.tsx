@@ -77,7 +77,7 @@ export default function AestheticsPage() {
       {!aesthetic && !toneGuidelines && !visualGuidelines ? (
         <div className="border rounded-lg p-8 text-center text-muted-foreground">
           <Palette className="h-12 w-12 mx-auto mb-3 opacity-30" />
-          <p>No aesthetic settings in the production bible yet.</p>
+          <p>No aesthetic settings in the reference library yet.</p>
           <p className="text-sm mt-1">Aesthetic data is synced from episode generation settings.</p>
         </div>
       ) : (
