@@ -3166,7 +3166,9 @@ export function SceneProductionMixer({
         const audioConfig = segmentAudioConfigs[seg.segmentId]
         const hasBackgroundStem = !!seg.stemSeparation?.backgroundStemUrl
         // Include video audio if: config says includeAudio=true (default), OR config doesn't exist (default to include)
-        const includeVideoAudio = (audioConfig?.includeAudio ?? true) && (!useStemDubbingPolicy || includeSpeechStem || !hasBackgroundStem)
+        const includeVideoAudio = !renderingAnimatic && (audioConfig?.includeAudio ?? true) && (!useStemDubbingPolicy || includeSpeechStem || !hasBackgroundStem)
+        const localAssetType: 'video' | 'image' =
+          renderingAnimatic ? 'image' : ((seg.assetType || 'video') as 'video' | 'image')
         console.log('[LocalRender] Segment config:', {
           segmentId: seg.segmentId,
           actualVideoDuration: seg.actualVideoDuration,
@@ -3174,14 +3176,14 @@ export function SceneProductionMixer({
           endTime: seg.endTime,
           calculatedDuration: duration,
           isUserUpload: seg.isUserUpload,
-          assetType: seg.assetType,
+          assetType: localAssetType,
           includeVideoAudio,
           volume: audioConfig?.volume ?? 1.0,
         })
         return {
           segmentId: seg.segmentId,
           assetUrl: seg.activeAssetUrl!,
-          assetType: (seg.assetType || 'video') as 'video' | 'image',
+          assetType: localAssetType,
           startTime: seg.startTime,
           duration,
           volume: (audioConfig?.volume ?? 1.0) * masterSegmentVolume,
