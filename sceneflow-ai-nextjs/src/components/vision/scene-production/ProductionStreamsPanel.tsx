@@ -19,7 +19,7 @@ import {
   X,
   Pause
 } from 'lucide-react'
-import { SUPPORTED_LANGUAGES, FLAG_EMOJIS } from '@/constants/languages'
+import { FLAG_EMOJIS } from '@/constants/languages'
 import type {
   ProductionStream,
   ProductionStreamStatus,
@@ -87,15 +87,6 @@ const STREAM_TYPE_CONFIG: Record<ProductionStreamType, StreamTypeEntry> = {
     label: 'Video', 
     description: 'Full AI-generated video'
   },
-}
-
-/** Defaults for “Compose animatic” (same as previous inline form defaults). */
-const DEFAULT_ANIMATIC_EXPORT_SETTINGS: AnimaticRenderSettings = {
-  type: 'animatic',
-  kenBurnsIntensity: 'subtle',
-  transitionStyle: 'crossfade',
-  transitionDuration: 0.5,
-  includeSubtitles: false,
 }
 
 interface StatusEntry {
@@ -441,10 +432,10 @@ function ProductionStreamCard({
 
 export function ProductionStreamsPanel({
   productionStreams,
-  selectedLanguage,
+  selectedLanguage: _selectedLanguage,
   streamTypeTab,
-  onRenderAnimatic,
-  onRenderProduction, // Legacy - maps to onRenderAnimatic
+  onRenderAnimatic: _onRenderAnimatic,
+  onRenderProduction: _onRenderProduction, // Legacy - maps to onRenderAnimatic
   onDeleteStream,
   onReRenderStream,
   onPreviewStream,
@@ -505,16 +496,6 @@ export function ProductionStreamsPanel({
   
   const currentStreams = selectedStreamType === 'animatic' ? animaticStreams : videoStreams
   
-  const handleComposeAnimatic = useCallback(async () => {
-    if (!selectedLanguage) return
-    const resolution: '720p' | '1080p' | '4K' = '1080p'
-    if (onRenderAnimatic) {
-      await onRenderAnimatic(selectedLanguage, resolution, DEFAULT_ANIMATIC_EXPORT_SETTINGS)
-    } else if (onRenderProduction) {
-      await onRenderProduction(selectedLanguage, resolution)
-    }
-  }, [selectedLanguage, onRenderAnimatic, onRenderProduction])
-
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -538,7 +519,7 @@ export function ProductionStreamsPanel({
       
       {/* Stream Type Tabs */}
       <p className="text-[11px] text-gray-500">
-        Library of finished exports for this scene. View follows the same Animatic vs Video choice as Preview output in the Scene Production Mixer above.
+        Library of finished exports for this scene. View follows the same Animatic vs Video choice as the Scene Production Mixer above.
       </p>
       <div className="flex items-center gap-2 text-xs">
         {selectedStreamType === 'animatic' ? (
@@ -590,32 +571,11 @@ export function ProductionStreamsPanel({
         </div>
       )}
       
-      {/* Animatic: open scene composer (language follows mixer Preview output) */}
       {selectedStreamType === 'animatic' && (
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 bg-gray-800/30 rounded-lg border border-dashed border-gray-700">
-          <p className="text-xs text-gray-400 flex-1">
-            Uses <span className="text-gray-200 font-medium">Preview output</span> language from the mixer (
-            {SUPPORTED_LANGUAGES.find((l) => l.code === selectedLanguage)?.name ?? selectedLanguage.toUpperCase()}
-            ). Adjust Ken Burns and transitions in the dialog.
+        <div className="p-3 bg-gray-800/25 rounded-lg border border-gray-700/60">
+          <p className="text-xs text-gray-400 text-center">
+            New animatic exports: use <span className="text-purple-300 font-medium">Render</span> in the Scene Production Mixer footer. This list shows completed outputs for preview and download.
           </p>
-          <Button
-            size="sm"
-            onClick={handleComposeAnimatic}
-            disabled={disabled || isRendering || !selectedLanguage || !(onRenderAnimatic || onRenderProduction)}
-            className="h-9 shrink-0 text-white bg-purple-600 hover:bg-purple-700"
-          >
-            {isRendering ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Opening…
-              </>
-            ) : (
-              <>
-                <Clapperboard className="w-4 h-4 mr-2" />
-                Compose animatic…
-              </>
-            )}
-          </Button>
         </div>
       )}
 
@@ -641,7 +601,7 @@ export function ProductionStreamsPanel({
       {selectedStreamType === 'animatic' && animaticStreams.length === 0 && (
         <div className="p-3 bg-purple-900/20 border border-purple-700/50 rounded-lg">
           <p className="text-xs text-purple-300 text-center">
-            No animatic files yet. Use Compose animatic above to open the export wizard (defaults: subtle Ken Burns, crossfade).
+            No animatic files yet. Render an animatic from the mixer footer to create your first export.
           </p>
         </div>
       )}

@@ -4772,7 +4772,7 @@ export function SceneProductionMixer({
               </div>
               {!canMixerStitchRender && (
                 <p className="text-amber-300/90 leading-snug">
-                  Mixer quick/server stitch needs generated segment videos. For animatic (keyframes), use Compose animatic in Production Streams to open the scene export dialog.
+                  Mixer quick/server stitch needs generated segment videos. For animatic (keyframes), use Render in the mixer footer.
                 </p>
               )}
             </div>
