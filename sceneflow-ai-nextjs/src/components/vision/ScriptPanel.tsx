@@ -38,7 +38,7 @@ import type { SceneProductionData, SceneProductionReferences, SegmentKeyframeSet
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { getCuratedElevenVoices, type CuratedVoice } from '@/lib/tts/voices'
+import type { CuratedVoice } from '@/lib/tts/voices'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -1438,12 +1438,12 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     }
   }
 
-  // Fetch ElevenLabs voices
+  // Fetch Google/Gemini voices for fallback playback only
   useEffect(() => {
     let mounted = true
     ;(async () => {
       try {
-        const res = await fetch('/api/tts/elevenlabs/voices', { cache: 'no-store' })
+        const res = await fetch('/api/tts/google/voices', { cache: 'no-store' })
         const data = await res.json().catch(() => null)
         if (!mounted) return
         if (data?.enabled && Array.isArray(data.voices) && data.voices.length > 0) {
@@ -1838,7 +1838,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     for (const t of texts) {
       if (queueAbortRef.current.abort) break
       
-      const resp = await fetch('/api/tts/elevenlabs', {
+      const resp = await fetch('/api/tts/google', {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: t, voiceId: selectedVoiceId || voices[0]?.id })
@@ -1858,8 +1858,70 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
   // Audio generation functions
   const generateSFX = async (sceneIdx: number, sfxIdx: number, skipOverlay?: boolean) => {
-    toast.error('SFX generation is temporarily disabled.')
-    return
+    const scene = scenes[sceneIdx]
+    const sfxEntry = scene?.sfx?.[sfxIdx]
+    const description = typeof sfxEntry === 'string'
+      ? sfxEntry
+      : (sfxEntry?.description || sfxEntry?.text || '').trim()
+    if (!description) return
+
+    if (!skipOverlay) {
+      overlayStore?.show(`Finding SFX for Scene ${sceneIdx + 1}...`, 20, 'audio-generation')
+    }
+    try {
+      const sceneContext = [scene?.heading, scene?.action, scene?.narration].filter(Boolean).join(' | ')
+      const searchResponse = await fetch('/api/audio/epidemic/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: description,
+          sceneContext,
+          limit: 6,
+          targetDurationSec: sfxEntry?.duration || 2,
+        }),
+      })
+
+      if (!searchResponse.ok) {
+        const error = await searchResponse.json().catch(() => ({ error: 'SFX search failed' }))
+        throw new Error(error.error || 'SFX search failed')
+      }
+
+      const searchData = await searchResponse.json()
+      const topResult = Array.isArray(searchData.results) && searchData.results.length > 0 ? searchData.results[0] : null
+      if (!topResult?.id) {
+        throw new Error('No matching SFX found')
+      }
+
+      const selectResponse = await fetch('/api/audio/epidemic/select', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          assetId: topResult.id,
+          projectId: projectId || undefined,
+          sceneIndex: sceneIdx,
+          sfxIndex: sfxIdx,
+          commit: true,
+        }),
+      })
+
+      if (!selectResponse.ok) {
+        const error = await selectResponse.json().catch(() => ({ error: 'SFX select failed' }))
+        throw new Error(error.error || 'SFX select failed')
+      }
+
+      const selectData = await selectResponse.json()
+      const sfxUrl = selectData.url
+      if (!sfxUrl) throw new Error('No SFX URL returned')
+      await saveSceneAudio(sceneIdx, 'sfx', sfxUrl, sfxIdx)
+      toast.success('SFX generated from Epidemic library')
+    } catch (error: any) {
+      console.error('[SFX Generation] Error:', error)
+      toast.error(`Failed to generate SFX: ${error.message}`)
+    } finally {
+      if (!skipOverlay) {
+        overlayStore?.hide()
+      }
+    }
   }
 
   const generateMusic = async (sceneIdx: number, skipOverlay?: boolean) => {
@@ -2098,8 +2160,46 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
   // Quick play SFX (generate and play immediately)
   const generateAndPlaySFX = async (description: string) => {
-    toast.error('SFX generation is temporarily disabled.')
-    return
+    try {
+      const searchResponse = await fetch('/api/audio/epidemic/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: description, limit: 4, targetDurationSec: 2 }),
+      })
+      if (!searchResponse.ok) {
+        const error = await searchResponse.json().catch(() => ({ error: 'SFX search failed' }))
+        throw new Error(error.error || 'SFX search failed')
+      }
+
+      const searchData = await searchResponse.json()
+      const topResult = Array.isArray(searchData.results) && searchData.results.length > 0 ? searchData.results[0] : null
+      if (!topResult?.id) throw new Error('No matching SFX found')
+
+      const selectResponse = await fetch('/api/audio/epidemic/select', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          assetId: topResult.id,
+          projectId: projectId || undefined,
+          commit: false,
+        }),
+      })
+      if (!selectResponse.ok) {
+        const error = await selectResponse.json().catch(() => ({ error: 'SFX select failed' }))
+        throw new Error(error.error || 'SFX select failed')
+      }
+      const selectData = await selectResponse.json()
+      const audioUrl = selectData.url
+      if (!audioUrl) throw new Error('No SFX URL returned')
+      const audio = new Audio(audioUrl)
+      orphanAudioRefs.current.add(audio)
+      audio.onended = () => orphanAudioRefs.current.delete(audio)
+      audio.onerror = () => orphanAudioRefs.current.delete(audio)
+      await audio.play()
+    } catch (error: any) {
+      console.error('[SFX Playback] Error:', error)
+      alert(`Failed to play SFX: ${error.message}`)
+    }
   }
 
   // Quick play Music (generate and play immediately)

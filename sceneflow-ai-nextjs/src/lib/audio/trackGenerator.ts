@@ -37,13 +37,13 @@ function estimateDurationFromBlob(blobSize: number, language: string = 'en'): nu
 }
 
 /**
- * Generate narration or dialogue audio using ElevenLabs TTS
+ * Generate narration or dialogue audio using Google/Gemini TTS
  * Returns blob URL and estimated duration
  */
 export async function generateTTSAudio(params: GenerateTTSParams): Promise<{ mp3Url: string; duration: number }> {
   const language = params.language || 'en'
   
-  const response = await fetch('/api/tts/elevenlabs', {
+  const response = await fetch('/api/tts/google', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -99,11 +99,38 @@ export async function generateTTSAudio(params: GenerateTTSParams): Promise<{ mp3
 }
 
 /**
- * Generate sound effect using ElevenLabs SFX API
+ * Generate sound effect via Epidemic API
  */
 export async function generateSFXAudio(params: GenerateSFXParams): Promise<{ mp3Url: string; duration: number }> {
-  // SFX generation is temporarily disabled
-  throw new Error('SFX generation is temporarily disabled.')
+  const searchResponse = await fetch('/api/audio/epidemic/search', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      query: params.description,
+      targetDurationSec: params.duration || 2,
+      limit: 5,
+    }),
+  })
+  if (!searchResponse.ok) {
+    const error = await searchResponse.json().catch(() => ({ error: 'SFX search failed' }))
+    throw new Error(error.error || 'SFX search failed')
+  }
+  const searchData = await searchResponse.json()
+  const topResult = Array.isArray(searchData.results) && searchData.results.length > 0 ? searchData.results[0] : null
+  if (!topResult?.id) throw new Error('No SFX result found')
+
+  const selectResponse = await fetch('/api/audio/epidemic/select', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ assetId: topResult.id, commit: false }),
+  })
+  if (!selectResponse.ok) {
+    const error = await selectResponse.json().catch(() => ({ error: 'SFX select failed' }))
+    throw new Error(error.error || 'SFX select failed')
+  }
+  const selectData = await selectResponse.json()
+  if (!selectData.url) throw new Error('SFX select response missing url')
+  return { mp3Url: selectData.url, duration: params.duration || topResult.durationSec || 2 }
 }
 
 /**

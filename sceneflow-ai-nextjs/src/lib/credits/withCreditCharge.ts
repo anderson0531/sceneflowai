@@ -53,6 +53,7 @@ export type CreditOperation =
   | 'elevenlabs_tts'
   | 'elevenlabs_sfx'
   | 'elevenlabs_music'
+  | 'epidemic_sfx'
   | 'voice_preview'
   // Text operations
   | 'gemini_flash'
@@ -118,6 +119,7 @@ const DEFAULT_CREDITS: Record<CreditOperation, number> = {
   elevenlabs_tts: AUDIO_CREDITS.ELEVENLABS_PER_1K_CHARS,
   elevenlabs_sfx: AUDIO_CREDITS.ELEVENLABS_SFX,
   elevenlabs_music: AUDIO_CREDITS.ELEVENLABS_MUSIC,
+  epidemic_sfx: AUDIO_CREDITS.EPIDEMIC_SFX,
   voice_preview: AUDIO_CREDITS.VOICE_PREVIEW,
   // Text
   gemini_flash: TEXT_CREDITS.GEMINI_FLASH,

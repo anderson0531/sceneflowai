@@ -50,8 +50,59 @@ async function generateAndSaveMusicForScene(scene: any, projectId: string, scene
 
 // Helper function to generate and save SFX for a scene
 async function generateAndSaveSFXForScene(scene: any, projectId: string, sceneIdx: number, sfxIdx: number, baseUrl: string): Promise<string | null> {
-  // SFX generation is temporarily disabled
-  return null
+  try {
+    const sfxEntry = Array.isArray(scene.sfx) ? scene.sfx[sfxIdx] : null
+    const description = typeof sfxEntry === 'string'
+      ? sfxEntry
+      : (sfxEntry?.description || sfxEntry?.text || '').trim()
+    if (!description) return null
+
+    const sceneContext = [scene.heading, scene.action, scene.narration].filter(Boolean).join(' | ')
+    const searchResponse = await fetch(`${baseUrl}/api/audio/epidemic/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: description,
+        sceneContext,
+        limit: 6,
+        targetDurationSec: sfxEntry?.duration || 2,
+      }),
+    })
+
+    if (!searchResponse.ok) {
+      const errorText = await searchResponse.text().catch(() => 'Unknown error')
+      console.error(`[Batch Audio] Epidemic search failed scene ${sceneIdx + 1} sfx ${sfxIdx + 1}:`, errorText)
+      return null
+    }
+
+    const searchData = await searchResponse.json()
+    const topResult = Array.isArray(searchData.results) && searchData.results.length > 0 ? searchData.results[0] : null
+    if (!topResult?.id) return null
+
+    const selectResponse = await fetch(`${baseUrl}/api/audio/epidemic/select`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        assetId: topResult.id,
+        projectId,
+        sceneIndex: sceneIdx,
+        sfxIndex: sfxIdx,
+        commit: false,
+      }),
+    })
+
+    if (!selectResponse.ok) {
+      const errorText = await selectResponse.text().catch(() => 'Unknown error')
+      console.error(`[Batch Audio] Epidemic select failed scene ${sceneIdx + 1} sfx ${sfxIdx + 1}:`, errorText)
+      return null
+    }
+
+    const selectData = await selectResponse.json()
+    return selectData.url || null
+  } catch (error: any) {
+    console.error(`[Batch Audio] SFX generation failed for scene ${sceneIdx + 1}:`, error?.message || String(error))
+    return null
+  }
 }
 
 export async function POST(req: NextRequest) {

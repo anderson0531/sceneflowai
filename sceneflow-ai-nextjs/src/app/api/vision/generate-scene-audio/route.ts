@@ -4,7 +4,6 @@ import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { optimizeTextForTTS } from '../../../../lib/tts/textOptimizer'
 import { getAudioDurationFromBuffer } from '../../../../lib/audio/serverAudioDuration'
-import { getElevenLabsVoiceForLanguage } from '../../../../lib/audio/elevenlabsVoices'
 import { translateWithVertexAI } from '../../../../lib/vertexai/translate'
 import { getVertexAIAuthToken } from '../../../../lib/vertexai/client'
 
@@ -12,7 +11,7 @@ export const maxDuration = 60
 export const runtime = 'nodejs'
 
 interface VoiceConfig {
-  provider: 'elevenlabs' | 'google'
+  provider: 'google'
   voiceId: string
   voiceName: string
   stability?: number
@@ -24,7 +23,7 @@ interface VoiceConfig {
 interface AudioGenerationRequest {
   projectId: string
   sceneIndex: number
-  audioType: 'narration' | 'dialogue'
+  audioType: 'narration' | 'dialogue' | 'description'
   text: string
   voiceConfig: VoiceConfig
   characterName?: string // For dialogue
@@ -140,15 +139,14 @@ export async function POST(req: NextRequest) {
       }, { status: 200 }) // Return 200 (success) but indicate no audio was generated
     }
 
-    // Step 3: Select appropriate voice for language (if using ElevenLabs)
+    // Step 3: Normalize voice config (Google/Gemini only)
     let finalVoiceConfig = { ...voiceConfig }
-    if (voiceConfig.provider === 'elevenlabs') {
-      const languageVoice = getElevenLabsVoiceForLanguage(language, voiceConfig.voiceId)
+    if (voiceConfig.provider !== 'google') {
+      console.warn('[Scene Audio] Deprecated provider requested, forcing google:', voiceConfig.provider)
       finalVoiceConfig = {
         ...voiceConfig,
-        voiceId: languageVoice.voiceId
+        provider: 'google',
       }
-      console.log('[Scene Audio] Using ElevenLabs voice for language:', language, languageVoice.voiceName)
     }
 
     // Step 4: Generate audio using specified provider with optimized text
@@ -263,114 +261,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function generateAudio(text: string, voiceConfig: VoiceConfig, language: string = 'en'): Promise<Buffer> {
-  if (voiceConfig.provider === 'elevenlabs') {
-    return await generateElevenLabsAudio(text, voiceConfig, language)
-  } else {
-    return await generateGoogleAudio(text, voiceConfig, language)
-  }
-}
-
-async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig, language: string = 'en'): Promise<Buffer> {
-  const apiKey = process.env.ELEVENLABS_API_KEY
-  if (!apiKey) throw new Error('ElevenLabs API key not configured')
-
-  // Check if text contains bracketed audio tags (ElevenLabs v3 format)
-  // v3 models support [instruction] bracket syntax for audio tags
-  const hasAudioTags = /\[[^\]]+\]/.test(text)
-
-  console.log('[Scene Audio] Audio tags detected:', hasAudioTags, 'Text:', text.substring(0, 100), 'Language:', language)
-
-  // Use higher quality format for non-English languages to avoid stuttering/quality issues
-  // MP3 44.1kHz 192kbps provides better quality for complex languages like Thai
-  // For English, we can use 128kbps to save bandwidth
-  const outputFormat = language !== 'en' ? 'mp3_44100_192' : 'mp3_44100_128'
-
-  // Model selection strategy:
-  // - eleven_v3: Flagship model, best quality, 73 languages, 5k char limit
-  // - eleven_flash_v2_5: Ultra-fast fallback (~75ms), 32 languages, 40k char limit
-  // Default: v3 for all languages (best quality). Override with ELEVENLABS_MODEL_ID env var.
-  const useV3Model = !process.env.ELEVENLABS_MODEL_ID || process.env.ELEVENLABS_MODEL_ID === 'eleven_v3'
-  const modelId = process.env.ELEVENLABS_MODEL_ID || 'eleven_v3'
-  
-  // Build URL - eleven_v3 does NOT support optimize_streaming_latency parameter
-  // Only add it for non-v3 models
-  const urlParams = new URLSearchParams({ output_format: outputFormat })
-  if (modelId !== 'eleven_v3') {
-    urlParams.append('optimize_streaming_latency', '0')
-  }
-  const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceConfig.voiceId}?${urlParams.toString()}`
-  
-  console.log('[Scene Audio] Model selection:', {
-    language,
-    useV3Model,
-    selectedModel: modelId,
-  })
-
-  // Build voice_settings based on model
-  // eleven_v3 uses different settings than turbo_v2_5:
-  // - v3: stability must be 0.0 (Creative), 0.5 (Natural), or 1.0 (Robust)
-  // - v3: does NOT support similarity_boost, style, or use_speaker_boost
-  // - turbo: supports stability (0-1), similarity_boost (0-1), style (0-1), use_speaker_boost
-  
-  let voiceSettings: Record<string, any>
-  
-  if (modelId === 'eleven_v3') {
-    // v3 model - simpler settings
-    // Use 0.5 (Natural) for balanced quality, or 1.0 (Robust) for more consistent output
-    voiceSettings = {
-      stability: 0.5, // Natural - best balance for most content
-    }
-  } else {
-    // turbo_v2_5 and other models - full settings
-    const isNonEnglish = language !== 'en'
-    const defaultStability = isNonEnglish ? 0.6 : 0.5
-    const defaultSimilarityBoost = isNonEnglish ? 0.8 : 0.75
-    
-    voiceSettings = {
-      stability: voiceConfig.stability || defaultStability,
-      similarity_boost: voiceConfig.similarityBoost || defaultSimilarityBoost,
-      style: hasAudioTags ? 0.5 : undefined,
-      use_speaker_boost: hasAudioTags ? true : (isNonEnglish ? true : undefined),
-    }
-  }
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'xi-api-key': apiKey,
-      'Content-Type': 'application/json',
-      Accept: 'audio/mpeg',
-    },
-    body: JSON.stringify({
-      text: text,
-      model_id: modelId,
-      voice_settings: voiceSettings,
-    }),
-  })
-
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => 'Unknown error')
-    console.error('[Scene Audio] ElevenLabs API failed:', response.status, errorText, 'Language:', language, 'Format:', outputFormat, 'Model:', modelId)
-    throw new Error(`ElevenLabs API error: ${response.status}`)
-  }
-
-  const arrayBuffer = await response.arrayBuffer()
-  const buffer = Buffer.from(arrayBuffer)
-  
-  // Log audio generation details for debugging
-  console.log('[Scene Audio] ElevenLabs audio generated', {
-    bytes: buffer.length,
-    format: outputFormat,
-    language,
-    model: modelId,
-  })
-  
-  // Validate audio buffer is not empty
-  if (buffer.length === 0) {
-    throw new Error('Generated audio buffer is empty')
-  }
-  
-  return buffer
+  return await generateGoogleAudio(text, voiceConfig, language)
 }
 
 async function generateGoogleAudio(text: string, voiceConfig: VoiceConfig, language: string = 'en'): Promise<Buffer> {
