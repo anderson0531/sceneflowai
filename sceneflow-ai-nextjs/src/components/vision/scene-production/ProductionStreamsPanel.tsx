@@ -350,14 +350,26 @@ function ProductionStreamCard({
       {/* Right: Actions */}
       <div className="flex items-center gap-1">
         {stream.status === 'rendering' ? (
-          <div className="flex items-center gap-2 px-3">
-            <div className="w-16 h-1.5 bg-gray-700 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-blue-500 transition-all duration-300"
-                style={{ width: `${renderProgress || 0}%` }}
-              />
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 px-3">
+              <div className="w-16 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-blue-500 transition-all duration-300"
+                  style={{ width: `${renderProgress || 0}%` }}
+                />
+              </div>
+              <span className="text-xs text-blue-400">{renderProgress || 0}%</span>
             </div>
-            <span className="text-xs text-blue-400">{renderProgress || 0}%</span>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onDelete}
+              className="h-8 px-2 text-gray-400 hover:text-red-300 hover:bg-gray-700"
+              title="Clear stuck render entry"
+            >
+              <XCircle className="w-4 h-4 mr-1" />
+              Clear
+            </Button>
           </div>
         ) : stream.status === 'complete' && stream.mp4Url ? (
           <>
