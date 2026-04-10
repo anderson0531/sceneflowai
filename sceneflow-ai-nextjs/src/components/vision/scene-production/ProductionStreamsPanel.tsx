@@ -38,7 +38,6 @@ interface ProductionStreamsPanelProps {
   selectedLanguage: string
   /** When set, Animatic / Video tab is controlled by parent (e.g. mixer output) */
   streamTypeTab?: ProductionStreamType
-  onStreamTypeTabChange?: (t: ProductionStreamType) => void
   /** Callback to render a new animatic production stream */
   onRenderAnimatic?: (language: string, resolution: '720p' | '1080p' | '4K', settings: AnimaticRenderSettings) => Promise<void>
   /** Legacy callback for backwards compatibility - renders as animatic */
@@ -444,7 +443,6 @@ export function ProductionStreamsPanel({
   productionStreams,
   selectedLanguage,
   streamTypeTab,
-  onStreamTypeTabChange,
   onRenderAnimatic,
   onRenderProduction, // Legacy - maps to onRenderAnimatic
   onDeleteStream,
@@ -458,19 +456,7 @@ export function ProductionStreamsPanel({
   videoGenerationAvailable = false,
   disabled = false
 }: ProductionStreamsPanelProps) {
-  const [internalStreamType, setInternalStreamType] = useState<ProductionStreamType>('animatic')
-  const isStreamTabControlled = streamTypeTab != null
-  const selectedStreamType = streamTypeTab ?? internalStreamType
-
-  const setSelectedStreamType = useCallback(
-    (t: ProductionStreamType) => {
-      onStreamTypeTabChange?.(t)
-      if (!isStreamTabControlled) {
-        setInternalStreamType(t)
-      }
-    },
-    [isStreamTabControlled, onStreamTypeTabChange]
-  )
+  const selectedStreamType: ProductionStreamType = streamTypeTab ?? 'animatic'
 
   // Inline video preview state
   const [previewingStreamId, setPreviewingStreamId] = useState<string | null>(null)
@@ -552,46 +538,26 @@ export function ProductionStreamsPanel({
       
       {/* Stream Type Tabs */}
       <p className="text-[11px] text-gray-500">
-        Library of finished exports for this scene. Tabs follow the same Animatic vs Video choice as Preview output in the Scene Production Mixer above (change either place to stay in sync).
+        Library of finished exports for this scene. View follows the same Animatic vs Video choice as Preview output in the Scene Production Mixer above.
       </p>
-
-      <div className="flex gap-1 p-1 bg-gray-800/50 rounded-lg">
-        <button
-          onClick={() => setSelectedStreamType('animatic')}
-          className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 text-sm rounded transition-colors ${
-            selectedStreamType === 'animatic'
-              ? 'bg-purple-600 text-white'
-              : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
-          }`}
-        >
-          <Clapperboard className="w-4 h-4" />
-          Animatic
-          {animaticStreams.length > 0 && (
-            <span className="px-1.5 py-0.5 text-xs bg-white/20 rounded">
+      <div className="flex items-center gap-2 text-xs">
+        {selectedStreamType === 'animatic' ? (
+          <>
+            <Clapperboard className="w-3.5 h-3.5 text-purple-300" />
+            <span className="text-purple-200">Showing Animatic exports</span>
+            <span className="px-1.5 py-0.5 text-[11px] bg-purple-500/20 text-purple-300 rounded">
               {animaticStreams.length}
             </span>
-          )}
-        </button>
-        <button
-          onClick={() => setSelectedStreamType('video')}
-          disabled={!videoGenerationAvailable && videoStreams.length === 0}
-          className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 text-sm rounded transition-colors ${
-            selectedStreamType === 'video'
-              ? 'bg-indigo-600 text-white'
-              : !videoGenerationAvailable && videoStreams.length === 0
-              ? 'text-gray-600 cursor-not-allowed'
-              : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
-          }`}
-          title={!videoGenerationAvailable && videoStreams.length === 0 ? 'Generate segment videos first' : undefined}
-        >
-          <VideoIcon className="w-4 h-4" />
-          Video
-          {videoStreams.length > 0 && (
-            <span className="px-1.5 py-0.5 text-xs bg-white/20 rounded">
+          </>
+        ) : (
+          <>
+            <VideoIcon className="w-3.5 h-3.5 text-indigo-300" />
+            <span className="text-indigo-200">Showing Video exports</span>
+            <span className="px-1.5 py-0.5 text-[11px] bg-indigo-500/20 text-indigo-300 rounded">
               {videoStreams.length}
             </span>
-          )}
-        </button>
+          </>
+        )}
       </div>
       
       {/* Inline Video Player */}
@@ -683,7 +649,7 @@ export function ProductionStreamsPanel({
       {/* Help text */}
       {currentStreams.length === 0 && selectedStreamType === 'video' && videoGenerationAvailable && (
         <p className="text-xs text-gray-500 text-center">
-          Stitched video exports from the mixer will show up here. Set Output resolution in the mixer before rendering.
+          Stitched video exports from the mixer will show up here.
         </p>
       )}
     </div>

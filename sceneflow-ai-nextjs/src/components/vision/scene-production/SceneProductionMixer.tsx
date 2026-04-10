@@ -31,7 +31,6 @@ import {
   Download,
   Loader2,
   CheckCircle2,
-  Settings2,
   Clock,
   SkipBack,
   SkipForward,
@@ -70,14 +69,6 @@ import {
 } from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import { SUPPORTED_LANGUAGES, FLAG_EMOJIS } from '@/constants/languages'
 import { MixerTimeline } from './MixerTimeline'
@@ -453,139 +444,56 @@ function animaticKeyframeUrl(segment: SceneSegment): string | null {
 }
 
 /**
- * Single control for output kind (animatic vs video) and mix language.
+ * Stream type tabs for mixer/streams navigation.
  */
 function ProductionTargetSelector({
   productionTarget,
   onProductionTargetChange,
   videoGenerationAvailable,
-  availableLanguages,
   disabled,
-  onGenerateAudioForLanguage,
-  isGeneratingAudio,
 }: {
   productionTarget: ProductionTarget
   onProductionTargetChange: (target: ProductionTarget) => void
   videoGenerationAvailable: boolean
-  availableLanguages: string[]
   disabled?: boolean
-  onGenerateAudioForLanguage?: (lang: string) => void
-  isGeneratingAudio?: boolean
 }) {
-  const { streamType, language } = productionTarget
-  const langName = SUPPORTED_LANGUAGES.find(l => l.code === language)?.name || language.toUpperCase()
-  const hasAudioForSelected = availableLanguages.includes(language)
-  const TypeIcon = streamType === 'animatic' ? Clapperboard : Video
+  const { streamType } = productionTarget
 
   return (
     <div className="flex items-center gap-2 flex-wrap justify-end">
       <span className="text-xs text-gray-400 uppercase tracking-wide hidden sm:inline">Preview output</span>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={disabled}
-            className="h-9 gap-2 bg-gray-800/80 border-purple-500/40 text-white hover:bg-gray-800 hover:text-white"
-          >
-            <TypeIcon className="w-3.5 h-3.5 text-purple-300 shrink-0" />
-            <span className="text-xs font-medium">
-              {streamType === 'animatic' ? 'Animatic' : 'Video'} · {langName}
-            </span>
-            <ChevronDown className="w-3.5 h-3.5 opacity-60" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="bg-gray-900 border-gray-700 text-gray-100 max-h-[min(70vh,420px)] overflow-y-auto w-[min(100vw-2rem,280px)]">
-          <DropdownMenuLabel className="text-purple-300 text-xs">Animatic</DropdownMenuLabel>
-          {SUPPORTED_LANGUAGES.map((lang) => {
-            const hasAudio = availableLanguages.includes(lang.code)
-            return (
-              <DropdownMenuItem
-                key={`animatic-${lang.code}`}
-                className="gap-2 cursor-pointer"
-                onSelect={() => onProductionTargetChange({ streamType: 'animatic', language: lang.code })}
-              >
-                <span>{FLAG_EMOJIS[lang.code] || '🌐'}</span>
-                <span className="flex-1">{lang.name}</span>
-                <span className={cn('h-2 w-2 rounded-full shrink-0', hasAudio ? 'bg-green-500' : 'bg-gray-500')} />
-              </DropdownMenuItem>
-            )
-          })}
-          <DropdownMenuSeparator className="bg-gray-700" />
-          <DropdownMenuLabel className="text-indigo-300 text-xs">Video</DropdownMenuLabel>
-          {SUPPORTED_LANGUAGES.map((lang) => {
-            const hasAudio = availableLanguages.includes(lang.code)
-            return (
-              <DropdownMenuItem
-                key={`video-${lang.code}`}
-                className="gap-2 cursor-pointer"
-                disabled={!videoGenerationAvailable}
-                onSelect={() => {
-                  if (videoGenerationAvailable) {
-                    onProductionTargetChange({ streamType: 'video', language: lang.code })
-                  }
-                }}
-              >
-                <span>{FLAG_EMOJIS[lang.code] || '🌐'}</span>
-                <span className="flex-1">{lang.name}</span>
-                <span className={cn('h-2 w-2 rounded-full shrink-0', hasAudio ? 'bg-green-500' : 'bg-gray-500')} />
-              </DropdownMenuItem>
-            )
-          })}
-          {!videoGenerationAvailable && (
-            <p className="px-2 py-1.5 text-[10px] text-gray-500 leading-snug">
-              Generate segment videos to enable Video output.
-            </p>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-      {!hasAudioForSelected && language !== 'en' && onGenerateAudioForLanguage && (
+      <div className="flex gap-1 p-1 bg-gray-800/60 rounded-lg border border-gray-700/80">
         <button
           type="button"
-          onClick={() => onGenerateAudioForLanguage(language)}
-          disabled={disabled || isGeneratingAudio}
-          className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 transition-colors disabled:opacity-50"
-          title={`Translate & generate audio in ${langName}`}
-        >
-          {isGeneratingAudio ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
-          ) : (
-            <Zap className="w-3 h-3" />
+          onClick={() => onProductionTargetChange({ ...productionTarget, streamType: 'animatic' })}
+          disabled={disabled}
+          className={cn(
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+            streamType === 'animatic'
+              ? 'bg-purple-600 text-white'
+              : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/60'
           )}
-          <span className="hidden sm:inline">{isGeneratingAudio ? 'Generating...' : 'Generate'}</span>
+        >
+          <Clapperboard className="w-3.5 h-3.5" />
+          Animatic
         </button>
-      )}
-    </div>
-  )
-}
-
-/**
- * ResolutionSelector - Output resolution dropdown
- */
-function ResolutionSelector({
-  resolution,
-  onResolutionChange,
-  disabled,
-}: {
-  resolution: '720p' | '1080p' | '4K'
-  onResolutionChange: (res: '720p' | '1080p' | '4K') => void
-  disabled?: boolean
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      <Settings2 className="w-4 h-4 text-gray-400" />
-      <span className="text-xs text-gray-400 uppercase tracking-wide hidden sm:inline">Resolution</span>
-      <Select value={resolution} onValueChange={onResolutionChange as (v: string) => void} disabled={disabled}>
-        <SelectTrigger className="w-[128px] sm:w-[152px] h-9 bg-gray-800/80 border-gray-600 text-white">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent className="bg-gray-900 border-gray-700">
-          <SelectItem value="720p" className="text-gray-200">720p (HD)</SelectItem>
-          <SelectItem value="1080p" className="text-gray-200">1080p (Full HD)</SelectItem>
-          <SelectItem value="4K" className="text-gray-200">4K (UHD)</SelectItem>
-        </SelectContent>
-      </Select>
+        <button
+          type="button"
+          onClick={() => onProductionTargetChange({ ...productionTarget, streamType: 'video' })}
+          disabled={disabled || !videoGenerationAvailable}
+          className={cn(
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+            streamType === 'video'
+              ? 'bg-indigo-600 text-white'
+              : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/60',
+            !videoGenerationAvailable && 'opacity-50 cursor-not-allowed'
+          )}
+          title={!videoGenerationAvailable ? 'Generate segment videos to enable Video output.' : undefined}
+        >
+          <Video className="w-3.5 h-3.5" />
+          Video
+        </button>
+      </div>
     </div>
   )
 }
@@ -3665,15 +3573,6 @@ export function SceneProductionMixer({
             <p className="text-xs text-gray-400">
               Mix segment video or animatic keyframes with narration, dialogue, music, and SFX — then export from the footer.
             </p>
-            <p className="text-[11px] text-purple-300/90 mt-1">
-              Preview:{' '}
-              <span className="font-medium text-purple-200">
-                {productionTarget.streamType === 'animatic' ? 'Animatic' : 'Video'} ·{' '}
-                {SUPPORTED_LANGUAGES.find((l) => l.code === productionTarget.language)?.name ??
-                  productionTarget.language.toUpperCase()}
-              </span>
-              <span className="text-gray-500"> — matches Production Streams below when you switch tabs there.</span>
-            </p>
           </div>
         </div>
         
@@ -3697,14 +3596,6 @@ export function SceneProductionMixer({
             productionTarget={productionTarget}
             onProductionTargetChange={onProductionTargetChange}
             videoGenerationAvailable={videoGenerationAvailable}
-            availableLanguages={availableLanguages}
-            disabled={isRendering}
-            onGenerateAudioForLanguage={onGenerateSceneAudio ? handleGenerateLanguageAudio : undefined}
-            isGeneratingAudio={isGeneratingAudio || isGeneratingLanguageAudio}
-          />
-          <ResolutionSelector
-            resolution={resolution}
-            onResolutionChange={setResolution}
             disabled={isRendering}
           />
         </div>

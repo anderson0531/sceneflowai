@@ -1189,7 +1189,6 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           productionStreams={productionStreams}
           selectedLanguage={productionTarget.language}
           streamTypeTab={productionTarget.streamType}
-          onStreamTypeTabChange={(t) => setProductionTarget(prev => ({ ...prev, streamType: t }))}
           onRenderAnimatic={handleRenderAnimatic}
           onDeleteStream={handleDeleteStream}
           onReRenderStream={handleReRenderStream}
