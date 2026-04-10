@@ -3628,33 +3628,18 @@ export function SceneProductionMixer({
   
   // === Smart Render Handler (routes to local, server, or headless) ===
   const handleSmartRender = useCallback(async () => {
-    // Check for headless preference
-    if (selectedRenderMode === 'headless') {
-      await handleHeadlessRender()
-      return
-    }
-
     const hasBurnIns = textOverlays.length > 0 || watermarkConfig.enabled
     const audioLongerThanVideo = maxAudioDuration > videoTotalDuration + 0.1
-    const headlessAvailable = renderOptions.some((opt) => opt.mode === 'headless' && opt.available)
 
-    // Reliability guard: use deterministic cloud rendering for any burn-ins.
-    // This avoids local/server path variance where text/watermark can drift or drop.
+    // Single-selector flow: always route burn-ins through standard cloud render.
+    // This avoids hard dependency on optional headless Cloud Run infrastructure.
     if (hasBurnIns) {
-      if (headlessAvailable) {
-        await handleHeadlessRender()
-        return
-      }
       setActiveRenderMode('server')
       await handleRender()
       return
     }
 
     if (selectedRenderMode === 'auto' && audioLongerThanVideo) {
-      if (headlessAvailable) {
-        await handleHeadlessRender()
-        return
-      }
       setActiveRenderMode('server')
       await handleRender()
       return
@@ -3671,12 +3656,10 @@ export function SceneProductionMixer({
     renderStrategy,
     handleLocalRender,
     handleRender,
-    handleHeadlessRender,
     textOverlays.length,
     watermarkConfig.enabled,
     maxAudioDuration,
     videoTotalDuration,
-    renderOptions,
   ])
   
   // === Render ===
