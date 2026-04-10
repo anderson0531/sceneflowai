@@ -450,18 +450,19 @@ function ProductionTargetSelector({
   productionTarget,
   onProductionTargetChange,
   videoGenerationAvailable,
+  availableLanguages,
   disabled,
 }: {
   productionTarget: ProductionTarget
   onProductionTargetChange: (target: ProductionTarget) => void
   videoGenerationAvailable: boolean
+  availableLanguages: string[]
   disabled?: boolean
 }) {
   const { streamType } = productionTarget
 
   return (
     <div className="flex items-center gap-2 flex-wrap justify-end">
-      <span className="text-xs text-gray-400 uppercase tracking-wide hidden sm:inline">Preview output</span>
       <div className="flex gap-1 p-1 bg-gray-800/60 rounded-lg border border-gray-700/80">
         <button
           type="button"
@@ -494,6 +495,19 @@ function ProductionTargetSelector({
           Video
         </button>
       </div>
+      {availableLanguages.length > 0 && (
+        <GroupedLanguageSelector
+          value={productionTarget.language}
+          onValueChange={(code) => onProductionTargetChange({ ...productionTarget, language: code })}
+          filterCodes={availableLanguages}
+          size="sm"
+          intent="navigate"
+          showFlags={true}
+          disabled={disabled}
+          className="min-w-[140px]"
+          placeholder="Select language..."
+        />
+      )}
     </div>
   )
 }
@@ -3630,6 +3644,7 @@ export function SceneProductionMixer({
             productionTarget={productionTarget}
             onProductionTargetChange={onProductionTargetChange}
             videoGenerationAvailable={videoGenerationAvailable}
+            availableLanguages={availableLanguages}
             disabled={isRendering}
           />
         </div>
