@@ -316,25 +316,10 @@ export interface SegmentAudioConfig {
 type RenderStatus = 'idle' | 'preparing' | 'rendering' | 'complete' | 'error'
 type ActiveRenderMode = 'local' | 'server' | 'headless'
 
-/** Short labels for the render-mode Select trigger (dropdown items stay verbose). */
-const RENDER_MODE_TRIGGER_LABELS: Record<RenderMode, string> = {
-  local: 'Fast',
-  server: 'Final',
-  headless: 'Pro Cloud',
-  auto: 'Auto',
-}
-
 const RESOLUTION_TRIGGER_LABELS: Record<'720p' | '1080p' | '4K', string> = {
-  '720p': '720',
-  '1080p': '1080',
-  '4K': '4K',
-}
-
-const RENDER_MODE_MENU_LABELS: Record<RenderMode, string> = {
-  local: 'Fast',
-  server: 'Final',
-  headless: 'Pro Cloud',
-  auto: 'Auto',
+  '720p': '720 (HD)',
+  '1080p': '1080 (FHD)',
+  '4K': '4K (UHD)',
 }
 
 interface SceneProductionMixerProps {
@@ -2571,7 +2556,7 @@ export function SceneProductionMixer({
   // (Render State declared earlier to avoid TDZ — see above text overlay block)
   
   // === Render Mode State (Local vs Server) ===
-  const [selectedRenderMode, setSelectedRenderMode] = useState<RenderMode>('auto')
+  const selectedRenderMode: RenderMode = 'auto'
   const [activeRenderMode, setActiveRenderMode] = useState<ActiveRenderMode>('server')
   const [localRenderProgress, setLocalRenderProgress] = useState<LocalRenderProgress | null>(null)
   
@@ -4757,7 +4742,7 @@ export function SceneProductionMixer({
                 onValueChange={(value) => setResolution(value as '720p' | '1080p' | '4K')}
                 disabled={isRendering}
               >
-                <SelectTrigger className="w-[84px] h-9 shrink-0 bg-gray-800 border-gray-600 [&>span]:text-left">
+                <SelectTrigger className="w-[180px] h-9 shrink-0 bg-gray-800 border-gray-600 [&>span]:text-left">
                   <SelectValue placeholder="Res">
                     {RESOLUTION_TRIGGER_LABELS[resolution]}
                   </SelectValue>
@@ -4770,37 +4755,6 @@ export function SceneProductionMixer({
                 </SelectContent>
               </Select>
 
-              {/* Render Mode Selector */}
-              <Select
-                value={selectedRenderMode}
-                onValueChange={(value) => setSelectedRenderMode(value as RenderMode)}
-                disabled={isRendering}
-              >
-                <SelectTrigger className="min-w-[7.25rem] w-[min(100%,9.5rem)] max-w-[10.5rem] h-9 shrink-0 bg-gray-800 border-gray-600 [&>span]:flex-1 [&>span]:min-w-0 [&>span]:text-left">
-                  <SelectValue placeholder="Mode">
-                    {RENDER_MODE_TRIGGER_LABELS[selectedRenderMode]}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {renderOptions.filter(opt => opt.available).map((option) => (
-                    <SelectItem key={option.mode} value={option.mode}>
-                      <div className="flex items-center gap-2">
-                        {option.mode === 'local' && <Zap className="w-3 h-3 text-yellow-400" />}
-                        {option.mode === 'server' && <Server className="w-3 h-3 text-purple-400" />}
-                        {option.mode === 'headless' && <Monitor className="w-3 h-3 text-blue-400" />}
-                        {option.mode === 'auto' && <Sparkles className="w-3 h-3 text-gray-400" />}
-                        <span>{RENDER_MODE_MENU_LABELS[option.mode]}</span>
-                        {option.badge && (
-                          <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0">
-                            {option.badge}
-                          </Badge>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
               {/* Smart Render Button */}
               <Button
                 onClick={handleSmartRender}
