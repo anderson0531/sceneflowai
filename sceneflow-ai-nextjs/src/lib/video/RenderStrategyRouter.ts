@@ -106,6 +106,8 @@ export interface RenderContext {
   hasTextOverlays: boolean
   /** Number of text overlays */
   textOverlayCount: number
+  /** Whether watermark is enabled */
+  hasWatermark?: boolean
   /** User's subscription tier */
   userTier: SubscriptionTier
   /** User's remaining server renders this month (for trial/starter) */
@@ -176,6 +178,7 @@ export function determineRenderStrategy(context: RenderContext): RenderDecision 
     audioTrackCount,
     hasTextOverlays,
     textOverlayCount,
+    hasWatermark = false,
     userTier,
     remainingServerRenders,
     userPreference,
@@ -299,8 +302,19 @@ export function determineRenderStrategy(context: RenderContext): RenderDecision 
   // Calculate complexity score
   const complexityScore = calculateComplexityScore(context)
   
+  // Preserve overlays/watermarks: cloud rendering is more deterministic than browser capture.
+  if (hasTextOverlays || hasWatermark) {
+    return {
+      mode: 'server',
+      reason: 'Text/watermark overlays are enabled. Cloud render is recommended for consistent burn-in.',
+      canOverride: true,
+      estimatedCredits: Math.ceil(duration / 60) * SERVER_RENDER_CREDITS_PER_MINUTE,
+      estimatedTime: duration * 1.5,
+    }
+  }
+
   // Short, simple videos: local is faster (no upload/download)
-  if (duration < ROUTING_THRESHOLDS.DURATION_SERVER_RECOMMENDED && complexityScore < 3) {
+  if (duration < ROUTING_THRESHOLDS.DURATION_SERVER_RECOMMENDED && complexityScore < 3 && audioTrackCount <= 1) {
     return {
       mode: 'local',
       reason: 'Quick render: local is faster for short videos',
@@ -353,6 +367,11 @@ function calculateComplexityScore(context: RenderContext): number {
   if (context.hasTextOverlays) {
     score += 1
     if (context.textOverlayCount > 3) score += 1
+  }
+
+  // Watermark burn-in adds extra rendering complexity
+  if (context.hasWatermark) {
+    score += 1
   }
   
   // Resolution
@@ -410,16 +429,16 @@ export function getRenderModeOptions(context: RenderContext): Array<{
   return [
     {
       mode: 'local',
-      label: 'Quick Export',
+      label: '720/1080 Fast',
       description:
-        'Browser WebM • Up to 1080p (4K needs cloud) • Fast; quality/sync can vary by device',
+        'Browser WebM (720/1080) • Fastest • Timing and overlays can vary by device',
       available: localSupport.supported && context.duration <= LOCAL_RENDER_MAX_DURATION && context.resolution !== '4K',
       recommended: decision.mode === 'local',
       badge: decision.mode === 'local' ? 'Recommended' : undefined,
     },
     {
       mode: 'server',
-      label: 'Final Render',
+      label: '1080/4K Final',
       description: `Server MP4 at your Output resolution • ${SERVER_RENDER_CREDITS_PER_MINUTE} credits/min`,
       available: canServer.allowed,
       recommended: decision.mode === 'server',
@@ -427,7 +446,7 @@ export function getRenderModeOptions(context: RenderContext): Array<{
     },
     {
       mode: 'headless',
-      label: 'Pro Cloud',
+      label: '4K Pro Cloud',
       description:
         'Headless WebM at your Output resolution • Frame-accurate overlays and watermarks when enabled',
       available: canHeadless,

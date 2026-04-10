@@ -318,10 +318,16 @@ type ActiveRenderMode = 'local' | 'server' | 'headless'
 
 /** Short labels for the render-mode Select trigger (dropdown items stay verbose). */
 const RENDER_MODE_TRIGGER_LABELS: Record<RenderMode, string> = {
-  local: 'Quick',
-  server: 'Final',
-  headless: 'Pro Cloud',
+  local: '720/1080 Fast',
+  server: '1080/4K Final',
+  headless: '4K Pro Cloud',
   auto: 'Auto',
+}
+
+const RESOLUTION_TRIGGER_LABELS: Record<'720p' | '1080p' | '4K', string> = {
+  '720p': '720',
+  '1080p': '1080',
+  '4K': '4K',
 }
 
 interface SceneProductionMixerProps {
@@ -2657,6 +2663,7 @@ export function SceneProductionMixer({
     audioTrackCount,
     hasTextOverlays: textOverlays.length > 0,
     textOverlayCount: textOverlays.length,
+    hasWatermark: watermarkConfig.enabled,
     userTier,
     remainingServerRenders,
     userPreference: selectedRenderMode,
@@ -2666,6 +2673,7 @@ export function SceneProductionMixer({
     renderedSegments.length,
     audioTrackCount,
     textOverlays.length,
+    watermarkConfig.enabled,
     userTier,
     remainingServerRenders,
     selectedRenderMode,
@@ -3594,14 +3602,39 @@ export function SceneProductionMixer({
       await handleHeadlessRender()
       return
     }
-    
+
+    const hasBurnIns = textOverlays.length > 0 || watermarkConfig.enabled
+    const audioLongerThanVideo = maxAudioDuration > videoTotalDuration + 0.1
+    const headlessAvailable = renderOptions.some((opt) => opt.mode === 'headless' && opt.available)
+
+    if (selectedRenderMode === 'auto' && (hasBurnIns || audioLongerThanVideo)) {
+      if (headlessAvailable) {
+        await handleHeadlessRender()
+        return
+      }
+      setActiveRenderMode('server')
+      await handleRender()
+      return
+    }
+
     if (renderStrategy.mode === 'local') {
       await handleLocalRender()
     } else {
       setActiveRenderMode('server')
       await handleRender()
     }
-  }, [selectedRenderMode, renderStrategy, handleLocalRender, handleRender, handleHeadlessRender])
+  }, [
+    selectedRenderMode,
+    renderStrategy,
+    handleLocalRender,
+    handleRender,
+    handleHeadlessRender,
+    textOverlays.length,
+    watermarkConfig.enabled,
+    maxAudioDuration,
+    videoTotalDuration,
+    renderOptions,
+  ])
   
   // === Render ===
   
@@ -4631,6 +4664,25 @@ export function SceneProductionMixer({
             
             {/* Render Button */}
             <div className="flex items-center gap-2 w-full sm:w-auto">
+              {/* Resolution Selector */}
+              <Select
+                value={resolution}
+                onValueChange={(value) => setResolution(value as '720p' | '1080p' | '4K')}
+                disabled={isRendering}
+              >
+                <SelectTrigger className="w-[84px] h-9 shrink-0 bg-gray-800 border-gray-600 [&>span]:text-left">
+                  <SelectValue placeholder="Res">
+                    {RESOLUTION_TRIGGER_LABELS[resolution]}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="720p">720 (HD)</SelectItem>
+                  <SelectItem value="1080p">1080 (FHD)</SelectItem>
+                  <SelectItem value="2K" disabled>2K (coming soon)</SelectItem>
+                  <SelectItem value="4K">4K (UHD)</SelectItem>
+                </SelectContent>
+              </Select>
+
               {/* Render Mode Selector */}
               <Select
                 value={selectedRenderMode}
